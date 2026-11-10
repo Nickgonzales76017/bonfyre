@@ -1,0 +1,58 @@
+mkdir -p build
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror bf_lz4.c tests/lz4_boundary_test.c -o build/lz4_boundary_test
+./build/lz4_boundary_test
+lz4 boundaries: PASS
+lz4 boundaries: PASS
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror -D_DARWIN_C_SOURCE -Iinclude src/bf_sqlite.c tests/sqlite_policy_test.c -lsqlite3 -o build/sqlite_policy_test
+./build/sqlite_policy_test
+  ok   the fast tier opens
+  ok   its policy can be read
+  ok   fast is WAL
+  ok   fast is synchronous NORMAL
+  ok   the durable tier opens
+  ok   durable is WAL
+  ok   durable is synchronous FULL
+  ok   a durable store takes a write
+  ok   an unknown tier is refused
+  ok   a store that cannot be opened is an error, not a quiet success
+  ok   the long-standing opener still opens
+  ok   and is NORMAL unless told otherwise
+  ok   it opens with the operator's setting
+  ok   and is FULL when the operator says full
+sqlite policy: PASS
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude test/test_bonfyre.c -L. -lbonfyre -o test_bonfyre
+./test_bonfyre
+libbonfyre test suite
+=====================
+
+  artifact_init                                     PASS
+  artifact_parse                                    PASS
+  artifact_keys_deterministic                       PASS
+  artifact_family_key_groups                        PASS
+  artifact_to_json                                  PASS
+  sha256_known_vector                               PASS
+  sha256_empty                                      PASS
+  fnv1a_basic                                       PASS
+  normalize_token                                   PASS
+  ensure_dir                                        PASS
+  iso_timestamp                                     PASS
+  arg_has                                           PASS
+  arg_value                                         PASS
+  json_str                                          PASS
+  json_int                                          PASS
+  operator_registry_count                           PASS
+  operator_find                                     PASS
+  operator_find_by_name                             PASS
+  operator_layers                                   PASS
+  operator_pure_vs_stateful                         PASS
+
+20 passed, 0 failed
+mkdir -p build
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror -Dfopen=bf_test_fopen -Dfclose=bf_test_fclose -c src/bf_sha256.c -o build/sha256_fault.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror tests/sha256_file_test.c build/sha256_fault.o -o build/sha256_file_test
+./build/sha256_file_test
+sha256 file: 18 checks, 0 failures
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror -DBONFYRE_SHA256_PORTABLE -Dfopen=bf_test_fopen -Dfclose=bf_test_fclose -c src/bf_sha256.c -o build/sha256_portable_fault.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Werror tests/sha256_file_test.c build/sha256_portable_fault.o -o build/sha256_portable_file_test
+./build/sha256_portable_file_test
+sha256 file: 18 checks, 0 failures

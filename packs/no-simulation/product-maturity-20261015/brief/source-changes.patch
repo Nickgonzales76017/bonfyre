@@ -1,0 +1,970 @@
+diff --git a/README.md b/README.md
+index 5a1d267..42607a4 100644
+--- a/README.md
++++ b/README.md
+@@ -47,3 +47,16 @@ For a customer implementation, the next step is to bind this interaction to the
+ ## Documentation and support
+ 
+ [Bonfÿre system guides](https://docs.aurekai.work/) cover the platform more broadly. The working routes above are the best starting point for evaluating what an operator or buyer can do today.
++
++
++### Brief Studio workspace
++
++The studio now separates opportunities and their working views: brief, checks, routes, source and recipient preview. Each opportunity retains its own recipient, recommendation, formatted memo, budget, comparison mode and included sections. Existing IndexedDB drafts migrate when opened; drafts stay specific to the browser origin. A save compares the stored revision and refuses stale tab writes.
++
++The route matrix shows proposed check coverage. Providers can be excluded from a comparison, edited or added through an eligible-check picker. Estimates and recorded-ready quotes remain separate. Price changes update the same selected-route solution used by the recipient brief and typed proposal.
++
++The reviewer memo uses self-hosted Tiptap 3.32.0 with formatting, undo/redo and source links. A bounded document schema drives HTML and Markdown export. If the editor cannot load, a plain text field remains available; Retry restores the rich editor with those edits.
++
++To rebuild the vendored editor, run `npm ci --ignore-scripts --no-audit --no-fund` in `tools/brief-editor-build`, then `bun build.mjs`. The package lock, bundled licenses and generated provenance record are retained with the source. Publishing `site/` needs no runtime npm installation or external script service.
++
++The current upgrade is published at [the separate preview](https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/). GitHub Pages remains on its committed version. Shared account storage, organization permissions and native approval/dispatch are not connected to this browser workspace. Google Stitch design generation remains pending.
+diff --git a/site/brief-studio/core.mjs b/site/brief-studio/core.mjs
+index 6c62d15..0c1da99 100644
+--- a/site/brief-studio/core.mjs
++++ b/site/brief-studio/core.mjs
+@@ -12,7 +12,7 @@ export const KINDS=[
+ ];
+ export const METHODS=[
+ ["desk","Desk review"],["owner","Owner documents"],["partner","Partner confirmation"],["remote-live","Remote walkthrough"],
+-["partner","Partner check"],["field","On-site inspection"],
++["field","On-site inspection"],
+ ["licensed","Qualified specialist"],["lab","Testing laboratory"]
+ ];
+ export const SECTIONS=["Summary","Source","Required checks","Verification","Decision"];
+@@ -74,9 +74,10 @@ export function fresh(profile){
+     offer("recording","Review chaptered recording","remote-live",["outcome"],0,35)])
+   ];
+  }
+- s.current=s.opportunities[0].id;return s;
++ s.current=s.opportunities[0].id;return hydrateWorkspace(s);
+ }
+ export function validSource(raw){
++ if(typeof raw!=="string"||raw.length>420||/[\u0000-\u0020\u007f\\#<>"`]/.test(raw))return false;
+  try{const u=new URL(raw);return u.protocol==="https:"&&!u.username&&!u.password&&!u.hash&&u.href.length<=420;}catch{return false;}
+ }
+ export function eligible(method,kind){
+@@ -105,7 +106,7 @@ export function checkOpportunity(op){
+  }
+  const rids=new Set();for(const r of op.offers){
+   if(!/^[a-z0-9-]{1,70}$/i.test(r.id)||rids.has(r.id)||!METHODS.some(x=>x[0]===r.method)||
+-   [r.base,r.labor,r.travel].some(n=>!Number.isSafeInteger(n)||n<0)||!Array.isArray(r.coverage))throw Error("Invalid or duplicate verification route.");
++   [r.base,r.labor,r.travel].some(n=>!Number.isSafeInteger(n)||n<0)||!Array.isArray(r.coverage)||(r.enabled!==undefined&&typeof r.enabled!=="boolean"))throw Error("Invalid or duplicate verification route.");
+   if(r.coverage.some(id=>!names.has(id)))throw Error("Route references a missing requirement.");
+   rids.add(r.id);
+  }
+@@ -125,7 +126,7 @@ export function routePrice(routes){
+ export function optimize(op,budget,mode="exploratory"){
+  checkOpportunity(op);if(!Number.isSafeInteger(budget)||budget<0)throw Error("Invalid verification budget.");
+  if(!["exploratory","documented"].includes(mode))throw Error("Unknown route comparison mode.");
+- const routes=op.offers.filter(r=>mode!=="documented"||documented(r)),needIds=op.needs.map(n=>n.id);
++ const routes=op.offers.filter(r=>r.enabled!==false&&(mode!=="documented"||documented(r))),needIds=op.needs.map(n=>n.id);
+  let best=null,partial=null,minFull=Infinity;
+  for(let m=0;m<(1<<routes.length);m++){
+   const selected=routes.filter((r,i)=>Boolean(m&(1<<i))),cost=routePrice(selected),covered=new Set();
+@@ -169,23 +170,27 @@ const norm=s=>String(s??"").replace(/[\t\r\n]+/g," ").trim();
+ export function briefContent(s){
+  const op=s.opportunities.find(x=>x.id===s.current);
+  if(!op)throw Error("Select an opportunity.");
+- return {op,solution:optimize(op,s.budget,s.mode||"exploratory"),title:s.briefHeading||op.title,
+-  recipient:s.recipient||"Buyer review",sections:s.sections.filter(x=>!s.hidden.includes(x))};
++ const editorial=editorialSnapshot(s,op.editorial??{});
++ return {op,solution:optimize(op,editorial.budget,editorial.mode),title:editorial.briefHeading||op.title,
++  recipient:editorial.recipient||"Buyer review",editorial,sections:editorial.sections.filter(x=>!editorial.hidden.includes(x))};
+ }
+ export function toMarkdown(s){
+- const {op,solution,title,recipient,sections}=briefContent(s);
+- const lines=["# "+norm(title),"","For: "+norm(recipient),"Opportunity: "+norm(op.title),"Subject: "+norm(op.subject),""];
++ const {op,solution,title,recipient,sections,editorial}=briefContent(s);
++ const prose=value=>markdownText(norm(value));
++ const lines=["# "+prose(title),"","For: "+prose(recipient),"Opportunity: "+prose(op.title),"Subject: "+prose(op.subject),""];
+  for(const section of sections){
+   lines.push("## "+section);
+-  if(section==="Summary")lines.push(norm(op.assertion)||"Source description not supplied.");
+-  if(section==="Source")lines.push(op.source||"Source URL not supplied; do not treat claims as verified.");
+-  if(section==="Required checks")for(const n of op.needs)lines.push("- "+norm(n.label)+" ("+n.kind+", "+(n.status||"missing")+"). Source: "+norm(n.source||"not supplied"));
++  if(section==="Summary")lines.push(prose(op.assertion)||"Source description not supplied.");
++  if(section==="Source")lines.push(op.source?'<' + op.source + '>':"Source URL not supplied; do not treat claims as verified.");
++  if(section==="Required checks")for(const n of op.needs)lines.push("- "+prose(n.label)+" ("+n.kind+", "+prose(n.status||"missing")+"). Source: "+prose(n.source||"not supplied"));
+   if(section==="Verification"){
+-   lines.push("Plan: "+solution.status+". "+money(solution.cost)+" against "+money(s.budget)+" verification budget.","Methods:");
+-   for(const r of solution.selected)lines.push("- "+r.id+" / "+r.provider+": "+r.method+", "+r.quote+", "+r.availability);
+-   if(solution.unresolved.length)lines.push("Unresolved: "+solution.unresolved.map(n=>n.label).join("; "));
++   lines.push("Plan: "+solution.status+". "+money(solution.cost)+" against "+money(editorial.budget)+" verification budget.","Methods:");
++   for(const r of solution.selected)lines.push("- "+prose(r.id)+" / "+prose(r.provider)+": "+r.method+", "+prose(r.quote)+", "+prose(r.availability));
++   const excluded=op.offers.filter(r=>r.enabled===false);
++   if(excluded.length){lines.push("Excluded from this comparison:");for(const r of excluded)lines.push("- "+prose(r.id)+" / "+prose(r.provider)+": "+r.method+" (excluded).");}
++   if(solution.unresolved.length)lines.push("Unresolved: "+solution.unresolved.map(n=>prose(n.label)).join("; "));
+   }
+-  if(section==="Decision")lines.push("Recommendation: "+s.decision+".",norm(s.notes)||"No reviewer notes supplied.");
++  if(section==="Decision")lines.push("Recommendation: "+editorial.decision+".",editorial.notesDoc?noteMarkdown(editorial.notesDoc)||"No reviewer notes supplied.":prose(editorial.notes)||"No reviewer notes supplied.");
+   lines.push("");
+  }
+  lines.push("Planning estimates do not prove availability, authorize inspection, certify title, or complete a transaction.");
+@@ -193,16 +198,176 @@ export function toMarkdown(s){
+ }
+ const quote=s=>'"'+norm(s).replaceAll('"',"'")+'"';
+ export function toYaff(s){
+- const {op,solution}=briefContent(s);
++ const {op,solution,editorial}=briefContent(s);
+  return [
+   "program acquisition-brief-proposal",
+   "subject "+quote(op.subject),"profile "+s.profile,"opportunity "+quote(op.title),
+-  "recipient "+quote(s.recipient),"source "+quote(op.source||"unbound"),
+-  "budget_cents "+s.budget,"proposed_cents "+solution.cost,
++  "recipient "+quote(editorial.recipient),"source "+quote(op.source||"unbound"),
++  "budget_cents "+editorial.budget,"proposed_cents "+solution.cost,
+   "coverage "+solution.covered.size+"/"+op.needs.length,"plan_status "+solution.status,
+-  "quote_basis "+solution.mode,"decision "+s.decision,"assertion "+quote(op.assertion),"notes "+quote(s.notes),
++  "quote_basis "+solution.mode,"decision "+editorial.decision,"assertion "+quote(op.assertion),"notes "+quote(editorial.notes),
+   ...op.needs.map(n=>"need "+quote(n.id)+" "+n.kind+" "+n.weight+" "+n.status+" "+quote(n.source||"unbound")),
+   ...solution.selected.map(r=>"route "+quote(r.id)+" "+quote(r.provider)+" "+r.method+" "+r.base+" "+r.labor+" "+r.travel+" "+quote(r.group||"-")+" "+r.quote+" "+r.availability+" "+quote(r.quoteRef||"unquoted")),
+   "authority none","cannot_infer proposal_is_not_quote_dispatch_proof_title_or_settlement"
+  ].join("\n")+"\n";
+-}
+\ No newline at end of file
++}
++
++const editorialTextFields=["recipient","briefHeading","decision","notes"];
++const editorialFields=[...editorialTextFields,"budget","mode","sections","hidden"];
++function editorialSnapshot(source,fallback={}){
++ if(!isRecord(source)||!isRecord(fallback))throw Error("Open valid editorial fields for this opportunity.");
++ const result={};
++ const limits={recipient:120,briefHeading:150,decision:20,notes:50000};
++ for(const field of editorialTextFields){
++  const value=source[field]??fallback[field]??(field==="decision"?"hold":"");
++  if(typeof value!=="string"||value.length>limits[field]||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value))throw Error("Invalid or oversized "+field+" field.");
++  result[field]=value;
++ }
++ if(!["hold","request","review","decline"].includes(result.decision))throw Error("Choose a supported recommendation.");
++ result.budget=source.budget??fallback.budget??cents(180);
++ result.mode=source.mode??fallback.mode??"exploratory";
++ if(!Number.isSafeInteger(result.budget)||result.budget<0)throw Error("Invalid verification budget.");
++ if(!["exploratory","documented"].includes(result.mode))throw Error("Unknown route comparison mode.");
++ for(const field of ["sections","hidden"]){
++  const values=source[field]??fallback[field]??(field==="sections"?SECTIONS:[]);
++  if(!Array.isArray(values)||values.length>SECTIONS.length||new Set(values).size!==values.length||values.some(value=>!SECTIONS.includes(value)))throw Error("Invalid brief section settings.");
++  result[field]=[...values];
++ }
++ const doc=Object.hasOwn(source,"notesDoc")?source.notesDoc:Object.hasOwn(source,"notes")?undefined:fallback.notesDoc;
++ if(doc!=null)result.notesDoc=validateNote(doc);
++ return result;
++}
++export function hydrateWorkspace(state){
++ if(!isRecord(state)||!Array.isArray(state.opportunities)||!state.opportunities.length)throw Error("Open a valid brief workspace.");
++ const ids=new Set();
++ for(const op of state.opportunities){if(!isRecord(op)||typeof op.id!=="string"||!op.id||ids.has(op.id))throw Error("Opportunity identities must be present and distinct.");ids.add(op.id);}
++ if(!ids.has(state.current))throw Error("Select an existing opportunity.");
++ // Legacy drafts had one set of editorial fields shared by every opportunity.
++ // Copy that text into each existing opportunity before the first switch.
++ const settings={budget:state.budget,mode:state.mode,sections:state.editorialVersion===2?SECTIONS:state.sections,hidden:state.editorialVersion===2?[]:state.hidden};
++ const initialized=state.opportunities.map(op=>[op,op.editorial==null?editorialSnapshot(state.editorialVersion>=1?{}:state,settings):editorialSnapshot(op.editorial,settings)]);
++ const selected=initialized.find(([op])=>op.id===state.current);
++ const active=editorialSnapshot(state,selected[1]);
++ selected[1]=editorialSnapshot(active);
++ for(const [op,editorial] of initialized)op.editorial=editorial;
++ for(const field of editorialFields)state[field]=active[field];
++ if(active.notesDoc)state.notesDoc=active.notesDoc;else delete state.notesDoc;
++ state.editorialVersion=2;
++ return state;
++}
++export function selectOpportunity(state,id){
++ if(!state?.opportunities?.some(op=>op.id===id))throw Error("Select an existing opportunity.");
++ hydrateWorkspace(state);
++ const outgoing=state.opportunities.find(op=>op.id===state.current);
++ if(outgoing)outgoing.editorial=editorialSnapshot(state);
++ const incoming=state.opportunities.find(op=>op.id===id);
++ const editorial=editorialSnapshot(incoming.editorial);
++ for(const field of editorialFields)state[field]=editorial[field];
++ if(editorial.notesDoc)state.notesDoc=editorial.notesDoc;else delete state.notesDoc;
++ state.current=id;
++ return state;
++}
++
++const noteError=()=>Error("Use a note with supported text, headings, lists and safe HTTPS links.");
++const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
++function onlyKeys(value,keys){if(!isRecord(value)||Object.keys(value).some(key=>!keys.includes(key)))throw noteError();}
++function noteLink(href){
++ if(typeof href!=="string"||href.length>2048||/[\u0000-\u0020\u007f]/.test(href))throw noteError();
++ let url;try{url=new URL(href);}catch{throw noteError();}
++ if(url.protocol!=="https:"||url.username||url.password)throw noteError();
++ return url.href;
++}
++export function validateNote(doc){
++ let nodes=0,textSize=0;const ancestors=new Set();
++ function marks(input){
++  if(input===undefined)return undefined;
++  if(!Array.isArray(input)||input.length>5)throw noteError();
++  const seen=new Set();
++  return input.map(mark=>{
++   onlyKeys(mark,["type","attrs"]);
++   if(!["bold","italic","strike","underline","link"].includes(mark.type)||seen.has(mark.type))throw noteError();
++   seen.add(mark.type);
++   if(mark.type!=="link"){if(mark.attrs!=null)onlyKeys(mark.attrs,[]);return {type:mark.type};}
++   onlyKeys(mark.attrs,["href","target","rel","class","title"]);
++   for(const key of ["target","rel","class","title"])if(mark.attrs[key]!=null&&(typeof mark.attrs[key]!=="string"||mark.attrs[key].length>500))throw noteError();
++   if(mark.attrs.target!=null&&!["_blank","_self"].includes(mark.attrs.target))throw noteError();
++   const attrs={href:noteLink(mark.attrs.href)};
++   if(mark.attrs.title)attrs.title=mark.attrs.title;
++   return {type:"link",attrs};
++  });
++ }
++ const blocks=["paragraph","heading","bulletList","orderedList","blockquote"];
++ function visit(node,depth,allowed){
++  if(depth>20||++nodes>2000||ancestors.has(node))throw Error("The note is too large or deeply nested.");
++  onlyKeys(node,["type","attrs","content","text","marks"]);
++  if(!allowed.includes(node.type))throw noteError();
++  ancestors.add(node);
++  let output={type:node.type};
++  if(node.type==="text"){
++   if(typeof node.text!=="string"||!node.text.length||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(node.text)||node.content!==undefined||node.attrs!=null)throw noteError();
++   textSize+=node.text.length;if(textSize>50000)throw Error("Keep reviewer notes within 50,000 characters.");
++   output.text=node.text;const value=marks(node.marks);if(value?.length)output.marks=value;
++  }else{
++   if(node.text!==undefined||(node.type!=="hardBreak"&&node.marks!==undefined))throw noteError();
++   const attrs=node.attrs??{};
++   if(node.type==="heading"){onlyKeys(attrs,["level"]);if(![2,3].includes(attrs.level))throw noteError();output.attrs={level:attrs.level};}
++   else if(node.type==="orderedList"){
++    onlyKeys(attrs,["start","type"]);const start=attrs.start??1;
++    if(!Number.isSafeInteger(start)||start<1||start>999999||attrs.type!=null)throw noteError();
++    output.attrs={start};
++   }else onlyKeys(attrs,[]);
++   if(node.type==="hardBreak"){
++    if(node.content!==undefined)throw noteError();const value=marks(node.marks);if(value?.length)output.marks=value;
++   }else{
++    const children=node.content??[];if(!Array.isArray(children))throw noteError();
++    const childTypes=["paragraph","heading"].includes(node.type)?["text","hardBreak"]:["bulletList","orderedList"].includes(node.type)?["listItem"]:blocks;
++    if(["bulletList","orderedList","blockquote","listItem"].includes(node.type)&&!children.length)throw noteError();
++    if(node.type==="listItem"&&children[0]?.type!=="paragraph")throw noteError();
++    output.content=children.map(child=>visit(child,depth+1,childTypes));
++   }
++  }
++  ancestors.delete(node);return output;
++ }
++ const result=visit(doc,0,["doc"]);
++ if(new TextEncoder().encode(JSON.stringify(result)).length>200000)throw Error("Keep reviewer notes smaller than 200 KB.");
++ return result;
++}
++function htmlNoteNode(node){
++ if(node.type==="text"||node.type==="hardBreak"){
++  let text=node.type==="text"?escaped(node.text):"<br>";
++  for(const mark of node.marks??[]){
++   if(mark.type==="link")text='<a href="'+escaped(mark.attrs.href)+'" target="_blank" rel="noopener noreferrer"'+(mark.attrs.title?' title="'+escaped(mark.attrs.title)+'"':"")+'>'+text+'</a>';
++   else {const tag={bold:"strong",italic:"em",strike:"s",underline:"u"}[mark.type];text='<'+tag+'>'+text+'</'+tag+'>';}
++  }return text;
++ }
++ const content=(node.content??[]).map(htmlNoteNode).join("");
++ if(node.type==="doc")return content;
++ const tag={paragraph:"p",heading:"h"+node.attrs?.level,bulletList:"ul",orderedList:"ol",listItem:"li",blockquote:"blockquote"}[node.type];
++ return '<'+tag+(node.type==="orderedList"&&node.attrs.start!==1?' start="'+node.attrs.start+'"':"")+'>'+content+'</'+tag+'>';
++}
++export const noteHTML=doc=>htmlNoteNode(validateNote(doc));
++const markdownText=text=>text.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replace(/[\\`*_\[\]~#!|]/g,"\\$&").replace(/^([ \t]*)([-+])/gm,"$1\\$2").replace(/^([ \t]*\d+)\./gm,"$1\\.");
++function markdownNoteNode(node){
++ if(node.type==="hardBreak")return "  \n";
++ if(node.type==="text"||node.type==="hardBreak"){
++  let text=node.type==="text"?markdownText(node.text):"  \n";
++  for(const mark of node.marks??[]){
++   if(mark.type==="link")text='['+text+']('+mark.attrs.href.replace(/[()<>\\"]/g,c=>encodeURIComponent(c).replace(/[()]/g,x=>'%'+x.charCodeAt(0).toString(16).toUpperCase()))+')';
++   else {const edge={bold:"**",italic:"*",strike:"~~",underline:"<u>"}[mark.type];const parts=text.match(/^(\s*)([\s\S]*?)(\s*)$/);if(parts[2])text=parts[1]+edge+parts[2]+(mark.type==="underline"?"</u>":edge)+parts[3];}
++  }return text;
++ }
++ if(node.type==="paragraph"||node.type==="heading")return (node.type==="heading"?'#'.repeat(node.attrs.level)+' ':"")+(node.content??[]).map(markdownNoteNode).join("");
++ if(node.type==="bulletList"||node.type==="orderedList")return node.content.map((child,index)=>{
++  const prefix=node.type==="bulletList"?'- ':String(node.attrs.start+index)+'. ';
++  return markdownNoteNode(child).split('\n').map((line,i)=>(i?' '.repeat(prefix.length):prefix)+line).join('\n');
++ }).join('\n');
++ const content=node.content.map(markdownNoteNode).join('\n\n');
++ return node.type==="blockquote"?content.split('\n').map(line=>'> '+line).join('\n'):content;
++}
++export const noteMarkdown=doc=>markdownNoteNode(validateNote(doc));
++function textNoteNode(node){
++ if(node.type==="text")return node.text;
++ if(node.type==="hardBreak")return '\n';
++ return node.content.map(textNoteNode).join(["paragraph","heading"].includes(node.type)?'':'\n');
++}
++export const noteText=doc=>textNoteNode(validateNote(doc));
+diff --git a/site/brief-studio/index.html b/site/brief-studio/index.html
+index c018a56..4142a80 100644
+--- a/site/brief-studio/index.html
++++ b/site/brief-studio/index.html
+@@ -1,70 +1,26 @@
+-<!doctype html>
+-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+-<meta name="color-scheme" content="dark"><meta name="description" content="Compose an acquisition brief, compare verification options and prepare a review for equipment, property or procurement opportunities.">
+-<link rel="canonical" href="https://nickgonzales76017.github.io/pages-procurement-memory/brief-studio/">
+-<title>Acquisition Brief Studio · Aurekai</title><link rel="stylesheet" href="./studio.css">
+-<script type="module" src="./studio.mjs"></script></head>
+-<body>
++<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="description" content="Review opportunities, compare verification routes and edit a recipient brief."><title>Brief Studio · Aurekai</title><link rel="stylesheet" href="./studio.css"><script type="module" src="./studio.mjs"></script></head><body>
+ <a class="skip" href="#workspace">Skip to studio</a>
+-<header class="topbar">
+-<a href="../" class="brand" aria-label="Procurement Memory home"><span class="brand-symbol">A<span>·</span></span><span>AUREKAI<small>WORK SAMPLES / PROCUREMENT</small></span></a>
+-<nav class="topnav" aria-label="Experience navigation">
+-<a href="../">Procurement memory</a>
+-<a href="https://nickgonzales76017.github.io/pages-town-box/civic-council/">Council media</a>
+-<a href="https://aurekai-work-samples.pages.dev/">All work samples ↗</a>
+-</nav>
+-<div class="header-status"><span class="online-dot"></span><span>Local workspace</span></div>
+-</header>
+-<main id="workspace">
+-<div class="intro">
+-<div class="eyebrow">BUYER INTELLIGENCE / REUSABLE DECISION WORKBENCH</div>
+-<div class="intro-row"><div><h1>Make the next decision <em>worth checking.</em></h1>
+-<p>From an unconfirmed opportunity to a brief someone can act on. Keep the source attached, price the missing checks, and choose what happens next.</p></div>
+-<div class="intro-actions"><button id="save" class="primary">Save workspace</button><button id="export" class="secondary">Export brief ↓</button></div></div>
+-</div>
+-<section class="portfolio" aria-label="Choose a working example">
+-<div class="portfolio-head"><span>01 / START WITH A WORKING EXAMPLE</span><span>Four domain views · One decision model</span></div>
+-<div class="portfolio-cards">
+-<button class="example active" data-profile="itad" type="button"><span class="example-no">01</span><strong>Equipment acquisition</strong><small>2nd Life example · buyer screening</small><span class="example-foot">Inventory, boot tests, collection ↗</span></button>
+-<button class="example" data-profile="property" type="button"><span class="example-no">02</span><strong>Property acquisition</strong><small>Fleming example · estate research</small><span class="example-foot">Owner, tax, title, condition ↗</span></button>
+-<button class="example" data-profile="supplier" type="button"><span class="example-no">03</span><strong>Supplier procurement</strong><small>Generic operations example</small><span class="example-foot">Quotes, capacity, freight ↗</span></button>
+-<button class="example" data-profile="civic" type="button"><span class="example-no">04</span><strong>Civic source review</strong><small>Dallas Council · official record</small><span class="example-foot">File identity, video, reuse rights ↗</span></button>
+-</div>
+-</section>
+-<div class="studio-grid">
+-<div class="editor">
+-<section class="panel opportunity-panel">
+-<div class="panel-head"><div><span class="eyebrow">02 / OPPORTUNITY</span><h2>What are you considering?</h2></div><span id="identityChip" class="chip">Illustrative source</span></div>
+-<div class="record-picker"><label for="recordPicker">Working opportunities</label><select id="recordPicker"></select><button class="small-button" id="addOpportunity" type="button">+ New</button></div>
+-<div class="form-grid">
+-<label class="full">Opportunity title<input id="title" maxlength="160" autocomplete="off"></label>
+-<label>Buyer or recipient<input id="recipient" maxlength="120"></label>
+-<label>Opportunity reference<input id="subject" maxlength="160" placeholder="Lot number, parcel or buyer identifier"></label>
+-<label class="full">Original source URL<input id="source" type="url" maxlength="420" placeholder="https://…"></label>
+-<label class="full">What the source says<textarea id="assertion" rows="3" maxlength="1200"></textarea></label>
+-</div>
+-<div class="inline-actions"><a id="openSource" href="#" rel="noopener noreferrer" target="_blank" class="text-link">Open original source ↗</a><span class="subtle">An observation, seller statement and verified fact are different states.</span></div>
+-</section>
+-<section class="panel">
+-<div class="panel-head"><div><span class="eyebrow">03 / REQUIRED CHECKS</span><h2>Which questions change the decision?</h2></div><span id="needCount" class="head-note">0 checks</span></div>
+-<p class="helper">An answer can be supplied, unresolved, or reviewed. Marking it reviewed does not establish independent proof.</p>
+-<div id="needsList" class="needs-list"></div>
++<div class="app-shell"><aside class="workspace-sidebar"><a class="brand" href="https://aurekai-work-samples.pages.dev/"><span class="brand-symbol">A</span><span>AUREKAI<small>BRIEF STUDIO</small></span></a><label class="sidebar-label">Workspace</label><div class="domain-switch" aria-label="Domain"><button data-profile="itad" type="button"><span>IT</span>Equipment</button><button data-profile="property" type="button"><span>RE</span>Property</button><button data-profile="supplier" type="button"><span>PO</span>Procurement</button><button data-profile="civic" type="button"><span>CV</span>Civic review</button></div><div class="sidebar-section"><label for="op-search">Opportunities <span id="op-count"></span></label><button id="addOpportunity" class="icon-button" aria-label="New opportunity">+</button></div><input id="op-search" type="search" placeholder="Find an opportunity" aria-label="Find an opportunity"><div id="op-list" class="op-list" aria-label="Opportunities"></div><select id="recordPicker" hidden aria-label="Working opportunity"></select><div class="sidebar-foot"><label class="upload-button">Import TSV<input id="importTsv" type="file" accept=".tsv,text/tab-separated-values,text/plain" hidden></label><small>Sample data · Saved in this browser</small><a href="https://nickgonzales76017.github.io/pages-procurement-memory/">Procurement memory ↗</a></div></aside>
++<main id="workspace"><header class="workspace-header"><div><span id="workspace-domain" class="eyebrow">Equipment</span><h1 id="workspace-title">Acquisition brief</h1></div><div class="header-actions"><span id="saveStatus" role="status">Opening workspace…</span><button id="save" class="secondary">Save</button><button id="export" class="primary">Export brief ↓</button></div></header>
++<div id="save-conflict" class="conflict-banner" role="alert" hidden><strong>Another tab saved changes.</strong><span>Your edits are still here. Export them before loading the saved workspace.</span><button id="conflict-export" class="small-button">Export my brief</button><button id="conflict-reload" class="small-button">Load saved workspace</button></div>
++<nav class="workspace-tabs" aria-label="Opportunity views"><button data-view="brief">Brief</button><button data-view="checks">Checks <span id="checks-badge"></span></button><button data-view="routes">Routes <span id="routes-badge"></span></button><button data-view="source">Source</button><button data-view="preview">Preview</button></nav>
++<div class="studio-grid"><div class="editor"><section class="panel view-panel" data-panel="brief"><div class="panel-head"><div><span class="eyebrow">RECIPIENT BRIEF</span><h2>Prepare the decision</h2></div><span class="chip">Draft</span></div><div class="form-grid"><label class="full">Brief heading<input id="briefHeading" maxlength="150"></label><label>Recipient<input id="recipient" maxlength="120"></label><label>Recommendation<select id="decision"><option value="hold">Hold pending checks</option><option value="request">Request verification quote</option><option value="review">Ready for buyer review</option><option value="decline">Decline opportunity</option></select></label></div>
++<div class="memo-label"><label for="notes">Reviewer memo</label><button id="insert-source" class="small-button">Insert source link</button></div><div id="notes-toolbar" class="notes-toolbar" role="toolbar" aria-label="Memo formatting" hidden><button type="button" data-format="bold" aria-label="Bold" title="Bold"><b>B</b></button><button type="button" data-format="italic" aria-label="Italic" title="Italic"><i>I</i></button><button type="button" data-format="underline" aria-label="Underline" title="Underline"><u>U</u></button><button type="button" data-format="heading" aria-label="Heading" title="Heading">H2</button><button type="button" data-format="bulletList" aria-label="Bullet list" title="Bullet list">• List</button><button type="button" data-format="orderedList" aria-label="Numbered list" title="Numbered list">1. List</button><button type="button" data-format="blockquote" aria-label="Quote" title="Quote">“ ”</button><button type="button" data-format="undo" aria-label="Undo" title="Undo">↶</button><button type="button" data-format="redo" aria-label="Redo" title="Redo">↷</button></div><div id="notes-editor"></div><textarea id="notes" rows="8" maxlength="50000" placeholder="Your recommendation and the evidence behind it."></textarea><div class="memo-footer"><span id="memo-status">Plain text editor</span><button id="editor-retry" class="text-link" hidden>Retry rich editor</button><button id="copy" class="small-button">Copy brief</button></div><div class="decision-summary" id="decision-summary"></div></section>
++<section class="panel view-panel" data-panel="checks" hidden><div class="panel-head"><div><span class="eyebrow">EVIDENCE REVIEW</span><h2>Required checks</h2></div><span id="needCount" class="head-note"></span></div><div id="needsList" class="needs-list"></div>
+ <form id="addNeedForm" class="add-form"><label>Question<input name="label" maxlength="120" placeholder="e.g. Can these devices boot?" required></label>
+ <label>Proof kind<select name="kind" id="needKind"></select></label><label>Importance<select name="weight"><option value="5">Required</option><option value="3">Important</option><option value="1">Optional</option></select></label><button type="submit" class="small-button">Add check</button></form>
+ </section>
+-<section class="panel">
+-<div class="panel-head"><div><span class="eyebrow">04 / VERIFICATION MARKET</span><h2>Compare ways to find out.</h2></div><span class="head-note">Indicative costs until quoted</span></div>
+-<div class="budget-row"><label>Maximum verification budget (USD)<input id="budget" type="number" min="0" max="100000000" step=".01"></label>
++<section class="panel view-panel" data-panel="routes" hidden><div class="panel-head"><div><span class="eyebrow">VERIFICATION OPTIONS</span><h2>Route comparison</h2></div><span class="chip">Estimates</span></div><div class="budget-row"><label>Maximum verification budget (USD)<input id="budget" type="number" min="0" max="100000000" step=".01"></label>
+ <label>Plan using<select id="planMode"><option value="exploratory">All eligible estimates</option><option value="documented">Recorded quotes with ready status</option></select></label>
+ <button id="runPlan" type="button" class="primary">Compare routes ↗</button></div>
+ <div class="offer-header"><span>Methods available for this opportunity</span><span>Travel is charged once per matching provider and visit group.</span></div>
+-<div id="offerList" class="offer-list"></div>
+-<details class="new-offer"><summary>Add a verification route</summary>
++<div id="routeResult" class="route-result" aria-live="polite"></div><div id="coverage-matrix" class="coverage-matrix" tabindex="0" aria-label="Route coverage, scroll horizontally for more routes"></div><div id="offerList" class="offer-list"></div>
++<details class="new-offer"><summary id="offer-form-title">Add a verification route</summary>
+ <form id="addOfferForm" class="form-grid offer-form">
+-<label>Route name<input name="id" placeholder="e.g. field-test" maxlength="72" required></label>
++<label>Route name<input name="id" placeholder="e.g. field-test" maxlength="70" required></label>
+ <label>Provider or owner<input name="provider" placeholder="provider:local-team" maxlength="120" required></label>
+ <label>Method<select name="method" id="offerMethod"></select></label>
+-<label>Covers check IDs (comma separated)<input name="covers" maxlength="180" placeholder="model, boot"></label>
++<fieldset class="full coverage-fieldset"><legend>Checks addressed</legend><div id="coverage-picker"></div></fieldset>
+ <label>Base charge USD<input name="base" type="number" min="0" step=".01" value="0" required></label>
+ <label>Labor USD<input name="labor" type="number" min="0" step=".01" value="0" required></label>
+ <label>Travel USD<input name="travel" type="number" min="0" step=".01" value="0" required></label>
+@@ -72,33 +28,15 @@
+ <label>Quote status<select name="quote"><option value="estimate">Estimate</option><option value="quoted">Quoted</option></select></label>
+ <label>Availability<select name="availability"><option value="unknown">Unknown</option><option value="conditional">Conditional</option><option value="ready">Recorded ready</option></select></label>
+ <label class="full">Quote or availability reference<input name="quoteRef" maxlength="250" placeholder="Document/confirmation reference, if applicable"></label>
+-<button type="submit" class="small-button">Add route for comparison</button>
++<div class="full inline-actions"><button type="submit" id="offer-submit" class="primary">Add route</button><button type="button" id="cancel-offer-edit" class="secondary" hidden>Cancel edit</button></div>
+ </form></details>
+-<div id="routeResult" class="route-result" aria-live="polite"><p>Change the checks or budget to compare available routes.</p></div>
+-</section>
+-<section class="panel">
+-<div class="panel-head"><div><span class="eyebrow">05 / BUYER DECISION</span><h2>Prepare the next action.</h2></div></div>
+-<div class="form-grid">
+-<label>Recommendation<select id="decision"><option value="hold">Hold pending checks</option><option value="request">Request verification quote</option><option value="review">Ready for buyer review</option><option value="decline">Decline opportunity</option></select></label>
+-<label>Brief heading<input id="briefHeading" maxlength="150"></label>
+-<label class="full">Decision notes<textarea id="notes" rows="4" maxlength="1500" placeholder="What would change the decision? Who must approve?"></textarea></label>
+-</div>
+-<div class="inline-actions"><button id="copy" class="small-button">Copy brief</button><button id="exportYaff" class="small-button">Export typed handoff</button><button id="print" class="small-button">Print / save PDF</button></div>
++
+ </section>
+-</div>
+-<aside class="preview-col">
+-<section class="preview-panel">
+-<div class="preview-top"><span class="eyebrow">LIVE / RECIPIENT PREVIEW</span><span class="preview-state" id="saveStatus" role="status">Open a working example</span></div>
++<section class="panel view-panel" data-panel="source" hidden><div class="panel-head"><div><span class="eyebrow">SOURCE RECORD</span><h2>Opportunity details</h2></div></div><div class="form-grid"><label class="full">Opportunity title<input id="title" maxlength="160"></label><label>Reference<input id="subject" maxlength="160" placeholder="Lot, parcel or file number"></label><label>Original source URL<input id="source" type="url" maxlength="420" placeholder="https://…"></label><label class="full">Source statement<textarea id="assertion" rows="5" maxlength="1200"></textarea></label></div><div class="inline-actions"><a id="openSource" href="#" rel="noopener noreferrer" target="_blank" class="text-link">Open source ↗</a><span id="identityChip" class="chip"></span></div><details class="import-help"><summary>Import opportunities</summary><p>TSV columns: title, subject, source, assertion. Up to 100 rows per import.</p><button id="exportYaff" class="small-button">Export typed handoff</button><a class="text-link" href="https://aurekai.work/studio/" target="_blank" rel="noopener noreferrer">Open Aurekai Work ↗</a></details></section></div><aside class="preview-col"><section class="preview-panel">
++<div class="preview-top"><span class="eyebrow">RECIPIENT PREVIEW</span><button id="print" class="small-button">Print / PDF</button></div>
+ <div class="paper"><div class="paper-rule"></div><span class="paper-eyebrow" id="paperProfile">ACQUISITION SCREEN</span><h2 id="paperTitle"></h2><div id="paperBody"></div><footer id="paperFooter"></footer></div>
+-<div class="preview-bottom"><span>Reorders and changes carry into exports</span><div id="sectionToggles" class="section-toggles"></div></div>
++<div class="preview-bottom"><span>Included sections</span><div id="sectionToggles" class="section-toggles"></div></div>
+ </section>
+-<div class="next-panel"><h3>Continue the work</h3><p>Bring the reviewed brief to the native institutional workbench. This preview does not contact vendors, dispatch inspectors or authorize an offer.</p>
+-<a href="https://aurekai.work/studio/" target="_blank" rel="noopener noreferrer" class="next-link">Open Aurekai Work ↗</a>
+-<a href="../" class="muted-link">Return to procurement memory</a>
+-</div></aside>
+-</div>
+-<section class="batch-panel"><div><span class="eyebrow">06 / MORE THAN ONE OPPORTUNITY</span><h2>Bring a batch, keep the identities.</h2><p>Import a tab-separated file with columns <code>title</code>, <code>subject</code>, <code>source</code>, <code>assertion</code>. Each row becomes an individually reviewable lead with the current domain's required checks. Files stay in this browser.</p></div><label class="upload-button">Import TSV <input id="importTsv" type="file" accept=".tsv,text/tab-separated-values,text/plain" hidden></label></section>
+-<div class="foot-note"><span>Built on Bonfÿre's shared acquisition and verification model · Browser-local draft</span><span>Actual provider quotes, proof admission and dispatch require separate owners.</span></div>
+-</main>
+-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+-</body></html>
+\ No newline at end of file
++</aside></div></main></div>
++<dialog id="new-opportunity"><form id="newOpportunityForm"><h2>New opportunity</h2><label>Opportunity name<input name="name" required maxlength="160" autocomplete="off"></label><div><button type="button" data-close-dialog class="secondary">Cancel</button><button class="primary">Create opportunity</button></div></form></dialog>
++<div id="toast" class="toast" role="status" aria-live="polite"></div></body></html>
+\ No newline at end of file
+diff --git a/site/brief-studio/studio.css b/site/brief-studio/studio.css
+index 09ed908..3ad6f65 100644
+--- a/site/brief-studio/studio.css
++++ b/site/brief-studio/studio.css
+@@ -1,4 +1,4 @@
+-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
++@font-face{font-family:"DM Sans";src:url(./fonts/dm-sans.woff2);font-weight:100 1000;font-display:swap}@font-face{font-family:"DM Mono";src:url(./fonts/dm-mono.woff2);font-display:swap}@font-face{font-family:"Instrument Serif";src:url(./fonts/instrument-serif.woff2);font-display:swap}
+ :root{color-scheme:dark;--bg:#0d1414;--panel:#121e1d;--panel2:#172421;--ink:#e6ece5;--muted:#9aaea5;--hair:#34473f;--accent:#bbdcab;--gold:#dfba84;--red:#e6a6a0;--sans:"DM Sans",system-ui,sans-serif;--serif:"Instrument Serif",Georgia,serif;--mono:"DM Mono",ui-monospace,monospace}
+ *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit}a:hover{text-decoration-color:var(--gold)}.skip{position:absolute;top:-99px;left:12px;padding:14px;background:var(--ink);color:var(--bg);z-index:40}.skip:focus{top:12px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+ .topbar{height:79px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:36px;padding:0 max(26px,calc((100vw - 1536px)/2));max-width:100%;background:#101917;position:relative}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:700;letter-spacing:.16em;font-size:.81rem;white-space:nowrap}.brand-symbol{display:grid;place-items:center;height:41px;width:41px;border:1px solid #6f8979;color:var(--accent);font-family:var(--serif);font-size:27px;letter-spacing:-.07em;font-style:italic}.brand-symbol span{color:var(--gold)}.brand small{display:block;font:10px var(--mono);letter-spacing:.02em;color:var(--muted);margin-top:2px}.topnav{display:flex;align-items:center;gap:24px;font-size:12px;margin-left:auto}.topnav a{color:var(--muted);text-decoration:none;white-space:nowrap}.topnav a:hover{color:var(--accent)}.header-status{border-left:1px solid var(--hair);padding-left:22px;display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px;white-space:nowrap}.online-dot{width:7px;height:7px;border-radius:50%;background:#9ec49d}
+@@ -14,4 +14,20 @@ label{display:flex;flex-direction:column;gap:6px;color:#b9c9bf;font-size:12px;fo
+ .batch-panel{display:flex;align-items:center;justify-content:space-between;gap:20px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);padding:33px 0;margin-top:38px}.batch-panel h2{font-size:26px;font-weight:500;letter-spacing:-.035em;margin:8px 0}.batch-panel p{font-size:13px;color:var(--muted);max-width:745px;margin:0}.batch-panel code{font:12px var(--mono);color:var(--accent)}.upload-button{cursor:pointer;white-space:nowrap;align-items:center}.foot-note{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:#8ca294;margin-top:22px}.toast{position:fixed;bottom:22px;right:22px;max-width:390px;background:#d4e8c7;color:#163021;padding:13px 18px;border-radius:4px;font-size:12px;box-shadow:0 9px 40px #0008;opacity:0;pointer-events:none;z-index:100;transition:opacity .18s}.toast.show{opacity:1}
+ @media(max-width:1100px){.studio-grid{grid-template-columns:minmax(0,1fr) minmax(345px,.82fr)}.topnav{gap:12px}.header-status{display:none}.paper{padding:25px}.intro h1{font-size:50px}}
+ @media(max-width:860px){.topbar{height:auto;min-height:72px;padding:13px 22px;flex-wrap:wrap;gap:8px}.topnav{width:100%;justify-content:flex-start;overflow-x:auto;padding-top:8px;gap:16px}.studio-grid{grid-template-columns:1fr}.preview-col{position:static}.intro-row{align-items:start;flex-direction:column}.intro-actions{margin:0}.portfolio-cards{grid-template-columns:1fr 1fr}.example:last-child{grid-column:1/-1}.paper{max-width:none}}
+-@media(max-width:570px){main{padding:0 16px 30px}.topbar{padding:13px 16px}.intro{padding:35px 0 25px}.intro h1{font-size:40px}.intro p{font-size:14px}.portfolio-head span:last-child{display:none}.portfolio-cards{grid-template-columns:1fr}.example{min-height:116px}.example:last-child{grid-column:auto}.example strong{font-size:16px}.panel{padding:17px}.panel h2{font-size:22px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:1}.add-form{grid-template-columns:1fr 1fr}.add-form label:first-child{grid-column:1/-1}.budget-row{grid-template-columns:1fr 1fr}.budget-row button{grid-column:1/-1}.need-row{grid-template-columns:minmax(0,1fr) 112px 18px;gap:5px;padding:9px}.paper{margin:0 8px 8px;padding:24px 20px}.paper h2{font-size:32px}.batch-panel{flex-direction:column;align-items:start}.foot-note{flex-direction:column}.offer-header{flex-direction:column}.offer-header span:last-child{text-align:left}.preview-top{padding:15px 13px}.paper .paper-kv{grid-template-columns:86px minmax(0,1fr)}}@media print{body{background:#fff;color:#111}.topbar,.intro,.portfolio,.editor,.preview-top,.preview-bottom,.next-panel,.batch-panel,.foot-note,.toast{display:none!important}.studio-grid{display:block}.preview-panel{border:0}.paper{box-shadow:none;margin:0 auto;padding:0;max-width:750px;background:#fff}.paper h2{font-size:44px}}
+\ No newline at end of file
++@media(max-width:570px){main{padding:0 16px 30px}.topbar{padding:13px 16px}.intro{padding:35px 0 25px}.intro h1{font-size:40px}.intro p{font-size:14px}.portfolio-head span:last-child{display:none}.portfolio-cards{grid-template-columns:1fr}.example{min-height:116px}.example:last-child{grid-column:auto}.example strong{font-size:16px}.panel{padding:17px}.panel h2{font-size:22px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:1}.add-form{grid-template-columns:1fr 1fr}.add-form label:first-child{grid-column:1/-1}.budget-row{grid-template-columns:1fr 1fr}.budget-row button{grid-column:1/-1}.need-row{grid-template-columns:minmax(0,1fr) 112px 18px;gap:5px;padding:9px}.paper{margin:0 8px 8px;padding:24px 20px}.paper h2{font-size:32px}.batch-panel{flex-direction:column;align-items:start}.foot-note{flex-direction:column}.offer-header{flex-direction:column}.offer-header span:last-child{text-align:left}.preview-top{padding:15px 13px}.paper .paper-kv{grid-template-columns:86px minmax(0,1fr)}}@media print{body{background:#fff;color:#111}.topbar,.intro,.portfolio,.editor,.preview-top,.preview-bottom,.next-panel,.batch-panel,.foot-note,.toast{display:none!important}.studio-grid{display:block}.preview-panel{border:0}.paper{box-shadow:none;margin:0 auto;padding:0;max-width:750px;background:#fff}.paper h2{font-size:44px}}
++/* Workspace shell: the chosen opportunity stays beside its current task. */
++[hidden]{display:none!important}html{scroll-behavior:auto}.app-shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}.workspace-sidebar{padding:25px 18px;position:sticky;top:0;height:100vh;border-right:1px solid var(--hair);background:#101a18;display:flex;flex-direction:column;min-width:0}.brand{margin-bottom:32px}.brand-symbol{border-radius:9px;height:36px;width:36px}.sidebar-label{font:10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}.domain-switch{display:grid;gap:4px}.domain-switch button{display:flex;align-items:center;gap:12px;background:none;border:1px solid transparent;border-radius:7px;padding:10px;color:var(--muted);text-align:left;font-size:13px}.domain-switch button>span{font:10px var(--mono);border:1px solid var(--hair);border-radius:4px;padding:3px 4px}.domain-switch button.active{border-color:var(--hair);background:var(--panel2);color:var(--ink)}.domain-switch button.active>span{color:var(--accent)}.sidebar-section{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:30px 0 10px}.sidebar-section label{font-size:12px;display:block;color:var(--ink)}#op-count{font:10px var(--mono);color:var(--muted);margin-left:8px}.icon-button{border:1px solid var(--hair);background:none;color:var(--ink);width:30px;height:30px;font-size:20px;border-radius:6px}#op-search{min-height:34px;font-size:11px;padding:8px 10px;background:transparent}.op-list{overflow:auto;margin:12px -4px;scrollbar-width:thin}.op-row{display:block;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:7px;color:var(--ink);padding:13px 10px;margin:3px 0}.op-row[aria-pressed=true]{border-color:#4d6a55;background:#1d3027}.op-row strong{display:block;font-size:12px;font-weight:500;line-height:1.5}.op-row small{display:block;font:9px/1.5 var(--mono);color:var(--muted);margin-top:7px}.sidebar-empty{font-size:12px;color:var(--muted);padding:8px}.sidebar-foot{margin-top:auto;padding-top:25px;font-size:11px;display:grid;gap:12px;color:var(--muted)}.sidebar-foot .upload-button{display:block;min-height:36px;font-size:12px;text-align:center}.sidebar-foot small{font-size:10px}.sidebar-foot a{text-decoration:none;font-size:11px}
++#workspace{width:100%;min-width:0;max-width:none;padding:0 28px 35px}.workspace-header{display:flex;align-items:center;justify-content:space-between;gap:25px;min-height:111px;border-bottom:1px solid var(--hair);padding:22px 0}.workspace-header h1{font-size:24px;line-height:1.25;letter-spacing:-.035em;margin:8px 0 0;font-weight:500;max-width:600px}.workspace-header .eyebrow{font-size:9px;color:var(--muted)}.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}#saveStatus{font:9px var(--mono);color:var(--muted);max-width:130px}.primary,.secondary{min-height:38px;padding:9px 13px;font-size:12px;border-radius:6px}.workspace-tabs{display:flex;gap:18px;margin:0 0 22px;border-bottom:1px solid var(--hair);overflow-x:auto}.workspace-tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:16px 3px 13px;font-size:12px;white-space:nowrap}.workspace-tabs [aria-current=page]{color:var(--accent);border-bottom-color:var(--accent)}.workspace-tabs span{font:9px var(--mono);margin-left:5px;padding:3px 5px;background:var(--panel2);border-radius:4px}.studio-grid{grid-template-columns:minmax(0,1fr) minmax(330px,.9fr);gap:20px}.panel{padding:22px;border-color:#30463a;border-radius:10px}.panel-head{margin-bottom:24px;gap:12px}.panel h2{font-size:22px}.panel .eyebrow{font-size:9px;color:var(--muted)}.chip{font-size:9px;border-radius:5px}.form-grid{gap:14px}.form-grid label{font-size:11px}input:not([type=file]):not([type=checkbox]),textarea,select{border-radius:6px;padding:10px;font-size:12px}.memo-label{display:flex;align-items:center;justify-content:space-between;margin:24px 0 10px;gap:12px}.memo-label label{font-size:11px}.memo-label button{min-height:30px;padding:6px 9px;font-size:10px}.notes-toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:7px;border:1px solid var(--hair);border-bottom:0;border-radius:7px 7px 0 0;background:#192820}.notes-toolbar button{border:0;background:transparent;color:var(--ink);min-width:30px;min-height:30px;padding:5px 9px;font-size:11px;border-radius:4px}.notes-toolbar [aria-pressed=true]{background:#3a5540;color:#efffe6}.notes-toolbar button:disabled{opacity:.35;cursor:default}.tiptap{min-height:260px;max-height:560px;overflow:auto;padding:20px;border:1px solid var(--hair);border-radius:0 0 7px 7px;background:#111c18;font-size:14px;line-height:1.75;outline:none}.tiptap:focus{border-color:#8ba985}.tiptap>:first-child{margin-top:0}.tiptap p{margin:10px 0}.tiptap h2{font:500 22px/1.3 var(--sans);margin:22px 0 10px}.tiptap h3{font-size:18px}.tiptap li p{margin:3px 0}.tiptap blockquote{margin:18px 0;padding-left:16px;border-left:2px solid var(--accent);color:#bfcebd}.tiptap a{color:var(--gold)}.memo-footer{display:flex;align-items:center;gap:12px;margin-top:12px}.memo-footer span{font:9px var(--mono);color:var(--muted);margin-right:auto}.memo-footer button{font-size:10px;min-height:30px;padding:6px 9px}.memo-footer .text-link{background:transparent;border:0}.decision-summary{border-top:1px solid var(--hair);margin-top:24px;padding-top:20px}.decision-summary:empty{display:none}.preview-col{top:20px}.preview-panel{border-radius:10px;background:#18231e}.preview-top{padding:16px;flex-wrap:wrap}.preview-top .eyebrow{font-size:9px}.preview-top button{font-size:10px;min-height:30px;padding:6px 9px}.paper{padding:25px 28px;margin:0 12px 12px}.paper-rule{margin-bottom:20px}.paper h2{font-size:32px}.paper section h2{font:600 16px/1.4 var(--sans);margin:12px 0}.paper section h3{font:500 11px var(--mono)}.paper p,.paper li{font-size:11px}.paper a{overflow-wrap:anywhere}.preview-bottom{font-size:10px;padding:12px 16px 18px}.section-toggles{gap:4px}.section-toggle{font-size:9px;padding:5px 7px;min-height:28px}.paper footer{font-size:8px}.head-note{font-size:10px}.budget-row{grid-template-columns:1fr 1.2fr}.budget-row button{grid-column:1/-1}.add-form{grid-template-columns:1fr 1fr}.add-form label:first-child{grid-column:1/-1}.add-form button{grid-column:1/-1}.offer-header{display:none}.need-row{grid-template-columns:minmax(0,1fr) 124px 22px}.need-main small{font-size:9px}.need-main strong{font-size:12px}.need-no{font-size:10px}.route-result p.helper{display:none}.new-offer{margin-top:20px}.result-status{font-size:9px}.result-head strong{font-size:27px}.result-list li{font-size:11px}.import-help{margin-top:24px;padding-top:20px;border-top:1px solid var(--hair);font-size:12px;color:var(--muted)}.import-help summary{cursor:pointer}.import-help a{display:block;margin-top:15px}.conflict-banner{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:16px;margin:18px 0;border:1px solid var(--gold);border-radius:8px;background:#30271e;font-size:12px}.conflict-banner span{flex:1;min-width:200px}.conflict-banner button{font-size:11px}.conflict-banner strong{width:100%}dialog{border:1px solid var(--hair);border-radius:12px;background:var(--panel);color:var(--ink);padding:28px;width:min(440px,calc(100% - 30px))}dialog::backdrop{background:#0009}dialog h2{font-size:23px;margin:0 0 24px}dialog form>div{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
++#workspace[data-view=preview] .editor{display:none}#workspace[data-view=preview] .studio-grid{grid-template-columns:minmax(0,820px);justify-content:center}#workspace[data-view=preview] .paper{padding:40px 55px}#workspace[data-view=preview] .paper p,#workspace[data-view=preview] .paper li{font-size:14px}#workspace[data-view=preview] .paper h2{font-size:42px}#workspace[data-view=preview] .paper section h2{font-size:22px}#workspace[data-view=preview] .paper footer{font-size:10px}.toast{max-width:min(390px,calc(100vw - 32px));right:16px;bottom:16px}
++@media(max-width:1200px){.app-shell{grid-template-columns:225px minmax(0,1fr)}#workspace{padding:0 20px 30px}.header-actions{flex-wrap:wrap;max-width:220px;justify-content:flex-end}#saveStatus{width:100%;text-align:right;max-width:none}.studio-grid{grid-template-columns:minmax(0,1fr) minmax(295px,.8fr)}.panel{padding:18px}.paper{padding:22px}.need-row{grid-template-columns:minmax(0,1fr) 115px 18px}.need-main{gap:6px}}
++@media(max-width:1000px){.studio-grid{grid-template-columns:1fr}.preview-col{display:none}#workspace[data-view=preview] .preview-col{display:block}.form-grid{grid-template-columns:1fr 1fr}.workspace-header h1{font-size:22px}.header-actions{max-width:180px}}
++@media(max-width:700px){.app-shell{grid-template-columns:1fr}.workspace-sidebar{height:auto;position:static;padding:18px 16px;border-right:0;border-bottom:1px solid var(--hair)}.brand{margin:0 0 18px}.sidebar-label{display:none}.domain-switch{display:flex;gap:6px;overflow:auto}.domain-switch button{font-size:11px;padding:8px 10px;flex-shrink:0}.domain-switch button>span{display:none}.sidebar-section{margin:18px 0 8px}#op-search{display:none}.op-list{display:flex;gap:8px;overflow:auto;margin:0}.op-row{flex:0 0 210px;min-width:0;min-height:70px;padding:10px}.op-row strong{font-size:11px}.op-row small{font-size:8px}.sidebar-foot{padding:0;margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}.sidebar-foot .upload-button{padding:5px 10px;font-size:10px;min-height:28px}.sidebar-foot a{display:none}.sidebar-foot small{font-size:9px}#workspace{padding:0 16px 30px}.workspace-header{align-items:flex-start;gap:12px;min-height:100px}.workspace-header h1{font-size:20px}.workspace-header .eyebrow{font-size:8px}.header-actions{max-width:150px;gap:6px}.header-actions button{font-size:10px;min-height:32px;padding:7px 9px}#saveStatus{font-size:8px}.workspace-tabs{gap:20px;margin-bottom:16px}.workspace-tabs button{font-size:12px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:1}.need-row{grid-template-columns:minmax(0,1fr) 106px 18px}.budget-row{grid-template-columns:1fr}.budget-row button{grid-column:1}.panel-head{margin-bottom:18px}.panel h2{font-size:22px}.tiptap{min-height:240px;padding:16px}.memo-label button{max-width:120px}.memo-footer{flex-wrap:wrap}.paper{padding:24px 20px!important;margin:0 8px 8px}#workspace[data-view=preview] .paper h2{font-size:32px}#workspace[data-view=preview] .paper section h2{font-size:20px}.preview-top{padding:12px}.inline-actions{align-items:flex-start}.chip{white-space:normal}.panel-head .chip{white-space:nowrap}.need-row{grid-template-columns:1fr 20px}.need-main{grid-column:1}.need-row select{grid-column:1;grid-row:2}.need-row .delete{grid-column:2;grid-row:1/3}}
++@media print{.workspace-sidebar,.workspace-header,.workspace-tabs,.editor,.toast,.conflict-banner,.skip{display:none!important}.app-shell{display:block}#workspace{padding:0}.studio-grid{display:block!important}.preview-col{display:block!important;position:static}.paper{background:white!important;color:#111!important;margin:0!important;padding:0!important}.preview-top,.preview-bottom{display:none!important}.preview-panel{border:0;background:white}body{background:white}}
++
++/* Route comparison uses the same quote and proof contracts as the exported brief. */
++.coverage-matrix{overflow:auto;border:1px solid var(--hair);border-radius:8px;margin:20px 0;max-height:390px}.coverage-matrix table{border-collapse:collapse;font-size:12px;min-width:100%;text-align:center}.coverage-matrix caption{text-align:left;padding:14px;font-weight:600}.coverage-matrix th,.coverage-matrix td{padding:12px;border:1px solid var(--hair);min-width:130px}.coverage-matrix th:first-child{text-align:left;min-width:190px;position:sticky;left:0;background:#182722;z-index:1}.coverage-matrix th small{display:block;font-weight:400;font-size:10px;color:#9fb2a9;margin-top:4px}.coverage-matrix th{font-weight:500}.coverage-matrix .covered{color:#c2e2ac;background:#263e2b;font-size:19px}.muted{opacity:.45}.route-enable{display:flex;align-items:center;gap:9px}.route-enable input,.coverage-option input{width:16px;height:16px;margin:0;flex-shrink:0;accent-color:#c2e2ac}.selected-route{border-color:#789766!important;background:#203426!important}.selected-label{color:#c2e2ac;margin-left:10px}.excluded{opacity:.6}.cost-parts{display:flex;gap:16px;font-size:11px;color:#aebfb6;margin-top:12px}.offer-foot>div{display:flex;gap:8px;align-items:center}.offer-meta{display:flex;flex-wrap:wrap}.coverage-fieldset{border:1px solid var(--hair);border-radius:8px;padding:14px}.coverage-fieldset legend{font-size:12px;color:#adc0b4;padding:0 6px}.coverage-option{display:flex;align-items:center;gap:10px;padding:9px 0;color:#e0e9df}.coverage-option small{display:block;color:#9aad9f;margin-top:3px}.coverage-option.unavailable{opacity:.5}.plan-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.plan-stat strong{display:block;font-family:'DM Sans',sans-serif;font-weight:500;font-size:24px;color:#e2eddc;letter-spacing:-.7px}.plan-stat strong small{font-size:15px;color:#879e8e}.plan-stat>span{display:block;font-size:10px;color:#a7bca9;margin-top:5px}.decision-summary{border-top:1px solid var(--hair);margin-top:25px;padding-top:5px}.result-list li span{font-size:11px;color:#a1b5a5}.route-result{margin:20px 0}.coverage-matrix:focus-visible{outline:2px solid #c2e2ac;outline-offset:3px}
++@media(max-width:700px){.cost-parts{gap:10px;flex-wrap:wrap}.plan-stat strong{font-size:22px}.plan-stat>span{font-size:9px}.plan-stats{gap:9px}.offer-top{align-items:flex-start}.offer-row .route-price{white-space:nowrap}}
++
++.editor,.view-panel{min-width:0}.route-enable,.coverage-option{flex-direction:row}.decision-summary button.text-link{border:0;background:transparent;padding:0;text-align:left}.coverage-fieldset{min-width:0}.offer-foot{gap:10px}.offer-status{overflow-wrap:anywhere}#workspace[data-view=routes] .studio-grid{grid-template-columns:minmax(0,1fr)}#workspace[data-view=routes] .preview-col{display:none}.offer-list{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}#workspace[data-view=routes] .budget-row{grid-template-columns:minmax(180px,.8fr) minmax(200px,1fr) auto}#workspace[data-view=routes] .budget-row button{grid-column:auto}.paper,.tiptap{overflow-wrap:anywhere}.offer-form{max-width:850px}
++@media(max-width:1000px){.studio-grid{grid-template-columns:minmax(0,1fr)}#workspace[data-view=routes] .budget-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#workspace[data-view=routes] .budget-row button{grid-column:1/-1}}
++@media(max-width:700px){.offer-list{grid-template-columns:minmax(0,1fr)}#workspace[data-view=routes] .budget-row{grid-template-columns:minmax(0,1fr)}.workspace-tabs{gap:15px}.workspace-tabs span{margin-left:2px}.workspace-header h1{overflow-wrap:anywhere}}
+diff --git a/site/brief-studio/studio.mjs b/site/brief-studio/studio.mjs
+index 925922b..be227a4 100644
+--- a/site/brief-studio/studio.mjs
++++ b/site/brief-studio/studio.mjs
+@@ -1,8 +1,9 @@
+ import {KINDS,METHODS,SECTIONS,fresh,cents,money,escaped,validSource,eligible,
+- optimize,parseTsv,toMarkdown,toYaff,briefContent,routePrice} from "./core.mjs";
++ optimize,parseTsv,toMarkdown,toYaff,briefContent,routePrice,hydrateWorkspace,selectOpportunity,noteHTML,noteText,validateNote,checkOpportunity} from "./core.mjs";
+ const $=id=>document.getElementById(id),h=escaped,profiles=["itad","property","supplier","civic"];
+ let profile="itad",state=fresh(profile),revision=0,dirty=false,db;
+-let toastTimer=null;
++let toastTimer=null,saveTimer=null,changeNumber=0,saving=null,conflicted=false,view='brief',composer=null,composerKey='',composerAttempt=0,planCache=null,editingOffer=null,navigationAttempt=0,offerDirty=false;
++const invalidFields=new Set();
+ const value=(id)=>$(id).value;
+ const option=(v,label,current)=>'<option value="'+h(v)+'"'+(v===current?' selected':'')+'>'+h(label)+'</option>';
+ const notice=(msg,bad=false)=>{
+@@ -10,6 +11,7 @@ const notice=(msg,bad=false)=>{
+  el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),4200);
+ };
+ const op=()=>state.opportunities.find(x=>x.id===state.current);
++function solution(){const key=JSON.stringify([state.current,op().needs,op().offers,state.budget,state.mode]);if(planCache?.key!==key)planCache={key,value:optimize(op(),state.budget,state.mode)};return planCache.value;}
+ const isFull=id=>Boolean(op().needs.find(x=>x.id===id));
+ function currentId(base){let id=String(base).toLowerCase().replace(/[^a-z0-9-]/g,"-").slice(0,62)||"check";let i=2;const all=new Set(op().needs.map(x=>x.id));const original=id;while(all.has(id))id=original.slice(0,56)+"-"+(i++);return id;}
+ function openDB(){
+@@ -27,31 +29,56 @@ function txGet(key){
+ }
+ async function txSave(key,baseRev,payload){
+  return new Promise((resolve,reject)=>{
+- const tr=db.transaction("workspaces","readwrite"),store=tr.objectStore("workspaces");
++ const snapshot=structuredClone(payload),tr=db.transaction("workspaces","readwrite"),store=tr.objectStore("workspaces");let stale=false;
+  const r=store.get(key);let savedRev=null;
+  r.onsuccess=()=>{
+   const prev=r.result;
+-  if((prev?.revision||0)!==baseRev){tr.abort();return;}
+-  savedRev=baseRev+1;store.put({revision:savedRev,value:structuredClone(payload)},key);
++  if((prev?.revision||0)!==baseRev){stale=true;tr.abort();return;}
++  savedRev=baseRev+1;store.put({revision:savedRev,value:snapshot},key);
+  };
+  tr.oncomplete=()=>resolve(savedRev);
+- tr.onabort=()=>reject(Error("Another tab changed this workspace. Reload before overwriting it."));
++ tr.onabort=()=>reject(Object.assign(Error(stale?"Another tab changed this workspace. Export your edits before loading the saved workspace.":"Unable to save locally."),{conflict:stale}));
+  tr.onerror=()=>reject(tr.error||Error("Unable to save the workspace."));
+  });
+ }
+-function markDirty(){dirty=true;$("saveStatus").textContent="Unsaved changes";$("saveStatus").style.color="#efbd94";}
++function markDirty(){dirty=true;changeNumber++;$("saveStatus").textContent="Unsaved changes";$("saveStatus").style.color="#efbd94";clearTimeout(saveTimer);if(!conflicted)saveTimer=setTimeout(()=>safe(save),800);}
++function validDraft(){requireRouteSaved();if(invalidFields.size)throw Error('Correct the highlighted field before saving or exporting.');for(const o of state.opportunities)checkOpportunity(o);if(state.notesDoc)validateNote(state.notesDoc);}
+ async function save(){
++ requireRouteSaved();clearTimeout(saveTimer);if(saving)return saving;
++ if(conflicted)throw Error('Load the saved workspace before saving again. Export your edits first.');
+  if(!db)throw Error("Your browser did not make local draft storage available.");
+- const next=await txSave(profile,revision,state);revision=next;dirty=false;
+- $("saveStatus").textContent="Saved on this browser";$("saveStatus").style.color="#b8d5ac";
+- return next;
++ validDraft();const changed=changeNumber,key=profile,base=revision,payload=structuredClone(hydrateWorkspace(state));
++ saving=(async()=>{const next=await txSave(key,base,payload);revision=next;dirty=changeNumber!==changed;$("saveStatus").textContent=offerDirty?'Unsaved route changes':dirty?'Unsaved changes':'Saved in this browser';$("saveStatus").style.color=dirty||offerDirty?'#efbd94':'#b8d5ac';return next;})();
++ try{return await saving;}catch(error){if(error.conflict){conflicted=true;$("save-conflict").hidden=false;$("saveStatus").textContent='Save conflict';}throw error;}finally{saving=null;if(dirty&&!conflicted&&changeNumber!==changed){clearTimeout(saveTimer);saveTimer=setTimeout(()=>safe(save),800);}}
+ }
+-async function switchProfile(next){
+- if(!profiles.includes(next))throw Error("Unknown domain.");
+- if(dirty)await save();
+- profile=next;const stored=db?await txGet(profile):null;
+- state=stored?.value||fresh(profile);revision=stored?.revision||0;dirty=false;
+- render();$("saveStatus").textContent=stored?"Saved draft opened":"Illustrative example opened";
++function markOfferDirty(){offerDirty=true;$("cancel-offer-edit").hidden=false;$("saveStatus").textContent='Unsaved route changes';$("saveStatus").style.color='#efbd94';}
++function requireRouteSaved(){if(offerDirty)throw Error('Save or cancel the route changes before leaving this editor.');}
++function writeRoute(replace=false){const p=new URLSearchParams({profile,case:state.current,view});const url=location.pathname+'?'+p.toString();if(location.pathname+location.search!==url)history[replace?'replaceState':'pushState'](null,'',url);}
++function renderPanels(){document.querySelector('#workspace').dataset.view=view;for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==view;for(const tab of document.querySelectorAll('[data-view]'))tab.setAttribute('aria-current',tab.dataset.view===view?'page':'false');}
++async function switchProfile(next,{selected='',replace=false}={}){
++ requireRouteSaved();if(invalidFields.size)throw Error('Correct the highlighted field before changing workspaces.');
++ if(!profiles.includes(next))throw Error('Unknown domain.');
++ const navigation=++navigationAttempt;
++ if(dirty)await save();if(dirty)throw Error('Wait for your latest edits to save before switching workspaces.');
++ if(navigation!==navigationAttempt)return;
++ const changed=changeNumber,stored=db?await txGet(next):null;if(navigation!==navigationAttempt)return;requireRouteSaved();if(changeNumber!==changed||dirty)throw Error('Your draft changed. Save before switching workspaces.');
++ const nextState=hydrateWorkspace(stored?.value||fresh(next));
++ if(selected&&nextState.opportunities.some(o=>o.id===selected))selectOpportunity(nextState,selected);
++ profile=next;state=nextState;revision=stored?.revision||0;dirty=false;conflicted=false;$("save-conflict").hidden=true;
++ invalidFields.clear();for(const field of document.querySelectorAll('input,textarea'))field.setCustomValidity('');render(true);writeRoute(replace);$("saveStatus").textContent=stored?'Saved draft opened':'Sample workspace';return true;
++}
++function chooseOpportunity(id){requireRouteSaved();if(invalidFields.size)throw Error('Correct the highlighted field before switching opportunities.');navigationAttempt++;selectOpportunity(state,id);markDirty();render();writeRoute();}
++function renderOpportunities(){
++ const query=$("op-search").value.toLowerCase();$("op-count").textContent=state.opportunities.length;
++ $("op-list").innerHTML=state.opportunities.filter(o=>`${o.title} ${o.subject}`.toLowerCase().includes(query)).map(o=>`<button class="op-row" data-op="${h(o.id)}" aria-pressed="${o.id===state.current}"><strong>${h(o.title)}</strong><small>${o.needs.filter(n=>n.status!=='reviewed').length} open checks · ${o.source?'Source linked':'Source missing'}</small></button>`).join('')||'<p class="sidebar-empty">No matching opportunities.</p>';
++ $("workspace-title").textContent=op().title;$("workspace-domain").textContent={itad:'Equipment acquisition',property:'Property acquisition',supplier:'Supplier procurement',civic:'Civic source review'}[profile];
++ $("checks-badge").textContent=op().needs.length;$("routes-badge").textContent=op().offers.length;
++}
++async function syncComposer(force=false){
++ const key=profile+':'+state.current;if(composer&&composerKey===key&&!force)return;
++ composer?.destroy();composer=null;composerKey=key;const attempt=++composerAttempt;$("notes-editor").replaceChildren();$("notes").hidden=false;$("notes-toolbar").hidden=true;$("memo-status").textContent='Opening memo editor…';
++ try{const module=await import('./composer.mjs'+(force?'?retry='+Date.now():''));if(attempt!==composerAttempt)return;composer=module.createComposer({element:$("notes-editor"),toolbar:$("notes-toolbar"),document:state.notesDoc,text:state.notes,onChange:(doc,text)=>{state.notesDoc=doc;state.notes=text;$("notes").value=text;markDirty();preview();$("memo-status").textContent=text.length+' characters';},onError:error=>notice(error.message,true)});$("notes").hidden=true;$("notes-toolbar").hidden=false;$("editor-retry").hidden=true;$("memo-status").textContent=state.notes.length+' characters';}
++ catch(error){if(attempt!==composerAttempt)return;$("memo-status").textContent='Plain text editor · Rich editor unavailable';$("editor-retry").hidden=false;}
+ }
+ const label=(kind)=>KINDS.find(x=>x[0]===kind)?.[1]||kind;
+ const method=(name)=>METHODS.find(x=>x[0]===name)?.[1]||name;
+@@ -63,31 +90,46 @@ function renderNeeds(){
+   option("missing","Not established",n.status)+option("supplied","Source supplied",n.status)+option("reviewed","Reviewed here",n.status)+'</select><button class="delete" type="button" data-remove-need="'+h(n.id)+'" aria-label="Remove '+h(n.label)+'">×</button></div>'
+  ).join("")||'<p class="helper">Add the first decision-critical question.</p>';
+ }
++function renderCoverage(selected=[]){
++ const form=$("addOfferForm"),kind=form.elements.method.value;
++ $("coverage-picker").innerHTML=op().needs.map(n=>{const allowed=eligible(kind,n.kind);return `<label class="coverage-option${allowed?'':' unavailable'}"><input type="checkbox" name="covers" value="${h(n.id)}" ${allowed?'':'disabled'} ${allowed&&selected.includes(n.id)?'checked':''}><span>${h(n.label)}<small>${h(label(n.kind))}${allowed?'':' · Requires another method'}</small></span></label>`;}).join('')||'<p>Add a required check first.</p>';
++}
++function resetOfferForm(){
++ offerDirty=false;$("saveStatus").textContent=conflicted?"Save conflict":dirty?"Unsaved changes":revision?"Saved in this browser":"Sample workspace";if(dirty&&!conflicted){clearTimeout(saveTimer);saveTimer=setTimeout(()=>safe(save),800);}const form=$("addOfferForm");form.reset();form.elements.id.disabled=false;$("offer-submit").textContent='Add route';$("cancel-offer-edit").hidden=true;$("offer-form-title").textContent='Add a verification route';editingOffer=null;renderCoverage();
++}
++function editOffer(id){
++ if(editingOffer===id&&offerDirty)return;requireRouteSaved();
++ const route=op().offers.find(r=>r.id===id);if(!route)return;editingOffer=id;
++ const form=$("addOfferForm");for(const key of ['id','provider','method','group','quote','availability','quoteRef'])form.elements[key].value=route[key]||'';
++ for(const key of ['base','labor','travel'])form.elements[key].value=(route[key]/100).toFixed(2);
++ form.elements.id.disabled=true;renderCoverage(route.coverage);$("offer-submit").textContent='Save route';$("cancel-offer-edit").hidden=false;$("offer-form-title").textContent='Edit verification route';form.closest('details').open=true;form.scrollIntoView({block:'nearest',behavior:'smooth'});form.elements.provider.focus();
++}
+ function renderOffers(){
++ const selected=new Set(solution().selected.map(r=>r.id));
+  $("offerList").innerHTML=op().offers.map(r=>
+-  '<div class="offer-row"><div class="offer-top"><strong>'+h(r.provider)+'</strong><span class="route-price">'+money(r.base+r.labor+r.travel)+'</span></div>'+
+-  '<div class="offer-meta">'+h(method(r.method))+' · '+h(r.id)+' · '+(r.group!=="-"?"Shared trip "+h(r.group):"No shared trip")+'</div>'+
+-  '<div class="offer-proof">Addresses: '+(r.coverage.map(id=>op().needs.find(x=>x.id===id)?.label||id).map(h).join("; ")||"No questions assigned")+'</div>'+
+-  '<div class="offer-foot"><span class="offer-status">'+h(r.quote)+" / "+h(r.availability)+(r.quoteRef?" · ref on file":"")+'</span>'+
+-  '<button class="delete" type="button" data-remove-offer="'+h(r.id)+'" aria-label="Remove '+h(r.provider)+'">×</button></div></div>'
+- ).join("")||'<p class="helper">No verification methods recorded. Add a route.</p>';
++  `<article class="offer-row${r.enabled===false?' excluded':''}${selected.has(r.id)?' selected-route':''}"><div class="offer-top"><label class="route-enable"><input type="checkbox" data-route-enabled="${h(r.id)}" aria-label="Include ${h(r.provider)}" ${r.enabled===false?'':'checked'}><strong>${h(r.provider)}</strong></label><span class="route-price">${money(r.base+r.labor+r.travel)}</span></div>`+
++  `<div class="offer-meta">${h(method(r.method))} · ${h(r.quote)} / ${h(r.availability)}${selected.has(r.id)?'<span class="selected-label">In plan</span>':''}</div>`+
++  `<div class="cost-parts"><span>Base ${money(r.base)}</span><span>Labor ${money(r.labor)}</span><span>Travel ${money(r.travel)}</span></div>`+
++  `<div class="offer-foot"><span class="offer-status">${r.group!=='-'?'Shared visit: '+h(r.group):'Separate visit'}${r.quoteRef?' · '+h(r.quoteRef):''}</span><div><button class="small-button" data-edit-offer="${h(r.id)}" aria-label="Edit ${h(r.provider)}">Edit</button><button class="delete" type="button" data-remove-offer="${h(r.id)}" aria-label="Remove ${h(r.provider)}">×</button></div></div></article>`
++ ).join('')||'<p class="helper">Add a route to compare methods and costs.</p>';
++ $("coverage-matrix").innerHTML=op().offers.length?`<table><caption>Check coverage by route</caption><thead><tr><th scope="col">Required check</th>${op().offers.map(r=>`<th scope="col" class="${r.enabled===false?'muted':''}">${h(r.provider)}</th>`).join('')}</tr></thead><tbody>${op().needs.map(n=>`<tr><th scope="row">${h(n.label)}<small>${h(n.status==='reviewed'?'Reviewed here':n.status==='supplied'?'Source supplied':'Not established')}</small></th>${op().offers.map(r=>{const covers=r.coverage.includes(n.id)&&eligible(r.method,n.kind);return `<td class="${r.enabled===false?'muted':covers?'covered':''}"><span aria-label="${r.enabled===false?'Excluded route':covers?'Proposed coverage':'No coverage'}">${r.enabled===false?'Excluded':covers?'✓':'—'}</span></td>`;}).join('')}</tr>`).join('')}</tbody></table>`:'';
++ renderCoverage(Array.from($("addOfferForm").querySelectorAll('[name="covers"]:checked'),x=>x.value));
+ }
++
+ function result(){
+  try{
+- const x=optimize(op(),state.budget,state.mode),full=x.status==="candidate_full";
+- const statusText={candidate_full:"FULL COVERAGE WITHIN BUDGET",over_budget:"FULL COVERAGE COSTS MORE THAN BUDGET",incomplete:"IMPORTANT QUESTIONS STILL OPEN",no_candidate:"NO ELIGIBLE ROUTES"}[x.status];
+- const routes=x.selected.map(r=>'<li>'+h(r.provider)+' · '+h(method(r.method))+' · '+h(r.quote)+' / '+h(r.availability)+'</li>').join("");
+- $("routeResult").innerHTML='<div class="result-status">'+statusText+'</div><div class="result-head"><strong>'+money(x.cost)+'</strong><span class="head-note">'+x.covered.size+' / '+op().needs.length+' questions</span></div>'+
+- '<p>'+(full?"All required questions have a proposed method. Check actual supplier evidence before committing.":"No route within the selected scope and budget answers every question.")+'</p>'+
+- (x.minimumFull!==null&&!full?'<p class="unresolved">Lowest complete route estimate: '+money(x.minimumFull)+'</p>':'')+
+- (routes?'<ul class="result-list">'+routes+'</ul>':'')+
+- (x.unresolved.length?'<p class="unresolved">Still unanswered: '+h(x.unresolved.map(n=>n.label).join("; "))+'</p>':'')+
+- '<p class="helper">Route prices and availability are entered for comparison; the app has not checked providers, booked visits, or approved spending.</p>';
++ const x=solution(),full=x.status==="candidate_full";
++ const statusText={candidate_full:"Complete proposed coverage",over_budget:"Complete plan exceeds budget",incomplete:"Checks need another route",no_candidate:"No eligible routes"}[x.status];
++ const routes=x.selected.map(r=>'<li>'+h(r.provider)+' <span>'+h(method(r.method))+'</span></li>').join('');
++ const reviewCount=op().needs.filter(n=>n.status==='reviewed').length;
++ const summary=`<div class="plan-stat"><strong>${money(x.cost)}</strong><span>Proposed route cost</span></div><div class="plan-stat"><strong>${x.covered.size}<small> / ${op().needs.length}</small></strong><span>Checks with a route</span></div><div class="plan-stat"><strong>${reviewCount}<small> / ${op().needs.length}</small></strong><span>Reviewed here</span></div>`;
++ $("routeResult").innerHTML='<div class="result-status">'+statusText+'</div><div class="plan-stats">'+summary+'</div>'+(x.minimumFull!==null&&!full?'<p class="unresolved">Complete coverage starts at '+money(x.minimumFull)+'</p>':'')+(routes?'<ul class="result-list">'+routes+'</ul>':'')+(x.unresolved.length?'<p class="unresolved">No selected route: '+h(x.unresolved.map(n=>n.label).join('; '))+'</p>':'')+'<small class="helper">Entered estimates · Provider evidence still needs review</small>';
++ $("decision-summary").innerHTML='<div class="plan-stats">'+summary+'</div><button class="text-link" data-view="routes">Review route comparison →</button>';
+  return x;
+  }catch(error){$("routeResult").replaceChildren(document.createTextNode(error.message));return null;}
+ }
+ function preview(){
+- let b;try{b=briefContent(state);}catch(error){$("paperBody").textContent=error.message;return;}
++ let b;try{b={op:op(),solution:solution(),title:state.briefHeading||op().title,recipient:state.recipient||"Buyer review",sections:state.sections.filter(x=>!state.hidden.includes(x))};}catch(error){$("paperBody").textContent=error.message;return;}
+  $("paperProfile").textContent=state.profile==="itad"?"IT ASSET ACQUISITION":state.profile==="property"?"PROPERTY ACQUISITION":state.profile==="civic"?"CIVIC SOURCE REVIEW":"SUPPLIER PROCUREMENT";
+  $("paperTitle").textContent=b.title;
+  const sections=[];
+@@ -102,7 +144,7 @@ function preview(){
+    ' · '+b.solution.covered.size+' of '+b.op.needs.length+' questions have eligible routes.</p>'+
+    (b.solution.selected.length?'<ul>'+b.solution.selected.map(r=>'<li>'+h(r.provider)+' ('+h(method(r.method))+')</li>').join("")+'</ul>':'<p>No eligible route selected.</p>')+
+    (b.solution.unresolved.length?'<p>Still open: '+h(b.solution.unresolved.map(x=>x.label).join("; "))+'</p>':'');
+-  if(section==="Decision")content='<p><strong>'+h({hold:"Hold pending checks",request:"Request verification quote",review:"Ready for buyer review",decline:"Decline opportunity"}[state.decision])+'</strong></p><p>'+h(state.notes||"No review notes supplied.")+'</p>';
++  if(section==="Decision")content='<p><strong>'+h({hold:"Hold pending checks",request:"Request verification quote",review:"Ready for buyer review",decline:"Decline opportunity"}[state.decision])+'</strong></p>'+(state.notesDoc?noteHTML(state.notesDoc):'<p>'+h(state.notes||"No review notes supplied.")+'</p>');
+   sections.push('<section><h3>'+h(section)+'</h3>'+content+'</section>');
+  }
+  $("paperBody").innerHTML=sections.join("");
+@@ -112,9 +154,9 @@ function preview(){
+   '<button class="section-toggle section-order" type="button" data-up="'+h(n)+'" '+(i===0?"disabled":"")+' title="Move '+h(n)+' earlier" aria-label="Move '+h(n)+' earlier">↑</button>'
+  ).join("");
+ }
+-function render(){
++function render(forceComposer=false){
+  for(const b of document.querySelectorAll("[data-profile]"))b.classList.toggle("active",b.dataset.profile===profile);
+- const selected=op();if(!selected){state.current=state.opportunities[0]?.id;return;}
++ editingOffer=null;resetOfferForm();const selected=op();if(!selected){state.current=state.opportunities[0]?.id;return;}
+  $("recordPicker").innerHTML=state.opportunities.map(x=>option(x.id,x.title,x.id===state.current?x.id:null)).join("");
+  $("title").value=selected.title;$("subject").value=selected.subject;$("source").value=selected.source||"";
+  $("assertion").value=selected.assertion||"";$("recipient").value=state.recipient;$("briefHeading").value=state.briefHeading;
+@@ -124,7 +166,7 @@ function render(){
+  $("identityChip").textContent=selected.source?"Original link supplied":"Illustrative / unbound";
+  $("needKind").innerHTML=KINDS.map(x=>option(x[0],x[1])).join("");
+  $("offerMethod").innerHTML=METHODS.map(x=>option(x[0],x[1])).join("");
+- renderNeeds();renderOffers();result();preview();
++ renderNeeds();renderOffers();result();preview();renderOpportunities();renderPanels();syncComposer(forceComposer);
+ }
+ function download(name,body,type){
+  const url=URL.createObjectURL(new Blob([body],{type})),a=document.createElement("a");
+@@ -137,6 +179,8 @@ function makeOpportunity(name,subject,source,assertion){
+ }
+ async function safe(fn){try{await fn();}catch(error){notice(error.message||"Action refused",true);}}
+ function collectField(id,value){
++ if(id==='source'&&value&&!validSource(value))throw Error('Use an HTTPS source URL without credentials or fragments.');
++ if(id==='title'&&!value.trim())throw Error('Enter an opportunity title.');
+  const o=op();
+  if(["title","subject","source","assertion"].includes(id))o[id]=value;
+  if(id==="source"){
+@@ -144,43 +188,49 @@ function collectField(id,value){
+   $("openSource").href=valid?value:"#";$("openSource").setAttribute("aria-disabled",valid?"false":"true");
+   $("identityChip").textContent=valid?"Original link supplied":"Illustrative / unbound";
+  }
+- else if(["recipient","briefHeading","notes","decision"].includes(id))state[id]=value;
+- else if(id==="budget")state.budget=cents(value);
++ else if(["recipient","briefHeading","notes","decision"].includes(id)){state[id]=value;if(id==="notes")delete state.notesDoc;}
++ else if(id==="budget"){if(!value.trim())throw Error("Enter a verification budget.");state.budget=cents(value);}
+  else if(id==="planMode")state.mode=value;
+- else return;
+- markDirty();result();preview();
++ else if(!["title","subject","assertion"].includes(id))return;
++ markDirty();if(["budget","planMode"].includes(id)){renderOffers();result();}preview();
+ }
+ document.addEventListener("input",event=>{
+  const id=event.target.id;
++ if(event.target.closest?.("#addOfferForm"))markOfferDirty();
+  if(["title","subject","source","assertion","recipient","briefHeading","notes","budget"].includes(id)){
+-  try{collectField(id,event.target.value);}catch(e){notice(e.message,true);}
++  try{collectField(id,event.target.value);invalidFields.delete(id);event.target.setCustomValidity('');if(id==='title')renderOpportunities();}catch(e){invalidFields.add(id);event.target.setCustomValidity(e.message);notice(e.message,true);}
+  }
+ });
+ document.addEventListener("change",event=>{
+- if(["decision","planMode"].includes(event.target.id))collectField(event.target.id,event.target.value);
++ if(event.target.closest?.("#addOfferForm"))markOfferDirty();
++ if(['decision','planMode'].includes(event.target.id))safe(()=>collectField(event.target.id,event.target.value));
++ const routeId=event.target.dataset.routeEnabled;if(routeId){const r=op().offers.find(r=>r.id===routeId);r.enabled=event.target.checked;markDirty();renderOffers();result();preview();}
+  const id=event.target.dataset.needStatus;
+- if(id){const n=op().needs.find(x=>x.id===id);if(n){n.status=event.target.value;markDirty();preview();}}
++ if(id){const n=op().needs.find(x=>x.id===id);if(n){n.status=event.target.value;markDirty();preview();renderOpportunities();result();}}
+ });
+-$("recordPicker").addEventListener("change",()=>{state.current=value("recordPicker");markDirty();render();});
++$("recordPicker").addEventListener("change",()=>{chooseOpportunity(value("recordPicker"));});
+ $("save").addEventListener("click",()=>safe(async()=>{await save();notice("Saved in this browser. Other users do not see this draft.");}));
+ for(const b of document.querySelectorAll("[data-profile]"))b.addEventListener("click",()=>safe(()=>switchProfile(b.dataset.profile)));
+-$("addOpportunity").addEventListener("click",()=>safe(async()=>{
+- if(state.opportunities.length>=120)throw Error("Keep a maximum of 120 opportunities in one browser workspace.");
+- const name=prompt("Name this opportunity","New acquisition opportunity");if(name===null)return;
+- const n=makeOpportunity(name.trim().slice(0,160));state.opportunities.push(n);state.current=n.id;markDirty();render();notice("New draft added.");
+-}));
++$("addOpportunity").addEventListener("click",()=>safe(()=>{requireRouteSaved();if(invalidFields.size)throw Error("Correct the highlighted field before creating an opportunity.");$("new-opportunity").showModal();$("newOpportunityForm").elements.name.focus();}));
++$("newOpportunityForm").addEventListener('submit',event=>{event.preventDefault();safe(()=>{if(state.opportunities.length>=120)throw Error('Keep a maximum of 120 opportunities.');const name=new FormData(event.target).get('name').trim();if(!name)throw Error('Name this opportunity.');const next=makeOpportunity(name);next.editorial={recipient:state.recipient,briefHeading:name.slice(0,150),decision:'hold',notes:''};checkOpportunity(next);state.opportunities.push(next);chooseOpportunity(next.id);$("new-opportunity").close();event.target.reset();});});
++document.querySelector('[data-close-dialog]').addEventListener('click',()=>$("new-opportunity").close());
++$("op-search").addEventListener('input',renderOpportunities);
++$("editor-retry").addEventListener('click',()=>syncComposer(true));
++$("insert-source").addEventListener('click',()=>safe(()=>{if(!composer)throw Error('Open the rich editor to insert a source link.');if(!validSource(op().source))throw Error('Add an HTTPS URL in the Source view first.');composer.insertSource(op().title,op().source);}));
++$("conflict-export").addEventListener('click',()=>$("export").click());
++$("conflict-reload").addEventListener('click',()=>safe(async()=>{if(!confirm('Replace these unsaved edits with the saved workspace? Export your brief first.'))return;requireRouteSaved();clearTimeout(saveTimer);const wasDirty=dirty;dirty=false;try{if(!await switchProfile(profile,{selected:state.current,replace:true}))dirty=dirty||wasDirty;}catch(error){dirty=dirty||wasDirty;throw error;}}));
+ $("addNeedForm").addEventListener("submit",e=>{e.preventDefault();safe(()=>{
+  const form=new FormData(e.target),id=currentId(form.get("label")),kind=form.get("kind"),weight=Number(form.get("weight"));
+  if(op().needs.length>=16)throw Error("16 questions maximum; create another opportunity for larger cases.");
+  op().needs.push({id,kind,label:String(form.get("label")).slice(0,120),weight,source:"Not yet supplied",status:"missing"});
+- e.target.reset();markDirty();renderNeeds();renderOffers();result();preview();notice("Question added.");
++ e.target.reset();markDirty();renderNeeds();renderOffers();result();preview();renderOpportunities();notice("Question added.");
+ });});
+ $("addOfferForm").addEventListener("submit",e=>{e.preventDefault();safe(()=>{
+- const f=new FormData(e.target),id=String(f.get("id")).trim().toLowerCase().replace(/[^a-z0-9-]/g,"-");
+- if(!id||op().offers.some(x=>x.id===id)||op().offers.length>=15)throw Error("Use a unique route name; maximum 15 routes.");
++ const f=new FormData(e.target),id=String(editingOffer||f.get("id")).trim().toLowerCase().replace(/[^a-z0-9-]/g,"-");
++ if(!id||op().offers.some(x=>x.id===id&&x.id!==editingOffer)||(!editingOffer&&op().offers.length>=15))throw Error("Use a unique route name; maximum 15 routes.");
+  const provider=String(f.get("provider")).trim(),method=String(f.get("method"));
+  if(!provider||provider.length>120)throw Error("Name the provider or owner.");
+- const coverage=String(f.get("covers")).split(",").map(x=>x.trim()).filter(Boolean);
++ const coverage=f.getAll("covers");
+  if(!coverage.length)throw Error("Assign at least one question ID.");
+  for(const needId of coverage){
+   const n=op().needs.find(x=>x.id===needId);
+@@ -191,32 +241,38 @@ $("addOfferForm").addEventListener("submit",e=>{e.preventDefault();safe(()=>{
+  if(quote==="quoted"&&(!quoteRef||availability==="ready"&&!quoteRef))throw Error("Record a quote reference before treating a route as quoted.");
+  if(availability==="ready"&&!quoteRef)throw Error("A recorded-ready route needs a confirmation reference.");
+  const group=String(f.get("group")).trim()||"-";
+- if(group!=="-"&&op().offers.some(x=>x.group===group&&x.provider!==provider))throw Error("Shared travel group must have the same exact provider.");
+- op().offers.push({id,provider,method,coverage,base:cents(f.get("base")),labor:cents(f.get("labor")),
+- travel:cents(f.get("travel")),group,quote,availability,quoteRef});
+- e.target.reset();e.target.closest("details").open=false;markDirty();renderOffers();result();preview();notice("Verification route added.");
++ if(group!=="-"&&op().offers.some(x=>x.id!==editingOffer&&x.group===group&&x.provider!==provider))throw Error("Shared travel group must have the same exact provider.");
++ const edited={id,provider,method,coverage,base:cents(f.get("base")),labor:cents(f.get("labor")),travel:cents(f.get("travel")),group,quote,availability,quoteRef};
++ const index=op().offers.findIndex(x=>x.id===editingOffer);if(editingOffer&&index<0)throw Error("This route was removed. Cancel the edit before adding another route.");const offers=[...op().offers];if(index>=0){edited.enabled=offers[index].enabled;offers[index]=edited;}else offers.push(edited);checkOpportunity({...op(),offers});op().offers=offers;
++ resetOfferForm();
++ e.target.reset();e.target.closest("details").open=false;markDirty();renderOffers();result();preview();renderOpportunities();notice("Verification route saved.");
+ });});
+ document.addEventListener("click",event=>safe(()=>{
+  const b=event.target.closest("button");
+  if(!b)return;
+- if(b.dataset.removeNeed){const id=b.dataset.removeNeed;op().needs=op().needs.filter(n=>n.id!==id);for(const offer of op().offers)offer.coverage=offer.coverage.filter(x=>x!==id);markDirty();renderNeeds();renderOffers();result();preview();}
+- if(b.dataset.removeOffer){op().offers=op().offers.filter(x=>x.id!==b.dataset.removeOffer);markDirty();renderOffers();result();preview();}
++ if(b.dataset.view){view=b.dataset.view;renderPanels();writeRoute();}
++ if(b.dataset.editOffer)editOffer(b.dataset.editOffer);
++ if(b.dataset.op)chooseOpportunity(b.dataset.op);
++ if(b.dataset.removeNeed){const id=b.dataset.removeNeed;op().needs=op().needs.filter(n=>n.id!==id);for(const offer of op().offers)offer.coverage=offer.coverage.filter(x=>x!==id);markDirty();renderNeeds();renderOffers();result();preview();renderOpportunities();}
++ if(b.dataset.removeOffer){if(editingOffer===b.dataset.removeOffer)resetOfferForm();op().offers=op().offers.filter(x=>x.id!==b.dataset.removeOffer);markDirty();renderOffers();result();preview();renderOpportunities();}
+  if(b.dataset.section){const n=b.dataset.section;state.hidden=state.hidden.includes(n)?state.hidden.filter(x=>x!==n):[...state.hidden,n];markDirty();preview();}
+  if(b.dataset.up){const index=state.sections.indexOf(b.dataset.up);if(index>0){[state.sections[index-1],state.sections[index]]=[state.sections[index],state.sections[index-1]];markDirty();preview();}}
+ }));
++$("offerMethod").addEventListener("change",()=>renderCoverage());
++$("cancel-offer-edit").addEventListener("click",resetOfferForm);
+ $("runPlan").addEventListener("click",()=>{const x=result();if(x)notice(x.status==="candidate_full"?"Full coverage plan found. Confirm quotes separately.":"Unresolved questions remain. Review the coverage result.",x.status!=="candidate_full");});
+-$("export").addEventListener("click",()=>safe(()=>{download("acquisition-brief.md",toMarkdown(state),"text/markdown");notice("Recipient brief downloaded.");}));
+-$("exportYaff").addEventListener("click",()=>safe(()=>{download("acquisition-proposal.yaff",toYaff(state),"text/plain");notice("Typed proposal downloaded for operator review.");}));
+-$("copy").addEventListener("click",()=>safe(async()=>{await navigator.clipboard.writeText(toMarkdown(state));notice("Recipient brief copied.");}));
++$("export").addEventListener("click",()=>safe(()=>{validDraft();download("acquisition-brief.md",toMarkdown(state),"text/markdown");notice("Recipient brief downloaded.");}));
++$("exportYaff").addEventListener("click",()=>safe(()=>{validDraft();download("acquisition-proposal.yaff",toYaff(state),"text/plain");notice("Typed proposal downloaded for operator review.");}));
++$("copy").addEventListener("click",()=>safe(async()=>{validDraft();await navigator.clipboard.writeText(toMarkdown(state));notice("Recipient brief copied.");}));
+ $("print").addEventListener("click",()=>window.print());
+ $("openSource").addEventListener("click",event=>{if($("openSource").getAttribute("aria-disabled")==="true")event.preventDefault();});
+ $("importTsv").addEventListener("change",event=>safe(async()=>{
+- const file=event.target.files?.[0];if(!file)return;
++ const file=event.target.files?.[0];if(!file)return;requireRouteSaved();if(invalidFields.size)throw Error("Correct the highlighted field before importing.");const originCase=profile+":"+state.current;
+  if(file.size>170000)throw Error("TSV exceeds 170 KB.");
+- const rows=parseTsv(await file.text());
++ const rows=parseTsv(await file.text());if(originCase!==profile+":"+state.current)throw Error("The opportunity changed during import. Choose the file again.");requireRouteSaved();
+  if(state.opportunities.length+rows.length>120)throw Error("Import exceeds 120 opportunities in this profile.");
+  for(const row of rows)state.opportunities.push(makeOpportunity(row.title,row.subject,row.source,row.assertion));
+- state.current=state.opportunities[state.opportunities.length-rows.length].id;markDirty();render();
++ chooseOpportunity(state.opportunities[state.opportunities.length-rows.length].id);
+  notice(rows.length+" opportunities imported as drafts. Save the workspace to retain them.");
+  event.target.value="";
+ }));
+@@ -230,7 +286,7 @@ async function openIncomingCivicSource(){
+  if(!/^\d{2}-\d{4}[A-Z]$/.test(file))throw Error("Council handoff requires an exact official file number.");
+  if(!validSource(source)||!["cityofdallas.legistar.com","dallastx.new.swagit.com"].includes(new URL(source).hostname))
+   throw Error("Council handoff refused: official source URL required.");
+- await switchProfile("civic");
++ await switchProfile("civic",{replace:true});
+  const id="civic-"+file.toLowerCase();
+  let existing=state.opportunities.find(x=>x.id===id);
+  if(!existing){
+@@ -243,13 +299,18 @@ async function openIncomingCivicSource(){
+    existing.needs.push({id:"requested-"+kind,kind,label:"Additional "+kind+" review",weight:3,source:"Council Media reviewer request",status:"missing"});
+   }
+   state.opportunities.push(existing);
+-  state.briefHeading=title;
++  existing.editorial={recipient:state.recipient,briefHeading:title.slice(0,150),decision:"hold",notes:""};
+   const reviewerNote=String(p.get("note")||"").trim().slice(0,900);
+-  if(reviewerNote)state.notes="Council reviewer note: "+reviewerNote+"\nOriginal source and receipt require independent review before any operational decision.";
++  if(reviewerNote)existing.editorial.notes="Council reviewer note: "+reviewerNote+"\nOriginal source and receipt require independent review before any operational decision.";
+  }
+- state.current=id;
++ selectOpportunity(state,id);
+  if(!state.notes)state.notes="Imported from Dallas Council Media. Compare official sources and review the outcome before publication.";
+  markDirty();render();
+  notice("Official civic record linked. Save this browser draft to keep your review.");
+ }
+-(async()=>{try{db=await openDB();await switchProfile("itad");await openIncomingCivicSource();}catch(error){render();notice(error.message||"Browser-local draft storage is unavailable.",true);}})();
++(async()=>{try{db=await openDB();const p=new URL(location.href).searchParams;view=["brief","checks","routes","source","preview"].includes(p.get("view"))?p.get("view"):"brief";const incoming=p.get("handoff")==="civic";if(incoming){await openIncomingCivicSource();writeRoute(true);}else await switchProfile(profiles.includes(p.get("profile"))?p.get("profile"):"itad",{selected:p.get("case"),replace:true});}catch(error){render();notice(error.message||"Browser-local draft storage is unavailable.",true);}})();
++
++window.addEventListener('beforeunload',event=>{if(dirty||offerDirty){event.preventDefault();event.returnValue='';}});
++window.addEventListener('popstate',()=>safe(async()=>{const requested=new URL(location.href),p=requested.searchParams;const nextView=['brief','checks','routes','source','preview'].includes(p.get('view'))?p.get('view'):'brief';try{await switchProfile(profiles.includes(p.get('profile'))?p.get('profile'):profile,{selected:p.get('case'),replace:true});view=nextView;renderPanels();writeRoute(true);}catch(error){writeRoute(true);throw error;}}));
++window.addEventListener('pagehide',()=>{composer?.destroy();composer=null;});
++window.addEventListener('pageshow',event=>{if(event.persisted)syncComposer(true);});
+diff --git a/tests/brief-studio.test.mjs b/tests/brief-studio.test.mjs
+index 6a1e5c0..e78c65b 100644
+--- a/tests/brief-studio.test.mjs
++++ b/tests/brief-studio.test.mjs
+@@ -1,6 +1,6 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+-import {fresh,cents,money,eligible,routePrice,optimize,parseTsv,validSource,toMarkdown,toYaff,METHODS,checkOpportunity} from "../site/brief-studio/core.mjs";
++import {fresh,cents,money,eligible,routePrice,optimize,parseTsv,validSource,toMarkdown,toYaff,METHODS,SECTIONS,checkOpportunity,hydrateWorkspace,selectOpportunity,validateNote,noteHTML,noteMarkdown,noteText} from "../site/brief-studio/core.mjs";
+ 
+ test("working domain scenarios remain distinct and bounded",()=>{
+  const itad=fresh("itad"),estate=fresh("property"),supplier=fresh("supplier"),civic=fresh("civic");
+@@ -97,3 +97,159 @@ test("money never silently treats invalid amounts as zero",()=>{
+  assert.throws(()=>cents(-1));
+  assert.throws(()=>cents("bad"));
+ });
++
++const text=(value,marks)=>({type:"text",text:value,...(marks?{marks}: {})});
++const paragraph=(...content)=>({type:"paragraph",content});
++const documentNote=(...content)=>({type:"doc",content});
++test("legacy editorial fields migrate independently and opportunity switching saves current edits",()=>{
++ const s=fresh("itad");for(const op of s.opportunities)delete op.editorial;delete s.editorialVersion;
++ Object.assign(s,{recipient:"Original reviewer",briefHeading:"Original heading",decision:"request",notes:"Original notes"});
++ const originalCurrent=s.current,next=s.opportunities[1].id;
++ assert.equal(hydrateWorkspace(s),s);
++ assert.ok(s.opportunities.every(op=>op.editorial.notes==="Original notes"));
++ s.recipient="Houston reviewer";s.notes="Houston note";s.notesDoc=documentNote(paragraph(text("Houston",[{type:"bold"}])));
++ selectOpportunity(s,next);
++ assert.equal(s.recipient,"Original reviewer");assert.equal(s.notes,"Original notes");assert.equal(s.notesDoc,undefined);
++ s.recipient="Virginia reviewer";s.notes="Virginia note";s.briefHeading="Virginia review";s.decision="hold";
++ selectOpportunity(s,originalCurrent);
++ assert.equal(s.recipient,"Houston reviewer");assert.equal(s.notes,"Houston note");assert.equal(noteMarkdown(s.notesDoc),"**Houston**");
++ // The current editor and stored opportunity have separate note objects.
++ s.notesDoc.content[0].content[0].text="Edited again";
++ assert.equal(noteText(s.opportunities[0].editorial.notesDoc),"Houston");
++ selectOpportunity(s,next);
++ assert.equal(s.notes,"Virginia note");assert.equal(s.briefHeading,"Virginia review");assert.equal(s.notesDoc,undefined);
++ const restored=hydrateWorkspace(structuredClone(s));selectOpportunity(restored,originalCurrent);
++ assert.equal(noteText(restored.notesDoc),"Edited again");
++ const before=structuredClone(restored);assert.throws(()=>selectOpportunity(restored,"missing"));assert.deepEqual(restored,before);
++ assert.equal(new Set(METHODS.map(([id])=>id)).size,METHODS.length);
++});
++
++test("new imports do not inherit another opportunity's notes and partial imports get safe defaults",()=>{
++ const s=fresh("itad");s.notes="Private review of the first supplier";s.decision="decline";
++ s.notesDoc=documentNote(paragraph(text("Private rich review")));
++ const imported={...structuredClone(s.opportunities[0]),id:"new-import"};delete imported.editorial;s.opportunities.push(imported);
++ selectOpportunity(s,imported.id);
++ assert.equal(s.notes,"");assert.equal(s.notesDoc,undefined);assert.equal(s.decision,"hold");
++ assert.equal(s.recipient,"");assert.equal(s.briefHeading,"");
++ assert.equal(s.opportunities[0].editorial.notes,"Private review of the first supplier");
++ const restored=structuredClone(s);restored.opportunities.find(op=>op.id===restored.current).editorial={notes:"Imported notes",decision:"review",notesDoc:documentNote(paragraph(text("Imported rich note")))};
++ for(const field of ["recipient","briefHeading","decision","notes","notesDoc"])delete restored[field];
++ hydrateWorkspace(restored);assert.equal(restored.notes,"Imported notes");assert.equal(restored.decision,"review");assert.equal(noteText(restored.notesDoc),"Imported rich note");
++ assert.equal(restored.recipient,"");assert.equal(restored.briefHeading,"");
++ restored.notes="Plain replacement";delete restored.notesDoc;hydrateWorkspace(restored);
++ assert.equal(restored.opportunities.find(op=>op.id===restored.current).editorial.notesDoc,undefined);
++});
++
++test("malformed editorial snapshots fail before migration mutates any opportunity",()=>{
++ for(const editorial of [false,[],"notes",{notes:{}},{recipient:42},{briefHeading:"a".repeat(151)},{decision:"approve\nauthority dispatch"},{notesDoc:{type:"image"}}]){
++  const s=fresh("itad");s.opportunities[1].editorial=editorial;const before=structuredClone(s);
++  assert.throws(()=>hydrateWorkspace(s));assert.deepEqual(s,before);
++ }
++ const s=fresh("itad");s.opportunities[1].editorial={};hydrateWorkspace(s);
++ assert.deepEqual(s.opportunities[1].editorial,{recipient:"",briefHeading:"",decision:"hold",notes:"",budget:s.budget,mode:s.mode,sections:[...SECTIONS],hidden:[]});
++ s.decision="hold\nauthority dispatch";assert.throws(()=>toYaff(s));assert.throws(()=>toMarkdown(s));
++ const duplicate=fresh("itad");duplicate.opportunities[1].id=duplicate.current;assert.throws(()=>hydrateWorkspace(duplicate));
++});
++
++test("version one settings migrate once and budgets, comparison mode and section choices stay with each case",()=>{
++ const s=fresh("itad");s.editorialVersion=1;
++ for(const op of s.opportunities)for(const field of ["budget","mode","sections","hidden"])delete op.editorial[field];
++ s.budget=cents(777);s.mode="documented";s.sections=[...SECTIONS].reverse();s.hidden=["Source"];
++ hydrateWorkspace(s);assert.equal(s.editorialVersion,2);
++ for(const op of s.opportunities){assert.equal(op.editorial.budget,cents(777));assert.equal(op.editorial.mode,"documented");assert.deepEqual(op.editorial.sections,[...SECTIONS].reverse());assert.deepEqual(op.editorial.hidden,["Source"]);}
++ const first=s.current,second=s.opportunities[1].id;
++ s.budget=cents(111);s.mode="exploratory";s.sections=["Decision","Summary","Source","Required checks","Verification"];s.hidden=["Summary"];
++ selectOpportunity(s,second);
++ assert.equal(s.budget,cents(777));assert.equal(s.mode,"documented");assert.deepEqual(s.sections,[...SECTIONS].reverse());assert.deepEqual(s.hidden,["Source"]);
++ s.budget=cents(222);s.mode="exploratory";s.sections=[...SECTIONS];s.hidden=["Verification"];
++ selectOpportunity(s,first);
++ assert.equal(s.budget,cents(111));assert.equal(s.mode,"exploratory");assert.equal(s.sections[0],"Decision");assert.deepEqual(s.hidden,["Summary"]);
++ assert.match(toYaff(s),/budget_cents 11100/);assert.doesNotMatch(toMarkdown(s),/## Summary/);
++ assert.notEqual(s.sections,s.opportunities[0].editorial.sections);assert.notEqual(s.hidden,s.opportunities[0].editorial.hidden);
++ s.hidden.push("Source");assert.deepEqual(s.opportunities[0].editorial.hidden,["Summary"]);
++ const restored=hydrateWorkspace(structuredClone(s));selectOpportunity(restored,second);
++ assert.equal(restored.budget,cents(222));assert.equal(restored.mode,"exploratory");assert.deepEqual(restored.sections,SECTIONS);assert.deepEqual(restored.hidden,["Verification"]);
++ selectOpportunity(restored,first);assert.deepEqual(restored.hidden,["Summary","Source"]);
++});
++
++test("new cases inherit current budget and mode with a complete visible brief",()=>{
++ const s=fresh("itad");s.budget=cents(432);s.mode="documented";s.sections=[...SECTIONS].reverse();s.hidden=["Summary","Source"];
++ const next={...structuredClone(s.opportunities[0]),id:"settings-import",editorial:{notes:"New source review"}};s.opportunities.push(next);
++ selectOpportunity(s,next.id);
++ assert.equal(s.budget,cents(432));assert.equal(s.mode,"documented");assert.deepEqual(s.sections,SECTIONS);assert.deepEqual(s.hidden,[]);
++ for(const editorial of [{budget:-1},{budget:"100"},{mode:"dispatch"},{sections:["Unknown"]},{sections:["Source","Source"]},{hidden:"Source"}]){
++  const bad=fresh("itad");bad.opportunities[1].editorial=editorial;const before=structuredClone(bad);
++  assert.throws(()=>hydrateWorkspace(bad));assert.deepEqual(bad,before);
++ }
++});
++
++test("source URLs preserve exact HTTPS references and refuse normalization tricks",()=>{
++ for(const url of [null,{}," https://example.org/a","https://example.org/a\n","https://example.org/a b","https://example.org/a#","https://example.org/a#fragment","https:\\example.org/a","https://example.org/<script>","https://user@example.org/a","javascript:alert(1)"])
++  assert.equal(validSource(url),false,String(url));
++ assert.equal(validSource("https://example.org/a%20b?record=3&version=2"),true);
++ const s=fresh("itad");s.opportunities[0].source="https://example.org/<script>";
++ assert.throws(()=>toMarkdown(s));assert.throws(()=>toYaff(s));
++ assert.throws(()=>parseTsv('title\tsubject\tsource\tassertion\nBad\tcase:bad\thttps://example.org/record#\tUnconfirmed'));
++ const safe=fresh("itad");safe.opportunities[0].source="https://example.org/[link](javascript:alert(1))";
++ safe.notes="<script>alert(1)</script> [fake](javascript:alert(1))";safe.opportunities[0].assertion="<img src=x onerror=alert(1)>";
++ const markdown=toMarkdown(safe);
++ assert.match(markdown,/<https:\/\/example.org\/\[link\]\(javascript:alert\(1\)\)>/);
++ assert.doesNotMatch(markdown,/<script>|<img/);assert.match(markdown,/\\\[fake\\\]/);
++});
++
++test("excluding a route changes the comparison without removing it or exporting it as selected",()=>{
++ const s=fresh("itad"),op=s.opportunities[0],route=op.offers.find(r=>r.id==="ownership"),initial=optimize(op,s.budget);
++ assert.equal(initial.complete,true);route.enabled=false;
++ const disabled=optimize(op,s.budget);
++ assert.equal(disabled.complete,false);assert.ok(disabled.unresolved.some(n=>n.id==="owner"));assert.equal(disabled.minimumFull,null);
++ assert.equal(op.offers.length,5);assert.equal(op.offers.find(r=>r.id==="ownership"),route);
++ assert.doesNotMatch(toYaff(s),/^route "ownership"/m);
++ assert.match(toMarkdown(s),/Excluded from this comparison:\n- ownership/);
++ route.enabled=true;assert.equal(optimize(op,s.budget).cost,initial.cost);
++ for(const r of op.offers){r.enabled=false;r.quote="quoted";r.availability="ready";r.quoteRef="example reference";}
++ const empty=optimize(op,s.budget,"documented");assert.equal(empty.selected.length,0);assert.equal(empty.cost,0);assert.equal(empty.unresolved.length,op.needs.length);
++ route.enabled="false";assert.throws(()=>optimize(op,s.budget));
++});
++
++test("notes serialize headings, nested lists, formatting, links and line breaks without changing facts",()=>{
++ const doc=documentNote(
++  {type:"heading",attrs:{level:2},content:[text("Reviewer decision")]},
++  paragraph(text("Hold",[{type:"bold"}]),text(" pending "),text("evidence",[{type:"italic"},{type:"underline"}]),{type:"hardBreak"},text("Superseded",[{type:"strike"}])),
++  {type:"bulletList",content:[{type:"listItem",content:[paragraph(text("Check source")),{type:"orderedList",attrs:{start:3,type:null},content:[{type:"listItem",content:[paragraph(text("Original record",[{type:"link",attrs:{href:"https://example.org/a?x=1&y=2",target:"_blank",rel:"nofollow",class:null}}]))]}]}]}]},
++  {type:"blockquote",content:[paragraph(text("Seller statement, unconfirmed."))]},
++  {type:"heading",attrs:{level:3},content:[text("Next step")]}
++ );
++ const validated=validateNote(doc);assert.notEqual(validated,doc);
++ const html=noteHTML(doc),markdown=noteMarkdown(doc),plain=noteText(doc);
++ assert.match(html,/<h2>Reviewer decision<\/h2>/);assert.match(html,/<strong>Hold<\/strong>/);
++ assert.match(html,/<u><em>evidence<\/em><\/u><br><s>Superseded<\/s>/);
++ assert.match(html,/<ol start="3">/);assert.match(html,/href="https:\/\/example.org\/a\?x=1&amp;y=2" target="_blank" rel="noopener noreferrer"/);
++ assert.match(markdown,/## Reviewer decision/);assert.match(markdown,/\*\*Hold\*\*/);assert.match(markdown,/~~Superseded~~/);
++ assert.match(markdown,/  3\. \[Original record\]/);assert.match(markdown,/> Seller statement, unconfirmed\./);
++ assert.match(plain,/Hold pending evidence\nSuperseded/);assert.doesNotMatch(plain,/<|\*\*/);
++ const s=fresh("itad"),assertion=s.opportunities[0].assertion;s.notes="Plain retained note";s.notesDoc=doc;
++ assert.match(toMarkdown(s),/## Reviewer decision/);assert.doesNotMatch(toMarkdown(s),/Plain retained note/);
++ assert.match(toYaff(s),/notes "Plain retained note"/);assert.equal(s.opportunities[0].assertion,assertion);
++});
++
++test("notes reject unsupported and hostile content and bound recursive documents",()=>{
++ for(const href of ["javascript:alert(1)","data:text/html,test","http://example.org","https://user:password@example.org"," https://example.org","https://example.org/\nunsafe"])
++  assert.throws(()=>validateNote(documentNote(paragraph(text("Link",[{type:"link",attrs:{href}}])))));
++ for(const bad of [
++  documentNote({type:"image",attrs:{src:"https://example.org/a.png"}}),
++  documentNote({type:"heading",attrs:{level:1},content:[text("Disallowed")]}),
++  documentNote(paragraph(text("Disallowed",[{type:"code"}]))),
++  documentNote(paragraph(text("Disallowed",[{type:"bold",attrs:{onclick:"alert(1)"}}]))),
++  documentNote({type:"paragraph",attrs:{onclick:"alert(1)"},content:[]}),
++  documentNote({type:"listItem",content:[paragraph(text("Outside list"))]}),
++  documentNote(paragraph(text("a".repeat(50001)))),
++  documentNote(...Array.from({length:2001},()=>paragraph())),
++ ])assert.throws(()=>validateNote(bad));
++ let deep=paragraph(text("Deep"));for(let i=0;i<22;i++)deep={type:"blockquote",content:[deep]};assert.throws(()=>validateNote(documentNote(deep)));
++ const cycle={type:"blockquote",content:[]};cycle.content.push(cycle);assert.throws(()=>validateNote(documentNote(cycle)));
++ const hostile=documentNote(paragraph(text('<img src=x onerror="alert(1)"> **claim**\n1. injected')));
++ assert.doesNotMatch(noteHTML(hostile),/<img/);assert.match(noteHTML(hostile),/&lt;img/);
++ assert.doesNotMatch(noteMarkdown(hostile),/<img/);assert.match(noteMarkdown(hostile),/1\\\. injected/);
++ assert.equal(noteMarkdown(documentNote(paragraph())),"");assert.equal(noteText(documentNote()),"");
++ assert.equal(noteMarkdown(documentNote(paragraph(text(" Padded ",[{type:"bold"}]),{type:"hardBreak",marks:[{type:"italic"}]})))," **Padded**   \n");
++});

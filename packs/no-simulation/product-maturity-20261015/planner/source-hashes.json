@@ -1,0 +1,10 @@
+{
+  "components/BonfyreServiceSite/planner-client.mjs": "8ec73b187cfaba53ce9053a551c616e77d783a8ed808849f06395f5179d54167",
+  "components/BonfyreServiceSite/planner-projects.mjs": "fcc89bb2b0129a48bdc4f0a64c7ae56212aa9da9e7b4c083ec386aa1f8b578f4",
+  "components/BonfyreServiceSite/planner-project-client.mjs": "c61a46a45f87c1c6a8244323faca0b3c195be4cd403e8f4310aa745422037c5e",
+  "components/BonfyreServiceSite/planner-material.mjs": "29fc45d6fc6155aa030fd098a8b6cc56ccccfd9d995aa7bec1646eafb6d26ad1",
+  "components/BonfyreServiceSite/planner.css": "a2866b39375ea09506a5f07e513cca4bb996eba2b36fe3f32c8c41abce32bae1",
+  "components/BonfyreServiceSite/sections/planner.mjs": "0655738b1fae3f49c76efb0cc3fc1a1237451600e89e786121827e8234402472",
+  "components/BonfyreServiceSite/tests/planner-projects.test.mjs": "f52973d902981250ac69cb2f8accf7e7aef3101f01c12a64076f41f1c27761c7",
+  "components/BonfyreServiceSite/tests/planner-projects-browser.mjs": "6ed486d438368a2f8d689d6dfcd90f85c614972368c16ccf33b4670b92a075c5"
+}

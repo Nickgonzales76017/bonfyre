@@ -1,0 +1,203 @@
+{
+  "conclusion": "success",
+  "headSha": "9ef69c00cf69f1269f7f46ff378625dc6b8d7e93",
+  "jobs": [
+    {
+      "completedAt": "2026-10-17T21:21:34Z",
+      "conclusion": "success",
+      "databaseId": 117505900954,
+      "name": "deploy",
+      "startedAt": "2026-10-17T21:15:19Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-17T21:15:21Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-17T21:15:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:26Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-17T21:15:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:26Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-node@v4",
+          "number": 3,
+          "startedAt": "2026-10-17T21:15:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "success",
+          "name": "Check application directory and retained release",
+          "number": 4,
+          "startedAt": "2026-10-17T21:15:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "success",
+          "name": "Detect retained helper dependencies",
+          "number": 5,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "skipped",
+          "name": "Run actions/download-artifact@v4",
+          "number": 6,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "skipped",
+          "name": "Run actions/download-artifact@v4",
+          "number": 7,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "skipped",
+          "name": "Verify archives and extract without installation scripts",
+          "number": 8,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:28Z",
+          "conclusion": "success",
+          "name": "Build immutable studio UI packages",
+          "number": 9,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:15:31Z",
+          "conclusion": "success",
+          "name": "Install browser driver",
+          "number": 10,
+          "startedAt": "2026-10-17T21:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:16:43Z",
+          "conclusion": "success",
+          "name": "Verify rendered product and room interactions before publication",
+          "number": 11,
+          "startedAt": "2026-10-17T21:15:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:16:43Z",
+          "conclusion": "success",
+          "name": "Connect the existing showcase entries to the tested release",
+          "number": 12,
+          "startedAt": "2026-10-17T21:16:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:17:50Z",
+          "conclusion": "success",
+          "name": "Retain tested release and helper licences",
+          "number": 13,
+          "startedAt": "2026-10-17T21:16:43Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:18:27Z",
+          "conclusion": "success",
+          "name": "Verify final composed workspaces and retained editors",
+          "number": 14,
+          "startedAt": "2026-10-17T21:17:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:18:27Z",
+          "conclusion": "success",
+          "name": "Setup Pages",
+          "number": 15,
+          "startedAt": "2026-10-17T21:18:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:18:29Z",
+          "conclusion": "success",
+          "name": "Upload artifact",
+          "number": 16,
+          "startedAt": "2026-10-17T21:18:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:19:39Z",
+          "conclusion": "success",
+          "name": "Deploy to GitHub Pages",
+          "number": 17,
+          "startedAt": "2026-10-17T21:18:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:20:48Z",
+          "conclusion": "success",
+          "name": "Verify the actual public studio",
+          "number": 18,
+          "startedAt": "2026-10-17T21:19:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:21:29Z",
+          "conclusion": "success",
+          "name": "Verify the public composed workflows",
+          "number": 19,
+          "startedAt": "2026-10-17T21:20:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:21:31Z",
+          "conclusion": "success",
+          "name": "Keep local and live browser results",
+          "number": 20,
+          "startedAt": "2026-10-17T21:21:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:21:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-node@v4",
+          "number": 39,
+          "startedAt": "2026-10-17T21:21:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:21:31Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 40,
+          "startedAt": "2026-10-17T21:21:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-17T21:21:31Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 41,
+          "startedAt": "2026-10-17T21:21:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/Nickgonzales76017/bonfyre/actions/runs/39070152184/job/117505900954"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/Nickgonzales76017/bonfyre/actions/runs/39070152184"
+}

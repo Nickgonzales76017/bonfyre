@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-19T15:26:58.014Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "coaching access alone offers no publishing action",
+    "review exposes public program content before any publication",
+    "explicit publication creates native CMS version one",
+    "public catalogue excludes the member brief and request identity",
+    "published program stays within its studio",
+    "member adopts the published version into personal training",
+    "new catalogue version leaves the previously adopted version unchanged",
+    "saved public catalogue reopens offline",
+    "withdrawal waits for a separate confirmation",
+    "withdrawal removes the program without falling back to an older release",
+    "withdrawal retains both adopted versions on the member device",
+    "a damaged public cache cannot block offline personal training",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

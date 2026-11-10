@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-13T20:40:08.497909+00:00",
+  "previous_sha256": "fb2011acde8f44ca587447133ed2e8868ade087d08445644e088a205a534cf52",
+  "installed_sha256": "2ea28418e45b65ef57d0506a4ee181da3ed6aeb870c795133a62d0bc7d84892e",
+  "checkout_sha256": "2ea28418e45b65ef57d0506a4ee181da3ed6aeb870c795133a62d0bc7d84892e",
+  "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-fabric-fb2011acde8f44ca587447133ed2e8868ade087d08445644e088a205a534cf52",
+  "corpus": {
+    "previous": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/releases/b327eb535ca761be845d39e7f6afec2dba71c5ed30ad42e25617d9e1c7a24a0f",
+    "release": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/releases/c6176ec815b507e3e6572b6c8ba0e8ca7d0a6dd5ee7b0429383fb1add2f7fe0e",
+    "files": {
+      "all_bindings.tsv": "764d83c780a3a57c908a662d169f1d89b1bd5e5ad9e0e2e74ff0258e5e267188",
+      "app_bindings.jsonl": "f3e6fc650d96bd7f32434ffe4019bd4a60a6cc11a2d462c67de10fa1e6700304",
+      "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+      "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+      "manifest.json": "0436e45dcc3920d32a085bd959662dbe920cfe4853dae927cfef3568c16a467e",
+      "owner_graph.json": "5729294635b8cf60fd60af3db390a5751e5d5d29c9112bf31d3a5c65faaa7d32",
+      "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+      "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+    }
+  }
+}

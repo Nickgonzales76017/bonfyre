@@ -1,0 +1,46 @@
+{
+  "before": 395,
+  "probes": [
+    {
+      "id": "",
+      "tag": "HEADER",
+      "width": 395
+    },
+    {
+      "kind": "hero",
+      "id": "",
+      "tag": "SECTION",
+      "width": 395
+    },
+    {
+      "kind": "cases",
+      "id": "samples",
+      "tag": "SECTION",
+      "width": 395
+    },
+    {
+      "kind": "cases",
+      "id": "built",
+      "tag": "SECTION",
+      "width": 390
+    },
+    {
+      "kind": "steps",
+      "id": "working-together",
+      "tag": "SECTION",
+      "width": 390
+    },
+    {
+      "kind": "ask",
+      "id": "",
+      "tag": "SECTION",
+      "width": 390
+    },
+    {
+      "id": "",
+      "tag": "FOOTER",
+      "width": 390
+    }
+  ],
+  "overflow": []
+}

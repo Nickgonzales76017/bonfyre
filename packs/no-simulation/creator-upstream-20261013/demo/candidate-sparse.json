@@ -1,0 +1,59 @@
+{
+  "schema": "aurekai.creator.native-pcm-candidate.v1",
+  "state": "candidate_requires_owner_approval",
+  "format": "interleaved-f32le",
+  "output_representation": "sparse_file_holes_candidate",
+  "sparse_silence_requested": true,
+  "timeline_digest": "c965b163c5983b112b344478e5a2866990b0aa028f8b19a39728a88432719656",
+  "scope_digest": "6466e2c54690b8d658b10028bf5b31440ec0c217f45a4e5b17f15e77ad9ca571",
+  "window_body_key": "95f37332da812d72c9ff75e30cfd52f26a27044c33227876f4de6e40435c4421",
+  "window_index": 0,
+  "source_bindings": [
+    {
+      "id": "pulse",
+      "sha256": "d4fa7fb946b483dd27a9def585eefa9d5c9cb78757c9fe77854e19adab674166",
+      "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/pulse.f32"
+    },
+    {
+      "id": "chime",
+      "sha256": "3d353f91b90da7b9c456991451f5bb7756d27296ec40db356af3866a3b577979",
+      "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/chime.f32"
+    },
+    {
+      "id": "harmony",
+      "sha256": "1d9b1c2bf7d08a1d02e3c908e5e592888097704223734bbf34d9520cca3f8411",
+      "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/harmony.f32"
+    }
+  ],
+  "argv": [
+    "--samples",
+    "288000",
+    "--channels",
+    "2",
+    "--output",
+    "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/mix-sparse.f32",
+    "--stem",
+    "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/pulse.f32",
+    "0",
+    "0",
+    "48000",
+    "0.4",
+    "--stem",
+    "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/chime.f32",
+    "72000",
+    "0",
+    "72000",
+    "0.5",
+    "--stem",
+    "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/harmony.f32",
+    "96000",
+    "0",
+    "72000",
+    "0.5",
+    "--sparse-silence"
+  ],
+  "media_bytes_materialized": 0,
+  "source_file_digest_verified": false,
+  "execution_authority_inferred": false,
+  "cannot_infer": "Source binding claims are not byte verification or media rights; an authorized owner must check source bodies and effects before invoking native execution."
+}

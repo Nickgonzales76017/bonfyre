@@ -1,0 +1,21 @@
+{
+  "task_reference": "w20k-conroe-toner-handoff",
+  "equipment": "Four sealed Canon OEM cartridges requested: 054H black/cyan and 054 yellow/magenta. Exclude the extra opened cartridge.",
+  "area": "Conroe/The Woodlands, TX",
+  "service_requested": "Quote preparation of an inspection/manifest or packing and loading plan; proposed scope will be agreed before a visit.",
+  "deliverables": [
+    "Photos of identifiers and each condition group",
+    "Verified unit counts and exceptions",
+    "Packing dimensions, weights or explicit estimates",
+    "Access/loading requirements and excluded work"
+  ],
+  "quote_requested": {
+    "currency": "USD",
+    "amount": null,
+    "price_basis": null,
+    "travel_or_minimum_charge": null,
+    "valid_until": null
+  },
+  "assignment_state": "not_assigned",
+  "dispatch_instruction": "No visit, equipment movement or payment collection authorized by this brief."
+}

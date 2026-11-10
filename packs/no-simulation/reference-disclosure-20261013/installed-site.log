@@ -1,0 +1,13 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:
+(pass) a missing replacement file leaves every page record and the served guide unchanged [509.20ms]
+(pass) long code fences retain embedded Markdown through import and native HTML rendering [1932.30ms]
+(pass) empty, whitespace, binary and directory inputs are refused before replacement [375.80ms]
+(pass) valid replacement keeps the page identity, creation time and navigation group [442.77ms]
+(pass) a storage failure during replacement, creation or removal preserves the served page [371.99ms]
+
+ 5 pass
+ 0 fail
+ 61 expect() calls
+Ran 5 tests across 1 file. [3.74s]

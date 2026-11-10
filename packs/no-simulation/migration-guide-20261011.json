@@ -1,0 +1,159 @@
+{
+  "checked_at": "2026-10-12T01:01:45.406Z",
+  "guide": "docs/experiences/integration-and-migration.md",
+  "guide_sha256": "5a4ed7a3d20f36a4e03cacdc30090bc4ec46574a6644dde07f8efcf79e87a998",
+  "execution": "All six sh Terminal blocks extracted verbatim and executed in order under sh -eu; exit 0.",
+  "bridge_sha256": "b3159ac89f2580a0a45ddf171e698e0d1bcbc44043e534d997aa92506d02d2dd",
+  "duckdb_version": "v1.5.1 (Variegata) 7dbb2e646f",
+  "source_posts": [
+    {
+      "excerpt": "Order a birthday cake three days ahead. Tell us the size and collection date.",
+      "title": "Custom cakes"
+    },
+    {
+      "excerpt": "Sourdough is ready at nine. Collect your loaf before noon.",
+      "title": "Saturday bread"
+    }
+  ],
+  "wordpress_and_frappe_roundtrip_match": true,
+  "unpublished_draft_excluded": true,
+  "self_contained_html": true,
+  "move": {
+    "schema": "bonfyre.bridge.db.v1",
+    "mode": "move",
+    "from": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/source.db",
+    "to": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/target.db",
+    "engine": "duckdb connectors",
+    "tables": [
+      {
+        "table": "order_lines",
+        "state": "arrived",
+        "source_rows": 3,
+        "target_rows": 3,
+        "values_match": true,
+        "type_changes": ""
+      },
+      {
+        "table": "orders",
+        "state": "arrived",
+        "source_rows": 2,
+        "target_rows": 2,
+        "values_match": true,
+        "type_changes": ""
+      }
+    ],
+    "arrived": 2,
+    "differ": 0,
+    "not_moved": 0,
+    "rows_arrived": 5,
+    "verified": true,
+    "cannot_infer": "values agreeing as read back is not the target's constraints, indexes, keys or stored procedures having been carried; this moves rows and their types"
+  },
+  "verify": {
+    "schema": "bonfyre.bridge.db.v1",
+    "mode": "verify",
+    "from": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/source.db",
+    "to": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/target.db",
+    "engine": "duckdb connectors",
+    "tables": [
+      {
+        "table": "order_lines",
+        "state": "arrived",
+        "source_rows": 3,
+        "target_rows": 3,
+        "values_match": true,
+        "type_changes": ""
+      },
+      {
+        "table": "orders",
+        "state": "arrived",
+        "source_rows": 2,
+        "target_rows": 2,
+        "values_match": true,
+        "type_changes": ""
+      }
+    ],
+    "arrived": 2,
+    "differ": 0,
+    "not_moved": 0,
+    "rows_arrived": 5,
+    "verified": true,
+    "cannot_infer": "values agreeing as read back is not the target's constraints, indexes, keys or stored procedures having been carried; this moves rows and their types"
+  },
+  "changed": {
+    "schema": "bonfyre.bridge.db.v1",
+    "mode": "verify",
+    "from": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/source.db",
+    "to": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/target.db",
+    "engine": "duckdb connectors",
+    "tables": [
+      {
+        "table": "order_lines",
+        "state": "arrived",
+        "source_rows": 3,
+        "target_rows": 3,
+        "values_match": true,
+        "type_changes": ""
+      },
+      {
+        "table": "orders",
+        "state": "values_differ",
+        "source_rows": 2,
+        "target_rows": 2,
+        "values_match": false,
+        "type_changes": ""
+      }
+    ],
+    "arrived": 1,
+    "differ": 1,
+    "not_moved": 0,
+    "rows_arrived": 3,
+    "verified": false,
+    "cannot_infer": "values agreeing as read back is not the target's constraints, indexes, keys or stored procedures having been carried; this moves rows and their types"
+  },
+  "restored": {
+    "schema": "bonfyre.bridge.db.v1",
+    "mode": "verify",
+    "from": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/source.db",
+    "to": "sqlite:/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-migration-guide.4AW3RB/target.db",
+    "engine": "duckdb connectors",
+    "tables": [
+      {
+        "table": "order_lines",
+        "state": "arrived",
+        "source_rows": 3,
+        "target_rows": 3,
+        "values_match": true,
+        "type_changes": ""
+      },
+      {
+        "table": "orders",
+        "state": "arrived",
+        "source_rows": 2,
+        "target_rows": 2,
+        "values_match": true,
+        "type_changes": ""
+      }
+    ],
+    "arrived": 2,
+    "differ": 0,
+    "not_moved": 0,
+    "rows_arrived": 5,
+    "verified": true,
+    "cannot_infer": "values agreeing as read back is not the target's constraints, indexes, keys or stored procedures having been carried; this moves rows and their types"
+  },
+  "regression_command": "make -C cmd/BonfyreBridge test",
+  "regression_results": [
+    "SQLite transfer and changed-value detection passed",
+    "Verification leaves existing SQLite files unchanged and refuses a missing destination without creating it",
+    "Separator and NULL/NUL distinctions passed",
+    "Real MariaDB to PostgreSQL and back passed, including decimal readback and tamper detection"
+  ],
+  "scope": "Invented local data. Format round trips use Bonfyre importers; no import into a running WordPress or Frappe installation, live production database change, publication or desktop/mobile visual review was performed.",
+  "local_preview": {
+    "url": "http://docs-review.localhost:8913/integration-and-migration",
+    "html_readback": true,
+    "mcp_readback": true,
+    "visual_review": false
+  }
+}

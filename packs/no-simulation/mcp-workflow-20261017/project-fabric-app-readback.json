@@ -1,0 +1,83 @@
+{
+  "schema": "bonfyre.project-fabric-app-readback.v1",
+  "observed_at": "2026-10-17T21:37:19.778Z",
+  "is_error": false,
+  "result": {
+    "path": "integrations/mcp/project_fabric.mjs",
+    "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+    "source_bytes": 936,
+    "total_lines": 17,
+    "lines": [
+      {
+        "line": 1,
+        "text": "// Project exposes the existing delivery lifecycle without creating another queue."
+      },
+      {
+        "line": 2,
+        "text": "import { readFileSync } from 'node:fs';"
+      },
+      {
+        "line": 3,
+        "text": "import { createProjectOwner } from './project_owner.mjs';"
+      },
+      {
+        "line": 4,
+        "text": ""
+      },
+      {
+        "line": 5,
+        "text": "const names = ['fabric_status', 'implementation_relay', 'task_status', 'task_cancel', 'recent_receipts'];"
+      },
+      {
+        "line": 6,
+        "text": "const catalog = JSON.parse(readFileSync(new URL('./fabric_catalog.json', import.meta.url), 'utf8'));"
+      },
+      {
+        "line": 7,
+        "text": "export const FABRIC_PROJECT_TOOLS = names.map(name => {"
+      },
+      {
+        "line": 8,
+        "text": "  const tool = catalog.tools.find(tool => tool.name === name);"
+      },
+      {
+        "line": 9,
+        "text": "  if (!tool) throw new Error(`missing Fabric delivery operation: ${name}`);"
+      },
+      {
+        "line": 10,
+        "text": "  return { ...tool, 'x-bonfyre-owner': 'fabric' };"
+      },
+      {
+        "line": 11,
+        "text": "});"
+      },
+      {
+        "line": 12,
+        "text": ""
+      },
+      {
+        "line": 13,
+        "text": "export function createProjectFabric(options = {}) {"
+      },
+      {
+        "line": 14,
+        "text": "  return createProjectOwner({ ...options, name: 'fabric', tools: FABRIC_PROJECT_TOOLS,"
+      },
+      {
+        "line": 15,
+        "text": "    urlEnv: 'BONFYRE_FABRIC_URL', tokenFileEnv: 'BONFYRE_FABRIC_TOKEN_FILE',"
+      },
+      {
+        "line": 16,
+        "text": "    defaultUrl: 'http://127.0.0.1:3053', stopExemptTools: ['task_cancel'] });"
+      },
+      {
+        "line": 17,
+        "text": "}"
+      }
+    ],
+    "next_start_line": null
+  },
+  "scope": "Authenticated current-source read through the existing ChatGPT connector after both public OAuth services and Project were refreshed. This verifies authentication continuity, not refresh of the connector's tool schemas."
+}

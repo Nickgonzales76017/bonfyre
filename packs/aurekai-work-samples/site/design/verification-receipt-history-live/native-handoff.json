@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-08T15:38:32.085Z",
+  "receipt": "lead:catalogue:0f4008e3984a8d64b51bd42b3c22775131deab977f6a2bbea5a33addb96cc12a",
+  "lead_id": 11,
+  "message_id": 51,
+  "store": "red3-display",
+  "product_id": "7631",
+  "retained_change_count": 7,
+  "first_sync": {
+    "sites": [
+      "aurekai-work-samples"
+    ],
+    "brought": 1,
+    "prepared": 1,
+    "recovered": 0,
+    "already_here": 1,
+    "errors": []
+  },
+  "real_customer": false,
+  "second_sync": {
+    "sites": [
+      "aurekai-work-samples"
+    ],
+    "brought": 0,
+    "prepared": 0,
+    "recovered": 0,
+    "already_here": 2,
+    "errors": []
+  },
+  "test_lead_handled": true,
+  "test_message_abandoned": true,
+  "prospect_drafts": {
+    "total": 40,
+    "held": 38
+  },
+  "outreach_sent": 0
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://aurekai-work-samples.pages.dev/red3-planner/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 21558",
+      "stderr": ""
+    }
+  },
+  {
+    "url": "https://aurekai-work-samples.pages.dev/catalogue/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 214330",
+      "stderr": ""
+    }
+  },
+  {
+    "url": "https://aurekai-work-samples.pages.dev/archive/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 21863",
+      "stderr": ""
+    }
+  },
+  {
+    "url": "https://aurekai-work-samples.pages.dev/wix-review/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 20793",
+      "stderr": ""
+    }
+  },
+  {
+    "url": "https://aurekai-work-samples.pages.dev/training/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 24201",
+      "stderr": ""
+    }
+  },
+  {
+    "url": "https://aurekai-work-samples.pages.dev/documents/",
+    "error": "HTTP Error 403: Forbidden",
+    "curl": {
+      "exit_code": 0,
+      "readback": "200 17587",
+      "stderr": ""
+    }
+  }
+]

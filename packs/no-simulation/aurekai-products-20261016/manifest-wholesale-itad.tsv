@@ -1,0 +1,7 @@
+model	qty	grade	recovery_per_unit
+HP EliteDesk	1	unknown	
+Vertiv VRA1016	1	unknown	
+Canon	1	unknown	
+Dell	1	unknown	
+Lexmark/Epson/Fujifilm	121	working	
+Dell/HP/Apple/Samsung/Cisco iMac	1	parts	

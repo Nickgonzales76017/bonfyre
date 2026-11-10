@@ -1,0 +1,899 @@
+{
+  "schema": "service-site.v1",
+  "site_id": "aurekai-work-samples",
+  "pages_project": "aurekai-work-samples",
+  "preview": false,
+  "leads": "server",
+  "business": {
+    "name": "Aurekai",
+    "page_title": "Custom web tools, sites and integrations | Aurekai",
+    "description": "Custom web tools, client sites and integrations. Try working examples and tell Nick what your team needs to get done."
+  },
+  "contact": {
+    "name": "Nick Gonzales",
+    "email": "nickgonzales76017@gmail.com"
+  },
+  "action": "Send a project brief",
+  "theme": {
+    "look": "aurekai",
+    "ground": "#0d130f",
+    "ink": "#dde6da",
+    "display": "#f5f7ee",
+    "accent": "#b5df32",
+    "muted": "#9aa89b",
+    "panel": "#17211a",
+    "face_display": "'DM Sans',system-ui,sans-serif",
+    "face_body": "'DM Sans',system-ui,sans-serif",
+    "face_mono": "'DM Mono',ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap"
+  },
+  "navigation": [
+    {
+      "label": "Work samples",
+      "href": "/#samples"
+    },
+    {
+      "label": "Sites and apps",
+      "href": "/#built"
+    },
+    {
+      "label": "Aurekai setup",
+      "href": "https://aurekai.work/packs/setup"
+    },
+    {
+      "label": "Workspace guide",
+      "href": "/connected-workspaces/"
+    },
+    {
+      "label": "Guides",
+      "href": "https://docs.aurekai.work/"
+    },
+    {
+      "label": "Contact",
+      "href": "/#ask"
+    }
+  ],
+  "sections": [
+    {
+      "kind": "hero",
+      "overline": "Remote development for businesses and agencies",
+      "headline": "Custom web tools, *sites and integrations*",
+      "lede": "Give your team a better way to handle the work between systems. I build tools for catalogues, planning and manual handoffs, sites that carry your own name, and apps your customers keep using. I can also take on a defined feature alongside your existing team.",
+      "button": "Send a project brief",
+      "href": "/#ask",
+      "secondary": {
+        "label": "Try the work samples",
+        "href": "/#samples"
+      },
+      "reel": [
+        {
+          "src": "assets/shots/program-contents-20261015.jpg",
+          "alt": "Actual Aurekai product selection workspace with labeled sample products, quantities and per-cycle cost impacts",
+          "href": "https://browser-workbench.aurekai-work-samples.pages.dev/",
+          "label": "Sources and recurring programs"
+        },
+        {
+          "src": "assets/shots/itad-acquisition-desk.png",
+          "alt": "Equipment acquisition desk with editable inventory and modeled purchase totals",
+          "label": "ITAD Acquisition Desk",
+          "href": "https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/"
+        },
+        {
+          "src": "assets/shots/acquisition-brief-studio.png",
+          "alt": "Acquisition brief workspace with opportunity list, reviewer memo and recipient preview",
+          "label": "Acquisition Brief Studio",
+          "href": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/"
+        },
+        {
+          "src": "assets/shots/planner-comparison.png",
+          "alt": "Two retail layouts with their exact fixture cost difference",
+          "label": "Planning workspace",
+          "href": "/red3-planner/"
+        },
+        {
+          "src": "assets/shots/catalogue-grid.png",
+          "alt": "Catalogue grid with inline editing and bulk actions",
+          "label": "Product workspace",
+          "href": "/catalogue/"
+        },
+        {
+          "src": "assets/shots/audio-arrangement.png",
+          "alt": "Audio arrangement with draggable clips and a source waveform editor",
+          "label": "Audio workspace",
+          "href": "/audio/"
+        },
+        {
+          "src": "assets/shots/archive.jpg",
+          "alt": "A table of shipment records sorted into ready, duplicate, unknown and missing-document groups",
+          "label": "Shipment archive",
+          "href": "/archive/"
+        },
+        {
+          "src": "assets/shots/wix.jpg",
+          "alt": "A numbered list of findings from a review of a public Wix site",
+          "label": "Wix review",
+          "href": "/wix-review/"
+        },
+        {
+          "src": "assets/shots/training.jpg",
+          "alt": "A workout in progress in a studio training app, with a timer and the next set",
+          "label": "Training app",
+          "href": "/training/"
+        },
+        {
+          "src": "assets/shots/documents.jpg",
+          "alt": "A search across household documents returning the passages that answer a question",
+          "label": "Document search",
+          "href": "/documents/"
+        },
+        {
+          "src": "assets/shots/site-tallgrass.jpg",
+          "alt": "The front page of a bike workshop site with its name set large beside a wheel",
+          "label": "Shop sites",
+          "href": "/#built"
+        }
+      ]
+    },
+    {
+      "kind": "cases",
+      "id": "samples",
+      "title": "Try the work",
+      "items": [
+        {
+          "title": "Your own model at work",
+          "text": "Business mentions, private books and lot manifests, each from a real run.",
+          "href": "https://own-model.aurekai-work-samples.pages.dev/",
+          "button": "See it",
+          "icon": "memory",
+          "picture": {
+            "src": "assets/shots/own-model.jpg",
+            "alt": "A mention digest for Apple"
+          }
+        },
+        {
+          "title": "ITAD Acquisition Desk",
+          "text": "Edit equipment manifests, compare lots and test purchase prices before preparing a buyer inquiry.",
+          "href": "https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/",
+          "button": "Open acquisition desk",
+          "icon": "inventory_2",
+          "picture": {
+            "src": "assets/shots/itad-acquisition-desk.png",
+            "alt": "Equipment acquisition desk with editable inventory and modeled purchase totals"
+          }
+        },
+        {
+          "title": "Acquisition Brief Studio",
+          "text": "Build source-linked briefs, compare verification routes and prepare a recipient-specific recommendation.",
+          "href": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/",
+          "button": "Open brief studio",
+          "icon": "fact_check",
+          "picture": {
+            "src": "assets/shots/acquisition-brief-studio.png",
+            "alt": "Acquisition brief workspace with opportunity list, reviewer memo and recipient preview"
+          }
+        },
+        {
+          "title": "Sources and recurring programs",
+          "text": "Build product selections, change one cycle without rewriting the recurring plan, and review source-price changes across selected programs. Open the same editor in an Aurekai destination for authorized shared work.",
+          "icon": "fact_check",
+          "href": "https://browser-workbench.aurekai-work-samples.pages.dev/",
+          "button": "Open workspace",
+          "picture": {
+            "src": "assets/shots/program-contents-20261015.jpg",
+            "alt": "Actual Aurekai product selection workspace with labeled sample products, quantities and per-cycle cost impacts"
+          }
+        },
+        {
+          "title": "Retail space planner",
+          "text": "Arrange fixtures, compare alternatives and prepare a supplier enquiry.",
+          "href": "/red3-planner/",
+          "button": "Open planner",
+          "icon": "grid_view",
+          "picture": {
+            "src": "assets/shots/planner-spatial.png",
+            "alt": "Retail floor plan with draggable fixtures, alignment tools, exact option costs and project controls"
+          }
+        },
+        {
+          "title": "Catalogue workspace",
+          "text": "Edit products in bulk, compare price changes and save drafts for review.",
+          "href": "/catalogue/",
+          "button": "Open catalogue",
+          "icon": "inventory_2",
+          "picture": {
+            "src": "assets/shots/catalogue-grid.png",
+            "alt": "Catalogue grid with 223 products, 3644 options, missing SKU filters and inline editing"
+          }
+        },
+        {
+          "title": "Shipment archive workflow",
+          "text": "See a sample shipment archive checked for duplicates, missing delivery documents and records that need review.",
+          "href": "/archive/",
+          "button": "Open the before and after",
+          "icon": "folder_open",
+          "picture": {
+            "src": "assets/shots/archive.jpg",
+            "alt": "A table of shipment records sorted into ready, duplicate, unknown and missing-document groups"
+          }
+        },
+        {
+          "title": "Wix search and conversion",
+          "text": "Read an independent review of Elite Accreditation’s public Wix pages, with specific changes to titles, repeated copy and page size.",
+          "href": "/wix-review/",
+          "button": "Read the concrete findings",
+          "icon": "search",
+          "picture": {
+            "src": "assets/shots/wix.jpg",
+            "alt": "A numbered list of findings from a review of a public Wix site"
+          }
+        },
+        {
+          "title": "Audio arrangement",
+          "text": "Drag and trim tracks, audition the mix and export a WAV.",
+          "href": "/audio/",
+          "button": "Open audio",
+          "icon": "graphic_eq",
+          "picture": {
+            "src": "assets/shots/audio-arrangement.png",
+            "alt": "Three generated audio tracks on a shared timeline with trim handles, playback and a source waveform selection"
+          }
+        }
+      ],
+      "lede": "These are Aurekai demonstrations using public or sample data. Open a tool to see how the work could fit your business."
+    },
+    {
+      "kind": "cases",
+      "id": "built",
+      "title": "Sites and apps",
+      "lede": "Larger pieces built the same way. The three shop sites are live. The two apps run on your own computer or server, so each has a page that walks through it.",
+      "items": [
+        {
+          "title": "Three shops, three looks",
+          "text": "A pottery studio, a bike workshop and a bakery. Each has its own name, pages, offers and contact form, and all three are run from one installation.",
+          "href": "https://docs.aurekai.work/three-businesses",
+          "button": "Visit the three sites",
+          "icon": "storefront",
+          "picture": {
+            "src": "assets/shots/site-tallgrass.jpg",
+            "alt": "The front page of Tallgrass Bike Works with its name set large beside a wheel"
+          }
+        },
+        {
+          "title": "A training app for a studio",
+          "text": "Members follow a programme, log each set and keep going without a signal. Coaches answer requests and publish programmes under the studio’s own name and colours.",
+          "href": "/training/",
+          "button": "See the training app",
+          "icon": "fitness_center",
+          "picture": {
+            "src": "assets/shots/training.jpg",
+            "alt": "A workout in progress with a timer, the next exercise and a rest prompt"
+          }
+        },
+        {
+          "title": "Search your own documents",
+          "text": "Ask a question in plain words and get the paragraphs that answer it, each with its source. The documents stay on your computer.",
+          "href": "/documents/",
+          "button": "See the document search",
+          "icon": "find_in_page",
+          "picture": {
+            "src": "assets/shots/documents.jpg",
+            "alt": "A question about a boiler service answered with passages from household papers"
+          }
+        },
+        {
+          "title": "Software for your kind of business",
+          "text": "Service networks, media and membership, community projects, property and repairs, supply and trade. What each would look like, and which guide shows the working part.",
+          "href": "https://docs.aurekai.work/operating-products",
+          "button": "Read the product families",
+          "icon": "category",
+          "picture": {
+            "src": "assets/shots/guides.jpg",
+            "alt": "The front of the Bonfÿre guides"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "cases",
+      "id": "workspace-guides",
+      "title": "Guides for the applications and native system",
+      "items": [
+        {
+          "title": "Using sources and recurring programs",
+          "text": "Product contents, cycle-only changes, multi-program source updates, and browser or native destination storage. Follow the actual save, conflict and continuation workflows.",
+          "href": "https://docs.aurekai.work/source-program-workspace",
+          "button": "Read the workspace guide",
+          "icon": "menu_book"
+        },
+        {
+          "title": "Native source reuse and Cloudflare work",
+          "text": "Use the installed representation command, verify an exact source demand and understand the existing signed Cloudflare-to-native work bridge. Broader rollout and alternate-provider recovery remain separate.",
+          "href": "https://docs.aurekai.work/native-source-reuse",
+          "button": "Read the system guide",
+          "icon": "code"
+        }
+      ]
+    },
+    {
+      "kind": "steps",
+      "id": "working-together",
+      "title": "From a brief to something your team can use",
+      "items": [
+        {
+          "title": "Define the work",
+          "text": "Tell me what needs to work, what you use today and any deadline. We can start with a free introductory call and agree the scope before discussing a price."
+        },
+        {
+          "title": "Try the implementation",
+          "text": "Review the working feature with representative data. Check the main task and the cases that need a person’s attention."
+        },
+        {
+          "title": "Put it to work",
+          "text": "Once the agreed checks pass, deploy to the agreed environment and hand over the code and operating instructions. Ongoing support can be scoped separately."
+        }
+      ]
+    },
+    {
+      "kind": "ask",
+      "form": {
+        "id": "work-request",
+        "title": "Send a project brief",
+        "fields": [
+          {
+            "label": "Your name",
+            "wide": true
+          },
+          {
+            "label": "Email",
+            "type": "email",
+            "wide": true
+          },
+          {
+            "label": "What needs to work?",
+            "type": "textarea",
+            "placeholder": "A short description of the task, feature or problem."
+          },
+          {
+            "label": "Current tools or public URL",
+            "optional": true,
+            "wide": true
+          },
+          {
+            "label": "Deadline or timing",
+            "optional": true,
+            "wide": true
+          }
+        ],
+        "button": "Send your brief",
+        "subject": "Aurekai project brief",
+        "sent": "Your brief has been received. Nick will reply to the email you supplied.",
+        "notice": "Your details go to Nick Gonzales at Aurekai for a reply. Introductory calls are free. Please leave out passwords and private customer data."
+      }
+    }
+  ],
+  "pages": [
+    {
+      "path": "catalogue",
+      "title": "Product workspace",
+      "menu": "Products",
+      "sections": [
+        {
+          "kind": "catalogue",
+          "id": "product-workspace",
+          "title": "Products",
+          "review": true,
+          "material": "products"
+        }
+      ],
+      "layout": "workspace"
+    },
+    {
+      "path": "archive",
+      "title": "Shipment document preparation sample",
+      "menu": "Archive",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Eight messy files. *One checked handoff.*",
+          "lede": "A made-up set of shipment files, not a trucking company’s private records. The check matches each file to its shipment, finds duplicates, flags dates it cannot read and deliveries with no proof, and proposes new file names without changing anything.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "archive-results",
+          "title": "What the check found",
+          "columns": [
+            "Result",
+            "Records"
+          ],
+          "rows": [
+            [
+              "Ready for review and import",
+              "5"
+            ],
+            [
+              "Duplicate of another file",
+              "1"
+            ],
+            [
+              "Unknown shipment",
+              "1"
+            ],
+            [
+              "Unreadable date",
+              "1"
+            ],
+            [
+              "Shipments missing a delivery proof",
+              "2"
+            ]
+          ],
+          "source": {
+            "name": "Download the checked record and rename-preview CSV",
+            "url": "/assets/archive-rename-preview.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "The document text was supplied as test input. This run did not scan paper, read text from images, rename real files or import into QuickBooks."
+        },
+        {
+          "kind": "figures",
+          "id": "missing-proof",
+          "title": "Two missing documents stay visible",
+          "columns": [
+            "Shipment",
+            "Missing document"
+          ],
+          "rows": [
+            [
+              "DEMO-1002",
+              "Delivery proof"
+            ],
+            [
+              "DEMO-1003",
+              "Delivery proof"
+            ]
+          ],
+          "source": {
+            "name": "Download the missing-document CSV",
+            "url": "/assets/archive-missing-documents.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Made-up shipment references. These are items to review, not completed deliveries."
+        },
+        {
+          "kind": "steps",
+          "id": "archive-pilot",
+          "title": "A batch before a staffing commitment",
+          "items": [
+            {
+              "title": "Choose representative material",
+              "text": "Agree the document kinds, naming convention, destination fields and a small representative batch."
+            },
+            {
+              "title": "Run and inspect",
+              "text": "Deliver checked rows, duplicates, unknown references and unreadable fields with a review list. Physical scanning can be supplied separately."
+            },
+            {
+              "title": "Discuss your workload",
+              "text": "A phone or video introduction is free. We can then agree the work you need covered and a price for delivery."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "wix-review",
+      "title": "Elite Accreditation public website review",
+      "menu": "Wix review",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Three concrete checks *for an existing Wix site.*",
+          "lede": "Prepared in response to a public request for technical SEO work. This is an independent review of the pages anyone can load. It is not a client engagement, a Search Console inspection or a claim about rankings.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "cases",
+          "id": "wix-findings",
+          "title": "Observed on the live homepage",
+          "items": [
+            {
+              "title": "Search intent is diluted",
+              "text": "The delivered title leads with “elite accreditation services review”, and the page has a second primary heading phrased as a review. A service buyer is more directly served by a title such as “Healthcare Accreditation Consultants | Elite Accreditation” and a service-led introduction."
+            },
+            {
+              "title": "The same long introduction repeats",
+              "text": "Several testimonial blocks carry the same broad service-description paragraphs. Make each testimonial concise, keep one authoritative service introduction, and link to the specific service pages instead of repeating the same text."
+            },
+            {
+              "title": "The HTML response is 2,320,224 bytes",
+              "text": "That is the uncompressed response-body size observed in this run, not a Core Web Vitals score. Inspect Wix apps, video embeds and repeated sections, then measure mobile loading before and after each change."
+            }
+          ]
+        },
+        {
+          "kind": "figures",
+          "id": "wix-source",
+          "title": "What was inspected",
+          "columns": [
+            "Public endpoint",
+            "Observed result"
+          ],
+          "rows": [
+            [
+              "Homepage",
+              "HTTP 200; two h1 elements"
+            ],
+            [
+              "robots.txt",
+              "HTTP 200"
+            ],
+            [
+              "sitemap.xml",
+              "HTTP 200"
+            ]
+          ],
+          "source": {
+            "name": "Elite Accreditation public website",
+            "url": "https://www.eliteaccreditation.org/",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "A reachable sitemap is not proof of Google indexing. “Discovered, not indexed” and “Crawled, not indexed” need their actual URL examples and Search Console evidence before assigning a cause."
+        },
+        {
+          "kind": "steps",
+          "id": "wix-first-pass",
+          "title": "A first implementation pass — without a platform migration",
+          "items": [
+            {
+              "title": "Baseline",
+              "text": "Record current Wix settings and selected service pages, then inspect Search Console examples with owner-approved read access."
+            },
+            {
+              "title": "Correct high-intent pages",
+              "text": "Refine homepage and key ASC/DME service titles, headings and internal links, preserving the site and its existing content ownership."
+            },
+            {
+              "title": "Measure the change",
+              "text": "Recheck rendered pages and crawlability; track indexing and qualified enquiries separately. No paid backlinks or ranking guarantees."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "red3-planner",
+      "title": "Plan your next shop",
+      "menu": "Fixture planner",
+      "layout": "workspace",
+      "sections": [
+        {
+          "kind": "planner",
+          "id": "red3-fixtures",
+          "title": "Plan your next shop.",
+          "presentation": {
+            "brand": "red",
+            "accent": "3",
+            "descriptor": "DISPLAY",
+            "intro": "Plan a space, keep alternative layouts and compare their costs before preparing an enquiry.",
+            "presets": {
+              "compact": "Open floor",
+              "display": "More display"
+            },
+            "planning_url": "https://red3display.com/retail-planning-and-design1/retail-design/"
+          },
+          "material": "fixtures"
+        }
+      ]
+    },
+    {
+      "path": "training",
+      "title": "A training app for a studio",
+      "menu": "Training app",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "One training app. *Every studio its own.*",
+          "lede": "A sample built for a strength studio and a yoga studio. Members train from their phone, coaches write and publish the programmes, and each studio keeps its own name, colours and typeface. The studios and members shown here are made up.",
+          "button": "Discuss an app like this",
+          "href": "/#ask"
+        },
+        {
+          "kind": "cases",
+          "id": "member",
+          "title": "What a member does",
+          "items": [
+            {
+              "title": "Open today’s session",
+              "text": "The day’s workout is on the first screen, with the week around it and what was done last time.",
+              "icon": "today",
+              "picture": {
+                "src": "assets/shots/training-today.jpg",
+                "alt": "The Today screen of a studio training app showing the next session"
+              }
+            },
+            {
+              "title": "Pick a programme",
+              "text": "Members choose from the programmes the studio has published and add one to their own plan.",
+              "icon": "list_alt",
+              "picture": {
+                "src": "assets/shots/training-programs.jpg",
+                "alt": "A list of published training programmes"
+              }
+            },
+            {
+              "title": "Log each set",
+              "text": "A timer, the next exercise and a rest prompt. Sets are saved on the phone, so a session carries on in a basement gym with no signal.",
+              "icon": "timer",
+              "picture": {
+                "src": "assets/shots/training.jpg",
+                "alt": "A workout in progress with a timer and the next set"
+              }
+            }
+          ],
+          "pictures": "shown"
+        },
+        {
+          "kind": "cases",
+          "id": "coach",
+          "title": "What a coach does",
+          "items": [
+            {
+              "title": "Answer requests",
+              "text": "A member asks for a programme. The coach picks the request up, drafts a plan and sends it back to that member.",
+              "icon": "inbox",
+              "picture": {
+                "src": "assets/shots/creator-requests.jpg",
+                "alt": "A coach’s list of programme requests from members"
+              }
+            },
+            {
+              "title": "Publish programmes",
+              "text": "A programme is reviewed before it goes out. Each change is a new version, and a programme can be withdrawn.",
+              "icon": "publish",
+              "picture": {
+                "src": "assets/shots/creator-programs.jpg",
+                "alt": "A coach’s list of programmes with their published versions"
+              }
+            },
+            {
+              "title": "Set the studio’s look",
+              "text": "Name, colours, typeface and mark are set in one place and the member app follows.",
+              "icon": "palette",
+              "picture": {
+                "src": "assets/shots/creator-appearance.jpg",
+                "alt": "The appearance settings for a studio, with colour and typeface choices"
+              }
+            }
+          ],
+          "pictures": "shown"
+        },
+        {
+          "kind": "steps",
+          "id": "devices",
+          "title": "Bring your devices into training",
+          "items": [
+            {
+              "title": "Review a workout from your watch",
+              "text": "Choose a TCX workout file from an app that supports export. Review its duration, distance and heart rate before adding it to your history. Apple Watch and Wear OS exports use the same review."
+            },
+            {
+              "title": "Put your plan on your calendar",
+              "text": "Share upcoming sessions with a calendar app or download the calendar file, even offline. Each session is an all-day event. Calendar copies do not update when your plan changes."
+            },
+            {
+              "title": "Connect a heart-rate sensor",
+              "text": "Pair a compatible Bluetooth heart-rate sensor in a supported browser and choose whether to save readings with your workout. Physical-device checks are still pending. Direct Apple Health and Health Connect sync and watch controls are not available yet."
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "id": "training-scope",
+          "title": "What is in the sample, and what is not",
+          "items": [
+            {
+              "title": "Working now",
+              "text": "Programmes, sessions and history on the member’s own device, offline use, heart-rate sensors, workout files from a watch, calendar export, coach requests and versioned publishing. A studio can also let an assistant read its published programmes, read-only."
+            },
+            {
+              "title": "Not in the sample",
+              "text": "Paid memberships and card payments. Those would be agreed and built for your studio and your payment provider."
+            },
+            {
+              "title": "See it running",
+              "text": "The app runs on your own server, so there is no public copy to click through. Ask for a walk-through on a call."
+            }
+          ]
+        },
+        {
+          "kind": "call",
+          "title": "Want this for your business?",
+          "text": "Tell me what you need it to do. An introductory call is free.",
+          "button": "Send a project brief",
+          "href": "/#ask"
+        }
+      ]
+    },
+    {
+      "path": "documents",
+      "title": "Search your own documents",
+      "menu": "Document search",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Ask your documents. *Get the paragraph, not a guess.*",
+          "lede": "A sample workspace over a made-up household’s papers: receipts, handover notes, a service log. It finds the passages that answer a question and shows where each one came from. Nothing is sent to an outside service.",
+          "button": "Discuss a workspace like this",
+          "href": "/#ask"
+        },
+        {
+          "kind": "cases",
+          "id": "document-use",
+          "title": "How it is used",
+          "items": [
+            {
+              "title": "Ask in plain words",
+              "text": "Search by meaning or by exact phrase. Results are passages from your documents, listed with the document and paragraph they came from.",
+              "icon": "search",
+              "picture": {
+                "src": "assets/shots/documents.jpg",
+                "alt": "A question about a boiler service answered with passages from household papers"
+              }
+            },
+            {
+              "title": "Read the original",
+              "text": "Open any passage in its document to check it in context, then save a note that keeps the citation.",
+              "icon": "article",
+              "picture": {
+                "src": "assets/shots/documents-open.jpg",
+                "alt": "The document workspace with its list of documents"
+              }
+            }
+          ],
+          "pictures": "shown"
+        },
+        {
+          "kind": "steps",
+          "id": "document-scope",
+          "title": "What is in the sample, and what is not",
+          "items": [
+            {
+              "title": "Working now",
+              "text": "Search over a collection of text documents and recording transcripts, the original paragraph for every result, saved notes with citations, and removing a document from search for good."
+            },
+            {
+              "title": "Not in the sample",
+              "text": "Scanning paper or reading text out of images. Documents arrive as text."
+            },
+            {
+              "title": "See it running",
+              "text": "The workspace runs on your own computer, so there is no public copy to click through. Ask for a walk-through on a call, or for the source to run yourself."
+            }
+          ]
+        },
+        {
+          "kind": "call",
+          "title": "Want this for your business?",
+          "text": "Tell me what you need it to do. An introductory call is free.",
+          "button": "Send a project brief",
+          "href": "/#ask"
+        }
+      ]
+    },
+    {
+      "path": "audio",
+      "title": "Audio workspace",
+      "menu": "Audio mixer",
+      "layout": "workspace",
+      "sections": [
+        {
+          "kind": "creator",
+          "id": "generated-audio",
+          "title": "Shape your recordings.",
+          "lede": "Import WAV recordings, trim and arrange clips, then save the session or export your mix. Try the sample to start.",
+          "material": "audio"
+        }
+      ]
+    },
+    {
+      "path": "connected-workspaces",
+      "title": "Shared catalogue, room and audio workspaces",
+      "menu": "Connected workspaces",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Continue the same work together.",
+          "overline": "Connected workspaces",
+          "lede": "Use the specialized catalogue, room and audio editors with destination-owned drafts. Keep original browser work and choose explicitly where to adopt it."
+        },
+        {
+          "kind": "steps",
+          "id": "connected-journey",
+          "title": "Install and open the right editor",
+          "items": [
+            {
+              "title": "Choose a destination",
+              "text": "In Aurekai setup choose Catalogue, Room Planning or Audio Studio — shared workspace. Select your personal workspace, an organization you administer, or a household where you are steward or delegated admin."
+            },
+            {
+              "title": "Install, then activate",
+              "text": "Installation pins the reviewed behavior and creates native backend bindings. Activate separately, then open the specialized editor. Published source material stays shared; saved drafts belong to this destination."
+            },
+            {
+              "title": "Continue saved work",
+              "text": "Catalogue selections open in the room editor with the same plan, fixture and model identities. Audio sessions retain their original WAV sources and clip edits. Another authorized member can reopen the saved work; stale overwrites are refused."
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "id": "household-members",
+          "title": "Share a household workspace",
+          "items": [
+            {
+              "title": "Review an existing account",
+              "text": "The recorded steward opens Household access from the selected configuration, enters an existing account email, and reviews the member before changing access. This does not create accounts or send invitations."
+            },
+            {
+              "title": "Choose the access",
+              "text": "Read allows inspection, write allows shared draft edits, and admin allows configuration changes. Only the steward manages memberships. Personal training records and other households stay separate."
+            },
+            {
+              "title": "Remove access, keep the work",
+              "text": "Choose none to revoke a member. Saved work remains; expired and revoked grants are refused on the next request. Changing a steward away and back cannot revive an old grant. Browser expiry renewal remains separate."
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "id": "draft-adoption",
+          "title": "Keep existing browser drafts",
+          "items": [
+            {
+              "title": "Select at the source",
+              "text": "Choose Bring browser drafts in the native editor. Spaces offers Work Samples or GitHub Spaces; audio offers Work Samples audio. In the source window choose the saved drafts and needed files, then send that selection for review."
+            },
+            {
+              "title": "Review the destination",
+              "text": "New drafts are offered. Different existing drafts are not selected automatically; choose replacements deliberately. A concurrent member edit invalidates a stale review. Originals and their browser revisions stay unchanged."
+            },
+            {
+              "title": "Retain identities, review permissions",
+              "text": "Plans keep fixture identities, but imported submission receipts are cleared. Audio keeps original recordings and clip coordinates; recipient recording permission resets to unreviewed. Reload the editor after adoption."
+            }
+          ]
+        },
+        {
+          "kind": "steps",
+          "id": "release-boundaries",
+          "title": "Release boundaries",
+          "items": [
+            {
+              "title": "Native persistence",
+              "text": "Atomic revision-checked saves and verified binary sources never silently fall back to a different browser-local draft. Deactivation preserves work. Uploads remain bounded; automatic abandoned-upload reclamation is still open."
+            },
+            {
+              "title": "Still separate",
+              "text": "Training, Brief Studio and ITAD need their own backend adaptations. WAV export is not channel delivery. Supplier ordering and merchant publication are not implemented by this release."
+            },
+            {
+              "title": "Verification",
+              "text": "The follow-up passes 25 household access checks, 20 audio browser checks and eight two-origin audio adoption checks. Adoption also passes from the actual public Work Samples source into an isolated native account, including reopening the waveform editor. Live public setup and access refusals pass on all four Aurekai domains. No production test account was created."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "about": "Aurekai · Custom web tools, sites and integrations by Nick Gonzales. Remote delivery for businesses and agencies.",
+    "notice": {
+      "title": "About these samples",
+      "text": "These examples use public or made-up data. Named businesses have not commissioned or endorsed them."
+    }
+  },
+  "to_confirm": []
+}

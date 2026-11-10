@@ -1,0 +1,95 @@
+pack reconciliation-2026-08-27
+generation control-1
+provenance one map of what exists, what supersedes what, and what of mine should be deleted
+authority measured
+note Written because the session sprawled. Five things were being conflated: the legacy Bonfyre estate, the current Aurekai product, this session's maturity work, hand-rolled artefacts from me and from codex, and the Downloads system maps. This states which is authoritative and what dies.
+
+# ---------------------------------------------------------------------------
+# THE FIVE THINGS, AND WHICH IS AUTHORITATIVE
+# ---------------------------------------------------------------------------
+
+layer aurekai-product
+  status AUTHORITATIVE
+  what the current generation. Product 'Aurekai', legacy_codename 'Bonfyre', CLI 'akai', release 0.8.0-alpha.1, native runtime 0.8.0-alpha.2, ABI 'bonfyre-abi-v1'
+  where ~/repos/aurekai (active, main, 48 dirty) plus 49 repos in the github.com/aurekai org
+  scale registry declares 10 families and 138 commands; command-truth-matrix.json classifies native 131, integration-only 109, hyper-delegated 7
+  native github.com/aurekai/native-runtime -- 644 files, 202 C sources, 89 operators as cmd/Akai*, categories specialized 14, platform 11, artifacts 11, data 11, media 11, knowledge 11, inference 10, pipeline 9, misc 1
+  partners 41 shipped integration repos, one per partner (langchain, temporal, dagster, duckdb, helm, terraform, vscode, ...)
+  ruling this is the system. Everything else is measured against it.
+
+layer bonfyre-legacy
+  status SUPERSEDED, still load-bearing
+  what ~/Documents/Bonfyre, 46,424 files across 36 top-level directories; ~/.bonfyre with 89 bonfyre-* binaries, a 1.0 GB agent-hypervisor and 489 MB of provider-runtimes
+  relation cmd/Bonfyre* is the previous generation of cmd/Akai*; the local BonfyreQuery source is 302 lines against upstream AkaiQuery's 276
+  ruling do not mature the legacy layer in place. A fix here is worth only what it is worth UPSTREAM.
+
+layer reality-foundry-substrates
+  status AUTHORITATIVE, and I ignored it all session
+  what architecture/substrate/foundry.yaff plus ~/.bonfyre/substrates/v6.1/ -- 13 substrates each carrying a PASSING semantic-proof.json witness: tract, burn, cubecl, restate, feldera, lance, daft, egglog, gigatoken, hydro, automerge, verus, yaff
+  ruling local execution, durable execution, incremental views, vector store, context and equality saturation are ALREADY measured with witnesses. I re-derived several by hand.
+
+layer downloads-system-maps
+  status REFERENCE
+  what seven Gen-10 FULL_SYSTEM_MAP markdown files under ~/Downloads
+  contains the 112 Partner Commons profiles, the 82 deep-promoted specialties with Pairs-with, the deep-promotion coverage by hook, the 91 public capability identities
+  ruling these are the design record. They are NOT state, and the 41 shipped repos are the real partner surface.
+
+layer session-maturity
+  status MIXED -- see disposition below
+
+# ---------------------------------------------------------------------------
+# DISPOSITION OF EVERYTHING I MADE THIS SESSION
+# ---------------------------------------------------------------------------
+
+keep art:compute-ledger
+  where ~/.bonfyre/compute-ledger.sqlite3
+  why rates DERIVED from real provider billing arithmetic, cross-validated exactly against the published book on 3 of 5 models; reconciles to the invoice within the web-search line item; 36 invariants
+  caveat lives in the LEGACY path. Belongs under Aurekai's commerce/meter families.
+
+keep art:partner-commons
+  where ~/.bonfyre/partner-commons.sqlite3, 176 profiles, 1,885 authored role observations
+  why the authored role assignments from the 82 deep-promotions and the family tables are real and were never in any state store
+  caveat the 41 shipped repos supersede it as the definition of a partner. This is metadata ABOUT them.
+
+keep art:cue-schemas
+  where ~/Documents/Bonfyre/schemas/bonfyre.cue plus vet.sh
+  why proven to reject: a promoted capability with proof_ref 'pending', an invariant with no reheat condition. Caught 15 uppercase capability names I had introduced.
+  caveat schemas the legacy shape. Needs re-pointing at Aurekai's registry.
+
+keep art:bonfyrequery-fix
+  where ~/Documents/Bonfyre/cmd/BonfyreQuery/src/main.c
+  why real defect, real fix, builds clean, stats returns 594 instead of a binder error
+  action PORT UPSTREAM. The same bug is live at aurekai/native-runtime cmd/AkaiQuery/src/main.c:189. Fixing only the legacy copy is worthless.
+
+delete art:local-generation-detour
+  what the qwen2.5-3b gguf, the bonfyre-moe serve experiment, and the two invariants claiming local generation as a finding
+  why it re-derived a documented forbidden_inference. foundry.yaff states it outright under burn: 'trained -> generation quality good (the FPQ lesson generalizes)'. tract already records the local execution phenotype as measured with a passing witness.
+  cost two failed downloads, a filled root filesystem, a 30%-accuracy result
+  ruling delete rather than record. A duplicate claim beside a witnessed original is worse than nothing.
+
+delete art:native-sweep
+  where ~/.bonfyre/native-sweep.sqlite3 and scratchpad/native_sweep.py
+  why a hand-rolled capability prober written while bonfyre-capability and probe_native_capabilities.py both existed. The estate's prober names the exact defect in its own docstring.
+
+review art:bonfyre-common
+  where components/BonfyreControlPlane/bonfyre_common.py and bonfyre_common_equivalence.py
+  status equivalence FAILED -- continuous_supervisor._iso(None) and verification._iso(None) return current time; four _parse variants reject whitespace while provider_state accepts it
+  ruling correctly NOT migrated. Keep the harness, discard the premise that the family was one function.
+
+review art:bonfyre-schema
+  where components/BonfyreControlPlane/bonfyre_schema.py and bonfyre_schema_equivalence.py
+  status codex verified GROUP_A 15/15, GROUP_B 6/6, DISAGREEMENTS NONE, SAFE_TO_MIGRATE
+  scale the removal is worth ~15 lines; each body is 3 lines. The census counted copies, not code.
+  ruling correct but low value. The finding that mattered was that the 15/6 split IS the foreign-key split.
+
+# ---------------------------------------------------------------------------
+# WHAT ACTUALLY BLOCKS THE PRODUCT
+# ---------------------------------------------------------------------------
+
+blocker anchor-bytepatch-skill
+  status UNIMPLEMENTED, not missing
+  what seven commands are declared hyper-delegated: anchor.build, anchor.lineage, bytepatch.emit, bytepatch.inspect, skill.run, skill.score, skill.tune
+  evidence org-wide code search across all 49 aurekai repos returns NO hits for anchor.build, bytepatch or skill.run. No hyper.ts exists on disk anywhere.
+  mechanism akai resolves AKAI_HYPER, then a compiled dist binary, then ../bonfyre-hyper/src/hyper.ts, then bare 'bonfyre-hyper' on PATH -- which is a symlink to akai.mjs itself, so it re-enters
+  false_green pointing AKAI_HYPER at ANY executable flips akai runtime doctor from FAIL to PASS. It checks reachability, not capability. A stub would report health while all seven stay unimplemented.
+  ruling these were declared and never written. That is the honest state.

@@ -1,0 +1,33 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:
+(pass) a missing replacement file leaves every page record and the served guide unchanged [454.06ms]
+31 | test('long code fences retain embedded Markdown through import and native HTML rendering',()=>siteFixture(async({run,snapshot,page})=>{
+32 |   const code='Literal example.\n```\n## This heading is code\n<script>example()</script>\n````not a closing fence\n## Still code\n';
+33 |   const source='# Reference\n\nA public fixture.\n\n## Result\n\n````text In\n'+code+'`````\n\n## Next step\n\nVisible instructions.';
+34 |   const result=run('page','replace-test','--route','/guide','--title','Reference','--replace','--text',source);
+35 |   expect(result.code).toBe(0);
+36 |   expect(snapshot().fragments.filter(f=>f.page==='/guide').map(f=>f.heading)).toEqual(['Result','Next step']);
+                                                                                   ^
+error: expect(received).toEqual(expected)
+
+  [
+    "Result",
++   "This heading is code",
+    "Next step",
+  ]
+
+- Expected  - 0
++ Received  + 1
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:36:79)
+      at siteFixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:21:11)
+(fail) long code fences retain embedded Markdown through import and native HTML rendering [350.62ms]
+(pass) empty, whitespace, binary and directory inputs are refused before replacement [543.83ms]
+(pass) valid replacement keeps the page identity, creation time and navigation group [573.79ms]
+(pass) a storage failure during replacement, creation or removal preserves the served page [404.99ms]
+
+ 4 pass
+ 1 fail
+ 52 expect() calls
+Ran 5 tests across 1 file. [2.74s]

@@ -1,0 +1,33 @@
+{"workload":"synthetic one-million-float sequential stem","source_read_calls":977,"explicit_seeks":1,"seeks_skipped":976,"output_exact_f32_bytes":true,"performance_elapsed_gain_proven":false}
+{"workload":"sparse logical PCM representation","exact_logical_bytes":4000000,"dense_allocated_bytes":4001792,"sparse_allocated_bytes":1052672,"actual_pcm_fwrite_bytes":262144,"elided_silent_bytes":3737856,"output_byte_parity":true,"client_data_included":false}
+{"workload":"synthetic 64 sparse stems / one million samples","legacy_overlap_probes":62528,"actual_overlap_probes":64,"overlap_probes_avoided":62464,"source_f32_bytes_exact":true,"elapsed_time_speedup_proven":false}
+✔ native bounded mixer exactly respects ordered gain and offset arithmetic (810.23625ms)
+✔ native refuses truncated, nonfinite, out-of-range and malformed audio without publishing (326.119125ms)
+✔ native processes a million exact float32 samples using bounded blocks (371.1735ms)
+﹣ browser WASM uses the exact allocation-free native f32 mix kernel (34.935209ms) # clang wasm32/lld toolchain unavailable on this host: error: unable to create target: 'No available targets are compatible with triple "wasm32"'
+1 error generated.
+
+✔ per-stem sequential cursors preserve ordered overlapping source windows (340.186292ms)
+✔ event-driven 64-stem schedule preserves byte-exact mixing while eliminating inactive probes (355.074458ms)
+✔ stems inside the same block retain original accumulation order and boundaries (329.106542ms)
+{"kind":"synthetic_creator_to_pcm","samples":4800,"native_backend":true,"output_parity":"exact","source_body_verified":false}
+✔ Creator source cut lowers to exact native PCM and mixes under synthetic approval (969.3455ms)
+✔ native PCM candidate refuses unbound source claims and changed scope (0.641708ms)
+{"workload":"synthetic 6000 unrelated sources, one viewport","full_carrier_bytes":672555,"demand_carrier_bytes":1718,"sources_declared":6002,"sources_carried":2,"render_body_keys_identical":true,"client_data_included":false}
+✔ exact output, bounded nonmaterialized shards and shared source bases (5.612292ms)
+✔ viewport selects exact cut and does not expand neighboring work (1.208792ms)
+✔ agent edits are candidate-only and revision-bound (0.894625ms)
+✔ identical authorized bodies reuse within a scope, never across scope (0.278375ms)
+✔ invalid sources, rights coordinates, clock and duplicate mutations refuse (0.3205ms)
+✔ 10k-clip synthetic viewport stays local and reports unmeasured physical costs (15.822708ms)
+✔ immutable prepared revision reuses a clip index across viewports without state aliasing (0.927583ms)
+✔ late sharded view keeps clip order and exact sparse overlap (17.400708ms)
+✔ demand-selected source bases preserve rendered meaning with bounded carrier payloads (37.80075ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 2654.83075

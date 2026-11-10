@@ -1,0 +1,57 @@
+{
+  "origin": "http://127.0.0.1:57317",
+  "status": "passed",
+  "checks": [
+    "home page links to audio sample",
+    "initial mix matches native bytes",
+    "layout fits 1440px",
+    "layout fits 390px",
+    "gain changes rendered output",
+    "saved levels survive reload",
+    "browser Back restores a working saved mix",
+    "stale tab cannot overwrite saved levels",
+    "reset restores exact reference",
+    "playback starts",
+    "stop clears playback",
+    "export decodes as six-second stereo WAV",
+    "download reaches disk as a complete WAV",
+    "worker refuses invalid gains",
+    "corrupt source blocks playback",
+    "missing source blocks playback",
+    "no server writes or uploads",
+    "no script exceptions"
+  ],
+  "layouts": [
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "canvas": 950
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "canvas": 324
+    }
+  ],
+  "failures": [],
+  "initial": {
+    "kind": "creator",
+    "creator": "",
+    "busy": "false",
+    "ready": "true",
+    "mixSha256": "068bb4b051fbe6de2fc1936cdcf6d31e5ea518d0e84a0d972075cf4f8448f26f",
+    "referenceVerified": "true",
+    "playing": "false",
+    "importsReady": "true"
+  },
+  "wav": {
+    "bytes": 1152044,
+    "duration": 6,
+    "channels": 2,
+    "rate": 48000
+  },
+  "worker": {
+    "type": "error",
+    "message": "Levels must be between 0 and 1."
+  }
+}

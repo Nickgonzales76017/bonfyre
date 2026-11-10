@@ -1,0 +1,82 @@
+pack doom-guest-fly
+generation control-1
+source_plane run5_recursive_external
+item_kind proof_witness
+source_ref campaign:doom-guest
+note The one attempt in this campaign that is not a cheat: a controller that reads the rendered frame and nothing else. The controller is the FlyWire fruit-fly connectome, observed through the foreign-twin path and run as SQL in the query organ. The result is negative. It plays from pixels, it is fast, its left-right bias is cancelled, and it explores less of the level than random keys do. That is recorded here as the finding, not as a step toward one.
+
+witness e1m1_fly_from_pixels
+  subject guest:doom-shareware-1.9
+  profile flywire-783 wave model, six synapses, connections of five or more
+  fixture packs/doom-guest/fixtures/e1m1-fly.cmds
+  fixture_sha256 82ba7fccb8f0ccfbae966af1bb8ba6f6f568e3a3838b8d588e9a277c04cc7e0a
+  body connectivity flywire-connectivity-783 sha256 efeb23fb99098e9c390f6869969b2a121a2ee92c833cfc45ecb2c1d8e1af0347 observed 2026-10-03T06:53:46Z
+  body annotations flywire-neuron-annotations sha256 b214970b55d2fbe0853bba536fdcb9e28730f4eb7ab06f600491df795da683cd observed 2026-10-03T06:53:50Z
+  body columns flywire-column-assignment-783 sha256 bdf4ce7f62cc63493d53eefad3816ff2dfd08b190e97b35a492e0e453df2f0f6 observed 2026-10-03T07:03:16Z
+  rule observation is the last two rendered frames; no engine state, no map, no coordinates, no forks, no rewinds; every action is committed; the game waits while the controller decides
+  command per decision: guest replays the log with frames on; the query organ runs program/fly-wave.sql for the scene and for its mirror image, then program/fly-decide.sql; the returned keys are appended to the log
+  observed 2026-10-03 300 decisions, 5226 tics on E1M1 skill 2; around decision 281 the guest process was killed once from outside, so one decision was taken on a truncated frame pair and stands in the log as committed; 57000 neurons active per wave; 0.60 seconds per decision in the query organ
+  scored_after from engine state the controller never saw: 38 map cells of 64 units, 5 sectors, furthest 736 units from the start, 0 kills, health 101, armor 2
+  baseline five random-key runs of 300 decisions with the same action shapes: 43 to 81 cells, 5 to 7 sectors, furthest 736 to 1255, 0 kills
+  verdict the fly explores less than every random run; it stays in the start hall
+
+claim clm:fly-plays-from-pixels-and-loses-to-random
+  status STANDING
+  verification MEASURED
+  claim A connectome driven by the screen alone can hold the controls, and as modelled here it is worse than chance at getting anywhere.
+  evidence see witness e1m1_fly_from_pixels; 38 cells against 43 to 81 for random keys
+  consequence the non-cheating result on record is a loss. Nothing in this campaign is on the level of a model that reaches a second room from the screen
+
+claim clm:the-wiring-carries-laterality
+  status STANDING
+  verification MEASURED
+  claim Left and right are in the connectome, not added by the model.
+  evidence from the left eye's lamina the left DNa02 is three excitatory synapses away and the right one four; the same holds for the giant fiber
+  evidence a bright patch on the left of an otherwise grey scene steers +0.0298 and the same patch on the right steers -0.0298, after averaging each scene with its mirror image
+  consequence steering toward a bright object is real in this model; it is also most of what the model does
+
+claim clm:no-direction-selectivity-without-fitted-parameters
+  status STANDING
+  verification MEASURED
+  claim Giving the known slow arms of the motion detectors a slow rate and everything else a fast one does not make the motion cells prefer a direction.
+  evidence a bar swept each way across the left eye gave T4a to T4b response ratios of 1.10 and 1.10; the same for T5a to T5b
+  evidence that dynamic version cost 253 seconds a decision and its activity grew without bound; it was removed from the program
+  consequence the model has no motion vision, so no optic flow and no looming. A fly without those walks into walls, and this one does
+
+claim clm:column-axes-are-anchored-in-anatomy-not-physiology
+  status STANDING
+  verification MEASURED
+  claim Screen-to-eye mapping uses the published column grid. Its vertical axis is measured; its horizontal sense is inferred.
+  evidence grid y against ventral brain position: correlation -0.98 for L1 and Mi1 in both hemispheres
+  evidence grid x against the brain's front-back axis for Mi1: +0.92 in both hemispheres; taking +x as the frontal field rests on the first optic chiasm inverting that axis, which is a fact from the literature and was not checked inside this model
+  consequence if that inference is wrong, each eye's field is reversed front to back while left and right eyes stay correct
+
+claim clm:the-cost-was-the-pixels
+  status STANDING
+  verification MEASURED
+  claim Spreading activity through 2.7 million connections is cheap in the query organ; reading pixels out of a long hex string was the whole cost.
+  evidence one decision took 55 seconds with substring extraction and 0.60 seconds with a single pass over the bytes, with identical outputs
+  evidence cutting the network to neurons within seven synapses of both eyes and readouts kept 90 percent of the connections and bought nothing
+
+claim clm:flywire-terms-as-read
+  status STANDING
+  verification READ
+  claim The connectivity table comes from a repository under the MIT licence. The annotations repository declares no licence and asks for citation.
+  evidence the annotations README asks users to cite Schlegel et al. 2024, Dorkenwald et al. 2024, Matsliah et al. 2024 and the later annotation papers it names
+  source https://github.com/flyconnectome/flywire_annotations
+  source https://github.com/philshiu/Drosophila_brain_model
+  consequence the bodies are held as foreign observations with receipts and are not redistributed; no claim built on them may be published without those citations
+
+forbidden_inference a brain that holds the controls -> a brain that plays
+forbidden_inference steering that is antisymmetric under mirroring -> steering that is correct; it cancels the wiring's asymmetry and says nothing about whether turning toward brightness is useful
+forbidden_inference 139248 neurons in the query organ -> a simulated fly; this is one feed-forward wave per frame with no fitted parameter, no spikes and no motion vision
+
+work fitted_visual_model_or_nothing
+  target_plane run5_recursive_external
+  priority 7.5
+  reason Motion vision does not come from the wiring plus two rates. Published connectome-constrained models of the fly visual system fit their time constants and gains to a task. Without a fitted model the controller has no flow and no looming, and with one the question becomes whether a native substrate can run it. Until then the fly is a demonstration that the wiring can be driven, not a player.
+
+work screen_only_trial_by_a_model_that_can_see
+  target_plane run5_recursive_external
+  priority 7.0
+  reason The same rule -- frame in, keys out, no state, no forks -- has been set up and one frame rendered, with no action taken. It is the trial the published benchmark runs, and it has not been run here by anything that can see.

@@ -1,0 +1,49 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/browser/tests/navigation.test.mjs:
+20 |     const tab=await open(),origin=`http://127.0.0.1:${server.port}`;
+21 |     const state=async()=>{const r=await tab.page('Runtime.evaluate',{expression:'({path:location.pathname,hash:location.hash,heading:document.querySelector("h1")?.textContent,ready:window.pageReady,state:document.readyState})',returnByValue:true});return r.result.value;};
+22 |     const first=await tab.go(origin+'/first');
+23 |     expect(await state()).toMatchObject({path:'/first',heading:'/first',state:'complete'});
+24 |     expect(await tab.go(origin+'/second')).toBe(first);
+25 |     expect(await state()).toMatchObject({path:'/second',heading:'/second',ready:'second-ready',state:'complete'});
+                               ^
+error: expect(received).toMatchObject(expected)
+
+  {
++   "hash": "",
+    "heading": "/second",
+    "path": "/second",
+-   "ready": "second-ready",
+-   "state": "complete",
++   "state": "loading",
+  }
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/tests/navigation.test.mjs:25:27)
+      at async withChrome (/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/browser-navigation-20261013/chrome-session-before.mjs:66:18)
+      at async <anonymous> (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/tests/navigation.test.mjs:19:13)
+(fail) reused tabs wait for each document, delayed resources and redirects, and support fragment navigation [1468.22ms]
+33 | 
+34 | test('a browser navigation error cannot borrow a prior successful load',async()=>{
+35 |   await withChrome(async({open})=>{
+36 |     const tab=await open();
+37 |     await tab.go('data:text/html,<h1>First document</h1>');
+38 |     await expect(tab.go('http://127.0.0.1:1/')).rejects.toThrow(/ERR_UNSAFE_PORT|navigation/i);
+                                                             ^
+error: 
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/tests/navigation.test.mjs:38:57)
+      at async withChrome (/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/browser-navigation-20261013/chrome-session-before.mjs:66:18)
+      at async <anonymous> (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/tests/navigation.test.mjs:35:9)
+(fail) a browser navigation error cannot borrow a prior successful load [1038.64ms]
+
+ 0 pass
+ 2 fail
+ 4 expect() calls
+Ran 2 tests across 1 file. [2.98s]

@@ -1,0 +1,50 @@
+{
+  "projects": [
+    {
+      "id": 49,
+      "project_id": "funding:futo-local-ai-toolkit",
+      "stage": "application_sent_followup_held"
+    },
+    {
+      "id": 102,
+      "project_id": "funding:sentient-open-source-agi",
+      "stage": "application_answers_prepared"
+    },
+    {
+      "id": 109,
+      "project_id": "funding:openmined-ensembles-winter-2026",
+      "stage": "application_submitted"
+    },
+    {
+      "id": 126,
+      "project_id": "provider:runpod-starter-review-20261009",
+      "stage": "qualification_sent"
+    },
+    {
+      "id": 127,
+      "project_id": "wholesale:dealfactory-dallas-supply-20261009",
+      "stage": "supplier_manifest_requested"
+    },
+    {
+      "id": 128,
+      "project_id": "wholesale:hurst-121-oem-20261009",
+      "stage": "seller_manifest_needed"
+    },
+    {
+      "id": 129,
+      "project_id": "wholesale:xtreme-kennedale-source-20261009",
+      "stage": "source_qualification"
+    }
+  ],
+  "rfq6": {
+    "vendor": "International Machinery Movers & Transport",
+    "terms": "Original sent request Gmail1a11ea4ad402f437. Incoming Gmail1a1215117d582033 dated2026-10-09T15:22:40Z: Amber assigned Donald (Donny) Young, dyoung@immnow.com, to prepare the quote. A human handoff is received, no numeric rigging quote. No instruction to visit, disconnect, move or book equipment.\n\nIncoming1a12196acf9f0afa fromDonnyYoung confirmed no-charge sitevisit; needs exactaddress/sitecontact, equipmentdimensions, opening dimensions, dock/ground access, approach/interior surfaces andphotos/video. Sent1a121e4b6c0bb24e suppliedthreeexisting sellerphotos with no visit authorization. Neither rigging nortransport is quotedzero. Company signature is International Machinery Movers & Transport."
+  },
+  "proof": {
+    "id": 1,
+    "bytes": 14485,
+    "published": 0,
+    "allow_guest": 0
+  },
+  "sentient_project_ref": "funding:sentient-open-source-agi"
+}

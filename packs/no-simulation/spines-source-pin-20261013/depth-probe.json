@@ -1,0 +1,102 @@
+[
+  {
+    "depth": 128,
+    "bytes": 641,
+    "witness": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "6e1860a74014615421acd7602c2c33c0626dc942a470769d9aebc5ecfa87c0c2",
+      "steps": 129,
+      "fuel_remaining": 99871,
+      "result": 1
+    },
+    "followup": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "fdf270b0c2143a8a6d76cd3ba2ee6b39d3b60e1ad03ab41eb24ad97e90acb596",
+      "steps": 3,
+      "fuel_remaining": 97,
+      "result": 3
+    }
+  },
+  {
+    "depth": 1024,
+    "bytes": 5121,
+    "witness": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "66b7327b531b2afde10e89b4ff15e77359c44c7d0933d9d9390f1f4d37d627f9",
+      "steps": 1025,
+      "fuel_remaining": 98975,
+      "result": 1
+    },
+    "followup": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "fdf270b0c2143a8a6d76cd3ba2ee6b39d3b60e1ad03ab41eb24ad97e90acb596",
+      "steps": 3,
+      "fuel_remaining": 97,
+      "result": 3
+    }
+  },
+  {
+    "depth": 4096,
+    "bytes": 20481,
+    "witness": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "691989d70818f67643dd394cb3482e0a5e51b0f2fa899dfae519a38bbb2c2457",
+      "steps": 4097,
+      "fuel_remaining": 95903,
+      "result": 1
+    },
+    "followup": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "fdf270b0c2143a8a6d76cd3ba2ee6b39d3b60e1ad03ab41eb24ad97e90acb596",
+      "steps": 3,
+      "fuel_remaining": 97,
+      "result": 3
+    }
+  },
+  {
+    "depth": 8192,
+    "bytes": 40961,
+    "witness": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "9ee846c844982351f036d52dd9493b0c4a11ecaa433fa43bab4dc2deb113426e",
+      "steps": 8193,
+      "fuel_remaining": 91807,
+      "result": 1
+    },
+    "followup": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "fdf270b0c2143a8a6d76cd3ba2ee6b39d3b60e1ad03ab41eb24ad97e90acb596",
+      "steps": 3,
+      "fuel_remaining": 97,
+      "result": 3
+    }
+  },
+  {
+    "depth": 12000,
+    "bytes": 60001,
+    "witness": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "d5b56a4868b418f512d166e16847fee246c0494c64c70b583dc7ff4cf0d4d95a",
+      "steps": 12001,
+      "fuel_remaining": 87999,
+      "result": 1
+    },
+    "followup": {
+      "schema": "bonfyre.helix-witness.v1",
+      "state": "passed",
+      "term_sha256": "fdf270b0c2143a8a6d76cd3ba2ee6b39d3b60e1ad03ab41eb24ad97e90acb596",
+      "steps": 3,
+      "fuel_remaining": 97,
+      "result": 3
+    }
+  }
+]

@@ -1,0 +1,112 @@
+{
+  "schema": "bonfyre.project-fabric-live.v1",
+  "observed_at": "2026-10-17T21:36:17.727Z",
+  "services": [
+    {
+      "label": "com.bonfyre.public-oauth-mcp-legacy",
+      "previous_pid": 945,
+      "pid": 42488
+    },
+    {
+      "label": "com.bonfyre.public-oauth-mcp",
+      "previous_pid": 919,
+      "pid": 42500
+    },
+    {
+      "label": "com.bonfyre.project-mcp",
+      "previous_pid": 79957,
+      "pid": 42539
+    }
+  ],
+  "tool_count": 86,
+  "delivery_tools": [
+    "fabric_status",
+    "implementation_relay",
+    "task_status",
+    "task_cancel",
+    "recent_receipts"
+  ],
+  "admission": {
+    "paused": true,
+    "accepting_tasks": false,
+    "background_tasks_enabled": true
+  },
+  "execution": {
+    "active_tasks": [],
+    "queued_tasks": [],
+    "unreconciled": [],
+    "scope": "Executors and queue owned by this service process; stored task states are historical records."
+  },
+  "task_summary": {
+    "id": "a0cf14c75bc048f8b4d81f8a",
+    "kind": "review",
+    "title": "Review FPQ2 fallback and legacy fidelity baseline",
+    "state": "running",
+    "worktree": null,
+    "branch": null,
+    "apply_to_project": 0,
+    "created_at": 1785454106.6682398,
+    "started_at": 1785454106.682112,
+    "completed_at": null,
+    "error": "",
+    "text_truncated": 0,
+    "detail": "summary",
+    "run_states": {
+      "failed": 1,
+      "running": 1
+    },
+    "recent_runs": [
+      {
+        "id": "456eab39033543ea86f76293",
+        "agent": "claude",
+        "role": "cross-review",
+        "state": "failed",
+        "exit_code": 1,
+        "started_at": 1785454106.687358,
+        "completed_at": 1785454112.9239612,
+        "duration_ms": 6236
+      },
+      {
+        "id": "d3bc123770f84dfca4226528",
+        "agent": "codex",
+        "role": "cross-review",
+        "state": "running",
+        "exit_code": null,
+        "started_at": 1785454106.687111,
+        "completed_at": null,
+        "duration_ms": null
+      }
+    ],
+    "receipt_count": 0,
+    "recent_receipts": [],
+    "next_read": "Use task_status with detail=full for review findings, patch and apply results.",
+    "execution": {
+      "owned_by_this_process": false,
+      "queue_position": null,
+      "reconciliation_required": true
+    }
+  },
+  "task_summary_bytes": 958,
+  "configuration_unchanged": true,
+  "controls_unchanged": true,
+  "durable_tables_unchanged": true,
+  "receipts_verified": true,
+  "source_hashes": {
+    "project_fabric.mjs": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+    "project_node.mjs": "d08fce66da2ef0a5760af9634395c19594cf4394b868739e368f8c964bff31e9",
+    "project_owner.mjs": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+    "project_catalog.json": "d3ff5672b82bf99083c02e9cd4602c27a12d8c4b81450073c6bda519d44d0472",
+    "project_reads.mjs": "12f8d6e36da143acf091a91119cef26ef60b973a636df337f00bba3f96a98346",
+    "project_native.mjs": "a0ef83fa8be494b918fa9d8d54ca4bee57cccc3cfdf1b5146f6aa2d1da9f7a32",
+    "project_operator.mjs": "df837c087a1187687b70715f7efe17df6ca8570ce2dd86361fe79214627e03f1",
+    "project_runtime.mjs": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede",
+    "owned_mcp_client.mjs": "bbf69490f47abe51337ce1cd19c2c8e1960bda378cc8ede2b234efe209f6211e",
+    "http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71",
+    "fabric_catalog.json": "bf348103b7a5837ee70fc9a9d487f8daf8d0076bb6672d5d40918b54d798a5b5",
+    "project_v6.mjs": "695e3de4bb644a7f549c0c8819090eccc718f0a72b9f2bf46854ee756abb593b",
+    "project_spines.mjs": "0e80e6ca9af1d8a06aac8708dd271568427065a23e70f6bb532ff23f97581f83",
+    "bonfyre_oauth_gateway.mjs": "b1777aedadca0ec7c43583091d8b75528ee80268127eddbd527df4eeb82f406a"
+  },
+  "live_submissions": 0,
+  "scope": "Authenticated local Project -> Fabric reads. Broker remains paused; no provider or task dispatched. ChatGPT catalogue refresh remains separate."
+}

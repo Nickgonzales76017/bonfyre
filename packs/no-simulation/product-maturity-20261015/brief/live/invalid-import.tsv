@@ -1,0 +1,2 @@
+title	subject	source	assertion
+Unsafe source	fixture	javascript:alert(1)	Invalid fixture

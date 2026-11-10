@@ -1,0 +1,28 @@
+{
+  "source": "cmd/BonfyreOutreach/src/main.c",
+  "source_sha256": "3423e6e62350a93751c7c4e5bb07cdf27de1e6cb9607989929212a5bacd7084f",
+  "verified": {
+    "stock_template_unpriced": true,
+    "live_report_explicitly_unverified": true
+  },
+  "installed": [
+    {
+      "id": "managed",
+      "path": "/Users/nickgonzales/.bonfyre/bin/bonfyre-outreach",
+      "original_sha256": "31c0baa4e609bb08173eeeadf64a149f4d63c3662d3af370bc48363d64b55b98",
+      "current_sha256": "88de865b6117adc50e57b6b1c798a36716f37b309e245ccc206da17e8cc7dc12",
+      "backup_path": "/Users/nickgonzales/.bonfyre/backups/outreach-safety-20261009/managed.preimage"
+    },
+    {
+      "id": "local-bin",
+      "path": "/Users/nickgonzales/.local/bin/bonfyre-outreach",
+      "original_sha256": "31c0baa4e609bb08173eeeadf64a149f4d63c3662d3af370bc48363d64b55b98",
+      "current_sha256": "88de865b6117adc50e57b6b1c798a36716f37b309e245ccc206da17e8cc7dc12",
+      "backup_path": "/Users/nickgonzales/.bonfyre/backups/outreach-safety-20261009/local-bin.preimage"
+    }
+  ],
+  "live_send_rows_changed": 0,
+  "external_sends": 0,
+  "realized_revenue": 0,
+  "qualification": "Recorded rows remain historical; this is not a Gmail receipt reconciliation."
+}

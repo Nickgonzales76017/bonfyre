@@ -1,0 +1,9 @@
+file_name,shipment_id,document_type,date_text,body_id
+IMG_4821.jpg,DEMO-1001,cargo-photo,2026-10-01,fixture-body-A
+IMG_4821-copy.jpg,DEMO-1001,cargo-photo,2026-10-01,fixture-body-A
+scan_001.pdf,DEMO-1001,delivery-proof,2026-10-01,fixture-body-B
+SCAN002.pdf,DEMO-1002,shipping-label,2026-10-02,fixture-body-C
+phone_294.jpg,DEMO-1002,cargo-photo,2026-10-02,fixture-body-D
+unknown.pdf,DEMO-9999,delivery-proof,2026-10-03,fixture-body-E
+label_unclear.pdf,DEMO-1003,shipping-label,not-readable,fixture-body-F
+IMG_992.jpg,DEMO-1003,cargo-photo,2026-10-03,fixture-body-G

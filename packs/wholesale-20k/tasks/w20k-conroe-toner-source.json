@@ -1,0 +1,33 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-conroe-toner-source",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "conroe-toner",
+  "project_ref": "wholesale:conroe-toner-20261008",
+  "title": "Toner - Canon 054",
+  "location": "Conroe/The Woodlands, TX",
+  "phase": "source",
+  "role_requested": "sourcing coordinator",
+  "desired_result": "Seller-confirmed current lot availability and all-in ask, representative family-label photos/counts, operating/storage condition, transfer authority and pickup access. Use supported public reply or direct business channel; do not bypass CAPTCHA or promise purchase.",
+  "disclosure_allowlist": [
+    "lot identity",
+    "source reference",
+    "group counts",
+    "verification checklist"
+  ],
+  "disclosure_exclusions": [
+    "other buyers",
+    "other suppliers",
+    "target contribution",
+    "purchase ceilings"
+  ],
+  "acceptance": "Retain source message or call note attributed to the speaker; distinguish confirmed facts and unanswered items.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-toner/foreign/receipts/classified-7109dc4623dd4c742f24-7109dc4623dd-d24fd95b57fa.json",
+  "next_action": "price only four sealed original Canon boxes"
+}

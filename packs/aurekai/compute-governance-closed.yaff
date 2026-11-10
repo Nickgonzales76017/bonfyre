@@ -1,0 +1,118 @@
+pack compute-governance-closed
+generation control-1
+provenance closing the three gaps called out 2026-08-27 -- Claude unmetered, commons coverage incomplete, spend governed by an env var
+authority measured
+note Continues compute-financial-metabolism. Three demands, three closures, and the largest single finding in the session: actual compute spend is roughly nineteen times the declared budget, and nothing was watching.
+
+# ---------------------------------------------------------------------------
+# 1. CLAUDE METERED -- and it is the whole bill
+# ---------------------------------------------------------------------------
+
+upgrade upg:claude-in-the-ledger
+  status LANDED
+  verification MEASURED
+  claim Claude usage is now metered into the same financial membrane as OpenAI.
+  receipts 241 Claude Code session transcripts under ~/.claude/projects, 22,253 assistant messages carrying a usage block per message
+  scale claude-sonnet-5 5,290,720,872 cache reads; claude-opus-5 1,739,687,925; claude-opus-4-8 1,606,416,885
+  totals fresh input 88,521; cache writes 93,464,252; cache reads 8,636,825,682; output 19,633,885
+  priced $5,748.75 at published rates, against OpenAI's $18.85 -- Claude is 99.7% of measured compute spend
+  basis billed, via rung 2 (published book by exact model id)
+  caveat claude-opus-4-8 resolved to anthropic/claude-opus-4 by family match, so that line is approximate
+
+claim clm:anthropic-admin-key-is-not-an-admin-key
+  status STANDING
+  verification REPRODUCED
+  claim The ANTHROPIC_AI_ADMIN_API_KEY added to provider.refs.env cannot reach org endpoints.
+  evidence prefix is sk-ant-api03-, which is a standard API key; Anthropic Admin keys are sk-ant-admin01-
+  evidence /v1/organizations/cost_report, /usage_report/messages, /workspaces, /api_keys and /users all return 403 permission_error
+  consequence Claude stays at cascade rung 2 (published book) rather than rung 1 (derived from billing), so its $5,748.75 is list-rate and cannot reflect contract terms
+  action_required an Admin key minted by an org Owner under Console -> Admin keys would promote Claude to rung 1, the same way OPEN_AI_ADMIN_API_KEY did for OpenAI
+  note the cascade degraded correctly and labelled the basis it earned rather than guessing
+
+claim clm:cache-is-87-percent-of-avoided-cost
+  status STANDING
+  verification MEASURED
+  claim Prompt caching is doing almost all of the token-cost work, and its value is now quantified on both providers.
+  anthropic read:write ratio 92.4:1; caching avoided $38,890.29 of an otherwise $44,519.50 bill -- 87% avoided
+  openai 58.2% of input served cached; caching avoided $7.4721 of an otherwise $26.85 bill -- 39% avoided
+  asymmetry Anthropic cache WRITES cost more than fresh input while READS cost far less, so the workload is only cache-positive because reads outnumber writes 92:1; that ratio is measured here, not assumed
+  consequence cache hit rate is the highest-leverage token lever in the estate, and it is now a billed quantity rather than a belief
+
+# ---------------------------------------------------------------------------
+# 2. COMMONS COVERAGE CLOSED COMPLETELY
+# ---------------------------------------------------------------------------
+
+upgrade upg:coverage-closed
+  status LANDED
+  verification MEASURED
+  before 112 profiles; 49% of the map's own hook answer key unreachable
+  after 176 profiles, 6 aliases, 0 unauthored specialties, 0% of the answer key unreachable
+  method 65 names already present; 66 new profiles created with authored specialty; 6 recorded as aliases against existing partner_ids so no duplicate identity was created
+  authored specialty text for the 66 is authored here rather than extracted, and every observation records which, so a later reader can tell knowledge from transcription
+  proof the token-reduction query that previously failed now answers correctly
+
+claim clm:token-query-now-answerable
+  status STANDING
+  verification MEASURED
+  before latent query for token reduction returned Weights & Biases, DVC, JSON Schema, ArcticDB, MLflow -- lifecycle and billing profiles, because every real method was missing
+  after returns caveman, llama.cpp/GGUF, GigaToken, BitNet, rtk, ggml -- output compression, local inference, context coordinates, ternary quantization, CLI output filtering, tensor kernels
+  consequence the commons can now answer the question it exists to answer; the coverage gap was not cosmetic
+
+defect def:substring-aliasing-corrupts-identity
+  status FIXED
+  verification REPRODUCED
+  claim Loose substring matching produced four wrong partner identities before it was caught.
+  wrong quickfix -> QUIC (a FIX session protocol engine mapped onto a transport protocol)
+  wrong oracle_oci -> OCI (Oracle Cloud Infrastructure mapped onto Open Container Initiative)
+  wrong DSSE/SARIF/VEX/OpenTelemetry -> Tel
+  wrong github_discovery -> Git
+  fix a name with authored specialty is a DISTINCT method and is never aliased; otherwise suffix-stripped equality only
+  note this is the third time in this session that substring matching silently corrupted a result set; the earlier two were "Git" swallowing "GitHub discovery" in the hook answer key, and the same pattern in name resolution. Substring matching on identity is not safe anywhere in this estate.
+
+# ---------------------------------------------------------------------------
+# 3. SPEND GOVERNANCE -- the env var is superseded
+# ---------------------------------------------------------------------------
+
+claim clm:env-budget-was-never-a-control
+  status SUPERSEDED
+  verification REPRODUCED
+  finding BONFYRE_RESOURCE_MAX_DAILY_SPEND_USD is declared twice with different values (25 and 75); shell sourcing is last-wins and silent
+  finding no control-plane module has ever read it; it is a number in a file
+  replacement the mature mechanism already existed and had simply never been wired to compute
+
+upgrade upg:funding-routes-replace-the-constant
+  status LANDED
+  verification MEASURED
+  organ financial_metabolism.record_funding_route / choose_funding
+  property a funding route carries a depleting REMAINING balance and an authority_ref; choose_funding refuses an amount no route can absorb
+  routes route:compute/anthropic $300, route:compute/openai $100, route:compute/experimental $25, all under @bonfyre/authority/operator
+
+upgrade upg:admission-control-for-spend
+  status LANDED
+  verification MEASURED
+  organ resource_admission.decide, written for disk after Run 6 died of ENOSPC
+  why_it_transfers the failure it was built for is exactly the concurrent-spender failure: five planes each observing the same headroom and all being admitted
+  demonstrated ai-leads $40 ADMIT, ai-loss $40 ADMIT, rubicon $40 ADMIT, experimental $200 REJECT (exceeds single-grant cap)
+  property outstanding grants of $120 are subtracted from what the next caller may see
+  units micro-USD so the integer budget arithmetic stays exact
+
+upgrade upg:commitment-with-expiry
+  status LANDED
+  verification MEASURED
+  organ economic_graphs.record_commitment
+  recorded commit:compute/2026-08, committer @bonfyre/operator, beneficiary program K, expires 2026-09-26, authority @bonfyre/authority/operator
+
+# ---------------------------------------------------------------------------
+# THE FINDING THAT MATTERS MOST
+# ---------------------------------------------------------------------------
+
+claim clm:spend-exceeds-budget-by-nineteen-times
+  status UNRESOLVED
+  verification MEASURED
+  claim Measured compute spend is roughly nineteen times the declared budget, and nothing was watching.
+  evidence measured Claude spend $5,748.75; declared burst budget $300; declared daily cap 25 or 75
+  evidence choose_funding(USD, 5748.75) returns NO ROUTE -- the spend would be REFUSED by the mechanism that now exists
+  evidence the $18.85 OpenAI spend funds fine; the entire exposure is Claude
+  qualifier the $5,748.75 is priced at published list rates over the full retained transcript history, not a billing-period invoice, and Claude Code subscription terms may mean the cash cost differs; the Admin-key gap is what prevents settling that
+  consequence either the budget is wrong by an order of magnitude or the spend is, and until an Anthropic Admin key resolves rung 1 the ledger cannot say which
+  action_required mint an Anthropic Admin key, then reconcile the ledger against an actual invoice

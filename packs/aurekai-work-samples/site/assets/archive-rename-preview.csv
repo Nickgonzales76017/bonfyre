@@ -1,0 +1,9 @@
+file_name,shipment_id,document_type,date_text,body_id,origin,destination,disposition,proposed_name
+IMG_4821-copy.jpg,DEMO-1001,cargo-photo,2026-10-01,fixture-body-A,"Dallas, TX","Tulsa, OK",ready,DEMO-1001_2026-10-01_cargo-photo_34a82763.jpg
+IMG_4821.jpg,DEMO-1001,cargo-photo,2026-10-01,fixture-body-A,"Dallas, TX","Tulsa, OK",duplicate_content,DEMO-1001_2026-10-01_cargo-photo_845d7586.jpg
+scan_001.pdf,DEMO-1001,delivery-proof,2026-10-01,fixture-body-B,"Dallas, TX","Tulsa, OK",ready,DEMO-1001_2026-10-01_delivery-proof_30afcc6d.pdf
+SCAN002.pdf,DEMO-1002,shipping-label,2026-10-02,fixture-body-C,"Fort Worth, TX","Austin, TX",ready,DEMO-1002_2026-10-02_shipping-label_a47c8ad2.pdf
+phone_294.jpg,DEMO-1002,cargo-photo,2026-10-02,fixture-body-D,"Fort Worth, TX","Austin, TX",ready,DEMO-1002_2026-10-02_cargo-photo_ad851dbc.jpg
+IMG_992.jpg,DEMO-1003,cargo-photo,2026-10-03,fixture-body-G,"Dallas, TX","Houston, TX",ready,DEMO-1003_2026-10-03_cargo-photo_78be8216.jpg
+label_unclear.pdf,DEMO-1003,shipping-label,not-readable,fixture-body-F,"Dallas, TX","Houston, TX",date_needs_review,
+unknown.pdf,DEMO-9999,delivery-proof,2026-10-03,fixture-body-E,,,unmatched_shipment,

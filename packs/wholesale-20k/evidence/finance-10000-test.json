@@ -1,0 +1,23 @@
+{
+  "exit": 0,
+  "elapsed_ms": 800.6280419999999,
+  "witness": [
+    {
+      "witness": "zero_close_scale",
+      "opportunities": 10000,
+      "import_ms": 212.185542,
+      "requirements_and_closure_ms": 220.14749999999998,
+      "rank_and_projection_ms": 90.84400000000005,
+      "total_ms": 523.177042,
+      "finance_db_bytes": 7348224,
+      "queue_batch_bytes": 990000,
+      "outreach_effects": 0,
+      "payment_effects": 0
+    }
+  ],
+  "synthetic": true,
+  "actual_commercial_lots": 9,
+  "external_dispatch": 0,
+  "production_finance_modified_by_tests": false,
+  "tail": "bun test v1.3.13 (bf2e2cec)\n{\"witness\":\"zero_close_scale\",\"opportunities\":10000,\"import_ms\":212.185542,\"requirements_and_closure_ms\":220.14749999999998,\"rank_and_projection_ms\":90.84400000000005,\"total_ms\":523.177042,\"finance_db_bytes\":7348224,\"queue_batch_bytes\":990000,\"outreach_effects\":0,\"payment_effects\":0}\n\ncmd/BonfyreFinance/tests/zero_close.test.mjs:\n(pass) economic closure remains idempotent and cannot jump the human line [165.66ms]\n\ncmd/BonfyreFinance/tests/zero_close_scale.test.mjs:\n(pass) 100k opportunities close capability requirements and project pre-authority work without effects [574.27ms]\n\n 2 pass\n 0 fail\n 54 expect() calls\nRan 2 tests across 2 files. [784.00ms]\n"
+}

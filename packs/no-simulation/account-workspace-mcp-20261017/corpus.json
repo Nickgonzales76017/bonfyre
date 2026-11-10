@@ -1,0 +1,15 @@
+{
+  "digest": "454b303acbb15fcfab12f9747bfa8a64cd99db3d6378e35a1e084cb04f7ed5ca",
+  "previous": "releases/ce210b3c80c72dfe3e33867e75ad5f74af5e6af04a6a1b49bd13cd899108b116",
+  "files": {
+    "all_bindings.tsv": "a9261c3b0631efebc6d025af6e0b4d8e0828e21fc0b44c9acc779621fead3149",
+    "app_bindings.jsonl": "60576ab2c00cc317f6350c05864b4da8b862fd97229329ad1042fb07e525a23b",
+    "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+    "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+    "manifest.json": "9d8e1d5a509a033534d3bf79ae3e8aae7cb00684f31749cd099ebe403e7a8397",
+    "owner_graph.json": "42ed7372fd31e2909baa002e6c3d71d53e1c52a3bae5e85db0edc3a9fa6530cd",
+    "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+    "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+  },
+  "validation": "Atlas valid; corpus target passed."
+}

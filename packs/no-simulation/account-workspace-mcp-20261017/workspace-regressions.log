@@ -1,0 +1,33 @@
+PASS native configuration opens the actual AG Grid and product editor release
+PASS private editor responses are never public-cache entries
+PASS native page projection does not point at the old public editor root
+PASS anonymous editor navigation returns to native login
+PASS login continuation retains the exact saved plan and editor mode
+PASS the native sign-in form retains the specialized editor destination
+PASS anonymous record reads are refused
+PASS another account cannot open the organization editor
+PASS a permitted organization writer saves through the native CMS aperture
+PASS read-only access cannot become a draft write
+PASS a stale browser cannot overwrite another member’s edit
+PASS the separately installed next product reads the same exact plan identity
+PASS model bytes survive chunking, new client state and a different product
+PASS identical model bodies are retained once in the same destination
+PASS a personal installation does not inherit organization drafts
+PASS the recorded household steward receives a real separate editor
+PASS organization membership does not grant household access
+PASS the existing household appears in the native destination picker
+PASS another web origin cannot write into this workspace
+PASS a wrong record content type is refused
+PASS duplicate query fields cannot select a different operation
+PASS record writes cannot be issued as GET requests
+PASS unrelated personal records cannot enter the catalogue aperture
+PASS larger workspace packets do not widen unrelated form limits
+PASS revoked organization access is checked on the next request
+PASS deactivation closes its editor while the next active product keeps its plan
+PASS reactivation preserves existing remote drafts
+PASS a changed source invalidates the installed editor before use
+PASS private bindings remain excluded from public site-program publication
+PASS connected publication replays without duplicating native definitions
+PASS the actual portfolio publication opens both connected products over one destination
+PASS connected publication leaves existing workflow-only definitions without backend demands
+WORKSPACE_HTTP_PASS	32

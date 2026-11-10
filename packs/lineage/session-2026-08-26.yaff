@@ -1,0 +1,154 @@
+pack lineage-session-2026-08-26
+generation control-1
+provenance claims made, corrected and measured during the Upper90 materialization pass, 2026-08-26
+authority measured
+note Every claim this session produced, with its verification state. Two were retracted after direct checking. Both had verification state ASSERTED_BY_INFERENCE at the time they were made, which is the predictive signal.
+
+claim clm:registry-split
+  status STANDING
+  verification VERIFIED_ON_DISK
+  origin 2026-08-26 recovery check
+  claim The mature machine and the live atlas are two separate registries and are not connected.
+  evidence the five scaling substrates are named nowhere under architecture/
+  evidence they are named, with a validator, under .bonfyre/run8/canonical/estate/.../TOOLS/validate_scaling_substrate.py
+  evidence and under .bonfyre/run8/canonical/estate/.../90_REFERENCE/V8_1_SCALING_CORRECTION_VALIDATION.md
+  evidence the live atlas holds 223 architectures and none of them is a scaling substrate
+  consequence everything written into architecture/ this session extended a registry that does not contain the machine's own scaling layer
+  blast_radius high; it means atlas completeness is not machine completeness
+  action the substrates are DORMANT in the atlas and VERIFIED_ON_DISK in the canonical estate; the gap is a registry gap, not an absent design
+
+claim clm:p0-p7-physical-density
+  status STANDING
+  verification VERIFIED_ON_DISK
+  origin earlier compression-company work, recovered 2026-08-26
+  claim The physical density roots are real measured work, not philosophy.
+  evidence docs/benchmarks.md records the pipeline latency table including the 76 ms sequential baseline
+  evidence scripts/vecf_e8.py exists
+  spot_checked pipeline latency only; the embedding, tag inference and VECF size figures were not independently re-run
+  note partial verification is recorded as partial
+
+claim clm:five-substrates-required
+  status DORMANT
+  verification VERIFIED_ON_DISK
+  origin V8.1 canonical estate
+  claim capability_hypergraph_planning, executable_closure_hot_index, dialect_trait_interface_pass, incremental_semantic_derivation and multidimensional_peer_reconciliation are the required machine-scaling substrates.
+  evidence a dedicated validator exists in the canonical estate
+  implementation_state unknown from this session
+  atlas_state absent
+  note DORMANT means designed, unimplemented in the live registry, and not contradicted. Absence from the atlas is not evidence against it.
+
+claim clm:jrss-attribution-gap
+  status RETRACTED
+  verification CONTRADICTED
+  origin 2026-08-25 census
+  original_verification ASSERTED_BY_INFERENCE
+  claimed 1209 of 1390 audited change records are unattributed, blocking work routing
+  checked direct read of sonar-audit/change_attribution.csv on 2026-08-26
+  found all 1208 rows touch 4 files, carry zero sonar rules, and are overwhelmingly line additions to the audit's own report documents
+  becomes 182 real code changes, all 182 attributed; provenance is complete
+  downstream ProvenanceRepair removed as JRSS work; retained only as a candidate for future messy estates
+  failure_mode a derived metric was read as a proven fact
+
+claim clm:paymentsproc-charges-cards
+  status RETRACTED
+  verification CONTRADICTED
+  origin 2026-08-26 schedule census
+  original_verification ASSERTED_BY_INFERENCE
+  claimed the payment cron performs card authorization and capture
+  checked direct read of paymentsProc.js
+  found it applies payments already recorded in payments_journal to open invoices; no external effect
+  also_found its trigger is a boot-started setInterval, not the background_jobs scheduler as claimed
+  becomes card capture is a separate unmeasured effect family in the AR routes
+  failure_mode a filename and a job name were read as an effect class
+
+claim clm:payment-allocation-defects
+  status STANDING
+  verification VERIFIED_ON_DISK
+  origin 2026-08-26 direct source read
+  claim Four defects in payment application; one reachable in production today.
+  evidence df:payment-double-allocation, df:payment-carryover-loss, df:payment-partial-crash, df:payment-status-error-swallowed
+  reachability confirmed through the bootstrapper's unconditional spawn path
+  blast_radius client-facing financial correctness
+
+claim clm:dictionary-first-compression
+  status REVISED
+  verification VERIFIED_BY_MEASUREMENT
+  origin 2026-08-26 compression ledger targets
+  original_claim dictionary coding is the obvious first optimization for the Sonar finding estate
+  measurement msr:sonar-ingest-baseline
+  found column-wise dictionary coding yields 1.6x; generic byte compression at level 9 yields 10.7x on the same source
+  becomes the correct factoring is a rule basis carrying repeated rule description and remediation strategy, not column-wise dictionary coding
+  caveat generic compression measured with zlib level 9; the actual cold-storage codec was not measured
+  caveat this result is specific to this subject family and says nothing about the Personal food or housing estates
+  doctrine_confirmed the cascade invariant that stage order is measured per subject family
+
+claim clm:copyreceipt-baseline
+  status STANDING
+  verification VERIFIED_BY_MEASUREMENT
+  measurement msr:sonar-ingest-baseline
+  claim the current Sonar ingest copies 4.2 MB and holds 7.2 MB resident to produce 1.8 KB of consumed information
+  universe recorded in full on the measurement
+  caveat useful_output_bytes is defined by what this session consumed; a different demand moves the ratio
+
+claim clm:node-gate-implemented
+  status STANDING
+  verification VERIFIED_ON_DISK
+  claim node-syntax and php-lint profiles exist in the project carrier
+  implementation_state code landed; the running server has not reloaded it
+  proof_state node --check exercised against a real JRSS ESM file, exit 0
+  gap the php body is absent on this host, so php-lint is r1 yes and r2 no
+  gap the gate ran under Node 24.20 while the client specifies Node 22; the runtime version is a universe property of the gate
+
+claim clm:jrss-role-products-observed
+  status STANDING
+  verification VERIFIED_ON_DISK
+  claim only the internal administrator product is observed in the running application
+  detail stable administrator, barn employee, stable owner and veterinarian products are declared targets, not current surfaces
+  note recorded this way from the start rather than corrected later
+
+claim clm:apppack-bodies-exist
+  status STANDING
+  verification VERIFIED_ON_DISK
+  claim 502 compiled doctypes and 506 routes exist and are marked installed and active
+  gap no host serves them
+  localization ResourceActivation and ServiceAvailability, not an unbuilt compiler
+  supersedes clm:erpnext-migration-framing
+
+claim clm:erpnext-migration-framing
+  status RETRACTED
+  verification CONTRADICTED
+  origin 2026-08-25 first assessment
+  claimed ERPNext is not a migration path, therefore leave it
+  failure_mode a replacement framing was constructed and then rejected, discarding the harvest path with it
+  becomes compiled functionality is callable machinery; migration was never the proposition
+
+claim clm:allocation-run
+  status PROPOSED
+  verification ASSERTED_BY_INFERENCE
+  origin generated by evidence from one inspection
+  promotion_state CANDIDATE
+  blocking_requirement independent recurrence in the AI Loss recursive split mechanics
+  note explicitly not promoted toward a shared kernel on one domain
+
+claim clm:upper90-first-vertical
+  status STANDING
+  verification VERIFIED_ON_DISK
+  claim Upper90 owns the Azure and Sonar relationships in fact
+  evidence org u90tech, pool U90OnPrem, project key u90tech_JRSSv1
+  gap the Intuit relationship remains asserted with zero evidence
+
+claim clm:upper90-is-not-the-machine
+  status STANDING
+  verification VERIFIED_ON_DISK
+  origin 2026-08-26 no-prune recovery
+  claim The Upper90 materialization is one proving workload, not the architecture.
+  evidence the atlas gained 15 institutional and optimization entries this session while the five scaling substrates, Contract Projection Kernel v2, SemanticProgramIR, ExecutionFrame and the semantic query optimizer gained none
+  consequence recent work is broad at the institutional layer and absent at the execution layer
+  invariant no local success may silently shrink the whole-machine plan
+
+failure_mode_summary
+  observed_this_session 3 retractions
+  common_property every retracted claim was ASSERTED_BY_INFERENCE when made
+  common_property every one was overturned by reading the primary artifact directly
+  predictive_rule an inference from a filename, a job name, a derived count or a framing is the highest-risk claim class
+  standing_rule prefer one direct read of the primary artifact over any amount of adjacent evidence

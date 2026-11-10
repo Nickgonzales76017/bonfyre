@@ -1,0 +1,22 @@
+{
+  "origin": "http://127.0.0.1:60396",
+  "checks": [
+    "deep link opens the requested authorized studio",
+    "request inbox excludes the other studio",
+    "assigned-to-me view has an honest empty state",
+    "native assignment appears in the personal queue",
+    "account screen shows both studios and distinct permissions",
+    "account route survives a full reload",
+    "workspace switch retains the current task view",
+    "read-only studio hides mutation and administration actions",
+    "browser Back restores the prior task view",
+    "access change requires review before native mutation",
+    "confirmed team change persists in native Auth",
+    "team view fits 1440px",
+    "team view fits 390px",
+    "new member can open the granted workspace after signing in",
+    "revocation removes private data from an existing signed-in session",
+    "no browser runtime exceptions"
+  ],
+  "status": "passed"
+}

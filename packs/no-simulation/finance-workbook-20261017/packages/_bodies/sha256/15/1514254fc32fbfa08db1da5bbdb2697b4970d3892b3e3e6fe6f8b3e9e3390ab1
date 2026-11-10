@@ -1,0 +1,97 @@
+import {encode,decode} from './workspace-msgpack.mjs';
+export const blobChunk = 256 * 1024, blobLimit = 24 * 1024 * 1024;
+const text = new TextEncoder(), hashPattern = /^[a-f0-9]{64}$/;
+export const digest = async bytes => [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const property = (object,key,value) => Object.defineProperty(object,key,{value,enumerable:true,writable:true,configurable:true});
+// File bodies are immutable content references, not base64 fields in a draft.
+export function prepareRecord(value) {
+  const blobs=[],refs=[],kinds=[];let nodes=0;
+  function copy(v,path){
+    if(path.length>30||++nodes>45000)throw Error('This draft is too deeply nested.');
+    if(v instanceof ArrayBuffer){
+      if(v.byteLength>blobLimit||blobs.length>=64)throw Error('Choose recordings within the existing 24 MiB asset limit.');
+      blobs.push(new Blob([v]));refs.push([path,'0'.repeat(64),v.byteLength,'',null,null]);kinds.push(1);return null;
+    }
+    if(v instanceof Blob){
+      kinds.push(0);
+      if(v.size>blobLimit||blobs.length>=64)throw Error('Choose model files within the existing 24 MiB asset limit.');
+      const file=typeof File!=='undefined'&&v instanceof File,name=file?v.name:null,modified=file?v.lastModified:null;
+      if(text.encode(v.type).length>255||name!==null&&text.encode(name).length>1024||modified!==null&&(!Number.isSafeInteger(modified)||modified<0))throw Error('Unsupported file metadata.');
+      blobs.push(v);refs.push([path,'0'.repeat(64),v.size,v.type,name,modified]);return null;
+    }
+    if(Array.isArray(v))return v.map((x,i)=>copy(x,[...path,i]));
+    if(v&&typeof v==='object'&&!(v instanceof Uint8Array)){
+      if(![Object.prototype,null].includes(Object.getPrototypeOf(v)))throw Error('This draft contains an unsupported object.');
+      const result={},descriptors=Object.getOwnPropertyDescriptors(v);
+      if(Reflect.ownKeys(v).length!==Object.keys(v).length)throw Error('This draft contains unsupported properties.');
+      for(const key of Object.keys(v)){if(!Object.hasOwn(descriptors[key],'value'))throw Error('This draft contains an unsupported property.');property(result,key,copy(descriptors[key].value,[...path,key]));}
+      return result;
+    }
+    return v instanceof Uint8Array?v.slice():v;
+  }
+  const plain=copy(value,[]),version=kinds.includes(1)?3:2;
+  if(version===3)refs.forEach((ref,i)=>ref.push(kinds[i]));
+  const probe=encode([version,plain,refs],{maxBytes:256*1024});
+  return {bytes:probe.length,async encodeWith(putBlob){
+    for(let i=0;i<blobs.length;i++)refs[i][1]=await putBlob(blobs[i]);
+    return encode([version,plain,refs],{maxBytes:256*1024});
+  }};
+}
+export async function restoreRecord(bytes,getBlob){
+  const packet=decode(bytes,{maxBytes:256*1024});
+  if(!Array.isArray(packet)||packet.length!==3||![2,3].includes(packet[0])||!Array.isArray(packet[2])||packet[2].length>64)throw Error('The saved draft has an unsupported value profile.');
+  let value=packet[1];const seen=new Set();
+  for(const ref of packet[2]){
+    if(!Array.isArray(ref)||ref.length!==(packet[0]===3?7:6))throw Error('Invalid saved file reference.');
+    const [path,hash,size,mime,name,modified,kind=0]=ref;
+    if(![0,1].includes(kind)||kind===1&&(mime!==''||name!==null||modified!==null))throw Error('Invalid saved binary value type.');
+    if(!Array.isArray(path)||path.length>30||!hashPattern.test(hash)||!Number.isSafeInteger(size)||size<0||size>blobLimit||typeof mime!=='string'||text.encode(mime).length>255||name!==null&&(typeof name!=='string'||text.encode(name).length>1024)||name===null&&modified!==null||name!==null&&(!Number.isSafeInteger(modified)||modified<0))throw Error('Invalid saved file metadata.');
+    const key=Array.from(encode(path)).join(',');if(seen.has(key))throw Error('Duplicate saved file reference.');seen.add(key);
+    let parent=null,last=null,current=value;
+    for(const segment of path){
+      if(!current||typeof current!=='object'||current instanceof Uint8Array)throw Error('Invalid saved file location.');
+      if(Array.isArray(current)?!Number.isInteger(segment)||segment<0||segment>=current.length:typeof segment!=='string')throw Error('Invalid saved file location.');
+      if(!Object.hasOwn(current,segment))throw Error('The saved file location is missing.');
+      parent=current;last=segment;current=current[segment];
+    }
+    if(current!==null)throw Error('The saved file would replace another draft value.');
+    const body=await getBlob(hash,size);
+    const restored=kind===1?await new Blob([body]).arrayBuffer():name===null?new Blob([body],{type:mime}):new File([body],name,{type:mime,lastModified:modified});
+    if(parent===null)value=restored;else property(parent,last,restored);
+  }
+  return value;
+}
+export function blobTransport(exchange){
+  const uploaded=new WeakMap(),received=new Map();
+  function check(packet,hash,size,offset){
+    if(!Array.isArray(packet)||packet.length!==6||packet[0]!==1||packet[1]!==hash||packet[2]!==size||packet[3]!==offset||typeof packet[4]!=='boolean'||!(packet[5] instanceof Uint8Array))throw Error('The native file response changed identity.');
+    return packet;
+  }
+  return {
+    async put(blob){
+      if(uploaded.has(blob))return uploaded.get(blob);
+      const bytes=new Uint8Array(await blob.arrayBuffer()),hash=await digest(bytes);let complete=false;
+      for(let offset=0;offset<bytes.length||offset===0;offset+=blobChunk){
+        const packet=check(await exchange('blob-put',[1,hash,bytes.length,offset,bytes.slice(offset,offset+blobChunk)]),hash,bytes.length,offset);
+        if(packet[5].length)throw Error('Unexpected native file acknowledgement.');
+        if(packet[4]){complete=true;break;}
+      }
+      if(!complete)throw Error('The native file owner has not confirmed every chunk.');
+      uploaded.set(blob,hash);return hash;
+    },
+    async get(hash,size){
+      const key=hash+':'+size;
+      if(!received.has(key)){
+        const promise=(async()=>{const bytes=new Uint8Array(size);
+          for(let offset=0;offset<size||offset===0;offset+=blobChunk){
+            const packet=check(await exchange('blob-get',null,{prefix:hash,cursor:String(offset)}),hash,size,offset),part=packet[5];
+            if(!packet[4]||part.length!==Math.min(blobChunk,size-offset))throw Error('The saved model file is incomplete.');bytes.set(part,offset);
+          }
+          if(await digest(bytes)!==hash)throw Error('The saved model file failed its source digest check.');return new Blob([bytes]);})();
+        received.set(key,promise);promise.catch(()=>received.delete(key));
+        if(received.size>16)received.delete(received.keys().next().value);
+      }
+      return received.get(key);
+    }
+  };
+}

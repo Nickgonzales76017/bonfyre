@@ -1,0 +1,29 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [
+    "layout opens separately from the fixture catalogue",
+    "another option has its own project identity",
+    "both arrangements are saved as independent projects",
+    "comparison computes the extra rack cost",
+    "comparison carries the revised budget problem",
+    "comparison keeps source listings and unresolved supplier questions",
+    "download includes both exact plans and sources",
+    "comparison and selected plans survive reload",
+    "comparison fits 1440px",
+    "comparison fits 390px",
+    "comparison fits 320px",
+    "project search narrows saved alternatives",
+    "a new project keeps previous plans and clears prior receipt",
+    "multiple spaces remain available",
+    "opening an earlier plan restores its original arrangement",
+    "canceling a project switch preserves unsaved work",
+    "Back restores the preceding project and view",
+    "obsolete source plans are identified and excluded without deletion",
+    "the project library survives a fresh load",
+    "no browser exceptions",
+    "no remote writes or submissions"
+  ],
+  "errors": [],
+  "writes": [],
+  "status": "passed"
+}

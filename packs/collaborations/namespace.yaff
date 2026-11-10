@@ -1,0 +1,44 @@
+pack collaborations-namespace
+generation control-1
+provenance product topology separation, 2026-08-26
+authority asserted
+note Namespace only. No collaboration below is materialized and none is described as if it were. A Partner Commons method profile is not a relationship and must never be promoted into one to make this branch look populated.
+
+namespace_declaration bonfyre/collaborations
+  state DECLARED
+  populated_by none
+  detail Direct project collaborations: a live relationship with issues, pull requests, maintainers, upstream response and assigned work. A project can simultaneously be an external project, a live relationship, a source of Bonfyre work, a Partner organ, a source of methods and a consumer of Bonfyre methods, without those identities collapsing.
+
+candidate col:bernstein
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+candidate col:deepeval
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+candidate col:agentguard
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+candidate col:agent-inspect
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+candidate col:deputy
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+candidate col:chainweaver
+  state DECLARED
+  partner_commons_profile present
+  relationship_evidence none
+
+derivation_source issue state
+derivation_source pull request state
+derivation_source maintainer response
+derivation_source upstream merge outcome
+
+invariant a collaboration becomes REAL only from actual issue, pull request and maintainer evidence
+forbidden_inference a Partner Commons profile existing -> a live collaboration
+forbidden_inference a project being deep-promoted into a hook family -> a relationship with its maintainers

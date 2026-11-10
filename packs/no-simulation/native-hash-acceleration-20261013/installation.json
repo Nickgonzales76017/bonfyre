@@ -1,0 +1,26 @@
+[
+  {
+    "binary": "bonfyre-hash",
+    "old_sha256": "149edb51a33688a6ae05cdf91aefbffbc878341167bf41d133d91e0d7deb7c7b",
+    "sha256": "2ccbe99944c288c91d9cb586af453b70fe9b25a89d96a696e1b7aa4be3a76cab",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-hash-149edb51a33688a6ae05cdf91aefbffbc878341167bf41d133d91e0d7deb7c7b/bonfyre-hash"
+  },
+  {
+    "binary": "bonfyre-fabric",
+    "old_sha256": "9ac408561886f37b84cf32b0c5265028205be82b64f46c86b33e8a01b175bcc3",
+    "sha256": "ab2897cbcc320824a87c65b19eda069543ced893d2b873304230dba86eb9b2ed",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-fabric-9ac408561886f37b84cf32b0c5265028205be82b64f46c86b33e8a01b175bcc3/bonfyre-fabric"
+  },
+  {
+    "binary": "bonfyre-ingest",
+    "old_sha256": "1bbb1b15afc81dfc4ea908ec66410570015a4fd438b70e534bd641457a28537b",
+    "sha256": "d98ceba1509d966d6e800c4137d782ceada90d45b9f6bd0b28bc07d0cc5e0518",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-ingest-1bbb1b15afc81dfc4ea908ec66410570015a4fd438b70e534bd641457a28537b/bonfyre-ingest"
+  },
+  {
+    "binary": "bonfyre-compress",
+    "old_sha256": "37917708f98a3adc0ab481612777184e5fcb895f9a98ae49e9d7932913500616",
+    "sha256": "b6893519b24c8ee8a9e774b59b9cd96218051b479e81659ce4194c2e511fc96c",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-compress-37917708f98a3adc0ab481612777184e5fcb895f9a98ae49e9d7932913500616/bonfyre-compress"
+  }
+]

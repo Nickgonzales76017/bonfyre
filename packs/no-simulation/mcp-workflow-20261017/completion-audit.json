@@ -1,0 +1,108 @@
+{
+  "schema": "bonfyre.mcp-workflow-completion-audit.v1",
+  "observed_at": "2026-10-17T21:39:43.081Z",
+  "objective": "Improve the MCP workflow shown in the supplied shared chat so it requires fewer discovery, source-transfer and implementation/test/review round trips.",
+  "scope": "The shared chat is evidence of workflow bottlenecks. Its entire product and architecture backlog is not relabelled as completed by MCP changes.",
+  "previous_goal_turn": "progress: existing Fabric lifecycle connected to Project, tested through real HTTP/Git/Bun fixtures, deployed and read back with existing STOP controls intact.",
+  "requirements": [
+    {
+      "id": "inspect_shared_workflow",
+      "state": "verified_with_limits",
+      "evidence": "chat-review.json",
+      "limits": "Shared chat redacts tool arguments and results; message counts do not prove exact call counts or durations."
+    },
+    {
+      "id": "targeted_native_discovery",
+      "state": "server_verified_client_blocked",
+      "evidence": [
+        "measurement.json",
+        "completion-audit-live.json"
+      ],
+      "limits": "App still advertises native_tool_inventory with an empty input schema."
+    },
+    {
+      "id": "batch_and_reuse_source_reads",
+      "state": "server_verified_client_blocked",
+      "evidence": [
+        "completion-audit-live.json",
+        "project-fabric-tests.log"
+      ],
+      "limits": "Current app validation removes files and rejects missing path; whole-file hashes describe individual observations, not an atomic repository snapshot."
+    },
+    {
+      "id": "learn_write_constraints_before_implementation",
+      "state": "server_verified_client_blocked",
+      "evidence": "completion-audit-live.json",
+      "limits": "Current policy still requires approved manual writes for component and architecture paths. Optimization does not expand authority; app lacks path-only preview input."
+    },
+    {
+      "id": "one_delivery_submission_and_compact_progress",
+      "state": "server_and_fixture_verified_client_blocked",
+      "evidence": [
+        "project-fabric-live.json",
+        "project-fabric-source-fixture.json",
+        "project-fabric-base-fixture.json",
+        "project-fabric-tests.log"
+      ],
+      "limits": "Real HTTP/Git/Bun and guarded Project apply are exercised with injected agents. No live paid-provider mission is claimed. App exposes neither implementation_relay nor task_status."
+    },
+    {
+      "id": "current_dirty_source_in_isolation",
+      "state": "fixture_verified",
+      "evidence": [
+        "relay-source-tests.log",
+        "project-fabric-source-fixture.json"
+      ],
+      "limits": "Caller selects source coverage. Unselected files retain Git baseline; current Project write policy still applies."
+    },
+    {
+      "id": "preserve_account_and_operator_boundaries",
+      "state": "verified",
+      "evidence": [
+        "project-fabric-live.json",
+        "project-fabric-oauth-tests.log",
+        "project-fabric-regressions.log"
+      ],
+      "limits": "Broker remains paused; no automatic resume or live task dispatch."
+    },
+    {
+      "id": "user_facing_end_to_end_workflow",
+      "state": "not_achieved",
+      "evidence": "Current tool metadata and the fresh app batch validation result below",
+      "limits": "Requires updated app metadata and a new conversation to verify tool selection and arguments through ChatGPT."
+    }
+  ],
+  "client_check": {
+    "is_error": true,
+    "error_code": "INVALID_ARGUMENT",
+    "error": "Parameters failed connector schema validation: path [required]: Missing required property; path [required]: Missing required property",
+    "files_argument_removed": true,
+    "relay_tool_available": false
+  },
+  "next_action": {
+    "custom_mcp": "Open the AurekaiBonfyre connection in ChatGPT Plugins, select Refresh, confirm the changed metadata and start a new conversation.",
+    "published_plugin": "Published plugin tool definitions update through continuous review; inspect that review state if no custom-connection Refresh action is present.",
+    "installation_kind": "Not established by available metadata; installed AurekaiBonfyre was not returned by plugin directory search.",
+    "docs": [
+      "https://developers.openai.com/plugins/deploy/connect-chatgpt",
+      "https://developers.openai.com/plugins/deploy/app-review"
+    ],
+    "user_question": "Refresh confirmation or absence of Refresh requested asynchronously; not yet answered."
+  },
+  "completion": "not proven; user-facing connector path still blocks the optimized workflow",
+  "blocker_history": "The same outdated app schemas were observed before the last bridge implementation turn, after its deployment, and in this current audit. Server-side work progressed during that interval. No callable metadata-refresh or browser-control capability is exposed in this session.",
+  "effects_this_audit": "Read-only live calls and retained audit evidence; no service reload, model invocation, task submission, policy change or operator resume.",
+  "post_refresh_observation": {
+    "evidence": "app-refresh-readback.json",
+    "previous_findings": "The original client_check and blocker history above describe observations before the user refreshed the connection.",
+    "verified_through_app": [
+      "filtered tool inventory",
+      "batched source reads",
+      "conditional unchanged reads",
+      "path-only patch preflight"
+    ],
+    "remaining_limit": "New relay tool names are still absent from this conversation tool registry. Existing app operations now accept the refreshed arguments.",
+    "next_action": "Verify the newly added relay tool names in a new conversation with AurekaiBonfyre enabled; another connection refresh is not indicated by these successful calls.",
+    "effects": "Read-only calls and retained evidence; operator remains paused."
+  }
+}

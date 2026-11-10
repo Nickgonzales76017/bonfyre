@@ -1,0 +1,21 @@
+{
+  "checkedAt": "2026-10-12T14:46:23.866Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "designer opens Appearance without coaching or publishing access",
+    "appearance preview leaves the shared brand unchanged",
+    "changing a reviewed field requires another preview",
+    "applying saves the native template, logo and shared creator appearance",
+    "another studio keeps its own brand",
+    "member-specific appearance survives a studio update",
+    "member can return to the shared studio appearance",
+    "shared appearance never rewrites member training",
+    "a fresh member browser receives the published brand and logo",
+    "shared appearance fits the mobile viewport",
+    "saved shared appearance reopens offline",
+    "stale designer edits are retained and refused",
+    "unreadable colors cannot reach shared appearance",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

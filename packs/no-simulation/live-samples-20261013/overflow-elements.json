@@ -1,0 +1,317 @@
+[
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 643.9172973632812,
+    "right": 947.9172973632812,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Shipment archive",
+    "left": 643.9172973632812,
+    "right": 947.9172973632812,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Wix review\n          ",
+    "left": 962.3079223632812,
+    "right": 1266.307861328125,
+    "width": 303.99993896484375,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 962.3079223632812,
+    "right": 1266.307861328125,
+    "width": 303.99993896484375,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Wix review",
+    "left": 962.3079223632812,
+    "right": 1266.307861328125,
+    "width": 303.99993896484375,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Training app\n          ",
+    "left": 1280.698486328125,
+    "right": 1584.698486328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 1280.698486328125,
+    "right": 1584.698486328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Training app",
+    "left": 1280.698486328125,
+    "right": 1584.698486328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Document search\n          ",
+    "left": 1599.089111328125,
+    "right": 1903.089111328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 1599.089111328125,
+    "right": 1903.089111328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Document search",
+    "left": 1599.089111328125,
+    "right": 1903.089111328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Shop sites\n          ",
+    "left": 1917.479736328125,
+    "right": 2221.479736328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 1917.479736328125,
+    "right": 2221.479736328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Shop sites",
+    "left": 1917.479736328125,
+    "right": 2221.479736328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Fixture planner\n          ",
+    "left": 2235.870361328125,
+    "right": 2539.870361328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 2235.870361328125,
+    "right": 2539.870361328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Fixture planner",
+    "left": 2235.870361328125,
+    "right": 2539.870361328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Product editor\n          ",
+    "left": 2554.260986328125,
+    "right": 2858.260986328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 2554.260986328125,
+    "right": 2858.260986328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Product editor",
+    "left": 2554.260986328125,
+    "right": 2858.260986328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Shipment archive\n          ",
+    "left": 2872.651611328125,
+    "right": 3176.651611328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 2872.651611328125,
+    "right": 3176.651611328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Shipment archive",
+    "left": 2872.651611328125,
+    "right": 3176.651611328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Wix review\n          ",
+    "left": 3191.042236328125,
+    "right": 3495.042236328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 3191.042236328125,
+    "right": 3495.042236328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Wix review",
+    "left": 3191.042236328125,
+    "right": 3495.042236328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Training app\n          ",
+    "left": 3509.432861328125,
+    "right": 3813.432861328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 3509.432861328125,
+    "right": 3813.432861328125,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Training app",
+    "left": 3509.432861328125,
+    "right": 3813.432861328125,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Document search\n          ",
+    "left": 3827.823486328125,
+    "right": 4131.82373046875,
+    "width": 304.000244140625,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 3827.823486328125,
+    "right": 4131.82373046875,
+    "width": 304.000244140625,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Document search",
+    "left": 3827.823486328125,
+    "right": 4131.82373046875,
+    "width": 304.000244140625,
+    "overflow": "visible"
+  },
+  {
+    "tag": "A",
+    "cls": "hero-reel-item shrink-0 w-72 sm:w-96",
+    "text": "\n            \n            Shop sites\n          ",
+    "left": 4146.21435546875,
+    "right": 4450.21435546875,
+    "width": 304,
+    "overflow": "visible"
+  },
+  {
+    "tag": "IMG",
+    "cls": "w-full aspect-[16/10] object-cover rounded-xl border border-surface-container-high",
+    "text": "",
+    "left": 4146.21435546875,
+    "right": 4450.21435546875,
+    "width": 304,
+    "overflow": "clip"
+  },
+  {
+    "tag": "SPAN",
+    "cls": "block mt-2 text-xs font-mono uppercase tracking-wider text-on-surface-variant",
+    "text": "Shop sites",
+    "left": 4146.21435546875,
+    "right": 4450.21435546875,
+    "width": 304,
+    "overflow": "visible"
+  }
+]

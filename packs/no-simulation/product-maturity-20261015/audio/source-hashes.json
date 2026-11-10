@@ -1,0 +1,12 @@
+{
+  "components/BonfyreServiceSite/creator-import.mjs": "909628a219bca33578af32f14cea705402326382b5e7421f2bf1ee8ea60ef2b0",
+  "components/BonfyreServiceSite/creator-import-client.mjs": "3e3b1c201b62437047cc87e5188e16cea6157be31b1e41086d9d56a33e88212a",
+  "components/BonfyreServiceSite/creator-import-view.mjs": "a65b00eb7a967f8e9bda4b09ef28f243228259d65c8359c0f78debbaed8f9fa6",
+  "components/BonfyreServiceSite/creator-client.mjs": "db56392ba2661542e4dba1044e1db3c04a21a1a5885ef3a823adf34273c65658",
+  "components/BonfyreServiceSite/creator-worker.mjs": "0415aab0ad9ccacaca7cc8714c87b97df0ca6577c9f2e2d0e6baaab0a8289e12",
+  "components/BonfyreServiceSite/creator-material.mjs": "bf22039145efc46775535ad1a1e78f0d666c711ddb33e6625c1917b74833793d",
+  "components/BonfyreServiceSite/creator.css": "c94cb402d999aa89ae79b9419ea08b12274951ebfe0d40dc2d53bab361a42fab",
+  "components/BonfyreServiceSite/sections/creator.mjs": "0554a211ec2643ed5b9ed7ecd44f57e62d8fb5ca3aa433497046c9b2d5674c84",
+  "components/BonfyreServiceSite/tests/creator-import.test.mjs": "f22739721082c2e722d8c9c460b53361b246d56c2888c4bb851048c2ec2fee30",
+  "components/BonfyreServiceSite/tests/creator-import-browser.mjs": "00f3fca176c438f0e03a48bc549dc22114ad3d0422e8339abb77f53b25a6b828"
+}

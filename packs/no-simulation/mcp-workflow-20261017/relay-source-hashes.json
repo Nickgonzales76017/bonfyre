@@ -1,0 +1,10 @@
+{
+  "integrations/mcp/fabric_server.mjs": "295e0de1ca77f22451b2c87114d7fb967bc41188142cada748a4f7059f2f584e",
+  "integrations/mcp/fabric_store.mjs": "47e303f4ff9f220f3e81d6d2cb3b8ed118ffbb4b4cf9f61506b55606d0cbcf81",
+  "integrations/mcp/fabric_work.mjs": "53f61f8befb7a8aa3f914aa29696a0273fd7f87a2605d240b919bce7a648f21c",
+  "integrations/mcp/fabric_catalog.json": "d5dc9eb5c246e7e382fe43d88f7b0fabe70bbed79d2af33e0fe2cbfeef184bcc",
+  "integrations/mcp/tests/fabric_work.test.mjs": "77ef5d2f329060af428cc73b3650cccb2084258c9eb2b0e180be51e9af1fc0a3",
+  "integrations/mcp/tests/fabric_store.test.mjs": "831e1a9834a88eacb5ea37f4582a967d9be983038001cf95a8a870710573c323",
+  "integrations/mcp/tests/fabric_transport.test.mjs": "eb6ff872300a46a252cc45f3edd7aea1f9a1b5ea36fbff4ff4db713b526f6b06",
+  "integrations/mcp/tests/fabric_project_workflow.test.mjs": "a6ac015d5c8c174584bfb8e8c257ac2e86222e41a0d273f5449b345109e74341"
+}

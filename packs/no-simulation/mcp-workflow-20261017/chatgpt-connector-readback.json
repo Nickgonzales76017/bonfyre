@@ -1,0 +1,102 @@
+{
+  "schema": "bonfyre.chatgpt-connector-readback.v1",
+  "observed_at": "2026-10-17T21:31:37.071Z",
+  "authenticated_read": {
+    "is_error": false,
+    "content": {
+      "path": "integrations/mcp/fabric_catalog.json",
+      "sha256": "bf348103b7a5837ee70fc9a9d487f8daf8d0076bb6672d5d40918b54d798a5b5",
+      "source_bytes": 10756,
+      "total_lines": 400,
+      "lines": [
+        {
+          "line": 86,
+          "text": "      \"name\": \"implementation_relay\","
+        },
+        {
+          "line": 87,
+          "text": "      \"description\": \"Run isolated plan, implementation, review, conditional repair, tests and concurrent independent final verification. Apply candidates are checked before reviews. Failed tests get one bounded repair in the same worktree, then persistent failure stops verification. Optional apply uses current Project policy and preimage checks. Optional source_files capture selected current files by SHA-256 into the isolated baseline. Invalid or stale inputs stop before model calls; the final patch excludes baseline inputs. This does not relax Project write policy.\","
+        },
+        {
+          "line": 88,
+          "text": "      \"inputSchema\": {"
+        },
+        {
+          "line": 89,
+          "text": "        \"type\": \"object\","
+        },
+        {
+          "line": 90,
+          "text": "        \"properties\": {"
+        },
+        {
+          "line": 91,
+          "text": "          \"prompt\": {"
+        },
+        {
+          "line": 92,
+          "text": "            \"type\": \"string\""
+        },
+        {
+          "line": 93,
+          "text": "          },"
+        },
+        {
+          "line": 94,
+          "text": "          \"title\": {"
+        },
+        {
+          "line": 95,
+          "text": "            \"type\": \"string\""
+        },
+        {
+          "line": 96,
+          "text": "          },"
+        },
+        {
+          "line": 97,
+          "text": "          \"apply_to_project\": {"
+        },
+        {
+          "line": 98,
+          "text": "            \"type\": \"boolean\","
+        }
+      ],
+      "next_start_line": 99
+    }
+  },
+  "inventory": {
+    "request": {
+      "query": "CMS",
+      "detail": "summary",
+      "limit": 5
+    },
+    "is_error": false,
+    "result_count": 180,
+    "result_bytes": 104398,
+    "filtered_response": false
+  },
+  "batch": {
+    "is_error": true,
+    "error_code": "INVALID_ARGUMENT",
+    "error": "Parameters failed connector schema validation: path [required]: Missing required property; path [required]: Missing required property",
+    "clamp_errors": [
+      {
+        "path": [
+          "path"
+        ],
+        "message": "Missing required property",
+        "keyword": "required"
+      },
+      {
+        "path": [
+          "path"
+        ],
+        "message": "Missing required property",
+        "keyword": "required"
+      }
+    ],
+    "files_argument_removed": true
+  },
+  "scope": "Authenticated single-file reads reach current local source. The app tool schema still requires path and excludes files, if_sha256 and inventory options. This does not identify which deployment or connector cache requires refresh."
+}

@@ -1,0 +1,34 @@
+{
+  "cmd/BonfyreHash/bonfyre-hash": {
+    "libraries": "cmd/BonfyreHash/bonfyre-hash:\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n",
+    "system_sha256_symbols": [
+      "_CC_SHA256_Final",
+      "_CC_SHA256_Init",
+      "_CC_SHA256_Update"
+    ]
+  },
+  "cmd/BonfyreIngest/bonfyre-ingest": {
+    "libraries": "cmd/BonfyreIngest/bonfyre-ingest:\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n",
+    "system_sha256_symbols": [
+      "_CC_SHA256_Final",
+      "_CC_SHA256_Init",
+      "_CC_SHA256_Update"
+    ]
+  },
+  "cmd/BonfyreCompress/bonfyre-compress": {
+    "libraries": "cmd/BonfyreCompress/bonfyre-compress:\n\t/usr/lib/libsqlite3.dylib (compatibility version 9.0.0, current version 360.1.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n",
+    "system_sha256_symbols": [
+      "_CC_SHA256_Final",
+      "_CC_SHA256_Init",
+      "_CC_SHA256_Update"
+    ]
+  },
+  "programs/bonfyre/bonfyre": {
+    "libraries": "programs/bonfyre/bonfyre:\n\t/usr/lib/libsqlite3.dylib (compatibility version 9.0.0, current version 360.1.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n",
+    "system_sha256_symbols": [
+      "_CC_SHA256_Final",
+      "_CC_SHA256_Init",
+      "_CC_SHA256_Update"
+    ]
+  }
+}

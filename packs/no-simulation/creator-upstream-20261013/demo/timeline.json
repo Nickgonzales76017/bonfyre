@@ -1,0 +1,67 @@
+{
+  "schema": "aurekai.creator.timeline.v1",
+  "scope": {
+    "owner": "synthetic-demo",
+    "purpose": "offline-verification",
+    "authority_digest": "fc3098a905a4d9be7fbba632a3513ad63c34a4a87e94cd3d8de89a3d3772306c",
+    "frontier_digest": "59332b448a809a6fa58bdbfe36cd36deff2f574ee77fb77d5b8cb7f61b57e73c"
+  },
+  "fps": {
+    "num": 30,
+    "den": 1
+  },
+  "sample_rate": 48000,
+  "frames": 180,
+  "sources": [
+    {
+      "id": "pulse",
+      "kind": "audio",
+      "sha256": "d4fa7fb946b483dd27a9def585eefa9d5c9cb78757c9fe77854e19adab674166",
+      "frames": 60
+    },
+    {
+      "id": "chime",
+      "kind": "audio",
+      "sha256": "3d353f91b90da7b9c456991451f5bb7756d27296ec40db356af3866a3b577979",
+      "frames": 60
+    },
+    {
+      "id": "harmony",
+      "kind": "audio",
+      "sha256": "1d9b1c2bf7d08a1d02e3c908e5e592888097704223734bbf34d9520cca3f8411",
+      "frames": 60
+    }
+  ],
+  "tracks": [
+    {
+      "id": "audio",
+      "kind": "audio",
+      "clips": [
+        {
+          "id": "pulse",
+          "source_id": "pulse",
+          "at": 0,
+          "in": 0,
+          "frames": 30,
+          "gain": 0.4
+        },
+        {
+          "id": "chime",
+          "source_id": "chime",
+          "at": 45,
+          "in": 0,
+          "frames": 45,
+          "gain": 0.5
+        },
+        {
+          "id": "harmony",
+          "source_id": "harmony",
+          "at": 60,
+          "in": 0,
+          "frames": 45,
+          "gain": 0.5
+        }
+      ]
+    }
+  ]
+}

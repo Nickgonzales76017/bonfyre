@@ -1,0 +1,27 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:
+(pass) idle browser connections do not occupy the only request worker [300.66ms]
+(pass) split headers and an unfinished body wait without blocking another request [146.96ms]
+(pass) malformed framing is refused before a handler and later requests still work [84.50ms]
+(pass) a burst of preconnects remains bounded and leaves room for a complete request [88.96ms]
+(pass) body text cannot supply a missing Host header [83.35ms]
+(pass) an unused preconnection expires while the listener stays available [10091.62ms]
+(pass) headers that exhaust the request bound are refused without waiting for another byte [90.68ms]
+
+cmd/BonfyreWebAddress/tests/url_review.test.mjs:
+(pass) a pasted URL opens a review without inventing a discovery candidate or fetching its body [517.36ms]
+(pass) candidate coordinates retain their exact-pair check and invalid URLs get no observation form [528.61ms]
+(pass) sign-in preserves the complete review URL across success, failure and no-script referral [767.93ms]
+(pass) the authorized review form reaches the native observer and retains the selected body [579.48ms]
+
+cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:
+(pass) a missing replacement file leaves every page record and the served guide unchanged [318.96ms]
+(pass) empty, whitespace, binary and directory inputs are refused before replacement [357.37ms]
+(pass) valid replacement keeps the page identity, creation time and navigation group [439.07ms]
+(pass) a storage failure during replacement, creation or removal preserves the served page [368.40ms]
+
+ 15 pass
+ 0 fail
+ 135 expect() calls
+Ran 15 tests across 3 files. [15.14s]

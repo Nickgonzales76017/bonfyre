@@ -1,0 +1,32 @@
+{
+  "scope": "Static UI bundle, official MCP Apps SDK transport and isolated native account services. No rendered-host or live deployment claim.",
+  "browser_verified": false,
+  "live_deployment": false,
+  "bundle": {
+    "path": "integrations/mcp/dist/workbook-review.html",
+    "bytes": 2555491,
+    "sha256": "beb672c3688d84d673b47f13414398098c821c06b11502472064460406cf060e"
+  },
+  "sources": {
+    "integrations/mcp/workbook_app_resource.mjs": "2ce47381ac1c2c90c48862c9e590619cd181fc7269addc2d95c2b67cbb32024a",
+    "integrations/mcp/workbook_mcp.mjs": "a4e267f12daabcbec0369273b7f3a5102b75dc6bce0f76c385ea8fa2942796f8",
+    "integrations/mcp/workspace_mcp.mjs": "1cff1e2a0979293b0fd8f841a603c386d1b40c146003be973bff93cbc28d64be",
+    "integrations/mcp/bonfyre_oauth_gateway.mjs": "0c0733bddbed7372afd8ca7ec71b215eb50d0a77068f875d3685f80b08ab4382",
+    "integrations/mcp/tests/oauth_institution_slice_test.sh": "fdda156e4d251c284767ae8a8c4de475624de0c58a39528557226bdfc7671659",
+    "components/BonfyreServiceSite/workbook-mcp-app.mjs": "dedc7b5776dd806129a54549a7f8aebfc0d9916be91bbf871140f9f1b048dfb9",
+    "components/BonfyreServiceSite/workbook-mcp-app.html": "c5a4882717b28a2013742543f8db0b52805566d1a265fd39ab72f924ee6f66aa",
+    "components/BonfyreServiceSite/workbook-mcp-controller.mjs": "31db96189a24e8f8877fb00a8f7d5b6c0a393fdafc1adc04dbe20806bba09fb6",
+    "components/BonfyreServiceSite/workbook-mcp-build.mjs": "d5fa4a698fb72e11be8835221412a21da4a9e2940e54386c3220e6df39fa6894",
+    "components/BonfyreServiceSite/tests/workbook-mcp.test.mjs": "a9ab7a5dc17a832008dd9215f430e26dab19f7fb6a701521ab3231851407aec8",
+    "components/BonfyreServiceSite/tests/workbook-mcp-controller.test.mjs": "533dbf9e70777d3e8121605bea7426b98502f66f4669a9b5465755372224d030",
+    "components/BonfyreServiceSite/package.json": "bb4946f8ec05e570a91061a95c2ef58a43284741cb2f6c0d43af18a2dda3eb1b",
+    "components/BonfyreServiceSite/bun.lock": "d61481e251231120d3a960758a0f7866e82cb19634d7714fefac12d168c3af9c"
+  },
+  "checks": {
+    "workbook_tests": 44,
+    "workbook_assertions": 258,
+    "account_regression_tests": 9,
+    "account_regression_assertions": 94,
+    "oauth_institution_slices": "pass"
+  }
+}

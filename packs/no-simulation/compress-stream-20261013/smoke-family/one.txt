@@ -1,0 +1,1 @@
+A retained public fixture for compression measurement.

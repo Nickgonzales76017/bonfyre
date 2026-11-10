@@ -1,0 +1,1466 @@
+bun test v1.3.13 (bf2e2cec)
+
+components/BonfyreControlPlane/tests/compounding-slice.test.mjs:
+(skip) single term narrows
+(skip) terms compound
+(skip) substring reaches a list-valued column
+(skip) a slice never widens
+(skip) unknown field is refused with alternatives
+(skip) refusal escapes untrusted field
+(pass) pattern selector has no hardcoded protocols default [4.62ms]
+(skip) slice retains the pattern contract
+
+components/BonfyreControlPlane/tests/territory-home.test.mjs:
+(pass) public root is authored and search uses native surface [0.10ms]
+(pass) home leads with one native bounded operation [0.08ms]
+(pass) home does not recreate an estate catalogue [0.05ms]
+(pass) three next moves are existing owner doors
+(pass) territory identity comes from native presentation slots [1.31ms]
+(pass) session indicator uses native HTTP-only session
+(pass) public weather is a bounded observation read [0.08ms]
+(pass) machine root contract remains owned by WebAddress [0.70ms]
+(pass) page is responsive without hiding its only operation
+
+components/BonfyreControlPlane/tests/territory-surface.test.mjs:
+(skip) life catalogue serves the page's pattern
+(skip) live catalogue serves the page's pattern
+(skip) shop catalogue serves the page's pattern
+(skip) work catalogue serves the page's pattern
+(pass) descriptor names the paths the page fetches [0.15ms]
+(skip) same subject appears across territories with different fields
+(skip) each territory projects its own field set
+(skip) observed field sets stay within descriptor
+(skip) work is refused, not empty
+(pass) refusal and absence remain distinct in declaration and page
+(skip) life, live and shop answer without a session
+(pass) page handles statuses htmx will not swap
+(pass) withheld pane offers the session that can fill it
+(pass) page offers exactly mode verbs declared [1.10ms]
+(pass) no mode offers verbs outside its territory [0.08ms]
+(pass) page says verbs are offered, not granted [0.01ms]
+(pass) page has no submitting action
+(pass) page derives territory from host, not a per-territory route table
+(skip) every territory host resolves to its territory
+(pass) life and work have two modes, others one [0.69ms]
+(pass) mode is not a separate product
+(pass) page offers each mode its own verbs [0.30ms]
+(skip) business mode reads patterns actually served
+(pass) business mode is ordered by reversibility cost [0.26ms]
+(skip) funding records carry cannot_infer
+(pass) household is declared and unbuilt
+(pass) unbuilt mode is not an unbuilt territory
+(pass) each pattern has its own attributable pane
+
+components/BonfyreControlPlane/tests/operator-console.test.mjs:
+(skip) person host resolves to that person
+(skip) uncreated host still completes TLS
+(skip) apex hosts retain certificates
+(skip) catalogue declares the extent dial
+(skip) chip caps records and reports withheld rows
+(skip) chip withholds action layer in the organ
+(skip) card caps records and reports withheld rows
+(skip) card withholds action layer in the organ
+(skip) section caps records and reports withheld rows
+(skip) section withholds action layer in the organ
+(skip) page extent keeps the action layer
+(skip) extent narrows and never grants above authored extent
+(skip) unknown extent is refused with alternatives
+(skip) unset extent does not demote a page to card
+(pass) six modes are declared over four territories [0.07ms]
+(pass) life/household verbs stay within its territory [0.06ms]
+(pass) life/personal verbs stay within its territory
+(pass) live/occurrence verbs stay within its territory [0.04ms]
+(pass) shop/exchange verbs stay within its territory
+(pass) work/business verbs stay within its territory [0.01ms]
+(pass) work/professional verbs stay within its territory
+(pass) life modes together use all its territory verbs [0.14ms]
+(pass) live modes together use all its territory verbs [0.07ms]
+(pass) shop modes together use all its territory verbs [0.01ms]
+(pass) work modes together use all its territory verbs [0.05ms]
+(pass) household and business differ from personal and professional verbs [0.01ms]
+(pass) retention lattice is declared in order [0.07ms]
+(pass) pattern tier follows what it reads, not traffic [0.04ms]
+(skip) foreign graph is observed edges and not prose
+(pass) observing a source is an effect owned by ForeignTwin [0.33ms]
+(skip) observing without a session is refused
+(pass) shape lives in URL and not browser storage [0.09ms]
+(pass) global extent is one parameter, not one per pattern [0.01ms]
+(skip) console serves on every host
+(pass) console reads organs and names source paths [0.22ms]
+(skip) surface takes withheld action layer from organ
+(pass) estate pages carry the dial [0.86ms]
+(pass) dial is absent where nothing can narrow [0.08ms]
+(skip) estate page narrows over its address
+
+components/BonfyreControlPlane/tests/occurrence-origin.test.mjs:
+(pass) the same spine distinguishes watching, derivation and authorized action [1.88ms]
+(pass) origin refusals prevent observations and derivations from laundering authority [0.35ms]
+(pass) provenance bottoms out at observed roots, not effects, and duplicate origin cannot replace one [0.36ms]
+
+components/BonfyreControlPlane/tests/domain-profile.test.mjs:
+(pass) same row renders in three industry vocabularies [0.55ms]
+(pass) carriers cannot disagree on shared fact [0.03ms]
+(pass) agreement holds field by field [0.21ms]
+(pass) parcel with distinct land and total values is detected by projection [0.19ms]
+(pass) carrier cannot project undeclared field [0.29ms]
+(pass) grammar may omit field with no place for it [0.04ms]
+(pass) withheld mailing address never leaks
+(pass) policy applies before every carrier projection [0.08ms]
+(pass) withheld marker is not a dropped key
+(pass) profile does not claim standards conformance
+(pass) one semantic profile serves three carriers
+(pass) evidence requirement is declared by profile
+(pass) unknown carrier is refused [0.04ms]
+
+components/BonfyreControlPlane/tests/aurekai-live-loop.test.mjs:
+(pass) attributed live claim, independent observations, native authority and durable event obligation [207.68ms]
+(pass) a listed show not performed remains a breach after compensation [55.67ms]
+(pass) spoken sponsorship, externally observed clip and settlement close distinct obligations [113.87ms]
+(pass) one sponsor acknowledgement cannot close a two-acknowledgement contract [71.76ms]
+(pass) cooling drops chatter but preserves promoted claims and institutional commitments [86.55ms]
+(pass) whole-occurrence compression only increases durability after explicit claim promotion [0.27ms]
+(pass) a mid-stream surface sees place but no future sponsor acknowledgement [0.14ms]
+
+components/BonfyreControlPlane/tests/publication-program.test.mjs:
+(pass) consent is per platform, purpose, expiry and revocation; adapters stay untouched on refusal [0.42ms]
+(pass) disclosure precedes projection and projection precedes adapter [0.31ms]
+(pass) adapter report is not round-trip observation; receipt required to confirm each target [0.11ms]
+(pass) target grammar is checked at declaration
+(pass) publication gates on the compiled AuthorityGraph, not a local grant approximation [96.69ms]
+
+components/BonfyreControlPlane/tests/native-ingest.test.mjs:
+(pass) seconds use the same half-even millisecond clock and require Whisper segments [1.16ms]
+(pass) real Segment and Clips outputs become a track without taxonomy remapping or publication [13.86ms]
+(pass) a recognizer is named, never assumed [0.26ms]
+(pass) a recording becomes a timed track through the managed recognizer [4527.56ms]
+(pass) a recording becomes a timed track through the hcp recognizer [1440.92ms]
+(pass) a running occurrence reaches the track window by window, never ahead of the audio [12729.87ms]
+(pass) a trace of the stream shows each native process and the transcript both organs read [11.36ms]
+
+components/BonfyreControlPlane/tests/standing-address.test.mjs:
+(pass) the unit is an addressed action and entertainment may win [0.28ms]
+(pass) territory actions have one CUE-authored vocabulary and reject category errors [0.04ms]
+(pass) attention reorders only; unavailable remains below available and no obligation opens [0.26ms]
+(pass) the institutional loop needs enactment and occurrence, and policy gates before ranking [0.14ms]
+
+components/BonfyreControlPlane/tests/obligation-decision-frontier.test.mjs:
+(pass) ordinary enactment lowering exposes a reconstructable typed frontier without changing queue ownership [150.93ms]
+(pass) queue and commitment changes invalidate an old planned frontier before model execution [107.19ms]
+(pass) Flow plans through the default installed native owner without injection or model execution [88.20ms]
+(pass) inference-time state changes refuse stale diagnostics after the shared evaluator returns [83.64ms]
+(pass) decision compilation refusal is visible but never withholds exact native queue lowering [77.76ms]
+
+components/BonfyreControlPlane/tests/protocol-library.test.mjs:
+(pass) authority/authority-challenge is conformant [0.05ms]
+(pass) authority/authority-challenge orders and opens obligations
+(pass) authority/authority-challenge roles declare authority
+(pass) authority/scoped-delegation is conformant
+(pass) authority/scoped-delegation orders and opens obligations [0.20ms]
+(pass) authority/scoped-delegation roles declare authority
+(pass) data_compute/compute-placement is conformant
+(pass) data_compute/compute-placement orders and opens obligations
+(pass) data_compute/compute-placement roles declare authority
+(pass) data_compute/minimum-dataset-slice is conformant
+(pass) data_compute/minimum-dataset-slice orders and opens obligations
+(pass) data_compute/minimum-dataset-slice roles declare authority
+(pass) economic/collective-purchase is conformant
+(pass) economic/collective-purchase orders and opens obligations
+(pass) economic/collective-purchase roles declare authority
+(pass) economic/escrow is conformant
+(pass) economic/escrow orders and opens obligations
+(pass) economic/escrow roles declare authority
+(pass) economic/ownership-transfer is conformant [0.17ms]
+(pass) economic/ownership-transfer orders and opens obligations
+(pass) economic/ownership-transfer roles declare authority
+(pass) economic/sponsor-obligation is conformant
+(pass) economic/sponsor-obligation orders and opens obligations
+(pass) economic/sponsor-obligation roles declare authority
+(pass) evidence/evidence-challenge is conformant [0.06ms]
+(pass) evidence/evidence-challenge orders and opens obligations [0.01ms]
+(pass) evidence/evidence-challenge roles declare authority
+(pass) foreign_world/carrier-upgrade is conformant
+(pass) foreign_world/carrier-upgrade orders and opens obligations
+(pass) foreign_world/carrier-upgrade roles declare authority
+(pass) foreign_world/foreign-observation is conformant
+(pass) foreign_world/foreign-observation orders and opens obligations
+(pass) foreign_world/foreign-observation roles declare authority
+(pass) identity/relationship-admission is conformant
+(pass) identity/relationship-admission orders and opens obligations
+(pass) identity/relationship-admission roles declare authority
+(pass) identity/subject-introduction is conformant
+(pass) identity/subject-introduction orders and opens obligations
+(pass) identity/subject-introduction roles declare authority
+(pass) meta/agent-delegation is conformant
+(pass) meta/agent-delegation orders and opens obligations [0.03ms]
+(pass) meta/agent-delegation roles declare authority
+(pass) physical/reservation is conformant
+(pass) physical/reservation orders and opens obligations
+(pass) physical/reservation roles declare authority
+(pass) social/event-formation is conformant
+(pass) social/event-formation orders and opens obligations
+(pass) social/event-formation roles declare authority [0.03ms]
+(pass) social/mutual-aid is conformant
+(pass) social/mutual-aid orders and opens obligations [0.01ms]
+(pass) social/mutual-aid roles declare authority
+(pass) work/contract-net is conformant
+(pass) work/contract-net orders and opens obligations
+(pass) work/contract-net roles declare authority
+(pass) work/job-application is conformant [0.05ms]
+(pass) work/job-application orders and opens obligations [0.02ms]
+(pass) work/job-application roles declare authority
+(pass) work/mission-lease is conformant
+(pass) work/mission-lease orders and opens obligations [0.02ms]
+(pass) work/mission-lease roles declare authority
+(pass) work/quorum-decision is conformant
+(pass) work/quorum-decision orders and opens obligations
+(pass) work/quorum-decision roles declare authority
+(pass) contract net call precedes proposal and award [0.07ms]
+(pass) collapsed manager cycle is reported [0.03ms]
+(pass) contract net obliges both directions
+(pass) delegation obliges delegate to principal [19.56ms]
+(pass) onward delegation leaves original accountable [25.38ms]
+(pass) escrow obligations remain opposed [55.21ms]
+(pass) escrow closes only when both directions settle [51.71ms]
+(pass) mission lease permits honest escalation [22.39ms]
+(pass) adjudicator reads evidence rather than claim [0.20ms]
+(pass) reservation obliges availability only
+(pass) no family is stub-only [0.22ms]
+(pass) unknown lookups name available patterns [0.12ms]
+(pass) library has twenty-one protocols across ten families [0.08ms]
+(pass) introduction stakes introducer reputation [11.12ms]
+(pass) relationship needs admission [27.74ms]
+(pass) dataset slice is bounded before release [0.12ms]
+(pass) compute executor owes the admitter [10.73ms]
+(pass) foreign observation preflights before fetch [0.08ms]
+(pass) carrier upgrade verifies evidence before adoption [0.01ms]
+(pass) agent owes principal, not counterparty [10.33ms]
+(pass) group buy commits everybody together [19.21ms]
+(pass) ownership transfer is independent of delivery [0.16ms]
+(pass) reviewer reads application only [0.06ms]
+(pass) quorum is counted by answerable teller [0.03ms]
+(pass) mutual aid has no money parameter [0.11ms]
+
+components/BonfyreControlPlane/tests/territory-physics.test.mjs:
+(pass) life carries exactly its own verbs
+(pass) life states its question and ordering principle [0.16ms]
+(pass) life recency policy is territory-specific [0.04ms]
+(pass) live carries exactly its own verbs
+(pass) live states its question and ordering principle
+(pass) live recency policy is territory-specific [0.03ms]
+(pass) shop carries exactly its own verbs
+(pass) shop states its question and ordering principle
+(pass) shop recency policy is territory-specific
+(pass) work carries exactly its own verbs [0.03ms]
+(pass) work states its question and ordering principle
+(pass) work recency policy is territory-specific
+(pass) no verb belongs to every territory
+(pass) each territory has at least one exclusive verb
+(pass) personal world has no rank while live and shop do
+(pass) discover takes verbs and ordering from territory [0.32ms]
+(pass) board takes verbs and ordering from territory [0.21ms]
+(pass) listings takes verbs and ordering from territory [0.23ms]
+(pass) territory page quotes the shared physics and questions [0.21ms]
+(pass) board inlined physics agrees with kit [0.10ms]
+(pass) channels inlined physics agrees with kit [0.45ms]
+(pass) community inlined physics agrees with kit [0.17ms]
+(pass) discover inlined physics agrees with kit [0.08ms]
+(pass) inbox inlined physics agrees with kit [0.16ms]
+(pass) listings inlined physics agrees with kit [0.04ms]
+(pass) parcels inlined physics agrees with kit [0.20ms]
+(pass) stage inlined physics agrees with kit [1.12ms]
+(pass) territory inlined physics agrees with kit [0.06ms]
+(skip) live shop ordering differs from stable life ordering over the same records
+
+components/BonfyreControlPlane/tests/surface-pattern.test.mjs:
+(pass) only page and workspace carry actions [0.09ms]
+(pass) card offering action is refused [0.04ms]
+(pass) workspace shown as card loses actions, not subject
+(pass) returning to page restores nothing
+(pass) unknown extent is refused
+(pass) pattern declares one owner
+(pass) neither owner is refused
+(pass) pattern must name source
+(pass) action layer states required authority
+(pass) action layer without authority is refused
+(pass) authority requirement is not a grant
+(pass) unknown action is refused
+(pass) catalogue records borrowed behaviour [0.32ms]
+(pass) bidirectional compiler patterns are native [0.12ms]
+(pass) catalogue answers which patterns offer an action [0.06ms]
+(pass) duplicate pattern is refused
+(pass) unknown pattern lookup names what exists
+(pass) every action pattern sits at action extent
+(pass) surface commons covers all four territories [0.10ms]
+(pass) pattern cannot offer verb territory does not carry
+(pass) each territory answers its own question [0.03ms]
+(pass) narrowing extent keeps territory
+(pass) unknown territory is refused
+(pass) permissive project may be donor [0.09ms]
+(pass) copyleft project cannot be donor
+(pass) field-of-use license cannot be donor
+(pass) mixed license needs review
+(pass) unknown license defaults to refusing donorship
+(pass) every declared reference is classified
+(pass) copyleft projects are references [0.16ms]
+(pass) reference records what project solved [0.02ms]
+
+components/BonfyreControlPlane/tests/commerce-facts.test.mjs:
+(pass) all fifteen commerce facts are declared in order
+(pass) Product names its owner and the boundary of its knowledge
+(pass) Listing names its owner and the boundary of its knowledge
+(pass) Inventory names its owner and the boundary of its knowledge
+(pass) AvailabilityObservation names its owner and the boundary of its knowledge
+(pass) Offer names its owner and the boundary of its knowledge
+(pass) Quote names its owner and the boundary of its knowledge
+(pass) Cart names its owner and the boundary of its knowledge
+(pass) Checkout names its owner and the boundary of its knowledge
+(pass) Commitment names its owner and the boundary of its knowledge
+(pass) Payment names its owner and the boundary of its knowledge
+(pass) Settlement names its owner and the boundary of its knowledge
+(pass) Fulfilment names its owner and the boundary of its knowledge
+(pass) Delivery names its owner and the boundary of its knowledge
+(pass) Satisfaction names its owner and the boundary of its knowledge
+(pass) Ownership names its owner and the boundary of its knowledge
+(pass) no two stages claim identical knowledge [0.02ms]
+(pass) no two stages share an owner
+(pass) all 105 pairwise gaps remain in the test space [0.02ms]
+(pass) Product does not imply Listing
+(pass) Product/Listing gap is symmetric [0.08ms]
+(pass) Product does not imply Inventory
+(pass) Product/Inventory gap is symmetric
+(pass) Product does not imply AvailabilityObservation
+(pass) Product/AvailabilityObservation gap is symmetric [0.06ms]
+(pass) Product does not imply Offer
+(pass) Product/Offer gap is symmetric [0.04ms]
+(pass) Product does not imply Quote
+(pass) Product/Quote gap is symmetric
+(pass) Product does not imply Cart
+(pass) Product/Cart gap is symmetric
+(pass) Product does not imply Checkout
+(pass) Product/Checkout gap is symmetric
+(pass) Product does not imply Commitment
+(pass) Product/Commitment gap is symmetric
+(pass) Product does not imply Payment
+(pass) Product/Payment gap is symmetric [0.17ms]
+(pass) Product does not imply Settlement
+(pass) Product/Settlement gap is symmetric
+(pass) Product does not imply Fulfilment
+(pass) Product/Fulfilment gap is symmetric [0.05ms]
+(pass) Product does not imply Delivery
+(pass) Product/Delivery gap is symmetric [0.02ms]
+(pass) Product does not imply Satisfaction
+(pass) Product/Satisfaction gap is symmetric
+(pass) Product does not imply Ownership
+(pass) Product/Ownership gap is symmetric [0.02ms]
+(pass) Listing does not imply Inventory
+(pass) Listing/Inventory gap is symmetric
+(pass) Listing does not imply AvailabilityObservation
+(pass) Listing/AvailabilityObservation gap is symmetric
+(pass) Listing does not imply Offer
+(pass) Listing/Offer gap is symmetric [0.06ms]
+(pass) Listing does not imply Quote
+(pass) Listing/Quote gap is symmetric [0.03ms]
+(pass) Listing does not imply Cart
+(pass) Listing/Cart gap is symmetric [0.02ms]
+(pass) Listing does not imply Checkout
+(pass) Listing/Checkout gap is symmetric
+(pass) Listing does not imply Commitment
+(pass) Listing/Commitment gap is symmetric
+(pass) Listing does not imply Payment
+(pass) Listing/Payment gap is symmetric
+(pass) Listing does not imply Settlement
+(pass) Listing/Settlement gap is symmetric
+(pass) Listing does not imply Fulfilment
+(pass) Listing/Fulfilment gap is symmetric
+(pass) Listing does not imply Delivery
+(pass) Listing/Delivery gap is symmetric
+(pass) Listing does not imply Satisfaction
+(pass) Listing/Satisfaction gap is symmetric
+(pass) Listing does not imply Ownership
+(pass) Listing/Ownership gap is symmetric
+(pass) Inventory does not imply AvailabilityObservation
+(pass) Inventory/AvailabilityObservation gap is symmetric [0.31ms]
+(pass) Inventory does not imply Offer
+(pass) Inventory/Offer gap is symmetric
+(pass) Inventory does not imply Quote
+(pass) Inventory/Quote gap is symmetric
+(pass) Inventory does not imply Cart
+(pass) Inventory/Cart gap is symmetric
+(pass) Inventory does not imply Checkout
+(pass) Inventory/Checkout gap is symmetric
+(pass) Inventory does not imply Commitment
+(pass) Inventory/Commitment gap is symmetric
+(pass) Inventory does not imply Payment
+(pass) Inventory/Payment gap is symmetric [0.10ms]
+(pass) Inventory does not imply Settlement
+(pass) Inventory/Settlement gap is symmetric
+(pass) Inventory does not imply Fulfilment
+(pass) Inventory/Fulfilment gap is symmetric [0.08ms]
+(pass) Inventory does not imply Delivery
+(pass) Inventory/Delivery gap is symmetric
+(pass) Inventory does not imply Satisfaction
+(pass) Inventory/Satisfaction gap is symmetric
+(pass) Inventory does not imply Ownership
+(pass) Inventory/Ownership gap is symmetric
+(pass) AvailabilityObservation does not imply Offer
+(pass) AvailabilityObservation/Offer gap is symmetric
+(pass) AvailabilityObservation does not imply Quote
+(pass) AvailabilityObservation/Quote gap is symmetric
+(pass) AvailabilityObservation does not imply Cart
+(pass) AvailabilityObservation/Cart gap is symmetric [0.19ms]
+(pass) AvailabilityObservation does not imply Checkout
+(pass) AvailabilityObservation/Checkout gap is symmetric [0.06ms]
+(pass) AvailabilityObservation does not imply Commitment
+(pass) AvailabilityObservation/Commitment gap is symmetric
+(pass) AvailabilityObservation does not imply Payment
+(pass) AvailabilityObservation/Payment gap is symmetric
+(pass) AvailabilityObservation does not imply Settlement
+(pass) AvailabilityObservation/Settlement gap is symmetric
+(pass) AvailabilityObservation does not imply Fulfilment
+(pass) AvailabilityObservation/Fulfilment gap is symmetric [0.12ms]
+(pass) AvailabilityObservation does not imply Delivery
+(pass) AvailabilityObservation/Delivery gap is symmetric [0.02ms]
+(pass) AvailabilityObservation does not imply Satisfaction
+(pass) AvailabilityObservation/Satisfaction gap is symmetric
+(pass) AvailabilityObservation does not imply Ownership
+(pass) AvailabilityObservation/Ownership gap is symmetric [0.08ms]
+(pass) Offer does not imply Quote
+(pass) Offer/Quote gap is symmetric [0.05ms]
+(pass) Offer does not imply Cart
+(pass) Offer/Cart gap is symmetric [0.03ms]
+(pass) Offer does not imply Checkout
+(pass) Offer/Checkout gap is symmetric
+(pass) Offer does not imply Commitment
+(pass) Offer/Commitment gap is symmetric
+(pass) Offer does not imply Payment
+(pass) Offer/Payment gap is symmetric
+(pass) Offer does not imply Settlement
+(pass) Offer/Settlement gap is symmetric [0.13ms]
+(pass) Offer does not imply Fulfilment
+(pass) Offer/Fulfilment gap is symmetric
+(pass) Offer does not imply Delivery
+(pass) Offer/Delivery gap is symmetric [0.05ms]
+(pass) Offer does not imply Satisfaction
+(pass) Offer/Satisfaction gap is symmetric [0.06ms]
+(pass) Offer does not imply Ownership
+(pass) Offer/Ownership gap is symmetric [0.03ms]
+(pass) Quote does not imply Cart
+(pass) Quote/Cart gap is symmetric
+(pass) Quote does not imply Checkout
+(pass) Quote/Checkout gap is symmetric
+(pass) Quote does not imply Commitment
+(pass) Quote/Commitment gap is symmetric [0.11ms]
+(pass) Quote does not imply Payment
+(pass) Quote/Payment gap is symmetric
+(pass) Quote does not imply Settlement
+(pass) Quote/Settlement gap is symmetric [0.06ms]
+(pass) Quote does not imply Fulfilment
+(pass) Quote/Fulfilment gap is symmetric
+(pass) Quote does not imply Delivery [0.05ms]
+(pass) Quote/Delivery gap is symmetric
+(pass) Quote does not imply Satisfaction
+(pass) Quote/Satisfaction gap is symmetric [0.02ms]
+(pass) Quote does not imply Ownership
+(pass) Quote/Ownership gap is symmetric [0.05ms]
+(pass) Cart does not imply Checkout
+(pass) Cart/Checkout gap is symmetric
+(pass) Cart does not imply Commitment
+(pass) Cart/Commitment gap is symmetric
+(pass) Cart does not imply Payment
+(pass) Cart/Payment gap is symmetric
+(pass) Cart does not imply Settlement [0.11ms]
+(pass) Cart/Settlement gap is symmetric
+(pass) Cart does not imply Fulfilment
+(pass) Cart/Fulfilment gap is symmetric
+(pass) Cart does not imply Delivery
+(pass) Cart/Delivery gap is symmetric [0.09ms]
+(pass) Cart does not imply Satisfaction
+(pass) Cart/Satisfaction gap is symmetric
+(pass) Cart does not imply Ownership
+(pass) Cart/Ownership gap is symmetric
+(pass) Checkout does not imply Commitment
+(pass) Checkout/Commitment gap is symmetric [0.12ms]
+(pass) Checkout does not imply Payment
+(pass) Checkout/Payment gap is symmetric [0.02ms]
+(pass) Checkout does not imply Settlement
+(pass) Checkout/Settlement gap is symmetric
+(pass) Checkout does not imply Fulfilment
+(pass) Checkout/Fulfilment gap is symmetric
+(pass) Checkout does not imply Delivery
+(pass) Checkout/Delivery gap is symmetric [0.03ms]
+(pass) Checkout does not imply Satisfaction
+(pass) Checkout/Satisfaction gap is symmetric [0.03ms]
+(pass) Checkout does not imply Ownership
+(pass) Checkout/Ownership gap is symmetric
+(pass) Commitment does not imply Payment
+(pass) Commitment/Payment gap is symmetric
+(pass) Commitment does not imply Settlement
+(pass) Commitment/Settlement gap is symmetric
+(pass) Commitment does not imply Fulfilment
+(pass) Commitment/Fulfilment gap is symmetric
+(pass) Commitment does not imply Delivery
+(pass) Commitment/Delivery gap is symmetric [0.18ms]
+(pass) Commitment does not imply Satisfaction
+(pass) Commitment/Satisfaction gap is symmetric [0.02ms]
+(pass) Commitment does not imply Ownership
+(pass) Commitment/Ownership gap is symmetric [0.02ms]
+(pass) Payment does not imply Settlement
+(pass) Payment/Settlement gap is symmetric [0.01ms]
+(pass) Payment does not imply Fulfilment
+(pass) Payment/Fulfilment gap is symmetric [0.03ms]
+(pass) Payment does not imply Delivery
+(pass) Payment/Delivery gap is symmetric
+(pass) Payment does not imply Satisfaction
+(pass) Payment/Satisfaction gap is symmetric [0.07ms]
+(pass) Payment does not imply Ownership
+(pass) Payment/Ownership gap is symmetric [0.01ms]
+(pass) Settlement does not imply Fulfilment
+(pass) Settlement/Fulfilment gap is symmetric
+(pass) Settlement does not imply Delivery
+(pass) Settlement/Delivery gap is symmetric [0.09ms]
+(pass) Settlement does not imply Satisfaction
+(pass) Settlement/Satisfaction gap is symmetric [0.03ms]
+(pass) Settlement does not imply Ownership
+(pass) Settlement/Ownership gap is symmetric [0.03ms]
+(pass) Fulfilment does not imply Delivery
+(pass) Fulfilment/Delivery gap is symmetric [0.02ms]
+(pass) Fulfilment does not imply Satisfaction
+(pass) Fulfilment/Satisfaction gap is symmetric [0.02ms]
+(pass) Fulfilment does not imply Ownership
+(pass) Fulfilment/Ownership gap is symmetric
+(pass) Delivery does not imply Satisfaction
+(pass) Delivery/Satisfaction gap is symmetric
+(pass) Delivery does not imply Ownership
+(pass) Delivery/Ownership gap is symmetric
+(pass) Satisfaction does not imply Ownership
+(pass) Satisfaction/Ownership gap is symmetric
+(pass) Payment/Delivery is a dangerous skip rather than an adjacent step
+(pass) Delivery/Ownership is a dangerous skip rather than an adjacent step
+(pass) Payment/Ownership is a dangerous skip rather than an adjacent step
+(pass) Quote/Commitment is a dangerous skip rather than an adjacent step
+(pass) Listing/AvailabilityObservation is a dangerous skip rather than an adjacent step
+(pass) Offer/Settlement is a dangerous skip rather than an adjacent step
+(pass) Product/Ownership is a dangerous skip rather than an adjacent step
+(pass) Checkout/Fulfilment is a dangerous skip rather than an adjacent step
+(pass) surface says collapses skip rather than step
+(pass) surface does not draw a misleading progress bar to ownership
+(pass) delivery cannot skip fulfilment either [0.01ms]
+(pass) ownership leaves the store for life [0.02ms]
+(skip) quote is reachable but payment remains gated
+(skip) delivery is empty with an explicit reason
+(skip) estate does not invent inventory or availability
+
+components/BonfyreControlPlane/tests/reference-contracts.test.mjs:
+(pass) checker exists and is runnable [0.02ms]
+(pass) resolving reference passes [14.41ms]
+(pass) dangling reference fails loudly [12.62ms]
+(pass) required empty reference is dangling [12.55ms]
+(pass) no declaration does not look like clean resolution [12.18ms]
+(pass) missing target table is undeclarable [16.17ms]
+(pass) declaration rejects nonidentifier without executing it [12.61ms]
+(pass) checker names no type of its own [0.11ms]
+(skip) every declared live reference names a real field
+(skip) live estate has no dangling reference
+(pass) column reference resolves against row-named table [12.76ms]
+(pass) missing column is named as a column [11.51ms]
+(pass) row naming missing table is dangling, not undeclarable [12.05ms]
+(pass) organ-backed holder is skipped [12.27ms]
+
+components/BonfyreControlPlane/tests/worlds.test.mjs:
+(skip) every world carries world
+(skip) every world carries title
+(skip) every world carries character
+(skip) every world carries lede
+(skip) every world carries sources
+(skip) every world carries cannot_infer
+(pass) world type requires temporary status and refusal
+(skip) world slugs are unique and well formed
+(skip) characters share one document and branch within it
+(skip) no character is the silent default
+(skip) characters have distinct visual grounds
+(skip) characters and worlds have no routes of their own
+(skip) world sources resolve to observed census rows with extraction contracts
+(pass) one census interpreter lives in the kit, not copies in pages [4.94ms]
+(skip) reader names no source or host beyond font hosts
+(pass) interpreter reads row.extract [0.04ms]
+(pass) interpreter reads row.title_field
+(pass) interpreter reads row.image_field [0.03ms]
+(pass) interpreter reads row.image_base
+(pass) interpreter reads row.twin
+(pass) interpreter reads row.link_field
+(pass) interpreter reads row.sub_field
+(skip) world grammars resolve and compose more than one grammar
+(pass) grammar chips link through the kit [0.10ms]
+(skip) world limits and ledes speak to strangers
+(skip) shelf and worlds share one document
+(skip) unpublished world is declined without invention
+(skip) shelf shows character-specific covers
+(skip) worlds are reachable from ordinary navigation
+(pass) shelf is a list and not itself a world [0.07ms]
+(skip) template owns presentation and no state
+(skip) every template carries template
+(skip) every template carries family
+(skip) every template carries reference_source
+(skip) every template carries reference_name
+(skip) every template carries reference_url
+(skip) every template carries layout_tokens
+(skip) every template carries cannot_infer
+(skip) templates carry provenance and complete reader-applicable tokens
+(skip) address-selected template overrides authored template
+(pass) character is fallback when template cannot apply [0.06ms]
+(pass) template only sets declared presentation roles [0.02ms]
+(pass) one dresser serves every surface [1.11ms]
+(skip) authored templates resolve and characters still own their palettes
+
+components/BonfyreControlPlane/tests/obligation-work.test.mjs:
+(pass) lowering creates claimable work without settling [41.91ms]
+(pass) claiming work does not settle obligation [58.17ms]
+(pass) completed work discharges obligation [63.25ms]
+(pass) settle all discharges only completed work [190.63ms]
+(pass) failed attempt does not violate obligation [64.75ms]
+(pass) permanent work failure still does not violate obligation [66.36ms]
+(pass) violation remains a standing observation [80.15ms]
+(pass) lowering twice is idempotent [50.50ms]
+(pass) settled obligation has no work to claim [34.52ms]
+(pass) unknown commitment cannot be lowered [13.61ms]
+(pass) settling never-lowered work is refused [15.38ms]
+(pass) direct discharge needs no work item [35.66ms]
+(pass) enactment lowers each outstanding obligation [82.59ms]
+(pass) enactment closes after all lowered work completes [143.32ms]
+(pass) partial completion leaves enactment open [124.43ms]
+(pass) work status is read from queue owner database [45.52ms]
+
+components/BonfyreControlPlane/tests/pack-graph.test.mjs:
+(pass) adding a product requires no WebAddress native branch [14.49ms]
+(skip) community fork depends on parent instead of copying it
+(skip) pack overlay cannot widen native authority
+(pass) unknown overlay verb is refused out loud [1.12ms]
+(pass) tighten narrows and never widens [0.51ms]
+(skip) internet demand does not mirror bodies
+(skip) pack is not an identity
+(skip) scenario needs no institution or install
+(skip) scenario configuration does not persist
+(skip) surface pattern still reads exactly one semantic owner
+(skip) host string cannot invent an institution
+(skip) enabling behaviour grants no authority
+(skip) fork does not silently activate
+(skip) Ron does not get social surfaces merely because they exist
+(skip) downstream publisher needs no Bonfyre release
+(skip) pack refers to shared grammar instead of packaging it
+(skip) community publishes governed behaviour without native change
+(skip) two actors receive different products from one engine
+(skip) five semantic things remain five distinct types
+(skip) official layer has authored material
+(skip) institution layer has authored material
+(skip) community layer has authored material
+(skip) household layer has authored material
+(skip) scenario layer has authored material
+(skip) composition order is the authored order
+(pass) dependency cycle is bounded rather than hung
+(pass) pack surface shows what was refused [0.27ms]
+(pass) view control asks closure and not only deployment [0.13ms]
+
+components/BonfyreControlPlane/tests/internet-census.test.mjs:
+(pass) heartbeat delegates whole-census weather to native refresh owner [0.26ms]
+(pass) native reheat preserves authored census and honors refusal and activated demand
+(pass) named reads do not publish partial whole-census weather [0.41ms]
+(pass) retained bodies are staged atomically and served from the newest receipt [0.19ms]
+(pass) an absent JSON field clears the output and cannot reuse another twin body
+(pass) arrival reads the public carrier without retaining a remote body [0.19ms]
+(pass) source extraction contract stays in one interpreter, not the public page [0.18ms]
+(pass) public page leads with input, uses doors not an internal instrument panel [0.19ms]
+(pass) console retains named outside panel and a path to retained bytes
+(pass) date tokens agree between authored URL reader and browser interpreter [0.22ms]
+(skip) census is a mostly unobserved map with a bounded extraction contract
+(skip) published weather derives tier and generally declines to read
+(skip) retained bodies answer by twin with digest and observation time
+(skip) media bodies expose item pictures and console subjects have names
+(skip) hot twin remains readable and not older than its reported observation
+
+components/BonfyreControlPlane/tests/protocol-contract.test.mjs:
+(pass) ordering derives from information dependencies
+(pass) independent roles share wave
+(pass) role needing nothing starts immediately
+(pass) liveness catches unsatisfied role [0.32ms]
+(pass) ordering refuses contract that waits forever [0.08ms]
+(pass) cycle is liveness, not a hang
+(pass) healthy contract has no liveness error
+(pass) safety detects racing producers
+(pass) healthy contract has no safety errors
+(pass) integrity catches unentitled input
+(pass) integrity consults disclosure policy
+(pass) role producing nothing cannot fail integrity
+(pass) healthy conformance reports all three clean
+(pass) structural conformance is not actor permission
+(pass) enactment opens obligations in commitment graph [26.85ms]
+(pass) completed messages do not settle obligations [36.95ms]
+(pass) enactment closes only after every obligation is terminal [54.36ms]
+(pass) commitments carry originating enactment [21.13ms]
+(pass) two enactments do not collide [41.07ms]
+(pass) nonconformant enactment refuses before opening obligations [8.49ms]
+(pass) commitment cannot name undeclared role
+(pass) every role needs an actor at enactment [5.97ms]
+(pass) role cannot be declared twice
+
+components/BonfyreControlPlane/tests/commitment-graph.test.mjs:
+(pass) open commitment is not delivery [16.13ms]
+(pass) unknown commitment is null, not open [11.06ms]
+(pass) delegation retains original obligation [28.03ms]
+(pass) delegated commitment remains violable [27.77ms]
+(pass) delegation chain retains original promiser [23.00ms]
+(pass) violated commitment is still outstanding [24.06ms]
+(pass) late delivery discharges and retains violation [25.50ms]
+(pass) compensation requires a violation [19.86ms]
+(pass) compensation retains visible violation [29.51ms]
+(pass) compensated and discharged remain distinguishable [40.17ms]
+(pass) discharged is terminal [30.22ms]
+(pass) compensated is terminal [26.76ms]
+(pass) re-recording cannot reopen obligation [25.08ms]
+(pass) expiry is not automatic violation [19.07ms]
+(pass) violable excludes settled and unexpiring [27.78ms]
+(pass) event log is append-only and complete [36.13ms]
+(pass) enactment binds obligation to originating exchange [12.12ms]
+
+components/BonfyreControlPlane/tests/protocol-authority.test.mjs:
+(pass) conformant contract is refused without grants [18.21ms]
+(pass) granting every role authorizes enactment [33.92ms]
+(pass) refusal names role and grant [39.59ms]
+(pass) refused enactment opens no obligations [38.90ms]
+(pass) authorized enactment opens named obligations [88.25ms]
+(pass) authority never crosses subjects [55.89ms]
+(pass) revocation closes grant immediately and reports second revoke [28.82ms]
+(pass) window excludes moments outside it [17.97ms]
+(pass) purpose-bound grant cannot generalize [24.47ms]
+(pass) role without declared authority is ungated [7.23ms]
+(pass) unassigned roles are reported [28.91ms]
+(pass) native owner matches an independent SQL rule on every case [66.01ms]
+(pass) parity witness detects revoked-edge drift [19.49ms]
+(pass) non-delegable grant refuses derivation [14.29ms]
+(pass) delegable grant yields child [20.33ms]
+(pass) revoked parent grants no delegation [16.41ms]
+(pass) child may narrow purpose but never widen [26.48ms]
+(pass) child never outlives parent [23.50ms]
+(pass) delegation is one hop absent explicit regrant [19.93ms]
+(pass) cascade closes every descendant [52.09ms]
+(pass) plain revoke does not cascade [41.25ms]
+(pass) descendants and chain are transitive [38.73ms]
+
+components/BonfyreControlPlane/tests/surface-renderers.test.mjs:
+(skip) renderers are authored in a registry, not compiled into routes
+(skip) vertical declares grammar, seam, renderable kinds and limit
+(skip) vertical declares only valid extents
+(skip) stage declares grammar, seam, renderable kinds and limit
+(skip) stage declares only valid extents
+(skip) thread declares grammar, seam, renderable kinds and limit
+(skip) thread declares only valid extents
+(skip) board declares grammar, seam, renderable kinds and limit
+(skip) board declares only valid extents
+(skip) community declares grammar, seam, renderable kinds and limit
+(skip) community declares only valid extents
+(skip) market declares grammar, seam, renderable kinds and limit
+(skip) market declares only valid extents
+(skip) search declares grammar, seam, renderable kinds and limit
+(skip) search declares only valid extents
+(skip) spatial declares grammar, seam, renderable kinds and limit
+(skip) spatial declares only valid extents
+(skip) work declares grammar, seam, renderable kinds and limit
+(skip) work declares only valid extents
+(skip) inspector declares grammar, seam, renderable kinds and limit
+(skip) inspector declares only valid extents
+(skip) watch declares grammar, seam, renderable kinds and limit
+(skip) watch declares only valid extents
+(skip) renderer names no semantic owner
+(skip) pattern names no renderer grammar
+(skip) every deployed surface contributed a renderer
+(skip) parcels contributed both search and spatial renderers
+(skip) donor lineage survives renderer extraction
+(pass) kit carries a frame, not just a route [0.14ms]
+(pass) changing view retains the frame [0.02ms]
+(pass) drawer groups views by what a person is doing [0.12ms]
+(pass) a view lights only where deployed [0.02ms]
+(pass) shared chrome mounts the view control [0.71ms]
+(skip) compiled estate page mounts the view control
+(skip) subject index answers for every kind
+(skip) subject index is one list rather than ours and theirs
+(skip) named subject returns its projections
+(skip) subject index stays sparse until a subject is named
+(skip) receipts distinguish retained from cooled bytes
+(skip) retained foreign bytes are never a document on this origin
+(skip) foreign twin identifier refuses path ../../../etc/passwd
+(skip) foreign twin identifier refuses path ..%2f..%2fetc%2fpasswd
+(skip) foreign twin identifier refuses path .ssh/id_rsa
+(skip) foreign twin identifier refuses path aurekai-auth-md-20260902T023408Z-3f34da0315/../../../etc/hosts
+(pass) receipt cannot name arbitrary file [0.31ms]
+(pass) safe-file check is stricter than identifier check [0.82ms]
+(skip) console surface is served and declared
+(skip) link surface is served and declared
+(pass) console begins with the subject [0.34ms]
+(pass) link desk derives account doors from observed metadata [0.11ms]
+
+components/BonfyreControlPlane/tests/web-lowering.test.mjs:
+(skip) same address answers human and machine
+(skip) search narrows and compounds with slice
+(skip) every surface offers search
+(pass) public search is a form and not a record renderer [0.11ms]
+(pass) public page does not call the unserved legacy endpoint
+(skip) a record carries its own actionable affordance
+(pass) affordance template drops an unserved field [0.54ms]
+(pass) kit asks estate whether a person is signed in [0.05ms]
+(pass) same-origin kit fetches carry cookies and foreign fetches do not [0.09ms]
+(pass) browser storage token is not a session [0.09ms]
+(skip) limit narrows the actual answer
+(skip) limit cannot raise extent ceiling
+(pass) public page does not expose internal density vocabulary [0.02ms]
+
+components/BonfyreControlPlane/tests/surface-patterns.test.mjs:
+(pass) surface patterns are declared
+(pass) console reads exactly one owner [0.02ms]
+(pass) console declares an extent from the authored vocabulary
+(pass) console extent constrains its action layer
+(pass) console declares authority for any action
+(pass) console page renders only declared actions [0.03ms]
+(pass) console lineage can be checked against its donor [0.26ms]
+(pass) console loads its declared donor asset [0.02ms]
+(pass) discover reads exactly one owner
+(pass) discover declares an extent from the authored vocabulary
+(pass) discover extent constrains its action layer
+(pass) discover declares authority for any action
+(pass) discover page renders only declared actions
+(pass) discover lineage can be checked against its donor [0.26ms]
+(pass) discover loads its declared donor asset [0.05ms]
+(pass) board reads exactly one owner
+(pass) board declares an extent from the authored vocabulary
+(pass) board extent constrains its action layer
+(pass) board declares authority for any action
+(pass) board page renders only declared actions
+(pass) board lineage can be checked against its donor [0.21ms]
+(pass) board loads its declared donor asset [0.02ms]
+(pass) parcels reads exactly one owner
+(pass) parcels declares an extent from the authored vocabulary
+(pass) parcels extent constrains its action layer
+(pass) parcels declares authority for any action
+(pass) parcels page renders only declared actions [0.04ms]
+(pass) parcels lineage can be checked against its donor
+(pass) parcels loads its declared donor asset
+(pass) inbox reads exactly one owner
+(pass) inbox declares an extent from the authored vocabulary
+(pass) inbox extent constrains its action layer
+(pass) inbox declares authority for any action
+(pass) inbox page renders only declared actions [0.05ms]
+(pass) inbox lineage can be checked against its donor [0.16ms]
+(pass) inbox loads its declared donor asset
+(pass) channels reads exactly one owner
+(pass) channels declares an extent from the authored vocabulary
+(pass) channels extent constrains its action layer
+(pass) channels declares authority for any action
+(pass) channels page renders only declared actions [0.11ms]
+(pass) channels lineage can be checked against its donor [0.20ms]
+(pass) channels loads its declared donor asset
+(pass) packs reads exactly one owner
+(pass) packs declares an extent from the authored vocabulary
+(pass) packs extent constrains its action layer
+(pass) packs declares authority for any action
+(pass) packs page renders only declared actions [0.11ms]
+(pass) packs lineage can be checked against its donor
+(pass) packs loads its declared donor asset
+(pass) territory reads exactly one owner
+(pass) territory declares an extent from the authored vocabulary
+(pass) territory extent constrains its action layer
+(pass) territory declares authority for any action
+(pass) territory page renders only declared actions [0.04ms]
+(pass) territory lineage can be checked against its donor
+(pass) territory loads its declared donor asset
+(pass) link reads exactly one owner
+(pass) link declares an extent from the authored vocabulary
+(pass) link extent constrains its action layer
+(pass) link declares authority for any action
+(pass) link page renders only declared actions [0.01ms]
+(pass) link lineage can be checked against its donor
+(pass) link loads its declared donor asset
+(pass) home reads exactly one owner
+(pass) home declares an extent from the authored vocabulary
+(pass) home extent constrains its action layer
+(pass) home declares authority for any action
+(pass) home page renders only declared actions
+(pass) home lineage can be checked against its donor
+(pass) home loads its declared donor asset
+(pass) stage reads exactly one owner
+(pass) stage declares an extent from the authored vocabulary
+(pass) stage extent constrains its action layer
+(pass) stage declares authority for any action
+(pass) stage page renders only declared actions [0.13ms]
+(pass) stage lineage can be checked against its donor [0.20ms]
+(pass) stage loads its declared donor asset
+(pass) community reads exactly one owner
+(pass) community declares an extent from the authored vocabulary
+(pass) community extent constrains its action layer
+(pass) community declares authority for any action
+(pass) community page renders only declared actions
+(pass) community lineage can be checked against its donor [0.25ms]
+(pass) community loads its declared donor asset [0.01ms]
+(pass) listings reads exactly one owner
+(pass) listings declares an extent from the authored vocabulary
+(pass) listings extent constrains its action layer
+(pass) listings declares authority for any action
+(pass) listings page renders only declared actions
+(pass) listings lineage can be checked against its donor [0.23ms]
+(pass) listings loads its declared donor asset
+(skip) catalogue reports extent and action-layer flag for every pattern
+(skip) catalogue refuses action layer below page extent
+(skip) catalogue reports lineage
+
+components/BonfyreControlPlane/tests/subject-address.test.mjs:
+(skip) every indexed kind is addressable
+(skip) nonexistent subject returns 404
+(skip) wrong kind for a real subject returns 404
+(skip) miss never becomes a soft 404
+(skip) identifier is validated, not silently rewritten
+(skip) canonical subject address is a cheap read
+(skip) subject page is a bounded identity shell
+(skip) index and address agree about a subject
+(skip) page and aperture endpoint cannot disagree
+(skip) withheld operation is counted rather than hidden
+(skip) refusal survives a wide subject address list
+(skip) offered operation links to its form
+(pass) closure domains dispatch by authored state, not C domain names [0.28ms]
+(pass) unknown is reported beside unmet rather than folded into it [0.24ms]
+(skip) subject without a closure domain invents no conditions
+(skip) closure scopes resolve to addressed subjects
+
+components/BonfyreControlPlane/tests/live-carrier-conformance.test.mjs:
+(skip) mismo serves every mapped field
+(skip) mismo maps every served field
+(skip) ogc serves every mapped field
+(skip) ogc maps every served field
+(skip) reso serves every mapped field
+(skip) reso maps every served field
+(skip) carriers agree on shared semantic facts
+(skip) first row is same parcel across carriers
+(skip) live carriers do not yet apply disclosure policy
+(skip) MISMO omits owner while RESO carries it
+(skip) carrier pages are stable on repeated reads
+(pass) projection orders on stored observation_id, not parsed account [0.70ms]
+(skip) internal ordering key is not served
+(skip) carrier page answers without estate scan
+
+components/BonfyreControlPlane/tests/external-estate.test.mjs:
+(skip) catalogue is larger than walked census
+(skip) catalogued resource cannot claim observation
+(skip) every catalogue row retains identity
+(skip) description does not repeat its URL
+(skip) catalogue is sliceable
+(skip) catalogue slices compound
+(skip) unknown catalogue slice is refused
+(skip) census remains a small map of sources actually walked
+
+components/BonfyreControlPlane/tests/live-semantic-track.test.mjs:
+(pass) speech is not a claim; attributed promotion is explicit [0.19ms]
+(pass) repeated, dependent, and self corroboration never manufacture proof [0.09ms]
+(pass) media clock windows partition and the track never reads a future moment [0.23ms]
+(pass) retention tiers and cooling are CUE-authored, promotion is cause-bound and upward only [0.23ms]
+(pass) sponsor matching is case-insensitive but exact; candidates cool [0.07ms]
+(pass) one live moment projects across carrier grammars without inventing meaning or leaking a withheld speaker [0.27ms]
+(pass) spoken sponsorship is evidence toward a native durable obligation, not its discharge [36.35ms]
+
+components/BonfyreControlPlane/tests/clone-surfaces.test.mjs:
+(skip) board is served on all four hosts
+(skip) board source endpoints actually answer
+(skip) board has inlined kit and no unserved asset
+(pass) board distinguishes refusal and empty [0.13ms]
+(pass) board does not submit effects [0.24ms]
+(pass) board renders verbs as affordances [0.07ms]
+(pass) board names every path that produced it [0.02ms]
+(pass) board descriptor matches page contract [0.08ms]
+(skip) board is reachable from root navigation
+(skip) channels is served on all four hosts
+(skip) channels source endpoints actually answer
+(skip) channels has inlined kit and no unserved asset
+(pass) channels distinguishes refusal and empty [0.10ms]
+(pass) channels does not submit effects [0.21ms]
+(pass) channels renders verbs as affordances [0.06ms]
+(pass) channels names every path that produced it [0.21ms]
+(pass) channels descriptor matches page contract [0.18ms]
+(skip) channels is reachable from root navigation
+(skip) community is served on all four hosts
+(skip) community source endpoints actually answer
+(skip) community has inlined kit and no unserved asset
+(pass) community distinguishes refusal and empty [0.19ms]
+(pass) community does not submit effects [0.23ms]
+(pass) community renders verbs as affordances [0.25ms]
+(pass) community names every path that produced it [0.05ms]
+(pass) community descriptor matches page contract [0.04ms]
+(skip) community is reachable from root navigation
+(skip) discover is served on all four hosts
+(skip) discover source endpoints actually answer
+(skip) discover has inlined kit and no unserved asset
+(pass) discover distinguishes refusal and empty [0.06ms]
+(pass) discover does not submit effects [0.18ms]
+(pass) discover renders verbs as affordances [0.07ms]
+(pass) discover names every path that produced it [0.04ms]
+(pass) discover descriptor matches page contract [0.04ms]
+(skip) discover is reachable from root navigation
+(skip) inbox is served on all four hosts
+(skip) inbox source endpoints actually answer
+(skip) inbox has inlined kit and no unserved asset
+(pass) inbox distinguishes refusal and empty [0.06ms]
+(pass) inbox does not submit effects [0.12ms]
+(pass) inbox renders verbs as affordances [0.08ms]
+(pass) inbox names every path that produced it [0.05ms]
+(pass) inbox descriptor matches page contract
+(skip) inbox is reachable from root navigation
+(skip) listings is served on all four hosts
+(skip) listings source endpoints actually answer
+(skip) listings has inlined kit and no unserved asset
+(pass) listings distinguishes refusal and empty [0.09ms]
+(pass) listings does not submit effects [0.37ms]
+(pass) listings renders verbs as affordances [0.07ms]
+(pass) listings names every path that produced it [0.10ms]
+(pass) listings descriptor matches page contract [0.03ms]
+(skip) listings is reachable from root navigation
+(skip) parcels is served on all four hosts
+(skip) parcels source endpoints actually answer
+(skip) parcels has inlined kit and no unserved asset
+(pass) parcels distinguishes refusal and empty [0.05ms]
+(pass) parcels does not submit effects [0.18ms]
+(pass) parcels renders verbs as affordances [0.09ms]
+(pass) parcels names every path that produced it [0.13ms]
+(pass) parcels descriptor matches page contract [0.04ms]
+(skip) parcels is reachable from root navigation
+(skip) stage is served on all four hosts
+(skip) stage source endpoints actually answer
+(skip) stage has inlined kit and no unserved asset
+(pass) stage distinguishes refusal and empty [0.11ms]
+(pass) stage does not submit effects [0.80ms]
+(pass) stage renders verbs as affordances [0.42ms]
+(pass) stage names every path that produced it [0.16ms]
+(pass) stage descriptor matches page contract [0.09ms]
+(skip) stage is reachable from root navigation
+(skip) the kit asset really is unserved
+(skip) work night projection remains gated
+(skip) one service book crosses all three carriers
+(skip) parcel market spans more than a page
+(skip) channels reads real emitted events
+(skip) authored navigation reaches every host
+(skip) territory surface is linked
+(skip) every navigated path resolves
+(skip) quote is priced and holds nothing
+(skip) priced resource remains gated
+(skip) gate admits it cannot collect
+(skip) quote and gate carry the same money
+(skip) every priced capability quotes and gates
+(pass) listings page walks quote, gate, and not-for-sale chain [0.33ms]
+(skip) board loads real donor stylesheet
+(pass) board uses donor class names [0.42ms]
+(pass) board versions donor assets [0.58ms]
+(pass) board names donor license [0.10ms]
+(pass) board respects reduced motion [0.06ms]
+(pass) board carries one estate mark [0.16ms]
+(skip) channels loads real donor stylesheet
+(pass) channels uses donor class names [0.64ms]
+(pass) channels versions donor assets [0.10ms]
+(pass) channels names donor license [0.08ms]
+(pass) channels respects reduced motion [0.23ms]
+(pass) channels carries one estate mark [0.20ms]
+(skip) community loads real donor stylesheet
+(pass) community uses donor class names [0.27ms]
+(pass) community versions donor assets [0.04ms]
+(pass) community names donor license [0.09ms]
+(pass) community respects reduced motion [0.07ms]
+(pass) community carries one estate mark [0.08ms]
+(skip) discover loads real donor stylesheet
+(pass) discover uses donor class names [0.41ms]
+(pass) discover versions donor assets [0.17ms]
+(pass) discover names donor license [0.27ms]
+(pass) discover respects reduced motion [0.34ms]
+(pass) discover carries one estate mark [0.54ms]
+(skip) listings loads real donor stylesheet
+(pass) listings uses donor class names [0.33ms]
+(pass) listings versions donor assets [0.11ms]
+(pass) listings names donor license [0.02ms]
+(pass) listings respects reduced motion [0.05ms]
+(pass) listings carries one estate mark [0.31ms]
+(skip) stage loads real donor stylesheet
+(pass) stage uses donor class names [0.27ms]
+(pass) stage versions donor assets [0.05ms]
+(pass) stage names donor license
+(pass) stage respects reduced motion [0.03ms]
+(pass) stage carries one estate mark [0.04ms]
+(pass) donor-maplibre.css retains attribution and vendored license [0.30ms]
+(pass) donor-maplibre.js retains attribution and vendored license [0.90ms]
+(pass) donor-masonry.js retains attribution and vendored license [0.28ms]
+(pass) donor-mobilizon.css retains attribution and vendored license [0.15ms]
+(pass) donor-nextcommerce.css retains attribution and vendored license [0.35ms]
+(pass) donor-pinry.css retains attribution and vendored license [0.33ms]
+(pass) donor-pixelfed.css retains attribution and vendored license [0.87ms]
+(pass) donor-zulip.css retains attribution and vendored license [1.39ms]
+(pass) business mode is a capital plane, not an app inventory [0.25ms]
+(skip) capital plane reads deployed routes, transformations, funding
+(skip) transformations carry reversibility and horizon
+(skip) routes distinguish unknown and evidenced capacity
+(skip) community reads federation rather than scoreboard
+(skip) channels keeps four stream outcomes apart
+(pass) channels marks topic read, not handled [0.15ms]
+(skip) source stream admits absent timestamps
+(skip) stage reads room records and status fields
+(pass) stage says no video, status not pixels [0.28ms]
+(skip) fill meter comes from room sentence
+(skip) stage schedule is gated and says so
+(skip) also tonight derives from records naming each other
+(skip) long-tail book is larger than priced offers
+(skip) three commerce carriers show one price
+(skip) market path uses the search-returned city code
+(pass) computed parcel numbers name their measured set [0.09ms]
+(pass) a saved parcel makes no external claim [0.13ms]
+(skip) host names institution that holds it
+(skip) institution is one subject across territories
+(skip) institution may hold a domain hostname does not reveal
+(skip) address document permits cross-territory reading
+(skip) clone links only to addresses estate carries
+(pass) listings is a representation one can leave [0.08ms]
+(pass) parcels is a representation one can leave
+(pass) channels is a representation one can leave [0.07ms]
+(pass) published kit equals inlined source kit [0.30ms]
+(skip) kit is served to compiled estate
+(skip) knight image is served
+(skip) compiled estate carries mark
+(skip) landing page carries mark without duplicate wordmark
+
+components/BonfyreControlPlane/tests/information-policy.test.mjs:
+(pass) undeclared fields and contact details are explicitly withheld without shrinking the record [0.13ms]
+(pass) audiences are exact labels, not an inheritance ladder [0.10ms]
+(pass) aggregate floor withholds values and count without widening constituent disclosure [0.10ms]
+(pass) evidence release defaults to nothing and grants exact witness kinds
+(pass) an explicit empty audience set denies everyone in both fields and aggregates [0.08ms]
+
+components/BonfyreControlPlane/tests/foreign-live.test.mjs:
+(pass) four rights are individually granted; no forward inference [0.21ms]
+(pass) foreign material shares the native semantic grammar and retention lattice
+(pass) ingested claims belong to the foreign speaker and still need corroboration [0.44ms]
+(pass) republishing requires an explicit fourth grant and grant basis remains visible
+(pass) retained foreign material is filed as observed, never as an effect [0.34ms]
+
+components/BonfyreControlPlane/tests/protocol-program.test.mjs:
+(pass) role reads what it requires and writes what it produces [0.10ms]
+(pass) closure is union over roles [0.05ms]
+(pass) each parameter has exactly one producer [0.07ms]
+(pass) unread delta affects nothing
+(pass) delta invalidates reader and dependents [0.13ms]
+(pass) upstream role is never invalidated by downstream change [0.03ms]
+(pass) head delta cascades to every role [0.02ms]
+(pass) tail delta affects only reader
+(pass) FactDelta carries no global invalidation
+(pass) FactDelta must name an address [0.08ms]
+(pass) enactments of one contract do not share addressed closure [0.06ms]
+(pass) program requires enactment address [0.05ms]
+(pass) fan-out across estate is usually empty [0.17ms]
+(pass) nonconformant contract cannot be lowered [0.14ms]
+(pass) authority/authority-challenge lowers to a program [0.08ms]
+(pass) authority/authority-challenge ignores unrelated delta
+(pass) authority/scoped-delegation lowers to a program
+(pass) authority/scoped-delegation ignores unrelated delta
+(pass) data_compute/compute-placement lowers to a program [0.09ms]
+(pass) data_compute/compute-placement ignores unrelated delta
+(pass) data_compute/minimum-dataset-slice lowers to a program [0.03ms]
+(pass) data_compute/minimum-dataset-slice ignores unrelated delta
+(pass) economic/collective-purchase lowers to a program [0.02ms]
+(pass) economic/collective-purchase ignores unrelated delta
+(pass) economic/escrow lowers to a program
+(pass) economic/escrow ignores unrelated delta
+(pass) economic/ownership-transfer lowers to a program
+(pass) economic/ownership-transfer ignores unrelated delta
+(pass) economic/sponsor-obligation lowers to a program [0.07ms]
+(pass) economic/sponsor-obligation ignores unrelated delta
+(pass) evidence/evidence-challenge lowers to a program
+(pass) evidence/evidence-challenge ignores unrelated delta
+(pass) foreign_world/carrier-upgrade lowers to a program
+(pass) foreign_world/carrier-upgrade ignores unrelated delta
+(pass) foreign_world/foreign-observation lowers to a program
+(pass) foreign_world/foreign-observation ignores unrelated delta
+(pass) identity/relationship-admission lowers to a program
+(pass) identity/relationship-admission ignores unrelated delta
+(pass) identity/subject-introduction lowers to a program
+(pass) identity/subject-introduction ignores unrelated delta
+(pass) meta/agent-delegation lowers to a program
+(pass) meta/agent-delegation ignores unrelated delta
+(pass) physical/reservation lowers to a program
+(pass) physical/reservation ignores unrelated delta [0.13ms]
+(pass) social/event-formation lowers to a program [0.02ms]
+(pass) social/event-formation ignores unrelated delta
+(pass) social/mutual-aid lowers to a program
+(pass) social/mutual-aid ignores unrelated delta
+(pass) work/contract-net lowers to a program
+(pass) work/contract-net ignores unrelated delta
+(pass) work/job-application lowers to a program
+(pass) work/job-application ignores unrelated delta
+(pass) work/mission-lease lowers to a program
+(pass) work/mission-lease ignores unrelated delta
+(pass) work/quorum-decision lowers to a program
+(pass) work/quorum-decision ignores unrelated delta [0.10ms]
+(pass) written parameter is not a produced effect
+
+259 tests skipped:
+(skip) single term narrows
+(skip) terms compound
+(skip) substring reaches a list-valued column
+(skip) a slice never widens
+(skip) unknown field is refused with alternatives
+(skip) refusal escapes untrusted field
+(skip) slice retains the pattern contract
+(skip) life catalogue serves the page's pattern
+(skip) live catalogue serves the page's pattern
+(skip) shop catalogue serves the page's pattern
+(skip) work catalogue serves the page's pattern
+(skip) same subject appears across territories with different fields
+(skip) each territory projects its own field set
+(skip) observed field sets stay within descriptor
+(skip) work is refused, not empty
+(skip) life, live and shop answer without a session
+(skip) every territory host resolves to its territory
+(skip) business mode reads patterns actually served
+(skip) funding records carry cannot_infer
+(skip) person host resolves to that person
+(skip) uncreated host still completes TLS
+(skip) apex hosts retain certificates
+(skip) catalogue declares the extent dial
+(skip) chip caps records and reports withheld rows
+(skip) chip withholds action layer in the organ
+(skip) card caps records and reports withheld rows
+(skip) card withholds action layer in the organ
+(skip) section caps records and reports withheld rows
+(skip) section withholds action layer in the organ
+(skip) page extent keeps the action layer
+(skip) extent narrows and never grants above authored extent
+(skip) unknown extent is refused with alternatives
+(skip) unset extent does not demote a page to card
+(skip) foreign graph is observed edges and not prose
+(skip) observing without a session is refused
+(skip) console serves on every host
+(skip) surface takes withheld action layer from organ
+(skip) estate page narrows over its address
+(skip) live shop ordering differs from stable life ordering over the same records
+(skip) quote is reachable but payment remains gated
+(skip) delivery is empty with an explicit reason
+(skip) estate does not invent inventory or availability
+(skip) every declared live reference names a real field
+(skip) live estate has no dangling reference
+(skip) every world carries world
+(skip) every world carries title
+(skip) every world carries character
+(skip) every world carries lede
+(skip) every world carries sources
+(skip) every world carries cannot_infer
+(skip) world slugs are unique and well formed
+(skip) characters share one document and branch within it
+(skip) no character is the silent default
+(skip) characters have distinct visual grounds
+(skip) characters and worlds have no routes of their own
+(skip) world sources resolve to observed census rows with extraction contracts
+(skip) reader names no source or host beyond font hosts
+(skip) world grammars resolve and compose more than one grammar
+(skip) world limits and ledes speak to strangers
+(skip) shelf and worlds share one document
+(skip) unpublished world is declined without invention
+(skip) shelf shows character-specific covers
+(skip) worlds are reachable from ordinary navigation
+(skip) template owns presentation and no state
+(skip) every template carries template
+(skip) every template carries family
+(skip) every template carries reference_source
+(skip) every template carries reference_name
+(skip) every template carries reference_url
+(skip) every template carries layout_tokens
+(skip) every template carries cannot_infer
+(skip) templates carry provenance and complete reader-applicable tokens
+(skip) address-selected template overrides authored template
+(skip) authored templates resolve and characters still own their palettes
+(skip) community fork depends on parent instead of copying it
+(skip) pack overlay cannot widen native authority
+(skip) internet demand does not mirror bodies
+(skip) pack is not an identity
+(skip) scenario needs no institution or install
+(skip) scenario configuration does not persist
+(skip) surface pattern still reads exactly one semantic owner
+(skip) host string cannot invent an institution
+(skip) enabling behaviour grants no authority
+(skip) fork does not silently activate
+(skip) Ron does not get social surfaces merely because they exist
+(skip) downstream publisher needs no Bonfyre release
+(skip) pack refers to shared grammar instead of packaging it
+(skip) community publishes governed behaviour without native change
+(skip) two actors receive different products from one engine
+(skip) five semantic things remain five distinct types
+(skip) official layer has authored material
+(skip) institution layer has authored material
+(skip) community layer has authored material
+(skip) household layer has authored material
+(skip) scenario layer has authored material
+(skip) composition order is the authored order
+(skip) census is a mostly unobserved map with a bounded extraction contract
+(skip) published weather derives tier and generally declines to read
+(skip) retained bodies answer by twin with digest and observation time
+(skip) media bodies expose item pictures and console subjects have names
+(skip) hot twin remains readable and not older than its reported observation
+(skip) renderers are authored in a registry, not compiled into routes
+(skip) vertical declares grammar, seam, renderable kinds and limit
+(skip) vertical declares only valid extents
+(skip) stage declares grammar, seam, renderable kinds and limit
+(skip) stage declares only valid extents
+(skip) thread declares grammar, seam, renderable kinds and limit
+(skip) thread declares only valid extents
+(skip) board declares grammar, seam, renderable kinds and limit
+(skip) board declares only valid extents
+(skip) community declares grammar, seam, renderable kinds and limit
+(skip) community declares only valid extents
+(skip) market declares grammar, seam, renderable kinds and limit
+(skip) market declares only valid extents
+(skip) search declares grammar, seam, renderable kinds and limit
+(skip) search declares only valid extents
+(skip) spatial declares grammar, seam, renderable kinds and limit
+(skip) spatial declares only valid extents
+(skip) work declares grammar, seam, renderable kinds and limit
+(skip) work declares only valid extents
+(skip) inspector declares grammar, seam, renderable kinds and limit
+(skip) inspector declares only valid extents
+(skip) watch declares grammar, seam, renderable kinds and limit
+(skip) watch declares only valid extents
+(skip) renderer names no semantic owner
+(skip) pattern names no renderer grammar
+(skip) every deployed surface contributed a renderer
+(skip) parcels contributed both search and spatial renderers
+(skip) donor lineage survives renderer extraction
+(skip) compiled estate page mounts the view control
+(skip) subject index answers for every kind
+(skip) subject index is one list rather than ours and theirs
+(skip) named subject returns its projections
+(skip) subject index stays sparse until a subject is named
+(skip) receipts distinguish retained from cooled bytes
+(skip) retained foreign bytes are never a document on this origin
+(skip) foreign twin identifier refuses path ../../../etc/passwd
+(skip) foreign twin identifier refuses path ..%2f..%2fetc%2fpasswd
+(skip) foreign twin identifier refuses path .ssh/id_rsa
+(skip) foreign twin identifier refuses path aurekai-auth-md-20260902T023408Z-3f34da0315/../../../etc/hosts
+(skip) console surface is served and declared
+(skip) link surface is served and declared
+(skip) same address answers human and machine
+(skip) search narrows and compounds with slice
+(skip) every surface offers search
+(skip) a record carries its own actionable affordance
+(skip) limit narrows the actual answer
+(skip) limit cannot raise extent ceiling
+(skip) catalogue reports extent and action-layer flag for every pattern
+(skip) catalogue refuses action layer below page extent
+(skip) catalogue reports lineage
+(skip) every indexed kind is addressable
+(skip) nonexistent subject returns 404
+(skip) wrong kind for a real subject returns 404
+(skip) miss never becomes a soft 404
+(skip) identifier is validated, not silently rewritten
+(skip) canonical subject address is a cheap read
+(skip) subject page is a bounded identity shell
+(skip) index and address agree about a subject
+(skip) page and aperture endpoint cannot disagree
+(skip) withheld operation is counted rather than hidden
+(skip) refusal survives a wide subject address list
+(skip) offered operation links to its form
+(skip) subject without a closure domain invents no conditions
+(skip) closure scopes resolve to addressed subjects
+(skip) mismo serves every mapped field
+(skip) mismo maps every served field
+(skip) ogc serves every mapped field
+(skip) ogc maps every served field
+(skip) reso serves every mapped field
+(skip) reso maps every served field
+(skip) carriers agree on shared semantic facts
+(skip) first row is same parcel across carriers
+(skip) live carriers do not yet apply disclosure policy
+(skip) MISMO omits owner while RESO carries it
+(skip) carrier pages are stable on repeated reads
+(skip) internal ordering key is not served
+(skip) carrier page answers without estate scan
+(skip) catalogue is larger than walked census
+(skip) catalogued resource cannot claim observation
+(skip) every catalogue row retains identity
+(skip) description does not repeat its URL
+(skip) catalogue is sliceable
+(skip) catalogue slices compound
+(skip) unknown catalogue slice is refused
+(skip) census remains a small map of sources actually walked
+(skip) board is served on all four hosts
+(skip) board source endpoints actually answer
+(skip) board has inlined kit and no unserved asset
+(skip) board is reachable from root navigation
+(skip) channels is served on all four hosts
+(skip) channels source endpoints actually answer
+(skip) channels has inlined kit and no unserved asset
+(skip) channels is reachable from root navigation
+(skip) community is served on all four hosts
+(skip) community source endpoints actually answer
+(skip) community has inlined kit and no unserved asset
+(skip) community is reachable from root navigation
+(skip) discover is served on all four hosts
+(skip) discover source endpoints actually answer
+(skip) discover has inlined kit and no unserved asset
+(skip) discover is reachable from root navigation
+(skip) inbox is served on all four hosts
+(skip) inbox source endpoints actually answer
+(skip) inbox has inlined kit and no unserved asset
+(skip) inbox is reachable from root navigation
+(skip) listings is served on all four hosts
+(skip) listings source endpoints actually answer
+(skip) listings has inlined kit and no unserved asset
+(skip) listings is reachable from root navigation
+(skip) parcels is served on all four hosts
+(skip) parcels source endpoints actually answer
+(skip) parcels has inlined kit and no unserved asset
+(skip) parcels is reachable from root navigation
+(skip) stage is served on all four hosts
+(skip) stage source endpoints actually answer
+(skip) stage has inlined kit and no unserved asset
+(skip) stage is reachable from root navigation
+(skip) the kit asset really is unserved
+(skip) work night projection remains gated
+(skip) one service book crosses all three carriers
+(skip) parcel market spans more than a page
+(skip) channels reads real emitted events
+(skip) authored navigation reaches every host
+(skip) territory surface is linked
+(skip) every navigated path resolves
+(skip) quote is priced and holds nothing
+(skip) priced resource remains gated
+(skip) gate admits it cannot collect
+(skip) quote and gate carry the same money
+(skip) every priced capability quotes and gates
+(skip) board loads real donor stylesheet
+(skip) channels loads real donor stylesheet
+(skip) community loads real donor stylesheet
+(skip) discover loads real donor stylesheet
+(skip) listings loads real donor stylesheet
+(skip) stage loads real donor stylesheet
+(skip) capital plane reads deployed routes, transformations, funding
+(skip) transformations carry reversibility and horizon
+(skip) routes distinguish unknown and evidenced capacity
+(skip) community reads federation rather than scoreboard
+(skip) channels keeps four stream outcomes apart
+(skip) source stream admits absent timestamps
+(skip) stage reads room records and status fields
+(skip) fill meter comes from room sentence
+(skip) stage schedule is gated and says so
+(skip) also tonight derives from records naming each other
+(skip) long-tail book is larger than priced offers
+(skip) three commerce carriers show one price
+(skip) market path uses the search-returned city code
+(skip) host names institution that holds it
+(skip) institution is one subject across territories
+(skip) institution may hold a domain hostname does not reveal
+(skip) address document permits cross-territory reading
+(skip) clone links only to addresses estate carries
+(skip) kit is served to compiled estate
+(skip) knight image is served
+(skip) compiled estate carries mark
+(skip) landing page carries mark without duplicate wordmark
+
+ 871 pass
+ 259 skip
+ 0 fail
+ 3036 expect() calls
+Ran 1130 tests across 34 files. [23.75s]

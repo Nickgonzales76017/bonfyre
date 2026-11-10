@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-15T06:33:30.024Z",
+  "scope": "isolated loopback Project MCP with real native queue fixtures",
+  "http": 200,
+  "source_sha256": {
+    "bounded-body.mjs": "56aeaf21a2bc08934e3978ef63cfedf19f10fb1a05c2b19411a5a02e6e76a6a8",
+    "codex-delivery.test.mjs": "5539b84763148ea25649a8150a5dc564f98274ec9013738baafebcc4351b3cd4",
+    "codex-edge.test.mjs": "4692495a93b26b23546da513eb4b937d7de9c1ce2cb18d45b52bad9175286132",
+    "edge-worker.mjs": "ee735fa36ccbf03d1adcb5bb45bfe583f8d4c6d67ee17770c3cafb5efe294c18",
+    "native-ingress.mjs": "04e9555bb9e1ed1f64231c10feeb347373422645357de03ba5a9006834d20be3",
+    "native-ingress.test.mjs": "43a482cd0fa49ecd8fe23c41c31f75a3a917ef32282efd73167f2b59d4c5606a",
+    "native-nonce-store.mjs": "a73a54b1c1ded6378a114929d762ff718ea97bf9a0304c1fb947cebe6ef07bbe",
+    "native-queue-adapter.mjs": "260c906e97cb4fcd96278740e1336a2556d5de9f84992adee3955474db90e3d0",
+    "replay-recovery.test.mjs": "698b961cba8ed255e624e89a44d1b58aabff6e8c4c1067bf6831012d17e15212",
+    "workgraph-admission.mjs": "7c720103dc190f3cee3e1b668bb706072094f67c0645b52758bb4a6dea655e64",
+    "workgraph-admission.test.mjs": "1791aefd3cd582e06bc40ff36a4a42ee78c11f8f8bbc906a7c9ee07baea1217e",
+    "workgraph-envelope.mjs": "b398ea55ef95dbae58e758af6f493545a449e1723849a63a21ec73e1076ec6f7",
+    "workgraph-envelope.test.mjs": "f2d1c5936931a8d6589c7f6fa0fb7e8c57a68ee36fc6e0758b8b5eac9d9c1c7f"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"profile\":\"cloudflare-bridge\",\"build\":{\"argv\":[\"make\",\"-j2\"],\"cwd\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreQueue\",\"exit_code\":0,\"stdout\":\"make: Nothing to be done for `all'.\\n\",\"stderr\":\"\",\"duration_ms\":11},\"result\":{\"argv\":[\"/Users/nickgonzales/.bun/bin/bun\",\"test\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/workgraph-envelope.test.mjs\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/workgraph-admission.test.mjs\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/native-ingress.test.mjs\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/replay-recovery.test.mjs\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/codex-delivery.test.mjs\",\"/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/codex-edge.test.mjs\"],\"cwd\":\"/Users/nickgonzales/Developer/Bonfyre\",\"exit_code\":0,\"stdout\":\"bun test v1.3.13 (bf2e2cec)\\n\",\"stderr\":\"\\nintegrations/cloudflare/workgraph-envelope.test.mjs:\\n(pass) valid cloud intent roundtrips [2.17ms]\\n(pass) tamper, stale and extra effects are rejected [0.42ms]\\n\\nintegrations/cloudflare/workgraph-admission.test.mjs:\\n(pass) verified intent reaches the native admission callback once [2.72ms]\\n(pass) unsigned, tampered and oversized envelopes cannot enqueue [0.54ms]\\n\\nintegrations/cloudflare/native-ingress.test.mjs:\\n(pass) nonce claims survive SQLite restart and duplicate delivery [8.03ms]\\n(pass) only source-sync family reaches native owner [1.10ms]\\n\\nintegrations/cloudflare/replay-recovery.test.mjs:\\n(pass) failed enqueue is retriable and native work accepts exactly once [10.90ms]\\n(pass) in-flight replay leases expire and can be recovered [9.32ms]\\n\\nintegrations/cloudflare/codex-delivery.test.mjs:\\n(pass) overlapping delivery remains pending until native receipt is durable [6.83ms]\\n(pass) stale lease holder cannot accept or release its successor [5.86ms]\\n(pass) native enqueue followed by lost transport receipt recovers one durable job [66.05ms]\\n(pass) HTTP ingress admits through the real native owner and survives restart [44.58ms]\\n\\nintegrations/cloudflare/codex-edge.test.mjs:\\n(pass) edge refuses success without a matching native admission receipt [1.54ms]\\n(pass) delayed edge delivery refreshes authentication but preserves occurrence identity [0.21ms]\\n(pass) edge acknowledges both admitted and duplicate native receipts [0.47ms]\\n\\n 15 pass\\n 0 fail\\nRan 15 tests across 6 files. [197.00ms]\\n\",\"duration_ms\":204}}"
+      }
+    ],
+    "structuredContent": {
+      "profile": "cloudflare-bridge",
+      "build": {
+        "argv": [
+          "make",
+          "-j2"
+        ],
+        "cwd": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreQueue",
+        "exit_code": 0,
+        "stdout": "make: Nothing to be done for `all'.\n",
+        "stderr": "",
+        "duration_ms": 11
+      },
+      "result": {
+        "argv": [
+          "/Users/nickgonzales/.bun/bin/bun",
+          "test",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/workgraph-envelope.test.mjs",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/workgraph-admission.test.mjs",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/native-ingress.test.mjs",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/replay-recovery.test.mjs",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/codex-delivery.test.mjs",
+          "/Users/nickgonzales/Developer/Bonfyre/integrations/cloudflare/codex-edge.test.mjs"
+        ],
+        "cwd": "/Users/nickgonzales/Developer/Bonfyre",
+        "exit_code": 0,
+        "stdout": "bun test v1.3.13 (bf2e2cec)\n",
+        "stderr": "\nintegrations/cloudflare/workgraph-envelope.test.mjs:\n(pass) valid cloud intent roundtrips [2.17ms]\n(pass) tamper, stale and extra effects are rejected [0.42ms]\n\nintegrations/cloudflare/workgraph-admission.test.mjs:\n(pass) verified intent reaches the native admission callback once [2.72ms]\n(pass) unsigned, tampered and oversized envelopes cannot enqueue [0.54ms]\n\nintegrations/cloudflare/native-ingress.test.mjs:\n(pass) nonce claims survive SQLite restart and duplicate delivery [8.03ms]\n(pass) only source-sync family reaches native owner [1.10ms]\n\nintegrations/cloudflare/replay-recovery.test.mjs:\n(pass) failed enqueue is retriable and native work accepts exactly once [10.90ms]\n(pass) in-flight replay leases expire and can be recovered [9.32ms]\n\nintegrations/cloudflare/codex-delivery.test.mjs:\n(pass) overlapping delivery remains pending until native receipt is durable [6.83ms]\n(pass) stale lease holder cannot accept or release its successor [5.86ms]\n(pass) native enqueue followed by lost transport receipt recovers one durable job [66.05ms]\n(pass) HTTP ingress admits through the real native owner and survives restart [44.58ms]\n\nintegrations/cloudflare/codex-edge.test.mjs:\n(pass) edge refuses success without a matching native admission receipt [1.54ms]\n(pass) delayed edge delivery refreshes authentication but preserves occurrence identity [0.21ms]\n(pass) edge acknowledges both admitted and duplicate native receipts [0.47ms]\n\n 15 pass\n 0 fail\nRan 15 tests across 6 files. [197.00ms]\n",
+        "duration_ms": 204
+      }
+    },
+    "isError": false
+  }
+}

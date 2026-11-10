@@ -1,0 +1,18 @@
+[
+  {
+    "binary": "previous",
+    "exit_code": 1,
+    "stdout": "  verifying  /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/tmpq7rvicd8/cache/synthetic-null.bin  ...\n",
+    "stderr": "  \u2717 FAIL    expected: (null)\n               got:      e7a268baeedbbe090d4ae705a2c35fd555fb2e5eb7faa796d9807d48579259ca\n",
+    "stored_hash": null,
+    "expected_hash": "e7a268baeedbbe090d4ae705a2c35fd555fb2e5eb7faa796d9807d48579259ca"
+  },
+  {
+    "binary": "installed",
+    "exit_code": 0,
+    "stdout": "  pending  no expected hash stored \u2014 computing and storing...\n  stored   e7a268baeedbbe090d4ae705a2c35fd555fb2e5eb7faa796d9807d48579259ca  /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/tmpkcy2gc56/cache/synthetic-null.bin\n",
+    "stderr": "",
+    "stored_hash": "e7a268baeedbbe090d4ae705a2c35fd555fb2e5eb7faa796d9807d48579259ca",
+    "expected_hash": "e7a268baeedbbe090d4ae705a2c35fd555fb2e5eb7faa796d9807d48579259ca"
+  }
+]

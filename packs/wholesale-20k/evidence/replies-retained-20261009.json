@@ -1,0 +1,44 @@
+{
+  "observed_at": "2026-10-09T15:45:54.853Z",
+  "quotations": [
+    {
+      "id": 1,
+      "destination": "Dallas",
+      "zip": "75208",
+      "gross_cents": 25000,
+      "source": "gmail:message:1a120fdee1520f1c",
+      "terms": "Received supplier price, not an accepted booking. Original Gmail message 1a120fdee1520f1c, thread 1a11e86d55573537, independently read. Supplier calls rate all-in. Request concerned 35 used desktops plus keyboards/mice, preliminary 600 lb, and asked for a 900 lb alternative. Exact addresses, dimensions, packing and handling requirements remain unconfirmed. First-shipment $50 credit offered, coupon not yet issued; it is excluded from the recorded gross rate and must not be counted on both mutually exclusive routes. Prior thread detention terms: under 45 minutes waived, from minute 45 a $15 base charge plus $1/min thereafter; exact application remains to confirm. Existing clarification draft r3879815185282297814 / Gmail1a12120574537841 remains unsent and must not be duplicated. No expiry, insurance cover, payment schedule, packing labor or 900 lb price is established."
+    },
+    {
+      "id": 2,
+      "destination": "Stafford",
+      "zip": "77477",
+      "gross_cents": 63000,
+      "source": "gmail:message:1a120fdee1520f1c",
+      "terms": "Received supplier price, not an accepted booking. Original Gmail message 1a120fdee1520f1c, thread 1a11e86d55573537, independently read. Supplier calls rate all-in. Request concerned 35 used desktops plus keyboards/mice, preliminary 600 lb, and asked for a 900 lb alternative. Exact addresses, dimensions, packing and handling requirements remain unconfirmed. First-shipment $50 credit offered, coupon not yet issued; it is excluded from the recorded gross rate and must not be counted on both mutually exclusive routes. Prior thread detention terms: under 45 minutes waived, from minute 45 a $15 base charge plus $1/min thereafter; exact application remains to confirm. Existing clarification draft r3879815185282297814 / Gmail1a12120574537841 remains unsent and must not be duplicated. No expiry, insurance cover, payment schedule, packing labor or 900 lb price is established."
+    }
+  ],
+  "rfqs": [
+    {
+      "id": 5,
+      "vendor": "WARP"
+    },
+    {
+      "id": 6,
+      "vendor": "Industrial Machinery Movers"
+    }
+  ],
+  "updated_projects": {
+    "73": "rigging_contact_assigned",
+    "76": "freight_quote_received_inventory_needed",
+    "87": "qualification_response_sent",
+    "96": "contact_route_failed"
+  },
+  "effects": "Native internal records only; no mail sent, no purchase or booking",
+  "source_refs": [
+    "gmail:message:1a120fdee1520f1c",
+    "gmail:message:1a1215117d582033",
+    "gmail:message:1a11fa0f3e9f92c8",
+    "gmail:message:1a11e7b632b1f768"
+  ]
+}

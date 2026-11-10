@@ -1,0 +1,202 @@
+{
+  "schema": "bonfyre.mcp-app-relay-readback.v1",
+  "observed_at": "2026-10-17T22:35:43.197Z",
+  "app_tool_definitions": [
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_fabric_status",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nInspect current STOP/admission, live service-owned tasks, separate Project and mesh reachability, agent versions and historical task records. Stored running state alone is not liveness. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_fabric_status(args: {}): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_implementation_relay",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nRun isolated plan, implementation, review, conditional repair, tests and concurrent independent final verification. Apply candidates are checked before reviews. Failed tests get one bounded repair in the same worktree, then persistent failure stops verification. Optional apply uses current Project policy and preimage checks. Optional source_files capture selected current files by SHA-256 into the isolated baseline. Invalid or stale inputs stop before model calls; the final patch excludes baseline inputs. This does not relax Project write policy. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_implementation_relay(args: {\n  apply_to_project?: boolean;\n  prompt: string;\n  // Optional explicit current-source coverage over the configured Git base. Supply whole-file SHA-256 from project_read; null requires absence. Up to 8 MiB total. Unselected paths stay at the Git base. Ignored files and symlinks are refused.\n  source_files?: Array<{ path: string; sha256: string | null; }>;\n  title?: string;\n}): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_native_tool_inventory",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nFind native owners by family, capability or synopsis. Prefer query plus detail=summary for routing; use full details only for selected matches. Empty arguments preserve the full legacy inventory. Discovery does not prove runtime readiness. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_native_tool_inventory(args: {\n  detail?: \"summary\" | \"full\";\n  // Defaults to 20 when any filter or display option is supplied.\n  limit?: number;\n  offset?: number;\n  query?: string;\n}): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_project_patch_preview",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nBefore implementing, pass paths (up to 16) to inspect current preimage hashes, dirty state and configured write constraints without preparing a patch or writing receipts. Then pass patch for Git validation and low-risk eligibility. Use exactly one of paths or patch. Preflight grants no write authority. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_project_patch_preview(args: { patch?: string; paths?: Array<string>; }): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_project_read",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nRead one source range or up to 16 file ranges in one call, with exact whole-file SHA-256 and continuation lines. Use files for related owners/tests. if_sha256 returns only identity when unchanged. Shared batch limits: 32 MiB source, 512 KiB response. File reads are individually checked, not an atomic checkout snapshot. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_project_read(args: {\n  end_line?: number;\n  // Use instead of top-level path and range options.\n  files?: Array<{\n  end_line?: number;\n  // Previously observed whole-file digest. Matching bytes omit content; this does not attest prior range coverage.\n  if_sha256?: string;\n  path: string;\n  start_line?: number;\n}>;\n  // Previously observed whole-file digest. Matching bytes omit content; this does not attest prior range coverage.\n  if_sha256?: string;\n  path?: string;\n  start_line?: number;\n}): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_recent_receipts",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nList recent dual-agent plans, patches, reviews and verification receipts. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_recent_receipts(args: { limit?: number; }): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_task_cancel",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nCancel active subprocesses belonging to a task. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_task_cancel(args: { task_id: string; }): Promise<CallToolResult>; };\n```"
+    },
+    {
+      "name": "mcp__codex_apps__aurekaibonfyre_task_status",
+      "description": "Authority-gated Bonfÿre institutional operating system for native tools, work, evidence, finance, CMS, and Matrix operations.\n\nRead durable task state and current service ownership. Prefer detail=summary for bounded polling; full includes agent outputs and receipts. A historical running record without current ownership requires reconciliation, not automatic replay. This tool is part of plugin `AurekaiBonfyre`.\n\nexec tool declaration:\n```ts\ndeclare const tools: { mcp__codex_apps__aurekaibonfyre_task_status(args: { detail?: \"summary\" | \"full\"; task_id: string; }): Promise<CallToolResult>; };\n```"
+    }
+  ],
+  "admission": {
+    "paused": true,
+    "accepting_tasks": false,
+    "background_tasks_enabled": true
+  },
+  "execution": {
+    "active_tasks": [],
+    "queued_tasks": [],
+    "unreconciled": [],
+    "scope": "Executors and queue owned by this service process; stored task states are historical records."
+  },
+  "task_summary": {
+    "id": "a0cf14c75bc048f8b4d81f8a",
+    "kind": "review",
+    "title": "Review FPQ2 fallback and legacy fidelity baseline",
+    "state": "running",
+    "worktree": null,
+    "branch": null,
+    "apply_to_project": 0,
+    "created_at": 1785454106.6682398,
+    "started_at": 1785454106.682112,
+    "completed_at": null,
+    "error": "",
+    "text_truncated": 0,
+    "detail": "summary",
+    "run_states": {
+      "failed": 1,
+      "running": 1
+    },
+    "recent_runs": [
+      {
+        "id": "456eab39033543ea86f76293",
+        "agent": "claude",
+        "role": "cross-review",
+        "state": "failed",
+        "exit_code": 1,
+        "started_at": 1785454106.687358,
+        "completed_at": 1785454112.9239612,
+        "duration_ms": 6236
+      },
+      {
+        "id": "d3bc123770f84dfca4226528",
+        "agent": "codex",
+        "role": "cross-review",
+        "state": "running",
+        "exit_code": null,
+        "started_at": 1785454106.687111,
+        "completed_at": null,
+        "duration_ms": null
+      }
+    ],
+    "receipt_count": 0,
+    "recent_receipts": [],
+    "next_read": "Use task_status with detail=full for review findings, patch and apply results.",
+    "execution": {
+      "owned_by_this_process": false,
+      "queue_position": null,
+      "reconciliation_required": true
+    }
+  },
+  "task_summary_json_characters": 958,
+  "recent_receipts": [
+    {
+      "id": "22d614065e94466e94fa551f",
+      "task_id": "961ce2f8bd4f41bda09e341d",
+      "kind": "cross-review",
+      "digest": "879f691cdff21dbab7c558c1767673cc56f322b153ca4e4b111773cc40611cfe"
+    }
+  ],
+  "source_reads": {
+    "files": [
+      {
+        "path": "integrations/mcp/project_fabric.mjs",
+        "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+        "source_bytes": 936,
+        "total_lines": 17,
+        "lines": [
+          {
+            "line": 1,
+            "text": "// Project exposes the existing delivery lifecycle without creating another queue."
+          },
+          {
+            "line": 2,
+            "text": "import { readFileSync } from 'node:fs';"
+          },
+          {
+            "line": 3,
+            "text": "import { createProjectOwner } from './project_owner.mjs';"
+          },
+          {
+            "line": 4,
+            "text": ""
+          },
+          {
+            "line": 5,
+            "text": "const names = ['fabric_status', 'implementation_relay', 'task_status', 'task_cancel', 'recent_receipts'];"
+          },
+          {
+            "line": 6,
+            "text": "const catalog = JSON.parse(readFileSync(new URL('./fabric_catalog.json', import.meta.url), 'utf8'));"
+          },
+          {
+            "line": 7,
+            "text": "export const FABRIC_PROJECT_TOOLS = names.map(name => {"
+          },
+          {
+            "line": 8,
+            "text": "  const tool = catalog.tools.find(tool => tool.name === name);"
+          }
+        ],
+        "next_start_line": 9
+      },
+      {
+        "path": "integrations/mcp/project_owner.mjs",
+        "sha256": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+        "source_bytes": 2452,
+        "total_lines": 37,
+        "lines": [
+          {
+            "line": 1,
+            "text": "// Catalog-bound Project -> owner bridge. Deployment chooses the endpoint and"
+          },
+          {
+            "line": 2,
+            "text": "// dedicated remote credential; caller arguments cannot change either."
+          },
+          {
+            "line": 3,
+            "text": "import { existsSync, readFileSync } from 'node:fs';"
+          },
+          {
+            "line": 4,
+            "text": "import { homedir } from 'node:os';"
+          },
+          {
+            "line": 5,
+            "text": "import { join } from 'node:path';"
+          },
+          {
+            "line": 6,
+            "text": "import { createOwnedMcpCall, mcpEndpoint } from './owned_mcp_client.mjs';"
+          },
+          {
+            "line": 7,
+            "text": ""
+          },
+          {
+            "line": 8,
+            "text": "export function createProjectOwner({ name, tools, urlEnv, tokenFileEnv, defaultUrl,"
+          }
+        ],
+        "next_start_line": 9
+      }
+    ],
+    "consistency": "Each file is checked during its read; this is not an atomic multi-file snapshot."
+  },
+  "claims": {
+    "new_relay_names_available": true,
+    "app_status_summary_and_receipt_routes_verified": true,
+    "live_relay_submitted": false,
+    "provider_invoked": false,
+    "operator_resumed": false
+  },
+  "limits": "App relay discovery and read routes are verified here. Submission, Git isolation, reviews, tests and guarded apply are verified by the retained real HTTP fixture with deterministic injected agents; no live model quality or production task execution is claimed."
+}

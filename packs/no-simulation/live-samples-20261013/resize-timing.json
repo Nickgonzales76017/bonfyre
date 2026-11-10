@@ -1,0 +1,22 @@
+[
+  {
+    "delay": 0,
+    "width": 390,
+    "scrollWidth": 392
+  },
+  {
+    "delay": 50,
+    "width": 390,
+    "scrollWidth": 390
+  },
+  {
+    "delay": 200,
+    "width": 390,
+    "scrollWidth": 390
+  },
+  {
+    "delay": 500,
+    "width": 390,
+    "scrollWidth": 390
+  }
+]

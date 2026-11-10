@@ -1,0 +1,12 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreHash/tests/file.test.mjs:
+(pass) file digest matches an independent implementation across buffer boundaries [199.88ms]
+(pass) missing inputs and directory reads emit no digest [5.09ms]
+(pass) duplicate detection still reports equal complete files [2.88ms]
+(pass) a partial read error refuses both a file digest and the entire duplicate report [172.82ms]
+
+ 4 pass
+ 0 fail
+ 26 expect() calls
+Ran 4 tests across 1 file. [799.00ms]

@@ -1,0 +1,1611 @@
+{
+  "schema": "bonfyre-classified-routing.v1",
+  "network_requests": 0,
+  "input_rows": 762,
+  "distinct_verified_sources": 368,
+  "refused_rows": 317,
+  "provider_rules": 3,
+  "candidate_associations": 17,
+  "matched_associations": 17,
+  "withheld_associations": 0,
+  "withheld_output": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/routing/routing-withheld.jsonl",
+  "withheld_by_provider": {
+    "mfo-machinery": 0,
+    "conesco-racking": 0,
+    "resell-camaster": 0
+  },
+  "by_provider": {
+    "mfo-machinery": 2,
+    "conesco-racking": 14,
+    "resell-camaster": 1
+  },
+  "refused": [
+    {
+      "address": "https://www.craigslist.org/view/d/austin-commercial-janitorial-equipment/nsUvu4Gt9QUbk8bU8EZ614",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/mesa-foxalien-11250x7-enclosed-cnc/exUBTpq4oZib1Ns3fbvXBp",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glenside-complete-automotive-machine/usWmjTHz46UW3LhFB3mZnE",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-office-liquidation-printers/ePBGtiNDtEvDHrHNuDHVUb",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glen-cove-emco-concept-mill-55-cnc/h7ES1xusMEsU5W4SAU6gET",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/milwaukee-10k-for-5kclosing-down/bY9vJ57HnWhhpyKnpCpc9i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/mesa-teac-fd-55gfr-mb-floppy-disk-drive/bHkN46Ag6yHF6RkQTJzuJw",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/norfolk-metal-lathe/uJUBkb6fPfGUUw57jEPLJr",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/santa-monica-wolf-shne-german-precision/4HhAMfv69psTvhqWxZi29v",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-smithy-lathe-mill/smFiPEwocKPgqfPrySRurY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/marietta-kohler-faucets-showers/aqg9w8QaGDLg8Z6rnYyCVs",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/arvada-construction-company-liquidation/fPoXSTZVYrDn3dus7Mxs7p",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/round-rock-wood-lathe-woodworking-tool/fT2QQzGci3zwhMCexCcsgj",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-cnc-wire-edm-filter/5GGS3eSEfb8oTT9opGSzEE",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/marlborough-endmills-machine-shop-tools/bgdJ6jo7j8DGzuEvC7L2UH",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/asbury-park-pro-cut-pfm-92-on-car-brake/3oufJtqzmBpYBpkBDa9JAF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-business-for-sale-pvc-cnc/di12Q7SSnfwKV7t5TRTFCh",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glendale-snap-on-long-flathead/jPpzqrhk72u45zkPyaksJf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lathe-turret/puvRkrSNTPDUP71CncUsme",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-business-assets-for-sale-pvc/kZiPVrVyYRKETrUAq6hqyW",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boerne-48-hour-shop-liquidation-pontiac/mJ1bMj55Y15QtPA7DGbNWG",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/east-chicago-40-in-swingyam-gearhead/w2Xw2CA2rch3qXs8BkFpkm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-carpet-and-flooring/1RGYxPgSSC2EWkDaXgAK8c",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-nationwide-carpet-and/utzWVYrx989sdBTGa9t9t8",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/hoffman-estates-type-carton-closing/5PHpu1dGkSj9Jooq7RYBxQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/plano-netgear-wgps606-wireless-print/6rzTY2WXFKqqqQNfkL23wB",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-dell-optiplex-7010-heavy-duty/fcrsuVyaZVmzbb53Hs7ZcA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/brooklyn-bestergo-aluminum-laptop/nqGzKtwVrLgqwgL5Fix2Fh",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-francisco-bunn-64oz-19l-thermal/nT1oCucJKRYqc5XXz4UPno",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glenview-ross-xpression-m7-broadcast/iy1b9CMwSkZr4KBbWHjLTD",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/federal-way-dell-optiplex-3070-sff-9th/fbz582Z6GJHhhr3B2BQui6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/louviers-dell-optiplex5050-sff-cpu-8gb/tsQ9L9dFWwPwNiSiVGhPzS",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/new-bedford-pratt-whitney/mUd8VwNcNCGNJMdmAFcPNf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/miami-dell-mini-tower-optiplex-i5/kUX6Rtis48fr3GVqgnrmBt",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/palatine-ibm-intellistation-pro-xeon-2x/bbnKFgC4ZEqhEBFEMpXLPs",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/alpharetta-sale-dell-optiplex-5070/5gBVpTQXoaXQtWh3wwjzwy",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/olympia-dell-poweredge-r640-server-dual/iEfrNgSCvJ4VrAdQpL4zv4",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/louviers-dell-optiplex-ghz-gb-ram-512gb/cR3Km3rbEJUouF4Po7ihX3",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/staten-island-dell-r730-dual-cpu-128gb/1tfBtgnt37iB1izDaDkTMY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fox-valley-netgear-fr114p-cable-dsl/rCUHdfBaR7mGbyARksafNS",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/louviers-dell-optiplex3050-quadcore/bYNK5rpWMVf3yPWs7pZ56v",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jenkintown-apple-macbook-laptops/h2xvW5eGo7B3WNon4MA9YU",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boca-raton-dell-poweredge-t430-tower/pRiEWxmNFCrEMz2rT9R5ki",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/evanston-desktop-dell-optiplex-5050-i5/36Qv7VaPBtSf4Ao6d4TBN7",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-new-listing-dell-optiplex-5070/kMPCsvzE2XYbe6qXnhWcEW",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/parker-cisco-poe-gigabit-switches/nVSdB2oXyun545hJHLUNWQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-discounted-lenovo-dell-hp-50/oTXRHKJxTfWxBm6emZvC2f",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jenkintown-17-pc-laptops/44gG3PQJNUmVtdB7hkyenr",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-hp-proliant-ml350-g6/muuwvYA9J1iu2ecr3eJQhK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/east-elmhurst-dell-optiplex-990-desktop/u84Qabk5TKEnQHBe6MaP9i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/los-angeles-hp-b21-16-port-server/h3wJU9wDPAhKE1yKUiajrr",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-jose-x-42u-netapp-server-racks-with/5hzghosrRjwnb82jDz4zDi",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/pompano-beach-dell-optiplex-7050-full/k7DCHj6u6XD4LjgUvkAcNd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-dell-optiplex-390-desktop/ejNfpASBiboojWm8fv34d4",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lynnwood-48gb-ddr-ram-pc-server-ram-4x/hKP3QfXeLg8iBfepAxwgon",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-latitude-5401-laptops-for/sTfgLZKRTCGC7Wif6BzLi8",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jenkintown-apple-macbook-pro-laptops/nzPkAUe4aeqQmdc7KgJwDd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/new-york-dell-optiplex-3040-ghz-4gb-ram/ozgbYUhEX4SiN3Cfs6phPd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glendale-dell-optiplex-790-intel-core/h8uVq4w6BeFKSkxg6xt4Ri",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/sunnyvale-new-10u-deep-server-rack/oMTCi89g4pUr2vmJeJP7Ka",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boca-raton-dell-optiplex-760-ultra/uN6erpJrohoqPZcezfQi2o",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/kennesaw-dell-optiplex-3020-core-i5-8gb/797p3gUAp4MZcXC2y2adHd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/greeley-dell-poweredge-available/iYgfuYMVcqpPz8rAcKmpQw",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-latitude-7490-windows-11/tbsWtAMeoMWjLBgd8TcpHi",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jenkintown-dell-optiplex-towers/pgyA3dcE2m1BtU77vcx9Bd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/flushing-supermicro-x10drw-with-xeon-v3/eqATV1GtYHsYGecB4v3Zmg",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boca-raton-dell-optiplex-755-tower-case/79fzTbmbBBx8tHWq8kx41P",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/bridgeview-rolling-server-tall-cabinet/t5DzFnDiFVHpKjpHvCP1iR",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-cisco-air-ct-k9/cNAiQe95ZqA7asjKfewzDH",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-supermicro-server-sys-5018d-fn8t/iZSdApkeyZDS9m9RdqcwCM",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-7480-laptops-i7-i5-backlit/tyZbYraZpmtcjFgmMTuvow",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jenkintown-dell-optiplex-3060-desktop/6BjXYm8vwBiqG3okRDmQt2",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-optiplex-fast-windows/sPQhk1ipSdGfueyUsxYSkE",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-dell-optiplex-7010-sff-pc/eBsN9p1Uf58RGwxSFHAir1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/whitestone-supermicro-x10drw-it-2xe-v4/dvYTQ3HmqumGveASonMi8i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/glendale-dell-optiplex-7010-intel-core/isi1uX3xsQA7U8Vvpfnug7",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/victoria-supermicro-server-chassis/a3Bu98c79bfx1TX8gJWjsP",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-optiplex-7070-slim/vajwaDfcuAvKLqtvMsRo81",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-jose-rack-solution-45u-server-rack/uvB8YKBqHJSFbVwS5i4fPJ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-dell-emc-poweredge-r7425-server/vGf6wmo3VpreUnnKERpD7b",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/arvada-compaq-server-rack-with-servers/dNXhwfNft1m8pVSyvcXiEi",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-7420-touchscreen-win-11pro/bo1SMFpfK9Q586RSYtonnv",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/downingtown-used-wenger-briefcase-for/wmDX9YLaorLn1pXuUmwKXt",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-optiplex-7050-i7-420ghz/vLGQgdaDLqp9UCmidK5ytx",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-dell-optiplex-7060-micro/8zCPWyB5g8DcUYejEVysDb",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/asus-and-dell-15-windows-11-pro-laptops/ogwEhScbvFzWL6CRaemE87",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/long-beach-server-42-black-rack-6ft/pvrJLbA7E3TpRnAjKqkirh",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/hallandale-laptops-and-desktops-apple/brBjJCPPioERrtpQ3Ruvoq",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/schererville-wifi-dell-optiplex-3010-mt/uyz8joYX7yBnoYyD7H5ETs",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/chandler-surface-pro-and-surface-books/3xQVLRiCpB7FYrAC1w6AaV",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/kennesaw-dell-optiplex-790-sff-gb-ssd/3WRxbgMo3Lp92ynjUFMuqE",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-cisco-ws-tc-switch/g6XqNPppBcUtv6dh3ivnAV",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/darby-hp-proliant-dl380-gen-server-no/se6UK7PdVjUTEmG51R4Fxa",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-new-nvidia-tesla-k40m-12gb/etD9Z7L4cMiiVd7Mcnps59",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/pflugerville-dell-optiplex-5050-micro/bzExWHcqnYepg8pi7NiEK2",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/los-angeles-new-and-old-apple-laptops/b16W9XpEgz1jhsFFhSFzYL",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/miami-cisco-linksys-e1000-wireless/uat2CinvdrK7S8sDnYv1NA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/schererville-dell-optiplex-5050-tower/nMBWptTspdgZzduzWXD2mv",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/atlanta-dell-optiplex-790/8iHB3TKp8t6zQ42v7AB7pK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/westminster-dell-optiplex-3020-complete/ik2cd1BTWLU1abeyEkkhBt",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/somerville-dell-lenovo-surface/xeWxNoUhA7TiYPtJYrVu6s",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/darby-datto-siris-1u-blade-server-no/nzJCiYzoCcQhLmFXHHuYgK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-r620-server-96-gb-ram/spmLek67oRNYDAvHYgpTHs",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-dell-optiplex-3000-micro-t/9bXvgU8KxaWtRckmdkY2dF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/los-angeles-hawking-print-server-for/uVVk12VGGn68ZC5tbHT23K",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/tempe-large-dell-shipping-packing-box/ggQdSKNtjwkPvDGsK466Fd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-lot-of-dell-latitude-i7-laptops/dXza8XAAseJG9j41yScMqf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/medford-dell-xps-9310-laptops-i7-touch/oFszaxRxaArxdzDVqa8Whc",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lansdale-dell-optiplex-7050-micro/nSfxNUefYx8PHQB7FUU4vG",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/grand-prairie-dell-poweredge-r630-sff/oHgF7sPHpT7AoUz2S98vEF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/sugar-land-hp-dell-intel-samsung-hynix/sd8nVjgh7Pm8jwW9v8XwiQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-dell-optiplex-7040-mt-pc/aer76mRHHT8BiWHwpmor75",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/new-york-dell-optiplex-aio-180w-power/bGJ7ud4pYsSSRaoDzgMWmz",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/schererville-dell-optiplex-390-pc-intel/5PkYNHTDaCZC85edfLrE6E",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-cisco-15454ds3-12e/2kG1LT17nJJMLnAu5VM3qm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/arvada-hp-zbook-firefly-14-inch-g8/vCRifBQz6ZAVzaVaUMwoH6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-latitude-5320-performance/gkzqxAtUcQwZuYPfWZu12v",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/north-wales-dell-optiplex-7040-mini/oLDKu2jba6E7e9dTR9HsKN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/grand-prairie-dell-poweredge-gb-ddr3/eKNRMN3SwchALasCvrXh1i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-optiplex-3050-desktop/hfxPCk13EzGK23D9AhMDtf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-powerful-micro-desktop-dell/cWtT6NSxYzrMjH7WWVyexN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/new-york-dell-optiplex-aio-180w-power/25GaP5oPZJrEFe76Lk4AW8",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lake-worth-cisco-conference-station/uxjq7o3u2AEzFcraTyNYYq",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-cisco-ws-c2960g-8tc-switch/2u4WvP67k8o1KNy5A5Juwm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-dell-optiplex-5040-mt-gb-1tb-ssd/avUXKmVL5aSSrhMLX1fp85",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/pipersville-server-hard-drives/rmYbSShyCzSXtyyX1MXadB",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/grand-prairie-dell-poweredge-r720xd-lff/a6qVoxEXcFSPJ2cPwVNmDW",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-optiplex-7070-desktop/5iQPWjDAjRyMPkjq3vFhuS",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/inglewood-wireless-access-point-easily/piGyYtVkLSB6spJKcqL88j",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lawrenceville-hp-proliant-dl-360g7/vBjq5XeFHXosJxHx7DfpFY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redmond-asus-esc-4000-g3-server/qGiUNsRkxCdLd3GNKs9h4o",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/denver-used-crucial-ddr-sodimm-8gb-ram/kfKePM1yY5Dd2gjcEyQZH1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-dell-inspiron-5410-windows-11/4otQF3sGtFaQBnuzEkgNg7",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/exton-linksys-cisco-wireless-router/fykVpmg2V3azNJGazWuCfu",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-park-dell-poweredge-r720-ent-idrac/bMAkkZ9LJBLhXYNsCd3UnL",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-powerful-dell-optiplex-9020/8WFcMbyWEmqcVeZfRPdhbP",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/brooklyn-hp-ssd-drive-200gb-server-sas/mLWozGuiERNfgMAs2eVZ2A",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/encino-server-storage-raids-tb/kaPLj25m1A7aC6CRJ1Jc65",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/schererville-wifi-dell-optiplex-7440/vAAwweKmxTcLYeVifRqEuy",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cave-creek-cisco-2911-router-t1-and/461VYkSMnEJ5MNHYPNvQsd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/marietta-dell-optiplex-3080-micro-pc/o2CTw836qQZeP2sVHG69Yu",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/seattle-dell-optiplex-3050m-intel-i5/51mM8HLiUYCuFJYF7BEeg6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-server-switches-towers-and/g9h5GTYutQRsTzbdJxzWr5",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/medford-lenovo-x1-carbon-laptops-ultra/dJNgeQJrszuPCMUjzPMwTi",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/coppell-dell-optiplex-desktops-starting/en2Rpezopf7K6EbLbjXAoJ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/round-rock-business-class-pcs-and/hxsrLwB7PGcKtJxejoyCmX",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rosemead-linksys-cisco-sd208-port/hUMwsfthHju6KGaHSHAXsN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-francisco-hpe-proliant-microserver/u1FSzbMHUCAY1oyDw7xCLw",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/schererville-dell-optiplex-5050/ck8kMdHny4m9G93ghesBgu",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/alpharetta-dell-optiplex-7080-small/niYiJZARETFTBTh36nzxSo",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/seattle-dell-optiplex-3050m-intel-i5/5HqVQEunB2PVGt53Q7JZjZ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/arvada-new-enclosed-server-racks-with/38kAHn4oZyL6KE2dDMxbvL",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-32gb-64gb-128gb-server-memory/5Y51zyHZkAP6Uz4Hnc2u3Q",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-fleets/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/staten-island-dell-r730-dual-cpu-128gb/1tfBtgnt37iB1izDaDkTMY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-francisco-bunn-64oz-19l-thermal/nT1oCucJKRYqc5XXz4UPno",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/oak-forest-phillips-mh100-metal-halide/qH56WwbqKC9YXbw68yqCZu",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jbsa-ft-sam-houston-warehouse-pallet/oKxRHUvvFbxDJAGQ8zyxDr",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/atlanta-pallet-rack-liquidation-sale/iXepAWxRzHeuwiJEAC8LNi",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/plano-netgear-wgps606-wireless-print/6rzTY2WXFKqqqQNfkL23wB",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-tafts-sun-shade-sail-two/b9i9xi3AVxnEJMNHJFFdck",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/brooklyn-hp-ssd-drive-200gb-server-sas/mLWozGuiERNfgMAs2eVZ2A",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/knox-pallet-rack-beams-sturdibuilt-120/4cGtSPmhqMKyhJVdHVr9g9",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/auburn-lot-of-10-teninyu-non-metallic/sQfJAJJ1ZWibU2DApe4h6j",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/darby-hp-proliant-dl380-gen-server-no/se6UK7PdVjUTEmG51R4Fxa",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/brighton-used-steel-bulk-containers-46/3bMudF7UGhvXQs5wAcCT9v",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/brighton-poly-bulk-trucks/3y9pzPGvjTshCJwZmqGV5f",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/macdona-bulk-materials-gravel-base-sand/wCN5v63Xr2K9FfbQg8oRUH",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rego-park-apple-adc-to-dvi-adapter/kwaYrciwP9hE9He3MBDQMo",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-lauderdale-usedpallet/ebMcfncooiJpzrtFiAhZeF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/greeley-dell-poweredge-available/iYgfuYMVcqpPz8rAcKmpQw",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/darby-datto-siris-1u-blade-server-no/nzJCiYzoCcQhLmFXHHuYgK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-hp-proliant-ml350-g6/muuwvYA9J1iu2ecr3eJQhK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/los-angeles-bulk-lot-475-adoro-clip-in/vvbSQoEB8gacY2BA7wpVkw",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/chicago-reduced-aprilaire-merv-13-the/vhmRWPyLyJMUv8WxhrK7iV",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-enterprise-it/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/burleson-prestige-autoclave-classic/7PtSVXsacPSzxQA5v4rLdb",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-medical-dental-offices-is-your/9fe1FeakG9QZ9WAT2BT5ns",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-vintage-steel-medical/csvEXwzBTTeKtiKRDuTT36",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rowland-heights-19x19-pharmacy/kcpj8ZEeoAipBkWd1ndZRZ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boyes-hot-springs-exam-tables-each-obo/tUGpLFnojkHu8quysGLz3D",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/tucker-medical-equipmentlightly-used/jz6cd9c12G9m4xK8wQi8nD",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/bellevue-quiet-air-all-dental-compressor/2LQGfN23hYn3fz6QrU5UH8",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/accord-medical-hospital-clean-room/789BJEMhSH8cPAssNnszMN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/plano-posey-transfer-gait-belt-medical/taFSSA9UmBt9zz7UG3jGTW",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/buffalo-large-autoclave-for-composites/w3eM9oxYV3RUx6vwoi5dKJ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/saint-charles-dental-equipment/aPaTRq4gyvBw2iB1Vugb1F",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-medical-trolley-from-mount-plus/1iHQCn3aZosUo8B1G7tgRA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/roswell-danville-dental-microetcher-iia/6ytFWMxCGRT7UTN7vsXusR",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/bellevue-dental-lab-pan/wWM8hQYxgjmkw56jpF9J49",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/newton-kimberly-clark-nitrile-powder/deYhxSePJHBpPbL61ZUrw4",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-potental-medical-clinic/mmYnGPAVaQ2wUaE8zUKtaJ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/saint-charles-dental-equipment-air/pwzNZgQWyJThdyZkqSRyV1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/saint-charles-dental-equipment-vacuum/vGQAdeHMSt7sF94HGWRSzB",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/natick-tuttnauer-brinkmann-2540e/gi4tArBjVmnoaPMKmGntkA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/saint-charles-dental-equipment-xray/vhHtkpNeYSNEhb2bshBQLS",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-clinical/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/federal-way-vintage-apple-ii-computer/3M1Us7doHyNbZyZDKriNCd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/enriched-listings.jsonl",
+      "reason": "observation refused: allow HTTP 403"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/boston-bulk-computers-for-sale-lenovo/ndhk496VRe9fp8NGhVdmT6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cambridge-24-computers-printers/a553UWrX9ni5mbn9UAmB4s",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/enriched-listings.jsonl",
+      "reason": "observation refused: robots_preflight_unavailable HTTP 0"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rockwall-tom-looking-to-buy-rcbs-lee/8m3FoKgXHArjT5Ewfuqx27",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/spring-looking-to-buy-pokemon-bulk-card/hraD2UU5C2JQhRgzisQCnd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-wanted-large-music-equipment/hPGc1fzkkoURcnm5S8385t",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-sell-me-your-servers-and/cLwSPa6E8iqr4eJZuGbNvA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-nsf-stainless-steel-equipment/rVjnXFs7Kf2ihfJoDSZ47Q",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/carson-we-buy-bulk-laptops/7Dj5HE4CHKJKPR67HvnbVv",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cupertino-buying-magic-the-gathering/ehF4E1CPgCBEjTos9Uzy1x",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/miami-looking-for-commercial-strength/hARKj9USWXkfkCjZha7eUc",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/saint-charles-wanted-old-computers-pcs/uuWpQ3Mhdcp3Kc4am8eQxy",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-iso-buyer-looking-to-buy-bulk/i4mgdWEo1KsYueKL7S3esq",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/atlanta-help-small-businesses-sell/4rM1GvSDzdfJoQNphdCAQm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/seattle-buying-video-games-bulks/pisJJE5ac6b7zFHdM7WNAD",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/aurora-electrical-breakers-and/ipbKsx9grh4wuz7WvCCCq1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/peabody-old-non-working-snow-blowers/t7PA6LZnRjGeSeAEysYc7E",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/philadelphia-barn-find-powersports/4vPsy4vDs1HtcAMBiSor41",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rockwall-rcbs-lee-dillon-precision/9vZCqpnAW8DqJETE7g71jj",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-office-closing-upgrading/ru4HUw2FqfWwUpHfCLaA3M",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-wanted-ill-pick-up-buy-old/1fkVnKfvq5BVq2bXRo6X2f",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/san-antonio-we-buy-computer-networking/2RYPuBHGdoE1S3pSxcd1TY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-restaurant-kitchen-supplies/uFjCiQhCYLv73NqJu2aZHY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/south-pasadena-buy-vintage-antique/kJjUcrEaqVK3o5xY4F6843",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/milpitas-lapidary-equipment-saws/fSWCYuYfPRNe7KYwZETg2d",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-lauderdale-wanted-old-vintage/mw2h78c59vJeVAa2ALQGqj",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lemont-wanted-old-telegraph-equipment/28jJ4CDUGfdhH3RwDXAc6b",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/mesa-free-equipment-machine-removal/3YoKq6XUiazijgCxRvyGxj",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/smyrna-computers-wanted/jHCAE193KeoiiWRxbSsDcs",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/olympia-cash-paid-for-tractors-farm/45aV2sCGiyqPsPdsrE1a9q",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/commerce-city-hvac-equipment/qkLxN7eYzN3ANV3wVQ2QTd",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/peabody-old-non-working-snow-blowers/eFHdBSWqKKCvd64ntXCuLU",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/darby-wanted-scrap-computers-or/apKzc2uuT4BCxv3amWFZhM",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-worth-wanted-vintage-audio-tubes/kAbnWcBVnxwdiF7cF8EdVk",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/humble-buy-store-closing-going-out-of/wWG4ZY6QEs4jREH9WGM216",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cedar-creek-heavy-equipment/uqN918yWtVZYNeBsEZikQD",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-prep-table-double-deck/1qaKSpVZaB9Yp4n3iafxmc",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/los-angeles-wtb-apple-mac-g5-pcix-20/udeyVapp9V3j5mdXwkMs8x",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/redwood-city-wanted-old-computers/5S9WWgjez3XyEeEvrJY3RK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/cleveland-wanted-surplus-printing/8fzqDTYSeLMuSFtEDcf9gz",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/chicago-microsoft-surface-pro-tablet/1JRFK5TU612C7HVZPjPp7a",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/tempe-we-buy-broken-forklifts-scissor/aqgq19NMXqyKHo2Go9aM7m",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/atlanta-wanted-large-quantities-used/bjcXzZBrGBCvpuLcYF8eS6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/tacoma-wtb-older-hunting-equipment/6U3HBJ7SUK6PQTHAUYfM4P",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/denver-computer-liquidation-buyer/2WTaXXdRUjRmDBHgYgcyhf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/marshfield-buy-john-deere-equipment/h9Xo6fUyoZK2ttduVGZrjF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/willow-grove-wanted-scrap-metal-and/ks9HkXqQj37tQctisZdUpF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-worth-freon-r410a-r404a-looking/5e1Ap4Q7TWxrA1suCpUGyv",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-buy-any-must-sell-items-in-bulk/bNFvBQcpZQ4RnkF2SkPcna",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-computer-wanted-by-individual/hUTH8uNYWhtw5Cob6Upms2",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-juicer-blender-beverage/9ShX2uG8s54kUGwrQjU6E1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/burbank-wanted-sound-studio/259MpSsU9A3c6RTefctKC9",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/niles-defective-or-not-neded-computer/g2fSM8mgT1HooJNcBDhKgX",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/gilbert-forklift-e-o-a-broken-not/h4pqaEBwZkwPmxTG55qLpK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/roswell-wanted-parking-spaces-for-car/pLXt5M8mTia8f3gDEzyvzK",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/commerce-city-solar-equipment/p14oMGqiXfTcA5DniQbtRV",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/jamaica-plain-desk-corner-36x-high/jCU9vyL3pvaxKSvyGLZaGA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-washington-computer-recycling/wr6pgonwT3tehugMo2zGhf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/dallas-looking-to-buy-older-laptop/jyEEvAxBPJ2Qj1DrhH9ZAT",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-looking-for-tons-of-merchandise/fqT9D1tw6kMxfTh9U2a6vM",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-buying-workout-equipment/noZg97V4WRBz5FrkkLw4R4",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-gelato-machine-popsicle-maker/bG737UUPrngdgpwJawH8iV",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/simi-valley-lost-computer-bag-at-lax/1es2waLpqsGnKWotAddC9p",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/chicago-buy-mtg-bulk-magic-the-gathering/eqnKHFSabwerP7k1PQbb8p",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/gilbert-equipment-machines-forklift/n89GnC7m3tGqSH3BHufCd5",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clermont-would-like-to-buy-wheat/iSVUcnJgTEwZuqwpn8BGfA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/denver-buying-vintage-apple-ibm/mrawvnCtbpYYmopPfaSbr6",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/stoughton-snow-contractors-equipment/bhKY8VfgnmyodbyXFESyhN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/media-stereos-speakers-audio-equipment/pRSrpGuhKDo7RtN1txkvxF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/dallas-buy-servers-and-switches/bNfeGyiJ5CgSJTSqHQbUgA",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/spring-we-buy-new-used-test-equipment/u735k5pupn8QuzEKhYK3fa",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-we-buy-clothing-new-used-vintage/ci8VAobSAor363gAuv64YC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-food-trailer-truck-hood-exhaust/f2n9eofP2hzUwix3Rd1t7i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/ventura-sell-us-your-surplus-industrial/nboiAhxSWkHPSRsjx1Wn72",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-wtb-dell-nvidia-supermicro/7U15jGsdoCBHeDnh3HQjSQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/atlanta-wtb-quantities-of-used-new/eAq9m44N733Cv4NF38MeWR",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/denver-wanted-broken-and-used/sMKk1UnYjpTQEVfyZbsszp",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lynnfield-wanted-telescope-and/gMGV9BSPWT9yj8LEmgBF3T",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/hartford-vintage-boxing-equipment-wanted/pmauWywgxTbhjDtHn6VomR",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/weatherford-overstock-items/uabsvEKuW4d7zjM3JxCCXC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/spring-we-buy-it-data-center-equipment/rTF18qDqpkGfjwYDC3yMGQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-buying-running-and-non-running/6Y3qzmsdohYhYB3UefqcLx",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-air-curtain-restaurant-utility/kkAaECgx9G4YbzxtRTujCn",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/long-beach-we-buy-business-it-equipment/ushQarRuwobu8ciogsK5Ah",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-wanted-photo-equipment-for/566BZL2ToJvs93TTXvo6qZ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lebanon-band-looking-for-equipment-and/fwjdDv435H9ebN8tVpqncC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/lafayette-wanted-non-working-commercial/mtz1e7WyMtxaD2R94N2nJU",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/haverhill-old-computer-video-game-atari/8J1fgv7tg4qQmD5ggsSaPG",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/ambler-31-inch-insignia-tv-can-also-be/oR8oyZUPVhDRXvVbxByQYM",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/allen-cash-paid-for-new-used-test/b4c3HLSRjP3HkuUYdtQY3i",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-allused-junk-cars-trucks/sPEoumWAF8a7ZUbC2GQXNf",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/bryan-we-buy-bulk-firewood-oak-mesquite/hKZe4SS9qWGYj2qJnuzskn",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-portable-sink-food-truck-corner/3rBK9pPHgxLBptrnHw8huN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/phoenix-we-buy-servers-server-memory/9SwkVUq7WRKbjtgY318Q1G",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/dupont-restaurant-equipment/7QgGjz7G5tFsNb7GrSKEsQ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/collegeville-buying-equipment/x8zkVgt9CsbUTD79bG2mm4",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/dallas-wanted-new-in-box-used-cisco/kJos123qrmX2HmzTTomCAM",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-all-used-junk-cars/g4ayqKEKx4aAuoyczuei3U",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-we-buy-used-new-nvidia-other/utaGDatUL4auz9JWzmytqv",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-traffic-door-locker-restaurant/gWFpLmkLcPNfTWBosx7oNm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/sun-city-computer-dell-optiplex-3010/dBAYsQZU4QaofztiWnmq1Z",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/levittown-wanted-your-dead-ego-lawn/74UqXqF4xcGgnd18uFWa6n",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/dallas-wtb-intel-xeon-computer/ncWWuBTiKCwjK2wUpNHWnN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-all-junk-scrap-equipment/obL2ehRrt46DoPSaQAa2ho",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-we-buy-computer-ram-memory/j5cn5kJj3TThpPz5RtUssC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-meat-slicer-grinder-processing/qXPeVXXxoa48bPb96kyXHZ",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/sun-city-west-computer-screen-monitor/nuGrVAHdcCEx9KsZiF8f5c",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/rockwall-looking-to-buy-rcbs-lee-dillon/vNt2c6vVJuGXZXFaxYS4Td",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-all-used-junk-cars/75ppj9JGWHyV9TMipTBfi5",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-wanted-large-quantities-of/6g6FpHAWAZSwVUC76KxVxr",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-electric-food-warmer-lp-ng/iMH6EXoE9ehe8yRDxeHuJu",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/grapevine-wantedequipment-financing/g454xXZv6WfxhPLu67S4NY",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-cisco-networking-intel/7jCix7ppNSYvE34W6NQqt1",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/austin-we-buy-computer-ram-memory-cpus/r25hnEN14pC6A7oAAyGdzX",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-bakery-equipment-dough-mixer/k3RZNLbzUWuGj16gBytW7R",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/carrollton-wanted-vintage-electronic/uk4VDnRMmztybuKg7aDwDC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-used-new-nvidia-other/dCJ37xrzTZYVCZvy1habJm",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/burnet-warning-computer-ripp-off-ace/6KgvGL15d3aeYTWoR5iedF",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-food-trailer-truck-cooking/77MMxtHwf1h7q7GwgxrD5R",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/fort-worth-wtb-data-center-networking/wKvhEQSLFnnFDSeF2wnbS8",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/houston-we-buy-cisco-other-computer/3dnVy9h3VD59ck3xnhmwTC",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/leander-wanted-construction-equipment/vfHAcuC5ZXgsb64FKyRAwD",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    },
+    {
+      "address": "https://www.craigslist.org/view/d/clifton-steam-oven-seafood-dimsum/e9SSHpWWbnbWy2cY7vY5yN",
+      "evidence": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-buyers/enriched-listings.jsonl",
+      "reason": "not a supply observation"
+    }
+  ],
+  "output": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/routing/routing-candidates.jsonl",
+  "cannot_infer": "Associations can repeat a lot across buyers. Counts are not distinct owners, qualified leads, expected earnings or agreed introductions."
+}

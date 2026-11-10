@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-08T21:26:06.910Z",
+  "checks": {
+    "complete_plan_matches": true,
+    "complete_brief_matches": true,
+    "review_contains_full_brief": true,
+    "receipt_matches": true,
+    "listed_subtotal": true,
+    "no_supplier_contact": true,
+    "held_message": true
+  },
+  "lead": {
+    "rows": [
+      {
+        "id": 13,
+        "attributes": {
+          "namespace": "service-site",
+          "created_at": "2026-10-08T21:25:35Z",
+          "updated_at": "2026-10-08T21:25:35Z",
+          "published_at": null,
+          "status": "",
+          "lead_key": "lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590",
+          "site_id": "aurekai-work-samples",
+          "form": "planner-red3-fixtures",
+          "page": "/red3-planner/",
+          "received_at": "2026-10-08T21:25:26.614Z",
+          "fields_json": "[{\"label\":\"Name\",\"value\":\"Aurekai verification only\"},{\"label\":\"Email\",\"value\":\"verification@example.invalid\"},{\"label\":\"Fixture plan\",\"value\":\"{\\\"schema\\\":\\\"service-site.fixture-plan.v1\\\",\\\"catalogue\\\":\\\"2c5a78fc41b26577653a7ab63a27b56eaab37298efa4acfcfd715cc75a57f3a0\\\",\\\"id\\\":\\\"aurekai-live-verification-20261008\\\",\\\"title\\\":\\\"Aurekai verification only — no customer enquiry\\\",\\\"width\\\":16,\\\"depth\\\":12,\\\"budget\\\":150000,\\\"deadline\\\":\\\"2026-12-10\\\",\\\"notes\\\":\\\"Synthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.\\\",\\\"items\\\":[{\\\"key\\\":\\\"rack-1\\\",\\\"product\\\":\\\"rack\\\",\\\"x\\\":1,\\\"y\\\":1,\\\"rotation\\\":0},{\\\"key\\\":\\\"table-1\\\",\\\"product\\\":\\\"table\\\",\\\"x\\\":9,\\\"y\\\":1,\\\"rotation\\\":0},{\\\"key\\\":\\\"counter-1\\\",\\\"product\\\":\\\"counter\\\",\\\"x\\\":10,\\\"y\\\":8,\\\"rotation\\\":0},{\\\"key\\\":\\\"easel-1\\\",\\\"product\\\":\\\"easel\\\",\\\"x\\\":11,\\\"y\\\":8,\\\"rotation\\\":0}]}\"}]",
+          "brief": "Aurekai verification only — no customer enquiry\n16 × 12 ft · 4 fixtures\nBudget: $1,500.00 · Target date: 2026-12-10\n\n1. 36-inch rolling rack (Normal finials)\n   Listed $83.00 · 1, 1 ft from back-left · rotation 0°\n   Product 8628, option 10749; observed 2026-10-08\n2. Large maple display table (Large / Maple top, silver legs)\n   Listed $540.00 · 9, 1 ft from back-left · rotation 0°\n   Product 8570, option 20684; observed 2026-10-08\n3. 4-foot cash wrap counter (4-foot / Black)\n   Listed $526.00 · 10, 8 ft from back-left · rotation 0°\n   Product 1961, option 11740; observed 2026-10-08\n4. Acrylic shirt easel (Standard listing)\n   Listed $19.50 · 11, 8 ft from back-left · rotation 0°\n   Product 7631, option 7631; observed 2026-10-08\n\nListed fixture subtotal: $1,168.50. Delivery, tax and any custom work are excluded. This is a request for review, not a quote.\n\nFor the supplier to confirm\n• Confirm rack depth, height and loaded capacity.\n• Can this rack be disassembled for transport?\n• 36-inch rolling rack: depth is missing; the dashed area is a planning allowance.\n• Confirm assembly and transport requirements.\n• Confirm current price, finish and delivery date.\n• Confirm easel dimensions and whether the shirt is included.\n• Acrylic shirt easel: confirm the supporting surface and available space.\n• Confirm current prices, availability, freight, tax and delivery timing.\n• Review aisles, access, site measurements and placement before ordering.\n• Can these fixtures arrive by 2026-12-10?\n\nCustomer notes\nSynthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.\n\nSource listings\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/\nhttps://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/\n\nIndependent Aurekai planning preview. No order, reservation or supplier approval.",
+          "facts_json": "{\"kind\":\"fixture_plan\",\"project_title\":\"Aurekai verification only — no customer enquiry\",\"plan_id\":\"aurekai-live-verification-20261008\",\"catalogue_digest\":\"2c5a78fc41b26577653a7ab63a27b56eaab37298efa4acfcfd715cc75a57f3a0\",\"item_count\":4,\"listed_subtotal_cents\":116850,\"issue_count\":0,\"intake_receipt\":\"lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590\",\"author_verified\":false,\"supplier_contacted\":false,\"quote_issued\":false,\"order_placed\":false}",
+          "handled": "no",
+          "note": null
+        }
+      }
+    ],
+    "receipt": "eb8c1886-46bc-405e-9ede-1a0a87a48d92"
+  },
+  "msg": {
+    "rows": [
+      {
+        "id": 64,
+        "attributes": {
+          "namespace": "service-site",
+          "created_at": "2026-10-08T21:25:35Z",
+          "updated_at": "2026-10-08T21:25:35Z",
+          "published_at": null,
+          "status": "draft",
+          "message_id": "service-site:lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590",
+          "about": "aurekai-work-samples request (planner-red3-fixtures)",
+          "recipient": "nickgonzales76017@gmail.com",
+          "subject_line": "Fixture project for review: Aurekai verification only — no customer enquiry",
+          "body": "Received 2026-10-08T21:25:26.614Z through the planner-red3-fixtures form on Nick Gonzales's site.\n\nName: Aurekai verification only\nEmail: verification@example.invalid\nFull submission retained with request lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590.\n\nWhat the records on file say:\nAurekai verification only — no customer enquiry\n16 × 12 ft · 4 fixtures\nBudget: $1,500.00 · Target date: 2026-12-10\n\n1. 36-inch rolling rack (Normal finials)\n   Listed $83.00 · 1, 1 ft from back-left · rotation 0°\n   Product 8628, option 10749; observed 2026-10-08\n2. Large maple display table (Large / Maple top, silver legs)\n   Listed $540.00 · 9, 1 ft from back-left · rotation 0°\n   Product 8570, option 20684; observed 2026-10-08\n3. 4-foot cash wrap counter (4-foot / Black)\n   Listed $526.00 · 10, 8 ft from back-left · rotation 0°\n   Product 1961, option 11740; observed 2026-10-08\n4. Acrylic shirt easel (Standard listing)\n   Listed $19.50 · 11, 8 ft from back-left · rotation 0°\n   Product 7631, option 7631; observed 2026-10-08\n\nListed fixture subtotal: $1,168.50. Delivery, tax and any custom work are excluded. This is a request for review, not a quote.\n\nFor the supplier to confirm\n• Confirm rack depth, height and loaded capacity.\n• Can this rack be disassembled for transport?\n• 36-inch rolling rack: depth is missing; the dashed area is a planning allowance.\n• Confirm assembly and transport requirements.\n• Confirm current price, finish and delivery date.\n• Confirm easel dimensions and whether the shirt is included.\n• Acrylic shirt easel: confirm the supporting surface and available space.\n• Confirm current prices, availability, freight, tax and delivery timing.\n• Review aisles, access, site measurements and placement before ordering.\n• Can these fixtures arrive by 2026-12-10?\n\nCustomer notes\nSynthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.\n\nSource listings\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/\nhttps://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/\n\nIndependent Aurekai planning preview. No order, reservation or supplier approval.",
+          "state": "composed",
+          "composed_by": "service-site",
+          "composed_at": "2026-10-08T21:25:35.398Z",
+          "would_be_sent_by": "a person, using their own account and their own judgement, outside this estate",
+          "state_reason": null,
+          "cannot_infer": "that the business has seen this request, that the person who typed it is who they say, or that anybody agreed to anything beyond being answered"
+        }
+      }
+    ],
+    "receipt": "27f60683-0a48-4140-914a-b044ae06e1ff"
+  },
+  "first_sync": {
+    "brought": 1,
+    "prepared": 1,
+    "recovered": 0,
+    "errors": []
+  },
+  "second_sync": {
+    "brought": 0,
+    "prepared": 0,
+    "recovered": 0,
+    "errors": []
+  }
+}

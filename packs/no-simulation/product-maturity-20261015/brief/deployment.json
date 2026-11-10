@@ -1,0 +1,17 @@
+{
+  "account": "estate",
+  "project": "aurekai-work-samples",
+  "address": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/",
+  "branch": "brief-studio-upgrade",
+  "preview": true,
+  "keeps_requests": false,
+  "id": "e8875e2b-6dc2-49cf-8f59-3ab119d8c9b6",
+  "url": "https://e8875e2b.aurekai-work-samples.pages.dev",
+  "aliases": [
+    "https://brief-studio-upgrade.aurekai-work-samples.pages.dev"
+  ],
+  "environment": "preview",
+  "production_before": "f9ad11eb-6f99-4730-a307-533444332535",
+  "production_after": "f9ad11eb-6f99-4730-a307-533444332535",
+  "created_on": "2026-10-15T09:13:25.646437Z"
+}

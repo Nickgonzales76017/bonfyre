@@ -1,0 +1,41 @@
+PASS Real catalogue opens
+PASS Original title is source product
+PASS No fake publish control
+PASS Save begins disabled
+PASS Empty title is rejected
+PASS Fractional-cent prices are rejected
+PASS Review shows title and price edits
+PASS Review preserves old price
+PASS Draft survives page reload
+PASS Draft survives browser restart
+STEP two-tab conflict
+STEP first tab saved
+STEP second tab clicked
+PASS Concurrent stale draft cannot overwrite
+PASS Two service items remain separate
+PASS Search has useful empty state
+PASS No horizontal overflow at 1440
+PASS No horizontal overflow at 768
+PASS No horizontal overflow at 390
+PASS No horizontal overflow at 320
+PASS Mobile list returns
+PASS Mobile opens selected product
+PASS Second store uses same workspace
+PASS Missing SKUs remain empty
+PASS Saved-draft filter works
+PASS RED3 opens its own product
+PASS RED3 retains the legacy source URL
+PASS RED3 missing source fields stay empty
+PASS RED3 keeps its observed price
+PASS Prepared sample includes search, image and collection proposals
+PASS Prepared sample has seven reviewable changes
+PASS Prepared sample survives save and reload
+PASS RED3 has no horizontal overflow at 1440
+PASS RED3 has no horizontal overflow at 390
+PASS RED3 change review works
+PASS RED3 draft reopens after reload
+PASS Failed first load has visible error
+PASS A changed catalogue chunk cannot be edited
+PASS No page errors
+PASS No external writes or submissions
+{"passed":37,"failed":0,"errors":[],"writes":[],"submissionReceipt":null}

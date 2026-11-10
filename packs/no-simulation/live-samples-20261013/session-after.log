@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/browser/tests/session-lifecycle.test.mjs:
+{"session_cases":4,"elapsed_ms":5641}
+(pass) browser helper exits after replies, protocol errors and work failures without retained timers or profiles [5647.30ms]
+
+ 1 pass
+ 0 fail
+ 6 expect() calls
+Ran 1 test across 1 file. [5.91s]

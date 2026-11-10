@@ -1,0 +1,47 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreCompress/tests/savings_stream.test.mjs:
+45 |   expect(measured.directory).toBe(source);
+46 |   expect(measured.raw_bytes).toBe(text.length + 6);
+47 |   expect(measured.archive_stream_bytes).toBe(archive.length);
+48 |   expect(measured.compressed_bytes).toBe(oracle.stdout.length);
+49 |   expect(measured.stream_ratio).toBeCloseTo(oracle.stdout.length / archive.length, 4);
+50 |   expect(readFileSync(calls, 'utf8')).toBe('tar\n');
+                                           ^
+error: expect(received).toBe(expected)
+
+  "tar
++ tar
+  "
+
+- Expected  - 0
++ Received  + 1
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/savings_stream.test.mjs:50:39)
+      at fixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/savings_stream.test.mjs:31:15)
+(fail) savings counts one real archive stream and matches independent zstd output [322.23ms]
+58 |   const oracle = Bun.spawnSync([zstd, '-19', '-q', '-c'], {stdin: archive});
+59 |   expect(oracle.exitCode).toBe(0);
+60 |   expect(measured.raw_bytes).toBe(0);
+61 |   expect(measured.archive_stream_bytes).toBe(archive.length);
+62 |   expect(measured.compressed_bytes).toBe(oracle.stdout.length);
+63 |   expect(readFileSync(calls, 'utf8')).toBe('tar\n');
+                                           ^
+error: expect(received).toBe(expected)
+
+  "tar
++ tar
+  "
+
+- Expected  - 0
++ Received  + 1
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/savings_stream.test.mjs:63:39)
+      at fixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCompress/tests/savings_stream.test.mjs:31:15)
+(fail) an empty family still finalizes and counts the complete compressed frame [266.48ms]
+(pass) a failed or unavailable archive producer emits no successful measurement [119.94ms]
+
+ 1 pass
+ 2 fail
+ 18 expect() calls
+Ran 3 tests across 1 file. [814.00ms]

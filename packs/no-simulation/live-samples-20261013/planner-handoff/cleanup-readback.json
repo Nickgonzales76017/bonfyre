@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-13T21:11:29.389Z",
+  "run_id": "14ddad0c-7ed2-420f-943c-676f4721c060",
+  "receipt": "lead:planner:2cb31f442a761c5cd38d08c92a32c26b85c3703a69b9b26cebdb207a877956a7",
+  "lead_id": 14,
+  "handled": "yes",
+  "message_id": 139,
+  "message_state": "abandoned",
+  "remote_test_record_absent": true
+}

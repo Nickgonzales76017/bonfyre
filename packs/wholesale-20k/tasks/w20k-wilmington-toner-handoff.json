@@ -1,0 +1,31 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-wilmington-toner-handoff",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "wilmington-toner",
+  "project_ref": "wholesale:toner-exit-routing-20261008",
+  "title": "Turnkey Toner Business For Sale",
+  "location": "Wilmington, DE",
+  "phase": "handoff",
+  "role_requested": "inspection and logistics partner",
+  "desired_result": "Quoted inspection/manifest preparation or pack/load/transport scope, exclusions, exact evidence deliverables, pickup/dropoff assumptions and compensation. No dispatch or visit without acceptance.",
+  "disclosure_allowlist": [
+    "task-specific units",
+    "safe access details once authorized",
+    "required photos and outputs"
+  ],
+  "disclosure_exclusions": [
+    "portfolio finance",
+    "unrelated customers",
+    "unapproved contact list"
+  ],
+  "acceptance": "Named party, quote reference, scope, price basis, evidence checklist and explicit acceptance status; completion verified separately from payout.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-toner/foreign/receipts/classified-b9ddab1ede276b0685d8-b9ddab1ede27-b4e2d27e6da9.json",
+  "next_action": "SKU inventory and prospective supplier price"
+}

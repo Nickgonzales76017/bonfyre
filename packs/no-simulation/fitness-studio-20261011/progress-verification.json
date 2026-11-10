@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-19T15:25:38.632Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "editor saves a configured progression and exposes its initial targets",
+    "session 1 leaves actual effort blank",
+    "session 1 derives the next targets from completed work",
+    "session 2 leaves actual effort blank",
+    "session 2 derives the next targets from completed work",
+    "weight chart contains both dated entries",
+    "weights and completed progression sessions survive reload and creator switch",
+    "saving an unchanged pounds display retains exact canonical kilograms",
+    "mobile weight history fits the viewport",
+    "removing a weight updates the chart",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-19T15:28:02.207Z",
+  "browser": "Chrome/146.0.7680.178",
+  "memoryFreePercentBefore": 41,
+  "checks": [
+    "coach starts from the requested program with all exercises and sets",
+    "unfinished draft names survive reload",
+    "draft survives a complete browser restart",
+    "saving a draft does not deliver it to the member",
+    "an unfinished numeric target is retained on screen without silently clearing the saved effort",
+    "stale autosave preserves current edits and offers recovery",
+    "loading the saved draft recovers the winning revision",
+    "stale review cannot complete native work",
+    "reviewing the latest draft delivers that exact routine",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

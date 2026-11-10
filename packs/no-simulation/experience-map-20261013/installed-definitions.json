@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-13T19:32:32.374Z",
+  "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-experience-map",
+  "corpus": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/current",
+  "cwd": "/tmp",
+  "explicitCorpusEnvironment": false,
+  "checks": [
+    {
+      "operation": "chain-def",
+      "definitions": 52,
+      "passed": true
+    },
+    {
+      "operation": "protocol-def",
+      "definitions": 108,
+      "passed": true
+    },
+    {
+      "operation": "home-def",
+      "definitions": 17,
+      "passed": true
+    }
+  ]
+}

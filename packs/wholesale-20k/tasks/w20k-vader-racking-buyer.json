@@ -1,0 +1,32 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-vader-racking-buyer",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "vader-racking",
+  "project_ref": "wholesale:vader-racking-routing-20261008",
+  "title": "Industrial Pallet Rack Lot - 250+ Beams, 400 Deck Supports, Uprights -",
+  "location": "Vader, WA",
+  "phase": "buyer",
+  "role_requested": "commercial operator",
+  "desired_result": "Whole-lot or nonoverlapping split bids with exact accepted units, condition, net collection/delivered basis, deductions, payment timing and validity. Reuse existing threads, do not repeat opening.",
+  "disclosure_allowlist": [
+    "equipment specification",
+    "condition evidence",
+    "approximate pickup region"
+  ],
+  "disclosure_exclusions": [
+    "supplier identity until authorized handoff",
+    "supplier asking price",
+    "internal margins",
+    "other bids"
+  ],
+  "acceptance": "Actual buyer reply or written indication, no bid invented from retail/auction comparisons.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-supply/foreign/receipts/classified-ea86dad07e6c65a0eaf6-ea86dad07e6c-6d4b240b42b7.json",
+  "next_action": "connector/condition groups and collected bid"
+}

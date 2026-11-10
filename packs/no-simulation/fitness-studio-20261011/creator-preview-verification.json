@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-12T02:43:47.430Z",
+  "url": "http://127.0.0.1:4190/creator",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "Exact preview route authenticates into both explicitly granted studios",
+    "Still Studio applies its own brand and fits a 390px viewport",
+    "Sign-out succeeds without browser runtime errors",
+    "Local model execution remains disconnected"
+  ],
+  "errors": []
+}

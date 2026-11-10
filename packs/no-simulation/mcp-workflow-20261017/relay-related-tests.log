@@ -1,0 +1,21 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/hook_bridge.test.mjs:
+(pass) PreToolUse respects peer depth and installed policy regex, including its double-escaped whitespace [5.58ms]
+(pass) missing or invalid policy fails closed for PreToolUse [0.52ms]
+(pass) hook telemetry is local, authenticated and best effort; source and event are derived [1.43ms]
+(pass) prompt fingerprint, compaction and stop guard preserve event output contracts [1.97ms]
+(pass) session context uses sanitized Git status and read-only estate summary [0.42ms]
+(pass) estate summary performs legacy status queries without a Python launcher [18.36ms]
+(pass) CLI reads bounded stdin and emits local denial on malformed oversized input [4.64ms]
+
+integrations/mcp/tests/fabric_estate.test.mjs:
+(pass) status reproduces installed estate and operator read model without Python [34.68ms]
+(pass) add writes compiled mission with Python defaults, locks and no operator-goal mutation [21.43ms]
+(pass) explicit dedupe updates intended fields but retains actual mission identity, family and locks [10.06ms]
+(pass) invalid inputs and missing DB refuse without creating a replacement database [6.24ms]
+
+ 11 pass
+ 0 fail
+ 49 expect() calls
+Ran 11 tests across 2 files. [324.00ms]

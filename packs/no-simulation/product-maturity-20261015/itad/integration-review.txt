@@ -1,0 +1,9 @@
+Account and organization integration review
+
+Existing native owner: components/BonfyreServiceSite/training-creator.mjs handles actor binding, native login, profile, institutional authorization, team membership and logout. Extract its session/command adapter with configurable route and cookie mappings; do not copy hardcoded training studios or grant acquisition rights from a training grant.
+
+Institution choices must come from current server authorization. integrations/mcp/institution_contract.json identifies estates but grants nothing. workspace-navigation.mjs can derive visible views from permitted operations. The existing training request owner demonstrates artifact-backed revisions and native checkpoint compare-and-swap. Acquisition needs a bounded schema and explicit native admission under the destination actor, estate and scope. Local samples must never silently become shared records when an organization selector changes.
+
+training-workspace.mjs remains loopback-only. Public demos need a reviewed same-origin HTTPS API transport; the MCP OAuth gateway does not establish a browser session API. Test at least two organizations, read/write/admin roles, missing actor binding, cross-organization object IDs, revoked grants, concurrent revisions, logout and explicit local-to-shared import. This pass did not implement that integration.
+
+Claude bonfyre-2d received the implementation and integration handoff. The tool reported inbox delivery, not reading or review. The stopped native dispatcher was not bypassed.

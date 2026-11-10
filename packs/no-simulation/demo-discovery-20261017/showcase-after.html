@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f2efe7">
+  <link rel="icon" href="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" type="image/png">
+  <link rel="canonical" href="https://nickgonzales76017.github.io/bonfyre/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nickgonzales76017.github.io/bonfyre/">
+  <meta property="og:image" content="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Bonfÿre & Aurekai — One foundation. Many ways to work.</title>
+  <meta name="description" content="Explore Aurekai's working customer applications and Bonfÿre's native software: branded sites, practical integrations, local-first tools and independent developer components.">
+  <meta property="og:title" content="Bonfÿre & Aurekai — One foundation. Many ways to work.">
+  <meta property="og:description" content="See the working software, explore independently useful native tools, and follow the current source.">
+  <style>
+    :root{--paper:#f2efe7;--paper-dark:#e8e4d9;--ink:#202b27;--forest:#233d35;--rust:#b35436;--line:#c9cbbf;--muted:#606b62;--white:#fffdf6}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit;text-underline-offset:4px}
+    a:focus-visible{outline:3px solid var(--rust);outline-offset:5px}
+    .wrap{max-width:1200px;margin:auto;padding:0 clamp(20px,4vw,56px)}
+    .eyebrow{font-size:.72rem;letter-spacing:.17em;font-weight:750;text-transform:uppercase}
+    .top{border-bottom:1px solid var(--line)}
+    .top .wrap{display:flex;min-height:80px;align-items:center;gap:28px}
+    .brand{display:flex;gap:12px;align-items:center;text-decoration:none;white-space:nowrap}
+    .brand img{width:36px;height:36px;object-fit:contain}
+    .brand span{font-weight:800;letter-spacing:.06em;font-size:.95rem}
+    .brand small{font-size:.65rem;color:var(--muted);letter-spacing:.1em;font-weight:650}
+    nav{margin-left:auto;display:flex;gap:clamp(10px,2.5vw,36px);align-items:center}
+    nav a{font-size:.82rem;text-decoration:none;font-weight:650}
+    nav a:hover,.inline:hover{color:var(--rust)}
+    .hero{padding:clamp(70px,9vw,128px) 0 clamp(60px,8vw,105px)}
+    .hero-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.8fr);gap:clamp(36px,6vw,86px);align-items:center}
+    .hero .eyebrow{color:var(--rust)}
+    h1,h2,h3,p{margin-top:0}
+    h1,h2,.quote{font-family:Georgia,"Times New Roman",serif;letter-spacing:-.047em;font-weight:500}
+    h1{font-size:clamp(3.6rem,7.8vw,7.65rem);line-height:.99;margin:26px 0 30px}
+    h1 em{font-weight:500;color:var(--rust)}
+    .intro{max-width:620px;font-size:clamp(1.05rem,1.65vw,1.3rem);color:#415249;line-height:1.7;margin-bottom:34px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .action{display:inline-flex;align-items:center;gap:20px;padding:14px 20px;text-decoration:none;font-weight:750;font-size:.88rem;border:1px solid var(--forest);transition:transform .2s,background .2s}
+    .action:hover{transform:translateY(-2px)}
+    .action.primary{background:var(--forest);color:var(--white)}
+    .action.secondary{background:transparent}
+    .action span{font-size:1.25rem;font-weight:400;line-height:1}
+    .plate{padding:34px;background:var(--forest);color:var(--white);min-height:480px;position:relative;overflow:hidden;box-shadow:22px 22px 0 #dbd9ce}
+    .plate:before{content:"";position:absolute;width:350px;height:350px;border:1px solid #6f867c;right:-170px;top:-190px;border-radius:50%;box-shadow:0 0 0 42px rgba(255,255,255,.035),0 0 0 110px rgba(255,255,255,.015)}
+    .plate > *{position:relative}
+    .plate-top{display:flex;align-items:center;justify-content:space-between;font-size:.67rem;letter-spacing:.15em;font-weight:700;color:#c0cfc6;text-transform:uppercase}
+    .crest{display:grid;place-items:center;height:160px;margin:16px 0 10px}
+    .crest{display:grid;place-items:center;height:112px;margin:24px 0 20px}.crest-rule{display:block;width:90%;height:1px;background:linear-gradient(90deg,transparent,#aabeb0,transparent)}
+    .plate h2{font-size:2.8rem;line-height:1.06;margin-bottom:24px}
+    .route{border-top:1px solid rgba(255,255,255,.26);display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+    .route div{padding:17px 0;border-bottom:1px solid rgba(255,255,255,.15)}
+    .route b{display:block;font-size:.78rem;font-weight:750}
+    .route small{color:#b3c9bc;font-size:.72rem}
+    .strip{background:var(--paper-dark);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .strip .wrap{display:flex;flex-wrap:wrap;gap:18px 48px;justify-content:space-between;padding-top:22px;padding-bottom:22px}
+    .strip span{font-size:.76rem;font-weight:750;color:#4a5a51;letter-spacing:.06em}
+    section.block{padding:clamp(70px,8vw,112px) 0}
+    .head{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:end;margin-bottom:34px}
+    .head h2{font-size:clamp(2.7rem,5vw,4.9rem);line-height:1.08;margin:10px 0 0}
+    .head p{max-width:420px;color:var(--muted);margin:0 0 6px}
+    .items{border-top:1px solid var(--line)}
+    .item{display:grid;grid-template-columns:56px 1fr minmax(130px,.8fr) 34px;gap:20px;align-items:center;padding:26px 10px;border-bottom:1px solid var(--line);text-decoration:none;transition:background .2s,padding .2s}
+    .item:hover{background:var(--white);padding-left:20px;padding-right:20px}
+    .item .index{font-size:.73rem;color:var(--rust);font-weight:750}
+    .item strong{font:500 clamp(1.28rem,2vw,1.85rem)/1.2 Georgia,serif;letter-spacing:-.025em}
+    .item .detail{font-size:.85rem;color:var(--muted)}
+    .item .arrow{font-size:1.5rem;text-align:right}
+    .light{background:#e7e9e0;border-top:1px solid var(--line)}
+    .devgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .devcard{background:var(--white);border:1px solid #cdd0c5;padding:30px;display:flex;flex-direction:column;min-height:250px;text-decoration:none}
+    .devcard:hover{border-color:var(--rust)}
+    .devcard .eyebrow{color:var(--rust)}
+    .devcard h3{font:500 1.8rem/1.12 Georgia,serif;margin:25px 0 12px}
+    .devcard p{color:var(--muted);font-size:.87rem;margin-bottom:20px;flex:1}
+    .devcard .go{font-weight:800;font-size:.82rem}
+    .end{background:var(--forest);color:var(--white);padding:clamp(70px,8vw,100px) 0}
+    .endinner{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:end}
+    .end h2{font-size:clamp(2.65rem,5.3vw,5.5rem);line-height:1.07;margin:12px 0 0}
+    .end p{max-width:470px;color:#cbd8d0}
+    .end .action{border-color:#d7e1d8;color:var(--white)}
+    footer{padding:25px 0;border-top:1px solid #426055;background:var(--forest);color:#c8d8ce}
+    footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    footer small{font-size:.72rem}
+    @media(max-width:850px){.hero-grid,.head,.endinner{grid-template-columns:1fr}.plate{min-height:auto;max-width:560px}.devgrid{grid-template-columns:1fr}.head p{max-width:580px}}
+    @media(max-width:620px){nav a:nth-child(1){display:none}.top .wrap{gap:8px}.brand span{font-size:.78rem}nav{gap:15px}.item{grid-template-columns:32px 1fr 28px;gap:12px}.item .detail{grid-column:2;grid-row:2}.item .arrow{grid-column:3;grid-row:1}.plate{padding:25px}.plate h2{font-size:2.3rem}h1{font-size:clamp(3.4rem,13vw,5rem)}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+  </style>
+  <link rel="stylesheet" href="assets/showcase.css">
+  <script defer src="assets/showcase.js"></script>
+</head>
+<body>
+  <header class="top"><div class="wrap">
+    <a class="brand" href="https://github.com/Nickgonzales76017/bonfyre" aria-label="Bonfÿre canonical repository"><img src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" alt=""><span>BONFŸRE <small>/ AUREKAI</small></span></a>
+    <nav aria-label="Main navigation"><a href="#experiences">See the work</a><a href="modules/">Source atlas / 48</a><a href="https://aurekai-work-samples.pages.dev/#ask">Start a project ↗</a></nav>
+  </div></header>
+  <main>
+    <section class="hero"><div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">Native foundation · Finished experiences</div>
+        <h1>One foundation.<br><em>Many ways</em><br>to work.</h1>
+        <p class="intro">Bonfÿre supplies the software underneath. Aurekai turns it into tools, branded customer applications, and the working connections between existing systems.</p>
+        <div class="actions">
+          <a class="action primary" href="https://aurekai-work-samples.pages.dev/">Try working software <span aria-hidden="true">↗</span></a>
+          <a class="action secondary" href="https://github.com/Nickgonzales76017/bonfyre">Explore the source <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+      <aside class="plate" aria-label="Shared operating model">
+        <div class="plate-top"><span>BONFŸRE / THE ENGINE</span><span>01—04</span></div>
+        <div class="crest" aria-hidden="true"><span class="crest-rule"></span></div>
+        <h2>One system.<br>Different doors.</h2>
+        <div class="route">
+          <div><b>01 / SOURCE</b><small>Where facts come from</small></div>
+          <div><b>02 / WORK</b><small>Who may do what</small></div>
+          <div><b>03 / EVIDENCE</b><small>What actually happened</small></div>
+          <div><b>04 / DELIVERY</b><small>What people can use</small></div>
+        </div>
+      </aside>
+    </div></section>
+    <div class="strip"><div class="wrap">
+      <span>WORKING BROWSER EXAMPLES</span><span>INDEPENDENT NATIVE TOOLS</span><span>BRANDED BUSINESS SOFTWARE</span><span>REVIEWED SOURCE BOUNDARIES</span>
+    </div></div>
+    <section class="block" id="experiences"><div class="wrap">
+      <div class="head"><div><div class="eyebrow">Aurekai / in use</div><h2>Choose a workspace.</h2></div><p>Open a demo using public or sample data. <a href="https://aurekai-work-samples.pages.dev/#samples">Browse Work Samples →</a></p></div>
+      <h3 class="experience-subhead">Working applications</h3>
+      <p class="experience-subcopy">These links open runnable user journeys. Their examples don't imply real-world external execution.</p>
+      <div class="items" data-demo-list aria-label="Working application directory">
+        <a class="item" data-demo data-kind="Equipment acquisition · public preview" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/itad-acquisition-desk.png" data-shot-alt="Equipment manifest and modeled purchase totals" href="https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/"><span class="index">01</span><strong>ITAD Acquisition Desk</strong><span class="detail">Edit equipment manifests, compare lots and model purchase costs before preparing a buyer inquiry.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Recipient briefs · public preview" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/acquisition-brief-studio.png" data-shot-alt="Opportunity list with reviewer memo and recipient preview" href="https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/"><span class="index">02</span><strong>Acquisition Brief Studio</strong><span class="detail">Review source-linked opportunities, edit a recipient memo and compare estimated verification routes.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Shift operations · demo scenario" href="https://nickgonzales76017.github.io/pages-shift-handoff/continuity/"><span class="index">03</span><strong>Shift Continuity Studio</strong><span class="detail">Claim bounded work, review blockers and retain the receiving shift’s acknowledgment.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Civic media · source review" href="https://nickgonzales76017.github.io/pages-town-box/civic-council/"><span class="index">04</span><strong>Dallas Council Media</strong><span class="detail">Explore exact agenda/video joins, open original records and prepare a selected-file handoff.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Funding operations · demo scenario" href="https://nickgonzales76017.github.io/pages-grant-evidence/impact-studio/"><span class="index">05</span><strong>Funding &amp; Impact Studio</strong><span class="detail">Compare funding sources, balance proposed grants and matching costs, and review milestone evidence.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="3D room planning · interactive" data-shot="https://nickgonzales76017.github.io/bonfyre/spaces/shots/studio-room-selection.png" data-shot-alt="Aurekai Room Design Studio showing source-linked lamps, dimension labels and a calculated materials subtotal." href="https://nickgonzales76017.github.io/bonfyre/spaces/product-room/"><span class="index">06</span><strong>Room Design Studio</strong><span class="detail">Place source-linked products in 2D or 3D, inspect dimensions, compare saved alternatives and prepare a review brief.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Product configuration · interactive" data-shot="https://nickgonzales76017.github.io/bonfyre/spaces/shots/studio-product.png" data-shot-alt="Aurekai product studio showing the retained lamp, model inspection and catalogue-to-room controls." href="https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/?store=wayfair-reference&amp;workspace=inventory"><span class="index">07</span><strong>Catalogue &amp; 3D Configuration</strong><span class="detail">Choose an observed option, inspect model parts and finishes, set a quantity and continue in the same saved room plan.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Audio production · interactive" href="https://nickgonzales76017.github.io/pages-podcast-plant/studio/"><span class="index">08</span><strong>Multitrack Creator Studio</strong><span class="detail">Arrange imported audio with trims, fades, pan and markers, then render and export a WAV.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Voice production · interactive" href="https://nickgonzales76017.github.io/pages-podcast-plant/studio/quick/"><span class="index">09</span><strong>Narrated Quick Mix</strong><span class="detail">Mix the credited audio sources, compare music ducking and export an editorial cut.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Recurring programs · interactive" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/program-contents-20261015.jpg" data-shot-alt="Product selections with quantities and per-cycle costs" href="https://browser-workbench.aurekai-work-samples.pages.dev/"><span class="index">10</span><strong>Sources and recurring programs</strong><span class="detail">Plan recurring selections and review source-price changes across saved programs.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Retail planning · interactive" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/planner-spatial.png" data-shot-alt="Retail plan with draggable fixtures and exact option costs" href="https://aurekai-work-samples.pages.dev/red3-planner/"><span class="index">11</span><strong>Retail space planner</strong><span class="detail">Arrange fixtures, compare layouts and prepare a supplier enquiry.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Product operations · interactive" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/catalogue-grid.png" data-shot-alt="Product grid with inline edits and bulk actions" href="https://aurekai-work-samples.pages.dev/catalogue/"><span class="index">12</span><strong>Catalogue workspace</strong><span class="detail">Edit products in bulk, compare prices and save a draft for review.</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" data-demo data-kind="Audio editing · interactive" data-shot="https://aurekai-work-samples.pages.dev/assets/shots/audio-arrangement.png" data-shot-alt="Audio tracks with trim handles and playback controls" href="https://aurekai-work-samples.pages.dev/audio/"><span class="index">13</span><strong>Audio arrangement</strong><span class="detail">Drag and trim tracks, audition the mix and export a WAV.</span><span class="arrow" aria-hidden="true">↗</span></a>
+      </div>
+      <h3 class="experience-subhead smaller">Guides, customer sites &amp; case studies</h3>
+      <p class="experience-subcopy">Maintained documentation and reviewed work are different products from interactive demos.</p>
+      <div class="items" aria-label="Guides and case studies">
+        <a class="item" href="https://aurekai-work-samples.pages.dev/archive/"><span class="index">01</span><strong>Shipment reconciliation case</strong><span class="detail">Reconciliation findings and evidence exceptions; not a general live intake application</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" href="https://aurekai-work-samples.pages.dev/wix-review/"><span class="index">02</span><strong>Site reconstruction review</strong><span class="detail">Wix/SEO findings and methodology; a case study, not a full live optimization laboratory</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" href="https://docs.aurekai.work/three-businesses"><span class="index">03</span><strong>Three customer-site implementations</strong><span class="detail">Explanation and links to branded sites on the common ServiceSite system</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" href="https://aurekai-work-samples.pages.dev/training/"><span class="index">04</span><strong>Member training application guide</strong><span class="detail">Instructions for the existing coach/member application</span><span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="item" href="https://aurekai-work-samples.pages.dev/documents/"><span class="index">05</span><strong>Local document-search guide</strong><span class="detail">How to access source-cited local retrieval and saved research</span><span class="arrow" aria-hidden="true">↗</span></a>
+      </div>
+    </div></section>
+    <section class="block light" id="developers"><div class="wrap">
+      <div class="head"><div><div class="eyebrow">Bonfÿre / for builders</div><h2>Adopt one piece.<br>Or connect many.</h2></div><p>The native software, independent distributions and application integrations have distinct maturity and licensing. You don't need to adopt the whole estate for one useful job.</p></div>
+      <div class="devgrid">
+        <a class="devcard" href="https://github.com/Nickgonzales76017/bonfyre"><div class="eyebrow">Native foundation</div><h3>Bonfÿre engine</h3><p>Shared work, authority, evidence, finance, data and execution capabilities. Newer source is being published through separate review.</p><span class="go">Explore code ↗</span></a>
+        <a class="devcard" href="https://github.com/Nickgonzales76017/bonfyre-statement-import"><div class="eyebrow">Independent C tool</div><h3>Statement Import</h3><p>Offline conversion of normalized statement text to checked CSV, with explicit reconciliation failure.</p><span class="go">Inspect the tool ↗</span></a>
+        <a class="devcard" href="https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier"><div class="eyebrow">Independent verifier</div><h3>Agent Trace Verifier</h3><p>Deterministic trace inspection across execution, authority, evidence and recovery boundaries.</p><span class="go">Inspect the verifier ↗</span></a>
+      </div>
+    </div></section>
+    <section class="end"><div class="wrap endinner">
+      <div><div class="eyebrow">AUREKAI / BUILD & OPERATE</div><h2>Bring the actual<br>problem.</h2></div>
+      <div><p>Need a custom application, a WordPress or ERP integration, a customer-branded site, or a useful feature inside existing software? Start with what people need to do and what successful delivery looks like.</p><a class="action" href="https://aurekai-work-samples.pages.dev/#ask">Discuss a project <span aria-hidden="true">↗</span></a></div>
+    </div></section>
+  </main>
+  <footer><div class="wrap"><small>© 2026 Aurekai / Bonfÿre · This legacy GitHub Pages address leads to current products and reviewed source.</small><small><a href="https://docs.aurekai.work/">Guides</a> · <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">Licensing</a></small></div></footer>
+</body>
+</html>

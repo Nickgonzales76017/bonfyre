@@ -1,0 +1,25 @@
+{
+  "schema": "bonfyre.witness.model-residency.v1",
+  "measured_at": "2026-10-16",
+  "machine": "Apple M3, 16 GiB unified memory, macOS 15 (Darwin 24.5.0)",
+  "before": {
+    "service": "com.bonfyre.moe exec'd llama-server with Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf -ngl 99 -c 2048",
+    "resident_since": "2026-10-12T21:14 local",
+    "requests_since_start": 0,
+    "metal_bytes_mib": {"model": 5611, "kv": 384, "compute": 304, "total": 6300},
+    "available_memory_bytes": 1838432256,
+    "swap_used_mib": 11520
+  },
+  "after_unload": {"available_memory_bytes": 8412626944},
+  "cold_loads": [
+    {"model": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf", "seconds_to_ready": 10, "grant_mib": 6001, "answered": "Hello!"},
+    {"model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS.gguf", "path": "bonfyre reason ask with no endpoint, fallback after the MoE was deferred", "wall_seconds": 5.9}
+  ],
+  "refusal_observed": "defer: needs 6321 MiB, 5367 MiB available beyond the floor; other programs are using the memory now; retry when it frees",
+  "clean_stop": "SIGTERM via launchctl kickstart -k unloaded the model and released grant 1 (released_at 2026-10-16T14:27:23+00:00)",
+  "cannot_infer": [
+    "a model that fit once -> it fits on the next request; available memory moves with every other program",
+    "an admitted load -> the answer is good; admission measures memory, not output quality",
+    "the size estimate -> exact residency for other checkpoints or context sizes; it was measured on one checkpoint at -c 2048"
+  ]
+}

@@ -1,0 +1,3 @@
+shipment_id,ship_date,destination,issue
+DEMO-1002,2026-10-02,"Austin, TX",No delivery-proof document in this input batch
+DEMO-1003,2026-10-03,"Houston, TX",No delivery-proof document in this input batch

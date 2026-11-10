@@ -1,0 +1,16 @@
+{
+  "digest": "8dca3ee80ce53b83ff5b962e9f373a163edf7e225c90af5ca71d84c15d381302",
+  "digest_contract": "sha256 of ordered file-digest JSON",
+  "previous": "releases/6a57b2e0e4464396d829fbdd268ee2cbbf18c1a7ce6f9fb0356876d800c0ea76",
+  "files": {
+    "all_bindings.tsv": "a9261c3b0631efebc6d025af6e0b4d8e0828e21fc0b44c9acc779621fead3149",
+    "app_bindings.jsonl": "60576ab2c00cc317f6350c05864b4da8b862fd97229329ad1042fb07e525a23b",
+    "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+    "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+    "manifest.json": "7b8099d522118df010e85b784d7ee1e64b5c42bfdcab397453339db9ddec1592",
+    "owner_graph.json": "71ca24f995ceef35a4f31622402d5b0a1140702b1cc379e1eff4e6a50a26d7ef",
+    "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+    "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+  },
+  "validation": "Atlas valid; ExperienceMap corpus target completed successfully."
+}

@@ -1,0 +1,81 @@
+{
+  "observed_at": "2026-10-09T15:57:56.393Z",
+  "ledger": {
+    "type": "wiki_page",
+    "id": 1,
+    "namespace": "aurekai-commercial-proof",
+    "route": "commercial-proof-ledger",
+    "sha256": "e99ca35b6cb4aeda24b30e056f4eac14018215047511365380c32dcc2cb9edd7",
+    "evidence_entries": 13,
+    "uses": 5,
+    "published": false,
+    "allow_guest": false
+  },
+  "projects": [
+    {
+      "id": 73,
+      "namespace": "craigslist-zero-close",
+      "stage": "rigging_contact_assigned"
+    },
+    {
+      "id": 76,
+      "namespace": "craigslist-zero-close",
+      "stage": "freight_quote_received_inventory_needed"
+    },
+    {
+      "id": 87,
+      "namespace": "craigslist-zero-close",
+      "stage": "qualification_response_sent"
+    },
+    {
+      "id": 96,
+      "namespace": "craigslist-zero-close",
+      "stage": "contact_route_failed"
+    },
+    {
+      "id": 123,
+      "namespace": "craigslist-zero-close",
+      "stage": "qualification_draft_ready"
+    },
+    {
+      "id": 124,
+      "namespace": "craigslist-zero-close",
+      "stage": "qualification_draft_ready"
+    },
+    {
+      "id": 125,
+      "namespace": "craigslist-zero-close",
+      "stage": "qualification_draft_ready"
+    }
+  ],
+  "drafts": [
+    {
+      "id": 109,
+      "recipient": "support@sodesign.online",
+      "state": "written"
+    },
+    {
+      "id": 110,
+      "recipient": "it@understack.it",
+      "state": "written"
+    },
+    {
+      "id": 111,
+      "recipient": "contact@buddydevelopers.com",
+      "state": "written"
+    },
+    {
+      "id": 112,
+      "recipient": "quotes@immnow.com",
+      "state": "written"
+    }
+  ],
+  "imm_outbound": 112,
+  "campaign": {
+    "id": 119,
+    "namespace": "wholesale-20k",
+    "project_id": "wholesale:20k-mixed-20261008",
+    "title": "Mixed wholesale: $20,000 contribution campaign"
+  },
+  "emails_sent": 0
+}

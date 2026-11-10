@@ -1,0 +1,16 @@
+{
+  "ingest_version": "1.0.0",
+  "timestamp": "2026-10-13T21:29:42Z",
+  "source_file": "intake-source.txt",
+  "source_bytes": 97,
+  "detected_type": "text",
+  "normalized_path": "normalized.txt",
+  "normalized_bytes": 99,
+  "source_content_hash": "0056da3a6e4f6e9e7a869f2cff9ee0eab49ea486a766582db039a8dc36bcef19",
+  "normalized_content_hash": "5b56e785273507b6db08b82c63cad41af1a62aacd7ce62d32d0b44e9ab9b807f",
+  "content_hash": "5b56e785273507b6db08b82c63cad41af1a62aacd7ce62d32d0b44e9ab9b807f",
+  "source_media_type": "text/plain",
+  "normalized_media_type": "text/plain",
+  "media_type": "text/plain",
+  "status": "ready"
+}

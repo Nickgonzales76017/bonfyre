@@ -1,0 +1,14 @@
+Interview with music
+2.000 seconds · stereo · 8000 Hz
+Recording permissions: Creator states they made the recordings
+Mix PCM SHA-256: eb0e853404d53171800555a7f57a176e1a14b86d28ee9228b1b9e90114dcce72
+
+Voice.wav
+Source WAV SHA-256: d0c2232c095b6e7ebcd157a4c42991f4d0d0f1ef0ad165504f8fa32d7494f642
+Source 0.250 to 0.750 seconds; starts at 0.500 seconds; level 0.8; audible
+
+Bed.wav
+Source WAV SHA-256: f7d4a2a2823aef16e2d68567668d7caa2782b642c782bad9b5c5b12ec1d402f1
+Source 0.000 to 2.000 seconds; starts at 0.000 seconds; level 0.5; audible
+
+Saved and mixed locally. These notes do not establish publication permission.

@@ -1,0 +1,65 @@
+pack fpq-proof-frontier-archive-seed
+generation control-1
+source_plane run4_institutional_fabric
+subject model:qwen2.5-0.5b
+profile fpq-bwa-multiscale-v9
+truth_plane measured
+note Historical archive evidence only. This pack is not a proof and must never promote the subject.
+
+layer source_model
+  ordinal 0
+  status proven
+  detail architecture/tokenizer/tensor namespace identified
+layer representation_abi
+  ordinal 1
+  status proven
+  detail profile magic and shards validated
+layer reconstruction
+  ordinal 2
+  status proven
+  detail native-row Q/K/V reconstruction agrees with reference
+layer prepared_state
+  ordinal 3
+  status untested
+layer transformer_math
+  ordinal 4
+  status open
+  detail divergence localized to the runtime execution path
+layer runtime_contract
+  ordinal 5
+  status blocked
+layer physical_execution
+  ordinal 6
+  status blocked
+layer semantic_behavior
+  ordinal 7
+  status blocked
+  detail garbage generation is a symptom of the open layer, not a cause
+
+known_non_cause fpq.noncause.quantization
+  hypothesis quantization
+  experiment fully-lossless FP16 passthrough forced every tensor exact; garbage persisted
+  witness archive:fp16-passthrough-experiment
+  invalidates_on a new representation profile is introduced
+known_non_cause fpq.noncause.qkv_reconstruction
+  hypothesis reconstruction
+  experiment BONFYRE_QWEN_DISABLE_SLI_FAST_SCORE=1 routed Q/K/V through native reconstruction; deltas dropped to zero versus reference
+  witness archive:qkv-bypass-experiment
+  invalidates_on encoded artifact hash changes
+  invalidates_on reader/profile version changes
+known_non_cause fpq.noncause.rope
+  hypothesis rope
+  experiment RoPE stayed exact under both normal and bypass execution paths
+  witness archive:qkv-bypass-experiment
+  invalidates_on attention execution path changes
+
+invariant fpq.reconstruction.qkv.qwen05b
+  layer reconstruction
+  statement trusted native per-row reconstruction of Q/K/V agrees with the reference model
+  status cooled
+  truth_plane measured
+  witness archive:qkv-bypass-experiment
+  reheat encoded artifact hash changes
+  reheat reader version changes
+  reheat representation profile changes
+  reheat reconstruction fixture fails

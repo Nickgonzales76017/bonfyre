@@ -1,0 +1,8 @@
+{
+  "components/BonfyreServiceSite/catalogue-client.mjs": "931a390bb3da2bec8a094533a38d31ab1f9cc92f7ada13a0063bdb480b7b399d",
+  "components/BonfyreServiceSite/catalogue-desk.mjs": "22f60baaebdd1aa44380a63b437cbc78721322f9d1d3f2eb628c56a1e8608ce6",
+  "components/BonfyreServiceSite/workspace-navigation.mjs": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+  "components/BonfyreServiceSite/sections/catalogue.mjs": "c905387606fc2a89ca49b5efaafb5b4dab7cb7665d86bf56c7de6c3e2e9c8937",
+  "components/BonfyreServiceSite/catalogue.css": "3df2d33df5054d9f22a8bf573584378fcfaf687491712728945bf41d28589334",
+  "packs/aurekai-work-samples/site/content.json": "29ec40e18f60a25c8c594b29af6f9e3b643d388e2858162cbe1dc8e10852a1d9"
+}

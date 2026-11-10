@@ -1,0 +1,123 @@
+pack native-power-maturation
+generation control-1
+provenance systematic maturation of the 89 native Bonfyre powers, 2026-08-27
+authority measured
+note Every finding below came from invoking the binary, read-only, never from reading its help text. The pattern is consistent: the powers are real and mostly load-bearing, several carry months of live state nobody reads, and the failures are wiring and measurement rather than capability.
+
+# ---------------------------------------------------------------------------
+# WHAT THE NATIVES ARE ACTUALLY CARRYING
+# ---------------------------------------------------------------------------
+
+claim clm:estate-holds-unread-operational-history
+  status STANDING
+  verification MEASURED
+  bonfyre-control 4 active policies, 248 logged decisions, 138 artifacts scored, latest 2026-06-17
+  bonfyre-entity 77 entities, 161 observations, 1 link
+  bonfyre-tier 7 assignments on the fast tier with 8 recorded SLA VIOLATIONS; 5 on batch with none
+  bonfyre-learn 4 stages all pinned at quality 0.750 with no 7-day average -- no feedback has ever been recorded
+  bonfyre-time 75 artifacts pending, 2 total runs, and 505 ACTIVE re-interpretation triggers
+  bonfyre-space 5 spaces holding real keys, last accessed 2026-04-29
+  bonfyre-query scan imported 594 artifacts
+  bonfyre-orchestrate 53 operators registered, endpoint_configured false
+  bonfyre-compete 9+ A/B competitions, all recipe flywheel stage assistant-routing, all created 2026-06-06, all still active with 2 variants and 24 runs each
+  reading these are not empty scaffolds; the estate has been accumulating evidence it never spends
+
+claim clm:triggers-armed-but-never-fire
+  status UNRESOLVED
+  verification MEASURED
+  claim bonfyre-time carries 505 active re-interpretation triggers against 2 total runs.
+  consequence the temporal re-interpretation surface is armed and effectively dormant; 75 artifacts sit pending
+  action_required either drain the backlog or retire the triggers, but 505:2 is not a working ratio
+
+claim clm:ab-tests-never-conclude
+  status UNRESOLVED
+  verification MEASURED
+  claim bonfyre-compete accumulates experiments that never resolve.
+  evidence nine or more competitions, identical recipe and stage, all created 2026-06-06, all status active, 2 variants and 24 runs each
+  reading 24 runs is enough to decide a two-variant test; nothing has been promoted or demoted in nearly three months
+  gap the help surface exposes demote but no concluding verb
+
+# ---------------------------------------------------------------------------
+# POWERS MATURED THIS PASS
+# ---------------------------------------------------------------------------
+
+upgrade upg:capability-registry-wired-to-its-own-prober
+  status LANDED
+  verification MEASURED
+  before probe_native_capabilities.py produced .capabilities.json (92 families, 90 with a surface, 460 subcommands); bonfyre-capability read a separate registry holding 32 binaries
+  after registry bridged to 103 capabilities, probed rows marked source='probed' so manual descriptions still outrank synopses; FTS rebuilt
+  note neither component was broken; the wire between them did not exist. The prober's own docstring names the defect it was written to fix.
+
+upgrade upg:economy-carries-the-derived-rates
+  status LANDED
+  verification MEASURED
+  before bonfyre-economy routed on an empty cost model
+  after carries rates derived from real provider billing -- gpt-5.6-sol $0.016238, claude-opus-5 $0.020405, mistral-medium-2508 $0.001632, gemini-flash-lite $0.000349, fasttext-local $0.000000 for the identical classification call
+  method recorded through its own 'cost record' verb, not a parallel Python ledger
+  result asked to route, it independently returns fasttext-local as cheapest within budget
+  reading this is the financial membrane reaching the native power
+
+upgrade upg:index-density-engine-activated
+  status LANDED
+  verification MEASURED
+  before every density verb returned nothing -- 'Cannot open db: bonfyre-index.db'
+  after built from 23 artifact.json files into 12 families; reuse finds a shared operator across 7 families; collapse-preview reports 1 group with 6 collapsible families; collapse-plan names a keep representative and 6 folds at confidence 'exact-shape'
+  reading the native equivalent of the Tree-sitter duplicate detection I hand-rolled, and it carries a confidence vocabulary the hand-rolled version lacked. It works over ARTIFACTS not source, so the two are complementary.
+
+claim clm:kvcache-compression-is-real-and-unwired
+  status STANDING
+  verification MEASURED
+  evidence bonfyre-kvcache v8 RLF self-test at 4-bit returns cos=0.999923, rmse=0.000249, bpw=5.75 over 131,072-float K and V projections in 256 tiles
+  reading a working near-lossless KV compression path, addressing the same context cost the Anthropic prompt-cache measurement put at 87% of list-rate exposure
+  gap never bound to any workload in this session's ledger
+
+# ---------------------------------------------------------------------------
+# DEFECTS FOUND BY RUNNING THEM
+# ---------------------------------------------------------------------------
+
+defect def:compress-savings-compares-unlike-quantities
+  status OPEN
+  verification REPRODUCED
+  symptom on schemas/ it reports raw 7,635 vs compressed 12,129 for savings_pct -58.9%, claiming compression enlarged the data; on packs/ it reports raw_bytes 0 against compressed 2,963,629 for 0.0% savings
+  cause raw is summed FILE bytes while compressed is a compressed TAR, so tar block padding dominates small corpora
+  not_broken the compression itself is correct -- 2,963,629 matches an independent tar|zstd-19 reference exactly
+  independent_measure .yaff/.json subsets compress 3.8x (packs) and 7.7x (architecture) at zstd-19
+
+defect def:query-stats-selects-a-column-scan-never-writes
+  status OPEN
+  verification REPRODUCED
+  symptom bonfyre-query stats fails with 'Binder Error: Referenced column "type" not found in FROM clause! Candidate bindings: "filename"'
+  scope scan works and imported 594 artifacts; the sql subcommand works on the same store; only the canned stats query is broken
+
+defect def:capability-match-is-lexical-not-semantic
+  status OPEN
+  verification REPRODUCED
+  symptom advertised as 'semantic match' using a 'native semantic registry', but scores are clean fractions of query-term overlap (0.167, 0.333) and a query whose words are absent returns an unscored fallback
+  works 'compress an artifact to save space' finds bonfyre-fpq and bonfyre-pack; 'route inference to the cheapest model' finds bonfyre-model and bonfyre-sli
+  fails 'classify business type from a company name' returns brief, offer and threshold-tune while tag-artifact/bonfyre-tag -- the correct answer, present in the registry -- never surfaces
+  available_fix bonfyre-embed onnx plus bonfyre-vec are used elsewhere in this session and are not behind this verb
+
+defect def:bonfyre-model-fails-on-large-transfers
+  status OPEN
+  verification REPRODUCED
+  symptom pull of a 1,840 MB gguf reached 1,162 MB then reported 'source failed, trying next' and deleted the partial
+  source_is_fine HEAD returns 200 and a ranged GET returns 1,046 bytes with a 302 follow, so the URL serves correctly
+  contrast an 80 MB gguf pulled successfully earlier in the session
+  also the registered source for llama-3-8b-instruct is the GATED meta-llama repo, which fails for any unauthenticated pull
+  workaround file:// is an accepted source scheme, so a sideloaded file can be registered
+  consequence local generation remains unproven for want of a transfer, not a capability
+
+defect def:bonfyre-tag-claims-pure-c
+  status OPEN
+  verification REPRODUCED
+  symptom banner reads 'instant topic/intent tagging (fastText, pure C)' but the binary shells to a generated Python script importing fasttext; training failed with ModuleNotFoundError until fasttext-wheel was installed
+  note the capability is real and fast; the claim and the missing startup dependency check are the defect
+
+# ---------------------------------------------------------------------------
+# STILL UNWIRED
+# ---------------------------------------------------------------------------
+
+note bonfyre-swarm cannot open swarm.db -- never initialised
+note bonfyre-surface reports no clients directory
+note bonfyre-graph initialises clean but holds 0 atoms, 0 operators, 0 realizations
+note bonfyre-moe, bonfyre-sli and bonfyre-infer all refuse with '--model required'; bonfyre-infer's PLANNER works without one and computes Qwen2 at 16.0B params, 16 GFLOP/token

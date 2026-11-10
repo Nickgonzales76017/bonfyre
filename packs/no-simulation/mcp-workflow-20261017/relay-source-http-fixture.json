@@ -1,0 +1,60 @@
+{
+  "schema": "bonfyre.relay-workflow-http-fixture.v1",
+  "measured_at": "2026-10-17T21:27:53.443Z",
+  "transport": "real authenticated loopback HTTP",
+  "execution": "real Git worktree, Bun test and Project patch owner",
+  "agent_behavior": "deterministic injected responses; no model requests",
+  "task_submissions": 1,
+  "status_requests": 3,
+  "source_snapshot": {
+    "base_commit": "0e4e2e891738d316960dec3717abebb58e65c1a5",
+    "commit": "cb02fe00296aff4dfdde9717c0fe15ccb181a74c",
+    "files": [
+      {
+        "bytes": 25,
+        "mode": 420,
+        "path": "scripts/value.mjs",
+        "sha256": "62fd84cab8e6d4ec27bcb260ba46089127feb34de7fc3d524ee5e1d265d7fa15"
+      },
+      {
+        "bytes": 27,
+        "mode": 420,
+        "path": "scripts/context.mjs",
+        "sha256": "8ccef40546fcd876cff7f8fd375ffd5c29374f020c402bed68ed75230ab348a0"
+      },
+      {
+        "bytes": 202,
+        "mode": 420,
+        "path": "scripts/value.test.mjs",
+        "sha256": "1e4b2098b95f22cb91fae77c157fd47f2605cbb9f900be44076578373159ab96"
+      },
+      {
+        "bytes": 0,
+        "mode": null,
+        "path": "scripts/absent.mjs",
+        "sha256": null
+      }
+    ],
+    "receipt": {
+      "kind": "source-snapshot",
+      "path": "/private/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-relay-http-kLdewe/home/fabric/receipts/1792272472-e340ba33aa6a4032978d97d0.json",
+      "receipt_id": "e340ba33aa6a4032978d97d0",
+      "sha256": "d906ef297bf21695f91840ed60343e1afecba24e4d7b3273477198103dc3316f"
+    },
+    "schema": "bonfyre.relay-source-snapshot.v1",
+    "scope": "Explicit current-source files over Git base; unselected paths remain at that base"
+  },
+  "project_index_preserved": true,
+  "agent_runs": 5,
+  "test_command": "bun test scripts/value.test.mjs",
+  "test_exit_code": 0,
+  "task_state": "completed",
+  "applied": true,
+  "summary_json_bytes": 3533,
+  "full_json_bytes": 58055,
+  "verified_file": {
+    "path": "scripts/value.mjs",
+    "contents": "export const value = 11;\n"
+  },
+  "limitations": "Temporary fixture is removed after the test. This does not prove paid-agent behavior or permission to resume stopped production work."
+}

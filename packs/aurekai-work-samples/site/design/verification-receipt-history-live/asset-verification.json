@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-08T15:36:51.373Z",
+  "checks": [
+    {
+      "path": "/catalogue/",
+      "status": 200,
+      "exact_build_match": true,
+      "sha256": "d603f0c46d2c3c0778d52147245d3e49f3ab76c96112efe6f0902a7a47612b53"
+    },
+    {
+      "path": "/data/product-workspace/catalogue-client.mjs",
+      "status": 200,
+      "exact_build_match": true,
+      "sha256": "3405ed7556cdd876517cbd44cc66c77bf7640bfc24a5606c9742412f34f19b52"
+    },
+    {
+      "path": "/data/product-workspace/catalogue-review.mjs",
+      "status": 200,
+      "exact_build_match": true,
+      "sha256": "f732ceeab8496c56b2d5858e7a51a638e344ba7ef015a18020cd62635bc09188"
+    },
+    {
+      "path": "/data/product-workspace/store.mjs",
+      "status": 200,
+      "exact_build_match": true,
+      "sha256": "b55087afe1c31e1ce45cd125fb452e0d5603b60d120ccece4649737f60a7d01e"
+    }
+  ]
+}

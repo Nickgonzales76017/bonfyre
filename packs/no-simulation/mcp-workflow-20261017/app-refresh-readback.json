@@ -1,0 +1,193 @@
+{
+  "schema": "bonfyre.mcp-app-refresh-readback.v1",
+  "observed_at": "2026-10-17T22:31:38.493Z",
+  "trigger": "User reported refresh complete.",
+  "checks": [
+    {
+      "name": "batch_read",
+      "is_error": false,
+      "result": {
+        "files": [
+          {
+            "path": "integrations/mcp/project_fabric.mjs",
+            "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+            "source_bytes": 936,
+            "total_lines": 17,
+            "lines": [
+              {
+                "line": 1,
+                "text": "// Project exposes the existing delivery lifecycle without creating another queue."
+              },
+              {
+                "line": 2,
+                "text": "import { readFileSync } from 'node:fs';"
+              },
+              {
+                "line": 3,
+                "text": "import { createProjectOwner } from './project_owner.mjs';"
+              },
+              {
+                "line": 4,
+                "text": ""
+              },
+              {
+                "line": 5,
+                "text": "const names = ['fabric_status', 'implementation_relay', 'task_status', 'task_cancel', 'recent_receipts'];"
+              },
+              {
+                "line": 6,
+                "text": "const catalog = JSON.parse(readFileSync(new URL('./fabric_catalog.json', import.meta.url), 'utf8'));"
+              },
+              {
+                "line": 7,
+                "text": "export const FABRIC_PROJECT_TOOLS = names.map(name => {"
+              },
+              {
+                "line": 8,
+                "text": "  const tool = catalog.tools.find(tool => tool.name === name);"
+              }
+            ],
+            "next_start_line": 9
+          },
+          {
+            "path": "integrations/mcp/project_owner.mjs",
+            "sha256": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+            "source_bytes": 2452,
+            "total_lines": 37,
+            "lines": [
+              {
+                "line": 1,
+                "text": "// Catalog-bound Project -> owner bridge. Deployment chooses the endpoint and"
+              },
+              {
+                "line": 2,
+                "text": "// dedicated remote credential; caller arguments cannot change either."
+              },
+              {
+                "line": 3,
+                "text": "import { existsSync, readFileSync } from 'node:fs';"
+              },
+              {
+                "line": 4,
+                "text": "import { homedir } from 'node:os';"
+              },
+              {
+                "line": 5,
+                "text": "import { join } from 'node:path';"
+              },
+              {
+                "line": 6,
+                "text": "import { createOwnedMcpCall, mcpEndpoint } from './owned_mcp_client.mjs';"
+              },
+              {
+                "line": 7,
+                "text": ""
+              },
+              {
+                "line": 8,
+                "text": "export function createProjectOwner({ name, tools, urlEnv, tokenFileEnv, defaultUrl,"
+              }
+            ],
+            "next_start_line": 9
+          }
+        ],
+        "consistency": "Each file is checked during its read; this is not an atomic multi-file snapshot."
+      }
+    },
+    {
+      "name": "path_preflight",
+      "is_error": false,
+      "result": {
+        "kind": "path_preflight",
+        "metadata": {
+          "files": [
+            {
+              "path": "integrations/mcp/project_fabric.mjs",
+              "exists": true,
+              "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+              "mode": 420,
+              "dirty_before": true
+            }
+          ],
+          "file_count": 1,
+          "dirty_conflicts": [
+            "integrations/mcp/project_fabric.mjs"
+          ]
+        },
+        "low_risk_paths_eligible": true,
+        "policy_errors": [],
+        "limits": {
+          "max_patch_files": 20,
+          "max_patch_changed_lines": 2400
+        },
+        "manual_write_enabled": true,
+        "manual_approval_required": true,
+        "operator_paused": true,
+        "patch_validation_required": true,
+        "next_step": "Prepare changes against these preimages, then call project_patch_preview with the patch. Apply rechecks policy and source state.",
+        "cannot_infer": "Path preflight is not patch approval, a reservation of these files, permission to resume the operator, or proof of a valid patch."
+      }
+    },
+    {
+      "name": "filtered_inventory",
+      "is_error": false,
+      "result": {
+        "schema_version": "bonfyre.native.tool.inventory.v1",
+        "root": "/Users/nickgonzales/Developer/Bonfyre",
+        "count": 180,
+        "query": "bonfyrecms",
+        "detail": "summary",
+        "matched": 1,
+        "offset": 0,
+        "returned": 1,
+        "next_offset": null,
+        "tools": [
+          {
+            "family": "BonfyreCMS",
+            "capabilities": [
+              "cmd:ann",
+              "cmd:bench-real",
+              "cmd:entry",
+              "cmd:publish-layer-family",
+              "cmd:publish-layer-report",
+              "cmd:schema",
+              "cmd:serve",
+              "cmd:token"
+            ],
+            "source": "managed",
+            "synopsis": "Usage:",
+            "shape": "dispatcher"
+          }
+        ],
+        "refused_count": 10,
+        "cannot_infer": "Discovery hints do not attest source-build freshness, runtime readiness or effect authority."
+      }
+    },
+    {
+      "name": "conditional_read",
+      "is_error": false,
+      "result": {
+        "files": [
+          {
+            "path": "integrations/mcp/project_fabric.mjs",
+            "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+            "source_bytes": 936,
+            "not_modified": true
+          },
+          {
+            "path": "integrations/mcp/project_owner.mjs",
+            "sha256": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+            "source_bytes": 2452,
+            "not_modified": true
+          }
+        ],
+        "consistency": "Each file is checked during its read; this is not an atomic multi-file snapshot."
+      }
+    }
+  ],
+  "session_tool_registry": {
+    "fabric_status": false,
+    "implementation_relay": false
+  },
+  "limits": "Existing app operations accept the refreshed arguments. Newly added relay operations are not available in this conversation's tool registry; no app relay invocation or live task submission is claimed."
+}

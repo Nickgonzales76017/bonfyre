@@ -1,0 +1,25 @@
+{
+  "schema": "bonfyre.account-workspace-release.v1",
+  "services": [
+    {
+      "label": "com.bonfyre.public-web-address",
+      "previous_pid": 82770,
+      "pid": 45272,
+      "binary": "/Users/nickgonzales/.bonfyre/account-workspace-release-20261017-787c5456cc61/bonfyre-web-address",
+      "binary_sha256": "787c5456cc61080981726ec1023c9704e39243a183e7ef242b31876cd68ed9f0",
+      "anonymous_bindings_status": 403
+    }
+  ],
+  "sources": {
+    "integrations/mcp/workspace_mcp.mjs": "505877c6e44e2b841e4cc8bc2b5aed8eed9c997f912c90e67941c649b6e2f6d0",
+    "integrations/mcp/bonfyre_oauth_gateway.mjs": "55ff4ec339592d1618668cf39cece598a46c682ab3ae11816eea64f4ee0b039c",
+    "integrations/browser/workspace-msgpack.mjs": "192f06f6cd4e7f41589788a95f9ed55803c9a776eff22f624e308897d27891da",
+    "integrations/mcp/http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71",
+    "cmd/BonfyreWebAddress/src/application_continuation.h": "ee0e662001b7c6cc326973b17aeb5e582c8d8c695ac193898d13ab5e5be6bd5a",
+    "cmd/BonfyreWebAddress/bonfyre-web-address": "787c5456cc61080981726ec1023c9704e39243a183e7ef242b31876cd68ed9f0"
+  },
+  "controls_unchanged": true,
+  "live_account_writes": 0,
+  "live_authenticated_workspace_calls": 0,
+  "limits": "Anonymous native binding route and OAuth metadata verified; authenticated product actions verified against isolated real accounts, not production accounts."
+}

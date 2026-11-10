@@ -1,0 +1,506 @@
+pack capability-bar-baseline
+generation control-1
+source_plane run4_institutional_fabric
+item_kind proof_frontier
+source_ref direction:operator:20261010
+note The bar is what the ERPNext-family applications can do, done natively and then exceeded. Frappe is the shorthand for that bar and nothing here depends on it. This is the starting measurement, taken on 2026-10-10 from the compiled inventory in the estate (frappe-surfaces.db) and the command certification matrix (packs/no-simulation/command-evidence-20261010.tsv). A module row is a count read from the inventory. A capability row names the native organ that does the same act and the run that proves it, or says there is none.
+
+module mod:crm-fcrm
+  application crm
+  module FCRM
+  record_types 39
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 8
+  kind_of_tie presentation
+
+module mod:crm-lead-syncing
+  application crm
+  module Lead Syncing
+  record_types 5
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:drive-drive
+  application drive
+  module Drive
+  record_types 12
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:erpnext-accounts
+  application erpnext
+  module Accounts
+  record_types 179
+  transactional_documents 27
+  record_types_tied_to_an_estate_organ 53
+  kind_of_tie presentation
+
+module mod:erpnext-stock
+  application erpnext
+  module Stock
+  record_types 72
+  transactional_documents 15
+  record_types_tied_to_an_estate_organ 18
+  kind_of_tie presentation
+
+module mod:erpnext-setup
+  application erpnext
+  module Setup
+  record_types 40
+  transactional_documents 1
+  record_types_tied_to_an_estate_organ 13
+  kind_of_tie presentation
+
+module mod:erpnext-manufacturing
+  application erpnext
+  module Manufacturing
+  record_types 40
+  transactional_documents 7
+  record_types_tied_to_an_estate_organ 10
+  kind_of_tie presentation
+
+module mod:erpnext-crm
+  application erpnext
+  module CRM
+  record_types 29
+  transactional_documents 2
+  record_types_tied_to_an_estate_organ 8
+  kind_of_tie presentation
+
+module mod:erpnext-assets
+  application erpnext
+  module Assets
+  record_types 25
+  transactional_documents 8
+  record_types_tied_to_an_estate_organ 10
+  kind_of_tie presentation
+
+module mod:erpnext-buying
+  application erpnext
+  module Buying
+  record_types 19
+  transactional_documents 4
+  record_types_tied_to_an_estate_organ 6
+  kind_of_tie presentation
+
+module mod:erpnext-selling
+  application erpnext
+  module Selling
+  record_types 16
+  transactional_documents 3
+  record_types_tied_to_an_estate_organ 5
+  kind_of_tie presentation
+
+module mod:erpnext-quality-management
+  application erpnext
+  module Quality Management
+  record_types 16
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 7
+  kind_of_tie presentation
+
+module mod:erpnext-projects
+  application erpnext
+  module Projects
+  record_types 15
+  transactional_documents 2
+  record_types_tied_to_an_estate_organ 5
+  kind_of_tie presentation
+
+module mod:erpnext-support
+  application erpnext
+  module Support
+  record_types 11
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:erpnext-subcontracting
+  application erpnext
+  module Subcontracting
+  record_types 8
+  transactional_documents 2
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:erpnext-utilities
+  application erpnext
+  module Utilities
+  record_types 5
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:erpnext-telephony
+  application erpnext
+  module Telephony
+  record_types 5
+  transactional_documents 1
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:erpnext-regional
+  application erpnext
+  module Regional
+  record_types 5
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:erpnext-portal
+  application erpnext
+  module Portal
+  record_types 5
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:erpnext-maintenance
+  application erpnext
+  module Maintenance
+  record_types 5
+  transactional_documents 2
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:erpnext-edi
+  application erpnext
+  module EDI
+  record_types 2
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:erpnext-communication
+  application erpnext
+  module Communication
+  record_types 2
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:erpnext-bulk-transaction
+  application erpnext
+  module Bulk Transaction
+  record_types 2
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:erpnext-erpnext-integrations
+  application erpnext
+  module ERPNext Integrations
+  record_types 1
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:frappe-core
+  application frappe
+  module Core
+  record_types 91
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 22
+  kind_of_tie presentation
+
+module mod:frappe-desk
+  application frappe
+  module Desk
+  record_types 52
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 12
+  kind_of_tie presentation
+
+module mod:frappe-website
+  application frappe
+  module Website
+  record_types 40
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 11
+  kind_of_tie presentation
+
+module mod:frappe-integrations
+  application frappe
+  module Integrations
+  record_types 25
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 5
+  kind_of_tie presentation
+
+module mod:frappe-email
+  application frappe
+  module Email
+  record_types 19
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 4
+  kind_of_tie presentation
+
+module mod:frappe-custom
+  application frappe
+  module Custom
+  record_types 9
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:frappe-automation
+  application frappe
+  module Automation
+  record_types 8
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:frappe-workflow
+  application frappe
+  module Workflow
+  record_types 7
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:frappe-printing
+  application frappe
+  module Printing
+  record_types 7
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:frappe-contacts
+  application frappe
+  module Contacts
+  record_types 7
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:frappe-social
+  application frappe
+  module Social
+  record_types 4
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 1
+  kind_of_tie presentation
+
+module mod:frappe-geo
+  application frappe
+  module Geo
+  record_types 2
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:helpdesk-helpdesk
+  application helpdesk
+  module Helpdesk
+  record_types 36
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 8
+  kind_of_tie presentation
+
+module mod:hrms-hr
+  application hrms
+  module HR
+  record_types 117
+  transactional_documents 36
+  record_types_tied_to_an_estate_organ 36
+  kind_of_tie presentation
+
+module mod:hrms-payroll
+  application hrms
+  module Payroll
+  record_types 43
+  transactional_documents 17
+  record_types_tied_to_an_estate_organ 14
+  kind_of_tie presentation
+
+module mod:insights-insights
+  application insights
+  module Insights
+  record_types 37
+  transactional_documents 1
+  record_types_tied_to_an_estate_organ 8
+  kind_of_tie presentation
+
+module mod:lms-lms
+  application lms
+  module LMS
+  record_types 67
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 12
+  kind_of_tie presentation
+
+module mod:lms-job
+  application lms
+  module Job
+  record_types 2
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+module mod:wiki-wiki
+  application wiki
+  module Wiki
+  record_types 15
+  transactional_documents 1
+  record_types_tied_to_an_estate_organ 2
+  kind_of_tie presentation
+
+module mod:wiki-frappe-wiki
+  application wiki
+  module Frappe Wiki
+  record_types 6
+  transactional_documents 0
+  record_types_tied_to_an_estate_organ 0
+  kind_of_tie presentation
+
+note Capability rows. status is one of: proven (a native organ does the act and a run on real records proved it today), verb_unproven (the organ has the verb and nothing real has gone through it), partial, blocked, absent. Each row was checked against the organ on 2026-10-10; none is taken from documentation.
+
+capability cap:raise-an-invoice
+  application_shorthand erpnext Accounts: Sales Invoice
+  native_organ bonfyre-pay invoice
+  status partial
+  evidence receipt rcpt-98a347a32051fb980e2a: 421 metered events of one key in one month invoiced at 295 cents, the meter's own sum
+  gap invoices metered usage only; no line items for goods or services, no tax, no customer record, no numbering series
+
+capability cap:record-a-payment
+  application_shorthand erpnext Accounts: Payment Entry
+  native_organ bonfyre-pay pay
+  status verb_unproven
+  evidence cmd/BonfyrePay/tests/payment_test.sh: on an invoice raised from the estate's meter, a payment with no reference, a zero amount, an unknown invoice and a repeated reference are each refused, and the invoice is marked paid only when recorded payments reach its amount
+  gap the references in that test were written by the test; no payment has been received through the organ, so nothing real has gone through it. Before 2026-10-10 the verb marked an invoice paid with no evidence at all
+
+capability cap:quote
+  application_shorthand erpnext Selling: Quotation
+  native_organ bonfyre-offer quote
+  status verb_unproven
+  evidence cmd/BonfyreOffer/tests/quote_test.sh: a review becomes a quoted offer only when a named person states the need, scope, capacity, permissions, price, turnaround and promise; five incomplete quotes are refused, a quote is made once and carries the digest of its review, and bonfyre-distribute composes the stated promise, price and turnaround from it
+  gap the terms in that test were written by the test; nobody has been quoted. No line items, no tax, no validity date, no acceptance
+
+capability cap:record-what-work-cost
+  application_shorthand erpnext Accounts: Purchase Invoice, Journal Entry (cost side)
+  native_organ bonfyre-economy cost record, report
+  status proven
+  evidence receipt rcpt-bcbfb685c19e14de5573: report accounted for all 406 model costs in the estate's store
+  gap costs are per model call; no supplier, no bill, no ledger posting
+
+capability cap:budget
+  application_shorthand erpnext Accounts: Budget
+  native_organ bonfyre-economy budget
+  status verb_unproven
+  gap seven budgets are in the store; the verb is not in the certification
+
+capability cap:meter-usage
+  application_shorthand none; the applications do not meter their own operations
+  native_organ bonfyre-meter record
+  status proven
+  evidence receipt rcpt-028236e5892f4f6e78bf: one execution recorded with the fabric's own receipt, start time, duration and measured output size
+  exceeds every priced event keeps the rate that was admitted when it happened
+
+capability cap:keep-records
+  application_shorthand frappe core: DocType create, read, update, delete
+  native_organ bonfyre-cms
+  status proven
+  evidence receipt rcpt-d8cd1c6d43fce5f69b20
+  gap certified on a scratch store; the live content store was not exercised by the certification
+
+capability cap:follow-up-with-people
+  application_shorthand erpnext CRM: Lead, Opportunity; Communication
+  native_organ bonfyre-outreach report; bonfyre-distribute messages
+  status partial
+  evidence receipts rcpt-7dbba5d549c86c70bc79 and rcpt-98a099d2f31f4aec58f2: 7 outbound entries and 118 composed messages read and counted by state
+  gap reading and counting only; a person sends; no lead or opportunity record, no pipeline stages
+
+capability cap:price-list
+  application_shorthand erpnext Stock: Item Price, Price List
+  native_organ none of its own
+  status absent
+  gap the services in the finance store under the home directory are experiment prices and are no longer certified on; the 23,954 prices the estate observes belong to other publishers; the estate has no price list of its own
+
+capability cap:projects-and-tasks
+  application_shorthand erpnext Projects: Project, Task
+  native_organ bonfyre-project
+  status proven
+  evidence receipt rcpt-716c678f31846de33a97
+  gap certified on a scratch space; no timesheet, no billing from tasks
+
+capability cap:telephony
+  application_shorthand erpnext Telephony
+  native_organ bonfyre-tel
+  status partial
+  evidence receipt rcpt-b08099fcd606f14db078: a call placed, confirmed by the switch, recorded and hung up in a real FreeSWITCH on loopback
+  gap no carrier trunk, so no telephone has rung; send-sms, send-mms and listen have not been run against the switch
+
+capability cap:buying
+  application_shorthand erpnext Buying: Request for Quotation, Supplier Quotation
+  native_organ the content store, as compiled record types; bonfyre-finance books reads them
+  status partial
+  evidence on 2026-10-10 the estate held 6 requests for quotation drafted to named vendors and 2 supplier quotations received, 250 and 630 USD; bonfyre-finance books counts them beside the books and posts neither
+  gap they are records and nothing acts on them: no comparison of quotes, no purchase order, no receipt of goods, and both quotations are still drafts
+
+capability cap:deals
+  application_shorthand crm: Deal; erpnext CRM: Opportunity
+  native_organ the content store (9 deals) and bonfyre-finance opportunity rank (9 opportunities)
+  status proven
+  evidence the finance operator ranked the estate's 9 real opportunities in the certification run of 2026-10-10; expected cost 41,564.00 USD in all, compensation stated for none and shown as unknown
+  gap no stage beyond specified; no bid has been received
+
+capability cap:stock-manufacturing-assets
+  application_shorthand erpnext Stock, Manufacturing, Assets, Subcontracting
+  native_organ none
+  status absent
+
+capability cap:people-and-payroll
+  application_shorthand hrms HR, Payroll: 160 record types, 53 transactional
+  native_organ none
+  status absent
+
+capability cap:support-desk
+  application_shorthand helpdesk; erpnext Support
+  native_organ none
+  status absent
+
+capability cap:evidence-on-every-act
+  application_shorthand none; the applications keep a document log, not a receipt chain
+  native_organ the fabric
+  status proven
+  evidence 92 operator executions in the matrix each carry an event and a receipt
+  exceeds an act that did not happen has no receipt to point at
+
+capability cap:keep-the-books
+  application_shorthand erpnext Accounts: General Ledger, Journal Entry, Trial Balance
+  native_organ bonfyre-finance books
+  status partial
+  evidence cmd/BonfyreFinance/tests/books_test.sh: 409 journal lines derived from an invoice, two payments and the estate's 406 model costs; debits equal credits and each figure equals the direct sum of its store
+  gap derived, never posted by hand; five fixed accounts; no tax, no period close, no supplier or customer ledgers; the two payments in that run were written by a test
+
+chain chn:commerce-fifteen-stages
+  native_organ bonfyre-commerce record, progress, stages
+  stages product, listing, inventory, availability_observation, offer, quote, cart, checkout, commitment, payment, settlement, fulfilment, delivery, satisfaction, ownership
+  rule a stage requires exactly the one before it; recording a stage establishes that stage and nothing later; nothing in the organ performs a commercial act
+  exchanges_recorded 57
+  of_which_observed_marketplace_lots 48
+  of_which_the_estates_own_opportunities 9
+  furthest_stage_any_exchange_has_reached listing (2 of 15)
+  measured_from ~/.bonfyre/estate-local/commerce.db on 2026-10-10 after scripts/commerce_adopt_opportunities.sh adopted the nine opportunities whose source is a classified listing
+  organs_that_record_into_it bonfyre-offer quote (the quote stage) and bonfyre-pay pay (the payment stage), each refused by the chain when the stage before is missing; on a copy of the chain advanced by a test, both recorded
+  reading this chain is the estate's own model of a sale and it goes further than a document workflow, because each stage names who owns it and what it does not establish. Every real exchange stands at the second stage, waiting on a seller's confirmed inventory
+
+summary sum:baseline-20261010
+  record_types 1152
+  transactional_documents 129
+  record_types_tied_to_an_estate_organ 301
+  capabilities_listed 18
+  proven 6
+  partial 5
+  verb_unproven 3
+  blocked 0
+  absent 4
+  reading the estate's real commercial work of 2026-10-08 and 09 (deals, requests for quotation, supplier quotations, funding packages, a pledge) is held as records in its content store. The finance organs were measuring experiment figures while that sat beside them; they now read it. What is absent is acting on it: no purchase order, no bid received, no payment, no stock
+
+forbidden_inference a capability listed as proven -> parity with the application's document; the gap line says what is missing
+forbidden_inference fifteen rows -> the applications' whole scope; they are the acts checked on 2026-10-10
+

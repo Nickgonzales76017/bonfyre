@@ -1,0 +1,72 @@
+[
+  {
+    "id": "mfo-machinery",
+    "name": "Machine Factory Outlet",
+    "source_url": "https://machinefactoryoutlet.com/sell-your-surplus/",
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/mfo-machinery.receipt.json",
+    "terms_excerpt": "We Buy All Types and Makes of CNC and Fabrication Machinery.",
+    "terms_stated": "Published purchasing category, no accepted bid or partner appointment.",
+    "match_any": [
+      "press brake",
+      "shear",
+      "CNC router",
+      "CNC milling"
+    ],
+    "exclude_any": [
+      "no resellers",
+      "no dealers"
+    ],
+    "transaction_model": "purchase_resale",
+    "review_questions": [
+      "What is the price net of collection and deductions?",
+      "Which exact condition, quantity and models are accepted?",
+      "When are inspection, payment and release due?"
+    ]
+  },
+  {
+    "id": "conesco-racking",
+    "name": "Conesco",
+    "source_url": "https://conesco.com/services/nationwide-racking-purchasing/",
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/conesco-racking.receipt.json",
+    "terms_excerpt": "We Buy Racking Nationwide",
+    "terms_stated": "Published purchasing category, no accepted bid or partner appointment.",
+    "match_any": [
+      "pallet rack",
+      "pallet racking",
+      "rack lot"
+    ],
+    "exclude_any": [
+      "no resellers",
+      "no dealers"
+    ],
+    "transaction_model": "purchase_resale",
+    "review_questions": [
+      "What is the price net of collection and deductions?",
+      "Which exact condition, quantity and models are accepted?",
+      "When are inspection, payment and release due?"
+    ]
+  },
+  {
+    "id": "resell-camaster",
+    "name": "Resell CNC",
+    "source_url": "https://www.resellcnc.com/brand/camaster/",
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/resell-camaster.receipt.json",
+    "terms_excerpt": "Resell CNC buys used CAMaster routers",
+    "terms_stated": "Published purchasing category, no accepted bid or partner appointment.",
+    "match_any": [
+      "Camaster",
+      "CAMaster",
+      "Panther 408"
+    ],
+    "exclude_any": [
+      "no resellers",
+      "no dealers"
+    ],
+    "transaction_model": "purchase_resale",
+    "review_questions": [
+      "What is the price net of collection and deductions?",
+      "Which exact condition, quantity and models are accepted?",
+      "When are inspection, payment and release due?"
+    ]
+  }
+]

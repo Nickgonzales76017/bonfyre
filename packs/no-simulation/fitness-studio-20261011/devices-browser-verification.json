@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-19T15:26:21.039Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "both phone and watch families have readable device setup",
+    "Bluetooth notifications display heart rate without recording by default",
+    "lost sensor contact clears the live value",
+    "TCX import reviews duration, distance and heart rate before any write",
+    "watch imports preserve strength history and add a separate activity",
+    "repeated workout files cannot create duplicates",
+    "malformed workouts and external-entity declarations are refused",
+    "recording saves readings without resetting set inputs",
+    "paused workouts do not record incoming readings",
+    "disconnection immediately clears the workout reading",
+    "finished sessions show recorded heart-rate summaries",
+    "watch activities and recorded heart rate reopen offline",
+    "phone calendar downloads dated sessions while offline when sharing is unsupported",
+    "supported phone sharing receives the same calendar file without downloading",
+    "cancelling the share sheet does not download a calendar",
+    "a rejected share falls back to a usable calendar download",
+    "a failed sharing capability probe still allows calendar download",
+    "direct calendar download bypasses the phone share sheet",
+    "calendar handoffs leave member history and plan progress unchanged",
+    "device connections fit a phone screen",
+    "portable training exports retain device activities and readings",
+    "unsupported browsers receive a usable file workflow without a broken pairing button",
+    "no browser runtime errors"
+  ],
+  "errors": [],
+  "physicalSensor": "not tested",
+  "nativeCompanions": "not installed",
+  "sensorInput": "test notifications through the production Bluetooth adapter"
+}

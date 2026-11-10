@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-11",
+  "checks": [
+    "completed set starts a rest timer",
+    "paused workout and completed set survive reload",
+    "paused workout disables set entry",
+    "mobile workout fits the viewport",
+    "finished workout appears once in history",
+    "studio switch preserves member workout history",
+    "studio programs are scoped",
+    "studio style survives reload",
+    "WordPress program export is well-formed and excludes private history",
+    "custom branding stays with its studio",
+    "mobile routine editor fits the viewport",
+    "routine edits survive reload with order, targets and effort intact",
+    "routine edits leave completed history unchanged",
+    "OpenGym import presents review before replacing history",
+    "OpenGym import persists converted history and source archive",
+    "stale tab cannot overwrite a newer workout",
+    "desktop workout fits the viewport",
+    "no browser runtime or asset errors"
+  ],
+  "errors": []
+}

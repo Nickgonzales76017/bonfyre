@@ -1,0 +1,386 @@
+{
+  "schema": "service-site.v1",
+  "site_id": "aurekai-work-samples",
+  "pages_project": "aurekai-work-samples",
+  "preview": true,
+  "leads": "server",
+  "business": {
+    "name": "Aurekai",
+    "page_title": "Aurekai — working samples, not a sales deck"
+  },
+  "contact": {
+    "name": "Nick Gonzales",
+    "email": "nickgonzales76017@gmail.com"
+  },
+  "action": "Discuss your workflow",
+  "theme": {
+    "template": "ghost-ease"
+  },
+  "navigation": [
+    {
+      "label": "Catalogue work",
+      "href": "/catalogue/"
+    },
+    {
+      "label": "Archive work",
+      "href": "/archive/"
+    },
+    {
+      "label": "Wix findings",
+      "href": "/wix-review/"
+    },
+    {
+      "label": "Contact",
+      "href": "/#ask"
+    }
+  ],
+  "sections": [
+    {
+      "kind": "hero",
+      "headline": "Bring the messy work. See the actual output.",
+      "lede": "Catalogue operations, document batches and small-business websites. These samples show work already run through Aurekai. Public store observations and demonstration records are labelled separately.",
+      "button": "Inspect the working samples",
+      "href": "#samples"
+    },
+    {
+      "kind": "cases",
+      "id": "samples",
+      "title": "Start with something you can inspect",
+      "items": [
+        {
+          "title": "Live store catalogues",
+          "text": "243 observed products and 3,684 variants converted into source-linked registers. Inspect the original identifiers, listed prices, shipping flags and exceptions.",
+          "href": "/catalogue/",
+          "button": "Open catalogue outputs",
+          "icon": "inventory_2"
+        },
+        {
+          "title": "Shipment archive workflow",
+          "text": "A deliberately messy eight-file demonstration becomes five ready records, three review items and two missing-delivery-document alerts. No source files are renamed.",
+          "href": "/archive/",
+          "button": "Open the before and after",
+          "icon": "folder_open"
+        },
+        {
+          "title": "Wix search and conversion",
+          "text": "Specific public-page findings for Elite Accreditation: headline intent, duplicate homepage text and an unusually large HTML response. A first repair scope stays on Wix.",
+          "href": "/wix-review/",
+          "button": "Read the concrete findings",
+          "icon": "search"
+        }
+      ]
+    },
+    {
+      "kind": "ask",
+      "form": {
+        "id": "work-request",
+        "title": "What should we prove on your material?",
+        "fields": [
+          {
+            "label": "Your name",
+            "wide": true
+          },
+          {
+            "label": "Email",
+            "type": "email",
+            "wide": true
+          },
+          {
+            "label": "Workflow or public website",
+            "type": "textarea",
+            "placeholder": "Describe one batch, catalogue, website or recurring task. No passwords, bank details or sensitive customer documents."
+          }
+        ],
+        "button": "Send the request",
+        "subject": "Aurekai workflow sample request",
+        "sent": "Your request has been recorded. We will reply by email.",
+        "notice": "This form sends your message to Aurekai. It is not a purchase or a permission to access your accounts."
+      }
+    }
+  ],
+  "pages": [
+    {
+      "path": "catalogue",
+      "title": "Source-linked catalogue operations",
+      "menu": "Catalogue",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "A live catalogue, turned into working records.",
+          "lede": "We fetched the public product feeds of two stores and ran the same native query over both. No merchant login was used and no product, price, stock or order was changed.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "aj-register",
+          "title": "AJ Collectives — 40 source variants",
+          "columns": [
+            "Public record check",
+            "Count"
+          ],
+          "rows": [
+            [
+              "Products",
+              "20"
+            ],
+            [
+              "Variants",
+              "40"
+            ],
+            [
+              "SKU not included in public record",
+              "11"
+            ],
+            [
+              "Source says unavailable",
+              "2"
+            ]
+          ],
+          "source": {
+            "name": "Download the complete 40-row source-linked CSV",
+            "url": "/assets/aj-variant-register.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Prepared from https://ajcollectives.com/products.json. A missing public SKU does not prove missing internal inventory data. Source availability can change."
+        },
+        {
+          "kind": "figures",
+          "id": "redwood-register",
+          "title": "Redwood Rings — 3,644 source variants",
+          "columns": [
+            "Public record check",
+            "Count"
+          ],
+          "rows": [
+            [
+              "Products",
+              "223"
+            ],
+            [
+              "Variants",
+              "3,644"
+            ],
+            [
+              "SKU not included in public record",
+              "28"
+            ],
+            [
+              "Nonshipping service variants",
+              "2"
+            ],
+            [
+              "Source says unavailable",
+              "29"
+            ]
+          ],
+          "source": {
+            "name": "Download the complete 3,644-row source-linked CSV",
+            "url": "/assets/redwood-variant-register.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Prepared from https://redwoodrings.com/products.json. Prices retain the source denomination. The Engraving and Exchange / Shipping items are nonshipping services, not physical ring variants."
+        },
+        {
+          "kind": "steps",
+          "id": "next-batch",
+          "title": "The useful next batch",
+          "items": [
+            {
+              "title": "Agree one outcome",
+              "text": "A clean cross-channel product register, a weekly stock exception list, or a repeatable product-launch packet."
+            },
+            {
+              "title": "Use the correct account boundary",
+              "text": "Public data proves the preparation. Merchant-approved access is used for changes to Shopify, Etsy, email or order systems."
+            },
+            {
+              "title": "Deliver and leave the process",
+              "text": "A first catalogue-cleanup pilot can be scoped at $150 for an agreed batch. Work on a live account starts after scope and access are agreed."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "archive",
+      "title": "Shipment document preparation sample",
+      "menu": "Archive",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Eight messy files. One checked handoff.",
+          "lede": "This is an authored demonstration of the archive task, not a trucking company’s private records. It exercises shipment joins, duplicate-content identifiers, invalid dates, missing proof-of-delivery checks and a non-destructive rename plan.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "figures",
+          "id": "archive-results",
+          "title": "Native query result",
+          "columns": [
+            "Disposition",
+            "Records"
+          ],
+          "rows": [
+            [
+              "Ready for review and import",
+              "5"
+            ],
+            [
+              "Duplicate content identifier",
+              "1"
+            ],
+            [
+              "Unknown shipment",
+              "1"
+            ],
+            [
+              "Unreadable date",
+              "1"
+            ],
+            [
+              "Shipments missing a delivery proof",
+              "2"
+            ]
+          ],
+          "source": {
+            "name": "Download the checked record and rename-preview CSV",
+            "url": "/assets/archive-rename-preview.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Document text and content identifiers are provided test inputs. This run did not scan physical papers, perform OCR, alter real filenames or import into QuickBooks."
+        },
+        {
+          "kind": "figures",
+          "id": "missing-proof",
+          "title": "Two missing documents stay visible",
+          "columns": [
+            "Shipment",
+            "Missing document"
+          ],
+          "rows": [
+            [
+              "DEMO-1002",
+              "Delivery proof"
+            ],
+            [
+              "DEMO-1003",
+              "Delivery proof"
+            ]
+          ],
+          "source": {
+            "name": "Download the missing-document CSV",
+            "url": "/assets/archive-missing-documents.csv",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "Synthetic shipment references. These are review items, not completed deliveries."
+        },
+        {
+          "kind": "steps",
+          "id": "archive-pilot",
+          "title": "A batch before a staffing commitment",
+          "items": [
+            {
+              "title": "Choose representative material",
+              "text": "Agree the document kinds, naming convention, destination fields and a small representative batch."
+            },
+            {
+              "title": "Run and inspect",
+              "text": "Deliver checked rows, duplicates, unknown references and unreadable fields with a review list. Physical scanning can be supplied separately."
+            },
+            {
+              "title": "Agree a repeatable scope",
+              "text": "The office pilot starts with a proposed $280 fixed batch and handoff. Its batch size and acceptance checklist are set from the actual material, not guessed from an hourly job ad."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "wix-review",
+      "title": "Elite Accreditation public website review",
+      "menu": "Wix review",
+      "sections": [
+        {
+          "kind": "hero",
+          "headline": "Three concrete checks for an existing Wix site.",
+          "lede": "Prepared in response to a public request for technical SEO work. This is an independent Aurekai review of publicly delivered HTML, not a client engagement, a Google Search Console inspection or a claim about search rankings.",
+          "button": "Discuss this workflow",
+          "href": "/#ask"
+        },
+        {
+          "kind": "cases",
+          "id": "wix-findings",
+          "title": "Observed on the live homepage",
+          "items": [
+            {
+              "title": "Search intent is diluted",
+              "text": "The delivered title leads with “elite accreditation services review”, and the page has a second primary heading phrased as a review. A service buyer is more directly served by a title such as “Healthcare Accreditation Consultants | Elite Accreditation” and a service-led introduction."
+            },
+            {
+              "title": "The same long introduction repeats",
+              "text": "Several testimonial blocks carry the same broad service-description paragraphs. Make each testimonial concise, keep one authoritative service introduction, and link to the specific service pages instead of repeating the same text."
+            },
+            {
+              "title": "The HTML response is 2,320,224 bytes",
+              "text": "That is the uncompressed response-body size observed in this run, not a Core Web Vitals score. Inspect Wix apps, video embeds and repeated sections, then measure mobile loading before and after each change."
+            }
+          ]
+        },
+        {
+          "kind": "figures",
+          "id": "wix-source",
+          "title": "What was inspected",
+          "columns": [
+            "Public endpoint",
+            "Observed result"
+          ],
+          "rows": [
+            [
+              "Homepage",
+              "HTTP 200; two h1 elements"
+            ],
+            [
+              "robots.txt",
+              "HTTP 200"
+            ],
+            [
+              "sitemap.xml",
+              "HTTP 200"
+            ]
+          ],
+          "source": {
+            "name": "Elite Accreditation public website",
+            "url": "https://www.eliteaccreditation.org/",
+            "observed": "October 6, 2026"
+          },
+          "caveat": "A reachable sitemap is not proof of Google indexing. “Discovered, not indexed” and “Crawled, not indexed” need their actual URL examples and Search Console evidence before assigning a cause."
+        },
+        {
+          "kind": "steps",
+          "id": "wix-first-pass",
+          "title": "A first implementation pass — without a platform migration",
+          "items": [
+            {
+              "title": "Baseline",
+              "text": "Record current Wix settings and selected service pages, then inspect Search Console examples with owner-approved read access."
+            },
+            {
+              "title": "Correct high-intent pages",
+              "text": "Refine homepage and key ASC/DME service titles, headings and internal links, preserving the site and its existing content ownership."
+            },
+            {
+              "title": "Measure the change",
+              "text": "Recheck rendered pages and crawlability; track indexing and qualified enquiries separately. No paid backlinks or ranking guarantees."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "footer": {},
+  "to_confirm": [
+    "Independent work samples. Public-data analysis does not establish a paid client relationship. Demo records are synthetic and labelled."
+  ]
+}

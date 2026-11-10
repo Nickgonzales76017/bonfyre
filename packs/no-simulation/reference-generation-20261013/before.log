@@ -1,0 +1,22 @@
+bun test v1.3.13 (bf2e2cec)
+
+engine/core/tests/operator_reference.test.mjs:
+37 | 
+38 |     const profile = join(temp, 'profiles.yaff');
+39 |     writeFileSync(profile, readFileSync(join(root, 'estate/profiles.yaff'), 'utf8') + '\n# New reference generation\n');
+40 |     compile(profile);
+41 |     const afterCompile = reference();
+42 |     expect(afterCompile).not.toContain(first.receipt_id);
+                                  ^
+error: expect(received).not.toContain(expected)
+
+Expected to not contain: "rcpt-d42d22534f46e298a4b7"
+Received: "# bonfyre hash\n\nTakes one artifact and gives `stdout`. Bound to contract `artifact_file_v1` in the `artifact_intake_archive` family, with effect `pure-read` and maturity `defined` at catalog generation `f21c173e45b6`.\n\n## Run it\n\nFrom a terminal, or as one node of a mission that leaves a receipt.\n\n```sh Terminal\nbonfyre hash file <input-path>\n```\n\n```sh Mission\nbonfyre fabric artifact ingest <input-path>   # prints uri=bonfyre://artifact/...\nbonfyre fabric mission create first\nbonfyre fabric work add first step command.hash <uri>\nbonfyre fabric work run first                 # prints the output and its receipt\n```\n\n## Last run\n\n| | |\n|---|---|\n| When | 2026-10-13T20:37:55Z |\n| In | `bonfyre://artifact/f78a5b4752cd`, 37 bytes |\n| Out | `bonfyre://artifact/786e8a2fed73` |\n| Took | 15 ms |\n| Workload check | passed |\n| Quality check | passed |\n| Receipt | `rcpt-d42d22534f46e298a4b7` |\n\n```text In\nA retained native reference fixture.\n```\n\nRead the receipt back:\n\n```sh\nbonfyre fabric receipt show rcpt-d42d22534f46e298a4b7\n```\n\n## What is checked\n\nA run is complete only when both checks pass. The result of each is written into the receipt.\n\n- `output-artifact`: the command exited cleanly and left the output its contract names\n- `sha256-output`: the printed digest is the SHA-256 of the input that was handed over\n\n## Limits\n\n| Limit | Value |\n|---|---|\n| Time | 30 seconds |\n| Output | 1048576 bytes |\n| Retries | `bounded:0` |\n\n> A run that passes a limit, exits non-zero or fails a check ends as a failed node. Its output is not admitted as an artifact and no later node receives it.\n\n## Options\n\nThe command's own usage text.\n\n```text\nBonfyreHash — content-addressing engine\n\nUsage:\n  bonfyre-hash file <path>                              SHA-256 of file\n  bonfyre-hash node <op> <ver> <params_json> <h1,h2>    operator node hash\n  bonfyre-hash merkle <artifact.json>                    compute/update root_hash\n  bonfyre-hash verify <artifact.json>                    verify all hashes\n  bonfyre-hash dedup <dir>                               find duplicate files\n  bonfyre-hash feature <features.json>                   stable SAE feature hash URI\n```\n\n## In the same family\n\n- [bonfyre compress](/bonfyre-compress)\n- [bonfyre fragment](/bonfyre-fragment)\n- [bonfyre index](/bonfyre-index)\n- [bonfyre offer](/bonfyre-offer)\n- [bonfyre proof](/bonfyre-proof)\n"
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/engine/core/tests/operator_reference.test.mjs:42:30)
+(fail) operator reference uses a verified run from the selected compiled generation [1268.31ms]
+
+ 0 pass
+ 1 fail
+ 10 expect() calls
+Ran 1 test across 1 file. [1.65s]

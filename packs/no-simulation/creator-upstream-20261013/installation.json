@@ -1,0 +1,7 @@
+{
+  "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-creator-mix",
+  "sha256": "c63995e57d88bab29f539ac696ab5bd7f3f9469a56ea822030a80573d5cbc57d",
+  "previous": null,
+  "rollback": "Remove this newly installed binary to revert; no prior binary was replaced.",
+  "global_akai_changed": false
+}

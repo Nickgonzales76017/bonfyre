@@ -1,0 +1,989 @@
+{
+ "schema": "bonfyre.manifest.v1",
+ "lot": "wholesale-20261009",
+ "units": 7,
+ "needs_wipe": 3,
+ "to_confirm": 7,
+ "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+ "model_artifact_sha256": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+ "seconds": 51.677,
+ "rows": [
+  {
+   "source": "photos houston-35",
+   "files": [
+    "houston-35-1.jpg",
+    "houston-35-2.jpg"
+   ],
+   "make": "HP",
+   "model_family": "EliteDesk",
+   "part_number": "",
+   "quantity": null,
+   "category": "desktop",
+   "category_confidence": 0.8695862371356146,
+   "category_by": "local model",
+   "data_bearing": true,
+   "data_bearing_probability": 0.4082906081019929,
+   "condition": "unknown",
+   "condition_by": "text says nothing",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "count not stated"
+   ],
+   "line": "HP EliteDesk",
+   "receipt": "dbfd0ffd31b2602cefa2a86d1959777c0f4d73e5c0531a48a327d3beb6f9fed6"
+  },
+  {
+   "source": "photos vertiv-32",
+   "files": [
+    "vertiv-32-1.jpg",
+    "vertiv-32-2.jpg"
+   ],
+   "make": "Vertiv",
+   "model_family": "",
+   "part_number": "VRA1016",
+   "quantity": null,
+   "category": "consumable",
+   "category_confidence": 1,
+   "category_by": "text",
+   "data_bearing": false,
+   "data_bearing_probability": 0.39390681004860406,
+   "condition": "unknown",
+   "condition_by": "text says nothing",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "count not stated"
+   ],
+   "line": "Vertiv VRA1016",
+   "receipt": "f480dcad64929f186e39fb58a123b87c63d6257438a8dff2fe331c13841b8ae6"
+  },
+  {
+   "source": "photos conroe-toner",
+   "files": [
+    "conroe-toner-1.jpg"
+   ],
+   "make": "Canon",
+   "model_family": "",
+   "part_number": "",
+   "quantity": null,
+   "category": "",
+   "category_confidence": 0.8932836517936303,
+   "category_by": "local model",
+   "data_bearing": null,
+   "data_bearing_probability": 0.474498736740986,
+   "condition": "unknown",
+   "condition_by": "text says nothing",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "model not stated",
+    "count not stated",
+    "only a brand name is readable: say what the items are"
+   ],
+   "line": "Canon",
+   "receipt": "c04179e805f429dade097119e855423bc35d1e034a9d245328c0a04523b9468c"
+  },
+  {
+   "source": "photos covina-toner",
+   "files": [
+    "covina-toner-1.jpg"
+   ],
+   "make": "Dell",
+   "model_family": "",
+   "part_number": "",
+   "quantity": null,
+   "category": "desktop",
+   "category_confidence": 0.5663297294704991,
+   "category_by": "local model",
+   "data_bearing": true,
+   "data_bearing_probability": 0.5128553285057461,
+   "condition": "unknown",
+   "condition_by": "text says nothing",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "model not stated",
+    "count not stated"
+   ],
+   "line": "Dell",
+   "receipt": "f21854be12015c12841ced0f9a4f0639b590b9d4dc030437509622bf1ae6525d"
+  },
+  {
+   "source": "listing hurst-121-oem.html",
+   "files": [
+    "hurst-121-oem.html"
+   ],
+   "make": "Lexmark/Epson/Fujifilm",
+   "model_family": "",
+   "part_number": "",
+   "quantity": 121,
+   "category": "consumable",
+   "category_confidence": 1,
+   "category_by": "text",
+   "data_bearing": false,
+   "data_bearing_probability": 0.4430575172640211,
+   "condition": "working",
+   "condition_by": "local model",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "model not stated"
+   ],
+   "line": "Lexmark/Epson/Fujifilm",
+   "receipt": "4960a9ab092d6d1aef5cbb01476863959046272f5f98be6ecb7367102431b80a"
+  },
+  {
+   "source": "listing kennedale-stock.html",
+   "files": [
+    "kennedale-stock.html"
+   ],
+   "make": "Dell/HP/Apple/Samsung/Cisco",
+   "model_family": "iMac",
+   "part_number": "",
+   "quantity": null,
+   "category": "desktop",
+   "category_confidence": 0.8445046501508963,
+   "category_by": "local model",
+   "data_bearing": true,
+   "data_bearing_probability": 0.5961479214115286,
+   "condition": "parts",
+   "condition_by": "local model",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "count not stated"
+   ],
+   "line": "Dell/HP/Apple/Samsung/Cisco iMac",
+   "receipt": "d849b670e2853dc68ae3cd7846e6030139572ec8364495b5491f1a48c74227b3"
+  },
+  {
+   "source": "photos heim-gmc",
+   "files": [
+    "heim-gmc-1.jpg"
+   ],
+   "make": "",
+   "model_family": "",
+   "part_number": "",
+   "quantity": null,
+   "category": "",
+   "category_confidence": 0,
+   "data_bearing": null,
+   "data_bearing_probability": null,
+   "condition": "unknown",
+   "seller_condition": "",
+   "confirm_with_seller": [
+    "no readable text: attach the listing or a photo of the label"
+   ],
+   "line": "photos heim-gmc",
+   "receipt": null
+  }
+ ],
+ "receipts": [
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-1",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-1",
+      "description": "ELITEDES",
+      "owner_ref": "Manifest:photos houston-35"
+     }
+    ]
+   },
+   "case_digest": "4e23b6f9df8a16766b9776f0ff97cc035db9f0d3a48747caaa7cdcffc6998c77",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "58c2328869fedcb63caa4bd26e703d5a707230bde3f4c478d9f54010cb2b91bc",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "dbfd0ffd31b2602cefa2a86d1959777c0f4d73e5c0531a48a327d3beb6f9fed6",
+   "latency_ms": 8620,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "desktop",
+     "confidence": 0.8695862371356146,
+     "probabilities": {
+      "component": 0.014490418096042826,
+      "consumable": 0.014490418096042826,
+      "desktop": 0.8695862371356146,
+      "laptop": 0.014490418096042826,
+      "monitor": 0.014490418096042826,
+      "networking": 0.014490418096042826,
+      "other": 0.014490418096042826,
+      "phone_tablet": 0.014490418096042826,
+      "printer": 0.014490418096042826,
+      "server": 0.014490418096042826
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "unknown",
+     "confidence": 0.411257829611039,
+     "probabilities": {
+      "parts": 0.016667009553653623,
+      "unknown": 0.411257829611039,
+      "untested": 0.3282791216874507,
+      "working": 0.24379603914785666
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.4082906081019929
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.9517461799500037
+    }
+   },
+   "answers_digest": "34cd6ea069da3651b84bd48544df4aafc4ee4726673074338407b5efeaf11587",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 8619.441041000002,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-1",
+    "candidate_id": "unit-1",
+    "category": "desktop",
+    "data_bearing_probability": 0.4082906081019929,
+    "identity_probability": 0.9517461799500037,
+    "condition": "unknown",
+    "uncertainty": {
+     "category": {
+      "mass": 0.9999999999999997,
+      "maximum": 0.8695862371356146,
+      "winner": "desktop",
+      "margin": 0.8550958190395718,
+      "expectation": 0.6520688143219272,
+      "entropy": 0.6737208212500565,
+      "concentration": 0.8550958190395718,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8695862371356146
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.411257829611039,
+      "winner": "unknown",
+      "margin": 0.0829787079235883,
+      "expectation": 1.5953866296278751,
+      "entropy": 1.1434236756515919,
+      "concentration": 0.21501043948138535,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.411257829611039
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.5917093918980071,
+      "winner": "false",
+      "margin": 0.18341878379601417,
+      "expectation": 0.5917093918980071,
+      "entropy": 0.6762303449648805,
+      "concentration": 0.18341878379601417,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.9517461799500037,
+      "winner": "true",
+      "margin": 0.9034923599000073,
+      "expectation": 0.04825382004999634,
+      "entropy": 0.19334126647361444,
+      "concentration": 0.9034923599000073,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-2",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-2",
+      "description": "VERTIV. PART NO. VRA1016 PART DESC. 67041 02468 VERTICAL CABLE MANAGER FOR 800MM WIDE 42U [QTY 2] Qty. 1 SET. GW. 5.70 kg. MFG DATE. 02-302021 NW. 4.12 kg. ASSEMBLED IN THAILAND",
+      "owner_ref": "Manifest:photos vertiv-32"
+     }
+    ]
+   },
+   "case_digest": "d2b3d7534193b9bf083efb763680b8f4b05f2e2848380598ec84c9637c127a52",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "5e3ae3ff111f9d8f3f9357bb9aa77666e5fbada670d281ce84d1fddba60a5bff",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "f480dcad64929f186e39fb58a123b87c63d6257438a8dff2fe331c13841b8ae6",
+   "latency_ms": 7368,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "networking",
+     "confidence": 0.3652030585528432,
+     "probabilities": {
+      "component": 0.07053299349412853,
+      "consumable": 0.07053299349412853,
+      "desktop": 0.07053299349412853,
+      "laptop": 0.07053299349412853,
+      "monitor": 0.07053299349412853,
+      "networking": 0.3652030585528432,
+      "other": 0.07053299349412853,
+      "phone_tablet": 0.07053299349412853,
+      "printer": 0.07053299349412853,
+      "server": 0.07053299349412853
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "working",
+     "confidence": 0.42214041194117474,
+     "probabilities": {
+      "parts": 0.007464830782907672,
+      "unknown": 0.307624105516054,
+      "untested": 0.2627706517598636,
+      "working": 0.42214041194117474
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.39390681004860406
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.9468829010097004
+    }
+   },
+   "answers_digest": "7d76118de21e1ca45b91ccb2917160b1ec14832362723b4176a8b19ec346f151",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 7367.665125000001,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-2",
+    "candidate_id": "unit-2",
+    "category": "networking",
+    "data_bearing_probability": 0.39390681004860406,
+    "identity_probability": 0.9468829010097004,
+    "condition": "working",
+    "uncertainty": {
+     "category": {
+      "mass": 1,
+      "maximum": 0.3652030585528432,
+      "winner": "networking",
+      "margin": 0.2946700650587146,
+      "expectation": 4.647335032529357,
+      "entropy": 2.0511446621845515,
+      "concentration": 0.2946700650587147,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3652030585528432
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.42214041194117474,
+      "winner": "working",
+      "margin": 0.11451630642512073,
+      "expectation": 1.2005726298738408,
+      "entropy": 1.1144575329935922,
+      "concentration": 0.22952054925489965,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.42214041194117474
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.6060931899513959,
+      "winner": "false",
+      "margin": 0.21218637990279188,
+      "expectation": 0.6060931899513959,
+      "entropy": 0.6704636099904163,
+      "concentration": 0.21218637990279188,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.9468829010097004,
+      "winner": "true",
+      "margin": 0.8937658020194008,
+      "expectation": 0.053117098990299594,
+      "entropy": 0.20759302704136307,
+      "concentration": 0.8937658020194008,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-3",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-3",
+      "description": "054H 054 Canon Canon Canon Canon 054H",
+      "owner_ref": "Manifest:photos conroe-toner"
+     }
+    ]
+   },
+   "case_digest": "d1d3d8765fe76ec44f18b4c96fe72b560800347f7493aec36c08e5b2e4ea271a",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "5fceb9419d2c7bead7ba428df9993dacd34891281011ad87e59026e2f92e42b4",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "c04179e805f429dade097119e855423bc35d1e034a9d245328c0a04523b9468c",
+   "latency_ms": 6361,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "printer",
+     "confidence": 0.8932836517936303,
+     "probabilities": {
+      "component": 0.011857372022929961,
+      "consumable": 0.011857372022929961,
+      "desktop": 0.011857372022929961,
+      "laptop": 0.011857372022929961,
+      "monitor": 0.011857372022929961,
+      "networking": 0.011857372022929961,
+      "other": 0.011857372022929961,
+      "phone_tablet": 0.011857372022929961,
+      "printer": 0.8932836517936303,
+      "server": 0.011857372022929961
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "unknown",
+     "confidence": 0.33898101325504526,
+     "probabilities": {
+      "parts": 0.05645960891796221,
+      "unknown": 0.33898101325504526,
+      "untested": 0.27992496879625856,
+      "working": 0.324634409030734
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.474498736740986
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.9525236584553717
+    }
+   },
+   "answers_digest": "a020515bd086a0edd8f77e39397cd40306b0bbbc495c3d36e35263d892a8d69b",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6360.232708,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-3",
+    "candidate_id": "unit-3",
+    "category": "printer",
+    "data_bearing_probability": 0.474498736740986,
+    "identity_probability": 0.9525236584553717,
+    "condition": "unknown",
+    "uncertainty": {
+     "category": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.8932836517936303,
+      "winner": "printer",
+      "margin": 0.8814262797707004,
+      "expectation": 4.05928686011465,
+      "entropy": 0.5740742983132701,
+      "concentration": 0.8814262797707004,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8932836517936303
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.33898101325504526,
+      "winner": "unknown",
+      "margin": 0.014346604224311277,
+      "expectation": 1.4097872263973188,
+      "entropy": 1.2506330060744477,
+      "concentration": 0.11864135100672701,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.33898101325504526
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.5255012632590139,
+      "winner": "false",
+      "margin": 0.05100252651802789,
+      "expectation": 0.5255012632590139,
+      "entropy": 0.6918459872383247,
+      "concentration": 0.051002526518027835,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.9525236584553717,
+      "winner": "true",
+      "margin": 0.9050473169107434,
+      "expectation": 0.04747634154462832,
+      "entropy": 0.19101634802716788,
+      "concentration": 0.9050473169107434,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-4",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-4",
+      "description": "DELL™ DELL DeLL DEAL",
+      "owner_ref": "Manifest:photos covina-toner"
+     }
+    ]
+   },
+   "case_digest": "6782f7e554d65b5042e0c1f730d1a08875a6906279a3ccf75cdb5be37a70d1af",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "8c58f868e0bfe1a9ead36f520192ba42fbdb523e5e7916a926461d920444b11b",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "f21854be12015c12841ced0f9a4f0639b590b9d4dc030437509622bf1ae6525d",
+   "latency_ms": 5199,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "desktop",
+     "confidence": 0.5663297294704991,
+     "probabilities": {
+      "component": 0.04818558561438899,
+      "consumable": 0.04818558561438899,
+      "desktop": 0.5663297294704991,
+      "laptop": 0.04818558561438899,
+      "monitor": 0.04818558561438899,
+      "networking": 0.04818558561438899,
+      "other": 0.04818558561438899,
+      "phone_tablet": 0.04818558561438899,
+      "printer": 0.04818558561438899,
+      "server": 0.04818558561438899
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "working",
+     "confidence": 0.3640166203172767,
+     "probabilities": {
+      "parts": 0.05617232305404647,
+      "unknown": 0.315414365614626,
+      "untested": 0.2643966910140509,
+      "working": 0.3640166203172767
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.5128553285057461
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.9068203975179155
+    }
+   },
+   "answers_digest": "869b05ec985c34477704dc12a218e21b9c04593c89f2e91a86149ef9ec59a404",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 5198.952667000001,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-4",
+    "candidate_id": "unit-4",
+    "category": "desktop",
+    "data_bearing_probability": 0.5128553285057461,
+    "identity_probability": 0.9068203975179155,
+    "condition": "working",
+    "uncertainty": {
+     "category": {
+      "mass": 1.0000000000000002,
+      "maximum": 0.5663297294704991,
+      "winner": "desktop",
+      "margin": 0.5181441438561101,
+      "expectation": 2.1683513526475044,
+      "entropy": 1.63719289896441,
+      "concentration": 0.5181441438561101,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5663297294704991
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.3640166203172767,
+      "winner": "working",
+      "margin": 0.04860225470265073,
+      "expectation": 1.3229844339660217,
+      "entropy": 1.2452725258033996,
+      "concentration": 0.15202216042303562,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3640166203172767
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.5128553285057461,
+      "winner": "true",
+      "margin": 0.02571065701149222,
+      "expectation": 0.4871446714942539,
+      "entropy": 0.692816625194075,
+      "concentration": 0.02571065701149222,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.9068203975179155,
+      "winner": "true",
+      "margin": 0.8136407950358311,
+      "expectation": 0.09317960248208446,
+      "entropy": 0.3098331851356521,
+      "concentration": 0.8136407950358311,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-5",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-5",
+      "description": "121 NEW OEM Ink Toner Lot - Lexmark Epson Fujifilm",
+      "owner_ref": "Manifest:listing hurst-121-oem.html"
+     }
+    ]
+   },
+   "case_digest": "2c1e703b41d4187b636a2d377385c4aa4bf87301d135c8b8ab52c5117c2cb32c",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "e9dbf3e4d2a6625e1b9010ca49880b06039c55290434caad22d2078b78a48895",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "4960a9ab092d6d1aef5cbb01476863959046272f5f98be6ecb7367102431b80a",
+   "latency_ms": 11694,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "printer",
+     "confidence": 0.850045924779517,
+     "probabilities": {
+      "component": 0.016661563913387,
+      "consumable": 0.016661563913387,
+      "desktop": 0.016661563913387,
+      "laptop": 0.016661563913387,
+      "monitor": 0.016661563913387,
+      "networking": 0.016661563913387,
+      "other": 0.016661563913387,
+      "phone_tablet": 0.016661563913387,
+      "printer": 0.850045924779517,
+      "server": 0.016661563913387
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "working",
+     "confidence": 0.4923159389691874,
+     "probabilities": {
+      "parts": 0.008341213578060466,
+      "unknown": 0.14389222594628792,
+      "untested": 0.3554506215064642,
+      "working": 0.4923159389691874
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.4430575172640211
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.6925616178046332
+    }
+   },
+   "answers_digest": "1b00d5e1fe6f6135b89c84a57c373e74b657038deebcb70856d70bbf43584ff4",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 11693.968665999997,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-5",
+    "candidate_id": "unit-5",
+    "category": "printer",
+    "data_bearing_probability": 0.4430575172640211,
+    "identity_probability": 0.6925616178046332,
+    "condition": "working",
+    "uncertainty": {
+     "category": {
+      "mass": 1,
+      "maximum": 0.850045924779517,
+      "winner": "printer",
+      "margin": 0.83338436086613,
+      "expectation": 4.083307819566935,
+      "entropy": 0.7521121979095233,
+      "concentration": 0.83338436086613,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.850045924779517
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.4923159389691874,
+      "winner": "working",
+      "margin": 0.13686531746272318,
+      "expectation": 0.803809726501449,
+      "entropy": 1.03542732442318,
+      "concentration": 0.3230879186255832,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.4923159389691874
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.5569424827359789,
+      "winner": "false",
+      "margin": 0.11388496547195781,
+      "expectation": 0.5569424827359789,
+      "entropy": 0.6866481967020137,
+      "concentration": 0.11388496547195781,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.6925616178046332,
+      "winner": "true",
+      "margin": 0.3851232356092664,
+      "expectation": 0.3074383821953668,
+      "entropy": 0.6170357025044968,
+      "concentration": 0.3851232356092664,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "manifest_unit",
+    "owner": "Manifest",
+    "program_digest": "e44f73253dc256820f5bdd4d0ec7a6f87aca8e2a29ca0c50fb0cb4e6d2d93d8d",
+    "subject_id": "manifest/unit-6",
+    "mask_digest": "2739ab4bb6057e7c724dcd816755ec458f454825da99fdb855067149073f6b8f",
+    "gate_state": "ADMIT",
+    "information_policy_class": "private",
+    "frontier": [
+     {
+      "id": "unit-6",
+      "description": "XTR LIQUIDATION, Gaming Computer, Parts, Cisco Equipment, laptops, ra",
+      "owner_ref": "Manifest:listing kennedale-stock.html"
+     }
+    ]
+   },
+   "case_digest": "f8bf09ebba5977fd8cae39293efa5b03c03ae7766868990809c5553e74206547",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "3e29ec388e236c2d6c4c34b98ebc1409b5218c7303432b1f85e348e7fe7496bb",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "d849b670e2853dc68ae3cd7846e6030139572ec8364495b5491f1a48c74227b3",
+   "latency_ms": 12424,
+   "usage": null,
+   "answers": {
+    "category": {
+     "type": "choice",
+     "choice": "desktop",
+     "confidence": 0.8445046501508963,
+     "probabilities": {
+      "component": 0.01727726109434486,
+      "consumable": 0.01727726109434486,
+      "desktop": 0.8445046501508963,
+      "laptop": 0.01727726109434486,
+      "monitor": 0.01727726109434486,
+      "networking": 0.01727726109434486,
+      "other": 0.01727726109434486,
+      "phone_tablet": 0.01727726109434486,
+      "printer": 0.01727726109434486,
+      "server": 0.01727726109434486
+     }
+    },
+    "condition": {
+     "type": "choice",
+     "choice": "parts",
+     "confidence": 0.42389703979314725,
+     "probabilities": {
+      "parts": 0.42389703979314725,
+      "unknown": 0.08898538464989982,
+      "untested": 0.159701035228387,
+      "working": 0.327416540328566
+     }
+    },
+    "data_bearing": {
+     "type": "noul",
+     "noul": 0.5961479214115286
+    },
+    "identity_clear": {
+     "type": "noul",
+     "noul": 0.8690298696473334
+    }
+   },
+   "answers_digest": "c15a9fccd91ea44b9f82935b1303200eb1806a462e2ac177955fee0a5d2cfd30",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 12424.235624999994,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "manifest/unit-6",
+    "candidate_id": "unit-6",
+    "category": "desktop",
+    "data_bearing_probability": 0.5961479214115286,
+    "identity_probability": 0.8690298696473334,
+    "condition": "parts",
+    "uncertainty": {
+     "category": {
+      "mass": 1.0000000000000004,
+      "maximum": 0.8445046501508963,
+      "winner": "desktop",
+      "margin": 0.8272273890565514,
+      "expectation": 0.7774767492455187,
+      "entropy": 0.7737822737059323,
+      "concentration": 0.8272273890565514,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8445046501508963
+     },
+     "condition": {
+      "mass": 1,
+      "maximum": 0.42389703979314725,
+      "winner": "parts",
+      "margin": 0.09648049946458126,
+      "expectation": 1.274451268764381,
+      "entropy": 1.2376283434300006,
+      "concentration": 0.23186271972419634,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.42389703979314725
+     },
+     "data_bearing": {
+      "mass": 1,
+      "maximum": 0.5961479214115286,
+      "winner": "true",
+      "margin": 0.19229584282305723,
+      "expectation": 0.4038520785884714,
+      "entropy": 0.6745426696170762,
+      "concentration": 0.19229584282305723,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     },
+     "identity_clear": {
+      "mass": 1,
+      "maximum": 0.8690298696473334,
+      "winner": "true",
+      "margin": 0.7380597392946668,
+      "expectation": 0.13097013035266658,
+      "entropy": 0.38822673214042264,
+      "concentration": 0.7380597392946668,
+      "ordinal_concentration": null,
+      "provider_confidence": null
+     }
+    },
+    "action": "none"
+   }
+  }
+ ],
+ "cannot_infer": "a manifest read from photos and a listing -> units counted, tested or owned; it says what the seller showed and wrote, and what to confirm"
+}

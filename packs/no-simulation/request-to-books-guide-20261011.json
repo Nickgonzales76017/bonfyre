@@ -1,0 +1,163 @@
+{
+  "checked_at": "2026-10-12T00:58:28.720Z",
+  "guide": "docs/experiences/request-to-books.md",
+  "guide_sha256": "27a6021ed54f398ed41900243e4b89fa06a2adf32ae4f5609acea18661e4a6a6",
+  "execution": "All eight sh Terminal blocks extracted verbatim and run in order under sh -eu from the checkout root; exit status 0.",
+  "binary_sha256": {
+    "web_address": "7bff52b0469ebcf5c64ae5dde61664d32d22bfdfc454435d19c6d280a8dc42fb",
+    "finance": "9fa614305cdfa25b06ab156c7234eb4bfc85da4123f5b7556ffab85f2b9de0e4"
+  },
+  "product_alias": "bonfyre-web-address",
+  "accepted": {
+    "schema": "bonfyre.site.accept.v1",
+    "site": "fernhollow",
+    "request": "fernhollow-1791766686-a3a14934",
+    "commitment": "site:fernhollow:offer-1:2026-10-18-14-00",
+    "promised": "Private pottery lesson",
+    "when": "2026-10-18 14:00",
+    "to": "ada@example.test",
+    "invoiced": true,
+    "invoice": "Invoice #1 created   User: 812297031   Period: 2026-10-01T00:00:00Z to 2026-11-01T00:00:00Z   Key: fernhollow:customer:fernhollow-1791766686-a3a14934   Metered events: 1 (0 unpriced, not billed)   Am",
+    "finance_opportunity": "recorded",
+    "cannot_infer": "a promise recorded and an invoice raised are not the customer told, the service delivered, or money received"
+  },
+  "before": {
+    "kind": "books",
+    "unit": "micro_usd",
+    "sources": {
+      "invoices": 1,
+      "payments": 0,
+      "credits": 0,
+      "costs": 0
+    },
+    "entries": 1,
+    "accounts": {
+      "receivable": {
+        "debit": 85000000,
+        "credit": 0
+      },
+      "revenue_invoiced": {
+        "debit": 0,
+        "credit": 85000000
+      },
+      "cash_evidenced": {
+        "debit": 0,
+        "credit": 0
+      },
+      "revenue_adjustment": {
+        "debit": 0,
+        "credit": 0
+      },
+      "model_cost": {
+        "debit": 0,
+        "credit": 0
+      },
+      "cost_owed_or_paid_unknown": {
+        "debit": 0,
+        "credit": 0
+      }
+    },
+    "total_debit": 85000000,
+    "total_credit": 85000000,
+    "balanced": true,
+    "receivable_outstanding": 85000000,
+    "cash_evidenced": 0,
+    "model_cost_recorded": 0,
+    "payments_without_a_reference": 0,
+    "not_known_from_these_records": [
+      "whether any recorded model cost was billed or paid",
+      "tax",
+      "anything not in the stores named"
+    ]
+  },
+  "paid": {
+    "schema": "bonfyre.site.paid.v1",
+    "site": "fernhollow",
+    "request": "fernhollow-1791766686-a3a14934",
+    "invoice": 1,
+    "amount_cents": 8500,
+    "reference": "TUTORIAL-PAYMENT-001",
+    "recorded_in": "Pay",
+    "cannot_infer": "the reference is the owner's statement of a payment; this does not see a bank"
+  },
+  "after": {
+    "kind": "books",
+    "unit": "micro_usd",
+    "sources": {
+      "invoices": 1,
+      "payments": 1,
+      "credits": 0,
+      "costs": 0
+    },
+    "entries": 2,
+    "accounts": {
+      "receivable": {
+        "debit": 85000000,
+        "credit": 85000000
+      },
+      "revenue_invoiced": {
+        "debit": 0,
+        "credit": 85000000
+      },
+      "cash_evidenced": {
+        "debit": 85000000,
+        "credit": 0
+      },
+      "revenue_adjustment": {
+        "debit": 0,
+        "credit": 0
+      },
+      "model_cost": {
+        "debit": 0,
+        "credit": 0
+      },
+      "cost_owed_or_paid_unknown": {
+        "debit": 0,
+        "credit": 0
+      }
+    },
+    "total_debit": 170000000,
+    "total_credit": 170000000,
+    "balanced": true,
+    "receivable_outstanding": 0,
+    "cash_evidenced": 85000000,
+    "model_cost_recorded": 0,
+    "payments_without_a_reference": 0,
+    "not_known_from_these_records": [
+      "whether any recorded model cost was billed or paid",
+      "tax",
+      "anything not in the stores named"
+    ]
+  },
+  "repeat_payment_refused_and_books_unchanged": true,
+  "delivered": {
+    "schema": "bonfyre.site.done.v1",
+    "site": "fernhollow",
+    "request": "fernhollow-1791766686-a3a14934",
+    "commitment": "site:fernhollow:offer-1:2026-10-18-14-00",
+    "state": "discharged",
+    "delivered": true
+  },
+  "inbox": {
+    "schema": "bonfyre.site.inbox.v1",
+    "messages": [
+      {
+        "reference": "fernhollow-1791766686-a3a14934",
+        "received_at": "2026-10-12T00:58:06Z",
+        "name": "Ada Example",
+        "contact": "ada@example.test",
+        "message": "Booking request for \"Private pottery lesson\" at: 2026-10-18 14:00.",
+        "how": "delivered; commitment site:fernhollow:offer-1:2026-10-18-14-00"
+      }
+    ],
+    "count": 1
+  },
+  "journal": "source\tdebit\tcredit\tmicro_usd\tdetail\ninvoice:1\treceivable\trevenue_invoiced\t85000000\tfernhollow:customer:fernhollow-1791766686-a3a14934 2026-10-01T00:00:00Z\npayment:1\tcash_evidenced\treceivable\t85000000\tinvoice 1 ref TUTORIAL-PAYMENT-001\n",
+  "scope": "Local invented private lesson and tutorial payment only. No customer notification, processor call, bank settlement or model execution. Site product regression suite passed; official MCP SDK client skipped because BONFYRE_MCP_SDK_DIR was not configured.",
+  "local_preview": {
+    "url": "http://docs-review.localhost:8913/request-to-books",
+    "updated_html_readback": true,
+    "updated_mcp_readback": true,
+    "visual_review": false
+  }
+}

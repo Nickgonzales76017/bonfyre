@@ -1,0 +1,44 @@
+{
+  "source_record": "twc:published:inspirable-institutional-monthly:20261009",
+  "source_price": 349.99,
+  "numeric_json_stored": "349",
+  "live_observation_amount": "349.99",
+  "all_live_prices": [
+    {
+      "id": 1,
+      "observation_id": "vra1016:hurst-lot-ask:20261008",
+      "amount": "1995.00"
+    },
+    {
+      "id": 2,
+      "observation_id": "vra1016:cdw-unit-advertised:20261008",
+      "amount": "353.99"
+    },
+    {
+      "id": 3,
+      "observation_id": "twc:published:sitecare-gold-monthly:20261009",
+      "amount": "435.00"
+    },
+    {
+      "id": 4,
+      "observation_id": "twc:published:sitecare-gold-annual:20261009",
+      "amount": "4680.00"
+    },
+    {
+      "id": 5,
+      "observation_id": "twc:published:sitecare-diamond-monthly:20261009",
+      "amount": "2190.00"
+    },
+    {
+      "id": 6,
+      "observation_id": "twc:published:sitecare-diamond-annual:20261009",
+      "amount": "23880.00"
+    },
+    {
+      "id": 7,
+      "observation_id": "twc:published:inspirable-institutional-monthly:20261009",
+      "amount": "349.99"
+    }
+  ],
+  "production_writes": 0
+}

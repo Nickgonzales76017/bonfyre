@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-13T21:41:56Z",
+  "free_bytes_before": 4233113600,
+  "removed": [
+    {
+      "path": "/Users/nickgonzales/.bun/install/cache",
+      "allocated_bytes_before": 215220224,
+      "kind": "rebuildable package download cache"
+    },
+    {
+      "path": "/Users/nickgonzales/.local/share/bonfyre/rea/npm-cache/_cacache",
+      "allocated_bytes_before": 65363968,
+      "kind": "rebuildable package download cache"
+    },
+    {
+      "path": "/Users/nickgonzales/.cargo/git/db/feldera-93e069cd0a577fb3",
+      "allocated_bytes_before": 238108672,
+      "kind": "Cargo bare dependency cache; no checkouts or active Rust build"
+    }
+  ],
+  "free_bytes_after": 4538732544
+}

@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-07T15:37:49.479Z",
+  "project": "aurekai-work-samples",
+  "previous_deployment": "fcd941b4-33d9-44ce-be8f-455a9239a98a",
+  "deployment_id": "b9f92075-679d-4fee-ac93-770388b634c6",
+  "status": {
+    "name": "deploy",
+    "started_on": null,
+    "ended_on": "2026-10-07T15:37:48.775936Z",
+    "status": "success"
+  },
+  "asset_count": 24,
+  "uploaded_assets": 2,
+  "url": "https://aurekai-work-samples.pages.dev/catalogue/?store=red3-display",
+  "worker_uploaded": false,
+  "merchant_accounts_changed": false
+}

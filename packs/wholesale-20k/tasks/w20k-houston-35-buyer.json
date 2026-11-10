@@ -1,0 +1,32 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-houston-35-buyer",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "houston-35",
+  "project_ref": "wholesale:houston-35-desktops-20261008",
+  "title": "35 Windows 10 computers",
+  "location": "Houston, TX",
+  "phase": "buyer",
+  "role_requested": "commercial operator",
+  "desired_result": "Whole-lot or nonoverlapping split bids with exact accepted units, condition, net collection/delivered basis, deductions, payment timing and validity. Reuse existing threads, do not repeat opening.",
+  "disclosure_allowlist": [
+    "equipment specification",
+    "condition evidence",
+    "approximate pickup region"
+  ],
+  "disclosure_exclusions": [
+    "supplier identity until authorized handoff",
+    "supplier asking price",
+    "internal margins",
+    "other bids"
+  ],
+  "acceptance": "Actual buyer reply or written indication, no bid invented from retail/auction comparisons.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/foreign/receipts/classified-bda45f493eb251f19955-bda45f493eb2-a2afe9c7d1c2.json",
+  "next_action": "inventory and buyer pricing"
+}

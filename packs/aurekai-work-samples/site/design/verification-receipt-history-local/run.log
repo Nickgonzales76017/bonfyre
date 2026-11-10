@@ -1,0 +1,62 @@
+PASS Real catalogue opens
+PASS Original title is source product
+PASS No fake publish control
+PASS Save begins disabled
+PASS Empty title is rejected
+PASS Fractional-cent prices are rejected
+PASS Review shows title and price edits
+PASS Review preserves old price
+PASS Draft survives page reload
+PASS Draft survives browser restart
+STEP two-tab conflict
+STEP first tab saved
+STEP second tab clicked
+PASS Concurrent stale draft cannot overwrite
+PASS Two service items remain separate
+PASS Search has useful empty state
+PASS No horizontal overflow at 1440
+PASS No horizontal overflow at 768
+PASS No horizontal overflow at 390
+PASS No horizontal overflow at 320
+PASS Mobile list returns
+PASS Mobile opens selected product
+PASS Second store uses same workspace
+PASS Missing SKUs remain empty
+PASS Saved-draft filter works
+PASS RED3 opens its own product
+PASS RED3 retains the legacy source URL
+PASS RED3 missing source fields stay empty
+PASS RED3 keeps its observed price
+PASS Prepared sample includes search, image and collection proposals
+PASS Prepared sample has seven reviewable changes
+PASS Prepared sample survives save and reload
+PASS RED3 has no horizontal overflow at 1440
+PASS RED3 has no horizontal overflow at 390
+PASS RED3 change review works
+PASS RED3 draft reopens after reload
+PASS Unsaved changes cannot be submitted
+PASS Failed submission shows no receipt and keeps the saved draft
+PASS Submitted draft receives a server receipt
+PASS Reload restores the receipt without resubmission
+PASS Received version cannot be submitted again
+PASS Sent-for-review filter identifies the saved version
+PASS Reopening the product keeps its receipt
+PASS Receipt survives browser restart without a network write
+PASS Receipt history keeps no sender contact details
+PASS Only one review is retained by the generated worker
+PASS Review handoff fits width 1440
+PASS Review handoff fits width 390
+PASS A later edit cannot reuse the previous receipt
+PASS A newly saved version is ready for its own review
+PASS New unsent version is absent from the sent filter
+PASS Another store does not inherit a review receipt
+PASS A local receipt write failure does not hide server acceptance
+PASS A failed local receipt write remains retryable after reload
+PASS Retry recovers the same server receipt
+PASS Retry retains only the two distinct draft versions
+PASS Failed first load has visible error
+PASS A changed catalogue chunk cannot be edited
+PASS No page errors
+PASS Only explicit catalogue review requests were submitted
+{"passed":57,"failed":0,"errors":[],"writes":[{"url":"http://127.0.0.1:50428/api/lead/catalogue-product-workspace","method":"POST"},{"url":"http://127.0.0.1:50428/api/lead/catalogue-product-workspace","method":"POST"},{"url":"http://127.0.0.1:50428/api/lead/catalogue-product-workspace","method":"POST"},{"url":"http://127.0.0.1:50428/api/lead/catalogue-product-workspace","method":"POST"}],"submissionReceipt":"lead:catalogue:5c9eb16516bb8b9a96c531827d4ab3698cf2392ebbd84baf5b6cae2c0c5f42b0"}
+

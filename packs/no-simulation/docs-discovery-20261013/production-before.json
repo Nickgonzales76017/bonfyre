@@ -1,0 +1,29 @@
+{
+  "id": "764b506e-98b6-4c62-a441-4b6365253198",
+  "url": "https://764b506e.aurekai.pages.dev",
+  "files": {
+    "/404.html": "3d07068da1f4577ed189dba5fe034d8e",
+    "/assets/aurekai-bar.css": "3c9473f050c9f71dda500a91ce2645ff",
+    "/assets/aurekai-native.css": "347566b49ce983ff38a74155873ba397",
+    "/assets/aurekai-site-program.css": "3edbd2136ce87f5604e520f4737fab01",
+    "/assets/matrix.css": "deceaf080a2d576e4a3a7927f6ad467c",
+    "/assets/own-site-agent.js": "f71ef88f2e1f9d3684e6ec9a5f30da70",
+    "/assets/own-site-reading.js": "fb13d9068da70af13139670c0ea4b311",
+    "/assets/own-site.css": "33f672e7246d57824c7393d187889246",
+    "/assets/world.css": "9c6531e768300a1d75bf24b9aaf12842",
+    "/building-blocks.html": "93653474910d2a49b0618849e6103eb4",
+    "/contact.html": "b1f0b6ee11c0f397caee56067ebce29c",
+    "/export-import-readback.html": "c68d556bba60fd1e0362e8c8b7376c25",
+    "/index.html": "140a4c57f7c76c95dfd3a44d601f4b5e",
+    "/integration-and-migration.html": "6e39853e355d6d6845a7722f1fa81dcd",
+    "/interfaces-and-mcp.html": "02b8fb2478c57e65c02e09f2b2713da9",
+    "/local-first-applications.html": "07c8108c47fdafb8dd667cc384dad7e7",
+    "/models-and-compression.html": "d2c92ead53fec1f321c8f50755487a32",
+    "/operating-products.html": "fdba9caeb537db016f64eab9bf117bc5",
+    "/recording-to-workspace.html": "3f376d2558bb3c5b3775ac245b3ab9ad",
+    "/request-to-books.html": "c9bf4bec059a0426649cdf37d582380d",
+    "/start.html": "a6dad521f986160bbb3bfb0fa78ec652",
+    "/three-businesses.html": "9c7be2160903ba31467e84abc79abbc4",
+    "/white-label-delivery.html": "209a935e9fb58fc10e3f4136c5824c06"
+  }
+}

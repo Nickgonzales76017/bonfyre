@@ -1,0 +1,131 @@
+{
+  "source": "https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/browser_protocol.json",
+  "commands": [
+    {
+      "name": "navigate",
+      "description": "Navigates current page to the given URL.",
+      "parameters": [
+        {
+          "name": "url",
+          "description": "URL to navigate the page to.",
+          "type": "string"
+        },
+        {
+          "name": "referrer",
+          "description": "Referrer URL.",
+          "optional": true,
+          "type": "string"
+        },
+        {
+          "name": "transitionType",
+          "description": "Intended transition type.",
+          "optional": true,
+          "$ref": "TransitionType"
+        },
+        {
+          "name": "frameId",
+          "description": "Frame id to navigate, if not specified navigates the top frame.",
+          "optional": true,
+          "$ref": "FrameId"
+        },
+        {
+          "name": "referrerPolicy",
+          "description": "Referrer-policy used for the navigation.",
+          "experimental": true,
+          "optional": true,
+          "$ref": "ReferrerPolicy"
+        }
+      ],
+      "returns": [
+        {
+          "name": "frameId",
+          "description": "Frame id that has navigated (or failed to navigate)",
+          "$ref": "FrameId"
+        },
+        {
+          "name": "loaderId",
+          "description": "Loader identifier. This is omitted in case of same-document navigation,\nas the previously committed loaderId would not change.",
+          "optional": true,
+          "$ref": "Network.LoaderId"
+        },
+        {
+          "name": "errorText",
+          "description": "User friendly error message, present if and only if navigation has failed.",
+          "optional": true,
+          "type": "string"
+        },
+        {
+          "name": "isDownload",
+          "description": "Whether the navigation resulted in a download.",
+          "experimental": true,
+          "optional": true,
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "setLifecycleEventsEnabled",
+      "description": "Controls whether page will emit lifecycle events.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "description": "If true, starts emitting lifecycle events.",
+          "type": "boolean"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "lifecycleEvent",
+      "description": "Fired for lifecycle events (navigation, load, paint, etc) in the current\ntarget (including local frames).",
+      "parameters": [
+        {
+          "name": "frameId",
+          "description": "Id of the frame.",
+          "$ref": "FrameId"
+        },
+        {
+          "name": "loaderId",
+          "description": "Loader identifier. Empty string if the request is fetched from worker.",
+          "$ref": "Network.LoaderId"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "timestamp",
+          "$ref": "Network.MonotonicTime"
+        }
+      ]
+    },
+    {
+      "name": "navigatedWithinDocument",
+      "description": "Fired when same-document navigation happens, e.g. due to history API usage or anchor navigation.",
+      "experimental": true,
+      "parameters": [
+        {
+          "name": "frameId",
+          "description": "Id of the frame.",
+          "$ref": "FrameId"
+        },
+        {
+          "name": "url",
+          "description": "Frame's new url.",
+          "type": "string"
+        },
+        {
+          "name": "navigationType",
+          "description": "Navigation type",
+          "type": "string",
+          "enum": [
+            "fragment",
+            "historyApi",
+            "other"
+          ]
+        }
+      ]
+    }
+  ]
+}

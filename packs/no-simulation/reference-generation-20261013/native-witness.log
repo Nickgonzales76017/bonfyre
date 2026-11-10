@@ -1,0 +1,15 @@
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include -c src/fabric_exec.c -o obj/fabric_exec.o
+ar rcs libbonfyre-fabric.a obj/fabric.o obj/fabric_exec.o obj/workgraph.o obj/workgraph_schema.o obj/workgraph_events.o obj/workgraph_scheduler.o obj/workgraph_effects.o obj/lifecycle.o obj/filesystem_projection.o obj/process_operator.o obj/operator_contract.o obj/bf_sha256.o obj/occurrence.o obj/occurrence_origin.o obj/commitment.o obj/retention.o obj/information_policy.o obj/commerce.o obj/protocol_contract.o obj/standing_address.o obj/actor.o obj/admission.o obj/corroboration.o obj/evidence.o obj/activation.o obj/service_lifecycle.o obj/reservation.o obj/foreign_twin.o obj/authority.o obj/proof.o obj/target_obligation.o obj/control_provider.o obj/control_admission.o obj/control_attention.o obj/control_capability.o obj/semantic_operator.o obj/semantic_derivation.o obj/matrix.o obj/matrix_closure.o obj/bf_catalog_generation.o obj/bf_json.o
+ranlib libbonfyre-fabric.a
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../programs/bonfyre
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../engine/core/include main.c ../../engine/core/libbonfyre-fabric.a -lsqlite3 -o bonfyre
+cd ../.. && bun test engine/core/tests/operator_reference.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+engine/core/tests/operator_reference.test.mjs:
+(pass) operator reference uses a verified run from the selected compiled generation [1435.92ms]
+
+ 1 pass
+ 0 fail
+ 61 expect() calls
+Ran 1 test across 1 file. [1.61s]

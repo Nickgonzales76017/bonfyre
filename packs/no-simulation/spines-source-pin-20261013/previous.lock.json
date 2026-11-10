@@ -1,0 +1,15 @@
+{
+  "schema": "bonfyre.spines-helix-wasm-lock.v1",
+  "source": "Installed R6 Helix C evaluator, with only SHA-256 provider changed to shared libbonfyre",
+  "compiler": "zig 0.13.0 cc -target wasm32-wasi -O3 -g0 -Wl,--strip-all -Wl,--max-memory=0x2000000",
+  "artifact": "spines_helix.wasm",
+  "artifact_bytes": 30454,
+  "artifact_sha256": "5dd6f057e49c7c6637b9cf3b5b86190eb2ae9fc93bfaf6a146a03cf53cf48e52",
+  "sources": {
+    "integrations/mcp/native/spines_helix_vm.c": "d2e761917691b2ccf2b247aed635575e6f6d8c3fcc68b2737fe0100938a5c978",
+    "integrations/mcp/native/spines_helix_export.c": "6ca40d553867d62731b9d6ccb3740d2e88388799d8255038a5a4b47d7d7b8be6",
+    "integrations/mcp/native/spines_sha256_compat.h": "618fe4dbca940007cc57d28a02f28509d9f449300b9555a7c9b3f42a72b25bc5",
+    "lib/libbonfyre/src/bf_sha256.c": "ff689db627d596254f390cc24c99f3e86626a2fd284e6e2e5de08c2cdaefd319",
+    "lib/libbonfyre/include/bonfyre.h": "7ea9f83c547e4fa7b1338ef82d0b51e5ee2451fc807e765e66226654d34a8470"
+  }
+}

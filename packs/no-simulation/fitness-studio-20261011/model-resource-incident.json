@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-12T02:21:49.940Z",
+  "trigger": "Started an additional Qwen2.5 Coder 3B Q4 model with GPU offload while browser checks were running.",
+  "observed": {
+    "memoryFreePercentBefore": 23,
+    "memoryFreePercentDuring": 0,
+    "memoryFreePercentAfter": 19,
+    "browserLaunches": "timed out",
+    "userReport": "computer crashed; suspected OOM",
+    "extraModelPid": 84406,
+    "extraModelPort": 7011,
+    "extraModelStillPresent": false,
+    "leftoverTrainingBrowserTests": false,
+    "osRestartConfirmed": true,
+    "bootTime": "2026-10-11T21:17:11-05:00"
+  },
+  "causeAssessment": "Additional model and concurrent browser workloads exhausted available memory immediately before the confirmed restart. The precise OS termination cause has not been independently confirmed.",
+  "followup": "Do not start additional models or concurrent browser workloads on this machine. Use lightweight code and contract checks. Live model quality remains unverified; failed Qwen1.5 proposals are retained as rejected evidence."
+}

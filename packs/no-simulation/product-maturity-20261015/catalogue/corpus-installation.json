@@ -1,0 +1,15 @@
+{
+  "previous": "releases/f631980a9c040b7c74bb5af190e49983f02300b043df6a892aae6fc1ebc90c0c",
+  "current": "releases/f756e6ac96e61698dccc131ec99064d3fefc0cdbb7e1804b6ca0a972aa615aa3",
+  "files": {
+    "all_bindings.tsv": "88e55b58810e4ccbd4bf434e5d552c0282b48d0622b980c97e1be11a0a90f89b",
+    "app_bindings.jsonl": "68188bd3d81954cc227a77ecd6c6ea8811f397f430516b101a7dd02116a5963b",
+    "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+    "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+    "manifest.json": "27f41978589f4fed09a00915b5d35d82cdd94fb17a70ec53c93e3594305d9510",
+    "owner_graph.json": "c1d6c31fc06421f343ae1031f9fb781feadcd75f88b05ee081a1c920b73a6155",
+    "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+    "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+  },
+  "verified": true
+}

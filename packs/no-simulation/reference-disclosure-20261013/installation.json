@@ -1,0 +1,14 @@
+[
+  {
+    "binary": "bonfyre-fabric",
+    "old_sha256": "2ea28418e45b65ef57d0506a4ee181da3ed6aeb870c795133a62d0bc7d84892e",
+    "sha256": "98081458fe4575e0fe7253a94076725ed1f4078c9a6dcc3efe92d5afc0ca4b1d",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-fabric-2ea28418e45b65ef57d0506a4ee181da3ed6aeb870c795133a62d0bc7d84892e/bonfyre-fabric"
+  },
+  {
+    "binary": "bonfyre-web-address",
+    "old_sha256": "410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0",
+    "sha256": "ec386c0fd63c3a0972a523f0193b341d36146f5c923f9bfec4f984f71eff8a44",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-web-address-410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0/bonfyre-web-address"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "package": "a2e21a1ddb9242f6a1d2db7b8c73882ad1280c3d3b3dbc9f737775353a747138",
+  "source": "7a649a988af9e40e1c89290010512b54d61b7d909510ae0b58984ff9f2386a70",
+  "checks": [
+    "built catalogue release UI assets, retained fixture sources and exact native continuation",
+    "shared release review, exact JSON round trip, budget impact and unchanged source drafts",
+    "atomic product and room revision checks; stale review refusal",
+    "lost native response and idempotent recovery of the exact release save",
+    "current roles, revoked writer and destination isolation"
+  ],
+  "browser_verified": false,
+  "live_deployment": false,
+  "scope": "Real isolated Auth, CMS, WebAddress and store transport; fictional merchant fixture."
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "bonfyre.mcp-workflow-measurement.v1",
+  "observed_at": "2026-10-17T21:00:09.382Z",
+  "scope": "One local authenticated HTTP sample per operation; current implementations only. Timing is not a before/after latency benchmark.",
+  "inventory": {
+    "legacy_full": {
+      "response_bytes": 217426,
+      "local_http_ms": 140.031,
+      "count": 177
+    },
+    "first_summary_page": {
+      "response_bytes": 6162,
+      "local_http_ms": 27.026,
+      "returned": 20,
+      "next_offset": 20
+    },
+    "selected_family": {
+      "response_bytes": 1334,
+      "local_http_ms": 22.615,
+      "matched": 1
+    }
+  },
+  "reads": {
+    "files": 8,
+    "individual": {
+      "requests": 8,
+      "response_bytes": 146676
+    },
+    "batch": {
+      "requests": 1,
+      "response_bytes": 146143,
+      "local_http_ms": 5.41
+    },
+    "unchanged_refresh": {
+      "requests": 1,
+      "response_bytes": 3135,
+      "local_http_ms": 1.19
+    }
+  },
+  "sources": {
+    "integrations/mcp/project_reads.mjs": "12f8d6e36da143acf091a91119cef26ef60b973a636df337f00bba3f96a98346",
+    "integrations/mcp/project_native.mjs": "9cc8a612d4fb0ee639eca5fe7b6e3631d25485a670b820e9d3f0decd9a146d5b",
+    "integrations/mcp/project_operator.mjs": "df837c087a1187687b70715f7efe17df6ca8570ce2dd86361fe79214627e03f1",
+    "integrations/mcp/project_node.mjs": "b8cb972fbe2b02a6de073d77af8accf9f9aeb2fc1a4eac0edd542718cdfc3b3c",
+    "integrations/mcp/tests/project_reads.test.mjs": "fdaedc2e68d44e8faf189801754dd3da974fcf6ce07c4b8bdc9c9079e9913b42",
+    "integrations/mcp/tests/project_native.test.mjs": "4240deb96174bb4909561941b7c22dc76491fc4f416dc257f49b23b2bc805a41",
+    "integrations/mcp/tests/project_operator.test.mjs": "2f2689a209a378ea24d53764cc58d443a7500de0ae65ad8328971ce75c402d0c",
+    "integrations/mcp/tests/project_node.test.mjs": "dc54e565238817ee7a8f7db4e8ed5abfc074da69b823f84d71fb655b1f794b29"
+  },
+  "cannot_infer": "These measurements do not establish remote latency, deployment, complete chat call arguments, atomic multi-file snapshots or write authority."
+}

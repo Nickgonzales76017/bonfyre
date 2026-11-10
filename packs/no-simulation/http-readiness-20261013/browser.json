@@ -1,0 +1,199 @@
+{
+  "at": "2026-10-13T20:24:53.737Z",
+  "serverWorkers": 1,
+  "checks": [
+    {
+      "width": 1440,
+      "territory": "life",
+      "title": "Bonfÿre — the workshop",
+      "body": "life",
+      "overflow": 0,
+      "canonical": "https://aurekai.life/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "live",
+      "title": "Bonfÿre — in the open",
+      "body": "live",
+      "overflow": 0,
+      "canonical": "https://aurekai.live/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "shop",
+      "title": "Bonfÿre — the market",
+      "body": "shop",
+      "overflow": 0,
+      "canonical": "https://aurekai.shop/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "work",
+      "title": "Bonfÿre — the institution",
+      "body": "work",
+      "overflow": 0,
+      "canonical": "https://aurekai.work/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 1440,
+      "intakePrepared": true,
+      "urlPreserved": true,
+      "remoteBodyFetched": false
+    },
+    {
+      "width": 1440,
+      "studioReview": true,
+      "signInContinuationPreserved": true,
+      "anonymousObservationUnavailable": true
+    },
+    {
+      "width": 390,
+      "territory": "life",
+      "title": "Bonfÿre — the workshop",
+      "body": "life",
+      "overflow": 0,
+      "canonical": "https://aurekai.life/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "live",
+      "title": "Bonfÿre — in the open",
+      "body": "live",
+      "overflow": 0,
+      "canonical": "https://aurekai.live/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "shop",
+      "title": "Bonfÿre — the market",
+      "body": "shop",
+      "overflow": 0,
+      "canonical": "https://aurekai.shop/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "work",
+      "title": "Bonfÿre — the institution",
+      "body": "work",
+      "overflow": 0,
+      "canonical": "https://aurekai.work/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier · public observation only"
+    },
+    {
+      "width": 390,
+      "intakePrepared": true,
+      "urlPreserved": true,
+      "remoteBodyFetched": false
+    },
+    {
+      "width": 390,
+      "studioReview": true,
+      "signInContinuationPreserved": true,
+      "anonymousObservationUnavailable": true
+    }
+  ],
+  "errors": []
+}

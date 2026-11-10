@@ -1,0 +1,11 @@
+{
+  "site/itad-exchange/index.html": "0d682bee21a5c793fcd0368563a08fa706c17e14b9ac27208158654a2040fb1b",
+  "site/itad-exchange/manifest-grid.mjs": "c4be74516d8c9728ecb7f70d78b49a30cbf02c2ec22764a995018c70005ad9c1",
+  "site/itad-exchange/desk.css": "fcf995e63e4be13c1c4f6752f433fceb2a6dbfab9e8e4376858a951fb03c1758",
+  "site/itad-exchange/core.mjs": "22f71edc40437f5d29e30e1ea6ec87ce20396957997c8696d8b4953a4e5f0a42",
+  "site/itad-exchange/app.mjs": "3918bb1c635c01ef45bdd09f1f585da1fbb3baeb54b216cb03fa2ea9fe067750",
+  "site/itad-exchange/vendor/ag-grid-community-36.2.0/ag-grid-community.min.js": "5f8ddee2e7e2d78e4005f29329404e67bba54ee6db63710b91878e81076ebc1e",
+  "site/itad-exchange/vendor/ag-grid-community-36.2.0/LICENSE.txt": "31636f0472dda16bba11a7b78204e1f677b77452092e185a65cddd45b6c9fb29",
+  "site/itad-exchange/vendor/ag-grid-community-36.2.0/provenance.tsv": "4a173aaac28f2928b43d84a8bc44e60eb40dd6f146baf8c4904e3edec46a83e1",
+  "tests/itad-workspace.test.mjs": "157e27cbe28f6803aecf8cba66c52169d3903f3280980b2e9940e2bddfa42e4c"
+}

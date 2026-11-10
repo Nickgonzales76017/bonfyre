@@ -1,0 +1,8 @@
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../lib/libbonfyre
+make[1]: Nothing to be done for `all'.
+python3 ./tests/manifest_test.py ./bonfyre-model
+BonfyreModel manifest: PASS
+./tests/representation_passport_test.sh ./bonfyre-model
+BonfyreModel representation passport: PASS
+python3 ./tests/file_verification_test.py ./bonfyre-model
+BonfyreModel file verification: PASS (9 CLI checks)

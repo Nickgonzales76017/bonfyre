@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-10-09T07:10:48.945Z",
+  "command": "bonfyre finance payment-options",
+  "exit_code": 0,
+  "provider": "QuantLib",
+  "version": "1.43",
+  "input_ref": "opportunity:twc-website-rfp",
+  "alternatives": 4,
+  "parity_with_native_family": true,
+  "stderr": "",
+  "managed_finance_sha256": "25d7b56a3b318175b7002a84100ba7e5519ca26a763f84e3ce051c7cddafcce4"
+}

@@ -1,0 +1,40 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"argv\":[\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"--help\"],\"cwd\":\"/Users/nickgonzales/.bonfyre/bin\",\"exit_code\":0,\"stdout\":\"\",\"stderr\":\"usage: bonfyre-web-address bootstrap-owned|subject|address|alias|institution|relate|presence|presence-withdraw|domain|presence|standing|standing-members|constellation ... --db FILE\\n       bonfyre-web-address closure-contribution --db FILE --subject ID --presence ID --plane material|latent|execution|economic --owner OWNER --resource URI --representation FORMAT --digest HEX --evidence RECEIPT\\n       bonfyre-web-address closure-contributions --db FILE --subject ID --presence ID [--plane PLANE]\\n       bonfyre-web-address resolve --db FILE --host HOST --path PATH [--world live --audience public --repr HTML]\\n       bonfyre-web-address closure --db FILE (--host HOST [--path PATH] | --subject ID --presence ID) [--format ro-crate|zarr]\\n       bonfyre-web-address public-projection-invalidate --cache-db FILE --dependency COORDINATE\\n       bonfyre-web-address public-projection-lower --cache-db FILE --handoff FILE\\n       bonfyre-web-address public-projection-drain --cache-db FILE --lowerer-dir DIRECTORY [--limit N]\\n       bonfyre-web-address serve --db FILE [--port 8787 --workers 1..64 --backlog 1024 --site-root DIR]\\n\",\"duration_ms\":5,\"family\":\"BonfyreWebAddress\",\"binary\":\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"source_binary\":null,\"binary_sha256_at_readback\":\"410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0\",\"binary_bytes\":2077632,\"checkout_binary\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address\",\"checkout_bytes\":2077632,\"checkout_sha256_at_readback\":\"410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0\",\"checkout_comparison\":\"matched\",\"source_build_freshness\":\"not_attested\",\"corpus_binding\":null,\"managed_binary\":true,\"schema_version\":\"bonfyre.native.tool.receipt.v1\",\"receipt_id\":\"9db29853-190a-4e43-9453-335c2a3addff\",\"status\":\"passed\",\"capabilities\":[],\"stdout_sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"8f86bccf4f6573cb68a319fa4b1650d6d5e339df12e20c483a43988f9bb08b7f\",\"stdout_bytes\":0,\"stderr_bytes\":1122}"
+    }
+  ],
+  "structuredContent": {
+    "argv": [
+      "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+      "--help"
+    ],
+    "cwd": "/Users/nickgonzales/.bonfyre/bin",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "usage: bonfyre-web-address bootstrap-owned|subject|address|alias|institution|relate|presence|presence-withdraw|domain|presence|standing|standing-members|constellation ... --db FILE\n       bonfyre-web-address closure-contribution --db FILE --subject ID --presence ID --plane material|latent|execution|economic --owner OWNER --resource URI --representation FORMAT --digest HEX --evidence RECEIPT\n       bonfyre-web-address closure-contributions --db FILE --subject ID --presence ID [--plane PLANE]\n       bonfyre-web-address resolve --db FILE --host HOST --path PATH [--world live --audience public --repr HTML]\n       bonfyre-web-address closure --db FILE (--host HOST [--path PATH] | --subject ID --presence ID) [--format ro-crate|zarr]\n       bonfyre-web-address public-projection-invalidate --cache-db FILE --dependency COORDINATE\n       bonfyre-web-address public-projection-lower --cache-db FILE --handoff FILE\n       bonfyre-web-address public-projection-drain --cache-db FILE --lowerer-dir DIRECTORY [--limit N]\n       bonfyre-web-address serve --db FILE [--port 8787 --workers 1..64 --backlog 1024 --site-root DIR]\n",
+    "duration_ms": 5,
+    "family": "BonfyreWebAddress",
+    "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+    "source_binary": null,
+    "binary_sha256_at_readback": "410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0",
+    "binary_bytes": 2077632,
+    "checkout_binary": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address",
+    "checkout_bytes": 2077632,
+    "checkout_sha256_at_readback": "410ba0cce81cd8be148bbe0ad3a33bfc0b9416f5d7de2f384496db796d1d5cd0",
+    "checkout_comparison": "matched",
+    "source_build_freshness": "not_attested",
+    "corpus_binding": null,
+    "managed_binary": true,
+    "schema_version": "bonfyre.native.tool.receipt.v1",
+    "receipt_id": "9db29853-190a-4e43-9453-335c2a3addff",
+    "status": "passed",
+    "capabilities": [],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8f86bccf4f6573cb68a319fa4b1650d6d5e339df12e20c483a43988f9bb08b7f",
+    "stdout_bytes": 0,
+    "stderr_bytes": 1122
+  },
+  "isError": false
+}

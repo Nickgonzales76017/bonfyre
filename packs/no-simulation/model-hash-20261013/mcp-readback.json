@@ -1,0 +1,47 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"argv\":[\"/Users/nickgonzales/.bonfyre/bin/bonfyre-hash\",\"file\",\"/Users/nickgonzales/.bonfyre/bin/bonfyre-model\"],\"cwd\":\"/Users/nickgonzales/.bonfyre/bin\",\"exit_code\":0,\"stdout\":\"10090fdf15cdcc497d1bfaedc46db07256db50d33869bc094716ae276863caf4  /Users/nickgonzales/.bonfyre/bin/bonfyre-model\\n\",\"stderr\":\"\",\"duration_ms\":10,\"family\":\"BonfyreHash\",\"binary\":\"/Users/nickgonzales/.bonfyre/bin/bonfyre-hash\",\"source_binary\":null,\"binary_sha256_at_readback\":\"2ccbe99944c288c91d9cb586af453b70fe9b25a89d96a696e1b7aa4be3a76cab\",\"binary_bytes\":35840,\"checkout_binary\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreHash/bonfyre-hash\",\"checkout_bytes\":35840,\"checkout_sha256_at_readback\":\"2ccbe99944c288c91d9cb586af453b70fe9b25a89d96a696e1b7aa4be3a76cab\",\"checkout_comparison\":\"matched\",\"source_build_freshness\":\"not_attested\",\"corpus_binding\":null,\"managed_binary\":true,\"schema_version\":\"bonfyre.native.tool.receipt.v1\",\"receipt_id\":\"093386cd-2c4f-4438-92b9-3814cb68d08c\",\"status\":\"passed\",\"capabilities\":[\"cmd:dedup\",\"cmd:feature\",\"cmd:merkle\",\"cmd:node\",\"cmd:verify\"],\"stdout_sha256\":\"a69175ec710882bc09404272e41a10da16a270c8e7deeae1872373afd4f75cd0\",\"stderr_sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stdout_bytes\":113,\"stderr_bytes\":0}"
+    }
+  ],
+  "structuredContent": {
+    "argv": [
+      "/Users/nickgonzales/.bonfyre/bin/bonfyre-hash",
+      "file",
+      "/Users/nickgonzales/.bonfyre/bin/bonfyre-model"
+    ],
+    "cwd": "/Users/nickgonzales/.bonfyre/bin",
+    "exit_code": 0,
+    "stdout": "10090fdf15cdcc497d1bfaedc46db07256db50d33869bc094716ae276863caf4  /Users/nickgonzales/.bonfyre/bin/bonfyre-model\n",
+    "stderr": "",
+    "duration_ms": 10,
+    "family": "BonfyreHash",
+    "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-hash",
+    "source_binary": null,
+    "binary_sha256_at_readback": "2ccbe99944c288c91d9cb586af453b70fe9b25a89d96a696e1b7aa4be3a76cab",
+    "binary_bytes": 35840,
+    "checkout_binary": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreHash/bonfyre-hash",
+    "checkout_bytes": 35840,
+    "checkout_sha256_at_readback": "2ccbe99944c288c91d9cb586af453b70fe9b25a89d96a696e1b7aa4be3a76cab",
+    "checkout_comparison": "matched",
+    "source_build_freshness": "not_attested",
+    "corpus_binding": null,
+    "managed_binary": true,
+    "schema_version": "bonfyre.native.tool.receipt.v1",
+    "receipt_id": "093386cd-2c4f-4438-92b9-3814cb68d08c",
+    "status": "passed",
+    "capabilities": [
+      "cmd:dedup",
+      "cmd:feature",
+      "cmd:merkle",
+      "cmd:node",
+      "cmd:verify"
+    ],
+    "stdout_sha256": "a69175ec710882bc09404272e41a10da16a270c8e7deeae1872373afd4f75cd0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 113,
+    "stderr_bytes": 0
+  },
+  "isError": false
+}

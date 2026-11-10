@@ -1,0 +1,64 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [
+    "self-hosted spatial canvas opens with the existing four fixtures",
+    "pointer drag snaps and updates the saved proposal coordinates",
+    "undo restores the full prior arrangement",
+    "redo restores exact moved coordinates",
+    "Shift selection is reflected in both list and canvas",
+    "group drag preserves relative fixture placement",
+    "alignment updates both selected fixtures",
+    "duplication creates new fixture identities and exact supplier costs",
+    "rotation applies to the selected duplicate group",
+    "keyboard movement retains quarter-foot precision",
+    "zoom uses the same editable scene",
+    "panning changes only the view",
+    "all spatial edits survive reload through the existing record",
+    "browser Back restores the spatial editor and saved proposal",
+    "layout export is a real PNG with doubled canvas resolution",
+    "deleting every fixture is refused without clearing the plan",
+    "spatial workspace fits 1440px",
+    "spatial workspace fits 390px",
+    "spatial workspace fits 320px",
+    "touch dragging on a phone updates the same proposal",
+    "marquee selects the fixtures inside its visible region",
+    "review includes spatial edits and retained supplier identifiers",
+    "library failure retains the SVG and precise editing controls",
+    "canvas retry restores the existing saved layout",
+    "no browser exceptions",
+    "no remote writes or submissions"
+  ],
+  "errors": [],
+  "writes": [],
+  "status": "passed",
+  "dragged": [
+    {
+      "key": "rack-1",
+      "product": "rack",
+      "x": 2.25,
+      "y": 1.5,
+      "rotation": 0
+    },
+    {
+      "key": "table-1",
+      "product": "table",
+      "x": 9,
+      "y": 1,
+      "rotation": 0
+    },
+    {
+      "key": "counter-1",
+      "product": "counter",
+      "x": 10,
+      "y": 8,
+      "rotation": 0
+    },
+    {
+      "key": "easel-1",
+      "product": "easel",
+      "x": 11,
+      "y": 8,
+      "rotation": 0
+    }
+  ]
+}

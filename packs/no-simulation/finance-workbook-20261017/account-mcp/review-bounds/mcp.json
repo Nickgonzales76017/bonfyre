@@ -1,0 +1,22 @@
+{
+  "package": "4bba9b69f810b9b33796f386ebe91509a6ad881dc4fec9f269cde53c29dcae38",
+  "checks": [
+    "gateway tool discovery, bounded revision-bound pages and original-address inspection without original XLSX download",
+    "read-only preview and exact gateway save share Univer edits, recalculation and immutable sources with the editor",
+    "manual and agent review decisions interoperate, reopen and export through the same record",
+    "invalid cells, unresolved rows, excess inputs, actor injection, altered confirmation and expired preview refusal",
+    "competing edits, stale pages, read-only and revoked writers, unrelated users and inactive installations are refused by native owners",
+    "lost response after a real commit never auto-retries and is reconciled by current workbook read",
+    "generic workspace preview/save preserves workbook files and native exact continuation",
+    "two-operation workbook concurrency bound and capacity recovery after completion"
+  ],
+  "browser_verified": false,
+  "live_deployment": false,
+  "scope": "isolated real Auth, CMS, WebAddress, account MCP gateway and Univer worker",
+  "gateway_runtime": "node",
+  "binaries": {
+    "web": "787c5456cc61080981726ec1023c9704e39243a183e7ef242b31876cd68ed9f0",
+    "cms": "f746bb96341edbeec9ed03093c18783ca1eb1d6cdb2882b01ffce8d702f8ea17",
+    "auth": "893284565e1bf58405f8356cac5dc95cb337941be364aca4073983bfc4cffe60"
+  }
+}

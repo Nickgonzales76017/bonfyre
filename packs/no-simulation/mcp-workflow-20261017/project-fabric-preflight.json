@@ -1,0 +1,135 @@
+{
+  "services": [
+    {
+      "label": "com.bonfyre.public-oauth-mcp-legacy",
+      "port": 8794,
+      "pid": 945,
+      "configuration_sha256": "106b40f88451212b58d967fedefbb92d5cf114e97892e0e8d3f55d04298de747"
+    },
+    {
+      "label": "com.bonfyre.public-oauth-mcp",
+      "port": 8791,
+      "pid": 919,
+      "configuration_sha256": "06517b66919ab95d2efa0386a5813268359ab55fba598724e74bd23ab1d0beae"
+    },
+    {
+      "label": "com.bonfyre.project-mcp",
+      "port": 3051,
+      "pid": 79957,
+      "configuration_sha256": "ae0b14a6696a604f3b12367d3dc7b185e420f4ddb9e926b7fed4e8ead381c1f9"
+    }
+  ],
+  "controls": {
+    "/Users/nickgonzales/.bonfyre/operator/STOP": "dc2a04a523bfdae311187bf7aacaa97725829152b40c7c169cae268fa22ede28",
+    "/Users/nickgonzales/.bonfyre/dev-fabric/STOP": null,
+    "/Users/nickgonzales/.bonfyre/operator/policy.json": "7f9e7ceb2aa12d848111ea4124b56aa871a82f7dceeebadd8991e3404fcfe958",
+    "/Users/nickgonzales/.bonfyre/dev-fabric/fabric_policy.json": "c19bd0f43fc5237574bdf751b533f6240d11287450645007ff7d19e45cf176b4"
+  },
+  "sources": {
+    "project_fabric.mjs": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+    "project_node.mjs": "d08fce66da2ef0a5760af9634395c19594cf4394b868739e368f8c964bff31e9",
+    "project_owner.mjs": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+    "project_catalog.json": "d3ff5672b82bf99083c02e9cd4602c27a12d8c4b81450073c6bda519d44d0472",
+    "project_reads.mjs": "12f8d6e36da143acf091a91119cef26ef60b973a636df337f00bba3f96a98346",
+    "project_native.mjs": "a0ef83fa8be494b918fa9d8d54ca4bee57cccc3cfdf1b5146f6aa2d1da9f7a32",
+    "project_operator.mjs": "df837c087a1187687b70715f7efe17df6ca8570ce2dd86361fe79214627e03f1",
+    "project_runtime.mjs": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede",
+    "owned_mcp_client.mjs": "bbf69490f47abe51337ce1cd19c2c8e1960bda378cc8ede2b234efe209f6211e",
+    "http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71",
+    "fabric_catalog.json": "bf348103b7a5837ee70fc9a9d487f8daf8d0076bb6672d5d40918b54d798a5b5",
+    "project_v6.mjs": "695e3de4bb644a7f549c0c8819090eccc718f0a72b9f2bf46854ee756abb593b",
+    "project_spines.mjs": "0e80e6ca9af1d8a06aac8708dd271568427065a23e70f6bb532ff23f97581f83",
+    "bonfyre_oauth_gateway.mjs": "b1777aedadca0ec7c43583091d8b75528ee80268127eddbd527df4eeb82f406a"
+  },
+  "fabric": {
+    "source_db_sha256": "c46115eff7435a5dc0e0ddb4a3117bb54fe8b5b88fe41e4109c31eecf597c20a",
+    "tables": {
+      "tasks": {
+        "rows": 57,
+        "sha256": "0f7c10e44533ebc0daba99ae151088f6d1797586c58a35535355260bd5aced2b"
+      },
+      "runs": {
+        "rows": 137,
+        "sha256": "c7d5087dc61035cc2cb87ac984a2588f05958b92a4f93bbb5d4995711a51720b"
+      },
+      "events": {
+        "rows": 3174,
+        "sha256": "2d43c1096e44a7ab016801716e7f98d89bffa46db439d228bc564461ff4a0e34"
+      },
+      "locks": {
+        "rows": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "sessions": {
+        "rows": 131,
+        "sha256": "c21875bebd8904793cfb8e099ecbb2b33f668e60912c01979d40a0e85ff1db37"
+      },
+      "receipts": {
+        "rows": 52,
+        "sha256": "8bb1a23f0ef06b09c417210709095e0e7dd59c96ee040d62ac044809d86f5cab"
+      }
+    },
+    "receipts": {
+      "verified": true,
+      "failures": []
+    },
+    "task_states": [
+      {
+        "state": "cancelled",
+        "count": 2
+      },
+      {
+        "state": "completed",
+        "count": 49
+      },
+      {
+        "state": "failed",
+        "count": 5
+      },
+      {
+        "state": "running",
+        "count": 1
+      }
+    ],
+    "run_states": [
+      {
+        "state": "failed",
+        "count": 72
+      },
+      {
+        "state": "passed",
+        "count": 63
+      },
+      {
+        "state": "running",
+        "count": 2
+      }
+    ],
+    "recorded_nonterminal_tasks": [
+      {
+        "id": "a0cf14c75bc048f8b4d81f8a",
+        "kind": "review",
+        "state": "running",
+        "started_at": 1785454106.682112
+      }
+    ],
+    "recorded_nonterminal_runs": [
+      {
+        "id": "2c7a8d347eda4843839fc3a4",
+        "task_id": "2f06532631b94156a8f50e21",
+        "agent": "claude",
+        "role": "cross-review",
+        "state": "running",
+        "started_at": 1785408742.60782
+      },
+      {
+        "id": "d3bc123770f84dfca4226528",
+        "task_id": "a0cf14c75bc048f8b4d81f8a",
+        "agent": "codex",
+        "role": "cross-review",
+        "state": "running",
+        "started_at": 1785454106.687111
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "release": "583c987746e4fc5ee768c8ce7874a0ae67cfbf5e22b208576890885956100089",
+  "files": {
+    "all_bindings.tsv": "88e55b58810e4ccbd4bf434e5d552c0282b48d0622b980c97e1be11a0a90f89b",
+    "app_bindings.jsonl": "68188bd3d81954cc227a77ecd6c6ea8811f397f430516b101a7dd02116a5963b",
+    "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+    "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+    "manifest.json": "fc90212e7525cb8f1bab54d2990f22e647b9e56be187fd4e8518cd3be3169868",
+    "owner_graph.json": "8a0c18d6b69bf1d060478a0dcea8fac7f233080cb8e2cfc100d2aab28708a524",
+    "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+    "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+  }
+}

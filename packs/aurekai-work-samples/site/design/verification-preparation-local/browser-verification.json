@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-08T05:00:59.290Z",
+  "origin": "http://127.0.0.1:53568",
+  "passed": [
+    "Real catalogue opens",
+    "Original title is source product",
+    "No fake publish control",
+    "Save begins disabled",
+    "Empty title is rejected",
+    "Fractional-cent prices are rejected",
+    "Review shows title and price edits",
+    "Review preserves old price",
+    "Draft survives page reload",
+    "Draft survives browser restart",
+    "Concurrent stale draft cannot overwrite",
+    "Two service items remain separate",
+    "Search has useful empty state",
+    "No horizontal overflow at 1440",
+    "No horizontal overflow at 768",
+    "No horizontal overflow at 390",
+    "No horizontal overflow at 320",
+    "Mobile list returns",
+    "Mobile opens selected product",
+    "Second store uses same workspace",
+    "Missing SKUs remain empty",
+    "Saved-draft filter works",
+    "RED3 opens its own product",
+    "RED3 retains the legacy source URL",
+    "RED3 missing source fields stay empty",
+    "RED3 keeps its observed price",
+    "Prepared sample includes search, image and collection proposals",
+    "Prepared sample has seven reviewable changes",
+    "Prepared sample survives save and reload",
+    "RED3 has no horizontal overflow at 1440",
+    "RED3 has no horizontal overflow at 390",
+    "RED3 change review works",
+    "RED3 draft reopens after reload",
+    "Unsaved changes cannot be submitted",
+    "Failed submission shows no receipt and keeps the saved draft",
+    "Submitted draft receives a server receipt",
+    "Retry after reload returns the same receipt",
+    "Only one review is retained by the generated worker",
+    "Review handoff fits width 1440",
+    "Review handoff fits width 390",
+    "A later edit cannot reuse the previous receipt",
+    "Failed first load has visible error",
+    "A changed catalogue chunk cannot be edited",
+    "No page errors",
+    "Only explicit catalogue review requests were submitted"
+  ],
+  "errors": [],
+  "writes": [
+    {
+      "url": "http://127.0.0.1:53568/api/lead/catalogue-product-workspace",
+      "method": "POST"
+    },
+    {
+      "url": "http://127.0.0.1:53568/api/lead/catalogue-product-workspace",
+      "method": "POST"
+    },
+    {
+      "url": "http://127.0.0.1:53568/api/lead/catalogue-product-workspace",
+      "method": "POST"
+    }
+  ],
+  "submissionReceipt": "lead:catalogue:26a79d6ebf96d566d918a9edece3bfd4606b0b560c7e0239f01c93b66eb5a019",
+  "site_live": false
+}

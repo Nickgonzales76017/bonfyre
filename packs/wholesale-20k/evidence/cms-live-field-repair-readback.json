@@ -1,0 +1,71 @@
+{
+  "observed_at": "2026-10-09T06:41:24.880Z",
+  "backup": "/Users/nickgonzales/.bonfyre/backups/cms-before-field-repair-20261009.db",
+  "backup_bytes": 112533504,
+  "checked": [
+    {
+      "table": "project",
+      "original_rows": 122,
+      "original_values_preserved": true
+    },
+    {
+      "table": "outbound_message",
+      "original_rows": 95,
+      "original_values_preserved": true
+    },
+    {
+      "table": "frappe_crm_crm_deal",
+      "original_rows": 9,
+      "original_values_preserved": true
+    },
+    {
+      "table": "frappe_erpnext_request_for_quotation",
+      "original_rows": 3,
+      "original_values_preserved": true
+    },
+    {
+      "table": "price_observation",
+      "original_rows": 7,
+      "original_values_preserved": true
+    },
+    {
+      "table": "frappe_erpnext_supplier_quotation",
+      "original_rows": 0,
+      "original_values_preserved": true
+    },
+    {
+      "table": "frappe_erpnext_quotation",
+      "original_rows": 0,
+      "original_values_preserved": true
+    }
+  ],
+  "parity": [
+    {
+      "table": "frappe_erpnext_supplier_quotation",
+      "declared": 68,
+      "missing": []
+    },
+    {
+      "table": "frappe_erpnext_quotation",
+      "declared": 74,
+      "missing": []
+    }
+  ],
+  "integrity": [
+    {
+      "quick_check": "ok"
+    }
+  ],
+  "results": [
+    {
+      "schema": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/schemas/supplier-quotation.json",
+      "exit": 0,
+      "stderr": "[migrate] staged column frappe_erpnext_supplier_quotation.billing_address_display (text)\n[migrate] staged column frappe_erpnext_supplier_quotation.cost_center (string)\n[migrate] staged column frappe_erpnext_supplier_quotation.project (string)\n[migrate] staged column frappe_erpnext_supplier_quotation.has_unit_price_items (boolean)\n[schema] loaded: frappe_erpnext_supplier_quotation (68 fields)\n"
+    },
+    {
+      "schema": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/schemas/quotation.json",
+      "exit": 0,
+      "stderr": "[migrate] staged column frappe_erpnext_quotation.opportunity (string)\n[migrate] staged column frappe_erpnext_quotation.company_address (string)\n[migrate] staged column frappe_erpnext_quotation.company_address_display (text)\n[migrate] staged column frappe_erpnext_quotation.scan_barcode (string)\n[migrate] staged column frappe_erpnext_quotation.incoterm (string)\n[migrate] staged column frappe_erpnext_quotation.named_place (string)\n[migrate] staged column frappe_erpnext_quotation.disable_rounded_total (boolean)\n[migrate] staged column frappe_erpnext_quotation.company_contact_person (string)\n[migrate] staged column frappe_erpnext_quotation.has_unit_price_items (boolean)\n[migrate] staged column frappe_erpnext_quotation.last_scanned_warehouse (string)\n[schema] loaded: frappe_erpnext_quotation (74 fields)\n"
+    }
+  ]
+}

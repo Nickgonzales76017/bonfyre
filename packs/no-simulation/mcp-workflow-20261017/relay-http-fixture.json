@@ -1,0 +1,21 @@
+{
+  "schema": "bonfyre.relay-workflow-http-fixture.v1",
+  "measured_at": "2026-10-17T21:10:30.522Z",
+  "transport": "real authenticated loopback HTTP",
+  "execution": "real Git worktree, Bun test and Project patch owner",
+  "agent_behavior": "deterministic injected responses; no model requests",
+  "task_submissions": 1,
+  "status_requests": 3,
+  "agent_runs": 5,
+  "test_command": "bun test scripts/value.test.mjs",
+  "test_exit_code": 0,
+  "task_state": "completed",
+  "applied": true,
+  "summary_json_bytes": 2900,
+  "full_json_bytes": 49716,
+  "verified_file": {
+    "path": "scripts/value.mjs",
+    "contents": "export const value = 2;\n"
+  },
+  "limitations": "Temporary fixture is removed after the test. This does not prove paid-agent behavior or permission to resume stopped production work."
+}

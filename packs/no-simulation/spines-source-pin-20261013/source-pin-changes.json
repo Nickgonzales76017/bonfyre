@@ -1,0 +1,12 @@
+[
+  {
+    "path": "lib/libbonfyre/src/bf_sha256.c",
+    "previous": "ff689db627d596254f390cc24c99f3e86626a2fd284e6e2e5de08c2cdaefd319",
+    "current": "a412f24046caa21e2d56523ab227c6acb7a7c62e7d76adc7ea37bc8915faab81"
+  },
+  {
+    "path": "lib/libbonfyre/include/bonfyre.h",
+    "previous": "7ea9f83c547e4fa7b1338ef82d0b51e5ee2451fc807e765e66226654d34a8470",
+    "current": "d2c7532168a35c48899385e41fddf6d798a6125e231604b269f44fbd3297cf07"
+  }
+]

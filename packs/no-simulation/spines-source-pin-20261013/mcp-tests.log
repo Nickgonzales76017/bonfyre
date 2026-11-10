@@ -1,0 +1,637 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/v6_resources.test.mjs:
+(pass) constructor is lazy and every historical provider/backend descriptor survives [0.84ms]
+(pass) discovery preserves precedence, names and projections without secrets or effects when probes disabled [14.82ms]
+(pass) CLI probe output is hashed not retained; local runpod configuration does not prove remote reachability [10.02ms]
+(pass) Python and unknown shell trampolines are refused, direct Node tooling stays executable [10.72ms]
+(pass) HTTP activation strips query credentials, refuses redirects, and propagates process-over-file precedence [17.70ms]
+(pass) Cloudflare account-owned tokens use account verification and require active status, not HTTP 200 alone [8.57ms]
+(pass) Cloudflare verification refuses disabled, malformed, or invalid account credentials [17.61ms]
+(pass) Cloudflare user-owned tokens retain user verification and reject non-token HTTP success [8.07ms]
+(pass) failed and oversized HTTP observations do not preserve an old validated claim [9.40ms]
+(pass) HTTP error messages never escape credentials and unapproved custom health URLs are refused [8.00ms]
+(pass) manifest verification binds Unicode and raw integral float spellings to historical digest [3.33ms]
+(pass) manifest refuses synthetic, wrong id, future clock, duplicate and escaping artifacts [3.78ms]
+(pass) all backends discovered; exact names only; live manifest activation is distinct from help/build success [8.73ms]
+(pass) explicit HVM source build preserves package identity and offline flags, without model/network execution [5.40ms]
+(pass) cancellation refuses before effects; environment symlinks are not followed [3.94ms]
+(pass) late cancellation does not persist a partial discovery or proceed to the next process [2.26ms]
+(pass) chunked oversized HTTP response is cancelled and cannot become validation evidence [9.58ms]
+(pass) real disposable durable store retains all projections and a verifiable receipt chain after reopen [52.90ms]
+
+integrations/mcp/tests/canary_fixtures.test.mjs:
+(pass) RTK Bun fixture certifies real parity predicates, sanitizes Git env, and marks skipped recursion partial [39.30ms]
+(pass) RTK summary-only test output fails the identity claim even with exit parity and strong reduction [29.50ms]
+(pass) RTK cannot pass when both test launchers fail even if diff mentions the sentinel [28.70ms]
+(pass) recursive projection journals intent before each effect and retains artifact identity on uncertainty [28.74ms]
+(pass) no durable projection intent means no remote call [1.41ms]
+(pass) Bernstein Python launcher is explicitly classified; actual CLI path and boundary are recorded [5.63ms]
+(pass) missing Cavekit skills never yield fabricated spec/backprop success [4.32ms]
+(pass) Cavekit does not replay an uncertain Claude attempt under alternate CLI syntax [5.31ms]
+(pass) Agent Deck missing PTY marker cannot pass and never kills unrelated tmux sessions [6.95ms]
+
+integrations/mcp/tests/project_operator.test.mjs:
+(pass) preview and low-risk apply use Git affected-path proof, policy, receipts and exact preimage rollback [177.25ms]
+(pass) manual gate requires token; postimage CAS refuses another writer and receipts reject traversal [89.59ms]
+(pass) existing-file preimage is restored; malformed legacy receipts cannot fake a revert [171.49ms]
+(pass) legacy sorted post-hash keys compare by path; corrupt later preimage blocks all restoration [119.86ms]
+(pass) Git observation disables a configured fsmonitor hook and strips hostile Git environment [111.78ms]
+(pass) mode-changing and file-deletion patches refuse until mode-preserving rollback has an owner [21.41ms]
+(pass) rollback verifies modes as well as bytes and refuses legacy receipts without mode evidence [99.59ms]
+(pass) second hash check blocks a simulated external write; no apply command follows [87.45ms]
+(pass) bounded runner timeout during apply records uncertain effect, never applied success [105.27ms]
+(pass) commit admission uses applied receipt and postimage CAS without a real fixture commit [180.75ms]
+(pass) policy and symlink confinement refuse sensitive, dirty and escaping patch effects [86.24ms]
+(pass) existing operator SQLite store keeps goal dedupe, pause and resume semantics [44.80ms]
+(pass) test profiles refuse Python and parse Bun source without execution or output [26.37ms]
+
+integrations/mcp/tests/operator_integration.test.mjs:
+(pass) real store and canonical project_status owner carry a two-response read into verified resolution [12.90ms]
+(pass) paused real store performs no database creation, catalog call, or API request [0.27ms]
+(pass) failed file-receipt projection does not replay a resolved goal or its read [6.00ms]
+(pass) uncertain MCP effect blocks stored run and emitted receipt despite model resolution claim [7.41ms]
+
+integrations/mcp/tests/v6_store.test.mjs:
+(pass) lazy construction and exact legacy schema without rewriting metadata on reopen [14.95ms]
+(pass) V6 UTF-8 receipt identity binds floats, payload, row fields and previous head [13.17ms]
+(pass) mission run and receipt commit together and failed insertion rolls back [13.80ms]
+(pass) receipt corruption, path traversal, symlinks and closed use are refused [10.79ms]
+
+integrations/mcp/tests/operator_daemon.test.mjs:
+(pass) STOP and disabled policy cause zero store, catalog, event, or API calls [0.34ms]
+(pass) every model response repeats instructions, links previous id, and aggregates per-response usage [0.60ms]
+(pass) unknown and invalid-schema calls are refused without tool effects; duplicate IDs fail the cycle [0.83ms]
+(pass) at most eight reads overlap; writes start after reads and retain model order [10.11ms]
+(pass) deadline, midcycle STOP, and tool failure become retryable failures without trailing effects [0.65ms]
+(pass) tool-call budget and no-finish response produce retry, never synthetic resolution [0.30ms]
+(pass) transport redacts auth/API failures and refuses MCP isError without exposing body [1.36ms]
+(pass) temporary real SQLite store stays absent under STOP, then accounts two responses and resolves one goal [5.60ms]
+
+integrations/mcp/tests/project_node.test.mjs:
+(pass) Project, Spines and V6 catalogs have exactly one owner without schema duplication [9.53ms]
+(pass) bearer, schema and unknown-name refusals happen before any owner invocation [1.03ms]
+(pass) resources bind to the same owners and prompts never execute tools [1.75ms]
+(pass) initialization, notifications, health and unavailable local model stay distinct [1.05ms]
+
+integrations/mcp/tests/recursive_cli.test.mjs:
+(pass) captured installed catalog retains every tool, prompt and annotation
+(pass) all installed CLI command forms map to their catalog tools and budgets [0.69ms]
+(pass) options, repeat sections and bounded mission JSON retain installed meanings [1.10ms]
+(pass) malformed command and unowned arguments refuse before network [0.48ms]
+(pass) help/version/no arguments never access token or network [0.21ms]
+(pass) single authenticated bounded JSON-RPC request preserves command payload and identity [0.45ms]
+(pass) wire rejects identity mismatch, tool error, unsafe URL, oversized body and secret leakage [0.51ms]
+(pass) native-smoke uses owned temporary input and does not claim success on failed replay [0.69ms]
+
+integrations/mcp/tests/project_transport_adversarial.test.mjs:
+(pass) auth refusal precedes parsing and dispatch, including malformed unauthenticated bodies [0.20ms]
+(pass) invalid JSON-RPC ids are never reflected as valid response ids [0.70ms]
+(pass) malformed body, envelope, params and unknown tools never reach owners [0.79ms]
+(pass) all owner error envelopes redact the MCP credential, including model resources
+(pass) invalid resource identifiers refuse without invoking read owners [0.69ms]
+(pass) concurrency admission rejects excess requests and releases slots on completion [1.39ms]
+(pass) oversized owner result refuses without retrying or re-invoking an effect [49.15ms]
+(pass) malformed UTF-8 and excessive declared bodies refuse before dispatch [1.87ms]
+(pass) bounded runner kills a SIGTERM-resistant grandchild that retains stdout after parent exit [659.70ms]
+(pass) bounded runner refuses overflow, invalid UTF-8 and missing executable without truncated success [46.17ms]
+
+integrations/mcp/tests/hypervisor_live_witness.test.mjs:
+(pass) online snapshot covers all fourteen tables and explicitly records absent owned files [29.87ms]
+(pass) read-only RPC witness normalizes corrected annotation and never invokes a write tool [30.11ms]
+(pass) mission read projection refuses a candidate that drops historical receipt rows [23.92ms]
+
+integrations/mcp/tests/canary_cli.test.mjs:
+(pass) all twelve installed terminal commands map to canonical tools with original defaults
+(pass) options preserve choices, repeated classes, turn clamping, and omit optional nulls [0.84ms]
+(pass) catalog validates argument types/ranges before network; malformed grammar refuses
+(pass) help and version never load credentials or issue requests [0.54ms]
+(pass) CLI invokes one bounded authenticated JSON-RPC call with identity and structured result [0.31ms]
+(pass) remote HTTP, URL credentials, response identity, isError, redirect, oversized and leaked tokens refuse safely [0.84ms]
+
+integrations/mcp/tests/spines_model.test.mjs:
+(pass) native CPU probe verifies real dot/variance and layernorm bytes without claiming GPU inference [34.12ms]
+(pass) another backend cannot relabel CPU parity as Metal or CUDA proof [13.36ms]
+(pass) valid-looking native numbers with failing exit or incorrect count cannot pass [84.04ms]
+(pass) inventory bounds discovery, refuses script execution and never verifies model weights [211.14ms]
+(pass) native executable mutated during version probe cannot become durable inventory [14.83ms]
+(pass) hardware census uses bounded argv without shells and reports missing GPU probe as degraded [15.38ms]
+(pass) no denied or unhealthy node becomes selected merely by winning a negative score [13.29ms]
+(pass) placement and fuse retain float digests, candidate authority gates and source binding [18.87ms]
+(pass) bounded planner inputs reject coercion, unknown effects and oversized roots [0.60ms]
+(pass) phenotype corruption cannot be laundered into a fuse passport [15.71ms]
+
+integrations/mcp/tests/project_runtime.test.mjs:
+(pass) project process owner keeps literal argv and drains both streams [14.12ms]
+(pass) project process owner refuses timeout and overflow rather than truncated success [64.50ms]
+(pass) project process owner fails closed on missing executable, binary output and retired interpreter [22.44ms]
+
+integrations/mcp/tests/v6_history.test.mjs:
+(pass) hypervisor federation reuses the read-only owner verifier and detects forged row authority [36.57ms]
+(pass) history construction is lazy and STOP refuses raw SQL and bundle publication [0.95ms]
+(pass) bundle destination symlink refuses publication outside owner [12.74ms]
+(pass) federation imports only owner-verified recursive receipts and rejects tampering [42.47ms]
+(pass) missing federation roots are explicit and do not attest a chain [12.91ms]
+(pass) spines and canary federation reuse their independent Bun chain verifiers [49.94ms]
+(pass) sparse snapshot hashes packed bytes, skips symlinks, and stages a consistent SQLite DB [25.76ms]
+(pass) sparse traversal refuses an exhausted entry budget without publishing a false snapshot [12.44ms]
+
+integrations/mcp/tests/hypervisor_server.test.mjs:
+(pass) all33 catalog bindings preserve schema and reject unauthenticated or malformed dispatch before owner effects [3.94ms]
+(pass) legacy write-misannotations fixed and STOP blocks all mutations while pure reads remain [1.37ms]
+(pass) all installed tools dispatch through their actual composed owner contract [5.01ms]
+(pass) events require auth and exact bounded query; prompts have no side effects; health is public [1.03ms]
+(pass) background mission admission is bounded, duplicate is not replayed, close aborts and joins [1.37ms]
+(pass) mission queue refuses observed completed, running and attempted work before acknowledging acceptance [0.93ms]
+(pass) downstream endpoints are trusted constructor bindings and remote endpoints need separate credential files [1.33ms]
+(pass) missing source owner refuses explicitly and transport errors never echo bearer credentials [0.33ms]
+(pass) shutdown also joins running read probes instead of closing their store early [0.41ms]
+(pass) normal default factory composes real native owners lazily; compilation and context persist in disposable store [48.12ms]
+(pass) cold STOP read surfaces never initialize a missing database or bootstrap its schema [2.76ms]
+
+integrations/mcp/tests/fabric_transport.test.mjs:
+(pass) captured installed fabric catalog has exactly fourteen tools and four prompts
+(pass) health is public; events/status/hook require bearer and events are finite JSON, not SSE [0.28ms]
+(pass) MCP catalog, prompts, admission and unknown-resource refusal use one shared boundary [1.00ms]
+(pass) hook input is bounded and malformed JSON fails without recording an event [0.85ms]
+(pass) task creation is serialized despite inherited readOnlyHint annotation [11.23ms]
+(pass) real fabric constructor binds all fourteen catalog tools to injected owners [2.44ms]
+(pass) real fabric routes bind hook/events while STOP refuses new task and estate effects [1.44ms]
+(pass) real fabric queue applies active and queued bounds before creating additional tasks [2.59ms]
+
+integrations/mcp/tests/spines_integration.test.mjs:
+(pass) actual C and default Wasm engines compose through CLI/MCP owner without Python or live state [102.12ms]
+
+integrations/mcp/tests/owned_mcp_client.test.mjs:
+(pass) outbound owner is explicitly bound, validates identity and never retries effects [0.55ms]
+(pass) outbound HTTP, identity, isError and byte boundaries cannot become success [4.46ms]
+(pass) shared outbound admission rejects concurrent and byte-pressure overload before fetch, then releases [0.76ms]
+(pass) maxConcurrent independently rejects a third request without queueing [0.78ms]
+(pass) deadline and caller abort span stalled response body and release admission [21.64ms]
+(pass) HTTPS owner exact response identity succeeds; uncertain transport errors never retry [0.63ms]
+(pass) header deadline releases the slot and cancels a late response without replay [22.05ms]
+(pass) invalid declared response length cancels body before releasing admission [0.62ms]
+(pass) abort between call return and queued fetch prevents any dispatch
+(pass) remote isError after an effect is reported but never assumed effect-free or replayed [0.35ms]
+
+integrations/mcp/tests/project_spines.test.mjs:
+(pass) all existing Spines schemas are reused and hidden proof writes require write admission [0.62ms]
+(pass) remote route and credential are deployment-owned, never derived from caller arguments [0.82ms]
+(pass) write gate and STOP refuse before network admission, including misleading historical reads [1.29ms]
+(pass) Project authenticated route composes real Spines/Wasm through a simulated HTTPS owner, not a second evaluator [23.32ms]
+
+integrations/mcp/tests/spines_transport.test.mjs:
+(pass) 29 captured contracts and authentication are bound through the shared transport [1.71ms]
+(pass) persistent read annotations cannot bypass STOP or perform hidden proofs [0.22ms]
+(pass) public health briefly caches integrity observations and mutation invalidates the cache [0.31ms]
+(pass) partial composite failure leaves an uncertain attempt and never replays [0.40ms]
+(pass) successful replay does not hide failed native delta execution in mission bootstrap [0.12ms]
+(pass) CLI operation table rejects malformed arguments and omits nullable optional schema fields [0.42ms]
+(pass) CLI complete smoke visits each original owner and does not manufacture passed native results
+(pass) CLI replay equality cannot hide failed native delta receipts
+
+integrations/mcp/tests/fabric_store.test.mjs:
+(pass) lazy store initializes exact six legacy tables without seeding work [14.95ms]
+(pass) claim is compare-and-swap and cancelled state survives late success [10.19ms]
+(pass) completed and failed runs are immutable; task cannot complete while a child remains active [8.02ms]
+(pass) cancel preserves lane lock until joined owner releases; expired foreign lock is not proof of death [8.91ms]
+(pass) confined file IO refuses symlinks, traversal, oversized files and invalid JSON-lines safely [9.22ms]
+(pass) receipt bytes match digest and task status/event/recent projections retain legacy shape [9.27ms]
+(pass) reopening existing rows neither replays nor rewrites legacy queued/running work [8.77ms]
+(pass) real isolated worktree creation and reuse validate Git registration; diff reports untracked files [190.49ms]
+(pass) preexisting arbitrary directory is not trusted as a worktree; option-shaped base cannot inject commands [119.54ms]
+(pass) overflowed git diff never yields a complete patch receipt [0.85ms]
+(pass) explicit run identity pins Codex output path and terminal review/uncertain cannot replay [9.34ms]
+(pass) event projections enforce byte budget before accumulating unbounded result sets [137.07ms]
+(pass) Git cannot inherit repository, index, executable or config injection [1.08ms]
+(pass) pre-aborted worktree/diff performs zero subprocesses and zero filesystem effects [30.45ms]
+(pass) abort after actual Git read prevents subsequent diff or worktree mutation [63.36ms]
+(pass) abort on registered existing worktree lookup cannot be swallowed as detached success [135.60ms]
+
+integrations/mcp/tests/hypervisor_discovery.test.mjs:
+(pass) constructors are lazy and discovery snapshots registry with stable order and bounded parallelism [55.88ms]
+(pass) fallback probe order remains per-provider; missing, refused, timed-out and overflow are not reachable [2.51ms]
+(pass) unknown shell and Python trampolines refuse; direct Bun script is admitted [1.30ms]
+(pass) native symlink admission preserves argv0 instead of changing multicall command semantics [1.24ms]
+(pass) existing exact reviewed wrapper is admitted but changed bytes are refused [0.80ms]
+(pass) STOP during parallel subprocesses cancels and joins all lanes without partial persistence [53.41ms]
+(pass) invalid registry and pre-abort perform no probes or writes [0.95ms]
+(pass) real subprocess witnesses overlap while complete observations commit once into real SQLite [170.13ms]
+{"schema":"bonfyre.discovery-fixture-benchmark.v1","providers":8,"subprocess":"Bun sleep(60ms) then fixed output","samples_per_configuration":1,"semantic_outputs_equal":true,"production_speed_claim":false,"timings":[{"concurrency":1,"elapsed_ms":683.53},{"concurrency":4,"elapsed_ms":161.79}]}
+(pass) paired real-process fixture benchmark compares one and four lanes without a production speed claim [849.36ms]
+
+integrations/mcp/tests/hypervisor_store.test.mjs:
+(pass) original table names and columns persist, registry loads without replacing observed state [12.67ms]
+(pass) registry callers cannot mutate cached authority and read-only mode never initializes schema [10.40ms]
+(pass) explicit database path canonicalizes the macOS /var alias without weakening containment [9.28ms]
+(pass) one-query routeMany is equivalent to separate legacy routes with promotion, license and shadow gates [11.96ms]
+(pass) discovery updates declared providers and event atomically; STOP refuses mutation [10.16ms]
+(pass) default-space Python digest and row-bound chain verify; forged row or file fails [11.03ms]
+(pass) mission persistence keeps exact legacy rows and durable intent receipts [16.95ms]
+(pass) backpropagation updates mission and bug in one admitted SQLite transition [14.46ms]
+(pass) native session identity remains stable without erasing previously assigned lineage [10.38ms]
+(pass) durable task intent survives restart, refuses replay, and binds one exact completion [16.03ms]
+(pass) STOP after task effect leaves started intent and prevents implicit execution retry [13.00ms]
+(pass) read snapshots remain available under STOP and event bytes are bounded before JSON allocation [122.66ms]
+(pass) revision and live provider gates invalidate stale dispatch and stale completion without whole-plan rereads [18.66ms]
+
+integrations/mcp/tests/operator_store.test.mjs:
+(pass) construction and close do not create a database or seed goals [18.30ms]
+(pass) legacy schema opens additively and preserves rows and project-facing columns [9.03ms]
+(pass) claim is exclusive across connections and duplicate goal ingestion cannot requeue active work [7.28ms]
+(pass) claim enforces daily and hourly budgets in its write transaction [6.90ms]
+(pass) every response is durably counted once, including responses before failed runs [7.69ms]
+(pass) actions account successful and failed tool calls atomically with bounded JSON [7.14ms]
+(pass) action intent is counted before dispatch and completion does not double count or replay [7.03ms]
+(pass) unresolved action outcomes override retry and claimed resolution even without process death [10.33ms]
+(pass) event ingestion and cursor commit together and cursor never regresses [8.11ms]
+(pass) finish recurrence, retry caps and terminal causes share atomic run/goal transitions [9.06ms]
+(pass) orphan reconciliation never mistakes old timestamps for dead executors [8.36ms]
+(pass) concurrent processes obtain exactly one claim; proven dead local executor can be reclaimed [42.02ms]
+(pass) a dead executor with attempted effects is blocked instead of automatically replayed [36.11ms]
+(pass) local calendar rollover accounts each response and action on its recorded day [8.16ms]
+(pass) invalid amounts cannot corrupt accounting and reopening preserves durable totals [8.50ms]
+(pass) budget arithmetic overflow rolls back response accounting and run aggregates together [7.97ms]
+
+integrations/mcp/tests/project_native.test.mjs:
+(pass) native inventory and invoke refuse executable Python launchers without executing classification [10.47ms]
+(pass) managed executable provenance never borrows a different checkout artifact [6.71ms]
+(pass) native inventory and invoked receipts identify managed versus checkout drift without changing the selected owner [10.53ms]
+(pass) checkout-only native binaries remain callable without a false managed parity claim [7.32ms]
+(pass) ExperienceMap MCP reuses its retained corpus without overriding an explicit operator selection [7.98ms]
+(pass) default Project MCP dispatch binds the concrete native owner without mocks [9.01ms]
+(pass) managed family manifest cannot redirect invocation outside its binary directory [3.22ms]
+(pass) financial routes never trust a caller-supplied local-ready bit [4.31ms]
+(pass) CMS writes preserve native namespace and mutation boundary [3.04ms]
+(pass) Frappe compiler preserves local lineage and optional native CMS registration [5.08ms]
+(pass) ForeignTwin observation uses public-right native owner only [3.61ms]
+(pass) ForeignTwin observation and later native lookup use the same retained store [7.67ms]
+(pass) ForeignTwin roots expand the configured home and refuse cwd-dependent paths [5.40ms]
+(pass) compiled Project owner resolves retained evidence through the MCP root binding [210.81ms]
+(pass) ForeignTwin observation honors explicitly separated receipt and body stores [7.33ms]
+(pass) Matrix remains unconfigured instead of silently opening another store, and honors declared remote route [6.24ms]
+(pass) remote Matrix shell transport preserves metacharacters as one literal address argument [9.26ms]
+(pass) MoE generation persists the four existing control-plane projections before final manifest [17.87ms]
+(pass) QUIC generation preserves local client receipt and same durable projection contract [14.77ms]
+(pass) institutional preparation composes local health, native recipe/economy, and persisted generation without effects [17.13ms]
+(pass) capability protocol only records independently verified facilitator responses [9.97ms]
+(pass) configured facilitator can advance only after HTTP success and a verified answer [24.82ms]
+(pass) declared local Matrix store owns all read cuts, with no default store substitution [5.75ms]
+(pass) generation refuses malformed response and cannot publish a final manifest when a projection fails [12.41ms]
+(pass) failed pre-projection receipt can resume without re-requesting model output [14.59ms]
+(pass) a throwing native runner leaves a durable uncertain attempt and forbids model replay [4.44ms]
+(pass) HTTP generation enforces response byte budget before consuming the whole stream [2.49ms]
+
+integrations/mcp/tests/v6_missions.test.mjs:
+(pass) all ten local workloads are materialized, but disabled compilation never becomes activation [125.42ms]
+(pass) default compile request reports unavailable native owner without invoking Python [64.34ms]
+(pass) trusted injected owner proofs can activate only matching mission/effect identities [73.16ms]
+(pass) an uncertain compiler outcome has an intent receipt and stops before any canary or later mission [19.85ms]
+(pass) configured database providers never mask failed or absent SQLite inventory checks [96.32ms]
+(pass) SQLite digest describes a consistent checked snapshot including committed WAL rows [117.77ms]
+(pass) STOP check is enforced after compiler await and before canary [17.13ms]
+
+integrations/mcp/tests/canary_transport.test.mjs:
+(pass) public health, private status, and bearer auth precede body parsing and unknown routes [0.67ms]
+(pass) MCP initialization, notifications, ping, and exact twelve-tool catalog never invoke owners [0.82ms]
+(pass) bounded strict JSON and identity/schema failures never call a semantic owner [0.22ms]
+(pass) all twelve canonical tools route to their injected owner and preserve wrapper shapes [1.52ms]
+(pass) tool errors are isError results, while effect calls serialize without serializing reads [0.35ms]
+(pass) response and active-request bounds refuse excess work without truncated success [13.04ms]
+(pass) recursive callback bounds endpoint, identity, isError, redirects and credential diagnostics [0.47ms]
+
+integrations/mcp/tests/project_reads.test.mjs:
+(pass) status preserves project shape and treats untracked-only work as dirty [249.27ms]
+(pass) status reuses bounded 30-row summaries and parses ahead/behind only from headers [0.76ms]
+(pass) diff uses literal paths and disables executable diff/textconv helpers [191.00ms]
+(pass) tree enforces depth/count before traversal, excludes bulky directories and never follows links [2.11ms]
+(pass) read preserves bounded line coordinates, Python splitlines and replacement decoding [3.48ms]
+(pass) read refuses symlinks, directories, excessive source/response bytes and malformed arguments [8.38ms]
+(pass) search treats leading options as patterns and bounds overall matches [51.44ms]
+(pass) search never admits preprocessing flags or external symlink targets [1.97ms]
+(pass) Git status cannot invoke a repository-configured fsmonitor hook [92.97ms]
+(pass) path changed into an external symlink during subprocess read refuses its result [0.77ms]
+(pass) Atlas uses existing root-local query owner and exact project argument schema [144.20ms]
+(pass) timeouts, overflow and malformed owner output refuse without partial success [2.11ms]
+
+integrations/mcp/tests/spines_store.test.mjs:
+(pass) exact legacy schema and defaults bootstrap only on a new database [18.26ms]
+(pass) receipt chain preserves Python float timestamps, unicode escapes and row identity [14.43ms]
+(pass) per-stream ordered verification uses an indexed search, not repeated estate scans [13.35ms]
+(pass) damaged, missing and path-escaping receipts never verify [12.26ms]
+(pass) owned IO refuses traversal and symlinks before writing [11.40ms]
+(pass) status probes actual configured native paths concurrently and does not claim adapter execution [14.58ms]
+(pass) closed store refuses later use and process wrapper preserves failed outcomes [0.35ms]
+
+integrations/mcp/tests/canonical_json.test.mjs:
+(pass) historical Unicode policies are explicit and retain sorted codepoint keys [0.18ms]
+(pass) raw numeric spellings and owner-specific digest fields survive verification
+(pass) strict Unicode and bounded JSON refuse malformed or excessive input [1.19ms]
+(pass) Python default-space canonical mode preserves float exponents and raw historical spellings [0.15ms]
+
+integrations/mcp/tests/hook_bridge.test.mjs:
+(pass) PreToolUse respects peer depth and installed policy regex, including its double-escaped whitespace [1.86ms]
+(pass) missing or invalid policy fails closed for PreToolUse
+(pass) hook telemetry is local, authenticated and best effort; source and event are derived [0.65ms]
+(pass) prompt fingerprint, compaction and stop guard preserve event output contracts [0.40ms]
+(pass) session context uses sanitized Git status and read-only estate summary [0.02ms]
+(pass) estate summary performs legacy status queries without a Python launcher [4.62ms]
+(pass) CLI reads bounded stdin and emits local denial on malformed oversized input [0.90ms]
+
+integrations/mcp/tests/matrix_aperture.test.mjs:
+(pass) registry is one bounded read-only Matrix tool family
+(pass) native calls preserve argv, receipt and sparse authority boundary [0.32ms]
+(pass) invalid hosts, paths, subjects and timeout are refused before native execution [0.29ms]
+(pass) MCP HTTP aperture authenticates and exposes only its three owner-backed tools [10.93ms]
+
+integrations/mcp/tests/v6_hypervisor_bridge.test.mjs:
+(pass) V6 default compiler bridge verifies actual Bun-owned spec, graph, plan and receipts, but never claims canary activation [151.56ms]
+(pass) bridge refuses forged stored spec instead of laundering a compile proof [28.01ms]
+
+integrations/mcp/tests/operator_tools.test.mjs:
+(pass) catalog intersects trusted Project and rich schemas, never trusts advertised annotations or unknown names [0.45ms]
+(pass) unexpected composite exception after native apply remains outcome uncertain [0.95ms]
+(pass) recursive local CMS read is admitted, but a write requires an explicit effect grant [0.38ms]
+(pass) policy and exact schemas gate Oracle flow/task execution; nested errors are failures with epoch-second audit [0.37ms]
+(pass) durable started row precedes MCP; audit outage refuses effect and remote throw retains uncertainty [0.19ms]
+(pass) completion-ledger failure never reports a successful effect as complete
+(pass) required tests refuse Python and use Bun syntax instead of a Python interpreter
+(pass) real native owner preview → patch receipt → required test closes without UUID assumptions [166.35ms]
+(pass) a failed required test uses the native receipt for verified rollback [150.44ms]
+
+integrations/mcp/tests/owned_worker_pool.test.mjs:
+(pass) fixed entrypoints and execution budgets are validated before any worker starts [0.91ms]
+(pass) warm workers reuse identity, snapshot payloads, and return structured errors without stack [19.93ms]
+(pass) capacity is fail-fast with no queue; two independent slots may work concurrently [136.73ms]
+(pass) pre-abort, running cancellation, and timeout reject without replay and allow clean new generation [1723.08ms]
+(pass) worker crash and malformed reply cannot leave calls hanging or poison capacity [55.34ms]
+(pass) shared cancellation interrupts synchronous cooperative work without waiting for its event loop [60.40ms]
+(pass) close joins running work once, rejects active calls, and refuses later admission [3.61ms]
+(pass) bounded JSON refuses getters, cycles, nonfinite values and oversized requests/replies [17.37ms]
+(pass) synchronous CPU worker leaves the parent event loop responsive [267.23ms]
+(pass) fixed BFP worker verifies real archive parity, rejects escape/extract and exposes missing-file errno [87.00ms]
+
+integrations/mcp/tests/mission_plan.test.mjs:
+(pass) stable content identity, exact waves and input snapshots survive input order [0.99ms]
+(pass) one shared producer invalidates its exact downstream cut, no unrelated branch [0.68ms]
+(pass) semantic delta propagates transitively; runtime status does not change definition identity [6.37ms]
+(pass) policy changes invalidate all candidate reuse, even disconnected tasks [0.82ms]
+(pass) new mission semantic fields and verification obligations participate conservatively in identity [0.79ms]
+(pass) removal and rewiring cannot preserve stale descendant keys [0.44ms]
+(pass) duplicate ids, duplicate edges, missing parents, cycles and non-JSON definitions refuse [1.77ms]
+(pass) indexed invalidation visits only two nodes in a 10000-task forest [217.47ms]
+
+integrations/mcp/tests/recursive_overlay.test.mjs:
+(pass) every rich descriptor has exactly one native or project owner [2.00ms]
+(pass) native process output drains fully with bounded retained tail [0.83ms]
+(pass) recursive owner calls preserve exact CLI coordinates and source boundaries [1.60ms]
+(pass) foreign observation keeps a receipt but drops error body [1.66ms]
+(pass) circuit chooses one priced capability but refuses authority inference [3.62ms]
+(pass) native overlay merges exact schemas, forwards base, records native calls [14.30ms]
+(pass) native overlay enforces bearer and origin before any forwarding [1.48ms]
+(pass) rich tool cutovers use CUE policy and the shared call ledger [0.84ms]
+(pass) the live MCP catalogue exposes only read-only exact candidates to DecisionPlane [25.64ms]
+(pass) native receipt ledger retains evidence without approval tokens or patch bodies [0.99ms]
+(pass) native delta, events and metrics share the rich mesh SQLite state [1.91ms]
+(pass) all five rich resources bind to native rich or project owners [14.85ms]
+(pass) missing project owner refuses project tools and resources without a substitute [14.75ms]
+
+integrations/mcp/tests/project_delta_watcher.test.mjs:
+(pass) Python-era Git snapshot retains command order, branch, status digest and bounded diff summaries [1.12ms]
+(pass) real tiny Git fixture produces the exact porcelain-v2 status hash without Python [186.54ms]
+(pass) Git observer suppresses optional index locks without losing inherited environment [0.21ms]
+(pass) failed, timed-out or oversized Git reads refuse instead of publishing a false snapshot [0.29ms]
+(pass) journal retains Python ASCII JSON encoding, token-file precedence and source-order fields [1.51ms]
+(pass) failed delivery backs off while Git observations and journal continue without retry storm [0.65ms]
+(pass) transport retry delay doubles only on attempted failures and caps at 30 seconds [0.31ms]
+(pass) HTTP publication uses the existing authenticated delta route and refuses a failed status [0.62ms]
+
+integrations/mcp/tests/hypervisor_context.test.mjs:
+(pass) unchanged source bodies share exact CAS bytes while each purpose-bound packet has its own receipt [26.87ms]
+(pass) required semantics never truncate; optional bodies become explicit exact references [23.71ms]
+(pass) complete rendered envelope is accounted by the declared counter, not just source sections [17.02ms]
+(pass) render refuses changed CAS or packet bytes rather than reusing stale context [19.33ms]
+(pass) STOP and cancellation prevent publication even after concurrent observations finish [11.75ms]
+(pass) mission start binds a persisted packet and outstanding attempts cannot be overwritten [17.71ms]
+
+integrations/mcp/tests/fabric_estate.test.mjs:
+(pass) status reproduces installed estate and operator read model without Python [6.14ms]
+(pass) add writes compiled mission with Python defaults, locks and no operator-goal mutation [4.59ms]
+(pass) explicit dedupe updates intended fields but retains actual mission identity, family and locks [4.83ms]
+(pass) invalid inputs and missing DB refuse without creating a replacement database [3.32ms]
+
+integrations/mcp/tests/v6_bfp.test.mjs:
+(pass) section identities reject filesystem aliases before packing [0.36ms]
+(pass) stream verification checks cooperative cancellation between bounded reads [40.28ms]
+(pass) RAW, COPY_ADD and DEFLATE_DICT32 preserve exact target and digest identity [4.10ms]
+(pass) delta application refuses changed source, target, dictionary and malformed bounds [0.22ms]
+(pass) pack is deterministic across section insertion order and verifies sorted offsets and non-ASCII metadata [1.43ms]
+(pass) pack streams file sections and extraction happens only after all section digests pass [54.15ms]
+(pass) format refuses bad magic, gap, trailing body, unsafe names and unsupported header [1.55ms]
+(pass) factory confines path/source and keeps optional native witness separate from JSON authority [1.94ms]
+(pass) extraction refuses symlink ancestors and dangling destination links [1.17ms]
+(pass) installed native verifier corroborates the Bun-packed temporary archive [12.82ms]
+
+integrations/mcp/tests/spines_wasm_binaryen.test.mjs:
+binaryen -Oz: 30454 -> 26956 bytes; 3000 reductions 24.1 ms pinned, 26.5 ms optimised; 1640 answers compared, 35 of them refusals; host imports no longer asked for: wasi_snapshot_preview1.fd_close:function
+(pass) a Binaryen-optimised reducer is smaller, valid, and answers every term exactly as the pinned one [525.44ms]
+
+integrations/mcp/tests/fabric_work.test.mjs:
+(pass) stream parser and typed verdict refuse malformed or unstructured agent claims
+(pass) direct dispatch persists exact command, real run paths, session and completed receipt [19.85ms]
+(pass) duel and batch run independent analyses, peer critiques, and synthesis without editing [30.15ms]
+(pass) relay captures new files in patch and applies only after tests plus two typed resolved verdicts [483.46ms]
+(pass) unstructured reviewer text never authorizes Project MCP apply [502.58ms]
+(pass) post-review worktree mutation invalidates the patch receipt before any Project MCP effect [415.73ms]
+(pass) inferred shell syntax check passes a Git filename as argv, never shell interpolation [422.96ms]
+(pass) cancel aborts agent execution, preserves cancelled state, and releases lane only after join [13.09ms]
+(pass) STOP refuses queued work without claiming it or invoking an agent [8.03ms]
+(pass) STOP appearing after child start blocks later stages and releases the lane [13.82ms]
+(pass) review, verify and recorded-session resume retain their distinct real owner paths [21.17ms]
+(pass) PR convergence gathers bounded GitHub evidence and runs isolated relay without pushing [421.60ms]
+(pass) ambiguous Project MCP apply leaves an uncertain task and an attempt receipt, never retries [444.84ms]
+(pass) cancellation reaches a bounded non-agent GitHub subprocess before PR relay begins [12.28ms]
+(pass) real subprocess runner kills an ignoring grandchild process group on cancellation [1781.58ms]
+(pass) real subprocess output overflow never becomes a successful dispatch [650.95ms]
+(pass) real subprocess deadline terminates its process group and records timeout [1274.81ms]
+
+integrations/mcp/tests/recursive_store.test.mjs:
+(pass) all seven IRs bind the shared semantic task plan instead of trusting supplied plan metadata [32.51ms]
+(pass) construction is lazy; original schema and tokenizer distinctions survive reopen [14.54ms]
+(pass) arbitrary local source paths canonicalize BOM/newlines without corrupting binary bytes [13.08ms]
+(pass) owned output symlink escape refuses without external mutation [0.75ms]
+(pass) receipt corruption and database payload substitution refuse runtime image proof [13.05ms]
+(pass) historical Python float lexemes verify in receipt and flux chains [12.50ms]
+(pass) new flux REAL timestamps preserve integral float semantics for legacy verification [10.87ms]
+(pass) dependency closure is bounded, cycle safe and feeds graph and seven IR views [22.16ms]
+(pass) bids default optional counts and cannot claim negative uncached usage [9.17ms]
+(pass) motifs distinguish structural heuristic from exact match; BFP remains gated candidate [11.63ms]
+(pass) real native tokens share body across distinct semantic owners and refuse corrupted cache [42.58ms]
+(pass) concurrent native compilation keeps one valid body; empty tokens retain exact byte coverage [34.48ms]
+(pass) native output injection is refused and never gets a token row [13.57ms]
+(pass) native multichunk spans overlap at byte boundaries; deltas bind all chunk digests [280.59ms]
+(pass) forged delta chunk source cannot commit a delta receipt [43.39ms]
+(pass) native status preserves actual failure and timeout receipt instead of inventing missing binary [10.99ms]
+
+integrations/mcp/tests/spines_wasm.test.mjs:
+(pass) pinned artifact and source lock verify without compiling or executing effects [25.63ms]
+(pass) in-process Wasm runs same pure result/error/fuel cases and reuses one pinned module [3.28ms]
+(pass) platform-neutral core accepts pinned bytes directly without local-file or process owner [1.63ms]
+(pass) present modified module refuses execution; no fallback to untrusted bytes [1.55ms]
+(pass) pinned WASI imports have no rights and trap if invoked [2.90ms]
+(pass) ordinary reduction refuses a present corrupt module without invoking native fallback [20.24ms]
+(pass) dangling symlink is present corruption, not native-fallback absence [13.51ms]
+(pass) ordinary R6 reduction selects verified Wasm by default, preserves receipt truth and no fake argv [18.39ms]
+(pass) installed native Helix VM agrees on exact bounded witness outputs [35.31ms]
+
+integrations/mcp/tests/canary_integration.test.mjs:
+(pass) concrete default canary owners start lazily and persist fallback/outcome/receipt transitions without a provider [15.94ms]
+(pass) concrete canary decisions and hash chain survive an owner restart [12.78ms]
+
+integrations/mcp/tests/spines_temporal.test.mjs:
+(pass) append persists legacy event/state/delta/closure/view/graph/receipt and verifies exact chain [14.92ms]
+(pass) delete, invalidate and retract preserve old state and parity replay; tampering is detected [24.47ms]
+(pass) failed native kernel is explicit failure evidence; never claims a native manifest passed [17.72ms]
+(pass) bounded path and payload inputs refuse escape before any SQL or file mutation [11.73ms]
+(pass) stream verification catches a changed segment, missing stream owner and head/count drift [16.56ms]
+(pass) parity compares persisted standing views, refusing stale, missing and malformed view rows [14.91ms]
+(pass) installed native delta binary produces a real chunk manifest in disposable storage [32.48ms]
+
+integrations/mcp/tests/hypervisor_missions.test.mjs:
+(pass) trait descriptor and task rewrites preserve the installed R7 mission DAG [0.31ms]
+(pass) compile writes semantic plan and exact spec/graph surface, but no task execution [2.17ms]
+(pass) one batched route read binds provider choice and exposes only its downstream impact [3.58ms]
+(pass) backpropagated invariant invalidates the current plan without authorizing reuse [3.77ms]
+(pass) invalid goals, budgets and task graphs refuse before store mutation [0.65ms]
+(pass) real durable store compiles, routes once, and backpropagates with a verifiable receipt chain [29.99ms]
+
+integrations/mcp/tests/spines_reasoning.test.mjs:
+(pass) parser preserves application, variable, integer and floating distinctions with strict admission [0.61ms]
+(pass) rule registration retains legacy identity law, SQL row and R6 receipt [14.67ms]
+(pass) bounded saturation selects cheapest rewritten term and identifies run without claiming egglog execution [14.12ms]
+(pass) max term budget truncates and refused malformed programs never create receipts [13.65ms]
+(pass) compiled Helix remains PURE and reduction invokes actual configured native owner contract [25.24ms]
+(pass) declared Helix depth is enforced before compiling and before either execution backend [14.72ms]
+(pass) native failure stays failed, and cannot become proof by malformed stdout or status [16.45ms]
+(pass) native claimed success with wrong identity, invalid result or inconsistent fuel cannot pass [62.84ms]
+(pass) mutated persisted Helix row or artifact refuses execution before native invocation [14.47ms]
+(pass) authority decision table preserves nonpromotion of candidate and external effects [17.83ms]
+(pass) Crux proof retains candidate classification and explicit nonauthoritative state [13.52ms]
+
+integrations/mcp/tests/canary_store.test.mjs:
+(pass) construction is lazy; status shape and empty receipt chain remain compatible [9.98ms]
+(pass) canonical ASCII escaping and source-number verification preserve historical Python digests [10.47ms]
+(pass) receipt chain is serialized across stores and binds database metadata to documents [10.01ms]
+(pass) certificate sealing preserves both current and R3 projection and records backups [15.56ms]
+(pass) certificate gates reject wrong identity, cleanup, expired and unknown probe without success laundering [18.30ms]
+(pass) routing preserves exact hash buckets and rejects authority expansion or provider drift [18.09ms]
+(pass) all policy state transitions preserve passed certificate and exact digest binding [24.40ms]
+(pass) outcomes retain cancellation/fallback distinction and suspend exact failure windows [16.58ms]
+(pass) failure-rate guard is distinct from consecutive failures [17.03ms]
+(pass) policy or certificate mutation during asynchronous probes cannot commit stale authority [12.68ms]
+(pass) fixture and certificate paths refuse symlink or traversal escape [8.57ms]
+(pass) fixture digest preserves component-wise pathlib ordering and excludes git metadata [1.70ms]
+(pass) only explicit Bernstein Python boundary is permitted and records its identity [0.97ms]
+(pass) exact reviewed non-Python wrappers remain available while unreviewed scripts refuse [0.77ms]
+
+integrations/mcp/tests/recall_results.test.mjs:
+(pass) exact repeated authority passages collapse to one preview without losing any source IDs [0.28ms]
+(pass) near-identical text and different evidence are never merged [0.04ms]
+(pass) malformed inputs, untrusted rank rows and unbounded limits are refused [0.24ms]
+
+integrations/mcp/tests/hypervisor_execution.test.mjs:
+(pass) only promoted or active eligible providers execute; canary-like candidate hints have no authority
+(pass) default execution uses bounded ready-wave parallelism and persists intent before owner calls [13.75ms]
+(pass) owner transport failure leaves uncertain result and blocks downstream execution [0.39ms]
+(pass) failed wave joins in-flight sibling and starts no third effect [21.42ms]
+(pass) effectful Fabric task refuses without authorization before any owner invocation [0.54ms]
+(pass) task attempt identity includes current context, route and provider, not only definition [0.41ms]
+(pass) Fabric queue receipt is not completion; terminal result requires matching durable receipt [0.46ms]
+(pass) two completed verifier agent runs do not become a goal-verification claim [0.38ms]
+(pass) only separate typed behavioral-verifier receipt can resolve a goal [0.22ms]
+(pass) real SQLite owner stores context, intents, task completions and mission proof [25.25ms]
+(pass) concurrent provider quarantine refuses next wave inside durable beginTask [20.78ms]
+
+integrations/mcp/tests/hypervisor_sources.test.mjs:
+(pass) source ingest uses real local Git fixture, preserves Python manifest hash, and verifies reuse [297.72ms]
+(pass) update check persists candidate once without promoting or downloading remote code [251.33ms]
+(pass) registry gate, ref admission, test-execution refusal and interrupted attempt prevent effects [79.50ms]
+(pass) failed clone is a durable failed attempt with no provider binding or automatic retry [82.17ms]
+
+integrations/mcp/tests/hypervisor_cli.test.mjs:
+(pass) native CLI uses the same operation schemas for positional and typed flags [0.58ms]
+(pass) installed positional and flag aliases preserve all formerly missing command contracts [0.89ms]
+(pass) execute --wait dispatches once, then polls status and emits only changed states before final result [0.90ms]
+(pass) wait terminal, identity, deadline and poll-budget boundaries never re-execute
+(pass) cancellation and stalled status calls terminate the wait without a second execution or poll [27.07ms]
+(pass) events command uses bounded authenticated GET and validates cursors without MCP execution [13.52ms]
+(pass) method deadlines and terminal exit status preserve the installed contracts within explicit shared runtime cap [0.42ms]
+(pass) CLI refuses ambiguous options and malformed numbers before contacting an owner [0.41ms]
+(pass) real Bun CLI entrypoint exposes help/version and returns parser exit2 without contacting any service [248.01ms]
+
+integrations/mcp/tests/v6_transport.test.mjs:
+(pass) default server mission action uses the durable Bun compiler without an injected provider [194.98ms]
+(pass) all eighteen contracts use shared auth; dashboard escapes data and is private [17.48ms]
+(pass) confirmation constants and STOP prevent any effects or admission receipt [13.36ms]
+(pass) confirmed action records actual completion without upgrading candidate state [11.75ms]
+(pass) partial failure records uncertain outcome once, with no automatic retry [12.63ms]
+(pass) activation marker alone cannot verify; complete historical binding fails on changed archive [16.42ms]
+(pass) CLI has exact read contract and no option-based endpoint escape [0.68ms]
+(pass) default composed owner is lazy and verifies real archives through its worker boundary [22.09ms]
+
+integrations/mcp/tests/training_public_programs.test.mjs:
+(pass) one member request reaches native WorkGraph, actor-authorized CMS publication, member adoption and read-only MCP [1284.89ms]
+(pass) MCP public catalogue requires explicit configuration and returns an empty unconfigured catalogue [291.03ms]
+(pass) MCP matches the public latest-version rule and refuses a changed native release [628.62ms]
+
+integrations/mcp/tests/project_v6.test.mjs:
+(pass) all V6 contracts derive from the owner catalog, including no-argument reads [0.24ms]
+(pass) V6 HTTPS uses only a dedicated credential and fixed configured endpoint [1.43ms]
+(pass) V6 write admission and STOP refuse before outbound dispatch [0.70ms]
+(pass) Project schema rejects endpoint selection and missing V6 confirmation before owner call [1.04ms]
+
+integrations/mcp/tests/recursive_transport.test.mjs:
+(pass) public health, private status, and authentication before body parsing or route disclosure [0.63ms]
+(pass) initialize, notifications, exact legacy catalog and prompts do not invoke semantic owners [1.55ms]
+(pass) strict bounded requests and identity/schema refusals never reach owners [0.55ms]
+(pass) all 22 legacy tools dispatch to their owner with MCP structured results [2.97ms]
+(pass) persisting closure and other effects serialize, while real read calls remain concurrent [0.23ms]
+(pass) owner failure is a bounded isError result, not fabricated proof [0.33ms]
+(pass) health and status owner exceptions are HTTP unavailable, not 200 success
+(pass) active-request bound refuses excess requests before starting another owner call [0.21ms]
+(pass) composite mission abort retains started/uncertain receipts and stops downstream effects [0.37ms]
+
+integrations/mcp/tests/recursive_integration.test.mjs:
+(pass) disposable native recursive substrate exercises all 22 tools and reopens verified chains [111.88ms]
+
+integrations/mcp/tests/project_run_cancel.test.mjs:
+(pass) pre-aborted execution does not spawn or create its marker [0.27ms]
+(pass) abort kills a TERM-resistant grandchild even when the parent closes all pipes [347.03ms]
+
+integrations/mcp/tests/hypervisor_evaluation.test.mjs:
+(pass) active native reachability and traits never fabricate semantic behavior [3.03ms]
+(pass) Spines R5/R6/R7 capability predicates use one real verifier response and a sealed smoke document [1.65ms]
+(pass) R3 shadow certificate binds compact digest, cleanup, expiry, provider and current version [1.82ms]
+(pass) RTK compares real outputs and exit status; version/help does not substitute for output reduction [0.47ms]
+(pass) Bernstein dry-run is exact third-party boundary and Agent Deck help remains partial [0.86ms]
+(pass) compare and install plans are bounded and never auto-install [0.33ms]
+(pass) default semantic admission refuses unreviewed Python executables without spawning [1.53ms]
+(pass) certificate parent symlink is refused before a shadow pass [1.46ms]
+(pass) real store records row-bound evaluation evidence and ranks the latest persisted result [16.84ms]
+
+integrations/mcp/tests/hypervisor_adapters.test.mjs:
+(pass) construction is lazy and all provider status probes redact raw output [4.58ms]
+(pass) memory search and status preserve real raw result with precise non-timeline limitation [2.79ms]
+(pass) compact parsing refuses arbitrary execution, option escapes and shell evaluation [0.48ms]
+(pass) compact execution records paired hashed evidence and sanitizes ambient Git state [4.43ms]
+(pass) Bernstein DAG compiles a bounded candidate and refuses cycles, aliases and escaping IDs [12.93ms]
+(pass) Bernstein validation and execution call real command contracts; third-party Python is explicit [5.01ms]
+(pass) fleet complete action vocabulary and both Caveman modes preserve argv without shell [5.71ms]
+(pass) Invoker license is checked before any run and unknown scripts or escaped paths refuse [3.80ms]
+(pass) failed effect is uncertain, overflow cannot become passed, STOP cancels and joins execution [56.36ms]
+(pass) real disposable Bun provider returns semantic stdout through bounded subprocess owner [17.71ms]
+
+ 505 pass
+ 0 fail
+ 6788 expect() calls
+Ran 505 tests across 62 files. [24.73s]

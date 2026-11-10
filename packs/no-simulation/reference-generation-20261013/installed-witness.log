@@ -1,0 +1,9 @@
+bun test v1.3.13 (bf2e2cec)
+
+engine/core/tests/operator_reference.test.mjs:
+(pass) operator reference uses a verified run from the selected compiled generation [1280.46ms]
+
+ 1 pass
+ 0 fail
+ 61 expect() calls
+Ran 1 test across 1 file. [1.65s]

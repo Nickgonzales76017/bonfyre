@@ -1,0 +1,58 @@
+pack personal-bodies
+generation control-1
+provenance census of tools/ and .bonfyre/run8-r2c physical realization output, 2026-08-26
+authority measured
+note Binds existing physical bodies into the Personal root product by reference. The scrape is not regenerated to fit the new product. Food and Housing are at different maturities and are recorded that way rather than levelled.
+
+binding personal:food
+  namespace bonfyre/personal/food
+  state REAL
+  binding_kind reference
+  regeneration forbidden
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/food-deal-graph.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/food-combination-projection.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/realization-manifest.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/physical-execution-frame.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/physical-derivation-receipt.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/body-availability.json
+  body .bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/reuse-proof.json
+  evidence .bonfyre/run8-r2c/20260823T032652Z-27525/evidence/partner-method-food-receipt-replay-codex-20260824T015142-ef9bc06b.json
+  tool tools/food_offer_observations.py
+  witness components/BonfyreControlPlane/tests/test_food_offer_observations.py
+  detail A complete physical realization set with a derivation receipt and a reuse proof, not a bare scrape. Provenance stays with the epoch that produced it.
+
+binding personal:housing
+  namespace bonfyre/personal/housing
+  state TOOLING
+  binding_kind reference
+  tool tools/housing_explicit_observations.py
+  tool tools/housing_quote_observations.py
+  tool tools/housing_signal_candidates.py
+  tool tools/housing_direct_candidates.py
+  tool tools/housing_shadow_inventory.py
+  tool tools/housing_concession_arbitrage.py
+  tool tools/housing_geographic_arbitrage.py
+  tool tools/housing_strategy_frontiers.py
+  tool tools/housing_receipt_policy.py
+  witness tests/test_housing_explicit_observations.py
+  witness tests/test_housing_quote_observations.py
+  witness tests/test_housing_signal_candidates.py
+  witness tests/test_housing_shadow_inventory.py
+  witness tests/test_housing_concession_arbitrage.py
+  detail Nine tools with tests exist. The census found no materialized housing observation bodies under .bonfyre. Recorded as TOOLING rather than REAL: the capability to observe exists, the observations do not.
+
+binding personal:external
+  namespace bonfyre/personal/external
+  state DECLARED
+  detail Observed institutions, accounts, memberships, retailers, property operators, utilities, service providers and eventual effect rails. Reserved from day one and deliberately empty.
+  invariant a public observation, a personal relationship and a realization rail are three different subjects and are never collapsed
+  example a retailer selling an item is an observation; holding an account there is a relationship; placing an order is a realization
+
+aperture personal:owner
+  scope owner-only
+  detail Personal is owner-scoped today. The ownership and delegation boundary is modelled so a household with members and invited collaborators can be added later without exposing the owner's whole private world.
+  future_state Personal Product to Household to member or collaborator
+  invariant the business hierarchy is never copied into Personal to obtain sharing
+
+invariant physical bodies are bound by reference and never regenerated to fit a product shape
+forbidden_inference tooling existing -> observations existing

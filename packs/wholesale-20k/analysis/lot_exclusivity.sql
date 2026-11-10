@@ -1,0 +1,1 @@
+WITH exits(lot,route,net_cents) AS (VALUES('A','whole',50000),('A','split-complete',65000),('B','collected',40000),('B','delivered',35000)) SELECT sum(net_cents) naive_double_counted_cents,(SELECT sum(best) FROM(SELECT lot,max(net_cents) best FROM exits GROUP BY lot)) correct_mutually_exclusive_cents FROM exits;

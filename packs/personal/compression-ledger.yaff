@@ -1,0 +1,97 @@
+pack personal-compression-ledger
+generation control-1
+provenance Personal food and housing tooling census, 2026-08-26; doctrine promoted 2026-08-26
+authority asserted
+note Every measure below is UNMEASURED. Personal is not deferred optimization work. It is the second real non-model dataset, with a completely different shape from Upper90, which is what makes it worth proving the doctrine on. Food and Housing are at different maturities and their ledgers say so.
+
+ledger led:personal
+  estate bonfyre/personal
+  state UNMEASURED
+  gate_ref optimization-proof
+  detail Every new estate gets an optimization plan covering semantic state, relationships, history, latent state, artifacts, queries, execution, context, models and network movement. This is that plan for Personal.
+
+target tgt:food-observation
+  ledger led:personal
+  namespace bonfyre/personal/food
+  source_state REAL
+  source_shape a thousand observations should not become a thousand products
+  observed_invariant most of an observation repeats: retailer, store, brand, product, package
+  observed_variance little changes: price, promotion, availability
+  proposed_form product basis: product identifier, brand, category, package, normalized identity
+  proposed_form retailer basis: retailer identifier
+  proposed_form store basis: store identifier, retailer reference, location
+  proposed_form offer occurrence: product reference, store reference, timestamp, price, promotion reference, availability bits
+  acceptance a repeat observation with an unchanged product at an unchanged store stores approximately the price delta
+  invariant the raw scrape remains evidence and is never the runtime database
+  cheap_stage_role tokenize a scraped title into candidate attributes before exact entity resolution
+  measure raw scraped bytes
+  measure unique products, retailers and stores
+  measure bytes per observation
+  measure duplicate body collapse across repeated images and boilerplate
+  measure delta ratio
+  measure embedding bytes per product
+  measure candidate reduction from exact filtering before similarity
+  state UNMEASURED
+
+target tgt:housing-observation
+  ledger led:personal
+  namespace bonfyre/personal/housing
+  source_state TOOLING
+  source_shape nine observation tools exist; no materialized observation bodies were found in the census
+  observed_invariant address, operator, building identity, amenity baseline and location are stable across observations
+  observed_variance rent, term, concession, availability and fees change
+  proposed_form property basis: address, operator, building identity, persistent amenity baseline, location
+  proposed_form unit basis: floorplan, beds, baths, square footage
+  proposed_form offer occurrence: unit reference, time, rent, term, concession, availability, fee delta
+  worked_example a rent moving from one value to another and a concession moving from six weeks to eight should store approximately that change, not another copy of the property page
+  cheap_stage_role classify a phrase such as a stated free-weeks offer as carrying a candidate contract term, before the exact lease grammar parses it
+  measure raw listing bytes
+  measure unique properties and units
+  measure price and offer observations
+  measure bytes per changed offer
+  measure duplicate image and floorplan collapse
+  measure history compression ratio
+  measure latent bytes per property
+  measure hydration amplification
+  state UNMEASURED
+  blocked_on materialized observations; the capability to observe exists, the observations do not
+
+target tgt:personal-latent-bases
+  ledger led:personal
+  source_shape one independent full-precision vector per instance
+  proposed_form a shared basis per family plus a per-instance residual
+  family_example a product approximated by a category basis, a brand basis and a product residual
+  family_example a property approximated by a property-type basis, an operator basis, a neighborhood transform and a property residual
+  claim only the residual may need a per-instance vector
+  selection_protocol optimization-proof representation_selection_protocol
+  expectation_note one family may prove that integer quantization suffices while another needs product quantization or half precision; selection is measured per family and never defaulted
+  measure baseline bytes against selected bytes at equal retrieval quality
+  state UNMEASURED
+
+target tgt:personal-body-dedup
+  ledger led:personal
+  source_shape identical media and documents repeated across observations
+  candidate identical listing images
+  candidate identical product images
+  candidate identical floorplans
+  candidate identical lease documents
+  candidate identical retailer boilerplate
+  candidate identical page fragments
+  proposed_form one physical body, many semantic references
+  ordering deduplicate first, compress second
+  measure unique bodies against total references
+  state UNMEASURED
+
+target tgt:personal-external-boundary
+  ledger led:personal
+  namespace bonfyre/personal/external
+  source_state DECLARED
+  detail The external estate is empty and must stay structurally honest as it fills.
+  invariant a public observation, a personal relationship and a realization rail are three separate subjects
+  worked_example a retailer selling an item, holding an account with that retailer, and placing an order through a rail are three facts and are never collapsed into one
+  state UNMEASURED
+
+anti_target private_data_movement
+  detail Method and capability may move between Personal and any other estate. Personal data never moves with them.
+anti_target aperture
+  detail Compression never widens the owner aperture. A household boundary added later is a delegation decision, not a representation decision.

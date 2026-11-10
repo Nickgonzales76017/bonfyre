@@ -1,0 +1,32 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [
+    "default route opens a populated three-track arrangement",
+    "self-hosted WaveSurfer source selection loads",
+    "generated samples are labeled and do not claim a saved session",
+    "pointer drag moves a clip by snapped timeline time",
+    "undo restores exact rendered audio",
+    "redo restores the clip placement and output",
+    "left trim changes source start and preserves the right edge",
+    "right trim removes audio at the source boundary",
+    "keyboard clip movement renders the same contract",
+    "keyboard undo restores the previous placement",
+    "WaveSurfer region resizing changes the native clip source",
+    "zoom enlarges the real timeline and preserves edit values",
+    "tracks scroll against the same time ruler",
+    "playback starts at the chosen cursor and retains its stop position",
+    "gesture edits and original recordings survive reload",
+    "arrangement stays inside 1440px viewport",
+    "arrangement stays inside 390px viewport",
+    "arrangement stays inside 320px viewport",
+    "gesture-edited export has the scheduled frame count",
+    "every exported sample matches independent source placement and trim math",
+    "optional waveform failure preserves native playback and export",
+    "waveform retry recovers without losing the saved session",
+    "no browser exceptions",
+    "no remote writes or uploads"
+  ],
+  "errors": [],
+  "writes": [],
+  "status": "passed"
+}

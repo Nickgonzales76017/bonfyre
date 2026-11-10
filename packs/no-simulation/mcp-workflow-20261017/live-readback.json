@@ -1,0 +1,59 @@
+{
+  "schema": "bonfyre.mcp-workflow-live-readback.v1",
+  "service": "gui/503/com.bonfyre.project-mcp",
+  "previous_pid": 934,
+  "current_pid": 79957,
+  "configuration_sha256": "ae0b14a6696a604f3b12367d3dc7b185e420f4ddb9e926b7fed4e8ead381c1f9",
+  "configuration_unchanged": true,
+  "stop_state_unchanged": true,
+  "before_schemas": {
+    "native_tool_inventory": [],
+    "project_patch_preview": [
+      "patch"
+    ],
+    "project_read": [
+      "path",
+      "start_line",
+      "end_line"
+    ]
+  },
+  "after_schemas": {
+    "native_tool_inventory": [
+      "query",
+      "detail",
+      "offset",
+      "limit"
+    ],
+    "project_patch_preview": [
+      "patch",
+      "paths"
+    ],
+    "project_read": [
+      "path",
+      "start_line",
+      "end_line",
+      "if_sha256",
+      "files"
+    ]
+  },
+  "verified": [
+    "filtered native inventory",
+    "batched source reads",
+    "unchanged refresh",
+    "path-only preflight"
+  ],
+  "preimages": {
+    "integrations/mcp/project_reads.mjs": "12f8d6e36da143acf091a91119cef26ef60b973a636df337f00bba3f96a98346",
+    "integrations/mcp/project_catalog.json": "d3ff5672b82bf99083c02e9cd4602c27a12d8c4b81450073c6bda519d44d0472"
+  },
+  "scope": "Local project MCP endpoint; remote connector catalog refresh remains separate",
+  "direct_mcp_verified": [
+    "filtered inventory: BonfyreCMS, matched 1 of 177",
+    "three-file batched source read",
+    "three-path preflight reports components and architecture outside current low-risk scope"
+  ],
+  "app_connector_verification": {
+    "status": "UNAUTHORIZED",
+    "message": "This app connection requires reauthentication. Reconnect the app and try again."
+  }
+}

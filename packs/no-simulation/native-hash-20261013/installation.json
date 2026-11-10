@@ -1,0 +1,14 @@
+[
+  {
+    "binary": "bonfyre-hash",
+    "old_sha256": "abf489c37021c0d6a1de0d5a65af5b969828131d372354aee6b6a3d92e2d2b87",
+    "sha256": "149edb51a33688a6ae05cdf91aefbffbc878341167bf41d133d91e0d7deb7c7b",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-hash-abf489c37021c0d6a1de0d5a65af5b969828131d372354aee6b6a3d92e2d2b87/bonfyre-hash"
+  },
+  {
+    "binary": "bonfyre-fabric",
+    "old_sha256": "98081458fe4575e0fe7253a94076725ed1f4078c9a6dcc3efe92d5afc0ca4b1d",
+    "sha256": "9ac408561886f37b84cf32b0c5265028205be82b64f46c86b33e8a01b175bcc3",
+    "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-fabric-98081458fe4575e0fe7253a94076725ed1f4078c9a6dcc3efe92d5afc0ca4b1d/bonfyre-fabric"
+  }
+]

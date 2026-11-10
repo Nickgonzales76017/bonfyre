@@ -1,0 +1,14 @@
+{
+  "pulse": {
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/pulse.f32",
+    "sha256": "d4fa7fb946b483dd27a9def585eefa9d5c9cb78757c9fe77854e19adab674166"
+  },
+  "chime": {
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/chime.f32",
+    "sha256": "3d353f91b90da7b9c456991451f5bb7756d27296ec40db356af3866a3b577979"
+  },
+  "harmony": {
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/creator-upstream-20261013/demo/harmony.f32",
+    "sha256": "1d9b1c2bf7d08a1d02e3c908e5e592888097704223734bbf34d9520cca3f8411"
+  }
+}

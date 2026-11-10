@@ -1,0 +1,1 @@
+SELECT count(*) lots,count(DISTINCT physical_lot_key) distinct_physical_lots,sum(seller_asking_cents) listed_ask_cents,count(buyer_bid_cents) actual_bid_count,count(transport_quote_cents) actual_transport_quote_count,sum(realized_contribution_cents) realized_contribution_cents FROM read_json_auto('/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/lots.snapshot.jsonl');

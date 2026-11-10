@@ -1,0 +1,32 @@
+bun test v1.3.13 (bf2e2cec)
+
+components/BonfyreServiceSite/tests/workbook-import.test.mjs:
+(pass) browser-compatible import retains original XLSX bytes and real calculation replaces cached results [366.69ms]
+(pass) old browser draft records remain readable, and calculation errors cannot become saved reviews [8.46ms]
+(pass) the last supported row imports without adding rows past the editor limit [2.99ms]
+(pass) invalid files, unsupported formulas, merged cells and hidden macro content refuse import [4.25ms]
+(pass) lying ZIP size cannot hide actual deflate expansion [2.30ms]
+
+components/BonfyreServiceSite/tests/workbook-native.test.mjs:
+(pass) the installed finance workspace serves its editor, import worker, styles and native continuation contract [521.50ms]
+(pass) two authorized people reopen, edit, recalculate and export the same organization workbook [980.77ms]
+(pass) large workbook bodies use native files without increasing metadata limits [458.57ms]
+(pass) stale writes, readers, unrelated accounts and foreign record families cannot overwrite reviews [536.74ms]
+(pass) deactivation removes access and reactivation restores the retained review [244.10ms]
+
+components/BonfyreServiceSite/tests/workbook-material.test.mjs:
+(pass) existing site renderer publishes a workbook workspace with its actual JS and CSS bundle [252.51ms]
+(pass) navigation checks anchors without treating workbook stylesheets as page routes [0.96ms]
+
+components/BonfyreServiceSite/tests/workbook-calculation.test.mjs:
+(pass) real Univer calculation independently verifies Books export formulas and invalidates stale caches [328.98ms]
+(pass) editing an assumption recalculates dependent cells and survives XLSX export and reopen [605.53ms]
+(pass) formula failures are visible and circular references cannot reuse cached success [616.51ms]
+(pass) unsupported functions, external files and excessive coordinates are refused [18.55ms]
+(pass) workbooks without formulas return without waiting for a calculation event [279.15ms]
+(pass) calculation deadline terminates the worker without accepting cached values [8.03ms]
+
+ 18 pass
+ 0 fail
+ 78 expect() calls
+Ran 18 tests across 4 files. [8.59s]

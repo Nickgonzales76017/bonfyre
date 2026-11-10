@@ -1,0 +1,127 @@
+{
+  "at": "2026-10-13T19:52:16.272Z",
+  "deployment_id": "e4fc643c-4823-4a9d-9617-6e64356e54e5",
+  "deployment_url": "https://e4fc643c.aurekai.pages.dev",
+  "address": "https://docs.aurekai.work/interfaces-and-mcp",
+  "stage": "success",
+  "changed_manifest_paths": [
+    "/interfaces-and-mcp.html"
+  ],
+  "checks": [
+    {
+      "path": "/404.html",
+      "sha256": "2ee5af53f7e6315bc0ef148cfe8ef2623b3f8cd8676572e01bb1bfffa9e751f3",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/aurekai-bar.css",
+      "sha256": "8d3ed065a11f9c48c122e649cbc6473dae0e1d42a332e68941f847db48e9a6b4",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/aurekai-native.css",
+      "sha256": "8b308742ecb1e06ec241f50f44b852eb595e9ceaab0374634bb83c9ca58e529d",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/aurekai-site-program.css",
+      "sha256": "1e8ceac345b3f8eda1dfbfb653a70c5f450312154d7689ce06b5c39e4a1be229",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/matrix.css",
+      "sha256": "5dee730d84a0f0a510e3ba7cbf6854e0763900f5655d4003f248530996e8990a",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/own-site-agent.js",
+      "sha256": "62a8c5cf664eb9580ad9e5998bd9f8f96a6bb1a2dccca2bf702733f907fb1d82",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/own-site-reading.js",
+      "sha256": "b93252311e5c95d217706766aa7b0f1d0cebe8e909002479c4e908d63b9fdd56",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/own-site.css",
+      "sha256": "c2a803878715ad67455ffaf4543f26b42dd5cd1c96bb08ece33c003ca0129618",
+      "unchanged": true
+    },
+    {
+      "path": "/assets/world.css",
+      "sha256": "cc95f547ce08a12153f9947bbe3c13a7cade747693b790a15406cd952c2ffe44",
+      "unchanged": true
+    },
+    {
+      "path": "/building-blocks.html",
+      "sha256": "4f2aec2f5b9590d828c2dc8bf3e3efb95d4193c9f5bfe397ce944fbe4daad0b4",
+      "unchanged": true
+    },
+    {
+      "path": "/contact.html",
+      "sha256": "24c7cb904e291d1172b3f38487a297175aefbaea4cf03c32554424270e5232bd",
+      "unchanged": true
+    },
+    {
+      "path": "/export-import-readback.html",
+      "sha256": "2208ef660b49e82ea32e7194e1b6fa5dd255b16c111ae8e69f2291103770b116",
+      "unchanged": true
+    },
+    {
+      "path": "/index.html",
+      "sha256": "b74e8d9aee248768a50b6886ee022ec1c47d75149e9c8b495cac6ae0f3bc94bc",
+      "unchanged": true
+    },
+    {
+      "path": "/integration-and-migration.html",
+      "sha256": "39a787742775509881385fb87025e13047ef5d58b8f0eab2bd2e4925a1214481",
+      "unchanged": true
+    },
+    {
+      "path": "/interfaces-and-mcp.html",
+      "sha256": "c5688a5ed95ab61fdaae8165737fe91bfeae01a7d888bd0a2feaafbe53d6c152",
+      "unchanged": false
+    },
+    {
+      "path": "/local-first-applications.html",
+      "sha256": "cfc5d93554be8d87d2a76fdc8b26c537193b3ce23b8c6fb17f8daf89dd1070bc",
+      "unchanged": true
+    },
+    {
+      "path": "/models-and-compression.html",
+      "sha256": "223c4855ceab9c471f68dd56fc595376c4bb1a2ade8f4c1f2b17daf92a1b112f",
+      "unchanged": true
+    },
+    {
+      "path": "/operating-products.html",
+      "sha256": "b9407e6b726e1fe7c944592eae3b716811ec428b6e92cb0b1359a256c04acfd4",
+      "unchanged": true
+    },
+    {
+      "path": "/recording-to-workspace.html",
+      "sha256": "9ce1be6306b7524d54c8ffffba369eabef0441a03bcec142f062cc8cbd12a1fe",
+      "unchanged": true
+    },
+    {
+      "path": "/request-to-books.html",
+      "sha256": "359713866a43d88e8a1977c9556cf4ed94e2b9aafcaf49f1570f9c601c1a6457",
+      "unchanged": true
+    },
+    {
+      "path": "/start.html",
+      "sha256": "b3f96dddfb24b6642060ac98d676ff5250c0d7d09e7b3fd4cc5ea05aba2d2bfd",
+      "unchanged": true
+    },
+    {
+      "path": "/three-businesses.html",
+      "sha256": "993fcca59a022b82ec6cb3a07a063dbcdb322334ffc7d34f96f4952e39eae61a",
+      "unchanged": true
+    },
+    {
+      "path": "/white-label-delivery.html",
+      "sha256": "03b750b4377c8f0e9c63e0fb313d7f689801f70b9655bdef9ff2f057e90a30da",
+      "unchanged": true
+    }
+  ]
+}

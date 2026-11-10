@@ -1,0 +1,63 @@
+bun test v1.3.13 (bf2e2cec)
+
+components/BonfyreServiceSite/tests/catalogue-release-native.test.mjs:
+(pass) the actual catalogue release view, fixture sources and native continuation ship in the bound package [289.18ms]
+(pass) another authorized member reviews and reopens the same release without changing product or room drafts [183.54ms]
+(pass) a concurrent source edit atomically refuses staging and stale review revisions cannot overwrite newer notes [412.72ms]
+(pass) a response lost after commit can retry the same native request without duplicating a release [111.42ms]
+(pass) readers, revoked writers and unrelated accounts cannot save releases; another destination remains separate [432.40ms]
+
+components/BonfyreServiceSite/tests/catalogue-release.test.mjs:
+(pass) retained merchant product and option identities connect each room placement to the proposed price [2.09ms]
+(pass) similar names, another merchant and another option do not create a price dependency [0.21ms]
+(pass) unknown room collections and different product observations block review instead of inventing totals [1.18ms]
+(pass) a changed room, new room, or revised product requires a new review; refresh removes the old annotation [2.95ms]
+(pass) altered release content, duplicate dependencies and unvalidated source changes are refused [1.42ms]
+(pass) catalogue packaging retains the fixture owner and release modules; altered fixture digests refuse [0.98ms]
+(pass) the public easel shared by catalogue and room retains its different capture hashes and cannot finish review [146.02ms]
+
+components/BonfyreServiceSite/tests/catalogue-baseline.test.mjs:
+(pass) retained HTML becomes inert decoded text with consistent paragraph boundaries [2.23ms]
+(pass) browser baseline and source digests share decoded text and normalized prices [0.31ms]
+
+components/BonfyreServiceSite/tests/catalogue-desk.test.mjs:
+(pass) draft desk keeps store identity, stale sources and receipts separate [14.43ms]
+
+components/BonfyreServiceSite/tests/catalogue-model.test.mjs:
+(pass) exact cent arithmetic and formatting [0.75ms]
+(pass) invalid prices do not become quotes [0.14ms]
+(pass) unchanged product has no draft [0.13ms]
+(pass) title required and option identity preserved [0.09ms]
+(pass) save and restore preserve source and proposed values [0.10ms]
+(pass) equivalent source price representations restore correctly [0.04ms]
+(pass) wrong product, source snapshot and duplicate field are refused [0.06ms]
+(pass) changed original is not silently overwritten [0.10ms]
+(pass) missing SKU stays empty until supplied [0.05ms]
+(pass) material packages exact checksummed pieces and canonical store [1.54ms]
+(pass) legacy product paths use the same workspace without rewriting source URLs [1.45ms]
+
+components/BonfyreServiceSite/tests/catalogue-review.test.mjs:
+(pass) a saved product review returns one stable receipt across repeated submission [25.18ms]
+(pass) invalid source identities, duplicate fields, cross-origin requests and excess bytes store nothing [12.87ms]
+(pass) receipt is absent when storage fails, and retry safely retains the draft [12.50ms]
+(pass) intake refuses product addresses and options that native review cannot accept [10.76ms]
+(pass) a retained option change passes both generated intake and native review [72.15ms]
+(pass) invented original values are rejected before storage and by the native lead hook [369.88ms]
+(pass) a browser-shaped draft with a nonempty source description reaches native review [106.29ms]
+(pass) review travels through generated worker, existing lead sync, site hook and compiled CMS without truncation [353.61ms]
+(pass) preparation proposals restore and reach review without claiming merchant originals [92.68ms]
+(pass) review version includes nested changes, source, form and saved revision [11.55ms]
+(pass) local receipt validates its exact version and keeps no contact details [0.38ms]
+
+components/BonfyreServiceSite/tests/catalogue-grid.test.mjs:
+(pass) product and option layouts project the same source and missing identifiers [0.77ms]
+(pass) bulk percentages round exact cents, affect selected variants, and leave source untouched [0.49ms]
+(pass) bulk validation rejects the whole proposal before changing any live edit [0.60ms]
+(pass) tags apply once per product and existing tags survive [0.39ms]
+(pass) inline edits validate, keep option identity, and produce the existing draft contract [0.54ms]
+(pass) saved drafts resume with exact revisions and obsolete source drafts stay blocked [0.50ms]
+
+ 43 pass
+ 0 fail
+ 275 expect() calls
+Ran 43 tests across 7 files. [7.17s]

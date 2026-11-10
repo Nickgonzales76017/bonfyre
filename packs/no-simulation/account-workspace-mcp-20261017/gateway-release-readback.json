@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.account-workspace-gateway-release.v1",
+  "sources": {
+    "integrations/mcp/workspace_mcp.mjs": "505877c6e44e2b841e4cc8bc2b5aed8eed9c997f912c90e67941c649b6e2f6d0",
+    "integrations/mcp/bonfyre_oauth_gateway.mjs": "55ff4ec339592d1618668cf39cece598a46c682ab3ae11816eea64f4ee0b039c",
+    "integrations/browser/workspace-msgpack.mjs": "192f06f6cd4e7f41589788a95f9ed55803c9a776eff22f624e308897d27891da",
+    "integrations/mcp/http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71",
+    "cmd/BonfyreWebAddress/src/application_continuation.h": "ee0e662001b7c6cc326973b17aeb5e582c8d8c695ac193898d13ab5e5be6bd5a",
+    "cmd/BonfyreWebAddress/bonfyre-web-address": "787c5456cc61080981726ec1023c9704e39243a183e7ef242b31876cd68ed9f0"
+  },
+  "reloaded": [
+    {
+      "label": "com.bonfyre.public-oauth-mcp-legacy",
+      "previous_pid": 32475,
+      "pid": 45789,
+      "metadata_status": 200
+    },
+    {
+      "label": "com.bonfyre.public-oauth-mcp",
+      "previous_pid": 32472,
+      "pid": 46343,
+      "metadata_status": 200
+    }
+  ],
+  "pending": [],
+  "controls_unchanged": true,
+  "account_mutations": 0
+}

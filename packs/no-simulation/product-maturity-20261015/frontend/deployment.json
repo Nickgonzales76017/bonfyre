@@ -1,0 +1,55 @@
+{
+  "deployment": "c0e35176-1ff6-4207-95ae-467320fae4c6",
+  "url": "https://c0e35176.aurekai-work-samples.pages.dev",
+  "matches": [
+    {
+      "path": "/catalogue/",
+      "status": 200,
+      "local": "0e49c0965ab82e75ecb3510363213326f647c105fc3c60d12d488392f8946d85",
+      "live": "0e49c0965ab82e75ecb3510363213326f647c105fc3c60d12d488392f8946d85",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/catalogue-client.mjs",
+      "status": 200,
+      "local": "3580e3da38533cdbc901944ee8ad36bc5f01dc6233c012f7f12f3fbf22a56681",
+      "live": "3580e3da38533cdbc901944ee8ad36bc5f01dc6233c012f7f12f3fbf22a56681",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/catalogue-grid.mjs",
+      "status": 200,
+      "local": "42230035624458637751d6b365156d45102ff5e760ffdfdd8f0b3e0f56601c60",
+      "live": "42230035624458637751d6b365156d45102ff5e760ffdfdd8f0b3e0f56601c60",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/catalogue-grid-model.mjs",
+      "status": 200,
+      "local": "8e5af46c5b67a64295a7522f4264663688ba855cae16b21d4ccc76b765c7090a",
+      "live": "8e5af46c5b67a64295a7522f4264663688ba855cae16b21d4ccc76b765c7090a",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/ag-grid-community.min.js",
+      "status": 200,
+      "local": "5f8ddee2e7e2d78e4005f29329404e67bba54ee6db63710b91878e81076ebc1e",
+      "live": "5f8ddee2e7e2d78e4005f29329404e67bba54ee6db63710b91878e81076ebc1e",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/ag-grid-LICENSE.txt",
+      "status": 200,
+      "local": "31636f0472dda16bba11a7b78204e1f677b77452092e185a65cddd45b6c9fb29",
+      "live": "31636f0472dda16bba11a7b78204e1f677b77452092e185a65cddd45b6c9fb29",
+      "match": true
+    },
+    {
+      "path": "/data/product-workspace/store.mjs",
+      "status": 200,
+      "local": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "live": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "match": true
+    }
+  ]
+}

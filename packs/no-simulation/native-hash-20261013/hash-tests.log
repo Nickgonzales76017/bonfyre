@@ -1,0 +1,28 @@
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../lib/libbonfyre
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_decision_head.c -o obj/bf_decision_head.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_artifact.c -o obj/bf_artifact.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_common.c -o obj/bf_common.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_discipl.c -o obj/bf_discipl.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_layer_artifact.c -o obj/bf_layer_artifact.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_catalog.c -o obj/bf_catalog.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_catalog_generation.c -o obj/bf_catalog_generation.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_sha256.c -o obj/bf_sha256.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_operators.c -o obj/bf_operators.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_sae.c -o obj/bf_sae.o
+cc -O2 -Wall -Wextra -std=c11 -Iinclude -I../../cmd/BonfyreLex/src -Iinclude -c src/bf_sqlite.c -o obj/bf_sqlite.o
+ar rcs libbonfyre.a obj/bf_decision_head.o obj/bf_artifact.o obj/bf_common.o obj/bf_discipl.o obj/bf_layer_artifact.o obj/bf_catalog.o obj/bf_catalog_generation.o obj/bf_sha256.o obj/bf_operators.o obj/bf_sae.o obj/bf_reactor.o obj/bf_hotload.o obj/bf_fountain.o obj/bf_textfuse.o obj/bf_lmdb.o obj/bf_pipeline_coro.o obj/bf_flatbuf.o obj/bf_picohttpparser.o obj/bf_json.o obj/bf_crypto.o obj/bf_bloom.o obj/bf_dns.o obj/bf_log.o obj/bf_mmap.o obj/bf_msgpack.o obj/bf_opts.o obj/bf_pool.o obj/bf_utf8.o obj/bf_conf.o obj/bf_lz4.o obj/bf_hashmap.o obj/bf_csv.o obj/bf_sqlite.o obj/bf_embed_cache.o obj/bf_embed_pack.o obj/bf_embed_steer.o obj/bf_embed_index.o obj/bf_embed_refs.o obj/bf_kvcache_pack.o obj/bf_embed_bvh.o obj/bf_physics.o obj/bf_kvcache_mount.o obj/bf_entropy_trace.o obj/bf_trajectory_entropy.o obj/bf_netlist.o obj/bf_component.o obj/bf_circuit.o obj/bf_spice_eval.o obj/bf_hesli.o obj/bridge_orchestrator.o
+ranlib libbonfyre.a
+cc -O2 -Wall -Wextra -std=c11 -I../../lib/libbonfyre/include -o bonfyre-hash src/main.c ../../lib/libbonfyre/libbonfyre.a
+bun test tests/file.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/file.test.mjs:
+(pass) file digest matches an independent implementation across buffer boundaries [204.76ms]
+(pass) missing inputs and directory reads emit no digest [4.09ms]
+(pass) duplicate detection still reports equal complete files [2.32ms]
+(pass) a partial read error refuses both a file digest and the entire duplicate report [170.93ms]
+
+ 4 pass
+ 0 fail
+ 26 expect() calls
+Ran 4 tests across 1 file. [636.00ms]

@@ -1,0 +1,21 @@
+{
+  "schema": "bonfyre.witness.operator-local.v1",
+  "measured_at": "2026-10-16",
+  "why_it_was_stopped": {
+    "runs": 23126, "resolved": 4, "failed_with_no_credits_429": 20777,
+    "blocked_goals": 157, "most_blocked_goals_were_spawned_by_its_own_runs": true,
+    "seed_goals_retried_past_cap": {"Resolve route contract gaps": 540, "Continuous autonomous power-user sweep": 509},
+    "gateway": "127.0.0.1:13052 was an ssh tunnel to the Oracle instance, which no longer exists",
+    "stop_file": "2026-10-05T12:38 CDT: Pause repeated credit_balance_exhausted retries while the economic zero-close lane is wired to local/native execution"
+  },
+  "live_cycles_on_local_model": [
+    {"run": "f31d02bb2d694d998f63191f2fe6a444", "outcome": "the 3B wrote its tool call as JSON text; no tool ran (led to text tool-call recovery)", "input_tokens": 2848},
+    {"run": "070ec83175ff44889b01fb634e616b2d", "outcome": "project_status ran (1.7s); the model then generated 2689 tokens at 12 tokens/s and hit the 300s fetch limit (led to the 768-token cap)"},
+    {"run": "08f6993924324a428e19c7b8a76de52a", "outcome": "project_status, project_tree, project_diff and project_patch_preview ran; the model then asked for project_apply_low_risk_patch with an invented README about ML models. The tool was not offered, nothing was written, the run ended retry after 241s"}
+  ],
+  "goal_attempts_restored": "042c0670649c4c4a8eb5997cc292541d returned to queued with 0 attempts after each test cycle",
+  "cannot_infer": [
+    "a completed local cycle -> progress on the goal; the 3B produced no usable work on a human-scale goal",
+    "the read-only gate holding once -> a small model is safe to give write tools"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "checkedAt": "2026-10-19T15:26:31.275Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "member submission reaches the native creator queue",
+    "request is absent from the other creator queue",
+    "member sees the native work claim",
+    "native completion supplies the versioned delivered program",
+    "request and delivery fit the mobile viewport",
+    "member receipt and adopted routine survive reload",
+    "an offline submission keeps its brief without claiming receipt",
+    "unsent request and retry identity survive reload",
+    "explicit retry submits the retained brief once",
+    "member request view stays scoped to its studio",
+    "delivered routine runs in the member training app",
+    "no browser runtime errors"
+  ],
+  "errors": [],
+  "nativeDelivery": {
+    "id": "c809aae3-ef12-41a9-b203-7522eea35df1",
+    "creatorId": "forge",
+    "brief": {
+      "creatorId": "forge",
+      "programId": "forge:foundations",
+      "programVersion": "1",
+      "title": "Dumbbells in 30 minutes",
+      "details": "Please adapt Foundations A for a pair of dumbbells and a 30-minute session."
+    },
+    "submittedAt": "2026-10-19T15:26:28.678Z",
+    "state": "complete",
+    "receiptId": "rcpt-c3aac3d41d08b43164a55465227f5ae8",
+    "delivery": {
+      "routine": {
+        "id": "delivery:c809aae3-ef12-41a9-b203-7522eea35df1",
+        "name": "Dumbbells in 30 minutes",
+        "source": {
+          "creator": "forge",
+          "program": "request:c809aae3-ef12-41a9-b203-7522eea35df1",
+          "version": "1"
+        },
+        "exercises": [
+          {
+            "id": "goblet-squat",
+            "name": "Goblet squat",
+            "kind": "resistance",
+            "restSeconds": 45,
+            "superset": null,
+            "progression": null,
+            "sets": [
+              {
+                "id": "goblet-squat:0",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              },
+              {
+                "id": "goblet-squat:1",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "floor-press",
+            "name": "Dumbbell floor press",
+            "kind": "resistance",
+            "restSeconds": 45,
+            "superset": null,
+            "progression": null,
+            "sets": [
+              {
+                "id": "floor-press:0",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              },
+              {
+                "id": "floor-press:1",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              }
+            ]
+          },
+          {
+            "id": "one-arm-row",
+            "name": "One-arm row",
+            "kind": "resistance",
+            "restSeconds": 45,
+            "superset": null,
+            "progression": null,
+            "sets": [
+              {
+                "id": "one-arm-row:0",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              },
+              {
+                "id": "one-arm-row:1",
+                "type": "work",
+                "loadKg": 16,
+                "reps": 8,
+                "seconds": 0,
+                "distanceM": 0,
+                "rir": null,
+                "rpe": null,
+                "done": false
+              }
+            ]
+          }
+        ]
+      },
+      "sha256": "6602cd6c7ad0a630cdf3463267107443564d2fda5189c920ea9fb1245345595c",
+      "deliveredAt": "2026-10-19T15:26:28.931Z"
+    }
+  }
+}

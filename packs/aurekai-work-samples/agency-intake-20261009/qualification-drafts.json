@@ -1,0 +1,65 @@
+[
+  {
+    "key": "so-design",
+    "company": "SO Design Online",
+    "to": "support@sodesign.online",
+    "source": "https://sodesign.online/careers/",
+    "draft": "r2927371605805426962",
+    "message": "1a1215dcf29267f3",
+    "subject": "Frontend Developer application: WordPress-ready sections and forms",
+    "proof": [
+      "E01",
+      "E02",
+      "E03",
+      "E07",
+      "E09"
+    ],
+    "fit": "Remote contract/project-based Frontend Developer. HTML, CSS, Bootstrap, vanilla JavaScript and WordPress-ready custom sections. Official email application permits a short note and relevant samples; no mandatory price or CV. Strong direct stack fit. WP Coder-specific deployment and a real project brief remain to inspect.",
+    "project_id": 123,
+    "outbound_message_id": 109,
+    "source_receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/so-design.receipt.json",
+    "source_sha256": "bc343a6f6404523f8e5e7cc260bceeaa27725e6d044c1ab91592489cfa88fcbe"
+  },
+  {
+    "key": "understack",
+    "company": "Understack",
+    "to": "it@understack.it",
+    "source": "https://understack.it/en/work-with-us/",
+    "draft": "r-2615034517443154504",
+    "message": "1a1215df6f4efe0e",
+    "subject": "Remote PHP and frontend collaboration",
+    "proof": [
+      "E01",
+      "E02",
+      "E06",
+      "E09"
+    ],
+    "fit": "Official agency invitation for independent WordPress, PHP, frontend and remote contributors. The site explicitly permits a brief email plus code link instead of its CV form. Code-first qualification; no paid project or current budget offered. Do not claim Laravel proficiency or Italian-language ability.",
+    "project_id": 124,
+    "outbound_message_id": 110,
+    "source_receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/understack.receipt.json",
+    "source_sha256": "b78db29f80aa555c247b1bbdc8e45e9d4783aec34d0a72736426d8ffb49f61b4"
+  },
+  {
+    "key": "buddydevelopers",
+    "company": "BuddyDevelopers",
+    "to": "contact@buddydevelopers.com",
+    "source": "https://buddydevelopers.com/career/",
+    "draft": "r1864832833048689772",
+    "message": "1a1215e3f9b0a7a6",
+    "subject": "AI Automation & AI Applications Developer application",
+    "proof": [
+      "E01",
+      "E02",
+      "E03",
+      "E06",
+      "E07",
+      "E13"
+    ],
+    "fit": "Official remote contract AI Automation & AI Applications Developer role for WordPress workflows, MCP, Claude, n8n and custom integrations; community/directory specialization. Email is explicitly offered as application alternative. Strong fit for custom API/MCP work. No claim of prior paid BuddyPress, GeoDirectory or n8n delivery; exact platform implementation and responsibility need qualification.",
+    "project_id": 125,
+    "outbound_message_id": 111,
+    "source_receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/agency-intake-20261009/buddydevelopers.receipt.json",
+    "source_sha256": "c85dd940d66d39828311b24fa2b26f69dc61e10f5f311a9e5f467dc27653be28"
+  }
+]

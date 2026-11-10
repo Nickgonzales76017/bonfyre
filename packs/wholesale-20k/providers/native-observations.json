@@ -1,0 +1,81 @@
+[
+  {
+    "id": "mfo-machinery",
+    "name": "Machine Factory Outlet",
+    "url": "https://machinefactoryoutlet.com/sell-your-surplus/",
+    "terms": "We Buy All Types and Makes of CNC and Fabrication Machinery.",
+    "email": "procurment@mfogroup.com",
+    "match_any": [
+      "press brake",
+      "shear",
+      "CNC router",
+      "CNC milling"
+    ],
+    "exit": 0,
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/mfo-machinery.receipt.json",
+    "http_status": 200,
+    "observed_at": "2026-10-09T03:16:10Z",
+    "body_sha256": "c6b787eef5b3d7c30ee1ca07a736182ba3a5bfe17dc4a10d5da4dff4e766d97b",
+    "policy": "allow",
+    "error": null
+  },
+  {
+    "id": "conesco-racking",
+    "name": "Conesco",
+    "url": "https://conesco.com/services/nationwide-racking-purchasing/",
+    "terms": "We Buy Racking Nationwide",
+    "email": "info@conesco.com",
+    "match_any": [
+      "pallet rack",
+      "pallet racking",
+      "rack lot"
+    ],
+    "exit": 0,
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/conesco-racking.receipt.json",
+    "http_status": 200,
+    "observed_at": "2026-10-09T03:16:10Z",
+    "body_sha256": "957629225345cb12471448992c83a2138bb5cd40bfaaa5bae6145688c82d846f",
+    "policy": "allow",
+    "error": null
+  },
+  {
+    "id": "tonerg-oem",
+    "name": "TonerG",
+    "url": "https://tonerg.net/",
+    "terms": "Factory-sealed OEM toner only.",
+    "email": "info@tonerg.net",
+    "match_any": [
+      "Canon 054",
+      "Dell 5110",
+      "sealed toner",
+      "sealed Canon",
+      "sealed HP"
+    ],
+    "exit": 0,
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/tonerg-oem.receipt.json",
+    "http_status": 206,
+    "observed_at": "2026-10-09T03:16:10Z",
+    "body_sha256": "567173b17bb055d7333d7ec362a1f6c9de447300c673a7461a58c7fe60ed7349",
+    "policy": "allow",
+    "error": null
+  },
+  {
+    "id": "resell-camaster",
+    "name": "Resell CNC",
+    "url": "https://www.resellcnc.com/brand/camaster/",
+    "terms": "Resell CNC buys used CAMaster routers",
+    "email": "sales@resellcnc.com",
+    "match_any": [
+      "Camaster",
+      "CAMaster",
+      "Panther 408"
+    ],
+    "exit": 0,
+    "receipt_path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/providers/resell-camaster.receipt.json",
+    "http_status": 200,
+    "observed_at": "2026-10-09T03:16:10Z",
+    "body_sha256": "05f35b24790ce8419ef25564c4008660b408eb0efc02e27c624a07d6895d5e3f",
+    "policy": "allow",
+    "error": null
+  }
+]

@@ -1,0 +1,66 @@
+{
+  "checked_at": "2026-10-12T01:20:37.161Z",
+  "origin": "http://127.0.0.1:8927",
+  "checks": [
+    "First result answers: Why do the raw telescope images look almost black?",
+    "Result plays its passage after minute 2",
+    "Full six-minute video decodes",
+    "First result answers: How are colors assigned to infrared wavelengths?",
+    "Result plays its passage after minute 5",
+    "Full six-minute video decodes",
+    "First result answers: How many filters does the near infrared camera have?",
+    "Result plays its passage after minute 4",
+    "Full six-minute video decodes",
+    "Publisher source link is present",
+    "Current transcript follows playback",
+    "Playing passage is visible in the transcript",
+    "Note keeps its timed citation",
+    "No horizontal overflow at 1024",
+    "Playback stays visible after resize to 1024",
+    "No horizontal overflow at 768",
+    "Playback stays visible after resize to 768",
+    "No horizontal overflow at 390",
+    "Playback stays visible after resize to 390",
+    "No horizontal overflow at 320",
+    "Playback stays visible after resize to 320",
+    "Reload restores the note at its passage",
+    "Empty query has a usable error",
+    "Unmatched phrase stays empty",
+    "No browser exceptions",
+    "No external playback or search requests"
+  ],
+  "retrieval": [
+    {
+      "query": "Why do the raw telescope images look almost black?",
+      "first_result": "Composing Webb telescope images · transcript 2:10–2:16 · paragraph 23\n\nWhen we first open these images, they may appear black, but they actually contain a huge amount of information.\n\nRead originalPlay 2:10",
+      "playback": {
+        "time": 130.577774,
+        "duration": 360.404,
+        "width": 960,
+        "height": 540
+      }
+    },
+    {
+      "query": "How are colors assigned to infrared wavelengths?",
+      "first_result": "Composing Webb telescope images · transcript 5:06–5:13 · paragraph 53\n\nWe assign colors in chromatic order, blue, green, red, from shortest to longest wavelengths for both of web's cameras.\n\nRead originalPlay 5:06",
+      "playback": {
+        "time": 306.604235,
+        "duration": 360.404,
+        "width": 960,
+        "height": 540
+      }
+    },
+    {
+      "query": "How many filters does the near infrared camera have?",
+      "first_result": "Composing Webb telescope images · transcript 4:59–5:02 · paragraph 51\n\nNearcam has 29 filters while mirrory has 9 filters.\n\nRead originalPlay 4:59",
+      "playback": {
+        "time": 299.221412,
+        "duration": 360.404,
+        "width": 960,
+        "height": 540
+      }
+    }
+  ],
+  "errors": [],
+  "external": []
+}

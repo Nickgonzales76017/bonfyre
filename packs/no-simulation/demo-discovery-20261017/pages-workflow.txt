@@ -1,0 +1,146 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check application directory and retained release
+        run: |
+          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs
+          test -f site/spaces/RELEASE.tsv
+      - name: Detect retained helper dependencies
+        id: helpers
+        run: |
+          if test -f vendor/spaces-helpers-20261015/SOURCE.txt; then echo 'needed=false' >> "$GITHUB_OUTPUT"; else echo 'needed=true' >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/download-artifact@v4
+        if: steps.helpers.outputs.needed == 'true'
+        with:
+          name: spaces-helper-inputs
+          run-id: 38803211793
+          github-token: ${{ github.token }}
+          path: studio-inputs/archives
+      - uses: actions/download-artifact@v4
+        if: steps.helpers.outputs.needed == 'true'
+        with:
+          name: product-scene-public-inputs
+          run-id: 38791615713
+          github-token: ${{ github.token }}
+          path: studio-inputs/retained
+      - name: Verify archives and extract without installation scripts
+        if: steps.helpers.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd studio-inputs/archives
+          echo '489d6e0c991108023d13fa169be53a932a682cc88c4e3b33a30ec494a55d7767  camera-controls-3.1.2.tgz' | sha256sum --check
+          echo '559c47e9bec146242c364f43c542d8f0d8fda839c8fe7348c9011787551fc0ae  pmndrs-vanilla-1.25.0.tgz' | sha256sum --check
+          cd ../..
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
+          const row=readFileSync('studio-inputs/retained/SHA256SUMS.tsv','utf8').split('\n').find(s=>s.startsWith('upstream/three-0.180.0.tgz\t'));
+          if(!row)throw Error('Pinned Three archive receipt missing.');
+          const [path,hash,size]=row.split('\t'),body=readFileSync('studio-inputs/retained/'+path);
+          if(body.length!==Number(size)||createHash('sha256').update(body).digest('hex')!==hash)throw Error('Pinned Three archive changed.');
+          JS
+          mkdir -p studio-inputs/{camera,drei,three}
+          tar -xzf studio-inputs/archives/camera-controls-3.1.2.tgz -C studio-inputs/camera
+          tar -xzf studio-inputs/archives/pmndrs-vanilla-1.25.0.tgz -C studio-inputs/drei
+          tar -xzf studio-inputs/retained/upstream/three-0.180.0.tgz -C studio-inputs/three
+      - name: Build immutable studio UI packages
+        run: |
+          node --check components/BonfyreServiceSite/product-scene-tools.mjs
+          node --check scripts/upgrade-spaces.mjs
+          node scripts/upgrade-spaces.mjs site/spaces studio-inputs
+          node scripts/component-release.mjs site/spaces
+      - name: Install browser driver
+        run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify rendered product and room interactions before publication
+        env:
+          SPACES_STUDIO_REQUIRED: '1'
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Connect the existing showcase entries to the tested release
+        run: |
+          node scripts/prepare-spaces-discovery.mjs
+          node --test scripts/tests/showcase-directory.test.mjs
+      - name: Retain tested release and helper licences
+        shell: bash
+        env:
+          SPACES_STUDIO_REQUIRED: '1'
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/retain-tested-pages.mjs
+      - name: Verify final composed workspaces and retained editors
+        env:
+          WORKSPACE_EVIDENCE: workspace-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-composition-browser.mjs
+          node scripts/tests/workspace-docking-browser.mjs
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify the actual public studio
+        env:
+          SPACES_ORIGIN: https://nickgonzales76017.github.io
+          SPACES_EVIDENCE: spaces-live-evidence
+          SPACES_STUDIO_REQUIRED: '1'
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Verify the public composed workflows
+        env:
+          WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
+          WORKSPACE_EVIDENCE: workspace-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-composition-browser.mjs
+          node scripts/tests/workspace-docking-browser.mjs
+      - name: Keep local and live browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spaces-release-evidence
+          retention-days: 30
+          path: |
+            spaces-evidence
+            spaces-live-evidence
+            workspace-evidence
+            workspace-live-evidence

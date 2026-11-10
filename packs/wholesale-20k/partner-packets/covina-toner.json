@@ -1,0 +1,21 @@
+{
+  "task_reference": "w20k-covina-toner-handoff",
+  "equipment": "Five Dell 5110CN OEM cartridges: 2 black CT200840/GD898; cyan CT200841/GD900; magenta CT200842/KD557; yellow CT200843/JD750. Original sealed packaging needs checking. Seller pickup arrangement needs confirmation.",
+  "area": "Covina, CA",
+  "service_requested": "Quote preparation of an inspection/manifest or packing and loading plan; proposed scope will be agreed before a visit.",
+  "deliverables": [
+    "Photos of identifiers and each condition group",
+    "Verified unit counts and exceptions",
+    "Packing dimensions, weights or explicit estimates",
+    "Access/loading requirements and excluded work"
+  ],
+  "quote_requested": {
+    "currency": "USD",
+    "amount": null,
+    "price_basis": null,
+    "travel_or_minimum_charge": null,
+    "valid_until": null
+  },
+  "assignment_state": "not_assigned",
+  "dispatch_instruction": "No visit, equipment movement or payment collection authorized by this brief."
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-camaster-408-source",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "camaster-408",
+  "project_ref": "wholesale:camaster-408-20261008",
+  "title": "Camaster 4x8 CNC Router",
+  "location": "Boyle Heights, Los Angeles, CA",
+  "phase": "source",
+  "role_requested": "sourcing coordinator",
+  "desired_result": "Seller-confirmed current lot availability and all-in ask, representative family-label photos/counts, operating/storage condition, transfer authority and pickup access. Use supported public reply or direct business channel; do not bypass CAPTCHA or promise purchase.",
+  "disclosure_allowlist": [
+    "lot identity",
+    "source reference",
+    "group counts",
+    "verification checklist"
+  ],
+  "disclosure_exclusions": [
+    "other buyers",
+    "other suppliers",
+    "target contribution",
+    "purchase ceilings"
+  ],
+  "acceptance": "Retain source message or call note attributed to the speaker; distinguish confirmed facts and unanswered items.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/foreign/receipts/classified-0d2d24bef76dd7ae0bac-0d2d24bef76d-e82988141aee.json",
+  "next_action": "model/control evidence and collected buyer bid"
+}

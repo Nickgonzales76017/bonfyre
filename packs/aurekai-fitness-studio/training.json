@@ -1,0 +1,380 @@
+{
+  "schema": "service-site.training.v1",
+  "creators": [
+    {
+      "id": "forge",
+      "description": "Strength sessions for a small space and the equipment you have.",
+      "settings": {
+        "schema": "bonfyre.training-settings.v1",
+        "brand": {
+          "name": "Forge Studio",
+          "accent": "#ff5432",
+          "ground": "#111112",
+          "ink": "#ebeee0",
+          "font": "sans",
+          "density": "comfortable"
+        },
+        "bridges": [],
+        "model": {
+          "provider": "none",
+          "model": "",
+          "endpoint": "",
+          "data": "program-only"
+        }
+      },
+      "routines": [
+        {
+          "id": "forge:foundations",
+          "name": "Foundations A",
+          "source": {
+            "creator": "forge",
+            "program": "forge:foundations",
+            "version": "1"
+          },
+          "exercises": [
+            {
+              "id": "goblet-squat",
+              "name": "Goblet squat",
+              "kind": "resistance",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "goblet-squat:0",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "goblet-squat:1",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "goblet-squat:2",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            },
+            {
+              "id": "floor-press",
+              "name": "Dumbbell floor press",
+              "kind": "resistance",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "floor-press:0",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "floor-press:1",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "floor-press:2",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            },
+            {
+              "id": "one-arm-row",
+              "name": "One-arm row",
+              "kind": "resistance",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "one-arm-row:0",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "one-arm-row:1",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "one-arm-row:2",
+                  "type": "work",
+                  "loadKg": 16,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "forge:carry",
+          "name": "Carry & core",
+          "source": {
+            "creator": "forge",
+            "program": "forge:carry",
+            "version": "1"
+          },
+          "exercises": [
+            {
+              "id": "suitcase-carry",
+              "name": "Suitcase carry",
+              "kind": "timed",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "suitcase-carry:0",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "suitcase-carry:1",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "suitcase-carry:2",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            },
+            {
+              "id": "dead-bug",
+              "name": "Dead bug",
+              "kind": "bodyweight",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "dead-bug:0",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "dead-bug:1",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "dead-bug:2",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 8,
+                  "seconds": 0,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "still",
+      "description": "Short sessions to make movement part of your day.",
+      "settings": {
+        "schema": "bonfyre.training-settings.v1",
+        "brand": {
+          "name": "Still Studio",
+          "accent": "#f2c14e",
+          "ground": "#1d2b53",
+          "ink": "#f3ecdd",
+          "font": "serif",
+          "density": "comfortable"
+        },
+        "bridges": [],
+        "model": {
+          "provider": "none",
+          "model": "",
+          "endpoint": "",
+          "data": "program-only"
+        }
+      },
+      "routines": [
+        {
+          "id": "still:reset",
+          "name": "Daily reset",
+          "source": {
+            "creator": "still",
+            "program": "still:reset",
+            "version": "1"
+          },
+          "exercises": [
+            {
+              "id": "standing-reach",
+              "name": "Standing reach",
+              "kind": "timed",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "standing-reach:0",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "standing-reach:1",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "standing-reach:2",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            },
+            {
+              "id": "seated-rotation",
+              "name": "Seated rotation",
+              "kind": "timed",
+              "restSeconds": 60,
+              "superset": null,
+              "sets": [
+                {
+                  "id": "seated-rotation:0",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "seated-rotation:1",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                },
+                {
+                  "id": "seated-rotation:2",
+                  "type": "work",
+                  "loadKg": 0,
+                  "reps": 0,
+                  "seconds": 30,
+                  "distanceM": 0,
+                  "rir": null,
+                  "rpe": null,
+                  "done": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

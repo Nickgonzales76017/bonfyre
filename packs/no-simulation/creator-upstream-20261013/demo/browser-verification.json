@@ -1,0 +1,28 @@
+{
+  "status": "passed",
+  "layouts": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "canvasWidth": 842,
+      "heading": "Three stems. One exact mix."
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "canvasWidth": 324,
+      "heading": "Three stems. One exact mix."
+    }
+  ],
+  "audio": {
+    "duration": 6,
+    "channels": 2,
+    "sampleRate": 44100
+  },
+  "playback": {
+    "time": 0.38567,
+    "paused": false,
+    "error": null
+  },
+  "exceptions": []
+}

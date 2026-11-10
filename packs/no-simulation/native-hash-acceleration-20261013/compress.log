@@ -1,0 +1,35 @@
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../lib/libbonfyre
+make[1]: Nothing to be done for `all'.
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../lib/libbonfyre/include -DBONFYRE_HAVE_ZSTD -I/opt/homebrew/include -o bonfyre-compress src/main.c src/physical.c src/record_factor.c src/record_factor_cli.c ../../lib/libbonfyre/libbonfyre.a  -lsqlite3 /opt/homebrew/lib/libzstd.a
+sh ./tests/physical_compiler_test.sh ./bonfyre-compress
+physical compiler: PASS
+sh ./tests/family_pipeline_test.sh ./bonfyre-compress
+[compress] Packing family /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-compress-family.WNFMPa/a';touch /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-compress-family.WNFMPa/injected;echo ' -> /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-compress-family.WNFMPa/family.tar.zst
+tar: Removing leading '/' from member names
+/*stdin*\            :  3.56%   (  20.0 KiB =>    729 B, /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T//bonfyre-compress-family.WNFMPa/family.tar.zst.tmp.AOh0iT) 
+tar: Removing leading '/' from member names
+[compress] files 63, stream 20480, delivered 729 (stream ratio 0.0356)
+family compression pipeline: PASS
+sh ./tests/record_factor_test.sh ./bonfyre-compress
+record_factor_test: PASS (normal Compress commands, exact bytes, search, refused incomplete verification)
+bash ./tests/savings_accounting_test.sh ./bonfyre-compress
+  ok   file bytes are the files' own
+  ok   the archive stream is measured separately
+  ok   a delivered archive larger than its files says so
+  ok   and by how much
+  ok   a compressible directory is not flagged
+  ok   the two ratios are each compressed bytes over their own base
+savings accounting: PASS
+bun test ./tests/savings_stream.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/savings_stream.test.mjs:
+(pass) savings counts one real archive stream and matches independent zstd output [264.97ms]
+(pass) an empty family still finalizes and counts the complete compressed frame [215.37ms]
+(pass) multi-job frames match the CLI worker mode on a larger archive [510.95ms]
+(pass) a failed or unavailable archive producer emits no successful measurement [217.61ms]
+
+ 4 pass
+ 0 fail
+ 23 expect() calls
+Ran 4 tests across 1 file. [1227.00ms]

@@ -1,0 +1,80 @@
+[
+  {
+    "path": "itad-exchange/index.html",
+    "localSha256": "0d682bee21a5c793fcd0368563a08fa706c17e14b9ac27208158654a2040fb1b",
+    "publicSha256": "0d682bee21a5c793fcd0368563a08fa706c17e14b9ac27208158654a2040fb1b",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/manifest-grid.mjs",
+    "localSha256": "c4be74516d8c9728ecb7f70d78b49a30cbf02c2ec22764a995018c70005ad9c1",
+    "publicSha256": "c4be74516d8c9728ecb7f70d78b49a30cbf02c2ec22764a995018c70005ad9c1",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/desk.css",
+    "localSha256": "fcf995e63e4be13c1c4f6752f433fceb2a6dbfab9e8e4376858a951fb03c1758",
+    "publicSha256": "fcf995e63e4be13c1c4f6752f433fceb2a6dbfab9e8e4376858a951fb03c1758",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/core.mjs",
+    "localSha256": "22f71edc40437f5d29e30e1ea6ec87ce20396957997c8696d8b4953a4e5f0a42",
+    "publicSha256": "22f71edc40437f5d29e30e1ea6ec87ce20396957997c8696d8b4953a4e5f0a42",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/app.mjs",
+    "localSha256": "3918bb1c635c01ef45bdd09f1f585da1fbb3baeb54b216cb03fa2ea9fe067750",
+    "publicSha256": "3918bb1c635c01ef45bdd09f1f585da1fbb3baeb54b216cb03fa2ea9fe067750",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/vendor/ag-grid-community-36.2.0/ag-grid-community.min.js",
+    "localSha256": "5f8ddee2e7e2d78e4005f29329404e67bba54ee6db63710b91878e81076ebc1e",
+    "publicSha256": "5f8ddee2e7e2d78e4005f29329404e67bba54ee6db63710b91878e81076ebc1e",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/vendor/ag-grid-community-36.2.0/LICENSE.txt",
+    "localSha256": "31636f0472dda16bba11a7b78204e1f677b77452092e185a65cddd45b6c9fb29",
+    "publicSha256": "31636f0472dda16bba11a7b78204e1f677b77452092e185a65cddd45b6c9fb29",
+    "match": true
+  },
+  {
+    "path": "itad-exchange/vendor/ag-grid-community-36.2.0/provenance.tsv",
+    "localSha256": "4a173aaac28f2928b43d84a8bc44e60eb40dd6f146baf8c4904e3edec46a83e1",
+    "publicSha256": "4a173aaac28f2928b43d84a8bc44e60eb40dd6f146baf8c4904e3edec46a83e1",
+    "match": true
+  },
+  {
+    "path": "journey-kit/room.mjs",
+    "localSha256": "5b69ecee4abd6fae6d7410a870d57613e7e6106b2261403932324b7551c11325",
+    "publicSha256": "5b69ecee4abd6fae6d7410a870d57613e7e6106b2261403932324b7551c11325",
+    "match": true
+  },
+  {
+    "path": "brief-studio/core.mjs",
+    "localSha256": "7e33e00ff133ff4fa4986b1075fba18fd78f25308db54309ae50bb2626c628aa",
+    "publicSha256": "7e33e00ff133ff4fa4986b1075fba18fd78f25308db54309ae50bb2626c628aa",
+    "match": true
+  },
+  {
+    "path": "brief-studio/fonts/dm-mono.woff2",
+    "localSha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e",
+    "publicSha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e",
+    "match": true
+  },
+  {
+    "path": "brief-studio/fonts/instrument-serif.woff2",
+    "localSha256": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
+    "publicSha256": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
+    "match": true
+  },
+  {
+    "path": "brief-studio/fonts/dm-sans.woff2",
+    "localSha256": "ca72d2bcea8f4daa783dbdfa2d9b46068c3ce38168e05918fb867aa453b4f890",
+    "publicSha256": "ca72d2bcea8f4daa783dbdfa2d9b46068c3ce38168e05918fb867aa453b4f890",
+    "match": true
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "commit": "1187f3736ebbdeba3b70edb39f04de15c752cd5c",
+  "repository": "https://github.com/Nickgonzales76017/bonfyre",
+  "files": [
+    {
+      "path": "Aurekai/src/creator-native-pcm.mjs",
+      "blob_sha1": "1d48ea05d5def7a25028d47c802d846104feee12",
+      "sha256": "4fe7043a7e591555643fa128b917b14d6f12ccc0f52e8a3eb2f1495641fe2859",
+      "bytes": 3992
+    },
+    {
+      "path": "Aurekai/native/creator/mix.c",
+      "blob_sha1": "23d8158f66bf9fef496aac6b52e85a70f5bf693f",
+      "sha256": "40253bb6e2dd2dc49ae1c59ef68f3256a26e56249471b172e17659ee63c2d72c",
+      "bytes": 12015
+    },
+    {
+      "path": "Aurekai/tests/creator-native-pcm.test.mjs",
+      "blob_sha1": "61e76cd6355dec8b632d04522cc52e3298d8257f",
+      "sha256": "5c1657a3ced0156fa361b91fe072a66f07a364e8cc5e26ce96621e08df999ebe",
+      "bytes": 4718
+    },
+    {
+      "path": "Aurekai/tests/creator-native-mix.test.mjs",
+      "blob_sha1": "657df26255485865a46ef4dda01989ef4086b7eb",
+      "sha256": "a54b68a585c53271402afc9a2ae364734c3d1daf98f2eccd529240e4443b1491",
+      "bytes": 11912
+    },
+    {
+      "path": "Aurekai/native/creator/mix_kernel.c",
+      "blob_sha1": "94a465852c3f672ab99f91198776a1cb647ec398",
+      "sha256": "cba37b9a35273e28fab3998cab7be69047a38d9a92f2aca8404c3bebba488d47",
+      "bytes": 167
+    },
+    {
+      "path": "Aurekai/native/creator/mix_kernel.h",
+      "blob_sha1": "f0a52a60e5e7b781e2275db41bb0630a88552a5d",
+      "sha256": "1cc08af18fb26e034f3b132838cec6aeaf2edcb6b0c09482177af8fa86149e08",
+      "bytes": 401
+    },
+    {
+      "path": "Aurekai/src/creator-render-program.mjs",
+      "blob_sha1": "1196ed19ce0e8a204e6f4177917e023f2253ead6",
+      "sha256": "7bce1a4931f4f9f1b30967e22a3f7d52809b02819e204e8e1f1303d9b8264335",
+      "bytes": 14971
+    },
+    {
+      "path": "Aurekai/tests/creator-render-program.test.mjs",
+      "blob_sha1": "36c80384281274c0c08ca5940c2ca58389316ace",
+      "sha256": "e598ab51fc889d8cb834cc928d30c3a8d320a5141e0d15775290b8d1efcb1dbc",
+      "bytes": 8996
+    }
+  ]
+}

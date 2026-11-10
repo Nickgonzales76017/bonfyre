@@ -1,0 +1,2 @@
+view	label	entry	prefix	title	query
+workbook	Financial review	finance/	finance-workbook:	title	workbook=$key

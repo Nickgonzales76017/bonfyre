@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreModel/tests/file_verification_test.py", line 53, in <module>
+    verify(False, 'cannot hash')
+  File "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreModel/tests/file_verification_test.py", line 32, in verify
+    assert (result.returncode == 0) == expected, (result.stdout, result.stderr)
+AssertionError: (b'  verifying  /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-model-hash-g_mmwcnl/cache/synthetic-bytes.bin  ...\n  \xe2\x9c\x93 ok      e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n', b'')

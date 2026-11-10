@@ -1,0 +1,27 @@
+{
+  "source_sha256": {
+    "components/BonfyreServiceSite/build.mjs": "0bbacede2577b9ed45900618ef56492b480827b8552c9cb2d003b7471675a13b",
+    "components/BonfyreServiceSite/looks/aurekai.css": "bbf3e7a8d4fd7d739f13418ef82c96ea4c6e101cd5796da89642aea9ff611dfb",
+    "components/BonfyreServiceSite/sections/creator.mjs": "714871f36399142324be8d5a1b39e78cd533ee6eff1f7e62a7ca6e8adb98940d",
+    "components/BonfyreServiceSite/creator-client.mjs": "8a4eaf0657fc4645015dcdfcb748109d2a65ebfd37f6311d7a5ded0c44d0e1d7",
+    "components/BonfyreServiceSite/creator-worker.mjs": "c9aed5ce3aceedd8a28b8903218d7427a11140ebf60b9294722b89060f6acbb1",
+    "components/BonfyreServiceSite/creator-sample.mjs": "245b7e98a6409e4983b03e30240c87ff94ecac956c570304614f76594cd00c83",
+    "components/BonfyreServiceSite/creator-material.mjs": "299a8e6137912fa2fabf7965bc7f8fe43e58668843bf1a1145ef2033df1f20ab",
+    "components/BonfyreServiceSite/creator.css": "77c16a74d9f53ec6fc522bf5b571ca0d87cd0ec1295a739ed64c720b6b9fb3c2",
+    "components/BonfyreServiceSite/tests/creator.test.mjs": "b71edcb5a4e1b65a6d2036958956cea66893c568d80419bd673323bc862f4bdf",
+    "components/BonfyreServiceSite/tests/creator-browser.mjs": "79c5833b19e5ff52fa0343661ed6c33497e7b6c0146764a8cf7615c4406afabf",
+    "packs/aurekai-work-samples/site/content.json": "b35db7ab35ca9d01406eac5d36a056c71f609cdb4f5218fb017d30e2cf5a867b",
+    "packs/aurekai-work-samples/site/material.mjs": "88d0ca036b08fbd3f48e3e5e80244971e38e80fee2d79231dae5dab5979d9efa",
+    "packs/aurekai-work-samples/audio/sample.json": "c515caea2447b9c5195ca38604dfb2651dfcb2c0ebb09cd22c7dd9c1d762c07d"
+  },
+  "live_url": "https://aurekai-work-samples.pages.dev/audio/",
+  "public_audio_checks": 16,
+  "local_audio_checks": 18,
+  "unit_tests": 30,
+  "catalogue_browser_checks": 57,
+  "planner_browser_checks": 28,
+  "public_routes_checked": 8,
+  "public_server_writes_during_checks": 0,
+  "available_bytes": 5873975296,
+  "installed_corpus": "e2692413138a356dfe73a898676e22b5966abbcb97d069ffd1bd648aa3e714b3"
+}

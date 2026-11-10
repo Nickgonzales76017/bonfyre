@@ -1,0 +1,169 @@
+{
+  "at": "2026-10-13T14:40:28.026855",
+  "cwd": "/private/tmp",
+  "environment_override": false,
+  "records": [
+    {
+      "cannot_infer": [
+        "available app/tool -> semantic owner for every matching chain",
+        "reference -> authority"
+      ],
+      "classification": {
+        "architecture_ids": [
+          "training-program-publication"
+        ],
+        "basis": "atlas-source-path",
+        "human_chains": [
+          "learning",
+          "creator-publish"
+        ]
+      },
+      "home_blueprints": [
+        "life-apex-public",
+        "life-apex-personal",
+        "work-apex-public",
+        "work-apex-member",
+        "company-public",
+        "course-deep"
+      ],
+      "human_chains": [
+        "learning",
+        "creator-publish"
+      ],
+      "id": "cms_type:training-program-release",
+      "name": "training_program_release",
+      "presentation_modes": [
+        "path",
+        "lesson",
+        "assessment",
+        "deep-creator-publish"
+      ],
+      "protocol_chains": [],
+      "record_kind": "cms_type",
+      "slug_roots": [
+        "/learn",
+        "/creator-publish"
+      ],
+      "source_ref": "cmd/BonfyreCMS/content-types/training_program_release.json",
+      "territories": [
+        "life",
+        "live",
+        "shop",
+        "work"
+      ]
+    },
+    {
+      "cannot_infer": [
+        "possession of a local request receipt or operator filesystem access -> authenticated Actor identity, coaching consent, paid entitlement or team authority",
+        "workflow reference -> authorized executable chain"
+      ],
+      "canonical_name": "TrainingCreatorRequest",
+      "classification": {
+        "architecture_ids": [
+          "training-creator-request"
+        ],
+        "basis": "atlas-declaration"
+      },
+      "home_blueprints": [
+        "life-apex-public",
+        "life-apex-personal",
+        "shop-apex-personal",
+        "work-apex-public",
+        "work-apex-member",
+        "company-public",
+        "property-deep",
+        "course-deep",
+        "product-deep",
+        "public-systems-deep"
+      ],
+      "human_chains": [
+        "learning",
+        "service-case",
+        "project"
+      ],
+      "id": "architecture:training-creator-request",
+      "interaction_refs": [
+        {
+          "destination": "training-creator-request",
+          "drops": [
+            "private training history, body-weight records and automatic retries or adoption"
+          ],
+          "forbidden_inferences": [],
+          "id": "member-training-submits-creator-request",
+          "invalidates_on": [],
+          "preserves": [
+            "creator/program version, authored brief, stable retry identity and explicit adoption of the completed delivery"
+          ],
+          "relation": "",
+          "source": "member-training"
+        },
+        {
+          "destination": "training-creator-request",
+          "drops": [
+            "authority over another coach's active claim and automatic adoption into member training"
+          ],
+          "forbidden_inferences": [],
+          "id": "training-creator-delivers-native-request",
+          "invalidates_on": [],
+          "preserves": [
+            "exact studio/request binding, actor-derived claim owner, explicit delivery review and native completion receipt"
+          ],
+          "relation": "",
+          "source": "training-creator-access"
+        },
+        {
+          "destination": "work-graph",
+          "drops": [
+            "a separate application-owned work status database"
+          ],
+          "forbidden_inferences": [],
+          "id": "training-request-uses-native-workgraph",
+          "invalidates_on": [],
+          "preserves": [
+            "native lifecycle, claim ownership, lease expiry, creator routing family and completion receipt"
+          ],
+          "relation": "",
+          "source": "training-creator-request"
+        }
+      ],
+      "known_gaps": [
+        "creator request operations have native sign-in, scoped grants and reviewed public CMS publication; SLA, quoting and refusal/revision workflow remain unconnected",
+        "claims expire after at most 24 hours and require explicit renewal; expired work is shown as needing creator attention, with recovery still performed through the native queue",
+        "receipts and unsent briefs are local to the member browser; device synchronization and portable receipt export remain open"
+      ],
+      "maturity": "implemented",
+      "name": "training-creator-request",
+      "presentation_modes": [
+        "path",
+        "lesson",
+        "assessment",
+        "deep-service-case",
+        "workspace",
+        "board",
+        "timeline"
+      ],
+      "protocol_chains": [],
+      "record_kind": "architecture",
+      "slug_roots": [
+        "/learn",
+        "/cases",
+        "/projects"
+      ],
+      "source_paths": [
+        "components/BonfyreServiceSite/training-requests.mjs",
+        "components/BonfyreServiceSite/training-request-view.mjs",
+        "components/BonfyreServiceSite/training-request-cli.mjs",
+        "components/BonfyreServiceSite/training-draft.mjs"
+      ],
+      "source_ref": "architecture:training-creator-request",
+      "territories": [
+        "life",
+        "work"
+      ],
+      "witnesses": [
+        "components/BonfyreServiceSite/tests/training-requests.test.mjs checks real native queue retries, scoped claims, receipt isolation, restart readback, stale-claim refusal and delivery digest checks",
+        "packs/no-simulation/fitness-studio-20261011/request-browser-verification.json records member submission, native creator claim and completion, delivered-program adoption, reload, studio isolation and execution of the returned routine"
+      ]
+    }
+  ]
+}

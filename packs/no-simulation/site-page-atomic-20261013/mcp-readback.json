@@ -1,0 +1,92 @@
+[
+  {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"argv\":[\"/Users/nickgonzales/.bonfyre/bin/bonfyre-cms\",\"--help\"],\"cwd\":\"/Users/nickgonzales/.bonfyre/bin\",\"exit_code\":0,\"stdout\":\"BonfyreCMS v0.1.0 — stripped binary CMS\\n\\nUsage:\\n  bonfyre-cms serve [--port PORT] [--db FILE] [--schemas DIR]\\n  bonfyre-cms schema list [--db FILE]\\n  bonfyre-cms schema apply <schema.json> [--db FILE]\\n  bonfyre-cms schema migrate [--db FILE] [--schemas DIR]\\n  bonfyre-cms entry page-write @file.json --ns NS  atomic page and fragment write\\n  bonfyre-cms entry create <type> [--ns NS] '<json>'\\n  bonfyre-cms entry list <type> [--ns NS] [--status STATUS] [--limit N]\\n  bonfyre-cms entry get <type> <id>\\n  bonfyre-cms entry update <type> <id> '<json>'\\n  bonfyre-cms entry delete <type> <id>\\n  bonfyre-cms token issue [--scope NS] [--actions ACTS] [--label LABEL]\\n  bonfyre-cms token list\\n  bonfyre-cms token revoke --scope NS --label LABEL\\n  bonfyre-cms ann build <type>\\n  bonfyre-cms ann knn <type> '<json>' [k]\\n  bonfyre-cms ann qknn <type> '<json>' [k]\\n  bonfyre-cms ann qknn-entry <type> <id> [k]\\n  bonfyre-cms ann qbench <type> [queries] [k]\\n  bonfyre-cms ann stats <type>\\n  bonfyre-cms bench-real <type> [--query-field F --query-op OP --query-value V]\\n  bonfyre-cms publish-layer-report <artifact_id> [--root DIR]\\n  bonfyre-cms publish-layer-family <T_FAMILY> [--root DIR]\\n\\nOptions:\\n  --port PORT     HTTP port (default: 8800)\\n  --db FILE       SQLite database file (default: bonfyre_cms.db)\\n  --schemas DIR   Content-type JSON directory (default: ./content-types)\\n  --ns NAMESPACE  Namespace scope (default: root)\\n\\n\",\"stderr\":\"\",\"duration_ms\":7,\"family\":\"BonfyreCMS\",\"binary\":\"/Users/nickgonzales/.bonfyre/bin/bonfyre-cms\",\"source_binary\":null,\"binary_sha256_at_readback\":\"98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02\",\"binary_bytes\":388520,\"checkout_binary\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/bonfyre-cms\",\"checkout_bytes\":388520,\"checkout_sha256_at_readback\":\"98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02\",\"checkout_comparison\":\"matched\",\"source_build_freshness\":\"not_attested\",\"corpus_binding\":null,\"managed_binary\":true,\"schema_version\":\"bonfyre.native.tool.receipt.v1\",\"receipt_id\":\"0707a8f6-e391-41f2-b306-f9557a2196ae\",\"status\":\"passed\",\"capabilities\":[\"cmd:ann\",\"cmd:bench-real\",\"cmd:entry\",\"cmd:publish-layer-family\",\"cmd:publish-layer-report\",\"cmd:schema\",\"cmd:serve\",\"cmd:token\"],\"stdout_sha256\":\"40e56cecf66151810a1dfc4babe0612e6f981c6ec99d36b783e6658065c38889\",\"stderr_sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stdout_bytes\":1421,\"stderr_bytes\":0}"
+      }
+    ],
+    "structuredContent": {
+      "argv": [
+        "/Users/nickgonzales/.bonfyre/bin/bonfyre-cms",
+        "--help"
+      ],
+      "cwd": "/Users/nickgonzales/.bonfyre/bin",
+      "exit_code": 0,
+      "stdout": "BonfyreCMS v0.1.0 — stripped binary CMS\n\nUsage:\n  bonfyre-cms serve [--port PORT] [--db FILE] [--schemas DIR]\n  bonfyre-cms schema list [--db FILE]\n  bonfyre-cms schema apply <schema.json> [--db FILE]\n  bonfyre-cms schema migrate [--db FILE] [--schemas DIR]\n  bonfyre-cms entry page-write @file.json --ns NS  atomic page and fragment write\n  bonfyre-cms entry create <type> [--ns NS] '<json>'\n  bonfyre-cms entry list <type> [--ns NS] [--status STATUS] [--limit N]\n  bonfyre-cms entry get <type> <id>\n  bonfyre-cms entry update <type> <id> '<json>'\n  bonfyre-cms entry delete <type> <id>\n  bonfyre-cms token issue [--scope NS] [--actions ACTS] [--label LABEL]\n  bonfyre-cms token list\n  bonfyre-cms token revoke --scope NS --label LABEL\n  bonfyre-cms ann build <type>\n  bonfyre-cms ann knn <type> '<json>' [k]\n  bonfyre-cms ann qknn <type> '<json>' [k]\n  bonfyre-cms ann qknn-entry <type> <id> [k]\n  bonfyre-cms ann qbench <type> [queries] [k]\n  bonfyre-cms ann stats <type>\n  bonfyre-cms bench-real <type> [--query-field F --query-op OP --query-value V]\n  bonfyre-cms publish-layer-report <artifact_id> [--root DIR]\n  bonfyre-cms publish-layer-family <T_FAMILY> [--root DIR]\n\nOptions:\n  --port PORT     HTTP port (default: 8800)\n  --db FILE       SQLite database file (default: bonfyre_cms.db)\n  --schemas DIR   Content-type JSON directory (default: ./content-types)\n  --ns NAMESPACE  Namespace scope (default: root)\n\n",
+      "stderr": "",
+      "duration_ms": 7,
+      "family": "BonfyreCMS",
+      "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-cms",
+      "source_binary": null,
+      "binary_sha256_at_readback": "98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02",
+      "binary_bytes": 388520,
+      "checkout_binary": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreCMS/bonfyre-cms",
+      "checkout_bytes": 388520,
+      "checkout_sha256_at_readback": "98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02",
+      "checkout_comparison": "matched",
+      "source_build_freshness": "not_attested",
+      "corpus_binding": null,
+      "managed_binary": true,
+      "schema_version": "bonfyre.native.tool.receipt.v1",
+      "receipt_id": "0707a8f6-e391-41f2-b306-f9557a2196ae",
+      "status": "passed",
+      "capabilities": [
+        "cmd:ann",
+        "cmd:bench-real",
+        "cmd:entry",
+        "cmd:publish-layer-family",
+        "cmd:publish-layer-report",
+        "cmd:schema",
+        "cmd:serve",
+        "cmd:token"
+      ],
+      "stdout_sha256": "40e56cecf66151810a1dfc4babe0612e6f981c6ec99d36b783e6658065c38889",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 1421,
+      "stderr_bytes": 0
+    },
+    "isError": false
+  },
+  {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"argv\":[\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"site\",\"--help\"],\"cwd\":\"/Users/nickgonzales/.bonfyre/bin\",\"exit_code\":0,\"stdout\":\"\",\"stderr\":\"bonfyre site — make, find, move and hand over sites\\n\\n  bonfyre site new NAME [--title T] [--tagline T] [--accent #hex] [--host H] [--no-open]\\n        one command: the site's records, its address, a running server, the page in a browser\\n  bonfyre site set NAME [--title T] [--tagline T] [--accent #hex] [--footnote T [--footnote-label L --footnote-link URL] | --no-footnote] | --presentation FILE.json   change a running site; the next page load shows it\\n  bonfyre site list [--json]\\n  bonfyre site show NAME|HOST [--json]\\n  bonfyre site search TEXT [--top N] [--json]      by meaning and by words, across every site\\n  bonfyre site page NAME --title T --text \\\"...\\\"|--file F   a standing page: served, in the menu, readable by assistants\\n                    [--group G]                      Markdown keeps its sections, code and tables; six pages or a group make a manual\\n  bonfyre site offer NAME --title T --price \\\"$450 per project\\\" --text \\\"...\\\" [--bookable]\\n        something the site sells: on its offers page, and readable by assistants; nothing takes payment\\n  bonfyre site accept NAME --request REF [--when T]  a request becomes a promise (commitments), an invoice (Pay), an opportunity (Finance)\\n  bonfyre site paid NAME --request REF --reference BANK-REF | done NAME --request REF | promises NAME\\n  bonfyre site domain NAME --to example.com [--ip A.B.C.D --secrets FILE [--apply]]\\n  bonfyre site post NAME --title T --text \\\"...\\\"      a dated post;  --withdraw ID takes one down\\n  bonfyre site page NAME --route /path --remove | --replace ...\\n  bonfyre site key NAME [--label WHO] [--write]      a key for one assistant, tried before it is handed over\\n  bonfyre site key NAME --withdraw WHO | keys NAME   withdraw a holder's key; who holds what\\n  bonfyre site share NAME [--stop]                   a public address for the site, tried from outside first\\n  bonfyre site usage NAME | inbox NAME               what assistants asked; messages left for the owner\\n  bonfyre site mcp NAME [--json]                   the site as an assistant's tool: stood up, checked, ready to paste\\n  bonfyre site check NAME [--json]                 dead links, unreadable colours, missing name or language\\n  bonfyre site export NAME --out FILE [--format html|wordpress|frappe]\\n        html: one self-contained page, fit to attach.  wordpress: its export file.  frappe: its documents\\n  bonfyre site import SOURCE --as NAME [--limit N]\\n        a WordPress address or export file, Frappe documents, any page address, or a file\\n  bonfyre site serve | stop\\n\\n  --home DIR      where this network of sites lives (default ~/.bonfyre/sites)\\n  --cms-db FILE   read another estate's content store (list, show, search)\\n  --port N        local port (default 8787)\\n\",\"duration_ms\":5,\"family\":\"BonfyreWebAddress\",\"binary\":\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"source_binary\":null,\"binary_sha256_at_readback\":\"9763ef1253d42f05fb6ad7656f52fdf1b7df5ec1d6a826e00bf0fdf06306b117\",\"binary_bytes\":2076064,\"checkout_binary\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address\",\"checkout_bytes\":2076064,\"checkout_sha256_at_readback\":\"9763ef1253d42f05fb6ad7656f52fdf1b7df5ec1d6a826e00bf0fdf06306b117\",\"checkout_comparison\":\"matched\",\"source_build_freshness\":\"not_attested\",\"corpus_binding\":null,\"managed_binary\":true,\"schema_version\":\"bonfyre.native.tool.receipt.v1\",\"receipt_id\":\"5c4a0493-9a32-41db-b709-371220272ee6\",\"status\":\"passed\",\"capabilities\":[],\"stdout_sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"16e777c4300c98ba6bff64ffbe1f45934701bb2bc30a55498b6826f8dad7da12\",\"stdout_bytes\":0,\"stderr_bytes\":2737}"
+      }
+    ],
+    "structuredContent": {
+      "argv": [
+        "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+        "site",
+        "--help"
+      ],
+      "cwd": "/Users/nickgonzales/.bonfyre/bin",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "bonfyre site — make, find, move and hand over sites\n\n  bonfyre site new NAME [--title T] [--tagline T] [--accent #hex] [--host H] [--no-open]\n        one command: the site's records, its address, a running server, the page in a browser\n  bonfyre site set NAME [--title T] [--tagline T] [--accent #hex] [--footnote T [--footnote-label L --footnote-link URL] | --no-footnote] | --presentation FILE.json   change a running site; the next page load shows it\n  bonfyre site list [--json]\n  bonfyre site show NAME|HOST [--json]\n  bonfyre site search TEXT [--top N] [--json]      by meaning and by words, across every site\n  bonfyre site page NAME --title T --text \"...\"|--file F   a standing page: served, in the menu, readable by assistants\n                    [--group G]                      Markdown keeps its sections, code and tables; six pages or a group make a manual\n  bonfyre site offer NAME --title T --price \"$450 per project\" --text \"...\" [--bookable]\n        something the site sells: on its offers page, and readable by assistants; nothing takes payment\n  bonfyre site accept NAME --request REF [--when T]  a request becomes a promise (commitments), an invoice (Pay), an opportunity (Finance)\n  bonfyre site paid NAME --request REF --reference BANK-REF | done NAME --request REF | promises NAME\n  bonfyre site domain NAME --to example.com [--ip A.B.C.D --secrets FILE [--apply]]\n  bonfyre site post NAME --title T --text \"...\"      a dated post;  --withdraw ID takes one down\n  bonfyre site page NAME --route /path --remove | --replace ...\n  bonfyre site key NAME [--label WHO] [--write]      a key for one assistant, tried before it is handed over\n  bonfyre site key NAME --withdraw WHO | keys NAME   withdraw a holder's key; who holds what\n  bonfyre site share NAME [--stop]                   a public address for the site, tried from outside first\n  bonfyre site usage NAME | inbox NAME               what assistants asked; messages left for the owner\n  bonfyre site mcp NAME [--json]                   the site as an assistant's tool: stood up, checked, ready to paste\n  bonfyre site check NAME [--json]                 dead links, unreadable colours, missing name or language\n  bonfyre site export NAME --out FILE [--format html|wordpress|frappe]\n        html: one self-contained page, fit to attach.  wordpress: its export file.  frappe: its documents\n  bonfyre site import SOURCE --as NAME [--limit N]\n        a WordPress address or export file, Frappe documents, any page address, or a file\n  bonfyre site serve | stop\n\n  --home DIR      where this network of sites lives (default ~/.bonfyre/sites)\n  --cms-db FILE   read another estate's content store (list, show, search)\n  --port N        local port (default 8787)\n",
+      "duration_ms": 5,
+      "family": "BonfyreWebAddress",
+      "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+      "source_binary": null,
+      "binary_sha256_at_readback": "9763ef1253d42f05fb6ad7656f52fdf1b7df5ec1d6a826e00bf0fdf06306b117",
+      "binary_bytes": 2076064,
+      "checkout_binary": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address",
+      "checkout_bytes": 2076064,
+      "checkout_sha256_at_readback": "9763ef1253d42f05fb6ad7656f52fdf1b7df5ec1d6a826e00bf0fdf06306b117",
+      "checkout_comparison": "matched",
+      "source_build_freshness": "not_attested",
+      "corpus_binding": null,
+      "managed_binary": true,
+      "schema_version": "bonfyre.native.tool.receipt.v1",
+      "receipt_id": "5c4a0493-9a32-41db-b709-371220272ee6",
+      "status": "passed",
+      "capabilities": [],
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "16e777c4300c98ba6bff64ffbe1f45934701bb2bc30a55498b6826f8dad7da12",
+      "stdout_bytes": 0,
+      "stderr_bytes": 2737
+    },
+    "isError": false
+  }
+]

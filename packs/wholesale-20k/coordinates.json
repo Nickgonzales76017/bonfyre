@@ -1,0 +1,16 @@
+{
+  "schema": "aurekai.wholesale-campaign-coordinates.v1",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "target_contribution_cents": 2000000,
+  "currency": "USD",
+  "target_is_not_capital_budget": true,
+  "cms_db": "/Users/nickgonzales/.bonfyre/estate-local/cms.db",
+  "cms_namespace": "wholesale-20k",
+  "finance_db": "/Users/nickgonzales/.bonfyre/estate-local/finance.db",
+  "workgraph_db": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/state/workgraph.db",
+  "workgraph_scope": "explicit campaign shard owned by existing BonfyreQueue, no worker started",
+  "quote_currency": "USD",
+  "purchase_authority": false,
+  "king_surplus_dispatch": "held",
+  "created_at": "2026-10-09T03:12:55.815Z"
+}

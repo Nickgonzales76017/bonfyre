@@ -1,0 +1,40 @@
+{
+  "schema": "bonfyre.relay-workflow-live-readback.v1",
+  "service": "gui/503/com.bonfyre.dual-agent-fabric",
+  "previous_pid": 924,
+  "current_pid": 8869,
+  "configuration_sha256": "69f2314de87bd0fe158c07b86dccf2601b6a801da319ba12c5e965b85f82318c",
+  "configuration_unchanged": true,
+  "policy_unchanged": true,
+  "stop_files_unchanged": true,
+  "paused": true,
+  "active_tasks": 0,
+  "queued_tasks": 0,
+  "project_owner_reachable": true,
+  "mesh_status": {
+    "transport_error": "configured mesh status unavailable"
+  },
+  "historical_task": {
+    "id": "a0cf14c75bc048f8b4d81f8a",
+    "recorded_state": "running",
+    "execution": {
+      "owned_by_this_process": false,
+      "queue_position": null,
+      "reconciliation_required": true
+    }
+  },
+  "summary_response_bytes": 2136,
+  "full_response_bytes": 8790,
+  "live_agents_dispatched": 0,
+  "loaded_pids": [
+    96330,
+    8869
+  ],
+  "loaded_source_hashes": {
+    "integrations/mcp/fabric_server.mjs": "295e0de1ca77f22451b2c87114d7fb967bc41188142cada748a4f7059f2f584e",
+    "integrations/mcp/fabric_store.mjs": "47e303f4ff9f220f3e81d6d2cb3b8ed118ffbb4b4cf9f61506b55606d0cbcf81",
+    "integrations/mcp/fabric_work.mjs": "53f61f8befb7a8aa3f914aa29696a0273fd7f87a2605d240b919bce7a648f21c",
+    "integrations/mcp/fabric_catalog.json": "d5dc9eb5c246e7e382fe43d88f7b0fabe70bbed79d2af33e0fe2cbfeef184bcc"
+  },
+  "final_guard_loaded": true
+}

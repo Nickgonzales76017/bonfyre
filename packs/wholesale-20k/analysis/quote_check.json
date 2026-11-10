@@ -1,0 +1,32 @@
+[
+  {
+    "id": "collected",
+    "calculated_cents": 50000,
+    "expected": 50000,
+    "passed": "true"
+  },
+  {
+    "id": "delivered",
+    "calculated_cents": 40000,
+    "expected": 40000,
+    "passed": "true"
+  },
+  {
+    "id": "negative",
+    "calculated_cents": -5000,
+    "expected": -5000,
+    "passed": "true"
+  },
+  {
+    "id": "unknown_bid",
+    "calculated_cents": null,
+    "expected": null,
+    "passed": "true"
+  },
+  {
+    "id": "unknown_cost",
+    "calculated_cents": null,
+    "expected": null,
+    "passed": "true"
+  }
+]

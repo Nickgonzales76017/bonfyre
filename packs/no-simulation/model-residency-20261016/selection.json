@@ -1,0 +1,16 @@
+{
+  "schema": "bonfyre.witness.model-selection.v1",
+  "measured_at": "2026-10-16",
+  "machine": "Apple M3, 16 GiB unified memory",
+  "service": "com.bonfyre.moe: bonfyre-moe serve --port 7000 --gpu-layers 99, no --model; candidates discovered under ~/BonfyreModels",
+  "discovered": ["Clef-Flash-Q4_K_M.gguf", "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf", "Qwen2.5-Coder-7B-Instruct-IQ3_XS.gguf", "Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf"],
+  "skipped": {"bitnet-embeddings-0.6b-bf16-i2_s.gguf": "no tokenizer.chat_template: not a chat model"},
+  "shape_prices_q8_kv_at_4096_mib": {"Clef-Flash": 7006, "Qwen1.5-MoE": 6386, "Coder-7B": 3671, "Coder-3B": 2277},
+  "earlier_measurement_agreement": "Coder-7B at -c 2048 f16 measured KV 112 MiB and compute 311 MiB; the shape gives 112 MiB KV and 361 MiB compute (50 MiB conservative)",
+  "load_observed": "2026-10-16T16:04:46Z loading Qwen2.5-Coder-3B-Instruct-Q4_K_M.gguf with 16384 context (grant 5, 2507 MiB); resident after 3s",
+  "cannot_infer": [
+    "the largest file -> the best answer; rank by size is a capacity proxy, not a quality measurement",
+    "a chat template -> this llama-server can run the architecture; Clef needs its own runtime and is set aside after a failed load",
+    "the context given at load -> the context a later request can use once memory has moved"
+  ]
+}

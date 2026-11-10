@@ -1,0 +1,36 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "status": "failed",
+  "checks": [
+    "home page links to audio sample",
+    "initial mix matches native bytes",
+    "layout fits 1440px",
+    "layout fits 390px",
+    "gain changes rendered output",
+    "saved levels survive reload"
+  ],
+  "layouts": [
+    {
+      "width": 1440,
+      "scroll": 1440,
+      "canvas": 850
+    },
+    {
+      "width": 390,
+      "scroll": 390,
+      "canvas": 324
+    }
+  ],
+  "failures": [
+    "AssertionError [ERR_ASSERTION]: browser Back restores a working saved mix\n    at check (/Users/nickgonzales/Developer/Bonfyre/components/BonfyreServiceSite/tests/creator-browser.mjs:21:33)\n    at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/components/BonfyreServiceSite/tests/creator-browser.mjs:57:5)\n    at async withChrome (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/capture/chrome-session.mjs:78:18)\n    at processTicksAndRejections (native:7:39)"
+  ],
+  "initial": {
+    "kind": "creator",
+    "creator": "",
+    "busy": "false",
+    "ready": "true",
+    "mixSha256": "068bb4b051fbe6de2fc1936cdcf6d31e5ea518d0e84a0d972075cf4f8448f26f",
+    "referenceVerified": "true",
+    "playing": "false"
+  }
+}

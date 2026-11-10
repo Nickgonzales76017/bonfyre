@@ -1,0 +1,44 @@
+[
+  {
+    "site": "fernhollow.localhost",
+    "width": 1440,
+    "overflow": false,
+    "hero": "quiet-title",
+    "font": "Fraunces, Georgia, serif"
+  },
+  {
+    "site": "tallgrass.localhost",
+    "width": 1440,
+    "overflow": false,
+    "hero": "headline-stack",
+    "font": "Archivo, \"Helvetica Neue\", Arial, sans-serif"
+  },
+  {
+    "site": "juniper.localhost",
+    "width": 1440,
+    "overflow": false,
+    "hero": "masthead",
+    "font": "\"Bodoni Moda\", Didot, Georgia, serif"
+  },
+  {
+    "site": "fernhollow.localhost",
+    "width": 390,
+    "overflow": false,
+    "hero": "quiet-title",
+    "font": "Fraunces, Georgia, serif"
+  },
+  {
+    "site": "tallgrass.localhost",
+    "width": 390,
+    "overflow": false,
+    "hero": "headline-stack",
+    "font": "Archivo, \"Helvetica Neue\", Arial, sans-serif"
+  },
+  {
+    "site": "juniper.localhost",
+    "width": 390,
+    "overflow": false,
+    "hero": "masthead",
+    "font": "\"Bodoni Moda\", Didot, Georgia, serif"
+  }
+]

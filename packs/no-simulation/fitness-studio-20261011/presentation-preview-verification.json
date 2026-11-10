@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-12T03:29:49.337Z",
+  "url": "http://127.0.0.1:4190/creator#appearance",
+  "checks": [
+    "fresh desktop browser opens Forge appearance",
+    "shared route renders an appearance preview before applying",
+    "mobile Still appearance fits the viewport",
+    "sign out clears creator appearance controls",
+    "model execution remains disconnected"
+  ],
+  "errors": []
+}

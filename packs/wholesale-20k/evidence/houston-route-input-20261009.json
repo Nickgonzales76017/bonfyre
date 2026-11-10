@@ -1,0 +1,34 @@
+[
+  {
+    "lot_id": "houston-35",
+    "destination": "Dallas",
+    "units_listed": 35,
+    "seller_ask_cents": 40000,
+    "freight_quote_cents": 25000,
+    "first_shipment_credit_cents": 5000,
+    "credit_state": "offered_not_issued_not_applied",
+    "quote_id": 1,
+    "quote_source": "gmail:message:1a120fdee1520f1c",
+    "seller_source": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/foreign/receipts/classified-bda45f493eb251f19955-bda45f493eb2-a2afe9c7d1c2.json",
+    "buyer_bid_cents": null,
+    "confirmed_acquisition_cents": null,
+    "other_costs_cents": null,
+    "terms": "Received supplier price, not an accepted booking. Original Gmail message 1a120fdee1520f1c, thread 1a11e86d55573537, independently read. Supplier calls rate all-in. Request concerned 35 used desktops plus keyboards/mice, preliminary 600 lb, and asked for a 900 lb alternative. Exact addresses, dimensions, packing and handling requirements remain unconfirmed. First-shipment $50 credit offered, coupon not yet issued; it is excluded from the recorded gross rate and must not be counted on both mutually exclusive routes. Prior thread detention terms: under 45 minutes waived, from minute 45 a $15 base charge plus $1/min thereafter; exact application remains to confirm. Existing clarification draft r3879815185282297814 / Gmail1a12120574537841 remains unsent and must not be duplicated. No expiry, insurance cover, payment schedule, packing labor or 900 lb price is established."
+  },
+  {
+    "lot_id": "houston-35",
+    "destination": "Stafford",
+    "units_listed": 35,
+    "seller_ask_cents": 40000,
+    "freight_quote_cents": 63000,
+    "first_shipment_credit_cents": 5000,
+    "credit_state": "offered_not_issued_not_applied",
+    "quote_id": 2,
+    "quote_source": "gmail:message:1a120fdee1520f1c",
+    "seller_source": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-it-lots/foreign/receipts/classified-bda45f493eb251f19955-bda45f493eb2-a2afe9c7d1c2.json",
+    "buyer_bid_cents": null,
+    "confirmed_acquisition_cents": null,
+    "other_costs_cents": null,
+    "terms": "Received supplier price, not an accepted booking. Original Gmail message 1a120fdee1520f1c, thread 1a11e86d55573537, independently read. Supplier calls rate all-in. Request concerned 35 used desktops plus keyboards/mice, preliminary 600 lb, and asked for a 900 lb alternative. Exact addresses, dimensions, packing and handling requirements remain unconfirmed. First-shipment $50 credit offered, coupon not yet issued; it is excluded from the recorded gross rate and must not be counted on both mutually exclusive routes. Prior thread detention terms: under 45 minutes waived, from minute 45 a $15 base charge plus $1/min thereafter; exact application remains to confirm. Existing clarification draft r3879815185282297814 / Gmail1a12120574537841 remains unsent and must not be duplicated. No expiry, insurance cover, payment schedule, packing labor or 900 lb price is established."
+  }
+]

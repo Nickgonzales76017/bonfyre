@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-09T03:15:06.045Z",
+  "records": [
+    {
+      "lot": "houston-35",
+      "id": 1,
+      "source": "wholesale:houston-35-desktops-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "vertiv-32",
+      "id": 2,
+      "source": "wholesale:dfw-it-lots-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "heim-gmc",
+      "id": 3,
+      "source": "wholesale:lewisville-machinery-referral-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "camaster-408",
+      "id": 4,
+      "source": "wholesale:camaster-408-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "vader-racking",
+      "id": 5,
+      "source": "wholesale:vader-racking-routing-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "wilmington-toner",
+      "id": 6,
+      "source": "wholesale:toner-exit-routing-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "conroe-toner",
+      "id": 7,
+      "source": "wholesale:conroe-toner-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "covina-toner",
+      "id": 8,
+      "source": "wholesale:covina-toner-20261008",
+      "deal_value": null
+    },
+    {
+      "lot": "laguna-swift",
+      "id": 9,
+      "source": "wholesale:san-antonio-laguna-router-20261008",
+      "deal_value": null
+    }
+  ],
+  "verified": 9,
+  "remote_frappe_writes": 0
+}

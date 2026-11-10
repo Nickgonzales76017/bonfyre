@@ -1,0 +1,84 @@
+{
+  "platform": "macOS-15.5-arm64-arm-64bit",
+  "bytes": 67108881,
+  "binary_sha256": {
+    "before": "1bbb1b15afc81dfc4ea908ec66410570015a4fd438b70e534bd641457a28537b",
+    "system": "d98ceba1509d966d6e800c4137d782ceada90d45b9f6bd0b28bc07d0cc5e0518"
+  },
+  "runs": [
+    {
+      "repeat": 0,
+      "backend": "before",
+      "elapsed_seconds": 1.1204154590000002,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 0,
+      "backend": "system",
+      "elapsed_seconds": 0.525585958,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 1,
+      "backend": "system",
+      "elapsed_seconds": 0.6606916250000001,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 1,
+      "backend": "before",
+      "elapsed_seconds": 1.013099,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 2,
+      "backend": "before",
+      "elapsed_seconds": 1.0141257500000003,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 2,
+      "backend": "system",
+      "elapsed_seconds": 0.41108316600000006,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 3,
+      "backend": "system",
+      "elapsed_seconds": 0.5252166670000005,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 3,
+      "backend": "before",
+      "elapsed_seconds": 1.0671999159999999,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 4,
+      "backend": "before",
+      "elapsed_seconds": 1.1005784580000002,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    },
+    {
+      "repeat": 4,
+      "backend": "system",
+      "elapsed_seconds": 0.5034199999999984,
+      "sha256": "3468083d4d2893f9c2dd282803995f53104138ab4337bbe0b5a415d375c5760e",
+      "bytes": 67108881
+    }
+  ],
+  "median_seconds": {
+    "before": 1.0671999159999999,
+    "system": 0.5252166670000005
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-vertiv-32-buyer",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "vertiv-32",
+  "project_ref": "wholesale:dfw-it-lots-20261008",
+  "title": "🚨 32 NEW VERTIV VRA1016 KITS — TAKE ALL $1,995 — RESELLER LOT",
+  "location": "Hurst, TX",
+  "phase": "buyer",
+  "role_requested": "commercial operator",
+  "desired_result": "Whole-lot or nonoverlapping split bids with exact accepted units, condition, net collection/delivered basis, deductions, payment timing and validity. Reuse existing threads, do not repeat opening.",
+  "disclosure_allowlist": [
+    "equipment specification",
+    "condition evidence",
+    "approximate pickup region"
+  ],
+  "disclosure_exclusions": [
+    "supplier identity until authorized handoff",
+    "supplier asking price",
+    "internal margins",
+    "other bids"
+  ],
+  "acceptance": "Actual buyer reply or written indication, no bid invented from retail/auction comparisons.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-vertiv/foreign/receipts/classified-20937073110c96c211c4-20937073110c-f3a0f5653f68.json",
+  "next_action": "seller labels and independent buyer bid"
+}

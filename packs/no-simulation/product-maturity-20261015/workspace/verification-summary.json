@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-15T06:51:08.210153+00:00",
+  "sources": {
+    "cmd/BonfyreAuth/src/main.c": "eac81087a88eb026fdc7dfbe4d36327ee980fc873bb0b85e423ae26d7f1ef116",
+    "cmd/BonfyreAuth/src/institution_members.h": "8ea373fea3f8a712f8f26b0d31616db8bb7d982e6373e6fda88622ac721eaf40",
+    "cmd/BonfyreAuth/Makefile": "7100d1fc1d202523241d8c83621f405a9bc407dbf39fd199714aba732663b07f",
+    "cmd/BonfyreAuth/tests/institution_members_test.py": "85b3e64812ca0bd42f8bcd508d0484663fd75107ca8dfea0eb467a06da7296b3",
+    "components/BonfyreServiceSite/training-creator.mjs": "7617c5bb70374af7a5e46998735498912d740a0dcd96ef9cb2624daa37bd0c27",
+    "components/BonfyreServiceSite/training-creator-client.mjs": "1b0bb5acad7b7f42ac1692914db16d5b90e927cf607a041764604bacef6d3a97",
+    "components/BonfyreServiceSite/training-creator-view.mjs": "75b336b6573972d7fee759c25b5abfb230204c13570c31bc49077d454f0a51b4",
+    "components/BonfyreServiceSite/training-creator.css": "adb56e1753427293e5866b3bb42e5bc7724d80a6d34c8662846847399032d684",
+    "components/BonfyreServiceSite/workspace-navigation.mjs": "f64ed257cfc2d5a18973ef828e2e4a08bb39e430ee2aa635670c685b2065483e",
+    "components/BonfyreServiceSite/training-workspace-views.mjs": "3a5fb1739b7650c3a0903ee7fb2ba4f53076440e66ea959ad90d5ac9f5890081",
+    "components/BonfyreServiceSite/training-workspace.mjs": "2cde27413ff6d8f44443d96dce2acb4ee7f40509a79d239377d8e978d69b41e7",
+    "components/BonfyreServiceSite/tests/training-creator.test.mjs": "541df03776e2b731bf655613e2dda7d63015e1e75874bd68d474c992f8be5b3a",
+    "components/BonfyreServiceSite/tests/training-workspace-browser.mjs": "a7171082f679e3527bec27f67340800fdcbf158ecd8e2bd46a550dc6c7fbfa7e"
+  },
+  "checks": {
+    "creator_api_and_shared_navigation": {
+      "pass": 9,
+      "fail": 0
+    },
+    "related_training_api": {
+      "pass": 17,
+      "fail": 0
+    },
+    "native_auth_existing_suites": "passed",
+    "native_team_scope_expiry_pagination_and_lock_tests": "passed",
+    "workspace_browser": {
+      "pass": 16,
+      "fail": 0
+    },
+    "original_creator_delivery_browser": {
+      "pass": 12,
+      "fail": 0
+    },
+    "control_plane": {
+      "pass": 871,
+      "skip": 259,
+      "fail": 0
+    },
+    "atlas": "510 architectures, 455 interactions; valid and exported",
+    "experience_map": "all checks passed; installed corpus refreshed"
+  },
+  "deployment": "local source and native binary; no public deployment"
+}

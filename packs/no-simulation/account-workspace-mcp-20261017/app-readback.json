@@ -1,0 +1,38 @@
+{
+  "observed_at": "2026-10-17T22:50:02.970Z",
+  "is_error": false,
+  "source": {
+    "path": "integrations/mcp/workspace_mcp.mjs",
+    "sha256": "505877c6e44e2b841e4cc8bc2b5aed8eed9c997f912c90e67941c649b6e2f6d0",
+    "source_bytes": 15653,
+    "total_lines": 161,
+    "lines": [
+      {
+        "line": 1,
+        "text": "// Account MCP carrier for the existing WebAddress/CMS workspace owner."
+      },
+      {
+        "line": 2,
+        "text": "// No database, copied draft, inferred actor, or alternate grant evaluator."
+      },
+      {
+        "line": 3,
+        "text": "import {createHash} from 'node:crypto';"
+      },
+      {
+        "line": 4,
+        "text": "import {encode,decode,maxPacket} from '../browser/workspace-msgpack.mjs';"
+      },
+      {
+        "line": 5,
+        "text": "import {validateArguments} from './http_boundary.mjs';"
+      },
+      {
+        "line": 6,
+        "text": ""
+      }
+    ],
+    "next_start_line": 7
+  },
+  "scope": "Existing authenticated app project_read succeeds after gateway reload. New workspace tool names are absent from this conversation; this is not a live workspace invocation."
+}

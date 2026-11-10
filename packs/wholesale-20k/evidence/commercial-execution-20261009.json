@@ -1,0 +1,81 @@
+{
+  "created_projects": [
+    {
+      "key": "provider:runpod-starter-review-20261009",
+      "id": 126,
+      "stage": "qualification_sent"
+    },
+    {
+      "key": "wholesale:dealfactory-dallas-supply-20261009",
+      "id": 127,
+      "stage": "supplier_manifest_requested"
+    },
+    {
+      "key": "wholesale:hurst-121-oem-20261009",
+      "id": 128,
+      "stage": "seller_manifest_needed"
+    },
+    {
+      "key": "wholesale:xtreme-kennedale-source-20261009",
+      "id": 129,
+      "stage": "source_qualification"
+    }
+  ],
+  "project_updates": [
+    {
+      "id": 76,
+      "stage": "buyer_photo_review_pending"
+    },
+    {
+      "id": 73,
+      "stage": "seller_access_needed_for_free_survey"
+    },
+    {
+      "id": 68,
+      "stage": "buyer_photo_review_pending"
+    },
+    {
+      "id": 121,
+      "stage": "buyer_photo_review_pending"
+    },
+    {
+      "id": 122,
+      "stage": "buyer_photo_review_pending"
+    }
+  ],
+  "sent_messages": [
+    {
+      "gmail": "1a121e4682d3c561",
+      "native": 114,
+      "project": "wholesale:conroe-toner-20261008"
+    },
+    {
+      "gmail": "1a121e49102fb567",
+      "native": 115,
+      "project": "wholesale:houston-35-desktops-20261008"
+    },
+    {
+      "gmail": "1a121e4b6c0bb24e",
+      "native": 116,
+      "project": "wholesale:lewisville-machinery-referral-20261008"
+    },
+    {
+      "gmail": "1a121eb92269f0c2",
+      "native": 117,
+      "project": "provider:runpod-starter-review-20261009"
+    },
+    {
+      "gmail": "1a121ed034ad3201",
+      "native": 118,
+      "project": "wholesale:dealfactory-dallas-supply-20261009"
+    },
+    {
+      "gmail": "1a121eeb5d905d16",
+      "native": 119,
+      "project": "wholesale:dfw-it-lots-20261008"
+    }
+  ],
+  "external_sends": 6,
+  "accepted_bids": 0,
+  "grant_awards": 0
+}

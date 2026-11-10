@@ -1,0 +1,14 @@
+{
+  "components/BonfyreServiceSite/workspace-queue.mjs": "0486fcdb449e22b25ce4d59b0aa0570dcac3322fa2e91c2ae71ddbb3530e34f7",
+  "components/BonfyreServiceSite/training-workspace-views.mjs": "011a40d8319d4305f4e9c61cf873793316d4418f01cd7b91ea3a53e49afc0014",
+  "components/BonfyreServiceSite/training-workspace.mjs": "e86ceaad018a1aa255905c1c4f55fe7d202edda50e8f393bda24990c9fcf6066",
+  "components/BonfyreServiceSite/training-creator-client.mjs": "47d41764079d51749edba2a7d10c445adbc83b58f50a829f200d1b1a365c6300",
+  "components/BonfyreServiceSite/training-creator.css": "681bfbcc6e4d9ba49b61677a90183625029d9c6c3119bd204b55f34fe2931306",
+  "components/BonfyreServiceSite/training-creator.mjs": "49d8798ffe2de87c36ab4ba9f25dd54a4c6486301c435c49af9d0c719b8b7f66",
+  "cmd/BonfyreAuth/src/institution_members.h": "1009c7447986fa2ab74e754bf44ae44613cf1915f79f235c4df4ac7eff215c4e",
+  "cmd/BonfyreAuth/src/main.c": "b98fe46fc0a4ab33d0f3b67fae0752786ec9c5bae88fbdd795b6af82fec9fff3",
+  "cmd/BonfyreAuth/tests/institution_members_test.py": "4ec71b0b0a4783152667de2f12d9bfa7655741e48c406b35acacdec3989e6aa3",
+  "components/BonfyreServiceSite/tests/training-queue-browser.mjs": "4a4539a516bc273fd830c0f7c2cccbaa02984b547dfe1d9d22c057e7c2cd88de",
+  "components/BonfyreServiceSite/tests/workspace-queue.test.mjs": "61c6b1bef8ebde5b9b32cd1c087100835ff89a58e6c72a3b99cf7e12ec401873",
+  "components/BonfyreServiceSite/tests/training-creator.test.mjs": "340aee2389489cf14eab0bd7c36142cf9256f6b900e70437c80a90b3415ee289"
+}

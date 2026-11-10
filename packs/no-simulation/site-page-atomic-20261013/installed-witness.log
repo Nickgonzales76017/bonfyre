@@ -1,0 +1,18 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreCMS/tests/page_write.test.mjs:
+(pass) page and fragment writes roll back together with history and deferred effects [91.91ms]
+(pass) namespace, stale identity and malformed aggregates are refused without writes [81.81ms]
+(pass) concurrent replacements leave one complete generation and run hooks after commit [54.99ms]
+(pass) notification failure reports an already committed page explicitly [28.68ms]
+
+cmd/BonfyreWebAddress/tests/site_page_replace.test.mjs:
+(pass) a missing replacement file leaves every page record and the served guide unchanged [499.71ms]
+(pass) empty, whitespace, binary and directory inputs are refused before replacement [316.61ms]
+(pass) valid replacement keeps the page identity, creation time and navigation group [457.82ms]
+(pass) a storage failure during replacement, creation or removal preserves the served page [321.14ms]
+
+ 8 pass
+ 0 fail
+ 122 expect() calls
+Ran 8 tests across 2 files. [1.99s]

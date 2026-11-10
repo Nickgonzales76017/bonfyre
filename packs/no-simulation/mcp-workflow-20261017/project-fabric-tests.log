@@ -1,0 +1,61 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/project_node.test.mjs:
+(pass) Project, Spines, V6 and Fabric catalogs have exactly one owner without schema duplication [13.08ms]
+(pass) bearer, schema and unknown-name refusals happen before any owner invocation [1.08ms]
+(pass) resources bind to the same owners and prompts never execute tools [1.76ms]
+(pass) HTTP workflow exposes batched source reads, conditional refresh and path preflight through existing tools [94.72ms]
+(pass) initialization, notifications, health and unavailable local model stay distinct [1.09ms]
+
+integrations/mcp/tests/project_transport_adversarial.test.mjs:
+(pass) auth refusal precedes parsing and dispatch, including malformed unauthenticated bodies [0.42ms]
+(pass) invalid JSON-RPC ids are never reflected as valid response ids [0.33ms]
+(pass) malformed body, envelope, params and unknown tools never reach owners [0.69ms]
+(pass) all owner error envelopes redact the MCP credential, including model resources [0.62ms]
+(pass) invalid resource identifiers refuse without invoking read owners [0.24ms]
+(pass) concurrency admission rejects excess requests and releases slots on completion [1.51ms]
+(pass) oversized owner result refuses without retrying or re-invoking an effect [76.25ms]
+(pass) malformed UTF-8 and excessive declared bodies refuse before dispatch [1.77ms]
+(pass) bounded runner kills a SIGTERM-resistant grandchild that retains stdout after parent exit [661.76ms]
+(pass) bounded runner refuses overflow, invalid UTF-8 and missing executable without truncated success [53.90ms]
+
+integrations/mcp/tests/owned_mcp_client.test.mjs:
+(pass) outbound owner is explicitly bound, validates identity and never retries effects [1.35ms]
+(pass) outbound HTTP, identity, isError and byte boundaries cannot become success [0.95ms]
+(pass) shared outbound admission rejects concurrent and byte-pressure overload before fetch, then releases [0.36ms]
+(pass) maxConcurrent independently rejects a third request without queueing [0.61ms]
+(pass) deadline and caller abort span stalled response body and release admission [23.02ms]
+(pass) HTTPS owner exact response identity succeeds; uncertain transport errors never retry [0.79ms]
+(pass) header deadline releases the slot and cancels a late response without replay [21.66ms]
+(pass) invalid declared response length cancels body before releasing admission [0.56ms]
+(pass) abort between call return and queued fetch prevents any dispatch [0.10ms]
+(pass) remote isError after an effect is reported but never assumed effect-free or replayed [0.28ms]
+(pass) owner error details are bounded and redact the dedicated credential [0.06ms]
+
+integrations/mcp/tests/project_spines.test.mjs:
+(pass) all existing Spines schemas are reused and hidden proof writes require write admission [0.22ms]
+(pass) remote route and credential are deployment-owned, never derived from caller arguments [1.60ms]
+(pass) write gate and STOP refuse before network admission, including misleading historical reads [0.77ms]
+(pass) Project authenticated route composes real Spines/Wasm through a simulated HTTPS owner, not a second evaluator [52.38ms]
+
+integrations/mcp/tests/fabric_project_workflow.test.mjs:
+(pass) one HTTP relay preserves Project authority with base [826.24ms]
+(pass) one HTTP relay preserves Project authority with source [854.25ms]
+(pass) one HTTP relay preserves Project authority with source-refused [495.72ms]
+
+integrations/mcp/tests/project_fabric.test.mjs:
+(pass) Project delivery operations retain exact Fabric schemas and effect annotations [0.78ms]
+(pass) Fabric placement uses a fixed endpoint and requires a separate remote credential [1.74ms]
+(pass) STOP blocks submissions, permits cancellation, and never bypasses the write gate [1.01ms]
+(pass) Project validates delivery inputs before forwarding and preserves owner refusals [1.03ms]
+
+integrations/mcp/tests/project_v6.test.mjs:
+(pass) all V6 contracts derive from the owner catalog, including no-argument reads
+(pass) V6 HTTPS uses only a dedicated credential and fixed configured endpoint [1.27ms]
+(pass) V6 write admission and STOP refuse before outbound dispatch [0.71ms]
+(pass) Project schema rejects endpoint selection and missing V6 confirmation before owner call [1.60ms]
+
+ 41 pass
+ 0 fail
+ 560 expect() calls
+Ran 41 tests across 7 files. [3.41s]

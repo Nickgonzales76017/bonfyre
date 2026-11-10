@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nick Gonzales — Builder, Engineer, Founder</title>
+<meta name="description" content="Nick Gonzales builds open-source tools, automation systems, and audio pipelines. Creator of Bonfyre (47 C11 binaries) and Norme D'or Consulting.">
+<meta name="theme-color" content="#111">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root {
+  --bg: #111;
+  --surface: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #eee;
+  --dim: #888;
+  --accent: #f97316;
+  --blue: #58a6ff;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(17,17,17,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); padding: 10px 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+nav .brand { font-weight: 700; color: var(--accent); text-decoration: none; }
+nav a:not(.brand) { font-size: 0.85rem; color: var(--dim); }
+nav a:not(.brand):hover { color: var(--text); text-decoration: none; }
+
+/* Hero */
+.hero { padding: 80px 0 60px; border-bottom: 1px solid var(--border); }
+.hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+.hero h1 span { color: var(--accent); }
+.hero .subtitle { color: var(--dim); font-size: 1.1rem; max-width: 600px; margin-bottom: 24px; }
+.hero .links { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero .links a {
+  display: inline-block; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
+  text-decoration: none; transition: all 0.15s;
+}
+.hero .links .primary { background: var(--accent); color: #fff; }
+.hero .links .primary:hover { filter: brightness(1.15); }
+.hero .links .outline { border: 1px solid var(--border); color: var(--text); }
+.hero .links .outline:hover { border-color: var(--dim); }
+
+/* Sections */
+section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+section h2 { font-size: 1.4rem; margin-bottom: 8px; }
+section .lead { color: var(--dim); margin-bottom: 24px; }
+
+/* Project cards */
+.projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.project {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 20px; transition: border-color 0.15s;
+}
+.project:hover { border-color: var(--dim); }
+.project h3 { font-size: 1rem; margin-bottom: 4px; }
+.project h3 a { color: var(--text); }
+.project p { color: var(--dim); font-size: 0.9rem; margin-bottom: 8px; }
+.project .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.project .tag {
+  font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--dim);
+}
+
+/* Services */
+.services { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.service {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; text-align: center;
+}
+.service .icon { font-size: 1.5rem; margin-bottom: 6px; }
+.service h4 { font-size: 0.9rem; margin-bottom: 4px; }
+.service p { font-size: 0.8rem; color: var(--dim); }
+
+/* Team */
+.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+.member img { width: 100%; border-radius: 8px; margin-bottom: 12px; aspect-ratio: 1; object-fit: cover; }
+.member h3 { font-size: 1rem; margin-bottom: 2px; }
+.member .role { color: var(--dim); font-size: 0.85rem; margin-bottom: 8px; }
+.member p { font-size: 0.9rem; color: var(--dim); line-height: 1.5; }
+
+/* Contact */
+.contact-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.contact-row a {
+  display: inline-block; padding: 10px 20px; border-radius: 6px; font-weight: 600;
+  font-size: 0.9rem; text-decoration: none; background: var(--accent); color: #fff;
+}
+.contact-row a:hover { filter: brightness(1.15); text-decoration: none; }
+.contact-row a.outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+footer { padding: 32px 0; text-align: center; color: var(--dim); font-size: 0.85rem; }
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 1.8rem; }
+  .projects { grid-template-columns: 1fr; }
+  .services { grid-template-columns: 1fr 1fr; }
+  .team { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="brand">⚡ Nick Gonzales</a>
+  <a href="#projects">Projects</a>
+  <a href="#services">Services</a>
+  <a href="#about">About</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <h1>Nick <span>Gonzales</span></h1>
+    <p class="subtitle">Builder, engineer, founder. I build tools that turn audio into structured data, replace SaaS backends with tiny binaries, and help businesses automate what slows them down.</p>
+    <div class="links">
+      <a class="primary" href="https://github.com/Nickgonzales76017">GitHub</a>
+      <a class="outline" href="https://nickgonzales76017.github.io/bonfyre/">Bonfyre</a>
+      <a class="outline" href="#contact">Get in touch</a>
+    </div>
+  </div>
+</header>
+
+<section id="projects">
+  <div class="container">
+    <h2>Projects</h2>
+    <p class="lead">Open-source tools and production systems I've built.</p>
+    <div class="projects">
+      <div class="project">
+        <h3><a href="https://nickgonzales76017.github.io/bonfyre/">🔥 Bonfyre</a></h3>
+        <p>47 composable C11 binaries that replace an entire backend stack. CMS, transcription, telephony, auth, payments, vector search, compression — each under 70 KB. ~2.1 MB total.</p>
+        <div class="tags">
+          <span class="tag">C11</span>
+          <span class="tag">MIT</span>
+          <span class="tag">47 binaries</span>
+          <span class="tag">~2.1 MB</span>
+        </div>
+      </div>
+      <div class="project">
+        <h3><a href="https://github.com/Nickgonzales76017/bonfyre-recipes">📋 Bonfyre Recipes</a></h3>
+        <p>Step-by-step workflow guides for 16 industries — turn voice memos, interviews, and recordings into structured deliverables using Bonfyre pipelines.</p>
+        <div class="tags">
+          <span class="tag">Guides</span>
+          <span class="tag">16 industries</span>
+          <span class="tag">Non-technical</span>
+        </div>
+      </div>
+      <div class="project">
+        <h3>🎯 20 Live Apps</h3>
+        <p>Real end-user applications running on GitHub Pages — from shift handoff boards to podcast publishers. Each uses Bonfyre binaries with WASM client-side preview.</p>
+        <div class="tags">
+          <span class="tag">GitHub Pages</span>
+          <span class="tag">WASM</span>
+          <span class="tag">Production</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="container">
+    <h2>Norme D'or Consulting</h2>
+    <p class="lead">Automation consulting for businesses ready to stop paying for tools they don't need.</p>
+    <div class="services">
+      <div class="service">
+        <div class="icon">📊</div>
+        <h4>Automation Reports</h4>
+        <p>Audit your stack. Find what to cut, what to keep, what to automate.</p>
+      </div>
+      <div class="service">
+        <div class="icon">🎤</div>
+        <h4>Presentations</h4>
+        <p>Technical demos and executive briefings for your team or stakeholders.</p>
+      </div>
+      <div class="service">
+        <div class="icon">🔧</div>
+        <h4>Technology Recommendations</h4>
+        <p>Vendor selection, architecture review, and migration planning.</p>
+      </div>
+      <div class="service">
+        <div class="icon">📈</div>
+        <h4>Revenue &amp; Cost Reports</h4>
+        <p>Data-driven analysis of automation ROI and cost reduction opportunities.</p>
+      </div>
+      <div class="service">
+        <div class="icon">🗂️</div>
+        <h4>Smart Data Creation</h4>
+        <p>Turn unstructured audio, documents, and records into searchable structured data.</p>
+      </div>
+      <div class="service">
+        <div class="icon">⚡</div>
+        <h4>Productivity Reports</h4>
+        <p>Measure throughput, find bottlenecks, and benchmark improvements.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="container">
+    <h2>About</h2>
+    <p class="lead">Norme D'or Consulting helps businesses automate the right things — not everything, just the parts that are bleeding time and money.</p>
+    <div class="team">
+      <div class="member">
+        <img src="images/IMG_0049.jpeg" alt="Nicholas Mayfield-Gonzales">
+        <h3>Nicholas Mayfield-Gonzales</h3>
+        <div class="role">Co-Founder &amp; Head of Technology</div>
+        <p>Electrical engineering background. Builds the systems and tools that power our recommendations — including Bonfyre, a 47-binary backend stack written in C. Knows the technology being recommended because he built it.</p>
+      </div>
+      <div class="member">
+        <img src="images/IMG_4121.jpeg" alt="Truong L. Tran">
+        <h3>Truong L. Tran</h3>
+        <div class="role">Co-Founder &amp; Lead Business Strategist</div>
+        <p>Grew up around local businesses — donut shops to nail salons — and saw firsthand how they should and shouldn't be run. Marketing background with a focus on understanding how markets shift during long-term consulting engagements.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="container">
+    <h2>Contact</h2>
+    <p class="lead">Let's talk about your next project.</p>
+    <div class="contact-row">
+      <a href="mailto:normedorconsulting@gmail.com">Email us</a>
+      <a href="https://github.com/Nickgonzales76017" class="outline">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      Nick Gonzales · <a href="https://github.com/Nickgonzales76017">GitHub</a> ·
+      <a href="https://nickgonzales76017.github.io/bonfyre/">Bonfyre</a> ·
+      <a href="mailto:normedorconsulting@gmail.com">normedorconsulting@gmail.com</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
+</html>

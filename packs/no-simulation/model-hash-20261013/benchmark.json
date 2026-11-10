@@ -1,0 +1,79 @@
+{
+  "synthetic": true,
+  "model_downloaded": false,
+  "model_executed": false,
+  "bytes": 134217745,
+  "runs": [
+    {
+      "binary": "previous",
+      "seconds": 0.952384292,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "candidate",
+      "seconds": 0.13769725,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "candidate",
+      "seconds": 0.1274927090000002,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "previous",
+      "seconds": 0.718396625,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "previous",
+      "seconds": 0.703202417,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "candidate",
+      "seconds": 0.1405324170000002,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "candidate",
+      "seconds": 0.12371516699999985,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "previous",
+      "seconds": 0.7072804159999997,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "previous",
+      "seconds": 0.7868101670000001,
+      "exit_code": 0,
+      "digest_exact": true
+    },
+    {
+      "binary": "candidate",
+      "seconds": 0.12078812500000069,
+      "exit_code": 0,
+      "digest_exact": true
+    }
+  ],
+  "binaries": {
+    "previous": "d6bad96fa3356da9a61ccca645bff4aab05b08df96b25e7a4d57cbfe050dffb6",
+    "candidate": "10090fdf15cdcc497d1bfaedc46db07256db50d33869bc094716ae276863caf4"
+  },
+  "sha256": "0a577db7b77b054382aa10d8e61dbea70800803f3e625ac471aaa0a2b11a2ba2",
+  "median_seconds": {
+    "previous": 0.718396625,
+    "candidate": 0.1274927090000002
+  },
+  "speedup": 5.634805555822011,
+  "source_unchanged": true
+}

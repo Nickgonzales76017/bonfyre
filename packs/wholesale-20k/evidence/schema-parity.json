@@ -1,0 +1,42 @@
+[
+  {
+    "type": "frappe_crm_crm_deal",
+    "expected_fields": 42,
+    "retained_declared_fields": 42,
+    "missing_fields": []
+  },
+  {
+    "type": "frappe_erpnext_supplier_quotation",
+    "expected_fields": 68,
+    "retained_declared_fields": 64,
+    "missing_fields": [
+      "billing_address_display",
+      "cost_center",
+      "project",
+      "has_unit_price_items"
+    ]
+  },
+  {
+    "type": "frappe_erpnext_request_for_quotation",
+    "expected_fields": 24,
+    "retained_declared_fields": 24,
+    "missing_fields": []
+  },
+  {
+    "type": "frappe_erpnext_quotation",
+    "expected_fields": 74,
+    "retained_declared_fields": 64,
+    "missing_fields": [
+      "opportunity",
+      "company_address",
+      "company_address_display",
+      "scan_barcode",
+      "incoterm",
+      "named_place",
+      "disable_rounded_total",
+      "company_contact_person",
+      "has_unit_price_items",
+      "last_scanned_warehouse"
+    ]
+  }
+]

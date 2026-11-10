@@ -1,0 +1,80 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/fabric_transport.test.mjs:
+(pass) captured installed fabric catalog has exactly fourteen tools and four prompts
+(pass) health is public; events/status/hook require bearer and events are finite JSON, not SSE [4.73ms]
+(pass) MCP catalog, prompts, admission and unknown-resource refusal use one shared boundary [2.05ms]
+(pass) hook input is bounded and malformed JSON fails without recording an event [0.50ms]
+(pass) task creation is serialized despite inherited readOnlyHint annotation [11.25ms]
+(pass) real fabric constructor binds all fourteen catalog tools to injected owners [3.54ms]
+(pass) real fabric routes bind hook/events while STOP refuses new task and estate effects [1.85ms]
+(pass) real fabric queue applies active and queued bounds before creating additional tasks [1.54ms]
+
+integrations/mcp/tests/owned_mcp_client.test.mjs:
+(pass) outbound owner is explicitly bound, validates identity and never retries effects [0.69ms]
+(pass) outbound HTTP, identity, isError and byte boundaries cannot become success [0.60ms]
+(pass) shared outbound admission rejects concurrent and byte-pressure overload before fetch, then releases [0.37ms]
+(pass) maxConcurrent independently rejects a third request without queueing [0.35ms]
+(pass) deadline and caller abort span stalled response body and release admission [22.81ms]
+(pass) HTTPS owner exact response identity succeeds; uncertain transport errors never retry [0.36ms]
+(pass) header deadline releases the slot and cancels a late response without replay [21.36ms]
+(pass) invalid declared response length cancels body before releasing admission [0.39ms]
+(pass) abort between call return and queued fetch prevents any dispatch [0.15ms]
+(pass) remote isError after an effect is reported but never assumed effect-free or replayed [0.24ms]
+
+integrations/mcp/tests/fabric_store.test.mjs:
+(pass) lazy store initializes exact six legacy tables without seeding work [14.84ms]
+(pass) compact task polling omits large prompts, agent text and receipt payloads while retaining evidence coordinates [105.15ms]
+(pass) claim is compare-and-swap and cancelled state survives late success [14.39ms]
+(pass) completed and failed runs are immutable; task cannot complete while a child remains active [10.25ms]
+(pass) cancel preserves lane lock until joined owner releases; expired foreign lock is not proof of death [9.31ms]
+(pass) canonical project lanes allow independent repositories while legacy global leases must drain [12.80ms]
+(pass) confined file IO refuses symlinks, traversal, oversized files and invalid JSON-lines safely [9.65ms]
+(pass) receipt bytes match digest and task status/event/recent projections retain legacy shape [7.98ms]
+(pass) reopening existing rows neither replays nor rewrites legacy queued/running work [7.47ms]
+(pass) real isolated worktree creation and reuse validate Git registration; diff reports untracked files [309.31ms]
+(pass) preexisting arbitrary directory is not trusted as a worktree; option-shaped base cannot inject commands [111.51ms]
+(pass) overflowed git diff never yields a complete patch receipt [0.66ms]
+(pass) explicit run identity pins Codex output path and terminal review/uncertain cannot replay [10.76ms]
+(pass) event projections enforce byte budget before accumulating unbounded result sets [278.36ms]
+(pass) Git cannot inherit repository, index, executable or config injection [3.24ms]
+(pass) pre-aborted worktree/diff performs zero subprocesses and zero filesystem effects [38.12ms]
+(pass) abort after actual Git read prevents subsequent diff or worktree mutation [124.57ms]
+(pass) abort on registered existing worktree lookup cannot be swallowed as detached success [221.59ms]
+
+integrations/mcp/tests/fabric_work.test.mjs:
+(pass) stream parser and typed verdict refuse malformed or unstructured agent claims [0.72ms]
+(pass) direct dispatch persists exact command, real run paths, session and completed receipt [35.11ms]
+(pass) duel and batch run independent analyses, peer critiques, and synthesis without editing [91.55ms]
+(pass) relay captures new files in patch and applies only after tests plus two typed resolved verdicts [929.78ms]
+(pass) unstructured reviewer text never authorizes Project MCP apply [786.61ms]
+(pass) a refused apply route retains the candidate and stops before review or repair agent expense [463.01ms]
+(pass) persistent failed verification stops after one bounded repair without launching final reviewers [514.13ms]
+(pass) explicit test-repair policy can stop on the first failure and refuses ambiguous configuration [707.43ms]
+(pass) a failed executable test is repaired in the existing worktree and verified without replanning [815.92ms]
+(pass) clean review skips repair while final verifiers start concurrently with independent test evidence [995.01ms]
+(pass) a repair that changes the candidate is rechecked before final reviewers [687.23ms]
+(pass) post-review worktree mutation invalidates the patch receipt before any Project MCP effect [811.36ms]
+(pass) inferred shell syntax check passes a Git filename as argv, never shell interpolation [708.94ms]
+(pass) cancel aborts agent execution, preserves cancelled state, and releases lane only after join [23.86ms]
+(pass) STOP refuses queued work without claiming it or invoking an agent [12.00ms]
+(pass) STOP appearing after child start blocks later stages and releases the lane [18.62ms]
+(pass) review, verify and recorded-session resume retain their distinct real owner paths [27.39ms]
+(pass) PR convergence gathers bounded GitHub evidence and runs isolated relay without pushing [735.30ms]
+(pass) ambiguous Project MCP apply leaves an uncertain task and an attempt receipt, never retries [703.25ms]
+(pass) cancellation reaches a bounded non-agent GitHub subprocess before PR relay begins [19.30ms]
+(pass) real subprocess runner kills an ignoring grandchild process group on cancellation [1838.06ms]
+(pass) real subprocess output overflow never becomes a successful dispatch [483.39ms]
+(pass) real subprocess deadline terminates its process group and records timeout [1271.99ms]
+
+integrations/mcp/tests/fabric_project_workflow.test.mjs:
+(pass) one relay submission reaches the real Project owner, tests a real change, applies it and supports compact polling [903.88ms]
+
+integrations/mcp/tests/project_run_cancel.test.mjs:
+(pass) pre-aborted execution does not spawn or create its marker [0.80ms]
+(pass) abort kills a TERM-resistant grandchild even when the parent closes all pipes [319.67ms]
+
+ 62 pass
+ 0 fail
+ 381 expect() calls
+Ran 62 tests across 6 files. [15.80s]

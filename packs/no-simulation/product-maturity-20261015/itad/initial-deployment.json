@@ -1,0 +1,20 @@
+{
+  "account": "estate",
+  "project": "aurekai-work-samples",
+  "address": "https://itad-desk-upgrade.aurekai-work-samples.pages.dev/",
+  "branch": "itad-desk-upgrade",
+  "preview": true,
+  "keeps_requests": false,
+  "deployment": {
+    "id": "db19a239-df35-40be-8d40-157178446bad",
+    "url": "https://db19a239.aurekai-work-samples.pages.dev",
+    "aliases": [
+      "https://itad-desk-upgrade.aurekai-work-samples.pages.dev"
+    ],
+    "environment": "preview"
+  },
+  "productionBefore": "f9ad11eb-6f99-4730-a307-533444332535",
+  "productionAfter": "f9ad11eb-6f99-4730-a307-533444332535",
+  "productionUnchanged": true,
+  "createdAt": "2026-10-15T09:34:47.530Z"
+}

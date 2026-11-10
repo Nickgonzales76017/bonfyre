@@ -1,0 +1,75 @@
+{
+  "status": "passed",
+  "layouts": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "canvasWidth": 842
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "canvasWidth": 324
+    }
+  ],
+  "mix": {
+    "samples": 576000,
+    "bytes": 2304000,
+    "native_byte_parity": true,
+    "sha256": "068bb4b051fbe6de2fc1936cdcf6d31e5ea518d0e84a0d972075cf4f8448f26f",
+    "kernel_bytes": 259,
+    "memory_bytes": 131072,
+    "render_ms": 11.199999995529652
+  },
+  "initial": {
+    "gains": [
+      0.4,
+      0.5,
+      0.5
+    ],
+    "sum": 24141.950036007674,
+    "playing": false,
+    "clock": 0
+  },
+  "muted": {
+    "gains": [
+      0,
+      0,
+      0
+    ],
+    "sum": 0,
+    "playing": false,
+    "clock": 0
+  },
+  "restored": {
+    "gains": [
+      0.4,
+      0.5,
+      0.5
+    ],
+    "sum": 24141.950036007674,
+    "playing": false,
+    "clock": 0
+  },
+  "playback": {
+    "gains": [
+      0.4,
+      0.5,
+      0.5
+    ],
+    "sum": 24141.950036007674,
+    "playing": true,
+    "clock": 0.264
+  },
+  "stopped": {
+    "gains": [
+      0.4,
+      0.5,
+      0.5
+    ],
+    "sum": 24141.950036007674,
+    "playing": false,
+    "clock": 0.2693333333333333
+  },
+  "exceptions": []
+}

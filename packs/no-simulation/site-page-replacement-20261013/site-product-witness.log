@@ -1,0 +1,20 @@
+ln -sf bonfyre-web-address bonfyre-site
+test -L bonfyre-site
+test "$(readlink bonfyre-site)" = "bonfyre-web-address"
+bun test tests/site_page_replace.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/site_page_replace.test.mjs:
+(pass) a missing replacement file leaves every page record and the served guide unchanged [384.19ms]
+(pass) empty, whitespace, binary and directory inputs are refused before replacement [362.97ms]
+(pass) valid replacement keeps the page identity, creation time and navigation group [663.72ms]
+
+ 3 pass
+ 0 fail
+ 35 expect() calls
+Ran 3 tests across 1 file. [1424.00ms]
+sh tests/site_product_test.sh ./bonfyre-web-address
+site product: manual page PASS
+site product: reference MCP client SKIP (set BONFYRE_MCP_SDK_DIR)
+site product: recording import SKIP (explicitly disabled or transcriber, model or voice not present)
+site product: PASS

@@ -1,0 +1,44 @@
+{
+  "schema": "bonfyre.relay-source-live.v1",
+  "previous_pid": 8869,
+  "current_pid": 29366,
+  "paused": true,
+  "active_tasks": 0,
+  "queued_tasks": 0,
+  "configuration_policy_stop_unchanged": true,
+  "source_files_schema": {
+    "type": "array",
+    "minItems": 1,
+    "maxItems": 64,
+    "description": "Optional explicit current-source coverage over the configured Git base. Supply whole-file SHA-256 from project_read; null requires absence. Up to 8 MiB total. Unselected paths stay at the Git base. Ignored files and symlinks are refused.",
+    "items": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "loaded_source_hashes": {
+    "integrations/mcp/fabric_server.mjs": "2369d7978224e7b9ecc8826e023a5dede2e2051f1ae743c74a698b0f4d70b2f6",
+    "integrations/mcp/fabric_store.mjs": "4b674482c4d82c4b3442a062ea6453557b570351c3bd6372deb35fbceb80fd30",
+    "integrations/mcp/fabric_work.mjs": "84c42ac043424d51782c54c1cca2472b3f5b130dfc485f0c1d5f4e83cf10fbf5",
+    "integrations/mcp/fabric_catalog.json": "bf348103b7a5837ee70fc9a9d487f8daf8d0076bb6672d5d40918b54d798a5b5",
+    "integrations/mcp/http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71"
+  },
+  "live_tasks_dispatched": 0
+}

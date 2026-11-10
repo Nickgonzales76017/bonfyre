@@ -1,0 +1,51 @@
+{
+  "browser_verified": false,
+  "live_deployment": false,
+  "source_sha256": {
+    "components/BonfyreServiceSite/catalogue-release.mjs": "9c08ffb45c196ce628304fef3b5a9312cad0192894b00e7376c0526899b4a37f",
+    "components/BonfyreServiceSite/catalogue-release-view.mjs": "220b70736ff4be732d89f4c7d370703efe884c935cf4280af97d8bcfa54a47d1",
+    "components/BonfyreServiceSite/catalogue-client.mjs": "86e437735a4c7ceb74a97b16f50ea035a7416ea930bb5dfb7990126ba7e1eb38",
+    "components/BonfyreServiceSite/catalogue-grid.mjs": "495a126a1053e850714d5c27affbd60bd62be04e14ec73bf84cfb03243319ba0",
+    "components/BonfyreServiceSite/catalogue-desk.mjs": "7d6c1c55f5a437c6a34ef52c6bcf66bde13347dac03dd1e8de262a2e3124c6b2",
+    "components/BonfyreServiceSite/catalogue-material.mjs": "cb2f3d16dc792705108daa49ac398ae191d75db45fd389159a2505bef726afac",
+    "components/BonfyreServiceSite/catalogue-model.mjs": "5ab19df98539af14da70dc8b12dccc315b17f3067d1289ee4a502fe1f123c48b",
+    "components/BonfyreServiceSite/catalogue.css": "523e4dc4751ae6ca72bf0525d467169a1cfe1311d0a4d2c435684b78a99ba347",
+    "components/BonfyreServiceSite/planner-model.mjs": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04",
+    "components/BonfyreServiceSite/planner-material.mjs": "21ce9f470ab2625abd7eaf1a102a30b7c56424dd98179ad65e6e2abd34ae5b40",
+    "components/BonfyreServiceSite/sections/catalogue.mjs": "39216a0f30870820ffaeb71cfa2d56b36fa7712aced4ec7a4e5c0f8065c0c3ee",
+    "components/BonfyreServiceSite/tests/catalogue-release.test.mjs": "ddbf06ad87422abacbff31acc8db32192fd332d71280a9254be59b160a3c9ef6",
+    "components/BonfyreServiceSite/tests/catalogue-release-native.test.mjs": "53321ad3777312cb5136f7f89c03aa9f452fb64aa103196161db487428bf0c47",
+    "components/BonfyreServiceSite/tests/catalogue-release-fixture.mjs": "f7b31c7d5680f8b218e3f933494dddd6ef7716f9cd9c205b75999b94c3058651",
+    "scripts/materialize_workspace_package.mjs": "cd2b074c9f12106357591d1f64e10bc95611d79d5369488d19424bd6b8ca753d",
+    "scripts/publish_experience_setups.mjs": "67c324f6458f575ba4ab4ca5c911dcd03c07a4e9078d09aeb030b05d67256bbd",
+    "cmd/BonfyreWebAddress/tests/workspace_fixture.mjs": "eb1e9c4403492235d9f6defd3ac0354701759cd68950f44589a79f0616146eec",
+    "packs/aurekai-work-samples/site/material.mjs": "e7a09b006cd984f3e7223006baeab0145d4b75d5a6c7aa528f7fd51b3fd48e1e",
+    "architecture/surface/catalogue-release.yaff": "ed651e512799efe525ac1f78ae63f63cd9f89108456feedc17ccd517fcbaa389",
+    "docs/engineering/aurekai-experience-cohesion-20261015.md": "f0dda8f1a11bb99800927c6f28e758c1e6c498f75b9bdb33aa2b00befbb67902"
+  },
+  "public_artifact_sha256": {
+    "packs/no-simulation/catalogue-release-20261017/public/data/product-workspace/catalogue-release.mjs": "9c08ffb45c196ce628304fef3b5a9312cad0192894b00e7376c0526899b4a37f",
+    "packs/no-simulation/catalogue-release-20261017/public/data/product-workspace/catalogue-release-view.mjs": "220b70736ff4be732d89f4c7d370703efe884c935cf4280af97d8bcfa54a47d1",
+    "packs/no-simulation/catalogue-release-20261017/public/data/product-workspace/catalogue-client.mjs": "86e437735a4c7ceb74a97b16f50ea035a7416ea930bb5dfb7990126ba7e1eb38",
+    "packs/no-simulation/catalogue-release-20261017/public/data/product-workspace/catalogue-grid.mjs": "495a126a1053e850714d5c27affbd60bd62be04e14ec73bf84cfb03243319ba0",
+    "packs/no-simulation/catalogue-release-20261017/public/data/product-workspace/planner-model.mjs": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04"
+  },
+  "tests": {
+    "catalogue": {
+      "passed": 43,
+      "assertions": 275,
+      "log": "tests.log"
+    },
+    "material_and_continuation": {
+      "passed": 51,
+      "commands": [
+        "bun test cmd/BonfyreWebAddress/tests/workspace_material.test.mjs scripts/tests/workspace_continuation.test.mjs"
+      ]
+    },
+    "native_workspace_http": {
+      "checks_passed": 32,
+      "command": "bun test cmd/BonfyreWebAddress/tests/workspace_http_test.mjs",
+      "release": "43a884cda81fa5f285e70196862d12952e148b2b2fd9a9e26f306464682afeba"
+    }
+  }
+}

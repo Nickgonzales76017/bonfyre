@@ -1,0 +1,196 @@
+pack aurekai-rubicon-programs
+generation control-1
+provenance the Rubicon pass, 2026-08-27 -- stop improving local systems, start forcing them to collapse into shared machinery
+authority measured
+note Fifteen shared-machine programs, each recorded at the rung it has actually earned. Fourteen are at 'defined', which is rung 0. Nothing here claims to be built. What IS measured is the evidence that the factoring is warranted: twelve duplicate mechanic families with file:line citations, and a Partner Commons that is now loaded, latent-addressable and benchmarked rather than described.
+
+# ---------------------------------------------------------------------------
+# WHAT MOVED FROM PROSE TO STATE
+# ---------------------------------------------------------------------------
+
+upgrade upg:partner-commons-loaded
+  status LANDED
+  verification MEASURED
+  claim The 112 Partner Commons profiles now exist as state, not as a document.
+  before partner_commons.py had existed the whole time with record_profile and record_observation; the ONLY PartnerProfile anywhere in the estate was a Run8 test fixture
+  after 112 profiles across 35 families in ~/.bonfyre/partner-commons.sqlite3, loaded through the existing API with no new schema
+  fidelity parsed count is exactly 112, matching the map's own claim; zero duplicate ids
+  preservation the source table's 'provides' and 'family' columns have no schema field, so they are recorded as declared PartnerObservations rather than dropped
+  note this is the difference between having a standard library and having a document about one
+
+upgrade upg:partner-commons-latent-addressable
+  status LANDED
+  verification MEASURED
+  claim Partner Commons method retrieval is now a measured capability.
+  pipeline partner_commons -> bonfyre-embed --backend onnx (nomic-embed-text-v1.5 int8, 768d) -> bonfyre-vec (sqlite-vec SIMD) -> semantic_derivation
+  prerequisite this only became possible today; bonfyre-embed --backend onnx was silently falling back to hashed tokens until the model directory was laid out
+  measurement_held_out connects_to shared with a latent neighbour: 92.0% (103/112) against a 50.9% random draw, +41.1 pts. connects_to is never embedded.
+  note the geometry recovers declared organ attachment from specialty text alone
+
+claim clm:hook-retrieval-benchmarked
+  status STANDING
+  verification MEASURED
+  claim Latent retrieval recovers the map's own deep-promotion hook assignments far above chance.
+  answer_key the map's "Primary-path deep-promotion coverage by hook" section is a human-authored labelled dataset; 18 usable hooks, 191 partner assignments
+  discipline queries are hook DESCRIPTIONS written without naming any partner; the answer key never reaches the retriever
+  result recall@10 49.6%, precision@10 25.9%, random recall@10 2.6%, lift +47.0 pts
+  strong finance P@10 100%, risk R@10 100%, routing R@10 55%, time R@10 100%
+  weak compiler, context, surface score 0 -- their gold entries are largely outside the 112
+  correction a first pass reported 45.6% using a tolerant name matcher; substring matching let "Git" swallow "GitHub discovery" and "QUIC" swallow "QuickFIX", corrupting the gold set. Exact matching only, and misses are reported rather than absorbed.
+
+claim clm:partner-commons-coverage-gap
+  status STANDING
+  verification MEASURED
+  claim The 112-profile index does not cover the methods the map's own hook table depends on.
+  evidence 94 of 191 answer-key assignments (49%) name methods absent from the 112
+  evidence 44 distinct missing methods, including BitNet, CUE, YaFF, Restate, Feldera/DBSP, BLAKE3, Apache Arrow, Tree-sitter, simdjson, Zstd, OpenSSL, Vectorscan, ONNX Runtime, llama.cpp/GGUF, ggml, Cloudflare, Harbor, Hugging Face, Automerge, Iroh, OpenDAL
+  evidence one hook, federation, has NO reachable gold at all
+  cause the map itself names five profile groups "outside the 112 Partner index" -- late_assimilation, operational_agent, extended_operational, financial_specialty, quantitative_risk
+  consequence recall@10 is measured over REACHABLE gold only; scoring against unreachable answers would understate the retriever for a corpus reason
+  action the Partner Commons index needs those 44 methods before Program I can route the whole hook surface
+
+# ---------------------------------------------------------------------------
+# DENSITY EVIDENCE -- why the factoring is warranted (Program O)
+# ---------------------------------------------------------------------------
+
+claim clm:twelve-duplicate-mechanic-families
+  status STANDING
+  verification MEASURED
+  method independent audit of the 85 control-plane modules, read-only, file:line evidence required
+  claim Twelve duplicate mechanic families exist in the control plane today.
+  family_01 sqlite schema+ensure_schema+CRUD triple, 21 modules
+  family_02 money/value/cost stores independently implemented in economic_graphs, financial_metabolism, food_combination_engine, household_economic_circuit
+  family_03 cooling/reheat/backoff state machines outside scheduling.py -- proof_frontier, target_obligation, resource_metabolism, provider_state
+  family_04 candidate scoring/ranking outside route_ranker -- provider_graphs:74, bonfyre_sid:89, evidence_binding:83
+  family_05 vector embedding/similarity outside latent_fabric -- bonfyre_sid:35-93 reimplements projection, Hamming ordering
+  family_06 YaFF block parsing implemented twice -- pack_loader:56-87 and opportunity:304-366 parse the same grammar
+  family_07 form field/evidence-slot specs -- atomic_forms Field/EvidenceSlot vs form_graph FieldSpec/EvidenceSpec
+  family_08 canonical JSON + SHA-256 identity, 5 modules
+  family_09 the same sqlite_master existence probe locally defined in 9 modules
+  family_10 ISO-8601 UTC serialization, 13 modules, identical astimezone/replace/isoformat
+  family_11 ISO-8601 parsing with naive-to-UTC normalization, 5 near-identical helpers
+  family_12 timestamped subject-state observation records -- provider_state.Observation vs partner_commons.PartnerObservation
+  consequence families 9, 10 and 11 are pure mechanical duplication and could be factored with no semantic risk; families 2, 4 and 5 are the ones that matter, because they are the Allocation and Ranking fabrics already existing in triplicate
+
+claim clm:organs-exist-but-are-unbound
+  status STANDING
+  verification VERIFIED_ON_DISK
+  claim The fabrics are not missing. They exist as separate organs that were never bound to each other.
+  evidence opportunity.py carries Opportunity/Blocker/Unlock and reachability, with NO value dimension
+  evidence economic_graphs.py carries money, value, cost and commitment, with NO opportunity binding
+  evidence scheduling.py already implements StandingSet -> Effect: Watch, schedule, record_check, reheat, due, frontier_subjects
+  evidence route_ranker, capability_closure, financial_metabolism, latent_fabric, foreign, address_plane all exist and are individually sound
+  consequence the Rubicon is not a build program, it is a binding program; the user's diagnosis is confirmed in code
+
+# ---------------------------------------------------------------------------
+# THE 15 PROGRAMS -- all at rung 0 except where noted
+# ---------------------------------------------------------------------------
+
+note Thirteen of the fifteen are recorded in capability_catalog at 'defined' (rung 0). Two -- F-observation-fabric and I-partner-marketplace -- are at 'implemented' (rung 1), because real code ran against real state for those and only those. Naming a program is not building it, and the catalog must not be readable as if it were.
+
+program A-opportunity-fabric
+  maturity defined
+  factors AI Leads, Fleming, Personal, Zcrawl, Partner Commons, Model Commons, Upper90, Ventures, Aurekai, Run8
+  existing_organ opportunity.py (reachability half), economic_graphs.py (value half)
+  gap the two halves are not bound; Opportunity has no potential_value, probability, option_value, expiry or information_value
+  partner_methods Hummingbot, Interledger, OpenGamma Strata, NautilusTrader
+
+program B-allocation-fabric
+  maturity defined
+  factors AI Loss fee splits, JRSS ownership, Upper90 cost allocation, Fleming capital, Personal budget, model compute, WorkGraph obligations
+  existing_organ financial_metabolism.py with its basis law
+  law list/contracted/estimated/accrued/billed/authorized/captured/settled/paid/accounting/allocated/credit never silently collapse
+  partner_methods Formance, Interledger, Hummingbot, Fyle
+  note the strongest single candidate; family_02 shows it already exists three times
+
+program C-standing-effect-runtime
+  maturity defined
+  factors JRSS statements, AI Loss reconciliation, Upper90 remediation, Personal watches, Fleming deadlines, Run8 continuation
+  existing_organ scheduling.py -- Watch/schedule/record_check/reheat/due already IS this machine
+  gap five other modules implement cooling/backoff independently (family_03)
+  partner_methods Temporal, Kill Bill, Restate, celld
+
+program D-ranking-fabric
+  maturity defined
+  catalog_rung 0 -- 'partial' is not a catalog maturity; prior work exists but the FABRIC is unbuilt
+  factors partner selection, model selection, provider routing, deals, offers, Zcrawl frontier, work prioritization
+  existing_organ route_ranker.TernaryRanker
+  measured_today the AI Leads cascade is real: 45.1% ternary -> 49.1% real-valued + selective SSM, oracle 83.0%
+  measured_today ternary quantization costs 2.3 pts aggregate and the cost is widening
+  gap three other modules rank independently (family_04)
+  partner_methods vectorbt, QuantConnect LEAN, ArcticDB, Weights & Biases
+
+program E-physical-cell-fabric
+  maturity defined
+  gap NO partner method in the 112 covers geography; the latent route returns finance profiles because there is nothing closer
+  action needs new profiles before it can be routed at all
+
+program F-observation-fabric
+  maturity implemented
+  existing_organ foreign.ForeignTwin with rights OBSERVE/REFERENCE/BIND/ACT
+  landed_today Azure DevOps observed as 4 ForeignTwins at OBSERVE only, 4 external_events recorded through the digest-deduped path
+  evidence u90tech: AI_Leads 189MB, AiLtd_Loss 155MB, JRSSv1 64MB, AI_Leads2 59KB
+  law External project is not a semantic owner; Azure holds repo truth, Bonfyre holds a twin
+  gap the 112 contain no crawling/scanning profile; Firecrawl and Cloudflare are in the outside-112 groups
+
+program G-reporting-document-fabric
+  maturity defined
+  factors AI Loss 20+ reports, JRSS AR/billing/production, Upper90 Azure/Sonar/client, Fleming packages, Run8 proof packs
+  partner_methods LitParse, OpenGamma Strata, GraphQL, Formance
+
+program H-application-compression
+  maturity defined
+  existing_organ bonfyre-frappe-compiler binary exists and has never been exercised in this work
+
+program I-partner-marketplace
+  maturity implemented
+  landed_today 112 profiles loaded, latent-addressable, retrieval benchmarked at recall@10 49.6% vs 2.6% random
+  gap 44 methods missing from the index (see clm:partner-commons-coverage-gap)
+
+program J-power-runtime-fusion
+  maturity defined
+  evidence families 8, 9, 10, 11 are exactly this program's target and are already quantified
+
+program K-model-compute-exchange
+  maturity defined
+  existing_organ bonfyre-model registry, bonfyre-moe, bonfyre-embed, FPQ binaries
+  landed_today nomic-embed-text-onnx registered, making the registry hold a working ONNX embedder for the first time
+  partner_methods QuantConnect LEAN, Hummingbot, MLflow
+
+program L-unified-residency
+  maturity defined
+
+program M-distributed-placement
+  maturity defined
+
+program N-company-run8
+  maturity defined
+  catalog_rung 0 -- 'partial' is not a catalog maturity; prior work exists but the FABRIC is unbuilt
+  existing_organ proof_frontier with SolvedInvariant and mandatory reheat_conditions
+  measured_today the reheat mechanism reversed a wrong refusal within one session; see lineage-session-2026-08-27
+
+program O-aurekai-density
+  maturity defined
+  catalog_rung 0 -- 'partial' is not a catalog maturity; prior work exists but the FABRIC is unbuilt
+  existing_organ aurekai_lowering.py -- lower requires equivalence plus an invalidation envelope
+  measured_today 12 duplicate mechanic families identified with file:line evidence
+
+# ---------------------------------------------------------------------------
+# DEFECTS FOUND WHILE DOING THIS
+# ---------------------------------------------------------------------------
+
+defect def:external-events-constant-collision
+  status OPEN
+  verification REPRODUCED
+  target external_events.py
+  symptom EE.EXTERNAL_STATE_CHANGE = "external_state_change" is a LEDGER_CATEGORIES value and is NOT in EVENT_KINDS; the valid kind is EE.STATE_CHANGED = "state_changed"
+  effect observe() raises "unknown event_kind 'external_state_change'" for the constant whose name most reads like the right one
+  fix_shape rename the ledger category, or reject at import time when a category and a kind share a stem
+
+claim clm:sonar-token-expired
+  status UNRESOLVED
+  verification REPRODUCED
+  finding SONAR_TOKEN in u90.env is dead -- /api/authentication/validate returns {"valid":false} and the issues endpoint returns HTTP 401
+  note SONAR_URL is also stored as a full endpoint rather than a base, so any consumer must strip the path
+  contrast AZURE_DEVOPS_EXT_PAT in the same file is live and returned 4 projects
+  action_required rotate or reissue the Sonar token; Upper90 code-quality data is currently unreachable

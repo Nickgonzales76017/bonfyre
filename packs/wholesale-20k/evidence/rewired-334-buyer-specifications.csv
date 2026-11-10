@@ -1,0 +1,335 @@
+source_row,manufacturer,model,reported_chassis,cpu,ram,storage,seller_grade,reported_disk_health,reported_disk_workflow,seller_condition_notes,unverified_source_year
+1,Dell Inc.,OptiPlex 3000,Desktop,12th Gen Intel(R) Core(TM) i5-12500,8 GiB,256 GB,Grade B,good,success,,2018
+2,Dell Inc.,OptiPlex 3000,Desktop,12th Gen Intel(R) Core(TM) i5-12500,8 GiB,256 GB,Grade B,good,success,,2017
+3,Dell Inc.,OptiPlex 3000,Desktop,12th Gen Intel(R) Core(TM) i5-12500,32 GiB,256 GB,Grade B,good,success,,2019
+4,Dell Inc.,OptiPlex 3000,Desktop,12th Gen Intel(R) Core(TM) i5-12500,8 GiB,256 GB,Grade B,good,success,,2019
+5,Dell Inc.,OptiPlex 3000,Desktop,12th Gen Intel(R) Core(TM) i5-12500,16 GiB,256 GB,Grade B,good,success,,2019
+6,Dell Inc.,OptiPlex XE4 series,Desktop,12th Gen Intel(R) Core(TM) i5-12500,16 GiB,512 GB;2 TB,Grade B,good;good,success,,2019
+7,Dell Inc.,OptiPlex SFF 7010,Desktop,13th Gen Intel(R) Core(TM) i5-13500,16 GiB,256 GB,Grade B,good,success,,2019
+8,Dell Inc.,OptiPlex SFF 7010,Desktop,13th Gen Intel(R) Core(TM) i5-13500,16 GiB,512 GB,Grade B,good,success,,2019
+9,Dell Inc.,OptiPlex Micro 7010,Desktop,13th Gen Intel(R) Core(TM) i5-13500T,16 GiB,256 GB,Grade B,good,success,,2018
+10,Dell Inc.,OptiPlex Micro 7010,Desktop,13th Gen Intel(R) Core(TM) i5-13500T,16 GiB,256 GB,Grade B,good,success,,2018
+11,HP,HP EliteDesk 705 G4 DM 35W (TAA),Desktop,"AMD PRO A10-9700E R7, 10 COMPUTE CORES 4C+6G",8 GiB,256 GB,Grade B,good,success,,2018
+12,HP,HP EliteDesk 705 G4 DM 35W (TAA),Desktop,"AMD PRO A10-9700E R7, 10 COMPUTE CORES 4C+6G",8 GiB,256 GB,Grade B,good,success,,2018
+13,HP,HP EliteDesk 705 G4 DM 35W (TAA),Desktop,"AMD PRO A10-9700E R7, 10 COMPUTE CORES 4C+6G",8 GiB,256 GB,Grade B,good,success,,2018
+14,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+15,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+16,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+17,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+18,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+19,HP,HP EliteDesk 705 G3 Desktop Mini,Space-saving,"AMD PRO A6-9500E R5, 6 COMPUTE CORES 2C+4G",8 GiB,,Grade B,,,,2018
+20,LENOVO,ThinkCentre M75q Gen 2,Mini PC,AMD Ryzen 3 PRO 4350GE with Radeon Graphics,4 GiB,128 GB,Grade B,good,success,,2018
+21,LENOVO,ThinkCentre M70q,Mini PC,Intel(R) Core(TM) i5-10400T CPU @ 2.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+22,LENOVO,ThinkCentre M70q,Mini PC,Intel(R) Core(TM) i5-10400T CPU @ 2.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+23,LENOVO,ThinkCentre M70q,Mini PC,Intel(R) Core(TM) i5-10400T CPU @ 2.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+24,LENOVO,ThinkCentre M70q,Mini PC,Intel(R) Core(TM) i5-10400T CPU @ 2.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+25,Dell Inc.,OptiPlex 5080,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+26,Dell Inc.,OptiPlex 7080,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2017
+27,Dell Inc.,OptiPlex 7080,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2017
+28,Dell Inc.,OptiPlex 7080,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2017
+29,Dell Inc.,OptiPlex 7080,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB;250 GB,Grade B,good;good,success,,2018
+30,Dell Inc.,OptiPlex 7090,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2019
+31,Dell Inc.,OptiPlex 7090,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2020
+32,Dell Inc.,OptiPlex 7090,Desktop,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB;128 GB,Grade B,good;good,success,,2018
+33,HP,HP ProDesk 600 G6 Desktop Mini PC,Mini PC,Intel(R) Core(TM) i5-10500 CPU @ 3.10GHz,16 GiB,512 GB,Grade B,good,success,,2018
+34,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz,32 GiB,256 GB,Grade B,good,success,,2018
+35,HP,HP EliteDesk 800 G6 Desktop Mini PC,Mini PC,Intel(R) Core(TM) i5-10500T CPU @ 2.30GHz,16 GiB,256 GB,Grade B,good,success,,2018
+36,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2019
+37,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2017
+38,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2019
+39,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2019
+40,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2019
+41,Dell Inc.,OptiPlex 3080,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2017
+42,Dell Inc.,OptiPlex 3090,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+43,Dell Inc.,OptiPlex 3090,Desktop,Intel(R) Core(TM) i5-10505 CPU @ 3.20GHz,16 GiB,256 GB,Grade B,good,success,,2017
+44,Dell Inc.,Inspiron 3030S,Desktop,Intel(R) Core(TM) i5-14400,16 GiB,512 GB,Grade B,good,success,,2017
+45,Dell Inc.,OptiPlex SFF Plus 7020,Desktop,Intel(R) Core(TM) i5-14500,16 GiB,,Grade B,,,,2017
+46,Dell Inc.,OptiPlex Micro 7020,Desktop,Intel(R) Core(TM) i5-14500T,16 GiB,256 GB;512 GB,Grade B,good;good,success,,2018
+47,Dell Inc.,OptiPlex Micro 7020,Desktop,Intel(R) Core(TM) i5-14500T,16 GiB,256 GB;1 TB,Grade B,good;good,success,,2018
+48,Dell Inc.,OptiPlex Micro 7020,Desktop,Intel(R) Core(TM) i5-14500T,16 GiB,256 GB;1 TB,Grade B,good;good,success,,2018
+49,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,120 GB,Grade B,good,success,,2018
+50,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,256 GB,Grade B,good,success,,2017
+51,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,512 GB,Grade B,good,success,,2019
+52,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,500 GB,Grade B,good,success,,2019
+53,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,16 GiB,500 GB,Grade B,good,success,,2017
+54,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,256 GB,Grade B,good,success,,2017
+55,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,500 GB,Grade B,good,success,,2019
+56,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,240 GB;500 GB,Grade B,good;good,success,,2018
+57,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,,Grade B,,,,2019
+58,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz,8 GiB,500 GB,Grade B,good,success,,2019
+59,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,4 GiB,128 GB,Grade B,good,success,,2018
+60,Dell Inc.,OptiPlex 7040,Desktop,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,8 GiB,500 GB,Grade B,good,success,,2018
+61,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,8 GiB,256 GB,Grade B,good,success,,2019
+62,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,8 GiB,256 GB,Grade B,good,success,,2018
+63,HP,HP EliteDesk 800 G3 DM 35W (TAA),Mini PC,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,16 GiB,256 GB,Grade B,good,success,,2018
+64,HP,HP ProDesk 600 G2 DM,Space-saving,Intel(R) Core(TM) i5-6500T CPU @ 2.50GHz,8 GiB,,Grade B,,,,2018
+65,Dell Inc.,OptiPlex 3050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,256 GB,Grade B,good,success,,2019
+66,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,16 GiB,256 GB,Grade B,good,success,,2019
+67,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,500 GB,Grade B,good,success,,2020
+68,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,80 GB,Grade B,good,success,,2018
+69,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,256 GB,Grade B,good,success,,2017
+70,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,4 GiB,240 GB,Grade B,good,success,,2018
+71,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,240 GB;256 GB,Grade B,good;good,success,,2018
+72,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,,Grade B,,,,2018
+73,HP,HP EliteDesk 800 G3 DM 65W,Mini PC,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,256 GB,Grade B,good,success,,2018
+74,HP,HP EliteDesk 800 G3 DM 65W,Mini PC,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,256 GB,Grade B,good,success,,2018
+75,HP,HP EliteDesk 800 G3 DM 65W,Mini PC,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,,Grade B,,,,2018
+76,HP,HP EliteDesk 800 G3 SFF,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,16 GiB,256 GB,Grade B,good,success,,2017
+77,HP,HP ProDesk 600 G3 SFF,Desktop,Intel(R) Core(TM) i5-7500 CPU @ 3.40GHz,8 GiB,256 GB,Grade B,good,success,,2019
+78,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,,Grade B,,,,2018
+79,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+80,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+81,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+82,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+83,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+84,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+85,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+86,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+87,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+88,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+89,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+90,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+91,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+92,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+93,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+94,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+95,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+96,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+97,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+98,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+99,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+100,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+101,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+102,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+103,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+104,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+105,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+106,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+107,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+108,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+109,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+110,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+111,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+112,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+113,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+114,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+115,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+116,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+117,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+118,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+119,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+120,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+121,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+122,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+123,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+124,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+125,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+126,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+127,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+128,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+129,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+130,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+131,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+132,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+133,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+134,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+135,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+136,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+137,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+138,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+139,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+140,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+141,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+142,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+143,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+144,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+145,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+146,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2019
+147,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+148,Dell Inc.,OptiPlex 7050,Desktop,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,256 GB,Grade B,good,success,,2018
+149,HP,HP ProDesk 600 G3 DM,Mini PC,Intel(R) Core(TM) i5-7500T CPU @ 2.70GHz,8 GiB,,Grade B,,,,2018
+150,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2019
+151,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2018
+152,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2017
+153,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2017
+154,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,512 GB,Grade B,good,success,,2018
+155,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2019
+156,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+157,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+158,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2017
+159,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB,Grade B,good,success,,2017
+160,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,512 GB;500 GB,Grade B,good;good,success,,2018
+161,Dell Inc.,OptiPlex 5060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2019
+162,Dell Inc.,OptiPlex 5060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2020
+163,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,,Grade B,,,,2017
+164,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2019
+165,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+166,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+167,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2017
+168,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2018
+169,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2019
+170,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2017
+171,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,4 GiB,240 GB,Grade B,good,success,,2017
+172,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2020
+173,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2017
+174,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2019
+175,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2019
+176,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2017
+177,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+178,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+179,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2019
+180,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,4 GiB,240 GB,Grade B,good,success,,2019
+181,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,500 GB;256 GB,Grade B,good;good,success,,2017
+182,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB;500 GB,Grade B,good;good,success,,2019
+183,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,120 GB;256 GB,Grade B,good;good,success,,2019
+184,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB;250 GB,Grade B,good;good,success,,2018
+185,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB;250 GB,Grade B,good;good,success,,2017
+186,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,120 GB;256 GB,Grade B,good;good,success,,2018
+187,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB;256 GB,Grade B,good;good,success,,2017
+188,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,128 GB;256 GB,Grade B,good;good,success,,2019
+189,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB;480 GB,Grade B,good;good,success,,2019
+190,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,32 GiB,,Grade B,,,,2019
+191,Dell Inc.,OptiPlex XE3,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,480 GB,Grade B,good,success,,2018
+192,Dell Inc.,OptiPlex XE3,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2019
+193,Dell Inc.,OptiPlex XE3,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,16 GiB,,Grade B,,,,2019
+194,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,,Grade B,,,,2019
+195,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,,Grade B,,,,2019
+196,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,,Grade B,,,,2019
+197,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+198,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+199,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+200,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+201,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+202,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+203,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+204,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,4 GiB,256 GB,Grade B,good,success,,2019
+205,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+206,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+207,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+208,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,4 GiB,512 GB,Grade B,good,success,,2017
+209,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+210,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+211,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+212,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+213,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+214,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+215,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+216,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+217,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+218,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+219,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+220,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+221,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+222,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+223,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+224,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+225,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+226,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+227,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+228,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+229,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+230,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2018
+231,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+232,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+233,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+234,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2017
+235,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+236,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,512 GB,Grade B,good,success,,2019
+237,HP,HP Engage Flex Pro,Desktop,Intel(R) Core(TM) i5-8500 CPU @ 3.00GHz,8 GiB,,Grade B,,,,2019
+238,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,,Grade B,,,,2018
+239,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+240,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+241,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+242,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,16 GiB,256 GB,Grade B,good,success,,2018
+243,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+244,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+245,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+246,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+247,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+248,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+249,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+250,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+251,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+252,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+253,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+254,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+255,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+256,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+257,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+258,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+259,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+260,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+261,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+262,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+263,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+264,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+265,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+266,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+267,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+268,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+269,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+270,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+271,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+272,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+273,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+274,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+275,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+276,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+277,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+278,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+279,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+280,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+281,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+282,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+283,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+284,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+285,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+286,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+287,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+288,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+289,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+290,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+291,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+292,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+293,Dell Inc.,OptiPlex 3060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+294,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+295,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+296,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+297,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+298,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+299,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+300,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2019
+301,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+302,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+303,Dell Inc.,OptiPlex 7060,Desktop,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,8 GiB,256 GB,Grade B,good,success,,2018
+304,HP,HP ProDesk 400 G4 DM (TAA),Mini Tower,Intel(R) Core(TM) i5-8500T CPU @ 2.10GHz,32 GiB,256 GB,Grade B,good,success,,2018
+305,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,16 GiB,,Grade B,,,,2018
+306,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2019
+307,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2019
+308,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2018
+309,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,
+310,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,8 GiB,256 GB,Grade B,good,success,,2017
+311,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,4 GiB,2 TB,Grade B,good,success,,2019
+312,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,4 GiB,256 GB,Grade B,good,success,,2018
+313,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,16 GiB,256 GB,Grade B,good,success,,2019
+314,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,16 GiB,256 GB;128 GB,Grade B,good;good,success,,2019
+315,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz,8 GiB,256 GB;256 GB,Grade B,good;good,success,,2017
+316,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,,Grade B,,,,2018
+317,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+318,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+319,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+320,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2019
+321,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+322,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+323,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+324,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+325,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+326,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+327,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+328,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+329,Dell Inc.,OptiPlex 3070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2019
+330,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+331,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,128 GB,Grade B,good,success,,2018
+332,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+333,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2018
+334,Dell Inc.,OptiPlex 7070,Desktop,Intel(R) Core(TM) i5-9500T CPU @ 2.20GHz,8 GiB,256 GB,Grade B,good,success,,2019

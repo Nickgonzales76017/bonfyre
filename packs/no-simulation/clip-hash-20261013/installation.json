@@ -1,0 +1,7 @@
+{
+  "module": "/Users/nickgonzales/.bonfyre/lib/clips/export_clip.mjs",
+  "previous_sha256": "f77aca80cca8fd918199a3b78164c0db88c86f6160bd73f11c4da61fad577ad1",
+  "sha256": "563b2dede6383e72e487885f491e5d2c883f56353cb6e40857a48005590958af",
+  "rollback": "/Users/nickgonzales/.bonfyre/rollback/clip-export-f77aca80cca8fd918199a3b78164c0db88c86f6160bd73f11c4da61fad577ad1/export_clip.mjs",
+  "native_binary_sha256": "82ded71382fb184c1ae4a91d25163a1b089a07fe459c38853e785a91ddd7a337"
+}

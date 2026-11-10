@@ -1,0 +1,118 @@
+{
+  "schema": "bonfyre.native.publication-chain-audit.v1",
+  "captured_at": "2026-10-09T22:42:42.366Z",
+  "scope": {
+    "archived_items": 70132,
+    "advertised_items": 24000,
+    "compiled_subjects": 1706,
+    "compiled_material": 202275,
+    "compiled_route_edges": 662126,
+    "other_subject_only_count": 7048,
+    "export_reported_written": 16941,
+    "export_reported_missing": 7059,
+    "other_subject_only_coverage_of_missing": 0.9984417056240261
+  },
+  "archive_clock": {
+    "refiled_at_single_instant": 26012,
+    "refiled_oct9": 26024,
+    "stated_publication_oct9": 170,
+    "stated_publication_october": 362
+  },
+  "financial": {
+    "observations": 23954,
+    "source_level_delta_rows": 6,
+    "collector_single_instant_sources": [
+      "azure/retail-prices",
+      "openrouter/models"
+    ],
+    "observations_window": "2026-09-26T16:53:03Z through 16:55:17Z"
+  },
+  "funding": {
+    "n": 31,
+    "empty_scope": 31,
+    "empty_cost": 31
+  },
+  "published_probes": [
+    {
+      "path": "https://aurekai.life/funding",
+      "http": 404
+    },
+    {
+      "path": "https://aurekai.work/funding",
+      "http": 404
+    },
+    {
+      "path": "https://aurekai.life/economics",
+      "http": 404
+    },
+    {
+      "path": "https://aurekai.work/economics",
+      "http": 404
+    },
+    {
+      "path": "https://aurekai.shop/market",
+      "http": 200
+    }
+  ],
+  "publisher": {
+    "source": "scripts/publish_estate.sh",
+    "log": "/Users/nickgonzales/.bonfyre/estate-local/publish/publish.log",
+    "log_bytes": 43926607,
+    "observed_error": "bun: command not found",
+    "last_error": "item archive incomplete: expected 24000 retained items, materialized 16941",
+    "publication_stage": "export_static_estate.sh aborts under set -eu before funding/economics and R2 sync",
+    "authoritative_guard": "cmd/BonfyreWebAddress/src/main.c page_subject_projection_item refuses item belonging to other subject at territory apex",
+    "cannot_infer": "Other-subject-only membership accounts for 7048 of 7059 missing pages; remaining 11 not yet individually diagnosed, so this is a near match not complete proof."
+  },
+  "scratch_public_products": {
+    "economics_generated": true,
+    "economics_events_reported": 475,
+    "funding_generated": true,
+    "funding_programmes": 10,
+    "funding_packages": 31,
+    "funding_candidates": 23,
+    "funding_live_results": 0,
+    "funding_offline": true,
+    "receipt": "9df70ccc-a112-48af-a9ef-fecec7619088",
+    "no_upload": true
+  },
+  "live_origin_speed": {
+    "serial_roots_200": 4,
+    "roots_elapsed_ms_range": "3130-5725",
+    "isolated_cache_test": [
+      {
+        "route": "LIFE root",
+        "cold_ms": 3153,
+        "warm_ms": 3
+      },
+      {
+        "route": "LIVE root",
+        "cold_ms": 4412,
+        "warm_ms": 4
+      },
+      {
+        "route": "LIFE discover",
+        "cold_ms": 5748,
+        "warm_ms": 4
+      }
+    ],
+    "cache_receipt": "89704bc0-37d2-4340-b629-be68e65d727d",
+    "production_cache_config_missing": true,
+    "production_restart": false
+  },
+  "repair_ownership": {
+    "publication_shell": "scripts/publish_estate.sh (outside low-risk patch allowlist)",
+    "exporter": "scripts/export_static_estate.sh (outside low-risk patch allowlist)",
+    "launchd": "deploy/launchd/com.bonfyre.public-web-address.plist (outside low-risk patch allowlist)",
+    "economic_source_delta": "components/BonfyreProject/src/main.c (outside low-risk patch allowlist)",
+    "no_live_publishing_change": true
+  },
+  "warnings": [
+    "Archive last_read is a local archive-items upsert timestamp, not evidence of refetching a publisher; 26012 rows updated at identical time.",
+    "Published item dates include historic material and one absurd future event, not real-time availability.",
+    "Six price sources varied in SKU prices; counting distinct amounts by source is not temporal change.",
+    "Static export should honor exact compiled subject ownership; must not bypass page_subject_projection_item authority rules.",
+    "A grant work package with [] scope and cost codes is a candidate declaration, not separately scoped financing or an award.",
+    "The public funding/economics omission is a failed publication chain, not proof the rendering libraries are absent."
+  ]
+}

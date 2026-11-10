@@ -1,0 +1,93 @@
+{
+  "bytes": 268435498,
+  "expected_sha256": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0",
+  "source_sha256": {
+    "before": "f77aca80cca8fd918199a3b78164c0db88c86f6160bd73f11c4da61fad577ad1",
+    "after": "563b2dede6383e72e487885f491e5d2c883f56353cb6e40857a48005590958af"
+  },
+  "runs": [
+    {
+      "variant": "before",
+      "round": 0,
+      "seconds": 0.389742375,
+      "max_rss_bytes": 299237376,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "after",
+      "round": 0,
+      "seconds": 0.2340801659999998,
+      "max_rss_bytes": 34340864,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "after",
+      "round": 1,
+      "seconds": 0.22532462499999983,
+      "max_rss_bytes": 34422784,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "before",
+      "round": 1,
+      "seconds": 0.3585130419999998,
+      "max_rss_bytes": 299548672,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "before",
+      "round": 2,
+      "seconds": 0.84323075,
+      "max_rss_bytes": 299073536,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "after",
+      "round": 2,
+      "seconds": 0.2920782919999998,
+      "max_rss_bytes": 34357248,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "after",
+      "round": 3,
+      "seconds": 0.2470052909999998,
+      "max_rss_bytes": 34422784,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "before",
+      "round": 3,
+      "seconds": 0.39547595800000046,
+      "max_rss_bytes": 298385408,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "before",
+      "round": 4,
+      "seconds": 0.2854687920000005,
+      "max_rss_bytes": 299450368,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    },
+    {
+      "variant": "after",
+      "round": 4,
+      "seconds": 0.2493075410000003,
+      "max_rss_bytes": 34553856,
+      "digest": "9be0c4ddd902cbdcb3a18b3c3d6c8122d82be916bdcac3d7ca52649321fb75e0"
+    }
+  ],
+  "summary": [
+    {
+      "variant": "before",
+      "median_seconds": 0.389742375,
+      "median_max_rss_bytes": 299237376
+    },
+    {
+      "variant": "after",
+      "median_seconds": 0.2470052909999998,
+      "median_max_rss_bytes": 34422784
+    }
+  ],
+  "method": "Five alternating runs; 256 repetitions of bytes(range(256))*4096, then UTF-8 bounded hash fixture, final partial buffer. Startup included; /usr/bin/time -l RSS. Independent shasum oracle."
+}

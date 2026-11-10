@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/browser/tests/chromium-engines.test.mjs:
+(pass) a document written by the browser's PDF writer is read back by its PDF reader [2431.01ms]
+
+ 1 pass
+ 3 filtered out
+ 0 fail
+ 12 expect() calls
+Ran 1 test across 1 file. [2.59s]

@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-12T14:45:04.656Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "library-only editor lands in Programs without request access",
+    "new unfinished program is saved without creating a member request",
+    "saved program reopens with its exercises",
+    "stale tab retains its edits and cannot overwrite the native draft",
+    "conflict recovery loads the newer saved program",
+    "publication waits for review of the saved routine",
+    "changed source refuses stale publication",
+    "reviewed library routine publishes its new targets",
+    "editing the source leaves its public version unchanged",
+    "another studio has a separate program library",
+    "member adopts the reviewed library release",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

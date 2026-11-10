@@ -1,0 +1,152 @@
+{
+  "schema": "bonfyre.mcp-workflow-live-audit.v1",
+  "observed_at": "2026-10-17T21:39:19.680Z",
+  "endpoint": "http://127.0.0.1:3051/mcp",
+  "tool_count": 86,
+  "schemas": {
+    "native_tool_inventory": {
+      "fields": [
+        "query",
+        "detail",
+        "offset",
+        "limit"
+      ],
+      "required": []
+    },
+    "project_read": {
+      "fields": [
+        "path",
+        "start_line",
+        "end_line",
+        "if_sha256",
+        "files"
+      ],
+      "required": []
+    },
+    "project_patch_preview": {
+      "fields": [
+        "patch",
+        "paths"
+      ],
+      "required": []
+    },
+    "fabric_status": {
+      "fields": [],
+      "required": []
+    },
+    "implementation_relay": {
+      "fields": [
+        "prompt",
+        "title",
+        "apply_to_project",
+        "source_files"
+      ],
+      "required": [
+        "prompt"
+      ]
+    },
+    "task_status": {
+      "fields": [
+        "task_id",
+        "detail"
+      ],
+      "required": [
+        "task_id"
+      ]
+    },
+    "task_cancel": {
+      "fields": [
+        "task_id"
+      ],
+      "required": [
+        "task_id"
+      ]
+    },
+    "recent_receipts": {
+      "fields": [
+        "limit"
+      ],
+      "required": []
+    }
+  },
+  "inventory": {
+    "matched": 1,
+    "returned": 1
+  },
+  "batch": {
+    "files": 2,
+    "preimages": [
+      {
+        "path": "integrations/mcp/project_fabric.mjs",
+        "sha256": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893"
+      },
+      {
+        "path": "integrations/mcp/project_owner.mjs",
+        "sha256": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069"
+      }
+    ],
+    "all_unchanged": true
+  },
+  "preflight": {
+    "kind": "path_preflight",
+    "eligible": false,
+    "policy_errors": [
+      "path outside allowed roots: architecture/commands/project-node.yaff",
+      "path outside allowed roots: components/BonfyreDecision/books.mjs"
+    ],
+    "manual_write_enabled": true,
+    "manual_approval_required": true
+  },
+  "fabric": {
+    "admission": {
+      "paused": true,
+      "accepting_tasks": false,
+      "background_tasks_enabled": true
+    },
+    "execution": {
+      "active_tasks": [],
+      "queued_tasks": [],
+      "unreconciled": [],
+      "scope": "Executors and queue owned by this service process; stored task states are historical records."
+    }
+  },
+  "observations": [
+    {
+      "method": "tools/list",
+      "tool": null,
+      "bytes": 42071,
+      "milliseconds": 11.32
+    },
+    {
+      "method": "tools/call",
+      "tool": "native_tool_inventory",
+      "bytes": 1369,
+      "milliseconds": 95.079
+    },
+    {
+      "method": "tools/call",
+      "tool": "project_read",
+      "bytes": 7153,
+      "milliseconds": 1.626
+    },
+    {
+      "method": "tools/call",
+      "tool": "project_read",
+      "bytes": 1041,
+      "milliseconds": 0.614
+    },
+    {
+      "method": "tools/call",
+      "tool": "project_patch_preview",
+      "bytes": 2543,
+      "milliseconds": 47.768
+    },
+    {
+      "method": "tools/call",
+      "tool": "fabric_status",
+      "bytes": 16025,
+      "milliseconds": 181.884
+    }
+  ],
+  "scope": "Current authenticated live server reads only. Single observations are not a latency benchmark. No model, patch, policy change, task submission or operator resume."
+}

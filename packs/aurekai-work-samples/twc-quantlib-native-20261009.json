@@ -1,0 +1,129 @@
+{
+  "schema": "aurekai.payment-option-result.v1",
+  "input_ref": "opportunity:twc-website-rfp",
+  "reference_date": "2026-10-09",
+  "reference_date_basis": "Observation-date normalization for quotation comparison; no subscription or contract starts on this date.",
+  "currency": "USD",
+  "assumption_notice": "Actual published prices. Equal uninterrupted twelve-month service is required for this comparison. Both payment-in-advance and arrears conventions are calculated because an accepted subcontract billing schedule has not been received. Annual refundability and monthly cancellation differ and are not priced by these indifference rates. No borrowing rate or lender offer is assumed.",
+  "provider": "QuantLib",
+  "version": "1.43",
+  "day_count": "Actual/365 (Fixed)",
+  "date_adjustment": "Unadjusted subscription anniversaries; no bank-calendar rule supplied",
+  "results": [
+    {
+      "id": "gold-advance",
+      "effective_annual_indifference_rate": 0.27589135222432803,
+      "repriced_upfront_amount": "4680.00000000",
+      "repricing_error": 0,
+      "modified_duration_years": 0.3434241717868656,
+      "local_pv_change_per_basis_point": -0.1607225123962531,
+      "payment_dates": [
+        "2026-10-09",
+        "2026-11-09",
+        "2026-12-09",
+        "2027-01-09",
+        "2027-02-09",
+        "2027-03-09",
+        "2027-04-09",
+        "2027-05-09",
+        "2027-06-09",
+        "2027-07-09",
+        "2027-08-09",
+        "2027-09-09"
+      ],
+      "calculation": "QuantLib CashFlows.yieldRate / npv / duration",
+      "billing_timing": "advance",
+      "source_refs": [
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json",
+        "price_observation:3,4"
+      ]
+    },
+    {
+      "id": "gold-arrears",
+      "effective_annual_indifference_rate": 0.2273178652702273,
+      "repriced_upfront_amount": "4680.00000000",
+      "repricing_error": 0,
+      "modified_duration_years": 0.4275108686571292,
+      "local_pv_change_per_basis_point": -0.20007508653153647,
+      "payment_dates": [
+        "2026-11-09",
+        "2026-12-09",
+        "2027-01-09",
+        "2027-02-09",
+        "2027-03-09",
+        "2027-04-09",
+        "2027-05-09",
+        "2027-06-09",
+        "2027-07-09",
+        "2027-08-09",
+        "2027-09-09",
+        "2027-10-09"
+      ],
+      "calculation": "QuantLib CashFlows.yieldRate / npv / duration",
+      "billing_timing": "arrears",
+      "source_refs": [
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json",
+        "price_observation:3,4"
+      ]
+    },
+    {
+      "id": "diamond-advance",
+      "effective_annual_indifference_rate": 0.2374800386993471,
+      "repriced_upfront_amount": "23880.00000000",
+      "repricing_error": 3.637978807091713e-12,
+      "modified_duration_years": 0.3561129617834912,
+      "local_pv_change_per_basis_point": -0.8503977527389772,
+      "payment_dates": [
+        "2026-10-09",
+        "2026-11-09",
+        "2026-12-09",
+        "2027-01-09",
+        "2027-02-09",
+        "2027-03-09",
+        "2027-04-09",
+        "2027-05-09",
+        "2027-06-09",
+        "2027-07-09",
+        "2027-08-09",
+        "2027-09-09"
+      ],
+      "calculation": "QuantLib CashFlows.yieldRate / npv / duration",
+      "billing_timing": "advance",
+      "source_refs": [
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json",
+        "price_observation:5,6"
+      ]
+    },
+    {
+      "id": "diamond-arrears",
+      "effective_annual_indifference_rate": 0.19635781837170493,
+      "repriced_upfront_amount": "23880.00000000",
+      "repricing_error": -3.637978807091713e-12,
+      "modified_duration_years": 0.44032977622022096,
+      "local_pv_change_per_basis_point": -1.0515075056138874,
+      "payment_dates": [
+        "2026-11-09",
+        "2026-12-09",
+        "2027-01-09",
+        "2027-02-09",
+        "2027-03-09",
+        "2027-04-09",
+        "2027-05-09",
+        "2027-06-09",
+        "2027-07-09",
+        "2027-08-09",
+        "2027-09-09",
+        "2027-10-09"
+      ],
+      "calculation": "QuantLib CashFlows.yieldRate / npv / duration",
+      "billing_timing": "arrears",
+      "source_refs": [
+        "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json",
+        "price_observation:5,6"
+      ]
+    }
+  ],
+  "effect": "analysis_only",
+  "debt_created": false,
+  "payment_sent": false
+}

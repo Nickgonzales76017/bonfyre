@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.books-workbook.source-verification.v1",
+  "time": "2026-10-17T23:52:00.881Z",
+  "sources": {
+    "components/BonfyreDecision/books-workbook.mjs": "e8688eeb6f0a304256a4c1d6554a3d06e407516bd9b482e5f5cd8aca76caea57",
+    "cmd/BonfyreBooks/bonfyre-books": "6296dbe83031e7b9cfca8690a92c47ff5155bd69c1cf0a627e9714acf2d6b720",
+    "components/BonfyreDecision/tests/books-workbook.test.mjs": "b3fc80752a00ca3f4484e74284fac84871b03ce5dcdc2b22b91fcf102dbb6797",
+    "packs/no-simulation/books-workbook-20261017/bonfyre-books": "82b76ef3fe8445dd5d1ed82d3e09a032f733702fe1d5ea738061f53063b684da"
+  },
+  "checks": {
+    "source_tests": 13,
+    "source_assertions": 111,
+    "compiled_cli_tests": 1,
+    "compiled_cli_assertions": 9,
+    "atlas": "passed",
+    "experience_map_corpus": "passed"
+  },
+  "deployed": false,
+  "remaining": [
+    "Independent formula recalculation",
+    "Visual workbook verification",
+    "Interactive workbook editing",
+    "Account-scoped persistence and review",
+    "Reviewed native posting",
+    "MCP app and full connected journeys"
+  ]
+}

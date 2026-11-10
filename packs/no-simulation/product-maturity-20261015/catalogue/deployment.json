@@ -1,0 +1,30 @@
+{
+  "deployment": "4e2828c1-85b7-42ef-9fb7-d50d72fd6469",
+  "url": "https://4e2828c1.aurekai-work-samples.pages.dev",
+  "checks": [
+    {
+      "path": "/catalogue/",
+      "status": 200,
+      "sha256": "e70d18400dce86e8413f2ce25555e5d3bd9c7aca15ffa2357fd620ea42d8177a",
+      "matches": true
+    },
+    {
+      "path": "/data/product-workspace/catalogue-client.mjs",
+      "status": 200,
+      "sha256": "931a390bb3da2bec8a094533a38d31ab1f9cc92f7ada13a0063bdb480b7b399d",
+      "matches": true
+    },
+    {
+      "path": "/data/product-workspace/catalogue-desk.mjs",
+      "status": 200,
+      "sha256": "22f60baaebdd1aa44380a63b437cbc78721322f9d1d3f2eb628c56a1e8608ce6",
+      "matches": true
+    },
+    {
+      "path": "/data/product-workspace/workspace-navigation.mjs",
+      "status": 200,
+      "sha256": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+      "matches": true
+    }
+  ]
+}

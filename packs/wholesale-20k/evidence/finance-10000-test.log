@@ -1,0 +1,13 @@
+bun test v1.3.13 (bf2e2cec)
+{"witness":"zero_close_scale","opportunities":10000,"import_ms":212.185542,"requirements_and_closure_ms":220.14749999999998,"rank_and_projection_ms":90.84400000000005,"total_ms":523.177042,"finance_db_bytes":7348224,"queue_batch_bytes":990000,"outreach_effects":0,"payment_effects":0}
+
+cmd/BonfyreFinance/tests/zero_close.test.mjs:
+(pass) economic closure remains idempotent and cannot jump the human line [165.66ms]
+
+cmd/BonfyreFinance/tests/zero_close_scale.test.mjs:
+(pass) 100k opportunities close capability requirements and project pre-authority work without effects [574.27ms]
+
+ 2 pass
+ 0 fail
+ 54 expect() calls
+Ran 2 tests across 2 files. [784.00ms]

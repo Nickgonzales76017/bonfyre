@@ -1,0 +1,17 @@
+{
+  "updates": [
+    {
+      "id": 43,
+      "replacement": 95,
+      "gmail": "1a11ea1c27061ff1",
+      "state": "abandoned"
+    },
+    {
+      "id": 45,
+      "replacement": 94,
+      "gmail": "1a11ea17b50845e7",
+      "state": "abandoned"
+    }
+  ],
+  "king_state": "withheld"
+}

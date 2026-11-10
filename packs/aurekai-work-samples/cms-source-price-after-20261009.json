@@ -1,0 +1,21 @@
+{
+  "observed_at": "2026-10-09T07:59:18.883Z",
+  "source_before": 349.99,
+  "prior_numeric_store": 349,
+  "repaired_numeric_store": 349.99,
+  "managed_binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-cms",
+  "managed_binary_sha256": "941df582fd91b332027e001437b180b7b8f43a634ac31db2f3e5aa8be60885a7",
+  "source_sha256": "00b392048aba1b5e0bd74ee2acfdcb21358f24d5fd6458cedfc59d0a4c34ddad",
+  "live_original_prices_preserved": 7,
+  "dbs_stage": "qualification_reply_drafted",
+  "quantlib": {
+    "provider": "QuantLib",
+    "comparisons": 4,
+    "read_from_cms": true,
+    "parity_with_previous": true,
+    "input": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-quantlib-cms-input-20261009.json",
+    "output": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-quantlib-cms-result-20261009.json"
+  },
+  "validation_receipt": "0c0823dc-546c-4d60-8e94-032cf9796bf5",
+  "new_financial_transactions": 0
+}

@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-13T19:57:35.675Z",
+  "before": {
+    "bonfyre-web-address": {
+      "sha256": "f0d560076474337cf1c937cea4f731b39b62e91ed80ff6643365d95192937698",
+      "symlink": null
+    },
+    "bonfyre-site": {
+      "sha256": "7bff52b0469ebcf5c64ae5dde61664d32d22bfdfc454435d19c6d280a8dc42fb",
+      "symlink": null
+    }
+  },
+  "after": {
+    "sha256": "a04220dbfc4dc3bbfeda6d8796fe49781cf75bc4c03133c930c31d7fe186849c",
+    "site_alias": "bonfyre-web-address"
+  },
+  "rollback": "/Users/nickgonzales/.bonfyre/rollback/web-address-f0d560076474337cf1c937cea4f731b39b62e91ed80ff6643365d95192937698"
+}

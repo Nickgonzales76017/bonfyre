@@ -1,0 +1,160 @@
+{
+  "checked_at": "2026-10-12T01:30:41.381Z",
+  "results": [
+    {
+      "route": "start",
+      "width": 1440,
+      "status": 200,
+      "title": "Build with Bonfÿre. Deliver with Aurekai. · Bonfÿre guides",
+      "h1": "Build with Bonfÿre. Deliver with Aurekai.",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 0,
+      "text": 3948
+    },
+    {
+      "route": "start",
+      "width": 390,
+      "status": 200,
+      "title": "Build with Bonfÿre. Deliver with Aurekai. · Bonfÿre guides",
+      "h1": "Build with Bonfÿre. Deliver with Aurekai.",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 0,
+      "text": 3761
+    },
+    {
+      "route": "local-first-applications",
+      "width": 1440,
+      "status": 200,
+      "title": "Native local-first applications · Bonfÿre guides",
+      "h1": "Native local-first applications",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 5,
+      "text": 9199
+    },
+    {
+      "route": "local-first-applications",
+      "width": 390,
+      "status": 200,
+      "title": "Native local-first applications · Bonfÿre guides",
+      "h1": "Native local-first applications",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 5,
+      "text": 8940
+    },
+    {
+      "route": "request-to-books",
+      "width": 1440,
+      "status": 200,
+      "title": "From request to books · Bonfÿre guides",
+      "h1": "From request to books",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 8,
+      "text": 10556
+    },
+    {
+      "route": "request-to-books",
+      "width": 390,
+      "status": 200,
+      "title": "From request to books · Bonfÿre guides",
+      "h1": "From request to books",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 8,
+      "text": 10213
+    },
+    {
+      "route": "integration-and-migration",
+      "width": 1440,
+      "status": 200,
+      "title": "Integration and migration · Bonfÿre guides",
+      "h1": "Integration and migration",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 6,
+      "text": 12570
+    },
+    {
+      "route": "integration-and-migration",
+      "width": 390,
+      "status": 200,
+      "title": "Integration and migration · Bonfÿre guides",
+      "h1": "Integration and migration",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 6,
+      "text": 12227
+    },
+    {
+      "route": "white-label-delivery",
+      "width": 1440,
+      "status": 200,
+      "title": "White-label delivery · Bonfÿre guides",
+      "h1": "White-label delivery",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 6,
+      "text": 11894
+    },
+    {
+      "route": "white-label-delivery",
+      "width": 390,
+      "status": 200,
+      "title": "White-label delivery · Bonfÿre guides",
+      "h1": "White-label delivery",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 6,
+      "text": 11651
+    },
+    {
+      "route": "recording-to-workspace",
+      "width": 1440,
+      "status": 200,
+      "title": "Recording to searchable workspace · Bonfÿre guides",
+      "h1": "Recording to searchable workspace",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 4,
+      "text": 5503
+    },
+    {
+      "route": "recording-to-workspace",
+      "width": 390,
+      "status": 200,
+      "title": "Recording to searchable workspace · Bonfÿre guides",
+      "h1": "Recording to searchable workspace",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 4,
+      "text": 5389
+    },
+    {
+      "route": "models-and-compression",
+      "width": 1440,
+      "status": 200,
+      "title": "Models and compression · Bonfÿre guides",
+      "h1": "Models and compression",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "codeBlocks": 6,
+      "text": 6310
+    },
+    {
+      "route": "models-and-compression",
+      "width": 390,
+      "status": 200,
+      "title": "Models and compression · Bonfÿre guides",
+      "h1": "Models and compression",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "codeBlocks": 6,
+      "text": 6107
+    }
+  ],
+  "errors": []
+}

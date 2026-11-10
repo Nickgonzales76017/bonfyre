@@ -20,7 +20,7 @@ witness fpq_tiny_f16_roundtrip
   invariant fpq.reconstruction.fixture.tiny_f16 layer reconstruction plane measured status cooled
   reheat reconstruction-fixture-mse-exceeds-ceiling
   reheat fixture-gguf-hash-changes
-  note Reproduced by 10-Code/BonfyreControlPlane/fpq_evidence.py; verified live by tests/test_fpq_evidence.py (mutated fixture reheats the layer, unrelated symptom does not).
+  note Reproduced by components/BonfyreControlPlane/fpq_evidence.py; verified live by tests/test_fpq_evidence.py (mutated fixture reheats the layer, unrelated symptom does not).
 
 work fpq_verify_archive_claims_before_promoting
   target_plane run5_recursive_external

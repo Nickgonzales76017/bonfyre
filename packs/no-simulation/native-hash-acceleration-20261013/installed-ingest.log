@@ -1,0 +1,11 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreIngest/tests/hash.test.mjs:
+(pass) text, table and raw intake retain independently verified source and normalized digests [174.27ms]
+(pass) absent and directory inputs cannot publish a ready intake [6.31ms]
+(pass) partial source or normalized hash failure cannot publish ready manifests [320.40ms]
+
+ 3 pass
+ 0 fail
+ 47 expect() calls
+Ran 3 tests across 1 file. [1002.00ms]

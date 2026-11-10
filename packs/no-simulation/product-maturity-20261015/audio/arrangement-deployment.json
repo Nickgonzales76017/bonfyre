@@ -1,0 +1,160 @@
+{
+  "deployment": "35f84626-3358-420a-888c-354985d25f66",
+  "url": "https://35f84626.aurekai-work-samples.pages.dev",
+  "matches": [
+    {
+      "path": "/",
+      "status": 200,
+      "local": "cef76e85ac6fcd681fd886b2e65803966618bfa2b43b21a5b24ea10bb322c43c",
+      "live": "cef76e85ac6fcd681fd886b2e65803966618bfa2b43b21a5b24ea10bb322c43c",
+      "match": true
+    },
+    {
+      "path": "/audio/",
+      "status": 200,
+      "local": "fcb41078fc103e053110d0ff41bd9cab7b917b479d97cfe7b53d791f0427a14c",
+      "live": "fcb41078fc103e053110d0ff41bd9cab7b917b479d97cfe7b53d791f0427a14c",
+      "match": true
+    },
+    {
+      "path": "/assets/shots/audio-arrangement.png",
+      "status": 200,
+      "local": "49178520d8b4b3bee6a2dc9308be4996e49094048098ba39a1455f349328143a",
+      "live": "49178520d8b4b3bee6a2dc9308be4996e49094048098ba39a1455f349328143a",
+      "match": true
+    },
+    {
+      "path": "/assets/shots/catalogue-grid.png",
+      "status": 200,
+      "local": "91cc1a09fc5b4128ddcbddd8ba38e4a696bf54371e8fed769f654e8ea4ad47b1",
+      "live": "91cc1a09fc5b4128ddcbddd8ba38e4a696bf54371e8fed769f654e8ea4ad47b1",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-client.mjs",
+      "status": 200,
+      "local": "db56392ba2661542e4dba1044e1db3c04a21a1a5885ef3a823adf34273c65658",
+      "live": "db56392ba2661542e4dba1044e1db3c04a21a1a5885ef3a823adf34273c65658",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/mix_kernel.wasm",
+      "status": 200,
+      "local": "efba33826fa3da7f3ea28a9e44e7cad189b65a78aa9f58e7ab40ff8f1e574126",
+      "live": "efba33826fa3da7f3ea28a9e44e7cad189b65a78aa9f58e7ab40ff8f1e574126",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-wasm.mjs",
+      "status": 200,
+      "local": "b68a85626495e11881fa63981b622266ce94c616eb599ef01a06cc47caf21022",
+      "live": "b68a85626495e11881fa63981b622266ce94c616eb599ef01a06cc47caf21022",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/harmony.f32",
+      "status": 200,
+      "local": "3e42f13ac98cde84ff9771a5113de46a0ec0a7e32ac0c8062b5390e859ab5b4e",
+      "live": "3e42f13ac98cde84ff9771a5113de46a0ec0a7e32ac0c8062b5390e859ab5b4e",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-timeline-model.mjs",
+      "status": 200,
+      "local": "dac5b073014a0835ff1664c4f46e6e343aac1d13e6f1956ce7567189456ecf70",
+      "live": "dac5b073014a0835ff1664c4f46e6e343aac1d13e6f1956ce7567189456ecf70",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-sample.mjs",
+      "status": 200,
+      "local": "245b7e98a6409e4983b03e30240c87ff94ecac956c570304614f76594cd00c83",
+      "live": "245b7e98a6409e4983b03e30240c87ff94ecac956c570304614f76594cd00c83",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/workspace-navigation.mjs",
+      "status": 200,
+      "local": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+      "live": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-worker.mjs",
+      "status": 200,
+      "local": "0415aab0ad9ccacaca7cc8714c87b97df0ca6577c9f2e2d0e6baaab0a8289e12",
+      "live": "0415aab0ad9ccacaca7cc8714c87b97df0ca6577c9f2e2d0e6baaab0a8289e12",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/pulse.f32",
+      "status": 200,
+      "local": "343b9003fbbce75ef57bc2354472b88cc49ebee44cad63d4f5ee0449557ae457",
+      "live": "343b9003fbbce75ef57bc2354472b88cc49ebee44cad63d4f5ee0449557ae457",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-timeline.mjs",
+      "status": 200,
+      "local": "249258e679e4a164acec1c4adba87226ac7c04551c0c944ff03c595fb2d01337",
+      "live": "249258e679e4a164acec1c4adba87226ac7c04551c0c944ff03c595fb2d01337",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/sample.json",
+      "status": 200,
+      "local": "0bb67b13787ff12997593827f0e7d6185254b9eaf60f6d444827f87686eeee38",
+      "live": "0bb67b13787ff12997593827f0e7d6185254b9eaf60f6d444827f87686eeee38",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/store.mjs",
+      "status": 200,
+      "local": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "live": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-import-client.mjs",
+      "status": 200,
+      "local": "dc755ea38fced386c6ac424c586712b2bf0fabf23b47c6b02df84d2ed2720c24",
+      "live": "dc755ea38fced386c6ac424c586712b2bf0fabf23b47c6b02df84d2ed2720c24",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-import.mjs",
+      "status": 200,
+      "local": "909628a219bca33578af32f14cea705402326382b5e7421f2bf1ee8ea60ef2b0",
+      "live": "909628a219bca33578af32f14cea705402326382b5e7421f2bf1ee8ea60ef2b0",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/chime.f32",
+      "status": 200,
+      "local": "d1511b5d8b9c0162d382ac2005839da65451f8371884640499023b941077b4ff",
+      "live": "d1511b5d8b9c0162d382ac2005839da65451f8371884640499023b941077b4ff",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/vendor/wavesurfer-8.0.2/LICENSE",
+      "status": 200,
+      "local": "0fc992dc27cc34dde78bfeb024b4cadff6320f0dcbee2f1228efaeb533ca1364",
+      "live": "0fc992dc27cc34dde78bfeb024b4cadff6320f0dcbee2f1228efaeb533ca1364",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/vendor/wavesurfer-8.0.2/regions.esm.js",
+      "status": 200,
+      "local": "3d20b123b23bd0126fa2bab2ebeb6983bce1d33a385d8072f7dc5d3c5769be24",
+      "live": "3d20b123b23bd0126fa2bab2ebeb6983bce1d33a385d8072f7dc5d3c5769be24",
+      "match": true
+    },
+    {
+      "path": "/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/vendor/wavesurfer-8.0.2/wavesurfer.esm.js",
+      "status": 200,
+      "local": "8574e573da049feb232249ad147b771597b3caa66aeaf9c09b0ee291ae6ec93c",
+      "live": "8574e573da049feb232249ad147b771597b3caa66aeaf9c09b0ee291ae6ec93c",
+      "match": true
+    }
+  ]
+}

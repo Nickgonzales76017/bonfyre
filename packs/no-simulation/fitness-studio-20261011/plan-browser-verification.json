@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-19T15:25:10.690Z",
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "creator saves a three-week plan with reusable routine versions",
+    "saved plan reopens with its schedule and recovery week",
+    "stale plan edits cannot replace the saved draft",
+    "weekly schedule is reviewed before publication",
+    "publication creates one native plan release",
+    "member reviews weeks and chooses the start date",
+    "adopted dates follow the chosen start across the month boundary",
+    "recovery weeks remain visible in the member schedule",
+    "weekly plan fits the mobile viewport",
+    "skip records a member choice without inventing a workout",
+    "planned workout resumes offline with its plan identity",
+    "completed workout advances plan progress offline",
+    "new public version preserves the adopted plan",
+    "withdrawal removes the catalogue plan while preserving member progress",
+    "plan and completion survive portable export",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

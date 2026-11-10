@@ -1,0 +1,465 @@
+{
+  "binary_sha256": {
+    "before": "b74b4f5bfb6a0c66d5a832dd7ee5d87fef1780f32d19c21fc703cc9551c5fde8",
+    "after": "37917708f98a3adc0ab481612777184e5fcb895f9a98ae49e9d7932913500616"
+  },
+  "runs": [
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "round": 0,
+      "seconds": 3.096084083,
+      "max_rss_bytes": 97861632,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "round": 0,
+      "seconds": 1.0252807080000004,
+      "max_rss_bytes": 96223232,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "round": 1,
+      "seconds": 1.0394930420000001,
+      "max_rss_bytes": 96370688,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "round": 1,
+      "seconds": 2.481161708,
+      "max_rss_bytes": 97812480,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "round": 2,
+      "seconds": 2.351748875,
+      "max_rss_bytes": 97779712,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "round": 2,
+      "seconds": 1.2879070829999986,
+      "max_rss_bytes": 96321536,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "round": 3,
+      "seconds": 2.2382196249999993,
+      "max_rss_bytes": 96043008,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "round": 3,
+      "seconds": 3.3890382909999985,
+      "max_rss_bytes": 97353728,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "round": 4,
+      "seconds": 1.944015125,
+      "max_rss_bytes": 97992704,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "round": 4,
+      "seconds": 1.1786794590000014,
+      "max_rss_bytes": 96419840,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/small-files",
+        "raw_bytes": 4644500,
+        "archive_stream_bytes": 10250240,
+        "archive_overhead_bytes": 5605740,
+        "compressed_bytes": 55564,
+        "stream_ratio": 0.0054,
+        "ratio": 0.012,
+        "savings_pct": 98.8,
+        "bytes_saved": 4588936,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "round": 0,
+      "seconds": 0.5884270830000027,
+      "max_rss_bytes": 238960640,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "round": 0,
+      "seconds": 0.518609166000001,
+      "max_rss_bytes": 154501120,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "round": 1,
+      "seconds": 0.5448936660000001,
+      "max_rss_bytes": 154501120,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "round": 1,
+      "seconds": 0.529149958999998,
+      "max_rss_bytes": 242204672,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "round": 2,
+      "seconds": 0.5587381249999979,
+      "max_rss_bytes": 242139136,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "round": 2,
+      "seconds": 0.5550390410000006,
+      "max_rss_bytes": 154435584,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "round": 3,
+      "seconds": 0.571172917000002,
+      "max_rss_bytes": 154583040,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "round": 3,
+      "seconds": 0.5438765839999995,
+      "max_rss_bytes": 241893376,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "round": 4,
+      "seconds": 0.6830683749999977,
+      "max_rss_bytes": 241844224,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "round": 4,
+      "seconds": 0.6403429170000017,
+      "max_rss_bytes": 154501120,
+      "measurement": {
+        "directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compress-bench-8zl67_jh/large",
+        "raw_bytes": 67108864,
+        "archive_stream_bytes": 67123200,
+        "archive_overhead_bytes": 14336,
+        "compressed_bytes": 1054804,
+        "stream_ratio": 0.0157,
+        "ratio": 0.0157,
+        "savings_pct": 98.4,
+        "bytes_saved": 66054060,
+        "bytes_added": 0,
+        "delivered_larger_than_files": false,
+        "cannot_infer": "ratio compares the delivered archive with the files' own bytes; stream_ratio is what compression did to the tar stream. Neither is a saving on anything but this directory as it stood."
+      }
+    }
+  ],
+  "summary": [
+    {
+      "fixture": "small-files",
+      "variant": "before",
+      "median_seconds": 2.481161708,
+      "median_max_rss_bytes": 97812480
+    },
+    {
+      "fixture": "small-files",
+      "variant": "after",
+      "median_seconds": 1.1786794590000014,
+      "median_max_rss_bytes": 96321536
+    },
+    {
+      "fixture": "large",
+      "variant": "before",
+      "median_seconds": 0.5587381249999979,
+      "median_max_rss_bytes": 241893376
+    },
+    {
+      "fixture": "large",
+      "variant": "after",
+      "median_seconds": 0.5550390410000006,
+      "median_max_rss_bytes": 154501120
+    }
+  ],
+  "method": {
+    "rounds_per_binary_fixture": 5,
+    "order": "before/after on even rounds; after/before on odd rounds",
+    "timer": "Python perf_counter around /usr/bin/time -l",
+    "architecture": "arm64",
+    "macos": "15.5",
+    "python": "3.9.6",
+    "small_files": "body-{i}, i in 0..1999; UTF-8 Fixture record {i}: retained source material. plus newline, repeated 50 times",
+    "large_file": "random.Random(1729).randbytes(1048576), repeated 64 times",
+    "codec": "libzstd level 19, checksum enabled, one worker; CLI default zstd -19"
+  }
+}

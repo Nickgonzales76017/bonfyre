@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-13T19:58:15.562Z",
+  "release": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/releases/e782a3e66da1e90447c4658643a1b15681c1f680e72353d4102537d051786358",
+  "previous": "releases/014e434ec6dc40b37bae7fb094fb2143d12b39de3695513ce675cc184a222417",
+  "files": {
+    "manifest.json": "8605cf046b776b498a6b3fc6b47c64870061421e73d02b36316bfbaf29cf649b",
+    "all_bindings.tsv": "764d83c780a3a57c908a662d169f1d89b1bd5e5ad9e0e2e74ff0258e5e267188",
+    "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+    "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+    "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+    "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372",
+    "app_bindings.jsonl": "f3e6fc650d96bd7f32434ffe4019bd4a60a6cc11a2d462c67de10fa1e6700304",
+    "owner_graph.json": "a71320d12769b15583879e1f9bbab9ae8532ee24cfe9ed63c22cd90c0f9e2a79"
+  },
+  "atlas_digest": "636645b9d42cef4c6a979767e17921587be43a5ee91dbf5244f148921339c5bb",
+  "build_digest": "3ca6b8416ca8ba0a86cf145ce86e8992ad992f3e5b9fa4447ef2a1e3dc25eef7"
+}

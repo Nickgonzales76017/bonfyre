@@ -1,0 +1,16 @@
+{
+  "id": "f87d0e0b766cec6814b4b7b1859008c873fa16034f8951d54e60a32128dff3fe",
+  "dir": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/finance-workbook-20261017/review-desk/packages/f87d0e0b766cec6814b4b7b1859008c873fa16034f8951d54e60a32128dff3fe",
+  "files": 11,
+  "layout": "shared-bodies-v1",
+  "newBodies": 11,
+  "writtenBodyBytes": 15216060,
+  "reusedBodyBytes": 0,
+  "verifiedBytes": 0,
+  "manifestBytes": 1146,
+  "entry": "finance/",
+  "family": "financial-workbooks",
+  "records": [
+    "finance-workbook:"
+  ]
+}

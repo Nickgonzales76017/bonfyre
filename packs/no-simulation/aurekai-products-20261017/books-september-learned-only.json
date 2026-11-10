@@ -1,0 +1,21 @@
+{
+ "schema": "bonfyre.books.v3",
+ "lines": 1500,
+ "by_learned": 1447,
+ "suggested_by_model": 0,
+ "to_review": 53,
+ "amounts_unread": 0,
+ "learned": {
+  "artifact_sha256": "7b375e358d40e808650e2d8028bc74f5c6fefc59e0789b9cc8b8bd30aa6460ee",
+  "lines": 6000
+ },
+ "model": null,
+ "model_error": "the local model at http://127.0.0.1:7000 is not answering (defer: Clef-Flash-Q4_K_M.gguf needs 7006 MiB, 1021 MiB spendable beyond the floor; other programs are using the memory now; retry when it frees). Start it with: bonfyre-moe serve --port 7000   (see: bonfyre model local)",
+ "checked_against_given_accounts": {
+  "lines": 1500,
+  "booked": 1447,
+  "booked_correct": 1438,
+  "suggested_correct_including_review": 1458
+ },
+ "run": "2026-10-17, bonfyre books --transactions cmd/BonfyreBooks/examples/september.csv --learned (learned from examples/history.csv); the model front could not admit a model (memory), so every unsure line was held"
+}

@@ -1,0 +1,314 @@
+{
+  "checkedAt": "2026-10-15T07:24:28.510Z",
+  "scope": "Cloudflare-to-native owned Work Samples source synchronization",
+  "cloud": {
+    "account": "estate",
+    "script": "bonfyre-power-user-continuation",
+    "workflow": "bonfyre-workgraph-activation",
+    "queueId": "8675f06c9a2a4899a5e8c9d4e57858ec",
+    "consumers": [
+      {
+        "dead_letter_queue": "bonfyre-power-user-workgraph-dead-letter",
+        "settings": {
+          "batch_size": 1,
+          "max_retries": 5,
+          "visibility_timeout_ms": 60000,
+          "retry_delay": 30
+        },
+        "consumer_id": "955b1c87278a41f4afa265b19bcd1c83",
+        "type": "http_pull"
+      }
+    ],
+    "schedules": {
+      "schedules": [
+        {
+          "cron": "*/15 * * * *",
+          "created_on": "2026-07-26T15:36:53.972989Z",
+          "modified_on": "2026-07-26T15:37:16.39504Z"
+        }
+      ]
+    },
+    "watch": true
+  },
+  "flows": [
+    {
+      "id": "w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a",
+      "params": {
+        "intent": {
+          "version": 1,
+          "mission": "source:work-samples:canary-1792046611064",
+          "family": "source-sync",
+          "digest": "524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95",
+          "issued": 1792046611064,
+          "nonce": "workflow_w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a"
+        },
+        "signature": "57a4e3e4228d848b0ce75f5319b56b8b5d034bb2558e84e021b453ab1ef0ef1c"
+      },
+      "trigger": {
+        "source": "api"
+      },
+      "versionId": "37f1980e-21d3-48ee-a61e-30696af5e8ee",
+      "queued": "2026-10-15T06:43:31.639Z",
+      "start": "2026-10-15T06:43:34.116Z",
+      "end": "2026-10-15T06:45:43.625Z",
+      "success": true,
+      "error": null,
+      "output": {
+        "version": 1,
+        "workflow": "w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a",
+        "mission": "source:work-samples:canary-1792046611064",
+        "digest": "524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95",
+        "nativeMission": "edge-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a446d5c5e0aa07f98",
+        "node": "job",
+        "receipt": "urn:sha256:8e5fa75c56e3cad289353cf43d5221b1695b326d9dc0fffbe083f8ec498759fc",
+        "output": "urn:sha256:031c7a394507792cefbb456a9bb69f7c6d1985d7771ce96fd9d06690e353b488",
+        "status": "complete",
+        "at": 1792046743029
+      },
+      "rollback": null,
+      "status": "complete",
+      "step_count": 4,
+      "steps": [
+        {
+          "name": "validate-source-revision-1",
+          "start": "2026-10-15T06:43:34.220Z",
+          "end": "2026-10-15T06:43:34.260Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:43:34.220Z",
+              "end": "2026-10-15T06:43:34.260Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 5,
+              "delay": 10000,
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"version\":1,\"mission\":\"source:work-samples:canary-1792046611064\",\"family\":\"source-sync\",\"digest\":\"524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95\",\"issued\":1792046611064,\"nonce\":\"workflow_w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a\"}",
+          "success": true,
+          "type": "step"
+        },
+        {
+          "name": "deliver-to-native-queue-1",
+          "start": "2026-10-15T06:43:34.297Z",
+          "end": "2026-10-15T06:43:35.125Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:43:34.297Z",
+              "end": "2026-10-15T06:43:35.125Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 3,
+              "delay": "5 seconds",
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"mission\":\"source:work-samples:canary-1792046611064\",\"digest\":\"524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95\",\"queued\":true}",
+          "success": true,
+          "type": "step"
+        },
+        {
+          "name": "wait-for-native-completion-1",
+          "start": "2026-10-15T06:43:35.162Z",
+          "finished": true,
+          "type": "waitForEvent",
+          "event_type": "native-completion",
+          "error": null,
+          "end": "2026-10-15T06:45:43.509Z",
+          "output": "{\"result\":{\"version\":1,\"workflow\":\"w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a\",\"mission\":\"source:work-samples:canary-1792046611064\",\"digest\":\"524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95\",\"nativeMission\":\"edge-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a446d5c5e0aa07f98\",\"node\":\"job\",\"receipt\":\"urn:sha256:8e5fa75c56e3cad289353cf43d5221b1695b326d9dc0fffbe083f8ec498759fc\",\"output\":\"urn:sha256:031c7a394507792cefbb456a9bb69f7c6d1985d7771ce96fd9d06690e353b488\",\"status\":\"complete\",\"at\":1792046743029},\"signature\":\"9f2ff2bbcf9384ca2e555d801b27190d66f12a533e92ae4d397e2dd56d1245da\"}"
+        },
+        {
+          "name": "verify-native-completion-1",
+          "start": "2026-10-15T06:45:43.547Z",
+          "end": "2026-10-15T06:45:43.584Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:45:43.547Z",
+              "end": "2026-10-15T06:45:43.584Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 5,
+              "delay": 10000,
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"version\":1,\"workflow\":\"w-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a\",\"mission\":\"source:work-samples:canary-1792046611064\",\"digest\":\"524f39dc32adfe9325906ff41bff23f89582249762f50f0f63cea29d50e2da95\",\"nativeMission\":\"edge-b2938124b4d4ce939048e24a6fa65e29f04ab15e9366eb5a446d5c5e0aa07f98\",\"node\":\"job\",\"receipt\":\"urn:sha256:8e5fa75c56e3cad289353cf43d5221b1695b326d9dc0fffbe083f8ec498759fc\",\"output\":\"urn:sha256:031c7a394507792cefbb456a9bb69f7c6d1985d7771ce96fd9d06690e353b488\",\"status\":\"complete\",\"at\":1792046743029}",
+          "success": true,
+          "type": "step"
+        }
+      ]
+    },
+    {
+      "id": "w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404",
+      "params": {
+        "intent": {
+          "version": 1,
+          "mission": "source:work-samples",
+          "family": "source-sync",
+          "digest": "6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38",
+          "issued": 1792047427004,
+          "nonce": "workflow_w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404"
+        },
+        "signature": "46a8f29b97078f627532d641af78d7c513389e3cbe94f6f08b5fa994d3dbdcee"
+      },
+      "trigger": {
+        "source": "api"
+      },
+      "versionId": "37f1980e-21d3-48ee-a61e-30696af5e8ee",
+      "queued": "2026-10-15T06:57:07.760Z",
+      "start": "2026-10-15T06:57:09.348Z",
+      "end": "2026-10-15T06:57:11.177Z",
+      "success": true,
+      "error": null,
+      "output": {
+        "version": 1,
+        "workflow": "w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404",
+        "mission": "source:work-samples",
+        "digest": "6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38",
+        "nativeMission": "edge-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404c6f78a2798e6acc6",
+        "node": "job",
+        "receipt": "urn:sha256:81dd431b41d25d8d9c9f8e37bebcaa9eff8d567f6bc3359113ed60bb8f36ccbe",
+        "output": "urn:sha256:9b1298b09b95eee82f4d3dcbfb87d48493988ec321aaa04946808ef78ba55ff9",
+        "status": "complete",
+        "at": 1792047430668
+      },
+      "rollback": null,
+      "status": "complete",
+      "step_count": 4,
+      "steps": [
+        {
+          "name": "validate-source-revision-1",
+          "start": "2026-10-15T06:57:09.596Z",
+          "end": "2026-10-15T06:57:09.624Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:57:09.596Z",
+              "end": "2026-10-15T06:57:09.624Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 5,
+              "delay": 10000,
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"version\":1,\"mission\":\"source:work-samples\",\"family\":\"source-sync\",\"digest\":\"6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38\",\"issued\":1792047427004,\"nonce\":\"workflow_w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404\"}",
+          "success": true,
+          "type": "step"
+        },
+        {
+          "name": "deliver-to-native-queue-1",
+          "start": "2026-10-15T06:57:09.651Z",
+          "end": "2026-10-15T06:57:09.790Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:57:09.651Z",
+              "end": "2026-10-15T06:57:09.790Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 3,
+              "delay": "5 seconds",
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"mission\":\"source:work-samples\",\"digest\":\"6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38\",\"queued\":true}",
+          "success": true,
+          "type": "step"
+        },
+        {
+          "name": "wait-for-native-completion-1",
+          "start": "2026-10-15T06:57:09.816Z",
+          "finished": true,
+          "type": "waitForEvent",
+          "event_type": "native-completion",
+          "error": null,
+          "end": "2026-10-15T06:57:11.098Z",
+          "output": "{\"result\":{\"version\":1,\"workflow\":\"w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404\",\"mission\":\"source:work-samples\",\"digest\":\"6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38\",\"nativeMission\":\"edge-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404c6f78a2798e6acc6\",\"node\":\"job\",\"receipt\":\"urn:sha256:81dd431b41d25d8d9c9f8e37bebcaa9eff8d567f6bc3359113ed60bb8f36ccbe\",\"output\":\"urn:sha256:9b1298b09b95eee82f4d3dcbfb87d48493988ec321aaa04946808ef78ba55ff9\",\"status\":\"complete\",\"at\":1792047430668},\"signature\":\"b6f2a7fd47d3f4600d986855dd9406ae4c8089c038b08d9d23f8f7e407202101\"}"
+        },
+        {
+          "name": "verify-native-completion-1",
+          "start": "2026-10-15T06:57:11.124Z",
+          "end": "2026-10-15T06:57:11.149Z",
+          "attempts": [
+            {
+              "start": "2026-10-15T06:57:11.124Z",
+              "end": "2026-10-15T06:57:11.149Z",
+              "success": true,
+              "error": null
+            }
+          ],
+          "config": {
+            "retries": {
+              "limit": 5,
+              "delay": 10000,
+              "backoff": "exponential"
+            },
+            "timeout": "10 minutes"
+          },
+          "output": "{\"version\":1,\"workflow\":\"w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404\",\"mission\":\"source:work-samples\",\"digest\":\"6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38\",\"nativeMission\":\"edge-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404c6f78a2798e6acc6\",\"node\":\"job\",\"receipt\":\"urn:sha256:81dd431b41d25d8d9c9f8e37bebcaa9eff8d567f6bc3359113ed60bb8f36ccbe\",\"output\":\"urn:sha256:9b1298b09b95eee82f4d3dcbfb87d48493988ec321aaa04946808ef78ba55ff9\",\"status\":\"complete\",\"at\":1792047430668}",
+          "success": true,
+          "type": "step"
+        }
+      ]
+    }
+  ],
+  "installedConsumer": true,
+  "consumerState": [
+    "state = not running",
+    "runs = 35",
+    "last exit code = 0"
+  ],
+  "lastCompleted": {
+    "at": "2026-10-15T06:57:10.590Z",
+    "pulled": 1,
+    "backlog": 1,
+    "completed": [
+      {
+        "version": 1,
+        "workflow": "w-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404",
+        "mission": "source:work-samples",
+        "digest": "6977bf9a8c97148abcd6e474437f2fab14c68b6467a614ef24cccd9ec74a7c38",
+        "nativeMission": "edge-333ddcdf5bdc98b9bc3026ab856c728c87b09530ca5c1404c6f78a2798e6acc6",
+        "node": "job",
+        "receipt": "urn:sha256:81dd431b41d25d8d9c9f8e37bebcaa9eff8d567f6bc3359113ed60bb8f36ccbe",
+        "output": "urn:sha256:9b1298b09b95eee82f4d3dcbfb87d48493988ec321aaa04946808ef78ba55ff9",
+        "status": "complete",
+        "at": 1792047430668,
+        "cloudAttempts": 0,
+        "nativeAttempt": 1
+      }
+    ],
+    "retried": []
+  },
+  "nativeQueueSha256": "fa0c0cbe77a3567e293fe433946bd3e9a3d05152c0ca0ab48e184c19c12c7fae",
+  "sourceReuse": "streaming 1 MiB hashing and content-addressed retained ForeignTwin bodies",
+  "notEstablished": [
+    "Oracle or Supabase executor takeover",
+    "all 30 demo completion",
+    "public workbench deployment"
+  ]
+}

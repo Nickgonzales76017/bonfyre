@@ -1,0 +1,48 @@
+PASS source mixed fractions and decimals combine exactly
+PASS different units never get silently added
+PASS unknown source quantities remain visible and uncounted
+PASS the existing family plan participates without another calculator
+PASS no list row manufactures a store quote
+PASS all selected source digests and instructions reach the brief
+PASS selection order does not change plan identity or output
+PASS malformed selection source:a*0 refuses before output
+PASS malformed selection source:a*101 refuses before output
+PASS malformed selection source:a*1;source:a*2 refuses before output
+PASS malformed selection source:a*true refuses before output
+PASS malformed selection source:a*1; refuses before output
+PASS malformed selection source:a*1oops refuses before output
+PASS a missing second source cannot emit a partial successful list
+PASS changed source changes the compiled plan identity
+PASS the collection entry point opens an empty selectable plan
+PASS ordinary recipe route renders a multi-selection plan
+PASS native food calculations and explicit missing values reach the ordinary browser page
+PASS browser calculation does not mutate nutritional source records
+PASS food references come from the existing external source identities
+PASS rendering references does not change their owner database
+PASS anonymous page has no write form
+PASS HTTP and CLI deliver the same complete list and brief
+PASS search pagination retains every selected quantity
+PASS adding an already selected source preserves its chosen count
+PASS bad plan operation &offset=-1 is refused
+PASS bad plan operation &copies=101&edit=source:a is refused
+PASS bad plan operation &items=bad is refused
+PASS bad plan operation &format=buy is refused
+PASS oversized decoded CMS fields are refused without truncation
+PASS oversized field has an explicit refusal
+PASS whole-request bound still refuses an oversized declared body before reading it
+PASS planning and exporting did not create a private record
+PASS Chrome receives the existing CMS form rather than a parallel store
+PASS browser submission saved the full snapshot through native CMS
+PASS the existing Desk lists the saved plan for its owner
+PASS another account and a guest do not see the private plan
+PASS the saved plan opens through the existing note workspace
+PASS the saved plan reader preserves the complete text
+PASS the note reader preserves a large form field after extensive HTML escaping
+PASS the saved plan fits a phone viewport
+PASS the saved plan displays its line breaks
+PASS the private note body is withheld from another account
+PASS the private note body is withheld from a guest
+PASS CMS form encoding preserves tabs, carriage returns, newlines, quotes, backslashes and Unicode
+PASS JSON escaping expansion beyond the carrier bound refuses without writing a partial record
+PASS factored source bytes were not edited by planning or saving
+47 checks passed: retained recipes -> one native demand plan -> normal browser -> private CMS draft -> existing Desk.

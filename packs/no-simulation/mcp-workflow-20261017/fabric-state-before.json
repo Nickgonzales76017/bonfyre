@@ -1,0 +1,91 @@
+{
+  "source_db_sha256": "c46115eff7435a5dc0e0ddb4a3117bb54fe8b5b88fe41e4109c31eecf597c20a",
+  "tables": {
+    "tasks": {
+      "rows": 57,
+      "sha256": "0f7c10e44533ebc0daba99ae151088f6d1797586c58a35535355260bd5aced2b"
+    },
+    "runs": {
+      "rows": 137,
+      "sha256": "c7d5087dc61035cc2cb87ac984a2588f05958b92a4f93bbb5d4995711a51720b"
+    },
+    "events": {
+      "rows": 3174,
+      "sha256": "2d43c1096e44a7ab016801716e7f98d89bffa46db439d228bc564461ff4a0e34"
+    },
+    "locks": {
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sessions": {
+      "rows": 131,
+      "sha256": "c21875bebd8904793cfb8e099ecbb2b33f668e60912c01979d40a0e85ff1db37"
+    },
+    "receipts": {
+      "rows": 52,
+      "sha256": "8bb1a23f0ef06b09c417210709095e0e7dd59c96ee040d62ac044809d86f5cab"
+    }
+  },
+  "receipts": {
+    "verified": true,
+    "failures": []
+  },
+  "task_states": [
+    {
+      "state": "cancelled",
+      "count": 2
+    },
+    {
+      "state": "completed",
+      "count": 49
+    },
+    {
+      "state": "failed",
+      "count": 5
+    },
+    {
+      "state": "running",
+      "count": 1
+    }
+  ],
+  "run_states": [
+    {
+      "state": "failed",
+      "count": 72
+    },
+    {
+      "state": "passed",
+      "count": 63
+    },
+    {
+      "state": "running",
+      "count": 2
+    }
+  ],
+  "recorded_nonterminal_tasks": [
+    {
+      "id": "a0cf14c75bc048f8b4d81f8a",
+      "kind": "review",
+      "state": "running",
+      "started_at": 1785454106.682112
+    }
+  ],
+  "recorded_nonterminal_runs": [
+    {
+      "id": "2c7a8d347eda4843839fc3a4",
+      "task_id": "2f06532631b94156a8f50e21",
+      "agent": "claude",
+      "role": "cross-review",
+      "state": "running",
+      "started_at": 1785408742.60782
+    },
+    {
+      "id": "d3bc123770f84dfca4226528",
+      "task_id": "a0cf14c75bc048f8b4d81f8a",
+      "agent": "codex",
+      "role": "cross-review",
+      "state": "running",
+      "started_at": 1785454106.687111
+    }
+  ]
+}

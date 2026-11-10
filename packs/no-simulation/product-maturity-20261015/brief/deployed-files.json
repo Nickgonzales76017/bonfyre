@@ -1,0 +1,107 @@
+{
+  "origin": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/",
+  "source_repository": "https://github.com/nickgonzales76017/pages-procurement-memory",
+  "source_checkout": "/Users/nickgonzales/Developer/pages-procurement-memory",
+  "base_commit": "be17084b17ca69aa41bd64fba20b006215edf43a",
+  "uncommitted_changes": true,
+  "files": [
+    {
+      "path": "brief-studio/composer.mjs",
+      "bytes": 2547,
+      "source_sha256": "617d0ef75444dc42d4389f4a8ea70c3b6550af205bf33ae1c22a257bf6a0c7bd",
+      "deployed_sha256": "617d0ef75444dc42d4389f4a8ea70c3b6550af205bf33ae1c22a257bf6a0c7bd",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/index.html",
+      "bytes": 10743,
+      "source_sha256": "fef23fd8b9c4536a22ff5e105292563596d8104890bd039766ea1ba59afcca9b",
+      "deployed_sha256": "fef23fd8b9c4536a22ff5e105292563596d8104890bd039766ea1ba59afcca9b",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/studio.css",
+      "bytes": 28364,
+      "source_sha256": "b261016c3ab473667f740759cf060ecc9d86daa6f3ab5251dd81fd7bea12a77b",
+      "deployed_sha256": "b261016c3ab473667f740759cf060ecc9d86daa6f3ab5251dd81fd7bea12a77b",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/core.mjs",
+      "bytes": 28199,
+      "source_sha256": "7e33e00ff133ff4fa4986b1075fba18fd78f25308db54309ae50bb2626c628aa",
+      "deployed_sha256": "7e33e00ff133ff4fa4986b1075fba18fd78f25308db54309ae50bb2626c628aa",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/studio.mjs",
+      "bytes": 33604,
+      "source_sha256": "a3afc9873620f0a6a82cce854c11571e4725e61e5ad6145e62f31dd9c8f677cd",
+      "deployed_sha256": "a3afc9873620f0a6a82cce854c11571e4725e61e5ad6145e62f31dd9c8f677cd",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/dm-mono.woff2",
+      "bytes": 14820,
+      "source_sha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e",
+      "deployed_sha256": "e1896b13b2b1bb112fac2f9571bd6c40e118746e77a4511edbf43fbb41bf3e1e",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/INSTRUMENT-SERIF-LICENSE.txt",
+      "bytes": 4532,
+      "source_sha256": "b6106a757902d2d412e09d94dc4a226fe3da80485208a98003969f1b8b6b1d74",
+      "deployed_sha256": "b6106a757902d2d412e09d94dc4a226fe3da80485208a98003969f1b8b6b1d74",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/DM-SANS-LICENSE.txt",
+      "bytes": 4502,
+      "source_sha256": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
+      "deployed_sha256": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/instrument-serif.woff2",
+      "bytes": 21032,
+      "source_sha256": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
+      "deployed_sha256": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/DM-MONO-LICENSE.txt",
+      "bytes": 4937,
+      "source_sha256": "d2766c396a8534cba53340f8af2037749b6a0a1dd3587348c917a70e779d2e32",
+      "deployed_sha256": "d2766c396a8534cba53340f8af2037749b6a0a1dd3587348c917a70e779d2e32",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/fonts/dm-sans.woff2",
+      "bytes": 62724,
+      "source_sha256": "ca72d2bcea8f4daa783dbdfa2d9b46068c3ce38168e05918fb867aa453b4f890",
+      "deployed_sha256": "ca72d2bcea8f4daa783dbdfa2d9b46068c3ce38168e05918fb867aa453b4f890",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/vendor/tiptap-3.32.0/provenance.json",
+      "bytes": 13590,
+      "source_sha256": "76b0e89e187059606ca8a9b3d45809a4e188672085aecb2ef2a3a7fbd1eda017",
+      "deployed_sha256": "76b0e89e187059606ca8a9b3d45809a4e188672085aecb2ef2a3a7fbd1eda017",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/vendor/tiptap-3.32.0/LICENSES.txt",
+      "bytes": 49846,
+      "source_sha256": "5f2db0d6a98a242465c207f4d46bf6e9b31675b350280759c30874bf110aa357",
+      "deployed_sha256": "5f2db0d6a98a242465c207f4d46bf6e9b31675b350280759c30874bf110aa357",
+      "matches": true
+    },
+    {
+      "path": "brief-studio/vendor/tiptap-3.32.0/editor.mjs",
+      "bytes": 394300,
+      "source_sha256": "8fa372de8c8833304c537eaec01a30636f4a7967e2228fc2c89835e673fa8a32",
+      "deployed_sha256": "8fa372de8c8833304c537eaec01a30636f4a7967e2228fc2c89835e673fa8a32",
+      "matches": true
+    }
+  ]
+}

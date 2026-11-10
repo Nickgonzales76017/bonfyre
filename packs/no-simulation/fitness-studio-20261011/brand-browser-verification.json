@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-19T15:28:57.647Z",
+  "memoryFreePercentBefore": 43,
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "upload previews wait for Save settings before changing the studio",
+    "saving applies the logo and embedded browser icon",
+    "logo and icon survive reload",
+    "switching studios restores its own mark and colors",
+    "wide logos remain readable without a duplicate name",
+    "uploaded branding fits the mobile viewport",
+    "ordinary style edits retain saved assets",
+    "removal also waits for Save settings",
+    "logo removal leaves the independently configured icon",
+    "model execution remains disconnected",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

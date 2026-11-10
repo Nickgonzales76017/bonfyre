@@ -1,0 +1,16 @@
+[
+  {
+    "path": "site/index.html",
+    "url": "https://nickgonzales76017.github.io/bonfyre/",
+    "source_sha": "aac542b81093fa82d0b8e1feb6f03b76286b5bb7",
+    "sha256": "1e32304571d5c718d3551f636c12e8d53958b8ba351fcd65bb0d378387d37787",
+    "matches_current_source": true
+  },
+  {
+    "path": "site/explore.html",
+    "url": "https://nickgonzales76017.github.io/bonfyre/explore.html",
+    "source_sha": "7fef22d101a96d551cc44e4c654802eafb2b9cfe",
+    "sha256": "2151afbe6ca6496e6b5ccbc99521fe764e99ad3724a4e1b63ffcebb9b70aadc8",
+    "matches_current_source": true
+  }
+]

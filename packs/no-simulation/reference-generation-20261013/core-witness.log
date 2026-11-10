@@ -1,0 +1,107 @@
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/workgraph_checkpoint_test.c libbonfyre-fabric.a -lsqlite3 -o obj/workgraph_checkpoint_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/routable_family_test.c libbonfyre-fabric.a -lsqlite3 -o obj/routable_family_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/lifecycle_test.c libbonfyre-fabric.a -lsqlite3 -o obj/lifecycle_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/occurrence_spine_test.c libbonfyre-fabric.a -lsqlite3 -o obj/occurrence_spine_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/occurrence_origin_test.c libbonfyre-fabric.a -lsqlite3 -o obj/occurrence_origin_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/actor_graph_test.c libbonfyre-fabric.a -lsqlite3 -o obj/actor_graph_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/admission_test.c libbonfyre-fabric.a -lsqlite3 -o obj/admission_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/control_compose_test.c libbonfyre-fabric.a -lsqlite3 -o obj/control_compose_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/corroboration_test.c libbonfyre-fabric.a -lsqlite3 -o obj/corroboration_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/evidence_test.c libbonfyre-fabric.a -lsqlite3 -o obj/evidence_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/activation_test.c libbonfyre-fabric.a -lsqlite3 -o obj/activation_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/service_lifecycle_test.c libbonfyre-fabric.a -lsqlite3 -o obj/service_lifecycle_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/reservation_test.c libbonfyre-fabric.a -lsqlite3 -o obj/reservation_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/authority_test.c libbonfyre-fabric.a -lsqlite3 -o obj/authority_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/proof_test.c libbonfyre-fabric.a -lsqlite3 -o obj/proof_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/target_obligation_test.c libbonfyre-fabric.a -lsqlite3 -o obj/target_obligation_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/semantic_operator_test.c libbonfyre-fabric.a -lsqlite3 -o obj/semantic_operator_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/semantic_derivation_test.c libbonfyre-fabric.a -lsqlite3 -o obj/semantic_derivation_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/matrix_test.c libbonfyre-fabric.a -lsqlite3 -o obj/matrix_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/matrix_closure_test.c libbonfyre-fabric.a -lsqlite3 -o obj/matrix_closure_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/p0_loop_test.c libbonfyre-fabric.a -lsqlite3 -o obj/p0_loop_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/occurrence_correction_test.c libbonfyre-fabric.a -lsqlite3 -o obj/occurrence_correction_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/retraction_cascade_test.c libbonfyre-fabric.a -lsqlite3 -o obj/retraction_cascade_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/activation_retraction_test.c libbonfyre-fabric.a -lsqlite3 -o obj/activation_retraction_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/commitment_test.c libbonfyre-fabric.a -lsqlite3 -o obj/commitment_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/retention_test.c libbonfyre-fabric.a -lsqlite3 -o obj/retention_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/information_policy_test.c libbonfyre-fabric.a -lsqlite3 -o obj/information_policy_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/commerce_test.c libbonfyre-fabric.a -lsqlite3 -o obj/commerce_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/protocol_contract_test.c libbonfyre-fabric.a -lsqlite3 -o obj/protocol_contract_test
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../cmd/BonfyreLex/src -Wno-format-truncation -Iinclude -I../../lib/libbonfyre/include tests/standing_address_test.c libbonfyre-fabric.a -lsqlite3 -o obj/standing_address_test
+== obj/workgraph_checkpoint_test
+native checkpoints: concurrent save, stale delivery, owner and migration checks passed
+== obj/routable_family_test
+routable_family_test: PASS
+== obj/lifecycle_test
+lifecycle: all checks passed
+== obj/occurrence_spine_test
+DIGEST=7ddf8f79d1674f837d858999dfc1b321
+occurrence_spine_test: PASS
+== obj/occurrence_origin_test
+occurrence_origin_test: PASS
+== obj/actor_graph_test
+DB=/tmp/bf_actor_YcCVaV
+actor_graph_test: PASS
+== obj/admission_test
+CASE=0:reject
+CASE=1:reject
+CASE=2:defer
+CASE=3:admit
+CASE=4:reject
+CASE=5:defer
+CASE=6:defer
+DB=/tmp/bf_admit_oA7pIc
+admission_test: PASS
+== obj/control_compose_test
+DB=/tmp/bf_control_ypbmCf
+control_compose_test: PASS
+== obj/corroboration_test
+DB=/tmp/bf_corr_6VxYNu
+corroboration_test: PASS
+== obj/evidence_test
+DB=/tmp/bf_evidence_XPBSJZ
+evidence_test: PASS
+== obj/activation_test
+DB=/tmp/bf_act_732HPp
+activation_test: PASS
+== obj/service_lifecycle_test
+service_lifecycle_test: PASS
+== obj/reservation_test
+reservation_test: PASS
+== obj/authority_test
+DB=/tmp/bf_auth_UbyVsB
+authority_test: PASS
+== obj/proof_test
+DB=/tmp/bf_proof_N4AmwC
+proof_test: PASS
+== obj/target_obligation_test
+target obligation: PASS
+== obj/semantic_operator_test
+semantic_operator_test: PASS
+== obj/semantic_derivation_test
+semantic derivation native tests passed
+== obj/matrix_test
+matrix_test: PASS
+== obj/matrix_closure_test
+matrix_closure_test: PASS
+== obj/p0_loop_test
+p0_loop_test: PASS (native observation -> work -> receipt -> occurrence -> history)
+== obj/occurrence_correction_test
+occurrence_correction_test: PASS
+== obj/retraction_cascade_test
+retraction_cascade_test: PASS (Evidence -1 -> support lost -> proof retracts)
+== obj/activation_retraction_test
+activation_retraction_test: PASS (Authority -1 -> activation retracts -> not usable)
+== obj/commitment_test
+commitment_test: PASS
+== obj/retention_test
+retention_test: ok
+== obj/information_policy_test
+information_policy_test: PASS
+== obj/commerce_test
+commerce_test: PASS
+== obj/protocol_contract_test
+protocol_contract_test: PASS
+== obj/standing_address_test
+standing_address_test: PASS
+native conformance: all passed

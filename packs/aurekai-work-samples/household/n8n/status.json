@@ -1,0 +1,29 @@
+{
+  "as_of": "2026-10-08",
+  "state": "prepared_runtime_unverified",
+  "n8n_version": "2.42.5",
+  "runtime_test_passed": false,
+  "published": false,
+  "credentials_imported": false,
+  "installation_attempts": [
+    {
+      "method": "temporary npm install",
+      "result": "ENOSPC during package extraction"
+    },
+    {
+      "method": "512 MB Node heap",
+      "result": "V8 heap out of memory"
+    },
+    {
+      "method": "1024 MB Node heap",
+      "result": "ENOSPC during package extraction"
+    }
+  ],
+  "workflow": "household-source-review.json",
+  "generator": "workflow.mjs",
+  "pending_witness": "components/BonfyreServiceSite/tests/documents-n8n-witness.mjs",
+  "next": "Use an adequately provisioned local runtime, run the actual n8n witness, inspect the imported graph and resulting review output before sharing a working-integration claim.",
+  "cannot_infer": "The previously tested native browser workspace does not establish execution of this n8n workflow.",
+  "temporary_installation_removed": true,
+  "free_space_after_cleanup_gib": 3.3
+}

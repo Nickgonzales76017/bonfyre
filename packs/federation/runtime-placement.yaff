@@ -1,0 +1,158 @@
+pack federation-runtime-placement
+generation control-1
+provenance direct filesystem census and live process inspection, 2026-08-26
+authority measured
+note Runtime placement dimension for the federation. The metric is not Python file count. It is which bodies sit on the hot, standing or effect path with no non-Python realization. Implementation convenience does not confer semantic or runtime ownership.
+
+census cen:runtime-composition
+  measured_at 2026-08-26
+  scope Documents/Bonfyre, excluding node_modules, .git and frappe-bench
+  python_files_total 1012
+  python_files_vendored 569
+  python_files_authored 443
+  correction a raw count of 1012 overstates the surface by more than half; 569 files are site-packages under services/bonfyre-restate-adapter/venv
+  c_files 308
+  c_headers 93
+  zig_files 4
+  javascript_files 22
+  typescript_files 5
+  rust_files 10
+  perl_files 5
+  shell_files 178
+  authored_python_by_area components 220, services adapter, scripts 32, tools 18, cmd 12, architecture 10
+  components_split 143 non-test, 77 tests
+  note C remains the largest native body count; the Python surface is large but roughly half vendored and roughly a third tests
+
+finding fnd:python-owns-the-effect-path
+  severity high
+  state VERIFIED_BY_MEASUREMENT
+  claim the two live Python processes that matter are not tooling; they own the effect path
+  evidence process 890 runs /Users/nickgonzales/.bonfyre/mcp/project_node.py under python 3.9
+  evidence process 8966 runs /Users/nickgonzales/.bonfyre/agents-runtime/operator_agents_runtime.py under python 3.12
+  evidence process 879 runs an agent hypervisor canary server under python 3.12
+  detail project_node.py serves project_read, project_search, project_patch_preview, project_apply_patch, project_apply_low_risk_patch, project_commit_receipt, project_revert_receipt and project_test_profile
+  consequence the machinery that mutates client source is Python-owned with no alternative realization
+  detail operator_agents_runtime.py executes autonomous goals against that carrier
+  consequence the machinery that decides and drives autonomous work is Python-owned with no alternative realization
+  scary_metric HOT_OR_EFFECT_PATH and PYTHON_ONLY equals 2 live bodies
+  contrast a thousand Python archaeology scripts would be nearly irrelevant; these two are not
+
+finding fnd:dependency-blocks-the-machine
+  severity high
+  state VERIFIED_BY_MEASUREMENT
+  claim the operator's Python dependency stack is what has blocked 86 goals all session
+  evidence every operator run fails on ValidationError for InputTokensDetails.cache_write_tokens
+  mechanism a pydantic model version mismatch inside the Python agent runtime
+  significance this is the concrete cost of accidental runtime ownership; a library version in a convenience runtime is holding the autonomous lane down
+  relation_to_ladder carrier admission fails while capability and body both exist
+  note recorded here because the cause is runtime placement, not the operator's design
+
+body_role bdr:project-node
+  body .bonfyre/mcp/project_node.py
+  runtime_family Python
+  required_version 3.9 as running
+  role EFFECT_PATH_RUNTIME
+  hot_path no
+  standing_path yes
+  effect_path YES
+  production_required YES
+  current_owner Python
+  intended_owner unresolved
+  disposition audit candidate; the source-mutation carrier is foundational and should not be owned by convenience
+  note this session added node-syntax and php-lint profiles to it, which deepened rather than reduced that ownership
+
+body_role bdr:operator-runtime
+  body .bonfyre/agents-runtime/operator_agents_runtime.py
+  runtime_family Python
+  required_version 3.12 as running
+  role EFFECT_PATH_RUNTIME
+  effect_path YES
+  production_required YES
+  current_owner Python
+  blocked_by a pydantic model mismatch
+  disposition audit candidate
+
+body_role bdr:semantic-derivation
+  body components/BonfyreControlPlane/semantic_derivation.py.archive
+  runtime_family Python
+  role REFERENCE_IMPLEMENTATION
+  hot_path no
+  effect_path no
+  production_required no
+  disposition PRESERVE as specification and equivalence oracle
+  rationale it is clear, inspectable, witnessed by 15 passing tests, and slow in a way that does not matter for an oracle
+  lowering_target the canonical incremental_semantic_derivation substrate with its content-addressed store and dependency-cone invalidation
+  equivalence_test generate random dependency graphs and prove reference_slice(delta) equals native_slice(delta) before making the native body authoritative
+  note this is the ideal first lowering campaign: hot semantics, clear contract, existing tests, existing lower substrate
+
+body_role bdr:address-plane
+  body components/BonfyreControlPlane/address_plane.py
+  runtime_family Python
+  role REFERENCE_IMPLEMENTATION
+  disposition PRESERVE; compare against the canonical bitmap substrate rather than choosing between them
+
+body_role bdr:atlas-machine
+  body architecture/atlas-machine.mjs
+  runtime_family Bun
+  role TOOLING
+  hot_path no
+  effect_path no
+  production_required no
+  authored 2026-08-26 during this session
+  disposition native registry projection; reference-only bindings and source-digest cache have parity witnesses
+
+body_role bdr:canonical-validators
+  body .bonfyre/run8/canonical/estate/.../TOOLS/validate_*.py
+  runtime_family Python
+  role VALIDATOR
+  count 17
+  disposition PRESERVE; validators are a correct use of Python
+
+body_role bdr:scaling-substrates
+  body .bonfyre/run8/canonical/estate/.../TOOLS/scaling_substrate/*.py
+  runtime_family Python
+  role REFERENCE_IMPLEMENTATION
+  detail five modules, 12 of 12 checks passing under python 3.12
+  disposition PRESERVE as reference; the described substrates are meant to be dense native execution units, and a passing Python reference is exactly the right proving artifact
+  caution do not mistake a passing reference implementation for the native realization the design calls for
+
+representation_selection rs:exact-sets
+  finding four distinct exact-set representations exist and are probably not duplicates
+  candidate BitRegistry in current source, a machine-word mask over a small fixed universe
+  candidate SparseBitmap in the canonical substrate, a sparse-set physical representation
+  candidate a native ROBDD in the canonical substrate, a compiled Boolean admission predicate
+  candidate ExecutableClosureIndex in the canonical substrate, a maintained hot closure lookup
+  proposed_rule tiny fixed universe uses a machine-word mask; moderate sparse closure uses a sparse bitmap; a complex Boolean admission predicate uses a decision diagram; a frequently demanded executable closure uses the hot index; a cold or open-world closure uses a query
+  invariant this is representation selection for exact sets, measured per demand, not a choice of one winner
+  supersedes the earlier framing that two bitmap systems were unaware duplicates
+
+admission_rule ar:implementation-convenience
+  rule implementation convenience does not confer semantic or runtime ownership
+  procedure before creating a new runtime owner, search native commands, shared libraries, current operating machinery, preserved implementations, specialized runtimes and lower substrates
+  default_disposition REFERENCE_IMPLEMENTATION, WRAP_ADAPTER or PATCH_EXISTING_OWNER
+  prohibited NEW_RUNTIME_OWNER by default
+  applies_equally Python convenience, a new service, a rewrite in a preferred language, a new state store, a new daemon, a new index, a new API wrapper
+  agent_bias_note the rule is about any implementer's convenient environment, not one language
+
+disposition_ring1 ExecutionFrame
+  do_not write a new module
+  instead compose the six dimensions from existing owners and pass a small immutable packed value through the execution fabric
+  pending_search authority.py, execution_environment.py and any world or frontier fields in current source
+
+disposition_ring1 StandingAddress
+  do_not write a new service
+  instead connect an address query, a read closure, a current relation, incremental invalidation and the hot index
+  note the parts exist separately; the behavior does not
+
+disposition_ring1 SemanticConstraintNetwork
+  do_not build the diagram literally
+  instead inventory ConstraintIR, the planner, the decision diagram, the capability hypergraph, AllocationProblem, authority masks and provider constraints
+  hypothesis the network is a compiled projection over existing specialized constraint sources
+
+era_note
+  era_a native and low level: C, Zig, packed bodies, native commands, hot indexes, binary formats
+  era_b runtime and product: Bun, JavaScript, provider integrations, projection surfaces
+  era_c reconstruction and control plane: architecture census, semantic models, validators, tests, institutional modelling
+  error treating era C as if it superseded A and B
+  correct era C explains, tests and federates A and B, and owns runtime machinery only with an explicit reason
+  historical_constraint later native work established a native runtime owner with C acceleration, making earlier Python expansion capture and source material rather than final runtime ownership

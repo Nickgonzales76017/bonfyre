@@ -1,0 +1,6 @@
+{
+  "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-compress",
+  "previous_sha256": "1456d049e02db34e8c011b468ce0a4f4a82beabc9c0651fb83e9dbf05651de6c",
+  "sha256": "37917708f98a3adc0ab481612777184e5fcb895f9a98ae49e9d7932913500616",
+  "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-compress-1456d049e02db34e8c011b468ce0a4f4a82beabc9c0651fb83e9dbf05651de6c/bonfyre-compress"
+}

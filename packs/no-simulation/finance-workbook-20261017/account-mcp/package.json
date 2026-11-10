@@ -1,0 +1,16 @@
+{
+  "id": "0ccf25974dcd8c111ca809a19c263037673a3c683c558a4694a85682f739e051",
+  "dir": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/finance-workbook-20261017/account-mcp/packages/0ccf25974dcd8c111ca809a19c263037673a3c683c558a4694a85682f739e051",
+  "files": 11,
+  "layout": "shared-bodies-v1",
+  "newBodies": 11,
+  "writtenBodyBytes": 15216195,
+  "reusedBodyBytes": 0,
+  "verifiedBytes": 0,
+  "manifestBytes": 1146,
+  "entry": "finance/",
+  "family": "financial-workbooks",
+  "records": [
+    "finance-workbook:"
+  ]
+}

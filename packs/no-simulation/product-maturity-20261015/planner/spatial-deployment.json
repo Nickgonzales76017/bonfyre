@@ -1,0 +1,97 @@
+{
+  "deployment": "f9ad11eb-6f99-4730-a307-533444332535",
+  "url": "https://f9ad11eb.aurekai-work-samples.pages.dev",
+  "matches": [
+    {
+      "path": "/",
+      "status": 200,
+      "local": "4a86ddf7b2cca41dd069e469bb642cf2339a4c966e1991af610bb69e0f8e5c68",
+      "live": "4a86ddf7b2cca41dd069e469bb642cf2339a4c966e1991af610bb69e0f8e5c68",
+      "match": true
+    },
+    {
+      "path": "/red3-planner/",
+      "status": 200,
+      "local": "d0d954c0b035d2a3346ceda2d67ce94769bc15953db5def72e7470c35eca4454",
+      "live": "d0d954c0b035d2a3346ceda2d67ce94769bc15953db5def72e7470c35eca4454",
+      "match": true
+    },
+    {
+      "path": "/assets/shots/planner-spatial.png",
+      "status": 200,
+      "local": "4f8f1a44cdf01790374f5e0f8bafad1d5e8bb2315fd00b9799cace473edcb481",
+      "live": "4f8f1a44cdf01790374f5e0f8bafad1d5e8bb2315fd00b9799cace473edcb481",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-client.mjs",
+      "status": 200,
+      "local": "1444df478e79899bf4c0c97ba884dfedfba13ce61dfefc919acb97406b4d2208",
+      "live": "1444df478e79899bf4c0c97ba884dfedfba13ce61dfefc919acb97406b4d2208",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-spatial.mjs",
+      "status": 200,
+      "local": "65f5a3d5f3beb2e372b343ed878599e76b78c5dd4ec7312e9ea0f292c28cc897",
+      "live": "65f5a3d5f3beb2e372b343ed878599e76b78c5dd4ec7312e9ea0f292c28cc897",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-spatial-model.mjs",
+      "status": 200,
+      "local": "6a014df44f766b00966883d7480b2fa9af23b80152e16aa1d8292a45c5b94487",
+      "live": "6a014df44f766b00966883d7480b2fa9af23b80152e16aa1d8292a45c5b94487",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-model.mjs",
+      "status": 200,
+      "local": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04",
+      "live": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-projects.mjs",
+      "status": 200,
+      "local": "fcc89bb2b0129a48bdc4f0a64c7ae56212aa9da9e7b4c083ec386aa1f8b578f4",
+      "live": "fcc89bb2b0129a48bdc4f0a64c7ae56212aa9da9e7b4c083ec386aa1f8b578f4",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-project-client.mjs",
+      "status": 200,
+      "local": "c61a46a45f87c1c6a8244323faca0b3c195be4cd403e8f4310aa745422037c5e",
+      "live": "c61a46a45f87c1c6a8244323faca0b3c195be4cd403e8f4310aa745422037c5e",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/workspace-navigation.mjs",
+      "status": 200,
+      "local": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+      "live": "5afbd89b66ac7a37a7c0c1f8aa0c48d549392d8f8b72ff31de596984d3861e22",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/store.mjs",
+      "status": 200,
+      "local": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "live": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/vendor/konva-10.9.0/konva.min.js",
+      "status": 200,
+      "local": "5445b122b332b99530a0ed43ae514ad8121d661d7b7f5d938ae1d5932ed64334",
+      "live": "5445b122b332b99530a0ed43ae514ad8121d661d7b7f5d938ae1d5932ed64334",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/vendor/konva-10.9.0/LICENSE",
+      "status": 200,
+      "local": "7190132c82df30243dc2ba512c9509ea3b629329b4266e9f2c3b5dbd04029613",
+      "live": "7190132c82df30243dc2ba512c9509ea3b629329b4266e9f2c3b5dbd04029613",
+      "match": true
+    }
+  ]
+}

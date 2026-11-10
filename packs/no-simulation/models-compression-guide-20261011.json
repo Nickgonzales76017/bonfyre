@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-10-12T01:29:21.568532+00:00",
+  "guide": "docs/experiences/models-and-compression.md",
+  "execution": {
+    "shell_blocks": 6,
+    "method": "Extracted verbatim and executed together with sh -eu",
+    "exit_code": 0,
+    "log": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/compression-guide-20261011/guide-execution.log",
+    "original_run_directory": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-compression-guide.3fkti4",
+    "retained_run_directory": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/compression-guide-20261011/guide-run"
+  },
+  "model": {
+    "id": "minilm-l3-guide",
+    "name": "paraphrase-MiniLM-L3-v2",
+    "format": "safetensors",
+    "sha256": "cf1e4e2d420c664973037c3c73125d7a8fc69952495093ef8f50596f8943a433",
+    "size_mb": 69.569488,
+    "sources": [
+      {
+        "url": "https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/4ca70771034acceecb2e72475f72050fcdde4ddc/model.safetensors",
+        "scheme": "https"
+      }
+    ]
+  },
+  "roundtrip": {
+    "tensors": 55,
+    "skipped_integer_tensors": 1,
+    "elements": 17389824,
+    "float32_bytes": 69559296,
+    "physical_bqfp_bytes": 19421016,
+    "physical_bpw": 8.934,
+    "weighted_cosine": 0.998609,
+    "minimum_cosine": 0.998582,
+    "below_0_999_cosine": 25,
+    "log": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/compression-guide-20261011/guide-run/roundtrip.txt",
+    "scope": "Each tensor encoded to a temporary BQFP file and recovered through the shared reader. No full-model inference measurement."
+  },
+  "retained_matrix": {
+    "name": "encoder.layer.0.attention.self.query.weight",
+    "elements": 147456,
+    "bqfp_bytes": 177960,
+    "float32_bytes": 589824,
+    "cosine": 0.998747,
+    "rmse": 0.004176
+  },
+  "archive": {
+    "directory": "docs",
+    "raw_bytes": 661686,
+    "compressed_bytes": 191444,
+    "ratio": 0.2893,
+    "savings_pct": 71.1,
+    "bytes_saved": 470242,
+    "files_restored": 83,
+    "exact_readback": true,
+    "hash_manifest": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre-runtime/compression-guide-20261011/restored-sha256.json"
+  },
+  "checks": [
+    "Model manifest source objects, strings, empty arrays, escaped text, invalid input, rollback and retained recipe references",
+    "Representation passport regression",
+    "Physical benchmark matches independently decoded cosine, RMSE and file size",
+    "Roundtrip real-model selection and invalid input",
+    "Two distinct BQFP tensors and five truncations",
+    "Two valid and ten malformed BQFP files",
+    "Family pipeline nested and hidden files, exact bytes, missing input and existing output",
+    "Guide incomplete-file refusal leaves no decoded output"
+  ],
+  "sha256": {
+    "cmd/BonfyreModel/src/main.c": "601d487b01e5cbeea9115b04b64e30493806aab06e5f2d87250aff3ebdb09c21",
+    "cmd/BonfyreModel/bonfyre-model": "530847e1907d7097641d2efff5917716bad198e9959187b3058e3b2adaed0738",
+    "cmd/BonfyreModel/tests/manifest_test.py": "46afde7eda5e66de8cd95461bfd96522b7dd4a4bafc46fab3278df17e8cc376c",
+    "cmd/BonfyreQuant/src/main.c": "c771056a07b67da69f6399710c10b5dd71d702b050e960c83a5c8a7bec776984",
+    "cmd/BonfyreQuant/bonfyre-quant": "09fa7e00106d3d14d40555b4f33d4161223a55ac3a13d304fa4884bb7cedb213",
+    "cmd/BonfyreQuant/tests/physical_roundtrip_test.py": "7c5a62da36c7a2aadbb2f545ed8969f4ea50d1d202ee3b2c9a27b001451d4436",
+    "cmd/BonfyreSLI/bonfyre-sli": "748540d55c1c5b6d113136f39256207f92690b00ca1c4208f253c83cd51cd83f",
+    "cmd/BonfyreCompress/bonfyre-compress": "43311fc40f047f776b4d03070f1c7751725448bcca6986ff7f00dfd0f5aea886",
+    "docs/experiences/models-and-compression.md": "1dd2baaa750c0154b295a7a97ca3b0d20c596eee95fbfad0a73d3f7ca7db4aaa",
+    "site/matrix/own-site.css": "5f6ca16d8c8a71691be22dde91550d63f9644e288c9980168045567003812458"
+  },
+  "browser": {
+    "evidence": "packs/no-simulation/guide-pages-20261011/browser-verification.json",
+    "pages": 7,
+    "widths": [
+      1440,
+      390
+    ],
+    "checks": 14,
+    "errors": 0,
+    "reviewed_screenshots": [
+      "models-and-compression-1440.png",
+      "models-and-compression-390.png"
+    ]
+  }
+}

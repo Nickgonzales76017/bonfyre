@@ -1,0 +1,84 @@
+pack doom-guest-market
+generation control-1
+source_plane run5_recursive_external
+item_kind adjacent_opportunity
+source_ref research:2026-10-03-web-search
+note Read on 2026-10-03 from search results and their summaries, not from primary filings. Funding figures are as reported by the pages named and were not cross-checked. The claims say who is paying for which shape of problem; the work items say where this campaign's shape touches theirs. None is a commitment and none has a customer.
+
+claim clm:deterministic-guests-are-a-funded-category
+  status STANDING
+  verification READ
+  claim Running a real system inside a deterministic hypervisor and searching its branches for failures is a business, not a curiosity.
+  evidence Antithesis boots a customer's containers in a deterministic hypervisor so every run is reproducible, then explores failure scenarios; reported total raised 182 million dollars, the latest round 105 million led by Jane Street
+  source https://sacra.com/c/antithesis/
+  source https://pulse2.com/antithesis-105-million-series-a/amp/
+  consequence the shape this campaign reached by accident -- deterministic guest, ranked branches, committed log, replay as proof -- is the shape that category sells, at the scale of one process instead of a production cluster
+
+claim clm:models-fail-doom-on-latency
+  status STANDING
+  verification READ
+  claim Current vision-language models cannot finish Doom in real time, and the stated reason is latency: by the time the answer returns, the game has moved.
+  evidence VideoGameBench tests models on twenty games from the screen alone; GPT-4o, Claude Sonnet 3.7 and Gemini 2.5 Pro all struggle with Doom, the furthest reaching the blue room
+  source https://decrypt.co/315493/ai-bad-playing-doom
+  source https://arxiv.org/pdf/2505.18134v2
+  consequence a guest whose clock is its step count removes latency from the question; here a model that took 87 seconds for one token changed nothing about what the guest did
+
+claim clm:neural-doom-is-lossy-by-construction
+  status STANDING
+  verification READ
+  claim A diffusion model can simulate Doom interactively, and its fidelity is measured in picture terms.
+  evidence GameNGen runs at 20 frames a second on one TPU with next-frame PSNR 29.4, compared by its authors to lossy JPEG; raters barely distinguish short clips from the game
+  source https://arxiv.org/html/2408.14837v2
+  consequence a learned simulator has no log to replay and no state to compare; an exact guest with a world-hash chain is the thing such a model could be scored against, tic by tic, rather than by how its frames look
+
+claim clm:agent-sandboxes-sell-snapshot-and-fork
+  status STANDING
+  verification READ
+  claim The runtime layer for agents is funded heavily and competes on isolation and on restoring from a snapshot quickly; determinism is not what they sell.
+  evidence Modal reported at a 4.65 billion dollar valuation; Daytona raised a 24 million dollar Series A and restores from snapshots in under 100 milliseconds; E2B isolates each sandbox in a Firecracker microVM
+  source https://www.alexcloudstar.com/blog/sandboxing-ai-generated-code-execution-2026/
+  source https://www.morphllm.com/comparisons/daytona-alternative
+  consequence fork-and-compare exists as plumbing in that market; committing one branch to a replayable record, with the rest remaining candidate, is not what those pages describe
+
+claim clm:replay-is-already-how-doom-settles-disputes
+  status STANDING
+  verification READ
+  claim Doom's own community has verified records by replaying input logs for decades, and its tool-assisted runs are built by rewinding and rebuilding frame by frame.
+  evidence a demo lump records the player's inputs and is replayed against a fixed executable version to verify a record; DSDA-Doom adds rewinding and frame-by-frame building for tool-assisted runs, tracked separately
+  source https://www.doomwiki.org/wiki/Speedrunning
+  source https://doomwiki.org/wiki/TAS
+  consequence the branch verb is tool-assistance stated generally, and a signed log against named bodies is a record anyone can check; nothing here is new to that community except that the tooling is not Doom's
+
+claim clm:record-and-replay-has-buyers-outside-games
+  status STANDING
+  verification READ
+  claim Recording a program's non-deterministic inputs so a run can be replayed exactly is sold to large engineering organisations.
+  evidence Undo sells recording and replay for Linux programs and reported a 37 million dollar round; rr and Replay.io cover native code and browsers
+  source https://undo.io/products
+  source https://www.caplight.com/company/undo-io
+  consequence the buyers pay for reproducing one failure; none of these pages describes ranking futures from a live state
+
+work latency_free_replayable_agent_trial
+  target_plane run5_recursive_external
+  priority 7.0
+  reason The published reason models fail Doom is latency. A guest on a step clock takes that away, and a committed log makes every result replayable by anyone holding the body. What would have to be true first: the model player layer, which is open, and at least the episode layer, which has one map of nine.
+
+work exact_oracle_for_learned_simulators
+  target_plane run5_recursive_external
+  priority 5.5
+  reason A learned Doom is scored by how its frames look. The guest can emit the true state at every tic for any log, which is a ground truth such a model has never been scored against. Not started; needs the determinism layer re-witnessed before it can be called an oracle.
+
+work oracle_guided_reduction_beyond_doom
+  target_plane run4_institutional_fabric
+  priority 5.0
+  reason Removing bytes and replaying an oracle found a table that looked dead and was not. The method does not care that the body is a game. Whether any body the estate already holds has an oracle of that kind is not known.
+
+work signed_logs_as_receipts
+  target_plane run4_institutional_fabric
+  priority 4.5
+  reason A log, the hashes of the bodies it runs against and a signature from the attestation organ make a claim anyone can replay. The pieces exist separately; they have not been put together since the restart.
+
+work a_second_guest_that_is_not_a_game
+  target_plane run4_institutional_fabric
+  priority 6.5
+  reason One body does not make a primitive. The branch verb earns its place when something the institution already runs -- a what-if over a deterministic model of its own -- is held the same way. Until then guest-branch-commit is a general claim with one witness.

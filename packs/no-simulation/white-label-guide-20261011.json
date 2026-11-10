@@ -1,0 +1,132 @@
+{
+  "checked_at": "2026-10-12T01:07:22.926Z",
+  "guide": "docs/experiences/white-label-delivery.md",
+  "guide_sha256": "6865f5bea9ce4228cceea281f91fc718e8f4b6d69e06d3d186a5f826fb1f1b46",
+  "execution": "All six sh Terminal blocks extracted verbatim and executed in order under sh -eu; exit 0.",
+  "sources": {
+    "cmd/BonfyreWebAddress/src/site_mcp.c": "92be495d1ba9b3e5b356e5bcb495e72b8f30fb993677c41f191e3c199fdd1e78",
+    "cmd/BonfyreWebAddress/tests/site_product_test.sh": "0c21b54bd2e1be6df8776eed542c7f0110e94dd8dcc5d3fcf467c8f4d7bdf18e",
+    "cmd/BonfyreWebAddress/bonfyre-web-address": "e07c6574f3d52cd7fad001ae3151955ca5a3472babd3dcba06206ddf6f23ba55"
+  },
+  "sites": {
+    "fernhollow": {
+      "page": {
+        "route": "/services",
+        "title": "Pottery lessons",
+        "summary": "",
+        "text": "Learn to throw a bowl at Fernhollow Pottery.",
+        "address": "https://fernhollow.localhost/services"
+      },
+      "info": {
+        "name": "Fernhollow Pottery",
+        "about": "Workshops for all levels",
+        "address": "https://fernhollow.localhost/",
+        "posts": 1
+      },
+      "inbox_count": 0,
+      "html_identity_and_content_match": true,
+      "other_customer_names_and_page_titles_absent": true
+    },
+    "tallgrass": {
+      "page": {
+        "route": "/services",
+        "title": "Bicycle repairs",
+        "summary": "",
+        "text": "Book a puncture repair at Tallgrass Bike Works.",
+        "address": "https://tallgrass.localhost/services"
+      },
+      "info": {
+        "name": "Tallgrass Bike Works",
+        "about": "Keep moving",
+        "address": "https://tallgrass.localhost/",
+        "posts": 1
+      },
+      "inbox_count": 1,
+      "html_identity_and_content_match": true,
+      "other_customer_names_and_page_titles_absent": true
+    },
+    "juniper": {
+      "page": {
+        "route": "/services",
+        "title": "Bakery orders",
+        "summary": "",
+        "text": "Order a sourdough loaf from Juniper Lane Bakery.",
+        "address": "https://juniper.localhost/services"
+      },
+      "info": {
+        "name": "Juniper Lane Bakery",
+        "about": "Fresh from the neighborhood",
+        "address": "https://juniper.localhost/",
+        "posts": 1
+      },
+      "inbox_count": 0,
+      "html_identity_and_content_match": true,
+      "other_customer_names_and_page_titles_absent": true
+    }
+  },
+  "reader_write": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "This needs a key the site's owner issued for writing. Without one, point the person to the site's contact page instead; nothing was sent. (The owner issues one with: bonfyre site key NAME --write)"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "writer_write": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Delivered to Tallgrass Bike Works's inbox, reference tallgrass-1791767216-ca9ad846. That is the message arriving, not a reply or a promise of one."
+        }
+      ],
+      "structuredContent": {
+        "delivered": true,
+        "reference": "tallgrass-1791767216-ca9ad846"
+      },
+      "isError": false
+    }
+  },
+  "foreign_key": {
+    "jsonrpc": "2.0",
+    "id": null,
+    "error": {
+      "code": -32001,
+      "message": "that key is not one this site issued, or it has been withdrawn"
+    }
+  },
+  "revoked_key": {
+    "jsonrpc": "2.0",
+    "id": null,
+    "error": {
+      "code": -32001,
+      "message": "that key is not one this site issued, or it has been withdrawn"
+    }
+  },
+  "http_checks": {
+    "other_site_missing_page": 404,
+    "foreign_key": 401,
+    "revoked_key": 401,
+    "own_origin": 200,
+    "lookalike_origin": 403,
+    "sibling_origin": 403,
+    "opaque_null_origin": 403
+  },
+  "regression_command": "make -C cmd/BonfyreWebAddress site-product-witness",
+  "regression_result": "PASS, including manual page and recording import; optional reference MCP client skipped because BONFYRE_MCP_SDK_DIR was not set.",
+  "atlas_validation": "493 architectures, 11 views, 414 interactions; passed after export.",
+  "local_preview": {
+    "url": "http://docs-review.localhost:8913/white-label-delivery",
+    "html_readback": true,
+    "mcp_readback": true,
+    "visual_review": false
+  },
+  "scope": "Invented local businesses. Content routing, scoped credentials, enquiry writes, settings and origin checks were exercised. Desktop/mobile visual review, custom domains, per-customer billing isolation and finished client branding remain unverified. No public deployment or customer message was performed."
+}

@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreClips/tests/export_clip.test.mjs:
+(pass) invalid cuts and overlapping, empty or out-of-range captions refuse [0.80ms]
+(pass) installed native exporter creates and decodes portrait video and refuses overwriting or empty media [834.60ms]
+
+ 2 pass
+ 0 fail
+ 22 expect() calls
+Ran 2 tests across 1 file. [937.00ms]

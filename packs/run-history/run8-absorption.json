@@ -1,0 +1,349 @@
+{
+  "schema_version": "bonfyre.run-history-absorption.v1",
+  "captured_at": "2026-08-21T03:01:06Z",
+  "sources": [
+    "run6 frozen capital.db replay",
+    "Run 6/7 typed packs and proof-frontier fixtures",
+    "run8-side-lane:2026-08-20"
+  ],
+  "work_planes": [
+    "run_history_absorption",
+    "execution_contracts",
+    "evidence_learning",
+    "relationship_adoption"
+  ],
+  "work": [
+    {
+      "source_plane": "run_history_absorption",
+      "target_plane": "execution_contracts",
+      "item_kind": "contract_promotion",
+      "subject_ref": "agent-session-provider-fidelity",
+      "reason": "Promote context compaction, strategy changes, model-turn provider fidelity, and subject/host/external evidence origin into native AgentSession and ReceiptEnvelope contracts.",
+      "source_ref": "run8-side-lane:2026-08-20#CrowBe/agentbranch#290",
+      "priority": 9.0
+    },
+    {
+      "source_plane": "run_history_absorption",
+      "target_plane": "evidence_learning",
+      "item_kind": "trace_semantics",
+      "subject_ref": "deepeval-trace-alignment-recovery",
+      "reason": "Backtest equal-length substitutions and asymmetric local replacements in native TraceDivergence without reopening upstream PR work.",
+      "source_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056",
+      "priority": 8.0
+    },
+    {
+      "source_plane": "run_history_absorption",
+      "target_plane": "relationship_adoption",
+      "item_kind": "maintainer_invitation",
+      "subject_ref": "RonsenbergVI/fraise#112",
+      "reason": "Revalidate live issue state before any fork/branch; preserve plan-cache identity, bounded source_ref provenance, versioned explanation, compatibility, and credential-canary privacy.",
+      "source_ref": "run8-side-lane:2026-08-20#RonsenbergVI/fraise#112",
+      "priority": 9.0
+    },
+    {
+      "source_plane": "run_history_absorption",
+      "target_plane": "evidence_learning",
+      "item_kind": "audit_contract",
+      "subject_ref": "append-only-accountability-receipts",
+      "reason": "Specify digest-not-payload evidence, per-task monotonic sequence/hash chain, frozen serialization, task boundaries, and separate audit/debug retention.",
+      "source_ref": "run8-side-lane:2026-08-20#praxis-proxy/ai#194",
+      "priority": 7.5
+    }
+  ],
+  "partners": [
+    {
+      "profile": {
+        "partner_id": "confident-ai/deepeval",
+        "name": "DeepEval",
+        "specialty": "evaluation, regression algebra, and trace alignment",
+        "connects_to": "EvidenceGraph; Aurekai; TraceDivergence",
+        "does_not_own": "Bonfyre truth, WorkGraph, or provider admission",
+        "remote_url": "https://github.com/confident-ai/deepeval/pull/3056"
+      },
+      "observation": {
+        "observation_id": "deepeval-3056-ca677d5",
+        "partner_id": "confident-ai/deepeval",
+        "state": "advanced_side_lane",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056",
+        "detail": "Rebased onto current main at ca677d5; equal-length substitution and asymmetric replacement recovery corrected; mergeable. #3064 remains downstream."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "CrowBe/agentbranch",
+        "name": "AgentBranch",
+        "specialty": "portable agent-session trace contracts",
+        "connects_to": "AgentSession; ReceiptEnvelope; TraceDivergence; ProviderGraph",
+        "does_not_own": "Bonfyre execution semantics or provider identity",
+        "remote_url": "https://github.com/CrowBe/agentbranch/pull/290"
+      },
+      "observation": {
+        "observation_id": "agentbranch-290-requirements",
+        "partner_id": "CrowBe/agentbranch",
+        "state": "requirements_absorbed",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#CrowBe/agentbranch#290",
+        "detail": "Standalone verifier semantics merged as 0429919 and public surface ea47f031 with 21 tests; native contract promotion remains."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "richinmrudul/agentguard",
+        "name": "AgentGuard",
+        "specialty": "hostile trace boundary and portable evidence paths",
+        "connects_to": "EvidenceGraph; external trace ingestion; Bernstein",
+        "does_not_own": "trace normalization, final evaluation, or WorkGraph",
+        "remote_url": "https://github.com/richinmrudul/agentguard/pull/214"
+      },
+      "observation": {
+        "observation_id": "agentguard-214-review3",
+        "partner_id": "richinmrudul/agentguard",
+        "state": "hostile_matrix_preserved",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#richinmrudul/agentguard#214",
+        "detail": "Non-vacuous hostile-input matrix is preserved on wip/214-review3-hostile-path-matrix; production Windows drive-root normalization is the unfinished seam."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "dgenio/ChainWeaver",
+        "name": "ChainWeaver",
+        "specialty": "behavior mining and pattern discovery",
+        "connects_to": "ActionTrace; PatternCluster; Aurekai",
+        "does_not_own": "Bonfyre history, secret identity, or promotion authority",
+        "remote_url": "https://github.com/dgenio/ChainWeaver/issues/376"
+      },
+      "observation": {
+        "observation_id": "chainweaver-376-guidance",
+        "partner_id": "dgenio/ChainWeaver",
+        "state": "maintainer_guidance_absorbed",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#dgenio/ChainWeaver#376",
+        "detail": "Load-scoped placeholders, persisted-byte canaries, redact-before-content-addressing, all-writer enumeration, and raw-vs-redacted comparison adopted."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "RonsenbergVI/fraise",
+        "name": "Fraise",
+        "specialty": "provenance-rich deterministic recall",
+        "connects_to": "History; ContextDemand; EvidenceGraph; GigaToken",
+        "does_not_own": "History authority, ContextCut, or canonical identity",
+        "remote_url": "https://github.com/RonsenbergVI/fraise/issues/112"
+      },
+      "observation": {
+        "observation_id": "fraise-112-invitation",
+        "partner_id": "RonsenbergVI/fraise",
+        "state": "direct_maintainer_invitation",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#RonsenbergVI/fraise#112",
+        "detail": "Maintainer invited Nickgonzales76017 to provenance/explainable recall work; live revalidation is required before branch creation."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "praxis-proxy/ai",
+        "name": "Praxis AI",
+        "specialty": "provider brokerage and accountability evidence",
+        "connects_to": "ProviderGraph; EvidenceGraph; ReceiptEnvelope",
+        "does_not_own": "Capability identity, AddressPlane authority, WorkGraph, or semantic truth",
+        "remote_url": "https://github.com/praxis-proxy/ai/issues/194"
+      },
+      "observation": {
+        "observation_id": "praxis-194-design",
+        "partner_id": "praxis-proxy/ai",
+        "state": "design_feedback_advanced",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#praxis-proxy/ai#194",
+        "detail": "Digest-not-payload evidence, monotonic sequence/hash chain, frozen serialization, explicit task boundaries, policy inputs, and distinct audit/debug retention converged."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "rajudandigam/agent-inspect",
+        "name": "Agent Inspect",
+        "specialty": "trace facts and public-surface parity",
+        "connects_to": "ActionTrace; EvidenceGraph; ChainWeaver",
+        "does_not_own": "Bonfyre trace truth or WorkGraph",
+        "remote_url": "https://github.com/rajudandigam/agent-inspect/pull/233"
+      },
+      "observation": {
+        "observation_id": "agent-inspect-233-merged",
+        "partner_id": "rajudandigam/agent-inspect",
+        "state": "merged_credit",
+        "observed_at": "2026-08-15T00:00:00Z",
+        "source_ref": "run8-side-lane:2026-08-20#rajudandigam/agent-inspect#233",
+        "detail": "Maintainer-authored contributor-credit PR for Nickgonzales76017 TraceFacts parity merged. Relationship evidence only."
+      }
+    },
+    {
+      "profile": {
+        "partner_id": "sipyourdrink-ltd/bernstein",
+        "name": "Bernstein",
+        "specialty": "distributed bounded execution and portable result receipts",
+        "connects_to": "WorkGraph; Restate; ProviderGraph; EvidenceGraph",
+        "does_not_own": "WorkGraph semantics or external truth",
+        "remote_url": "https://github.com/sipyourdrink-ltd/bernstein/pull/3903"
+      },
+      "observation": {
+        "observation_id": "bernstein-3903-merged",
+        "partner_id": "sipyourdrink-ltd/bernstein",
+        "state": "merged",
+        "observed_at": "2026-08-20T21:30:00-05:00",
+        "source_ref": "run8-side-lane:2026-08-20#sipyourdrink-ltd/bernstein#3903",
+        "detail": "Result receipt bundle and offline DSSE verification landed from #3870; treat as foreign capability evidence, not local WorkGraph ownership."
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "claim_id": "trace-recovery-tests-mechanism-specific",
+      "evidence_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056",
+      "kind": "supports",
+      "proof_state": "measured"
+    },
+    {
+      "claim_id": "provider-origin-fidelity-required",
+      "evidence_ref": "run8-side-lane:2026-08-20#CrowBe/agentbranch#290",
+      "kind": "supports",
+      "proof_state": "measured"
+    },
+    {
+      "claim_id": "redaction-precedes-content-addressing",
+      "evidence_ref": "run8-side-lane:2026-08-20#dgenio/ChainWeaver#376",
+      "kind": "supports",
+      "proof_state": "measured"
+    },
+    {
+      "claim_id": "audit-artifacts-append-only-verifiable",
+      "evidence_ref": "run8-side-lane:2026-08-20#praxis-proxy/ai#194",
+      "kind": "supports",
+      "proof_state": "measured"
+    },
+    {
+      "claim_id": "portable-receipt-bundle-landed",
+      "evidence_ref": "run8-side-lane:2026-08-20#sipyourdrink-ltd/bernstein#3903",
+      "kind": "supports",
+      "proof_state": "measured"
+    }
+  ],
+  "solved_invariants": [
+    {
+      "invariant_id": "run-history.provider-origin-fidelity",
+      "subject_resource": "contract:AgentSession/ReceiptEnvelope",
+      "layer": "evidence_origin",
+      "statement": "Subject-origin, host-origin, and external calls remain distinct evidence dimensions per model turn.",
+      "truth_plane": "measured",
+      "proof_refs": ["run8-side-lane:2026-08-20#CrowBe/agentbranch#290"],
+      "reheat_conditions": ["an accepted trace mixes evidence origins", "provider identity is absent on a model turn"]
+    },
+    {
+      "invariant_id": "run-history.redact-before-address",
+      "subject_resource": "contract:secret-safe-evidence",
+      "layer": "content_addressing",
+      "statement": "Stored evidence is redacted before hashing; within-load equality does not create durable cross-load linkability.",
+      "truth_plane": "measured",
+      "proof_refs": ["run8-side-lane:2026-08-20#dgenio/ChainWeaver#376"],
+      "reheat_conditions": ["a credential canary appears in persisted bytes", "the same secret has a stable digest across loads"]
+    },
+    {
+      "invariant_id": "run-history.receipt-bundle-landed",
+      "subject_resource": "repo:sipyourdrink-ltd/bernstein",
+      "layer": "result_receipt_bundle",
+      "statement": "Portable result receipt bundles support offline DSSE verification in the landed foreign capability.",
+      "truth_plane": "measured",
+      "proof_refs": ["run8-side-lane:2026-08-20#sipyourdrink-ltd/bernstein#3903"],
+      "reheat_conditions": ["upstream removes offline verification", "a receipt byte can change without verification failure"]
+    }
+  ],
+  "known_noncauses": [
+    {
+      "noncause_id": "run-history.deepeval-old-base",
+      "hypothesis": "the 45-commit-old DeepEval base is still the blocker",
+      "subject_scope": "partner:confident-ai/deepeval#3056",
+      "experiment": "side-lane rebase moved the seam to ca677d5 on current main and retained one commit",
+      "witness_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056",
+      "invalidation_conditions": ["the base branch advances and creates a new conflict"]
+    },
+    {
+      "noncause_id": "run-history.agentguard-missing-matrix",
+      "hypothesis": "AgentGuard #214 lacks hostile-input regression coverage",
+      "subject_scope": "partner:richinmrudul/agentguard#214",
+      "experiment": "the non-vacuous hostile-input matrix is preserved on wip/214-review3-hostile-path-matrix; the production drive-root rejection is the remaining seam",
+      "witness_ref": "run8-side-lane:2026-08-20#richinmrudul/agentguard#214",
+      "invalidation_conditions": ["the preserved branch becomes unavailable or the matrix no longer exercises rejection classes"]
+    },
+    {
+      "noncause_id": "run-history.md-search-missing-harness",
+      "hypothesis": "md-semantic-search still needs the proposed benchmark harness",
+      "subject_scope": "partner:chelslava/md-semantic-search#56",
+      "experiment": "maintainer reported completion with scripts/run-bench.mjs, fixtures, and CI golden-smoke",
+      "witness_ref": "run8-side-lane:2026-08-20#chelslava/md-semantic-search#56",
+      "invalidation_conditions": ["live upstream removes the reported harness"]
+    }
+  ],
+  "regression_fences": [
+    {
+      "subject_resource": "contract:trace-alignment",
+      "subject_profile": "deepeval-3056/rebased",
+      "layers": [
+        {"name": "equal_length_substitution", "status": "proven", "witness_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056"},
+        {"name": "asymmetric_local_replacement", "status": "proven", "witness_ref": "run8-side-lane:2026-08-20#confident-ai/deepeval#3056"},
+        {"name": "native_trace_divergence_parity", "status": "open", "detail": "Bonfyre-native parity backtest remains."}
+      ]
+    },
+    {
+      "subject_resource": "contract:secret-safe-evidence",
+      "subject_profile": "load-scoped-redaction/v1",
+      "layers": [
+        {"name": "redact_before_hash", "status": "proven", "witness_ref": "run8-side-lane:2026-08-20#dgenio/ChainWeaver#376"},
+        {"name": "all_writer_enumeration", "status": "open", "detail": "Every Bonfyre writer still needs a native canary witness."}
+      ]
+    }
+  ],
+  "pattern_clusters": [
+    {
+      "cluster_id": "run-history.trace-evidence-fidelity",
+      "statement": "Portable evaluation requires explicit execution events and evidence origin per model turn.",
+      "trace_refs": ["CrowBe/agentbranch#290", "confident-ai/deepeval#3056"],
+      "evidence_refs": ["run8-side-lane:2026-08-20#CrowBe/agentbranch#290", "run8-side-lane:2026-08-20#confident-ai/deepeval#3056"],
+      "candidate": {
+        "candidate_id": "candidate:origin-faithful-agent-event",
+        "statement": "AgentEvent carries provider, origin, compaction, and strategy dimensions as first-class fields."
+      }
+    },
+    {
+      "cluster_id": "run-history.secret-safe-addressing",
+      "statement": "Secret-safe evidence preserves equality only inside a load and redacts before durable addressing.",
+      "trace_refs": ["dgenio/ChainWeaver#376", "richinmrudul/agentguard#214"],
+      "evidence_refs": ["run8-side-lane:2026-08-20#dgenio/ChainWeaver#376", "run8-side-lane:2026-08-20#richinmrudul/agentguard#214"],
+      "candidate": {
+        "candidate_id": "candidate:load-scoped-secret-token",
+        "statement": "Evidence writers accept a load-scoped tokenization context before content addressing."
+      }
+    },
+    {
+      "cluster_id": "run-history.audit-accountability",
+      "statement": "Accountability evidence needs independent append-only verification rather than debug-trace retention alone.",
+      "trace_refs": ["praxis-proxy/ai#194", "sipyourdrink-ltd/bernstein#3903"],
+      "evidence_refs": ["run8-side-lane:2026-08-20#praxis-proxy/ai#194", "run8-side-lane:2026-08-20#sipyourdrink-ltd/bernstein#3903"],
+      "candidate": {
+        "candidate_id": "candidate:task-evidence-chain",
+        "statement": "ReceiptEnvelope binds canonical task boundaries, sequence, previous digest, policy inputs, and payload digest."
+      }
+    }
+  ],
+  "drive_artifacts": [
+    {
+      "path": "packs/run-history/run8-absorption.json",
+      "source_ref": "run6/run7-history+run8-side-lane:2026-08-20"
+    }
+  ],
+  "wiki_pages": [
+    {
+      "path": "content/research-episodes/run-history-absorption/README.md",
+      "claim_id": "run1-7-unique-state-has-current-semantic-owners"
+    }
+  ]
+}

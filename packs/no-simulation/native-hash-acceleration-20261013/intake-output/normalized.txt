@@ -1,0 +1,4 @@
+Synthetic native intake verification.
+
+Source and normalized digests are checked independently.
+

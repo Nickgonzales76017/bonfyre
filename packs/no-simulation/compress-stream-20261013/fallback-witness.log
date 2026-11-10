@@ -1,0 +1,7 @@
+  ok   file bytes are the files' own
+  ok   the archive stream is measured separately
+  ok   a delivered archive larger than its files says so
+  ok   and by how much
+  ok   a compressible directory is not flagged
+  ok   the two ratios are each compressed bytes over their own base
+savings accounting: PASS

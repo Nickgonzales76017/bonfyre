@@ -1,0 +1,14 @@
+{
+  "source_sha256": {
+    "cmd/BonfyreModel/src/main.c": "98717d6526a29cc1f0bf6c1382f7c86221968f0dafc254d0c02b94a25b3b5f18",
+    "cmd/BonfyreModel/Makefile": "4cf92430fde109d875b3f17f68d278c253c1b732af3185c2c8f88af979b96452",
+    "cmd/BonfyreModel/tests/file_verification_test.py": "b0e3cfe56e826e82779ef7950607f3c515752cbeb41e1f4676fc8e629364b14c",
+    "integrations/mcp/native/spines_helix.lock.json": "0e7da323e3206e97f175db0904daa4ed3b6ff40ef4ccd7cf4aca8cb06abbdd2a"
+  },
+  "available_bytes": 5544501248,
+  "models_downloaded": false,
+  "models_executed": false,
+  "mcp_tests_passed": 505,
+  "mcp_assertions": 6788,
+  "installed_model_cli_checks": 9
+}

@@ -1,0 +1,281 @@
+pack no-simulation-work
+generation control-1
+source_plane run4_institutional_fabric
+item_kind proof_frontier
+source_ref campaign:no-simulation
+note Simulation still standing after the first pass, found by reading source for results produced without the work. Each item names where it is and what the real thing would be. Benchmarks that say they measure generated tensors are listed too: a number about noise is not a number about a model.
+
+work requirement_tests_use_typed_in_inputs
+  target_plane run5_recursive_external
+  priority 5.5
+  reason mixed_artifact.sh passes on real inputs. major_command_families.sh takes real inputs but has not been run: it needs a real model file ingested as an artifact, and the machine had 740 MB free when it was tried. Twelve other scripts under tests/requirements write a sentence or a row of their own; those are inputs a person could bring and were left.
+
+work fabric_probe_reads_ledger_labels
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason engine/core/src/fabric_exec.c checks ledger output for the labels Replacement cost and Portfolio value, and engine/core/tests/probe_contract_test.c feeds it 1.23 and 4.56. The labels are kept so the probe still finds them; the probe should check an observed cost or its stated absence, and the test should use a real report.
+
+work kernel_parity_is_not_listed_as_simulation
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason bonfyre-flashqla compares a fast kernel with a reference on tensors it generates and says so. The work it reports, that two kernels agree and how fast, is done on those tensors; it claims nothing about a model. Left as it is on that reading; a recorded tensor from a model would be a stronger input and none exists here.
+
+work scripted_layers_not_yet_read
+  target_plane run5_recursive_external
+  priority 8.0
+  reason This pass read C under cmd/ and lib/. integrations/mcp, components, scripts, services, the Aurekai package and every test that substitutes a fake for an organ have not been read for simulation.
+
+work demo_world_synthetic_events
+  target_plane run4_institutional_fabric
+  priority 5.0
+  reason cmd/BonfyreWebAddress/src/main.c serves a demo institution in world DEMO whose events it calls synthetic. Whether a declared demo world is tolerated is the operator's ruling; it is listed so the ruling is made on purpose.
+
+work components_tree_is_part_live
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Corrected: components/ is not a tree of stale copies. components/BonfyreProject holds the live source of the project organ (5,925 lines, last changed 2026-10-08), cmd/BonfyreProject builds from it, and scripts/publish_estate.sh runs its binary; ServiceSite and ControlPlane are referenced too. The older proof and ledger copies there do still carry the word-count rubric and the invented constants. Each directory needs deciding on its own, by whether anything builds from or runs it. Nothing under components/ was removed.
+
+work net_old_verbs_remain
+  target_plane run4_institutional_fabric
+  priority 3.0
+  reason The net operator is now certified by exec, which runs a netlist's organs. The older compile, run and probe verbs remain for the key-value field, the integrator and the isolation layer; the integrator is kept by ruling, so they stay.
+
+work one_json_plan_embeds_python
+  target_plane run5_recursive_external
+  priority 3.0
+  reason integrations/mcp/tests/project_delta_cutover.json carries Python inside a JSON document, which cannot hold a label and which this estate has retired. It is the one file of the 58 in test-doubles.tsv left unmarked; the thirteen tests that embed Python are labelled and still embed it.
+
+work dictionary_is_small_and_unlabelled
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason The trainer is real and the dictionaries it wrote are fitted to recorded residuals, but to very few: 76 vectors in the certification run and 149 in the one kept under dictionaries/. Recording ran at about a quarter of a token a second with the machine out of swap. No feature has a label or a danger tag, so the gate still gates nothing; labelling needs someone to look at what each feature fires on.
+
+work moq_self_test_does_not_relay
+  target_plane run4_institutional_fabric
+  priority 4.5
+  reason The native moq self-test proves a QUIC session and a refused subscribe. The archived one relayed a payload from a publisher to a subscriber, using Python peers. A native publish and an authorised subscribe would restore that.
+
+work capability_bar_is_what_the_frappe_apps_can_do
+  target_plane run4_institutional_fabric
+  priority 8.5
+  reason Direction from the operator, 2026-10-10: maturity is that the estate natively does what the ERPNext-family applications are capable of, and well past it. Frappe is the shorthand for that bar, not something to depend on. What is measured today is narrower: the compiler holds 1,152 record types from nine applications; 301 are tied to an estate organ, all of them presentation (list or space), and 851 to none. Nothing yet maps what those applications do (raise an invoice, take a payment, reconcile, quote, follow up) to the organ that does it and to a run that proves it. A first baseline is now in packs/capability-bar/crosswalk.yaff: 44 module rows counted from the inventory and 15 acts checked against the organs, of which 5 are proven, 3 partial, 2 have a verb nothing real has gone through, 1 is blocked and 4 are absent. The accounting core (payment, quote, ledger, tax, stock, payroll) is the absent part.
+
+work tone_profile_needs_egemaps
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason Without OpenSMILE the tone organ extracts and compares with the estate's own voice features and refuses to build a profile, whose dimensions are defined on eGeMAPS names. A profile defined on the native set, or OpenSMILE installed, would close it.
+
+work tel_has_not_reached_a_telephone
+  target_plane run5_recursive_external
+  priority 6.5
+  reason Tel is certified against a real FreeSWITCH that has no trunk: a call is placed, exists in the switch, is recorded and is hung up, all on loopback. Ringing a telephone needs a carrier account in the switch's external profile, and none was looked for: reading the estate's credential store was refused. The operator offered a number to test with on 2026-10-10. send-sms, send-mms and listen have not been run against the switch at all.
+
+work switch_is_installed_by_hand
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason Homebrew could not pour the FreeSWITCH bottle for lack of space (it is 412 MB, mostly hold music), so the switch was unpacked from the bottle without its sounds, its library paths corrected by hand and the keg linked. It runs and Homebrew lists its files, but it has no install receipt, and anything that plays a sound file will not find one.
+
+work infer_has_no_test_of_its_own
+  target_plane run4_institutional_fabric
+  priority 3.5
+  reason Every command entry in the atlas names a run or a test that passed on 2026-10-10 except infer, which still names cmd/command_smoke.sh and has no test.
+
+work install_targets_bypass_the_release_path
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason scripts/organ_drift.sh is the one path that checks an installed organ against its build. Several Makefiles still install from their default target (cms and project copy into ~/.bonfyre/bin and re-sign, which changes the digest), so a plain make there reads as drift, and two organs currently do. The tool also does not list distribute, which was installed by hand.
+
+work commercial_records_are_notes_nothing_acts_on
+  target_plane run4_institutional_fabric
+  priority 9.0
+  reason Direction from the operator, 2026-10-10: the financial organs were being exercised on dog food while the estate's real commercial facts sat in the content store as notes. Found there: 9 deals, 6 requests for quotation drafted to named vendors, 2 supplier quotations received (250 and 630 USD), 31 funding work packages, 31 bounties with no stated amount, a stated pledge of 120 USD with no receipt, 4 service leads; and in the estate's working finance store 9 opportunities with 41,564 USD of expected cost and no stated compensation. The finance operator is now certified on those opportunities and bonfyre-finance books reports the rest beside the books. Nothing yet acts on them: the commerce chain holds only 48 observed lots, none of these deals is an exchange in it, a supplier quotation cannot become a commitment, and a pledge cannot be matched to a receipt. Wiring those records into commerce, offer, pay and books is the work.
+
+work experiment_prices_remain_in_the_home_finance_store
+  target_plane run4_institutional_fabric
+  priority 3.0
+  reason ~/.local/share/bonfyre/finance.db still holds ten services priced at millionths of a dollar from old experiments. Nothing is certified on it any more. It should be emptied or archived by its owner.
+
+work nothing_in_the_chain_is_past_listing
+  target_plane run4_institutional_fabric
+  priority 8.5
+  reason The estate's nine real listed opportunities are now exchanges in its commerce chain, each at product and listing, which is all an opportunity record establishes. The next stage for every one is inventory, owned by the seller: confirmed counts and condition. That is what the deals' own next steps say is missing. Until a seller confirms, the chain correctly refuses an offer, a quote, a commitment and a payment for them, and the quote and payment verbs now obey it. Moving any exchange forward takes a fact from outside: a seller's count, a buyer's bid.
+
+work supplier_quotation_cannot_become_a_commitment
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Two supplier quotations (250 and 630 USD) are held as draft records. Nothing accepts one: there is no verb that turns a quotation the estate received into a commitment in the commitment store, and the commerce chain models a sale by the estate and not a purchase by it. The seven opportunities that are applications or messages sent are not in the chain either, for the same reason: it has no shape for a service engagement.
+
+
+work edge_tools_not_deployed_and_account_at_its_daily_limit
+  target_plane run4_institutional_fabric
+  priority 7.5
+  reason Superseded the same day: the worker was removed. The second Cloudflare account answers Browser Rendering and Workers AI directly, so no worker of the estate's own is needed for either. What stands from it: on the first account, Workers AI calls return error 1027, the daily Workers request ceiling its live sites alert on.
+
+work cloudflare_probe_calls_the_wrong_verify_and_reports_configured
+  target_plane run4_institutional_fabric
+  priority 6.5
+  reason The estate's resource view records provider cloudflare as configured while its own probe of /user/tokens/verify failed with HTTP 400. The second account's token is account-owned: /accounts/<id>/tokens/verify answers active, and Workers AI, Vectorize, D1, KV, Queues and Browser Rendering all answer with it. The probe should try the account verify, and a failed probe should not read as configured.
+
+work recall_has_no_reranker
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Recall orders by vector distance alone and a loosely worded question misses the passage a close wording finds. Workers AI on the second account answers bge-reranker-base in about a second and bge-m3 embeddings at 1,024 dimensions. A rerank step for recall query was written but not applied or run: sending the estate's private passages to a hosted model needs the operator's say first.
+
+work near_identical_coordination_records
+  target_plane run4_institutional_fabric
+  priority 3.0
+  reason Asking the campaign store about unanswered outreach returns outbound_message 16, 18 and 19 with the same authority paragraph word for word. Repeats are dropped inside one source file but not across records, so one fact fills several result slots. The record store has equivalence families; Recall does not consult them.
+
+work page_state_reader_keeps_the_page_chrome
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason Reading a script-built page from its embedded state returns every string in it that reads as prose. On the operator's thread that is the conversation and also the host application's own text (feature notes, onboarding instructions), which changes between fetches. Nothing separates the document from the application around it, and who said each turn is not recovered.
+
+work embedder_cannot_see_non_latin_passages
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason Two passages of the operator's thread, both Chinese trade material, are invisible to the local embedding vocabulary. Recall now keeps them in the word index and reports them instead of failing the build, but they have no vector. The operator has named China, Vietnam and India as markets. A multilingual embedding answers on the estate's second Cloudflare account (bge-m3, 1,024 dimensions); a local one is not installed.
+
+work site_product_face_is_a_baseline_not_a_finish
+  target_plane run4_institutional_fabric
+  priority 7.5
+  reason The site verbs exist and a stranger can now stand a site up; what they give is one page shape. A new site is a single community thread under a masthead: no pages, no navigation that leads anywhere but /community, no theme choice beyond one accent colour, no media, no editing after creation except through the content store's own entry verbs, no publish step that puts a site on the internet, and no delete. The estate's 1,702 newsroom sites show as "profile only" because the verbs read composition from site_program and those sites are drawn another way. Imports bring text and titles: images, authors, categories, comments and links between posts are left behind. Export to WordPress and Frappe is checked by reading the file back with this estate's own readers, not by either system importing it. The page has not been looked at by a person for whether it is good. site check now names dead links, unreadable colours, a missing name, language or viewport and an empty site, and it caught two faults of this work: a trimmed share directory that left the linked community page out, and a page with no declared language. The community page a new site links to is the estate's shared surface, not the site's own: it does not carry the site's name.
+
+work bridges_move_rows_and_text_not_systems
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Direction from the operator, 2026-10-10: clients want bridges, Frappe to WordPress and back, Postgres to MySQL and back, and everything in between, with verification. The database bridge moves tables and compares both sides; it does not carry keys, indexes, constraints, views, sequences or procedures, reads whole tables with no resume, and has been run on tables of a few rows. The content bridge carries posts as text between WordPress and Frappe formats; it has never written to a running WordPress or Frappe, and no Frappe document type other than Blog Post and Web Page is read. Nothing bridges WordPress users, WooCommerce orders or Frappe transactions. The estate's surface maturity audit and ast-grep rules are still not what site check runs; it reads the served page and its records only.
+
+work deliverables_must_arrive_whole_not_as_links
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Two signals from real outreach say the same thing. A buyer replied that he will not open the links sent and needs photographs attached directly. The operator said the examples sent were repository links, not at the level of the email. Export exists as static pages and object-store mirrors; nothing produces a self-contained file (a PDF or an image set) from a site, a record or a work sample that can ride in a message.
+
+work accepted_requests_stop_at_the_owner
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason The operator's correction, 2026-10-10: the gaps listed after offers and bookings read as plans to build what the estate already has. They were wired to their owners instead (commitment store, meter and Pay, Finance, the domain organ). What that still does not do: tell the customer (nothing is sent; Outreach and Distribute own sending and are not called), move the Finance opportunity past import (it sits at specified; proposal, authority, customer and payment attestations are not made from the site verbs, and the payment in Pay is not attested to Finance), show a customer their own promise or invoice, or let them pay. A commitment's id is the offer and the time as written, so "14:00" and "2pm" are two different times to it. The demos' other section shapes are still not fragment kinds. site promises does not show whether a promise was discharged.
+work shared_address_is_temporary_and_the_live_estate_changes_on_restart
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason site share gives a site a public address through a quick tunnel: it lasts while this machine is awake, changes every time, and is not the site's own domain. There is no command that puts a site on a named domain. Separately, the estate's own public server runs the resolver binary this work rebuilt; at its next restart the 1,203 newsroom addresses that hold readings will begin answering /mcp and /llms.txt, which they do not today. That is a change to what the estate serves publicly and nobody has decided it; the operator should restart knowingly or hold the build back.
+
+work view_is_proven_in_the_reference_host_not_in_an_assistant
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason The view completes its handshake with the protocol's own host library, redraws from a delivered tool result and follows the host's theme, in a browser Cloudflare runs. It has not been opened inside ChatGPT, Claude or any other assistant, whose sandboxing and sizing may differ, and the frame did not grow to its content in the reference host.
+
+work profiles_are_staged_not_published
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Both GitHub profiles are local commits under ~/Developer/aurekai-profile-drafts/staged and not pushed: a branch on the personal profile repository (the Bonfyre voice, for developers) and a new repository for the organization profile (the Aurekai voice, for customers), which does not exist on GitHub yet. The demo businesses are invented (Fernhollow Pottery, Tallgrass Bike Works, Juniper Lane Bakery); the first demo used a real customer's name and was replaced on the operator's word, 2026-10-11. Each profile shows three sites, the assistant view, and six terminal cards: start, recording to site, request to books, bridges, settings, models and size. The chat frame around the assistant view is drawn for the picture; the view inside it is the product's. The MySQL to Postgres line repeats the earlier measured run and was not rerun that day. The organization's main repository README still uses the older runtime vocabulary.
+
+work transcribe_garbles_across_the_thirty_second_window
+  target_plane run4_institutional_fabric
+  priority 5.0
+  reason On a 49 second recording the transcriber wrote one invented sentence where its thirty second window ended, with greedy decoding, with a beam of five and with speech splitting. The recording used publicly is 24 seconds. The learned vocabulary also takes in its own mishearings and offers them back as terms.
+
+work cross_site_search_and_meter_usage_print_raw_records
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason bonfyre site search prints whole records with their field names and ranks on that text, so a question about pickup put the wrong post first where the assistant endpoint's search_posts put the right one; bonfyre meter usage prints its SQL expressions as column headings. Neither is at the level of the site verbs.
+
+work other_products_have_no_one_command_face_yet
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Voice, books, models and compression are shown publicly through the site verbs and through each organ's own commands. None has a face like bonfyre site: one verb from nothing to a finished result with its own check. Books needs three store paths named by hand; a model's cost reaches the books only when someone records it.
+
+work fabric_quality_probes_checked_a_fixed_sentence
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed 2026-10-11 for four probes. clean-transcript, paragraph-structure, whisper-semantic and transcript-family-semantic passed only when the output held the sentence the workload fixture is written with, so a real transcript failed them. Each now checks the run against its own input: cleaned words are the transcript's words in order, paragraphed text keeps every source word, the transcript text and its timed segments agree and end inside the audio. Witnessed through Fabric on a spoken recording and a typed transcript. The other probes in fabric_exec.c have not been read for the same fault, and scripts/bonfyre-command-workloads could not be rerun whole on this machine because it needs a packet capture.
+
+work reference_pages_are_eight_of_ninety_three
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason bonfyre fabric operator reference writes a command's page from its contract, its binding and its latest receipted run, and bonfyre site page publishes it into a manual with grouped pages, find, outline, code sets and previous and next. The earlier reference run covered eight commands; eighty-five had no recorded run in that selected state. Pages ran 390 to 580 words against 1,200 to 3,700 on the command pages of Stripe, Tailwind, Bun, Astro, Supabase and Wrangler fetched that day. No command carried a one-line purpose in the catalog and bound arguments printed as written (<argument-model_path>); those reference-generator gaps have not been reverified in this continuation. Update 2026-10-11: docs/experiences contains the landing page and all six guide drafts. The local-data guide now supplies its inputs and was executed directly from all five shell blocks against the installed Nomic ONNX model: three stored notes, relevant retrieval through both search paths, replacement without duplication, persistence across command processes, deletion and harmless retry. packs/no-simulation/local-data-guide-20261011.json retains the source and binary hashes and observed results. All seven pages were loaded through site page into the isolated .bonfyre-runtime/docs-review-20261011 home, served with manual markup at docs-review.localhost:8913, and listed through MCP; site check reported zero failures. The other five guides still need complete example execution, and fresh-machine model setup, dark mode and desktop/mobile visual review remain unverified. The local-data commands require a preinstalled model and sqlite-vec; this does not establish a packaged SDK release.
+
+work site_server_stopped_twice_unasked
+  target_plane run4_institutional_fabric
+  priority 4.0
+  reason On 2026-10-11 the server behind a docs site on port 8912 was found not answering twice within minutes of answering, with no stop asked for. bonfyre site serve brought it back each time. serve.log ends in the binary's usage text. Cause not found.
+
+work site_product_copy_ran_older_behavior
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed locally 2026-10-11. bonfyre site resolved cmd/BonfyreWebAddress/bonfyre-site, a copied executable from 13:07, ahead of the current 19:22 resolver. The request-to-books tutorial displayed $85 but its stored offer had no numeric amount, so acceptance recorded a commitment and opportunity without an invoice. The Makefile now maintains the product name as a relative symlink to the resolver, including replacing an existing copied file, and removes it on clean. make -C cmd/BonfyreWebAddress site-product-witness passed alias checks and the existing site product suite. All eight shell blocks in docs/experiences/request-to-books.md then ran through bonfyre site: an $85 invoice, one tutorial payment, unchanged books on retry, delivered commitment and two journal entries. packs/no-simulation/request-to-books-guide-20261011.json retains those results and source/binary hashes. The revised guide is served in the isolated docs-review home. Together with the local-data walkthrough, two of the six guide drafts now have complete command execution evidence; white-label, audio, migration and models/compression still need it. No installed runtime update, remote deployment, customer message, model-cost execution or real settlement was performed.
+
+work database_bridge_verification_lost_field_boundaries
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed 2026-10-11. The verifier joined column text with character 31 and substituted NUL for SQL NULL. Different field values could therefore yield identical hash input, and a missing verification destination was created by a read-write attachment. The native bridge now hashes separate nullable column arguments and uses read-only destination attachments during verification and post-copy readback. The expanded existing suite passed separator, NULL/NUL, unchanged-file and missing-destination cases, plus real MariaDB/PostgreSQL round trips and tamper checks. architecture/external/database-bridge.yaff records the existing owner and its limits. All six shell blocks in docs/experiences/integration-and-migration.md passed: two published WordPress posts with a draft excluded, HTML/Frappe/WXR exports, Bonfyre format round trips, five database rows moved and a changed amount detected. packs/no-simulation/migration-guide-20261011.json retains those results. Three of six guide drafts now have executable walkthrough evidence. Actual WordPress/Frappe destination imports, white-label/audio/models guide execution and visual review remain open; aggregate hashes do not establish collision-free equality or a shared database snapshot.
+
+work site_mcp_origin_used_substring_matching
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed locally 2026-10-11. The site MCP endpoint accepted browser origins containing its hostname anywhere, including a lookalike domain or path, and accepted opaque null origins. It now matches HTTP(S) authorities by host and port, with a named-site allowance for the loopback path endpoint, on GET and POST. The existing site product suite passed valid-origin, lookalike, sibling-site, wrong-port, malformed and null-origin checks alongside scoped keys and write permissions; its optional reference MCP client check was skipped because BONFYRE_MCP_SDK_DIR was unset. All six shell blocks in docs/experiences/white-label-delivery.md passed against a fresh three-site store on port 8926. HTML and MCP readbacks kept each site's content, Tallgrass alone received the enquiry, Fernhollow alone changed its tagline, and foreign or revoked keys were refused. packs/no-simulation/white-label-guide-20261011.json retains the results and hashes. The isolated docs preview was refreshed with the new executable and guide; the live estate and the separate preview on port 8916 were left running. Four of six guide drafts now have executable walkthrough evidence. Audio and models/compression execution, desktop/mobile visual review, finished customer branding, custom domains and per-customer billing isolation remain open.
+
+work recording_workspace_needed_a_full_recording
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Advanced 2026-10-11 with the complete 360-second Composing Webb Telescope Images video from NASA, featuring Joseph DePasquale and Alyssa Pagan. The existing ServiceSite recording owner now groups interrupted ASR sentences into complete timed passages, retains source credits and links, plays search results from their timestamps, follows the transcript through playback and viewport resizing, exports the transcript and keeps separate notes for separate moments. A real browser failure on response.blob was fixed with a session-authorized byte-range media endpoint. New Nomic indexes now pair search_document and search_query prefixes; older indexes retain their original query encoding. The real video yields 60 passages, and three questions about brightness, filters and wavelength colors return the relevant passage first and play it after minutes two, four and five. Desktop/mobile interaction checks and screenshots pass, along with the document and recording regressions. All four guide blocks ran verbatim. packs/no-simulation/recording-guide-20261011.json and recording-workspace-20261011 retain receipts, caption comparison, source hashes and browser evidence. Five of six guides now have executable walkthroughs. Models/compression remains; other sites still need their own visual review. The prior 49-second clinic's recognition issue is not declared repaired by this different recording, and general recognition accuracy is not inferred from this run.
+
+work model_guide_needed_physical_roundtrip_measurements
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed locally 2026-10-11. Model manifest parsing treated JSON object keys as download addresses and could read fields after an empty source array. Registration now decodes JSON, validates before mutation, replaces sources atomically and keeps model identity references. Quant roundtrip used a different in-memory encoder and estimated storage; it now saves BQFP files, uses the shared decoder and counts physical bytes. A pinned MiniLM-L3-v2 download passed its publisher digest. All 55 floating-point tensors and 17,389,824 weights were encoded and recovered: 19,421,016 bytes against 69,559,296 float32 bytes, weighted cosine 0.998609. Independent SLI recovery agrees with the benchmark. All six guide shell blocks passed, including exact recovery of 83 documentation files and incomplete-file refusal. Native manifest, passport, roundtrip, malformed-file and archive regressions passed. packs/no-simulation/models-compression-guide-20261011.json retains measurements and source hashes. All six guides now have executable walkthroughs; full-model inference from compressed weights remains outside this measurement.
+
+work manual_mobile_article_exceeded_viewport
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Closed locally 2026-10-11. The mobile manual flex container inherited align-items:start and let table width expand the article to 592 pixels in a 390-pixel viewport. The shared stylesheet now stretches the article to its container. All seven pages pass browser checks at 1440 and 390 pixels without document overflow or browser errors; desktop/mobile screenshots were reviewed for the compression guide. Evidence is in packs/no-simulation/guide-pages-20261011. The isolated docs preview now explicitly serves the checkout assets; installed and public assets were not replaced.
+
+work operating_products_need_complete_branded_journeys
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason User supplied docs/commercial/white-label-operating-products-20261011.md during the guide work. Continue from its implementation order: native PresentationTemplate lowering and customer logos/favicons, then one revenue journey with independent merchants and existing Meter, Pay, Gate and Finance owners. The brief supplies the product families and customer/operator/partner views. The completed developer walkthroughs provide reusable execution paths; they do not close subscription periods, payment-provider callbacks, field dispatch or community funding collection.
+
+work native_customer_templates_needed_shared_lowering
+  target_plane run4_institutional_fabric
+  priority 2.0
+  reason Advanced locally 2026-10-11. Native home, standing and contact pages now share a closed PresentationTemplate reader for typography, colors, density, hero, cards and navigation. site set --presentation validates a customer-owned patch before the CMS update. Native program and site product regressions passed; the reference MCP SDK check remains optional and skipped. Three distinct customer profiles passed desktop/mobile browser checks, retained in packs/no-simulation/customer-presentation-20261011. Logos, favicons and product-specific journeys remain open. Existing intermittent earlier site-product failures were not reproduced by the retained passing run; no unrelated HTTP parser repair is claimed.
+
+work fitness_creator_studio_native_rewrite
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason Active 2026-10-11. Nick explicitly authorized an openGym rewrite with control over style, branding, Frappe/WordPress and other bridges, and models. This supersedes the brief's earlier upstream-adapter preference. The first original training owner and ServiceSite app are in components/BonfyreServiceSite/training-*.mjs, with two creator collections in packs/aurekai-fitness-studio. Port 4190 serves the local app. Workouts, rest deadlines, pause/resume, history, portable files, unit conversion, scoped brand preferences and program-only WordPress/Frappe exports work locally; model controls retain preferences only. Nine core/settings tests passed 52 assertions, thirteen fresh-browser checks passed at desktop/mobile sizes including reload and stale-tab refusal, and ControlPlane reported 871 pass, 259 skip, zero failures. Atlas validates 494 architectures and 418 interactions. Evidence and screenshots live in packs/no-simulation/fitness-studio-20261011. Continue with full routine editing, openGym backup import, progression and offline/device behavior, then native Actor/consent, WorkGraph requests, paid terms, booking/settlement, customer assets and model execution. This is an initial working rewrite, not completion of the commercial acceptance list. Stitch generation remains pending because no usable browser/Stitch tool binding is exposed; the authored local app is not a Stitch result. Disk has about 118 MiB free, so avoid full upstream media downloads.
+
+work fitness_routine_editor_and_opengym_import
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Advanced 2026-10-11. Multi-exercise editing now preserves IDs, per-set loads, warm-ups, effort targets, order and superset groups. Active/completed workouts retain their snapshots. Supersets alternate by round and rest at the round boundary. A warm-up indexing defect in last-load prefill is fixed. The reviewed OpenGym JSON reader converts load units, uses upstream canonical km/h, expands unilateral drops, retains original training records for export and excludes provider credentials. Additional routine settings, schedules, body-weight entries and media references remain in the archive where projection is incomplete. Legacy/mixed-mode input and a broader upstream corpus still need coverage. Eighteen core tests passed 92 assertions; eighteen browser checks passed including editor reload, unchanged history, reviewed import and stale-tab refusal. Atlas validates 495 architectures and 419 interactions. Port 4190 was restarted with the current assets. Browser IndexedDB returned Internal error with about 117 MiB disk free; deleting our disposable 66 MiB pinned MiniLM download recovered space and the browser runs passed. Its source digest, measurements and cleanup note remain. Continue progression, weight tracking, offline/device behavior and the native commercial integrations from the parent work item; this does not close the overall productization or outreach goal.
+
+work fitness_offline_bundle_and_updates
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Advanced 2026-10-11. The training server now freezes an asset snapshot per launch, publishes a manifest and brand-colored SVG icon, and admits a complete service-worker cache only when every response names the same content-derived version. The first installer stalled because parallel response bodies were left unconsumed; consuming each body immediately fixed the real browser failure. Ten offline checks pass with the server stopped and Chrome fully restarted: paused workout/rest state survives, completion saves offline, private training records stay out of app caches, updates wait for old tabs to close, mismatched candidates leave no partial cache, and activation preserves IndexedDB history. Existing eighteen browser interaction checks pass. Model configuration now rejects embedded credential fields, bringing core assertions to 93. A short-page mobile grid stretch was fixed and the current preview on port 4190 was restarted. Evidence is in packs/no-simulation/fitness-studio-20261011/offline-verification.json. Operating-system installation and non-Chrome behavior are still unverified; device sync, progression, weight tracking and native commercial integration remain open. The broader productization/outreach goal stays active.
+
+work fitness_progression_and_weight_records
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Advanced 2026-10-11. Configured linear load, double progression and timed increments now derive next targets from completed working sets with unchanged prescriptions. Optional consecutive-failure deloads reset by cycle. Planned effort stays separate from actual effort and missing or insufficient actual effort holds progression. The editor exposes the rules and the member sees targets and reasons before starting. Weight records support dated entry, chart, edit, removal and OpenGym import, with exact canonical kilograms retained through display-unit changes. Twenty-four core tests pass 129 assertions; eleven new browser checks verify progression and weight flows, alongside eighteen existing interaction checks and ten server-off offline/update checks. Atlas validates 495 architectures and 419 interactions. Evidence is in packs/no-simulation/fitness-studio-20261011. Periodized programs, exercise media, device sync and native commercial/model integration remain open; the overall productization and outreach goal stays active.
+
+work fitness_model_execution_resource_incident
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason Active model adaptation work adds bounded local requests and reviewed proposals; 33 core tests passed 181 assertions. Qwen1.5 live responses failed a no-weights request, so no quality success is claimed. Loading a second 1.8 GiB Qwen2.5 model with GPU offload alongside browser tests drove available memory to zero; Nick reported a computer crash. The extra model PID 84406 and port 7011 are absent after recovery, no training test Chrome processes remain, and available memory recovered to 19 percent. Do not launch another model or concurrent browser workloads on this machine. Preserve failed response evidence, finish lightweight contract checks and document incomplete live/browser verification. See packs/no-simulation/fitness-studio-20261011/model-resource-incident.json.
+
+work fitness_customer_logos_and_browser_icons
+  target_plane run4_institutional_fabric
+  priority 5.0
+  reason Advanced after resource recovery. Each studio now accepts a PNG logo and browser icon, previews uploads before Save settings, retains them across reloads, and restores its own assets when the member changes studios. Wide logos replace the adjacent text name to remain readable on mobile. Encoded size and PNG dimensions are bounded before decoding. Thirty-seven core tests pass 197 assertions; ten checks passed in one browser with no model route connected. Memory availability remained above 20 percent. Atlas records the implemented model-request boundary with failed live quality evidence and disconnected execution; hosted routes and complete live application are unverified. Current training preview runs on port 4190 with model execution explicitly disconnected. Installed application icons still use server material, and full-app/offline browser regressions need rerunning sequentially after the latest changes.
+
+work fitness_branding_regressions_verified
+  target_plane run4_institutional_fabric
+  priority 3.0
+  reason The mobile wide-logo check found and fixed a literal dot in the CSS class name. Eleven branding browser checks now pass, including readable wide logos without duplicate name text. Eighteen main-app interaction checks and ten offline/update checks passed sequentially after the model and image additions. No model was invoked. The preview remains disconnected from model execution; live model quality and complete proposal application remain unverified.
+
+work fitness_requests_use_native_workgraph
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Advanced 2026-10-12. Member program requests now submit an immutable authored brief and selected public program reference through the local server into BonfyreQueue and native WorkGraph. Stable request IDs make retries idempotent and receipt tokens scope reads. Added a named claim verb to the existing queue CLI, reusing bf_workgraph_claim_node and its family filter. The creator CLI lists, claims, renews and delivers approved routines; native completion names an immutable content-addressed artifact, which the member explicitly adopts into their own training library. Browser receipts and unsent briefs survive reload; lost connectivity leaves a retryable draft and does not claim that work was received. Forty-three core tests pass 230 assertions, twelve request browser checks pass through real native creator commands, and ten offline/update checks pass. Atlas validates 497 architectures and 422 interactions. The preview uses .bonfyre-runtime/fitness-studio-20261011/requests with model execution disconnected. Authenticated creator/team views, coaching consent, quoting/refusal/revisions, CMS publication and billing remain open; local filesystem access is not a native Actor or role grant. Claims last at most 24 hours and require explicit renewal. No models were started or invoked.

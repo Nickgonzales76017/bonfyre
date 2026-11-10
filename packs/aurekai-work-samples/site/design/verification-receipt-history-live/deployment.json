@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-08T15:36:24.224Z",
+  "project": "aurekai-work-samples",
+  "account": "estate",
+  "previous_deployment": "9a790bf5-94a1-42be-a98d-54346fed3370",
+  "deployment_id": "0f79618c-2a94-444d-9f59-1e7807caa02d",
+  "stage": {
+    "name": "deploy",
+    "started_on": null,
+    "ended_on": "2026-10-08T15:36:21.354535Z",
+    "status": "success"
+  },
+  "site_record_unchanged": true,
+  "committed": false
+}

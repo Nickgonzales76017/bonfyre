@@ -1,0 +1,92 @@
+{
+  "request": {
+    "model": {
+      "provider": "local",
+      "endpoint": "http://127.0.0.1:7000",
+      "model": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf",
+      "data": "program-only"
+    },
+    "instruction": "I have no weights today. Replace this with a bodyweight exercise. Keep three sets of eight and 60 seconds rest.",
+    "exercise": {
+      "name": "Goblet squat",
+      "kind": "resistance",
+      "restSeconds": 60,
+      "sets": [
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        },
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        },
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        }
+      ]
+    },
+    "session": null
+  },
+  "proposal": {
+    "name": "Goblet squat",
+    "kind": "bodyweight",
+    "restSeconds": 60,
+    "reason": "No weights today",
+    "sets": [
+      {
+        "type": "work",
+        "loadKg": 16,
+        "reps": 8,
+        "seconds": 0,
+        "distanceM": 0,
+        "rir": null,
+        "rpe": null
+      },
+      {
+        "type": "work",
+        "loadKg": 16,
+        "reps": 8,
+        "seconds": 0,
+        "distanceM": 0,
+        "rir": null,
+        "rpe": null
+      },
+      {
+        "type": "work",
+        "loadKg": 16,
+        "reps": 8,
+        "seconds": 0,
+        "distanceM": 0,
+        "rir": null,
+        "rpe": null
+      }
+    ]
+  },
+  "receipt": {
+    "provider": "local",
+    "endpoint": "http://127.0.0.1:7000",
+    "requestedModel": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf",
+    "returnedModel": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf",
+    "completedAt": "2026-10-12T02:09:45.796Z",
+    "inputSha256": "b1ce02e75dedd4a996fa91710d36833f938991fbfe1db7aca8b981054b0240e0",
+    "outputSha256": "a83105f5189497075ff4273b7e3477af8cb8c6790841379e8ac9a3f6f34ffa6c",
+    "data": "program-only"
+  },
+  "review": "Rejected: retained external load despite a request for no weights."
+}

@@ -1,0 +1,24 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreHash/tests/file.test.mjs:
+(pass) file digest matches an independent implementation across buffer boundaries [219.11ms]
+28 |   }
+29 | });
+30 | test('missing inputs and directory reads emit no digest',()=>{
+31 |   for(const path of [join(temp,'missing'),temp]){
+32 |     const result=run(['file',path]);
+33 |     expect(result.exitCode).not.toBe(0);
+                                     ^
+error: expect(received).not.toBe(expected)
+
+Expected: not 0
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreHash/tests/file.test.mjs:33:33)
+(fail) missing inputs and directory reads emit no digest [5.80ms]
+(pass) duplicate detection still reports equal complete files [2.60ms]
+(pass) a partial read error refuses both a file digest and the entire duplicate report [167.49ms]
+
+ 3 pass
+ 1 fail
+ 24 expect() calls
+Ran 4 tests across 1 file. [1179.00ms]

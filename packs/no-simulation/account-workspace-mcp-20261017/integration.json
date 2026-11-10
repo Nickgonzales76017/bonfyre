@@ -1,0 +1,86 @@
+{
+  "schema": "bonfyre.account-workspace-integration.v1",
+  "observed_at": "2026-10-17T22:49:31.149706+00:00",
+  "scope": "Connect account MCP with existing installed product records and native continuations. This is a product continuity integration, not completion of the wider product-maturity backlog.",
+  "tools": [
+    "workspace_list",
+    "workspace_records",
+    "workspace_views",
+    "workspace_preview",
+    "workspace_update"
+  ],
+  "products_tested": [
+    "catalogue",
+    "room planning",
+    "creator audio",
+    "recurring programs"
+  ],
+  "destinations_tested": [
+    "self",
+    "institution",
+    "household"
+  ],
+  "evidence": {
+    "account_product_journeys": {
+      "tests": 9,
+      "assertions": 94,
+      "log": "native-product-tests.log",
+      "actual_owners": [
+        "BonfyreAuth",
+        "installed BonfyreCMS binary",
+        "new BonfyreWebAddress binary",
+        "OAuth MCP gateway"
+      ],
+      "environment": "isolated temporary accounts and databases"
+    },
+    "existing_workspace_http": {
+      "checks": 32,
+      "log": "workspace-regressions.log"
+    },
+    "existing_product_tools": {
+      "tests": 3,
+      "assertions": 23,
+      "log": "product-tool-regressions.log",
+      "model": "Unavailable fixture endpoint; no model loaded."
+    },
+    "institution_isolation": {
+      "passed": true,
+      "log": "oauth-tests.log"
+    },
+    "native_release": "native-release-readback.json",
+    "gateway_release": "gateway-release-readback.json",
+    "native_route_smoke": "native-route-smoke.json",
+    "installed_architecture_corpus": "corpus.json",
+    "authenticated_app_after_reload": "app-readback.json"
+  },
+  "limits": [
+    "Existing scalar draft fields only; domain schemas, validation and operational effects stay in their product editors.",
+    "No new installation, account, live customer draft, payment, publication, provider task or operator resume performed.",
+    "No embedded MCP App or public-demo adoption UI is claimed.",
+    "Delegated institution product apertures retain their existing restricted tools.",
+    "Both production gateways loaded the new source and recovered. New workspace tool names are not yet exposed in this conversation tool catalogue; live authenticated workspace invocation is not claimed."
+  ],
+  "sources": {
+    "integrations/mcp/workspace_mcp.mjs": "505877c6e44e2b841e4cc8bc2b5aed8eed9c997f912c90e67941c649b6e2f6d0",
+    "integrations/mcp/bonfyre_oauth_gateway.mjs": "55ff4ec339592d1618668cf39cece598a46c682ab3ae11816eea64f4ee0b039c",
+    "integrations/mcp/tests/workspace_mcp.test.mjs": "721ac58fad9409bd9660b9e129e534745793245c6654053afeef152e2b06dac2",
+    "integrations/mcp/tests/oauth_institution_slice_test.sh": "8fb51f11cc71b512dfdd7924756861a3370cc4f7d244dd692a64193381db2aa5",
+    "cmd/BonfyreWebAddress/src/application_continuation.h": "ee0e662001b7c6cc326973b17aeb5e582c8d8c695ac193898d13ab5e5be6bd5a",
+    "architecture/surface/account-workspace-mcp.yaff": "49b2ada764ba01bfea6e066f2204c5c82e64b41c540230fcdf3e80e07608e06f"
+  },
+  "research": [
+    {
+      "url": "https://modelcontextprotocol.io/extensions/apps/overview",
+      "application": "Use embedded interactive reviews only where host support is verified, retaining the same product owner."
+    },
+    {
+      "url": "https://www.anthropic.com/engineering/advanced-tool-use",
+      "application": "Keep discovery selective and compose bounded operations through existing owners, with concrete tool usage patterns."
+    }
+  ],
+  "activation": {
+    "native": "deployed",
+    "oauth_gateways": "both reloaded after becoming idle",
+    "application_catalogue": "new workspace names not available in this conversation"
+  }
+}

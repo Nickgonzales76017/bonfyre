@@ -1,0 +1,11 @@
+{
+  "components/BonfyreServiceSite/catalogue-grid.mjs": "42230035624458637751d6b365156d45102ff5e760ffdfdd8f0b3e0f56601c60",
+  "components/BonfyreServiceSite/catalogue-grid-model.mjs": "8e5af46c5b67a64295a7522f4264663688ba855cae16b21d4ccc76b765c7090a",
+  "components/BonfyreServiceSite/catalogue-client.mjs": "3580e3da38533cdbc901944ee8ad36bc5f01dc6233c012f7f12f3fbf22a56681",
+  "components/BonfyreServiceSite/catalogue-material.mjs": "43ef75d253481d553a19af28a9e99275fb6f1f71d3acfd90d5c29788ba32bc91",
+  "components/BonfyreServiceSite/sections/catalogue.mjs": "350985dee1316ff4d159ff1a3ca9bb51506cd6c72d1b82478e2f2d98dfc1fd3f",
+  "components/BonfyreServiceSite/catalogue.css": "6583c84ecbb8328c3aa8b63e3661dfa7fab45130a791f699648637b6ceae9c75",
+  "components/BonfyreServiceSite/tests/catalogue-grid.test.mjs": "bdeb499a1f3a86efaff6f8a88ee9e3364754959b4f9c6b41df4425756cd96798",
+  "components/BonfyreServiceSite/tests/catalogue-grid-browser.mjs": "804441d3916ea52a93008177f489c54bb462e4c4ed2b5245970bea45205860db",
+  "integrations/browser/extension/store.mjs": "a906f1abb54051c4de9d1db0d6e21b0923d56202bd2193607d3a5dae4baf36d6"
+}

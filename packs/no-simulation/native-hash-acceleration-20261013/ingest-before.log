@@ -1,0 +1,24 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreIngest/tests/hash.test.mjs:
+(pass) text, table and raw intake retain independently verified source and normalized digests [190.68ms]
+31 |     expect(manifest.normalized_bytes).toBe(normalized.length);
+32 |     expect(readFileSync(join(output,'fabric-output.manifest'),'utf8')).toContain(manifest.normalized_path+'\n');
+33 |   }
+34 | });
+35 | const refused=(result,output)=>{
+36 |   expect(result.exitCode).not.toBe(0);
+                                   ^
+error: expect(received).not.toBe(expected)
+
+Expected: not 0
+
+      at refused (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreIngest/tests/hash.test.mjs:36:31)
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreIngest/tests/hash.test.mjs:44:5)
+(fail) absent and directory inputs cannot publish a ready intake [3.81ms]
+(pass) partial source or normalized hash failure cannot publish ready manifests [171.25ms]
+
+ 2 pass
+ 1 fail
+ 36 expect() calls
+Ran 3 tests across 1 file. [1225.00ms]

@@ -1,0 +1,156 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:
+TimeoutError: The operation timed out.
+DOMException {
+  stack: "",
+  code: 23,
+  name: "TimeoutError",
+  message: "The operation timed out.",
+  INDEX_SIZE_ERR: 1,
+  DOMSTRING_SIZE_ERR: 2,
+  HIERARCHY_REQUEST_ERR: 3,
+  WRONG_DOCUMENT_ERR: 4,
+  INVALID_CHARACTER_ERR: 5,
+  NO_DATA_ALLOWED_ERR: 6,
+  NO_MODIFICATION_ALLOWED_ERR: 7,
+  NOT_FOUND_ERR: 8,
+  NOT_SUPPORTED_ERR: 9,
+  INUSE_ATTRIBUTE_ERR: 10,
+  INVALID_STATE_ERR: 11,
+  SYNTAX_ERR: 12,
+  INVALID_MODIFICATION_ERR: 13,
+  NAMESPACE_ERR: 14,
+  INVALID_ACCESS_ERR: 15,
+  VALIDATION_ERR: 16,
+  TYPE_MISMATCH_ERR: 17,
+  SECURITY_ERR: 18,
+  NETWORK_ERR: 19,
+  ABORT_ERR: 20,
+  URL_MISMATCH_ERR: 21,
+  QUOTA_EXCEEDED_ERR: 22,
+  TIMEOUT_ERR: 23,
+  INVALID_NODE_TYPE_ERR: 24,
+  DATA_CLONE_ERR: 25,
+  toString: [Function: toString],
+}
+(fail) idle browser connections do not occupy the only request worker [1639.12ms]
+28 |  expect(await response).toContain('"verdict":"healthy"');
+29 | }));
+30 | 
+31 | test('split headers and an unfinished body wait without blocking another request',()=>fixture(async({socket,reply,health})=>{
+32 |  const partial=await socket(),response=reply(partial);let earlyBytes=0;partial.on('data',b=>earlyBytes+=b.length);
+33 |  partial.write('GET /healthz HTTP/1.1\r\nHo');await Bun.sleep(30);expect(await health()).toBeLessThan(1500);expect(earlyBytes).toBe(0);
+                                                                                                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 92
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:33:128)
+      at async fixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:20:9)
+(fail) split headers and an unfinished body wait without blocking another request [117.13ms]
+(pass) malformed framing is refused before a handler and later requests still work [82.13ms]
+TimeoutError: The operation timed out.
+DOMException {
+  stack: "",
+  code: 23,
+  name: "TimeoutError",
+  message: "The operation timed out.",
+  INDEX_SIZE_ERR: 1,
+  DOMSTRING_SIZE_ERR: 2,
+  HIERARCHY_REQUEST_ERR: 3,
+  WRONG_DOCUMENT_ERR: 4,
+  INVALID_CHARACTER_ERR: 5,
+  NO_DATA_ALLOWED_ERR: 6,
+  NO_MODIFICATION_ALLOWED_ERR: 7,
+  NOT_FOUND_ERR: 8,
+  NOT_SUPPORTED_ERR: 9,
+  INUSE_ATTRIBUTE_ERR: 10,
+  INVALID_STATE_ERR: 11,
+  SYNTAX_ERR: 12,
+  INVALID_MODIFICATION_ERR: 13,
+  NAMESPACE_ERR: 14,
+  INVALID_ACCESS_ERR: 15,
+  VALIDATION_ERR: 16,
+  TYPE_MISMATCH_ERR: 17,
+  SECURITY_ERR: 18,
+  NETWORK_ERR: 19,
+  ABORT_ERR: 20,
+  URL_MISMATCH_ERR: 21,
+  QUOTA_EXCEEDED_ERR: 22,
+  TIMEOUT_ERR: 23,
+  INVALID_NODE_TYPE_ERR: 24,
+  DATA_CLONE_ERR: 25,
+  toString: [Function: toString],
+}
+(fail) a burst of preconnects remains bounded and leaves room for a complete request [1592.28ms]
+50 | }));
+51 | 
+52 | test('body text cannot supply a missing Host header',()=>fixture(async({socket,reply})=>{
+53 |  const s=await socket(),response=reply(s),body='Host: aurekai.work\r\nAccept: text/html\r\n';
+54 |  s.write(`GET /_surface/intake?url=https%3A%2F%2Fexample.test%2F HTTP/1.1\r\nContent-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
+55 |  expect(await response).toStartWith('HTTP/1.1 404');
+                             ^
+error: expect(received).toStartWith(expected)
+
+Expected to start with: "HTTP/1.1 404"
+Received: "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n<div id=\"intake-result\" class=\"intake-result\"><p>Route prepared. Nothing has been fetched, claimed, or promoted.</p><form action=\"/studio/\" method=\"get\"><input type=\"hidden\" name=\"foreign_url\" value=\"https://example.test/\"><button class=\"button primary\" type=\"submit\">Review in Studio <span>→</span></button></form></div>\n"
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:55:25)
+      at async fixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:20:9)
+(fail) body text cannot supply a missing Host header [87.11ms]
+TimeoutError: The operation timed out.
+DOMException {
+  stack: "",
+  code: 23,
+  name: "TimeoutError",
+  message: "The operation timed out.",
+  INDEX_SIZE_ERR: 1,
+  DOMSTRING_SIZE_ERR: 2,
+  HIERARCHY_REQUEST_ERR: 3,
+  WRONG_DOCUMENT_ERR: 4,
+  INVALID_CHARACTER_ERR: 5,
+  NO_DATA_ALLOWED_ERR: 6,
+  NO_MODIFICATION_ALLOWED_ERR: 7,
+  NOT_FOUND_ERR: 8,
+  NOT_SUPPORTED_ERR: 9,
+  INUSE_ATTRIBUTE_ERR: 10,
+  INVALID_STATE_ERR: 11,
+  SYNTAX_ERR: 12,
+  INVALID_MODIFICATION_ERR: 13,
+  NAMESPACE_ERR: 14,
+  INVALID_ACCESS_ERR: 15,
+  VALIDATION_ERR: 16,
+  TYPE_MISMATCH_ERR: 17,
+  SECURITY_ERR: 18,
+  NETWORK_ERR: 19,
+  ABORT_ERR: 20,
+  URL_MISMATCH_ERR: 21,
+  QUOTA_EXCEEDED_ERR: 22,
+  TIMEOUT_ERR: 23,
+  INVALID_NODE_TYPE_ERR: 24,
+  DATA_CLONE_ERR: 25,
+  toString: [Function: toString],
+}
+(fail) an unused preconnection expires while the listener stays available [1584.68ms]
+66 | 
+67 | test('headers that exhaust the request bound are refused without waiting for another byte',()=>fixture(async({socket,reply,health})=>{
+68 |  const s=await socket(),response=reply(s);
+69 |  const prefix='GET /healthz HTTP/1.1\r\nHost: aurekai.work\r\nX-Padding: ';
+70 |  s.write(prefix+'x'.repeat(256*1024-1-Buffer.byteLength(prefix)));
+71 |  expect(await response).toStartWith('HTTP/1.1 413');await health();
+                             ^
+error: expect(received).toStartWith(expected)
+
+Expected to start with: "HTTP/1.1 413"
+Received: "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"healthy\"}\n"
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:71:25)
+      at async fixture (/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/http_readiness.test.mjs:20:9)
+(fail) headers that exhaust the request bound are refused without waiting for another byte [85.47ms]
+
+ 1 pass
+ 6 fail
+ 25 expect() calls
+Ran 7 tests across 1 file. [5.30s]

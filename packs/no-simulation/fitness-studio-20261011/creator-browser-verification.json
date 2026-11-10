@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-19T15:26:47.335Z",
+  "browser": "Chrome/146.0.7680.178",
+  "memoryFreePercentBefore": 37,
+  "checks": [
+    "native sign-in opens only the granted creator studio",
+    "member brief reaches the authenticated creator inbox",
+    "session credential is unavailable to page JavaScript",
+    "creator accepts work as its native actor",
+    "session and native assignment survive reload",
+    "routine review does not complete the request",
+    "delivery review fits a phone",
+    "explicit delivery completes native work",
+    "member adopts the routine delivered from the creator screen",
+    "revocation removes private request rows on refresh",
+    "sign-out clears the native session",
+    "no browser runtime errors"
+  ],
+  "errors": []
+}

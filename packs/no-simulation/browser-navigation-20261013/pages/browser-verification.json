@@ -1,0 +1,993 @@
+{
+  "at": "2026-10-13T21:19:34.512Z",
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "pages": [
+    {
+      "path": "/",
+      "title": "Custom web tools, sites and integrations | Aurekai",
+      "heading": "Custom web tools, sites and integrations",
+      "ids": [
+        "samples",
+        "built",
+        "working-together",
+        "ask",
+        "ask-0",
+        "ask-1",
+        "ask-2",
+        "ask-3",
+        "ask-4"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Try the work samples →",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Fixture planner",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Product editor",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Shipment archive",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Wix review",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Training app",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "Document search",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Shop sites",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Fixture planner",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Product editor",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Shipment archive",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Wix review",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Training app",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "Document search",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Shop sites",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Open the fixture planner →",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Try the editor →",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Open the before and after →",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Read the concrete findings →",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Visit the three sites →",
+          "href": "https://docs.aurekai.work/three-businesses"
+        },
+        {
+          "text": "See the training app →",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "See the document search →",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Read the product families →",
+          "href": "https://docs.aurekai.work/operating-products"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/archive.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/catalogue.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/planner.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/guides.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/wix.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/site-tallgrass.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/catalogue/",
+      "title": "Product workspace | Aurekai",
+      "heading": "Products",
+      "ids": [
+        "product-workspace",
+        "catalogue-edit",
+        "catalogue-review"
+      ],
+      "links": [
+        {
+          "text": "Skip to workspace",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/#product-workspace"
+        },
+        {
+          "text": "Contact Nick Gonzales",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "View original listing ↗",
+          "href": "https://redwoodrings.com/"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/catalogue/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-preparation.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/store.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-review.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-0.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithpurplelabalexandriteinlay_womensgemstonering_0376db52-794b-4ea9-b1b6-7e060ac40a75.jpg?v=1741636487",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/archive/",
+      "title": "Shipment document preparation sample | Aurekai",
+      "heading": "Eight messy files. One checked handoff.",
+      "ids": [
+        "archive-results",
+        "missing-proof",
+        "archive-pilot"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss this workflow",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Download the checked record and rename-preview CSV",
+          "href": "https://aurekai-work-samples.pages.dev/assets/archive-rename-preview.csv"
+        },
+        {
+          "text": "Download the missing-document CSV",
+          "href": "https://aurekai-work-samples.pages.dev/assets/archive-missing-documents.csv"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/archive/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/wix-review/",
+      "title": "Elite Accreditation public website review | Aurekai",
+      "heading": "Three concrete checks for an existing Wix site.",
+      "ids": [
+        "wix-findings",
+        "wix-source",
+        "wix-first-pass"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss this workflow",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Elite Accreditation public website",
+          "href": "https://www.eliteaccreditation.org/"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/wix-review/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/red3-planner/",
+      "title": "Plan your next shop | Aurekai",
+      "heading": "Plan your next shop.",
+      "ids": [
+        "red3-fixtures"
+      ],
+      "links": [
+        {
+          "text": "Skip to workspace",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/#red3-fixtures"
+        },
+        {
+          "text": "red3DISPLAY",
+          "href": "https://red3display.com/"
+        },
+        {
+          "text": "Aurekai preview",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/"
+        },
+        {
+          "text": "Review the source product sample ↗",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/red3-planner/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/planner-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSvfedN4.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/store.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/planner-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/RM_RR30.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/Fwd-Display-Tables-moitreyee-bwd-gmail-com-Gmail-05-06-2025_04_11_PM.png",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/standard-quality-built-cash-wrap-counters-in-multiple-finish-options-LG.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/acrylic-t-shirt-easel-tmb-1.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/training/",
+      "title": "A training app for a studio | Aurekai",
+      "heading": "One training app. Every studio its own.",
+      "ids": [
+        "member",
+        "coach",
+        "devices",
+        "training-scope"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss an app like this",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/training/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training-today.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training-programs.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-requests.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-appearance.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-programs.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/documents/",
+      "title": "Search your own documents | Aurekai",
+      "heading": "Ask your documents. Get the paragraph, not a guess.",
+      "ids": [
+        "document-use",
+        "document-scope"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss a workspace like this",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/documents/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents-open.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failures": [],
+  "writes": [],
+  "status": "passed"
+}

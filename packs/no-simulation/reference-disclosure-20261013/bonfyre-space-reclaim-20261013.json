@@ -1,0 +1,88 @@
+{
+  "at": "2026-10-13T14:40:00.813037",
+  "free_before_bytes": 1464225792,
+  "removed": [
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.159.0-aarch64-apple-darwin",
+      "allocated_bytes_before": 331649024
+    },
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.159.2-aarch64-apple-darwin",
+      "allocated_bytes_before": 331665408
+    },
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.159.3-aarch64-apple-darwin",
+      "allocated_bytes_before": 331870208
+    },
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.160.0-aarch64-apple-darwin",
+      "allocated_bytes_before": 333070336
+    },
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.160.1-aarch64-apple-darwin",
+      "allocated_bytes_before": 333037568
+    },
+    {
+      "path": "/Users/nickgonzales/.codex/packages/app-server-daemon/releases/0.161.0-aarch64-apple-darwin",
+      "allocated_bytes_before": 336703488
+    },
+    {
+      "path": "/Users/nickgonzales/.local/share/claude/versions/2.1.291",
+      "allocated_bytes_before": 233213952
+    },
+    {
+      "path": "/Users/nickgonzales/.npm/_npx/d77349f55c2be1c0",
+      "allocated_bytes_before": 202022912
+    },
+    {
+      "path": "/Users/nickgonzales/.npm/_npx/515228b7c8d004a2",
+      "allocated_bytes_before": 14479360
+    },
+    {
+      "path": "/Users/nickgonzales/.npm/_npx/32026684e21afda6",
+      "allocated_bytes_before": 202022912
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Application Support/Code/CachedExtensionVSIXs",
+      "allocated_bytes_before": 452292608
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/Google/Chrome/Default/Cache",
+      "allocated_bytes_before": 815796224
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/Google/Chrome/Default/Code Cache",
+      "allocated_bytes_before": 216182784
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/Homebrew",
+      "allocated_bytes_before": 203005952
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/.wrangler/chrome",
+      "allocated_bytes_before": 297172992
+    },
+    {
+      "path": "/Users/nickgonzales/.bun/install/cache",
+      "allocated_bytes_before": 251244544
+    },
+    {
+      "path": "/Users/nickgonzales/.cache/zig",
+      "allocated_bytes_before": 74186752
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/com.apple.python",
+      "allocated_bytes_before": 64720896
+    },
+    {
+      "path": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/C/clang",
+      "allocated_bytes_before": 313098240
+    },
+    {
+      "path": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/C/com.apple.python3",
+      "allocated_bytes_before": 96022528
+    }
+  ],
+  "free_after_bytes": 6713716736,
+  "net_reclaimed_bytes": 5249490944
+}

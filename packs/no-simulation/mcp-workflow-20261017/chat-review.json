@@ -1,0 +1,50 @@
+{
+  "schema": "bonfyre.mcp-workflow-chat-review.v1",
+  "source": "https://chatgpt.com/share/6ad389bd-0308-83ea-95e9-7e98bc39b7a2",
+  "title": "Architecture Optimization Plan",
+  "html_sha256": "a4cee12fece81d83ee0c7b5fa3954d27925a1bda503c7004c326a973e9ee7e04",
+  "source_nodes": 408,
+  "visible_messages": 17,
+  "tool_result_nodes": {
+    "a8km123": 4,
+    "api_tool.call_tool": 125,
+    "web.run": 5,
+    "api_tool": 10,
+    "container.exec": 45
+  },
+  "limits": "The share redacts tool arguments and results. Counts are message nodes, not an exact trace of distinct tool calls, durations or retries. Attached files and sandbox downloads were not recovered.",
+  "reported_blockers": [
+    {
+      "sequence": 282,
+      "finding": "Decision-consumer patch prepared and tested in an isolated environment, but reported unapplied because component paths and manual-write authorization blocked landing."
+    },
+    {
+      "sequence": 407,
+      "finding": "Workspace material changes reported applied and built; serving process not installed or restarted, Atlas patch outside permitted scope, earlier decision-consumer patch still unapplied."
+    }
+  ],
+  "local_changes": [
+    "Filtered and paginated native inventory with request-local manifest reuse",
+    "Batched source reads with whole-file hashes and conditional refresh",
+    "Path-only patch preflight using existing policy and source owners",
+    "Existing delivery prompt and initialization instructions teach the shorter sequence"
+  ],
+  "remaining": [
+    "Verify which patches from the shared chat have since landed",
+    "Reconnect the ChatGPT Aurekai app: its verification returned UNAUTHORIZED; the live local project owner is verified",
+    "Measure a real end-to-end delivery workflow without redacted tool results",
+    "Evaluate whether existing mission and execution owners can remove patch transfer and repeated build/test round trips"
+  ],
+  "current_source_observations": [
+    {
+      "path": "components/BonfyreDecision/books.mjs",
+      "sha256": "a0b770bd64f4c7bb7e4be4190d56499cc251c95a2f9aad64d4f05d461f4d54f0",
+      "observed": "Current parseAmount returns null for empty and unparseable text; explicit resolveColumns exists. This differs from the reviewed defect, but is not proof the entire shared-chat patch landed."
+    },
+    {
+      "path": "components/BonfyreDecision/manifest.mjs",
+      "sha256": "fc989ee057f76fddd1dec36cd0789249c1c4a188d3ea3dd6a27a2c3e2947118e",
+      "observed": "Current ITAD export separates held rows and rejects invalid ready quantities. Full uncertainty propagation still requires consumer verification."
+    }
+  ]
+}

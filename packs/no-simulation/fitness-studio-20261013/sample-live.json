@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-13T19:24:04.116Z",
+  "url": "https://aurekai-work-samples.pages.dev/training/#devices",
+  "sha256": "fcc8f7b038038a9de4dcbbb8f9cdb4a7889f1a2842bc3620f38a3a364f711327",
+  "matchesReviewedBuild": true,
+  "browser": "Chrome/146.0.7680.178",
+  "checks": [
+    "1440: Review a workout from your watch",
+    "1440: Put your plan on your calendar",
+    "1440: Connect a heart-rate sensor",
+    "390: Review a workout from your watch",
+    "390: Put your plan on your calendar",
+    "390: Connect a heart-rate sensor"
+  ],
+  "errors": []
+}

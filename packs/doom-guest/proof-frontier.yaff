@@ -1,0 +1,88 @@
+pack doom-guest-proof-frontier
+generation control-1
+source_plane run5_recursive_external
+subject guest:doom-shareware-1.9
+profile doomgeneric@dcb7a8dbc7a16ce3dda29382ac9aae9d77d21284
+truth_plane measured
+note Archive evidence only. Every number here was measured once, in one session on 2026-10-03, in a scratch directory that a machine restart then erased. The only witness that survived is hypervisor event 213 on mission 45095ca358914685806965f777458cb8, which recorded the hashes and counts at the time. Nothing in this pack may promote a claim until the layer is re-run and its fixture kept somewhere durable. The engine, its platform file and the search controller are foreign bodies held outside this repository; this pack names them and holds none of them.
+
+layer guest_identity
+  ordinal 0
+  status proven
+  detail WAD doom1.wad sha256 1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771, 4196020 bytes; engine pinned to one upstream commit; both re-derivable from public sources
+layer determinism
+  ordinal 1
+  status untested
+  detail measured once: with the clock defined as the tic count and no wall time read, two separate processes gave byte-identical state streams over 12000 tics of the three id demos; witness lost
+layer branch_exactness
+  ordinal 2
+  status untested
+  detail measured once: 200 copy-on-write forks of a live guest given the same commands reached one world hash; witness lost
+layer routing
+  ordinal 3
+  status untested
+  detail measured once: egglog saturation over the sector graph parsed from the WAD gave hop distances that led the guest through E1M1; the first graph was wrong because it counted windows as doorways
+layer level_completion
+  ordinal 4
+  status proven
+  detail TOOL-ASSISTED, and to be read as nothing more. The run used the engine's internal state, a sector graph parsed from the WAD before play, and forks of the live game to look ahead; against play from the screen that is a cheat and is not comparable to any model benchmark. Within that category: E1M1 on skill 2 reproduced through the runtime organ's branch verb with this pack's program; the committed log is a kept fixture and a fresh process replaying it reaches the intermission at tic 5370 with all four monsters killed. See measured-witness.yaff. The earlier run that reached it at tic 4931 used a foreign controller and its log is lost
+layer byte_exact_packaging
+  ordinal 5
+  status untested
+  detail measured once: transposition and delta in SQL then native zstd gave 1473517 bytes and decoded to the original sha256; plain xz on the original is smaller at 1362744
+layer gameplay_exact_packaging
+  ordinal 6
+  status untested
+  detail measured once: a WAD of 246692 packed bytes with pictures stubbed and sound emptied replayed the three id demos and the winning E1M1 run with identical world-hash chains; it renders blank and silent
+layer model_player
+  ordinal 7
+  status open
+  detail the live MoE service followed direction words only after few-shot examples, and then dithered at a doorway with no kills; the FPQ model over QUIC returned one correct token in 87 seconds
+layer hypervisor_mission
+  ordinal 8
+  status blocked
+  detail four missions compiled and routed in the live store; the furthest passed five tasks and blocked at the first agent task because execution accepts only bonfyre-native for fabric work while routing selected claude-code
+layer episode
+  ordinal 9
+  status open
+  detail worlds for all nine maps build from program/map.sql and their key and locked-edge counts match the game; E1M8 has no exit line. E1M2, E1M3 and E1M4 were each run for 900 decisions on 2026-10-03 and none reached an exit: E1M2 took its one key card then stayed in sector 38 from decision 300, E1M3 took no key and stayed in sector 98 from decision 150, E1M4 took one of two key cards then stayed in sector 3 from decision 450, and its kill count fell from 4 to 3 along the way, which means the guest died and the level restarted. E1M5 to E1M9 were not run
+
+known_non_cause doom.noncause.sound_and_pictures
+  hypothesis sound, music, flats, palette and picture pixels take part in the simulation
+  experiment a WAD with all of them emptied or stubbed replayed 12000 tics of the id demos with an identical world-hash chain
+  witness archive:session-2026-10-03-gameplay-exact
+  invalidates_on engine commit changes
+  invalidates_on the oracle stops covering all three demos
+known_non_cause doom.noncause.frame_divergence_is_simulation
+  hypothesis differing frame hashes between two runs mean the simulation diverged
+  experiment per-frame hashes differed only in the first 31 frames, the boot screen wipe reading uninitialised memory; the remaining 4101 matched and the state streams were identical throughout
+  witness archive:session-2026-10-03-frame-hashes
+  invalidates_on engine commit changes
+known_non_cause doom.noncause.weak_model_cannot_follow_directions
+  hypothesis the 2-bit MoE model cannot map LEFT and RIGHT to an action
+  experiment zero-shot it answered left for both; with five few-shot turns it answered correctly and followed the route through four sectors
+  witness archive:session-2026-10-03-model-player
+  invalidates_on the served model changes
+
+invariant doom.reject.is_gameplay
+  layer gameplay_exact_packaging
+  statement the REJECT tables take part in gameplay and may not be zeroed; with them zeroed the random index diverged from the oracle at tic 1011 of the first demo
+  status cooled
+  truth_plane measured
+  witness archive:session-2026-10-03-gameplay-exact
+  reheat engine commit changes
+  reheat a packaging change touches any map lump
+invariant doom.log.is_the_game
+  layer determinism
+  statement a session is the command log; forks are candidate state and only an appended log line is Actual
+  status cooled
+  truth_plane measured
+  witness hypervisor event 213, mission 45095ca358914685806965f777458cb8
+  reheat any platform change that reads wall time
+  reheat branch_exactness fails on re-run
+
+forbidden_inference a tool-assisted finish -> a result on the level of anything that plays from the screen; privileged state, a pre-parsed map and forks are each disqualifying on their own
+forbidden_inference a level beaten once on skill 2 -> general play, or a model that plays; the winning run used search and no model
+forbidden_inference gameplay-exact -> looks or sounds like the game
+forbidden_inference a compiled and routed mission -> an executed one
+forbidden_inference a number recorded in event 213 -> a re-runnable witness; the bodies those hashes name no longer exist

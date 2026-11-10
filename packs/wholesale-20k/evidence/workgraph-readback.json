@@ -1,0 +1,20 @@
+{
+  "nodes": {
+    "n": 27,
+    "missions": 27
+  },
+  "attempts": [
+    {
+      "exit": 0,
+      "stdout": "{\"accepted\":27,\"failed\":0,\"idempotent\":true}\n",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "{\"accepted\":27,\"failed\":0,\"idempotent\":true}\n",
+      "stderr": ""
+    }
+  ],
+  "worker_started": false,
+  "partners_assigned": 0
+}

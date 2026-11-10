@@ -1,0 +1,1501 @@
+date,description,amount,account,suggested,confidence,decided_by,needs_review
+,[debit] PAYPAL INST XFER INTELLIGENTSIA WEB ID: PAYPALSI75,0.00,Restaurants,Restaurants,0.98,learned,no
+,[credit] CITY OF PAYROLL,0.00,Income,Income,1.00,learned,no
+,[debit] LEMONADE 9097 ELM PKWY OAKLAND94601 CA USA,0.00,Insurance,Insurance,0.87,learned,no
+,[debit] NEWREZ PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] BETTER MORTGAGE MORTGAGE 71079807 PPD ID: 758677049,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] MOVEMENT MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] SPOTIFY* SPOTIFY Pro,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] AES 643 MAIN WAY BROOKLYN11201 NY USA,0.00,,Shopping,0.35,local model,yes
+,[debit] GOOGLE *APPLE TV+,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] FUBOTV 3430023,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PP*BLUEMERCURY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PRIORITY PASS PITTSBURGH,0.00,Travel,Travel,0.99,learned,no
+,[debit] szechuan palace 7241 center blvd fremont 94536 ca usa,0.00,Restaurants,Restaurants,0.98,learned,no
+,[debit] EXCESS TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] LEMONADE 6108 MISSION PKWY SAN DIEGO 92101-6948CA USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Paypal *p.f. Chang's Tf7jujw2rt,0.00,Restaurants,Restaurants,0.61,local model,no
+,[debit] AMERICAN AIRLINES,0.00,Travel,Travel,1.00,learned,no
+,[debit] Express Checkout Payment: SKILLSHARE,0.00,Education,Education,1.00,learned,no
+,[debit] DR WILLIAMS PHYSICAL THERAPY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] mr. cooper mortgage 99128259 ppd id: 139292341,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] freedom mortgage mortgage 74345700 ppd id: 637395571,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] BOZZUTO RENT PMT 66910112 PPD ID: 816607378,0.00,Rent,Rent,1.00,learned,no
+,[debit] ANTHEM 5700 MISSION LN MINNEAPOLIS 55401-3958MN USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] BUYER PAYMENT: GOLF COURSE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] topgolf; purchase,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] ACCOUNT MAINTENANCE FEE - 13/36,0.00,Fees,Fees,1.00,learned,no
+,[credit] ACH DEPOSIT INTERNET TRANSFER FROM ACCOUNT ENDING IN 5536,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] kaiser permanente medical,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] T-MOBILE ONLINE PMT WEB ID: BQHP7AWU,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] ESSEX PROPERTY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] PADDLE,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] LEMONADE BILLING PPD ID: 8680229590,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] BLIZZARD GAME,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] YMCA; PURCHASE,0.00,Personal Care,Personal Care,0.90,learned,no
+,[debit] LA FITNESS 5136 MARKET WAY NEW YORK10001 NY USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] SEPHORA.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] priority pass enrollment,0.00,Travel,Travel,1.00,learned,no
+,[debit] MASSAGE ENVY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] ethiopian restaurant 9138 industrial way philadelphia 19101 pa usa,0.00,Restaurants,Restaurants,0.88,learned,no
+,[debit] Wegmans 8075 Elm Rd Nashville37201 Tn Usa,0.00,Groceries,Groceries,0.97,learned,no
+,[debit] TOMMY'S EXPRESS,0.00,Restaurants,Restaurants,0.88,learned,no
+,[debit] Payment Thank You - 2nd A,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Valve Steam Purchase,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] ULTA BEAUTY; SERVICE,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PYPL *CVS,0.00,,Groceries,0.34,local model,yes
+,[debit] MARTIN DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] INTERNATIONAL WIRE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] HAVEN LIFE BILLING PPD ID: 6623109662,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] ARCO,0.00,Transportation,Transportation,0.97,learned,no
+,[debit] ESPN+ 2245 OAK AVE TAMPA33601 FL USA,0.00,Entertainment,Entertainment,0.89,learned,no
+,[debit] Offerup 2952 Broadway St Union City 94587-1982ca Usa,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Overdraft Fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] irvine company rent payment,0.00,Rent,Rent,1.00,learned,no
+,[credit] VA BENEFITS 310 XXSSI,0.00,Income,Income,0.99,learned,no
+,[debit] INTELLIGENTSIA - FREMONT,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] RITE AID #30605 DENVER,0.00,Healthcare,Healthcare,0.97,learned,no
+,[debit] Principal Pmt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] WITHDRAWAL FROM AQUA AMERICA WATER,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] AIMCO MONTHLY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] TARGET #1054 SEATTLE,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] SUNOCO - OAKLAND,0.00,Transportation,Transportation,0.95,learned,no
+,[debit] DAVE & BUSTER'S #1390 PHILADELPHIA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] card replacement fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] DR. HARRIS DERMATOLOGY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] STATE OF CALIFORNIA PAYROLL,0.00,Income,Income,1.00,learned,no
+,[debit] BETTERHELP.COM,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] wholefds #3835 indianap,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] UNIVERSITY OF SACRAMENTO TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] CENTRAL COMPUTERS,0.00,Shopping,Shopping,0.96,learned,no
+,[debit] GOOGLE *BITBUCKET,0.00,Subscription,Subscription,0.88,local model,no
+,[debit] Petsmart 3796,0.00,Shopping,Shopping,0.97,learned,no
+,[debit] PENFED CU MORTGAGE 49803060 WEB ID: 5Q9HIGFT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] WALMART 5148 LAS VEGAS,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: OJ19687F8N,0.00,Income,Income,1.00,learned,no
+,[debit] ACH RETURN FEE - 16/27,0.00,Fees,Fees,1.00,learned,no
+,[debit] BLUEMERCURY - FREMONT,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Preapproved Payment Bill User Payment: Sport Clips,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] COUNTY OF PAYROLL,0.00,Income,Income,1.00,learned,no
+,[debit] APPLE.COM/BILL 2251 MISSION DR SAN DIEGO 92101-3249CA USA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] LIVENATION,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PAYPAL INST XFER HYATT WEB ID: PAYPALSI00,0.00,Travel,Travel,0.99,learned,no
+,[debit] FOREIGN TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] State Farm 8201 Market Dr Minneapolis 55401 Mn Usa,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] COURSERA,0.00,Education,Education,1.00,learned,no
+,[credit] PYPL*BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] AMAZON MKTPL*RQ3AA2D9,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] GOOGLE *TWITCH,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] AIRBNB 1951 MAIN WAY TAMPA33601 FL USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] withdrawal from aimco rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] island grill 8718 center dr orlando 32801 fl usa,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] preauthorized withdrawal to goodyear,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] TST*GREEN MARKET CAFE,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] DUNKIN DONUTS*894AMX7SMI,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] SPORT CLIPS 3992 MARKET BLVD DENVER 80201-3187CO USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] FARMERS INS 1279 BROADWAY ST DENVER 80201-8962CO USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] UDR INC APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] WALGREENS #515 NEW YORK,0.00,Healthcare,Healthcare,0.98,learned,no
+,[credit] ORIG CO NAME:INTUIT CO ENTRY DESCR:PAYROLL SEC:PPD,0.00,Income,Income,1.00,learned,no
+,[credit] PAYPAL *SPIRIT AIRLINES,0.00,Travel,Travel,1.00,learned,no
+,[debit] Aqua America,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] MOBIL #7038 SEATTLE,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] SEPHORA.com,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Target #0849 Houston,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] EXPEDITED SHIPPING FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] zoo inc,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] Principal Pmt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] TUESDAY MORNING #9163 BOSTON,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] UNIVERSITY OF MINNEAPOLIS TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] MSC CRUISES BOOKING 85837968,0.00,Travel,Travel,1.00,learned,no
+,[credit] VA BENEFITS 310 FED SAL PPD ID: 880869639,0.00,Income,Income,1.00,learned,no
+,[debit] AMWELL INC,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PROTONVPN.COM,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO PACIFIC DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Golf Course.com,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] SQ *KURA SUSHI - CHARLOTTE,0.00,Restaurants,Restaurants,0.91,learned,no
+,[debit] ENTERGY,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] golf course 06121017,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] METLIFE INSURANCE PPD ID: 0550428576,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] PAYPAL INST XFER BOMBAY SPICE WEB ID: PAYPALSI97,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] RELATED COS APT RENT PPD ID: 1190643243,0.00,Rent,Rent,1.00,learned,no
+,[debit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] FANTASTIC SAMS 8209 MISSION RD SACRAMENTO95814 CA USA,0.00,Personal Care,Personal Care,0.98,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO O'REILLY MEDIA,0.00,Education,Education,1.00,learned,no
+,[debit] PEARSON INC,0.00,Education,Education,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] skillshare inc,0.00,Education,Education,1.00,learned,no
+,[debit] sofi mortgage escrow,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] BOOST MOBILE ELECTRIC WEB ID: B3DAQ55Q,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Atm Fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] SOFI MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Subscription Payment: OPENAI,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] AUTOMATIC PAYMENT - THANK,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] THAI BASIL - CHICAGO,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] ATM SERVICE CHARGE - 90/58,0.00,Fees,Fees,1.00,learned,no
+,[debit] WYNDHAM 5177 INDUSTRIAL CT FREMONT 94536 CA USA,0.00,Travel,Travel,0.96,learned,no
+,[credit] Zelle payment from ANDREW THOMAS 1CUUNZ3TBZAA,0.00,Income,Income,1.00,learned,no
+,[debit] UDR INC RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SOFI MORTGAGE MORTGAGE 44879977 PPD ID: 449387584,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] ENTERGY ONLINE PMT WEB ID: PI8BWTZD,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] GOLF COURSE 4784 OAK WAY DALLAS 75201 TX USA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] NAVY FEDERAL CU MORTGAGE 01305799 WEB ID: 4MD60HYE,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Blue Cross 6122 Oak Ct Austin 78701-4712tx Usa,0.00,Insurance,Insurance,0.71,learned,no
+,[debit] PAYPAL INST XFER HAIDILAO WEB ID: PAYPALSI05,0.00,Restaurants,Restaurants,0.84,learned,no
+,[debit] STUBHUB; SUBSCRIPTION,0.00,Entertainment,Entertainment,0.93,learned,no
+,[debit] HELP.MYFITNESSPAL.COM,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] MASSAGE ENVY; Service,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] betterhelp,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] DISNEY CRUISE LINE,0.00,Travel,Travel,1.00,learned,no
+,[credit] TRADESTATION PAYMENTS PPD ID: 38448212,0.00,Income,Income,1.00,learned,no
+,[debit] sofi mortgage mortgage 25672193 web id: nym361dq,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Ranch 99 9179 Nashville,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] DELTA AIR LINES 208 INDUSTRIAL WAY PORTLAND 97201 OR USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] TARGET #0955 INDIANAPOLIS,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] T-MOBILE ONLINE PMT WEB ID: LFA28LZ4,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] CASPER #06868,0.00,Shopping,Shopping,0.95,learned,no
+,[debit] FANDUEL SPORTSBOOK,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] WITHDRAWAL FROM DRIVING RANGE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] DAVE & BUSTER'S 209848,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] TST*noodle house,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] FOREIGN TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] SOFI MORTGAGE MORTGAGE 03260110 WEB ID: VH27LE0S,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Preauthorized Withdrawal To Floyd's 99,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] TACO CABANA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] GUILD MORTGAGE MORTGAGE 48672509 WEB ID: YJJBHPGZ,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Sport Clips 7010 Main Ct Nashville 37201 Tn Usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] TRANSAMERICA INSURANCE PPD ID: 7664989260,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] GREYSTAR RENT PMT PPD ID: 5551052320,0.00,Rent,Rent,1.00,learned,no
+,[credit] CAPITAL ONE AUTOPAY PPD ID: 3415712877,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] BANK OF AMERICA IFI DDA TO DDA XLHWQZ4M WEB ID: INTFITRVOS,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] VARSITY TUTORS TUTORING,0.00,Education,Education,1.00,learned,no
+,[debit] TALKSPACE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] newrez payment,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] GOOGLE FIBER CABLE SVC WEB ID: 7TT74H66,0.00,Utilities,Utilities,1.00,learned,no
+,[credit] UBISOFT GAME,0.00,Entertainment,Entertainment,0.94,learned,no
+,[debit] TRAVELERS AUTO PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] FOOD LION 3814 PARK AVE CHICAGO 60601 IL USA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] WITHDRAWAL FROM STARLINK PHONE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] COLLEGE OF BOSTON TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] BLUE CROSS EFT PYMT PPD ID: 2621611097,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] ROOSTERS,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] BOZZUTO APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] CLEAR ENROLLMENT,0.00,Travel,Travel,1.00,learned,no
+,[debit] Wal-mart #5303,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] withdrawal from newrez mtg pymt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] ALBERTSON TAM #43060,0.00,Groceries,Groceries,0.98,learned,no
+,[debit] PAPER STATEMENT FEE - 30/33,0.00,Fees,Fees,1.00,learned,no
+,[debit] INTELLIGENTSIA,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] RIOT GAMES.COM,0.00,Entertainment,Entertainment,0.90,learned,no
+,[debit] UNITED WHOLESALE MORTGAGE 78497392 WEB ID: T04J1AWL,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] MR. COOPER ESCROW PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] apple.com/bill 2762 industrial ave denver80201 co usa,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] ORIG CO NAME:US TREASURY CO ENTRY DESCR:FED SAL SEC:PPD,0.00,Income,Income,1.00,learned,no
+,[debit] PAYPAL *great clips,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MAYO CLINIC MEDICAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Savemart #12657 Nashvill,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] APPLE.COM/BILL 3864 MAIN CT UNION CITY 94587 CA USA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] KAISER PERMANENTEMEDICAL PMT WEB ID: CVK2OMM0,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] fatburger,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] SHELL*NJS6A76K6JS,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] crunch fitness,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] AMAZON MKTPL*9TJ2OBTX,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] O'REILLY MEDIA.COM,0.00,Education,Education,1.00,learned,no
+,[debit] PRIORITY PASS NEW YORK,0.00,Travel,Travel,1.00,learned,no
+,[debit] DR SHAH DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Chase Mortgage Mortgage 16804835 Ppd Id: 348515535,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] SKATING RINK; CHARGE,0.00,Entertainment,Entertainment,0.96,learned,no
+,[debit] barnes & noble; billing,0.00,Education,Education,1.00,learned,no
+,[debit] HUNTINGTON LEARNING,0.00,Education,Education,1.00,learned,no
+,[credit] UNEMPLOYMENT INS BENEFIT PMT PPD ID: 434012725,0.00,Income,Income,1.00,learned,no
+,[debit] ULTA BEAUTY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] CA DMV FEE,0.00,Transportation,Transportation,0.79,learned,no
+,[credit] SSA TREAS 310 FED SAL PPD ID: 730352372,0.00,Income,Income,1.00,learned,no
+,[debit] SQ *CURRY HOUSE,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] NAVY FEDERAL CU PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] PAYPAL CASHOUT PPD ID: 56765458,0.00,Income,Income,1.00,learned,no
+,[debit] BISHOPS CUT,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] encore 1015 broadway dr san francisco 94102-6245ca usa,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] ELEMENTS MASSAGE.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] AMERICAN HOME SHIELDPREMIUM PPD ID: 2718262755,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] RELATED COS APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] MARUKAI 69476511,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] TST* TGI FRIDAY'S #751,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] SKATING RINK,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] LASER TAG,0.00,Entertainment,Entertainment,0.98,learned,no
+,[debit] ATM CASH WITHDRAWAL LAS VEGAS,0.00,Transfer,Transfer,0.87,learned,no
+,[debit] BROOKFIELD RENT PMT 35147420 PPD ID: 922833888,0.00,Rent,Rent,1.00,learned,no
+,[debit] WINGSTOP,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] CHEGG 4620 BROADWAY LN LOS ANGELES90001 CA USA,0.00,Education,Education,1.00,learned,no
+,[credit] MCGRAW HILL INC,0.00,Education,Education,0.99,learned,no
+,[debit] WITHDRAWAL FROM ROBLOX,0.00,,Entertainment,0.46,local model,yes
+,[debit] CHASE MORTGAGE ESCROW PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] CISCO SYSTEMS PAYROLL PPD ID: 838576320,0.00,Income,Income,1.00,learned,no
+,[debit] winn-dixie 5103 denver,0.00,Groceries,Groceries,0.94,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO TICKETMASTER,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] GREAT CLIPS.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] EXPEDITED SHIPPING FEE - 80/75,0.00,Fees,Fees,1.00,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: MFCEXOTNSU,0.00,Income,Income,1.00,learned,no
+,[debit] PP*Bluemercury,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PP*ROOSTERS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] minimum balance fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] HCA HEALTHCARE MEDICAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO LASER TAG,0.00,Entertainment,Entertainment,0.98,learned,no
+,[debit] WORLD MARKET - SEATTLE,0.00,Shopping,Shopping,0.83,local model,no
+,[debit] SCHOOLSFIRST FCU MORTGAGE 01432591 PPD ID: 944979891,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] ATM SERVICE CHARGE,0.00,Fees,Fees,1.00,learned,no
+,[credit] Withdrawal from FIRST REPUBLIC Ext Trnsfr,0.00,Transfer,Transfer,0.97,learned,no
+,[debit] Express Checkout Payment: TOPGOLF,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] FIRST REPUBLIC DDA TO DDA 8ZS4Y7NAAJ PPD ID: 9660278972,0.00,Transfer,Transfer,0.99,learned,no
+,[debit] MARTIN DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Withdrawal from SPORTS CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] LA FITNESS 90772888,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] CASEY'S 78742,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO CITY PARKING,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] METLIFE INSPAYMENT PPD ID: 4182047368,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] PRINCIPAL PMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PAYPAL INST XFER PEET'S COFFEE WEB ID: PAYPALSI21,0.00,Restaurants,Restaurants,0.92,learned,no
+,[debit] withdrawal from nationstar mtg pymt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] MUNICIPAL WATER,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] cleveland clinic hospital,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] jc penney 6931 oak st dallas 75201-8854tx usa,0.00,Shopping,Shopping,0.68,local model,no
+,[debit] CHASE CREDIT CRD AUTOPAY PPD ID: 2329837835,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] DR. ANDERSON DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PAYPAL *PYPL TIKTOK SHOP,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] non-network atm fee,0.00,Fees,Fees,1.00,learned,no
+,[credit] STATEMENT CREDIT,0.00,Income,Income,0.99,learned,no
+,[debit] WAYFAIR 969 MAIN AVE HOUSTON 77001 TX USA,0.00,Shopping,Shopping,0.85,learned,no
+,[debit] lyft *trip salt lake city pwf2rq,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] TRAVELERS INS PREMIUM PPD ID: 5634180075,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] DR PEREZ CARDIOLOGY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] DR. MOORE PEDIATRICS,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] YMCA INC.,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] target 79452912,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] china wok,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] SQ *FARM STAND,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] UDEMY 3142 ELM RD LOS ANGELES 90001-1315CA USA,0.00,Education,Education,1.00,learned,no
+,[debit] NHP FOUNDATION RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] DUKE ENERGY,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PLURALSIGHT*1AS3UA3L1KBE,0.00,Education,Education,1.00,learned,no
+,[debit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PIGGLY WIGGLY,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] WHOLE FOODS 3020 ELM WAY SALT LAKE CITY 84101 UT USA,0.00,Groceries,Groceries,0.97,learned,no
+,[debit] NATIONSTAR PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PAYPAL INST XFER FANDANGO WEB ID: PAYPALSI17,0.00,Entertainment,Entertainment,0.96,learned,no
+,[debit] CLV*Crepe Bar - LOS ANGELES,0.00,Restaurants,Restaurants,0.96,learned,no
+,[credit] ANNUAL FEE - 30/39,0.00,Fees,Fees,1.00,learned,no
+,[credit] MANUAL DB-BKRG 01/53,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] SAVEMART #77 NASHVILL,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] PYPL*SALLY BEAUTY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] COSTCO GAS - SACRAMENTO,0.00,Transportation,Transportation,1.00,learned,no
+,[credit] AMAZON PAYROLL,0.00,Income,Income,0.99,learned,no
+,[debit] SYLVAN LEARNING TUTORING,0.00,Education,Education,1.00,learned,no
+,[debit] LINCOLN PROPERTY RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] amazon prime,0.00,Subscription,Subscription,0.94,learned,no
+,[debit] MASSAGE ENVY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Avalon Communities Rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] BOZZUTO RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] AMAZON MKTPL*AS4ENY7N,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Sunpower Solar Payment,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] WALMART PHARMACY 3311 BROADWAY RD CHICAGO 60601 IL USA,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] merrill lynch investments moneyline,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] SUNPASS REPLENISH,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] BETHPAGE FCU MORTGAGE 92278678 PPD ID: 194777108,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] binny's 4276 broadway ln oakland 94601 ca usa,0.00,,Restaurants,0.30,local model,yes
+,[credit] STATEMENT CREDIT,0.00,Income,Income,0.99,learned,no
+,[debit] INTERMOUNTAIN MEDICAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Google *coffee Meets Bagel,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] UDR INC LEASE PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] COX,0.00,Utilities,Utilities,0.93,learned,no
+,[debit] PreApproved Payment Bill User Payment: ASSEMBLYAI,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] PACKT PUBLISHING,0.00,Education,Education,1.00,learned,no
+,[debit] FOREIGN TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: brilliant.org,0.00,Education,Education,1.00,learned,no
+,[debit] Express Checkout Payment: FANTASTIC SAMS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] southwest airlines 3775 university ave atlanta 30301-7848ga usa,0.00,Travel,Travel,1.00,learned,no
+,[debit] HAMPTON INN,0.00,Travel,Travel,1.00,learned,no
+,[debit] BLUEMERCURY 4457 MARKET BLVD PHOENIX85001 AZ USA,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] PreApproved Payment Bill User Payment: BESTOW,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Hartford 3008 Oak Rd Oakland94601 Ca Usa,0.00,,Insurance,0.45,local model,yes
+,[debit] SPECTRUM,0.00,Utilities,Utilities,0.98,learned,no
+,[debit] minimum balance fee - 46/88,0.00,Fees,Fees,1.00,learned,no
+,[debit] CAMDEN PROPERTY LEASE PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SUTTER HEALTH MEDICAL PMT WEB ID: 79TJS3YS,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] DR. WONG OPTOMETRY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] CALIBER HOME LOANS HOME LOAN,0.00,Mortgage,Mortgage,0.97,learned,no
+,[debit] TST* POKE BOWL,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] WITHDRAWAL FROM ALASKA AIRLINES,0.00,Travel,Travel,1.00,learned,no
+,[credit] Payment Refund: NORTHWEST REGISTERED AGENT,0.00,Income,Income,1.00,learned,no
+,[debit] HOMESITE BILLING PPD ID: 5023101700,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] HAVEN LIFE 828 OAK RD UNION CITY 94587-0685CA USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Walmart Pharmacy,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] O'REILLY MEDIA INC,0.00,Education,Education,1.00,learned,no
+,[debit] SAVEMART #109 MIAMI,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] google *netlify,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] sutter health hospital,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] EQUINOX #977 NEWARK,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] NBA LEAGUE PASS,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: GEICO,0.00,Insurance,Insurance,0.92,learned,no
+,[debit] POSHMARK #643,0.00,Shopping,Shopping,0.60,local model,no
+,[debit] 99 Ranch 858 Mission Ave Hayward94541 Ca Usa,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] dr davis physical therapy,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] GREAT CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO YMCA,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] MTG PMT MR. COOPER,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] HORIZON TECH PAYROLL,0.00,Income,Income,1.00,learned,no
+,[debit] KHAN ACADEMY 550 BROADWAY CT TAMPA33601 FL USA,0.00,Education,Education,1.00,learned,no
+,[debit] HARTFORD PREMIUM PPD ID: 9071402129,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] WENDY'S,0.00,Restaurants,Restaurants,0.96,learned,no
+,[debit] Phh Mortgage Payment,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] AIMCO RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] principal pmt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] ROOSTERS 973034,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] BALANCE TRANSFER FEE - 17/78,0.00,Fees,Fees,1.00,learned,no
+,[debit] TARGET 74448351,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Lyft *trip Queens 54xfq1,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] MORGAN STANLEY ACH TRANSFER,0.00,Transfer,Transfer,0.98,learned,no
+,[debit] COLLEGE OF SAN DIEGO TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] PRINCESS CRUISES BOOKING 46357455,0.00,Travel,Travel,1.00,learned,no
+,[credit] SUMMIT HEALTHCAREDIR DEP PPD ID: 130957717,0.00,Income,Income,1.00,learned,no
+,[debit] THEME PARK; CHARGE,0.00,Entertainment,Entertainment,0.90,learned,no
+,[debit] MARUKAI #416,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] DUKE ENERGY AUTOPAY WEB ID: PU253V2S,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] whole foods #1187,0.00,Groceries,Groceries,1.00,learned,no
+,[credit] AMAZON PAYROLL PPD ID: 822816388,0.00,Income,Income,1.00,learned,no
+,[debit] NORDSTROM #4753 ORLANDO,0.00,Groceries,Groceries,0.80,learned,no
+,[debit] TING 45876,0.00,Utilities,Utilities,0.93,learned,no
+,[debit] Online Transfer 53796226662 from DoDataThings-BREX ########9683 transaction#: 7803035,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] SWIMMING POOL; PAYMENT,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] NOVO TRANSFER,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] SHUTTERFLY #463,0.00,,Shopping,0.25,local model,yes
+,[credit] CITIBANK DDA TO DDA REFCODE HZ6BFEVF WEB ID: 4NTJBFHNZS,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] WITHDRAWAL FROM VISIBLE WATER,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] HORSESHOE CASINO SPORTSBOOK,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] GREYSTAR RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SPORTS CLIPS - SACRAMENTO,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] WITHDRAWAL FROM OPTIMUM GAS,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] RIOT GAMES GAME,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] Wholefds Fre #98 Portland,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] AMWELL TELEHEALTH,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Kindle Unltd*NK52EO4NX,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] DR TAYLOR FAMILY MEDICINE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] target t-0966,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: LIBERTY MUTUAL,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Carnival Cruise Booking 56667960,0.00,Travel,Travel,1.00,learned,no
+,[debit] PHH MORTGAGE MORTGAGE 59883033 WEB ID: 659CFNVO,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] aimco monthly rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] WALMART 3453 DENVER,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] WITHDRAWAL FROM BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] MINT MOBILE BILL PAY WEB ID: BAW7GGN3,0.00,Utilities,Utilities,1.00,learned,no
+,[credit] Zelle payment from JENNIFER SINGH P6ZGPIKZPVE8,0.00,Income,Income,1.00,learned,no
+,[debit] ATM #954806 WITHDRAWAL,0.00,Transfer,Transfer,0.98,learned,no
+,[debit] PreApproved Payment Bill User Payment: AMERICAN HOME SHIELD,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] ARCO*MB5Q4LMS9,0.00,Transportation,Transportation,0.97,learned,no
+,[debit] PROGRESSIVE BILLING,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] AMAZON MKTPL*K9JQGNG1388,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] elements massage*3gcyrm6hxutx,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Daveshotchicken 87365,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] mybookie online,0.00,Entertainment,Entertainment,0.98,learned,no
+,[credit] ROBINHOOD ACH TRANSFER,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] GENTLE DENTAL 48243946,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] Zelle payment from DAVID LI POGWFHBSV0RC,0.00,Income,Income,0.99,learned,no
+,[debit] Barnes & Noble,0.00,Education,Education,1.00,learned,no
+,[debit] PAYPAL *RADISSON,0.00,Travel,Travel,1.00,learned,no
+,[debit] ALLSTATE PREMIUM PPD ID: 9829950973,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] cvs*lkpjjpjj,0.00,Healthcare,Healthcare,0.92,learned,no
+,[debit] PAYPAL INST XFER GREAT CLIPS WEB ID: PAYPALSI62,0.00,Personal Care,Personal Care,0.99,learned,no
+,[credit] TOPTAL PAYMENTS PPD ID: 85640660,0.00,Income,Income,1.00,learned,no
+,[debit] FARMERS INS INS PREMIUM PPD ID: 0243294634,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] MANUAL CR-BKRG 06/73,0.00,Transfer,Transfer,0.99,learned,no
+,[credit] Wingstop 25905,0.00,Restaurants,Restaurants,0.79,learned,no
+,[debit] HIMALAYAN KITCHEN #678 PITTSBURGH,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] withdrawal from cerebral,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] COST CUTTERS.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] WEGMANS #7410,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] SQ *FARMERS MARKET,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] ORANGETHEORY*L8ZF3VBZQ1,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] PAYPAL INST XFER BRILLIANT.ORG WEB ID: PAYPALSI18,0.00,Education,Education,1.00,learned,no
+,[debit] global entry enrollment,0.00,Travel,Travel,1.00,learned,no
+,[credit] TARGET #7096 PHOENIX,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] BLUEMERCURY - SALT LAKE CITY,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] APPLE.COM/BILL 1821 UNIVERSITY CT SALT LAKE CITY84101 UT USA,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] PYPL*PETSMART,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] TARGET #6205 INDIANAPOLIS,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: HAVEN LIFE,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] ORIG CO NAME:META PLATFORMS CO ENTRY DESCR:PAYROLL SEC:PPD,0.00,Income,Income,1.00,learned,no
+,[debit] WITHDRAWAL FROM BOZZUTO RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] essex property rent payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] volta charging dallas,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] Navy Federal Cu Escrow,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] burger king 4726 park blvd union city 94587 ca usa,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] ERIE INSURANCE 4576 MISSION WAY AUSTIN 78701 TX USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] TST* Great Wall,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] preauthorized withdrawal to crunch fitness,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] US BANK MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] X PREMIUM,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] KHAN ACADEMY; BILLING,0.00,Education,Education,1.00,learned,no
+,[debit] GOLF COURSE 24235,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PG AND E CABLE SVC WEB ID: U7H1PF1I,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PRINCIPAL PMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] MINIMUM BALANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WITHDRAWAL FROM ROCKET MORTGAGE MTG PYMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PAYPAL INST XFER JIRA WEB ID: PAYPALSI63,0.00,Subscription,Subscription,0.93,learned,no
+,[debit] 76,0.00,Transportation,Transportation,0.90,local model,no
+,[debit] RIOT GAMES PURCHASE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] ZIONS BANK XFER DDA TO DDA80QZKH5O WEB ID: WKXA0X0IGW,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Amazon.com*8NKBECBI8E,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] PreApproved Payment Bill User Payment: SUPERCUTS,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] DR ROBINSON PSYCHIATRY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] Global Entry Boston,0.00,Travel,Travel,0.96,learned,no
+,[debit] TST* peking duck house #199,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] GOOGLE FIBER INTERNET WEB ID: F1ZY845X,0.00,Utilities,Utilities,1.00,learned,no
+,[credit] Zelle payment from DANIEL MOORE 65IR7D0W9A27,0.00,Income,Income,1.00,learned,no
+,[debit] Ippudo 5783 Market Ln San Jose 95101-5199ca Usa,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] DELTA AIR LINES*I2GX47YJI,0.00,Travel,Travel,1.00,learned,no
+,[debit] Massage Envy,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] Amazon.com*63BO8EU1MGE,0.00,Shopping,Shopping,0.98,learned,no
+,[debit] lyft *trip nashville cgi5fh,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] BUYER PAYMENT: BIG LOTS,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] wawa,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] DOUBLETREE 6957 PARK BLVD SAN JOSE95101 CA USA,0.00,,none,0.39,local model,yes
+,[debit] PAYPAL INST XFER SALLY BEAUTY WEB ID: PAYPALSI18,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MERCARI 4318 OAK WAY SAN FRANCISCO 94102-7445CA USA,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] PAYPAL INST XFER THE ORDINARY WEB ID: PAYPALSI61,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] GIANT EAGLE #273,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] PREAPPROVED PAYMENT BILL USER PAYMENT: BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] AIRBNB; CHARGE,0.00,Travel,Travel,1.00,learned,no
+,[debit] WITHDRAWAL FROM IRVINE COMPANY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SYLVAN LEARNING*A47QV9VL,0.00,Education,Education,1.00,learned,no
+,[credit] O'REILLY MEDIA 7195 INDUSTRIAL PKWY CHICAGO60601 IL USA,0.00,Education,Education,0.93,learned,no
+,[debit] PLURALSIGHT,0.00,Education,Education,1.00,learned,no
+,[debit] Alliant Cu Mortgage 41461953 Web Id: 3wtdgk2h,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Orangetheory 6667 University Way Seattle 98101 Wa Usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] JETBLUE.COM,0.00,Travel,Travel,1.00,learned,no
+,[debit] PAYPAL INST XFER FIVE BELOW WEB ID: PAYPALSI53,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] INVITATION HOMES RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] WALGREENS*TC73XCYWM,0.00,Healthcare,Healthcare,0.81,learned,no
+,[debit] dr patel dental,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PROGRESSIVE PREMIUM PPD ID: 4063579142,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] dr. gonzalez optometry,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Mayo Clinic Medical,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] DOORDASH BV PAYMENTS,0.00,Income,Income,1.00,learned,no
+,[debit] PP*DOCTOR ON DEMAND,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] UBISOFT 5246 OAK RD BROOKLYN11201 NY USA,0.00,,Shopping,0.30,local model,yes
+,[debit] EXPRESS CHECKOUT PAYMENT: GROCERY OUTLET,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] BETHPAGE FCU ESCROW,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] official check purchased,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] CARD REPLACEMENT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PRINCIPAL PMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] LOWE'S #24303,0.00,Shopping,Shopping,0.93,learned,no
+,[debit] MINI GOLF 9611,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] TIGER SUGAR 6303304,0.00,Restaurants,Restaurants,0.98,learned,no
+,[credit] Lyft *trip New York Xvimd8,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] ROYAL CARIBBEAN LINE,0.00,Travel,Travel,1.00,learned,no
+,[debit] TAYLOR FAMILY MEDICINE,0.00,Healthcare,Healthcare,0.97,learned,no
+,[debit] 24 hour fitness,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] AMAZON WEB SERVICES* Subscription,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] US MOBILE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PENNYMAC MORTGAGE 13115271 WEB ID: EYUFG0WJ,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] PYPL*CTA,0.00,,Shopping,0.25,local model,yes
+,[debit] MLB.TV,0.00,Entertainment,Entertainment,0.96,learned,no
+,[debit] SPECTRUM INTERNET WEB ID: JZGYOWGQ,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] TARGET #1877 SAN JOSE,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] WHOLE FOODS #60772,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Pluralsight 3826 Elm Ct Hayward 94541-8521ca Usa,0.00,Education,Education,1.00,learned,no
+,[debit] VRBO; SERVICE,0.00,Travel,Travel,0.96,learned,no
+,[debit] LOANCARE PAYMENT,0.00,Mortgage,Mortgage,0.94,learned,no
+,[debit] PLURALSIGHT INC.,0.00,Education,Education,1.00,learned,no
+,[debit] massage envy llc,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Maa Rent Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] BED BATH & BEYOND 138343,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] AMZN DIGITAL*DSGNAWPR,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] FIRESTONE 5414 MARKET RD OAKLAND 94601 CA USA,0.00,Groceries,Groceries,0.88,learned,no
+,[debit] IRVINE COMPANY APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] PAYPAL PAYMENT TO MARK GONZALEZ,0.00,Transfer,Transfer,0.96,learned,no
+,[debit] BALANCE TRANSFER FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] XBOX PURCHASE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] taqueria el buen gusto #78844 queens,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] PAYPAL INST XFER TICKETMASTER WEB ID: PAYPALSI31,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] AMAZON MKTPL*4GMF3E05,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] COSTCO GAS - NEWARK,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] Manual DB-Bkrg 83/80,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] FARMERS INS HOME PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] DISCOUNT TIRE,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] WITHDRAWAL FROM FANTASTIC SAMS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] ELEMENTS MASSAGE 0130802,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Kayak.com,0.00,Travel,Travel,1.00,learned,no
+,[debit] PARKWHIZ 6728 INDUSTRIAL RD LAS VEGAS 89101-5316NV USA,0.00,Transportation,Transportation,0.57,local model,no
+,[credit] ACH DEPOSIT INTERNET TRANSFER FROM ACCOUNT ENDING IN 8098,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: PACIFIC LIFE,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] PAYPAL INST XFER KHAN ACADEMY WEB ID: PAYPALSI50,0.00,Education,Education,0.99,learned,no
+,[debit] PYPL*CEREBRAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] OFFICIAL CHECK PURCHASED,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] WITHDRAWAL FROM GREAT CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MARUKAI 3481 INDUSTRIAL RD PHILADELPHIA 19101-6569PA USA,0.00,Groceries,Groceries,0.97,learned,no
+,[debit] MONTHLY INSTALLMENTS (11 OF 12),0.00,Transfer,Transfer,1.00,learned,no
+,[credit] SHUTTERFLY #7881,0.00,Income,Income,0.51,local model,no
+,[debit] TAQUERIA EL BUEN GUSTO 4498 PARK DR SAN DIEGO 92101 CA USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] UNIVERSITY OF NASHVILLE TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: AETNA,0.00,Insurance,Insurance,0.98,learned,no
+,[debit] CLV*BAGEL SHOP - LAS VEGAS,0.00,Restaurants,Restaurants,0.95,learned,no
+,[debit] GROCERY OUTLET,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] BLUEMERCURY 7229 ELM ST RALEIGH 27601 NC USA,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] BLUE CROSS EFT PYMT PPD ID: 1491155256,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] SUPERCUTS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAPER STATEMENT FEE - 25/29,0.00,Fees,Fees,1.00,learned,no
+,[debit] Online Transfer 70019771457 to US GOVERNMENT-RELAY ########4213 transaction #: 1843146,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] AMEX AUTOPAY PPD ID: 6771504666,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] LADDER HOME PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] ENTERGY 9472,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] TRAVELERS 3197 ELM CT FREMONT94536 CA USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] EXPEDIA.COM,0.00,Travel,Travel,1.00,learned,no
+,[debit] smartfinal #65 columbus,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Nordstrom*23754dzqdhu,0.00,Shopping,Shopping,0.84,local model,no
+,[debit] FEDEX OFFICE 0176,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] PreApproved Payment Bill User Payment: PADDLE.NET,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] AFTERPAY PAYMENT,0.00,Transfer,Transfer,0.99,learned,no
+,[debit] HILTON 4393 MARKET WAY CHARLOTTE28201 NC USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] Pet Supplies Plus #1437,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] WITHDRAWAL FROM BETTERHELP,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] TARGET 75143842,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: GEICO,0.00,Insurance,Insurance,0.92,learned,no
+,[debit] Marugame Udon*3aygo0gu4rm1,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] 76 #31789 PITTSBURGH,0.00,,none,0.30,local model,yes
+,[debit] Duolingo,0.00,,Subscription,0.48,local model,yes
+,[debit] PP*FLOYD'S 99,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] INSUFFICIENT FUNDS FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] AMZN MKTP US*UJG7MVN3M,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Amazon Prime,0.00,Subscription,Subscription,0.94,learned,no
+,[debit] PYPL*Golf Course,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] SUNRUN SOLAR PMT WEB ID: HXR884PB,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] MINIMUM BALANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WEGMANS 2018 OAK WAY OAKLAND 94601-3925CA USA,0.00,Groceries,Groceries,1.00,learned,no
+,[credit] UNEMPLOYMENT INS BENEFIT PMT PPD ID: 292985913,0.00,Income,Income,1.00,learned,no
+,[debit] ROOSTERS,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] PAYPAL INST XFER UDEMY WEB ID: PAYPALSI02,0.00,Education,Education,0.96,learned,no
+,[debit] College Of Seattle Tuition,0.00,Education,Education,1.00,learned,no
+,[debit] brilliant.org 6410 mission st brooklyn 11201-8140ny usa,0.00,Education,Education,1.00,learned,no
+,[debit] OKCUPID,0.00,Subscription,Subscription,0.96,learned,no
+,[debit] FREEDOM MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Paypal Payment To Emily Walker,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] ANYTIME FITNESS INC.,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: TSA PRECHECK,0.00,Travel,Travel,0.93,learned,no
+,[debit] FOREIGN TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PAYPAL *WEGMANS YG0PY6QYUX,0.00,Groceries,Groceries,0.97,learned,no
+,[debit] CURSOR,0.00,Subscription,Subscription,0.96,learned,no
+,[debit] WASTE MANAGEMENT RECYCLING,0.00,Utilities,Utilities,1.00,learned,no
+,[credit] KAYAK.COM,0.00,Travel,Travel,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: LINKEDIN LEARNING,0.00,Subscription,Subscription,0.82,learned,no
+,[debit] WASTE MANAGEMENT TRASH WEB ID: 3JC2F638,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Qdoba 9566 Main Blvd Boston 02101-5719ma Usa,0.00,Insurance,Insurance,0.93,learned,no
+,[credit] INTEREST PAYMENT,0.00,Income,Income,1.00,learned,no
+,[credit] PAYMENT TO: NBA LEAGUE PASS,0.00,Entertainment,Entertainment,0.87,learned,no
+,[debit] NFL SUNDAY TICKET #628 UNION CITY,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PYPL *SWIMMING POOL,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] wire transfer fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] CAMDEN PROPERTY RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] IMAX,0.00,Entertainment,Entertainment,0.98,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO CLEAR,0.00,Travel,Travel,0.99,learned,no
+,[debit] LI ORTHOPEDICS,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PAYPAL INST XFER GRUBHUB WEB ID: PAYPALSI75,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] Pluralsight.com,0.00,Education,Education,1.00,learned,no
+,[debit] HOMESITE INSURANCE CO,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] TARGET T-6698,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] YMCA; PAYMENT,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] OPENAI* OPENAI Plus,0.00,Subscription,Subscription,0.97,learned,no
+,[debit] DONE HEALTH VIRTUAL VISIT,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] LINCOLN PROPERTY RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[credit] FRONTIER INTERNET WEB ID: QDAFHN9E,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] AVALON COMMUNITIES LEASE PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] Shell*etxbjubaem2,0.00,Transportation,Transportation,0.98,learned,no
+,[credit] SSA TREAS 310 FED SAL PPD ID: 379123461,0.00,Income,Income,1.00,learned,no
+,[debit] Subscription Payment: WALL STREET JOURNAL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] HORSESHOE CASINO 4300 MARKET LN LOS ANGELES 90001-7364CA USA,0.00,Entertainment,Entertainment,0.86,learned,no
+,[debit] POSHMARK #7991 BROOKLYN,0.00,,Shopping,0.48,local model,yes
+,[debit] COSTCO WHSE 9768 PHILADELPHIA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] SQ *Crepe Bar #955,0.00,Restaurants,Restaurants,0.81,learned,no
+,[debit] monthly installments (7 of 24),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] MONTHLY SERVICE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] LYFT *TRIP TAMPA AANOWB,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] NHP FOUNDATION MONTHLY RENT PPD ID: 3543156230,0.00,Rent,Rent,1.00,learned,no
+,[debit] GUILD MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] CARIBOU COFFEE 1859,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] NORTHWESTERN MUTUALBILLING PPD ID: 9935971155,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] BETRIVERS ONLINE,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] PYPL*SPORT CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] COLLEGE OF QUEENS TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] TRAMPOLINE PARK 883 MISSION PKWY CHARLOTTE28201 NC USA,0.00,Entertainment,Entertainment,0.95,learned,no
+,[debit] Withdrawal from SWIMMING POOL,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] SUPERCUTS 9673 UNIVERSITY CT NASHVILLE 37201-1507TN USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PLAYSTATION PURCHASE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] CLV*PANDA GARDEN - ATLANTA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO SPIRIT AIRLINES,0.00,Travel,Travel,1.00,learned,no
+,[debit] PARK OPTOMETRY,0.00,Healthcare,Healthcare,0.83,learned,no
+,[debit] NOTION* NOTION Pro,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] MONTHLY SERVICE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WITHDRAWAL FROM INVITATION HOMES RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] PRIORITY PASS HOUSTON,0.00,Travel,Travel,1.00,learned,no
+,[debit] PAYPAL INST XFER NETFLIX WEB ID: PAYPALSI06,0.00,Subscription,Subscription,0.89,learned,no
+,[debit] RALPH'S 5543 LOS ANGELES,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] Cashier Check Withdrawal,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] IRVINE COMPANY RENT PMT 65463182 PPD ID: 339184075,0.00,Rent,Rent,1.00,learned,no
+,[debit] LION SUPERMARKET 5484 BOSTON,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] ESSEX PROPERTY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] ATM CASH WITHDRAWAL HOUSTON,0.00,Transfer,Transfer,0.91,learned,no
+,[debit] FREEDOM MORTGAGE MORTGAGE 38431269 PPD ID: 062608981,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] DAZN 86219,0.00,Entertainment,Entertainment,0.97,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: KL4PMLSII4,0.00,Income,Income,1.00,learned,no
+,[debit] Camden Property Rent Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] BUFFALO WILD WINGS 5490 CENTER BLVD QUEENS 11101-6668NY USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] FOOD 4 LESS 1980 MAIN AVE DALLAS 75201 TX USA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Preauthorized Withdrawal To Regal Cinemas,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] KHAN ACADEMY*LP41F5NC,0.00,Education,Education,1.00,learned,no
+,[debit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] dutch bros 00208,0.00,Restaurants,Restaurants,0.95,learned,no
+,[debit] Take 5 Car Wash*1a3ezyea,0.00,Transportation,Transportation,1.00,learned,no
+,[credit] REMOTE ONLINE DEPOSIT # 4,0.00,Income,Income,1.00,learned,no
+,[credit] Zelle payment from SARAH CHEN H57B90XOT444,0.00,Income,Income,0.99,learned,no
+,[debit] WITHDRAWAL FROM ANYTIME FITNESS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] ATM OPERATOR FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] Xcel Energy 786746,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Withdrawal From Becu Mtg Pymt,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] Hotwire 5510,0.00,Travel,Travel,1.00,learned,no
+,[debit] shutterfly #6182 las vegas,0.00,,Entertainment,0.29,local model,yes
+,[debit] BECU PAYMENT,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] PEARLE VISION,0.00,Healthcare,Healthcare,0.53,local model,no
+,[debit] SQ *LOCAL HARVEST,0.00,Groceries,Groceries,1.00,learned,no
+,[credit] PAYPAL INST XFER ANCESTRY.COM WEB ID: PAYPALSI95,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] LIBERTY MUTUAL EFT PYMT PPD ID: 1470498703,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] BLUE CROSS 1830 UNIVERSITY CT PHILADELPHIA 19101-8693PA USA,0.00,Personal Care,Personal Care,0.80,learned,no
+,[debit] BETHPAGE FCU PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Hand & Stone,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] HAND & STONE 4822 UNIVERSITY PKWY SAN JOSE 95101-4111CA USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Account Maintenance Fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] PAYPAL *PYPL O'REILLY AUTO,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] ATM SURCHARGE,0.00,Fees,Fees,1.00,learned,no
+,[debit] LATE PAYMENT FEE - 53/79,0.00,Fees,Fees,1.00,learned,no
+,[credit] STATE OF CALIFORNIAPAYROLL PPD ID: 221694755,0.00,Income,Income,1.00,learned,no
+,[debit] VISIBLE 3862 UNIVERSITY DR INDIANAPOLIS46201 IN USA,0.00,Utilities,Utilities,0.93,learned,no
+,[debit] SPLITIT INSTALLMENT WEB ID: DK72R7HH,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Payment To: Skating Rink,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] WITHDRAWAL FROM GREYSTAR RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SQ *FRESH MARKET,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] JIRA,0.00,Subscription,Subscription,0.90,learned,no
+,[debit] DMV REGISTRATION 6163 CENTER DR OAKLAND 94601 CA USA,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] ACCOUNT MAINTENANCE FEE - 34/57,0.00,Fees,Fees,1.00,learned,no
+,[debit] Tesla Supercharger #21389,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] apple.com/bill 2689 center ave indianapolis46201 in usa,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] HARRIS TEETER 3150 MAIN LN UNION CITY94587 CA USA,0.00,Groceries,Groceries,0.56,local model,no
+,[debit] BOZZUTO MONTHLY RENT PPD ID: 4682199615,0.00,Rent,Rent,1.00,learned,no
+,[credit] Zelle payment from MATTHEW MOORE VX9NCMDKLBGN,0.00,Income,Income,1.00,learned,no
+,[debit] TRAVELOCITY,0.00,Travel,Travel,1.00,learned,no
+,[debit] GAP.COM #5214 TAMPA,0.00,Shopping,Shopping,0.91,learned,no
+,[debit] orangetheory 9539617,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] FLORIDA POWER ELECTRIC WEB ID: MKYA69A4,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] GROCERY OUTLET #07145,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] PLURALSIGHT,0.00,Education,Education,1.00,learned,no
+,[debit] ERIE INSURANCE 3038 MARKET CT DENVER 80201 CO USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] TING 9657409,0.00,Utilities,Utilities,0.93,learned,no
+,[debit] spirit airlines; billing,0.00,Travel,Travel,1.00,learned,no
+,[debit] LYFT *TRIP BROOKLYN J4QRFI,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] CAMDEN PROPERTY APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] BANK OF AMERICA MORTGAGEMORTGAGE 98782142 PPD ID: 150258259,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] SQ *Fresh Produce,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: FASTSPRING,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] COSTCO GAS*7MZ4RR1J,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] TRAMPOLINE PARK; Billing,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] Withdrawal from SWIMMING POOL,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] UDEMY,0.00,Education,Education,1.00,learned,no
+,[debit] WALMART 3515 COLUMBUS,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] dr chen cardiology,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] Child Tax Credit Benefit Payment,0.00,Income,Income,1.00,learned,no
+,[debit] LUCKY 6942 DALLAS,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] H MART 6049 MAIN ST TAMPA 33601-1863FL USA,0.00,,Shopping,0.39,local model,yes
+,[debit] JBG SMITH APT RENT PPD ID: 1428984368,0.00,Rent,Rent,1.00,learned,no
+,[debit] ESPN+; Subscription,0.00,Entertainment,Entertainment,0.95,learned,no
+,[debit] WITHDRAWAL FROM ULTA BEAUTY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Hand & Stone 0391,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] UDR INC RENT PMT 08215657 WEB ID: XCL7VRDT,0.00,Rent,Rent,1.00,learned,no
+,[debit] PLANET FITNESS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] DOORDASH*HAIDILAO,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] Bestow 3795 University Pkwy New York 10001-5450ny Usa,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] E*TRADE INVESTMENTS MONEYLINE,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PENNYMAC MORTGAGE 06164826 WEB ID: 8ZJBGFTG,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] Online Transfer 56161697371 from STATE OF CALIFORNIA-FOUND ########5423 transaction#: 4900219,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] CENTURION LOUNGE NEWARK,0.00,Travel,Travel,0.95,learned,no
+,[debit] UNITED WHOLESALE MORTGAGE 39071803 WEB ID: 7XQNSUEN,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] Money Network P2P MARY ANDERSON WEB ID: 19933976,0.00,Income,Income,1.00,learned,no
+,[debit] BUNGIE PURCHASE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] GREYSTAR RENT PMT 53053660 WEB ID: PV9ZYVWB,0.00,Rent,Rent,1.00,learned,no
+,[debit] TAQUERIA EL BUEN GUSTO 72547,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] INVISION,0.00,Subscription,Subscription,0.90,learned,no
+,[debit] WITHDRAWAL FROM LASER TAG,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] J.CREW #43450 PITTSBURGH,0.00,Shopping,Shopping,0.96,learned,no
+,[debit] TSA PRECHECK HAYWARD,0.00,Travel,Travel,1.00,learned,no
+,[debit] SUNPASS TOLLS,0.00,Transportation,Transportation,1.00,learned,no
+,[credit] Payment Refund: ZAPPOS,0.00,Income,Income,1.00,learned,no
+,[debit] STUBHUB 4829 MARKET CT PORTLAND 97201-5533OR USA,0.00,Entertainment,Entertainment,0.98,learned,no
+,[debit] Withdrawal from STARLINK CABLE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] HIPPO PREMIUM PPD ID: 4567648262,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] PAYPAL INST XFER YOUTUBE PREMIUM WEB ID: PAYPALSI65,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] WIRE TRANSFER FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] FANDANGO.COM,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] University Of Hayward Tuition,0.00,Education,Education,1.00,learned,no
+,[debit] COMCAST,0.00,Utilities,Utilities,0.98,learned,no
+,[debit] GAMESTOP 8747,0.00,Shopping,Shopping,0.94,learned,no
+,[debit] XCEL ENERGY PHONE SVC WEB ID: 2IIC93RJ,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] ROCKET MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PUBLIX #28529,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] YMCA.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] LEMONADE 8727 INDUSTRIAL RD ATLANTA 30301 GA USA,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] NATIONSTAR MORTGAGE 28977631 WEB ID: XSX6OZZZ,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] gentle dental 3642 center rd tampa 33601-2773fl usa,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: LIBERTY MUTUAL,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] METLIFE 248 INDUSTRIAL LN ATLANTA 30301 GA USA,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] Withdrawal from SUNPOWER SOLAR,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Giant Eagle,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] UNITED WHOLESALE MORTGAGE 91328209 PPD ID: 127409829,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] lowe's,0.00,Shopping,Shopping,0.93,learned,no
+,[debit] MATCH.COM,0.00,Subscription,Subscription,0.96,learned,no
+,[debit] PYPL *Tsa Precheck,0.00,Travel,Travel,0.99,learned,no
+,[debit] NBA LEAGUE PASS 7388 MAIN AVE MIAMI 33101 FL USA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] KAYAK 9961 MAIN WAY CHICAGO60601 IL USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] livenation 8711 main dr fremont94536 ca usa,0.00,Entertainment,Entertainment,0.51,local model,no
+,[credit] DUB (ECFI) TRANSFER,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] RAISINGCANES,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] INNOUT LOS ANGELES,0.00,,Transportation,0.43,local model,yes
+,[debit] DUKE ENERGY 7244 BROADWAY RD BROOKLYN 11201-5390NY USA,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Zelle payment to LISA SANCHEZ PHILADELPHIA PA 14633662276,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] AFLAC 4136 UNIVERSITY BLVD QUEENS11101 NY USA,0.00,Insurance,Insurance,0.92,learned,no
+,[debit] TST* SOUP KITCHEN,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] GREAT CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: NORTHWESTERN MUTUAL,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Target 09010374,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] ALBERTSONS 9505 OAK LN PHILADELPHIA19101 PA USA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] FED WIRE TO TD BANK,0.00,Transfer,Transfer,0.64,local model,no
+,[credit] ACH DEPOSIT INTERNET TRANSFER FROM ACCOUNT ENDING IN 7849,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] GEICO INSURANCE PPD ID: 1614787536,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] CHICK-FIL-A ORLANDO 4141,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] HARTFORD 4411 ELM CT SALT LAKE CITY 84101-1827UT USA,0.00,,none,0.35,local model,yes
+,[debit] Smith Orthopedics,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Principal Pmt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: PROGRESSIVE,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] BOZZUTO RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SUTTER HEALTH MEDICAL PMT WEB ID: 9X7VZWH0,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] MASSAGE ENVY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MI PUEBLO 062315,0.00,Restaurants,Restaurants,0.95,learned,no
+,[debit] MTG PMT MR. COOPER,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PHO 99*Q7K3STZRUMP,0.00,Restaurants,Restaurants,0.78,local model,no
+,[debit] RITE AID 4863 PARK BLVD NEW YORK 10001-4929NY USA,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] AMERICAN FAMILY EFT PYMT PPD ID: 3728856736,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] T-MOBILE,0.00,Utilities,Utilities,0.96,learned,no
+,[debit] HCA HEALTHCARE MEDICAL PMT WEB ID: F5XPYPGX,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] MINIMUM BALANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WITHDRAWAL FROM BOZZUTO RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] becu payment,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] monthly installments (7 of 24),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] AIMCO RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] ACCOUNT CLOSURE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] NETLIFY 5229 MARKET BLVD ATLANTA 30301-9643GA USA,0.00,Subscription,Subscription,0.62,local model,no
+,[debit] PROVIDENCE HEALTH HOSPITAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Tsa Precheck Los Angeles,0.00,Travel,Travel,0.97,learned,no
+,[debit] MARATHON 3141681,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] GOOGLE *VERCEL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Gold's Gym,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] notion 4791 main blvd charlotte 28201 nc usa,0.00,Subscription,Subscription,0.96,learned,no
+,[debit] MOE'S 5268 MAIN RD QUEENS 11101-8935NY USA,0.00,Restaurants,Restaurants,0.87,learned,no
+,[debit] STARLINK PHONE SVC WEB ID: U2CKOK6E,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] INACTIVITY FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] APPLE.COM/BILL 3857 MISSION DR NASHVILLE 37201 TN USA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PAYPAL *TRAMPOLINE PARK FRRXZK6AUU,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] SOUTHERN CALIFORNIA EDISON 8513 UNIVERSITY PKWY FREMONT 94536-2680CA USA,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] WASTE CONNECTIONSRECYCLING WEB ID: CD33QKFS,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] great clips.com,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] OPTIMUM AUTOPAY WEB ID: QYLCUQ9N,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO TALKSPACE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] INTUIT DIR DEP PPD ID: 033275540,0.00,Income,Income,1.00,learned,no
+,[debit] COURSERA,0.00,Education,Education,1.00,learned,no
+,[debit] LOANCARE ESCROW,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO RADISSON,0.00,Travel,Travel,1.00,learned,no
+,[debit] MTA CORP,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] PAYPAL INST XFER SEPHORA WEB ID: PAYPALSI69,0.00,Personal Care,Personal Care,0.99,learned,no
+,[credit] BOMBAS 47917,0.00,Shopping,Shopping,0.98,learned,no
+,[credit] APPLE INC DIR DEP PPD ID: 464432482,0.00,Income,Income,1.00,learned,no
+,[debit] NINJATRADER INVESTMENTS MONEYLINE,0.00,Transfer,Transfer,0.99,learned,no
+,[debit] ATM SERVICE CHARGE,0.00,Fees,Fees,1.00,learned,no
+,[debit] Subscription Payment: MEDIUM.COM,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] Online Transfer 16449570678 from Checking ...6937 transaction#: 1557161,0.00,Transfer,Transfer,1.00,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: 5ZFZPTEU0V,0.00,Income,Income,1.00,learned,no
+,[debit] COURTYARD 6011 MAIN PKWY CHARLOTTE 28201-0475NC USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] CINEMARK 669816,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] EQUITY RESIDENTIAL MONTHLY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] AFLAC INS PREMIUM PPD ID: 6723739471,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] CAPITAL ONE AUTOPAY PPD ID: 9128666750,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] ESSEX PROPERTY RENT PMT 26258002 PPD ID: 135117482,0.00,Rent,Rent,1.00,learned,no
+,[debit] Pacific Dental,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] Monthly Interest Paid,0.00,Income,Income,1.00,learned,no
+,[debit] SPORT CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] SQ *FOODMAXX,0.00,Groceries,Groceries,1.00,learned,no
+,[credit] Money Network P2P KAREN MILLER WEB ID: 39378231,0.00,Income,Income,1.00,learned,no
+,[debit] NHP FOUNDATION MONTHLY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] BARSTOOL SPORTSBOOK,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] AMZN DIGITAL*NWBHYFWZU4F,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] ATM SURCHARGE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WEGMANS 69762581,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] PACIFIC LIFE PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: HOME WARRANTY,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] JBG SMITH RENT,0.00,Rent,Rent,1.00,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: KTG3UEGSLI,0.00,Income,Income,1.00,learned,no
+,[debit] Sofi Mortgage Mortgage 08837072 Ppd Id: 322069127,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Subscription Payment: MIDJOURNEY,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] BETMGM 4668 MAIN LN HOUSTON 77001-3201TX USA,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] afterpay pmt 94802196,0.00,Transfer,Transfer,1.00,learned,no
+,[credit] DISCOVER BANK IFI DDA TO DDA AIWS1MRO WEB ID: G8FB0JKCTJ,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] MONTHLY INSTALLMENTS (6 OF 12),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] MAA RENT PMT 90601571 WEB ID: 9D5J9QV6,0.00,Rent,Rent,1.00,learned,no
+,[debit] PRINCIPAL PMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Aquarium 1379 Market St Oakland 94601 Ca Usa,0.00,Entertainment,Entertainment,0.75,learned,no
+,[debit] WITHDRAWAL FROM EQUINOX,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Withdrawal from NHP FOUNDATION RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SUPERCUTS - PORTLAND,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] EQUITY RESIDENTIALMONTHLY RENT PPD ID: 4802403462,0.00,Rent,Rent,1.00,learned,no
+,[debit] Codecademy.com,0.00,Education,Education,1.00,learned,no
+,[debit] BUFFALO WILD WINGS 3059 INDUSTRIAL WAY BROOKLYN 11201-5421NY USA,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] PYPL*THE ORDINARY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] GOOGLE *NOTION,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] Zelle payment from DAVID ROBINSON KU5GZTYO30MO,0.00,Income,Income,0.99,learned,no
+,[credit] LA FITNESS*U8HB7PT1,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL *PYPL MITSUWA,0.00,Groceries,Groceries,0.88,learned,no
+,[credit] Walmart Supercenter #5340,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] OVERDRAFT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] NORTHGATE MARKET 1549 BROADWAY PKWY SEATTLE98101 WA USA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] TRANSAMERICA AUTO PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] AMERICAN FAMILY 9519 CENTER PKWY BOSTON 02101-4817MA USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] UBER *TRIP NEW YORK KG9RW0,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] PRUDENTIAL PREMIUM PPD ID: 9952460741,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] GUILD MORTGAGE MORTGAGE 63798316 PPD ID: 967839717,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] DOORDASH DASHERPAY,0.00,Income,Income,0.98,learned,no
+,[debit] GOLD'S GYM*EOCA7RCKKF,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] TARGET 47457240,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Aimco Lease Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] MORGAN STANLEY MONEYLINK PPD ID: 785655811,0.00,Transfer,Transfer,0.99,learned,no
+,[debit] APPLE.COM/BILL 3064 BROADWAY CT LOS ANGELES 90001-5293CA USA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] IRVINE COMPANY APT RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] ESSEX PROPERTY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] MARRIOTT 9025220,0.00,Travel,Travel,0.99,learned,no
+,[debit] LINCOLN PROPERTY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] sp plus; billing,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] SQ *FARM HOUSE KITCHEN - CHARLOTTE,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] PLANET FITNESS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] RANCH99 MIN #685,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] HOMESITE BILLING PPD ID: 9698294159,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] O'REILLY MEDIA 7825 CENTER LN ATLANTA30301 GA USA,0.00,Education,Education,1.00,learned,no
+,[debit] DR NGUYEN DERMATOLOGY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] DR. THOMPSON DENTAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] HELP.DOCUSIGN.COM,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PAYPAL INST XFER YOUTUBE PREMIUM WEB ID: PAYPALSI14,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] RECOLOGY RECYCLING WEB ID: TDXO65EW,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] CLICKUP.com,0.00,Subscription,Subscription,0.87,learned,no
+,[credit] Uber *trip Raleigh Rq84ss,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] SEPHORA*0PA3OLJVR,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] BARSTOOL SPORTSBOOK,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] MEDIUM.COM* MEDIUM.COM Plus,0.00,Subscription,Subscription,0.96,learned,no
+,[debit] FRONTIER 9524975,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] EVGO 9869 MISSION RD TAMPA 33601-4268FL USA,0.00,Transportation,Transportation,0.67,local model,no
+,[debit] ANYTIME FITNESS LLC,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] the athletic.com,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] TARGET T-1436,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] WITHDRAWAL FROM DUKE ENERGY PHONE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] LAZ PARKING*UZLOHI3M,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] COMFORT DENTAL 4583 MAIN LN SALT LAKE CITY84101 UT USA,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] MAA RENT PMT 90797385 PPD ID: 724313242,0.00,Rent,Rent,1.00,learned,no
+,[debit] BROOKFIELD APT RENT PPD ID: 7142613828,0.00,Rent,Rent,1.00,learned,no
+,[debit] TELADOC TELEHEALTH,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Bozzuto Monthly Rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] AMERICAN WATER 48830,0.00,Utilities,Utilities,0.89,learned,no
+,[debit] NORTHGAT TAM #24347,0.00,Groceries,Groceries,0.95,learned,no
+,[credit] WYZANT LEARNING CENTER,0.00,Education,Education,1.00,learned,no
+,[debit] PAYPAL INST XFER MAC COSMETICS WEB ID: PAYPALSI75,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] WITHDRAWAL FROM ESSEX PROPERTY RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] TARGET 58684798,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] WITHDRAWAL FROM LOANDEPOT MTG PYMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] REMOTE ONLINE DEPOSIT # 1,0.00,Income,Income,1.00,learned,no
+,[debit] GUARANTEED RATE ESCROW,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] UPWORK PAYMENTS PPD ID: 05445369,0.00,Income,Income,1.00,learned,no
+,[debit] target t-6419,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] avalon communitiesrent pmt 14462693 web id: zrlzwjjp,0.00,Rent,Rent,1.00,learned,no
+,[debit] Sushi Spot,0.00,Restaurants,Restaurants,0.99,learned,no
+,[credit] INSTACART DRIVER PAY,0.00,Income,Income,0.99,learned,no
+,[debit] MARKET BASKET #9788 ATLANTA,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] PAYPAL INST XFER MASSAGE ENVY WEB ID: PAYPALSI53,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] WARBY PARKER OPTICAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] FANDUEL 2439 CENTER AVE MIAMI33101 FL USA,0.00,,Entertainment,0.46,local model,yes
+,[debit] ACCOUNT CLOSURE FEE - 25/68,0.00,Fees,Fees,1.00,learned,no
+,[debit] Express Checkout Payment: DONE HEALTH,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] DISNEY CRUISE LINE,0.00,Travel,Travel,1.00,learned,no
+,[debit] MONTHLY INSTALLMENTS (10 OF 24),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] INACTIVITY FEE - 49/50,0.00,Fees,Fees,1.00,learned,no
+,[debit] UBER EATS*KUNG FU TEA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] hp store 2441 park ave sacramento 95814-3945ca usa,0.00,Shopping,Shopping,0.82,local model,no
+,[debit] Venmo Payment To Robert Johnson,0.00,Transfer,Transfer,1.00,learned,no
+,[credit] TSA PRECHECK ENROLLMENT,0.00,Travel,Travel,1.00,learned,no
+,[credit] WAL-MART #9150,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] lyft *trip portland 1pcjob,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] ANNUAL FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] INSUFFICIENT FUNDS FEE - 83/98,0.00,Fees,Fees,1.00,learned,no
+,[debit] 24 hour fitness 160 main dr chicago 60601-5141il usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL INST XFER WALMART PHARMACYWEB ID: PAYPALSI89,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] GOLD'S GYM 2967 PARK LN TAMPA 33601 FL USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] VENMO CASHOUT PPD ID: 06896684,0.00,Income,Income,1.00,learned,no
+,[debit] PYPL *BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] PAYPAL INST XFER CITI AUTOPAY WEB ID: PAYPALSI17,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Delta Air Lines 564882,0.00,Travel,Travel,1.00,learned,no
+,[debit] WOK N ROLL 3588 PARK ST DENVER 80201 CO USA,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] LINKEDIN PREMIUM* Credit Report,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PG AND E AUTOPAY WEB ID: JUWN85HW,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] ANNUAL FEE - 92/11,0.00,Fees,Fees,1.00,learned,no
+,[debit] RALPH'S 2027 BROADWAY ST NASHVILLE37201 TN USA,0.00,Groceries,Groceries,0.99,learned,no
+,[credit] Payment Thank You - 2nd A,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Venmo Payment To Margaret Chen,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Subscription Payment: OKCUPID,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] UDR INC RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] UDR INC RENT PMT 26283402 WEB ID: HTAH8F1C,0.00,Rent,Rent,1.00,learned,no
+,[debit] airtable,0.00,Subscription,Subscription,0.95,learned,no
+,[debit] HUNTINGTON LEARNING LEARNING CENTER,0.00,Education,Education,1.00,learned,no
+,[credit] INTERACTIVE BROKERS ACH TRANSFER,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PG&E 5286 OAK LN LOS ANGELES90001 CA USA,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] COMCAST,0.00,Utilities,Utilities,0.98,learned,no
+,[debit] LUCKY SAN #672,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Johnson Dental,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Orangetheory #19973 Denver,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] BETTER MORTGAGE ESCROW,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Online Transfer 31732709633 from DoDataThings-MEOW ########0416 transaction#: 5009799,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] lincoln property rent pmt 87276113 web id: 1j7exaqv,0.00,Rent,Rent,1.00,learned,no
+,[debit] non-network atm fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] UNITED HEALTHCAREPREMIUM PPD ID: 1267281648,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] KHAN ACADEMY; SUBSCRIPTION,0.00,Education,Education,1.00,learned,no
+,[debit] ALLSTATE BILLING PPD ID: 7203121846,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] DR. THOMPSON DERMATOLOGY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] SCHOOL DISTRICT OF TAMPA TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: AMC THEATRES,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO DAZN,0.00,Entertainment,Entertainment,0.79,learned,no
+,[debit] MONTHLY INSTALLMENTS (3 OF 36),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] WHOLEFDS #95846 RALEIGH,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] sutter health medical,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PAYPAL INST XFER MARKET BASKET WEB ID: PAYPALSI69,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] WITHDRAWAL FROM FLORIDA POWER CABLE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PAYPAL *tripadvisor,0.00,Travel,Travel,0.99,learned,no
+,[debit] WITHDRAWAL FROM T-MOBILE INTERNET,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] AMAZON MKTPL*AM6CN44K,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] HARTFORD BILLING PPD ID: 9736219875,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] UNIVERSITY OF SAN JOSE TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] apple.com/bill 5751 park ct indianapolis46201 in usa,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] DATACAMP 518 ELM LN NASHVILLE37201 TN USA,0.00,Education,Education,0.94,learned,no
+,[credit] Money Network P2P THOMAS SHAH WEB ID: 69439330,0.00,Income,Income,1.00,learned,no
+,[debit] Maa Rent Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] ANYTIME FITNESS INC,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL INST XFER GOOGLE ONE WEB ID: PAYPALSI99,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] GOLD'S GYM*C5M98LBMGG,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] TARGET 33340253,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] DEL TACO*3OXQL72URVRN,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] WITHDRAWAL FROM AMERICAN WATER GAS,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] INTERNATIONAL WIRE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PHILZ COFFEE,0.00,Restaurants,Restaurants,0.91,learned,no
+,[debit] LYFT *TRIP RALEIGH ZF5F0O,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] BATH & BODY WORKS 123 MISSION PKWY OAKLAND 94601 CA USA,0.00,Personal Care,Personal Care,0.93,learned,no
+,[credit] AMAZON DIR DEP PPD ID: 898084437,0.00,Income,Income,0.99,learned,no
+,[debit] WAL-MART #8100,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] MASSAGE ENVY; PAYMENT,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] lincoln property rent payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] PAYPAL INST XFER FANDANGO WEB ID: PAYPALSI20,0.00,Entertainment,Entertainment,0.96,learned,no
+,[debit] MOHEGAN SUN DEPOSIT,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] GODADDY #688,0.00,Shopping,Shopping,0.91,learned,no
+,[debit] FIFTH THIRD IFI DDA TO DDA 4PLI47V9 WEB ID: INTFITRVOS,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PLUSHCARE VIRTUAL VISIT,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] SQ *FARM STAND,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] sunoco*y0ehhkpzebsn,0.00,Transportation,Transportation,0.97,learned,no
+,[debit] TIKKA MASALA 6323 INDUSTRIAL WAY CHICAGO 60601 IL USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] NAVY FEDERAL CU HOME LOAN,0.00,Mortgage,Mortgage,0.94,learned,no
+,[debit] PRINCIPAL PMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] GUARANTEED RATE HOME LOAN,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] COX EBILL WEB ID: CR6LXCCP,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] CROSSFIT; SUBSCRIPTION,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] TARGET T-2532,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] YMCA 1920 UNIVERSITY ST DENVER 80201-5645CO USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] FD *VEHICLE REGISTRATION VFC,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] WITHDRAWAL FROM ESPN+,0.00,Entertainment,Entertainment,0.94,learned,no
+,[debit] DR NGUYEN FAMILY MEDICINE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] AQUA AMERICA BILL PAY WEB ID: SQ3GZ1TE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] TARGET #2007 ATLANTA,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] SPEEDWAY,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] MASS MUTUAL INSPAYMENT PPD ID: 8593685102,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Sephora 6541 Market Pkwy San Diego92101 Ca Usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] LENSCRAFTERS EYE CARE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] CRICKET PHONE SVC WEB ID: 6R88MMOT,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] HAND & STONE,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Chick-fil-a Houston 5952,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] CASHIER CHECK WITHDRAWAL,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] FITBIT PREMIUM,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] AMZN MKTP US*J25G7OEEQ,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] NAVY FEDERAL CU MORTGAGE 88096770 WEB ID: 895IF70G,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] SAN PEDRO MARKET 1662 UNIVERSITY RD CHARLOTTE 28201-0502NC USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] UDEMY - PHILADELPHIA,0.00,Education,Education,1.00,learned,no
+,[debit] SQ *organic farm,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] hertz,0.00,Travel,Travel,0.99,learned,no
+,[debit] AMAZON MKTPL*HKB572YV,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] FREEDOM MORTGAGE MORTGAGE 24242898 PPD ID: 661016586,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] ELEMENTS MASSAGE 7388 CENTER LN SALT LAKE CITY84101 UT USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] DROPBOX,0.00,Subscription,Subscription,0.94,learned,no
+,[debit] WALL STREET JOURNAL,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] meta platforms payroll,0.00,Income,Income,1.00,learned,no
+,[debit] QUIKTRIP #9782 NEW YORK,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] RITE AID,0.00,Healthcare,Healthcare,0.95,learned,no
+,[credit] ORIG CO NAME:COUNTY OF CO ENTRY DESCR:PAYROLL SEC:PPD,0.00,Income,Income,1.00,learned,no
+,[debit] MONTHLY INSTALLMENTS (5 OF 24),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] DUKE ENERGY ELECTRIC WEB ID: CN6Z44ZV,0.00,Utilities,Utilities,1.00,learned,no
+,[credit] SALESFORCE PAYROLL PPD ID: 617826681,0.00,Income,Income,1.00,learned,no
+,[debit] SPORTS CLIPS 9087 MISSION BLVD HAYWARD 94541 CA USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Supercuts,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MTG PMT GUARANTEED RATE,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] WIRE TRANSFER FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] BROOKFIELD RENT,0.00,Rent,Rent,0.99,learned,no
+,[debit] Principal Pmt,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Encore 2933 Broadway Pkwy Columbus43201 Oh Usa,0.00,Entertainment,Entertainment,0.82,learned,no
+,[debit] ACE PARKING,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] Barnes & Noble.com,0.00,Education,Education,1.00,learned,no
+,[credit] TRADESTATION PAYMENTS 095012214023317 WEB ID: 35129837,0.00,Income,Income,0.57,local model,no
+,[debit] XFINITY,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] AMZN MKTP US*HOJ2K809X,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Caesars Sportsbook Deposit,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] POINTSBET ONLINE,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] CA DMV 1673 INDUSTRIAL DR TAMPA 33601 FL USA,0.00,,Transportation,0.27,local model,yes
+,[debit] AVALON COMMUNITIES RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] AVIS 1266 MARKET RD QUEENS 11101-7624NY USA,0.00,Transportation,Transportation,0.82,local model,no
+,[credit] DOORDASH PAYOUT,0.00,Income,Income,1.00,learned,no
+,[debit] wall street journal,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] WAL-MART #6363,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] NATIONAL GRID EBILL WEB ID: HKPJYEHU,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] wells fargo mortgage home loan,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PAYPAL INST XFER YMCA WEB ID: PAYPALSI80,0.00,Personal Care,Personal Care,0.93,learned,no
+,[debit] HUGGING FACE* Subscription,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Preauthorized Withdrawal To The Ordinary,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] WITHDRAWAL FROM INVITATION HOMES RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] TST* olive garden #160,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] PACIFIC LIFE 4674 UNIVERSITY CT DENVER 80201-0856CO USA,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] VISIBLE BILL PAY WEB ID: R9UGEP25,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] seafood city 7584 university st raleigh 27601-7811nc usa,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] GOLD'S GYM - SAN DIEGO,0.00,Personal Care,Personal Care,0.98,learned,no
+,[credit] PAYPAL INST XFER WEB ID: PAYPALSI18,0.00,Transfer,Transfer,0.98,learned,no
+,[debit] TST* CREPE BAR #150,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] ihop #133 portland,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] TING BILL PAY WEB ID: A2CXKM0P,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] E-ZPASS TOLLS,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] bath & body works 473073,0.00,Personal Care,Personal Care,0.92,learned,no
+,[debit] WITHDRAWAL FROM METRO BY T-MOBILE INTERNET,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PELOTON,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] RED LOBSTER 6199 UNIVERSITY ST CHARLOTTE 28201-2096NC USA,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] MAYO CLINIC 8408 BROADWAY BLVD SAN FRANCISCO 94102 CA USA,0.00,Healthcare,Healthcare,0.53,local model,no
+,[debit] CALTRAIN 4019 CENTER ST MINNEAPOLIS 55401 MN USA,0.00,Transportation,Transportation,0.99,learned,no
+,[credit] food lion 2954 broadway st tampa 33601-6415fl usa,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] Nationwide Ins,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] MASSAGE ENVY,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] cash advance fee - 37/09,0.00,Fees,Fees,1.00,learned,no
+,[debit] encore online,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] CASH ADVANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] airbnb 7757 main blvd new york 10001 ny usa,0.00,Travel,Travel,0.94,learned,no
+,[debit] DIGNITY HEALTH HOSPITAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] MYBOOKIE,0.00,Entertainment,Entertainment,0.77,learned,no
+,[debit] BJ'S WHOLESALE,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] SHELL 4510322,0.00,Transportation,Transportation,0.98,learned,no
+,[debit] MISTER CAR WASH*QD3HEHPQF,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] TST* Instacart - MINNEAPOLIS,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] MEIJER 974025,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] APPLE TV+.com,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Courtyard,0.00,Travel,Travel,0.99,learned,no
+,[debit] WARBY PARKER LLC,0.00,,Shopping,0.26,local model,yes
+,[debit] COLLEGE OF DENVER TUITION,0.00,Education,Education,1.00,learned,no
+,[credit] Payment Thank You - 2nd A,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] VISIBLE CABLE SVC WEB ID: RYLNTJR2,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] RIOT GAMES GAME,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] PreApproved Payment Bill User Payment: DROPBOX,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] H MART 2456838,0.00,Shopping,Shopping,0.66,local model,no
+,[debit] PACIFIC LIFE HOME PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] CALIBER HOME LOANSMORTGAGE 24421245 PPD ID: 829272723,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] FRESH MARKET 9272 BROADWAY PKWY UNION CITY 94587 CA USA,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Withdrawal from MASTERCLASS,0.00,Education,Education,1.00,learned,no
+,[credit] ACH DEPOSIT INTERNET TRANSFER FROM ACCOUNT ENDING IN 2730,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] GROCERY OUTLET #343,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Harris Teeter 8765 Raleigh,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] GROCOUTLT #45 QUEENS,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] THOMAS DERMATOLOGY,0.00,Healthcare,Healthcare,0.98,learned,no
+,[debit] AVIS*8HZ3SWY3,0.00,Travel,Travel,0.98,learned,no
+,[credit] Payment Refund: TIKTOK SHOP,0.00,Income,Income,1.00,learned,no
+,[debit] EA GAMES GAME,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] ANTHEM GRP,0.00,Insurance,Insurance,0.97,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO MAC COSMETICS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] progressive 9720 park pkwy oakland 94601-4719ca usa,0.00,Insurance,Insurance,0.94,learned,no
+,[credit] Grubhub Earnings,0.00,Income,Income,0.99,learned,no
+,[debit] ANYTIME FITNESS.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] FRESH MARKET #45309,0.00,Groceries,Groceries,0.99,learned,no
+,[credit] BMO HARRIS DDA TO DDA YK3BMGKUE1 PPD ID: 4810676053,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] CITGO 4242,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] WITHDRAWAL FROM RELATED COS RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] LIVENATION 7303 CENTER CT SAN FRANCISCO 94102 CA USA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: SEPHORA,0.00,Personal Care,Personal Care,0.99,learned,no
+,[debit] WITHDRAWAL FROM BETTER MORTGAGE MTG PYMT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Splitit Payment,0.00,Transfer,Transfer,0.99,learned,no
+,[debit] FOOD 4 LESS #877,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] BETTERHELP 8098 INDUSTRIAL ST HOUSTON 77001 TX USA,0.00,Healthcare,Healthcare,0.99,learned,no
+,[debit] NEW YORK LIFE INS PREMIUM PPD ID: 1949962850,0.00,Insurance,Insurance,1.00,learned,no
+,[credit] TRADESTATION PAYMENTS PPD ID: 79296821,0.00,Income,Income,1.00,learned,no
+,[debit] TARGET #1020 SAN FRANCISCO,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] BENEFIT PAYMENT EDI PYMNTS PPD ID: SCBLR4AVMU,0.00,Income,Income,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: NATIONWIDE,0.00,Insurance,Insurance,0.97,learned,no
+,[debit] AT&T CABLE SVC WEB ID: UEV180GO,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Preauthorized Withdrawal to AQUARIUM,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] LIBERTY MUTUAL INSPAYMENT PPD ID: 5383987965,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] LEMONADE 3739 MARKET PKWY MINNEAPOLIS 55401 MN USA,0.00,Insurance,Insurance,0.91,learned,no
+,[debit] JACKINTHEBOX,0.00,Restaurants,Restaurants,0.98,learned,no
+,[debit] HARTFORD INS,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] FLOYD'S 99 3195 BROADWAY ST QUEENS 11101-0400NY USA,0.00,Personal Care,Personal Care,0.97,learned,no
+,[debit] ACCOUNT CLOSURE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] AMERICAN WATER ELECTRIC WEB ID: LW66JT19,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: TWITCH,0.00,Subscription,Subscription,0.97,learned,no
+,[debit] WITHDRAWAL FROM UDR INC RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] NORTHWESTERN MUTUAL PAYMENT,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] Wok N Roll 9165,0.00,Restaurants,Restaurants,0.98,learned,no
+,[debit] us bank mortgage escrow payment,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] GOOGLE *CREDIT KARMA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] MERCURY TRANSFER PPD ID: 46988128,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] CASH ADVANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] KLARNA INSTALLMENT WEB ID: 0VFVRJRT,0.00,Transfer,Transfer,1.00,learned,no
+,[credit] ACH DEPOSIT INTERNET TRANSFER FROM ACCOUNT ENDING IN 5094,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PP*EXPEDIA,0.00,Travel,Travel,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: LA FITNESS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Withdrawal from O'REILLY MEDIA,0.00,Education,Education,1.00,learned,no
+,[debit] PP*COSTCO PHARMACY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] CHEVRON*M7WQXJIMQ,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] CLIMBING GYM*XO88U09J413C,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] safeway #851,0.00,Groceries,Groceries,0.96,learned,no
+,[debit] ZOHO,0.00,,Entertainment,0.35,local model,yes
+,[debit] withdrawal from hyatt,0.00,Travel,Travel,0.82,learned,no
+,[debit] PAYPAL *RITE AID,0.00,,Healthcare,0.46,local model,yes
+,[debit] SKILLSHARE*BP5P8SC46,0.00,Education,Education,1.00,learned,no
+,[credit] MOBILE CHECK DEPOSIT,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Delta Air Lines Corp,0.00,Travel,Travel,1.00,learned,no
+,[debit] TESLA ENERGY SOLAR PMT WEB ID: Q9NOC4YK,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] Hippo Auto Premium,0.00,Insurance,Insurance,0.99,learned,no
+,[credit] Best Western.com,0.00,Travel,Travel,0.77,learned,no
+,[debit] NHP FOUNDATION RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SEZZLE PMT 04878536,0.00,Transfer,Transfer,0.91,learned,no
+,[debit] Preauthorized Withdrawal to CEREBRAL,0.00,Healthcare,Healthcare,1.00,learned,no
+,[credit] Payment Refund: APPLE TV+,0.00,Income,Income,1.00,learned,no
+,[debit] AMERICAN HOME SHIELD 2563 UNIVERSITY AVE SAN JOSE 95101 CA USA,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] WITHDRAWAL FROM EXPEDIA,0.00,Travel,Travel,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: AUTOZONE,0.00,Transportation,Transportation,0.95,learned,no
+,[debit] AQUARIUM,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] PreApproved Payment Bill User Payment: JACK IN THE BOX,0.00,Restaurants,Restaurants,0.76,local model,no
+,[debit] CAESARS SPORTSBOOK 8118 MAIN BLVD SAN JOSE 95101 CA USA,0.00,Entertainment,Entertainment,0.95,learned,no
+,[debit] planet fitness,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] grocoutlt #72 san fran,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] UNITED HEALTHCARE BILLING,0.00,Insurance,Insurance,0.93,learned,no
+,[debit] TST*Whataburger #670,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] DOLLAR RENT A CAR #93663 AUSTIN,0.00,Travel,Travel,1.00,learned,no
+,[credit] CITY OF PAYROLL,0.00,Income,Income,1.00,learned,no
+,[debit] VENMO PAYMENT TO MATTHEW SHAH,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] NON-NETWORK ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] ACCOUNT MAINTENANCE FEE - 87/40,0.00,Fees,Fees,1.00,learned,no
+,[debit] DAVESHOTCHICKEN,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] Smog Check 1886 Center Rd Austin 78701-6621tx Usa,0.00,Transportation,Transportation,0.92,learned,no
+,[debit] APPLE.COM/BILL 1198 BROADWAY BLVD PITTSBURGH 15201-7992PA USA,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Withdrawal From American Water Web Online,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] YMCA.COM,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] DOUBLETREE INC,0.00,Travel,Travel,0.98,learned,no
+,[debit] LIVENATION,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] in-n-out 3703,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] NATIONSTAR HOME LOAN,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] CAMDEN PROPERTY RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] SMOG CHECK #29531 NEWARK,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] DASHLANE,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] GOLF COURSE CO,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] Lincoln Property Rent Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] PYPL *the ordinary,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO SPORTS CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MCDONALDS 9635 16747 BROADWAY ST 6837 BROADWAY BLVD HAYWARD 94541 CA USA,0.00,Restaurants,Restaurants,0.98,learned,no
+,[debit] HUNTINGTON LEARNING*Y3KG73J1VKP,0.00,Education,Education,1.00,learned,no
+,[debit] PP*ENTERPRISE,0.00,Travel,Travel,0.97,learned,no
+,[debit] EXPEDITED SHIPPING FEE,0.00,Fees,Fees,1.00,learned,no
+,[credit] JACKINTHEBOX,0.00,Restaurants,Restaurants,0.80,local model,no
+,[debit] ELEMENTS MASSAGE; PAYMENT,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] ANYTIME FITNESS #209 PITTSBURGH,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PLANET FITNESS #346 SAN DIEGO,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL PAYMENT TO STEVEN ANDERSON,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] FRONTIER AIRLINES 5896 MISSION BLVD MINNEAPOLIS 55401-8264MN USA,0.00,Travel,Travel,1.00,learned,no
+,[debit] CARD REPLACEMENT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] H MART #5303,0.00,Shopping,Shopping,0.61,local model,no
+,[credit] MAC COSMETICS 8717 MAIN ST NEW YORK 10001 NY USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Pigglywigg #0884,0.00,Groceries,Groceries,0.99,learned,no
+,[credit] ROBINHOOD MONEYLINK PPD ID: 070839226,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] DEPOSIT FROM TRUIST EXT TRNSFR,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PAYPAL INST XFER TWITTER BLUE WEB ID: PAYPALSI95,0.00,,Personal Care,0.29,local model,yes
+,[debit] RITE AID 9640 UNIVERSITY AVE CHICAGO60601 IL USA,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Subscription Payment: GOOGLE CLOUD,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO NBA LEAGUE PASS,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] PreApproved Payment Bill User Payment: AMAZON PRIME,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] DR NGUYEN PEDIATRICS,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] Din Tai Fung 6353 Center Rd Hayward94541 Ca Usa,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] Pacific Life 1680 University Blvd Charlotte 28201-3388nc Usa,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] FUBOTV,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] US GOVERNMENT PAYROLL PPD ID: 720090623,0.00,Income,Income,1.00,learned,no
+,[debit] FLOYD'S 99 565 ELM WAY INDIANAPOLIS 46201-0661IN USA,0.00,Personal Care,Personal Care,0.95,learned,no
+,[debit] TARGET #642,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] SUNO 5815 MARKET CT DALLAS75201 TX USA,0.00,,Shopping,0.31,local model,yes
+,[debit] ralph's #5947,0.00,Groceries,Groceries,1.00,learned,no
+,[credit] SUMMIT HEALTHCAREPAYROLL PPD ID: 744335427,0.00,Income,Income,1.00,learned,no
+,[debit] reddit premium,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] AES,0.00,Utilities,Utilities,0.89,learned,no
+,[debit] APPLE TV+,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] PAYPAL INST XFER AMC THEATRES WEB ID: PAYPALSI13,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] Amazon.com*CWJ9U0U3UC3,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] DOCTOR ON DEMAND VIRTUAL VISIT,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] NHP FOUNDATION RENT PMT 40888797 PPD ID: 422620652,0.00,Rent,Rent,1.00,learned,no
+,[debit] LOANCARE MORTGAGE 58343344 PPD ID: 973913832,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] withdrawal from brilliant.org,0.00,Education,Education,1.00,learned,no
+,[debit] BESTOW 8430 MISSION CT SAN FRANCISCO 94102 CA USA,0.00,Insurance,Insurance,0.97,learned,no
+,[debit] VENMO PAYMENT TO JENNIFER PARK,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] WALMART 0118 AUSTIN,0.00,Shopping,Shopping,0.99,learned,no
+,[debit] HYATT CO,0.00,Travel,Travel,0.98,learned,no
+,[credit] PRINCESS CRUISES LINE,0.00,Travel,Travel,1.00,learned,no
+,[debit] MONTHLY INSTALLMENTS (2 OF 36),0.00,Transfer,Transfer,1.00,learned,no
+,[debit] zapier,0.00,Shopping,Shopping,0.51,local model,no
+,[debit] SPORTS CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] PLURALSIGHT,0.00,Education,Education,1.00,learned,no
+,[debit] UBER *TRIP HOUSTON 148TAU,0.00,Transportation,Transportation,1.00,learned,no
+,[credit] MEOW TRANSFER PPD ID: 35115163,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] INVITATION HOMES MONTHLY RENT PPD ID: 5268860883,0.00,Rent,Rent,1.00,learned,no
+,[debit] PROVIDENCE HEALTHMEDICAL PMT WEB ID: RHZ51SG9,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] MUSEUM - PHOENIX,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] Withdrawal From Nhp Foundation Rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] TARGET 51418641,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] BETHPAGE FCU MORTGAGE 31656954 PPD ID: 211501650,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] EXCESS TRANSACTION FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] USAA INSURANCE PPD ID: 1647870990,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] MAC COSMETICS 9210 ELM WAY PITTSBURGH 15201-3725PA USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] TARGET 31715780,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Cash Advance Fee - 30/19,0.00,Fees,Fees,1.00,learned,no
+,[debit] DAILY CASH ADJUSTMENT,0.00,Fees,Fees,1.00,learned,no
+,[credit] Etsy Earnings,0.00,Income,Income,0.98,learned,no
+,[debit] Smashburger*gavlgbqrg,0.00,Restaurants,Restaurants,0.97,learned,no
+,[debit] CLEAR HOUSTON,0.00,Travel,Travel,0.99,learned,no
+,[debit] AMAZON MKTPL*UILPDM7F0MV,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] IPPUDO #5166 QUEENS,0.00,Restaurants,Restaurants,0.99,learned,no
+,[debit] EXPEDITED SHIPPING FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] express - queens,0.00,Restaurants,Restaurants,0.75,learned,no
+,[debit] LYFT *TRIP MIAMI D32A7W,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] Nhp Foundation Rent Pmt 83681679 Web Id: Nif5v9j7,0.00,Rent,Rent,1.00,learned,no
+,[debit] Municipal Water 1749,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] SHAWARMA KING 2950 MISSION ST NASHVILLE 37201-1545TN USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] SYLVAN LEARNING,0.00,Education,Education,1.00,learned,no
+,[debit] Target 67316145,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] INACTIVITY FEE - 39/52,0.00,Fees,Fees,1.00,learned,no
+,[debit] DIM SUM KING 7611 MARKET PKWY LOS ANGELES90001 CA USA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] mortgage payment,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] repairclinic.com 2100 market st columbus43201 oh usa,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Dazn 8213 Elm Rd Queens 11101-7993ny Usa,0.00,Entertainment,Entertainment,0.90,learned,no
+,[debit] EQUITY RESIDENTIAL RENT PAYMENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] asian supermarket 1906 park ave houston 77001-1837tx usa,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] MTG PMT GUARANTEED RATE,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] khan academy,0.00,Education,Education,1.00,learned,no
+,[debit] KHAN ACADEMY*2J0LCHNI33,0.00,Education,Education,1.00,learned,no
+,[debit] Atm Service Charge - 44/19,0.00,Fees,Fees,1.00,learned,no
+,[debit] AMAZON MKTPL*8W9CHMHME,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] CHILD TAX CREDIT 310 FED SAL PPD ID: 561116112,0.00,Income,Income,1.00,learned,no
+,[debit] PAYPAL INST XFER STARBUCKS WEB ID: PAYPALSI66,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] BLUE CROSS 6096 ELM AVE HOUSTON 77001 TX USA,0.00,Insurance,Insurance,0.99,learned,no
+,[debit] subscription payment: kroger,0.00,Groceries,Groceries,0.93,learned,no
+,[debit] PYPL*MISTER CAR WASH,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] sport clips 4172 oak dr atlanta30301 ga usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL INST XFER ZOHO WEB ID: PAYPALSI61,0.00,Subscription,Subscription,0.92,learned,no
+,[debit] COLLEGE OF OAKLAND TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] Official Check Purchased,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PP*APPLE.COM/BILL,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] Zelle payment from CHRISTOPHER DAVIS YFH8C35KOJ6W,0.00,Income,Income,1.00,learned,no
+,[debit] COLLEGE OF RALEIGH TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] TRAVELERS BILLING PPD ID: 1454186982,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] LYFT *TRIP ORLANDO F37JQO,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] STOP PAYMENT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PROVIDENCE HEALTH 8231,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] BLUEMERCURY 9234 PARK WAY CHARLOTTE 28201-3259NC USA,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] APPLEBEE'S*OU4ZLADRE,0.00,Subscription,Subscription,0.77,learned,no
+,[debit] cash app payment to thomas wang,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Withdrawal from DELTA AIR LINES,0.00,Travel,Travel,1.00,learned,no
+,[debit] CHEVRON - SAN DIEGO,0.00,Transportation,Transportation,0.99,learned,no
+,[credit] MUNICIPAL WATER,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] NAVY FEDERAL CU PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] QUIKTRIP 8294,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] MINIMUM BALANCE FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] SPORTS CLIPS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] CASH APP PAYMENT TO DONALD GONZALEZ,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] COSTCO WHSE*WJJMOTT0Z,0.00,Groceries,Groceries,0.99,learned,no
+,[debit] ARCO,0.00,Transportation,Transportation,0.97,learned,no
+,[debit] ATM FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] becu payment,0.00,Mortgage,Mortgage,0.99,learned,no
+,[debit] Lucky #877,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] SUBSTACK.com,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] SPEEDWAY - SAN DIEGO,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] CALIBER HOME LOANSMORTGAGE 78625604 PPD ID: 248743871,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] COMMUNITY COLLEGE OF SACRAMENTO TUITION,0.00,Education,Education,1.00,learned,no
+,[debit] PORTILLO'S 72921060,0.00,Restaurants,Restaurants,0.96,learned,no
+,[debit] GREYSTAR RENT PMT 65730271 WEB ID: FQTQGLXU,0.00,Rent,Rent,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PAYPAL INST XFER PLAYSTATION WEB ID: PAYPALSI27,0.00,Subscription,Subscription,0.82,learned,no
+,[debit] POSTMAN,0.00,Subscription,Subscription,0.97,learned,no
+,[debit] udr inc rent payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] AIMCO MONTHLY RENT PPD ID: 2516958341,0.00,Rent,Rent,1.00,learned,no
+,[credit] Zelle payment from ASHLEY SINGH P1QEW6PELUJU,0.00,Income,Income,1.00,learned,no
+,[debit] WALMART 7631 MINNEAPOLIS,0.00,Shopping,Shopping,1.00,learned,no
+,[credit] Zelle payment from CHRISTOPHER THOMPSON YS604SD34ZAN,0.00,Income,Income,1.00,learned,no
+,[debit] GOOD TO GO REPLENISH,0.00,Transportation,Transportation,0.99,learned,no
+,[credit] PAYPAL INST XFER APPLE TV+ WEB ID: PAYPALSI84,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] phillips 66 6771341,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] Google *calm,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] CENTURY 21 #3369 SAN FRANCISCO,0.00,Shopping,Shopping,0.86,learned,no
+,[debit] 365 MARKET 7055 FREMONT,0.00,Groceries,Groceries,0.87,learned,no
+,[debit] Withdrawal from DAZN,0.00,Entertainment,Entertainment,0.89,learned,no
+,[credit] PAPER STATEMENT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PAYPAL INST XFER PADDLE WEB ID: PAYPALSI33,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] TOPGOLF 4841 ELM WAY LOS ANGELES90001 CA USA,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] TARGET 86850649,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] ATM SERVICE CHARGE,0.00,Fees,Fees,1.00,learned,no
+,[debit] DERMALOGICA 6904,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] CROSSFIT - BROOKLYN,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] marukai 1731 orlando,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Ulta Beauty #146 Sacramento,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Withdrawal from 24 HOUR FITNESS,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] GEMINI MONEYLINK PPD ID: 985059912,0.00,Transfer,Transfer,0.98,learned,no
+,[debit] h-e-b #5548,0.00,Groceries,Groceries,0.59,local model,no
+,[debit] TST*taco spot,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] ACH RETURN FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] SQ *FRUIT STAND,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Bjswhol #511,0.00,Shopping,Shopping,0.67,local model,no
+,[debit] HOMESERVE HOME PREMIUM,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] SOFI MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] DENTAL365 DENTAL OFFICE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] PP*EXPEDIA,0.00,Travel,Travel,1.00,learned,no
+,[debit] BANK OF AMERICA MORTGAGEMORTGAGE 21612067 PPD ID: 043589762,0.00,Mortgage,Mortgage,1.00,learned,no
+,[credit] DOORDASH BV PAYMENTS,0.00,Income,Income,1.00,learned,no
+,[debit] TARGET 52640454,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Related Cos Rent Payment,0.00,Rent,Rent,1.00,learned,no
+,[debit] FANDANGO,0.00,Entertainment,Entertainment,1.00,learned,no
+,[credit] ADOBE INC PAYMENTS PPD ID: 88842842,0.00,Income,Income,1.00,learned,no
+,[debit] QUIKTRIP*PVYVL1684,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] Aqua America 914616,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] SQ *FARMERS MARKET,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] MORTGAGE PAYMENT,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] CERAVE,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] DR. WHITE PHYSICAL THERAPY,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] safeway,0.00,Groceries,Groceries,0.96,learned,no
+,[debit] CHICKFILA,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] PAYPAL *enterprise,0.00,Travel,Travel,0.99,learned,no
+,[debit] MINI GOLF 8342 UNIVERSITY CT ATLANTA 30301 GA USA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] JBG SMITH RENT PMT 01084976 WEB ID: PKQDARHR,0.00,Rent,Rent,1.00,learned,no
+,[debit] LION SUPERMARKET 7241 SEATTLE,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] BLUE BOTTLE #291 ORLANDO,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] RELATED COS RENT PMT 97477859 PPD ID: 461130032,0.00,Rent,Rent,1.00,learned,no
+,[debit] HAND & STONE CORP,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] frontier,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] MUNICIPAL WATER 74924,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] MINI GOLF 8795 ELM ST SEATTLE98101 WA USA,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] SUNRUN ENERGY,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] WITHDRAWAL FROM SPECTRUM PHONE,0.00,Utilities,Utilities,1.00,learned,no
+,[debit] TURO - BROOKLYN,0.00,Travel,Travel,0.96,learned,no
+,[debit] American Home Shield Ins,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] TRADESTATION BROKERAGE TRANSFER,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] ANTHEM BILLING PPD ID: 1224363516,0.00,Insurance,Insurance,1.00,learned,no
+,[debit] PHH MORTGAGE MORTGAGE 97996539 WEB ID: H3OST3F6,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] Subscription Payment: SUBSTACK,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Late Payment Fee,0.00,Fees,Fees,1.00,learned,no
+,[debit] GFL ENVIRONMENTAL 1538 OAK RD NASHVILLE 37201 TN USA,0.00,Utilities,Utilities,0.99,learned,no
+,[debit] BUYER PAYMENT: FRONTIER AIRLINES,0.00,Travel,Travel,1.00,learned,no
+,[debit] PAYPAL INST XFER CHASE CREDIT CRD AUTOPAYWEB ID: PAYPALSI69,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] METLIFE PAYMENT,0.00,Insurance,Insurance,0.97,learned,no
+,[debit] camden property rent pmt 71992277 web id: fbgoj2te,0.00,Rent,Rent,1.00,learned,no
+,[debit] anytime fitness 9971 park ln orlando32801 fl usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] MITSUWA #7042,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] BRILLIANT.ORG,0.00,Education,Education,1.00,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO EQUINOX,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] PAYPAL INST XFER VERCEL WEB ID: PAYPALSI04,0.00,Subscription,Subscription,1.00,learned,no
+,[debit] Express Checkout Payment: Brilliant.org,0.00,Education,Education,1.00,learned,no
+,[credit] BETRIVERS ONLINE,0.00,Entertainment,Entertainment,0.99,learned,no
+,[debit] TIKTOK SHOP,0.00,Shopping,Shopping,0.96,learned,no
+,[debit] HERTZ CO,0.00,Travel,Travel,0.99,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO DOUBLETREE,0.00,Travel,Travel,1.00,learned,no
+,[debit] DR. SINGH FAMILY MEDICINE,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] ralph's 6946 denver,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] Savemart #91 Minneapo,0.00,Groceries,Groceries,1.00,learned,no
+,[debit] TRAVELOCITY,0.00,Travel,Travel,1.00,learned,no
+,[debit] UNITED WHOLESALE ESCROW,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] massage envy 89144,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] CARNIVAL CRUISE BOOKING 26331209,0.00,Travel,Travel,1.00,learned,no
+,[credit] Maa Monthly Rent,0.00,Rent,Rent,1.00,learned,no
+,[debit] EQUITY RESIDENTIAL RENT,0.00,Rent,Rent,1.00,learned,no
+,[debit] CLV*STARBUCKS - RALEIGH,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] HARRISTEET #9646,0.00,Groceries,Groceries,0.77,learned,no
+,[debit] paypal *pypl h-e-b,0.00,Shopping,Shopping,0.90,learned,no
+,[debit] CURSOR.com,0.00,Subscription,Subscription,1.00,learned,no
+,[credit] WALMART 6169 UNION CITY,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] Preauthorized Withdrawal To Travelocity,0.00,Travel,Travel,1.00,learned,no
+,[debit] PP*THAI BASIL,0.00,Restaurants,Restaurants,0.79,learned,no
+,[debit] MOE'S,0.00,Restaurants,Restaurants,0.97,learned,no
+,[debit] Go Kart,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] INTERNATIONAL WIRE TRANSFER,0.00,Transfer,Transfer,0.90,learned,no
+,[debit] AIMCO RENT PMT 27077965 WEB ID: YEPLBH15,0.00,Rent,Rent,1.00,learned,no
+,[debit] la fitness 8768 industrial way hayward 94541-3082ca usa,0.00,Personal Care,Personal Care,1.00,learned,no
+,[credit] SALESFORCE PAYROLL PPD ID: 908580496,0.00,Income,Income,1.00,learned,no
+,[debit] Account Closure Fee,0.00,Fees,Fees,1.00,learned,no
+,[credit] ETSY PAYOUT,0.00,Income,Income,1.00,learned,no
+,[debit] INVITATION HOMES RENT PMT 01990909 WEB ID: S0ZS321H,0.00,Rent,Rent,1.00,learned,no
+,[debit] CEREBRAL TELEHEALTH,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] IMAX 770 BROADWAY ST SEATTLE98101 WA USA,0.00,Entertainment,Entertainment,0.95,learned,no
+,[credit] REMOTE ONLINE DEPOSIT # 3,0.00,Income,Income,1.00,learned,no
+,[debit] TARGET 79291597,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] AMERICAN WATER 4970,0.00,Utilities,Utilities,0.89,learned,no
+,[debit] BETTER MORTGAGE MORTGAGE 96226568 PPD ID: 688034676,0.00,Mortgage,Mortgage,1.00,learned,no
+,[debit] PARKME*WQRCK5CR,0.00,Transportation,Transportation,0.99,learned,no
+,[debit] PP*CHEGG,0.00,Education,Education,0.99,learned,no
+,[debit] WIRE TRANSFER FEE - 41/86,0.00,Fees,Fees,1.00,learned,no
+,[debit] LYFT *TRIP SAN DIEGO QE7U7N,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] cheesecake factory #5530 nashville,0.00,Restaurants,Restaurants,1.00,learned,no
+,[debit] Pypl *livenation,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] CARD REPLACEMENT FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] sonic,0.00,Restaurants,Restaurants,0.75,local model,no
+,[debit] BUMBLE,0.00,Subscription,Subscription,0.64,local model,no
+,[debit] Rite Aid 2549 Center Dr Indianapolis 46201-7103in Usa,0.00,Healthcare,Healthcare,0.89,learned,no
+,[debit] WIRE TRANSFER FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] PAYPAL *betterhelp,0.00,Healthcare,Healthcare,1.00,learned,no
+,[debit] POINTSBET DEPOSIT,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] NATIONWIDE 4387 ELM AVE SALT LAKE CITY 84101-6279UT USA,0.00,,none,0.31,local model,yes
+,[debit] TARGET 75351574,0.00,Shopping,Shopping,1.00,learned,no
+,[debit] ACE PARKING,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] QUICK QUACK,0.00,Transportation,Transportation,1.00,learned,no
+,[debit] GOOGLE ONE,0.00,Subscription,Subscription,0.92,learned,no
+,[debit] Preauthorized Withdrawal To Enterprise,0.00,Travel,Travel,1.00,learned,no
+,[debit] WIRE TRANSFER FEE,0.00,Fees,Fees,1.00,learned,no
+,[debit] VENMO PAYMENT TO WILLIAM CLARK,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] Mini Golf,0.00,Entertainment,Entertainment,1.00,learned,no
+,[debit] Payment Thank You - 2nd A,0.00,Transfer,Transfer,1.00,learned,no
+,[debit] PAYPAL INST XFER INSTAGRAM WEB ID: PAYPALSI10,0.00,Subscription,Subscription,0.99,learned,no
+,[debit] PREAUTHORIZED WITHDRAWAL TO ELEMENTS MASSAGE,0.00,Personal Care,Personal Care,1.00,learned,no
+,[debit] Balance Transfer Fee,0.00,Fees,Fees,1.00,learned,no

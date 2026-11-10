@@ -1,0 +1,3 @@
+{"bytes": 8192, "summary": {"before": {"median_seconds": 0.004654374999999988, "median_rss_bytes": 1015808}, "system": {"median_seconds": 0.004305416999999978, "median_rss_bytes": 1015808}}}
+{"bytes": 8388625, "summary": {"before": {"median_seconds": 0.04951133299999999, "median_rss_bytes": 1048576}, "system": {"median_seconds": 0.01232054199999999, "median_rss_bytes": 1048576}}}
+{"bytes": 134217745, "summary": {"before": {"median_seconds": 0.7204291249999999, "median_rss_bytes": 1048576}, "system": {"median_seconds": 0.11917324999999934, "median_rss_bytes": 1048576}}}

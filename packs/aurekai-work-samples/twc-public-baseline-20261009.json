@@ -1,0 +1,178 @@
+{
+  "schema": "aurekai.wordpress.prospect-observation.v1",
+  "project_ref": "opportunity:twc-website-rfp",
+  "purpose": "Prepare the current WordPress services proposal using actual public source records",
+  "records": [
+    {
+      "collection": "posts",
+      "source": "https://theworkforceconnection.org/wp-json/wp/v2/posts?per_page=5&_fields=id,link,date_gmt,modified_gmt,title",
+      "http_status": 200,
+      "public_record_total": 84,
+      "observed_at": "2026-10-09T05:28:35.160Z",
+      "sample_count": 5,
+      "body_sha256": "fb4b3a12172bba578e92523c5033c5c97ca9eb3246319cc9356ac57dc0f559ed",
+      "records": [
+        {
+          "id": 21486,
+          "date_gmt": "2026-09-21T19:25:40",
+          "modified_gmt": "2026-10-01T16:56:02",
+          "link": "https://theworkforceconnection.org/rfps-website-services/",
+          "title": {
+            "rendered": "RFP Open: Request for Proposals &#8211; Website Services 2026"
+          }
+        },
+        {
+          "id": 20953,
+          "date_gmt": "2026-06-17T18:49:07",
+          "modified_gmt": "2026-06-17T18:50:54",
+          "link": "https://theworkforceconnection.org/internship-journey-teba/",
+          "title": {
+            "rendered": "A Foundation For The Future: Teba&#8217;s Internship Journey"
+          }
+        },
+        {
+          "id": 20942,
+          "date_gmt": "2026-06-17T18:28:00",
+          "modified_gmt": "2026-06-17T18:51:30",
+          "link": "https://theworkforceconnection.org/workexperience-internship-zaria/",
+          "title": {
+            "rendered": "The Power of Opportunity: Zaria Shared Her Story"
+          }
+        },
+        {
+          "id": 20935,
+          "date_gmt": "2026-06-17T18:20:23",
+          "modified_gmt": "2026-06-17T18:20:24",
+          "link": "https://theworkforceconnection.org/board-member-retirement/",
+          "title": {
+            "rendered": "Honoring Karen Brown&#8217;s Years of Service"
+          }
+        },
+        {
+          "id": 20928,
+          "date_gmt": "2026-06-17T18:09:14",
+          "modified_gmt": "2026-06-17T18:09:15",
+          "link": "https://theworkforceconnection.org/internship-success-jada/",
+          "title": {
+            "rendered": "Setting the Foundation for Success: Jada&#8217;s Internship Journey"
+          }
+        }
+      ]
+    },
+    {
+      "collection": "pages",
+      "source": "https://theworkforceconnection.org/wp-json/wp/v2/pages?per_page=5&_fields=id,link,date_gmt,modified_gmt,title",
+      "http_status": 200,
+      "public_record_total": 41,
+      "observed_at": "2026-10-09T05:28:35.571Z",
+      "sample_count": 5,
+      "body_sha256": "de7313ca053981078ba0b105696e235fda43bb0abaee19f3d21d3dbfd6f64c3e",
+      "records": [
+        {
+          "id": 19680,
+          "date_gmt": "2026-04-10T20:05:06",
+          "modified_gmt": "2026-04-10T20:12:37",
+          "link": "https://theworkforceconnection.org/about-us-2/",
+          "title": {
+            "rendered": "About Us"
+          }
+        },
+        {
+          "id": 17523,
+          "date_gmt": "2025-09-26T17:06:31",
+          "modified_gmt": "2026-03-25T20:35:13",
+          "link": "https://theworkforceconnection.org/launch-your-career-in-clean-energy-free-training-2/",
+          "title": {
+            "rendered": "Launch Your Career in Clean Energy &#8211; Free Training"
+          }
+        },
+        {
+          "id": 15639,
+          "date_gmt": "2025-04-09T20:27:43",
+          "modified_gmt": "2026-03-19T16:21:28",
+          "link": "https://theworkforceconnection.org/jobs-board/jobs-board-terms-and-conditions/",
+          "title": {
+            "rendered": "Jobs Board Terms and Conditions"
+          }
+        },
+        {
+          "id": 14726,
+          "date_gmt": "2025-01-03T19:37:17",
+          "modified_gmt": "2026-09-04T02:22:50",
+          "link": "https://theworkforceconnection.org/equal_opportunity/",
+          "title": {
+            "rendered": "Equal Opportunity"
+          }
+        },
+        {
+          "id": 7065,
+          "date_gmt": "2022-05-27T22:55:05",
+          "modified_gmt": "2026-03-19T13:36:42",
+          "link": "https://theworkforceconnection.org/board/board-application/",
+          "title": {
+            "rendered": "Apply to Become a Board Member"
+          }
+        }
+      ]
+    },
+    {
+      "collection": "media",
+      "source": "https://theworkforceconnection.org/wp-json/wp/v2/media?per_page=5&_fields=id,link,date_gmt,modified_gmt,title",
+      "http_status": 200,
+      "public_record_total": 1522,
+      "observed_at": "2026-10-09T05:28:36.102Z",
+      "sample_count": 5,
+      "body_sha256": "f05e40da7d56decb1094aa8618c860f6af54f06caf650ca1378f1f2f675f8101",
+      "records": [
+        {
+          "id": 21575,
+          "date_gmt": "2026-10-06T12:45:03",
+          "modified_gmt": "2026-10-06T12:45:03",
+          "link": "https://theworkforceconnection.org/job/syngenta-malta-illinois-temporary-genotyping-lab-technician/genotyping-lab-technician/",
+          "title": {
+            "rendered": "Genotyping Lab Technician"
+          }
+        },
+        {
+          "id": 21569,
+          "date_gmt": "2026-10-05T14:41:11",
+          "modified_gmt": "2026-10-05T14:41:11",
+          "link": "https://theworkforceconnection.org/job/community-building-complex-of-boone-county-community-building-111-w-first-street-belvidere-part-time-part-time-custodian-light-maintenance/part-time-custodian-light-maintenance/",
+          "title": {
+            "rendered": "Part-Time Custodian/Light Maintenance"
+          }
+        },
+        {
+          "id": 21552,
+          "date_gmt": "2026-10-01T16:53:26",
+          "modified_gmt": "2026-10-01T16:53:26",
+          "link": "https://theworkforceconnection.org/rfp_website-services_original-and-amendment-1/",
+          "title": {
+            "rendered": "RFP_Website Services_Original and Amendment 1"
+          }
+        },
+        {
+          "id": 21551,
+          "date_gmt": "2026-10-01T16:53:24",
+          "modified_gmt": "2026-10-01T16:53:24",
+          "link": "https://theworkforceconnection.org/website-services-rfp_twc_amendment-1/",
+          "title": {
+            "rendered": "Website Services RFP_TWC_Amendment 1"
+          }
+        },
+        {
+          "id": 21534,
+          "date_gmt": "2026-09-30T22:24:24",
+          "modified_gmt": "2026-09-30T22:24:24",
+          "link": "https://theworkforceconnection.org/rfp-website-qa/",
+          "title": {
+            "rendered": "RFP Website Q&#038;A"
+          }
+        }
+      ]
+    }
+  ],
+  "site_writes": 0,
+  "private_records": 0,
+  "does_not_establish": "Private administrative inventory, performance diagnosis, accessibility compliance or awarded work."
+}

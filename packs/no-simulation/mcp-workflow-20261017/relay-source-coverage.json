@@ -1,0 +1,35 @@
+{
+  "head": "173d984a8e952d46f50aef9dbd3e9438be38ab8b",
+  "paths": [
+    {
+      "path": "integrations/mcp/fabric_server.mjs",
+      "current_sha256": "295e0de1ca77f22451b2c87114d7fb967bc41188142cada748a4f7059f2f584e",
+      "current_bytes": 12392,
+      "exists_in_head": false,
+      "matches_head": false
+    },
+    {
+      "path": "integrations/mcp/fabric_store.mjs",
+      "current_sha256": "47e303f4ff9f220f3e81d6d2cb3b8ed118ffbb4b4cf9f61506b55606d0cbcf81",
+      "current_bytes": 23615,
+      "exists_in_head": false,
+      "matches_head": false
+    },
+    {
+      "path": "integrations/mcp/fabric_work.mjs",
+      "current_sha256": "53f61f8befb7a8aa3f914aa29696a0273fd7f87a2605d240b919bce7a648f21c",
+      "current_bytes": 37850,
+      "exists_in_head": false,
+      "matches_head": false
+    },
+    {
+      "path": "integrations/mcp/fabric_catalog.json",
+      "current_sha256": "d5dc9eb5c246e7e382fe43d88f7b0fabe70bbed79d2af33e0fe2cbfeef184bcc",
+      "current_bytes": 9569,
+      "exists_in_head": false,
+      "matches_head": false
+    }
+  ],
+  "finding": "The relay creates its isolated worktree from the configured commit. Selected current files missing from that commit require explicit admitted source coverage before the model can work against them.",
+  "next_scope": "Add bounded explicit source-path admission and retained hashes through the existing worktree owner; keep the project index untouched and preserve guarded apply preconditions."
+}

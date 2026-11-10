@@ -1,0 +1,1 @@
+WITH margins(bp) AS (VALUES(1000),(2000),(2500),(3000),(4000)) SELECT 2000000 target_contribution_cents,bp net_contribution_rate_bp,CAST(ceil(2000000*10000.0/bp) AS BIGINT) required_sales_cents,'hypothetical_rate_not_measured' basis FROM margins;

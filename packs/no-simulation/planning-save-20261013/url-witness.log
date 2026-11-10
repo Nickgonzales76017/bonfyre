@@ -1,0 +1,12 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreWebAddress/tests/url_review.test.mjs:
+(pass) a pasted URL opens a review without inventing a discovery candidate or fetching its body [626.94ms]
+(pass) candidate coordinates retain their exact-pair check and invalid URLs get no observation form [529.64ms]
+(pass) sign-in preserves the complete review URL across success, failure and no-script referral [771.16ms]
+(pass) the authorized review form reaches the native observer and retains the selected body [529.38ms]
+
+ 4 pass
+ 0 fail
+ 42 expect() calls
+Ran 4 tests across 1 file. [2.88s]

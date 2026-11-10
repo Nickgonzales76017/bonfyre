@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Source-linked Dallas City Council agenda and video reconciliation. Review exact file-number joins, official indexed playback, evidence boundaries and publication changes.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://nickgonzales76017.github.io/pages-town-box/civic-council/">
+<link rel="stylesheet" href="./studio.css">
+<title>Dallas Council Media Workbench · Town in a Box · Bonfÿre</title>
+<script defer src="./studio.js"></script>
+</head>
+<body>
+<a class="skip" href="#records">Skip to meeting workbench</a>
+<div class="page-shell">
+  <nav class="global-nav" aria-label="Product navigation">
+    <a href="../" class="mark" aria-label="Return to Town in a Box"><span class="mark-square">T</span><span>TOWN <small>IN A BOX</small></span></a>
+    <span class="nav-divider" aria-hidden="true"></span>
+    <span class="nav-section">COUNCIL MEDIA</span>
+    <div class="nav-links">
+      <a href="../">Town board</a>
+      <a href="./media-room/">Media Room <span aria-hidden="true">↗</span></a>
+      <a href="https://nickgonzales76017.github.io/pages-procurement-memory/brief-studio/" rel="noopener noreferrer">Brief Studio <span aria-hidden="true">↗</span></a>
+      <a href="https://aurekai-work-samples.pages.dev/" rel="noopener noreferrer">Aurekai samples <span aria-hidden="true">↗</span></a>
+      <a href="https://docs.aurekai.work/" rel="noopener noreferrer">System guides <span aria-hidden="true">↗</span></a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="eyebrow-led"></span> SOURCE-LINKED CIVIC INTELLIGENCE <span class="eyebrow-date">DALLAS · SEPT 23, 2026</span></div>
+      <h1>Every agenda item.<br><em>Its actual place</em> in the record.</h1>
+      <p>Reconcile official council agenda files against the recorded meeting's chapter index. Follow the exact source, identify gaps and changes, prepare a review, and carry a cited brief forward. No invented votes. No downloaded video. No hidden task completion.</p>
+      <div class="hero-links">
+        <a class="primary-link" href="#records">Explore meeting <span aria-hidden="true">↗</span></a>
+        <a class="secondary-link" href="#compare">Import a newer source cut <span aria-hidden="true">↓</span></a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-label">ONE MEETING · TWO OFFICIAL SOURCES</div>
+      <svg viewBox="0 0 470 265" role="img">
+        <defs>
+          <linearGradient id="trace" x1="0" x2="1"><stop stop-color="#a3e8c2"/><stop offset="1" stop-color="#dbb97f"/></linearGradient>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.8" fill="#547467" opacity=".28"/></pattern>
+        </defs>
+        <rect x="0" y="0" width="470" height="265" fill="url(#dots)"/>
+        <path d="M20 47H448M20 128H448M20 213H448" stroke="#2c3d35" stroke-width="1"/>
+        <text x="22" y="33" fill="#9ea99e" font-size="11" letter-spacing="2">LEGISTAR · OFFICIAL AGENDA</text>
+        <text x="22" y="113" fill="#9ea99e" font-size="11" letter-spacing="2">SWAGIT · CHAPTER INDEX</text>
+        <g fill="#bbdcc8">
+          <rect x="25" y="57" width="36" height="9" rx="2"/><rect x="72" y="57" width="36" height="9" rx="2"/>
+          <rect x="119" y="57" width="36" height="9" rx="2"/><rect x="166" y="57" width="36" height="9" rx="2"/>
+          <rect x="213" y="57" width="36" height="9" rx="2"/><rect x="260" y="57" width="36" height="9" rx="2"/>
+          <rect x="307" y="57" width="36" height="9" rx="2"/><rect x="354" y="57" width="36" height="9" rx="2"/>
+          <rect x="401" y="57" width="36" height="9" rx="2"/>
+        </g>
+        <g stroke="url(#trace)" stroke-width="1.5" stroke-dasharray="3 4" opacity=".7">
+          <path d="M43 72V137"/><path d="M90 72V137"/><path d="M137 72V137"/>
+          <path d="M184 72V137"/><path d="M231 72V137"/><path d="M325 72V137"/>
+        </g>
+        <g fill="#e6c08d">
+          <circle cx="43" cy="142" r="5"/><circle cx="90" cy="142" r="5"/><circle cx="137" cy="142" r="5"/>
+          <circle cx="184" cy="142" r="5"/><circle cx="231" cy="142" r="5"/><circle cx="325" cy="142" r="5"/>
+        </g>
+        <g fill="#2b473c" stroke="#657d68"><circle cx="278" cy="142" r="4"/><circle cx="372" cy="142" r="4"/><circle cx="419" cy="142" r="4"/></g>
+        <text x="22" y="185" fill="#d1e2d0" font-size="13">Exact file identity, not guessed text similarity.</text>
+        <text x="22" y="232" fill="#87a395" font-size="12">↳ Every line returns to its own original source.</text>
+      </svg>
+      <div class="art-footer"><span>JOIN COORDINATE</span><code>26-XXXXA</code><span>RETAIN SOURCE ID</span></div>
+    </div>
+  </header>
+
+  <section class="metrics" aria-label="Retained records">
+    <div class="metric"><span>OFFICIAL AGENDA ITEMS</span><strong id="statAgenda">—</strong><small>Published occurrence records</small></div>
+    <div class="metric"><span>INDEXED CHAPTERS</span><strong id="statVideo">—</strong><small>Stored official video links</small></div>
+    <div class="metric"><span>EXACT JOINS</span><strong id="statMatched">—</strong><small>Matching official file numbers</small></div>
+    <div class="metric metric-gap"><span>UNINDEXED HERE</span><strong id="statGap">—</strong><small>Absence in retained snapshot only</small></div>
+  </section>
+  <div class="lineage-banner">
+    <div><span class="bullet"></span><b id="sourceCaption">Loading native source snapshot…</b></div>
+    <div>Earlier provider inspection: <b>26 chapters / 22 file-number joins</b> · CMS retained: <b>21 video rows</b> · <a href="#compare">Review the outstanding difference ↗</a></div>
+  </div>
+
+  <main id="records" class="workspace" aria-label="Civic meeting workbench">
+    <section class="records-panel" aria-label="Meeting records">
+      <div class="section-top">
+        <div><div class="section-kicker">01 / MEETING INDEX</div><h2>Follow the file number.</h2><p>Search by docket number or agenda language, then open the exact official video start.</p></div>
+        <span class="section-icon">↗</span>
+      </div>
+      <div class="search-wrap">
+        <label for="recordSearch">Search this meeting</label>
+        <input id="recordSearch" type="search" placeholder="File number, hearing, street, subject…" autocomplete="off">
+      </div>
+      <div class="filters" id="filterButtons" aria-label="Filter records">
+        <button type="button" data-filter="all" class="active">All</button>
+        <button type="button" data-filter="matched">Video indexed</button>
+        <button type="button" data-filter="unindexed">Agenda only</button>
+        <button type="button" data-filter="changed">Changed</button>
+        <button type="button" data-filter="reviewed">Reviewed here</button>
+      </div>
+      <div class="record-list-meta"><span id="resultsCount" aria-live="polite">Loading records…</span><span>OFFICIAL FILE IDENTITIES</span></div>
+      <div id="recordList" class="record-list" aria-live="polite"></div>
+      <div class="timeline-box">
+        <div class="timeline-heading"><span>RECORDING INDEX TIMELINE</span><span>Choose a marker</span></div>
+        <div id="timeline" class="timeline"></div>
+      </div>
+    </section>
+
+    <aside class="detail-panel" aria-label="Source lineage and review">
+      <div class="section-top detail-heading">
+        <div><div class="section-kicker">02 / EVIDENCE & ACTION</div><h2>Read the source. Decide the next check.</h2></div>
+        <span class="section-icon">◎</span>
+      </div>
+      <div id="details" class="detail-content"><p class="empty">Choose a record.</p></div>
+      <div class="review-module">
+        <div class="module-heading"><h3>Review state</h3><span>Local draft</span></div>
+        <label for="reviewStatus">Reviewer classification</label>
+        <select id="reviewStatus">
+          <option value="needs-review">Needs exact review</option>
+          <option value="monitor">Monitor this file</option>
+          <option value="research">Research follow-up</option>
+          <option value="ready-for-operator">Ready for operator assessment</option>
+          <option value="reviewed-source-only">Source reviewed, no action inferred</option>
+        </select>
+        <label for="reviewNote">What still needs checking?</label>
+        <textarea id="reviewNote" rows="3" maxlength="900" placeholder="Describe the missing record, question, or changed chapter coordinate."></textarea>
+        <div class="action-row">
+          <button type="button" id="saveReview" class="action-button">Hold review draft</button>
+          <button type="button" id="openSelectedVideo" class="outline-button">Official player ↗</button>
+        </div>
+        <p class="policy-caption">Draft remains in this browser session. It is not sent to a council office, CMS, operator queue or agency.</p>
+      </div>
+      <div class="review-module proof-module">
+        <div class="module-heading"><h3>Verification requirements</h3><span>Proposal only</span></div>
+        <div class="field-grid">
+          <div><label for="proofKind">Required evidence</label><select id="proofKind">
+            <option value="provenance">Source provenance</option><option value="rights">Rights / recording use</option>
+            <option value="identity">Actor identity</option><option value="tax">Tax or funding record</option>
+            <option value="geometry">Place and geometry</option><option value="consent">Consent / authority</option>
+            <option value="delivery">Service delivery</option><option value="ownership">Property ownership</option>
+          </select></div>
+          <div><label for="proofMethod">Proposed method</label><select id="proofMethod">
+            <option value="desk">Official desk review</option><option value="owner">Source-owner confirmation</option>
+            <option value="remote-live">Live remote verification</option><option value="field">Field inspection</option>
+            <option value="licensed">Qualified professional</option>
+          </select></div>
+        </div>
+        <button id="addProof" type="button" class="outline-button full">Add requirement to review packet +</button>
+        <div id="proofList" class="proof-list"><p class="minor">No requests drafted.</p></div>
+        <p class="policy-caption">No provider is booked, no cost is quoted and no legal/title conclusion is made.</p>
+      </div>
+    </aside>
+  </main>
+
+  <section id="compare" class="lower-section compare-section">
+    <div class="section-top"><div><div class="section-kicker">03 / CHANGE FRONTIER</div><h2>What changed since this source was retained?</h2>
+      <p>Import a newer bounded TSV cut with the same official-source columns. New records, moved timestamps, changed claims and missing records are review candidates, not automatically promoted.</p></div><span class="section-icon">△</span></div>
+    <div class="compare-grid">
+      <div class="import-panel">
+        <label for="candidateFile">Import a newer official observation export (.tsv)</label>
+        <input id="candidateFile" type="file" accept=".tsv,.txt,text/tab-separated-values,text/plain">
+        <p>Exact columns: kind, file, title, href, source, receipt, observed, rights, assertion. Official URLs and receipt coordinates are validated; imported assertions are still unverified.</p>
+        <button type="button" id="resetCandidate" class="outline-button">Restore published snapshot ↶</button>
+        <div id="candidateResult" class="candidate-result">No candidate imported.</div>
+      </div>
+      <div class="diff-panel"><h3>Differences requiring review</h3><div id="changeList"><p class="minor">No imported candidate.</p></div></div>
+    </div>
+  </section>
+
+  <section id="brief" class="lower-section brief-section">
+    <div class="section-top"><div><div class="section-kicker">04 / RESEARCH BRIEF COMPOSER</div><h2>One original record. Different useful readings.</h2>
+      <p>Compose a recipient-specific, source-linked brief from the selected file, its actual index status and the checks you proposed. This is a recoverable reading—not a copied source of truth.</p></div><span class="section-icon">⌘</span></div>
+    <div class="brief-grid">
+      <div class="brief-controls">
+        <label for="briefAudience">Who is reading?</label>
+        <select id="briefAudience">
+          <option value="Council staff briefing">Council staff</option>
+          <option value="Resident issue briefing">Resident / neighborhood</option>
+          <option value="Media and civic researcher briefing">Media / researcher</option>
+          <option value="Operator verification handoff">Operations verifier</option>
+        </select>
+        <label class="check-line"><input id="includeCitations" type="checkbox" checked> Include official source links and receipts</label>
+        <label class="check-line"><input id="includeGaps" type="checkbox" checked> Disclose unresolved inferences and source gaps</label>
+        <label class="check-line"><input id="includeProof" type="checkbox" checked> Include drafted verification work</label>
+        <div class="action-stack">
+          <a id="handoffStudio" class="outline-button full" href="https://nickgonzales76017.github.io/pages-procurement-memory/brief-studio/" rel="noopener noreferrer">Continue this file in Brief Studio ↗</a>
+          <button type="button" class="action-button full" id="downloadBrief">Export selected brief (.md) ↗</button>
+          <button type="button" class="outline-button full" id="exportReviews">Export review + verification packet (.tsv)</button>
+          <button type="button" class="quiet-button" id="printBrief">Print this reading</button>
+        </div>
+        <p class="policy-caption">Exported proposals require owner review before any native WorkGraph, evidence admission or public publication. Nothing is dispatched by these buttons.</p>
+      </div>
+      <div class="brief-paper">
+        <div class="paper-label"><span>COMPILED READING</span><span>LIVE PREVIEW · LOCAL</span></div>
+        <pre id="briefPreview" aria-live="polite">Select a source record to compose its briefing.</pre>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer"><div><strong>TOWN IN A BOX <span>×</span> BONFŸRE</strong><p>Public meeting records remain the property of their publishers; this independent research workbench makes no official finding.</p></div>
+    <div class="foot-links"><a href="../">Town Board</a><a href="https://aurekai.work/studio/">Native Institution Studio ↗</a><a href="https://docs.aurekai.work/">System guides ↗</a></div>
+  </footer>
+</div>
+<div id="message" role="status" aria-live="polite" class="message">Loading source records…</div>
+</body>
+</html>

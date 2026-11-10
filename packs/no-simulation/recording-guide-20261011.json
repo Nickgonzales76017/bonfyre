@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-10-12T01:21:29.778Z",
+  "guide": "docs/experiences/recording-to-workspace.md",
+  "guide_sha256": "03312f21629c26aab854660409d5ff06f407cd24009e07604706d4d3d0e0ea61",
+  "execution": "All four sh Terminal blocks extracted verbatim and executed in order under sh -eu; exit 0.",
+  "source": {
+    "page": "https://science.nasa.gov/asset/webb/composing-webb-telescope-images/",
+    "video": "https://assets.science.nasa.gov/content/dam/science/missions/webb/outreach/migrated/2023/STScI-01H70FA581K8JD844S42M4DWY8.mp4",
+    "credit": "NASA, ESA, CSA and the Space Telescope Science Institute",
+    "speakers": [
+      "Joseph DePasquale",
+      "Alyssa Pagan"
+    ],
+    "duration_seconds": 360.404,
+    "viewing_copy_bytes": 10814755,
+    "recording_sha256": "dfe81327e985031a6f24b4ad4c4b150d9744c86b7a4fc43f9ca15cd3a64fecb9"
+  },
+  "import": {
+    "schema": "bonfyre.recording-import.v1",
+    "created_at": "2026-10-12T01:14:38.589Z",
+    "recording_sha256": "dfe81327e985031a6f24b4ad4c4b150d9744c86b7a4fc43f9ca15cd3a64fecb9",
+    "transcript_sha256": "1be7710659d33b04d22eaec1c1431835fc0e5939a365613076b7efe863512c8c",
+    "segments": 60,
+    "recognized_segments": 95,
+    "duration_ms": 360404,
+    "review": "unreviewed",
+    "language": "en",
+    "model": "base",
+    "source_system": "BonfyreTranscribe",
+    "text_accuracy_verified": false
+  },
+  "comparison": {
+    "reference_words": 1066,
+    "recognized_words": 1068,
+    "word_edits": 39,
+    "word_error_rate": 0.036585365853658534,
+    "normalization": "lowercase alphanumeric/apostrophe words; VTT timing and bracketed music cues excluded",
+    "reference_url": "https://assets.science.nasa.gov/content/dam/science/missions/webb/outreach/migrated/2023/STScI-01H70FA581K8JD844S42M4DWY8.mp4/jcr:content/renditions/Captions.vtt"
+  },
+  "index": {
+    "fingerprint": "008e5e56bbcbc3a42cf5e3cfd00cb1eb3d57b9b7820ed964881e49ba13ef60be",
+    "passages": 60,
+    "embedding_tasks": "nomic-search-v1",
+    "backend": "onnx-runtime-native"
+  },
+  "browser_witness": "packs/no-simulation/recording-workspace-20261011/browser-verification.json",
+  "screenshots": [
+    "packs/no-simulation/recording-workspace-20261011/desktop.png",
+    "packs/no-simulation/recording-workspace-20261011/mobile.png"
+  ],
+  "visual_review": "Desktop and mobile screenshots inspected after correcting transcript scroll position on viewport resize.",
+  "tests": [
+    {
+      "command": "bun test components/BonfyreServiceSite/tests/documents-recording.test.mjs components/BonfyreServiceSite/tests/documents.test.mjs",
+      "result": "8 pass, 68 assertions; subsequent prefix change also passed the four document-owner tests and both browser suites"
+    },
+    {
+      "command": "bun components/BonfyreServiceSite/tests/documents-recording-browser.test.mjs",
+      "result": "PASS: media decode/seek, timed notes at different passages, reload, removal, browser/server restart, no browser exceptions"
+    },
+    {
+      "command": "bun components/BonfyreServiceSite/tests/documents-browser.test.mjs",
+      "result": "PASS: search, source reading, saved notes, stale-tab refusal, removal/restart and responsive widths"
+    },
+    {
+      "command": "bun components/BonfyreServiceSite/tests/documents-public-recording.witness.mjs http://127.0.0.1:8927 packs/no-simulation/recording-workspace-20261011",
+      "result": "PASS: full six-minute video, three first-ranked answers, playback after minutes two/four/five, visible transcript following, saved citation reload, invalid input, empty exact search and widths 320–1440"
+    }
+  ],
+  "sources": {
+    "components/BonfyreServiceSite/document-recording.mjs": "adae8e29fd14d846e784c83e51239aa987771e7b1ae7a4f7f292be216458b149",
+    "components/BonfyreServiceSite/document-workspace.mjs": "b6607b1610957e38feebb5a523938651e608bfadd2703f4eb7c01b45fada60a2",
+    "components/BonfyreServiceSite/document-client.mjs": "bee09f0948c61fb359c90de0847190b6dc0e347505baf8799591022ed8d23cdf",
+    "components/BonfyreServiceSite/document-workspace.css": "b64ae992fde148f4f3556e64ad0ef3c4795c0c93f2b46ff6c1ef6bb3da6d764e",
+    "components/BonfyreServiceSite/site.mjs": "c39a18914786008713ec757656e3e7504af6a077fd8ad99680b9bdbd5fea323d",
+    "cmd/BonfyreTranscribe/bonfyre-transcribe": "c96820b5755c2ddc39d3fd4f135fafda27b02cdfd9c15aa98916047ec4bf7456"
+  },
+  "local_preview": "http://127.0.0.1:8927/",
+  "docs_preview": "http://docs-review.localhost:8913/recording-to-workspace",
+  "scope": "One complete real six-minute recording, current local native models and fresh desktop/mobile Chromium sessions. ASR wording was compared with the publisher captions; the comparison is retained separately from the source transcript. No remote deployment or outreach dispatch."
+}

@@ -1,0 +1,10 @@
+FAIL: failure leaves no digest
+FAIL: /tmp/bonfyre-sha256-AC4Uar
+FAIL: failure leaves no digest
+FAIL: :read-error
+FAIL: failure leaves no digest
+FAIL: :partial-error
+FAIL: failure leaves no digest
+FAIL: :close-error
+FAIL: failure leaves no digest
+sha256 file: 18 checks, 9 failures

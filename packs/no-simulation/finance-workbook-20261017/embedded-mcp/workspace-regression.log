@@ -1,0 +1,17 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/workspace_mcp.test.mjs:
+(pass) the account MCP directory and native UI resolve the same installed products [340.23ms]
+(pass) exact records retain source hashes and compatible cross-product links [506.61ms]
+(pass) preview changes nothing; confirmed native save reopens in the other product and retains media [423.98ms]
+(pass) stale previews, altered confirmation and read-only accounts cannot overwrite drafts [590.12ms]
+(pass) scope, file-reference, field-shape and bounds refusals precede writes [284.78ms]
+(pass) revocation between preview and commit and inactive bindings are checked by native owners [366.70ms]
+(pass) a lost response after a real native commit preserves its request identity and never repeats the write [155.70ms]
+(pass) audio and recurring-program drafts use the same account carrier and their own record families [2072.72ms]
+(pass) personal and household destinations keep their own access even for a Bonfyre administrator [1223.84ms]
+
+ 9 pass
+ 0 fail
+ 94 expect() calls
+Ran 9 tests across 1 file. [10.06s]

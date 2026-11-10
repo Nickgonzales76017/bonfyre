@@ -1,0 +1,15 @@
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../lib/libbonfyre
+make[1]: Nothing to be done for `all'.
+cc -O2 -Wall -Wextra -std=c11 -I../../lib/libbonfyre/include -o bonfyre-ingest src/main.c ../../lib/libbonfyre/libbonfyre.a 
+bun test tests/hash.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/hash.test.mjs:
+(pass) text, table and raw intake retain independently verified source and normalized digests [275.44ms]
+(pass) absent and directory inputs cannot publish a ready intake [5.98ms]
+(pass) partial source or normalized hash failure cannot publish ready manifests [178.80ms]
+
+ 3 pass
+ 0 fail
+ 47 expect() calls
+Ran 3 tests across 1 file. [848.00ms]

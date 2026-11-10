@@ -1,0 +1,95 @@
+{
+ "source": {
+  "url": "https://aurekai.life/studio/",
+  "fetched_at": "2026-10-19T15:57:55.307Z",
+  "status": 200,
+  "sha256": "5c6bf3660b2a1f46f7b9a8dbce325dcecc98e0933eba2b78f0ddcc24ba12e78b"
+ },
+ "capabilities": [
+  {
+   "id": "parcel-underwrite",
+   "what": "Per-city land and exit anchors computed from the receipted DFW parcel estate",
+   "answer": {
+    "status": 503,
+    "body": {
+     "error": "not_for_sale",
+     "reason": "this capability has no sell price in the service book",
+     "inquiry": {
+      "url": "https://aurekai-work-samples.pages.dev/#ask",
+      "method": "human_reviewed_web_form",
+      "grants_execution": false
+     }
+    },
+    "at": "2026-10-19T15:57:55.068Z"
+   }
+  },
+  {
+   "id": "owner-concentration",
+   "what": "Parcel counts by taxpayer name of record, above a disclosure floor",
+   "answer": {
+    "status": 503,
+    "body": {
+     "error": "not_for_sale",
+     "reason": "this capability has no sell price in the service book",
+     "inquiry": {
+      "url": "https://aurekai-work-samples.pages.dev/#ask",
+      "method": "human_reviewed_web_form",
+      "grants_execution": false
+     }
+    },
+    "at": "2026-10-19T15:57:55.122Z"
+   }
+  },
+  {
+   "id": "estate-coverage",
+   "what": "Row and page coverage per observed public source, with page digests",
+   "answer": {
+    "status": 503,
+    "body": {
+     "error": "not_for_sale",
+     "reason": "this capability has no sell price in the service book",
+     "inquiry": {
+      "url": "https://aurekai-work-samples.pages.dev/#ask",
+      "method": "human_reviewed_web_form",
+      "grants_execution": false
+     }
+    },
+    "at": "2026-10-19T15:57:55.196Z"
+   }
+  },
+  {
+   "id": "frappe-schema",
+   "what": "Compiled schema IR for one installed Frappe lineage",
+   "answer": {
+    "status": 503,
+    "body": {
+     "error": "not_for_sale",
+     "reason": "this capability has no sell price in the service book",
+     "inquiry": {
+      "url": "https://aurekai-work-samples.pages.dev/#ask",
+      "method": "human_reviewed_web_form",
+      "grants_execution": false
+     }
+    },
+    "at": "2026-10-19T15:57:55.254Z"
+   }
+  },
+  {
+   "id": "route-frontier",
+   "what": "Cheapest source this estate has proven it can read for a named need, with the frontier it was chosen from, what it avoided, and a freshness verdict",
+   "answer": {
+    "status": 503,
+    "body": {
+     "error": "not_for_sale",
+     "reason": "this capability has no sell price in the service book",
+     "inquiry": {
+      "url": "https://aurekai-work-samples.pages.dev/#ask",
+      "method": "human_reviewed_web_form",
+      "grants_execution": false
+     }
+    },
+    "at": "2026-10-19T15:57:55.307Z"
+   }
+  }
+ ]
+}

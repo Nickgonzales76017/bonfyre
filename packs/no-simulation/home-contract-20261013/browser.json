@@ -1,0 +1,199 @@
+{
+  "at": "2026-10-13T20:17:48.526Z",
+  "checks": [
+    {
+      "width": 1440,
+      "territory": "life",
+      "title": "Bonf\u00ffre \u2014 the workshop",
+      "body": "life",
+      "overflow": 0,
+      "canonical": "https://aurekai.life/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "live",
+      "title": "Bonf\u00ffre \u2014 in the open",
+      "body": "live",
+      "overflow": 0,
+      "canonical": "https://aurekai.live/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "shop",
+      "title": "Bonf\u00ffre \u2014 the market",
+      "body": "shop",
+      "overflow": 0,
+      "canonical": "https://aurekai.shop/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 1440,
+      "territory": "work",
+      "title": "Bonf\u00ffre \u2014 the institution",
+      "body": "work",
+      "overflow": 0,
+      "canonical": "https://aurekai.work/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 1440,
+      "intakePrepared": true,
+      "urlPreserved": true,
+      "remoteBodyFetched": false
+    },
+    {
+      "width": 1440,
+      "studioReview": true,
+      "signInContinuationPreserved": true,
+      "anonymousObservationUnavailable": true
+    },
+    {
+      "width": 390,
+      "territory": "life",
+      "title": "Bonf\u00ffre \u2014 the workshop",
+      "body": "life",
+      "overflow": 0,
+      "canonical": "https://aurekai.life/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "live",
+      "title": "Bonf\u00ffre \u2014 in the open",
+      "body": "live",
+      "overflow": 0,
+      "canonical": "https://aurekai.live/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "shop",
+      "title": "Bonf\u00ffre \u2014 the market",
+      "body": "shop",
+      "overflow": 0,
+      "canonical": "https://aurekai.shop/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 390,
+      "territory": "work",
+      "title": "Bonf\u00ffre \u2014 the institution",
+      "body": "work",
+      "overflow": 0,
+      "canonical": "https://aurekai.work/",
+      "forms": [
+        {
+          "action": "/_surface/external-estate",
+          "method": "get",
+          "button": true
+        },
+        {
+          "action": "/_surface/intake",
+          "method": "get",
+          "button": true
+        }
+      ],
+      "weather": "1 available carrier \u00b7 public observation only"
+    },
+    {
+      "width": 390,
+      "intakePrepared": true,
+      "urlPreserved": true,
+      "remoteBodyFetched": false
+    },
+    {
+      "width": 390,
+      "studioReview": true,
+      "signInContinuationPreserved": true,
+      "anonymousObservationUnavailable": true
+    }
+  ],
+  "errors": [],
+  "serverWorkers": 4
+}

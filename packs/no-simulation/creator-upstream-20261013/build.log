@@ -1,0 +1,1 @@
+cc -O3 -std=c11 -Wall -Wextra -Wpedantic -Werror -fno-fast-math -ffp-contract=off ../../Aurekai/native/creator/mix.c ../../Aurekai/native/creator/mix_kernel.c -lm -o bonfyre-creator-mix

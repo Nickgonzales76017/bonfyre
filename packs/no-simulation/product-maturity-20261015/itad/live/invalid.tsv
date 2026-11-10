@@ -1,0 +1,3 @@
+model	qty	grade	recovery_per_unit
+Good first	1	working	10
+Bad second	50001	working	2

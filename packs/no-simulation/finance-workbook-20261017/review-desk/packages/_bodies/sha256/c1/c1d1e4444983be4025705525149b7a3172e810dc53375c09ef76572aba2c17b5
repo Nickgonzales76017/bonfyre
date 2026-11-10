@@ -1,0 +1,127 @@
+// Physical continuation views are retained with the editor release. This module
+// projects records the editor already read; it never fetches private collections.
+const encoder = new TextEncoder();
+export const continuationFields = ['view', 'label', 'entry', 'prefix', 'title', 'query'];
+const limits = [64, 160, 128, 512, 160, 1024];
+const text = (value, limit) => typeof value === 'string' && value.length > 0 && encoder.encode(value).length < limit && !/[\x00-\x1f\x7f]/.test(value);
+const word = value => /^[A-Za-z0-9_-]+$/.test(value);
+const selector = value => value === '$key' || value.startsWith('@') && value.length > 1 || value.length < 128 && /^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/.test(value);
+export function validateContinuationViews(views) {
+  if (!Array.isArray(views) || !views.length || views.length > 16) throw Error('Choose up to sixteen declared editor views.');
+  const seen = new Set();
+  for (const view of views) {
+    if (!view || Object.keys(view).length !== continuationFields.length || continuationFields.some((key, i) => !text(view[key], limits[i]))) throw Error('Invalid continuation field.');
+    if (!word(view.view) || seen.has(view.view) || !/^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\/$/.test(view.entry) || !selector(view.title) || view.prefix === '=') throw Error('Invalid or duplicate continuation view.');
+    if (view.query !== '-') {
+      const names = new Set(), pairs = view.query.split('&');
+      if (pairs.length > 8) throw Error('Too many continuation parameters.');
+      for (const pair of pairs) {
+        const at = pair.indexOf('='), name = pair.slice(0, at), value = pair.slice(at + 1);
+        if (at < 1 || !word(name) || name.length >= 64 || names.has(name) || !selector(value)) throw Error('Invalid continuation query.');
+        names.add(name);
+      }
+    }
+    seen.add(view.view);
+  }
+  return views;
+}
+export function parseContinuationManifest(body) {
+  if (typeof body !== 'string' || encoder.encode(body).length > 32768) throw Error('Continuation manifest exceeds its bound.');
+  const lines = body.trimEnd().split('\n');
+  if (lines.shift() !== continuationFields.join('\t')) throw Error('Unsupported continuation manifest.');
+  return validateContinuationViews(lines.map(line => {
+    const fields = line.split('\t');
+    if (fields.length !== continuationFields.length) throw Error('Invalid continuation row.');
+    return Object.fromEntries(continuationFields.map((key, i) => [key, fields[i]]));
+  }));
+}
+function selectedValue(row, field) {
+  if (field === '$key') return row.key;
+  if (field.startsWith('@')) return field.slice(1);
+  let value = row.value;
+  for (const part of field.split('.')) {
+    if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.hasOwn(value, part)) return null;
+    value = value[part];
+  }
+  return typeof value === 'string' && text(value, 1024) ? value : null;
+}
+export function projectSavedView(view, row) {
+  if (!row || !text(row.key, 512) || !Number.isSafeInteger(row.revision) || row.revision < 1 || row.revision >= 2147483647) return null;
+  if (view.prefix.startsWith('=') ? row.key !== view.prefix.slice(1) : !row.key.startsWith(view.prefix)) return null;
+  const parameters = [];
+  if (view.query !== '-') for (const pair of view.query.split('&')) {
+    const at = pair.indexOf('='), name = pair.slice(0, at), value = selectedValue(row, pair.slice(at + 1));
+    if (!value) return null;
+    parameters.push([name, value]);
+  }
+  return {key: row.key, revision: row.revision, view: view.view, entry: view.entry, label: view.label,
+    title: selectedValue(row, view.title) || view.label, parameters};
+}
+export function matchesEditor(projection, current, base) {
+  const path = base + projection.entry;
+  if (current.pathname !== path && current.pathname !== path + 'index.html') return false;
+  return projection.parameters.every(([name, value]) => current.searchParams.getAll(name).length === 1 && current.searchParams.get(name) === value);
+}
+export function createContinuationProjection(views, endpoint, release) {
+  validateContinuationViews(views);
+  if (!/^\/apps\/ws-[a-f0-9]{40}\/_records$/.test(endpoint) || !/^[a-f0-9]{64}$/.test(release)) throw Error('Invalid bound editor release.');
+  const base = endpoint.slice(0, -'_records'.length), records = new Map();
+  return {
+    observe(rows, {prefix = null, removed = []} = {}) {
+      if (prefix !== null) for (const key of records.keys()) if (key.startsWith(prefix)) records.delete(key);
+      for (const key of removed) records.delete(key);
+      for (const row of rows) {
+        const projections = views.map(view => projectSavedView(view, row)).filter(Boolean);
+        if (projections.length) records.set(row.key, projections); else records.delete(row.key);
+      }
+      // This is a disposable navigation projection, never a saved-work store.
+      while (records.size > 2048) records.delete(records.keys().next().value);
+    },
+    current(url) {
+      const hits = [...records.values()].flat().filter(row => matchesEditor(row, url, base));
+      const identities = new Set(hits.map(row => row.key));
+      if (identities.size !== 1) return null;
+      const row = hits[0], query = new URLSearchParams({key: row.key, revision: String(row.revision), release});
+      return {key: row.key, revision: row.revision, title: row.title, href: base + '_views?' + query};
+    }
+  };
+}
+const projectionKey = Symbol.for('bonfyre.workspace.continuation.v1');
+function browserProjection(endpoint) {
+  const document = globalThis.document;
+  if (!document || document.querySelector('meta[name="bonfyre-workspace-store"]')?.content !== endpoint) return null;
+  const release = document.querySelector('meta[name="bonfyre-workspace-release"]')?.content;
+  if (!/^[a-f0-9]{64}$/.test(release ?? '')) return null;
+  if (!document[projectionKey]) document[projectionKey] = (async () => {
+    const base = endpoint.slice(0, -'_records'.length), response = await fetch(base + 'CONTINUATIONS.tsv', {credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000)});
+    if (!response.ok) throw Error('Saved-work views are unavailable.');
+    const reader = response.body.getReader(), parts = []; let count = 0;
+    for (;;) { const part = await reader.read(); if (part.done) break; count += part.value.length;
+      if (count > 32768) { await reader.cancel(); throw Error('Saved-work views exceed their bound.'); } parts.push(part.value); }
+    const data = new Uint8Array(count); let at = 0; for (const part of parts) { data.set(part, at); at += part.length; }
+    const projection = createContinuationProjection(parseContinuationManifest(new TextDecoder('utf-8', {fatal: true}).decode(data)), endpoint, release);
+    const nav = document.querySelector('[data-native-workspace][aria-label="Workspace"]');
+    if (!nav) throw Error('This editor has no continuation placement.');
+    const link = document.createElement('a'); link.dataset.relatedWork = ''; link.hidden = true;
+    link.target = '_blank'; link.rel = 'noopener noreferrer'; nav.append(link);
+    function render() {
+      const row = projection.current(new URL(location.href));
+      link.hidden = !row; link.style.display = row ? '' : 'none';
+      if (!row) { link.removeAttribute('href'); return; }
+      link.href = row.href; link.textContent = 'Related views · saved version ' + row.revision;
+      link.title = row.title + '. Opens the saved version in another tab; unsaved edits stay here.';
+      link.setAttribute('aria-label', 'Related views of ' + row.title + ', saved version ' + row.revision + ', opens in another tab');
+    }
+    window.addEventListener('popstate', render); window.addEventListener('hashchange', render);
+    globalThis.navigation?.addEventListener('navigatesuccess', render);
+    return {projection, render};
+  })().catch(() => null);
+  return document[projectionKey];
+}
+export function observeWorkspaceRecords(endpoint, rows, options) {
+  // Optional presentation failure cannot change the result of a completed save.
+  const future = browserProjection(endpoint);
+  if (!future) return;
+  const snapshots = rows.map(row => ({key: row.key, revision: row.revision, value: row.value}));
+  future.then(result => { if (result) { result.projection.observe(snapshots, options); result.render(); } }).catch(() => {});
+}

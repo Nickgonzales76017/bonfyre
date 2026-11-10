@@ -1,0 +1,1 @@
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../lib/libbonfyre/include -DBONFYRE_HAVE_ZSTD -I/opt/homebrew/include -o bonfyre-compress src/main.c src/physical.c src/record_factor.c src/record_factor_cli.c -L../../lib/libbonfyre -lbonfyre -lsqlite3 /opt/homebrew/lib/libzstd.a

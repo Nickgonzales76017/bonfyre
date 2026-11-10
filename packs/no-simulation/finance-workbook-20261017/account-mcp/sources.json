@@ -1,0 +1,42 @@
+{
+  "package": "0ccf25974dcd8c111ca809a19c263037673a3c683c558a4694a85682f739e051",
+  "node": "v24.22.0",
+  "sources": {
+    "components/BonfyreServiceSite/workbook-calculation.mjs": "89e49a0d1c236aec3091d1677f1000aad4af0898f4b99f227d78f6259d1d47d3",
+    "components/BonfyreServiceSite/workbook-review-view.mjs": "6ed82f4341970e9e23b6291ef0f05e2345e92f8d27485be5577c58f5022bad37",
+    "components/BonfyreServiceSite/workbook-material.mjs": "ca0d042d60a3152f7517cf7fae6b38c0d5eb5a89423b41b8592948a9833d09c4",
+    "components/BonfyreServiceSite/workbook-import-worker.mjs": "3074714752bde193ad3a5e20f0499155b8fc1554744f2d2a5be205b10283178c",
+    "components/BonfyreServiceSite/workbook-package.mjs": "3a7a5acbe36b661f4687e8b47a34f7d55bc2480f0b1b6ccc5e8d9744f53ca945",
+    "components/BonfyreServiceSite/workbook-client.mjs": "75107ae4ccac287bc011d4566beb2ab4611afb58fe309be536ad21419c11fafa",
+    "components/BonfyreServiceSite/workbook-model.mjs": "9a9e44003ffdb2c79a7ac1310a3033c2d01ed5ca404c35786be94b73d2a79028",
+    "components/BonfyreServiceSite/workbook-record.mjs": "b13ffa451a04fc7eb5316f07ea7f3bf9372ca01ff51042e51509350c21c397f5",
+    "components/BonfyreServiceSite/workbook-import.mjs": "74b47d798107f5b54178bd1369a0b81e9d2e93e7b1f257d7cd22e3f827366601",
+    "components/BonfyreServiceSite/workbook-review.mjs": "8dc13651eecf693db12af37e4fd5cb04479db5c904d42f503b1ed907c94f440c",
+    "components/BonfyreServiceSite/workbook-workspace-client.mjs": "2b41749f42c48d26d424f923c5d7f00d4de5cb2b3d63f4dcd99d63d50c26331b",
+    "components/BonfyreServiceSite/workbook-calculation-worker.mjs": "6d2fa92fb9577627656d90a5ebc3764e2da8a634c739a91e79fab68e192b857e",
+    "components/BonfyreServiceSite/workbook-editor.mjs": "cb1fbaf069473a4de816987f1186f2b4ae716aaf4d7eda1a0d0a6ee9edb72e63",
+    "components/BonfyreServiceSite/tests/workbook-calculation.test.mjs": "933a46e482f4d329b5c6e78ff139a3472e090827f010ab4187a6e3306c5caf1f",
+    "components/BonfyreServiceSite/tests/workbook-facade.test.mjs": "95b3bcac9af8a4c13cd0ea8938ca8ebc1605bdbbc89f9a1c9ef41c13725d1b8b",
+    "components/BonfyreServiceSite/tests/workbook-import.test.mjs": "ce9b8d2368fa5a42c6164d01fa5975169298d9b982a9ed89aa62527f3e59d259",
+    "components/BonfyreServiceSite/tests/workbook-material.test.mjs": "468dc4d23e88f6885b595a7ac8b4d1d8b415dffa30f3faba5fe8cd1665ee9f2a",
+    "components/BonfyreServiceSite/tests/workbook-mcp.test.mjs": "7af81a3d56cfd0f7c03758793b99863d73b9723f63e303b29136924ce124ef0f",
+    "components/BonfyreServiceSite/tests/workbook-native.test.mjs": "ac7107fc0ff2d681ed538b922854514715f55f0ffac5ad94d5b63ee479029f5b",
+    "components/BonfyreServiceSite/tests/workbook-review.test.mjs": "32fdd056f23ea4d40b7b36f8539e492db4508090335ac19d094bdacecc0deb8a",
+    "components/BonfyreServiceSite/package.json": "1ef6ad9692b29f60b8e1970a16d63170508257276ea5bc9f8e85595f46f6bbe7",
+    "components/BonfyreServiceSite/bun.lock": "1ae75868f128df0a567434ce978efd7ad6cace10a2afaa4288885459818883b9",
+    "integrations/mcp/workspace_mcp.mjs": "1cff1e2a0979293b0fd8f841a603c386d1b40c146003be973bff93cbc28d64be",
+    "integrations/mcp/workbook_mcp.mjs": "c1d8984fb7022ee2c6cbc1f93b690485890738c689875f2474457713f86d0fe8",
+    "integrations/mcp/bonfyre_oauth_gateway.mjs": "c315374d5e404917673e5b5980d27ba13d4ceba0bf1d20878d18c1f4b8ae3af8",
+    "integrations/browser/workspace-value.mjs": "1514254fc32fbfa08db1da5bbdb2697b4970d3892b3e3e6fe6f8b3e9e3390ab1",
+    "integrations/browser/workspace-msgpack.mjs": "192f06f6cd4e7f41589788a95f9ed55803c9a776eff22f624e308897d27891da",
+    "architecture/surface/financial-workbook.yaff": "97411d59d67b01e4cd5d0bedc4693fac6e5e14ba3c975c95522402dff877348e",
+    "architecture/surface/account-workspace-mcp.yaff": "bac09249b98f2e85ce3e228f8273ee4312f3f97ee941ef83e6f6ab0f1d63e4a9"
+  },
+  "evidence": {
+    "tests.log": "0b7cb8bb4a1657b19bb9007053d1d76ac299a0fba253e682d86f248a0540da67",
+    "native.json": "15ce9a2fc7f1af14db30c065c31c2191790aa484f119ee1fe903396f6dc90fef",
+    "mcp.json": "082b87cce0ee468ba472641d6a2f5a73f1f9eed652ad68d7683f659a7c7b9270"
+  },
+  "browser_verified": false,
+  "live_deployment": false
+}

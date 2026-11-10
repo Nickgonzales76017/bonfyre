@@ -1,0 +1,132 @@
+{
+  "packets": [
+    {
+      "lot": "houston-35",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "vertiv-32",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "heim-gmc",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "camaster-408",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "vader-racking",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "wilmington-toner",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "conroe-toner",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "covina-toner",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    },
+    {
+      "lot": "laguna-swift",
+      "fields": [
+        "task_reference",
+        "equipment",
+        "area",
+        "service_requested",
+        "deliverables",
+        "quote_requested",
+        "assignment_state",
+        "dispatch_instruction"
+      ],
+      "internal_fields_excluded": true
+    }
+  ],
+  "external_shares": 0,
+  "assigned_partners": 0
+}

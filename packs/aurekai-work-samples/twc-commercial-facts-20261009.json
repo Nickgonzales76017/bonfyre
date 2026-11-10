@@ -1,0 +1,90 @@
+{
+  "schema": "aurekai.commercial-source-facts.v1",
+  "project_ref": "opportunity:twc-website-rfp",
+  "source_basis": "Published provider prices and issuer-stated procurement requirements; no fictional transactions or executed contract",
+  "sources": {
+    "sitecare": {
+      "url": "https://sitecare.com/pricing/",
+      "observed_at": "2026-10-09T05:42:30Z",
+      "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-sitecare-pricing.receipt.json",
+      "body_sha256": "8fa8468b71117bf698b66dac7f772fb8f9a099202845b7861c7c079930b5eece"
+    },
+    "inspirable": {
+      "url": "https://inspirable.com/careplans/",
+      "observed_at": "2026-10-09T05:42:44Z",
+      "receipt": "/Users/nickgonzales/Developer/Bonfyre/packs/aurekai-work-samples/twc-inspirable-pricing.receipt.json",
+      "body_sha256": "9cbcdfc6614cc25bd3139bb3e5c04cdac977933da2df3b27d4006a9b534cb4b2"
+    }
+  },
+  "offers": [
+    {
+      "id": "sitecare-gold-monthly",
+      "provider": "sitecare",
+      "plan": "Gold",
+      "billing": "monthly",
+      "amount_usd": "435.00",
+      "coverage_matches_twc": null
+    },
+    {
+      "id": "sitecare-gold-annual",
+      "provider": "sitecare",
+      "plan": "Gold",
+      "billing": "annual",
+      "amount_usd": "4680.00",
+      "coverage_matches_twc": null
+    },
+    {
+      "id": "sitecare-diamond-monthly",
+      "provider": "sitecare",
+      "plan": "Diamond",
+      "billing": "monthly",
+      "amount_usd": "2190.00",
+      "coverage_matches_twc": null
+    },
+    {
+      "id": "sitecare-diamond-annual",
+      "provider": "sitecare",
+      "plan": "Diamond",
+      "billing": "annual",
+      "amount_usd": "23880.00",
+      "coverage_matches_twc": null
+    },
+    {
+      "id": "inspirable-institutional-monthly",
+      "provider": "inspirable",
+      "plan": "Institutional",
+      "billing": "monthly",
+      "amount_usd": "349.99",
+      "coverage_matches_twc": null
+    }
+  ],
+  "rfp": {
+    "id": "TWC-2026-120",
+    "project_id": 39,
+    "deadline_local": "2026-10-09T17:00:00",
+    "timezone": "America/Chicago",
+    "base_term_months": 36,
+    "renewal_option_months": 24,
+    "renewal_is_committed": false,
+    "client_price_usd": null,
+    "partner_quote_usd": null,
+    "our_delivery_cost_usd": null,
+    "contribution_usd": null,
+    "points": {
+      "experience": 30,
+      "technical_approach": 25,
+      "scope": 20,
+      "team": 10,
+      "cost": 15
+    },
+    "source": "https://theworkforceconnection.org/wp-content/uploads/2026/10/RFP_Website-Services_Original-and-Amendment-1.pdf",
+    "qa": "https://theworkforceconnection.org/wp-content/uploads/2026/09/RFP-Website-QA.pdf",
+    "public_website_changes_per_month_approx": 10,
+    "public_social_posts_per_month_expected": 4,
+    "newsletters_per_year": 6,
+    "invoice_term": "within30days after receipt AND approval of complete invoice/support",
+    "factoring_requires_prior_written_approval": true,
+    "three_independent_references_supplied": false
+  },
+  "cannot_infer": "Published price is not subcontract pricing or coverage acceptance. Missing prices are NULL. No projected award, portfolio profit, or agreed three-year provider price."
+}

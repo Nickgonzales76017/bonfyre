@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-08",
+  "project": "cl:red3-product-pages",
+  "cms_project_id": 21,
+  "source_conversation": "https://chatgpt.com/share/6ac7d425-70b8-83ea-9ade-21d1bd47b9ac",
+  "decision": "Build the RED3 customer planning experience first; retain agency distribution as the next commercial test.",
+  "commercial_hypothesis": "A merchant can receive a more complete fixture enquiry, while a customer can compare a concrete plan and share it with another decision-maker.",
+  "scope_note": "This extends the original product-page preparation offer. RED3 has not requested or accepted a planning-tool engagement.",
+  "research": [
+    {
+      "url": "https://red3display.com/retail-planning-and-design1/retail-design/",
+      "finding": "RED3 asks for store photos and a wish list, then establishes requirements and budget."
+    },
+    {
+      "url": "https://red3display.com/retail-planning-and-design1/lease-your-fixtures/",
+      "finding": "RED3 describes rework when the budget is unknown. The planner captures a budget without offering finance."
+    },
+    {
+      "url": "https://streamlineresults.com/liveswitch-reviews/",
+      "finding": "Streamline identifies itself as a LiveSwitch partner. Video intake alone would duplicate a service it already offers."
+    },
+    {
+      "url": "https://help.gohighlevel.com/support/solutions/articles/48000982511-snapshots-overview",
+      "finding": "Snapshots transfer reusable assets, but live history and external account connections require separate handling."
+    }
+  ],
+  "design": {
+    "service": "Google Stitch",
+    "existing_project": "https://stitch.withgoogle.com/projects/4130246025382817859",
+    "status": "generation_pending_tool_binding_unavailable",
+    "connection_evidence": "Tool discovery returned no Stitch tools and no node_repl js tool; no current Google session or token failure was inferred.",
+    "prompt": "Design a RED3 retail fixture planning workspace for a customer preparing an apparel pop-up. Use restrained red, warm white and charcoal, legible sans-serif type, a compact RED3 identity and a small independent Aurekai preview label. Open directly on a prepared 16 by 12 foot floor plan with four observed products. Desktop: project inputs, spacious 2D plan, fixture shortlist and observed subtotal. Mobile: plan, project inputs, shortlist. Let customers move and rotate fixtures, compare an open-floor and more-display arrangement, add or remove fixtures, save, share a copy, and review the supplier brief. Distinguish verified dimensions from missing depths with dashed planning allowances; preserve unknown facts as questions. Show the selected product options and observe-only prices. Review explains that this preview submits to Nick at Aurekai, not to RED3, and creates no order. Include invalid dimensions, budget overage, overlapping fixtures, save conflict, failed send, durable receipt and shared-copy states. No inventory counts, invented shipping promises, AI hero, internal implementation labels or implication of merchant approval.",
+    "implementation_mapping": {
+      "workspace": "components/BonfyreServiceSite/sections/planner.mjs",
+      "styles": "components/BonfyreServiceSite/planner.css",
+      "interaction": "components/BonfyreServiceSite/planner-client.mjs",
+      "shared_contract": "components/BonfyreServiceSite/planner-model.mjs",
+      "intake": "components/BonfyreServiceSite/lead-worker.mjs",
+      "native_review": "packs/aurekai-work-samples/site/lead.mjs",
+      "existing_design_reference": "packs/aurekai-work-samples/site/design/SOURCE.md"
+    },
+    "new_stitch_output_claimed": false
+  },
+  "acceptance": [
+    "Exact observed product and option references reach the brief.",
+    "Price is recomputed from the retained collection; submitted prices cannot override it.",
+    "Layout changes update cost and questions.",
+    "Invalid input is rejected; missing dimensions are never certified as fit.",
+    "A saved plan survives reload and browser restart.",
+    "A stale tab cannot overwrite a newer saved version.",
+    "A shared link opens an independently editable copy without sender contact details.",
+    "Failed submission can retry; receipt persists for the received saved version.",
+    "Native lead sync retains the full proposal and creates a held review message once.",
+    "Desktop and mobile main actions are exercised in fresh browser contexts."
+  ],
+  "commercial_next_step": "Keep requested catalogue preparation as the first paid-work conversation. Show the planner as an optional customer-enquiry extension and ask whether one real store-planning enquiry would be useful. Scope implementation and continuing catalogue maintenance after interest; a demo compliment does not establish demand.",
+  "not_claimed": [
+    "RED3 acceptance",
+    "Stitch generation",
+    "live merchant integration",
+    "orders or funding"
+  ],
+  "delivery": {
+    "status": "published_independent_preview",
+    "url": "https://aurekai-work-samples.pages.dev/red3-planner/",
+    "cms_site_id": 3,
+    "local_tests": 22,
+    "local_assertions": 201,
+    "local_browser_checks": 28,
+    "published_browser_checks": 26,
+    "accepted_live_submissions": 0,
+    "external_messages_sent": 0,
+    "evidence": [
+      "verification-planner-local/browser-verification.json",
+      "verification-planner-live/browser-verification.json",
+      "verification-planner-live/deployed-material.json"
+    ]
+  }
+}

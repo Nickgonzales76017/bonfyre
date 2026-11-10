@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-09T18:49:40.066Z",
+  "incoming_decline": "1a121f105715e167",
+  "sent_reply": "1a121fb4a121ef96",
+  "native_reply": 120,
+  "projects": [
+    {
+      "id": 121,
+      "stage": "buyer_declined_no_priced_exit"
+    },
+    {
+      "id": 122,
+      "stage": "buyer_declined_no_priced_exit"
+    }
+  ],
+  "crm": [
+    {
+      "id": 7,
+      "source": "wholesale:conroe-toner-20261008",
+      "communication_status": "TonerG declined the current lot; future buy list requested",
+      "next_step": "No pending TonerG bid. Pursue another exit only with actual buying interest; retain the source and do not arrange pickup against the declined route.",
+      "deal_value": null,
+      "expected_deal_value": null
+    },
+    {
+      "id": 8,
+      "source": "wholesale:covina-toner-20261008",
+      "communication_status": "TonerG declined the current lot; future buy list requested",
+      "next_step": "No pending TonerG bid. Pursue another exit only with actual buying interest; retain the source and do not arrange pickup against the declined route.",
+      "deal_value": null,
+      "expected_deal_value": null
+    }
+  ],
+  "external_sends_in_continuation": 7,
+  "accepted_bids": 0,
+  "purchases": 0,
+  "realized_contribution_cents": 0,
+  "unpriced_buyer_route_closed": "TonerG for the two submitted lots only"
+}

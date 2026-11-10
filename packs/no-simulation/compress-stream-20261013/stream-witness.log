@@ -1,0 +1,11 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreCompress/tests/savings_stream.test.mjs:
+(pass) savings counts one real archive stream and matches independent zstd output [314.69ms]
+(pass) an empty family still finalizes and counts the complete compressed frame [141.06ms]
+(pass) a failed or unavailable archive producer emits no successful measurement [132.28ms]
+
+ 3 pass
+ 0 fail
+ 19 expect() calls
+Ran 3 tests across 1 file. [974.00ms]

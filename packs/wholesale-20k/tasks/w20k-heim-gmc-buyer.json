@@ -1,0 +1,32 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-heim-gmc-buyer",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "heim-gmc",
+  "project_ref": "wholesale:lewisville-machinery-referral-20261008",
+  "title": "HEIM 90 TON PRESS BRAKE",
+  "location": "Lewisville, TX",
+  "phase": "buyer",
+  "role_requested": "commercial operator",
+  "desired_result": "Whole-lot or nonoverlapping split bids with exact accepted units, condition, net collection/delivered basis, deductions, payment timing and validity. Reuse existing threads, do not repeat opening.",
+  "disclosure_allowlist": [
+    "equipment specification",
+    "condition evidence",
+    "approximate pickup region"
+  ],
+  "disclosure_exclusions": [
+    "supplier identity until authorized handoff",
+    "supplier asking price",
+    "internal margins",
+    "other bids"
+  ],
+  "acceptance": "Actual buyer reply or written indication, no bid invented from retail/auction comparisons.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/foreign/receipts/classified-c04dae274d1dd3aa11fe-c04dae274d1d-731ef7e857ad.json",
+  "next_action": "operating evidence, buyer bid and rigging"
+}

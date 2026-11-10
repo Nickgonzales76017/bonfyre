@@ -1,0 +1,63 @@
+PASS source mixed fractions and decimals combine exactly
+PASS different units never get silently added
+PASS unknown source quantities remain visible and uncounted
+PASS the existing family plan participates without another calculator
+PASS no list row manufactures a store quote
+PASS all selected source digests and instructions reach the brief
+PASS selection order does not change plan identity or output
+PASS malformed selection source:a*0 refuses before output
+PASS malformed selection source:a*101 refuses before output
+PASS malformed selection source:a*1;source:a*2 refuses before output
+PASS malformed selection source:a*true refuses before output
+PASS malformed selection source:a*1; refuses before output
+PASS malformed selection source:a*1oops refuses before output
+PASS a missing second source cannot emit a partial successful list
+PASS changed source changes the compiled plan identity
+PASS the collection entry point opens an empty selectable plan
+PASS ordinary recipe route renders a multi-selection plan
+PASS native food calculations and explicit missing values reach the ordinary browser page
+PASS browser calculation does not mutate nutritional source records
+PASS food references come from the existing external source identities
+PASS rendering references does not change their owner database
+PASS anonymous page has no write form
+PASS HTTP and CLI deliver the same complete list and brief
+PASS search pagination retains every selected quantity
+PASS adding an already selected source preserves its chosen count
+PASS bad plan operation &offset=-1 is refused
+PASS bad plan operation &copies=101&edit=source:a is refused
+PASS bad plan operation &items=bad is refused
+PASS bad plan operation &format=buy is refused
+PASS oversized decoded CMS fields are refused without truncation
+PASS oversized field has an explicit refusal
+PASS whole-request bound still refuses an oversized declared body before reading it
+PASS planning and exporting did not create a private record
+PASS Chrome receives the existing CMS form rather than a parallel store
+PASS browser submission saved the full snapshot through native CMS
+PASS the existing Desk lists the saved plan for its owner
+PASS another account and a guest do not see the private plan
+PASS the saved plan opens through the existing note workspace
+PASS the saved plan reader preserves the complete text and visible line breaks
+107 |    const route='/room/note/'+record.route.slice('notes/'.length),opened=await get(route,token);
+108 |    check('the saved plan opens through the existing note workspace',()=>{assert.equal(opened.status,200);assert.match(opened.text,/Weekly prep fixture/)});
+109 |    await go(`http://aurekai.life:${port}${route}`);
+110 |    let roomText='';for(let i=0;i<150;i++){try{roomText=await evaluate('document.querySelector(".room-read")?.textContent||""');if(roomText)break}catch{}await Bun.sleep(50)}
+111 |    check('the saved plan reader preserves the complete text and visible line breaks',()=>{assert.equal(roomText.replaceAll('\r\n','\n'),document);});
+112 |    assert.equal(await evaluate('getComputedStyle(document.querySelector(".room-read")).whiteSpace'),'pre-wrap');
+                ^
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ 'normal'
+- 'pre-wrap'
+
+ generatedMessage: true,
+     actual: "normal",
+   expected: "pre-wrap",
+   operator: "strictEqual",
+       code: "ERR_ASSERTION"
+
+      at /Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/tests/week_web.test.mjs:112:11
+      at withChrome (/Users/nickgonzales/Developer/Bonfyre/integrations/browser/capture/chrome-session.mjs:42:36)
+      at processTicksAndRejections (native:7:39)
+
+Bun v1.3.13 (macOS arm64)

@@ -1,0 +1,1387 @@
+{
+  "at": "2026-10-15T08:25:21.700Z",
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "pages": [
+    {
+      "path": "/",
+      "title": "Custom web tools, sites and integrations | Aurekai",
+      "heading": "Custom web tools, sites and integrations",
+      "ids": [
+        "samples",
+        "built",
+        "working-together",
+        "ask",
+        "ask-0",
+        "ask-1",
+        "ask-2",
+        "ask-3",
+        "ask-4"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Try the work samples →",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Planning workspace",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Product workspace",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Audio workspace",
+          "href": "https://aurekai-work-samples.pages.dev/audio/"
+        },
+        {
+          "text": "Shipment archive",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Wix review",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Training app",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "Document search",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Shop sites",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Planning workspace",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Product workspace",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Audio workspace",
+          "href": "https://aurekai-work-samples.pages.dev/audio/"
+        },
+        {
+          "text": "Shipment archive",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Wix review",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Training app",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "Document search",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Shop sites",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Open planner →",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+        },
+        {
+          "text": "Open catalogue →",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        },
+        {
+          "text": "Open the before and after →",
+          "href": "https://aurekai-work-samples.pages.dev/archive/"
+        },
+        {
+          "text": "Read the concrete findings →",
+          "href": "https://aurekai-work-samples.pages.dev/wix-review/"
+        },
+        {
+          "text": "Open audio →",
+          "href": "https://aurekai-work-samples.pages.dev/audio/"
+        },
+        {
+          "text": "Visit the three sites →",
+          "href": "https://docs.aurekai.work/three-businesses"
+        },
+        {
+          "text": "See the training app →",
+          "href": "https://aurekai-work-samples.pages.dev/training/"
+        },
+        {
+          "text": "See the document search →",
+          "href": "https://aurekai-work-samples.pages.dev/documents/"
+        },
+        {
+          "text": "Read the product families →",
+          "href": "https://docs.aurekai.work/operating-products"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/catalogue-grid.png",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/planner-comparison.png",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/audio-arrangement.png",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/planner-spatial.png",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/archive.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/wix.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/site-tallgrass.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/guides.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/catalogue/",
+      "title": "Product workspace | Aurekai",
+      "heading": "Catalogue",
+      "ids": [
+        "product-workspace",
+        "ag-23-label",
+        "ag-23-input",
+        "ag-64-label",
+        "ag-64-input",
+        "ag-74-label",
+        "ag-74-input",
+        "ag-84-label",
+        "ag-84-input",
+        "ag-94-label",
+        "ag-94-input",
+        "ag-104-label",
+        "ag-104-input",
+        "ag-114-label",
+        "ag-114-input",
+        "ag-124-label",
+        "ag-124-input",
+        "ag-134-label",
+        "ag-134-input",
+        "ag-144-label",
+        "ag-144-input",
+        "ag-154-label",
+        "ag-154-input",
+        "ag-164-label",
+        "ag-164-input",
+        "ag-174-label",
+        "ag-174-input",
+        "ag-184-label",
+        "ag-184-input",
+        "ag-194-label",
+        "ag-194-input",
+        "ag-204-label",
+        "ag-204-input",
+        "ag-214-label",
+        "ag-214-input",
+        "ag-224-label",
+        "ag-224-input",
+        "ag-11",
+        "ag-13-label",
+        "ag-13-display",
+        "ag-11-first-row",
+        "ag-11-to",
+        "ag-11-last-row",
+        "ag-11-of",
+        "ag-11-row-count",
+        "ag-11-start-page",
+        "ag-11-start-page-number",
+        "ag-20-label",
+        "ag-20-input",
+        "ag-11-of-page",
+        "ag-11-of-page-number",
+        "catalogue-bulk-title",
+        "catalogue-edit",
+        "catalogue-options",
+        "catalogue-preparation",
+        "catalogue-review"
+      ],
+      "links": [
+        {
+          "text": "Skip to workspace",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/?store=redwood-rings&workspace=inventory#product-workspace"
+        },
+        {
+          "text": "Contact Nick Gonzales",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "View original listing ↗",
+          "href": "https://redwoodrings.com/"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/catalogue/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/workspace-navigation.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-preparation.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-desk.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-grid.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-review.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/store.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/catalogue-grid-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-6.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-4.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-2.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-3.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-1.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-0.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/products-5.json.gz",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/product-workspace/ag-grid-community.min.js",
+          "status": 200
+        },
+        {
+          "url": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20class%3D%22ag-icon%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E*%20%7B%20vector-effect%3A%20non-scaling-stroke%3B%20%7D%3C%2Fstyle%3E%3Cpath%20d%3D%22M3%206h18%22%2F%3E%3Cpath%20d%3D%22M7%2012h10%22%2F%3E%3Cpath%20d%3D%22M10%2018h4%22%2F%3E%3C%2Fsvg%3E",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackspacering_tungstengalaxymeteorite_luxuryphotowatermarked_8b92376a-b756-471b-8d19-6d8a31f1017f.jpg?v=1741636911",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mm_black_ring_with_red_garnet_inlay_mens_gemstone_ring_1.jpg?v=1741793204",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackandrosegoldzeusring_menshammeredweddingband_b650683c-98bf-4e13-b607-477545f343e2.jpg?v=1741637326",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithpurplelabalexandriteinlay_womensgemstonering_0376db52-794b-4ea9-b1b6-7e060ac40a75.jpg?v=1741636487",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackgarnetring_flatblackplatedtungstenwithgenuinegarnetgemstoneinlay_mensweddingband_fe95e544-49f4-47f4-b1db-94603d15ae52.jpg?v=1741637032",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithlabdiamond_luxuryphotowatermarked.jpg?v=1736372899",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblacktungstenring_koawoodandgreenopaltripleinlay_menspromisering.jpg?v=1741808519",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackopalring_blackplatedtungstenwithredopalinlay_97d5f935-2119-4038-a1c3-8bf8d91fd77b.jpg?v=1741637422",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackringwithhammeredfinish_mensblacktungstenring_5da24d8a-3f8a-4de0-89a1-a8ad25396743.jpg?v=1741637127",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredtungstenring_mensruggedengagementband_cf36b7ad-fef2-437e-9520-4a5d46b9dba8.jpg?v=1741637181",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackredwoodemeraldring.jpg?v=1736368707",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mm_black_garnet_ring_black_plated_tungsten_with_red_lab_garnet_inlay_mens_wedding_ring_2.jpg?v=1741804736",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mm_black_damascus_steel_ring_hammered_mens_black_ring.jpg?v=1741637084",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithredwoodandgreenemeralddualinlays_forestinspiredwomensring.jpg?v=1759536384",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredringwithmeteoriteinlay_mensblacktungstenring_fa83d428-a58a-49f8-8c8c-3c1e3aa0f375.jpg?v=1741637245",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredringwithsilverstrip_menszeusring_0707d4dc-b050-4b8e-b230-882bf36f5a07.jpg?v=1741637356",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblacktungstenringwithwhitelabdiamondinlay_mensweddingring.jpg?v=1741892545",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblacktungstenwithlabdiamondring_luxuryphotowatermarked.jpg?v=1736372981",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithpurplelabalexandriteinlay_womensgemstonering_0376db52-794b-4ea9-b1b6-7e060ac40a75.jpg?v=1741636487",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackspacering_tungstengalaxymeteorite_luxuryphotowatermarked_8b92376a-b756-471b-8d19-6d8a31f1017f.jpg?v=1741636911",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackgarnetring_flatblackplatedtungstenwithgenuinegarnetgemstoneinlay_mensweddingband_fe95e544-49f4-47f4-b1db-94603d15ae52.jpg?v=1741637032",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mm_black_damascus_steel_ring_hammered_mens_black_ring.jpg?v=1741637084",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackringwithhammeredfinish_mensblacktungstenring_5da24d8a-3f8a-4de0-89a1-a8ad25396743.jpg?v=1741637127",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredtungstenring_mensruggedengagementband_cf36b7ad-fef2-437e-9520-4a5d46b9dba8.jpg?v=1741637181",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredringwithmeteoriteinlay_mensblacktungstenring_fa83d428-a58a-49f8-8c8c-3c1e3aa0f375.jpg?v=1741637245",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackandrosegoldzeusring_menshammeredweddingband_b650683c-98bf-4e13-b607-477545f343e2.jpg?v=1741637326",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblackhammeredringwithsilverstrip_menszeusring_0707d4dc-b050-4b8e-b230-882bf36f5a07.jpg?v=1741637356",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mmblacktungstenring_koawoodandgreenopaltripleinlay_menspromisering.jpg?v=1741808519",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackopalring_blackplatedtungstenwithredopalinlay_97d5f935-2119-4038-a1c3-8bf8d91fd77b.jpg?v=1741637422",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithredwoodandgreenemeralddualinlays_forestinspiredwomensring.jpg?v=1759536384",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblackredwoodemeraldring.jpg?v=1736368707",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mm_black_ring_with_red_garnet_inlay_mens_gemstone_ring_1.jpg?v=1741793204",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/8mm_black_garnet_ring_black_plated_tungsten_with_red_lab_garnet_inlay_mens_wedding_ring_2.jpg?v=1741804736",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/4mmblacktungstenringwithlabdiamond_luxuryphotowatermarked.jpg?v=1736372899",
+          "status": 200
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0618/8138/5173/files/6mmblacktungstenringwithwhitelabdiamondinlay_mensweddingring.jpg?v=1741892545",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/archive/",
+      "title": "Shipment document preparation sample | Aurekai",
+      "heading": "Eight messy files. One checked handoff.",
+      "ids": [
+        "archive-results",
+        "missing-proof",
+        "archive-pilot"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss this workflow",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Download the checked record and rename-preview CSV",
+          "href": "https://aurekai-work-samples.pages.dev/assets/archive-rename-preview.csv"
+        },
+        {
+          "text": "Download the missing-document CSV",
+          "href": "https://aurekai-work-samples.pages.dev/assets/archive-missing-documents.csv"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/archive/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/wix-review/",
+      "title": "Elite Accreditation public website review | Aurekai",
+      "heading": "Three concrete checks for an existing Wix site.",
+      "ids": [
+        "wix-findings",
+        "wix-source",
+        "wix-first-pass"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss this workflow",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Elite Accreditation public website",
+          "href": "https://www.eliteaccreditation.org/"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/wix-review/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/red3-planner/",
+      "title": "Plan your next shop | Aurekai",
+      "heading": "Plan your next shop.",
+      "ids": [
+        "red3-fixtures"
+      ],
+      "links": [
+        {
+          "text": "Skip to workspace",
+          "href": "https://aurekai-work-samples.pages.dev/red3-planner/?view=layout&project=abfb3310-a4c5-4f66-93ca-a2ca91b3ed50#red3-fixtures"
+        },
+        {
+          "text": "red3DISPLAY",
+          "href": "https://red3display.com/"
+        },
+        {
+          "text": "Aurekai preview",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/"
+        },
+        {
+          "text": "Listing observed 2026-10-08 ↗",
+          "href": "https://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/"
+        },
+        {
+          "text": "Review the source product sample ↗",
+          "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/red3-planner/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSvfedN4.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/store.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-projects.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-project-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-spatial.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/workspace-navigation.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/planner-spatial-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/red3-fixtures/v-448e2bce6498dbac0c07a6bed4c4fe9df2568a2fe7e566e0ce3bf63e3d07f460/vendor/konva-10.9.0/konva.min.js",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/standard-quality-built-cash-wrap-counters-in-multiple-finish-options-LG.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/RM_RR30.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/Fwd-Display-Tables-moitreyee-bwd-gmail-com-Gmail-05-06-2025_04_11_PM.png",
+          "status": 200
+        },
+        {
+          "url": "https://red3display.com/wp-content/uploads/2024/12/acrylic-t-shirt-easel-tmb-1.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/training/",
+      "title": "A training app for a studio | Aurekai",
+      "heading": "One training app. Every studio its own.",
+      "ids": [
+        "member",
+        "coach",
+        "devices",
+        "training-scope"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss an app like this",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/training/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training-today.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training-programs.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/training.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-requests.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-programs.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/creator-appearance.jpg",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/documents/",
+      "title": "Search your own documents | Aurekai",
+      "heading": "Ask your documents. Get the paragraph, not a guess.",
+      "ids": [
+        "document-use",
+        "document-scope"
+      ],
+      "links": [
+        {
+          "text": "Skip to the request form",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Aurekai",
+          "href": "https://aurekai-work-samples.pages.dev/"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Sites and apps",
+          "href": "https://aurekai-work-samples.pages.dev/#built"
+        },
+        {
+          "text": "Guides",
+          "href": "https://docs.aurekai.work/"
+        },
+        {
+          "text": "Contact",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Discuss a workspace like this",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "Send a project brief",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        },
+        {
+          "text": "mailnickgonzales76017@gmail.com",
+          "href": "mailto:nickgonzales76017@gmail.com"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/documents/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7Motmp5g.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjnTLgNs.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/shots/documents-open.jpg",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/materialsymbolsoutlined/v377/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsLjBuVY.woff2",
+          "status": 200
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/audio/",
+      "title": "Audio workspace | Aurekai",
+      "heading": "Shape your recordings.",
+      "ids": [
+        "generated-audio",
+        "creator-gain-0",
+        "creator-gain-1",
+        "creator-gain-2"
+      ],
+      "links": [
+        {
+          "text": "Skip to workspace",
+          "href": "https://aurekai-work-samples.pages.dev/audio/#generated-audio"
+        },
+        {
+          "text": "← All work samples",
+          "href": "https://aurekai-work-samples.pages.dev/#samples"
+        },
+        {
+          "text": "Discuss an audio tool",
+          "href": "https://aurekai-work-samples.pages.dev/#ask"
+        }
+      ],
+      "brokenImages": [],
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "scrollWidth": 1440
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "scrollWidth": 390
+        }
+      ],
+      "responses": [
+        {
+          "url": "https://aurekai-work-samples.pages.dev/audio/",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/assets/site.css",
+          "status": 200
+        },
+        {
+          "url": "https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZOIHTWEBlw.woff2",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/store.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-sample.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-import-client.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-timeline.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-import.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/workspace-navigation.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/creator-timeline-model.mjs",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/pulse.f32",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/chime.f32",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/harmony.f32",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/vendor/wavesurfer-8.0.2/wavesurfer.esm.js",
+          "status": 200
+        },
+        {
+          "url": "https://aurekai-work-samples.pages.dev/data/generated-audio/v-8d6ade91f6eb8310916eec1e8476824220459a03e89d2c4c0d283dd61194b9e7/vendor/wavesurfer-8.0.2/regions.esm.js",
+          "status": 200
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failures": [],
+  "writes": [],
+  "status": "passed"
+}

@@ -1,0 +1,31 @@
+PASS A prepared four-fixture layout opens
+PASS Exact selected options produce the expected subtotal
+PASS Supplier missing dimensions are visible
+PASS No horizontal overflow at 1440
+PASS No horizontal overflow at 1024
+PASS No horizontal overflow at 768
+PASS No horizontal overflow at 390
+PASS No horizontal overflow at 320
+PASS Invalid room dimensions block saving
+PASS Invalid room was not saved
+PASS Budget overage is visible
+PASS Out-of-room position is identified
+PASS Adding a fixture updates both layout and subtotal
+PASS Removing a fixture updates the proposal
+PASS Saved project survives reload
+STEP open concurrent tab
+STEP save first tab
+STEP save stale tab
+PASS Stale tab cannot overwrite the project
+PASS Share link contains a plan without contact details
+PASS A fresh visitor opens the shared layout and notes
+PASS Shared copy is not falsely marked saved
+PASS Brief carries exact source and missing dimensions
+PASS Downloaded brief matches the reviewed plan
+PASS Print shows the complete brief and hides interactive controls
+PASS Failed send is retryable without a receipt
+PASS Generated worker retains the real saved plan
+PASS Review fits a phone
+PASS Browser restart restores the receipt without resending
+PASS A revised plan cannot inherit the previous receipt
+PASS No browser exceptions

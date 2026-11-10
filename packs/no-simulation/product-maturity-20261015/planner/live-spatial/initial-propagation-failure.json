@@ -1,0 +1,8 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [],
+  "errors": [],
+  "writes": [],
+  "status": "failed",
+  "error": "TimeoutError: Waiting for selector `[data-planner][data-ready=true]` failed: Waiting failed: 15000ms exceeded\n    at new WaitTask (/Users/nickgonzales/Developer/Bonfyre/tools/creator-ingest/node_modules/puppeteer-core/lib/cjs/puppeteer/common/WaitTask.js:48:50)\n    at waitForFunction (/Users/nickgonzales/Developer/Bonfyre/tools/creator-ingest/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Realm.js:25:44)\n    at waitFor (/Users/nickgonzales/Developer/Bonfyre/tools/creator-ingest/node_modules/puppeteer-core/lib/cjs/puppeteer/common/QueryHandler.js:178:95)\n    at async waitForSelector (/Users/nickgonzales/Developer/Bonfyre/tools/creator-ingest/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:532:40)\n    at async waitForSelector (/Users/nickgonzales/Developer/Bonfyre/tools/creator-ingest/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:1373:43)\n    at processTicksAndRejections (native:7:39)"
+}

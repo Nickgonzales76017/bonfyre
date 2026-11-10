@@ -1,0 +1,410 @@
+deploy	Check application directory and retained release	﻿2026-10-17T21:14:39.4048120Z ##[group]Run node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs
+deploy	Check application directory and retained release	2026-10-17T21:14:39.4049520Z [36;1mnode --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs[0m
+deploy	Check application directory and retained release	2026-10-17T21:14:39.4050305Z [36;1mtest -f site/spaces/RELEASE.tsv[0m
+deploy	Check application directory and retained release	2026-10-17T21:14:39.4438010Z shell: /usr/bin/bash -e {0}
+deploy	Check application directory and retained release	2026-10-17T21:14:39.4438414Z ##[endgroup]
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5175008Z TAP version 13
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5728611Z # Subtest: rejected edits restore the editable slice and preserve redo
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5735517Z ok 1 - rejected edits restore the editable slice and preserve redo
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5736362Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5737092Z   duration_ms: 2.404588
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5737649Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5738160Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5739040Z # Subtest: no-op edits preserve redo and create no history entry
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5741321Z ok 2 - no-op edits preserve redo and create no history entry
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5742067Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5742720Z   duration_ms: 0.466007
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5743291Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5743785Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5744633Z # Subtest: history retains only the binding selected values and bounds undo
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5745812Z ok 3 - history retains only the binding selected values and bounds undo
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5746810Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5747458Z   duration_ms: 0.521014
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5748031Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5748467Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5749092Z # Subtest: failed restore cannot consume an undo entry
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5749854Z ok 4 - failed restore cannot consume an undo entry
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5750392Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5750817Z   duration_ms: 0.269409
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5751290Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5751747Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5752548Z # Subtest: synchronous transaction contract refuses async edits before invocation
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5753890Z ok 5 - synchronous transaction contract refuses async edits before invocation
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5754508Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5778242Z   duration_ms: 0.298471
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5778902Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5779338Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5780178Z # Subtest: typed views and dates are compared by values rather than empty property sets
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5781616Z ok 6 - typed views and dates are compared by values rather than empty property sets
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5782355Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5782794Z   duration_ms: 0.651292
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5783270Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5783821Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5784532Z # Subtest: review displays zero and false faithfully and escapes source strings
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5785484Z ok 7 - review displays zero and false faithfully and escapes source strings
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5786171Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5786579Z   duration_ms: 0.770348
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5787307Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5787740Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5788371Z # Subtest: confirmation binds exact edit generation and action
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5789156Z ok 8 - confirmation binds exact edit generation and action
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5789724Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5790166Z   duration_ms: 0.853913
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5790632Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5791060Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5791731Z # Subtest: pending review cannot close or accept a new candidate
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5792592Z ok 9 - pending review cannot close or accept a new candidate
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5793212Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5793650Z   duration_ms: 0.781856
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5794159Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5794591Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5795303Z # Subtest: destroyed review closes and removes cancellation listener
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5796214Z ok 10 - destroyed review closes and removes cancellation listener
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5797438Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5797986Z   duration_ms: 0.622614
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5798467Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5798882Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5799503Z # Subtest: record projection never mutates source rows and uses stable IDs
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5800121Z ok 11 - record projection never mutates source rows and uses stable IDs
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5800548Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5800841Z   duration_ms: 1.120897
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5801160Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5801461Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5801959Z # Subtest: selection survives row replacement without a spurious new selection
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5802650Z ok 12 - selection survives row replacement without a spurious new selection
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5803105Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5803444Z   duration_ms: 1.287413
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5803768Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5804063Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5804553Z # Subtest: duplicate or rewritten identities are rejected before reconciliation
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5805261Z ok 13 - duplicate or rewritten identities are rejected before reconciliation
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5805701Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5806018Z   duration_ms: 0.344958
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5806332Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5806621Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5807411Z # Subtest: invalid edits do not reach the binding
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5807942Z ok 14 - invalid edits do not reach the binding
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5808235Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5808449Z   duration_ms: 0.398336
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5808697Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5808908Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5809231Z # Subtest: permission changes are checked at edit time
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5809632Z ok 15 - permission changes are checked at edit time
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5809930Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5810140Z   duration_ms: 0.239418
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5810376Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5810580Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5810947Z # Subtest: editing state and teardown are scoped to the mounted grid
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5811440Z ok 16 - editing state and teardown are scoped to the mounted grid
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5811771Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5811975Z   duration_ms: 1.480576
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5812217Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:39.5812426Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.0999026Z # Subtest: ordinary verified projection is retained without an empty commit
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1000193Z ok 17 - ordinary verified projection is retained without an empty commit
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1028194Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1029331Z   duration_ms: 395.876789
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1030564Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1030977Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1031613Z # Subtest: a generated update is retained from its tested source
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1032400Z ok 18 - a generated update is retained from its tested source
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1032900Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1033221Z   duration_ms: 100.236427
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1033579Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1033907Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1034572Z # Subtest: concurrent unrelated source is preserved and the release is reverified
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1035488Z ok 19 - concurrent unrelated source is preserved and the release is reverified
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1036087Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1036401Z   duration_ms: 145.925271
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1036979Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1037318Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1038026Z # Subtest: concurrent build input is rebuilt instead of deploying stale generated bytes
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1038975Z ok 20 - concurrent build input is rebuilt instead of deploying stale generated bytes
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1039559Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1039866Z   duration_ms: 160.196558
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1040215Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1040526Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1041155Z # Subtest: a reconciliation that fails verification never reaches the remote release
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1042121Z ok 21 - a reconciliation that fails verification never reaches the remote release
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1043023Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1043348Z   duration_ms: 154.32222
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1043692Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1044289Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1044883Z # Subtest: a real generated-file conflict aborts without overwriting upstream
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1045808Z ok 22 - a real generated-file conflict aborts without overwriting upstream
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1046386Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1046874Z   duration_ms: 154.907775
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1047244Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1047553Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1048146Z # Subtest: unrelated staged work is never included in a release commit
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1048956Z ok 23 - unrelated staged work is never included in a release commit
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1049603Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1049932Z   duration_ms: 67.794046
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1050294Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1050571Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1051200Z # Subtest: lost successful push response is recovered by exact remote-head readback
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1051891Z ok 24 - lost successful push response is recovered by exact remote-head readback
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1052270Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1052523Z   duration_ms: 84.016733
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1052836Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1053045Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1053467Z # Subtest: continuous concurrent changes have a bounded retry count
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1053973Z ok 25 - continuous concurrent changes have a bounded retry count
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1054302Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1054513Z   duration_ms: 285.098733
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1054768Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1054975Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1127304Z # Subtest: nine unique authored application links include both current acquisition previews
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1131476Z not ok 26 - nine unique authored application links include both current acquisition previews
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1131999Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1132250Z   duration_ms: 4.970684
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1132498Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1132971Z   location: '/home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:48:1'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1133486Z   failureType: 'testCodeFailure'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1133791Z   error: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1134069Z     Expected values to be strictly equal:
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1134353Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1134558Z     13 !== 9
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1134764Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1134972Z   code: 'ERR_ASSERTION'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1135222Z   name: 'AssertionError'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1135471Z   expected: 9
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1136097Z   actual: 13
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1136428Z   operator: 'strictEqual'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1136964Z   stack: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1137858Z     TestContext.<anonymous> (file:///home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:50:10)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1138840Z     Test.runInAsyncScope (node:async_hooks:214:14)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1139492Z     Test.run (node:internal/test_runner/test:1047:25)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1140129Z     Test.start (node:internal/test_runner/test:944:17)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1140953Z     startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1141611Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1142230Z # Subtest: the authored directory remains ordinary links without JavaScript
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1143166Z ok 27 - the authored directory remains ordinary links without JavaScript
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1149027Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1152254Z   duration_ms: 1.116794
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1152692Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1153080Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1153741Z # Subtest: carousel order, destinations, titles and descriptions derive from that directory
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1154700Z ok 28 - carousel order, destinations, titles and descriptions derive from that directory
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1155116Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1155338Z   duration_ms: 5.212055
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1155584Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1155797Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1156257Z # Subtest: a changed source destination propagates without editing a second registry
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1157733Z ok 29 - a changed source destination propagates without editing a second registry
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1158161Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1158370Z   duration_ms: 1.699119
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1158609Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1158822Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1159269Z # Subtest: duplicate, active-scheme and credential-bearing links cannot enter the carousel
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1159927Z not ok 30 - duplicate, active-scheme and credential-bearing links cannot enter the carousel
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1160351Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1160566Z   duration_ms: 3.055064
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1160799Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1161245Z   location: '/home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:71:1'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1161729Z   failureType: 'testCodeFailure'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1161990Z   error: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1162243Z     Expected values to be strictly equal:
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1162526Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1162724Z     13 !== 9
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1162925Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1163134Z   code: 'ERR_ASSERTION'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1163376Z   name: 'AssertionError'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1163617Z   expected: 9
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1163827Z   actual: 13
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1164046Z   operator: 'strictEqual'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1164288Z   stack: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1164809Z     TestContext.<anonymous> (file:///home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:73:10)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1165400Z     Test.runInAsyncScope (node:async_hooks:214:14)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1165777Z     Test.run (node:internal/test_runner/test:1047:25)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1166217Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1166757Z     Test.postRun (node:internal/test_runner/test:1173:19)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1167298Z     Test.run (node:internal/test_runner/test:1101:12)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1167961Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1168560Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1168912Z # Subtest: untrusted titles remain text and do not create elements
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1169401Z ok 31 - untrusted titles remain text and do not create elements
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1169712Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1169930Z   duration_ms: 2.194408
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1170160Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1170368Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1170853Z # Subtest: only explicitly described published captures are shown; missing images leave the link usable
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1171773Z not ok 32 - only explicitly described published captures are shown; missing images leave the link usable
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1172222Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1172426Z   duration_ms: 1.827229
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1172657Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1173091Z   location: '/home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:80:1'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1173574Z   failureType: 'testCodeFailure'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1173887Z   error: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1174350Z     Expected values to be strictly equal:
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1174743Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1175011Z     1 !== 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1175280Z     
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1175581Z   code: 'ERR_ASSERTION'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1175933Z   name: 'AssertionError'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1176281Z   expected: 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1176567Z   actual: 1
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1177277Z   operator: 'strictEqual'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1177628Z   stack: |-
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1178169Z     TestContext.<anonymous> (file:///home/runner/work/bonfyre/bonfyre/scripts/tests/showcase-directory.test.mjs:82:10)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1178771Z     Test.runInAsyncScope (node:async_hooks:214:14)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1179162Z     Test.run (node:internal/test_runner/test:1047:25)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1179609Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1180066Z     Test.postRun (node:internal/test_runner/test:1173:19)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1180503Z     Test.run (node:internal/test_runner/test:1101:12)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1181207Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1181635Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1181998Z # Subtest: repeated initialization does not duplicate the carousel
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1182492Z ok 33 - repeated initialization does not duplicate the carousel
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1182833Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1183043Z   duration_ms: 1.364118
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1183277Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1183536Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1183934Z # Subtest: absent and empty directories stay valid without injecting controls
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1184528Z ok 34 - absent and empty directories stay valid without injecting controls
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1184941Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1185195Z   duration_ms: 1.78483
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1185527Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1185741Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1186269Z # Subtest: keyboard scrolling respects reduced motion and does not consume link keystrokes
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1187146Z ok 35 - keyboard scrolling respects reduced motion and does not consume link keystrokes
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1187660Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1187954Z   duration_ms: 1.550022
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1188318Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1188628Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1189118Z # Subtest: controls reflect scroll boundaries and their labels target the track
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1189784Z ok 36 - controls reflect scroll boundaries and their labels target the track
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1190267Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1190537Z   duration_ms: 1.23303
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1190894Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1191238Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1191747Z # Subtest: Aurekai adoption points to the live owner without carrying private context
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1192575Z ok 37 - Aurekai adoption points to the live owner without carrying private context
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1193047Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1193336Z   duration_ms: 1.217562
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1193648Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1193929Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1194374Z # Subtest: existing SurfaceScene bindings become a bounded executable composition
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1195116Z ok 38 - existing SurfaceScene bindings become a bounded executable composition
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1195569Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1195876Z   duration_ms: 2.417974
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1196158Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1196431Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1197097Z # Subtest: binding cannot acquire a different application kind
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1197996Z ok 39 - binding cannot acquire a different application kind
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1198535Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1198767Z   duration_ms: 0.545542
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1199115Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1199438Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1199770Z # Subtest: a slot cannot silently admit an unsupported kind
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1200198Z ok 40 - a slot cannot silently admit an unsupported kind
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1200498Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1200709Z   duration_ms: 0.191752
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1200939Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1201140Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1201478Z # Subtest: commands must be declared by exact aperture and handler
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1201949Z ok 41 - commands must be declared by exact aperture and handler
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1202268Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1202467Z   duration_ms: 0.150834
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1202696Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1202897Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1203250Z # Subtest: undeclared handlers do not appear from an aperture string
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1203746Z ok 42 - undeclared handlers do not appear from an aperture string
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1204069Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1204280Z   duration_ms: 0.158847
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1204502Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1204703Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1205051Z # Subtest: duplicate bindings, commands and incompatible extents fail
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1205550Z ok 43 - duplicate bindings, commands and incompatible extents fail
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1206250Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1206522Z   duration_ms: 0.314221
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1206967Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1207263Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1207779Z # Subtest: layout references must be bound and ordered without a cycle
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1208380Z ok 44 - layout references must be bound and ordered without a cycle
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1208711Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1208917Z   duration_ms: 0.430069
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1209153Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1209357Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1209793Z # Subtest: unknown initial layouts are refused without reinterpreting owner material limits
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1210431Z ok 45 - unknown initial layouts are refused without reinterpreting owner material limits
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1210883Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1211097Z   duration_ms: 0.207334
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1211322Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1211527Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1211885Z # Subtest: selection continuity links only the explicit source group
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1212396Z ok 46 - selection continuity links only the explicit source group
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1212754Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1212992Z   duration_ms: 0.537059
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1213267Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1213502Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1213817Z # Subtest: unrelated continuity remains independent
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1214312Z ok 47 - unrelated continuity remains independent
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1214624Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1214832Z   duration_ms: 0.398784
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1215072Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1215282Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1215749Z # Subtest: two simultaneous workspaces retain independent identical row IDs
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1216786Z ok 48 - two simultaneous workspaces retain independent identical row IDs
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1217333Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1217599Z   duration_ms: 0.267357
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1218045Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1218312Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1218844Z # Subtest: current availability is checked on execution, not palette rendering
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1219416Z ok 49 - current availability is checked on execution, not palette rendering
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1219784Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1219986Z   duration_ms: 0.490951
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1220216Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1220419Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1220686Z # Subtest: unknown operations cannot execute
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1221032Z ok 50 - unknown operations cannot execute
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1221309Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1221510Z   duration_ms: 0.182033
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1222088Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1222303Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1222656Z # Subtest: pending operations cannot rebind and are aborted on unmount
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1223148Z ok 51 - pending operations cannot rebind and are aborted on unmount
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1223480Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1223677Z   duration_ms: 0.402295
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1223906Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1224116Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1224463Z # Subtest: owner revisions invalidate a captured operation context
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1224940Z ok 52 - owner revisions invalidate a captured operation context
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1225265Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1225470Z   duration_ms: 0.18758
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1225745Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1225947Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1226319Z # Subtest: a rejected handler remains retryable without inventing success
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1226989Z ok 53 - a rejected handler remains retryable without inventing success
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1227337Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1227539Z   duration_ms: 0.182454
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1227766Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1227969Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1228337Z # Subtest: dirty source replacement leaves the active composition unchanged
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1228863Z ok 54 - dirty source replacement leaves the active composition unchanged
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1229210Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1229407Z   duration_ms: 0.291416
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1229631Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1229916Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1230349Z # Subtest: valid replacement clears stale selection and rejects late use of disposed sessions
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1230991Z ok 55 - valid replacement clears stale selection and rejects late use of disposed sessions
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1231387Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1231591Z   duration_ms: 0.196729
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1231817Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1232021Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1232403Z # Subtest: unavailable owner is a disabled command instead of a broken palette
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1232955Z ok 56 - unavailable owner is a disabled command instead of a broken palette
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1233304Z   ---
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1233502Z   duration_ms: 0.19723
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1233740Z   type: 'test'
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1233938Z   ...
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1234123Z 1..56
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1234313Z # tests 56
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1234518Z # suites 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1234721Z # pass 53
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1234919Z # fail 3
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1235128Z # cancelled 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1235382Z # skipped 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1235607Z # todo 0
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1235879Z # duration_ms 1616.358899
+deploy	Check application directory and retained release	2026-10-17T21:14:41.1247957Z ##[error]Process completed with exit code 1.

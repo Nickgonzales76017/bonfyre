@@ -1,0 +1,269 @@
+{
+  "id": "aurekaiHouseholdReview",
+  "name": "Aurekai · Household source review",
+  "active": false,
+  "nodes": [
+    {
+      "id": "start-review",
+      "name": "Start review",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "parameters": {},
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "question",
+      "name": "Question",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\"query\":\"Where is the dishwasher receipt?\",\"mode\":\"semantic\"}",
+        "options": {}
+      },
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "id": "open-local-workspace",
+      "name": "Open local workspace",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "http://127.0.0.1:4177/",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "id": "find-passages",
+      "name": "Find passages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:4177/api/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Document-Session",
+              "value": "={{ $('Open local workspace').first().json.data.match(/name=\"document-session\" content=\"([^\"]+)\"/)[1] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { query: $('Question').first().json.query, mode: $('Question').first().json.mode } }}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "id": "found-a-passage",
+      "name": "Found a passage",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-results",
+              "leftValue": "={{ $json.results.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "id": "read-original",
+      "name": "Read original",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "={{ 'http://127.0.0.1:4177/api/source?id=' + encodeURIComponent($json.results[0].document_id) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Document-Session",
+              "value": "={{ $('Open local workspace').first().json.data.match(/name=\"document-session\" content=\"([^\"]+)\"/)[1] }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "position": [
+        1100,
+        -120
+      ]
+    },
+    {
+      "id": "source-review",
+      "name": "Source review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ {\n    status: 'source_ready_for_review', question: $('Question').first().json.query,\n    method: $('Question').first().json.mode, title: $json.title, document_id: $json.id,\n    source_digest: $json.digest, paragraph: $('Find passages').first().json.results[0].paragraph,\n    retrieved_passage: $('Find passages').first().json.results[0].text, original_text: $json.text,\n    workspace_url: 'http://127.0.0.1:4177', review_required: true, cloud_handoff: false,\n    note: 'Read the source before writing a note. A similar passage may not answer the question.'\n  } }}",
+        "options": {}
+      },
+      "position": [
+        1320,
+        -120
+      ]
+    },
+    {
+      "id": "no-matching-passage",
+      "name": "No matching passage",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ {\n    status: 'no_matching_passage', question: $('Question').first().json.query,\n    method: $('Question').first().json.mode, review_required: true, cloud_handoff: false,\n    note: 'No passage matched this search. Try a different phrase or review the collection.'\n  } }}",
+        "options": {}
+      },
+      "position": [
+        1100,
+        140
+      ]
+    },
+    {
+      "id": "read-this-first",
+      "name": "Read this first",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "parameters": {
+        "content": "## Household source review\nSynthetic sample • manual run • local requests only\n\nStart the household workspace on this Mac, edit Question, then run. Review the original paragraph before keeping a note. Similarity is not a verified answer.\n\nNo email, calendar, Notion, file deletion or cloud AI nodes. Import into a separate test instance; keep the workflow unpublished. This sample reads the workspace page session on the same Mac.",
+        "height": 300,
+        "width": 640
+      },
+      "position": [
+        180,
+        -380
+      ]
+    }
+  ],
+  "connections": {
+    "Start review": {
+      "main": [
+        [
+          {
+            "node": "Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question": {
+      "main": [
+        [
+          {
+            "node": "Open local workspace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open local workspace": {
+      "main": [
+        [
+          {
+            "node": "Find passages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find passages": {
+      "main": [
+        [
+          {
+            "node": "Found a passage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Found a passage": {
+      "main": [
+        [
+          {
+            "node": "Read original",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No matching passage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read original": {
+      "main": [
+        [
+          {
+            "node": "Source review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  },
+  "pinData": {},
+  "tags": []
+}

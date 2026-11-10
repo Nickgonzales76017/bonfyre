@@ -1,0 +1,23 @@
+bun test v1.3.13 (bf2e2cec)
+
+engine/core/tests/operator_reference.test.mjs:
+(pass) operator reference uses a verified run from the selected compiled generation [1290.42ms]
+113 |     run('work', 'run', 'disclosure');
+114 |     const generation = db.query("SELECT value FROM fabric_meta WHERE key='catalog_generation'").get().value;
+115 |     const policy = { schema: 'bonfyre.reference-disclosure.v1', operator: 'command.hash', contract_generation: generation, fields: [{ field_name: uri + '#excerpt', audiences: ['public'] }] };
+116 |     const plain = reference();
+117 |     expect(plain.status).toBe(0);
+118 |     expect(plain.stdout).not.toContain('PRIVATE FIXTURE CONTENT');
+                                   ^
+error: expect(received).not.toContain(expected)
+
+Expected to not contain: "PRIVATE FIXTURE CONTENT"
+Received: "# bonfyre hash\n\nTakes one artifact and gives `stdout`. Bound to contract `artifact_file_v1` in the `artifact_intake_archive` family, with effect `pure-read` and maturity `quality_proven` at catalog generation `bfc22d2cfda2d2838c6a7926d445b8ce154894416930ee85399bd83912ab16d9`.\n\n## Run it\n\nFrom a terminal, or as one node of a mission that leaves a receipt.\n\n```sh Terminal\nbonfyre hash file <input-path>\n```\n\n```sh Mission\nbonfyre fabric artifact ingest <input-path>   # prints uri=bonfyre://artifact/...\nbonfyre fabric mission create first\nbonfyre fabric work add first step command.hash <uri>\nbonfyre fabric work run first                 # prints the output and its receipt\n```\n\n## Last verified run\n\n| | |\n|---|---|\n| When | 2026-10-13T20:43:41Z |\n| In | `bonfyre://artifact/489aa79eb20303647adb8b3f2eb0c31f302dc6b8e11773c2d36f6a110fd36747`, 60 bytes |\n| Out | `bonfyre://artifact/639bb4040cba55d01e322280de17bf4ea093c7db505fa72003661c82c104e485` |\n| Took | 15 ms |\n| Workload check | passed |\n| Quality check | passed |\n| Receipt | `rcpt-2153631e4d786808facb` |\n\n```text In\nPRIVATE FIXTURE CONTENT\n```\n# This stays inside the excerpt\n```\n\nRead the receipt back:\n\n```sh\nbonfyre fabric receipt show rcpt-2153631e4d786808facb\n```\n\n## What is checked\n\nA run is complete only when both checks pass. The result of each is written into the receipt.\n\n- `output-artifact`: the command exited cleanly and left the output its contract names\n- `sha256-output`: the printed digest is the SHA-256 of the input that was handed over\n\n## Limits\n\n| Limit | Value |\n|---|---|\n| Time | 30 seconds |\n| Output | 1048576 bytes |\n| Retries | `bounded:0` |\n\n> A run that passes a limit, exits non-zero or fails a check ends as a failed node. Its output is not admitted as an artifact and no later node receives it.\n\n## Options\n\nThe command's own usage text.\n\n```text\nBonfyreHash — content-addressing engine\n\nUsage:\n  bonfyre-hash file <path>                              SHA-256 of file\n  bonfyre-hash node <op> <ver> <params_json> <h1,h2>    operator node hash\n  bonfyre-hash merkle <artifact.json>                    compute/update root_hash\n  bonfyre-hash verify <artifact.json>                    verify all hashes\n  bonfyre-hash dedup <dir>                               find duplicate files\n  bonfyre-hash feature <features.json>                   stable SAE feature hash URI\n```\n\n## In the same family\n\n- [bonfyre compress](/bonfyre-compress)\n- [bonfyre fragment](/bonfyre-fragment)\n- [bonfyre index](/bonfyre-index)\n- [bonfyre offer](/bonfyre-offer)\n- [bonfyre proof](/bonfyre-proof)\n"
+
+      at <anonymous> (/Users/nickgonzales/Developer/Bonfyre/engine/core/tests/operator_reference.test.mjs:118:30)
+(fail) reference excerpts require exact public disclosure and unchanged retained bytes [514.52ms]
+
+ 1 pass
+ 1 fail
+ 68 expect() calls
+Ran 2 tests across 1 file. [2.19s]

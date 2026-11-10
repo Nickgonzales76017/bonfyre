@@ -1,0 +1,77 @@
+{
+  "at": "2026-10-09T03:25:17.174Z",
+  "strict_quote_checks": 5,
+  "negative_control": {
+    "must_be_false": "false",
+    "must_be_true": "true",
+    "must_remain_null": null
+  },
+  "rfq": {
+    "id": 1,
+    "namespace": "wholesale-20k",
+    "subject": "Rigging quote: press brake and shear in Lewisville",
+    "vendor": "quotes@immnow.com",
+    "opportunity": "wholesale:lewisville-machinery-referral-20261008",
+    "message_for_supplier": "Hi IMM team,\n\nPlease quote rigging for a prospective purchase in Lewisville: a Heim 90-ton, 10-foot mechanical press brake, listed at 8,500 lb, and a GMC 10-foot, 14-gauge shear whose weight I’m confirming.\n\nI need two options: load both onto a buyer-arranged truck, or load and deliver within 30 road miles in DFW. For preliminary pricing, assume ground-floor access; doorway clearance, power disconnection and exact dimensions still need checking.\n\nCould you give a budget range, your site-survey charge if needed, and the details required for a firm quote? Please separate transport, unloading and any minimum crew charges.\n\nScheduling is flexible. This is a quote request, not a booking or instruction to visit the seller.\n\nThanks,\nNick Gonzales",
+    "terms": "Internal record of sent request 1a11ea4ad402f437. No supplier quote received, no purchase order or transport booking. Company/vendor/opportunity are native references; no remote ERPNext record is asserted.",
+    "status": "draft"
+  },
+  "counts": {
+    "crm": 9,
+    "supplier_quotes": 0,
+    "buyer_quotes": 0
+  },
+  "legacy_messages": [
+    {
+      "id": 43,
+      "state": "withheld",
+      "subject_line": "Mixed pallet racking in Vader, Washington",
+      "state_reason": "CURRENT DIRECTION: Nick chose buy/resell margin on 2026-10-08 and rejected revealing wholesale sourcing in the opening. This is a conditional buyer-fit/bid inquiry. It omits supplier asking prices, discovery channels and referral-fee requests, and makes no ownership or availability claim. Earlier source and contact checks below remain historical. Sending is held; Nick explicitly kept King Surplus held. This revised wording has no approval.\n\nSupplemental wholesale provider qualification. Gmail domain-wide history check on 2026-10-08 found no messages for these providers. Public business contact verified against provider's official page. Nick has held all sending until final review. Owner identity and contact details are not included; no introduction, inventory ownership or agreed compensation is claimed. Existing fifteen client drafts are unchanged."
+    },
+    {
+      "id": 44,
+      "state": "abandoned",
+      "subject_line": "Sourcing sealed OEM toner lots",
+      "state_reason": "Superseded: this draft asks for sourcing fees, while Nick selected buy/resell margin. The toner-exit stock still lacks SKU counts and packaging evidence; obtain those facts before preparing a buyer bid inquiry. Do not send a generic replacement.\n\nSupplemental wholesale provider qualification. Gmail domain-wide history check on 2026-10-08 found no messages for these providers. Public business contact verified against provider's official page. Nick has held all sending until final review. Owner identity and contact details are not included; no introduction, inventory ownership or agreed compensation is claimed. Existing fifteen client drafts are unchanged."
+    },
+    {
+      "id": 45,
+      "state": "withheld",
+      "subject_line": "Heim press brake and GMC shear in Lewisville",
+      "state_reason": "CURRENT DIRECTION: Nick chose buy/resell margin on 2026-10-08 and rejected revealing wholesale sourcing in the opening. This is a conditional buyer-fit/bid inquiry. It omits supplier asking prices, discovery channels and referral-fee requests, and makes no ownership or availability claim. Earlier source and contact checks below remain historical. Sending is held; Nick explicitly kept King Surplus held. This revised wording has no approval.\n\nNick rejected the prior version on 2026-10-08 as AI language and weak outreach. This revision leads with the specific work or lot and one next step. It has not been approved; all sending remains held. Supplemental provider qualification; outside the original active 15. Domain-wide Gmail check on 2026-10-08 found no prior messages. Official public business contact and program retained. Nick holds sending until final review. No owner contact details or inventory ownership claim included."
+    },
+    {
+      "id": 48,
+      "state": "withheld",
+      "subject_line": "Texas equipment: Heim/GMC and Laguna Swift",
+      "state_reason": "CURRENT DIRECTION: Nick chose buy/resell margin on 2026-10-08 and rejected revealing wholesale sourcing in the opening. This is a conditional buyer-fit/bid inquiry. It omits supplier asking prices, discovery channels and referral-fee requests, and makes no ownership or availability claim. Earlier source and contact checks below remain historical. Sending is held; Nick explicitly kept King Surplus held. This revised wording has no approval.\n\nNew wholesale buyer qualification, outside the active 15. Published contact and finder program retained at /Users/nickgonzales/.bonfyre/foreign/receipts/wholesale-king-finders-20261008-20261008T040736Z-39d7beff01.json. The two lots are existing projects 73 and 77; prices and hours are seller statements, not verified quotes. Domain-wide Gmail check found no correspondence. No seller contact details shared. Nick rejected the preceding service/provider drafts; this version remains held and has not been presented as approved. Sending requires final review."
+    }
+  ],
+  "coordination": [
+    {
+      "id": 93,
+      "composed_by": "ChatGPT",
+      "subject_line": "Warp quote request routed to Sales; original thread retained"
+    },
+    {
+      "id": 92,
+      "composed_by": "ChatGPT",
+      "subject_line": "Houston: two buyer enquiries and two transport RFQs sent"
+    },
+    {
+      "id": 91,
+      "composed_by": "ChatGPT",
+      "subject_line": "Landing reset research and Houston $400 lot underwriting"
+    },
+    {
+      "id": 90,
+      "composed_by": "ChatGPT",
+      "subject_line": "Recording test diagnosed; tested patch and next product priorities retained"
+    },
+    {
+      "id": 89,
+      "composed_by": "ChatGPT",
+      "subject_line": "Run reviewed; recording privacy failure reproduced as inline SVG false positive"
+    }
+  ]
+}

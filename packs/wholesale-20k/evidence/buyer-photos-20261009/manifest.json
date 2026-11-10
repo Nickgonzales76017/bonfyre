@@ -1,0 +1,142 @@
+[
+  {
+    "lot": "houston-35",
+    "source_url": "https://images.craigslist.org/01212_gj19a2bOSoR_0iS0pS_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:44:56Z",
+    "fetched_at": "2026-10-09T18:19:03.798Z",
+    "http_status": 200,
+    "bytes": 20136,
+    "sha256": "7f64b07c3b396fed90a5be39a1d3b3e855ccd4174eff35818d232ae7504c1001",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/houston-35-1.jpg"
+  },
+  {
+    "lot": "houston-35",
+    "source_url": "https://images.craigslist.org/00z0z_6sueIjctVdL_0ak07K_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:44:56Z",
+    "fetched_at": "2026-10-09T18:19:03.860Z",
+    "http_status": 200,
+    "bytes": 19734,
+    "sha256": "01cb4385beec00860f79586d274ec723aef6f4e5a37f5abe97db601b871e1ff6",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/houston-35-2.jpg"
+  },
+  {
+    "lot": "vertiv-32",
+    "source_url": "https://images.craigslist.org/01515_fdWaEd565Wl_0CI0ug_600x450.jpg",
+    "source_observed_at": "2026-10-08T04:31:52Z",
+    "fetched_at": "2026-10-09T18:19:03.957Z",
+    "http_status": 200,
+    "bytes": 38508,
+    "sha256": "3762c499f83e6f992cdf25482b0da98d5a3f35851b841104a9cd21bd5f65c8ea",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/vertiv-32-1.jpg"
+  },
+  {
+    "lot": "vertiv-32",
+    "source_url": "https://images.craigslist.org/00e0e_jWD5Am4quFa_0us0CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T04:31:52Z",
+    "fetched_at": "2026-10-09T18:19:04.017Z",
+    "http_status": 200,
+    "bytes": 22178,
+    "sha256": "adda58bda6db7013cff53f3e271e741180ab9520c0afa1f274a3cdb28b82373c",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/vertiv-32-2.jpg"
+  },
+  {
+    "lot": "vertiv-32",
+    "source_url": "https://images.craigslist.org/00n0n_zuaxguI2Bx_0qb0CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T04:31:52Z",
+    "fetched_at": "2026-10-09T18:19:04.079Z",
+    "http_status": 200,
+    "bytes": 27235,
+    "sha256": "d13a5551abb42f479f189814d3b254a9e6a5776c0c3498daef7b725d82ada45e",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/vertiv-32-3.jpg"
+  },
+  {
+    "lot": "vertiv-32",
+    "source_url": "https://images.craigslist.org/00u0u_95p2uFL27h2_0mW0CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T04:31:52Z",
+    "fetched_at": "2026-10-09T18:19:04.130Z",
+    "http_status": 200,
+    "bytes": 18932,
+    "sha256": "505654be90e5ef635ddb82a413e53d13048d946a6d864e06e9edf5f066e15346",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/vertiv-32-4.jpg"
+  },
+  {
+    "lot": "heim-gmc",
+    "source_url": "https://images.craigslist.org/00N0N_6VMX3cRuSTV_0CI0hq_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:10:38Z",
+    "fetched_at": "2026-10-09T18:19:04.184Z",
+    "http_status": 200,
+    "bytes": 29402,
+    "sha256": "68670bdbe4b2263b879dfbdb24487d61cd235bf59f14d8e691ecdf049b36c653",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/heim-gmc-1.jpg"
+  },
+  {
+    "lot": "heim-gmc",
+    "source_url": "https://images.craigslist.org/00M0M_8JKkKv9PLHg_0CI0hq_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:10:38Z",
+    "fetched_at": "2026-10-09T18:19:04.238Z",
+    "http_status": 200,
+    "bytes": 24257,
+    "sha256": "e2c7ba9a0a845985c091e926117928168d4e5dbd94c4cba052328c87883954dc",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/heim-gmc-2.jpg"
+  },
+  {
+    "lot": "heim-gmc",
+    "source_url": "https://images.craigslist.org/00202_cx7OStXCPnq_0CI0hq_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:10:38Z",
+    "fetched_at": "2026-10-09T18:19:04.289Z",
+    "http_status": 200,
+    "bytes": 24795,
+    "sha256": "ce8d46354fa75d35dfc6ad22f3dbafc2d9edef5b2b5a03094b33a16f4c81405a",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/heim-gmc-3.jpg"
+  },
+  {
+    "lot": "conroe-toner",
+    "source_url": "https://images.craigslist.org/00707_a5839lVCOpa_0wg0eU_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:06:58Z",
+    "fetched_at": "2026-10-09T18:19:04.342Z",
+    "http_status": 200,
+    "bytes": 26593,
+    "sha256": "dc58b52c7d466809fc1b48f2f05d126a32e5208489023f23247b9fb7a07a3b8a",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/conroe-toner-1.jpg"
+  },
+  {
+    "lot": "conroe-toner",
+    "source_url": "https://images.craigslist.org/00000_gck2V3fxM2f_0eU0wg_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:06:58Z",
+    "fetched_at": "2026-10-09T18:19:04.399Z",
+    "http_status": 200,
+    "bytes": 13951,
+    "sha256": "83d8a6e40854d8dd42826e404b058ad725c7a8bb830e26958e0aedfa9da039aa",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/conroe-toner-2.jpg"
+  },
+  {
+    "lot": "covina-toner",
+    "source_url": "https://images.craigslist.org/00U0U_hdMMgpEryZy_0t20CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:06:58Z",
+    "fetched_at": "2026-10-09T18:19:04.456Z",
+    "http_status": 200,
+    "bytes": 27360,
+    "sha256": "8e24be25e8b0290e4d1670f6c81dbf9d0ad12bbcf7226ef2451affae73d901fe",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/covina-toner-1.jpg"
+  },
+  {
+    "lot": "covina-toner",
+    "source_url": "https://images.craigslist.org/00000_4YGb5cKHPkd_0t20CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:06:58Z",
+    "fetched_at": "2026-10-09T18:19:04.546Z",
+    "http_status": 200,
+    "bytes": 31431,
+    "sha256": "4b18a6ec77e0da47841718fedbe12a970decd77fa6a8c640d9c50253ce5e5aa5",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/covina-toner-2.jpg"
+  },
+  {
+    "lot": "covina-toner",
+    "source_url": "https://images.craigslist.org/00g0g_dbCAbV91WCQ_0t20CI_600x450.jpg",
+    "source_observed_at": "2026-10-08T03:06:58Z",
+    "fetched_at": "2026-10-09T18:19:04.639Z",
+    "http_status": 200,
+    "bytes": 32707,
+    "sha256": "add89e30a0c108bad1f4168ae0fdd9228c9de2d52bb75531daa78f14f812b13e",
+    "path": "/Users/nickgonzales/Developer/Bonfyre/packs/wholesale-20k/evidence/buyer-photos-20261009/covina-toner-3.jpg"
+  }
+]

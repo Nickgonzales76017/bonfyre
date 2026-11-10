@@ -1,0 +1,13 @@
+{
+  "store": "red3-display",
+  "product_id": "7631",
+  "source_url": "https://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/",
+  "source_sha256": "ba21476562bde3adfeeb816f633ea090334887b80755949c200f1b244925f458",
+  "observed_at": "2026-10-07T15:31:26Z",
+  "source_product_kind": "simple legacy WooCommerce product; not a Shopify item",
+  "variant_identity": "the observed simple-product add-to-cart ID; no variation IDs fabricated",
+  "sku_decision": "The JSON-LD number matches the product ID, while no labelled SKU is present. It remains unset in the editor.",
+  "description_decision": "The source Product node has an empty description; kept empty.",
+  "original_rows_unchanged": true,
+  "published": false
+}

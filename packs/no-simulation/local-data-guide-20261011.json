@@ -1,0 +1,115 @@
+{
+  "checked_at": "2026-10-12T00:54:22.091Z",
+  "guide": "docs/experiences/local-first-applications.md",
+  "guide_sha256": "3dcc4f078699b09fbfdb060e295fa42bc6dfbc36e54e41725f678530425d5bb9",
+  "execution": "Five sh Terminal blocks extracted verbatim and executed in order under sh -eu from the checkout root; exit status 0.",
+  "binaries": [
+    {
+      "path": "cmd/BonfyreEmbed/bonfyre-embed",
+      "sha256": "1b14fd0edb797c4af1c7ee6d3db1fbdab46929fa2bbfa85f6a3a990e097bf19c"
+    },
+    {
+      "path": "cmd/BonfyreVec/bonfyre-vec",
+      "sha256": "10144249f2a49e3bd90032ffdf950a14ea46c3fbfe82d54053b1bdffaf54197f"
+    }
+  ],
+  "model": "nomic-embed-text-onnx",
+  "batch": {
+    "schema": "bonfyre-embed-batch.v1",
+    "embedded": 3,
+    "stored": 3,
+    "failed": 0,
+    "not_stored": 0,
+    "degraded": 0,
+    "invisible_to_vocabulary": 0,
+    "partially_visible": 0,
+    "content_words": 57,
+    "unknown_words": 0,
+    "dims": 768,
+    "backend": "onnx-runtime-native",
+    "cannot_infer": [
+      "an embedding -> a meaning; distances are comparable only within one model and one geometry",
+      "embedded -> stored; a vector that did not reach the store answers nothing",
+      "partially visible -> faithfully represented; unknown words are dropped to a single token each"
+    ]
+  },
+  "checks": {
+    "first_result_both_search_paths": "flat-tire",
+    "updated_text": "inspect the tire for glass",
+    "counts": [
+      3,
+      3,
+      2
+    ],
+    "remaining_ids_both_search_paths": [
+      "pottery",
+      "bakery"
+    ],
+    "deletions": [
+      {
+        "requested_ids": 1,
+        "deleted_vectors": 1,
+        "deleted_artifacts": 1
+      },
+      {
+        "requested_ids": 1,
+        "deleted_vectors": 0,
+        "deleted_artifacts": 0
+      }
+    ]
+  },
+  "scope": "Native local index, query, replacement, persistence across command processes and exact-ID deletion. Existing installed model and sqlite-vec required. No browser UI, fresh-machine installation, tenant isolation or external provider demonstrated.",
+  "documentation_references": [
+    {
+      "url": "https://bun.sh/docs/quickstart",
+      "observation": "Prerequisites, executable setup and expected output support checking the first result."
+    },
+    {
+      "url": "https://docs.astro.build/en/tutorial/1-setup/",
+      "observation": "Setup is an explicit stage before the application tutorial."
+    }
+  ],
+  "local_preview": {
+    "home": ".bonfyre-runtime/docs-review-20261011",
+    "url": "http://docs-review.localhost:8913/start",
+    "routes": [
+      {
+        "route": "/start",
+        "bytes": 11429,
+        "manual_layout": true
+      },
+      {
+        "route": "/white-label-delivery",
+        "bytes": 16459,
+        "manual_layout": true
+      },
+      {
+        "route": "/recording-to-workspace",
+        "bytes": 14259,
+        "manual_layout": true
+      },
+      {
+        "route": "/request-to-books",
+        "bytes": 13410,
+        "manual_layout": true
+      },
+      {
+        "route": "/integration-and-migration",
+        "bytes": 13856,
+        "manual_layout": true
+      },
+      {
+        "route": "/local-first-applications",
+        "bytes": 19151,
+        "manual_layout": true
+      },
+      {
+        "route": "/models-and-compression",
+        "bytes": 12558,
+        "manual_layout": true
+      }
+    ],
+    "mcp_lists_all_seven_pages": true,
+    "visual_review": "Not performed: the in-app browser execution tool is unavailable in this session."
+  }
+}

@@ -1,0 +1,645 @@
+pack no-simulation-measured
+generation control-1
+source_plane run4_institutional_fabric
+item_kind proof_frontier
+source_ref campaign:no-simulation
+note Organs that reported results for work they had not done, and what each does now. Every entry was run against real material on 2026-10-09; pay, detect-objects, detect-vision, wire, quant and kvcache were then built in cmd/ and installed to ~/.bonfyre/bin and ~/.local/bin; the binaries they replaced are kept in ~/Developer/bonfyre-desim-backups.
+
+claim clm:pay-invoices-from-metered-events
+  status STANDING
+  verification MEASURED
+  claim An invoice is the metered events for one key in one period, priced by whatever admitted rate the meter applied when each was recorded. An event the meter left unpriced is listed and not billed.
+  evidence cmd/BonfyrePay/src/main.c reads the meter store read-only; two transcribe events at an admitted 0.50 per call and one unpriced brief produced a 100 cent invoice with the brief line carrying a null amount
+  evidence no events, or events with no admitted rate, exit 2 and write no invoice row
+  evidence before this pass: the line items came from a table that priced by operation name and a unit count fixed at zero, so every invoice was for nothing
+
+claim clm:detect-objects-runs-a-detector
+  status STANDING
+  verification MEASURED
+  claim The organ runs a detector on each frame and reads back what it wrote. With no detector, or when no frame could be read, it writes nothing.
+  evidence cmd/BonfyreDetectObjects/src/vision_detect.swift found a face at 0.865 and a person at 0.711 in two real photographs; four bird photographs returned empty lists, which is the detector's own answer
+  evidence cmd/BonfyreDetectObjects/tests/detect_test.sh passes, including a detector that exits 0 without writing and a file that is not an image
+  evidence before this pass: a frame with no model was written out as a stub with requires_model, and a frame the external detector did handle was merged as zero detections because its output was never read
+
+claim clm:qwen-fpq-decodes-or-fails
+  status STANDING
+  verification MEASURED
+  claim A row the pack cannot decode is a failure. No environment switch produces one.
+  evidence cmd/BonfyreQwenFPQ/tests/decode_row_shim.test.c passes with the old switch set to 1 and the decode still failing safely; the installed binary no longer carries the fallback's log line
+  evidence before this pass: a hash-noise row stood in for a failed decode behind BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS, and an unbuilt twin did it for every embedding lookup
+
+claim clm:wire-reads-captures
+  status STANDING
+  verification MEASURED
+  claim A capture is a pcap, from a file, from a stream on stdin, or from tcpdump run on a named interface for a bounded count. A list of described flows is refused.
+  evidence a public sample capture of SIP and RTP, retained through the foreign-twin observer with digest da24856f, yields 691 packets, 35 RTP and 4 SIP flows, media candidates, meter records, scaling events and routes
+  evidence cmd/BonfyreWire/tests/wire_smoke.sh passes against that capture
+  evidence found on the way: the byte-order test on the pcap magic was inverted, so no packet had ever been read from a real capture; the described-flow fixtures were the only input that worked
+  evidence not yet tested: live capture: this machine does not grant BPF access, so the tcpdump path was exercised only as far as its refusal
+
+claim clm:quant-measures-a-model
+  status STANDING
+  verification MEASURED
+  claim Roundtrip and benchmark read a safetensors model one tensor at a time and report cosine, error and bits per weight for each.
+  evidence four tensors of layer 0 of Qwen2.5-Coder 0.5B, 13075328 elements: cosine 0.999843 mean, 3.781 bits per weight, 2.05 million elements per second
+  evidence before this pass: the model argument was ignored and a Gaussian tensor was measured in its place, followed by a line saying zero-loss quantization was confirmed
+
+claim clm:kvcache-benchmark-measures-a-tensor
+  status STANDING
+  verification MEASURED
+  claim The benchmark measures a recorded float tensor and refuses without one.
+  evidence the layer 0 key projection of the same model, 114688 floats at 4 bits: cosine 0.999923, 5.89 bits per weight
+  evidence not yet tested: a key/value state recorded from live inference; the tensor measured was a weight matrix
+
+claim clm:context-compile-reads-text
+  status STANDING
+  verification MEASURED
+  claim Given bodies, required sentences and a token budget, the compiler counts with the model's tokenizer, pins the newest body carrying each required sentence, fills with the newest bodies that fit, writes the context and reads it back to confirm every required sentence is there.
+  evidence 787 messages of one working session, 108079 tokens, compiled to 5994 tokens under a 6000 budget with three standing corrections preserved
+  evidence cmd/BonfyreKVCache/tests/context_contract.sh passes on this repository's own working agreement, including a budget one token short of the required body and a sentence no body carries
+  evidence before this pass: eight commands over lib/libbonfyre/bf_context_*.c multiplied counts by constants and printed a continuity verdict for text they were never shown
+
+claim clm:sae-has-no-stand-in-dictionary
+  status STANDING
+  verification MEASURED
+  claim A feature dictionary is one trained on a model. The loader refuses a dictionary marked synthetic, activation fails without an encoder, and the gate records NOT_GATED when it had no dictionary or no feature manifest to examine.
+  evidence ~/.local/share/bonfyre/sae/default.bfsae, the gate's default, carried model family qwen3-8b, hidden dimension 256, 64 features and the training note synthetic; the installed organ now refuses it by name
+  evidence before this pass: bonfyre-sae synth wrote a random encoder, a missing encoder was answered with a hash of the residual as activations, and a gate with nothing to examine logged CLEAR_NO_FEATURES
+  evidence not yet tested: no dictionary trained on a model exists on this machine, so the real activation path has no witness
+
+claim clm:circuit-refuses-unknown-components
+  status STANDING
+  verification MEASURED
+  claim A netlist naming a component nobody registered does not compile.
+  evidence lib/libbonfyre/bf_circuit.c returns no circuit; the existing two-component contract netlist still compiles to 2 nodes and 1 edge
+  evidence before this pass: an unknown component was registered on the spot as a pass-through and the circuit ran
+
+claim clm:narrate-speaks-or-fails
+  status STANDING
+  verification MEASURED
+  claim Narration is audio. With Piper and a voice model it is Piper's; without, it is the system voice; with neither the organ fails and writes no manifest.
+  evidence one sentence rendered to 5.84 seconds of 22.05 kHz mono with a measured dynamic range of 32.8 dB; with no engine on the path it exits 1 and leaves only the paced text
+  evidence before this pass: with Piper absent it wrote a narrated-artifact manifest naming a WAV that did not exist, printed quality figures of zero and exited 0
+  evidence not yet tested: the Piper path on this machine, which has a voice model and no piper binary; what was spoken has not been transcribed back and compared
+
+claim clm:publish-audio-runs-its-steps
+  status STANDING
+  verification MEASURED
+  claim components/PublishAudio normalizes with the media-prep organ, speaks an intro with the narrate organ when given text, joins them, and fails if any step did not happen.
+  evidence components/PublishAudio/tests/smoke.sh passes on a real spoken recording: the file with an intro is longer than the one without, and a file that is not audio publishes nothing
+  evidence before this pass: a missing speech tool was replaced by echoing the command it would have run, the intro text was the word Intro, the model path was /path/to/piper_model, and the script exited 0 with a status file marked simulated
+
+claim clm:proof-checks-against-the-source
+  status STANDING
+  verification MEASURED
+  claim A proof is a comparison of a brief with the source it names: the share of its statements made of words the source contains, and the share that are whole statements. Without the source nothing is scored, and no review is recorded because none happens.
+  evidence the same fragmented brief that scored 86 and approve now scores 15 and reject, 34 of 40 statements being fragments; a brief of invented claims scores 0; a brief with no source exits 1
+  evidence before this pass: the score was a rubric of section headings and word counts, a review score of 90 with a reviewed-at time was written for anything over 80, and a missing transcript was replaced by a copy of the brief
+  evidence scripts/gen_proof_meta.sh, which wrote 85, verified and standard QA passed for any directory, now runs the organ
+
+claim clm:brief-keeps-sentences-whole
+  status STANDING
+  verification MEASURED
+  claim A sentence ends at terminal punctuation followed by space, or at a blank line. A full stop inside a file name does not end one and a wrapped line is a space.
+  evidence the hard-wrapped commit notes that produced 34 fragments now produce 16 statements, none a fragment, all grounded
+  evidence not yet tested: a brief selects sentences; nothing here measures whether it selected the important ones
+
+claim clm:reason-branches-are-model-runs
+  status STANDING
+  verification MEASURED
+  claim A reasoning session is a prompt and a set of branches; a branch is one model run under a stated system instruction and temperature, kept with the digests of what was sent and returned. Comparing branches compares their text.
+  evidence cmd/BonfyreReason/tests/session_contract.sh passes against the local model: two branches run, the receipt digest equals the digest of the answer on disk, an unrun branch cannot be compared or committed, and a dead endpoint leaves no result
+  evidence before this pass: the organ embedded a hash of the prompt, integrated that vector through a Hamiltonian, and called the trajectories cautious, creative and adversarial; its own header said it was not a model runner
+  evidence the operator contract is reason_ask_v1, one model run that prints its answer; ask returned a one-sentence answer from the local model
+  evidence not yet tested: the local model's answers are weak; the organ reports what was returned and makes no claim about its quality
+
+claim clm:connectors-need-an-event
+  status STANDING
+  verification MEASURED
+  claim A connector processes an event that arrived: one passed in, read from a file, or fetched from an endpoint. With none it throws.
+  evidence Aurekai/src/integration-connectors.mjs loads; the 23 project-native tests pass after simulate was removed from the institutional tool's modes
+  evidence before this pass: a preset could carry a mock event, and with no source at all an empty object was normalized and validated as if something had been received
+
+claim clm:tel-has-no-stand-in-switch
+  status STANDING
+  verification MEASURED
+  claim The telephony organ talks to FreeSWITCH or does nothing. A verification code is recorded only after the message carrying it was sent.
+  evidence the installed organ answers unknown command to mock and sim-call; verify-send against a closed port exits with no row in verify_codes, and verify-check then denies
+  evidence before this pass: the organ carried a mock ESL server, sim-call and sim-sms commands that generated calls and messages and touched an empty file as a recording, and verify-send under --dry-run stored and printed a valid code without sending it
+  evidence not yet tested: no FreeSWITCH is running here, so listen, call and send have no witness on this machine
+
+claim clm:ledger-reports-observed-cost
+  status STANDING
+  verification MEASURED
+  claim A family's cost is the cost the economy organ recorded for the recipe the caller names, or unknown. No value is computed.
+  evidence with --recipe ai-loss-classification the installed organ reports 0.040256 dollars observed in 7 cost records; without a recipe it reports unknown; delta requires a recipe and a date and reports what was recorded since
+  evidence before this pass: a family was priced at a dollar a megabyte plus fifty cents an operator, doubled as a brand premium, and summed into what the vault was worth; delta printed the current snapshot under the word DELTA
+  evidence not yet tested: that a recipe's costs belong to a given family is the caller's statement; nothing binds the two
+
+claim clm:circuit-carries-no-stand-in-organs
+  status STANDING
+  verification MEASURED
+  claim The circuit runtime registers only components that do what their name says. A netlist naming an organ it cannot run does not compile.
+  evidence cmd/BonfyreNet/tests/netlist_contract.sh passes: the meter-and-ledger netlist parses, is reported unknown, and fails to compile with no circuit written
+  evidence before this pass: ten components carried organ names over arithmetic of their own, among them a meter that was current times conductance and a content store that passed an event through, and a circuit of them ran and converged
+  evidence not yet tested: what is left, a key-value field, the integrator and the isolation layer, has no netlist exercising it; with no source component a circuit has nothing to drive it
+
+claim clm:structural-benchmark-reads-a-registry
+  status STANDING
+  verification MEASURED
+  claim The compress organ's structural benchmark measures a physical registry that exists.
+  evidence the estate's address-plane registry: 5525 passports, 27625 supports, 12005376 bytes, 2172.9 bytes per passport, walked in 4.6 milliseconds; its recorded physical bytes sum to zero, which is the registry's own state
+  evidence before this pass: it inserted passports named synthetic into a database in memory and reported their cost
+  evidence cmd/BonfyreCompress/results/physical-compiler/structural-*.json are results of the earlier version and describe rows it made up
+
+claim clm:doctor-reports-what-is-there
+  status STANDING
+  verification MEASURED
+  claim The health report finds installed organs from any directory and says a catalog exists when it does.
+  evidence from outside the source tree it reports 16 of 16 binaries and the catalog as last refreshed; before, the same machine reported 0 of 16 and catalog FAIL because both were resolved against the caller's working directory
+
+claim clm:narration-is-heard-back
+  status STANDING
+  verification MEASURED
+  claim Narrated audio, transcribed by the transcription organ, carries the words of the text.
+  evidence cmd/BonfyreNarrate/tests/roundtrip_test.sh passes; one sentence came back word for word apart from the spelling of a name
+  evidence cmd/BonfyreProof/tests/proof_test.sh passes on this repository's contributing guide: whole statements pass, the same statements cut in half do not, invented ones score zero grounded, and a brief with no source is not scored
+
+claim clm:akai-cli-reports-no-generated-figures
+  status STANDING
+  verification MEASURED
+  claim In the separate runtime at ~/repos/aurekai, which is what the aurekai and akai commands run, no command in the weights or tel modules reports a figure from a random number generator, from the length of a name, or from a table of made-up providers.
+  evidence 30 weights commands are withdrawn and exit 2 saying so, among them federated-merge, dp-noise, perf-profile, sae-probe, kv-restore, sla-monitor, credit-settle, synth-quant, verify-fidelity, ghost-infer, arb-route and cost-forecast; the module loads and no Math.random remains in it
+  evidence drift, feature-drift and p2p-seed fail when the models are not in the content store instead of emitting figures marked synthetic; a mirror not in the store is reported unknown where it was reported synced with a random byte count
+  evidence 58 hashes of label strings offered as eval, security and capability proofs are null; artifact digests and sizes are read from the file or null; a digest is no longer called a signature
+  evidence tel mock, sim-call and sim-sms are gone and tel listen reads the telephony organ's own record; context exposes only compile
+  evidence not yet tested: the withdrawn commands are still listed in the help text, and the other modules of that repository have not been read
+
+claim clm:recall-test-uses-the-organs
+  status STANDING
+  verification MEASURED
+  claim The recall organ's test embeds and searches with the embedding and vector organs themselves.
+  evidence cmd/BonfyreRecall/tests/semantic_recall_test.sh passes: three sentences indexed, and a paraphrase of each returns that sentence first; with no embedding organ a query is refused
+  evidence before this pass: two shell scripts stood in for the organs, one printing a fixed vector and one a fixed search result with identifier 42, so the test passed whatever either organ did
+
+claim clm:netlist-runs-its-organs
+  status STANDING
+  verification MEASURED
+  claim A netlist whose components name organs is executed by running those organs, in the order its nets require, each as one process. A net lets a component refer to the output of the one before it. The trace records each command's exit status and time.
+  evidence cmd/BonfyreNet/tests/netlist_contract.sh passes: a two-component netlist speaks a sentence with the narration organ and hears it back with the transcription organ, the transcript carrying the sentence's words; a failing component stops the one that depends on it; a reference with no net behind it is refused
+  evidence the design is the smallest that makes a wire mean something: order, and the upstream output directory. It carries no signal types, retries or parallelism, and the flow and stitch organs cover ground it does not
+
+claim clm:tests-run-the-organs-they-name
+  status STANDING
+  verification MEASURED
+  claim Two more tests exercise the organ they are about. The mixed-artifact requirement test passes on a real 2,307-row table, a real PDF and a real spoken recording. The event-source refiling test creates records in the content store, refiles one through it, and confirms the store changed.
+  evidence tests/requirements/mixed_artifact.sh printed mixed artifact intake: passed with the three real inputs; scripts/tests/project_event_sources_test.sh passes, including a store made read-only that refuses the write and is reported as refused
+  evidence before this pass: the refiling test put a script in place of the content store that wrote its arguments to a file, and asserted the record still held its old value
+  evidence the two static-export tests fetch from the estate's own running web server and check they wrote its pages; a script named curl used to answer in the server's place with one fixed line of HTML
+  evidence packs/no-simulation/test-doubles.tsv lists the tests that still use a stand-in, by kind
+
+claim clm:e2e-plan-runs-without-masks
+  status STANDING
+  verification MEASURED
+  claim With every failure mask removed and the missing steps written, eleven of the twelve end-to-end pipelines pass, each command exiting zero and each expected file present.
+  evidence run in a scratch copy on 2026-10-09. First run unmasked: five passed and seven failed at a step that had always failed. Four bundled a proof with no score before it and now run proof full; two lacked a brief before the proof and have one; explain-repo briefed a transcript nothing wrote and now ingests and briefs the repository README
+  evidence the twelfth, customer-voice, fails honestly: the tone organ's engine, OpenSMILE, is not installed on this machine. bonfyre-tone status used to print ok without looking and now reports engine_missing and exits 2
+  evidence before this pass: every command ended in || true, so each step was treated as having run; the stored results still marked a pipeline FAIL when its expected files were missing
+
+claim clm:akai-weights-withdrawn-commands-removed
+  status STANDING
+  verification MEASURED
+  claim The thirty akai weights commands that reported generated or canned figures no longer exist; asking for one is an unknown subcommand.
+  evidence ~/repos/aurekai/src/weightops.mjs is 4,984 lines where it was about 7,000; the module loads; weights prove and weights diff answer unknown subcommand and weights sbom still runs
+
+forbidden_inference an organ listed here -> every caller was updated; the command workload was rerun on them and its matrix is in this pack
+forbidden_inference a measured claim on one model or one capture -> every model or every capture
+forbidden_inference a brief that passes proof -> a good summary; proof finds invented and broken statements, not missing ones
+forbidden_inference a detector that finds people, faces and animals -> a general object detector
+
+claim clm:certification-probes-check-the-input
+  status STANDING
+  verification MEASURED
+  claim The fabric's quality probes for quant, wire, detect-objects, narrate and reason check what the organ reported against the artifact the node was handed, and refuse the same operators on inputs that are not what they claim.
+  evidence wire: the probe walks the capture's own records; a 691 packet, 99,997 byte capture certified, the same operator on a text file was refused by the organ, and a report one packet over is refused by the probe (engine/core/tests/probe_contract_test.c, 20 cases pass with BONFYRE_TEST_PCAP set and the wire case reports NOT RUN without it)
+  evidence quant: certified on mnist.safetensors, conv2.weight, cosine 0.999875; the report must name the model file handed in and its lowest cosine must be at least 0.99; a text prompt as the model is refused
+  evidence detect-objects: certified on a photograph where a face was found; a real product photograph with nobody in it is refused by the probe, since an empty list cannot be told from no detection
+  evidence narrate: contract narrate_voice_v1 replaces the blocked Piper contract; under PATH=/usr/bin:/bin the organ spoke with the system voice and wrote a 261 KB WAV, which the probe reads
+  evidence reason: certified through the managed local model; the probe requires the session to be keyed by the prompt's digest and an answer of more than zero bytes; the organ takes BONFYRE_REASON_DIR so it runs without a home directory
+  evidence before this pass: wire was certified on two typed-in packets and the figures 2 and 1536 written into the probe, quant on a text prompt, detect-objects on a flat blue frame and the model name yolo-v8, reason on a field the organ no longer prints, and sae on the text of a random dictionary
+
+claim clm:detect-objects-reads-content-not-names
+  status STANDING
+  verification MEASURED
+  claim A single file is accepted as an image by its first bytes, so a stored artifact that lost its extension is still read.
+  evidence a JPEG stored under a .body name was refused as "not a supported image format" before the change and read after it; cmd/BonfyreDetectObjects/tests/detect_test.sh passes
+
+claim clm:qwen-fpq-service-runs-the-rebuilt-binary
+  status STANDING
+  verification MEASURED
+  claim The resident QUIC model service runs the binary that has no fabricated-row fallback.
+  evidence a canary of the installed binary on port 9444 answered status and generated tokens; com.bonfyre.qwen-quic was then booted out and bootstrapped, came up as pid 8916 on 2026-10-10, and generated the same tokens on 9443
+
+claim clm:service-bin-and-front-door-agree
+  status STANDING
+  verification MEASURED
+  claim bonfyre-web-address in ~/.bonfyre/bin is its current build, and bonfyre-project at the front door is the build the publisher runs.
+  evidence digests match after promotion; the web-address services run from the repository path and were started after that build, so they were not restarted
+  evidence cms in ~/.bonfyre/bin was already its current build, differing only by an ad-hoc signature
+
+claim clm:ruling-physics-stays
+  status STANDING
+  verification OPERATOR_RULING_2026-10-10
+  claim bonfyre-physics is kept as it is. It integrates what it says it integrates and reports nothing it did not compute.
+
+claim clm:ruling-test-doubles-are-labelled
+  status STANDING
+  verification OPERATOR_RULING_2026-10-10
+  claim A test that stands in for an organ is labelled with what it does not prove. It is replaced only where the real organ exists on this machine.
+
+forbidden_inference a codec that survives a generated tone -> a cache compression result
+
+claim clm:distribute-says-what-the-offer-says
+  status STANDING
+  verification MEASURED
+  claim A message is the offer's own promise with its price and turnaround when it has them. An offer that is not marked sendable, or states no promise, gets no message.
+  evidence the offer the estate's chain produces is not_quoted and was refused with exit 2 and no output; the same offer with a promise typed in produced that sentence and nothing else; cmd/BonfyreDistribute/tests/message_test.sh passes
+  evidence before this pass: every offer got "I have a proof-backed local-first offer ... one messy recording", whatever it was for, and the certification looked for that sentence
+
+claim clm:capability-costs-are-unmeasured
+  status STANDING
+  verification MEASURED
+  claim The built-in capability table shows no cost nobody measured and no model the organ does not run.
+  evidence 23 typed-in per-call dollar figures (ten of them 0.000) now read unmeasured in match, show and list; transcribe no longer claims whisper-large-v3 on a GPU, brief no longer claims a llama model, segment no longer claims pyannote
+  evidence tests/discovery_test.sh and tests/owner_contract_realization_test.sh pass
+
+forbidden_inference 93 operators quality-proven -> 93 organs correct; a probe checks one run on one input
+forbidden_inference a blocked operator -> a broken organ; blocked means no real input for it exists here
+
+claim clm:stand-in-tests-say-what-they-do-not-prove
+  status STANDING
+  verification MEASURED
+  claim Every test that puts something in place of an organ or an outside service says so at its head, by kind.
+  evidence packs/no-simulation/test-doubles.tsv: all 58 read and classified; 46 labelled, 11 found not to be doubles (the word appears where the test refuses a forged input or asserts nothing is stubbed), one JSON file that cannot carry a label
+  evidence the labelled shell and module files still parse
+
+claim clm:self-optimize-proposes-only-what-it-found
+  status STANDING
+  verification MEASURED
+  claim bonfyre self optimize lists a plan when a comparison found drift and lists nothing otherwise; the score beside a plan says it is a fixed ordering by drift status and not a measurement.
+  evidence with no command drifting the output is an empty plan list; before this pass a precision scan at 0.70 and a bridge audit at 0.68 were proposed on every run whatever the estate looked like
+
+claim clm:front-door-runs-every-command-it-lists
+  status STANDING
+  verification MEASURED
+  claim All 97 commands the front door lists resolve and start from ~/.local/bin.
+  evidence workflow and family were installed there without the execute bit and five weeks behind their builds, and operator was only in ~/.bonfyre/bin; the front door reported each as not installed. After installing the current builds and linking operator, status reads 97/97 and each starts
+
+claim clm:kvcache-certified-on-a-recorded-cache
+  status STANDING
+  verification MEASURED
+  claim The cache codec is certified on the attention keys and values a model run left behind, written by that run.
+  evidence bonfyre-qwen-fpq generate with BONFYRE_QWEN_KV_OUT wrote 24 layers, 41 prompt tokens, 2 heads of 64: 1,007,616 bytes; roundtrip at 4 bits gave cosine 0.999920 over 251,904 floats; the probe requires the float count to equal the file's and the cosine to be at least 0.99
+  evidence the fabric's own model operator now writes that file and the workload hands it to kvcache; a generated tone was certified here before
+
+claim clm:meter-certified-on-a-real-execution
+  status STANDING
+  verification MEASURED
+  claim The meter operator records an execution that happened: the receipt of the node that produced its input, the time the fabric wrote that receipt, and the measured size of what the node produced.
+  evidence contract placeholders ${input.receipt} and ${input.receipt_at} are resolved from the fabric's receipts and fail to expand for an input no node produced; bonfyre-meter --bytes-of measures the file; the probe compares the recorded byte count with the artifact's size
+  evidence before this pass the contract recorded 64 bytes and one second for an attempt nobody made, and the organ had begun refusing it
+
+claim clm:api-and-moq-self-tests-are-native
+  status STANDING
+  verification MEASURED
+  claim The api operator starts the real HTTP server and proves key authentication against it; the moq operator completes a native QUIC session and has an unleased subscribe refused. Neither uses Python.
+  evidence api: authenticated 200, rejected 401, one request logged; moq: transport native_quic, paired SETUP completed, subscribe submitted, server answered UNAUTHORIZED
+  evidence the moq run shows a session and a refusal, and no media relayed; the earlier self-test relayed a payload between two Python peers
+
+claim clm:swarm-has-a-native-peer
+  status STANDING
+  verification MEASURED
+  claim bonfyre-swarm fetch asks a seeder for a block over the wire and writes it only when the seeder returned the piece, offset and length asked for. The swarm operator is certified by seeding a real file and having two such peers fetch from it.
+  evidence a 4,096 byte block of a seeded model file arrived byte-identical; the seeder's index then showed two peers and 8,192 bytes uploaded
+  evidence before this pass the only peers were Python and the organ could seed but not fetch
+
+claim clm:dictionary-is-trained-on-recorded-residuals
+  status STANDING
+  verification MEASURED
+  claim bonfyre-sae train fits a sparse autoencoder to residual activations a model run recorded, holds one vector in ten out, and reports reconstruction on those. The model organ records the residual stream at a chosen layer with BONFYRE_QWEN_RESID_OUT.
+  evidence certification run: 76 vectors of 896 from the model operator's own run, 16 features, variance explained on held-out vectors 0.94
+  evidence a second dictionary, 32 features on 149 vectors recorded over a real document, explains 0.82 of held-out variance with about 10 features active; the runtime opens it and activates on a recorded vector (dictionaries/qwen2.5-coder-0.5b-l12-n149.bfsae)
+  evidence the trainer refuses a recording with fewer than twice as many training vectors as features
+
+claim clm:atlas-cites-runs-not-help
+  status STANDING
+  verification MEASURED
+  claim 73 command entries in the atlas name the evidence matrix and the receipt of the run that proved them; 7 say their certification is blocked.
+  evidence architecture/commands/command-surface.yaff; atlas valid at 492 and exported
+
+forbidden_inference a dictionary that reconstructs held-out vectors -> features that mean something; none is labelled
+forbidden_inference 76 or 149 vectors -> a dictionary of the model; they are one prompt and part of one document
+
+claim clm:one-bqfp-contract
+  status STANDING
+  verification MEASURED
+  claim The .bqfp layout, its validity checks and its block reconstruction are defined once, in lib/libbonfyre/include/bf_bqfp.h. bonfyre-quant writes through it and bonfyre-sli and bonfyre-fpqx read through it; none keeps a copy of its own. The encoder keeps the organ's algorithms: random signs, Walsh-Hadamard, mu-law warp, an E8 snap and a learned 16-dimensional codebook.
+  evidence cmd/BonfyreQuant/tests/bqfp_roundtrip_test.sh on mnist.safetensors: two tensors encoded, decoded by bonfyre-sli and compared with the model at cosine 0.998746 and 0.998989; one tensor's weights refused as the other's; the two aligned by bonfyre-fpqx at a mean cosine short of 1; a file cut at five places refused by both readers with no output left behind
+  evidence the two readers' own malformed-file tests still pass against the shared reader (fpqx: 10 refused; sli: 8 refused at two entry points)
+  evidence a first encoder written in this pass rounded coefficients to a grid in place of the E8 snap and scored 0.9996; it was replaced, because the lattice is the organ's method and the grid was not
+  evidence the fpqx operator is now certified on two different tensors of one model (anchors 20, mean cosine 0.56), where it had been certified on a file aligned with itself
+  evidence released with scripts/organ_drift.sh --sync to ~/.bonfyre/bin and ~/.local/bin; the tool then reports nothing behind in either
+
+claim clm:drift-tool-agrees-with-what-is-built
+  status STANDING
+  verification MEASURED
+  claim scripts/organ_drift.sh reports no organ behind in either install location.
+  evidence it had promoted cmd/BonfyreProject's copy, a day older than the owner's build under components/, over the live one; the live build was put back and the cmd copy refreshed from the owner, which is what its Makefile does
+  evidence cms now matches its build byte for byte; its install-bin target re-signs the copy, which will read as drift again the next time it runs
+
+claim clm:bqfp-malformed-test-is-native-and-shared
+  status STANDING
+  verification MEASURED
+  claim One test covers malformed .bqfp files for both readers, starting from a tensor encoded from a real model and changing named bytes of it. The two per-organ tests that built their cases in embedded Python now run it.
+  evidence cmd/BonfyreQuant/tests/bqfp_malformed_test.sh: two valid files accepted, ten malformed refused by bonfyre-sli and bonfyre-fpqx with no output left; the fpqx and sli test entry points pass through it and fail with a stated reason when no model is named
+
+claim clm:meter-records-the-fabrics-own-event
+  status STANDING
+  verification MEASURED
+  claim The meter's record of an execution carries the receipt, start time and duration the fabric itself recorded for it, and the measured size of its output.
+  evidence in the certification run the meter stored operator-execution, 605 bytes, 12 ms, 2026-10-10T09:45:03Z, rcpt-092c0c9d7727e67b6d89; the fabric's event for the brief node reads 12 ms, the same start time and the same receipt
+  evidence the contract takes them through ${input.receipt}, ${input.receipt_at} and ${input.receipt_duration_ms}, read from the fabric's events table; an earlier version of this pass left the duration out and the store held 0
+
+claim clm:five-operators-read-the-estates-own-records
+  status STANDING
+  verification MEASURED
+  claim economy, finance, learn, outreach and pay are certified on what the estate itself has recorded, copied as it stands when the certification runs, and each probe counts the records in that copy and requires the organ's report to account for exactly that many. Nothing is written into a contract.
+  evidence on 2026-10-10 the stores held 406 model costs, 10 services, 233 feedback records, 7 outbound entries and 475 metered events; the invoice was for the one key and month with the most priced usage, 421 events and 295 cents, matching the meter's own sum
+  evidence bonfyre-economy and bonfyre-learn take --db like the other organs that keep a store; bonfyre-pay takes auto for a key or period only when the meter store has one answer and refuses otherwise (six keys: refused)
+  evidence before this pass each of the five was certified by recording a figure typed into its contract and reading it back
+
+claim clm:distribute-reports-the-estates-composed-messages
+  status STANDING
+  verification MEASURED
+  claim bonfyre-distribute messages counts by state the messages the estate has composed, read-only, and dispatches none. Its certification exports ids, states and times from the content store and never recipients or text.
+  evidence 118 messages on 2026-10-10: 52 withheld, 49 handed to a person, 9 abandoned, 7 written, 1 composed; the probe's own count of the export agreed
+  evidence the offer files its other verbs read were produced by components that are archived; nothing native writes them now
+
+claim clm:tone-measures-speech-without-opensmile
+  status STANDING
+  verification MEASURED
+  claim bonfyre-tone measures a recording with whichever engine the machine has and says which: eGeMAPS through OpenSMILE when one is configured, otherwise the estate's own voice features under their own name. The native extractor is one piece of code, lib/libbonfyre/include/bf_voice_fingerprint.h, shared with bonfyre-narrate, where it used to live.
+  evidence 27 features from a spoken recording, engine native, feature set bonfyre-voice-fingerprint; a text file refused; a profile refused because its dimensions are defined on eGeMAPS
+  evidence bonfyre-narrate rebuilt on the shared header and its speak-then-hear test passes
+forbidden_inference a report that matches its store -> a store that holds what a business needs; the finance store holds experiment prices
+forbidden_inference native voice features named like eGeMAPS -> eGeMAPS; they are fewer and are this code's own estimates
+
+claim clm:a-payment-needs-evidence
+  status STANDING
+  verification MEASURED
+  claim bonfyre-pay records a payment only against a reference that shows the money arrived, refuses the same reference twice, refuses a non-positive amount, and marks an invoice paid only when recorded payments reach its amount.
+  evidence cmd/BonfyrePay/tests/payment_test.sh passes on an invoice of 295 cents raised from the estate's meter
+  evidence before this pass the verb accepted a payment with no reference and marked the invoice paid, and an existing test did exactly that
+
+claim clm:command-workload-runs-on-real-inputs
+  status STANDING
+  verification MEASURED
+  claim The estate's own command certification runs to the end on real inputs with every one of its 93 operators quality-proven: none blocked, none unproven, none certified on a stand-in or an invented fact.
+  evidence scripts/bonfyre-command-workloads exit 0; scripts/bonfyre-command-evidence wrote 93 rows, all passed and quality_proven (command-evidence-20261010.tsv)
+  evidence inputs: a recorded packet capture, a model's weights, a photograph, speech spoken and heard back, keys, values and residuals recorded from a model run, a .bqfp encoded from the model, a real execution receipt, snapshots of the estate's own stores, and a real telephone switch
+  evidence run with BONFYRE_WORKLOADS_BUILD=0 on the organs as built
+
+claim clm:tel-places-a-call-in-a-real-switch
+  status STANDING
+  verification MEASURED
+  claim bonfyre-tel places a call in a real FreeSWITCH, records it under the switch's own identifier and hangs it up; the switch confirms the call exists after the call and is gone after the hangup.
+  evidence FreeSWITCH 1.11.3 started with only its event socket on 127.0.0.1 and calls that stay inside it; no SIP or WebRTC module loaded, nothing listening beyond loopback
+  evidence the first run against a switch found two defects that no stand-in had: the organ read only the header of the switch's answer and never its body, and gave up before an originate could answer; and it stored the word "pending" where the call's identifier belonged, so hangup had nothing to name
+  evidence the route a call takes is now named by BONFYRE_TEL_ROUTE with {to} for the number; unset, it is the outside trunk as before
+
+claim clm:books-are-derived-from-records
+  status STANDING
+  verification MEASURED
+  claim bonfyre-finance books derives a double-entry journal and trial balance from recorded invoices, payments, credits and model costs, read-only, with every line naming its source row.
+  evidence cmd/BonfyreFinance/tests/books_test.sh: 409 journal lines from one invoice, two payments and the estate's 406 model costs; debits equal credits; model cost on the books 278,463 millionths of a dollar, equal to the store's sum; receivable equal to invoices less payments
+  evidence a cost's credit side is an account named cost_owed_or_paid_unknown, because nothing records whether a model cost was billed or paid
+forbidden_inference a call inside a switch on loopback -> a call that reaches a telephone
+
+claim clm:a-quote-is-stated-by-a-person
+  status STANDING
+  verification MEASURED
+  claim bonfyre-offer quote turns an evidence review into a quoted, sendable offer only when a named person states every one of the six things the review lists as required, and works none of them out. bonfyre-distribute then composes that offer's own promise, price and turnaround.
+  evidence cmd/BonfyreOffer/tests/quote_test.sh passes; the organ's commercial safety test still passes, so generate still writes an unquoted review
+  evidence the terms in the test were written by the test; nobody has been quoted and nothing was sent
+
+claim clm:finance-reads-the-estates-real-commercial-records
+  status STANDING
+  verification MEASURED
+  claim The finance operator is certified on the opportunities in the estate's working finance store, and bonfyre-finance books reports, beside the books and without posting them, the commercial records the estate holds in its content store.
+  evidence certification run of 2026-10-10: 9 opportunities ranked, each with its expected cost and a dash for a compensation nobody has stated; all 93 operators quality-proven
+  evidence books with --cms-db and --finance-db: 6 requests for quotation drafted, 2 supplier quotations received totalling 880.00 USD, 9 deals, 120.00 USD of support stated and none received with a receipt, 31 bounties of which none has a stated amount, 31 funding work packages, 9 opportunities with 41,564.00 USD expected cost
+  evidence before this pass the operator was certified on ten services priced at millionths of a dollar, in a store the estate's work does not use
+
+claim clm:real-opportunities-are-exchanges-in-the-chain
+  status STANDING
+  verification MEASURED
+  claim The nine opportunities the estate is pursuing from classified listings are exchanges in its commerce chain, at product and listing and no further, and the organs that quote and take payment record their stage in that chain and are refused by it when the stage before is missing.
+  evidence scripts/commerce_adopt_opportunities.sh on the estate's stores: 9 adopted, 0 on a second run; the chain holds 57 exchanges, 57 at listing; a backup of the store was taken first
+  evidence bonfyre-offer quote for one of them was refused (an offer has to be established first) and left no quote file; bonfyre-pay pay for one was refused (a payment follows a commitment) and kept no payment and did not mark the invoice paid
+  evidence on a copy of the chain where a test wrote the intervening stages, the quote recorded the quote stage and the payment recorded the payment stage
+  evidence the rule is asked of the chain through one shared header, lib/libbonfyre/include/bf_commerce_stage.h
+
+forbidden_inference an exchange in the chain -> a deal in progress; all nine stand where an observed listing stands
+
+claim clm:paid-means-pay-holds-the-payment
+  status STANDING
+  verification MEASURED
+  claim bonfyre-finance opportunity attest --kind payment advances an opportunity to paid only when the Pay store named holds a payment under that reference for the amount claimed, and the reference is not already attested for another opportunity.
+  evidence tests/zero_close.test.mjs makes the payment with the meter and pay organs first; no Pay store, an unknown reference and a wrong amount are each refused; five Finance test files pass
+  evidence before this pass any typed reference and any typed revenue figure moved an opportunity to paid, and the test did exactly that
+
+claim clm:one-line-per-relationship-across-owners
+  status STANDING
+  verification MEASURED
+  claim bonfyre-finance relationships joins Finance, Outreach, the content store's CRM deals and the commerce chain on the finance opportunity id, read-only, and says for each relationship how far the evidence goes and what is missing. The Project MCP serves it, the books and a chain stage through one read-only tool, commercial_state.
+  evidence live stores on 2026-10-10: 18 relationships, 8 with something recorded as sent, 0 replies classified, 4 priced totalling 6,150.00 USD, 0 with an evidenced cost, 17 with a CRM deal, 9 in the commerce chain, 0 paid; 6 Outreach entries carry no opportunity
+  evidence tests/relationships_test.sh checks each total against a direct count of the stores; a store that is named and cannot be read stops the report; a copied store in write-ahead mode is read as immutable instead of answering zero, which the first version did
+  evidence the restarted local Project MCP lists 78 tools including commercial_state and answered it with the same totals; 492 gateway tests pass
+
+claim clm:content-types-all-declare-what-they-are
+  status STANDING
+  verification MEASURED
+  claim All 99 content types that hold rows declare a phenotype, a domain and an audience, with the narrower phenotype wherever the record is something observed, declared or held.
+  evidence schemas/control/content-type-facts.cue: 42 added, household domain added; cue vet passes; Facet density witness PASS (59 kinds + 99 content types across 13 domains, 2013 relations derivable, all 25 reached); reader agreement and native witness pass
+  evidence before this pass the density witness failed on 42 undeclared types
+
+claim clm:url-intake-refuses-what-it-did-not-fetch
+  status STANDING
+  verification MEASURED
+  claim Ingest no longer writes a ready manifest over zero bytes for a URL. A URL with no media is read as a page (fetched copy kept, readable text normalized, h1-h6 kept as heading lines); a page with no readable text outside script is refused with a non-zero exit.
+  evidence before: bonfyre ingest on a script-rendered page wrote status ready, bytes 0, media audio/wav, hash unknown
+  evidence after: the same URL exits non-zero naming 43 readable bytes; docs.frappe.io/hr/introduction normalizes to 10,351 readable bytes of text/plain with its headings
+
+claim clm:passages-keep-structure-and-identity
+  status STANDING
+  verification MEASURED
+  claim Paragraph keeps a text's own headings and blank-line blocks, cuts unstructured text on sentence ends only where whitespace follows, drops nothing, and writes passage records that Recall indexes; given records it carries each record's id onto its passages.
+  evidence cmd/BonfyreParagraph/tests/passages_test.sh passes; before, a 208 KB written thread was cut inside every timestamp and decimal and any sentence over 8,192 bytes was dropped without notice
+  evidence the thread yields 940 passages of which 826 are word-for-word repeats, counted and written once
+
+claim clm:recall-indexes-any-source-and-returns-its-text
+  status STANDING
+  verification MEASURED
+  claim One command builds a candidate store from text files, ingest artifacts and any content type in a record store, with the cutting done by Paragraph; a query can return the passage with each hit.
+  evidence cmd/BonfyreRecall/tests/semantic_recall_test.sh passes including refusals for a directory with no intake manifest and a record type that does not exist
+  evidence ~/.bonfyre/estate-local/recall/campaign.db: 532 passages from the operator thread (114), 123 outbound_message records (332), this ledger (67) and the convergence plan (19), built by bonfyre recall index-sources through the front door
+  evidence before, the only record reader was hard-wired to site_fragment and a query returned ids with no text
+
+claim clm:script-rendered-pages-read-through-a-browser
+  status PARTIAL
+  verification MEASURED
+  claim Ingest reads a page that exists only after script runs by asking Cloudflare Browser Rendering for the page as a browser built it, then normalizing it with the same reader as any page. Without an account id and token in the environment, or when the site refuses the browser, it still refuses.
+  evidence bonfyre-ingest on hn.algolia.com/?q=sqlite+vector through the estate's second Cloudflare account: 32 readable bytes as fetched, 6,370 after rendering, manifest text/plain, live search results in the text; no header or request file left behind
+  evidence the operator's share page is refused: the site serves Cloudflare's hosted browser a block page of 153 readable bytes, and Ingest exits non-zero instead of normalizing it
+  evidence the organ takes the account id and token from its environment; nothing in the estate hands them to it yet, so a plain bonfyre ingest still refuses such pages
+
+claim clm:script-built-pages-read-from-their-own-state
+  status STANDING
+  verification MEASURED
+  claim Ingest reads a page that draws itself from script by decoding the data the page ships, with nothing run and no account needed; a browser is asked only when that yields nothing.
+  evidence bonfyre ingest on the operator's share page, no credentials: 43 readable bytes outside script, about 700 KB of prose in over 4,000 strings from its embedded state; the operator's first message, latest message and the 450 USD proposal text are present
+  evidence the one-off reader this replaces recovered 208 KB because it kept only visible turns; the rest is the tool output those turns were written from
+
+claim clm:organs-get-cloud-credentials-one-way
+  status STANDING
+  verification MEASURED
+  claim An organ asks lib/libbonfyre/include/bf_cloud_refs.h for a provider's account id or token: environment first, then the estate's reference file for the account the estate has chosen in estate-local/cloud-accounts.tsv. A chosen account the file does not hold is not replaced by another account's credential.
+  evidence plain bonfyre-ingest on a client-rendered page with nothing exported: Cloudflare Browser Rendering built it, 11,540 readable bytes; no header or request file remained
+
+claim clm:recall-fuses-words-with-meaning-locally
+  status STANDING
+  verification MEASURED
+  claim recall query --hybrid returns one list from the vector order and a word index over every passage offered, by reciprocal rank, naming each passage's rank in both; passages the embedder cannot see are counted, not fatal, and found by their words.
+  evidence cmd/BonfyreRecall/tests/semantic_recall_test.sh: an exact order number and a Chinese-only record are found at word rank 1 with no vector; a store with no word index refuses --hybrid and gains the index with index-words
+  evidence the campaign store reports 2 passages not embedded of 1,226 and verified_complete false
+
+claim clm:every-native-site-is-searchable-by-meaning-and-name
+  status STANDING
+  verification MEASURED
+  claim The 1,703 published site presentations are one searchable network through the same chain as any record type; no site-specific code was written.
+  evidence bonfyre recall index-sources --records <content store>:site_presentation: 1,703 records, 1,703 vectors, complete; "board game reviews" returns boardgamequest, boardgamewire and choiceofgames; "security vulnerabilities and exploits" returns threatfilter and hackcur
+  evidence a publisher name the store does not hold returns near-spelled hosts, not a refusal: the list is candidates
+
+claim clm:one-command-ends-in-a-served-page
+  status STANDING
+  verification MEASURED
+  claim bonfyre site new NAME, from an empty directory with only installed binaries and a 456 KB share directory, writes the site's records through the content store and the resolver, starts the resolver's own server, and reads the page back as a visitor would before saying so. An operator's own site carries its own name and colour and none of the estate's.
+  evidence stranger run through the front door with no source tree named: 0.67 to 1.03 seconds, resolved true, page_served true, HTTP 200, title and masthead are the site's own
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh passes: new, duplicate and bad names refused, list, show, search by meaning, import of a saved page, an empty source leaving no site behind, export with no script or network reference left in the file
+  evidence the same verbs list the estate's 1,703 sites from its own content store without writing to it
+
+claim clm:wordpress-and-frappe-formats-carry-the-same-text
+  status STANDING
+  verification MEASURED
+  claim A site's posts leave as WordPress's export file and as Frappe documents and come back through this estate's readers of those formats with the same titles and text; a live WordPress site's posts come in through its public interface.
+  evidence five posts read from wordpress.org/news, exported to Frappe documents and to a WordPress export file, each imported again: one digest for all three sites, whitespace aside; the export file is well-formed XML
+  evidence a post holding < & quotes and the sequence that closes a CDATA section survives the WordPress format unchanged
+  evidence neither WordPress nor Frappe has imported one of these files
+
+claim clm:tables-move-between-postgres-mysql-and-sqlite-with-a-receipt
+  status STANDING
+  verification MEASURED
+  claim bonfyre bridge db copies tables between PostgreSQL, MySQL and SQLite through DuckDB's connectors, then reads each side back on its own and reports a table as arrived only when row count and a digest naming every column agree; the source is opened read-only and no password reaches output.
+  evidence cmd/BonfyreBridge/tests/db_bridge_test.sh against a MariaDB server and a PostgreSQL server started on loopback: MySQL to Postgres, Postgres back to MySQL, round trip equal to its origin, decimals and non-ASCII text intact
+  evidence one changed value, one missing row and an empty string turned absent are each reported; the first form of the comparison reported a changed value as arrived, because the engine returned one table for two of the same name read in one statement, and the tamper test is what showed it
+
+claim clm:every-own-site-answers-assistants
+  status STANDING
+  verification MEASURED
+  claim An operator's own site answers the Model Context Protocol at /mcp on its host, and by path on loopback for programs that cannot look up a .localhost name: five read-only tools returning typed structure and the same facts as text, each post as a resource, and one separate tool that carries a view. bonfyre site mcp NAME starts the server, builds the search index, performs the handshake, lists the tools and calls one before saying the endpoint works, then prints the lines to paste.
+  evidence the protocol's own reference client (SDK 1.32.1) connects, validates every tool result against the schema that tool declares, reads the view and a post resource, and is refused an unknown tool; run against a site made from eight live WordPress posts
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh: handshake, notification answered 202, no tool offered that can change a site, one site never serving another's posts, another origin refused, a site that does not exist not answering, search by words when the index is stale and by meaning and words once site mcp has run
+  evidence no assistant host has shown the view; the reference client reads it as a resource but does not draw it
+
+claim clm:own-site-page-was-looked-at
+  status STANDING
+  verification MEASURED
+  claim An operator's own site is drawn by one stylesheet taken from its own tokens. It no longer loads the estate's sheets, shows membership counts, subject identifiers or machine timestamps.
+  evidence rendered through Cloudflare's browser at 1100 and 390 pixels wide and read: before, the page was near-black with its title in dark ink on it and each post one unbroken block; after, one readable column with name, date, title and paragraphs in order at both widths
+  evidence the contrast check had passed the dark page because it compared the tokens with each other and not with what was drawn; the page now draws from those tokens, and an exported page fell from 402 KB to 18 KB
+  evidence this is one page shape judged by its maker, not a design review by a person who would use it
+
+claim clm:lower-case-headers-reach-the-right-site
+  status STANDING
+  verification MEASURED
+  claim The resolver's server reads Host and Accept whatever their case.
+  evidence before, a request from Node (which sends host: in lower case) had no host as far as the server could tell and was answered 405; the reference client now connects, and the site test sends a raw lower-case request
+
+claim clm:store-tokens-are-random-and-kept-as-sha256
+  status STANDING
+  verification MEASURED
+  claim The content store issues a token as 32 bytes from the system random source and keeps only its SHA-256. A token issued the earlier way still verifies and is marked WEAK in token list.
+  evidence before, a token was the 64-bit FNV hash of the scope, the second of issue and the process id, kept under a second FNV hash: reproducible by anyone who knew roughly when it was issued
+  evidence cmd/BonfyreCMS/tests/token_test.sh, the store's first token test, against its own HTTP server: own token reads its namespace; none, wrong and another namespace's are refused; the token is not in the store; an old-style row still verifies and is marked
+
+claim clm:site-endpoint-has-keys-limits-a-log-pages-and-one-write
+  status STANDING
+  verification MEASURED
+  claim Each of these is one command that proves itself before it reports. site page makes a standing page that is served, in the menu, and returned by list_pages and get_page. site key issues a key scoped to one site, tries it and an unissued one against the endpoint, and shows it once. Every tool call is one line in the meter under its caller; site usage reads it. The meter's own count enforces 60 calls a minute without a key and 600 with one. send_inquiry is the only tool that writes, needs a key issued for writing, and lands in site inbox. A search asked while the index is behind answers by words and starts the rebuild itself.
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh: page sections and menu, second page at the same route refused, one site's pages and keys not another's, no key and a read key both refused the write, write key delivered exactly one message, an unissued key answered 401, keyed and public calls both in the meter, public limit enforced while a keyed caller is not held to it, the index bringing itself up to date within the test, the estate's agent endpoint not answering on an operator's site
+  evidence the protocol's reference client lists eight tools, names send_inquiry as the only writer, is refused the write without a key, and has every result accepted against its declared schema
+  evidence run from an empty home as a stranger: site, page, key, an assistant reading the page, a message delivered and read in the inbox, the limit tripping at the configured count
+
+claim clm:offers-contact-withdrawal-editing-and-sharing-are-each-one-command
+  status STANDING
+  verification MEASURED
+  claim site offer puts something for sale on the site's offers page with its price and a way to take it up, and assistants read it through list_offers; request_booking records a request that says it is not a reservation. Every own site has a contact page whose messages reach the same inbox, refuse a program that fills its hidden field, and are limited per address. A keyless caller is counted by where it calls from, not in one shared pool. site key --withdraw makes a key stop working at the next request; site keys shows who holds what. A page can be replaced or removed, a post added or taken down, an offer withdrawn. site share gives a site a public HTTPS address and asks it a question through that address before printing it.
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh, from an empty directory: price shown as words and returned as a number, a time refused without a key and for an offer not open to it, a booking recorded as requested and not confirmed, the form's message in the inbox, the hidden-field program told nothing and kept out, markup in a name written as text, the sixth message in an hour from one address refused, a withdrawn key answered 401, a removed page answering 404 and gone from the menu, one site unable to withdraw another's post
+  evidence site share on a site of eight WordPress posts: public address in 6.6 seconds; the protocol's reference client, through that address, listed ten tools, searched by meaning and words, and was refused a write; two different keyless callers appear under two different marks in the meter
+  evidence the offers page and contact form were rendered and looked at at 900 and 420 pixels wide
+
+claim clm:view-draws-in-the-reference-host
+  status STANDING
+  verification MEASURED
+  claim The site's view, placed in a sandboxed frame by a host built on the protocol's own bridge library, completes the handshake, shows the posts the delivered tool result names in place of the ones it was drawn with, and takes light or dark from the host.
+  evidence cmd/BonfyreWebAddress/tests/site_view_host.mjs with @modelcontextprotocol/ext-apps 2.0.3: the frame showed the two oldest posts, which only the tool result held, with their expand controls, in a light host and in a dark one; the view's handshake fields are the ones the library's schema requires
+
+claim clm:newsroom-addresses-answer-as-readings
+  status STANDING
+  verification MEASURED
+  claim An estate address holding the estate's reading of a publisher's feed answers the protocol read-only and as a reading: it names the publisher, says it is not the publisher's site, lists only that source's public items each with its original link, offers no pages, offers or inbox, and is searched by words with nothing written beside the store.
+  evidence run against a copy of the estate's records: a newsroom address returned its five items with their original links, refused a message for the publisher, and a source with nothing read said so; 1,203 of the 1,702 newsroom addresses have readings
+  evidence the site test builds such an address and checks another source's and a non-public item never appear
+  evidence not running on the estate's public server: that process still holds the build from before this work
+
+claim clm:an-accepted-request-lands-in-the-owners-that-exist
+  status STANDING
+  verification MEASURED
+  claim site accept turns a request into a commitment in the commitment store, an invoice Pay makes from the offer's rate in the meter, and an opportunity Finance imports; site paid records the payment in Pay; site done discharges the commitment. No store was added for any of it. site domain gives a site a name of its own through the content store and the resolver, with DNS left to the domain organ's plan and apply.
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh: two requests for one time, the first accepted with commitment, invoice and opportunity, the second refused for that time and accepted for another; Pay holding two pending invoices at 180.00; Finance ranking the request at 18,000 cents; a payment recorded once and refused twice; a promise discharged once and refused twice; a request never accepted not markable as delivered; a site answering under a new name with its pages, and two sites unable to take one name
+  evidence found on the way: the content store's entry update ended with exit 255 and no word when the namespace was not given; it now says so
+
+claim clm:sites-are-discoverable-where-agents-look-in-2026
+  status STANDING
+  verification MEASURED
+  claim Every own site serves an MCP server card at /.well-known/mcp/server-card.json carrying the endpoint's own tool list, names it in a Link header and in the page, and its pages register their read tools with a browser's assistant through WebMCP where the browser has it. site check tests both.
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh: the card gives a reachable endpoint and the tools; pages carry the Link header; the page script, run against an object standing in for document.modelContext with its calls going to the real endpoint, registered exactly the seven read tools, each read-only, and site_info returned the site's name as a string
+  evidence the browser interface itself is the stand-in: no browser with WebMCP ran this
+  evidence market reading behind it, October 2026: the official WordPress MCP Adapter reached the plugin directory on 2 October; hosts ship read-only site MCP; llms.txt is on about 36,000 sites while most such files are never requested; Chrome's WebMCP moved to document.modelContext with an origin trial through version 156
+
+claim clm:a-recording-comes-in-through-the-same-door-as-a-page
+  status STANDING
+  verification MEASURED
+  claim site import takes a recording: Ingest normalises it, Transcribe hears it, TranscriptClean tidies it, and its words are a post named after the file, searchable and answerable through the site's assistant endpoint. site set changes a running site's name, line and colour through the content store. A price written as "$85 per person" states its amount and unit, so accepting a request for it raises the invoice.
+  evidence cmd/BonfyreWebAddress/tests/site_product_test.sh: a spoken recording imported as a recording source with its words on the page under its file's name; the new name, line and colour on the next page load and a colour that is not one refused; 75, USD and "per bike" read from a written price and none from a floor price; two posts in one second both kept; the inbox showing the reference accept asks for
+  evidence one run from an empty directory, 2026-10-11, 27 steps all exit 0: a 24 second recording to a served site in 3.0 s at transcript quality 0.90; a booking asked for through the assistant endpoint, accepted (commitment, 85.00 USD invoice, opportunity), paid and discharged; finance books balanced with cash 85.00, receivable 0 and model cost 0.0395 from the economy store; a WordPress export of three published posts and one draft imported as three and exported as three Frappe Blog Post documents
+  evidence found on the way, each fixed in its owner: Transcribe's learned-vocabulary prompt was a run of lowercase words and the decoder answered in kind, without capitals or punctuation; its repetition penalty fell on every recent token and took "the", "of" and a sentence's last clause out of ordinary speech (quality 0.74 to 0.83 on the same recording); Ingest did not know aiff, aif, aac or caf as audio; the inbox did not show the reference accept needs; the usage view counted a customer's billing line as an assistant's call
+  evidence the model cost in that balance was entered by hand with economy cost record; no organ records a model's cost from a real call to it in this chain
+
+claim clm:model-and-record-size-figures-on-the-profiles-were-run
+  status STANDING
+  verification MEASURED
+  claim The size figures shown publicly are ones the organs printed on this machine.
+  evidence bonfyre fpq roundtrip on nomic-embed-text.gguf, tensor blk.0.attn_output.weight (768 x 768): 2.25 MB to 0.25 MB, 9.1x, 3.50 bits a weight, cosine 0.984251, 0.57 s; bonfyre compress savings on cmd/BonfyreCMS/content-types (99 files): 108,774 to 26,047 bytes, 76.1 percent
+  evidence one tensor of one model whose stored weights were already quantised; it is not a whole-model figure and not an accuracy result
+

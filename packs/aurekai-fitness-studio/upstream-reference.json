@@ -1,0 +1,68 @@
+{
+  "repository": "https://github.com/DuarteSantos8/openGym",
+  "revision": "464355ef43d4c8f8a4e0bb6db9c2af7f240593b5",
+  "inspected_at": "2026-10-11",
+  "contract": {
+    "path": "api/openapi.yaml",
+    "sha256": "1a9302b7cdb7682e5e4a8ffd11b48114a325bdc2e15b1e799446f6208d18d286"
+  },
+  "implementation": "Original Bonfyre training implementation; no upstream code or exercise assets copied.",
+  "coverage": {
+    "implemented": [
+      "routine adoption",
+      "resistance, bodyweight, timed and cardio sets",
+      "rest deadlines",
+      "pause and resume",
+      "history and unit conversion",
+      "training JSON import/export",
+      "studio-specific styles",
+      "WordPress WXR draft export",
+      "Frappe Website Article draft export",
+      "model preference controls",
+      "multi-exercise routine editor with per-set targets and effort",
+      "alternating supersets with round-end rest",
+      "reviewed OpenGym state import and source archive",
+      "versioned offline app bundle and server-off browser restart",
+      "configurable load, repetition-range and timed progression with effort checks and deloads",
+      "dated weight chart, editing, removal and imported OpenGym weigh-ins",
+      "per-studio PNG logos and browser icons with reviewed save and bounded image decoding",
+      "model request projection, local transport and reviewed proposal application contracts",
+      "native WorkGraph program requests, creator CLI claims and immutable delivery, member adoption and explicit offline retry",
+      "native authenticated creator inbox, per-studio request read/write grants, actor-bound claims, routine review and member delivery",
+      "creator draft autosave, submission-time program snapshots, browser restart recovery and native revision-checked delivery",
+      "native CMS public program versions, separate publishing grants, offline catalogue, adoption and withdrawal",
+      "direct creator library authoring, native guarded draft saves, conflict recovery and reviewed draft publication",
+      "shared creator appearance through native PresentationTemplate and studio identity records, scoped grants, preview/apply, public offline caching and member style overrides",
+      "multi-week plan drafts and native versioned publication, member-selected start date, calendar schedule, recovery weeks, skip/restore, offline completion and portable plan progress",
+      "program-scoped stable exercise identities for new releases and prescribed planned loads independent from generic last-workout prefill"
+    ],
+    "pending": [
+      "media",
+      "device sync",
+      "member actor and coaching consent",
+      "creator invitations, quoting/revisions, paid-tier access and billing",
+      "verified live model quality/application and hosted provider routing",
+      "broader upstream import corpus validation",
+      "operating-system installation and non-Chrome offline verification",
+      "plan rescheduling, calendar reminders, pause/rebase and per-session overrides"
+    ]
+  },
+  "additional_contract_sources": [
+    {
+      "path": "frontend/src/lib/speed.js",
+      "url": "https://github.com/DuarteSantos8/openGym/blob/464355ef43d4c8f8a4e0bb6db9c2af7f240593b5/frontend/src/lib/speed.js"
+    },
+    {
+      "path": "frontend/src/lib/finish-workout.js",
+      "url": "https://github.com/DuarteSantos8/openGym/blob/464355ef43d4c8f8a4e0bb6db9c2af7f240593b5/frontend/src/lib/finish-workout.js"
+    },
+    {
+      "path": "frontend/src/lib/workout-model.js",
+      "url": "https://github.com/DuarteSantos8/openGym/blob/464355ef43d4c8f8a4e0bb6db9c2af7f240593b5/frontend/src/lib/workout-model.js"
+    },
+    {
+      "path": "frontend/src/lib/starter.js",
+      "url": "https://github.com/DuarteSantos8/openGym/blob/464355ef43d4c8f8a4e0bb6db9c2af7f240593b5/frontend/src/lib/starter.js"
+    }
+  ]
+}

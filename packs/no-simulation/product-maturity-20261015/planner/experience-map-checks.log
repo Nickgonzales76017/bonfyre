@@ -1,0 +1,1901 @@
+bun test tests/policy_compilation.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/policy_compilation.test.mjs:
+(pass) activation-law runtime policy is exactly compiled from CUE [60.28ms]
+(pass) domain-observation runtime policy is exactly compiled from CUE [8.87ms]
+(pass) experience-audit runtime policy is exactly compiled from CUE [6.51ms]
+(pass) experience-classification runtime policy is exactly compiled from CUE [8.06ms]
+(pass) experience-materiality runtime policy is exactly compiled from CUE [6.60ms]
+(pass) participation-law runtime policy is exactly compiled from CUE [7.87ms]
+(pass) protocol-observation runtime policy is exactly compiled from CUE [5.95ms]
+(pass) stage-law runtime policy is exactly compiled from CUE [5.73ms]
+
+ 8 pass
+ 0 fail
+ 16 expect() calls
+Ran 8 tests across 1 file. [119.00ms]
+bun test tests/atlas_bindings.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/atlas_bindings.test.mjs:
+(pass) exact source joins preserve multiple owners without classifying neighboring schemas or the CMS [0.50ms]
+(pass) source correction removes the previous workflow projection on the next compilation
+(pass) unknown chains, duplicate declarations and missing source evidence refuse compilation
+
+ 3 pass
+ 0 fail
+ 12 expect() calls
+Ran 3 tests across 1 file. [9.00ms]
+bun test tests/json_contract.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/json_contract.test.mjs:
+(pass) canonical JSON matches the retired Python digest grammar [0.31ms]
+
+ 1 pass
+ 0 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [4.00ms]
+bun test tests/zero_close.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/zero_close.test.mjs:
+(pass) closure is contiguous and later receipts cannot skip a missing stage [5.40ms]
+(pass) settlement requires an economic owner and exact integer revenue [0.67ms]
+{"witness":"zero_close_100k","requests":100000,"elapsed_ms":321.404667}
+(pass) 100k observed requests stream without pretending they closed [501.52ms]
+
+ 3 pass
+ 0 fail
+ 12 expect() calls
+Ran 3 tests across 1 file. [518.00ms]
+bun tools/compile_experience_map.mjs --write
+{"app_reference_records":571,"atlas_declaration_digest":"9aebda61e592d84d5051c9f65e4986b12ffdeb0d2aef7b63365d544154aa8444","build_digest":"5b5db21d1d63ff13e1c0be794f05be546b5f3e0ff7c135349e74fe3c2d7f1259","cannot_infer":["experience binding -> provider admission","home blueprint -> current publication","reference market leader -> copied ontology or code","chain fit -> authority to execute"],"coverage":{"cms_types":true,"donor_references":true,"external":true,"frappe_apps":true,"frappe_interaction_grammars":true,"ghost":true,"local_commands_components":true,"partner_shipped_repo_names":false,"protocol_occurrences":true,"reference_lattice":true,"surface_descriptors":true},"external_manifest_digest":"6f9fe4b58ab5c552e66bbc5e5c92d115270b33234dd4508accb596287832eb98","external_mapped":4891,"external_occurrences":4891,"external_with_protocol_chain":4891,"ghost_mapped":238,"ghost_references":238,"home_blueprint_count":17,"human_chain_count":52,"interaction_reference_lattice":{"all_references_are_evidence_only":true,"chains_with_any_reference_evidence":52,"chains_with_interaction_reference":52,"donor_interaction_references":19,"frappe_interaction_references":9,"ghost_art_direction_candidates":238,"market_reference_is_not_selection_boundary":true,"market_references":20,"total_evidence":286},"market_leader_count":20,"owner_graph":{"interactions":455,"owners":510},"owner_graph_digest":"60b9301c448d62d47b7bb326439ec103227849898dc87097747aa650f5375ac8","partner_inventory":{"declared_shipped_repos":41,"names_provable_in_checkout":19,"note":"session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"},"protocol_chain_count":108,"record_kind_counts":{"architecture":6,"cms_type":104,"command":174,"component":92,"donor_reference":19,"external":4891,"frappe_app":9,"ghost":238,"market_reference":20,"partner_observed":19,"protocol_reference":108,"surface":20},"schema":"bonfyre.experience-map.v1","source_kind_counts":{"machine_protocol":739,"mcp":1337,"public_api":1756,"rss":841,"x402":211,"x402_spec":7},"truth_level":"compiled_projection","typed_application_estate":{"all_nodes_unselected_until_site_program":true,"application_nodes":488,"experience_programs":52,"minimum_nodes_per_program":6,"prose_stage_input_used":false},"url_grammar_count":26}
+bun test tests/compile_experience_map.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/compile_experience_map.test.mjs:
+(pass) TSV parser retains quoted tabs, newlines, and escaped quotes [0.43ms]
+(pass) full estate compiles to exact candidate/reference outputs without selection [768.16ms]
+
+ 2 pass
+ 0 fail
+ 31 expect() calls
+Ran 2 tests across 1 file. [781.00ms]
+bun tools/materiality_report.mjs --write
+{
+  "cannot_infer": [
+    "materiality score -> source admission",
+    "chain fit -> semantic identity",
+    "protocol specificity -> authority or permission",
+    "market reference -> copied ontology, UI, code, or product ownership",
+    "reagent role -> provider availability"
+  ],
+  "external": {
+    "discover_only": 173,
+    "generic_protocol_only": 0,
+    "generic_protocol_only_by_source_kind": {},
+    "home_blueprint_counts": {
+      "community-topic": 3383,
+      "company-public": 3416,
+      "course-deep": 2736,
+      "creator-public": 3515,
+      "event-deep": 3342,
+      "life-apex-personal": 4032,
+      "life-apex-public": 3395,
+      "live-apex-personal": 3383,
+      "live-apex-public": 3515,
+      "place-public": 3709,
+      "product-deep": 3412,
+      "property-deep": 1893,
+      "public-systems-deep": 2719,
+      "shop-apex-personal": 2760,
+      "shop-apex-public": 3431,
+      "work-apex-member": 4498,
+      "work-apex-public": 3450
+    },
+    "human_chain_counts": {
+      "agriculture": 47,
+      "ai-work": 3016,
+      "audience-growth": 50,
+      "care": 160,
+      "civic": 320,
+      "collaboration": 209,
+      "commerce": 641,
+      "community": 461,
+      "creator-publish": 1318,
+      "discover": 377,
+      "emergency": 156,
+      "energy": 160,
+      "enterprise-gtm": 389,
+      "finance": 457,
+      "food": 74,
+      "healthcare": 148,
+      "hiring": 89,
+      "household": 205,
+      "housing": 128,
+      "insurance": 34,
+      "investing": 429,
+      "knowledge": 329,
+      "learning": 55,
+      "listen": 171,
+      "live-event": 497,
+      "logistics": 421,
+      "manufacturing": 476,
+      "media-production": 144,
+      "mission": 804,
+      "mobility": 360,
+      "place": 487,
+      "professional": 241,
+      "project": 120,
+      "property": 306,
+      "publication": 1999,
+      "relationship": 454,
+      "research": 1491,
+      "resource-market": 318,
+      "science": 283,
+      "service-case": 458,
+      "software-work": 3009,
+      "sports": 384,
+      "trip": 755,
+      "utility": 209,
+      "vehicle": 813,
+      "watch": 1861
+    },
+    "materiality_score_distribution": {
+      "4": 173,
+      "5": 29,
+      "6": 4689
+    },
+    "missing_home": 0,
+    "missing_human": 0,
+    "missing_protocol": 0,
+    "missing_reagent_role": 0,
+    "missing_territory": 0,
+    "protocol_chain_counts": {
+      "a2a": 30,
+      "activitypub": 3,
+      "adtech": 13,
+      "advanced-authorization": 6,
+      "agent-client": 1,
+      "agent-commerce": 6,
+      "agriculture-trade-exchange": 6,
+      "amqp": 2,
+      "ap2": 1,
+      "atproto": 11,
+      "aviation-schedule-exchange": 2,
+      "beckn": 3,
+      "business-document-exchange": 47,
+      "business-metadata-registry": 2,
+      "caldav": 6,
+      "calendar-contact-exchange": 7,
+      "capital-markets": 5,
+      "catena-x-exchange": 6,
+      "certificate-automation": 1,
+      "coap": 5,
+      "construction-bim": 7,
+      "dash": 1,
+      "dataspace-negotiation": 13,
+      "decentralized-storage-compute": 11,
+      "device-fabric": 33,
+      "did-vc": 4,
+      "emergency-exchange": 12,
+      "energy-grid": 25,
+      "epcis": 2,
+      "event-envelope": 13,
+      "file-object-transfer": 15,
+      "financial-reporting": 9,
+      "fipa-agent": 16,
+      "genomics-exchange": 12,
+      "geospatial-interchange": 26,
+      "graphql": 21,
+      "grpc": 6,
+      "health-interchange": 8,
+      "hls": 2,
+      "http-api": 1756,
+      "http-family": 12,
+      "imap": 8,
+      "industrial-control": 37,
+      "industrial-fieldbus": 9,
+      "interface-contract": 26,
+      "interledger": 4,
+      "internet-datagram": 5,
+      "internet-network": 5,
+      "internet-stream": 5,
+      "iot-web": 16,
+      "iso20022": 13,
+      "jmap": 3,
+      "jsonrpc": 6,
+      "kafka": 12,
+      "laboratory-instrument-data": 15,
+      "legal-data-representation": 1,
+      "legal-public-data": 11,
+      "linked-data": 2,
+      "maritime-single-window": 1,
+      "matrix-api": 5,
+      "mcp": 1443,
+      "media-authenticity": 6,
+      "mobility-data": 15,
+      "mqtt": 5,
+      "nat-traversal": 87,
+      "network-control": 20,
+      "network-discovery": 50,
+      "nostr": 11,
+      "oauth2": 20,
+      "oci-p2p": 11,
+      "ogc-sensor-operations": 2,
+      "openapi": 140,
+      "openid-connect": 8,
+      "payment-insurance-interchange": 16,
+      "privacy-signal": 2,
+      "programmable-network-telemetry": 6,
+      "quic": 31,
+      "robotics-interchange": 4,
+      "rss-atom": 851,
+      "scholarly-sync": 18,
+      "scim": 3,
+      "secure-transport": 4,
+      "security-automation": 20,
+      "smart-charging": 1,
+      "smtp": 12,
+      "space-operations": 25,
+      "sse": 141,
+      "telecom-api": 44,
+      "trade-identity": 7,
+      "transport-logistics": 29,
+      "ucp": 1,
+      "wallet-web3": 33,
+      "web-metadata": 3,
+      "web-payment": 2,
+      "webauthn": 2,
+      "webdav": 7,
+      "webfinger": 1,
+      "webhook": 22,
+      "webmention": 1,
+      "webrtc": 4,
+      "websocket": 12,
+      "websub": 2,
+      "webtransport": 1,
+      "whip": 1,
+      "wireless-mesh": 9,
+      "workload-identity": 11,
+      "x402": 266
+    },
+    "reagent_role_class_counts": {
+      "action": 255,
+      "carrier": 1977,
+      "compiler": 1625,
+      "design_reference": 69,
+      "interaction_reference": 49,
+      "material": 2065,
+      "service": 1967,
+      "standard": 7,
+      "verification": 152
+    },
+    "reagent_role_counts": {
+      "action_adapter": 168,
+      "authoring_adapter": 90,
+      "compiler_toolchain": 1625,
+      "design_reference": 69,
+      "external_service_candidate": 1967,
+      "interaction_reference": 49,
+      "material_source": 2014,
+      "media_service": 292,
+      "publication_carrier": 1048,
+      "reference_standard": 7,
+      "transport_carrier": 1051,
+      "verification_tool": 152
+    },
+    "slug_root_counts": {
+      "/accounts": 389,
+      "/agriculture": 47,
+      "/ai-work": 3016,
+      "/audience-growth": 50,
+      "/care": 160,
+      "/cases": 458,
+      "/civic": 320,
+      "/collaboration": 209,
+      "/community": 461,
+      "/creator-publish": 1318,
+      "/discover": 377,
+      "/emergency": 156,
+      "/energy": 160,
+      "/events": 497,
+      "/finance": 457,
+      "/food": 74,
+      "/healthcare": 148,
+      "/household": 205,
+      "/housing": 128,
+      "/insurance": 34,
+      "/investing": 429,
+      "/jobs": 89,
+      "/knowledge": 329,
+      "/learn": 55,
+      "/listen": 171,
+      "/logistics": 421,
+      "/manufacturing": 476,
+      "/media-production": 144,
+      "/mission": 804,
+      "/mobility": 360,
+      "/people": 241,
+      "/places": 487,
+      "/posts": 1999,
+      "/products": 641,
+      "/projects": 120,
+      "/property": 306,
+      "/relationship": 454,
+      "/research": 1491,
+      "/resource-market": 318,
+      "/science": 283,
+      "/software-work": 3009,
+      "/sports": 384,
+      "/trips": 755,
+      "/utility": 209,
+      "/vehicle": 813,
+      "/watch": 1861
+    },
+    "specific_human": 4718,
+    "specific_protocol": 4891,
+    "territory_counts": {
+      "life": 4422,
+      "live": 3348,
+      "shop": 3675,
+      "work": 4680
+    },
+    "total": 4891,
+    "weak_materiality_score_le_2": 0
+  },
+  "material_green": false,
+  "occupancy": {
+    "home_blueprints_unpopulated_by_external": [],
+    "human_chains_unpopulated_by_external": [
+      "dating",
+      "grant-funding",
+      "identity-access",
+      "support",
+      "telecom",
+      "ticketing"
+    ],
+    "protocol_chains_unpopulated_by_external": [
+      "matrix-protocol"
+    ],
+    "url_grammars": 26
+  },
+  "partner_inventory": {
+    "declared_shipped_repos": 41,
+    "names_provable_in_checkout": 19,
+    "note": "session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"
+  },
+  "primary_build_digest": "5b5db21d1d63ff13e1c0be794f05be546b5f3e0ff7c135349e74fe3c2d7f1259",
+  "reference_lattice": {
+    "app_reference_chain_counts": {
+      "agriculture": 14,
+      "ai-work": 42,
+      "audience-growth": 5,
+      "care": 8,
+      "civic": 8,
+      "collaboration": 26,
+      "commerce": 41,
+      "community": 25,
+      "creator-publish": 23,
+      "dating": 1,
+      "discover": 53,
+      "emergency": 6,
+      "energy": 5,
+      "enterprise-gtm": 22,
+      "finance": 26,
+      "food": 7,
+      "grant-funding": 3,
+      "healthcare": 10,
+      "hiring": 5,
+      "household": 7,
+      "housing": 4,
+      "identity-access": 26,
+      "insurance": 4,
+      "investing": 4,
+      "knowledge": 125,
+      "learning": 22,
+      "listen": 14,
+      "live-event": 10,
+      "logistics": 16,
+      "manufacturing": 14,
+      "media-production": 21,
+      "mission": 8,
+      "mobility": 9,
+      "place": 9,
+      "professional": 24,
+      "project": 37,
+      "property": 7,
+      "publication": 46,
+      "relationship": 10,
+      "research": 32,
+      "resource-market": 9,
+      "science": 15,
+      "service-case": 14,
+      "software-work": 233,
+      "sports": 5,
+      "support": 5,
+      "telecom": 17,
+      "ticketing": 6,
+      "trip": 8,
+      "utility": 14,
+      "vehicle": 10,
+      "watch": 30
+    },
+    "app_reference_kind_counts": {
+      "architecture": 6,
+      "cms_type": 104,
+      "command": 174,
+      "component": 92,
+      "donor_reference": 19,
+      "frappe_app": 9,
+      "market_reference": 20,
+      "partner_observed": 19,
+      "protocol_reference": 108,
+      "surface": 20
+    },
+    "app_reference_records": 571,
+    "chains_with_interaction_reference": 52,
+    "chains_with_market_reference": 26,
+    "chains_without_any_reference_evidence": [],
+    "chains_without_interaction_reference": [],
+    "chains_without_market_reference": [
+      "agriculture",
+      "audience-growth",
+      "care",
+      "civic",
+      "creator-publish",
+      "emergency",
+      "energy",
+      "healthcare",
+      "household",
+      "housing",
+      "identity-access",
+      "insurance",
+      "investing",
+      "manufacturing",
+      "media-production",
+      "mission",
+      "research",
+      "resource-market",
+      "science",
+      "software-work",
+      "sports",
+      "support",
+      "telecom",
+      "ticketing",
+      "utility",
+      "vehicle"
+    ],
+    "ghost_chain_counts": {
+      "commerce": 89,
+      "community": 204,
+      "creator-publish": 23,
+      "discover": 190,
+      "knowledge": 100,
+      "learning": 7,
+      "listen": 96,
+      "live-event": 17,
+      "place": 4,
+      "professional": 35,
+      "publication": 231,
+      "software-work": 7,
+      "support": 7,
+      "watch": 123
+    },
+    "ghost_references": 238,
+    "human_chains": 52,
+    "interaction_evidence_by_provenance": {
+      "donor": 19,
+      "frappe": 9,
+      "ghost": 238,
+      "market": 20
+    },
+    "interaction_evidence_total": 286,
+    "market_leaders": 20,
+    "market_reference_chain_counts": {
+      "ai-work": 4,
+      "collaboration": 4,
+      "commerce": 7,
+      "community": 9,
+      "dating": 1,
+      "discover": 3,
+      "enterprise-gtm": 6,
+      "finance": 1,
+      "food": 1,
+      "grant-funding": 1,
+      "hiring": 2,
+      "knowledge": 8,
+      "learning": 7,
+      "listen": 2,
+      "live-event": 4,
+      "logistics": 1,
+      "mobility": 1,
+      "place": 3,
+      "professional": 6,
+      "project": 3,
+      "property": 1,
+      "publication": 3,
+      "relationship": 2,
+      "service-case": 3,
+      "trip": 2,
+      "watch": 2
+    },
+    "selection_boundary": "none; all rows are evidence-only until a SiteProgram selects a compatible renderer"
+  },
+  "schema": "bonfyre.experience-materiality.v1",
+  "stage_projection": {
+    "actual_records_in_stage_manifest": 5700,
+    "delta": 0,
+    "expected_records_from_current_inputs": 5700,
+    "stage_manifest_digest": "4d9815879606b013dfd4baf92b3eafd1c4aab9db3a1372b627d2660a1abbf348",
+    "stale": false
+  },
+  "structural_green": true,
+  "truth_level": "compiled_diagnostic_projection",
+  "typed_application_estate": {
+    "nodes": 488,
+    "note": "typed declarations are not runtime selections; SiteProgram still supplies lawful material and renderer selection",
+    "programs": 52,
+    "programs_without_nodes": [],
+    "selected_nodes": 0
+  }
+}
+bun test tests/materiality_report.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/materiality_report.test.mjs:
+(pass) reports weak generic bindings without treating them as admitted material [2.55ms]
+
+ 1 pass
+ 0 fail
+ 11 expect() calls
+Ran 1 test across 1 file. [12.00ms]
+/Library/Developer/CommandLineTools/usr/bin/make observed-bindings
+bun test tests/policy_compilation.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/policy_compilation.test.mjs:
+(pass) activation-law runtime policy is exactly compiled from CUE [8.95ms]
+(pass) domain-observation runtime policy is exactly compiled from CUE [6.07ms]
+(pass) experience-audit runtime policy is exactly compiled from CUE [5.41ms]
+(pass) experience-classification runtime policy is exactly compiled from CUE [7.58ms]
+(pass) experience-materiality runtime policy is exactly compiled from CUE [6.57ms]
+(pass) participation-law runtime policy is exactly compiled from CUE [5.87ms]
+(pass) protocol-observation runtime policy is exactly compiled from CUE [5.70ms]
+(pass) stage-law runtime policy is exactly compiled from CUE [6.05ms]
+
+ 8 pass
+ 0 fail
+ 16 expect() calls
+Ran 8 tests across 1 file. [61.00ms]
+bun test tests/atlas_bindings.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/atlas_bindings.test.mjs:
+(pass) exact source joins preserve multiple owners without classifying neighboring schemas or the CMS [0.41ms]
+(pass) source correction removes the previous workflow projection on the next compilation [0.02ms]
+(pass) unknown chains, duplicate declarations and missing source evidence refuse compilation [0.10ms]
+
+ 3 pass
+ 0 fail
+ 12 expect() calls
+Ran 3 tests across 1 file. [5.00ms]
+bun test tests/json_contract.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/json_contract.test.mjs:
+(pass) canonical JSON matches the retired Python digest grammar [0.45ms]
+
+ 1 pass
+ 0 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [4.00ms]
+bun test tests/zero_close.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/zero_close.test.mjs:
+(pass) closure is contiguous and later receipts cannot skip a missing stage [5.35ms]
+(pass) settlement requires an economic owner and exact integer revenue [0.88ms]
+{"witness":"zero_close_100k","requests":100000,"elapsed_ms":257.65274999999997}
+(pass) 100k observed requests stream without pretending they closed [416.89ms]
+
+ 3 pass
+ 0 fail
+ 12 expect() calls
+Ran 3 tests across 1 file. [433.00ms]
+bun tools/domain_observation_bridge.mjs external:protocol-0304 --observation-receipts generated/participation_evidence.jsonl --ingest-dir generated/ingest_protocol-0304 --output generated/participation_evidence.jsonl
+{"axis":"semantic","binding_validated":true,"cannot_infer":["profile binding -> external standard conformance","semantic extraction -> source authority","retained bytes -> provider admission or callable capability"],"evidence_requirements":["foreign_observation_receipt","ingest_artifact"],"foreign_receipt_sha256":"4f2d6db0155ec7698ff8ab2f80794cd482a36b72a7b1f1d95e126c0185891efc","from_owner":"ForeignTwin","ingest_manifest_sha256":"bd51f2a04579af29b83118a3efe461e52629b2e83fe60eb794d148f2c046b2ac","normalized_content_sha256":"b8a03a588fd024c91f35805ceb848dfdeab71002b37d6811b173f81ffc673332","occurrence_id":"external:protocol-0304","owner":"DomainProfile","parser":"html-metadata-v1","profile":"reference-standard","schema":"bonfyre-domain-binding.v1","semantic_fields":["authority","description","name","source_url","updated_at"],"semantic_record_sha256":"edf0f26d0a5c9b6e525968a99d705328fd2194252bee0a89bbc6db28850e2b40","source_content_sha256":"7d39aedde96da1b388e1c1e1e8e46eece733a4de8730a60830afea77763da78d","source_url":"https://www.ogc.org/standards/ogcapi-common/","state":"profile_bound","to_owner":"DomainProfile"}
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../engine/core
+make[3]: Nothing to be done for `all'.
+mkdir -p generated
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../engine/core/include -I../../lib/libbonfyre/include -Isrc tests/protocol_observation_bridge_test.c src/protocol_derivation_bridge.c ../../engine/core/libbonfyre-fabric.a -lsqlite3 -o generated/protocol-observation-bridge-test
+bun tools/protocol_observation_bridge.mjs external:protocol-0304 --evidence generated/participation_evidence.jsonl --native-receipt generated/protocol_observation_bridge_receipt.json --output generated/participation_evidence.jsonl
+{"axis":"protocol","binding_validated":true,"cannot_infer":["compiled contract -> OGC conformance","compiled contract -> enacted request","compiled contract -> provider admission, authority or effect"],"contract":"ogc-api-common-observation","domain_binding_sha256":"bbd60b773e56b7eed09803e3fed2d8b3f8a71b728ddbd36fc11770d7a388003a","from_owner":"DomainProfile","native_registration_receipt_sha256":"eff00c3fbf56b2c3c4a0b15d551b8135602e6b9fc22726bf9d8c8ec39d914fe1","occurrence_id":"external:protocol-0304","owner":"ProtocolContract","programs":3,"schema":"bonfyre-protocol-binding.v1","semantic_record_sha256":"edf0f26d0a5c9b6e525968a99d705328fd2194252bee0a89bbc6db28850e2b40","state":"compiled","to_owner":"ProtocolContract"}
+bun tools/participation_report.mjs --write
+{
+  "braid_depth_distribution": {
+    "0": 4881,
+    "1": 9,
+    "3": 1
+  },
+  "candidate_axis_counts": {
+    "capability": 3624,
+    "discovery": 4891,
+    "economic": 1051,
+    "observation": 4891,
+    "protocol": 4891,
+    "round_trip": 2256,
+    "semantic": 4689
+  },
+  "cannot_infer": [
+    "unknown realized depth -> zero realized depth",
+    "high investigation priority -> source admission, authority or value",
+    "latent join power -> semantic compatibility or permission to join data"
+  ],
+  "frontier_limit": 100,
+  "join_power_distribution": {
+    "1": 794,
+    "2": 1785,
+    "3": 1003,
+    "4": 837,
+    "5": 351,
+    "6": 107,
+    "7": 14
+  },
+  "measured_axis_counts": {
+    "discovery": 4891,
+    "observation": 10,
+    "protocol": 1,
+    "semantic": 1
+  },
+  "owner_evidence_rows": 16,
+  "schema": "bonfyre.external-participation-manifest.v2",
+  "total_occurrences": 4891,
+  "truth_level": "compiled_diagnostic_projection"
+}
+bun test tests/participation_report.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/participation_report.test.mjs:
+(pass) candidate join power remains separate from measured owner depth [0.88ms]
+(pass) observed and retained bodies require distinct evidence; repeat observation is deeper [0.60ms]
+(pass) unreceipted owner claims and digest-free enactments are refused [0.50ms]
+
+ 3 pass
+ 0 fail
+ 20 expect() calls
+Ran 3 tests across 1 file. [12.00ms]
+bun test tests/domain_observation_bridge.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/domain_observation_bridge.test.mjs:
+(pass) binds a checked semantic record and appends once [2.07ms]
+(pass) rejects body drift [0.49ms]
+(pass) rejects stale ingest source lineage [0.41ms]
+(pass) rejects normalized body drift [0.40ms]
+(pass) rejects an observation for a different occurrence [0.39ms]
+(pass) uses observed URL and HTML title when Open Graph metadata is absent [0.79ms]
+(pass) refuses an unidentifiable authority [0.52ms]
+
+ 7 pass
+ 0 fail
+ 16 expect() calls
+Ran 7 tests across 1 file. [14.00ms]
+/Library/Developer/CommandLineTools/usr/bin/make protocol-derivation-bridge-witness
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../engine/core
+make[2]: Nothing to be done for `all'.
+mkdir -p generated
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../engine/core/include -I../../lib/libbonfyre/include -Isrc tests/protocol_derivation_bridge_test.c src/protocol_derivation_bridge.c ../../engine/core/libbonfyre-fabric.a -lsqlite3 -o generated/protocol-derivation-bridge-test
+/Library/Developer/CommandLineTools/usr/bin/make protocol-observation-bridge-witness
+/Library/Developer/CommandLineTools/usr/bin/make -C ../../engine/core
+make[2]: Nothing to be done for `all'.
+mkdir -p generated
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../engine/core/include -I../../lib/libbonfyre/include -Isrc tests/protocol_observation_bridge_test.c src/protocol_derivation_bridge.c ../../engine/core/libbonfyre-fabric.a -lsqlite3 -o generated/protocol-observation-bridge-test
+bun tools/protocol_observation_bridge.mjs external:protocol-0304 --evidence generated/participation_evidence.jsonl --native-receipt generated/protocol_observation_bridge_receipt.json --output generated/participation_evidence.jsonl
+{"axis":"protocol","binding_validated":true,"cannot_infer":["compiled contract -> OGC conformance","compiled contract -> enacted request","compiled contract -> provider admission, authority or effect"],"contract":"ogc-api-common-observation","domain_binding_sha256":"bbd60b773e56b7eed09803e3fed2d8b3f8a71b728ddbd36fc11770d7a388003a","from_owner":"DomainProfile","native_registration_receipt_sha256":"eff00c3fbf56b2c3c4a0b15d551b8135602e6b9fc22726bf9d8c8ec39d914fe1","occurrence_id":"external:protocol-0304","owner":"ProtocolContract","programs":3,"schema":"bonfyre-protocol-binding.v1","semantic_record_sha256":"edf0f26d0a5c9b6e525968a99d705328fd2194252bee0a89bbc6db28850e2b40","state":"compiled","to_owner":"ProtocolContract"}
+bun test tests/protocol_observation_bridge.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/protocol_observation_bridge.test.mjs:
+(pass) a scoped native registration binds one validated domain receipt without enactment [1.96ms]
+
+ 1 pass
+ 0 fail
+ 11 expect() calls
+Ran 1 test across 1 file. [12.00ms]
+bun tools/participation_activation.mjs --write
+{
+  "cannot_infer": [
+    "rank -> source admission, authority, budget or value",
+    "cohort membership -> semantic equivalence between members"
+  ],
+  "cohort_heads": {
+    "cross_world_service": [
+      {
+        "id": "external:ext-02715",
+        "name": "Deepnets",
+        "next_owner": "ForeignTwin",
+        "score": 171
+      },
+      {
+        "id": "external:ext-02696",
+        "name": "PulseNetwork",
+        "next_owner": "ForeignTwin",
+        "score": 169
+      },
+      {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02636",
+        "name": "ToolSnap MCP",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02680",
+        "name": "Bismuth",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02685",
+        "name": "agentsvc.io",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02731",
+        "name": "Usenami",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02801",
+        "name": "Hermes Plant",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      }
+    ],
+    "effect_adapter": [
+      {
+        "id": "external:ext-02823",
+        "name": "8randonpickart5/alderpost-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02911",
+        "name": "thebrierfox/the-stall",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02636",
+        "name": "ToolSnap MCP",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02680",
+        "name": "Bismuth",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02685",
+        "name": "agentsvc.io",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02731",
+        "name": "Usenami",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02801",
+        "name": "Hermes Plant",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      }
+    ],
+    "general_candidate": [
+      {
+        "id": "external:ext-01416",
+        "name": "TasteDive",
+        "next_owner": "ForeignTwin",
+        "score": 68
+      },
+      {
+        "id": "external:ext-01982",
+        "name": "Chronicling America",
+        "next_owner": "ForeignTwin",
+        "score": 68
+      },
+      {
+        "id": "external:ext-01909",
+        "name": "AI Economics Tools",
+        "next_owner": "ForeignTwin",
+        "score": 66
+      },
+      {
+        "id": "external:ext-01933",
+        "name": "Modelfax",
+        "next_owner": "ForeignTwin",
+        "score": 66
+      },
+      {
+        "id": "external:ext-01938",
+        "name": "Roboflow Universe",
+        "next_owner": "ForeignTwin",
+        "score": 66
+      },
+      {
+        "id": "external:ext-01940",
+        "name": "Statlyte",
+        "next_owner": "ForeignTwin",
+        "score": 66
+      },
+      {
+        "id": "external:ext-00978",
+        "name": "Urantia Papers",
+        "next_owner": "ForeignTwin",
+        "score": 64
+      },
+      {
+        "id": "external:ext-01603",
+        "name": "MMO Games",
+        "next_owner": "ForeignTwin",
+        "score": 64
+      },
+      {
+        "id": "external:ext-01986",
+        "name": "Florida Man",
+        "next_owner": "ForeignTwin",
+        "score": 64
+      },
+      {
+        "id": "external:ext-02002",
+        "name": "Trove",
+        "next_owner": "ForeignTwin",
+        "score": 64
+      }
+    ],
+    "paid_machine_market": [
+      {
+        "id": "external:ext-02715",
+        "name": "Deepnets",
+        "next_owner": "ForeignTwin",
+        "score": 171
+      },
+      {
+        "id": "external:ext-02696",
+        "name": "PulseNetwork",
+        "next_owner": "ForeignTwin",
+        "score": 169
+      },
+      {
+        "id": "external:ext-02823",
+        "name": "8randonpickart5/alderpost-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02911",
+        "name": "thebrierfox/the-stall",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02636",
+        "name": "ToolSnap MCP",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02680",
+        "name": "Bismuth",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02685",
+        "name": "agentsvc.io",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      }
+    ],
+    "publication_roundtrip": [
+      {
+        "id": "external:ext-02715",
+        "name": "Deepnets",
+        "next_owner": "ForeignTwin",
+        "score": 171
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "DomainProfile",
+        "score": 163
+      },
+      {
+        "id": "external:ext-02801",
+        "name": "Hermes Plant",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02628",
+        "name": "Agent402",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02674",
+        "name": "AI Growth",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02793",
+        "name": "jurat",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-03171",
+        "name": "aparajithn/agent-deploy-dashboard-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-03762",
+        "name": "Dusheh/myclaw-toolkit",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:protocol-0154",
+        "name": "Nostr NIP-19 bech32 Encoded Entities",
+        "next_owner": "ForeignTwin",
+        "score": 148
+      },
+      {
+        "id": "external:protocol-0468",
+        "name": "UN/CEFACT Cross Industry Quotation",
+        "next_owner": "ForeignTwin",
+        "score": 148
+      }
+    ],
+    "semantic_interchange": [
+      {
+        "id": "external:protocol-0471",
+        "name": "UN/CEFACT Cross Industry Despatch Advice",
+        "next_owner": "ForeignTwin",
+        "score": 157
+      },
+      {
+        "id": "external:protocol-0154",
+        "name": "Nostr NIP-19 bech32 Encoded Entities",
+        "next_owner": "ForeignTwin",
+        "score": 148
+      },
+      {
+        "id": "external:protocol-0468",
+        "name": "UN/CEFACT Cross Industry Quotation",
+        "next_owner": "ForeignTwin",
+        "score": 148
+      },
+      {
+        "id": "external:protocol-0464",
+        "name": "EN 16931 eInvoice semantic model",
+        "next_owner": "ForeignTwin",
+        "score": 146
+      },
+      {
+        "id": "external:protocol-0473",
+        "name": "Inline XBRL",
+        "next_owner": "DomainProfile",
+        "score": 146
+      },
+      {
+        "id": "external:protocol-0707",
+        "name": "IPPC ePhyto Hub Exchange",
+        "next_owner": "ForeignTwin",
+        "score": 146
+      },
+      {
+        "id": "external:protocol-0276",
+        "name": "SIRI",
+        "next_owner": "DomainProfile",
+        "score": 144
+      },
+      {
+        "id": "external:protocol-0478",
+        "name": "OECD SAF-T",
+        "next_owner": "ForeignTwin",
+        "score": 144
+      },
+      {
+        "id": "external:protocol-0519",
+        "name": "ads.cert Authenticated Connections",
+        "next_owner": "ForeignTwin",
+        "score": 144
+      },
+      {
+        "id": "external:protocol-0648",
+        "name": "CCSDS High Data Rate Wireless Proximity Network Communications",
+        "next_owner": "ForeignTwin",
+        "score": 144
+      }
+    ],
+    "sensor_material": [
+      {
+        "id": "external:ext-02823",
+        "name": "8randonpickart5/alderpost-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02911",
+        "name": "thebrierfox/the-stall",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02824",
+        "name": "GTCC777/pulsenetwork-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 159
+      },
+      {
+        "id": "external:ext-03699",
+        "name": "flexorch/flexorch-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 154
+      },
+      {
+        "id": "external:ext-02819",
+        "name": "forgemeshlabs/coinopai-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-02820",
+        "name": "forgemeshlabs/anomaly-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-02903",
+        "name": "sF1nX/x402station",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-02905",
+        "name": "supertrained/rhumb",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-02920",
+        "name": "whiteknightonhorse/APIbase",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-03114",
+        "name": "hshintelligence/agent-scrape",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      }
+    ],
+    "toolchain": [
+      {
+        "id": "external:ext-02823",
+        "name": "8randonpickart5/alderpost-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02911",
+        "name": "thebrierfox/the-stall",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02680",
+        "name": "Bismuth",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02685",
+        "name": "agentsvc.io",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02731",
+        "name": "Usenami",
+        "next_owner": "ForeignTwin",
+        "score": 161
+      },
+      {
+        "id": "external:ext-02824",
+        "name": "GTCC777/pulsenetwork-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 159
+      },
+      {
+        "id": "external:ext-02628",
+        "name": "Agent402",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02702",
+        "name": "WebberSites x402 Data API",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02721",
+        "name": "BitBooth",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02793",
+        "name": "jurat",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      }
+    ],
+    "verification_bridge": [
+      {
+        "id": "external:ext-02823",
+        "name": "8randonpickart5/alderpost-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 165
+      },
+      {
+        "id": "external:ext-02633",
+        "name": "Tollbooth",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02648",
+        "name": "API Witchcraft (API\\Dalla)",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02702",
+        "name": "WebberSites x402 Data API",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02793",
+        "name": "jurat",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
+        "id": "external:ext-02724",
+        "name": "anchor-x402",
+        "next_owner": "ForeignTwin",
+        "score": 154
+      },
+      {
+        "id": "external:ext-02691",
+        "name": "GPT55 x402 Wallet Safety and Merchant Readiness",
+        "next_owner": "ForeignTwin",
+        "score": 153
+      },
+      {
+        "id": "external:ext-02819",
+        "name": "forgemeshlabs/coinopai-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:ext-02903",
+        "name": "sF1nX/x402station",
+        "next_owner": "ForeignTwin",
+        "score": 149
+      },
+      {
+        "id": "external:protocol-0464",
+        "name": "EN 16931 eInvoice semantic model",
+        "next_owner": "ForeignTwin",
+        "score": 146
+      }
+    ]
+  },
+  "disturbance_acceptance": {
+    "accepted": false,
+    "cannot_infer": [
+      "event count -> propagation depth",
+      "sequence/step number -> causality",
+      "owner label -> owner receipt",
+      "completed protocol -> discharged commitment"
+    ],
+    "failures": [
+      "no disturbance trace supplied",
+      "expected one disturbance_id, got 0",
+      "expected one root disturbance, got 0",
+      "missing required owner BlockerGraph",
+      "missing required owner CommitmentGraph",
+      "missing required owner DomainProfile",
+      "missing required owner EvidenceGraph",
+      "missing required owner ForeignTwinGraph",
+      "missing required owner PublicationProgram",
+      "missing required owner RoundTripTwin",
+      "missing required owner SemanticDerivationGraph",
+      "missing required owner UnlockGraph",
+      "missing required owner WorkGraph",
+      "missing economic owner",
+      "distinct_owners=0 below 10",
+      "max_owner_braid_depth=0 below 8",
+      "blockers_opened=0 below 1",
+      "blockers_resolved=0 below 1",
+      "joins_admitted=0 below 1",
+      "human_decisions=0 below 1",
+      "commitments_opened=0 below 1",
+      "quotes=0 below 1",
+      "settlements=0 below 1",
+      "projections=0 below 1",
+      "round_trip_total=0 below 1",
+      "no retraction or compensation"
+    ],
+    "metrics": {
+      "blockers_opened": 0,
+      "blockers_resolved": 0,
+      "commitments_opened": 0,
+      "compensations": 0,
+      "corrections": 0,
+      "distinct_owners": 0,
+      "human_decisions": 0,
+      "improper_erases": 0,
+      "joins_admitted": 0,
+      "max_event_depth": 0,
+      "max_owner_braid_depth": 0,
+      "owner_transition_kinds": 0,
+      "owner_transition_pairs": [],
+      "owners": [],
+      "projections": 0,
+      "quotes": 0,
+      "retractions": 0,
+      "round_trip": {},
+      "round_trip_total": 0,
+      "settlements": 0,
+      "trace_events": 0
+    },
+    "owner_bridge_evidence": {
+      "ForeignTwinGraph->DomainProfile": {
+        "blocked_candidates": 6,
+        "cannot_infer": [
+          "validated occurrence bindings -> all future DomainProfile handoffs are ready"
+        ],
+        "receipt_ingress_observed": true,
+        "validated_bindings": 1
+      },
+      "ProtocolContract->SemanticDerivationGraph": {
+        "cannot_infer": [
+          "native registration witness -> every contract has a valid lowering"
+        ],
+        "native_graph_registration": true
+      }
+    },
+    "schema": "bonfyre.disturbance-acceptance.v1",
+    "sensor_boundary": {
+      "attempts": 2,
+      "body_observed": false,
+      "cannot_infer": [
+        "documented public feed -> lawful observation by this agent"
+      ],
+      "policy_decisions": {
+        "robots_disallow": 1,
+        "robots_preflight_unavailable": 1
+      },
+      "states": {
+        "policy_excluded": 1,
+        "policy_indeterminate": 1
+      }
+    }
+  },
+  "frontier_rows": 250,
+  "leverage_mode_counts": {
+    "cross_world_service": 812,
+    "effect_adapter": 255,
+    "general_candidate": 992,
+    "paid_machine_market": 266,
+    "publication_roundtrip": 1300,
+    "semantic_interchange": 746,
+    "sensor_material": 1715,
+    "toolchain": 1625,
+    "verification_bridge": 152
+  },
+  "next_owner_counts": {
+    "DomainProfile": 6,
+    "ForeignTwin": 4884,
+    "ResourceActivationGraph": 1
+  },
+  "schema": "bonfyre.external-activation-manifest.v1",
+  "total_occurrences": 4891,
+  "truth_level": "compiled_diagnostic_projection"
+}
+bun test tests/participation_activation.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/participation_activation.test.mjs:
+(pass) CUE-routed modes and next owner preserve the observation/semantic boundary [0.67ms]
+(pass) native protocol witness requires positive scoped atomic registration [0.49ms]
+(pass) causal owner braid is accepted; scripted step counts are refused [1.12ms]
+(pass) native projection writes its exact current manifest and frontier [2.06ms]
+
+ 4 pass
+ 0 fail
+ 23 expect() calls
+Ran 4 tests across 1 file. [14.00ms]
+bun tools/compile_stage_bindings.mjs --write
+{"binding_records": 5700, "chain_stage_edges": 69922, "coverage": true, "digest": "4d9815879606b013dfd4baf92b3eafd1c4aab9db3a1372b627d2660a1abbf348", "expected_binding_records": 5700, "human_chain_count": 52, "record_kind_counts": {"architecture": 6, "cms_type": 104, "command": 174, "component": 92, "donor_reference": 19, "external": 4891, "frappe_app": 9, "ghost": 238, "market_reference": 20, "partner_observed": 19, "protocol_reference": 108, "surface": 20}, "records_with_stage_bindings": 5114, "schema": "bonfyre.experience-stage-map.v1", "unbound_experience_references": 5062}
+bun test tests/compile_stage_bindings.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/compile_stage_bindings.test.mjs:
+(pass) lexical misses and reference-only apps emit no stage edge [0.95ms]
+(pass) compiles exact external, ghost and app stage records with digest/check parity [1.93ms]
+
+ 2 pass
+ 0 fail
+ 12 expect() calls
+Ran 2 tests across 1 file. [13.00ms]
+bun tools/audit_experience_map.mjs
+{
+  "app_reference_total": 571,
+  "app_reference_without_human_chain": 0,
+  "discover_only_examples": [
+    {
+      "id": "external:ext-00001",
+      "name": "x402 Protocol Specification",
+      "source_kind": "x402_spec"
+    },
+    {
+      "id": "external:ext-00002",
+      "name": "x402 Foundation",
+      "source_kind": "x402_spec"
+    },
+    {
+      "id": "external:ext-00005",
+      "name": "Protocol Specifications",
+      "source_kind": "x402_spec"
+    },
+    {
+      "id": "external:ext-00875",
+      "name": "AniAPI",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00877",
+      "name": "AniList",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00878",
+      "name": "AnimeChan",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00884",
+      "name": "Kitsu",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00888",
+      "name": "NekosBest",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00892",
+      "name": "Waifu.im",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00893",
+      "name": "Waifu.pics",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00894",
+      "name": "AbuseIPDB",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00900",
+      "name": "MalShare",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00902",
+      "name": "Metacert",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00904",
+      "name": "Phisherman",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00908",
+      "name": "VirusTotal",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00934",
+      "name": "Auth0",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00935",
+      "name": "GetOTP",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00937",
+      "name": "MojoAuth",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00938",
+      "name": "SAWO Labs",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00939",
+      "name": "Stytch",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00940",
+      "name": "Warrant",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00941",
+      "name": "Bitquery",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00945",
+      "name": "ClearTrace",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00982",
+      "name": "Charity Search",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00984",
+      "name": "Domainsdb.info",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-00986",
+      "name": "Funding Signals",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01001",
+      "name": "Smartsheet",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01014",
+      "name": "Calendarific",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01017",
+      "name": "Czech Namedays Calendar",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01021",
+      "name": "Holidays",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01022",
+      "name": "LectServe",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01023",
+      "name": "Nager.Date",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01024",
+      "name": "Namedays Calendar",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01028",
+      "name": "Russian Calendar",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01143",
+      "name": "CurrencyBeacon",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01144",
+      "name": "CurrencyFreaks",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01149",
+      "name": "Exchangerate.dev",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01150",
+      "name": "Frankfurter",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01155",
+      "name": "VATComply.com",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01158",
+      "name": "Lob.com",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01168",
+      "name": "Agify.io",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01185",
+      "name": "BrewPage",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01188",
+      "name": "Changelogs.md",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01189",
+      "name": "Ciprand",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01192",
+      "name": "Codex",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01194",
+      "name": "CORS Proxy",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01196",
+      "name": "crates.io",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01204",
+      "name": "dotsweep",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01209",
+      "name": "Genderize.io",
+      "source_kind": "public_api"
+    },
+    {
+      "id": "external:ext-01210",
+      "name": "GETPing",
+      "source_kind": "public_api"
+    }
+  ],
+  "external_discover_only": 173,
+  "external_machine_generic_only": 0,
+  "external_specific_protocol": 4891,
+  "external_total": 4891,
+  "external_without_home_blueprint": 0,
+  "external_without_human_chain": 0,
+  "external_without_protocol": 0,
+  "external_without_territory": 0,
+  "generic_protocol_examples": [],
+  "ghost_total": 238,
+  "ghost_without_human_chain": 0,
+  "home_binding_counts": {
+    "community-topic": 3383,
+    "company-public": 3416,
+    "course-deep": 2736,
+    "creator-public": 3515,
+    "event-deep": 3342,
+    "life-apex-personal": 4032,
+    "life-apex-public": 3395,
+    "live-apex-personal": 3383,
+    "live-apex-public": 3515,
+    "place-public": 3709,
+    "product-deep": 3412,
+    "property-deep": 1893,
+    "public-systems-deep": 2719,
+    "shop-apex-personal": 2760,
+    "shop-apex-public": 3431,
+    "work-apex-member": 4498,
+    "work-apex-public": 3450
+  },
+  "human_binding_counts": {
+    "agriculture": 47,
+    "ai-work": 3016,
+    "audience-growth": 50,
+    "care": 160,
+    "civic": 320,
+    "collaboration": 209,
+    "commerce": 641,
+    "community": 461,
+    "creator-publish": 1318,
+    "discover": 377,
+    "emergency": 156,
+    "energy": 160,
+    "enterprise-gtm": 389,
+    "finance": 457,
+    "food": 74,
+    "healthcare": 148,
+    "hiring": 89,
+    "household": 205,
+    "housing": 128,
+    "insurance": 34,
+    "investing": 429,
+    "knowledge": 329,
+    "learning": 55,
+    "listen": 171,
+    "live-event": 497,
+    "logistics": 421,
+    "manufacturing": 476,
+    "media-production": 144,
+    "mission": 804,
+    "mobility": 360,
+    "place": 487,
+    "professional": 241,
+    "project": 120,
+    "property": 306,
+    "publication": 1999,
+    "relationship": 454,
+    "research": 1491,
+    "resource-market": 318,
+    "science": 283,
+    "service-case": 458,
+    "software-work": 3009,
+    "sports": 384,
+    "trip": 755,
+    "utility": 209,
+    "vehicle": 813,
+    "watch": 1861
+  },
+  "machine_generic_only_by_source_kind": {},
+  "protocol_binding_counts": {
+    "a2a": 30,
+    "activitypub": 3,
+    "adtech": 13,
+    "advanced-authorization": 6,
+    "agent-client": 1,
+    "agent-commerce": 6,
+    "agriculture-trade-exchange": 6,
+    "amqp": 2,
+    "ap2": 1,
+    "atproto": 11,
+    "aviation-schedule-exchange": 2,
+    "beckn": 3,
+    "business-document-exchange": 47,
+    "business-metadata-registry": 2,
+    "caldav": 6,
+    "calendar-contact-exchange": 7,
+    "capital-markets": 5,
+    "catena-x-exchange": 6,
+    "certificate-automation": 1,
+    "coap": 5,
+    "construction-bim": 7,
+    "dash": 1,
+    "dataspace-negotiation": 13,
+    "decentralized-storage-compute": 11,
+    "device-fabric": 33,
+    "did-vc": 4,
+    "emergency-exchange": 12,
+    "energy-grid": 25,
+    "epcis": 2,
+    "event-envelope": 13,
+    "file-object-transfer": 15,
+    "financial-reporting": 9,
+    "fipa-agent": 16,
+    "genomics-exchange": 12,
+    "geospatial-interchange": 26,
+    "graphql": 21,
+    "grpc": 6,
+    "health-interchange": 8,
+    "hls": 2,
+    "http-api": 1756,
+    "http-family": 12,
+    "imap": 8,
+    "industrial-control": 37,
+    "industrial-fieldbus": 9,
+    "interface-contract": 26,
+    "interledger": 4,
+    "internet-datagram": 5,
+    "internet-network": 5,
+    "internet-stream": 5,
+    "iot-web": 16,
+    "iso20022": 13,
+    "jmap": 3,
+    "jsonrpc": 6,
+    "kafka": 12,
+    "laboratory-instrument-data": 15,
+    "legal-data-representation": 1,
+    "legal-public-data": 11,
+    "linked-data": 2,
+    "maritime-single-window": 1,
+    "matrix-api": 5,
+    "mcp": 1443,
+    "media-authenticity": 6,
+    "mobility-data": 15,
+    "mqtt": 5,
+    "nat-traversal": 87,
+    "network-control": 20,
+    "network-discovery": 50,
+    "nostr": 11,
+    "oauth2": 20,
+    "oci-p2p": 11,
+    "ogc-sensor-operations": 2,
+    "openapi": 140,
+    "openid-connect": 8,
+    "payment-insurance-interchange": 16,
+    "privacy-signal": 2,
+    "programmable-network-telemetry": 6,
+    "quic": 31,
+    "robotics-interchange": 4,
+    "rss-atom": 851,
+    "scholarly-sync": 18,
+    "scim": 3,
+    "secure-transport": 4,
+    "security-automation": 20,
+    "smart-charging": 1,
+    "smtp": 12,
+    "space-operations": 25,
+    "sse": 141,
+    "telecom-api": 44,
+    "trade-identity": 7,
+    "transport-logistics": 29,
+    "ucp": 1,
+    "wallet-web3": 33,
+    "web-metadata": 3,
+    "web-payment": 2,
+    "webauthn": 2,
+    "webdav": 7,
+    "webfinger": 1,
+    "webhook": 22,
+    "webmention": 1,
+    "webrtc": 4,
+    "websocket": 12,
+    "websub": 2,
+    "webtransport": 1,
+    "whip": 1,
+    "wireless-mesh": 9,
+    "workload-identity": 11,
+    "x402": 266
+  },
+  "schema": "bonfyre.experience-map-specificity.v1"
+}
+bun test tests/audit_experience_map.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/audit_experience_map.test.mjs:
+(pass) distinguishes specific external protocols from generic discovery [1.27ms]
+(pass) missing chains, homes, and territories fail the audit [0.69ms]
+
+ 2 pass
+ 0 fail
+ 12 expect() calls
+Ran 2 tests across 1 file. [11.00ms]
+sh tests/native_corpus_resolution.test.sh
+experience-map corpus resolution: PASS (checkout, package, PATH, explicit and refusal)
+bun test tests/native_definition.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/native_definition.test.mjs:
+(pass) every compiled definition and local/reference record resolves to its own exact record [2227.28ms]
+(pass) nested IDs, mentions, case changes and prefixes cannot select a definition [37.21ms]
+(pass) the JSON reader handles escaped IDs without changing the returned source record [3.82ms]
+(pass) ambiguous or damaged definition files fail before emitting a successful-looking record [16.59ms]
+(pass) protocol and home binding queries use the same exact definition identity [6.84ms]
+(pass) url-def retains its documented term-search behavior [1.53ms]
+
+ 6 pass
+ 0 fail
+ 1574 expect() calls
+Ran 6 tests across 1 file. [2.30s]
+bun test tests/native_resolution.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/native_resolution.test.mjs:
+(pass) an objective returns source owners, directed contracts and workflows without claiming execution [4.63ms]
+(pass) graph expansion includes incoming edges once and never invents transitive connections [2.82ms]
+(pass) a source correction or removed edge changes the next read with no saved routing database [2.90ms]
+(pass) unknown objectives, injection text, stopwords and invalid bounds do not become a default route [11.31ms]
+(pass) damaged or ambiguous graphs emit no partial result [18.68ms]
+(pass) the retained training objective exposes real request, WorkGraph and publication owners [49.54ms]
+
+ 6 pass
+ 0 fail
+ 94 expect() calls
+Ran 6 tests across 1 file. [102.00ms]

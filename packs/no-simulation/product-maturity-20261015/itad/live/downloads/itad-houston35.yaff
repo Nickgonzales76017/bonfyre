@@ -1,0 +1,34 @@
+program acquisition-brief-proposal
+subject "foreign:houston-35"
+profile itad
+opportunity "35 HP desktops · Houston"
+recipient "Houston acquisition team"
+source "unbound"
+budget_cents 14500
+proposed_cents 8000
+coverage 4/4
+plan_status candidate_full
+quote_basis exploratory
+decision hold
+assertion "Seller reports 35 HP desktops in Houston 77041 with mixed memory configurations. Exact models, condition and transfer authority are unconfirmed."
+notes "Review lot before agreeing pickup."
+need "model" model 5 missing "seller manifest"
+need "boot" condition 5 missing "seller statement"
+need "serial" serial 3 missing "seller photos"
+need "owner" ownership 5 missing "seller documents"
+route "remote" "Remote demonstration" remote-live 1000 3500 0 "-" estimate conditional "unquoted"
+route "ownership" "Independent transfer review" desk 2000 1500 0 "-" estimate conditional "unquoted"
+authority none
+cannot_infer proposal_is_not_quote_dispatch_proof_title_or_settlement
+program itad-disposition-candidate
+source "unbound"
+seller_claim_units 35
+manifest_units 35
+assumption_basis illustrative
+modeled_recovery_cents 210000
+buy_offer_cents 42000
+planned_pickup "Review lot before agreeing pickup."
+rights unreviewed
+custody none
+buyer_assent none
+cannot_infer source_claim_is_not_stock_verified_or_committed_purchase

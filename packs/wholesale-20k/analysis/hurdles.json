@@ -1,0 +1,5402 @@
+[
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 675000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 843750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 777778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 875000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 833334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 937500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 850000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 944445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1062500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1050000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1166667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 685000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 761112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 856250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 710000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 788889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 887500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 760000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 844445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 950000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 860000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 955556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1075000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1060000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1177778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1325000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 725000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 805556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 906250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 833334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 937500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 800000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 888889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 900000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1100000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1222223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1375000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 825000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 916667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1031250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 850000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 944445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1062500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 900000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1111112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1200000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1333334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "camaster-408",
+    "category": "Machinery",
+    "seller_asking_cents": 650000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 43900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 48778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 54875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 68900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 76556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 86125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 118900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 132112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 148625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 218900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 243223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 273625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 418900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 465445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 523625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 53900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 59889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 67375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 78900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 87667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 98625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 128900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 143223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 161125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 228900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 254334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 286125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 428900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 476556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 536125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 93900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 104334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 117375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 118900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 132112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 148625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 168900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 187667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 211125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 268900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 298778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 336125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 468900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 521000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 586125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 193900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 215445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 242375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 218900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 243223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 273625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 268900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 298778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 336125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 368900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 409889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 461125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 568900,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 632112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "conroe-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 18900,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 711125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 33000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 36667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 41250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 58000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 64445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 72500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 108000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 120000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 135000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 208000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 231112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 260000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 408000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 453334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 510000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 43000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 47778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 53750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 68000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 75556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 85000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 118000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 131112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 147500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 218000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 242223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 272500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 418000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 464445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 522500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 83000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 92223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 103750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 108000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 120000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 135000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 158000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 175556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 197500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 258000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 286667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 322500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 458000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 508889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 572500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 183000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 203334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 228750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 208000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 231112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 260000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 258000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 286667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 322500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 358000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 397778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 447500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 558000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 620000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "covina-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 8000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 697500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1325000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1472223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1656250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1350000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1687500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1400000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1555556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1666667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1875000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1888889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1335000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1483334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1668750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1360000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1511112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1410000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1566667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1762500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1510000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1677778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1887500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1710000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1900000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2137500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1375000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1527778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1718750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1400000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1555556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1450000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1611112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1812500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1550000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1722223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1937500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1944445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2187500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1475000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1638889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1843750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1666667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1875000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1550000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1722223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1937500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1650000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1833334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2062500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1850000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2055556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "heim-gmc",
+    "category": "Machinery",
+    "seller_asking_cents": 1300000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 65000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 72223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 81250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 90000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 100000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 112500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 140000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 155556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 175000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 240000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 266667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 300000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 440000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 488889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 550000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 75000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 83334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 93750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 100000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 111112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 150000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 166667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 187500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 277778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 450000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 562500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 115000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 127778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 143750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 140000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 155556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 175000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 190000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 211112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 237500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 290000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 322223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 362500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 490000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 544445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 612500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 215000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 238889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 268750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 240000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 266667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 300000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 290000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 322223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 362500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 390000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 433334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 487500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 590000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 655556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "houston-35",
+    "category": "IT",
+    "seller_asking_cents": 40000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 737500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1625000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1805556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2031250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1650000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1833334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2062500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1888889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1800000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 2000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2222223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1635000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1816667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2043750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1660000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1844445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2075000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1710000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1900000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2137500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1810000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2011112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2262500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 2010000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2233334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2512500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1675000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1861112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2093750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1888889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1944445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2187500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1850000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2055556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 2050000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2277778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2562500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1775000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 1972223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2218750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1800000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2000000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1850000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2055556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 1950000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2166667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2437500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 2150000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 2388889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "laguna-swift",
+    "category": "Machinery",
+    "seller_asking_cents": 1600000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 2687500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 315000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 350000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 393750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 340000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 377778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 425000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 390000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 433334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 487500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 490000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 544445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 612500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 690000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 766667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 862500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 325000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 361112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 406250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 350000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 388889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 437500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 400000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 444445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 555556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 625000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 700000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 777778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 875000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 365000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 405556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 456250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 390000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 433334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 487500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 440000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 488889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 550000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 540000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 600000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 675000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 740000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 822223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 925000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 465000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 516667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 581250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 490000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 544445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 612500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 540000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 600000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 675000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 640000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 711112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 800000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 840000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 933334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vader-racking",
+    "category": "Racking",
+    "seller_asking_cents": 290000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 1050000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 224500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 249445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 280625,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 249500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 277223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 311875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 299500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 332778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 374375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 399500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 443889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 499375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 599500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 666112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 749375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 234500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 260556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 293125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 259500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 288334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 324375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 309500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 343889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 386875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 409500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 455000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 511875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 609500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 677223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 761875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 274500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 305000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 343125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 299500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 332778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 374375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 349500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 388334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 436875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 449500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 499445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 561875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 649500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 721667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 811875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 374500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 416112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 468125,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 399500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 443889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 499375,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 449500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 499445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 561875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 549500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 610556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 686875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 749500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 832778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "vertiv-32",
+    "category": "Rack accessories",
+    "seller_asking_cents": 199500,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 936875,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 75000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 83334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 93750,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 100000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 111112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 150000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 166667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 187500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 277778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 450000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 0,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 562500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 85000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 94445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 106250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 110000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 122223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 137500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 160000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 177778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 200000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 260000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 288889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 325000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 460000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 511112,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 10000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 575000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 125000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 138889,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 156250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 150000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 166667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 187500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 200000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 222223,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 300000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 333334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 375000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 555556,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 50000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 625000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 225000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 25000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 281250,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 250000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 277778,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 50000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 312500,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 300000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 333334,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 100000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 375000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 400000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 444445,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 200000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 500000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 0,
+    "required_gross_bid_cents": 600000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 1000,
+    "required_gross_bid_cents": 666667,
+    "basis": "sensitivity_not_bid_or_forecast"
+  },
+  {
+    "lot_id": "wilmington-toner",
+    "category": "Consumables",
+    "seller_asking_cents": 50000,
+    "own_cost_scenario_cents": 150000,
+    "target_contribution_cents": 400000,
+    "buyer_deduction_scenario_bp": 2000,
+    "required_gross_bid_cents": 750000,
+    "basis": "sensitivity_not_bid_or_forecast"
+  }
+]

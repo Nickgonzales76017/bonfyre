@@ -1,0 +1,47 @@
+{
+  "schema": "service-site.documents.v1",
+  "title": "The household notebook",
+  "synthetic": true,
+  "documents": [
+    {
+      "id": "appliance-receipts",
+      "title": "Appliance receipts",
+      "text": "Fictional sample household record. These details are made up for trying the workspace.\n\nThe dishwasher receipt is in the blue folder in the kitchen drawer. A scanned copy is saved under Household / Appliances / Dishwasher. The folder also contains the installation receipt.\n\nThe washing machine receipt is in Household / Appliances / Laundry. The paper copy is clipped to the instruction booklet in the utility cupboard. This note does not record the purchase date or warranty expiry."
+    },
+    {
+      "id": "house-sitter",
+      "title": "House-sitter handover",
+      "text": "Fictional sample handover. No real keys, access codes or contact details are included.\n\nThe indoor plants are grouped on the dining room windowsill. Check the care cards tucked into the pots before watering. The fern's card says to check the soil on Wednesday.\n\nParcel deliveries can be left in the covered box beside the porch. Put any paper delivery slips on the hall table. The guest Wi-Fi details are written on the welcome card, which is not part of this collection."
+    },
+    {
+      "id": "household-calendar",
+      "title": "Household calendar notes",
+      "text": "Fictional sample calendar notes. Check an actual calendar before making plans.\n\nThe draft household plan sets aside the first Sunday of each month for reviewing paper mail and filing receipts. Bring the kitchen blue folder and the hall tray to the dining table.\n\nA reminder to review internet service is pencilled in for November. No renewal date, cancellation period or provider account number is recorded here."
+    },
+    {
+      "id": "garden-project",
+      "title": "Garden project list",
+      "text": "Fictional sample project list. Measurements and purchases still need review.\n\nThe next garden task is to repair the raised planter beside the shed. The sketch and measurements are in the green notebook on the workshop shelf. Check them before ordering timber.\n\nThe seed packets are kept in a labelled tin on the same shelf. The planting plan is a draft. No paid order has been placed for this project."
+    },
+    {
+      "id": "home-network",
+      "title": "Home network inventory",
+      "text": "Fictional sample network inventory. It contains no working passwords or network addresses.\n\nThe router's instruction card and purchase receipt are in the office filing box, under Home network. A paper sketch of the cable labels is attached to the inside lid.\n\nThe spare ethernet cable is in the small labelled basket below the desk. Changes to the network configuration should be recorded on the inventory sheet after they are checked."
+    },
+    {
+      "id": "storage-map",
+      "title": "Storage map",
+      "text": "Fictional sample storage map. Shelf names refer to an invented home.\n\nSeasonal decorations are in the loft boxes labelled A through D. The list of contents is taped inside each lid. The spare dining chair cushions are in box C.\n\nPaint colour cards are in the workshop's shallow drawer. This record contains colour names only in the paper cards; it does not specify paint quantities or match guarantees."
+    },
+    {
+      "id": "service-visits",
+      "title": "Service visit log",
+      "text": "Fictional sample service log. It is not a maintenance schedule or a safety inspection.\n\nThe kitchen tap repair receipt is filed under Household / Repairs / Kitchen. The paper copy is in the hall filing tray, waiting for the monthly filing session.\n\nThe visit note says a replacement part was fitted. It does not name the part, promise a service life or record the next inspection date. Refer to the original provider's paperwork for those details."
+    },
+    {
+      "id": "document-routine",
+      "title": "Document filing routine",
+      "text": "Fictional sample routine for trying the document workspace.\n\nReview new papers before scanning them. Give each file a useful title and keep the original until you have checked that the scan is readable. Put receipts in the matching appliance or repair folder.\n\nIf a search result looks relevant, open the original and read the surrounding paragraph before keeping a note. A missing detail stays a question for the person who has the paperwork."
+    }
+  ]
+}

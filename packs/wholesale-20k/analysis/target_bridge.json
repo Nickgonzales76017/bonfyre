@@ -1,0 +1,32 @@
+[
+  {
+    "target_contribution_cents": 2000000,
+    "net_contribution_rate_bp": 1000,
+    "required_sales_cents": 20000000,
+    "basis": "hypothetical_rate_not_measured"
+  },
+  {
+    "target_contribution_cents": 2000000,
+    "net_contribution_rate_bp": 2000,
+    "required_sales_cents": 10000000,
+    "basis": "hypothetical_rate_not_measured"
+  },
+  {
+    "target_contribution_cents": 2000000,
+    "net_contribution_rate_bp": 2500,
+    "required_sales_cents": 8000000,
+    "basis": "hypothetical_rate_not_measured"
+  },
+  {
+    "target_contribution_cents": 2000000,
+    "net_contribution_rate_bp": 3000,
+    "required_sales_cents": 6666667,
+    "basis": "hypothetical_rate_not_measured"
+  },
+  {
+    "target_contribution_cents": 2000000,
+    "net_contribution_rate_bp": 4000,
+    "required_sales_cents": 5000000,
+    "basis": "hypothetical_rate_not_measured"
+  }
+]

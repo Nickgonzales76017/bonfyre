@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+engine/core/tests/operator_reference.test.mjs:
+(pass) operator reference uses a verified run from the selected compiled generation [1747.03ms]
+(pass) reference excerpts require exact public disclosure and unchanged retained bytes [1070.04ms]
+
+ 2 pass
+ 0 fail
+ 149 expect() calls
+Ran 2 tests across 1 file. [2.98s]

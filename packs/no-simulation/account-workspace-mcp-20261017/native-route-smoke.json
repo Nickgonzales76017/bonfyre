@@ -1,0 +1,18 @@
+[
+  {
+    "path": "/",
+    "status": 200
+  },
+  {
+    "path": "/apps",
+    "status": 303
+  },
+  {
+    "path": "/apps/_bindings",
+    "status": 403
+  },
+  {
+    "path": "/healthz",
+    "status": 200
+  }
+]

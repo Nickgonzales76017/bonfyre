@@ -1,0 +1,48 @@
+{
+  "at": "2026-10-13T19:52:18.783Z",
+  "url": "https://docs.aurekai.work/interfaces-and-mcp",
+  "mode": "live",
+  "checks": [
+    {
+      "width": 1440,
+      "title": "One application, several interfaces",
+      "overflow": 0,
+      "commands": [
+        "bonfyre-experience-map resolve 'member training creator program request publication'\nbonfyre-experience-map resolve training-creator-request 1\n"
+      ],
+      "buildingBlocks": true,
+      "headings": [
+        "Start with the website",
+        "Inspect the site from the CLI",
+        "Read it through MCP",
+        "Give assistants only the access they need",
+        "A second example: a studio's published programmes",
+        "Find the owners of a workflow",
+        "Browser tools and assistant interfaces",
+        "Build the right user experience"
+      ]
+    },
+    {
+      "width": 390,
+      "title": "One application, several interfaces",
+      "overflow": 0,
+      "commands": [
+        "bonfyre-experience-map resolve 'member training creator program request publication'\nbonfyre-experience-map resolve training-creator-request 1\n"
+      ],
+      "buildingBlocks": true,
+      "headings": [
+        "Start with the website",
+        "Inspect the site from the CLI",
+        "Read it through MCP",
+        "Give assistants only the access they need",
+        "A second example: a studio's published programmes",
+        "Find the owners of a workflow",
+        "Browser tools and assistant interfaces",
+        "Build the right user experience"
+      ]
+    }
+  ],
+  "outlineNavigation": true,
+  "buildingBlocksNavigation": true,
+  "errors": []
+}

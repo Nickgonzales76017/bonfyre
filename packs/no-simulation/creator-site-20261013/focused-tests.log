@@ -1,0 +1,46 @@
+bun test v1.3.13 (bf2e2cec)
+
+components/BonfyreServiceSite/tests/planner.test.mjs:
+(pass) selected option prices are recomputed from retained sources and a changed source invalidates the plan [1.12ms]
+(pass) geometry checks rotation, collisions and bounds without inventing missing footprints [0.16ms]
+(pass) invalid quantities, references, dates and dimensions cannot enter a shared or submitted plan [14.28ms]
+(pass) generated intake rejects forged plans, cross-origin posts and oversized envelopes before storing anything [8.93ms]
+(pass) retry receives the same receipt and a changed layout receives a new one [3.13ms]
+(pass) the complete customer brief reaches existing native lead and held-message owners once [306.87ms]
+
+components/BonfyreServiceSite/tests/creator.test.mjs:
+(pass) published audio package is allowlisted, verified and byte-exact with the native fixture [55.84ms]
+(pass) source drift and incorrect native reference refuse packaging [12.20ms]
+(pass) invalid source paths, frames, gains and oversized samples are refused [0.71ms]
+(pass) audio uses the existing workspace and home-page discovery [10.25ms]
+
+components/BonfyreServiceSite/tests/catalogue-model.test.mjs:
+(pass) exact cent arithmetic and formatting
+(pass) invalid prices do not become quotes
+(pass) unchanged product has no draft [0.51ms]
+(pass) title required and option identity preserved [0.11ms]
+(pass) save and restore preserve source and proposed values [0.20ms]
+(pass) equivalent source price representations restore correctly [0.07ms]
+(pass) wrong product, source snapshot and duplicate field are refused [0.11ms]
+(pass) changed original is not silently overwritten [0.12ms]
+(pass) missing SKU stays empty until supplied [0.04ms]
+(pass) material packages exact checksummed pieces and canonical store [2.32ms]
+(pass) legacy product paths use the same workspace without rewriting source URLs [0.84ms]
+
+components/BonfyreServiceSite/tests/routing.test.mjs:
+(pass) published server sites invoke intake only for lead endpoints and remove routing when switched to mail [1494.33ms]
+
+components/BonfyreServiceSite/tests/completion.test.mjs:
+(pass) authored local links reject active, remote, malformed and missing destinations [2.56ms]
+(pass) CTA destinations and service links are projected by the existing components [0.59ms]
+(pass) metadata preserves identity and preview noindex without fictitious business proof [0.52ms]
+(pass) select and multiline message are genuine typed form fields [0.29ms]
+(pass) whitespace, unlisted choices, duplicate labels and prototype names store nothing [3.32ms]
+(pass) malformed origins and wrong schemes are refused before a request is stored [2.12ms]
+(pass) streaming body limit is bytes, including when content length is absent [1.54ms]
+(pass) ordinary intake, canonical page, and existing five-per-hour limit remain [2.88ms]
+
+ 30 pass
+ 0 fail
+ 198 expect() calls
+Ran 30 tests across 5 files. [2.39s]

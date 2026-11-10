@@ -1,0 +1,121 @@
+{
+  "schema": "bonfyre.mcp-workflow-completion-audit.v2",
+  "observed_at": "2026-10-17T22:36:08.637280+00:00",
+  "objective": "Optimize the MCP workflow shown in the supplied shared chat so discovery, source reads and implementation/test/review delivery require fewer transfers and repeated calls.",
+  "previous_goal_turn": "progress: refreshed app argument handling verified and retained; architecture record and installed corpus updated.",
+  "requirements": [
+    {
+      "id": "inspect_shared_workflow",
+      "verified_by": [
+        "chat-review.json"
+      ],
+      "finding": "Source chat identified repeated discovery, source transfer, delayed write-policy discovery and implementation/test/review handoffs. Redacted message counts are not exact tool call or latency measurements.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "targeted_native_discovery",
+      "verified_by": [
+        "measurement.json",
+        "app-refresh-readback.json",
+        "app-relay-readback.json"
+      ],
+      "finding": "Filtered and paginated inventory works through the app; refreshed metadata teaches query and summary.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "batch_and_reuse_source_reads",
+      "verified_by": [
+        "app-refresh-readback.json",
+        "app-relay-readback.json",
+        "project-fabric-tests.log"
+      ],
+      "finding": "Multiple source ranges are read in one app call; hashes support conditional omission of unchanged content. Individual file checks are not an atomic checkout snapshot.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "learn_write_constraints_before_implementation",
+      "verified_by": [
+        "completion-audit-live.json",
+        "app-refresh-readback.json"
+      ],
+      "finding": "Path-only preview reports policy, dirty state and exact preimages before patch preparation. Existing authority gates remain enforced.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "one_delivery_submission_and_compact_progress",
+      "verified_by": [
+        "project-fabric-source-fixture.json",
+        "project-fabric-base-fixture.json",
+        "project-fabric-tests.log",
+        "app-relay-readback.json"
+      ],
+      "finding": "One submission drives implementation, review, conditional repair, real tests and guarded Project apply in HTTP fixtures. The app now exposes the relay and successfully reads compact task status. Historical running state is distinguished from live ownership.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "current_dirty_source_in_isolation",
+      "verified_by": [
+        "relay-source-tests.log",
+        "project-fabric-source-fixture.json"
+      ],
+      "finding": "Selected current files are captured by exact hash into an isolated Git baseline. Input files are excluded from the resulting change, the caller index is preserved, and selected source drift refuses apply.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "preserve_account_and_operator_boundaries",
+      "verified_by": [
+        "project-fabric-live.json",
+        "app-relay-oauth-tests.log",
+        "app-relay-readback.json"
+      ],
+      "finding": "Current gateway authority fixture passes. Live broker remains paused; no active or queued tasks. No model request, resume, new task or production patch was performed in this final audit.",
+      "state": "verified_with_stated_limits"
+    },
+    {
+      "id": "make_shorter_workflow_available_to_chatgpt",
+      "verified_by": [
+        "app-refresh-readback.json",
+        "app-relay-readback.json"
+      ],
+      "finding": "Refreshed app descriptions expose batched reads, early preflight, source snapshots, relay submission and compact status. Actual app calls verify optimized reads and Fabric status/receipts. Local HTTP fixtures cover the mutation lifecycle with injected agents; provider output quality is outside this optimization verification.",
+      "state": "verified_with_stated_limits"
+    }
+  ],
+  "source_hashes": {
+    "project_fabric.mjs": "7a349ddea0ba1d7a860c27a044583722e369282eec7200ac7b12c73f516ce893",
+    "project_node.mjs": "d08fce66da2ef0a5760af9634395c19594cf4394b868739e368f8c964bff31e9",
+    "project_owner.mjs": "bc704ac4bfa977a9e3d54ccd87841e0546fd36726541f0694ef63483d099c069",
+    "project_catalog.json": "d3ff5672b82bf99083c02e9cd4602c27a12d8c4b81450073c6bda519d44d0472",
+    "project_reads.mjs": "12f8d6e36da143acf091a91119cef26ef60b973a636df337f00bba3f96a98346",
+    "project_native.mjs": "a0ef83fa8be494b918fa9d8d54ca4bee57cccc3cfdf1b5146f6aa2d1da9f7a32",
+    "project_operator.mjs": "df837c087a1187687b70715f7efe17df6ca8570ce2dd86361fe79214627e03f1",
+    "project_runtime.mjs": "5f192716ea7f18e5f7d30763900d443fa8dee8b06eb8ec6a43591f1f0aeb1ede",
+    "owned_mcp_client.mjs": "bbf69490f47abe51337ce1cd19c2c8e1960bda378cc8ede2b234efe209f6211e",
+    "http_boundary.mjs": "fba4e27a3db4600f1fe2c67cd2db5c190f72dae3487fc251e84bc5c1d0b67a71",
+    "fabric_catalog.json": "bf348103b7a5837ee70fc9a9d487f8daf8d0076bb6672d5d40918b54d798a5b5",
+    "project_v6.mjs": "695e3de4bb644a7f549c0c8819090eccc718f0a72b9f2bf46854ee756abb593b",
+    "project_spines.mjs": "0e80e6ca9af1d8a06aac8708dd271568427065a23e70f6bb532ff23f97581f83",
+    "bonfyre_oauth_gateway.mjs": "2dd042e8b2d7694a9fba21ec20ced26feb77b404acc60f2d34db49c1c5c9699e"
+  },
+  "changes_since_deployment_witness": [
+    "bonfyre_oauth_gateway.mjs"
+  ],
+  "gateway_change_validation": "Current OAuth institutional-slice fixture rerun successfully; actual app status, source, task and receipt calls also succeed. No gateway source overwrite or service restart performed.",
+  "completion": "Workflow optimizations implemented, deployed, exposed through refreshed app metadata and verified by live read routes plus isolated real HTTP/Git/Bun mutation fixtures.",
+  "limits": [
+    "No live paid-provider task was dispatched because the operator remains paused.",
+    "Fixture agent outputs are deterministic; they do not measure model quality or production mission success.",
+    "No before-and-after remote wall-clock speedup is claimed. Structural reductions and payload sizes have retained evidence.",
+    "The shared chat product backlog is not claimed complete by this workflow change."
+  ],
+  "supersedes_current_status_of": [
+    "completion-audit.json",
+    "app-refresh-readback.json"
+  ],
+  "history": "Earlier artifacts retain the authentication and catalogue failures observed before the refresh; this audit supersedes those blockers.",
+  "architecture_validation": {
+    "atlas": "515 architectures; 462 interactions; valid",
+    "corpus": "app-relay-corpus.json",
+    "installed_digest": "ce210b3c80c72dfe3e33867e75ad5f74af5e6af04a6a1b49bd13cd899108b116"
+  }
+}

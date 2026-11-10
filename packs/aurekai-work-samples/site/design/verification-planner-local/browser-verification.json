@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-08T18:03:34.042Z",
+  "origin": "http://127.0.0.1:62707",
+  "checks": [
+    "A prepared four-fixture layout opens",
+    "Exact selected options produce the expected subtotal",
+    "Supplier missing dimensions are visible",
+    "No horizontal overflow at 1440",
+    "No horizontal overflow at 1024",
+    "No horizontal overflow at 768",
+    "No horizontal overflow at 390",
+    "No horizontal overflow at 320",
+    "Invalid room dimensions block saving",
+    "Invalid room was not saved",
+    "Budget overage is visible",
+    "Out-of-room position is identified",
+    "Adding a fixture updates both layout and subtotal",
+    "Removing a fixture updates the proposal",
+    "Saved project survives reload",
+    "Stale tab cannot overwrite the project",
+    "Share link contains a plan without contact details",
+    "A fresh visitor opens the shared layout and notes",
+    "Shared copy is not falsely marked saved",
+    "Brief carries exact source and missing dimensions",
+    "Downloaded brief matches the reviewed plan",
+    "Print shows the complete brief and hides interactive controls",
+    "Failed send is retryable without a receipt",
+    "Generated worker retains the real saved plan",
+    "Review fits a phone",
+    "Browser restart restores the receipt without resending",
+    "A revised plan cannot inherit the previous receipt",
+    "No browser exceptions"
+  ],
+  "errors": [],
+  "posts": [
+    "/api/lead/planner-red3-fixtures",
+    "/api/lead/planner-red3-fixtures"
+  ],
+  "receipt": "Received by Aurekai. Reference: lead:planner:35d81e06bf539ed731340f9c6673e87ff52e712d05c459c7036b93eb95051a64",
+  "external_writes": 0
+}

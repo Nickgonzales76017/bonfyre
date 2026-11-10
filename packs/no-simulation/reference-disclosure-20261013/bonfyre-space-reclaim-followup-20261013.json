@@ -1,0 +1,48 @@
+{
+  "at": "2026-10-13T14:48:11.430440",
+  "free_before_bytes": 4155711488,
+  "removed": [
+    {
+      "path": "/Users/nickgonzales/.cache/bonfyre/bitnet.cpp",
+      "allocated_bytes_before": 576483328
+    },
+    {
+      "path": "/Users/nickgonzales/.cargo/git/checkouts/feldera-93e069cd0a577fb3",
+      "allocated_bytes_before": 366116864
+    },
+    {
+      "path": "/Users/nickgonzales/.cargo/registry/index",
+      "allocated_bytes_before": 70340608
+    },
+    {
+      "path": "/Users/nickgonzales/.cache/puppeteer",
+      "allocated_bytes_before": 313212928
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Logs/com.openai.codex/2026/07",
+      "allocated_bytes_before": 405823488
+    },
+    {
+      "path": "/Users/nickgonzales/.vite-plus/js_runtime/node/24.19.0",
+      "allocated_bytes_before": 205271040
+    },
+    {
+      "path": "/Users/nickgonzales/.vite-plus/js_runtime/node/24.20.0",
+      "allocated_bytes_before": 208261120
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/node-gyp",
+      "allocated_bytes_before": 67563520
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Caches/bun",
+      "allocated_bytes_before": 35119104
+    },
+    {
+      "path": "/Users/nickgonzales/Library/Application Support/Code/CachedData",
+      "allocated_bytes_before": 24354816
+    }
+  ],
+  "free_after_bytes": 6206963712,
+  "net_reclaimed_bytes": 2051252224
+}

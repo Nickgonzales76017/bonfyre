@@ -1,0 +1,30 @@
+{
+  "deployment": "892f07e6-1c23-4d72-9aba-140dac13ac14",
+  "url": "https://892f07e6.aurekai-work-samples.pages.dev",
+  "checks": [
+    {
+      "path": "/red3-planner/",
+      "status": 200,
+      "sha256": "bcc2ce34f4f8d5792db5c2c22c4e180b313d8741d6c44dc056924a615661c25f",
+      "matches": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-client.mjs",
+      "status": 200,
+      "sha256": "8ec73b187cfaba53ce9053a551c616e77d783a8ed808849f06395f5179d54167",
+      "matches": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-projects.mjs",
+      "status": 200,
+      "sha256": "fcc89bb2b0129a48bdc4f0a64c7ae56212aa9da9e7b4c083ec386aa1f8b578f4",
+      "matches": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-project-client.mjs",
+      "status": 200,
+      "sha256": "c61a46a45f87c1c6a8244323faca0b3c195be4cd403e8f4310aa745422037c5e",
+      "matches": true
+    }
+  ]
+}

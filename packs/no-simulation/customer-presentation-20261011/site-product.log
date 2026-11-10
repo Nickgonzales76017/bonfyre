@@ -1,0 +1,4 @@
+site product: manual page PASS
+site product: reference MCP client SKIP (set BONFYRE_MCP_SDK_DIR)
+site product: recording import PASS
+site product: PASS

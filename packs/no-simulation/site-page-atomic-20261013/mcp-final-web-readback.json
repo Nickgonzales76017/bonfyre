@@ -1,0 +1,41 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"argv\":[\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"site\",\"--help\"],\"cwd\":\"/Users/nickgonzales/.bonfyre/bin\",\"exit_code\":0,\"stdout\":\"\",\"stderr\":\"bonfyre site — make, find, move and hand over sites\\n\\n  bonfyre site new NAME [--title T] [--tagline T] [--accent #hex] [--host H] [--no-open]\\n        one command: the site's records, its address, a running server, the page in a browser\\n  bonfyre site set NAME [--title T] [--tagline T] [--accent #hex] [--footnote T [--footnote-label L --footnote-link URL] | --no-footnote] | --presentation FILE.json   change a running site; the next page load shows it\\n  bonfyre site list [--json]\\n  bonfyre site show NAME|HOST [--json]\\n  bonfyre site search TEXT [--top N] [--json]      by meaning and by words, across every site\\n  bonfyre site page NAME --title T --text \\\"...\\\"|--file F   a standing page: served, in the menu, readable by assistants\\n                    [--group G]                      Markdown keeps its sections, code and tables; six pages or a group make a manual\\n  bonfyre site offer NAME --title T --price \\\"$450 per project\\\" --text \\\"...\\\" [--bookable]\\n        something the site sells: on its offers page, and readable by assistants; nothing takes payment\\n  bonfyre site accept NAME --request REF [--when T]  a request becomes a promise (commitments), an invoice (Pay), an opportunity (Finance)\\n  bonfyre site paid NAME --request REF --reference BANK-REF | done NAME --request REF | promises NAME\\n  bonfyre site domain NAME --to example.com [--ip A.B.C.D --secrets FILE [--apply]]\\n  bonfyre site post NAME --title T --text \\\"...\\\"      a dated post;  --withdraw ID takes one down\\n  bonfyre site page NAME --route /path --remove | --replace ...\\n  bonfyre site key NAME [--label WHO] [--write]      a key for one assistant, tried before it is handed over\\n  bonfyre site key NAME --withdraw WHO | keys NAME   withdraw a holder's key; who holds what\\n  bonfyre site share NAME [--stop]                   a public address for the site, tried from outside first\\n  bonfyre site usage NAME | inbox NAME               what assistants asked; messages left for the owner\\n  bonfyre site mcp NAME [--json]                   the site as an assistant's tool: stood up, checked, ready to paste\\n  bonfyre site check NAME [--json]                 dead links, unreadable colours, missing name or language\\n  bonfyre site export NAME --out FILE [--format html|wordpress|frappe]\\n        html: one self-contained page, fit to attach.  wordpress: its export file.  frappe: its documents\\n  bonfyre site import SOURCE --as NAME [--limit N]\\n        a WordPress address or export file, Frappe documents, any page address, or a file\\n  bonfyre site serve | stop\\n\\n  --home DIR      where this network of sites lives (default ~/.bonfyre/sites)\\n  --cms-db FILE   read another estate's content store (list, show, search)\\n  --port N        local port (default 8787)\\n\",\"duration_ms\":7,\"family\":\"BonfyreWebAddress\",\"binary\":\"/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address\",\"source_binary\":null,\"binary_sha256_at_readback\":\"250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f\",\"binary_bytes\":2076064,\"checkout_binary\":\"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address\",\"checkout_bytes\":2076064,\"checkout_sha256_at_readback\":\"250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f\",\"checkout_comparison\":\"matched\",\"source_build_freshness\":\"not_attested\",\"corpus_binding\":null,\"managed_binary\":true,\"schema_version\":\"bonfyre.native.tool.receipt.v1\",\"receipt_id\":\"bd07aa8c-cf8d-4984-8f09-02623cff4011\",\"status\":\"passed\",\"capabilities\":[],\"stdout_sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\"stderr_sha256\":\"16e777c4300c98ba6bff64ffbe1f45934701bb2bc30a55498b6826f8dad7da12\",\"stdout_bytes\":0,\"stderr_bytes\":2737}"
+    }
+  ],
+  "structuredContent": {
+    "argv": [
+      "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+      "site",
+      "--help"
+    ],
+    "cwd": "/Users/nickgonzales/.bonfyre/bin",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "bonfyre site — make, find, move and hand over sites\n\n  bonfyre site new NAME [--title T] [--tagline T] [--accent #hex] [--host H] [--no-open]\n        one command: the site's records, its address, a running server, the page in a browser\n  bonfyre site set NAME [--title T] [--tagline T] [--accent #hex] [--footnote T [--footnote-label L --footnote-link URL] | --no-footnote] | --presentation FILE.json   change a running site; the next page load shows it\n  bonfyre site list [--json]\n  bonfyre site show NAME|HOST [--json]\n  bonfyre site search TEXT [--top N] [--json]      by meaning and by words, across every site\n  bonfyre site page NAME --title T --text \"...\"|--file F   a standing page: served, in the menu, readable by assistants\n                    [--group G]                      Markdown keeps its sections, code and tables; six pages or a group make a manual\n  bonfyre site offer NAME --title T --price \"$450 per project\" --text \"...\" [--bookable]\n        something the site sells: on its offers page, and readable by assistants; nothing takes payment\n  bonfyre site accept NAME --request REF [--when T]  a request becomes a promise (commitments), an invoice (Pay), an opportunity (Finance)\n  bonfyre site paid NAME --request REF --reference BANK-REF | done NAME --request REF | promises NAME\n  bonfyre site domain NAME --to example.com [--ip A.B.C.D --secrets FILE [--apply]]\n  bonfyre site post NAME --title T --text \"...\"      a dated post;  --withdraw ID takes one down\n  bonfyre site page NAME --route /path --remove | --replace ...\n  bonfyre site key NAME [--label WHO] [--write]      a key for one assistant, tried before it is handed over\n  bonfyre site key NAME --withdraw WHO | keys NAME   withdraw a holder's key; who holds what\n  bonfyre site share NAME [--stop]                   a public address for the site, tried from outside first\n  bonfyre site usage NAME | inbox NAME               what assistants asked; messages left for the owner\n  bonfyre site mcp NAME [--json]                   the site as an assistant's tool: stood up, checked, ready to paste\n  bonfyre site check NAME [--json]                 dead links, unreadable colours, missing name or language\n  bonfyre site export NAME --out FILE [--format html|wordpress|frappe]\n        html: one self-contained page, fit to attach.  wordpress: its export file.  frappe: its documents\n  bonfyre site import SOURCE --as NAME [--limit N]\n        a WordPress address or export file, Frappe documents, any page address, or a file\n  bonfyre site serve | stop\n\n  --home DIR      where this network of sites lives (default ~/.bonfyre/sites)\n  --cms-db FILE   read another estate's content store (list, show, search)\n  --port N        local port (default 8787)\n",
+    "duration_ms": 7,
+    "family": "BonfyreWebAddress",
+    "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-web-address",
+    "source_binary": null,
+    "binary_sha256_at_readback": "250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f",
+    "binary_bytes": 2076064,
+    "checkout_binary": "/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address",
+    "checkout_bytes": 2076064,
+    "checkout_sha256_at_readback": "250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f",
+    "checkout_comparison": "matched",
+    "source_build_freshness": "not_attested",
+    "corpus_binding": null,
+    "managed_binary": true,
+    "schema_version": "bonfyre.native.tool.receipt.v1",
+    "receipt_id": "bd07aa8c-cf8d-4984-8f09-02623cff4011",
+    "status": "passed",
+    "capabilities": [],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "16e777c4300c98ba6bff64ffbe1f45934701bb2bc30a55498b6826f8dad7da12",
+    "stdout_bytes": 0,
+    "stderr_bytes": 2737
+  },
+  "isError": false
+}

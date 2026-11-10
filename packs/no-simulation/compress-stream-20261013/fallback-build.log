@@ -1,0 +1,1 @@
+cc -O2 -Wall -Wextra -Werror -std=c11 -I../../lib/libbonfyre/include -o /private/tmp/bonfyre-compress-no-zstd-20261013 src/main.c src/physical.c src/record_factor.c src/record_factor_cli.c -L../../lib/libbonfyre -lbonfyre -lsqlite3 

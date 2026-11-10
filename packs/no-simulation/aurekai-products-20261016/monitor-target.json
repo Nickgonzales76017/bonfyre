@@ -1,0 +1,3657 @@
+{
+ "schema": "bonfyre.monitor.v1",
+ "watch": {
+  "name": "Target",
+  "also_known_as": [],
+  "about": "Target Corporation, the US retail chain"
+ },
+ "window_days": 30,
+ "archive": "/Users/nickgonzales/.bonfyre/estate-local/items.db",
+ "candidates": 23,
+ "about_the_business": 5,
+ "namesakes_set_aside": 18,
+ "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+ "model_artifact_sha256": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+ "seconds": 157.429,
+ "attention_cut": 0.9,
+ "to_act_on": 1,
+ "mentions": [
+  {
+   "title": "Owala’s exclusive Pokémon just dropped at Target: Shop Pikachu, Eevee, Charizard, and Gengar designs",
+   "link": "https://mashable.com/life/owala-pokemon-water-bottle-collab-where-to-buy",
+   "publisher": "mashable.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.6672209885777166,
+   "kind": "promotion",
+   "kind_confidence": 0.9823131749150065,
+   "tone": "positive",
+   "tone_score": 1.9901067533699697,
+   "action": "opportunity",
+   "action_confidence": 0.9338552667178479,
+   "attention": 0.990964896099882,
+   "receipt": "9e28223cac9804088152378a3b909856351b50881b9b30f8818b9dc298735629"
+  },
+  {
+   "title": "*HOT* FREE eos Shea Better Body Lotion at Target after Cash Back!",
+   "link": "https://moneysavingmom.com/hot-free-eos-shea-better-body-lotion-at-target-after-cash-back/",
+   "publisher": "moneysavingmom.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.6820839723105092,
+   "kind": "promotion",
+   "kind_confidence": 0.9942263687762617,
+   "tone": "positive",
+   "tone_score": 1.9519265004636719,
+   "action": "opportunity",
+   "action_confidence": 0.6219757603865345,
+   "attention": 0.8450985835737113,
+   "receipt": "59fa4482548ea1f832d12b3239be14609c8ed8bbd415d284fd554b1ffe7ccea0"
+  },
+  {
+   "title": "Free Chomps Beef Stick at Target!",
+   "link": "https://moneysavingmom.com/free-chomps-beef-stick-at-target-and-walmart/",
+   "publisher": "moneysavingmom.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.7216295158502287,
+   "kind": "promotion",
+   "kind_confidence": 0.9949822203816651,
+   "tone": "positive",
+   "tone_score": 1.9593065397625489,
+   "action": "opportunity",
+   "action_confidence": 0.5784031104523211,
+   "attention": 0.8068630594443136,
+   "receipt": "1657fa929dd77c07f1ca57cab5efcce86e067e986adeb741ba8b965aa1c8f15b"
+  },
+  {
+   "title": "Optimum Nutrition Gold Standard 100% Whey Protein Powder, 1.55lbs only $16.99 at Target (Reg. $34)!",
+   "link": "https://moneysavingmom.com/optimum-nutrition-gold-standard-100-whey-protein-powder-deal/",
+   "publisher": "moneysavingmom.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.7263247320153156,
+   "kind": "promotion",
+   "kind_confidence": 0.9941037066258581,
+   "tone": "positive",
+   "tone_score": 1.9558206579722275,
+   "action": "opportunity",
+   "action_confidence": 0.44605245235376606,
+   "attention": 0.7593383537820013,
+   "receipt": "a40047ef6fbf7ce44246c1b29a9f3ded7af3908c3f87042371b10288bf12dfa7"
+  },
+  {
+   "title": "Academy Sports and Outdoors (ASO): Target Hikes Follow Q2, but No Upgrades",
+   "link": "https://finance.yahoo.com/markets/stocks/articles/academy-sports-outdoors-aso-target-210404586.html",
+   "publisher": "yahoo.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.5799925550195446,
+   "kind": "news",
+   "kind_confidence": 0.44480727192761477,
+   "tone": "negative",
+   "tone_score": 0.3394482714594155,
+   "action": "respond",
+   "action_confidence": 0.3696167585770423,
+   "attention": 0.7041419009660083,
+   "receipt": "859a565609a2178c71ccb884e04668e5bfd31e355226cd30202863141281b169"
+  },
+  {
+   "title": "Digital payments target merchant growth",
+   "link": "https://tribune.com.pk/story/2630109/digital-payments-target-merchant-growth",
+   "publisher": "tribune.com.pk",
+   "published": "2026-09-19",
+   "matched": "Target",
+   "about": 0.27851980669137594,
+   "kind": "news",
+   "kind_confidence": 0.4831834950306394,
+   "tone": "neutral",
+   "tone_score": 1.4611204599534584,
+   "action": "opportunity",
+   "action_confidence": 0.7986903951649144,
+   "attention": 0.9718605015313811,
+   "receipt": "5586f20ba2b686be596bef7198c742e2fbafa63a0d669a604589252e85038871"
+  },
+  {
+   "title": "Child safety protesters target Apple Fifth Avenue at iPhone 18 Pro release",
+   "link": "https://appleinsider.com/articles/26/09/18/child-safety-protesters-target-apple-fifth-avenue-at-iphone-18-pro-release?utm_source=rss",
+   "publisher": "appleinsider.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.27906617332790085,
+   "kind": "news",
+   "kind_confidence": 0.3063615313523245,
+   "tone": "negative",
+   "tone_score": 0.21037538039828663,
+   "action": "respond",
+   "action_confidence": 0.49224102377722445,
+   "attention": 0.9688469549458364,
+   "receipt": "3bb3e67f39d0be8d15c53a0922a504651bd923b4634969475cc177f5f8e60b79"
+  },
+  {
+   "title": "Private Equity’s Next Target Is Indie Music",
+   "link": "https://www.rollingstone.com/music/music-features/private-equity-target-indie-music-1235626614/",
+   "publisher": "rollingstone.com",
+   "published": "2026-09-19",
+   "matched": "Target",
+   "about": 0.19893337707884112,
+   "kind": "other",
+   "kind_confidence": 0.551116716929925,
+   "tone": "neutral",
+   "tone_score": 0.8808705471201831,
+   "action": "opportunity",
+   "action_confidence": 0.7877232358680308,
+   "attention": 0.9466658688895832,
+   "receipt": "e2a40fa7d10ab9d756c2d091004e04222ccae7ba1d037748d2024362b6274eac"
+  },
+  {
+   "title": "'Tokuryu' Criminal Gangs Target Elderly Victims with Refrigerator Trick",
+   "link": "https://newsonjapan.com/article/150804.php",
+   "publisher": "newsonjapan.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.19970912425348092,
+   "kind": "news",
+   "kind_confidence": 0.5335567291666724,
+   "tone": "negative",
+   "tone_score": 0.11689828622316525,
+   "action": "risk",
+   "action_confidence": 0.4827509709395427,
+   "attention": 0.9453605242338706,
+   "receipt": "a52483f25ff120239cc27950c8217f9a2f2571adca1de97398904a40034b4e3a"
+  },
+  {
+   "title": "Co-optex sets Deepavali festival target of ₹1.20 crore for outlets in Tiruppur district",
+   "link": "https://www.thehindu.com/news/cities/Coimbatore/co-optex-sets-deepavali-festival-target-of-12-crore-for-outlets-in-tiruppur-district/article71481506.ece",
+   "publisher": "thehindu.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.31200811425375646,
+   "kind": "promotion",
+   "kind_confidence": 0.5897159651616516,
+   "tone": "neutral",
+   "tone_score": 0.7994695912043641,
+   "action": "opportunity",
+   "action_confidence": 0.6611454344910012,
+   "attention": 0.8821160642952199,
+   "receipt": "7fbb06c893e159ed606cf99b46b86eff777e1ceee6ac513a6d4b584500f318b0"
+  },
+  {
+   "title": "Evercore raises AAPL price target to $380 on new iPhone demand",
+   "link": "https://appleinsider.com/articles/26/09/18/evercore-raises-aapl-price-target-to-380-on-new-iphone-demand?utm_source=rss",
+   "publisher": "appleinsider.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.32956923869693616,
+   "kind": "other",
+   "kind_confidence": 0.4447694070513422,
+   "tone": "neutral",
+   "tone_score": 0.9481319727251462,
+   "action": "opportunity",
+   "action_confidence": 0.6010118970889501,
+   "attention": 0.8787458469025834,
+   "receipt": "bba7f87f88d55d4014bbbae0002e558f53c69cdd876a9f38f2891ee245fb3aa4"
+  },
+  {
+   "title": "Govt To Target 200 Chip Design Startups, Companies Under Semicon 2.0: Vaishnaw",
+   "link": "https://www.deccanchronicle.com/business/govt-to-target-200-chip-design-startups-companies-under-semicon-20-vaishnaw-1988164",
+   "publisher": "deccanchronicle.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.2099994363081099,
+   "kind": "other",
+   "kind_confidence": 0.7603854489760467,
+   "tone": "neutral",
+   "tone_score": 0.8771146023363641,
+   "action": "opportunity",
+   "action_confidence": 0.6458274197658315,
+   "attention": 0.816086917894527,
+   "receipt": "5a573faa62a6076e8f84ae15c33828f4ec89bdd1e31ec328e47c25b99baaf348"
+  },
+  {
+   "title": "Teledyne Technologies (TDY) Price Target Hiked to $760 as Needham Bets on Defense and Short-Cycle Recovery",
+   "link": "https://finance.yahoo.com/markets/stocks/articles/teledyne-technologies-tdy-price-target-224411866.html",
+   "publisher": "yahoo.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.3567988503807639,
+   "kind": "other",
+   "kind_confidence": 0.590203037621441,
+   "tone": "neutral",
+   "tone_score": 0.733355163464553,
+   "action": "opportunity",
+   "action_confidence": 0.415159246942897,
+   "attention": 0.806779375289142,
+   "receipt": "da99a5d0a8c09dd1f2269c066bf6347b71c67559fb9a94c99621049117e59821"
+  },
+  {
+   "title": "Copper Thieves Target Remote Nagano Shrine",
+   "link": "https://newsonjapan.com/article/150787.php",
+   "publisher": "newsonjapan.com",
+   "published": "2026-09-16",
+   "matched": "Target",
+   "about": 0.19247399933899087,
+   "kind": "other",
+   "kind_confidence": 0.6512213256268342,
+   "tone": "negative",
+   "tone_score": 0.19918405335600142,
+   "action": "opportunity",
+   "action_confidence": 0.3087508458951469,
+   "attention": 0.7982351141141324,
+   "receipt": "ed8759a31fe7f48229a425e67ce6bd327b61598a4b643f15c7e0b5bc5223b0eb"
+  },
+  {
+   "title": "ICC used as ‘tool’ to target Global South – political commentator",
+   "link": "https://www.rt.com/news/645865-icc-western-tool-global-south/?utm_source=rss&utm_medium=rss&utm_campaign=RSS",
+   "publisher": "rt.com",
+   "published": "2026-09-16",
+   "matched": "Target",
+   "about": 0.18393579181870068,
+   "kind": "other",
+   "kind_confidence": 0.8364279485266407,
+   "tone": "negative",
+   "tone_score": 0.36779020435451104,
+   "action": "respond",
+   "action_confidence": 0.5880921973398168,
+   "attention": 0.7897187390640287,
+   "receipt": "f4ce3b50ac2ca2de19235ca77f95e80984ec50119266569c39d634022cf9e0f6"
+  },
+  {
+   "title": "India sets food production target at 178 million tonnes for rabi season",
+   "link": "https://www.thehindubusinessline.com/economy/agri-business/india-sets-food-production-target-at-178-million-tonnes-for-rabi-season/article71480295.ece",
+   "publisher": "thehindubusinessline.com",
+   "published": "2026-09-19",
+   "matched": "Target",
+   "about": 0.16171888518887367,
+   "kind": "other",
+   "kind_confidence": 0.8378110005668037,
+   "tone": "neutral",
+   "tone_score": 0.9094902941247641,
+   "action": "opportunity",
+   "action_confidence": 0.5690035389935666,
+   "attention": 0.7239957854670669,
+   "receipt": "b198979062c67ad042ac4d1ebb0ba41b1d67de4c3a157da3540a6de7448fe2e6"
+  },
+  {
+   "title": "Sparsity-Promoting Hierarchical Bayesian Model for EIT with a Blocky Target",
+   "link": "https://commons.case.edu/facultyworks/1532",
+   "publisher": "case.edu",
+   "published": "2026-09-28",
+   "matched": "Target",
+   "about": 0.1844617324595016,
+   "kind": "other",
+   "kind_confidence": 0.9279628664489593,
+   "tone": "neutral",
+   "tone_score": 0.9405236578697039,
+   "action": "opportunity",
+   "action_confidence": 0.43788195712708244,
+   "attention": 0.7057581140503715,
+   "receipt": "1964b098b1f2a1e493e88046c7d6ddab05106af70a729a458e529b3b04e884da"
+  },
+  {
+   "title": "Killing endangered wildlife is legal if they aren't the target, new Trump rule says",
+   "link": "https://www.yahoo.com/news/politics/articles/trump-administration-allows-inadvertent-killing-205230109.html",
+   "publisher": "yahoo.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.27409581051613024,
+   "kind": "regulatory",
+   "kind_confidence": 0.36083187633060404,
+   "tone": "negative",
+   "tone_score": 0.3635568262855023,
+   "action": "respond",
+   "action_confidence": 0.4143360954905265,
+   "attention": 0.7000110147763222,
+   "receipt": "540245c34f333f166a5d86e5e4c46dd79f5f4f95ff4721a35496e63f57229ace"
+  },
+  {
+   "title": "John Lee keeps Hong Kong talent target unchanged despite 300,000 arrivals",
+   "link": "https://www.scmp.com/news/hong-kong/hong-kong-economy/article/3367961/hong-kong-talent-schemes-could-add-12-gdp-annually-john-lee?utm_source=rss_feed",
+   "publisher": "scmp.com",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.24974999776663434,
+   "kind": "other",
+   "kind_confidence": 0.5606490013714818,
+   "tone": "neutral",
+   "tone_score": 0.8943924838761105,
+   "action": "respond",
+   "action_confidence": 0.3994699502212737,
+   "attention": 0.6605928839770485,
+   "receipt": "1df7b8d83ec0dfd6b87f606321d4ce4eb92c1f87ee5730d6998b6f7c09f5c9e1"
+  },
+  {
+   "title": "Data centres a wartime target, defence AI chief warns",
+   "link": "https://www.perthnow.com.au/news/politics/data-centres-a-wartime-target-defence-ai-chief-warns-c-22893924",
+   "publisher": "perthnow.com.au",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.20153415450818346,
+   "kind": "news",
+   "kind_confidence": 0.6021032761799386,
+   "tone": "negative",
+   "tone_score": 0.3747998087254895,
+   "action": "respond",
+   "action_confidence": 0.39914141885655213,
+   "attention": 0.6605393394122174,
+   "receipt": "3ec359f88849f21a56e986d664ea2c7808f8967619e56ae50a9a451e9d398071"
+  },
+  {
+   "title": "“Delayed Isn’t as Good”: Why Boeing’s $10 Billion Cash Flow Target Just Got More Expensive",
+   "link": "https://finance.yahoo.com/markets/stocks/articles/delayed-isn-t-good-why-165042020.html",
+   "publisher": "yahoo.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.36511313079788604,
+   "kind": "news",
+   "kind_confidence": 0.6438149413842091,
+   "tone": "negative",
+   "tone_score": 0.2595399041217215,
+   "action": "respond",
+   "action_confidence": 0.37171144007041035,
+   "attention": 0.6573355592369825,
+   "receipt": "741d854a3c38f7b5998b9dd393b3e2525c4561e0dd91a3fd991a84fc8ed6fc0c"
+  },
+  {
+   "title": "New-look Wales target statement South Africa win",
+   "link": "https://www.bbc.co.uk/sport/rugby-union/articles/c6zjz1n9j01do?at_medium=RSS&amp;at_campaign=rss",
+   "publisher": "BBC",
+   "published": "2026-09-18",
+   "matched": "Target",
+   "about": 0.18462964687711753,
+   "kind": "other",
+   "kind_confidence": 0.8289539860750419,
+   "tone": "neutral",
+   "tone_score": 0.8417724108822949,
+   "action": "awareness",
+   "action_confidence": 0.37800726649363003,
+   "attention": 0.62199273350637,
+   "receipt": "591532a594fc066b786e7fe3f8636790e6f65724e00bdb1f8f2eed5461816e2b"
+  },
+  {
+   "title": "The Fed’s Inflation Target Keeps Slipping Farther Into The Future",
+   "link": "https://finance.yahoo.com/economy/policy/articles/fed-inflation-target-keeps-slipping-215549658.html",
+   "publisher": "yahoo.com",
+   "published": "2026-09-17",
+   "matched": "Target",
+   "about": 0.3184944881723,
+   "kind": "news",
+   "kind_confidence": 0.5085116822635158,
+   "tone": "neutral",
+   "tone_score": 0.6206578553299306,
+   "action": "awareness",
+   "action_confidence": 0.47995768683534323,
+   "attention": 0.5200423131646568,
+   "receipt": "35fd12912e4aec2b0de7e77c625fdd6a8bfbc55a342e458f40e18f3cf8401056"
+  }
+ ],
+ "receipts": [
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-commons-case-edu-ea3dee:b0e36fd442a02eda394166e8",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-commons-case-edu-ea3dee:b0e36fd442a02eda394166e8",
+      "description": "Sparsity-Promoting Hierarchical Bayesian Model for EIT with a Blocky Target",
+      "owner_ref": "ItemArchive:feed-commons-case-edu-ea3dee:b0e36fd442a02eda394166e8"
+     }
+    ]
+   },
+   "case_digest": "a55ece197182a5a16d3a397549ee188e6d524d8a27c5abebeb9d768854cfa97f",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "e576e55762da64af555277253077f28513812096cef418393188689acfeb8eb9",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "1964b098b1f2a1e493e88046c7d6ddab05106af70a729a458e529b3b04e884da",
+   "latency_ms": 10782,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8155382675404984,
+     "probabilities": {
+      "business": 0.1844617324595016,
+      "namesake": 0.8155382675404984
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.43788195712708244,
+     "probabilities": {
+      "awareness": 0.29424188594962847,
+      "opportunity": 0.43788195712708244,
+      "respond": 0.181364038046127,
+      "risk": 0.08651211887716209
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.9279628664489593,
+     "probabilities": {
+      "competitor": 0.012006188925173448,
+      "event": 0.012006188925173448,
+      "news": 0.012006188925173448,
+      "other": 0.9279628664489593,
+      "promotion": 0.012006188925173448,
+      "regulatory": 0.012006188925173448,
+      "review": 0.012006188925173448
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.9405236578697039,
+     "confidence": 0.9251913554969021,
+     "probabilities": {
+      "0": 0.0671424933166969,
+      "1": 0.9251913554969021,
+      "2": 0.007666151186400897
+     }
+    }
+   },
+   "answers_digest": "54d04cc87c9d6ecc23b4945c2d3c04a41ce18d1c578e060e24f5764fbac56b9e",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 10781.575416,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-commons-case-edu-ea3dee:b0e36fd442a02eda394166e8",
+    "candidate_id": "feed-commons-case-edu-ea3dee:b0e36fd442a02eda394166e8",
+    "about_probability": 0.1844617324595016,
+    "kind": "other",
+    "tone": 0.9405236578697039,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.8155382675404984,
+      "winner": "namesake",
+      "margin": 0.6310765350809968,
+      "expectation": 0.8155382675404984,
+      "entropy": 0.47809201703221293,
+      "concentration": 0.6310765350809968,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8155382675404984
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.9279628664489593,
+      "winner": "other",
+      "margin": 0.9159566775237858,
+      "expectation": 5.747870032571358,
+      "entropy": 0.3879500031795027,
+      "concentration": 0.9159566775237857,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9279628664489593
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.43788195712708244,
+      "winner": "opportunity",
+      "margin": 0.14364007117745398,
+      "expectation": 1.8450016909802123,
+      "entropy": 1.2429366899584413,
+      "concentration": 0.25050927616944324,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.43788195712708244
+     },
+     "tone": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.9251913554969021,
+      "winner": "1",
+      "margin": 0.8580488621802053,
+      "expectation": 0.9405236578697039,
+      "entropy": 0.29062705774941777,
+      "concentration": 0.887787033245353,
+      "ordinal_concentration": 0.8877870332453534,
+      "provider_confidence": 0.9251913554969021
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-tribune-com-pk-a7ee63:23eaacaa005c309acea0080d",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-tribune-com-pk-a7ee63:23eaacaa005c309acea0080d",
+      "description": "Digital payments target merchant growth",
+      "owner_ref": "ItemArchive:feed-tribune-com-pk-a7ee63:23eaacaa005c309acea0080d"
+     }
+    ]
+   },
+   "case_digest": "27b29282de75837a98e72297a61a14c0c0f0345f0668c8dae96524749c9dfc2b",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "bdec6a59c817e4d3a02d3f09ef805ac11150ab453d86749f7c56528c32138d7c",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "5586f20ba2b686be596bef7198c742e2fbafa63a0d669a604589252e85038871",
+   "latency_ms": 6223,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.7214801933086241,
+     "probabilities": {
+      "business": 0.27851980669137594,
+      "namesake": 0.7214801933086241
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.7986903951649144,
+     "probabilities": {
+      "awareness": 0.028139498468618802,
+      "opportunity": 0.7986903951649144,
+      "respond": 0.15007065684954388,
+      "risk": 0.023099449516922978
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.4831834950306394,
+     "probabilities": {
+      "competitor": 0.0861360841615601,
+      "event": 0.0861360841615601,
+      "news": 0.4831834950306394,
+      "other": 0.0861360841615601,
+      "promotion": 0.0861360841615601,
+      "regulatory": 0.0861360841615601,
+      "review": 0.0861360841615601
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 1.4611204599534584,
+     "confidence": 0.5216764162828217,
+     "probabilities": {
+      "0": 0.06055595632936331,
+      "1": 0.417767627387815,
+      "2": 0.5216764162828217
+     }
+    }
+   },
+   "answers_digest": "d3974df647d3cc499aa71a5d87a380786bc7a0a036d83cbf4de3600ecab24512",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6222.408250000002,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-tribune-com-pk-a7ee63:23eaacaa005c309acea0080d",
+    "candidate_id": "feed-tribune-com-pk-a7ee63:23eaacaa005c309acea0080d",
+    "about_probability": 0.27851980669137594,
+    "kind": "news",
+    "tone": 1.4611204599534584,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7214801933086241,
+      "winner": "namesake",
+      "margin": 0.4429603866172482,
+      "expectation": 0.7214801933086241,
+      "entropy": 0.5915498918639444,
+      "concentration": 0.44296038661724824,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7214801933086241
+     },
+     "kind": {
+      "mass": 1.0000000000000002,
+      "maximum": 0.4831834950306394,
+      "winner": "news",
+      "margin": 0.3970474108690793,
+      "expectation": 1.808857767392762,
+      "entropy": 1.618592350834538,
+      "concentration": 0.3970474108690793,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.4831834950306394
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.7986903951649144,
+      "winner": "opportunity",
+      "margin": 0.6486197383153705,
+      "expectation": 1.7048987352526082,
+      "entropy": 0.6516743620497821,
+      "concentration": 0.7315871935532191,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7986903951649144
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.5216764162828217,
+      "winner": "2",
+      "margin": 0.10390878889500671,
+      "expectation": 1.4611204599534584,
+      "entropy": 0.8739092360042198,
+      "concentration": 0.28251462442423253,
+      "ordinal_concentration": 0.1916806899301876,
+      "provider_confidence": 0.5216764162828217
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-rollingstone-com-8b3d6c:f7a52e3196c8496847c2dab6",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-rollingstone-com-8b3d6c:f7a52e3196c8496847c2dab6",
+      "description": "Private Equity’s Next Target Is Indie Music",
+      "owner_ref": "ItemArchive:feed-rollingstone-com-8b3d6c:f7a52e3196c8496847c2dab6"
+     }
+    ]
+   },
+   "case_digest": "86d27a1a17611aaeaa630d091a168c3fe2a4e6c842cf8ca12cf4dae5d2c125dc",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "955c7759106b32d9c208a07e077b47989fbec3e1834f364a0f545d44025d9e63",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "e2a40fa7d10ab9d756c2d091004e04222ccae7ba1d037748d2024362b6274eac",
+   "latency_ms": 6318,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8010666229211588,
+     "probabilities": {
+      "business": 0.19893337707884112,
+      "namesake": 0.8010666229211588
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.7877232358680308,
+     "probabilities": {
+      "awareness": 0.0533341311104169,
+      "opportunity": 0.7877232358680308,
+      "respond": 0.11702075302288593,
+      "risk": 0.04192187999866635
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.551116716929925,
+     "probabilities": {
+      "competitor": 0.07481388051167916,
+      "event": 0.07481388051167916,
+      "news": 0.07481388051167916,
+      "other": 0.551116716929925,
+      "promotion": 0.07481388051167916,
+      "regulatory": 0.07481388051167916,
+      "review": 0.07481388051167916
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.8808705471201831,
+     "confidence": 0.8627242556546143,
+     "probabilities": {
+      "0": 0.12820259861260128,
+      "1": 0.8627242556546143,
+      "2": 0.009073145732784373
+     }
+    }
+   },
+   "answers_digest": "d43aaba5beea0c10db898bda99aba61e2655f9c579867f21051bdd3c80c2c235",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6318.128790999999,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-rollingstone-com-8b3d6c:f7a52e3196c8496847c2dab6",
+    "candidate_id": "feed-rollingstone-com-8b3d6c:f7a52e3196c8496847c2dab6",
+    "about_probability": 0.19893337707884112,
+    "kind": "other",
+    "tone": 0.8808705471201831,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.8010666229211588,
+      "winner": "namesake",
+      "margin": 0.6021332458423176,
+      "expectation": 0.8010666229211588,
+      "entropy": 0.49892021017932553,
+      "concentration": 0.6021332458423176,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8010666229211588
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.551116716929925,
+      "winner": "other",
+      "margin": 0.4763028364182459,
+      "expectation": 4.428908509254738,
+      "entropy": 1.4922030746820376,
+      "concentration": 0.47630283641824583,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.551116716929925
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.7877232358680308,
+      "winner": "opportunity",
+      "margin": 0.6707024828451449,
+      "expectation": 1.7773707450659786,
+      "entropy": 0.728320101290326,
+      "concentration": 0.7169643144907077,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7877232358680308
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.8627242556546143,
+      "winner": "1",
+      "margin": 0.734521657042013,
+      "expectation": 0.8808705471201831,
+      "entropy": 0.43340241877499613,
+      "concentration": 0.7940863834819213,
+      "ordinal_concentration": 0.7940863834819215,
+      "provider_confidence": 0.8627242556546143
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-thehindubusinessline-com-d754cf:1d30c150c4b506d64a41eadb",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-thehindubusinessline-com-d754cf:1d30c150c4b506d64a41eadb",
+      "description": "India sets food production target at 178 million tonnes for rabi season",
+      "owner_ref": "ItemArchive:feed-thehindubusinessline-com-d754cf:1d30c150c4b506d64a41eadb"
+     }
+    ]
+   },
+   "case_digest": "0c8b26beb9ff16d2913d480e0c95cc1df20852777a2f375c17d90a370655d3b0",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "49cca5e98e49e9fd761d4c7e5e9078efae1024cf0d2fb8dffc32fe266e0dccd5",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "b198979062c67ad042ac4d1ebb0ba41b1d67de4c3a157da3540a6de7448fe2e6",
+   "latency_ms": 6336,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8382811148111263,
+     "probabilities": {
+      "business": 0.16171888518887367,
+      "namesake": 0.8382811148111263
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.5690035389935666,
+     "probabilities": {
+      "awareness": 0.27600421453293306,
+      "opportunity": 0.5690035389935666,
+      "respond": 0.10971844914851794,
+      "risk": 0.0452737973249823
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.8378110005668037,
+     "probabilities": {
+      "competitor": 0.02703149990553272,
+      "event": 0.02703149990553272,
+      "news": 0.02703149990553272,
+      "other": 0.8378110005668037,
+      "promotion": 0.02703149990553272,
+      "regulatory": 0.02703149990553272,
+      "review": 0.02703149990553272
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.9094902941247641,
+     "confidence": 0.9014561713049044,
+     "probabilities": {
+      "0": 0.09452676728516574,
+      "1": 0.9014561713049044,
+      "2": 0.004017061409929874
+     }
+    }
+   },
+   "answers_digest": "8204ecdab6cdb4d5beb7d020fe0c1b2a285b4c24d5baece42b7976b460edb39d",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6335.957333999999,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-thehindubusinessline-com-d754cf:1d30c150c4b506d64a41eadb",
+    "candidate_id": "feed-thehindubusinessline-com-d754cf:1d30c150c4b506d64a41eadb",
+    "about_probability": 0.16171888518887367,
+    "kind": "other",
+    "tone": 0.9094902941247641,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.8382811148111263,
+      "winner": "namesake",
+      "margin": 0.6765622296222527,
+      "expectation": 0.8382811148111263,
+      "entropy": 0.4425092230781802,
+      "concentration": 0.6765622296222527,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8382811148111263
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.8378110005668037,
+      "winner": "other",
+      "margin": 0.810779500661271,
+      "expectation": 5.432338501983812,
+      "entropy": 0.7338856542704836,
+      "concentration": 0.8107795006612708,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8378110005668037
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.5690035389935666,
+      "winner": "opportunity",
+      "margin": 0.29299932446063354,
+      "expectation": 2.0112935189109145,
+      "entropy": 1.0587378607422941,
+      "concentration": 0.4253380519914221,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5690035389935666
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.9014561713049044,
+      "winner": "1",
+      "margin": 0.8069294040197387,
+      "expectation": 0.9094902941247641,
+      "entropy": 0.3386600548113441,
+      "concentration": 0.8521842569573564,
+      "ordinal_concentration": 0.8521842569573566,
+      "provider_confidence": 0.9014561713049044
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-thehindu-com-659d18:6c322b0daad0dd69ed97dff2",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-thehindu-com-659d18:6c322b0daad0dd69ed97dff2",
+      "description": "Co-optex sets Deepavali festival target of ₹1.20 crore for outlets in Tiruppur district",
+      "owner_ref": "ItemArchive:feed-thehindu-com-659d18:6c322b0daad0dd69ed97dff2"
+     }
+    ]
+   },
+   "case_digest": "73f9a0dd0c14671690edeee1e211c1f174191ae5b2c29ede15a8a6cebfc17acb",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "3c9653150e802d640ee5ff7d2ce062bd2a8c7ec106e45afa18418853d74f22a6",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "7fbb06c893e159ed606cf99b46b86eff777e1ceee6ac513a6d4b584500f318b0",
+   "latency_ms": 7404,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.6879918857462434,
+     "probabilities": {
+      "business": 0.31200811425375646,
+      "namesake": 0.6879918857462434
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.6611454344910012,
+     "probabilities": {
+      "awareness": 0.1178839357047801,
+      "opportunity": 0.6611454344910012,
+      "respond": 0.16871820678853622,
+      "risk": 0.052252423015682455
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "promotion",
+     "confidence": 0.5897159651616516,
+     "probabilities": {
+      "competitor": 0.06838067247305807,
+      "event": 0.06838067247305807,
+      "news": 0.06838067247305807,
+      "other": 0.06838067247305807,
+      "promotion": 0.5897159651616516,
+      "regulatory": 0.06838067247305807,
+      "review": 0.06838067247305807
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.7994695912043641,
+     "confidence": 0.7067887799037904,
+     "probabilities": {
+      "0": 0.24687081444592263,
+      "1": 0.7067887799037904,
+      "2": 0.04634040565028688
+     }
+    }
+   },
+   "answers_digest": "d417f6d5046564520052e251d0800aed3d66bf94e4d13919c328382c15f3eca4",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 7403.453709000001,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-thehindu-com-659d18:6c322b0daad0dd69ed97dff2",
+    "candidate_id": "feed-thehindu-com-659d18:6c322b0daad0dd69ed97dff2",
+    "about_probability": 0.31200811425375646,
+    "kind": "promotion",
+    "tone": 0.7994695912043641,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.6879918857462434,
+      "winner": "namesake",
+      "margin": 0.3759837714924869,
+      "expectation": 0.6879918857462434,
+      "entropy": 0.6206979803695067,
+      "concentration": 0.37598377149248674,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6879918857462434
+     },
+     "kind": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.5897159651616516,
+      "winner": "promotion",
+      "margin": 0.5213352926885935,
+      "expectation": 2.4786647073114065,
+      "entropy": 1.4120920633340481,
+      "concentration": 0.5213352926885935,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5897159651616516
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.6611454344910012,
+      "winner": "opportunity",
+      "margin": 0.49242722770246494,
+      "expectation": 1.7281950991120252,
+      "entropy": 0.9800822052683571,
+      "concentration": 0.5481939126546682,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6611454344910012
+     },
+     "tone": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.7067887799037904,
+      "winner": "1",
+      "margin": 0.4599179654578678,
+      "expectation": 0.7994695912043641,
+      "entropy": 0.7329631167865344,
+      "concentration": 0.5601831698556856,
+      "ordinal_concentration": 0.5601831698556858,
+      "provider_confidence": 0.7067887799037904
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-newsonjapan-com-e129f9:ba0f4ea1eb59a2ea2da69671",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-newsonjapan-com-e129f9:ba0f4ea1eb59a2ea2da69671",
+      "description": "'Tokuryu' Criminal Gangs Target Elderly Victims with Refrigerator Trick",
+      "owner_ref": "ItemArchive:feed-newsonjapan-com-e129f9:ba0f4ea1eb59a2ea2da69671"
+     }
+    ]
+   },
+   "case_digest": "1c674b6f3e424d342840455fa9f3f34d5baba713c21ce2ca20cb7300ce13b7e1",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "fb2cc7f611e8910aa9513e5d581ed0d0256fb1b017cdb34b9cbec36a2ea7893d",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "a52483f25ff120239cc27950c8217f9a2f2571adca1de97398904a40034b4e3a",
+   "latency_ms": 7228,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.800290875746519,
+     "probabilities": {
+      "business": 0.19970912425348092,
+      "namesake": 0.800290875746519
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "risk",
+     "confidence": 0.4827509709395427,
+     "probabilities": {
+      "awareness": 0.054639475766129375,
+      "opportunity": 0.09036442050181978,
+      "respond": 0.3722451327925082,
+      "risk": 0.4827509709395427
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.5335567291666724,
+     "probabilities": {
+      "competitor": 0.07774054513888794,
+      "event": 0.07774054513888794,
+      "news": 0.5335567291666724,
+      "other": 0.07774054513888794,
+      "promotion": 0.07774054513888794,
+      "regulatory": 0.07774054513888794,
+      "review": 0.07774054513888794
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.11689828622316525,
+     "confidence": 0.8900137369059674,
+     "probabilities": {
+      "0": 0.8900137369059674,
+      "1": 0.10307423996489981,
+      "2": 0.006912023129132721
+     }
+    }
+   },
+   "answers_digest": "9016514830d1c08807f9b8f76c300510a100240c319f0074dace6b9eeff093dc",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 7227.946667000004,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-newsonjapan-com-e129f9:ba0f4ea1eb59a2ea2da69671",
+    "candidate_id": "feed-newsonjapan-com-e129f9:ba0f4ea1eb59a2ea2da69671",
+    "about_probability": 0.19970912425348092,
+    "kind": "news",
+    "tone": 0.11689828622316525,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.800290875746519,
+      "winner": "namesake",
+      "margin": 0.600581751493038,
+      "expectation": 0.800290875746519,
+      "entropy": 0.49999891963260373,
+      "concentration": 0.600581751493038,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.800290875746519
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.5335567291666724,
+      "winner": "news",
+      "margin": 0.45581618402778445,
+      "expectation": 1.6325514479166467,
+      "entropy": 1.5266475260714205,
+      "concentration": 0.45581618402778445,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5335567291666724
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.4827509709395427,
+      "winner": "risk",
+      "margin": 0.11050583814703452,
+      "expectation": 0.8273982392415704,
+      "entropy": 1.0954834665904292,
+      "concentration": 0.3103346279193903,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.4827509709395427
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.8900137369059674,
+      "winner": "0",
+      "margin": 0.7869394969410676,
+      "expectation": 0.11689828622316525,
+      "entropy": 0.3723029608849599,
+      "concentration": 0.835020605358951,
+      "ordinal_concentration": 0.8246525706652521,
+      "provider_confidence": 0.8900137369059674
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-perthnow-com-au-47b5d2:df527e23cd7c55c84a02ea75",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-perthnow-com-au-47b5d2:df527e23cd7c55c84a02ea75",
+      "description": "Data centres a wartime target, defence AI chief warns",
+      "owner_ref": "ItemArchive:feed-perthnow-com-au-47b5d2:df527e23cd7c55c84a02ea75"
+     }
+    ]
+   },
+   "case_digest": "91b3bc9efe10db94f38eb4ebb957cc849dc25041b8cb6d72885a4ac35ae4c042",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "59a985b6c7d6101607840da43b43b737eb447a0ec53fe0722d14a1f0b87acb9f",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "3ec359f88849f21a56e986d664ea2c7808f8967619e56ae50a9a451e9d398071",
+   "latency_ms": 6813,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.7984658454918167,
+     "probabilities": {
+      "business": 0.20153415450818346,
+      "namesake": 0.7984658454918167
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.39914141885655213,
+     "probabilities": {
+      "awareness": 0.3394606605877825,
+      "opportunity": 0.11712570597193811,
+      "respond": 0.39914141885655213,
+      "risk": 0.14427221458372722
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.6021032761799386,
+     "probabilities": {
+      "competitor": 0.0663161206366769,
+      "event": 0.0663161206366769,
+      "news": 0.6021032761799386,
+      "other": 0.0663161206366769,
+      "promotion": 0.0663161206366769,
+      "regulatory": 0.0663161206366769,
+      "review": 0.0663161206366769
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.3747998087254895,
+     "confidence": 0.6286997800866536,
+     "probabilities": {
+      "0": 0.6286997800866536,
+      "1": 0.3678006311012032,
+      "2": 0.0034995888121431675
+     }
+    }
+   },
+   "answers_digest": "04033a3baa9327b6524ddbf86a4bf2b20868e4f733f3ba2bee6ed2d427abef9c",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6812.408625000004,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-perthnow-com-au-47b5d2:df527e23cd7c55c84a02ea75",
+    "candidate_id": "feed-perthnow-com-au-47b5d2:df527e23cd7c55c84a02ea75",
+    "about_probability": 0.20153415450818346,
+    "kind": "news",
+    "tone": 0.3747998087254895,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7984658454918167,
+      "winner": "namesake",
+      "margin": 0.5969316909836332,
+      "expectation": 0.7984658454918167,
+      "entropy": 0.5025218722345182,
+      "concentration": 0.5969316909836333,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7984658454918167
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.6021032761799386,
+      "winner": "news",
+      "margin": 0.5357871555432617,
+      "expectation": 1.392638533370215,
+      "entropy": 1.3850848629784622,
+      "concentration": 0.5357871555432617,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6021032761799386
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.39914141885655213,
+      "winner": "respond",
+      "margin": 0.05968075826876962,
+      "expectation": 1.3969056082909508,
+      "entropy": 1.2638352591132207,
+      "concentration": 0.19885522514206952,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.39914141885655213
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.6286997800866536,
+      "winner": "0",
+      "margin": 0.2608991489854504,
+      "expectation": 0.3747998087254895,
+      "entropy": 0.6794504608216968,
+      "concentration": 0.4430496701299804,
+      "ordinal_concentration": 0.43780028691176565,
+      "provider_confidence": 0.6286997800866536
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:17c6f5f113bb75368600f0bb",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-moneysavingmom-com-077b1b:17c6f5f113bb75368600f0bb",
+      "description": "Free Chomps Beef Stick at Target!",
+      "owner_ref": "ItemArchive:feed-moneysavingmom-com-077b1b:17c6f5f113bb75368600f0bb"
+     }
+    ]
+   },
+   "case_digest": "2f1c23fd92db62769f09fa06182fd76e56d6197a7b83f00d5f82b781d6c48136",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "e129fbd13d45661bf97092e6b8fa47575e1dbe771a1c38e2b05ec25ddd0ece81",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "1657fa929dd77c07f1ca57cab5efcce86e067e986adeb741ba8b965aa1c8f15b",
+   "latency_ms": 6471,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "business",
+     "confidence": 0.7216295158502287,
+     "probabilities": {
+      "business": 0.7216295158502287,
+      "namesake": 0.2783704841497713
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.5784031104523211,
+     "probabilities": {
+      "awareness": 0.19313694055568645,
+      "opportunity": 0.5784031104523211,
+      "respond": 0.13834461172976376,
+      "risk": 0.09011533726222866
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "promotion",
+     "confidence": 0.9949822203816651,
+     "probabilities": {
+      "competitor": 0.0008362966030558231,
+      "event": 0.0008362966030558231,
+      "news": 0.0008362966030558231,
+      "other": 0.0008362966030558231,
+      "promotion": 0.9949822203816651,
+      "regulatory": 0.0008362966030558231,
+      "review": 0.0008362966030558231
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 1.9593065397625489,
+     "confidence": 0.9718743471475287,
+     "probabilities": {
+      "0": 0.01256780738497992,
+      "1": 0.01555784546749135,
+      "2": 0.9718743471475287
+     }
+    }
+   },
+   "answers_digest": "fafaad1549eab9d1ad052f74e87eac64227556c80f1300044d553bfba6ba69ae",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6470.696250000001,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:17c6f5f113bb75368600f0bb",
+    "candidate_id": "feed-moneysavingmom-com-077b1b:17c6f5f113bb75368600f0bb",
+    "about_probability": 0.7216295158502287,
+    "kind": "promotion",
+    "tone": 1.9593065397625489,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7216295158502287,
+      "winner": "business",
+      "margin": 0.44325903170045744,
+      "expectation": 0.2783704841497713,
+      "entropy": 0.5914077088304823,
+      "concentration": 0.44325903170045744,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7216295158502287
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.9949822203816651,
+      "winner": "promotion",
+      "margin": 0.9941459237786092,
+      "expectation": 2.005854076221391,
+      "entropy": 0.040563801299399425,
+      "concentration": 0.9941459237786091,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9949822203816651
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.5784031104523211,
+      "winner": "opportunity",
+      "margin": 0.38526616989663465,
+      "expectation": 1.8263323798339304,
+      "entropy": 1.1247765330867923,
+      "concentration": 0.43787081393642807,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5784031104523211
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.9718743471475287,
+      "winner": "2",
+      "margin": 0.9563165016800373,
+      "expectation": 1.9593065397625489,
+      "entropy": 0.14750111156614176,
+      "concentration": 0.9578115207212929,
+      "ordinal_concentration": 0.9389598096438232,
+      "provider_confidence": 0.9718743471475287
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-appleinsider-com-c6ac69:df1e26a7b7cdf19c67d6c882",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-appleinsider-com-c6ac69:df1e26a7b7cdf19c67d6c882",
+      "description": "Evercore raises AAPL price target to $380 on new iPhone demand",
+      "owner_ref": "ItemArchive:feed-appleinsider-com-c6ac69:df1e26a7b7cdf19c67d6c882"
+     }
+    ]
+   },
+   "case_digest": "22e8f53ccb463d18bf1883b74856092ed22dbaa1f98238b2aee5ab8bf96e815b",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "f463ef192594cd87fd6d3c9263aeb07e46c8451483980271bf23d7842a656a6a",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "bba7f87f88d55d4014bbbae0002e558f53c69cdd876a9f38f2891ee245fb3aa4",
+   "latency_ms": 6272,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.6704307613030638,
+     "probabilities": {
+      "business": 0.32956923869693616,
+      "namesake": 0.6704307613030638
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.6010118970889501,
+     "probabilities": {
+      "awareness": 0.12125415309741665,
+      "opportunity": 0.6010118970889501,
+      "respond": 0.18307943662658085,
+      "risk": 0.09465451318705245
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.4447694070513422,
+     "probabilities": {
+      "competitor": 0.09253843215810964,
+      "event": 0.09253843215810964,
+      "news": 0.09253843215810964,
+      "other": 0.4447694070513422,
+      "promotion": 0.09253843215810964,
+      "regulatory": 0.09253843215810964,
+      "review": 0.09253843215810964
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.9481319727251462,
+     "confidence": 0.6008766186332143,
+     "probabilities": {
+      "0": 0.2254957043208196,
+      "1": 0.6008766186332143,
+      "2": 0.17362767704596593
+     }
+    }
+   },
+   "answers_digest": "b4c48b4b55cb16aeb31271422c44af69025121a4af608fa7e1962b7ba8e0b921",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6272.138791999998,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-appleinsider-com-c6ac69:df1e26a7b7cdf19c67d6c882",
+    "candidate_id": "feed-appleinsider-com-c6ac69:df1e26a7b7cdf19c67d6c882",
+    "about_probability": 0.32956923869693616,
+    "kind": "other",
+    "tone": 0.9481319727251462,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.6704307613030638,
+      "winner": "namesake",
+      "margin": 0.3408615226061276,
+      "expectation": 0.6704307613030638,
+      "entropy": 0.6338731572826022,
+      "concentration": 0.34086152260612756,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6704307613030638
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.4447694070513422,
+      "winner": "other",
+      "margin": 0.3522309748932326,
+      "expectation": 4.056692924679698,
+      "entropy": 1.6818735485973346,
+      "concentration": 0.3522309748932326,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.4447694070513422
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.6010118970889501,
+      "winner": "opportunity",
+      "margin": 0.4179324604623692,
+      "expectation": 1.6604407666572025,
+      "entropy": 1.0958183743045944,
+      "concentration": 0.4680158627852668,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6010118970889501
+     },
+     "tone": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.6008766186332143,
+      "winner": "1",
+      "margin": 0.3753809143123947,
+      "expectation": 0.9481319727251462,
+      "entropy": 0.94592607154739,
+      "concentration": 0.40131492794982143,
+      "ordinal_concentration": 0.4013149279498216,
+      "provider_confidence": 0.6008766186332143
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-appleinsider-com-c6ac69:cd7153ace136636cce15af3c",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-appleinsider-com-c6ac69:cd7153ace136636cce15af3c",
+      "description": "Child safety protesters target Apple Fifth Avenue at iPhone 18 Pro release",
+      "owner_ref": "ItemArchive:feed-appleinsider-com-c6ac69:cd7153ace136636cce15af3c"
+     }
+    ]
+   },
+   "case_digest": "fff4406e06556f1f83b5881fa5b0c24906ddc470eff9f92c4b989e51584edeca",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "9024debac8b59ba7d07ed5f0bff63f7525973584658a63fe30b93287c7a0fdb6",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "3bb3e67f39d0be8d15c53a0922a504651bd923b4634969475cc177f5f8e60b79",
+   "latency_ms": 6240,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.7209338266720993,
+     "probabilities": {
+      "business": 0.27906617332790085,
+      "namesake": 0.7209338266720993
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.49224102377722445,
+     "probabilities": {
+      "awareness": 0.031153045054163633,
+      "opportunity": 0.0879225164129754,
+      "respond": 0.49224102377722445,
+      "risk": 0.3886834147556365
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.3063615313523245,
+     "probabilities": {
+      "competitor": 0.11560641144127926,
+      "event": 0.11560641144127926,
+      "news": 0.3063615313523245,
+      "other": 0.11560641144127926,
+      "promotion": 0.11560641144127926,
+      "regulatory": 0.11560641144127926,
+      "review": 0.11560641144127926
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.21037538039828663,
+     "confidence": 0.8014017729719201,
+     "probabilities": {
+      "0": 0.8014017729719201,
+      "1": 0.18682107365787318,
+      "2": 0.011777153370206728
+     }
+    }
+   },
+   "answers_digest": "4dfefe5a60a4c59dec5d025794db06fca8f3875a76485568cec3fac74d5d7883",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6239.366416000004,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-appleinsider-com-c6ac69:cd7153ace136636cce15af3c",
+    "candidate_id": "feed-appleinsider-com-c6ac69:cd7153ace136636cce15af3c",
+    "about_probability": 0.27906617332790085,
+    "kind": "news",
+    "tone": 0.21037538039828663,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7209338266720993,
+      "winner": "namesake",
+      "margin": 0.4418676533441984,
+      "expectation": 0.7209338266720993,
+      "entropy": 0.5920691897555669,
+      "concentration": 0.44186765334419853,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7209338266720993
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.3063615313523245,
+      "winner": "news",
+      "margin": 0.19075511991104527,
+      "expectation": 2.4277346402668645,
+      "entropy": 1.8589917372164462,
+      "concentration": 0.19075511991104527,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3063615313523245
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.49224102377722445,
+      "winner": "respond",
+      "margin": 0.10355760902158795,
+      "expectation": 0.6579875827440782,
+      "entropy": 1.0380269094401327,
+      "concentration": 0.3229880317029659,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.49224102377722445
+     },
+     "tone": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.8014017729719201,
+      "winner": "0",
+      "margin": 0.6145806993140469,
+      "expectation": 0.21037538039828663,
+      "entropy": 0.5431457387158337,
+      "concentration": 0.7021026594578801,
+      "ordinal_concentration": 0.6844369294025701,
+      "provider_confidence": 0.8014017729719201
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-feeds-mashable-com-644d6c:340397051ce82ec1f1aeca5c",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-feeds-mashable-com-644d6c:340397051ce82ec1f1aeca5c",
+      "description": "Owala’s exclusive Pokémon just dropped at Target: Shop Pikachu, Eevee, Charizard, and Gengar designs",
+      "owner_ref": "ItemArchive:feed-feeds-mashable-com-644d6c:340397051ce82ec1f1aeca5c"
+     }
+    ]
+   },
+   "case_digest": "e7bde7db45e0fc89fab6662e0feb37d80dbea6b3bacd1f0a83c6563a2132f222",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "a91a3476e72ecdae3d791bda15578a9328a7d340df3b620bde5178fd9e63d1ae",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "9e28223cac9804088152378a3b909856351b50881b9b30f8818b9dc298735629",
+   "latency_ms": 6468,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "business",
+     "confidence": 0.6672209885777166,
+     "probabilities": {
+      "business": 0.6672209885777166,
+      "namesake": 0.33277901142228344
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.9338552667178479,
+     "probabilities": {
+      "awareness": 0.009035103900117991,
+      "opportunity": 0.9338552667178479,
+      "respond": 0.030767040690996155,
+      "risk": 0.02634258869103781
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "promotion",
+     "confidence": 0.9823131749150065,
+     "probabilities": {
+      "competitor": 0.002947804180832255,
+      "event": 0.002947804180832255,
+      "news": 0.002947804180832255,
+      "other": 0.002947804180832255,
+      "promotion": 0.9823131749150065,
+      "regulatory": 0.002947804180832255,
+      "review": 0.002947804180832255
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 1.9901067533699697,
+     "confidence": 0.9926566447923603,
+     "probabilities": {
+      "0": 0.0025498914223905673,
+      "1": 0.004793463785249204,
+      "2": 0.9926566447923603
+     }
+    }
+   },
+   "answers_digest": "b91b3630efe5ef68a99fb4c48844998994263dd2f70721ffbaac9d90168eb0f5",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6468.1600409999955,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-feeds-mashable-com-644d6c:340397051ce82ec1f1aeca5c",
+    "candidate_id": "feed-feeds-mashable-com-644d6c:340397051ce82ec1f1aeca5c",
+    "about_probability": 0.6672209885777166,
+    "kind": "promotion",
+    "tone": 1.9901067533699697,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.6672209885777166,
+      "winner": "business",
+      "margin": 0.33444197715543317,
+      "expectation": 0.33277901142228344,
+      "entropy": 0.6361292500694302,
+      "concentration": 0.3344419771554332,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6672209885777166
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.9823131749150065,
+      "winner": "promotion",
+      "margin": 0.9793653707341742,
+      "expectation": 2.0206346292658255,
+      "entropy": 0.12058521334417184,
+      "concentration": 0.9793653707341742,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9823131749150065
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.9338552667178479,
+      "winner": "opportunity",
+      "margin": 0.9030882260268518,
+      "expectation": 1.9211584338270875,
+      "entropy": 0.3093385078124199,
+      "concentration": 0.9118070222904638,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9338552667178479
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.9926566447923603,
+      "winner": "2",
+      "margin": 0.987863181007111,
+      "expectation": 1.9901067533699697,
+      "entropy": 0.04814302754938128,
+      "concentration": 0.9889849671885402,
+      "ordinal_concentration": 0.9851601300549545,
+      "provider_confidence": 0.9926566447923603
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-scmp-com-ee5be5:aaba705618b874addb28153f",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-scmp-com-ee5be5:aaba705618b874addb28153f",
+      "description": "John Lee keeps Hong Kong talent target unchanged despite 300,000 arrivals",
+      "owner_ref": "ItemArchive:feed-scmp-com-ee5be5:aaba705618b874addb28153f"
+     }
+    ]
+   },
+   "case_digest": "aba9ba1302c847d006975c67989d60c636bb828c42ec2a8bfad59f50b6746b44",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "ebd97316b5b15f5e8a4d9a7783d2959fe7875b344902505b0246ac1e873f72db",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "1df7b8d83ec0dfd6b87f606321d4ce4eb92c1f87ee5730d6998b6f7c09f5c9e1",
+   "latency_ms": 6201,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.7502500022333656,
+     "probabilities": {
+      "business": 0.24974999776663434,
+      "namesake": 0.7502500022333656
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.3994699502212737,
+     "probabilities": {
+      "awareness": 0.3394071160229515,
+      "opportunity": 0.19919452428813603,
+      "respond": 0.3994699502212737,
+      "risk": 0.06192840946763862
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.5606490013714818,
+     "probabilities": {
+      "competitor": 0.07322516643808637,
+      "event": 0.07322516643808637,
+      "news": 0.07322516643808637,
+      "other": 0.5606490013714818,
+      "promotion": 0.07322516643808637,
+      "regulatory": 0.07322516643808637,
+      "review": 0.07322516643808637
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.8943924838761105,
+     "confidence": 0.8842291017483661,
+     "probabilities": {
+      "0": 0.11068920718776173,
+      "1": 0.8842291017483661,
+      "2": 0.005081691063872204
+     }
+    }
+   },
+   "answers_digest": "67134a1a4d092e5833b545fdae2943917dd8be9ccdf940f38f478c9a94231775",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6200.560666000005,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-scmp-com-ee5be5:aaba705618b874addb28153f",
+    "candidate_id": "feed-scmp-com-ee5be5:aaba705618b874addb28153f",
+    "about_probability": 0.24974999776663434,
+    "kind": "other",
+    "tone": 0.8943924838761105,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.7502500022333656,
+      "winner": "namesake",
+      "margin": 0.5005000044667313,
+      "expectation": 0.7502500022333656,
+      "entropy": 0.5620603223863343,
+      "concentration": 0.5005000044667312,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7502500022333656
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.5606490013714818,
+      "winner": "other",
+      "margin": 0.4874238349333954,
+      "expectation": 4.462271504800186,
+      "entropy": 1.472983743050457,
+      "concentration": 0.48742383493339536,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5606490013714818
+     },
+     "action": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.3994699502212737,
+      "winner": "respond",
+      "margin": 0.0600628341983222,
+      "expectation": 1.4785388061127651,
+      "entropy": 1.2269744035032188,
+      "concentration": 0.19929326696169825,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3994699502212737
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.8842291017483661,
+      "winner": "1",
+      "margin": 0.7735398945606043,
+      "expectation": 0.8943924838761105,
+      "entropy": 0.3792669452386172,
+      "concentration": 0.8263436526225492,
+      "ordinal_concentration": 0.826343652622549,
+      "provider_confidence": 0.8842291017483661
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-feeds-bbci-co-uk-bcdff1:eecb029528536da3a7458c81",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-feeds-bbci-co-uk-bcdff1:eecb029528536da3a7458c81",
+      "description": "New-look Wales target statement South Africa win",
+      "owner_ref": "ItemArchive:feed-feeds-bbci-co-uk-bcdff1:eecb029528536da3a7458c81"
+     }
+    ]
+   },
+   "case_digest": "0589387c84eeea84a1dcec4976df402ae89d309f1f69744710dce13996560294",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "2a232d0c739bc0d184e0802b0c3d7c8004af7e225bd4bd711e70bb8b72c6d0a7",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "591532a594fc066b786e7fe3f8636790e6f65724e00bdb1f8f2eed5461816e2b",
+   "latency_ms": 6288,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8153703531228824,
+     "probabilities": {
+      "business": 0.18462964687711753,
+      "namesake": 0.8153703531228824
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "awareness",
+     "confidence": 0.37800726649363003,
+     "probabilities": {
+      "awareness": 0.37800726649363003,
+      "opportunity": 0.3073528543055007,
+      "respond": 0.24432780969428272,
+      "risk": 0.07031206950658649
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.8289539860750419,
+     "probabilities": {
+      "competitor": 0.028507668987493018,
+      "event": 0.028507668987493018,
+      "news": 0.028507668987493018,
+      "other": 0.8289539860750419,
+      "promotion": 0.028507668987493018,
+      "regulatory": 0.028507668987493018,
+      "review": 0.028507668987493018
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.8417724108822949,
+     "confidence": 0.7996202544725622,
+     "probabilities": {
+      "0": 0.1793036673225715,
+      "1": 0.7996202544725622,
+      "2": 0.021076078204866358
+     }
+    }
+   },
+   "answers_digest": "0ed7ffba35c3da070a9a98429aaf0a1987cf528c71f70488674c79ba9ba6b989",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6287.993000000002,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-feeds-bbci-co-uk-bcdff1:eecb029528536da3a7458c81",
+    "candidate_id": "feed-feeds-bbci-co-uk-bcdff1:eecb029528536da3a7458c81",
+    "about_probability": 0.18462964687711753,
+    "kind": "other",
+    "tone": 0.8417724108822949,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.8153703531228824,
+      "winner": "namesake",
+      "margin": 0.6307407062457648,
+      "expectation": 0.8153703531228824,
+      "entropy": 0.47834151239313094,
+      "concentration": 0.6307407062457648,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8153703531228824
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.8289539860750419,
+      "winner": "other",
+      "margin": 0.8004463170875489,
+      "expectation": 5.401338951262646,
+      "entropy": 0.7640142454542932,
+      "concentration": 0.8004463170875489,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8289539860750419
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.37800726649363003,
+      "winner": "awareness",
+      "margin": 0.07065441218812935,
+      "expectation": 1.819039577598478,
+      "entropy": 1.2613264635404646,
+      "concentration": 0.17067635532484005,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.37800726649363003
+     },
+     "tone": {
+      "mass": 1.0000000000000002,
+      "maximum": 0.7996202544725622,
+      "winner": "1",
+      "margin": 0.6203165871499907,
+      "expectation": 0.8417724108822949,
+      "entropy": 0.5683199712364763,
+      "concentration": 0.6994303817088433,
+      "ordinal_concentration": 0.6994303817088432,
+      "provider_confidence": 0.7996202544725622
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:dbb5af61294e355f23f2e4c9",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-finance-yahoo-com-adf0f5:dbb5af61294e355f23f2e4c9",
+      "description": "Teledyne Technologies (TDY) Price Target Hiked to $760 as Needham Bets on Defense and Short-Cycle Recovery",
+      "owner_ref": "ItemArchive:feed-finance-yahoo-com-adf0f5:dbb5af61294e355f23f2e4c9"
+     }
+    ]
+   },
+   "case_digest": "71777fbbcb79436ea3cf0cda4b13b129a0a2480a50c71e3b3d453ed61821c5b4",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "f15c9c96c9044de8a98382dc77371f7bf5596f207ab8dbd1ddf69ba36e16428c",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "da99a5d0a8c09dd1f2269c066bf6347b71c67559fb9a94c99621049117e59821",
+   "latency_ms": 6720,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.643201149619236,
+     "probabilities": {
+      "business": 0.3567988503807639,
+      "namesake": 0.643201149619236
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.415159246942897,
+     "probabilities": {
+      "awareness": 0.193220624710858,
+      "opportunity": 0.415159246942897,
+      "respond": 0.18254739012946022,
+      "risk": 0.20907273821678468
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.590203037621441,
+     "probabilities": {
+      "competitor": 0.06829949372975984,
+      "event": 0.06829949372975984,
+      "news": 0.06829949372975984,
+      "other": 0.590203037621441,
+      "promotion": 0.06829949372975984,
+      "regulatory": 0.06829949372975984,
+      "review": 0.06829949372975984
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.733355163464553,
+     "confidence": 0.627538956571275,
+     "probabilities": {
+      "0": 0.319552939982086,
+      "1": 0.627538956571275,
+      "2": 0.05290810344663898
+     }
+    }
+   },
+   "answers_digest": "6f93be3f35198945cf93aacd442d9d2907246e952cfefd69dd9c398cc7fb080f",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6719.421624999988,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:dbb5af61294e355f23f2e4c9",
+    "candidate_id": "feed-finance-yahoo-com-adf0f5:dbb5af61294e355f23f2e4c9",
+    "about_probability": 0.3567988503807639,
+    "kind": "other",
+    "tone": 0.733355163464553,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.643201149619236,
+      "winner": "namesake",
+      "margin": 0.2864022992384721,
+      "expectation": 0.643201149619236,
+      "entropy": 0.6515541008288094,
+      "concentration": 0.28640229923847205,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.643201149619236
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.590203037621441,
+      "winner": "other",
+      "margin": 0.5219035438916811,
+      "expectation": 4.565710631675044,
+      "entropy": 1.4110421506595254,
+      "concentration": 0.5219035438916811,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.590203037621441
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.415159246942897,
+      "winner": "opportunity",
+      "margin": 0.20608650872611234,
+      "expectation": 1.6190531062351528,
+      "entropy": 1.3202841411202473,
+      "concentration": 0.22021232925719603,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.415159246942897
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.627538956571275,
+      "winner": "1",
+      "margin": 0.307986016589189,
+      "expectation": 0.733355163464553,
+      "entropy": 0.8124652355817513,
+      "concentration": 0.4413084348569125,
+      "ordinal_concentration": 0.4413084348569125,
+      "provider_confidence": 0.627538956571275
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:1f5fa5c726f8ea1843695e22",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-finance-yahoo-com-adf0f5:1f5fa5c726f8ea1843695e22",
+      "description": "The Fed’s Inflation Target Keeps Slipping Farther Into The Future",
+      "owner_ref": "ItemArchive:feed-finance-yahoo-com-adf0f5:1f5fa5c726f8ea1843695e22"
+     }
+    ]
+   },
+   "case_digest": "7abe3ae1ca07c3f6e118af864a705ea1daccc75d49aac916b219d1484d532aaa",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "321e013d7814c1cb1ce63664d8164e7f4937fdeae1d0430edb480cf90d1f4775",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "35fd12912e4aec2b0de7e77c625fdd6a8bfbc55a342e458f40e18f3cf8401056",
+   "latency_ms": 6302,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.6815055118277,
+     "probabilities": {
+      "business": 0.3184944881723,
+      "namesake": 0.6815055118277
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "awareness",
+     "confidence": 0.47995768683534323,
+     "probabilities": {
+      "awareness": 0.47995768683534323,
+      "opportunity": 0.07317606255471862,
+      "respond": 0.38537824384742264,
+      "risk": 0.061488006762515444
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.5085116822635158,
+     "probabilities": {
+      "competitor": 0.08191471962274736,
+      "event": 0.08191471962274736,
+      "news": 0.5085116822635158,
+      "other": 0.08191471962274736,
+      "promotion": 0.08191471962274736,
+      "regulatory": 0.08191471962274736,
+      "review": 0.08191471962274736
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.6206578553299306,
+     "confidence": 0.6090362670339892,
+     "probabilities": {
+      "0": 0.3851529388180402,
+      "1": 0.6090362670339892,
+      "2": 0.005810794147970722
+     }
+    }
+   },
+   "answers_digest": "40f6f26051599f9e0241a9ce4fb609db9dc793c01a4ef41761e17a7bd138babd",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6302.028374999994,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:1f5fa5c726f8ea1843695e22",
+    "candidate_id": "feed-finance-yahoo-com-adf0f5:1f5fa5c726f8ea1843695e22",
+    "about_probability": 0.3184944881723,
+    "kind": "news",
+    "tone": 0.6206578553299306,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.6815055118277,
+      "winner": "namesake",
+      "margin": 0.3630110236554,
+      "expectation": 0.6815055118277,
+      "entropy": 0.6257294327683893,
+      "concentration": 0.36301102365540006,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6815055118277
+     },
+     "kind": {
+      "mass": 0.9999999999999998,
+      "maximum": 0.5085116822635158,
+      "winner": "news",
+      "margin": 0.42659696264076846,
+      "expectation": 1.7202091120776948,
+      "entropy": 1.5736311234101104,
+      "concentration": 0.42659696264076846,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5085116822635158
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.47995768683534323,
+      "winner": "awareness",
+      "margin": 0.09457944298792059,
+      "expectation": 1.6477131923779824,
+      "entropy": 1.082618005137495,
+      "concentration": 0.306610249113791,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.47995768683534323
+     },
+     "tone": {
+      "mass": 1.0000000000000002,
+      "maximum": 0.6090362670339892,
+      "winner": "1",
+      "margin": 0.22388332821594897,
+      "expectation": 0.6206578553299306,
+      "entropy": 0.6994016586247538,
+      "concentration": 0.41355440055098375,
+      "ordinal_concentration": 0.4135544005509836,
+      "provider_confidence": 0.6090362670339892
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:f9a8354709d9d02361b8185e",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-finance-yahoo-com-adf0f5:f9a8354709d9d02361b8185e",
+      "description": "Academy Sports and Outdoors (ASO): Target Hikes Follow Q2, but No Upgrades",
+      "owner_ref": "ItemArchive:feed-finance-yahoo-com-adf0f5:f9a8354709d9d02361b8185e"
+     }
+    ]
+   },
+   "case_digest": "8d1ec921513d26c1065a052bcb7ef2fd636ce8c66de72b99c4820942619848ed",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "d9bd964b37aac95ea9ba35261ade1a5b783c476b2359d0b4b03efa1138f32427",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "859a565609a2178c71ccb884e04668e5bfd31e355226cd30202863141281b169",
+   "latency_ms": 6937,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "business",
+     "confidence": 0.5799925550195446,
+     "probabilities": {
+      "business": 0.5799925550195446,
+      "namesake": 0.4200074449804554
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.3696167585770423,
+     "probabilities": {
+      "awareness": 0.29585809903399174,
+      "opportunity": 0.20546029852195097,
+      "respond": 0.3696167585770423,
+      "risk": 0.129064843867015
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.44480727192761477,
+     "probabilities": {
+      "competitor": 0.09253212134539752,
+      "event": 0.09253212134539752,
+      "news": 0.44480727192761477,
+      "other": 0.09253212134539752,
+      "promotion": 0.09253212134539752,
+      "regulatory": 0.09253212134539752,
+      "review": 0.09253212134539752
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.3394482714594155,
+     "confidence": 0.7336203546730216,
+     "probabilities": {
+      "0": 0.7336203546730216,
+      "1": 0.19331101919454155,
+      "2": 0.07306862613243696
+     }
+    }
+   },
+   "answers_digest": "918721ca0b20a5a12c2440dcd7abe040b43f949ef4f2c5c5b1e184a2bc98ca3a",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6936.691500000001,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:f9a8354709d9d02361b8185e",
+    "candidate_id": "feed-finance-yahoo-com-adf0f5:f9a8354709d9d02361b8185e",
+    "about_probability": 0.5799925550195446,
+    "kind": "news",
+    "tone": 0.3394482714594155,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.5799925550195446,
+      "winner": "business",
+      "margin": 0.15998511003908922,
+      "expectation": 0.4200074449804554,
+      "entropy": 0.6802944031199827,
+      "concentration": 0.15998511003908922,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5799925550195446
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.44480727192761477,
+      "winner": "news",
+      "margin": 0.35227515058221726,
+      "expectation": 1.943174548253348,
+      "entropy": 1.6818141004165093,
+      "concentration": 0.3522751505822172,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.44480727192761477
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.3696167585770423,
+      "winner": "respond",
+      "margin": 0.07375865954305055,
+      "expectation": 1.4275597380128922,
+      "entropy": 1.3175876214434488,
+      "concentration": 0.1594890114360564,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3696167585770423
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.7336203546730216,
+      "winner": "0",
+      "margin": 0.54030933547848,
+      "expectation": 0.3394482714594155,
+      "entropy": 0.7361203832183018,
+      "concentration": 0.6004305320095323,
+      "ordinal_concentration": 0.49082759281087673,
+      "provider_confidence": 0.7336203546730216
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-news-yahoo-com-713673:74c045fa23edafe3ab9e28e6",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-news-yahoo-com-713673:74c045fa23edafe3ab9e28e6",
+      "description": "Killing endangered wildlife is legal if they aren't the target, new Trump rule says",
+      "owner_ref": "ItemArchive:feed-news-yahoo-com-713673:74c045fa23edafe3ab9e28e6"
+     }
+    ]
+   },
+   "case_digest": "b0c916c88f4aed355a784b128147955029e3f63f11d95fbff4256e940473373c",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "b57ba407d606e52f54f49c88f3c5250939b95950710976fb78fb18318a24e860",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "540245c34f333f166a5d86e5e4c46dd79f5f4f95ff4721a35496e63f57229ace",
+   "latency_ms": 6483,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.7259041894838697,
+     "probabilities": {
+      "business": 0.27409581051613024,
+      "namesake": 0.7259041894838697
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.4143360954905265,
+     "probabilities": {
+      "awareness": 0.2999889852236778,
+      "opportunity": 0.12062572202799082,
+      "respond": 0.4143360954905265,
+      "risk": 0.16504919725780487
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "regulatory",
+     "confidence": 0.36083187633060404,
+     "probabilities": {
+      "competitor": 0.10652802061156601,
+      "event": 0.10652802061156601,
+      "news": 0.10652802061156601,
+      "other": 0.10652802061156601,
+      "promotion": 0.10652802061156601,
+      "regulatory": 0.36083187633060404,
+      "review": 0.10652802061156601
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.3635568262855023,
+     "confidence": 0.6418104793705781,
+     "probabilities": {
+      "0": 0.6418104793705781,
+      "1": 0.3528222149733416,
+      "2": 0.005367305656080355
+     }
+    }
+   },
+   "answers_digest": "cd7258b9092c97ede5c5ce93bc4ee13a5e0b31f348e341dd2153a3839c57637f",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6482.712458000009,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-news-yahoo-com-713673:74c045fa23edafe3ab9e28e6",
+    "candidate_id": "feed-news-yahoo-com-713673:74c045fa23edafe3ab9e28e6",
+    "about_probability": 0.27409581051613024,
+    "kind": "regulatory",
+    "tone": 0.3635568262855023,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7259041894838697,
+      "winner": "namesake",
+      "margin": 0.45180837896773945,
+      "expectation": 0.7259041894838697,
+      "entropy": 0.587290203863382,
+      "concentration": 0.4518083789677394,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7259041894838697
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.36083187633060404,
+      "winner": "regulatory",
+      "margin": 0.254303855719038,
+      "expectation": 3.508607711438076,
+      "entropy": 1.7991308633500949,
+      "concentration": 0.254303855719038,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.36083187633060404
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.4143360954905265,
+      "winner": "respond",
+      "margin": 0.11434711026684874,
+      "expectation": 1.3062675969848199,
+      "entropy": 1.2787209605807481,
+      "concentration": 0.2191147939873687,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.4143360954905265
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.6418104793705781,
+      "winner": "0",
+      "margin": 0.2889882643972365,
+      "expectation": 0.3635568262855023,
+      "entropy": 0.6802429163698482,
+      "concentration": 0.46271571905586717,
+      "ordinal_concentration": 0.45466476057174654,
+      "provider_confidence": 0.6418104793705781
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:90c50c69be0380768043fcdb",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-moneysavingmom-com-077b1b:90c50c69be0380768043fcdb",
+      "description": "Optimum Nutrition Gold Standard 100% Whey Protein Powder, 1.55lbs only $16.99 at Target (Reg. $34)!",
+      "owner_ref": "ItemArchive:feed-moneysavingmom-com-077b1b:90c50c69be0380768043fcdb"
+     }
+    ]
+   },
+   "case_digest": "74d1012915688de9d460c93486dee6fe4616c3f2e5223fc13796e0dc664f44a7",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "fa35d2ea5cf61938b0f73383ee077135f23994bbe5a36fcb66a2337568613485",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "a40047ef6fbf7ce44246c1b29a9f3ded7af3908c3f87042371b10288bf12dfa7",
+   "latency_ms": 8964,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "business",
+     "confidence": 0.7263247320153156,
+     "probabilities": {
+      "business": 0.7263247320153156,
+      "namesake": 0.27367526798468444
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.44605245235376606,
+     "probabilities": {
+      "awareness": 0.24066164621799863,
+      "opportunity": 0.44605245235376606,
+      "respond": 0.15258296279991818,
+      "risk": 0.16070293862831703
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "promotion",
+     "confidence": 0.9941037066258581,
+     "probabilities": {
+      "competitor": 0.00098271556235698,
+      "event": 0.00098271556235698,
+      "news": 0.00098271556235698,
+      "other": 0.00098271556235698,
+      "promotion": 0.9941037066258581,
+      "regulatory": 0.00098271556235698,
+      "review": 0.00098271556235698
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 1.9558206579722275,
+     "confidence": 0.9748753141429399,
+     "probabilities": {
+      "0": 0.019054656170712555,
+      "1": 0.006070029686347532,
+      "2": 0.9748753141429399
+     }
+    }
+   },
+   "answers_digest": "c90b70c3ed4667969ddf47cc618e58fa48dd547858946db4a0e7834da4543684",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 8963.885166000007,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:90c50c69be0380768043fcdb",
+    "candidate_id": "feed-moneysavingmom-com-077b1b:90c50c69be0380768043fcdb",
+    "about_probability": 0.7263247320153156,
+    "kind": "promotion",
+    "tone": 1.9558206579722275,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.7263247320153156,
+      "winner": "business",
+      "margin": 0.4526494640306311,
+      "expectation": 0.27367526798468444,
+      "entropy": 0.5868801759604804,
+      "concentration": 0.4526494640306311,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7263247320153156
+     },
+     "kind": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.9941037066258581,
+      "winner": "promotion",
+      "margin": 0.9931209910635012,
+      "expectation": 2.0068790089364987,
+      "entropy": 0.046711832813231706,
+      "concentration": 0.993120991063501,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9941037066258581
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.44605245235376606,
+      "winner": "opportunity",
+      "margin": 0.20539080613576743,
+      "expectation": 1.774792781989845,
+      "entropy": 1.2835559712504685,
+      "concentration": 0.26140326980502143,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.44605245235376606
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.9748753141429399,
+      "winner": "2",
+      "margin": 0.9558206579722274,
+      "expectation": 1.9558206579722275,
+      "entropy": 0.13125508823158033,
+      "concentration": 0.9623129712144097,
+      "ordinal_concentration": 0.933730986958341,
+      "provider_confidence": 0.9748753141429399
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:398511ed13b0db4ea6438998",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-finance-yahoo-com-adf0f5:398511ed13b0db4ea6438998",
+      "description": "“Delayed Isn’t as Good”: Why Boeing’s $10 Billion Cash Flow Target Just Got More Expensive",
+      "owner_ref": "ItemArchive:feed-finance-yahoo-com-adf0f5:398511ed13b0db4ea6438998"
+     }
+    ]
+   },
+   "case_digest": "758950760e5bf81e84d7c861ef48052b96bbe0d33c22770a7fe4aff055700a46",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "d5294173fff764202d1d10155ebc28eb4ffb5ceb64b2b21ec9bedc240ba614d6",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "741d854a3c38f7b5998b9dd393b3e2525c4561e0dd91a3fd991a84fc8ed6fc0c",
+   "latency_ms": 6702,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.634886869202114,
+     "probabilities": {
+      "business": 0.36511313079788604,
+      "namesake": 0.634886869202114
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.37171144007041035,
+     "probabilities": {
+      "awareness": 0.34266444076301744,
+      "opportunity": 0.10971659805620941,
+      "respond": 0.37171144007041035,
+      "risk": 0.17590752111036284
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "news",
+     "confidence": 0.6438149413842091,
+     "probabilities": {
+      "competitor": 0.059364176435965144,
+      "event": 0.059364176435965144,
+      "news": 0.6438149413842091,
+      "other": 0.059364176435965144,
+      "promotion": 0.059364176435965144,
+      "regulatory": 0.059364176435965144,
+      "review": 0.059364176435965144
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.2595399041217215,
+     "confidence": 0.7537930344888991,
+     "probabilities": {
+      "0": 0.7537930344888991,
+      "1": 0.23287402690048,
+      "2": 0.013332938610620746
+     }
+    }
+   },
+   "answers_digest": "2bb6b02528299d3285948a8b4f9d96c7147c8d6c346787d2a73728d968efb30d",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6701.763999999996,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-finance-yahoo-com-adf0f5:398511ed13b0db4ea6438998",
+    "candidate_id": "feed-finance-yahoo-com-adf0f5:398511ed13b0db4ea6438998",
+    "about_probability": 0.36511313079788604,
+    "kind": "news",
+    "tone": 0.2595399041217215,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.634886869202114,
+      "winner": "namesake",
+      "margin": 0.26977373840422797,
+      "expectation": 0.634886869202114,
+      "entropy": 0.6563034866692886,
+      "concentration": 0.269773738404228,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.634886869202114
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.6438149413842091,
+      "winner": "news",
+      "margin": 0.584450764948244,
+      "expectation": 1.246647705155268,
+      "entropy": 1.2893895329021436,
+      "concentration": 0.584450764948244,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6438149413842091
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.37171144007041035,
+      "winner": "respond",
+      "margin": 0.029046999307392907,
+      "expectation": 1.423334039511834,
+      "entropy": 1.2830036784797023,
+      "concentration": 0.16228192009388046,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.37171144007041035
+     },
+     "tone": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.7537930344888991,
+      "winner": "0",
+      "margin": 0.5209190075884191,
+      "expectation": 0.2595399041217215,
+      "entropy": 0.6099727835082601,
+      "concentration": 0.6306895517333486,
+      "ordinal_concentration": 0.6106901438174177,
+      "provider_confidence": 0.7537930344888991
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:4ec15ef349c8e7619c7622f7",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-moneysavingmom-com-077b1b:4ec15ef349c8e7619c7622f7",
+      "description": "*HOT* FREE eos Shea Better Body Lotion at Target after Cash Back!",
+      "owner_ref": "ItemArchive:feed-moneysavingmom-com-077b1b:4ec15ef349c8e7619c7622f7"
+     }
+    ]
+   },
+   "case_digest": "e06f78cdc8c9b251f60c8b26511a85692410ece0171e570c29fba32948067550",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "493459c2ed9b3d9fb659abb5024d06ea33d1c9d0e404a5f8f5006d5cadab9a8e",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "59fa4482548ea1f832d12b3239be14609c8ed8bbd415d284fd554b1ffe7ccea0",
+   "latency_ms": 6697,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "business",
+     "confidence": 0.6820839723105092,
+     "probabilities": {
+      "business": 0.6820839723105092,
+      "namesake": 0.3179160276894908
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.6219757603865345,
+     "probabilities": {
+      "awareness": 0.15490141642628869,
+      "opportunity": 0.6219757603865345,
+      "respond": 0.12416853536141592,
+      "risk": 0.09895428782576103
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "promotion",
+     "confidence": 0.9942263687762617,
+     "probabilities": {
+      "competitor": 0.0009622718706230512,
+      "event": 0.0009622718706230512,
+      "news": 0.0009622718706230512,
+      "other": 0.0009622718706230512,
+      "promotion": 0.9942263687762617,
+      "regulatory": 0.0009622718706230512,
+      "review": 0.0009622718706230512
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 1.9519265004636719,
+     "confidence": 0.9668082248825385,
+     "probabilities": {
+      "0": 0.014881724418866671,
+      "1": 0.018310050698594826,
+      "2": 0.9668082248825385
+     }
+    }
+   },
+   "answers_digest": "a16fdbf8504bd57fc9703201fb2e61d0baf05de40a668861f2d3a819ac7c35ae",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6696.740250000003,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-moneysavingmom-com-077b1b:4ec15ef349c8e7619c7622f7",
+    "candidate_id": "feed-moneysavingmom-com-077b1b:4ec15ef349c8e7619c7622f7",
+    "about_probability": 0.6820839723105092,
+    "kind": "promotion",
+    "tone": 1.9519265004636719,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.6820839723105092,
+      "winner": "business",
+      "margin": 0.3641679446210184,
+      "expectation": 0.3179160276894908,
+      "entropy": 0.6252886273027731,
+      "concentration": 0.3641679446210184,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6820839723105092
+     },
+     "kind": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.9942263687762617,
+      "winner": "promotion",
+      "margin": 0.9932640969056387,
+      "expectation": 2.006735903094361,
+      "entropy": 0.0458618070113635,
+      "concentration": 0.9932640969056385,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.9942263687762617
+     },
+     "action": {
+      "mass": 1.0000000000000002,
+      "maximum": 0.6219757603865345,
+      "winner": "opportunity",
+      "margin": 0.4670743439602458,
+      "expectation": 1.807610057877696,
+      "entropy": 1.0721545078881165,
+      "concentration": 0.49596768051537926,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6219757603865345
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.9668082248825385,
+      "winner": "2",
+      "margin": 0.9484981741839437,
+      "expectation": 1.9519265004636719,
+      "entropy": 0.16849718220446858,
+      "concentration": 0.9502123373238077,
+      "ordinal_concentration": 0.9278897506955077,
+      "provider_confidence": 0.9668082248825385
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-deccanchronicle-com-49d029:4cb7a7e7e98a76da48551cb0",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-deccanchronicle-com-49d029:4cb7a7e7e98a76da48551cb0",
+      "description": "Govt To Target 200 Chip Design Startups, Companies Under Semicon 2.0: Vaishnaw",
+      "owner_ref": "ItemArchive:feed-deccanchronicle-com-49d029:4cb7a7e7e98a76da48551cb0"
+     }
+    ]
+   },
+   "case_digest": "6d1f6f78699cb267aec5649f3279ff5e310cf054e0905637f9b2be25d46e7943",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "ef18ee80e6745d268d54e5d2fd671d6b7b9130060899421c94f5c89bbf803f70",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "5a573faa62a6076e8f84ae15c33828f4ec89bdd1e31ec328e47c25b99baaf348",
+   "latency_ms": 6409,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.79000056369189,
+     "probabilities": {
+      "business": 0.2099994363081099,
+      "namesake": 0.79000056369189
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.6458274197658315,
+     "probabilities": {
+      "awareness": 0.18391308210547294,
+      "opportunity": 0.6458274197658315,
+      "respond": 0.1270997533490291,
+      "risk": 0.04315974477966634
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.7603854489760467,
+     "probabilities": {
+      "competitor": 0.039935758503992225,
+      "event": 0.039935758503992225,
+      "news": 0.039935758503992225,
+      "other": 0.7603854489760467,
+      "promotion": 0.039935758503992225,
+      "regulatory": 0.039935758503992225,
+      "review": 0.039935758503992225
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.8771146023363641,
+     "confidence": 0.8635410433234679,
+     "probabilities": {
+      "0": 0.12967217717008406,
+      "1": 0.8635410433234679,
+      "2": 0.006786779506448055
+     }
+    }
+   },
+   "answers_digest": "80091f300362d8e603f0668ba10b6cab9e4a6d9f866107440a068897f813ca3e",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6408.507667000027,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-deccanchronicle-com-49d029:4cb7a7e7e98a76da48551cb0",
+    "candidate_id": "feed-deccanchronicle-com-49d029:4cb7a7e7e98a76da48551cb0",
+    "about_probability": 0.2099994363081099,
+    "kind": "other",
+    "tone": 0.8771146023363641,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.79000056369189,
+      "winner": "namesake",
+      "margin": 0.5800011273837801,
+      "expectation": 0.79000056369189,
+      "entropy": 0.5139559237665567,
+      "concentration": 0.58000112738378,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.79000056369189
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.7603854489760467,
+      "winner": "other",
+      "margin": 0.7204496904720544,
+      "expectation": 5.161349071416163,
+      "entropy": 0.9799668622960822,
+      "concentration": 0.7204496904720544,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.7603854489760467
+     },
+     "action": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.6458274197658315,
+      "winner": "opportunity",
+      "margin": 0.4619143376603585,
+      "expectation": 1.886553830627748,
+      "entropy": 0.9916128234326551,
+      "concentration": 0.5277698930211087,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6458274197658315
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.8635410433234679,
+      "winner": "1",
+      "margin": 0.7338688661533839,
+      "expectation": 0.8771146023363641,
+      "entropy": 0.4254656064947999,
+      "concentration": 0.7953115649852017,
+      "ordinal_concentration": 0.7953115649852018,
+      "provider_confidence": 0.8635410433234679
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-newsonjapan-com-e129f9:8f1b35522c24b40851055d1f",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-newsonjapan-com-e129f9:8f1b35522c24b40851055d1f",
+      "description": "Copper Thieves Target Remote Nagano Shrine",
+      "owner_ref": "ItemArchive:feed-newsonjapan-com-e129f9:8f1b35522c24b40851055d1f"
+     }
+    ]
+   },
+   "case_digest": "980bbf5c8ffd73977cc8185c59e3b2e75e665165899562b3e18d9903b818584d",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "c01719219228bbdae0fbff40133b9f2341264038c83e97759d63c3134d5b5a38",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "ed8759a31fe7f48229a425e67ce6bd327b61598a4b643f15c7e0b5bc5223b0eb",
+   "latency_ms": 6632,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8075260006610092,
+     "probabilities": {
+      "business": 0.19247399933899087,
+      "namesake": 0.8075260006610092
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "opportunity",
+     "confidence": 0.3087508458951469,
+     "probabilities": {
+      "awareness": 0.2017648858858676,
+      "opportunity": 0.3087508458951469,
+      "respond": 0.28801453342784644,
+      "risk": 0.20146973479113908
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.6512213256268342,
+     "probabilities": {
+      "competitor": 0.0581297790621943,
+      "event": 0.0581297790621943,
+      "news": 0.0581297790621943,
+      "other": 0.6512213256268342,
+      "promotion": 0.0581297790621943,
+      "regulatory": 0.0581297790621943,
+      "review": 0.0581297790621943
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.19918405335600142,
+     "confidence": 0.8065370925084595,
+     "probabilities": {
+      "0": 0.8065370925084595,
+      "1": 0.1877417616270796,
+      "2": 0.005721145864460921
+     }
+    }
+   },
+   "answers_digest": "1ca21bf6d197c270c80d06d79a65912a5e9b1b7609991a11e2325b98c53e95c4",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6631.793708000012,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-newsonjapan-com-e129f9:8f1b35522c24b40851055d1f",
+    "candidate_id": "feed-newsonjapan-com-e129f9:8f1b35522c24b40851055d1f",
+    "about_probability": 0.19247399933899087,
+    "kind": "other",
+    "tone": 0.19918405335600142,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 1,
+      "maximum": 0.8075260006610092,
+      "winner": "namesake",
+      "margin": 0.6150520013220183,
+      "expectation": 0.8075260006610092,
+      "entropy": 0.489790469257026,
+      "concentration": 0.6150520013220184,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8075260006610092
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.6512213256268342,
+      "winner": "other",
+      "margin": 0.5930915465646399,
+      "expectation": 4.77927463969392,
+      "entropy": 1.2716148029718464,
+      "concentration": 0.5930915465646399,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.6512213256268342
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.3087508458951469,
+      "winner": "opportunity",
+      "margin": 0.020736312467300455,
+      "expectation": 1.4242660842390356,
+      "entropy": 1.3670881436866469,
+      "concentration": 0.0783344611935292,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.3087508458951469
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.8065370925084595,
+      "winner": "0",
+      "margin": 0.61879533088138,
+      "expectation": 0.19918405335600142,
+      "entropy": 0.5169848193332531,
+      "concentration": 0.7098056387626892,
+      "ordinal_concentration": 0.7012239199659979,
+      "provider_confidence": 0.8065370925084595
+     }
+    }
+   }
+  },
+  {
+   "schema": "bonfyre.decision-plane.v2",
+   "contract": {
+    "schema": "bonfyre.decision-plane.v2",
+    "program": "mention_review",
+    "owner": "ItemArchive",
+    "program_digest": "1bd89bfcaaca9920ae63fc4815351453a9755d3cfe43451210642c7564410a47",
+    "subject_id": "item/feed-rt-com-4013c3:000d818d020b03bc4594102f",
+    "mask_digest": "d1405502e67b4a34c5c11b0f32fa87739eb84a1cdd8b533ab03b4feb9b6daa1b",
+    "gate_state": "ADMIT",
+    "information_policy_class": "public",
+    "frontier": [
+     {
+      "id": "feed-rt-com-4013c3:000d818d020b03bc4594102f",
+      "description": "ICC used as ‘tool’ to target Global South – political commentator",
+      "owner_ref": "ItemArchive:feed-rt-com-4013c3:000d818d020b03bc4594102f"
+     }
+    ]
+   },
+   "case_digest": "1fb988670f6a1624626af4a6159616c92f12c553a8ee168f1df9b92774440062",
+   "provider": "local",
+   "request_provider": "clef-flash",
+   "requested_model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "request_digest": "d2eef53bdb4d8d9704f7ca136c2f52fa685679f85a7c0740e0673fd55e869017",
+   "cannot_infer": "a typed model assessment -> candidate admission, source truth, evidence, authorization, effect, or calibrated correctness on an unevaluated domain",
+   "action": "none",
+   "model": "Qwen2.5-Coder-7B-Instruct-IQ3_XS",
+   "model_identity_state": "artifact_bound",
+   "model_artifact_digest": "d9261e6a4409a142cbb9f12e3f98affc900732cc7d937e193225e0d300e91860",
+   "question_semantics": "independent_evaluation",
+   "confidence_semantics": "maximum_option_probability",
+   "state": "diagnostic",
+   "response_digest": "f4ce3b50ac2ca2de19235ca77f95e80984ec50119266569c39d634022cf9e0f6",
+   "latency_ms": 6501,
+   "usage": null,
+   "answers": {
+    "about_subject": {
+     "type": "choice",
+     "choice": "namesake",
+     "confidence": 0.8160642081812992,
+     "probabilities": {
+      "business": 0.18393579181870068,
+      "namesake": 0.8160642081812992
+     }
+    },
+    "action": {
+     "type": "choice",
+     "choice": "respond",
+     "confidence": 0.5880921973398168,
+     "probabilities": {
+      "awareness": 0.2102812609359713,
+      "opportunity": 0.07979148286047592,
+      "respond": 0.5880921973398168,
+      "risk": 0.12183505886373601
+     }
+    },
+    "kind": {
+     "type": "choice",
+     "choice": "other",
+     "confidence": 0.8364279485266407,
+     "probabilities": {
+      "competitor": 0.027262008578893215,
+      "event": 0.027262008578893215,
+      "news": 0.027262008578893215,
+      "other": 0.8364279485266407,
+      "promotion": 0.027262008578893215,
+      "regulatory": 0.027262008578893215,
+      "review": 0.027262008578893215
+     }
+    },
+    "tone": {
+     "type": "score",
+     "score": 0.36779020435451104,
+     "confidence": 0.6352713042413262,
+     "probabilities": {
+      "0": 0.6352713042413262,
+      "1": 0.36166718716283675,
+      "2": 0.0030615085958371363
+     }
+    }
+   },
+   "answers_digest": "931ef5e3a7190ca48c97163cf21e55695c785e0f362d1e8a7b37191b10ce8a1a",
+   "inference": {
+    "state": "uncached",
+    "producer_ms": 6500.147750000004,
+    "executed": true
+   },
+   "proposal": {
+    "subject_id": "item/feed-rt-com-4013c3:000d818d020b03bc4594102f",
+    "candidate_id": "feed-rt-com-4013c3:000d818d020b03bc4594102f",
+    "about_probability": 0.18393579181870068,
+    "kind": "other",
+    "tone": 0.36779020435451104,
+    "action": "none",
+    "uncertainty": {
+     "about_subject": {
+      "mass": 0.9999999999999999,
+      "maximum": 0.8160642081812992,
+      "winner": "namesake",
+      "margin": 0.6321284163625985,
+      "expectation": 0.8160642081812992,
+      "entropy": 0.477309335489193,
+      "concentration": 0.6321284163625984,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8160642081812992
+     },
+     "kind": {
+      "mass": 1,
+      "maximum": 0.8364279485266407,
+      "winner": "other",
+      "margin": 0.8091659399477475,
+      "expectation": 5.427497819843242,
+      "entropy": 0.738627741676627,
+      "concentration": 0.8091659399477473,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.8364279485266407
+     },
+     "action": {
+      "mass": 1,
+      "maximum": 0.5880921973398168,
+      "winner": "respond",
+      "margin": 0.37781093640384544,
+      "expectation": 0.9122618073926017,
+      "entropy": 1.0983082335278067,
+      "concentration": 0.450789596453089,
+      "ordinal_concentration": null,
+      "provider_confidence": 0.5880921973398168
+     },
+     "tone": {
+      "mass": 1,
+      "maximum": 0.6352713042413262,
+      "winner": "0",
+      "margin": 0.2736041170784894,
+      "expectation": 0.36779020435451104,
+      "entropy": 0.6737738707595573,
+      "concentration": 0.45290695636198924,
+      "ordinal_concentration": 0.4483146934682334,
+      "provider_confidence": 0.6352713042413262
+     }
+    }
+   }
+  }
+ ],
+ "cannot_infer": "a mention found in the sources this estate reads -> every mention that exists; an item judged about the business -> a verified fact about it"
+}

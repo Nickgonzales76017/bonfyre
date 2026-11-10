@@ -1,0 +1,30 @@
+bun test tests/native_definition.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/native_definition.test.mjs:
+(pass) every compiled definition and local/reference record resolves to its own exact record [4232.13ms]
+(pass) nested IDs, mentions, case changes and prefixes cannot select a definition [258.18ms]
+(pass) the JSON reader handles escaped IDs without changing the returned source record [12.10ms]
+(pass) ambiguous or damaged definition files fail before emitting a successful-looking record [34.42ms]
+(pass) protocol and home binding queries use the same exact definition identity [13.00ms]
+(pass) url-def retains its documented term-search behavior [2.53ms]
+
+ 6 pass
+ 0 fail
+ 1572 expect() calls
+Ran 6 tests across 1 file. [4.58s]
+bun test tests/native_resolution.test.mjs
+bun test v1.3.13 (bf2e2cec)
+
+tests/native_resolution.test.mjs:
+(pass) an objective returns source owners, directed contracts and workflows without claiming execution [9.26ms]
+(pass) graph expansion includes incoming edges once and never invents transitive connections [6.44ms]
+(pass) a source correction or removed edge changes the next read with no saved routing database [6.09ms]
+(pass) unknown objectives, injection text, stopwords and invalid bounds do not become a default route [20.89ms]
+(pass) damaged or ambiguous graphs emit no partial result [34.30ms]
+(pass) the retained training objective exposes real request, WorkGraph and publication owners [82.28ms]
+
+ 6 pass
+ 0 fail
+ 93 expect() calls
+Ran 6 tests across 1 file. [174.00ms]

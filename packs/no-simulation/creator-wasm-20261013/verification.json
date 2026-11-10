@@ -1,0 +1,27 @@
+{
+  "files": {
+    "Aurekai/src/creator-wasm.mjs": "b68a85626495e11881fa63981b622266ce94c616eb599ef01a06cc47caf21022",
+    "Aurekai/native/creator/mix_kernel.c": "cba37b9a35273e28fab3998cab7be69047a38d9a92f2aca8404c3bebba488d47",
+    "Aurekai/native/creator/mix_kernel.h": "1cc08af18fb26e034f3b132838cec6aeaf2edcb6b0c09482177af8fa86149e08",
+    "Aurekai/native/creator/mix_kernel.wasm": "efba33826fa3da7f3ea28a9e44e7cad189b65a78aa9f58e7ab40ff8f1e574126",
+    "Aurekai/native/creator/wasm.lock.json": "0b9eeac6a6796861f118d8e41702e157819e279342788699c9ee7ccf657d9960",
+    "Aurekai/tests/creator-wasm.test.mjs": "a841d507bcecf16bdcddd7fc2c9b92c6858c2cdd871af551189342d2de5d7a69",
+    "Aurekai/tests/creator-native-mix.test.mjs": "476861bdbf10a6c1355be9e5b83e5111618967029cf27467cb694d58a0b5464a",
+    "cmd/BonfyreCreatorMix/Makefile": "70d7f603c09f42eaf50d4a36b181ec8f66735c99c5085fe19e033f752bcde23f",
+    "cmd/BonfyreCreatorMix/tools/wasm.mjs": "fa01602e90b13bf4dcc74a167fd2f71e5b50f26c6c911a0397898b7dd4228147",
+    "cmd/BonfyreCreatorMix/tools/wasm-demo.html": "6c3fa4499955319079c27c127f1d146e23984b6b27962d121cf84075b6bc90ea",
+    "cmd/BonfyreCreatorMix/tools/wasm-demo.mjs": "95e2a6048aa4d9e46a8388cd04df64cfee941560e0d12549a6fc9c7370154c8f",
+    "cmd/BonfyreCreatorMix/tests/wasm-browser.mjs": "c7cc82d3a35f30679820fa295d2f503ccc6e2169fca331163aeff89f80d473d1"
+  },
+  "available_bytes": 5517701120,
+  "aurekai_tests": {
+    "passed": 77,
+    "failed": 0,
+    "skipped": 0
+  },
+  "local_preview": "http://127.0.0.1:53253/",
+  "kernel_rebuild_verified": true,
+  "native_binary_changed": false,
+  "public_deployment": false,
+  "preview_http_verified": true
+}

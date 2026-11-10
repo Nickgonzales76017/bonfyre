@@ -1,0 +1,162 @@
+{
+  "at": "2026-10-17T21:20:14.196Z",
+  "pages": [
+    {
+      "name": "directory",
+      "url": "https://nickgonzales76017.github.io/bonfyre/",
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "heading": "Bonfÿre & Aurekai — One foundation. Many ways to work.",
+          "demos": [
+            {
+              "title": "ITAD Acquisition Desk",
+              "href": "https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/"
+            },
+            {
+              "title": "Acquisition Brief Studio",
+              "href": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/"
+            },
+            {
+              "title": "Shift Continuity Studio",
+              "href": "https://nickgonzales76017.github.io/pages-shift-handoff/continuity/"
+            },
+            {
+              "title": "Dallas Council Media",
+              "href": "https://nickgonzales76017.github.io/pages-town-box/civic-council/"
+            },
+            {
+              "title": "Funding & Impact Studio",
+              "href": "https://nickgonzales76017.github.io/pages-grant-evidence/impact-studio/"
+            },
+            {
+              "title": "Room Design Studio",
+              "href": "https://nickgonzales76017.github.io/bonfyre/spaces/product-room/"
+            },
+            {
+              "title": "Catalogue & 3D Configuration",
+              "href": "https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/?store=wayfair-reference&workspace=inventory"
+            },
+            {
+              "title": "Multitrack Creator Studio",
+              "href": "https://nickgonzales76017.github.io/pages-podcast-plant/studio/"
+            },
+            {
+              "title": "Narrated Quick Mix",
+              "href": "https://nickgonzales76017.github.io/pages-podcast-plant/studio/quick/"
+            },
+            {
+              "title": "Sources and recurring programs",
+              "href": "https://browser-workbench.aurekai-work-samples.pages.dev/"
+            },
+            {
+              "title": "Retail space planner",
+              "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+            },
+            {
+              "title": "Catalogue workspace",
+              "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+            },
+            {
+              "title": "Audio arrangement",
+              "href": "https://aurekai-work-samples.pages.dev/audio/"
+            }
+          ],
+          "cards": 13,
+          "currentDirectory": false,
+          "brokenImages": []
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "heading": "Bonfÿre & Aurekai — One foundation. Many ways to work.",
+          "demos": [
+            {
+              "title": "ITAD Acquisition Desk",
+              "href": "https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/"
+            },
+            {
+              "title": "Acquisition Brief Studio",
+              "href": "https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/"
+            },
+            {
+              "title": "Shift Continuity Studio",
+              "href": "https://nickgonzales76017.github.io/pages-shift-handoff/continuity/"
+            },
+            {
+              "title": "Dallas Council Media",
+              "href": "https://nickgonzales76017.github.io/pages-town-box/civic-council/"
+            },
+            {
+              "title": "Funding & Impact Studio",
+              "href": "https://nickgonzales76017.github.io/pages-grant-evidence/impact-studio/"
+            },
+            {
+              "title": "Room Design Studio",
+              "href": "https://nickgonzales76017.github.io/bonfyre/spaces/product-room/"
+            },
+            {
+              "title": "Catalogue & 3D Configuration",
+              "href": "https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/?store=wayfair-reference&workspace=inventory"
+            },
+            {
+              "title": "Multitrack Creator Studio",
+              "href": "https://nickgonzales76017.github.io/pages-podcast-plant/studio/"
+            },
+            {
+              "title": "Narrated Quick Mix",
+              "href": "https://nickgonzales76017.github.io/pages-podcast-plant/studio/quick/"
+            },
+            {
+              "title": "Sources and recurring programs",
+              "href": "https://browser-workbench.aurekai-work-samples.pages.dev/"
+            },
+            {
+              "title": "Retail space planner",
+              "href": "https://aurekai-work-samples.pages.dev/red3-planner/"
+            },
+            {
+              "title": "Catalogue workspace",
+              "href": "https://aurekai-work-samples.pages.dev/catalogue/"
+            },
+            {
+              "title": "Audio arrangement",
+              "href": "https://aurekai-work-samples.pages.dev/audio/"
+            }
+          ],
+          "cards": 13,
+          "currentDirectory": false,
+          "brokenImages": []
+        }
+      ],
+      "errors": []
+    },
+    {
+      "name": "legacy-list",
+      "url": "https://nickgonzales76017.github.io/bonfyre/explore.html",
+      "widths": [
+        {
+          "width": 1440,
+          "fits": true,
+          "heading": "Bonfyre — What It Does For You",
+          "demos": [],
+          "cards": 0,
+          "currentDirectory": true,
+          "brokenImages": []
+        },
+        {
+          "width": 390,
+          "fits": true,
+          "heading": "Bonfyre — What It Does For You",
+          "demos": [],
+          "cards": 0,
+          "currentDirectory": true,
+          "brokenImages": []
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failures": []
+}

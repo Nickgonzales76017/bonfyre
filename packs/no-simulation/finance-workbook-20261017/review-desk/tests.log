@@ -1,0 +1,45 @@
+bun test v1.3.13 (bf2e2cec)
+
+components/BonfyreServiceSite/tests/workbook-facade.test.mjs:
+(pass) review edits through the real Univer facade clear the replaced formula, retain formatting and recalculate dependents [345.22ms]
+
+components/BonfyreServiceSite/tests/workbook-import.test.mjs:
+(pass) browser-compatible import retains original XLSX bytes and real calculation replaces cached results [337.18ms]
+(pass) old browser draft records remain readable, and calculation errors cannot become saved reviews [14.16ms]
+(pass) the last supported row imports without adding rows past the editor limit [2.96ms]
+(pass) invalid files, unsupported formulas, merged cells and hidden macro content refuse import [8.26ms]
+(pass) lying ZIP size cannot hide actual deflate expansion [3.63ms]
+
+components/BonfyreServiceSite/tests/workbook-native.test.mjs:
+(pass) the installed finance workspace serves its editor, import worker, styles and native continuation contract [908.03ms]
+(pass) two authorized people reopen, edit, recalculate and export the same organization workbook [1685.60ms]
+(pass) large workbook bodies use native files without increasing metadata limits [653.16ms]
+(pass) organization members continue row decisions and source evidence through the native owners [1230.52ms]
+(pass) stale writes, readers, unrelated accounts and foreign record families cannot overwrite reviews [694.12ms]
+(pass) deactivation removes access and reactivation restores the retained review [354.23ms]
+
+components/BonfyreServiceSite/tests/workbook-review.test.mjs:
+(pass) Books review detects its columns and retains missing amounts and exact account totals [28.66ms]
+(pass) content changes invalidate decisions and stale selections cannot mark changed rows reviewed [13.02ms]
+(pass) duplicate group changes invalidate earlier review and a duplicate needs an explanation [18.85ms]
+(pass) batch review refuses missing data and formula errors without partially accepting rows [19.23ms]
+(pass) arbitrary layouts can be mapped and ambiguous headers require an explicit choice [20.46ms]
+(pass) review decisions, unchanged source bytes and imported cell baseline survive record exchange [21.49ms]
+(pass) export includes current decisions and all accounts, retaining formulas and literal notes [931.20ms]
+
+components/BonfyreServiceSite/tests/workbook-material.test.mjs:
+(pass) existing site renderer publishes a workbook workspace with its actual JS and CSS bundle [338.83ms]
+(pass) navigation checks anchors without treating workbook stylesheets as page routes [0.30ms]
+
+components/BonfyreServiceSite/tests/workbook-calculation.test.mjs:
+(pass) real Univer calculation independently verifies Books export formulas and invalidates stale caches [352.92ms]
+(pass) editing an assumption recalculates dependent cells and survives XLSX export and reopen [737.22ms]
+(pass) formula failures are visible and circular references cannot reuse cached success [855.25ms]
+(pass) unsupported functions, external files and excessive coordinates are refused [25.20ms]
+(pass) workbooks without formulas return without waiting for a calculation event [252.44ms]
+(pass) calculation deadline terminates the worker without accepting cached values [6.06ms]
+
+ 27 pass
+ 0 fail
+ 139 expect() calls
+Ran 27 tests across 6 files. [15.02s]

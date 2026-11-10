@@ -1,0 +1,8 @@
+{
+  "native_exit": 255,
+  "native_stderr": "[schema] loaded: wiki_page (6 fields)\n[schema] loaded 1 content types from /var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-week-flow-NazUYA/schemas\n[crud] body must be a valid JSON object\n",
+  "body_bytes": 15552,
+  "invalid_json": "Invalid control character at: line 1 column 7129 (char 7128)",
+  "invalid_byte": 9,
+  "context": " separate.\\n\\nPORTIONS\\ncolumn\tpreparation\tsets\trecipe_sha25"
+}

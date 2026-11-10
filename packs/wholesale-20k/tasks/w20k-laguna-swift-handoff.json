@@ -1,0 +1,31 @@
+{
+  "schema": "aurekai.wholesale-task-brief.v1",
+  "task_id": "w20k-laguna-swift-handoff",
+  "campaign": "wholesale:20k-mixed-20261008",
+  "lot_id": "laguna-swift",
+  "project_ref": "wholesale:san-antonio-laguna-router-20261008",
+  "title": "Laguna Swift CNC router 4x8' table",
+  "location": "San Antonio, TX",
+  "phase": "handoff",
+  "role_requested": "inspection and logistics partner",
+  "desired_result": "Quoted inspection/manifest preparation or pack/load/transport scope, exclusions, exact evidence deliverables, pickup/dropoff assumptions and compensation. No dispatch or visit without acceptance.",
+  "disclosure_allowlist": [
+    "task-specific units",
+    "safe access details once authorized",
+    "required photos and outputs"
+  ],
+  "disclosure_exclusions": [
+    "portfolio finance",
+    "unrelated customers",
+    "unapproved contact list"
+  ],
+  "acceptance": "Named party, quote reference, scope, price basis, evidence checklist and explicit acceptance status; completion verified separately from payout.",
+  "partner_ref": null,
+  "partner_accepted": false,
+  "payout_agreement": null,
+  "purchase_authority": false,
+  "booking_authority": false,
+  "source_age_requires_recheck": true,
+  "source_receipt_internal": "/Users/nickgonzales/Developer/Bonfyre/.bonfyre/revenue/wholesale-20261008/enriched-machinery/foreign/receipts/classified-26e42eaf169a58efd7e6-26e42eaf169a-261a512e629e.json",
+  "next_action": "hold spend pending bid; duplicate post 7969591194"
+}

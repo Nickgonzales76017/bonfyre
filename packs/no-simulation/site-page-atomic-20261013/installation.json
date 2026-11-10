@@ -1,0 +1,32 @@
+{
+  "at": "2026-10-13T20:07:56.129454+00:00",
+  "binaries": {
+    "bonfyre-cms": {
+      "previous_sha256": "f1b689c7ec87ddf067a92abaa6c15d671870f9f1abe130549c80bb71af9062c8",
+      "installed_sha256": "98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02",
+      "checkout_sha256": "98bb3989a7959b06b2e16135e56072841f4556d9f44368ae92830b20c8249f02",
+      "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-cms-f1b689c7ec87ddf067a92abaa6c15d671870f9f1abe130549c80bb71af9062c8"
+    },
+    "bonfyre-web-address": {
+      "previous_sha256": "a04220dbfc4dc3bbfeda6d8796fe49781cf75bc4c03133c930c31d7fe186849c",
+      "installed_sha256": "250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f",
+      "checkout_sha256": "250ed953d5cb9dae30f20068607a87f370a4ff47fd65f820c60a2ae9da480b6f",
+      "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-web-address-a04220dbfc4dc3bbfeda6d8796fe49781cf75bc4c03133c930c31d7fe186849c"
+    }
+  },
+  "site_alias": "bonfyre-web-address",
+  "corpus": {
+    "previous": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/releases/e782a3e66da1e90447c4658643a1b15681c1f680e72353d4102537d051786358",
+    "release": "/Users/nickgonzales/.bonfyre/share/bonfyre/experience-map/releases/f58843241b3a3365e57bf7d115f406837601b3e5034c1bc7cea23eca933277f2",
+    "files": {
+      "all_bindings.tsv": "764d83c780a3a57c908a662d169f1d89b1bd5e5ad9e0e2e74ff0258e5e267188",
+      "app_bindings.jsonl": "f3e6fc650d96bd7f32434ffe4019bd4a60a6cc11a2d462c67de10fa1e6700304",
+      "chains.jsonl": "f02e7b30cf25b3290ed0940fc35ce86e393d6798e4052272a297b8b53491e573",
+      "home_blueprints.jsonl": "c0c0ef3908ca8c6d46c67849866f1e8cb44ab7814ec8fbd406980a7e1a437d4f",
+      "manifest.json": "a4b3d1d60f946e5bdcc318ee9468068290b4bcf9cf3624c2ca5dc2c5917828de",
+      "owner_graph.json": "4710baec012e36fa6c019d21b1ecfb4c96a9210631214b9f4ddfbec9e48cff35",
+      "protocols.jsonl": "277bfcae0a3ecf8fb704c3a4b8752666988986039d530cbabcc53be4b0790c0e",
+      "url_grammars.jsonl": "66b1e139db287c4349b75361b9cad0f96dbf88c0769ab5ef8a00b7f887dc4372"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "source": "/Users/nickgonzales/Developer/Bonfyre/packs/no-simulation/clip-hash-20261013/native-fixture/source.mp4",
+  "font": "/System/Library/Fonts/Supplemental/Arial.ttf",
+  "start": 0,
+  "end": 1,
+  "title": "A short sample",
+  "brand": "Practice edit",
+  "credit": "Synthetic test footage",
+  "captions": [
+    {
+      "start": 0,
+      "end": 0.5,
+      "text": "First phrase."
+    },
+    {
+      "start": 0.5,
+      "end": 1,
+      "text": "Second phrase."
+    }
+  ]
+}

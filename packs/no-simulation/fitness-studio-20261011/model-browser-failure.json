@@ -1,0 +1,58 @@
+{
+  "checks": [
+    "saving the connected model does not invoke it",
+    "reviewing the request still makes no model call",
+    "explicit send invokes the connected live model once",
+    "request includes one exercise and excludes history and weigh-ins",
+    "proposal generation leaves saved training unchanged"
+  ],
+  "errors": [],
+  "result": {
+    "proposal": {
+      "name": "Goblet squat",
+      "kind": "resistance",
+      "restSeconds": 60,
+      "reason": "Bodyweight exercise替代无重量训练。保持三套每八秒和60秒休息。",
+      "sets": [
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        },
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        },
+        {
+          "type": "work",
+          "loadKg": 16,
+          "reps": 8,
+          "seconds": 0,
+          "distanceM": 0,
+          "rir": null,
+          "rpe": null
+        }
+      ]
+    },
+    "receipt": {
+      "provider": "local",
+      "endpoint": "http://127.0.0.1:7000",
+      "requestedModel": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf",
+      "returnedModel": "Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf",
+      "completedAt": "2026-10-12T02:10:57.978Z",
+      "inputSha256": "c88d64f55808f4dfc9d60c4c04b5d371b5a930eb55d3c1351028e66c592efa5e",
+      "outputSha256": "d59491e4f74be7626668629c00e2603c747a0677b9a647b479026ab678a5e94e",
+      "data": "program-only"
+    }
+  },
+  "error": "live proposal meets requested equipment, set, repetition and rest constraints"
+}

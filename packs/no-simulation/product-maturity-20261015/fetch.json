@@ -1,0 +1,32 @@
+[
+  {
+    "name": "chat-native",
+    "url": "https://chatgpt.com/share/6ad06f37-647c-83e9-bb94-b4e84d7e5e66",
+    "status": 200,
+    "bytes": 1547115
+  },
+  {
+    "name": "chat-product",
+    "url": "https://chatgpt.com/share/6ad06f5d-c1e8-83e9-938a-46c8cceb5267",
+    "status": 200,
+    "bytes": 3207606
+  },
+  {
+    "name": "aurekai",
+    "url": "https://aurekai.work/",
+    "status": 200,
+    "bytes": 14132
+  },
+  {
+    "name": "samples",
+    "url": "https://aurekai-work-samples.pages.dev/",
+    "status": 200,
+    "bytes": 40688
+  },
+  {
+    "name": "github-pages",
+    "url": "https://nickgonzales76017.github.io/",
+    "status": 200,
+    "bytes": 34756
+  }
+]

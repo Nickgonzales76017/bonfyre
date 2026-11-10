@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-11",
+  "checks": [
+    "complete app bundle installs",
+    "app and paused workout reopen after browser restart with server stopped",
+    "offline restart preserves member, session and rest deadline",
+    "offline workout completion survives reload",
+    "private training data never enters the app asset cache",
+    "new app version waits while the old tab stays open",
+    "mismatched update cannot replace the installed app",
+    "failed update leaves no partial candidate cache",
+    "complete update takes over after old tabs close",
+    "update preserves training history and clears obsolete app cache"
+  ],
+  "serverStopped": true,
+  "browserRestarted": true
+}

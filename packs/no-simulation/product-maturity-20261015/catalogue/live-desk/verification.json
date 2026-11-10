@@ -1,0 +1,26 @@
+{
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "checks": [
+    "details open without the long options and preparation forms",
+    "options have a separate task view and URL",
+    "search preparation opens independently",
+    "Back between task panels retains unsaved edits",
+    "draft desk shows both saved products",
+    "desk has its own reloadable route",
+    "draft desk survives reload",
+    "draft desk fits 1440px",
+    "draft desk fits 390px",
+    "draft desk fits 320px",
+    "search narrows the saved work",
+    "opening a saved row goes directly to its change review",
+    "Back returns from review to the draft desk",
+    "another store does not inherit these drafts",
+    "canceling navigation preserves unsaved work",
+    "unsent drafts never appear as received reviews",
+    "no browser exceptions",
+    "no remote writes or submissions"
+  ],
+  "errors": [],
+  "writes": [],
+  "status": "passed"
+}

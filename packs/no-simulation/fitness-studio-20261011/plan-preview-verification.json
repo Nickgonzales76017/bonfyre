@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-12T03:43:07.154Z",
+  "url": "http://127.0.0.1:4190/creator#programs",
+  "checks": [
+    "fresh desktop browser offers Build a plan in Forge",
+    "plan choices read back exact Forge routine versions",
+    "mobile Still library offers plan authoring without overflow",
+    "sign out clears creator controls",
+    "model execution remains disconnected"
+  ],
+  "errors": []
+}

@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-11",
+  "training": {
+    "passed": 70,
+    "assertions": 463,
+    "failed": 0
+  },
+  "control_plane": {
+    "passed": 871,
+    "skipped": 259,
+    "failed": 0,
+    "assertions": 3031
+  },
+  "atlas": {
+    "architectures": 502,
+    "interactions": 436,
+    "valid": true
+  },
+  "preview": "http://127.0.0.1:4190",
+  "remaining": [
+    "device sync",
+    "member actor and consent",
+    "creator invitations, request quoting/revisions and recurring terms",
+    "booking and settlement",
+    "remote bridge acceptance",
+    "model execution",
+    "broader upstream import corpus validation",
+    "operating-system installation and non-Chrome offline verification",
+    "plan rescheduling, reminders and per-session target overrides",
+    "exercise media"
+  ],
+  "offline": {
+    "passed": 10,
+    "failed": 0,
+    "server_stopped": true,
+    "browser_restarted": true
+  },
+  "progression_browser": {
+    "passed": 11,
+    "failed": 0
+  },
+  "brand_browser": {
+    "passed": 11,
+    "failed": 0
+  },
+  "model": {
+    "preview_route": null,
+    "contract_tests": 9,
+    "live_quality": "failed equipment constraint",
+    "end_to_end_application": "unverified",
+    "additional_local_models": "do not start"
+  },
+  "regression_note": "After weekly plans were added, 70 training tests passed with 463 assertions. Sixteen plan browser checks, 18 member-workflow checks and five exact-preview checks passed sequentially. Older receipts retain their original timestamps. No model was invoked.",
+  "request_browser": {
+    "passed": 12,
+    "failed": 0,
+    "native_owner": "WorkGraph through BonfyreQueue"
+  },
+  "creator_browser": {
+    "passed": 12,
+    "failed": 0,
+    "native_owners": [
+      "Auth",
+      "WorkGraph"
+    ]
+  },
+  "native_auth": {
+    "institution_grants": "passed",
+    "actor_closure": "passed",
+    "external_account_links": "passed"
+  },
+  "creator_preview": "http://127.0.0.1:4190/creator",
+  "creator_preview_checks": {
+    "passed": 4,
+    "failed": 0,
+    "receipt": "creator-preview-verification.json"
+  },
+  "draft_browser": {
+    "passed": 10,
+    "failed": 0,
+    "browser_restarted": true,
+    "concurrent_tabs": true
+  },
+  "native_checkpoints": {
+    "schema_version": 9,
+    "concurrent_processes": "passed",
+    "stale_delivery": "refused",
+    "failed_completion": "rolled back",
+    "v8_migration": "passed",
+    "native_conformance": "passed"
+  },
+  "draft_preview": {
+    "checkedAt": "2026-10-12T02:57:15.006Z",
+    "url": "http://127.0.0.1:4190/creator",
+    "latest_client_served": true,
+    "model_route": null
+  },
+  "publishing_browser": {
+    "passed": 13,
+    "failed": 0,
+    "native_owner": "BonfyreCMS"
+  },
+  "library_browser": {
+    "passed": 12,
+    "failed": 0,
+    "native_owner": "BonfyreCMS",
+    "receipt": "library-browser-verification.json"
+  },
+  "library_preview": {
+    "checkedAt": "2026-10-12T03:19:49.937Z",
+    "url": "http://127.0.0.1:4190/creator#programs",
+    "checks": [
+      "fresh desktop browser signs in and opens the Forge library",
+      "mobile Still library offers New program without horizontal overflow",
+      "both studios retain coaching and program permissions",
+      "sign out clears the creator view",
+      "model execution remains disconnected"
+    ],
+    "errors": []
+  },
+  "native_cms": {
+    "conditional_update": {
+      "passed": 1,
+      "assertions": 9
+    },
+    "subcommand_dispatch": {
+      "passed": 2,
+      "assertions": 18
+    },
+    "large_update": "passed",
+    "conditional_required": "passed"
+  },
+  "presentation_browser": {
+    "passed": 14,
+    "failed": 0,
+    "receipt": "presentation-browser-verification.json"
+  },
+  "presentation_preview": {
+    "checkedAt": "2026-10-12T03:29:49.337Z",
+    "url": "http://127.0.0.1:4190/creator#appearance",
+    "checks": [
+      "fresh desktop browser opens Forge appearance",
+      "shared route renders an appearance preview before applying",
+      "mobile Still appearance fits the viewport",
+      "sign out clears creator appearance controls",
+      "model execution remains disconnected"
+    ],
+    "errors": []
+  },
+  "plan_browser": {
+    "passed": 16,
+    "failed": 0,
+    "receipt": "plan-browser-verification.json"
+  },
+  "plan_preview": {
+    "checkedAt": "2026-10-12T03:43:07.154Z",
+    "url": "http://127.0.0.1:4190/creator#programs",
+    "checks": [
+      "fresh desktop browser offers Build a plan in Forge",
+      "plan choices read back exact Forge routine versions",
+      "mobile Still library offers plan authoring without overflow",
+      "sign out clears creator controls",
+      "model execution remains disconnected"
+    ],
+    "errors": []
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "binary": "/Users/nickgonzales/.bonfyre/bin/bonfyre-model",
+  "previous_sha256": "d6bad96fa3356da9a61ccca645bff4aab05b08df96b25e7a4d57cbfe050dffb6",
+  "installed_sha256": "10090fdf15cdcc497d1bfaedc46db07256db50d33869bc094716ae276863caf4",
+  "rollback": "/Users/nickgonzales/.bonfyre/rollback/bonfyre-model-d6bad96fa3356da9a61ccca645bff4aab05b08df96b25e7a4d57cbfe050dffb6/bonfyre-model",
+  "codesign_verified": true,
+  "imports_commoncrypto_sha256": true
+}

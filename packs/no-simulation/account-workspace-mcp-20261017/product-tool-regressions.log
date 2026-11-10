@@ -1,0 +1,11 @@
+bun test v1.3.13 (bf2e2cec)
+
+integrations/mcp/tests/project_products.test.mjs:
+(pass) the products are Project operations with honest read-only declarations [0.33ms]
+(pass) learn keeps a named profile; booking books sure lines, holds unsure ones and unread amounts, and says the model was unavailable [91.60ms]
+(pass) monitor answers from the archive without loading a model when nothing matches; manifest says plainly when the model is needed [418.67ms]
+
+ 3 pass
+ 0 fail
+ 23 expect() calls
+Ran 3 tests across 1 file. [1034.00ms]

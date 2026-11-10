@@ -1,0 +1,62 @@
+{
+  "deployment": "c911dba8-6ff5-4339-b912-f5507d4793ce",
+  "url": "https://c911dba8.aurekai-work-samples.pages.dev",
+  "matches": [
+    {
+      "path": "/",
+      "status": 200,
+      "local": "4a86ddf7b2cca41dd069e469bb642cf2339a4c966e1991af610bb69e0f8e5c68",
+      "live": "4a86ddf7b2cca41dd069e469bb642cf2339a4c966e1991af610bb69e0f8e5c68",
+      "match": true
+    },
+    {
+      "path": "/red3-planner/",
+      "status": 200,
+      "local": "e8220883aa6a02fa192087b9eb015ef170339c70f2bd13cce2061427bfe2b911",
+      "live": "bcc2ce34f4f8d5792db5c2c22c4e180b313d8741d6c44dc056924a615661c25f",
+      "match": false
+    },
+    {
+      "path": "/assets/shots/planner-spatial.png",
+      "status": 200,
+      "local": "4f8f1a44cdf01790374f5e0f8bafad1d5e8bb2315fd00b9799cace473edcb481",
+      "live": "4f8f1a44cdf01790374f5e0f8bafad1d5e8bb2315fd00b9799cace473edcb481",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-client.mjs",
+      "status": 200,
+      "local": "1444df478e79899bf4c0c97ba884dfedfba13ce61dfefc919acb97406b4d2208",
+      "live": "1444df478e79899bf4c0c97ba884dfedfba13ce61dfefc919acb97406b4d2208",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-spatial.mjs",
+      "status": 200,
+      "local": "65f5a3d5f3beb2e372b343ed878599e76b78c5dd4ec7312e9ea0f292c28cc897",
+      "live": "65f5a3d5f3beb2e372b343ed878599e76b78c5dd4ec7312e9ea0f292c28cc897",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/planner-spatial-model.mjs",
+      "status": 404,
+      "local": "6a014df44f766b00966883d7480b2fa9af23b80152e16aa1d8292a45c5b94487",
+      "live": "2fd8e4c49906810408ca167dbeb15aff42dc0354a219590fbc5c9e4366df2ffb",
+      "match": false
+    },
+    {
+      "path": "/data/red3-fixtures/vendor/konva-10.9.0/konva.min.js",
+      "status": 200,
+      "local": "5445b122b332b99530a0ed43ae514ad8121d661d7b7f5d938ae1d5932ed64334",
+      "live": "5445b122b332b99530a0ed43ae514ad8121d661d7b7f5d938ae1d5932ed64334",
+      "match": true
+    },
+    {
+      "path": "/data/red3-fixtures/vendor/konva-10.9.0/LICENSE",
+      "status": 200,
+      "local": "7190132c82df30243dc2ba512c9509ea3b629329b4266e9f2c3b5dbd04029613",
+      "live": "7190132c82df30243dc2ba512c9509ea3b629329b4266e9f2c3b5dbd04029613",
+      "match": true
+    }
+  ]
+}

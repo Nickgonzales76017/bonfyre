@@ -1,0 +1,76 @@
+{
+  "at": "2026-10-08T21:25:26.067Z",
+  "origin": "https://aurekai-work-samples.pages.dev",
+  "plan": {
+    "schema": "service-site.fixture-plan.v1",
+    "catalogue": "2c5a78fc41b26577653a7ab63a27b56eaab37298efa4acfcfd715cc75a57f3a0",
+    "id": "aurekai-live-verification-20261008",
+    "title": "Aurekai verification only — no customer enquiry",
+    "width": 16,
+    "depth": 12,
+    "budget": 150000,
+    "deadline": "2026-12-10",
+    "notes": "Synthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.",
+    "items": [
+      {
+        "key": "rack-1",
+        "product": "rack",
+        "x": 1,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "table-1",
+        "product": "table",
+        "x": 9,
+        "y": 1,
+        "rotation": 0
+      },
+      {
+        "key": "counter-1",
+        "product": "counter",
+        "x": 10,
+        "y": 8,
+        "rotation": 0
+      },
+      {
+        "key": "easel-1",
+        "product": "easel",
+        "x": 11,
+        "y": 8,
+        "rotation": 0
+      }
+    ]
+  },
+  "request": "{\"form\":\"planner-red3-fixtures\",\"page\":\"/red3-planner/\",\"fields\":[{\"label\":\"Name\",\"value\":\"Aurekai verification only\"},{\"label\":\"Email\",\"value\":\"verification@example.invalid\"},{\"label\":\"Fixture plan\",\"value\":\"{\\\"schema\\\":\\\"service-site.fixture-plan.v1\\\",\\\"catalogue\\\":\\\"2c5a78fc41b26577653a7ab63a27b56eaab37298efa4acfcfd715cc75a57f3a0\\\",\\\"id\\\":\\\"aurekai-live-verification-20261008\\\",\\\"title\\\":\\\"Aurekai verification only — no customer enquiry\\\",\\\"width\\\":16,\\\"depth\\\":12,\\\"budget\\\":150000,\\\"deadline\\\":\\\"2026-12-10\\\",\\\"notes\\\":\\\"Synthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.\\\",\\\"items\\\":[{\\\"key\\\":\\\"rack-1\\\",\\\"product\\\":\\\"rack\\\",\\\"x\\\":1,\\\"y\\\":1,\\\"rotation\\\":0},{\\\"key\\\":\\\"table-1\\\",\\\"product\\\":\\\"table\\\",\\\"x\\\":9,\\\"y\\\":1,\\\"rotation\\\":0},{\\\"key\\\":\\\"counter-1\\\",\\\"product\\\":\\\"counter\\\",\\\"x\\\":10,\\\"y\\\":8,\\\"rotation\\\":0},{\\\"key\\\":\\\"easel-1\\\",\\\"product\\\":\\\"easel\\\",\\\"x\\\":11,\\\"y\\\":8,\\\"rotation\\\":0}]}\"}]}",
+  "expected_brief": "Aurekai verification only — no customer enquiry\n16 × 12 ft · 4 fixtures\nBudget: $1,500.00 · Target date: 2026-12-10\n\n1. 36-inch rolling rack (Normal finials)\n   Listed $83.00 · 1, 1 ft from back-left · rotation 0°\n   Product 8628, option 10749; observed 2026-10-08\n2. Large maple display table (Large / Maple top, silver legs)\n   Listed $540.00 · 9, 1 ft from back-left · rotation 0°\n   Product 8570, option 20684; observed 2026-10-08\n3. 4-foot cash wrap counter (4-foot / Black)\n   Listed $526.00 · 10, 8 ft from back-left · rotation 0°\n   Product 1961, option 11740; observed 2026-10-08\n4. Acrylic shirt easel (Standard listing)\n   Listed $19.50 · 11, 8 ft from back-left · rotation 0°\n   Product 7631, option 7631; observed 2026-10-08\n\nListed fixture subtotal: $1,168.50. Delivery, tax and any custom work are excluded. This is a request for review, not a quote.\n\nFor the supplier to confirm\n• Confirm rack depth, height and loaded capacity.\n• Can this rack be disassembled for transport?\n• 36-inch rolling rack: depth is missing; the dashed area is a planning allowance.\n• Confirm assembly and transport requirements.\n• Confirm current price, finish and delivery date.\n• Confirm easel dimensions and whether the shirt is included.\n• Acrylic shirt easel: confirm the supporting surface and available space.\n• Confirm current prices, availability, freight, tax and delivery timing.\n• Review aisles, access, site measurements and placement before ordering.\n• Can these fixtures arrive by 2026-12-10?\n\nCustomer notes\nSynthetic verification: retain this complete plan for native handoff checks. Do not contact the supplier or treat this as a sales lead. Café pop-up.\n\nSource listings\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/raw-steel-racks/raw-steel-rolling-racks/raw-steel-rolling-racks-36-length/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/display-tables/nesting-tables/economy-nesting-tables/modern-nesting-tables/\nhttps://red3display.com/retail_fixtures/counter-pos-showcases-retail/standard-counters/wrap-counters/standard-cash-wrap-counters-size-and-finish-options/\nhttps://red3display.com/retail_fixtures/fixtures-floor-displays/t-shirt-displays/countertop-t-shirt-displays/acrylic-shirt-display-easel-3/\n\nIndependent Aurekai planning preview. No order, reservation or supplier approval.",
+  "assets": [
+    {
+      "path": "/red3-planner/index.html",
+      "actual": "abb03ec70a44920157ac2daea74b6d122e0e2f7b3252d991c3184a5d4a491795",
+      "expected": "abb03ec70a44920157ac2daea74b6d122e0e2f7b3252d991c3184a5d4a491795"
+    },
+    {
+      "path": "/data/red3-fixtures/planner-model.mjs",
+      "actual": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04",
+      "expected": "dd0717ae279e10282ba51d4ebe5d8b5baee84583a15e91907c5e5a8712807c04"
+    }
+  ],
+  "responses": [
+    {
+      "status": 201,
+      "body": {
+        "ok": true,
+        "receipt": "lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590"
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "receipt": "lead:planner:807230186fb1e79a9f13b014e036fff47514181694c5525a44391c279dc57590"
+      }
+    }
+  ],
+  "complete": true
+}

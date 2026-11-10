@@ -1,0 +1,29 @@
+{
+  "package": "668f037f2402d79e097560a8385db88b33bcff5bf82bf9180f2da9478878102a",
+  "bun": "1.3.13",
+  "sources": {
+    "components/BonfyreServiceSite/workbook-calculation.mjs": "993c3cbb3da2af7c4825ad5683f3f4bdf822ea20ff36c81c211a64e48abacfe5",
+    "components/BonfyreServiceSite/workbook-material.mjs": "949fdbbc215b82a4662c93694b3ecbbabeab2f7decfddcef8b338ab9ee1735ec",
+    "components/BonfyreServiceSite/workbook-import-worker.mjs": "3074714752bde193ad3a5e20f0499155b8fc1554744f2d2a5be205b10283178c",
+    "components/BonfyreServiceSite/workbook-package.mjs": "12638847e829988a35968d06fa9cb5534df6c35e833def3251a40fc0d990b2f0",
+    "components/BonfyreServiceSite/workbook-client.mjs": "75107ae4ccac287bc011d4566beb2ab4611afb58fe309be536ad21419c11fafa",
+    "components/BonfyreServiceSite/workbook-model.mjs": "9a9e44003ffdb2c79a7ac1310a3033c2d01ed5ca404c35786be94b73d2a79028",
+    "components/BonfyreServiceSite/workbook-record.mjs": "817090446e02992431665e7c58f5b7186ca3347cadfa95e1c2eaf30e74786e44",
+    "components/BonfyreServiceSite/workbook-import.mjs": "2d1f0c0add8e427c5b6511c1e810ebc260fbc00f079d6fdce5d87de853a53091",
+    "components/BonfyreServiceSite/workbook-workspace-client.mjs": "2b41749f42c48d26d424f923c5d7f00d4de5cb2b3d63f4dcd99d63d50c26331b",
+    "components/BonfyreServiceSite/workbook-calculation-worker.mjs": "07b43ab9bcb09951632af1250d61b8a67fdc401912d395570a70d826b076c57f",
+    "components/BonfyreServiceSite/workbook-editor.mjs": "2f4b38bc572a0475c8e2b31cdaebe65cab99d3b47f177b818ea5946b29b01b9b",
+    "components/BonfyreServiceSite/tests/workbook-import.test.mjs": "ce9b8d2368fa5a42c6164d01fa5975169298d9b982a9ed89aa62527f3e59d259",
+    "components/BonfyreServiceSite/tests/workbook-native.test.mjs": "cbc3232701320aaa66c325e488e64d5d8399a96cf35b6f8605462672780dd7d7",
+    "components/BonfyreServiceSite/tests/workbook-material.test.mjs": "635ac1cc518ad854d4118497e05f8028150466484c2241c1a8f1193912fcb1bf",
+    "components/BonfyreServiceSite/tests/workbook-calculation.test.mjs": "933a46e482f4d329b5c6e78ff139a3472e090827f010ab4187a6e3306c5caf1f",
+    "components/BonfyreServiceSite/package.json": "1ef6ad9692b29f60b8e1970a16d63170508257276ea5bc9f8e85595f46f6bbe7",
+    "components/BonfyreServiceSite/bun.lock": "1ae75868f128df0a567434ce978efd7ad6cace10a2afaa4288885459818883b9",
+    "scripts/publish_experience_setups.mjs": "1b6b1454eb786b66680b002033989114f7886e1befaaaa00b1d72ef452b7122b",
+    "architecture/surface/financial-workbook.yaff": "4799a99cb2dd45bda8ee019d0343deede5377937ea518b5fccc9539ec5bc19fa"
+  },
+  "tests_log_sha256": "cbfb49516ef73173e623077ad5ee2bece1719b92e82756b60332b8e25c9befd6",
+  "native_proof_sha256": "30b8273d0398975975dc71b5b8898c7330658c66748fe02cbdddb54446f60ff5",
+  "browser_verified": false,
+  "live_deployment": false
+}

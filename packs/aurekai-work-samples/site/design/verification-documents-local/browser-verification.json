@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-19T15:26:03.726Z",
+  "checks": [
+    "Eight fictional documents open",
+    "Blank search has a useful error",
+    "Native semantic search finds the appliance source first",
+    "Original document and paragraph are visible",
+    "Exact source paragraph is highlighted",
+    "No horizontal overflow at 1440",
+    "No horizontal overflow at 1024",
+    "No horizontal overflow at 768",
+    "No horizontal overflow at 390",
+    "No horizontal overflow at 320",
+    "Cited note saves",
+    "Note and its paragraph survive reload",
+    "A stale tab cannot overwrite the saved note",
+    "Failed removal leaves the original available",
+    "Removal updates the list and preserves the saved note",
+    "Removed passages cannot match exact search",
+    "Unsupported phrase gives an empty result without an answer",
+    "Removal survives process and browser restart",
+    "Saved note survives full browser restart",
+    "Semantic search after restart excludes the removed document",
+    "No page exceptions",
+    "The workspace made no remote page requests"
+  ],
+  "errors": [],
+  "outside": [],
+  "synthetic": true,
+  "backend": "installed native ONNX embedding and vector search",
+  "process_restart": true,
+  "browser_restart": true
+}

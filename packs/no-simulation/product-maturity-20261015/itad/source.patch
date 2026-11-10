@@ -1,0 +1,786 @@
+diff --git a/site/itad-exchange/app.mjs b/site/itad-exchange/app.mjs
+index cc468c4..508ffad 100644
+--- a/site/itad-exchange/app.mjs
++++ b/site/itad-exchange/app.mjs
+@@ -1,156 +1,262 @@
+-import { initial,lots,getLot,getRecord,assess,verify,workflow,parseManifest,buyerBrief,buyerYaff } from "./core.mjs";
+-import { openDraft,esc,money,dollars,cents,boundedInt,sourceUrl,download,renderProgress } from "../journey-kit/room.mjs";
+-const $=id=>document.getElementById(id);
+-let state=initial(),draft=null,revision=0,active="source",busy=false;
+-const status=(message,bad=false)=>{const el=$("message");el.textContent=message;el.className="message"+(bad?" error":"");};
+-const safe=f=>{try{return f()}catch(e){status(e.message,true);return null;}};
+-const current=()=>getRecord(state);
+-const numeric=(v,nullable=true)=>cents(v,{empty:nullable});
+-const update=(key,value)=>{current()[key]=value;state.prepared=false;};
+-function progress(){
+- const stages=workflow(state);renderProgress($("process"),stages,active);
+- $("process").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.chapter)));
+-}
+-function show(name){active=name;document.querySelectorAll(".scene").forEach(p=>p.classList.toggle("active",p.dataset.scene===name));progress();window.history.replaceState(null,"","#"+name);}
+-function renderLotChoices(){
+- $("lots").innerHTML=lots.map(l=>'<button class="choice" type="button" data-lot="'+esc(l.id)+'" aria-pressed="'+(getLot(state).id===l.id)+'"><strong>'+esc(l.title)+'</strong><small>'+esc(l.family)+' · '+l.reportedCount+' seller-reported units</small></button>').join("");
+- $("lots").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+-  state.selected=b.dataset.lot;state.prepared=false;render();status("Changed candidate lot. Seller identity and quantities remain unverified.");
+- }));
+-}
+-function renderSource(){
+- const lot=getLot(state),r=current();
+- renderLotChoices();
+- $("lotAssertion").textContent=lot.claim;
+- $("lotIdentity").textContent=lot.subject;
+- $("sourceInput").value=r.source;
+- $("sourceLink").hidden=!r.source;
+- $("sourceLink").href=r.source||"#";
+- $("sellerCount").textContent=String(lot.reportedCount);
+-}
+-function renderManifest(){
+- const r=current();
+- $("manifestRows").innerHTML=r.rows.map((x,i)=>
+- '<div class="rowOption"><div class="rowTop"><strong>Line '+String(i+1).padStart(2,"0")+'</strong><button type="button" data-remove="'+esc(x.id)+'">Remove ×</button></div><div class="fieldGrid triple">'+
+- '<label>Model or family<input maxlength="100" data-line="'+esc(x.id)+'" data-prop="model" value="'+esc(x.model)+'"></label>'+
+- '<label>Seller quantity<input type="number" min="1" max="50000" data-line="'+esc(x.id)+'" data-prop="qty" value="'+x.qty+'"></label>'+
+- '<label>Seller condition<select data-line="'+esc(x.id)+'" data-prop="grade">'+["unknown","working","untested","parts"].map(g=>'<option value="'+g+'"'+(g===x.grade?" selected":"")+'>'+g+'</option>').join("")+'</select></label>'+
+- '<label>Modeled resale / unit ($)<input inputmode="decimal" data-line="'+esc(x.id)+'" data-prop="recovery" value="'+dollars(x.recovery)+'" placeholder="Unpriced until estimated"></label></div></div>'
+- ).join("");
+- $("manifestRows").querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click",()=>{r.rows=r.rows.filter(x=>x.id!==b.dataset.remove);touch();render();}));
+- const a=assess(state);
+- $("manifestResult").textContent=a.units+" modeled units vs "+a.claimed+" seller-reported. "+
+- (a.units!==a.claimed?"Quantity discrepancy requires review.":"Count matches claim; serial identity still unverified.");
+-}
+-function renderProof(){
+- const lot=getLot(state),p=verify(state),review=state.reviewed[lot.id]||{};
+- $("budgetInput").value=dollars(state.budget);
+- $("modeInput").value=state.mode;
+- $("needRows").innerHTML=lot.needs.map((n,i)=>
+- '<div class="line"><div><strong>'+String(i+1).padStart(2,"0")+' / '+esc(n.label)+'</strong><small>'+esc(n.kind)+' · '+esc(n.source)+' · proof weight '+n.weight+'</small></div>'+
+- '<label>Local review<select data-need="'+esc(n.id)+'">'+[["missing","Not established"],["supplied","Source supplied"],["reviewed","Reviewed here (not verified)"]].map(([v,t])=>'<option value="'+v+'"'+((review[n.id]||"missing")===v?" selected":"")+'>'+t+'</option>').join("")+'</select></label></div>'
+- ).join("");
+- $("proofRoutes").innerHTML=p.selected.map(x=>'<div class="line"><div><strong>'+esc(x.provider)+'</strong><small>'+esc(x.method)+' · '+esc(x.quote)+' · '+esc(x.availability)+'</small></div><b>'+money(x.base+x.labor+x.travel)+'</b></div>').join("")||'<p>No eligible route selected at this budget. The need remains open.</p>';
+- $("coverage").innerHTML='<strong>'+p.covered.size+" of "+lot.needs.length+' proof kinds covered by candidate methods</strong>'+
+- '<p>Modeled verification cost: '+money(p.cost)+' · '+esc(p.status)+
+- '. No quote, visit, seller statement or reviewed flag establishes verified stock or ownership.</p>'+
+- (p.unresolved.length?'<p class="error">Open: '+esc(p.unresolved.map(x=>x.label).join("; "))+'</p>':"");
+-}
+-function renderEconomics(){
+- const r=current();
+- for(const k of ["buyPerUnit","testingPerUnit","freight"])
+-  $(k).value=dollars(r[k]);
+- $("reservePct").value=r.reservePct;$("targetMarginPct").value=r.targetMarginPct;
+- const a=assess(state);
+- $("economicReadout").innerHTML=a.priced?
+- '<strong>Modeled gross recovery '+money(a.recovery)+'</strong><p>Proposed purchase '+money(a.buyTotal)+' + handling '+money(a.testing)+' + freight '+money(a.freight)+' + reserve '+money(a.reserve)+' = '+money(a.totalCost)+'</p>'+
+- '<p class="'+(a.meetsTarget?"success":"error")+'">Modeled net '+money(a.net)+' · '+a.margin.toFixed(1)+'% recovery margin. Maximum buy per unit at '+r.targetMarginPct+'% target: '+money(a.maxUnit)+'.</p>':
+- '<strong>Not priced</strong><p>Enter modeled recovery for every manifest line and a proposed buy-per-unit amount. A blank estimate is never silently treated as a zero-dollar offer.</p>';
+-}
+-function renderBuyer(){
+- $("recipient").value=state.recipient;$("buyerRequirements").value=state.buyerRequirements;
+- $("buyerNotes").value=current().notes;
+- $("packetState").textContent=state.prepared?"Local buyer inquiry prepared — not sent.":"No buyer inquiry prepared yet.";
+-}
+-function paper(){
+- const lot=getLot(state),a=assess(state),p=verify(state),r=current();
+- $("paperTitle").textContent=lot.title;
+- $("paperAudience").textContent=state.recipient;
+- $("paperMaterial").textContent=lot.claim;
+- $("paperSource").textContent=r.source||"Original source URL not supplied";
+- $("paperNumbers").textContent=a.priced?
+- money(a.recovery)+" modeled recovery · "+money(a.net)+" net after proposed acquisition, costs and reserve · "+a.margin.toFixed(1)+"%":
+- "Economics unpriced — buyer number and recovery assumptions required";
+- $("paperProof").textContent=p.covered.size+"/"+lot.needs.length+" candidate method coverage · "+money(p.cost)+" indicative verification · "+p.status;
+- $("paperOpen").textContent=p.unresolved.map(x=>x.label).join("; ")||"No uncovered candidate methods. Evidence is still not independently verified.";
+- $("paperProposal").textContent=state.prepared?"Buyer-facing inquiry prepared locally; no offer accepted.":"Draft needs buyer review; no supplier contacted.";
+-}
+-function render(){
+- safe(()=>{renderSource();renderManifest();renderProof();renderEconomics();renderBuyer();paper();progress();});
+-}
+-function touch(){state.prepared=false;$("savedState").textContent="Unsaved local changes";paper();progress();}
+-function downloadReview(kind){
+- safe(()=>{
+-  const content=kind==="md"?buyerBrief(state):buyerYaff(state);
+-  download("itad-"+getLot(state).id+(kind==="md"?".md":".yaff"),content,
+-    kind==="md"?"text/markdown;charset=utf-8":"text/plain;charset=utf-8");
+-  status(kind==="md"?"Downloaded a human acquisition brief.":"Downloaded a typed proposal; no WorkGraph or authority was created.");
+- });
+-}
+-function fieldChanged(e){
+- const el=e.target,field=el.dataset.field,line=el.dataset.line;
+- if(!field&&!line)return;
+- safe(()=>{
+-  if(line){
+-    const item=current().rows.find(x=>x.id===line);if(!item)return;
+-    const k=el.dataset.prop;
+-    if(k==="qty")item[k]=boundedInt(el.value,{min:1,max:50000});
+-    else if(k==="recovery")item[k]=numeric(el.value);
+-    else item[k]=el.value;
+-  } else if(field==="source"){
+-    update("source",sourceUrl(el.value.trim()));
+-  } else if(field==="budget")state.budget=numeric(el.value,false);
+-  else if(field==="mode")state.mode=el.value;
+-  else if(field==="recipient")state.recipient=el.value.slice(0,100);
+-  else if(field==="buyerRequirements")state.buyerRequirements=el.value.slice(0,950);
+-  else if(field==="notes")update("notes",el.value.slice(0,950));
+-  else if(["buyPerUnit","testingPerUnit","freight"].includes(field))update(field,numeric(el.value,field==="buyPerUnit"));
+-  else if(["reservePct","targetMarginPct"].includes(field))update(field,boundedInt(el.value,{min:0,max:85}));
+-  touch();render();
+- });
+-}
+-$("sourceInput").dataset.field="source";$("budgetInput").dataset.field="budget";$("modeInput").dataset.field="mode";
+-$("recipient").dataset.field="recipient";$("buyerRequirements").dataset.field="buyerRequirements";$("buyerNotes").dataset.field="notes";
+-for(const id of ["buyPerUnit","testingPerUnit","freight","reservePct","targetMarginPct"])$(id).dataset.field=id;
+-document.addEventListener("change",e=>{
+- if(e.target.dataset.need){
+-  const lot=getLot(state),review=state.reviewed[lot.id]||{};
+-  review[e.target.dataset.need]=e.target.value;state.reviewed[lot.id]=review;touch();paper();progress();return;
+- }
+- fieldChanged(e);
++import { initial, hydrate, selectLot, getLots, getLot, getRecord, validateState, assess, verify, parseManifest, buyerBrief, buyerYaff, createLot, editManifest, addManifestRow, removeManifest, compareLots, sensitivity } from './core.mjs';
++import { openDraft, esc, money, dollars, cents, boundedInt, sourceUrl, download } from '../journey-kit/room.mjs';
++import { createManifestGrid } from './manifest-grid.mjs';
++const $ = id => document.getElementById(id);
++const clone = value => structuredClone(value);
++const views = ['manifest','economics','compare','verification','source','buyer'];
++let state = initial(), draft, revision = 0, generation = 0, dirty = false, saving = false, timer, conflict = false;
++let active = 'manifest', grid, gridLoading = false, selection = [], inspection = null, inspectorDirty = false, proposal = null, ready = false;
++const histories = new Map(), invalid = new Set();
++const current = () => getRecord(state);
++const status = (message, bad = false) => { $('message').textContent = message; $('message').classList.toggle('error', bad); };
++const attempt = fn => { try { return fn(); } catch (error) { status(error.message, true); return false; } };
++const moneyOr = value => value == null ? '—' : money(value);
++const history = () => { if (!histories.has(state.selected)) histories.set(state.selected, {past:[], future:[]}); return histories.get(state.selected); };
++const snapshot = () => ({record:clone(current()), review:clone(state.reviewed[state.selected] ?? {})});
++function savedLabel() { $('savedState').textContent = conflict ? 'Save conflict · draft retained' : invalid.size || inspectorDirty || grid?.hasPendingEdit() ? 'Unapplied input' : saving ? 'Saving…' : dirty ? 'Unsaved changes' : revision ? 'Saved locally · r' + revision : 'Local draft'; }
++function schedule() { clearTimeout(timer); if (!conflict) timer = setTimeout(save, 800); savedLabel(); }
++function commit(next, {remember = true, material = true} = {}) {
++  if (material) next.prepared = false;
++  hydrate(next);
++  if (remember && next.selected === state.selected) { const h = history(); h.past.push(snapshot()); if (h.past.length > 50) h.past.shift(); h.future = []; }
++  state = next; generation++; dirty = true; render(); schedule();
++  return true;
++}
++function mutate(fn, options) { const next = clone(state); fn(next, getRecord(next)); return commit(next, options); }
++function setInput(id, value) { const el = $(id); if (document.activeElement !== el && !invalid.has(el)) el.value = value; }
++function renderLots() {
++  const term = $('lotSearch').value.trim().toLowerCase();
++  $('lots').innerHTML = compareLots(state).filter(l => l.title.toLowerCase().includes(term)).map(a => {
++    const l = getLots(state).find(x => x.id === a.id);
++    return `<button class="lot-card ${a.selected ? 'active' : ''}" data-lot="${esc(l.id)}" aria-pressed="${a.selected}"><strong>${esc(l.title)}</strong><small>${l.reportedCount} REPORTED · ${esc(l.family)}</small><span class="lot-value">${a.priced ? money(a.net) + ' modeled net' : 'Awaiting valuation'}</span></button>`;
++  }).join('') || '<p class="empty">No lots match.</p>';
++}
++function renderMetrics() {
++  const a = assess(state), r = current();
++  const metrics = [
++    ['Manifest units', a.units.toLocaleString(), a.claimed + ' seller-reported' + (a.units !== a.claimed ? ' · reconcile count' : ''), ''],
++    ['Modeled recovery', a.unknown || !a.units ? '—' : money(a.recovery), a.unknown ? a.unknown + ' units unpriced' : r.assumptions === 'illustrative' ? 'Example assumptions' : 'Entered estimates', ''],
++    ['Net after costs', moneyOr(a.net), a.margin == null ? 'Margin unavailable' : a.margin.toFixed(1) + '% recovery margin', a.net == null ? '' : a.net < 0 ? 'negative' : 'positive'],
++    ['Maximum buy / unit', moneyOr(a.maxUnit), r.targetMarginPct + '% target margin', '']
++  ];
++  $('metrics').innerHTML = metrics.map(([label,value,note,tone]) => `<div class="metric ${tone}"><span>${label}</span><strong>${value}</strong><small>${esc(note)}</small></div>`).join('');
++}
++function renderManifest() {
++  const r = current(), a = assess(state);
++  if (grid) { grid.setRows(r.rows); selection = grid.selectedIds(); }
++  else selection = selection.filter(id => r.rows.some(x => x.id === id));
++  $('manifestBasis').textContent = r.assumptions === 'illustrative' ? 'Example assumptions · prices are illustrative' : 'Seller claims · entered estimates';
++  $('manifestResult').textContent = `${r.rows.length} lines · ${a.units} modeled / ${a.claimed} reported units${a.units !== a.claimed ? ' · quantity mismatch' : ''}`;
++  $('lineCount').textContent = String(r.rows.length);
++  $('undo').disabled = !history().past.length; $('redo').disabled = !history().future.length;
++  renderFallback(); renderSelection();
++  if (inspection && !r.rows.some(x => x.id === inspection)) closeInspector();
++  else if (inspection && !inspectorDirty) fillInspector();
++}
++function renderFallback() {
++  if (grid) return;
++  const term = $('manifestSearch').value.toLowerCase(), grade = $('gradeFilter').value;
++  const rows = current().rows.filter(r => (!term || [r.model,r.grade].join(' ').toLowerCase().includes(term)) && (grade === 'all' || r.grade === grade));
++  $('manifestFallback').innerHTML = rows.map(r => `<div class="fallback-row"><input type="checkbox" aria-label="Select ${esc(r.model)}" data-select="${esc(r.id)}" ${selection.includes(r.id) ? 'checked' : ''}><button data-inspect="${esc(r.id)}"><strong>${esc(r.model)}</strong><small>${r.qty} units · ${esc(r.grade)} · ${r.recovery == null ? 'Unpriced' : money(r.recovery) + ' / unit'}</small></button></div>`).join('') || '<p class="empty">No manifest lines match this view.</p>';
++}
++function renderSelection() { $('bulkBar').hidden = !selection.length; $('selectionCount').textContent = selection.length + ' selected'; }
++function renderEconomics() {
++  const r = current(), a = assess(state);
++  for (const key of ['buyPerUnit','testingPerUnit','freight']) setInput(key, dollars(r[key]));
++  for (const key of ['reservePct','targetMarginPct']) setInput(key, r[key]);
++  $('useMaxBid').disabled = !a.priced;
++  $('economicReadout').innerHTML = a.priced ? `<strong class="${a.net < 0 ? 'negative' : 'positive'}">${money(a.net)} net</strong><small>${a.margin == null ? 'Margin undefined at zero recovery' : a.margin.toFixed(1) + '% margin'} · ${a.meetsTarget ? 'Meets' : 'Below'} ${r.targetMarginPct}% target</small>` : '<strong>Valuation incomplete</strong><small>Enter resale for every line and a buy price.</small>';
++  const parts = a.priced ? [['Purchase',a.buyTotal,'#e4b974'],['Testing',a.testing,'#6e9a90'],['Freight',a.freight,'#7891b1'],['Reserve',a.reserve,'#a994ad'],['Net',Math.max(0,a.net),'#b3d39f']] : [];
++  const total = parts.reduce((n,p) => n + p[1], 0) || 1; let x = 0;
++  $('costChart').innerHTML = a.priced ? `<svg viewBox="0 0 600 100" role="img" aria-label="Modeled allocation: ${esc(parts.map(p=>p[0]+' '+money(p[1])).join(', '))}">${parts.map(p => { const width = p[1] / total * 600, left = x; x += width; return `<rect x="${left}" y="20" width="${width}" height="45" fill="${p[2]}"><title>${p[0]} ${money(p[1])}</title></rect>`; }).join('')}<text x="0" y="92" fill="#a1b2a5" font-size="12">${a.net < 0 ? 'Costs exceed modeled recovery by ' + money(-a.net) : 'Modeled recovery ' + money(a.recovery)}</text></svg>` : '<span class="empty">The allocation appears when the lot is priced.</span>';
++  $('costLegend').innerHTML = parts.map(p => `<div><span><i style="background:${p[2]}"></i>${p[0]}</span><b>${money(p[1])}</b></div>`).join('');
++  const scenarios = sensitivity(state), largest = Math.max(1, ...scenarios.map(x=>Math.abs(x.net ?? 0)));
++  $('sensitivity').innerHTML = `<div class="scenario-grid">${scenarios.map(s => `<div class="scenario ${s.adjustmentPct === 0 ? 'base' : ''}"><span>${s.adjustmentPct === 0 ? 'BASE CASE' : (s.adjustmentPct > 0 ? '+' : '') + s.adjustmentPct + '% RESALE'}</span><strong class="${s.net < 0 ? 'negative' : 'positive'}">${moneyOr(s.net)}</strong><small>Modeled net</small><small>Max buy / unit ${moneyOr(s.maxUnit)}</small><div class="bar" style="width:${Math.max(0,Math.abs(s.net ?? 0)/largest*100)}%"></div></div>`).join('')}</div>`;
++}
++function renderCompare() {
++  $('comparison').innerHTML = '<table><thead><tr><th>Equipment lot</th><th>Units</th><th>Recovery</th><th>Net</th><th>Margin</th><th>Max / unit</th><th></th></tr></thead><tbody>' + compareLots(state).map(l => `<tr><td>${esc(l.title)}<small>${l.priced ? (l.assumptions === 'illustrative' ? 'Example assumptions' : 'Entered model') : 'Unpriced'}</small></td><td>${l.units} / ${l.claimed}${l.units !== l.claimed ? '<small>Mismatch</small>' : ''}</td><td>${l.unknown || !l.units ? '—' : money(l.recovery)}</td><td class="${l.net == null ? '' : l.net < 0 ? 'negative' : 'positive'}">${moneyOr(l.net)}</td><td>${l.margin == null ? '—' : l.margin.toFixed(1) + '%'}</td><td>${moneyOr(l.maxUnit)}</td><td><button data-open-lot="${esc(l.id)}">${l.selected ? 'Current lot' : 'Open lot'}</button></td></tr>`).join('') + '</tbody></table>';
++}
++function renderProof() {
++  const l = getLot(state), p = verify(state), review = state.reviewed[l.id] ?? {};
++  setInput('budgetInput', dollars(state.budget)); setInput('modeInput', state.mode);
++  $('needRows').innerHTML = l.needs.map(n => `<div class="check-row"><div><strong>${esc(n.label)}</strong><small>${esc(n.kind)}</small></div><select aria-label="${esc(n.label)} review" data-need="${esc(n.id)}">${[['missing','Needs review'],['supplied','Source supplied'],['reviewed','Reviewed locally']].map(([value,label])=>`<option value="${value}" ${(review[n.id] ?? 'missing') === value ? 'selected' : ''}>${label}</option>`).join('')}</select></div>`).join('');
++  $('coverage').innerHTML = `<div class="coverage-stat">${p.covered.size} / ${l.needs.length}</div><span class="muted">Candidate coverage · ${money(p.cost)} · ${esc(p.status)}</span>`;
++  $('proofRoutes').innerHTML = p.selected.map(o => `<div class="route"><div>${esc(o.provider)}<small>${esc(o.method)} · ${esc(o.quote)}</small></div><b>${money(o.base+o.labor+o.travel)}</b></div>`).join('') || '<p class="empty">No eligible methods in this lot at the selected budget.</p>';
++}
++function renderSource() {
++  const l = getLot(state), r = current();
++  $('lotIdentity').textContent = l.subject; $('lotAssertion').textContent = l.claim || 'No source statement entered.';
++  setInput('sourceInput', r.source); $('sourceLink').hidden = !r.source; $('sourceLink').href = r.source || '#'; $('sellerCount').textContent = String(l.reportedCount);
++}
++function renderBuyer() {
++  const l = getLot(state), r = current(), a = assess(state), p = verify(state);
++  setInput('recipient', state.recipient); setInput('buyerRequirements', state.buyerRequirements); setInput('buyerNotes', r.notes);
++  $('packetState').textContent = state.prepared ? 'Prepared locally · not sent' : 'Draft · not sent';
++  $('buyerPaper').innerHTML = `<small>ACQUISITION INQUIRY · ${state.prepared ? 'PREPARED' : 'DRAFT'}</small><h2>${esc(l.title)}</h2><p>For ${esc(state.recipient || 'recipient to be confirmed')}</p><h3>Inventory</h3><p>${a.units} modeled / ${a.claimed} reported units · ${r.rows.length} lines</p><ul>${r.rows.map(row=>`<li>${esc(row.model)} · ${row.qty} × ${row.recovery == null ? 'unpriced' : money(row.recovery)}</li>`).join('')}</ul><h3>Acquisition model${r.assumptions === 'illustrative' ? ' · example values' : ''}</h3><p>${a.priced ? money(a.recovery) + ' recovery · ' + money(a.buyTotal) + ' purchase<br>' + money(a.net) + ' net · max ' + money(a.maxUnit) + ' / unit' : 'Unit resale and buy price required.'}</p><h3>Evidence</h3><p>${p.covered.size} / ${l.needs.length} candidate methods · ${Object.values(state.reviewed[l.id] ?? {}).filter(x=>x==='reviewed').length} checks reviewed locally</p><p>${esc(r.source || 'Original source URL missing')}</p><h3>Buyer decision</h3><p>${esc(state.buyerRequirements || 'Decision and pickup terms missing.')}</p>${r.notes ? '<p>'+esc(r.notes)+'</p>' : ''}<small>Seller claims are unverified. No purchase, inspection or custody transfer recorded.</small>`;
++}
++function render() {
++  const l = getLot(state); $('lotTitle').textContent = l.title; $('lotFamily').textContent = l.family;
++  renderLots(); renderMetrics(); renderManifest(); renderEconomics(); renderCompare(); renderProof(); renderSource(); renderBuyer(); savedLabel();
++}
++function route(replace = false) { const url = new URL(location.href); url.searchParams.set('lot', state.selected); url.hash = active; window.history[replace ? 'replaceState' : 'pushState'](null,'',url); }
++function show(view, {url = true} = {}) {
++  if (!views.includes(view)) view = 'manifest'; active = view;
++  document.querySelectorAll('[data-scene]').forEach(el => el.hidden = el.dataset.scene !== view);
++  document.querySelectorAll('[data-view]').forEach(el => el.setAttribute('aria-current', el.dataset.view === view ? 'page' : 'false'));
++  if (url) route();
++}
++function chooseLot(id, view = active, url = true) {
++  if (!ensureInputs()) return false;
++  grid?.stopEditing(); const next = selectLot(clone(state), id);
++  closeInspector(); grid?.clearSelection(); selection = []; state = next; generation++; dirty = true;
++  $('manifestSearch').value = ''; $('gradeFilter').value = 'all'; grid?.setFilter('','all');
++  render(); show(view,{url}); schedule(); return true;
++}
++function fillInspector() {
++  const row = current().rows.find(r=>r.id === inspection); if (!row) return closeInspector();
++  const f = $('lineForm').elements;
++  for (const key of ['id','model','qty','grade']) f.namedItem(key).value = row[key];
++  f.namedItem('recovery').value = dollars(row.recovery);
++  $('lineTotal').innerHTML = (row.recovery == null ? 'Unpriced' : money(row.qty*row.recovery)) + '<small>Extended modeled resale</small>';
++}
++function closeInspector() { inspection = null; inspectorDirty = false; $('lineInspector').hidden = true; savedLabel(); }
++function inspect(id) { if (inspection === id) return; if (!ensureInputs()) return; inspection = id; inspectorDirty = false; $('lineInspector').hidden = false; fillInspector(); }
++function applyInspector() {
++  if (!inspectorDirty) return true;
++  const form = $('lineForm'); if (!form.reportValidity()) return false;
++  const data = new FormData(form), patch = {model:String(data.get('model')).trim(),qty:boundedInt(data.get('qty'),{min:1,max:50000}),grade:data.get('grade'),recovery:cents(data.get('recovery'),{empty:true})};
++  const next = editManifest(state,{ids:[inspection],patch}); inspectorDirty = false; commit(next); return true;
++}
++function ensureInputs() {
++  if (invalid.size) { const el = [...invalid][0]; show(el.closest('[data-scene]').dataset.scene); el.reportValidity(); status('Correct the highlighted input before continuing.',true); return false; }
++  return attempt(applyInspector) !== false;
++}
++async function mountGrid() {
++  if (gridLoading || grid) return; gridLoading = true; $('gridRetry').hidden = true;
++  try {
++    grid = await createManifestGrid($('manifestGrid'), {rows:current().rows,
++      onEdit: change => { if (!ensureInputs()) return false; return commit(editManifest(state,change)); },
++      onSelection: ids => { selection = ids; renderSelection(); }, onInspect:inspect,
++      onEditingChange: () => { savedLabel(); if (dirty) schedule(); }, onError: error => status(error.message,true)});
++    grid.setRows(current().rows); grid.setFilter($('manifestSearch').value,$('gradeFilter').value);
++    $('manifestGrid').hidden = false; $('manifestFallback').hidden = true; selection = []; renderSelection();
++  } catch (error) { $('manifestGrid').hidden = true; $('manifestFallback').hidden = false; $('gridRetry').hidden = false; renderFallback(); status(error.message + ' The list editor is available.',true); }
++  finally { gridLoading = false; }
++}
++async function save() {
++  clearTimeout(timer);
++  if (!ready || saving || !dirty || conflict || invalid.size || inspectorDirty || grid?.hasPendingEdit()) return;
++  if (!draft) { status('Local storage unavailable. Export the brief to keep your work.',true); return; }
++  const version = generation, value = hydrate(clone(state)); saving = true; savedLabel();
++  try { revision = await draft.write(revision,value); if (generation === version) dirty = false; }
++  catch (error) { conflict = true; $('conflict').hidden = false; status(error.message,true); }
++  finally { saving = false; savedLabel(); if (dirty && !conflict && generation !== version) schedule(); }
++}
++async function reloadSaved() {
++  if (!draft || saving) return;
++  grid?.stopEditing();
++  try {
++    const openedAt = generation, hadPending = inspectorDirty, inputValues = [...document.querySelectorAll('[data-record],[data-global],#lineForm input,#lineForm select,#manifestGrid input,#manifestGrid select')].map(el=>el.value).join('\u0000');
++    const stored = await draft.read(); if (generation !== openedAt || inspectorDirty !== hadPending || [...document.querySelectorAll('[data-record],[data-global],#lineForm input,#lineForm select,#manifestGrid input,#manifestGrid select')].map(el=>el.value).join('\u0000') !== inputValues) throw Error('The draft changed while loading. Export or finish your changes before reloading.'); if (!stored) throw Error('No saved draft found. Your current draft remains open.');
++    const next = hydrate(clone(stored.value));
++    state = next; revision = stored.revision; generation++; dirty = false; conflict = false; proposal = null; clearTimeout(timer);
++    invalid.forEach(el=>el.setCustomValidity('')); invalid.clear(); closeInspector(); histories.clear(); selection=[]; grid?.clearSelection();
++    $('conflict').hidden = true; render(); show(active,{url:false}); route(true); status('Loaded the saved revision.');
++  } catch (error) { status(error.message,true); }
++}
++function downloadReview(kind) {
++  if (!ensureInputs()) return;
++  attempt(()=>{ grid?.stopEditing(); download('itad-'+state.selected+(kind==='md'?'.md':'.yaff'),kind==='md'?buyerBrief(state):buyerYaff(state),kind==='md'?'text/markdown;charset=utf-8':'text/plain;charset=utf-8'); status('Exported the current acquisition draft.'); });
++}
++function fieldInput(el) {
++  const recordKey = el.dataset.record, key = recordKey || el.dataset.global;
++  if (!key) return;
++  try {
++    if (['reservePct','targetMarginPct'].includes(key) && !/^\d+$/.test(el.value)) throw Error('Enter a whole percentage from 0 to 85.');
++    const value = ['buyPerUnit','testingPerUnit','freight','budget'].includes(key) ? cents(el.value,{empty:key==='buyPerUnit'}) : ['reservePct','targetMarginPct'].includes(key) ? boundedInt(el.value,{min:0,max:85}) : key === 'source' ? sourceUrl(el.value.trim()) : el.value;
++    const next = clone(state); if (recordKey) getRecord(next)[key] = value; else next[key] = value;
++    validateState(next); invalid.delete(el); el.setCustomValidity('');
++    if ((recordKey ? current()[key] : state[key]) !== value) commit(next);
++    else { savedLabel(); if (dirty) schedule(); }
++  } catch (error) { invalid.add(el); el.setCustomValidity(error.message); savedLabel(); status(error.message,true); }
++}
++function undo(redo = false) {
++  if (!ensureInputs()) return;
++  grid?.stopEditing(); const h = history(), from = redo ? h.future : h.past, to = redo ? h.past : h.future;
++  if (!from.length) return; const restored = from.pop(); to.push(snapshot());
++  const next = clone(state); next.records[next.selected] = clone(restored.record); next.reviewed[next.selected] = clone(restored.review); Object.assign(next,restored.record.settings);
++  commit(next,{remember:false,material:false}); status(redo?'Change reapplied.':'Change undone.');
++}
++function propose(remove = false) {
++  if (!ensureInputs()) return; grid?.stopEditing();
++  attempt(()=>{
++    const ids = [...selection], field = $('bulkField').value;
++    const value = remove ? null : field === 'grade' ? $('bulkGrade').value : field === 'qty' ? boundedInt($('bulkValue').value,{min:1,max:50000}) : cents($('bulkValue').value,{empty:true});
++    const next = remove ? removeManifest(state,ids) : editManifest(state,{ids,patch:{[field]:value}});
++    proposal = {next,generation};
++    const format = v => field === 'recovery' ? v == null ? 'Unpriced' : money(v) : esc(v);
++    $('bulkDiff').innerHTML = current().rows.filter(r=>ids.includes(r.id)).map(r=>`<div class="diff-row"><strong>${esc(r.model)}</strong><del>${remove ? r.qty + ' units' : format(r[field])}</del><ins>${remove ? 'Remove line' : format(value)}</ins></div>`).join('');
++    $('applyBulk').textContent = remove ? 'Remove '+ids.length+' lines' : 'Apply '+ids.length+' changes'; $('bulkDialog').showModal();
++  });
++}
++function applySample() {
++  if (!ensureInputs()) return;
++  attempt(()=>mutate((s,r)=>{
++    const l = getLot(s);
++    const rows = s.selected === 'houston35' ? [['HP desktop / scenario A',20,8500,'working'],['HP desktop / scenario B',15,4500,'untested']] : s.selected === 'virginia120' ? [['Mixed laptop / repair cohort',80,4500,'untested'],['Parts-only cohort',40,1500,'parts']] : s.selected === 'central8' ? [['OptiPlex 7490',4,20000,'untested'],['OptiPlex 7480',4,17000,'untested']] : [[l.family || 'Equipment scenario',l.reportedCount,8500,'untested']];
++    r.rows = rows.map(([model,qty,recovery,grade],i)=>({id:'sample-'+i,model,qty,recovery,grade}));
++    Object.assign(r,{buyPerUnit:s.selected==='central8'?5000:1200,testingPerUnit:500,freight:12000,reservePct:10,targetMarginPct:15,assumptions:'illustrative'});
++  })); $('sampleDialog').close(); status('Applied illustrative values to this lot.');
++}
++document.addEventListener('input',e=>{
++  const el=e.target;
++  if (el.closest('#manifestGrid')) { savedLabel(); return; }
++  if (el.closest('#lineForm')) { inspectorDirty = true; savedLabel(); return; }
++  if (el.matches('[data-record],[data-global]')) fieldInput(el);
+ });
+-$("addManifest").addEventListener("click",()=>{const rows=current().rows;
+- rows.push({id:"row-"+Date.now()+"-"+rows.length,model:"",qty:1,grade:"unknown",recovery:null});touch();render();show("manifest");});
+-$("manifestFile").addEventListener("change",async e=>{
+- const file=e.target.files[0];if(!file)return;
+- try{const data=parseManifest(await file.text());current().rows=data;touch();render();
+-  status("Imported "+data.length+" distinct manifest lines locally; stock and identities still need verification.");}
+- catch(error){status(error.message,true);}finally{e.target.value="";}
++document.addEventListener('change',e=>{
++  const el=e.target;
++  if (el.matches('select[data-record],select[data-global]')) fieldInput(el);
++  if (el.dataset.need) attempt(()=>{ if (ensureInputs()) mutate(s=>{ (s.reviewed[s.selected]??={})[el.dataset.need] = el.value; }); });
++  if (el.dataset.select) { selection=el.checked?[...new Set([...selection,el.dataset.select])]:selection.filter(id=>id!==el.dataset.select); renderSelection(); }
+ });
+-$("prepareBuyer").addEventListener("click",()=>{safe(()=>{
+- if(!state.recipient.trim()||!state.buyerRequirements.trim())throw Error("Recipient and intended buyer decision must be specified.");
+- state.prepared=true;touch();state.prepared=true;render();status("Buyer inquiry prepared locally. No communication, offer or custody operation occurred.");
+-});});
+-$("saveDraft").addEventListener("click",async()=>{
+- if(!draft)return status("Local storage unavailable; use the human-readable exports.",true);
+- try{revision=await draft.write(revision,state);$("savedState").textContent="Saved on this browser · revision "+revision;status("Local workspace saved, without contacting a buyer or vendor.");}
+- catch(e){status(e.message,true);}
++document.addEventListener('click',e=>{
++  const b=e.target.closest('button'); if(!b)return;
++  if(b.dataset.view && ensureInputs()) { grid?.stopEditing(); show(b.dataset.view); }
++  if(b.dataset.lot) chooseLot(b.dataset.lot);
++  if(b.dataset.openLot) chooseLot(b.dataset.openLot,'economics');
++  if(b.dataset.inspect) inspect(b.dataset.inspect);
++  if(b.dataset.close) $(b.dataset.close).close();
+ });
+-$("exportBrief").addEventListener("click",()=>downloadReview("md"));
+-$("exportYaff").addEventListener("click",()=>downloadReview("yaff"));
++$('lotSearch').oninput=renderLots;
++for (const id of ['manifestSearch','gradeFilter']) $(id).addEventListener(id==='gradeFilter'?'change':'input',()=>{ grid?.setFilter($('manifestSearch').value,$('gradeFilter').value);renderFallback(); });
++$('lineForm').onsubmit=e=>{e.preventDefault();if(attempt(applyInspector))status('Manifest line updated.');};
++$('closeInspector').onclick=()=>{if(ensureInputs())closeInspector();};
++$('undo').onclick=()=>undo(); $('redo').onclick=()=>undo(true);
++$('addManifest').onclick=()=>{if(!ensureInputs())return;attempt(()=>{const id='row-'+crypto.randomUUID();commit(addManifestRow(state,{id,model:'New manifest line',qty:1,grade:'unknown',recovery:null}));inspect(id);$('lineForm').elements.namedItem('model').select();});};
++$('bulkField').onchange=()=>{$('bulkGrade').hidden=$('bulkField').value!=='grade';$('bulkValue').hidden=$('bulkField').value==='grade';$('bulkValue').value='';$('bulkValue').placeholder=$('bulkField').value==='recovery'?'Resale / unit ($)':'Quantity per line';};
++$('previewBulk').onclick=()=>propose();$('removeSelected').onclick=()=>propose(true);
++$('clearSelection').onclick=()=>{grid?.clearSelection();selection=[];renderSelection();renderFallback();};
++$('applyBulk').onclick=()=>attempt(()=>{if(!proposal||proposal.generation!==generation)throw Error('The lot changed. Review the selection again.');commit(proposal.next);proposal=null;$('bulkDialog').close();status('Manifest changes applied. Undo is available.');});
++$('newLot').onclick=()=>{if(ensureInputs())$('newLotDialog').showModal();};
++$('newLotForm').onsubmit=e=>{e.preventDefault();attempt(()=>{const f=new FormData(e.target);const next=createLot(state,{title:String(f.get('title')).trim(),reportedCount:boundedInt(f.get('reportedCount'),{min:1,max:50000}),family:f.get('family'),source:sourceUrl(String(f.get('source')).trim()),claim:f.get('claim')});closeInspector();grid?.clearSelection();selection=[];commit(next,{remember:false});$('newLotDialog').close();e.target.reset();show('manifest');status('New lot created. Add its manifest to begin.');});};
++$('sampleValues').onclick=()=>{if(ensureInputs())$('sampleDialog').showModal();}; $('applySample').onclick=applySample;
++$('manifestFile').onchange=async e=>{
++  const file=e.target.files[0];if(!file)return;
++  try {if(!ensureInputs())return;grid?.stopEditing();const lot=state.selected,version=generation;if(file.size>140000)throw Error('Import a TSV under 140 KB.');const rows=parseManifest(await file.text());if(state.selected!==lot||generation!==version)throw Error('The lot changed during import. Choose the file again.');mutate((s,r)=>{r.rows=rows;if(r.assumptions!=='illustrative')r.assumptions='entered';});status('Imported '+rows.length+' manifest lines.');}
++  catch(error){status(error.message,true);}finally{e.target.value='';}
++};
++$('useMaxBid').onclick=()=>{if(ensureInputs())attempt(()=>mutate((s,r)=>{const a=assess(s);if(!a.priced)throw Error('Complete the valuation first.');r.buyPerUnit=a.maxUnit;}));};
++$('prepareBuyer').onclick=()=>{if(ensureInputs())attempt(()=>{if(!state.recipient.trim()||!state.buyerRequirements.trim())throw Error('Enter a recipient and buyer decision.');mutate(s=>{s.prepared=true;},{material:false});status('Buyer inquiry prepared locally.');});};
++$('saveDraft').onclick=()=>{if(ensureInputs()){grid?.stopEditing();void save();}};
++$('exportBrief').onclick=()=>downloadReview('md');$('conflictExport').onclick=()=>downloadReview('md');$('exportYaff').onclick=()=>downloadReview('yaff');
++$('reloadSaved').onclick=reloadSaved;$('gridRetry').onclick=mountGrid;
++window.addEventListener('beforeunload',e=>{if(dirty||invalid.size||inspectorDirty||grid?.hasPendingEdit()){e.preventDefault();e.returnValue='';}});
++window.addEventListener('popstate',()=>{const id=new URL(location.href).searchParams.get('lot');if(id&&getLots(state).some(l=>l.id===id)){if(!chooseLot(id,location.hash.slice(1),false))route(true);}else if(ensureInputs())show(location.hash.slice(1),{url:false});});
+ (async()=>{
+- try{draft=await openDraft("itad-exchange.v1");const stored=await draft.read();
+-  if(stored?.value?.records&&lots.some(x=>x.id===stored.value.selected)){state=stored.value;revision=stored.revision;status("Restored a locally retained equipment decision.");}}
+- catch(e){status("Local drafts unavailable: "+e.message,true);}
+- render();show(["source","manifest","verification","economics","buyer"].includes(location.hash.slice(1))?location.hash.slice(1):"source");
++  document.querySelector('.app').inert = true;
++  try {draft=await openDraft('itad-exchange.v1');const stored=await draft.read();if(stored){const next=hydrate(clone(stored.value));state=next;revision=stored.revision;}}
++  catch(error){conflict=true;$('conflict').hidden=false;status('Could not open saved draft: '+error.message,true);}
++  const requested=new URL(location.href).searchParams.get('lot');if(requested&&getLots(state).some(l=>l.id===requested))selectLot(state,requested);
++  render();show(location.hash.slice(1),{url:false});route(true);ready=true;document.querySelector('.app').inert=false;document.body.dataset.ready='true';await mountGrid();
+ })();
+diff --git a/site/itad-exchange/core.mjs b/site/itad-exchange/core.mjs
+index 11419c2..5346e54 100644
+--- a/site/itad-exchange/core.mjs
++++ b/site/itad-exchange/core.mjs
+@@ -1,108 +1,199 @@
+-import { fresh, optimize, toYaff } from "../brief-studio/core.mjs";
+-import { cents, dollars, boundedInt, safeLines, sourceUrl, money, clean, quoted } from "../journey-kit/room.mjs";
++import { fresh, optimize, toYaff, checkOpportunity, validSource } from "../brief-studio/core.mjs";
++import { cents, boundedInt, safeLines, money, quoted } from "../journey-kit/room.mjs";
+ 
+ const template=fresh("itad");
+ const COUNTS={houston35:35,virginia120:120,central8:8};
+ const grades=["unknown","working","untested","parts"];
++const settingKeys=["recipient","buyerRequirements","budget","mode","prepared"];
++const defaults={recipient:"Illustrative ITAD buyer",budget:14500,mode:"exploratory",buyerRequirements:"Ask which lot, buying number, freight or pickup terms.",prepared:false};
++const MAX_CENTS=1000000000;
++const record=value=>value!==null&&typeof value==="object"&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
++function text(value,max,label,{empty=true}={}){if(typeof value!=="string"||value.length>max||(!empty&&!value.trim())||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value))throw Error("Enter a valid "+label+" within "+max+" characters.");return value;}
++function integer(value,min,max,label){if(!Number.isSafeInteger(value)||value<min||value>max)throw Error(label+" must be a whole number from "+min+" to "+max+".");return value;}
++function price(value,nullable=false){if(nullable&&value===null)return value;return integer(value,0,MAX_CENTS,"Amount in cents");}
++function checkedSource(value){text(value,420,"source URL");if(value&&!validSource(value))throw Error("Use an HTTPS source without credentials, fragments or whitespace.");return value;}
++function identity(value){if(typeof value!=="string"||!value.length||value.length>100||!/^[-a-zA-Z0-9_]+$/.test(value)||["__proto__","prototype","constructor"].includes(value))throw Error("Use a distinct, bounded row or lot ID.");return value;}
++function settings(value,fallback=defaults){
++ if(!record(value)||!record(fallback))throw Error("Invalid lot settings.");
++ const out=Object.fromEntries(settingKeys.map(key=>[key,value[key]!==undefined?value[key]:fallback[key]!==undefined?fallback[key]:defaults[key]]));
++ text(out.recipient,120,"recipient");text(out.buyerRequirements,2000,"buyer requirements");price(out.budget);
++ if(!["exploratory","documented"].includes(out.mode)||typeof out.prepared!=="boolean")throw Error("Invalid comparison mode or prepared state.");
++ return out;
++}
+ export const lots=template.opportunities.map((op,i)=>({
+  id:op.id,title:op.title,subject:op.subject,claim:op.assertion,source:op.source,
+  reportedCount:COUNTS[op.id],family:["Desktop fleet","Laptop fleet","All-in-one fleet"][i],
+  needs:op.needs.map(n=>({...n})),offers:op.offers.map(r=>({...r}))
+ }));
+ export function initial(){
+- return {selected:lots[0].id,recipient:"Illustrative ITAD buyer",
++ return hydrate({selected:lots[0].id,recipient:"Illustrative ITAD buyer",
+    budget:14500,mode:"exploratory",buyerRequirements:"Ask which lot, buying number, freight or pickup terms.",
+    reviewed:{},prepared:false,
+    records:Object.fromEntries(lots.map(l=>[l.id,{
+      source:l.source||"",rows:[{id:"seller-count",model:"Exact models still need a manifest",qty:l.reportedCount,grade:"unknown",recovery:null}],
+      buyPerUnit:null,testingPerUnit:0,freight:0,reservePct:10,targetMarginPct:15,notes:""
+    }]))
+- };
++ });
++}
++export function getLots(s){if(s.customLots!==undefined&&!Array.isArray(s.customLots))throw Error("Invalid custom lot collection.");return [...lots,...(s.customLots??[])];}
++export function getLot(s){const lot=getLots(s).find(x=>x.id===s.selected);if(!lot)throw Error("Select an existing equipment lot.");return lot;}
++export function getRecord(s){const r=s.records?.[getLot(s).id];if(!record(r))throw Error("This lot has no retained record.");return r;}
++function lotSettings(s,id){const stored=s.records?.[id]?.settings;return id===s.selected?settings(s,stored??defaults):settings(stored??{},s.settingsVersion===1?defaults:s);}
++function validateRows(rows){
++ if(!Array.isArray(rows)||rows.length>130)throw Error("A manifest supports at most 130 lines.");
++ const seen=new Set();let units=0;
++ for(const row of rows){
++  if(!record(row))throw Error("Invalid manifest row.");identity(row.id);if(seen.has(row.id))throw Error("Manifest row IDs must be unique.");seen.add(row.id);
++  text(row.model,100,"model",{empty:false});integer(row.qty,1,50000,"Quantity");units+=row.qty;
++  if(units>50000)throw Error("Manifest exceeds the bounded 50,000-unit workspace.");
++  if(!grades.includes(row.grade))throw Error("Choose a supported condition grade.");price(row.recovery,true);
++ }return rows;
++}
++export function validateState(s){
++ if(!record(s)||!record(s.records)||!record(s.reviewed??{}))throw Error("Open a valid equipment workspace.");
++ const all=getLots(s);if(all.length>100)throw Error("Keep at most 100 equipment lots.");const ids=new Set();
++ for(const lot of all){
++  if(!record(lot))throw Error("Invalid equipment lot.");identity(lot.id);if(ids.has(lot.id))throw Error("Lot IDs must be unique.");ids.add(lot.id);
++  text(lot.title,160,"lot title",{empty:false});text(lot.subject,160,"lot reference");text(lot.family,100,"equipment family");text(lot.claim,1200,"seller claim");checkedSource(lot.source);integer(lot.reportedCount,1,50000,"Seller-reported count");
++  if(lot.templateId!==undefined&&!lots.some(template=>template.id===lot.templateId))throw Error("Unknown equipment template provenance.");
++  checkOpportunity({...lot,assertion:lot.claim});
++  for(const need of lot.needs){text(need.label,160,"check label",{empty:false});text(need.source??"",1200,"check source");if(!["missing","supplied","reviewed"].includes(need.status))throw Error("Invalid check status.");}
++  for(const offer of lot.offers){text(offer.provider,120,"provider",{empty:false});text(offer.group??"",60,"visit group");text(offer.quoteRef??"",250,"quote reference");price(offer.base);price(offer.labor);price(offer.travel);if(!["estimate","quoted"].includes(offer.quote)||!["unknown","conditional","ready"].includes(offer.availability))throw Error("Invalid route quote or availability status.");}
++  const r=s.records[lot.id];if(!record(r))throw Error("This lot has no retained record.");
++  checkedSource(r.source);validateRows(r.rows);price(r.buyPerUnit,true);price(r.testingPerUnit);price(r.freight);
++  integer(r.reservePct,0,85,"Reserve percentage");integer(r.targetMarginPct,0,85,"Target margin percentage");text(r.notes,47999,"reviewer notes");
++  if(r.assumptions!==undefined&&!["illustrative","entered"].includes(r.assumptions))throw Error("Choose illustrative or entered assumption provenance.");
++  if(r.settings!==undefined)settings(r.settings);lotSettings(s,lot.id);
++  const reviewed=s.reviewed?.[lot.id]??{};if(!record(reviewed)||Object.entries(reviewed).some(([id,status])=>!lot.needs.some(n=>n.id===id)||!["missing","supplied","reviewed"].includes(status)))throw Error("Invalid local review state.");
++ }
++ if(!ids.has(s.selected)||Object.keys(s.records).some(id=>!ids.has(id))||Object.keys(s.reviewed??{}).some(id=>!ids.has(id)))throw Error("Workspace references an unknown lot.");
++ return s;
++}
++export function hydrate(s){
++ validateState(s);const snapshots=new Map(getLots(s).map(l=>[l.id,lotSettings(s,l.id)]));
++ for(const [id,value] of snapshots)s.records[id].settings={...value};
++ Object.assign(s,snapshots.get(s.selected));s.settingsVersion=1;s.customLots??=[];s.reviewed??={};return s;
++}
++export function selectLot(s,id){
++ if(!getLots(s).some(l=>l.id===id))throw Error("Select an existing equipment lot.");hydrate(s);
++ const next={...s.records[id].settings};s.selected=id;Object.assign(s,next);return s;
+ }
+-export const getLot=s=>lots.find(x=>x.id===s.selected)??lots[0];
+-export const getRecord=s=>s.records[getLot(s).id];
+ export function verify(s){
+- const source=getLot(s),op={...source,needs:source.needs,offers:source.offers};
+- return optimize(op,s.budget,s.mode);
++ validateState(s);const source=getLot(s),setting=lotSettings(s,source.id),op={...source,source:getRecord(s).source,assertion:source.claim};
++ return optimize(op,setting.budget,setting.mode);
+ }
+ export function parseManifest(text){
+  const data=safeLines(text,["model","qty","grade","recovery_per_unit"],{limit:130});
+  const seen=new Set();
+- return data.map((r,i)=>{
++ const rows=data.map((r,i)=>{
+   const id=r.model.toLowerCase().replace(/\s+/g,"-");
+   if(!r.model||r.model.length>100||seen.has(id)||!grades.includes(r.grade))
+     throw Error("Row "+(i+2)+": models must be unique, bounded, and have a valid grade.");
+   seen.add(id);return {id:"m-"+(i+1),model:r.model,qty:boundedInt(r.qty,{min:1,max:50000}),
+     grade:r.grade,recovery:r.recovery_per_unit===""?null:cents(r.recovery_per_unit)};
+- });
++ });return validateRows(rows);
++}
++function selectedIds(s,ids){
++ if(!Array.isArray(ids)||!ids.length||new Set(ids).size!==ids.length||ids.some(id=>!getRecord(s).rows.some(r=>r.id===id)))throw Error("Select existing manifest rows once each.");return new Set(ids);
++}
++function manifestChange(s,change){validateState(s);const next=hydrate(structuredClone(s));change(getRecord(next));next.prepared=false;getRecord(next).settings.prepared=false;return validateState(next);}
++export function editManifest(s,{ids,patch}={}){
++ validateState(s);const chosen=selectedIds(s,ids);
++ if(!record(patch)||!Object.keys(patch).length||Object.keys(patch).some(key=>!["model","qty","grade","recovery"].includes(key)))throw Error("Choose supported manifest fields to update.");
++ return manifestChange(s,r=>{r.rows=r.rows.map(row=>chosen.has(row.id)?{...row,...structuredClone(patch)}:row);});
++}
++export function removeManifest(s,ids){validateState(s);const chosen=selectedIds(s,ids);return manifestChange(s,r=>{r.rows=r.rows.filter(row=>!chosen.has(row.id));});}
++export function addManifestRow(s,row){return manifestChange(s,r=>{r.rows.push(structuredClone(row));});}
++const newRecord=lot=>({source:lot.source||"",rows:[],buyPerUnit:null,testingPerUnit:0,freight:0,reservePct:10,targetMarginPct:15,notes:""});
++const defaultNeeds=()=>[
++ {id:"model",kind:"model",label:"Exact models and configuration",weight:5,source:"",status:"missing"},
++ {id:"serial",kind:"serial",label:"Serial inventory and quantity",weight:5,source:"",status:"missing"},
++ {id:"condition",kind:"hardware-boot",label:"Repeatable boot and function test",weight:5,source:"",status:"missing"},
++ {id:"authority",kind:"ownership",label:"Transfer authority and collection access",weight:5,source:"",status:"missing"}
++];
++export function createLot(s,input){
++ validateState(s);if(!record(input)||Object.keys(input).some(key=>!["title","reportedCount","family","source","claim","templateId"].includes(key)))throw Error("Enter supported equipment lot fields.");
++ const chosen=input.templateId===undefined?null:lots.find(l=>l.id===input.templateId);if(input.templateId!==undefined&&!chosen)throw Error("Choose a known equipment template.");
++ const next=hydrate(structuredClone(s)),id="lot-"+crypto.randomUUID();
++ const lot={id,title:input.title,reportedCount:input.reportedCount,family:input.family??"",source:input.source??"",claim:input.claim??"",subject:"draft:"+id,
++  needs:chosen?structuredClone(chosen.needs).map(n=>({...n,source:"",status:"missing"})):defaultNeeds(),
++  offers:chosen?structuredClone(chosen.offers).map(r=>({...r,quote:"estimate",availability:"conditional",quoteRef:""})):[],...(chosen?{templateId:chosen.id}: {})};
++ next.customLots.push(lot);next.records[id]={...newRecord(lot),settings:settings({recipient:"",buyerRequirements:"",budget:next.budget,mode:next.mode,prepared:false})};
++ validateState(next);return selectLot(next,id);
+ }
+-export function assess(s){
+- const lot=getLot(s),r=getRecord(s);
+- const claimed=lot.reportedCount;
+- if(!r.rows.length)return {claimed,units:0,priced:false};
++const floorRatio=(value,numerator)=>Number(BigInt(value)*BigInt(numerator)/100n);
++const ceilRatio=(value,numerator)=>Number((BigInt(value)*BigInt(numerator)+99n)/100n);
++function assessment(lot,r,adjustmentPct=0){
++ const claimed=lot.reportedCount,assumptions=r.assumptions??"unspecified";
+  let units=0,recovery=0,unknown=0;
+  for(const line of r.rows){
+-  units+=boundedInt(line.qty,{min:1,max:50000});if(units>50000)throw Error("Manifest exceeds the bounded 50,000-unit workspace.");
+-  if(line.recovery==null)unknown+=line.qty;else recovery+=line.qty*line.recovery;
++  units+=line.qty;
++  if(line.recovery===null)unknown+=line.qty;else recovery+=line.qty*Number((BigInt(line.recovery)*BigInt(100+adjustmentPct)+50n)/100n);
+  }
+  const buy=r.buyPerUnit;
+- const priced=unknown===0&&buy!=null&&units>0;
+- if(!priced)return {claimed,units,unknown,priced:false,recovery,variantCount:r.rows.length};
+- const buyTotal=buy*units,testing=r.testingPerUnit*units,freight=r.freight,reserve=Math.ceil(recovery*r.reservePct/100);
++ const priced=unknown===0&&buy!==null&&units>0;
++ if(!priced)return {claimed,units,unknown,assumptions,priced:false,recovery,variantCount:r.rows.length,buyTotal:null,testing:null,freight:r.freight,reserve:null,totalCost:null,net:null,margin:null,maxTotal:null,maxUnit:null,maxBid:null,meetsTarget:false};
++ const buyTotal=buy*units,testing=r.testingPerUnit*units,freight=r.freight,reserve=ceilRatio(recovery,r.reservePct);
+  const totalCost=buyTotal+testing+freight+reserve,net=recovery-totalCost;
+  const margin=recovery?net/recovery*100:null;
+- const maxTotal=Math.floor(recovery*(100-r.targetMarginPct-r.reservePct)/100)-testing-freight;
+- const maxUnit=Math.max(0,Math.floor(maxTotal/units));
+- return {claimed,units,unknown,priced:true,recovery,buyTotal,testing,freight,reserve,totalCost,net,
+-   margin,maxUnit,meetsTarget:margin!==null&&margin>=r.targetMarginPct};
++ const maxTotal=Math.max(0,floorRatio(recovery,100-r.targetMarginPct)-reserve-testing-freight);
++ const maxUnit=Math.floor(maxTotal/units),maxBid=maxUnit*units;
++ return {claimed,units,unknown,assumptions,priced:true,recovery,buyTotal,testing,freight,reserve,totalCost,net,variantCount:r.rows.length,
++   margin,maxTotal,maxUnit,maxBid,meetsTarget:recovery>0&&BigInt(net)*100n>=BigInt(recovery)*BigInt(r.targetMarginPct)};
+ }
++export function assess(s){validateState(s);return assessment(getLot(s),getRecord(s));}
++export function sensitivity(s){validateState(s);return [-20,-10,0,10,20].map(adjustmentPct=>({adjustmentPct,...assessment(getLot(s),getRecord(s),adjustmentPct)}));}
++export function compareLots(s){validateState(s);return getLots(s).map(l=>({id:l.id,title:l.title,selected:l.id===s.selected,...assessment(l,s.records[l.id])}));}
+ export function workflow(s){
+- const lot=getLot(s),r=getRecord(s),math=assess(s),reviews=s.reviewed[lot.id]||{},checks=lot.needs;
++ const lot=getLot(s),r=getRecord(s),math=assess(s),reviews=s.reviewed?.[lot.id]||{},checks=lot.needs;
+  const plan=verify(s);
+  return [
+   {id:"source",title:"Seller source",done:!!r.source},
+   {id:"manifest",title:"Inventory table",done:r.rows.length>0 && r.rows.every(x=>x.grade!=="unknown"&&x.model!=="Exact models still need a manifest")},
+   {id:"verification",title:"Proof routing",done:checks.every(x=>reviews[x.id]==="reviewed") && plan.complete},
+   {id:"economics",title:"Acquisition math",done:math.priced},
+-  {id:"buyer",title:"Buyer decision",done:s.prepared}
++  {id:"buyer",title:"Buyer decision",done:lotSettings(s,lot.id).prepared}
+  ];
+ }
+ export function buyerBrief(s){
+- const lot=getLot(s),r=getRecord(s),a=assess(s),p=verify(s),review=s.reviewed[lot.id]||{};
++ const lot=getLot(s),r=getRecord(s),a=assess(s),p=verify(s),review=s.reviewed?.[lot.id]||{},setting=lotSettings(s,lot.id);
++ const clean=value=>String(value??"").replace(/[\r\n\t]+/g," ").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replace(/[\\`*_\[\]~#!|]/g,"\\$&");
+  const lines=[
+  "# Equipment acquisition — "+clean(lot.title),"",
+- "Prepared for: "+clean(s.recipient),"Disposition context: proposed ITAD acquisition, not an accepted purchase.",
++ "Prepared for: "+clean(setting.recipient),"Disposition context: proposed ITAD acquisition, not an accepted purchase.",
+  "Source identity: "+clean(lot.subject),"Seller-reported description: "+clean(lot.claim),
+- "Source URL: "+(r.source||"NOT SUPPLIED — request an exact original listing"),"",
++ "Source URL: "+(r.source?'<' +r.source+'>':"NOT SUPPLIED — request an exact original listing"),"",
+  "## Asset manifest — seller claims until inspected",
+  ...r.rows.map(x=>"- "+clean(x.model)+" · "+x.qty+" units · "+x.grade+" · modeled recovery "+(x.recovery==null?"unpriced":money(x.recovery))+" per unit"),
+  "Seller-reported headline count: "+lot.reportedCount+"; modeled count: "+a.units+
+  (a.units!==lot.reportedCount?" (quantity mismatch requires reconciliation)":" (quantity alone is not a serial audit)"),"",
+  "## Economics and pickup",
++ "Assumption basis: "+({illustrative:"Illustrative example values, possibly including user edits. These are not supplier quotes or verified recovery.",entered:"Entered estimates. These are not supplier quotes or verified recovery.",unspecified:"Origin not recorded. Treat these values as unverified estimates."}[a.assumptions]),
+  ...(a.priced?[
+  "Modeled gross recovery: "+money(a.recovery),
+  "Proposed acquisition spend: "+money(a.buyTotal),
+  "Testing/handling: "+money(a.testing)+" · freight: "+money(a.freight)+" · reserve: "+money(a.reserve),
+- "Modeled net: "+money(a.net)+" · recovery margin: "+a.margin.toFixed(1)+"%",
++ "Modeled net: "+money(a.net)+" · recovery margin: "+(a.margin===null?"not defined at zero recovery":a.margin.toFixed(1)+"%"),
+  "Maximum buy/unit for "+r.targetMarginPct+"% target: "+money(a.maxUnit)
+  ]:["UNPRICED: modeled unit recovery and acquisition offer are required before value conclusions."]),
+  "",
+  "## Verification plan (candidate, not booked)",
+- "Budget: "+money(s.budget)+" · status: "+p.status+" · modeled plan: "+money(p.cost),
+- ...p.selected.map(x=>"- "+clean(x.provider)+" · "+x.method+" · "+x.quote+" / "+x.availability),
+- ...lot.needs.map(x=>"- "+clean(x.label)+" · "+(review[x.id]||"missing")+" · source: "+clean(x.source)),
+- "Unresolved candidate coverage: "+(p.unresolved.map(x=>x.label).join("; ")||"none in candidate optimizer; proof still unconfirmed"),"",
++ ...(lot.templateId?["Illustrative verification template: "+clean(lots.find(item=>item.id===lot.templateId)?.title??lot.templateId)]:[]),
++ "Budget: "+money(setting.budget)+" · status: "+p.status+" · modeled plan: "+money(p.cost),
++ ...p.selected.map(x=>"- "+clean(x.provider)+" · "+clean(x.method)+" · "+clean(x.quote)+" / "+clean(x.availability)),
++ ...lot.needs.map(x=>"- "+clean(x.label)+" · "+clean(review[x.id]||"missing")+" · source: "+clean(x.source)),
++ "Unresolved candidate coverage: "+(p.unresolved.map(x=>clean(x.label)).join("; ")||"none in candidate optimizer; proof still unconfirmed"),"",
+  "## Buyer selection and next conversation",
+- clean(s.buyerRequirements),clean(r.notes),
++ clean(setting.buyerRequirements),clean(r.notes),
+  "No buyer assent, custody transfer, inspection, actual offer, freight reservation, invoice or settlement has occurred."
+  ];
+  return lines.join("\n")+"\n";
+ }
+ export function buyerYaff(s){
+- const lot=getLot(s),r=getRecord(s),a=assess(s),base={
+-  ...fresh("itad"),...s,opportunities:template.opportunities,current:lot.id,
+-  briefHeading:"Equipment acquisition · "+lot.title,recipient:s.recipient,
+-  notes:s.buyerRequirements+" "+r.notes,decision:"hold",hidden:[]
++ const lot=getLot(s),r=getRecord(s),a=assess(s),setting=lotSettings(s,lot.id),base={
++  ...fresh("itad"),...setting,opportunities:[{...lot,assertion:lot.claim,source:r.source}],current:lot.id,
++  briefHeading:("Equipment acquisition · "+lot.title).slice(0,150),recipient:setting.recipient,
++  notes:setting.buyerRequirements+" "+r.notes,decision:"hold",hidden:[]
+  };
+  const original=toYaff(base);
+  return original+
+@@ -110,9 +201,11 @@ export function buyerYaff(s){
+  "source "+quoted(r.source||"unbound")+"\n"+
+  "seller_claim_units "+lot.reportedCount+"\n"+
+  "manifest_units "+a.units+"\n"+
++ "assumption_basis "+a.assumptions+"\n"+
++ (lot.templateId?"verification_template "+quoted(lot.templateId)+"\n":"")+
+  "modeled_recovery_cents "+(a.priced?a.recovery:"unpriced")+"\n"+
+  "buy_offer_cents "+(a.priced?a.buyTotal:"unpriced")+"\n"+
+- "planned_pickup "+quoted(s.buyerRequirements)+"\n"+
++ "planned_pickup "+quoted(setting.buyerRequirements)+"\n"+
+  "rights unreviewed\ncustody none\nbuyer_assent none\n"+
+  "cannot_infer source_claim_is_not_stock_verified_or_committed_purchase\n";
+ }
+diff --git a/site/itad-exchange/index.html b/site/itad-exchange/index.html
+index be3a866..1b0cac9 100644
+--- a/site/itad-exchange/index.html
++++ b/site/itad-exchange/index.html
+@@ -1,88 +1,18 @@
+-<!doctype html>
+-<html lang="en">
+-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+-<meta name="color-scheme" content="dark"><meta name="description" content="Aurekai ITAD acquisition room: real manifest comparisons, constrained verification, acquisition economics and reviewed buyer inquiry without inventing a transaction.">
+-<title>ITAD Acquisition & Disposition · Aurekai</title>
+-<link rel="stylesheet" href="../journey-kit/room.css"><script type="module" src="./app.mjs"></script>
+-<style>.computer{stroke:#9cc6a3;stroke-width:2;fill:#23412f}.computerScreen{fill:#b8d8b1}.computerFrame{fill:#1b382a;stroke:#b8d8b1;stroke-width:1}.artGrid{stroke:#5c7960;stroke-width:1;opacity:.5}.paper .plain{max-height:300px;overflow:auto}.ref button{background:none;color:#c5e2be;border:0;text-decoration:underline}.manifestPrompt{background:#253c2a;border-left:3px solid #ddba87;padding:13px;font-size:12px;color:#e6d3b6}#sourceLink[hidden]{display:none}</style>
+-</head><body>
+-<div class="shell">
+- <nav class="top"><a class="brand" href="../"><mark>A</mark>AUREKAI / WORK</a>
+- <div class="topLinks"><a href="../brief-studio/">Acquisition Brief Studio</a><a href="https://aurekai.work/">WORK</a><a href="https://aurekai-work-samples.pages.dev/">Work Samples</a></div></nav>
+- <header class="hero">
+-  <div><div class="eyebrow">Operating room / ITAD · preparation and buyer decisions</div>
+-    <h1>From an off-market lot<br>to a <em>defensible buying number.</em></h1>
+-    <p>Compare seller-described equipment, reconcile a real inventory, model recovery and landed costs, choose meaningful verification, and prepare a buyer's next decision. No fictional purchase or inspection receipts.</p>
+-    <div class="heroActions"><a class="primary" href="#source" onclick="document.querySelector('[data-chapter=source]').click()">Open equipment room ↗</a><a class="secondary" href="../brief-studio/?profile=itad">Continue in Brief Studio ↗</a></div>
+-  </div>
+-  <div class="heroArt">
+-  <svg viewBox="0 0 460 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+-    <path class="artGrid" d="M15 220H445M15 190H445M15 160H445M15 130H445M15 100H445M15 70H445M15 40H445M60 20V250M130 20V250M200 20V250M270 20V250M340 20V250M410 20V250"/>
+-    <g transform="translate(46,44)"><rect width="104" height="130" rx="10" class="computer"/><rect x="13" y="14" width="78" height="92" rx="5" class="computerFrame"/><rect x="25" y="28" width="53" height="6" rx="2" class="computerScreen"/><circle cx="52" cy="118" r="4" class="computerScreen"/><text x="52" y="155" fill="#d9e5ca" font-size="12" text-anchor="middle">DESKTOP</text></g>
+-    <g transform="translate(169,76)"><rect width="119" height="90" rx="7" class="computer"/><rect x="9" y="7" width="102" height="69" rx="3" class="computerFrame"/><path d="M-9 84H128L140 101H-20Z" class="computerScreen"/><text x="58" y="130" fill="#d9e5ca" font-size="12" text-anchor="middle">LAPTOP</text></g>
+-    <g transform="translate(314,55)"><rect width="112" height="91" rx="5" class="computer"/><rect x="11" y="10" width="90" height="69" class="computerFrame"/><path d="M56 91V120M22 121H90" stroke="#b9d6b0" stroke-width="5"/><text x="56" y="144" fill="#d9e5ca" font-size="12" text-anchor="middle">ALL-IN-ONE</text></g>
+-    <path d="M15 232H445" stroke="#deb98a" stroke-width="2"/><text x="20" y="250" fill="#c6dda8" font-size="11">LOT → MANIFEST → PROOF → PRICE → BUYER</text>
+-  </svg><span class="artCaption">Quantity claims are not serial inventory or guaranteed availability.</span></div>
+- </header>
+- <section class="introStrip"><p>Three retained illustrative opportunity descriptions are already present in Procurement Memory: 35 HP desktops in Houston, 120 mixed laptops in Virginia, and eight Dell all-in-ones in Central Texas. The original sellers, their rights, dates, images and availability have not been independently established here.</p><span class="sourceTag">Source status / seller-described</span></section>
+- <nav class="processRail" id="process" aria-label="Equipment acquisition process"></nav>
+- <div class="layout"><main>
+-  <section class="scene surface active" id="source" data-scene="source">
+-   <div class="surfaceHead"><div><div class="hint">01 / SELECT AN ACTUAL OPPORTUNITY</div><h2>Choose the lot worth investigating.</h2></div><span class="pill warn">SOURCE NOT VERIFIED</span></div>
+-   <div id="lots" class="choices"></div><div class="divider"></div>
+-   <h3>Seller's description</h3><p id="lotAssertion"></p><p class="ref">Retained coordinate: <span id="lotIdentity"></span></p>
+-   <div class="fieldGrid"><label class="full">Original public listing or permitted source URL <input type="url" id="sourceInput" placeholder="https://original.example/listing"></label></div>
+-   <a id="sourceLink" target="_blank" rel="noopener noreferrer" href="#" hidden>Inspect this source ↗</a>
+-   <div class="manifestPrompt">Seller-reported count: <strong id="sellerCount">—</strong>. Enter source and item-level manifest below before treating this as inspectable stock.</div>
+-   <div class="buttonRow"><button class="primary" onclick="document.querySelector('[data-chapter=manifest]').click()">Inspect inventory →</button></div>
+-  </section>
+-  <section class="scene surface" id="manifest" data-scene="manifest">
+-    <div class="hint">02 / INVENTORY RECONCILIATION</div><h2>Work with line items, not a listing headline.</h2>
+-    <p>Correct seller quantities, group exact models, record condition, and add modeled recoverable value. Missing serials, BIOS results and power tests remain open even when totals match.</p>
+-    <div id="manifestRows" class="collection"></div><div class="buttonRow"><button id="addManifest">Add a manifest line +</button></div>
+-    <div class="manifestPrompt">Optional tab-separated manifest import with exact columns: <code>model · qty · grade · recovery_per_unit</code>. Unique models; accepted grades: unknown, working, untested, parts. Existing lines are replaced only after the whole import validates.</div>
+-    <div class="fieldGrid"><label class="full">Replace local manifest with a verified-format TSV <input id="manifestFile" type="file" accept=".tsv,text/tab-separated-values,text/plain"></label></div>
+-    <p id="manifestResult" class="result"></p>
+-  </section>
+-  <section class="scene surface" id="verification" data-scene="verification">
+-   <div class="hint">03 / PROOF BEFORE PROCUREMENT</div><h2>Who could actually answer each question?</h2>
+-   <p>Compare candidate desk checks, remote demonstrations, ownership review and bundled field visits. Shared trips are costed once by exact provider/visit identity. This does not book work or accept evidence.</p>
+-   <div class="fieldGrid"><label>Verification ceiling ($)<input id="budgetInput" inputmode="decimal"></label><label>Route posture <select id="modeInput"><option value="exploratory">Explore estimated routes</option><option value="documented">Only documented & ready routes</option></select></label></div>
+-   <div class="collection" id="needRows"></div><div class="divider"></div><h3>Lowest admissible candidate route</h3>
+-   <div id="coverage" class="result"></div><div id="proofRoutes" class="collection"></div>
+-  </section>
+-  <section class="scene surface" id="economics" data-scene="economics">
+-   <div class="hint">04 / BUYING NUMBER</div><h2>Model whether the lot can pay for itself.</h2>
+-   <p>These are your entered assumptions—not an external price feed. The model reports gross modeled recovery, acquisition cash, test costs, freight, reserve, net and the maximum buy-per-unit required by your margin target.</p>
+-   <div class="fieldGrid triple">
+-     <label>Proposed buy/unit ($)<input id="buyPerUnit" inputmode="decimal" placeholder="Awaiting buyer number"></label>
+-     <label>Testing/handling per unit ($)<input id="testingPerUnit" inputmode="decimal"></label>
+-     <label>Estimated freight total ($)<input id="freight" inputmode="decimal"></label>
+-     <label>Reserve of modeled gross (%)<input id="reservePct" type="number" min="0" max="85"></label>
+-     <label>Required recovery margin (%)<input id="targetMarginPct" type="number" min="0" max="85"></label>
+-   </div>
+-   <div id="economicReadout" class="result"></div>
+-   <div class="warning">No purchase offer, booking, sell-through, disposal right, transfer authorization, or acceptance is inferred from favorable arithmetic.</div>
+-  </section>
+-  <section class="scene surface" id="buyer" data-scene="buyer">
+-   <div class="hint">05 / MAKE THE NEXT CONVERSATION SHORTER</div><h2>Buyer decision and custody questions.</h2>
+-   <p>Prepare the shortlist decision an ITAD buyer actually needs: which lot, indicative buying number, pickup/freight feasibility, model/serial/condition gaps, and who must authorize transfer.</p>
+-   <div class="fieldGrid"><label class="full">Recipient or buying team<input id="recipient" maxlength="100"></label>
+-   <label class="full">Questions the buyer must answer<textarea id="buyerRequirements" rows="4" maxlength="950"></textarea></label>
+-   <label class="full">Reviewer notes / next actions<textarea id="buyerNotes" rows="3" maxlength="950"></textarea></label></div>
+-   <div class="buttonRow"><button id="prepareBuyer" class="primary">Prepare local buyer inquiry</button></div>
+-   <p id="packetState" class="statusLine"></p><p class="warning">A prepared inquiry is not sent. Real collection, custody and payment remain blocked by separate owner authorization and evidence.</p>
+-  </section>
+-  <section class="surface">
+-    <div class="surfaceHead"><div><div class="hint">RETAIN THE REVIEW</div><h3>Save locally or hand over typed material.</h3></div><span id="savedState" class="hint">Unsaved draft</span></div>
+-    <div class="buttonRow"><button id="saveDraft" class="primary">Save this room</button><button id="exportBrief">Download buyer brief (.md)</button><button id="exportYaff">Export typed proposal (.yaff)</button></div>
+-    <p class="statusLine" id="message" aria-live="polite"></p><p class="ref">Local drafts are revisioned in IndexedDB. No buyer, provider, CRM, WorkGraph or payment owner is called by this page.</p>
+-  </section>
+- </main><aside class="paperWrap" aria-label="Current buyer-facing preview">
+-  <section class="paper"><div class="eyebrow">Live recipient preview · editable buyer decision</div><h2 id="paperTitle">Equipment inquiry</h2>
+-   <dl><dt>For</dt><dd id="paperAudience"></dd><dt>Source coordinate</dt><dd id="paperSource"></dd></dl><h3>What the seller says</h3><p id="paperMaterial"></p><h3>Underwriting</h3><p id="paperNumbers"></p><h3>Proposed verification</h3><p id="paperProof"></p><h3>Still unresolved</h3><p class="critical" id="paperOpen"></p><hr><p id="paperProposal"></p>
+-   <footer>Planning and draft review only. Source claims, buyer assent, authority and custody require separate verification.</footer>
+-  </section>
+- </aside></div>
+- <footer class="footer"><span>Aurekai · ITAD Acquisition & Disposition / prospective opportunity analysis</span><span>No inspected goods, accepted price, supplier mandate or dispatched work is represented by this app.</span></footer>
+-</div></body></html>
+\ No newline at end of file
++<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="description" content="Reconcile equipment inventory, model acquisition costs and prepare a buyer inquiry."><title>Acquisition Desk · Aurekai</title><link rel="stylesheet" href="./desk.css"><script type="module" src="./app.mjs"></script></head><body><a class="skip" href="#workspace">Skip to desk</a>
++<div class="app"><aside class="rail"><a class="brand" href="https://aurekai-work-samples.pages.dev/"><span>A</span><div>AUREKAI<small>ACQUISITION DESK</small></div></a><div class="rail-heading"><span>Equipment lots</span><button id="newLot" aria-label="New equipment lot">+</button></div><input id="lotSearch" type="search" placeholder="Find a lot" aria-label="Find a lot"><div id="lots" class="lot-list"></div><footer><small>Sample opportunities + your drafts</small><a href="../brief-studio/?profile=itad">Brief Studio ↗</a><span>Saved in this browser</span></footer></aside>
++<main id="workspace"><header class="page-header"><div><span class="eyebrow" id="lotFamily">Equipment acquisition</span><h1 id="lotTitle">Acquisition desk</h1></div><div class="header-actions"><span id="savedState" role="status">Opening workspace…</span><button id="saveDraft">Save</button><button class="primary" id="exportBrief">Export inquiry ↓</button></div></header><div id="conflict" class="conflict" hidden role="alert"><strong>Another tab saved this workspace.</strong><span>Your edits are still here.</span><button id="conflictExport">Export this inquiry</button><button id="reloadSaved">Load saved workspace</button></div>
++<div id="metrics" class="metrics"></div><nav id="views" aria-label="Lot views"><button data-view="manifest">Inventory <span id="lineCount"></span></button><button data-view="economics">Valuation</button><button data-view="compare">Compare lots</button><button data-view="verification">Checks</button><button data-view="source">Source</button><button data-view="buyer">Buyer inquiry</button></nav>
++<section data-scene="manifest"><div class="section-heading"><div><h2>Asset manifest</h2><span id="manifestBasis" class="muted">Seller-described inventory</span></div><div class="actions"><button id="undo" disabled aria-label="Undo manifest change">↶ Undo</button><button id="redo" disabled aria-label="Redo manifest change">↷ Redo</button><button id="sampleValues">Use example assumptions</button><button id="addManifest" class="primary">Add line +</button></div></div>
++<div class="grid-tools"><input id="manifestSearch" type="search" placeholder="Search model or condition" aria-label="Search manifest"><select id="gradeFilter" aria-label="Condition filter"><option value="all">All conditions</option><option value="unknown">Unknown</option><option value="working">Working</option><option value="untested">Untested</option><option value="parts">Parts</option></select><label class="button upload">Import manifest<input id="manifestFile" type="file" accept=".tsv,text/tab-separated-values" hidden></label><button id="gridRetry" hidden>Retry grid</button></div>
++<div id="bulkBar" class="bulk-bar" hidden><strong id="selectionCount"></strong><select id="bulkField" aria-label="Bulk field"><option value="grade">Condition</option><option value="recovery">Recovery per unit ($)</option><option value="qty">Quantity per line</option></select><select id="bulkGrade" aria-label="Bulk condition"><option value="unknown">Unknown</option><option value="working">Working</option><option value="untested">Untested</option><option value="parts">Parts</option></select><input id="bulkValue" aria-label="Bulk value" hidden><button id="previewBulk">Review changes</button><button id="removeSelected">Remove selected</button><button id="clearSelection">Clear</button></div>
++<div class="grid-stage"><div class="grid-main"><div id="manifestGrid" aria-label="Equipment manifest"></div><div id="manifestFallback" hidden></div><div class="grid-footer"><span id="manifestResult"></span><span>Double-click to edit · Select rows for bulk changes</span></div></div><aside id="lineInspector" class="inspector" hidden><div class="inspector-head"><span>MANIFEST LINE</span><button id="closeInspector" aria-label="Close line details">×</button></div><form id="lineForm"><input type="hidden" name="id"><label>Model / cohort<input name="model" maxlength="100" required></label><div class="two"><label>Quantity<input name="qty" type="number" min="1" max="50000" required></label><label>Condition<select name="grade"><option>unknown</option><option>working</option><option>untested</option><option>parts</option></select></label></div><label>Modeled recovery per unit ($)<input name="recovery" inputmode="decimal" placeholder="Unpriced"></label><div id="lineTotal" class="line-total"></div><button class="primary" type="submit">Apply line changes</button></form></aside></div><details class="import-format"><summary>Manifest format</summary><code>model&nbsp; qty&nbsp; grade&nbsp; recovery_per_unit</code><p>Tab-separated columns. Conditions: unknown, working, untested, parts. Leave recovery blank when unpriced. Up to 130 lines; 50,000 units.</p></details></section>
++<section data-scene="economics" hidden><div class="section-heading"><div><h2>Buying number</h2><span class="muted">Your entered assumptions</span></div><button id="useMaxBid">Use target maximum bid</button></div><div class="valuation-layout"><div class="panel"><h3>Acquisition assumptions</h3><div class="form-grid"><label>Proposed buy / unit ($)<input id="buyPerUnit" data-record="buyPerUnit" inputmode="decimal" placeholder="Unpriced"></label><label>Testing / unit ($)<input id="testingPerUnit" data-record="testingPerUnit" inputmode="decimal"></label><label>Freight total ($)<input id="freight" data-record="freight" inputmode="decimal"></label><label>Recovery reserve (%)<input id="reservePct" data-record="reservePct" type="number" min="0" max="85"></label><label>Required margin (%)<input id="targetMarginPct" data-record="targetMarginPct" type="number" min="0" max="85"></label></div><div id="economicReadout"></div></div><div class="panel"><h3>Recovery allocation</h3><div id="costChart"></div><div id="costLegend"></div></div></div><div class="panel sensitivity"><div class="section-heading"><div><h3>Recovery sensitivity</h3><span class="muted">Same purchase, handling, freight and reserve assumptions</span></div></div><div id="sensitivity"></div></div></section>
++<section data-scene="compare" hidden><div class="section-heading"><div><h2>Compare the shortlist</h2><span class="muted">Every lot uses its own entered assumptions</span></div></div><div id="comparison" class="comparison"></div></section>
++<section data-scene="verification" hidden><div class="section-heading"><div><h2>Evidence and verification</h2><span class="muted">Candidate methods · Provider evidence still needs review</span></div></div><div class="two"><label>Verification budget ($)<input id="budgetInput" data-global="budget" inputmode="decimal"></label><label>Compare using<select id="modeInput" data-global="mode"><option value="exploratory">Planning estimates</option><option value="documented">Recorded ready quotes</option></select></label></div><div class="checks-layout"><div id="needRows"></div><div class="panel"><h3>Proposed route</h3><div id="coverage"></div><div id="proofRoutes"></div></div></div></section>
++<section data-scene="source" hidden><div class="section-heading"><div><h2>Source record</h2><span class="status-chip">Unverified</span></div></div><div class="panel source-panel"><h3 id="lotIdentity"></h3><p id="lotAssertion"></p><label>Original source URL<input id="sourceInput" data-record="source" type="url" placeholder="https://…" maxlength="420"></label><a id="sourceLink" target="_blank" rel="noopener noreferrer" hidden>Open source ↗</a><dl><div><dt>Reported quantity</dt><dd id="sellerCount"></dd></div><div><dt>Source status</dt><dd>Seller claim</dd></div><div><dt>Custody</dt><dd>Not recorded</dd></div></dl></div></section>
++<section data-scene="buyer" hidden><div class="section-heading"><div><h2>Buyer inquiry</h2><span id="packetState" class="muted"></span></div><div class="actions"><button id="exportYaff">Export typed proposal</button><button class="primary" id="prepareBuyer">Prepare inquiry</button></div></div><div class="buyer-layout"><div class="panel"><label>Recipient / buying team<input id="recipient" data-global="recipient" maxlength="100"></label><label>Buyer decision and pickup terms<textarea id="buyerRequirements" data-global="buyerRequirements" maxlength="950" rows="5"></textarea></label><label>Review notes<textarea id="buyerNotes" data-record="notes" maxlength="950" rows="5"></textarea></label></div><article id="buyerPaper" class="paper"></article></div></section>
++<div id="message" class="message" role="status" aria-live="polite"></div></main></div>
++<dialog id="bulkDialog"><h2>Review manifest changes</h2><div id="bulkDiff"></div><footer><button data-close="bulkDialog">Cancel</button><button id="applyBulk" class="primary">Apply changes</button></footer></dialog>
++<dialog id="newLotDialog"><form id="newLotForm"><h2>New equipment lot</h2><label>Lot name<input name="title" required maxlength="160"></label><div class="two"><label>Reported quantity<input name="reportedCount" type="number" min="1" max="50000" required></label><label>Equipment family<select name="family"><option>Desktop fleet</option><option>Laptop fleet</option><option>All-in-one fleet</option><option>Mixed equipment</option></select></label></div><label>Original source URL<input name="source" type="url" maxlength="420" placeholder="https://…"></label><label>Source statement<textarea name="claim" maxlength="1200" rows="3"></textarea></label><footer><button type="button" data-close="newLotDialog">Cancel</button><button class="primary">Create lot</button></footer></form></dialog>
++<dialog id="sampleDialog"><h2>Apply example assumptions</h2><p>This replaces the selected lot's manifest and cost assumptions with illustrative values. The source and other lots stay intact.</p><footer><button data-close="sampleDialog">Cancel</button><button id="applySample" class="primary">Apply example values</button></footer></dialog>
++</body></html>
+\ No newline at end of file

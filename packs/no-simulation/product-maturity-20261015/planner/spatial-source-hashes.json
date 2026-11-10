@@ -1,0 +1,12 @@
+{
+  "components/BonfyreServiceSite/planner-client.mjs": "1444df478e79899bf4c0c97ba884dfedfba13ce61dfefc919acb97406b4d2208",
+  "components/BonfyreServiceSite/planner-spatial.mjs": "65f5a3d5f3beb2e372b343ed878599e76b78c5dd4ec7312e9ea0f292c28cc897",
+  "components/BonfyreServiceSite/planner-spatial-model.mjs": "6a014df44f766b00966883d7480b2fa9af23b80152e16aa1d8292a45c5b94487",
+  "components/BonfyreServiceSite/planner-material.mjs": "21ce9f470ab2625abd7eaf1a102a30b7c56424dd98179ad65e6e2abd34ae5b40",
+  "components/BonfyreServiceSite/planner.css": "ed3423c07a35582595dd6985794e49685e58ed66a9c754b515bcab5b4491507a",
+  "components/BonfyreServiceSite/sections/planner.mjs": "656af3f0812b11b9db62c2320863fa4ca748fcce5f46740d9809c4b650a0c8fc",
+  "components/BonfyreServiceSite/tests/planner-spatial.test.mjs": "22eaf1391f9689dc2e11c92774587b83167bd3278b62c7ec1e3ea61c17f2bed7",
+  "components/BonfyreServiceSite/tests/planner-spatial-browser.mjs": "221dfe7abff91f951009e4c3133bf8066de8d8b164cafa799aaecd57a2c212b3",
+  "components/BonfyreServiceSite/vendor/konva-10.9.0/konva.min.js": "5445b122b332b99530a0ed43ae514ad8121d661d7b7f5d938ae1d5932ed64334",
+  "components/BonfyreServiceSite/vendor/konva-10.9.0/LICENSE": "7190132c82df30243dc2ba512c9509ea3b629329b4266e9f2c3b5dbd04029613"
+}

@@ -1,0 +1,10 @@
+bun test v1.3.13 (bf2e2cec)
+
+cmd/BonfyreClips/tests/hash_file.test.mjs:
+(pass) chunked file hashes match independent byte hashing at buffer boundaries [21.79ms]
+(pass) short reads and interruptions preserve the digest; read failures and changed files refuse [93.36ms]
+
+ 2 pass
+ 0 fail
+ 28 expect() calls
+Ran 2 tests across 1 file. [510.00ms]

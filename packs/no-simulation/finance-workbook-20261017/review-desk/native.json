@@ -1,0 +1,19 @@
+{
+  "package": "f87d0e0b766cec6814b4b7b1859008c873fa16034f8951d54e60a32128dff3fe",
+  "family": "financial-workbooks",
+  "browser_verified": false,
+  "scope": "isolated native Auth, CMS and WebAddress; no live accounts or provider calls",
+  "binaries": {
+    "web": "787c5456cc61080981726ec1023c9704e39243a183e7ef242b31876cd68ed9f0",
+    "cms": "f746bb96341edbeec9ed03093c18783ca1eb1d6cdb2882b01ffce8d702f8ea17",
+    "auth": "893284565e1bf58405f8356cac5dc95cb337941be364aca4073983bfc4cffe60"
+  },
+  "checks": [
+    "installed editor assets, import worker and native continuation manifest",
+    "shared organization review, formula recalculation, XLSX round trip and exact native continuation",
+    "large workbook body retained through existing immutable file storage",
+    "row decisions, original source and baseline survive shared native revisions; edits invalidate decisions and stale saves refuse",
+    "stale write, read role, revoked write role, unrelated account and foreign family refusal",
+    "deactivation removes access and reactivation preserves the saved revision"
+  ]
+}

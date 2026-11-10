@@ -1,0 +1,37 @@
+{
+  "previous_source_sha256": "ff689db627d596254f390cc24c99f3e86626a2fd284e6e2e5de08c2cdaefd319",
+  "current_source_sha256": "a412f24046caa21e2d56523ab227c6acb7a7c62e7d76adc7ea37bc8915faab81",
+  "artifact_sha256": "5dd6f057e49c7c6637b9cf3b5b86190eb2ae9fc93bfaf6a146a03cf53cf48e52",
+  "previous_artifact_sha256": "5dd6f057e49c7c6637b9cf3b5b86190eb2ae9fc93bfaf6a146a03cf53cf48e52",
+  "byte_identical": true,
+  "bytes": 30454,
+  "command": [
+    "zig",
+    "cc",
+    "-target",
+    "wasm32-wasi",
+    "-O3",
+    "-g0",
+    "-Iintegrations/mcp/native",
+    "-Ilib/libbonfyre/include",
+    "integrations/mcp/native/spines_helix_export.c",
+    "lib/libbonfyre/src/bf_sha256.c",
+    "-lm",
+    "-Wl,--no-entry",
+    "-Wl,--export=bf_reduce",
+    "-Wl,--export=malloc",
+    "-Wl,--export=free",
+    "-Wl,--export-memory",
+    "-Wl,--strip-all",
+    "-Wl,--max-memory=0x2000000",
+    "-o",
+    "packs/no-simulation/spines-source-pin-20261013/rebuilt.wasm"
+  ],
+  "rebuilt_sources": {
+    "integrations/mcp/native/spines_helix_vm.c": "d2e761917691b2ccf2b247aed635575e6f6d8c3fcc68b2737fe0100938a5c978",
+    "integrations/mcp/native/spines_helix_export.c": "6ca40d553867d62731b9d6ccb3740d2e88388799d8255038a5a4b47d7d7b8be6",
+    "integrations/mcp/native/spines_sha256_compat.h": "618fe4dbca940007cc57d28a02f28509d9f449300b9555a7c9b3f42a72b25bc5",
+    "lib/libbonfyre/src/bf_sha256.c": "a412f24046caa21e2d56523ab227c6acb7a7c62e7d76adc7ea37bc8915faab81",
+    "lib/libbonfyre/include/bonfyre.h": "d2c7532168a35c48899385e41fddf6d798a6125e231604b269f44fbd3297cf07"
+  }
+}
