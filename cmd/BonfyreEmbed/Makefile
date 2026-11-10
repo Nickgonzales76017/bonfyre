@@ -32,7 +32,13 @@ test: $(TARGET)
 $(TARGET): $(SRC) src/static_embed.h ../../lib/libbonfyre/include/bf_bert_fold.h ../../lib/libbonfyre/libbonfyre.a ../../engine/core/libbonfyre-fabric.a
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Wl,-dead_strip -o $(TARGET) $(SRC) $(LDFLAGS)
 
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-embed.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-embed.next" "$(MANAGED_PREFIX)/bin/bonfyre-embed"
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean test
+.PHONY: all clean test install

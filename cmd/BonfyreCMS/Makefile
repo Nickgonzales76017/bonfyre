@@ -66,6 +66,10 @@ install-bin: $(TARGET)
 	@cp $(TARGET) $(SYNC_BIN)
 	@codesign --force --sign - $(SYNC_BIN) >/dev/null 2>&1 || true
 
+# Witnesses already run under all; this is the uniform entry point.
+.PHONY: test
+test: all
+
 $(COMPACT_PROBE): tests/compact_probe.c src/compact_bindings.c src/compact_bindings.h src/bench_metrics.c src/bench_metrics.h $(LT_LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm
 
