@@ -2607,3 +2607,16 @@ interaction verified-context-handoff-meets-provider-token-evidence
   witness cmd/BonfyreKVCache/tests/context_contract.sh
   witness cmd/BonfyreMeter/tests/context_compare_test.sh
   binding cmd/BonfyreMeter/src/meter_context.h
+
+interaction authoring-template-renders-web-fragments
+  source cmd-surface-scene
+  destination cmd-web-address
+  relation mustach_template_to_native_fragment_projection
+  preserves row selection authority in native code, template purity, cited style allowlist, and exact fragment bytes
+  drops Puck/GrapesJS document structure, editor state, and any style outside the allowlist
+  forbidden_inference a rendered fragment -> the source document was valid, styled, or authorized for publication
+  invalidates_on authoring template sources, the style allowlist, or fragment row selection changing
+  witness cmd/BonfyreSurfaceScene/tests/native_public_authored_document_test.c
+  witness site fragment projection PASS via authoring_template.c
+  binding cmd/BonfyreSurfaceScene/src/authoring_template.c
+  binding cmd/BonfyreWebAddress/src/site_fragment_projection.c

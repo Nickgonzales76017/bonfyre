@@ -211,3 +211,8 @@ Aurekai/generated/integration-repos/
 
 # Local symlinks to installed dependencies (worktrees) are never source.
 node_modules
+
+# Built authoring editor bundles (make -C cmd/BonfyreSurfaceScene authoring-bundle
+# regenerates them from components/BonfyreServiceSite/authoring/).
+site/matrix/authoring-editor.js
+site/matrix/authoring-editor.css

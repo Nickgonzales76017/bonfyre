@@ -3268,6 +3268,13 @@ architecture cmd-surface-scene
   internal_calculus BonfyreSurfaceScene binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSurfaceScene/src/main.c
+  source_path cmd/BonfyreSurfaceScene/src/authoring_markdown.c
+  source_path cmd/BonfyreSurfaceScene/src/authoring_template.c
+  source_path cmd/BonfyreSurfaceScene/src/authoring_native_components.c
+  source_path cmd/BonfyreSurfaceScene/src/authoring_editorial.c
+  source_path cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs
+  witness md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)
+  witness SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)
   source_lineage current command directory and command_smoke.json census
   known_gap built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 

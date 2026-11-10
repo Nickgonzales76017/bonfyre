@@ -23,14 +23,21 @@ budget: {
 	// Merge 2026-11-10: union with the run8 line lands +8 files / +441 lines
 	// net (converge authoring JS plus restored provider boundary, minus the
 	// retired resurrections). Budgets reset to the merged actual; down only.
-	authored_mjs_files: 1562
-	authored_mjs_lines: 172088
+	// Authoring landing 2026-11-10: native md4c/mustach pipeline plus its JS
+	// bridge and tests land +23 files / +2,310 lines. Next port target: the
+	// compile_authoring_* tools once their contracts freeze.
+	// Authoring completion 2026-11-10: editor sources, renderers and reader
+	// assets land +27 files / +4,081 lines net. Same rule: down only.
+	authored_mjs_files: 1612
+	authored_mjs_lines: 178479
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
 	// +1: mcp gateway provider boundary in progress; port target when its
 	// protocol surface settles.
-	other_script_files: 74
+	// Authoring completion 2026-11-10: reader asset and pattern runtime (+2);
+	// down only.
+	other_script_files: 76
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0

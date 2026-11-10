@@ -10184,11 +10184,19 @@
       "publishes": [],
       "semantic_question": "What does the BonfyreSurfaceScene capability organ realize, and by what contract?",
       "source_paths": [
-        "cmd/BonfyreSurfaceScene/src/main.c"
+        "cmd/BonfyreSurfaceScene/src/main.c",
+        "cmd/BonfyreSurfaceScene/src/authoring_markdown.c",
+        "cmd/BonfyreSurfaceScene/src/authoring_template.c",
+        "cmd/BonfyreSurfaceScene/src/authoring_native_components.c",
+        "cmd/BonfyreSurfaceScene/src/authoring_editorial.c",
+        "cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs"
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)",
+        "SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)"
+      ]
     },
     "cmd-swarm": {
       "canonical_name": "BonfyreSwarm",
@@ -32926,6 +32934,23 @@
       "relation": "revocable_authenticated_actor_projection",
       "source": "cmd-auth"
     },
+    "authoring-template-renders-web-fragments": {
+      "destination": "cmd-web-address",
+      "drops": [
+        "Puck/GrapesJS document structure, editor state, and any style outside the allowlist"
+      ],
+      "forbidden_inferences": [
+        "a rendered fragment -> the source document was valid, styled, or authorized for publication"
+      ],
+      "invalidates_on": [
+        "authoring template sources, the style allowlist, or fragment row selection changing"
+      ],
+      "preserves": [
+        "row selection authority in native code, template purity, cited style allowlist, and exact fragment bytes"
+      ],
+      "relation": "mustach_template_to_native_fragment_projection",
+      "source": "cmd-surface-scene"
+    },
     "authority-compiles-to-mask": {
       "destination": "address-plane",
       "drops": [
@@ -41390,9 +41415,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "465cac03b1c3b01158edccb9a9851b7e404a50795a2a0da3686a1adb4f9c644c",
+    "declaration_digest": "ece20a1583421c07deea8c0fb318c4c6092377b26f444cd695d721f52f2ae4e6",
     "declaration_files": 151,
-    "generated_at": "2026-11-10T20:02:58Z"
+    "generated_at": "2026-11-10T20:41:51Z"
   },
   "views": {
     "CapabilityView": {

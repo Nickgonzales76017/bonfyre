@@ -1,0 +1,22 @@
+{
+  "name": "@bonfyre/authoring",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Aurekai visual authoring: GrapesJS, Puck and Editor.js on one Bonfyre-native document",
+  "scripts": {
+    "build": "bun build ./entry.mjs --target browser --minify --outfile ../../../site/matrix/authoring-editor.js",
+    "test": "node --test ../../../cmd/BonfyreSurfaceScene/tests/authoring-tree.test.mjs"
+  },
+  "dependencies": {
+    "grapesjs": "0.23.9",
+    "@puckeditor/core": "0.24.0",
+    "@editorjs/editorjs": "2.31.7",
+    "@editorjs/header": "2.8.9",
+    "@editorjs/list": "2.0.9",
+    "@editorjs/quote": "2.7.6",
+    "@editorjs/table": "2.4.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  }
+}
