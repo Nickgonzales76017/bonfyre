@@ -1,0 +1,272 @@
+name: REA Mac workstation proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/rea-local.sh'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/tests/creator-native-mix.test.mjs'
+      - '.github/workflows/rea-mac-local.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/rea-local.sh'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/tests/creator-native-mix.test.mjs'
+      - '.github/workflows/rea-mac-local.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-isolated-macos:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Validate isolated installer
+        run: |
+          bash -n scripts/rea-local.sh
+          bash scripts/rea-local.sh help
+      - name: Install real REA release into a disposable Mac home
+        run: |
+          set -eu
+          echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/bonfyre-rea-local" >> "$GITHUB_ENV"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/bonfyre-rea-local"
+          bash scripts/rea-local.sh install
+          bash scripts/rea-local.sh install
+          test -f "$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          test -d "$BONFYRE_REA_ROOT/npm-cache"
+      - name: Prove portable private Node bootstrap on a real Mac
+        run: |
+          set -eu
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-private-node-regression"
+          export BONFYRE_REA_FORCE_PRIVATE_NODE=1
+          bash scripts/rea-local.sh install
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          test ! -L "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0"
+          bash scripts/rea-local.sh smoke
+          bash scripts/rea-local.sh install
+          test "$("$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node" --version)" = v24.11.0
+      - name: Reproduce macOS Node-without-adjacent-npm layout
+        run: |
+          set -eu
+          # Simulate the actual user failure: a supported Node executable
+          # available on PATH with no colocated lib/node_modules/npm. Do not
+          # use FORCE_PRIVATE here; the installer must detect and heal it.
+          bare="$RUNNER_TEMP/rea-node-without-npm"
+          mkdir -p "$bare/bin"
+          cp "$(command -v node)" "$bare/bin/node"
+          test -x "$bare/bin/node"
+          test ! -f "$bare/lib/node_modules/npm/bin/npm-cli.js"
+          export PATH="$bare/bin:$PATH"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-missing-npm-regression"
+          unset BONFYRE_REA_FORCE_PRIVATE_NODE BONFYRE_REA_NODE_BIN || true
+          bash scripts/rea-local.sh install
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          test -f "$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          bash scripts/rea-local.sh smoke
+          bash scripts/rea-local.sh install
+      - name: Inspect synthetic JavaScript locally through actual REA
+        run: bash scripts/rea-local.sh smoke
+      - name: Verify compact local REA doctor projection
+        run: |
+          set -eu
+          result="$(bash scripts/rea-local.sh doctor)"
+          printf '%s\n' "$result"
+          REA_DOCTOR_RESULT="$result" node --input-type=module <<'JS'
+          const report=JSON.parse(process.env.REA_DOCTOR_RESULT);
+          if(report.schema!=='bonfyre.rea.local-doctor.v1'||report.package_version!=='6.4.0')
+            throw Error('REA compact doctor lacks verified identity');
+          if(!Array.isArray(report.native_providers)||!Array.isArray(report.agent_registrations))
+            throw Error('REA compact doctor lost provider/registration availability');
+          if(Buffer.byteLength(process.env.REA_DOCTOR_RESULT)>32768)
+            throw Error('REA doctor returned an unbounded catalog instead of status');
+          JS
+      - name: Discover explicit versioned creative app targets without opening them
+        run: |
+          set -eu
+          fixture="$RUNNER_TEMP/rea-creative-targets"
+          mkdir -p "$fixture/Ableton Live 99 Suite.app" "$fixture/FL Studio 99.app"
+          mkdir -p "$fixture/Adobe/Adobe After Effects 99.app" "$fixture/Personal Notes.app"
+          mkdir -p "$fixture/Obsidian.app/Contents/Frameworks/Obsidian Helper (GPU).app"
+          observed="$(BONFYRE_REA_APP_ROOT="$fixture" bash scripts/rea-local.sh targets)"
+          echo "$observed"
+          case "$observed" in *"Ableton Live 99 Suite.app"*) ;; *) exit 1 ;; esac
+          case "$observed" in *"FL Studio 99.app"*) ;; *) exit 1 ;; esac
+          case "$observed" in *"Adobe After Effects 99.app"*) ;; *) exit 1 ;; esac
+          case "$observed" in *"Personal Notes.app"*) exit 1 ;; esac
+          case "$observed" in *"Obsidian"*) exit 1 ;; esac
+          test "$(printf '%s\n' "$observed" | grep -c '^available ')" -eq 3
+      - name: Verify no-Ghidra REA on a real Creator Mach-O
+        run: |
+          set -eu
+          sandbox="$RUNNER_TEMP/rea-creator-native-fastpath"
+          mkdir -p "$sandbox"
+          cc -O2 -std=c11 -ffp-contract=off \
+            Aurekai/native/creator/mix.c Aurekai/native/creator/mix_kernel.c \
+            -lm -o "$sandbox/creator-mix"
+          bash scripts/rea-local.sh native-map "$sandbox/creator-mix" > "$sandbox/map.json"
+          node - "$sandbox/map.json" <<'JS'
+          const fs=require('node:fs');
+          const r=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(r.schema!=='bonfyre.rea.native-map.v1'||
+             !r.evidence_id?.startsWith('ev_')||
+             !/^[a-f0-9]{64}$/.test(r.target_sha256??'')||
+             !Number.isInteger(r.image_count)||!Number.isInteger(r.dependency_edge_count)||
+             r.state!=='static_native_observation_not_runtime_proof')process.exit(1);
+          console.log(JSON.stringify(r));
+          JS
+      - name: Verify user-selected external native root preflight
+        run: |
+          set -eu
+          mount="$RUNNER_TEMP/rea native tools"
+          mkdir -p "$mount"
+          BONFYRE_REA_NATIVE_ROOT="$mount" bash scripts/rea-local.sh native-preflight > "$RUNNER_TEMP/native-preflight.json"
+          node - "$RUNNER_TEMP/native-preflight.json" "$mount" <<'JS'
+          const fs=require('node:fs');
+          const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(v.schema!=='bonfyre.rea.native-preflight.v1'||
+             v.native_root!==process.argv[3]||
+             v.state!=='read_only_preflight_no_downloads')process.exit(1);
+          console.log(JSON.stringify(v));
+          JS
+          if BONFYRE_REA_NATIVE_ROOT="$RUNNER_TEMP/unmounted target" bash scripts/rea-local.sh native-preflight; then
+            echo 'Missing native root was incorrectly accepted' >&2
+            exit 1
+          fi
+      - name: Exact prior-vs-current PCM parity across 64 overlapping stems
+        run: |
+          set -eu
+          original=07bd6ce41d57a7bef709fb6e248609c894491cad
+          git fetch --no-tags --depth=1 origin "$original"
+          sandbox="$RUNNER_TEMP/rea-creator-legacy-parity"
+          mkdir -p "$sandbox/base" "$sandbox/new"
+          for path in mix.c mix_kernel.c mix_kernel.h; do
+            git show "$original:Aurekai/native/creator/$path" > "$sandbox/base/$path"
+            cp "Aurekai/native/creator/$path" "$sandbox/new/$path"
+          done
+          for version in base new; do
+            cc -O3 -std=c11 -ffp-contract=off -Wall -Wextra -Wpedantic -Werror \
+              "$sandbox/$version/mix.c" "$sandbox/$version/mix_kernel.c" -lm \
+              -o "$sandbox/$version/creator-mix"
+          done
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {mkdtempSync,writeFileSync,readFileSync,unlinkSync,rmSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          import {tmpdir} from 'node:os';
+          import {join} from 'node:path';
+          import {performance} from 'node:perf_hooks';
+          import {createHash} from 'node:crypto';
+          const dir=join(process.env.RUNNER_TEMP,'rea-creator-legacy-parity');
+          const fixture=mkdtempSync(join(tmpdir(),'rea-creator-parity-'));
+          try {
+            const src=join(fixture,'source;.f32');
+            const bytes=Buffer.alloc(8192*4);
+            for(let i=0;i<8192;i++) bytes.writeFloatLE(((i*13)%251-125)/151,i*4);
+            writeFileSync(src,bytes);
+            const gains=['1','-1','0','0.25','0.5','-0.75','1.5'];
+            const cases=[
+              {name:'sparse64',samples:1_000_000,coords:i=>[i*12*1024,32]},
+              {name:'dense64',samples:4096,coords:i=>[i%37,1024+(i%29)]},
+              {name:'cross-boundary',samples:200_000,
+                coords:i=>[i*3000+1012+(i%10),128+(i%13)]},
+              {name:'short-and-late',samples:9000,
+                coords:i=>[Math.min(8191,(i*127)%8550),5+(i%120)]}
+            ];
+            const receipts=[];
+            for(const work of cases){
+              const args=['--samples',String(work.samples),'--channels','1'];
+              for(let i=0;i<64;i++){
+                const [at,frames]=work.coords(i);
+                assert(at+frames<=work.samples);
+                args.push('--stem',src,String(at),String(i*29),String(frames),gains[i%gains.length]);
+              }
+              const results=[];
+              for(const tag of ['base','new']){
+                const dest=join(fixture,work.name+'-'+tag+'.f32');
+                const argv=[...args.slice(0,4),'--output',dest,...args.slice(4)];
+                const started=performance.now();
+                const run=spawnSync(join(dir,tag,'creator-mix'),argv,{encoding:'utf8'});
+                const duration=performance.now()-started;
+                assert.equal(run.status,0,tag+' '+work.name+': '+run.stderr);
+                const receipt=JSON.parse(run.stdout);
+                const rendered=readFileSync(dest);
+                results.push({tag,receipt,rendered,duration});
+                unlinkSync(dest);
+              }
+              assert(results[0].rendered.equals(results[1].rendered),
+                'native bytes changed: '+work.name);
+              for(const key of ['sample_frames','channels','bytes','stems','source_read_calls',
+                'source_explicit_seek_calls','sequential_seek_elisions','source_bytes_read',
+                'execution_authority_inferred']){
+                  assert.deepEqual(results[0].receipt[key],results[1].receipt[key],
+                    work.name+' changed existing receipt: '+key);
+              }
+              assert(results[1].receipt.stem_overlap_probes_avoided>=0);
+              receipts.push({workload:work.name,
+                source_sha256:createHash('sha256').update(results[1].rendered).digest('hex'),
+                source_bytes:results[1].rendered.length,
+                legacy_overlap_probes:results[1].receipt.legacy_stem_overlap_probes,
+                active_overlap_probes:results[1].receipt.stem_overlap_probes,
+                baseline_elapsed_ms:+results[0].duration.toFixed(3),
+                active_elapsed_ms:+results[1].duration.toFixed(3),
+                exact_f32_parity:true});
+            }
+            console.log(JSON.stringify({schema:'bonfyre.creator.scheduling-parity.v1',
+              source:'public prior native mixer commit',scenario_count:receipts.length,
+              results:receipts,elapsed_speeds_are_non_gating_observations:true}));
+          } finally {rmSync(fixture,{recursive:true,force:true});}
+          JS
+      - name: Verify native float32 composer on real macOS runner
+        run: node --test Aurekai/tests/creator-native-mix.test.mjs
+      - name: Check optional provider and external application discovery
+        run: |
+          bash scripts/rea-local.sh targets
+          bash scripts/rea-local.sh rea providers --json
+          bash scripts/rea-local.sh setup-preview
+      - name: Register REA in disposable Codex and Claude Code profiles
+        run: |
+          set -eu
+          # Explicitly isolate users' real agent configurations and credentials.
+          export HOME="$RUNNER_TEMP/rea-agents-home"
+          mkdir -p "$HOME"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-private-node-regression"
+          export BONFYRE_REA_FORCE_PRIVATE_NODE=1
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          bash scripts/rea-local.sh agents-preview > "$RUNNER_TEMP/rea-agents-plan.json"
+          bash scripts/rea-local.sh agents-connect > "$RUNNER_TEMP/rea-agents-applied.json"
+          test -f "$HOME/.codex/config.toml"
+          test -f "$HOME/.claude.json"
+          grep -qi rea "$HOME/.codex/config.toml"
+          grep -qi rea "$HOME/.claude.json"
+          # POSIX upstream REA registers the absolute JS entrypoint, which
+          # uses /usr/bin/env node. Its doctor-compatible format is deliberate;
+          # agents-connect refuses if the host PATH cannot launch REA.
+          entry="$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          grep -Fq "$entry" "$HOME/.codex/config.toml"
+          grep -Fq "$entry" "$HOME/.claude.json"
+          node - <<'JS'
+          const fs=require('node:fs'), path=require('node:path');
+          const root=process.env.RUNNER_TEMP;
+          const installed=JSON.parse(fs.readFileSync(path.join(root,'rea-agents-applied.json'),'utf8'));
+          console.log(JSON.stringify({setup_status:installed.status,
+            applied_actions:installed.appliedActions?.length??null,
+            target_scope:'disposable codex+claude only'}));
+          JS
+          bash scripts/rea-local.sh rea doctor --client codex --json > "$RUNNER_TEMP/rea-agent-codex-health.json"
+          bash scripts/rea-local.sh rea doctor --client claude_code --json > "$RUNNER_TEMP/rea-agent-claude-health.json"
+          echo "REA scoped agent registrations verified without touching real Mac accounts"
+      - name: Verify no scanned estate or global npm artifact
+        run: |
+          set -eu
+          test -d "$BONFYRE_REA_ROOT/releases/6.4.0"
+          test ! -e "$HOME/.bonfyre/rea"
+          test ! -e "$HOME/.config/rea/bonfyre-client.json"

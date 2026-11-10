@@ -14,9 +14,9 @@ clean:
 	rm -f $(TARGET)
 
 test: $(TARGET)
-	python3 tests/background_access_test.py
+	sh tests/background_access_test.sh
 	./tests/institution_grant_test.sh
-	python3 tests/institution_members_test.py
+	sh tests/institution_members_test.sh
 	bun test tests/organization_workspace.test.mjs
 	./tests/actor_closure_test.sh
 	./tests/external_account_link_test.sh

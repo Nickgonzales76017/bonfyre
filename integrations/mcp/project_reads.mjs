@@ -260,7 +260,7 @@ export function createProjectReads({ root, env = process.env, run, catalogTools 
   async function repositorySlice(args) {
     fields(args, ['path', 'ref', 'limit']);
     const requested = text(args.path, '.', 'project path', 2048);
-    if (/[\x00-\x1f\x7f]/.test(requested)) throw new Error('invalid repository slice path');
+    if (/[\x00-\x1f\x7f]/.test(requested)) throw new Error('invalid repository slice path'); // oxlint-disable-line no-control-regex -- refuses control characters
     const target = confined(requested, { missing: true });
     const prefix = relative(project, target).split(sep).join('/');
     const ref = text(args.ref, 'HEAD', 'repository ref', 128);
@@ -280,7 +280,7 @@ export function createProjectReads({ root, env = process.env, run, catalogTools 
     const files = [];
     let eligible = 0, omittedKinds = 0;
     for (const record of records) {
-      const row = /^(100644|100755|120000|160000) (blob|commit) ([a-f0-9]{40}|[a-f0-9]{64})\t([^\x00]+)$/.exec(record);
+      const row = /^(100644|100755|120000|160000) (blob|commit) ([a-f0-9]{40}|[a-f0-9]{64})\t([^\x00]+)$/.exec(record); // oxlint-disable-line no-control-regex -- refuses control characters
       if (!row) throw new Error('repository slice returned an unexpected tree entry');
       const [,mode,kind,oid,path] = row;
       if (prefix && path !== prefix && !path.startsWith(prefix + '/'))

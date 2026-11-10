@@ -1,0 +1,10 @@
+source_owner	integrations/browser/extension/store.mjs
+projection	Consent-only tail; import readLocal from the existing public Spaces store
+browser_store	aurekai-browser-workbench-v1
+native_package	8552281c1ac7aa0b0fc53ae7e92bce49770c823c445f1623ffbe96a249fe8d96
+native_http_checks	32
+isolated_two_origin_adoption_checks	13
+specialized_editor_browser_checks	16
+production_test_accounts	0
+preservation	Original browser records, revisions and model bytes remain unchanged
+not_inferred	No supplier purchase, merchant publication, approval or new permission grant

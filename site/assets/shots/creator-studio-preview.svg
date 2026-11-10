@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="title description">
+<title id="title">Aurekai Creator Studio — multitrack arrangement preview</title>
+<desc id="description">Faithful illustrated overview of the Creator Studio interface showing four editable recording lanes, waveforms, play transport, clip gain inspector, mastering and podcast handoff. This is a drawn UI preview, not a screenshot.</desc>
+<defs>
+  <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#111d16"/><stop offset="1" stop-color="#1b3325"/></linearGradient>
+  <linearGradient id="panel" x2="1"><stop stop-color="#17251e"/><stop offset="1" stop-color="#1f3025"/></linearGradient>
+  <clipPath id="lanes"><rect x="180" y="226" width="477" height="268" rx="4"/></clipPath>
+</defs>
+<rect width="960" height="600" fill="#08120e"/>
+<rect x="16" y="17" width="928" height="568" rx="12" fill="url(#bg)" stroke="#527260"/>
+<path d="M17 74H943" stroke="#395241"/>
+<rect x="35" y="33" width="32" height="32" rx="3" fill="#c4e4bd"/>
+<text x="46" y="56" fill="#213527" font-family="Georgia" font-style="italic" font-size="24">A</text>
+<text x="79" y="44" fill="#e6f4e2" font-family="Arial,sans-serif" font-weight="bold" font-size="18" letter-spacing="3">AUREKAI</text>
+<text x="80" y="62" fill="#9cbba5" font-family="Arial,sans-serif" font-size="9" letter-spacing="2">CREATOR SYSTEMS / NATIVE MULTITRACK</text>
+<text x="688" y="51" fill="#c2d6c3" font-family="Arial,sans-serif" font-size="12">C/WASM · VERIFIED ENGINE</text>
+<circle cx="672" cy="46" r="5" fill="#b8dfa7"/>
+<text x="39" y="114" fill="#b1cdb6" font-family="Arial,sans-serif" font-size="12" letter-spacing="2">01 / ARRANGEMENT</text>
+<text x="39" y="147" fill="#eef3e9" font-family="Georgia,serif" font-size="34">Make the <tspan fill="#e0c389" font-style="italic">whole piece.</tspan></text>
+<text x="39" y="170" fill="#a9bead" font-family="Arial,sans-serif" font-size="14">Voice · music bed · location audio · editorial cuts</text>
+<rect x="660" y="102" width="110" height="46" rx="23" fill="#c4e5ba"/>
+<text x="675" y="132" fill="#163123" font-family="Arial,sans-serif" font-weight="bold" font-size="13">▶ PLAY MIX</text>
+<rect x="781" y="102" width="141" height="46" rx="23" fill="none" stroke="#91b89a"/>
+<text x="793" y="131" fill="#c7dec8" font-family="Arial,sans-serif" font-size="13">RENDER / EXPORT</text>
+<rect x="35" y="196" width="625" height="349" rx="6" fill="#13231b" stroke="#44614c"/>
+<rect x="36" y="197" width="623" height="32" fill="#274032"/>
+<text x="46" y="218" fill="#cee6d0" font-family="Arial,sans-serif" font-size="12" letter-spacing="1">TRACKS / WAVEFORM TIMELINE</text>
+<g fill="#a9c4ab" font-family="Arial,sans-serif" font-size="11">
+<text x="200" y="217">00:00</text><text x="314" y="217">00:04</text><text x="425" y="217">00:08</text><text x="536" y="217">00:12</text>
+</g>
+<g fill="#192c22">
+<rect x="40" y="237" width="614" height="61" rx="3"/><rect x="40" y="306" width="614" height="61" rx="3"/>
+<rect x="40" y="375" width="614" height="61" rx="3"/><rect x="40" y="444" width="614" height="61" rx="3"/>
+</g>
+<g font-family="Arial,sans-serif" font-weight="bold" font-size="13">
+<text x="50" y="263" fill="#d5e8d6">Narration</text><text x="50" y="332" fill="#d5e8d6">Music bed</text>
+<text x="50" y="401" fill="#d5e8d6">Room tone</text><text x="50" y="470" fill="#d5e8d6">Field cut</text>
+</g>
+<g fill="#a9bbaa" font-family="Arial,sans-serif" font-size="10"><text x="50" y="282">M   S   L / R</text><text x="50" y="351">M   S   L / R</text><text x="50" y="420">M   S   L / R</text><text x="50" y="489">M   S   L / R</text></g>
+<g clip-path="url(#lanes)">
+ <path d="M180 226V496M292 226V496M404 226V496M516 226V496M628 226V496" stroke="#334d38" stroke-width="1"/>
+ <rect x="181" y="241" width="330" height="53" rx="4" fill="#85b394" stroke="#bbdbbf"/>
+ <rect x="181" y="310" width="405" height="53" rx="4" fill="#baa775" stroke="#ecdaa4"/>
+ <rect x="229" y="379" width="355" height="53" rx="4" fill="#8da9bc" stroke="#b3d0e6"/>
+ <rect x="413" y="448" width="220" height="53" rx="4" fill="#bf958e" stroke="#e6bab0"/>
+ <g stroke="#eaf5dc" fill="none" opacity=".94" stroke-linecap="round" stroke-width="1.4">
+  <path d="M184 268 Q189 257 194 268T204 268 Q209 246 214 268T224 268 Q229 255 234 268T244 268 Q249 237 254 268T264 268 Q269 247 274 268T284 268 Q289 238 294 268T304 268 Q309 254 314 268T324 268 Q329 243 334 268T344 268 Q349 257 354 268T364 268 Q369 244 374 268T384 268 Q389 247 394 268T404 268 Q409 242 414 268T424 268 Q429 249 434 268T444 268 Q449 253 454 268T464 268 Q469 245 474 268T484 268 Q489 258 494 268T504 268"/>
+  <path d="M183 337 Q194 315 205 337T227 337 Q238 319 249 337T271 337 Q282 314 293 337T315 337 Q326 321 337 337T359 337 Q370 312 381 337T403 337 Q414 319 425 337T447 337 Q458 322 469 337T491 337 Q502 315 513 337T535 337 Q546 320 557 337T579 337"/>
+  <path d="M231 406 Q237 393 244 406T258 406 Q265 380 272 406T286 406 Q293 389 300 406T314 406 Q321 379 328 406T342 406 Q349 389 356 406T370 406 Q377 381 384 406T398 406 Q405 394 412 406T426 406 Q433 389 440 406T454 406 Q461 381 468 406T482 406 Q489 390 496 406T510 406 Q517 380 524 406T538 406 Q545 391 552 406T566 406"/>
+  <path d="M414 475 Q420 463 427 475T441 475 Q448 448 455 475T469 475 Q476 455 483 475T497 475 Q504 448 511 475T525 475 Q532 461 539 475T553 475 Q560 455 567 475T581 475 Q588 448 595 475T609 475"/>
+ </g>
+ <path d="M348 229V496" stroke="#fff0ad" stroke-width="2.5"/>
+</g>
+<text x="45" y="529" fill="#b3cbb7" font-family="Arial,sans-serif" font-size="11">Nondestructive trims · Gain &amp; pan · Real source clips · Markers</text>
+<rect x="677" y="196" width="245" height="349" rx="6" fill="#182c21" stroke="#44614c"/>
+<text x="699" y="226" fill="#b8d5ba" font-family="Arial,sans-serif" font-size="12" letter-spacing="1">02 / CLIP DETAIL</text>
+<text x="699" y="257" fill="#ecf5e7" font-family="Georgia,serif" font-size="25">Voice · Narration</text>
+<g font-family="Arial,sans-serif" font-size="12" fill="#aebfaf">
+ <text x="700" y="297">Source trim</text><text x="846" y="297" fill="#e1e9dd">00:09.20</text>
+ <text x="700" y="326">Gain</text><text x="846" y="326" fill="#e1e9dd">− 3.0 dB</text>
+ <text x="700" y="355">Pan</text><text x="846" y="355" fill="#e1e9dd">Center</text>
+ <text x="700" y="384">Fade in/out</text><text x="846" y="384" fill="#e1e9dd">0.15 / 0.5 s</text>
+</g>
+<path d="M700 402H898" stroke="#506d56"/>
+<text x="700" y="432" fill="#b8d5ba" font-family="Arial,sans-serif" font-size="12" letter-spacing="1">03 / MASTER</text>
+<rect x="699" y="448" width="197" height="14" rx="7" fill="#3e6248"/>
+<rect x="699" y="448" width="148" height="14" rx="7" fill="#b5dcb5"/>
+<text x="700" y="497" fill="#b1cdb6" font-family="Arial,sans-serif" font-size="12">PCM WAV · Chapters · Podcast handoff</text>
+<text x="39" y="568" fill="#a4b9a8" font-family="Arial,sans-serif" font-size="11">Illustrated from the real Aurekai Creator Studio arrangement interface. Not a screen capture.</text>
+</svg>

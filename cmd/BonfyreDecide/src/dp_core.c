@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 DpCatch *dp_catch_top;
 
@@ -817,4 +819,111 @@ bf_jv *dp_assess_cases(bf_jv *cases, DpOwner *local, long max_calls, const bf_jv
     for (int k = 0; k < nu; k++) bf_jv_free(results[k]);
     free(compiled); free(uniq); free(gkeys); free(group_of); free(rep); free(results);
     return receipts;
+}
+
+/* ── hosted providers (decision-plane.mjs assessDecision, non-local) ─────── */
+
+/* Port of the hosted branch of assessDecision. The bearer credential comes only
+ * from the provider's credential_env and reaches curl through a 0600 config
+ * file, never argv. BONFYRE_DECISION_CURL replaces the transport for tests, as
+ * the JS tests replace fetch. */
+bf_jv *dp_assess_hosted(const bf_jv *compiled_in, const char *provider_name, int execute,
+                        const char *account_id, double timeout_ms, const bf_jv *policy) {
+    const bf_jv *provider = bf_jv_get(bf_jv_get(policy, "providers"), provider_name);
+    if (!provider || !strcmp(provider_name, "local")) dp_fail("unknown decision provider: %s", provider_name);
+    bf_jv *rebuilt = recompile(compiled_in, policy);
+    char a[65], b[65];
+    dp_digest(bf_jv_get(rebuilt, "questions"), a); dp_digest(bf_jv_get(compiled_in, "questions"), b);
+    if (strcmp(bf_jv_s(bf_jv_get(rebuilt, "case_digest")), bf_jv_s(bf_jv_get(compiled_in, "case_digest"))) || strcmp(a, b))
+        dp_fail("decision case changed after compilation");
+    bf_jv *compiled = rebuilt;
+    bf_jv_set(compiled, "state", dp_sorted_clone(bf_jv_get(compiled, "state")));
+    bf_jv *request = decision_request(compiled, provider_name, policy);
+    char request_digest[65]; dp_digest(request, request_digest);
+    bf_jv *base = bf_jv_obj();
+    bf_jv_set(base, "schema", bf_jv_clone(bf_jv_get(policy, "schema")));
+    bf_jv_set(base, "contract", bf_jv_clone(bf_jv_get(compiled, "contract")));
+    bf_jv_set(base, "case_digest", bf_jv_clone(bf_jv_get(compiled, "case_digest")));
+    bf_jv_set(base, "provider", S(provider_name));
+    bf_jv_set(base, "request_provider", S(provider_name));
+    bf_jv_set(base, "requested_model", bf_jv_clone(bf_jv_get(provider, "model")));
+    bf_jv_set(base, "request_digest", S(request_digest));
+    bf_jv_set(base, "cannot_infer", bf_jv_clone(bf_jv_get(policy, "forbidden_inference")));
+    bf_jv_set(base, "action", S("none"));
+    if (!execute) { bf_jv_set(base, "state", S("planned")); bf_jv_free(request); bf_jv_free(compiled); return base; }
+
+    const char *ipc = bf_jv_s(bf_jv_path(compiled, "contract.information_policy_class"));
+    const bf_jv *remote = bf_jv_get(policy, "remote_information_policy_classes"); int allowed = 0;
+    for (size_t i = 0; remote && i < remote->len; i++) if (ipc && !strcmp(bf_jv_s(remote->items[i]), ipc)) allowed = 1;
+    if (!allowed) dp_fail("information policy forbids a hosted decision model for this state");
+    const char *cred_env = bf_jv_s(bf_jv_get(provider, "credential_env"));
+    const char *key = cred_env ? getenv(cred_env) : NULL;
+    if (!key || !*key) dp_fail("decision execution requires %s", cred_env ? cred_env : "a credential");
+    for (const char *k = key; *k; k++) if (*k == '"' || *k == '\\' || *k == '\n' || *k == '\r') dp_fail("credential contains characters a header cannot carry");
+    const char *endpoint = bf_jv_s(bf_jv_get(provider, "endpoint"));
+    char *url;
+    if (!strcmp(bf_jv_s(bf_jv_get(provider, "response_envelope")), "direct")) url = dp_fmt("%s", endpoint);
+    else {
+        const char *acct = account_id && *account_id ? account_id : getenv(bf_jv_s(bf_jv_get(provider, "account_env")));
+        int ok = acct && strlen(acct) == 32;
+        for (int i = 0; ok && i < 32; i++) ok = (acct[i] >= '0' && acct[i] <= '9') || ((acct[i] | 32) >= 'a' && (acct[i] | 32) <= 'f');
+        if (!ok) dp_fail("decision execution requires %s", bf_jv_s(bf_jv_get(provider, "account_env")));
+        const char *at = strstr(endpoint, "{account_id}");
+        if (!at) dp_fail("provider endpoint names no account");
+        url = dp_fmt("%.*s%s%s", (int)(at - endpoint), endpoint, acct, at + strlen("{account_id}"));
+    }
+    char dir[] = "/tmp/bonfyre-decide.XXXXXX";
+    if (!mkdtemp(dir)) dp_fail("cannot create a request directory");
+    char *body_path = dp_fmt("%s/request.json", dir), *cfg_path = dp_fmt("%s/curl.cfg", dir);
+    size_t blen = 0; char *body = bf_jv_dump(request, 0, 1, &blen);
+    dp_write_file(body_path, body, blen); free(body);
+    {
+        int fd = open(cfg_path, O_WRONLY | O_CREAT | O_EXCL, 0600);
+        if (fd < 0) dp_fail("cannot write the request header");
+        char *line = dp_fmt("header = \"Authorization: Bearer %s\"\n", key);
+        if (write(fd, line, strlen(line)) != (ssize_t)strlen(line)) dp_fail("cannot write the request header");
+        close(fd); free(line);
+    }
+    const char *curl = getenv("BONFYRE_DECISION_CURL"); if (!curl || !*curl) curl = "curl";
+    char *cmd = dp_fmt("'%s' -sS --max-time %.0f -X POST -H 'Content-Type: application/json' -H 'Accept: application/json' "
+                       "--config '%s' --data-binary '@%s' -w '\\n%%{http_code}' '%s'", curl, timeout_ms / 1000.0 < 1 ? 1 : timeout_ms / 1000.0,
+                       cfg_path, body_path, url);
+    double started = dp_now_ms();
+    FILE *p = popen(cmd, "r");
+    size_t cap = 1 << 16, len = 0; char *out = malloc(cap);
+    if (p) { size_t got; while ((got = fread(out + len, 1, cap - len - 1, p)) > 0) { len += got; if (len + 1 == cap) { if (cap > ((size_t)8 << 20)) break; cap *= 2; out = realloc(out, cap); } } }
+    int status = p ? pclose(p) : -1;
+    double latency = dp_now_ms() - started;
+    unlink(cfg_path); unlink(body_path); rmdir(dir); free(cfg_path); free(body_path); free(cmd);
+    out[len] = 0;
+    char *nl = strrchr(out, '\n'); int http = nl ? atoi(nl + 1) : 0; if (nl) *nl = 0;
+    if (status != 0 || !http) dp_fail("decision provider could not be reached");
+    if (http < 200 || http > 299) dp_fail("decision provider HTTP %d", http);
+    char err[200] = {0};
+    bf_jv *envelope = bf_jv_parse(out, strlen(out), err, sizeof err); free(out);
+    if (!envelope) dp_fail("decision provider returned invalid JSON: %s", err);
+    const bf_jv *payload = !strcmp(bf_jv_s(bf_jv_get(provider, "response_envelope")), "direct") ? envelope
+        : (bf_jv_get(envelope, "success") && bf_jv_get(envelope, "success")->type == BF_JV_BOOL && bf_jv_get(envelope, "success")->b ? bf_jv_get(envelope, "result") : NULL);
+    if (!payload || !is_obj(payload)) dp_fail("decision provider returned an unsuccessful envelope");
+    const char *model = bf_jv_s(bf_jv_get(payload, "model"));
+    if (!model || !*model) dp_fail("decision response shape does not match the request");
+    DpSchema *schema = dp_schema(bf_jv_get(request, "questions"));
+    bf_jv *answers = snapshot_answers(schema, bf_jv_get(payload, "answers"), bf_jv_get(request, "questions"));
+    dp_schema_free(schema);
+    bf_jv *receipt = base;
+    bf_jv_set(receipt, "state", S("diagnostic"));
+    bf_jv_set(receipt, "model", S(model));
+    char rd[65]; dp_digest(envelope, rd); bf_jv_set(receipt, "response_digest", S(rd));
+    bf_jv_set(receipt, "model_identity_state", S(!strcmp(model, bf_jv_s(bf_jv_get(provider, "model"))) ? "mutable_alias" : "provider_reported_revision"));
+    bf_jv_set(receipt, "question_semantics", bf_jv_clone(bf_jv_get(provider, "question_semantics")));
+    bf_jv_set(receipt, "confidence_semantics", bf_jv_clone(bf_jv_get(provider, "confidence_semantics")));
+    bf_jv_set(receipt, "latency_ms", bf_jv_num((double)(long long)(latency + 0.5)));
+    const bf_jv *usage = bf_jv_get(payload, "usage");
+    bf_jv_set(receipt, "usage", usage && usage->type != BF_JV_NULL ? bf_jv_clone(usage) : bf_jv_null());
+    char ad[65]; dp_digest(answers, ad);
+    bf_jv_set(receipt, "answers", answers);
+    bf_jv_set(receipt, "answers_digest", S(ad));
+    bf_jv_set(receipt, "proposal", dp_proposal(receipt, policy));
+    bf_jv_free(envelope); bf_jv_free(request); bf_jv_free(compiled); free(url);
+    return receipt;
 }

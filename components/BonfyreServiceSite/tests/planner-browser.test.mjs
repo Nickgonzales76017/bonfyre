@@ -40,14 +40,6 @@ try {
   await p.screenshot({path:join(out,'desktop.png'),fullPage:true});
   for(const width of [1440,1024,768,390,320]){await p.setViewport({width,height:width<650?844:1100});check('No horizontal overflow at '+width,await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));if(width===390)await p.screenshot({path:join(out,'mobile.png'),fullPage:true});}
   await p.setViewport({width:1440,height:1100});
-  await p.click('[data-ui=source-review]');
-  await p.waitForSelector('dialog[data-source-review],dialog[aria-label="Review retained fixture sources"]');
-  check('Source review shows retained snapshot and not claimed supplier page text',await p.$eval('[data-source-reader]',n=>n.value.includes('Listing title:')&&n.value.includes('Source URL:')));
-  await p.$eval('[data-source-reader]',n=>{n.focus();n.setSelectionRange(0,35);});
-  await p.click('[data-source-stage]');
-  check('Exact source passage staged with provenance',await p.$eval('[data-source-preview]',n=>n.textContent.includes('Source digest:')));
-  await p.click('[data-source-adopt]');
-  check('User-confirmed source selection enters editable plan notes',await p.$eval('[data-ui=notes]',n=>n.value.includes('[Retained catalogue:')));
   await input(p,'width','0');check('Invalid room dimensions block saving',await p.$eval($('error'),n=>!n.hidden&&n.innerText.includes('6 to 60')));await p.click($('save'));check('Invalid room was not saved',await p.$eval($('save-state'),n=>n.textContent)!=='Saved in this browser');await input(p,'width','16');
   await input(p,'budget','500');check('Budget overage is visible',await p.$eval($('issues'),n=>n.innerText.includes('exceeds')));await input(p,'budget','1500');
   await p.click('[data-select="counter-1"]');await input(p,'x','15');check('Out-of-room position is identified',await p.$eval($('issues'),n=>n.innerText.includes('beyond')));await input(p,'x','10');

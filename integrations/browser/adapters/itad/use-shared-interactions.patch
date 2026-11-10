@@ -1,0 +1,109 @@
+diff --git a/itad-exchange/app.mjs b/itad-exchange/app.mjs
+--- a/itad-exchange/app.mjs
++++ b/itad-exchange/app.mjs
+@@ -1,3 +1,5 @@
++import {createEditHistory} from './renderers/edit-history.mjs';
++import {createReviewSheet} from './renderers/review-sheet.mjs';
+ import { initial, hydrate, selectLot, getLots, getLot, getRecord, validateState, assess, verify, parseManifest, buyerBrief, buyerYaff, createLot, editManifest, addManifestRow, removeManifest, compareLots, sensitivity } from './core.mjs';
+ import { openDraft, esc, money, dollars, cents, boundedInt, sourceUrl, download } from '../journey-kit/room.mjs';
+ import { createManifestGrid } from './manifest-grid.mjs';
+@@ -5,21 +7,31 @@
+ const clone = value => structuredClone(value);
+ const views = ['manifest','economics','compare','verification','source','buyer'];
+ let state = initial(), draft, revision = 0, generation = 0, dirty = false, saving = false, timer, conflict = false;
+-let active = 'manifest', grid, gridLoading = false, selection = [], inspection = null, inspectorDirty = false, proposal = null, ready = false;
++let active = 'manifest', grid, gridLoading = false, selection = [], inspection = null, inspectorDirty = false, ready = false;
+ const histories = new Map(), invalid = new Set();
+ const current = () => getRecord(state);
+ const status = (message, bad = false) => { $('message').textContent = message; $('message').classList.toggle('error', bad); };
+ const attempt = fn => { try { return fn(); } catch (error) { status(error.message, true); return false; } };
+ const moneyOr = value => value == null ? '—' : money(value);
+-const history = () => { if (!histories.has(state.selected)) histories.set(state.selected, {past:[], future:[]}); return histories.get(state.selected); };
+ const snapshot = () => ({record:clone(current()), review:clone(state.reviewed[state.selected] ?? {})});
++const history = () => {
++  if(!histories.has(state.selected))histories.set(state.selected,createEditHistory({
++    limit:50,capture:snapshot,
++    restore(value){const next=clone(state);next.records[next.selected]=clone(value.record);next.reviewed[next.selected]=clone(value.review);Object.assign(next,value.record.settings);state=hydrate(next);}
++  }));
++  return histories.get(state.selected);
++};
++const bulkReview=createReviewSheet({
++  dialog:$('bulkDialog'),title:$('bulkDialog').querySelector('h2'),body:$('bulkDiff'),confirm:$('applyBulk'),status:$('bulkStatus'),currentVersion:()=>generation,
++  renderChanges:changes=>changes.map(c=>`<div class="diff-row"><strong>${esc(c.title)}</strong><del>${esc(c.before)}</del><ins>${esc(c.after)}</ins></div>`).join('')
++});
+ function savedLabel() { $('savedState').textContent = conflict ? 'Save conflict · draft retained' : invalid.size || inspectorDirty || grid?.hasPendingEdit() ? 'Unapplied input' : saving ? 'Saving…' : dirty ? 'Unsaved changes' : revision ? 'Saved locally · r' + revision : 'Local draft'; }
+ function schedule() { clearTimeout(timer); if (!conflict) timer = setTimeout(save, 800); savedLabel(); }
+ function commit(next, {remember = true, material = true} = {}) {
+   if (material) next.prepared = false;
+   hydrate(next);
+-  if (remember && next.selected === state.selected) { const h = history(); h.past.push(snapshot()); if (h.past.length > 50) h.past.shift(); h.future = []; }
+-  state = next; generation++; dirty = true; render(); schedule();
++  if (remember && next.selected === state.selected) history().transact(()=>{state=next;});
++  else state=next; generation++; dirty = true; render(); schedule();
+   return true;
+ }
+ function mutate(fn, options) { const next = clone(state); fn(next, getRecord(next)); return commit(next, options); }
+@@ -48,7 +60,7 @@
+   $('manifestBasis').textContent = r.assumptions === 'illustrative' ? 'Example assumptions · prices are illustrative' : 'Seller claims · entered estimates';
+   $('manifestResult').textContent = `${r.rows.length} lines · ${a.units} modeled / ${a.claimed} reported units${a.units !== a.claimed ? ' · quantity mismatch' : ''}`;
+   $('lineCount').textContent = String(r.rows.length);
+-  $('undo').disabled = !history().past.length; $('redo').disabled = !history().future.length;
++  $('undo').disabled = !history().canUndo; $('redo').disabled = !history().canRedo;
+   renderFallback(); renderSelection();
+   if (inspection && !r.rows.some(x => x.id === inspection)) closeInspector();
+   else if (inspection && !inspectorDirty) fillInspector();
+@@ -159,7 +171,7 @@
+     const openedAt = generation, hadPending = inspectorDirty, inputValues = [...document.querySelectorAll('[data-record],[data-global],#lineForm input,#lineForm select,#manifestGrid input,#manifestGrid select')].map(el=>el.value).join('\u0000');
+     const stored = await draft.read(); if (generation !== openedAt || inspectorDirty !== hadPending || [...document.querySelectorAll('[data-record],[data-global],#lineForm input,#lineForm select,#manifestGrid input,#manifestGrid select')].map(el=>el.value).join('\u0000') !== inputValues) throw Error('The draft changed while loading. Export or finish your changes before reloading.'); if (!stored) throw Error('No saved draft found. Your current draft remains open.');
+     const next = hydrate(clone(stored.value));
+-    state = next; revision = stored.revision; generation++; dirty = false; conflict = false; proposal = null; clearTimeout(timer);
++    state = next; revision = stored.revision; generation++; dirty = false; conflict = false; bulkReview.close(); clearTimeout(timer);
+     invalid.forEach(el=>el.setCustomValidity('')); invalid.clear(); closeInspector(); histories.clear(); selection=[]; grid?.clearSelection();
+     $('conflict').hidden = true; render(); show(active,{url:false}); route(true); status('Loaded the saved revision.');
+   } catch (error) { status(error.message,true); }
+@@ -182,10 +194,9 @@
+ }
+ function undo(redo = false) {
+   if (!ensureInputs()) return;
+-  grid?.stopEditing(); const h = history(), from = redo ? h.future : h.past, to = redo ? h.past : h.future;
+-  if (!from.length) return; const restored = from.pop(); to.push(snapshot());
+-  const next = clone(state); next.records[next.selected] = clone(restored.record); next.reviewed[next.selected] = clone(restored.review); Object.assign(next,restored.record.settings);
+-  commit(next,{remember:false,material:false}); status(redo?'Change reapplied.':'Change undone.');
++  grid?.stopEditing();
++  if(!history()[redo?'redo':'undo']())return;
++  commit(state,{remember:false,material:false});status(redo?'Change reapplied.':'Change undone.');
+ }
+ function propose(remove = false) {
+   if (!ensureInputs()) return; grid?.stopEditing();
+@@ -193,10 +204,9 @@
+     const ids = [...selection], field = $('bulkField').value;
+     const value = remove ? null : field === 'grade' ? $('bulkGrade').value : field === 'qty' ? boundedInt($('bulkValue').value,{min:1,max:50000}) : cents($('bulkValue').value,{empty:true});
+     const next = remove ? removeManifest(state,ids) : editManifest(state,{ids,patch:{[field]:value}});
+-    proposal = {next,generation};
+-    const format = v => field === 'recovery' ? v == null ? 'Unpriced' : money(v) : esc(v);
+-    $('bulkDiff').innerHTML = current().rows.filter(r=>ids.includes(r.id)).map(r=>`<div class="diff-row"><strong>${esc(r.model)}</strong><del>${remove ? r.qty + ' units' : format(r[field])}</del><ins>${remove ? 'Remove line' : format(value)}</ins></div>`).join('');
+-    $('applyBulk').textContent = remove ? 'Remove '+ids.length+' lines' : 'Apply '+ids.length+' changes'; $('bulkDialog').showModal();
++    const format=v=>field==='recovery'?v==null?'Unpriced':money(v):String(v);
++    const changes=current().rows.filter(r=>ids.includes(r.id)).map(r=>({title:r.model,field,before:remove?r.qty+' units':format(r[field]),after:remove?'Remove line':format(value)}));
++    bulkReview.show({heading:'Review manifest changes',changes,action:'apply-bulk',label:remove?'Remove '+ids.length+' lines':'Apply '+ids.length+' changes',payload:next});
+   });
+ }
+ function applySample() {
+@@ -226,7 +236,7 @@
+   if(b.dataset.lot) chooseLot(b.dataset.lot);
+   if(b.dataset.openLot) chooseLot(b.dataset.openLot,'economics');
+   if(b.dataset.inspect) inspect(b.dataset.inspect);
+-  if(b.dataset.close) $(b.dataset.close).close();
++  if(b.dataset.close) {if(b.dataset.close==='bulkDialog')bulkReview.close();else $(b.dataset.close).close();}
+ });
+ $('lotSearch').oninput=renderLots;
+ for (const id of ['manifestSearch','gradeFilter']) $(id).addEventListener(id==='gradeFilter'?'change':'input',()=>{ grid?.setFilter($('manifestSearch').value,$('gradeFilter').value);renderFallback(); });
+@@ -237,7 +247,7 @@
+ $('bulkField').onchange=()=>{$('bulkGrade').hidden=$('bulkField').value!=='grade';$('bulkValue').hidden=$('bulkField').value==='grade';$('bulkValue').value='';$('bulkValue').placeholder=$('bulkField').value==='recovery'?'Resale / unit ($)':'Quantity per line';};
+ $('previewBulk').onclick=()=>propose();$('removeSelected').onclick=()=>propose(true);
+ $('clearSelection').onclick=()=>{grid?.clearSelection();selection=[];renderSelection();renderFallback();};
+-$('applyBulk').onclick=()=>attempt(()=>{if(!proposal||proposal.generation!==generation)throw Error('The lot changed. Review the selection again.');commit(proposal.next);proposal=null;$('bulkDialog').close();status('Manifest changes applied. Undo is available.');});
++$('applyBulk').onclick=()=>attempt(()=>{const next=bulkReview.take('apply-bulk');commit(next);bulkReview.close();status('Manifest changes applied. Undo is available.');});
+ $('newLot').onclick=()=>{if(ensureInputs())$('newLotDialog').showModal();};
+ $('newLotForm').onsubmit=e=>{e.preventDefault();attempt(()=>{const f=new FormData(e.target);const next=createLot(state,{title:String(f.get('title')).trim(),reportedCount:boundedInt(f.get('reportedCount'),{min:1,max:50000}),family:f.get('family'),source:sourceUrl(String(f.get('source')).trim()),claim:f.get('claim')});closeInspector();grid?.clearSelection();selection=[];commit(next,{remember:false});$('newLotDialog').close();e.target.reset();show('manifest');status('New lot created. Add its manifest to begin.');});};
+ $('sampleValues').onclick=()=>{if(ensureInputs())$('sampleDialog').showModal();}; $('applySample').onclick=applySample;

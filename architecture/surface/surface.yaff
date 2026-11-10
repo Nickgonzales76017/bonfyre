@@ -502,7 +502,6 @@ architecture foreign-link-desk
   source_path scripts/tests/source-publication-browser.test.mjs
   source_path site/matrix/surfaces/link.html
   source_path site/matrix/surfaces/link.json
-  source_path site/matrix/surfaces/build/link_workspace_contract.mjs
   source_path site/matrix/surfaces/build/link_workspace_test.sh
   source_path components/BonfyreProject/tests/foreign_release_projection_test.sh
   source_path cmd/BonfyreWebAddress/src/main.c

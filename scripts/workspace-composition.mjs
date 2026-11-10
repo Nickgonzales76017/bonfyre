@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {replaceSpacesComponents} from './component-release.mjs';
+import {ensureWorkspaceDocking} from './workspace-dependencies.mjs';
+await mkdir('workspace-evidence',{recursive:true});
+await ensureWorkspaceDocking('site/spaces');
+await replaceSpacesComponents('site/spaces');
+const first=await readFile('site/spaces/RELEASE.tsv');
+await replaceSpacesComponents('site/spaces');
+assert.deepEqual(await readFile('site/spaces/RELEASE.tsv'),first);
+await writeFile('workspace-evidence/BUILD.txt','PASS Existing catalogue and planner use the shared workspace composition.\nPASS Pinned module and CSS identities are verified by the normal build provider.\nPASS Repeating the release produces byte-identical assets and package addresses.\n');

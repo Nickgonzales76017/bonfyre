@@ -11,6 +11,7 @@ SRC      = src/main.c
 
 all: $(TARGET)
 
+.PHONY: test
 test: $(TARGET)
 	bash tests/width_admission_test.sh
 	sh tests/delete_test.sh

@@ -7,6 +7,8 @@ LIB      = ../../lib/libbonfyre
 CUE_SRC  = ../../components/BonfyreDecision/decision-plane.cue
 CFLAGS  ?= -Os -Wall -Wextra -Werror -std=gnu11 -D_GNU_SOURCE -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
 CFLAGS  += -ffp-contract=off -I$(LIB)/include -Ibuild -Isrc -flto -ffunction-sections -fdata-sections
+# GCC reports brace-less one-line guards that clang accepts.
+CFLAGS  += -Wno-misleading-indentation
 LDFLAGS += -flto
 LDLIBS   = -lsqlite3 -lz -lm
 ifeq ($(shell uname),Darwin)
@@ -14,7 +16,7 @@ LDFLAGS += -Wl,-dead_strip
 else
 LDFLAGS += -Wl,--gc-sections
 endif
-SRCS     = src/main.c src/dp_core.c src/dp_util.c src/dp_gguf.c src/books.c src/books_xlsx.c src/monitor.c src/manifest.c
+SRCS     = src/main.c src/dp_core.c src/dp_util.c src/dp_gguf.c src/books.c src/books_xlsx.c src/monitor.c src/manifest.c src/plane.c
 TARGET   = bonfyre-decide
 LINKS    = bonfyre-books bonfyre-monitor bonfyre-manifest
 
@@ -52,3 +54,8 @@ install: all
 
 clean:
 	rm -rf build $(TARGET) $(LINKS)
+
+# The DecisionPlane core over JSON, against vectors recorded from the JS plane.
+.PHONY: test-plane
+test-plane: $(TARGET)
+	sh tests/plane_parity.sh ./$(TARGET)

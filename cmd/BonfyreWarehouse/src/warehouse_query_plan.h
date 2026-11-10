@@ -15,7 +15,6 @@ typedef struct {
 typedef struct {
   sqlite3_int64 generation;
   sqlite3_int64 max_bytes;
-  sqlite3_int64 frontier_rows;
   char representation_id[241];
   char digest[65];
 } warehouse_query_head;
@@ -37,7 +36,7 @@ static int warehouse_pinned_input(sqlite3 *db, warehouse_query_input in,
      !warehouse_parse_positive(in.generation,&g) ||
      !warehouse_parse_positive(in.bound,&bytes)) return 0;
   const char *sql =
-    "SELECT h.generation,h.representation_id,h.digest,s.realization_count,s.max_realization_bytes,s.frontier_rows "
+    "SELECT h.generation,h.representation_id,h.digest,s.realization_count,s.max_realization_bytes "
     "FROM warehouse_snapshot_head h "
     "JOIN warehouse_snapshot_stats s ON s.semantic_kind=h.semantic_kind "
     "AND s.representation_kind=h.representation_kind AND s.generation=h.generation "
@@ -72,7 +71,6 @@ static int warehouse_pinned_input(sqlite3 *db, warehouse_query_input in,
       strcpy(out->digest,(const char*)digest);
       out->generation=sqlite3_column_int64(st,0);
       out->max_bytes=observed;
-      out->frontier_rows=sqlite3_column_type(st,5)==SQLITE_NULL ? -1 : sqlite3_column_int64(st,5);
       *bound=bytes;
       ok=1;
     }
@@ -115,14 +113,12 @@ static int warehouse_query_plan(sqlite3 *db, const char *operation,
   printf(",\"left\":{\"semantic_kind\":");json_string(left.semantic);
   printf(",\"generation\":%lld,\"representation_id\":",(long long)lh.generation);
   json_string(lh.representation_id);printf(",\"digest\":");json_string(lh.digest);
-  printf(",\"max_observed_realization_bytes\":%lld,\"frontier_rows\":",(long long)lh.max_bytes);
-  if(lh.frontier_rows>=0)printf("%lld}",(long long)lh.frontier_rows);else printf("null}");
+  printf(",\"max_observed_realization_bytes\":%lld}",(long long)lh.max_bytes);
   if(join){
     printf(",\"right\":{\"semantic_kind\":");json_string(right.semantic);
     printf(",\"generation\":%lld,\"representation_id\":",(long long)rh.generation);
     json_string(rh.representation_id);printf(",\"digest\":");json_string(rh.digest);
-    printf(",\"max_observed_realization_bytes\":%lld,\"frontier_rows\":",(long long)rh.max_bytes);
-    if(rh.frontier_rows>=0)printf("%lld}",(long long)rh.frontier_rows);else printf("null}");
+    printf(",\"max_observed_realization_bytes\":%lld}",(long long)rh.max_bytes);
   }
   printf(",\"proposed_route\":");
   json_string(total<=budget?"local-duckdb-candidate":(workers>1 && total<=aggregate)?

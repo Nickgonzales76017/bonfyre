@@ -1,0 +1,5 @@
+Dockview 8.5.1. MIT core docking only.
+https://registry.npmjs.org/dockview-core/-/dockview-core-8.5.1.tgz
+sha512-lUNJj4uvE36ks59pMeLeinzvVr0EVkGiA/c1kuUdR2V49CAIGx+bhiu0FuZNh8iqcggu/5h1v1U0KC0JrUuPSw==
+https://registry.npmjs.org/dockview/-/dockview-8.5.1.tgz
+sha512-ThlNLXBHP1TBMlsAXTWvoJl17nPYVO8WTtUMyoGf15K6DBCRnoKPzIcISlWben9XBx99txUfSjkVBZ9szGA9iQ==

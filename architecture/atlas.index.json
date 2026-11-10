@@ -1518,7 +1518,7 @@
         "integrations/browser/tests/provider-continuation.test.mjs",
         "integrations/browser/tests/provider-continuation.browser.test.mjs",
         "integrations/mcp/tests/fabric_push.test.mjs verifies encrypted RFC8291 packets, actual loopback HTTP signature and content verification, recipient isolation, revocation, bounded retries and uncertain-send preservation",
-        "cmd/BonfyreAuth/tests/background_access_test.py compiles the current native account policy helper and verifies active-user, institution-role and household-access parity",
+        "cmd/BonfyreAuth/tests/background_access_test.sh compiles the current native account policy helper and verifies active-user, institution-role and household-access parity",
         "integrations/browser/tests/aurekai-push.test.mjs",
         "integrations/browser/tests/aurekai-push.browser.test.mjs",
         "integrations/browser/tests/aurekai-push-rail.browser.test.mjs",
@@ -3907,10 +3907,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreActors (bonfyre-actors, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -3990,10 +3990,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreAgentContract (bonfyre-agent-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4126,10 +4126,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreAttention (bonfyre-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes AttentionCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4187,8 +4187,8 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreAuth/tests/institution_members_test.py exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
-        "cmd/BonfyreAuth/tests/institution_members_test.py checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
         "components/BonfyreServiceSite/tests/training-creator.test.mjs verifies credential stdin login, actor closure, institution-authorize-stdin and logout-stdin against real native sessions and revoked grants",
         "scripts/tests/catalog_persona_retirement.test.mjs invokes the real persona provisioner with mocked SSH, validates all DEMO contract rows before account calls, rejects malformed signup IDs before grants, keeps passwords off argv/stdout, and preserves an existing credential file on failure; it does not provision live accounts",
         "packs/no-simulation/command-evidence-20261010.tsv",
@@ -4215,10 +4215,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBitNet (bonfyre-bitnet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4321,7 +4321,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBraidAudit (bonfyre-braid-audit) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -4356,10 +4356,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreBridgeReadiness (bonfyre-bridge-readiness, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -4775,10 +4775,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreCommerce (bonfyre-commerce, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5019,10 +5019,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreCredentials (bonfyre-credentials, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5172,10 +5172,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.distribute is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.distribute quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-f9ae95815825fa80a63b), one run on one input; realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5187,6 +5187,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.distribute quality_proven, receipt rcpt-f9ae95815825fa80a63b, workload and quality probe passed over an ids-and-states export of the live CMS outbound_message table (135 messages); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreDistribute/tests/message_test.sh",
         "cmd/BonfyreDistribute/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.distribute=pass"
       ]
@@ -5210,10 +5211,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreDisturbanceAudit (bonfyre-disturbance-audit, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5245,10 +5246,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreDomain (bonfyre-domain, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes DomainCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5281,11 +5282,11 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.economy is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
+        "operator command.economy quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-436fcbf8b5e960a231ed), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
         "thirteen other commands still open their stores through the forgiving fast-tier helper, and Finance, Pay and Meter do not use the helper at all; nobody has decided a durability tier for each"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5300,6 +5301,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.economy quality_proven, receipt rcpt-436fcbf8b5e960a231ed, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/economy.db (406 costs); fabric state retained at ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "2026-10-12 lib/libbonfyre/tests/sqlite_policy_test.c (14 checks, run by make test in lib/libbonfyre) shows the durable tier opening in WAL with synchronous FULL, the fast tier with NORMAL, both read back from SQLite, and a store that cannot be opened returning an error with no handle; cmd/BonfyreEconomy opens its ledger at the durable tier and its existing store opened and listed budgets on the rebuilt binary",
         "cmd/BonfyreEconomy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.economy=pass"
@@ -5489,7 +5491,7 @@
         "each JSON value's kind is checked against its field before the library reads it, because the library's own reader takes the text \"yes\" for true"
       ],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work",
+        "built by make -C cmd/BonfyreEnvelope (bonfyre-envelope, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work",
         "no boundary uses these messages yet: the browser host, the queue and the native commands still pass JSON. The definitions cover four messages, and a generated reader exists for C++ only"
       ],
       "layer": "",
@@ -5530,10 +5532,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExperienceBinding (bonfyre-experience-binding, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5653,10 +5655,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExperienceStage (bonfyre-experience-stage, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5691,10 +5693,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreExternalEstate (bonfyre-external-estate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5813,10 +5815,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreFacet (bonfyre-facet, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5885,10 +5887,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.finance is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.finance quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-9f1da9e3b059dc69b2f3), one run on one input; realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -5902,6 +5904,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.finance quality_proven, receipt rcpt-9f1da9e3b059dc69b2f3, workload and quality probe passed over a snapshot of ~/.bonfyre/estate-local/finance.db, the live service store (21 opportunities); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreFinance/tests/vectors/zero_close.json",
         "cmd/BonfyreFinance/tests/vectors/*.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.finance=pass"
       ]
@@ -6041,10 +6044,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreFragmentMigration (bonfyre-fragment-migration, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6161,7 +6164,8 @@
       "experience_chains": [],
       "family": "command",
       "forbidden_inferences": [
-        "the command exists -> its effect is authorized (Authority gates the commit)"
+        "the command exists -> its effect is authorized (Authority gates the commit)",
+        "a key that verifies -> a paid or current customer; it says the institution issued these entitlements and the bytes have not moved, not that anything was bought or that the issuer has not since revoked it"
       ],
       "internal_calculi": [
         "bonfyre-gate binary"
@@ -6186,7 +6190,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyreGate/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.gate=fail"
+        "cmd/BonfyreGate/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.gate=fail",
+        "2026-11-08: keys are Ed25519-signed by the institution identity through bonfyre-sign over every field but the signature; check and guard verify against BONFYRE_GATE_TRUST and refuse with nothing trusted. The 2026-10-29 defect (editing allowed_ops in key.json granted the op) is closed: the third vector case edits a key, checks with no trust and with another institution key, and all three are refused; a signed key past expiry is EXPIRED. Keys are now written with bf_jv, so an org with a quote no longer breaks the JSON"
       ]
     },
     "cmd-gen": {
@@ -6248,10 +6253,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreGitHubWatch (bonfyre-github-watch, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes GitHubWatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6373,10 +6378,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreHousehold (bonfyre-household, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6633,10 +6638,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreLatentAtlas (bonfyre-latent-atlas, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6744,10 +6749,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.learn is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.learn quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-14cc5d42e9fc21f6943c), one run on one input; realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6761,6 +6766,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.learn quality_proven, receipt rcpt-14cc5d42e9fc21f6943c, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/learn.db (233 feedback rows); fabric state retained at ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreLearn/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.learn=pass"
       ]
@@ -6824,10 +6830,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreLex (bonfyre-lex, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6860,10 +6866,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreLifecycle (bonfyre-lifecycle, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes LifecycleCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -6937,10 +6943,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMCPProof (bonfyre-mcp-proof, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7102,10 +7108,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMaterialWeatherGate (bonfyre-material-weather-gate, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7137,10 +7143,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMaterialWeatherReheat (bonfyre-material-weather-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7209,10 +7215,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMediaLibrary (bonfyre-media-library, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7502,8 +7508,8 @@
       "views": [],
       "witnesses": [
         "cmd/BonfyreModel/tests/representation_passport_test.sh",
-        "cmd/BonfyreModel/tests/manifest_test.py",
-        "cmd/BonfyreModel/tests/file_verification_test.py verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
+        "cmd/BonfyreModel/tests/manifest_test.sh",
+        "cmd/BonfyreModel/tests/file_verification_test.sh verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
         "packs/no-simulation/model-hash-20261013/benchmark.json records five alternating native verify runs on 128 MiB plus 17 synthetic bytes with exact digests; median 0.718 to 0.127 seconds on this Mac",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreModel/tests/local_test.sh checks bonfyre-model local against a fixture ledger: a held checkpoint reads loaded, one larger than spendable memory reads waits"
@@ -7668,10 +7674,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreObservationBoundary (bonfyre-observation-boundary, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7901,10 +7907,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreOrigin (bonfyre-origin, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7936,10 +7942,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.outreach is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.outreach quality-proven on a real input in the certification of 2026-11-07 (receipt rcpt-1244756c94e695f8e198), one run on one input; realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -7951,6 +7957,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.outreach quality_proven, receipt rcpt-1244756c94e695f8e198, workload and quality probe passed over a snapshot of ~/.local/share/bonfyre/outreach.db (42 sends); fabric state retained at ~/.bonfyre/certification/20261107",
         "cmd/BonfyreOutreach/tests/commercial_outreach_test.sh",
         "cmd/BonfyreOutreach/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.outreach=pass"
       ]
@@ -7974,10 +7981,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreOwnerContract (bonfyre-owner-contract, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8049,10 +8056,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePackCondition (bonfyre-pack-condition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8085,10 +8092,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePackConditionDelta (bonfyre-pack-condition-delta, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8161,10 +8168,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreParticipation (bonfyre-participation, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8306,7 +8313,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyrePipeline/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.pipeline=fail"
+        "cmd/BonfyrePipeline/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.pipeline=fail",
+        "2026-11-08: the gate step delegates a --key-file to bonfyre-gate guard (signature verified) instead of its own unsigned substring check, and with no key file reports the licence as not checked instead of PASS for \"default-key\"; the meter step records usage with cost NULL instead of a price table of its own (admitted rates are BonfyreMeter's). Vector case 3: a signed key runs, an edited key stops the run before ingest, cost is NULL"
       ]
     },
     "cmd-project": {
@@ -8332,8 +8340,7 @@
         "message review projects the canonical project and outbound_message tables through a read-only snapshot and never dispatches or changes a record"
       ],
       "known_gaps": [
-        "operator command.project quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-bb62d1683675403dfe85), one run on one input; realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing",
-        "cmd/BonfyreProject/src/main.c remains on disk beside the build edge that bypasses it; it is neither removed nor reconciled with the components source it is not built from"
+        "operator command.project quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-bb62d1683675403dfe85), one run on one input; realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
       "maturity": "implemented",
@@ -8421,10 +8428,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreProvider (bonfyre-provider, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; realizes ProviderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8516,7 +8523,8 @@
       "views": [],
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
-        "cmd/BonfyreProxy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.proxy=fail"
+        "cmd/BonfyreProxy/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.proxy=fail",
+        "2026-11-07: /v1/chat/completions and /v1/audio/transcriptions killed the server (SIGBUS): each handler held a 4 MB result buffer on a 512 KB connection-thread stack, and both still called brief/transcribe with a retired --out /dev/stdout form. Buffers moved to the heap, handlers call bonfyre-brief <file> <dir> and bonfyre-transcribe <audio> <dir> --language L and return brief.md / transcript.txt|srt|vtt; the second vector case (two chat completions in a row, empty conversation 400, health after) passes and fails on the old source"
       ]
     },
     "cmd-public-world": {
@@ -8538,10 +8546,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyrePublicWorld (bonfyre-public-world, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -8596,7 +8604,7 @@
       "witnesses": [
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreQuant/tests/roundtrip_test.sh measures named tensors of a real safetensors model and refuses with no model, a text file, or a tensor that is not there",
-        "cmd/BonfyreQuant/tests/physical_roundtrip_test.py",
+        "cmd/BonfyreQuant/tests/physical_roundtrip_test.sh",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreQuant/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.quant=fail"
       ]
@@ -8822,10 +8830,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreRecall (bonfyre-recall, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9025,7 +9033,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherDelta (bonfyre-resource-weather-delta) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9060,10 +9068,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherRefresh (bonfyre-resource-weather-refresh, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9095,10 +9103,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreResourceWeatherTransition (bonfyre-resource-weather-transition, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9130,10 +9138,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreRetention (bonfyre-retention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9394,7 +9402,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedDemand (bonfyre-scoped-demand-reheat) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9430,10 +9438,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedFrontier (bonfyre-scoped-frontier, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9465,10 +9473,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedLeaseReheat (bonfyre-scoped-lease-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9500,10 +9508,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedReheat (bonfyre-scoped-reheat, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9535,10 +9543,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreScopedRespecialize (bonfyre-scoped-respecialize, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9641,10 +9649,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSemanticOperation (bonfyre-semantic-operation, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9711,7 +9719,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreShowcaseCrosswalk (bonfyre-showcase-crosswalk) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -9746,10 +9754,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreShowcaseEstate (bonfyre-showcase-estate, answers --help, not installed; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9781,10 +9789,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSign (bonfyre-sign, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9894,10 +9902,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSpatial (bonfyre-spatial, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -9967,10 +9975,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreStanding (bonfyre-standing, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10084,10 +10092,10 @@
       ],
       "known_gaps": [
         "only publisher institutions are composed as lake subjects; products, people, places and Programs do not yet join retained items through subject relations",
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSurfaceMaturity (bonfyre-surface-maturity, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10126,10 +10134,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10186,7 +10194,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreSwarm/tests/scoped_transfer_test.py",
+        "cmd/BonfyreSwarm/tests/scoped_transfer_test.c",
         "integrations/mcp/tests/fabric_output_transfer.test.mjs exercises actual native peers against a retained scoped Fabric output, current account authority, exact replay across restart, revocation before receiver dispatch, owner shutdown, and unavailable evidence",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreSwarm/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.swarm=pass"
@@ -10287,10 +10295,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreTargetAttention (bonfyre-target-attention, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10322,10 +10330,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.tel is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; realizes TelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.tel quality-proven in the certification of 2026-11-07 (receipt rcpt-6cbc1ebf282f874f5e92), one run on one input; realizes TelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10337,6 +10345,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.tel quality_proven, receipt rcpt-6cbc1ebf282f874f5e92, workload and quality probe passed over the bound self-test: a loopback-only FreeSWITCH 1.11.3, one call placed, seen by the switch, hung up, gone, unknown-call hangup refused, no trunk reached; fabric state ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreTel/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.tel=pass"
       ]
@@ -10436,10 +10445,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "certification of command.tone is blocked for want of a real input, see its contract in estate/operator-contracts.yaff; the binary answers --help, which is not a witness; its eGeMAPSv02 extraction contract is explicitly blocked until CapabilityClosure admits an OpenSMILE binary plus configuration. The binary's presence never implies the external model/config dependency is runnable; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "operator command.tone quality-proven in the certification of 2026-11-07 (receipt rcpt-768c11e636896c1177d8), one run on one input; its eGeMAPSv02 extraction contract is explicitly blocked until CapabilityClosure admits an OpenSMILE binary plus configuration. The binary's presence never implies the external model/config dependency is runnable; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10451,6 +10460,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "packs/no-simulation/command-evidence-20261107-real-input.tsv: command.tone quality_proven, receipt rcpt-768c11e636896c1177d8, workload and quality probe passed over a narrated recording from ~/.bonfyre/narrate-cache (synthesized speech, 520 frames, 396 voiced) measured as 27 bonfyre-voice-fingerprint features; a music mix (0 voiced frames, rcpt-14eefebdb96ba09fa20e) also passed. No recorded human voice was available; fabric state ~/.bonfyre/certification/20261107",
         "packs/no-simulation/command-evidence-20261010.tsv",
         "cmd/BonfyreTone/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.tone=pass"
       ]
@@ -10870,10 +10880,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWebSub (bonfyre-websub, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -10905,7 +10915,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWebSubLeaseGate (bonfyre-websub-lease-gate) but prints nothing on --help and exits 2 (checked 2026-11-07), so it is not yet a usable command; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -11024,10 +11034,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreWorldCompiler (bonfyre-world-compiler, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -12656,7 +12666,6 @@
       ],
       "known_gaps": [
         "the estate probes two paths per source and there are more: /.well-known/mcp.json, /.well-known/ai-plugin.json and /llms.txt all appeared in the operation lists and none were swept",
-        "the produced class is blocked by a real defect rather than by policy. bf_crypto advertises Ed25519 signing in its header and implements a symmetric HMAC tag: `pk` is H(seed) and cannot verify anything, and bf_crypto_sign_verify is a stub returning -1 for every input. Nothing calls it today, so nothing is broken in production, but a caller reading sign_keygen(pk, sk) would reasonably publish pk and ship a signature no counterparty can check. The header now says what it implements; the fix is libsodium and not a hand-rolled curve",
         "the issued class needs 19 registrations and every one of them is a commitment a person makes rather than a capability this estate can add",
         "github.com carries 2,670 of the MCP occurrences because their primary_url is a repository rather than an endpoint. The per-host cap removed them and the service behind each repository was never reached"
       ],
@@ -14484,6 +14493,56 @@
         "local 2026-09-15 server witness at 127.0.0.1:8872 returned Farm Cold Chain Household HTML and JSON with closure sha256:2bfb77eb17f049b210a63ec6d9a5d36712c3149eec2f6a8579d06ae91101576a, 131 occurrences and six eight-candidate lenses; an If-None-Match request returned 304 without a body"
       ]
     },
+    "factor-reduction": {
+      "canonical_name": "FactorReduction",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Optimization / Exact combinatorial reduction",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "optimization",
+      "forbidden_inferences": [
+        "a configuration counted as valid -> that configuration being authorized or committed",
+        "two components with different digests -> two different structures; isomorphic pieces built in a different order are computed twice",
+        "a fast count on a bounded-width family -> tractability of an arbitrary formula",
+        "shared FPQ seed programs -> equal exact factors"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "counts are exact unsigned 128-bit integers; overflow is refused, never wrapped",
+        "an elimination wider than the bound is refused, never approximated",
+        "a component digest covers renamed scopes and full tables, so a cached count is reused only for a component built identically",
+        "a clause holding v and not v adds nothing; an empty clause makes the count zero"
+      ],
+      "known_gaps": [
+        "no command calls it yet; CMS reduction, policy configurations and repository compositions are the first intended callers"
+      ],
+      "layer": "execution",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "ConstraintFactor",
+        "SharedFactorSummary"
+      ],
+      "owns": [
+        "SharedFactorSummary"
+      ],
+      "publishes": [
+        "ExactFactorCount"
+      ],
+      "semantic_question": "What is the exact sum over all assignments of a product of typed Boolean factors, and which parts of it were already computed for a related problem?",
+      "source_paths": [
+        "lib/libbonfyre/include/bf_factor.h",
+        "lib/libbonfyre/src/bf_factor.c",
+        "lib/libbonfyre/Makefile"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "lib/libbonfyre/tests/factor_count_test.c compares every count with brute-force enumeration over 400 random CNFs and 300 random weighted factor graphs, checks clause lowering, an auxiliary AND definition that preserves the count, refusal of an over-wide clique and of a 2^128 count, and exact 2^127; on a family of 2000 problems built from 6 shared pieces it eliminated 11 components and answered 39954 from the cache with every answer equal to fresh elimination (make -C lib/libbonfyre test-factor; also clean under ASan and UBSan, 2026-11-07)"
+      ]
+    },
     "federation-twin": {
       "canonical_name": "FederationTwin",
       "commands": [],
@@ -15003,9 +15062,11 @@
         "a basket that misses a source-stated fulfillment minimum has no plan in that mode",
         "an unresolved fulfillment leg never supplies an exact cash total or zero travel"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "sources are archived (.archive) and the run8-r2c observation path is machine-local and absent; no live implementation exists"
+      ],
       "layer": "economic/food",
-      "maturity": "implemented",
+      "maturity": "declared",
       "native_formats": [],
       "node_types": [
         "ObservedFoodOffer",
@@ -15032,8 +15093,7 @@
       "source_paths": [
         "tools/food_offer_observations.py.archive",
         "components/BonfyreControlPlane/food_combination_engine.py.archive",
-        "components/BonfyreControlPlane/food_fulfillment_route.py.archive",
-        ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl"
+        "components/BonfyreControlPlane/food_fulfillment_route.py.archive"
       ],
       "subscribes": [],
       "views": [],
@@ -15165,7 +15225,6 @@
         "scripts/tests/source-publication-browser.test.mjs",
         "site/matrix/surfaces/link.html",
         "site/matrix/surfaces/link.json",
-        "site/matrix/surfaces/build/link_workspace_contract.mjs",
         "site/matrix/surfaces/build/link_workspace_test.sh",
         "components/BonfyreProject/tests/foreign_release_projection_test.sh",
         "cmd/BonfyreWebAddress/src/main.c",
@@ -17279,6 +17338,7 @@
         "owns reduction mechanics, not the meaning of the structure reduced"
       ],
       "known_gaps": [
+        "the reducing binary vendor/hvm4/src/hvm4 is built on the estate machine from the pinned submodule's hvm.c and is not committed; a fresh checkout has the source and the witness but must build the binary before the witness can run",
         "this entry carried `implemented` with a source_path and a witness that were both .py.archive, and a known_gap reading \"installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending\". All three were stale: vendor/hvm4/src/hvm4 is a built arm64 binary answering HVM 4.0 that reduces the bench programs vendored beside it. The capability arrived and was never told to the registry, which went on citing evidence that had been retired -- and a capability the estate cannot see is one it will rebuild by hand.",
         "hvm-lang is still not present; programs are written in HVM4 core syntax, and nothing here compiles a higher-level front end down to it",
         "the reduction is sequential; HVM4 describes itself as a sequential Interaction Calculus runtime, so nothing in this estate is yet getting parallel reduction out of it",
@@ -17295,7 +17355,6 @@
       "semantic_question": "What is the bounded reduction of this selected symbolic or computational structure?",
       "source_paths": [
         "vendor/hvm4/src/hvm.c",
-        "vendor/hvm4/src/hvm4",
         "components/BonfyreControlPlane/substrate_hvm.py.archive"
       ],
       "subscribes": [],
@@ -19270,7 +19329,7 @@
         "a scheme change is a declared non-fold and is reported apart from misses; http and https are different origins, and folding them needs the digests to agree, which needs an outbound fetch"
       ],
       "known_gaps": [
-        "the current source of cmd/BonfyreProject/src/main.c does not dispatch `foreign` commands despite the existing gym, provider-trial and WebAddress callers expecting them; native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability",
+        "native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability (the installed bonfyre-project, built from components/BonfyreProject, does dispatch `foreign`: `foreign observe` returned an allowed receipt on 2026-11-07; the unbuilt cmd/BonfyreProject/src/main.c shim that lacked it was retired)",
         "MarketCeiling is unmeasured because no external supplier is declared as a provider_route yet; the estate holds provider credentials in a secrets store this process is not permitted to read, so the routes must be declared by name before the same contract can measure the market",
         "DirectSourceCeiling is declared and not exercised per run, because re-fetching every source is an outbound cost against third parties; a refresh is a separate rate-aware act",
         "deformation families are declared in the contract grammar and no gym uses them yet; the first gym measures decay rather than retrieval under degraded description",
@@ -27870,8 +27929,9 @@
         "components/BonfyreServiceSite/README.md",
         "components/BonfyreServiceSite/tests/catalogue-baseline.test.mjs",
         "components/BonfyreServiceSite/tests/catalogue-live-intake.test.mjs",
-        "components/BonfyreServiceSite/tools/product-review-pdf.py",
-        "components/BonfyreServiceSite/tools/product-review-requirements.txt",
+        "components/BonfyreServiceSite/tools/product-review.c",
+        "components/BonfyreServiceSite/tools/product-review-test.sh",
+        "components/BonfyreServiceSite/tools/Makefile",
         "components/BonfyreServiceSite/catalogue-review.mjs",
         "components/BonfyreServiceSite/tests/catalogue-review.test.mjs",
         "packs/aurekai-work-samples/site/lead.mjs",
@@ -27935,6 +27995,7 @@
         "2026-10-08 the prepared RED3 sample passed 45 local browser checks and 37 published browser checks including seven proposed changes, save and reload, desktop and mobile layouts; the live run submitted nothing. Evidence: packs/aurekai-work-samples/site/design/verification-preparation-local/browser-verification.json and packs/aurekai-work-samples/site/design/verification-preparation-live/browser-verification.json. Publication used site.mjs publish for aurekai-work-samples on the estate account; no Fleming deployment occurred",
         "2026-10-08 catalogue, lead recovery and routing tests pass 27 tests and 195 assertions; six preparation fields survive generated intake, native enrichment and the compiled CMS, while invented preparation originals, unknown fields and excess lengths are refused",
         "2026-10-08 product-review-pdf.py rendered the RED3 easel sample from retained product-copy JSON and the observed image into output/pdf/red3-easel-copy-review.pdf; pdfinfo reported one page and the final Poppler rendering was visually inspected. The sample includes proposed copy and unresolved supplier facts and is referenced by native project 21",
+        "2026-11-06 product-review.c (C over bf_json/bf_jsonw) replaced the reportlab renderer: product-review-test.sh renders a fixture with quotes, markup, \\u escapes and a surrogate pair to HTML and, through real headless Chrome with a throwaway profile and a dead proxy, to a one-page PDF whose text pdftotext reads back; a draft review and an unknown output kind are refused. The PDF page was rendered with pdftoppm and inspected. The retained RED3 input JSON is not on disk, so the RED3 sheet itself was not re-rendered",
         "components/BonfyreServiceSite/tests/catalogue-model.test.mjs checks decimal cents, invalid values, source identity, draft restoration and checksummed packaging",
         "2026-10-07 components/BonfyreServiceSite/tests/catalogue-browser.test.mjs passes 26 checks in fresh Chrome processes over the retained Redwood Rings and AJ Collectives catalogues: edit and review, reload and browser restart, stale-tab conflict, service items, store switching, empty and failed loads, corrupted piece, and 320/390/768/1440 layouts",
         "2026-10-07 the same catalogue-browser.test.mjs ran with CATALOGUE_TEST_ORIGIN=https://aurekai-work-samples.pages.dev and passed all 26 checks against the published workspace, using real pointer and keyboard title edits, browser restart and isolated stale-tab, failed-request and corrupted-chunk tests; the run observed no external writes; result is packs/aurekai-work-samples/site/design/verification-live/browser-verification.json",
@@ -41289,9 +41350,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "9bc29441f930b5fa9862be3f43419cf2450bb6fe7f52e06d9d947cef6a6233bd",
-    "declaration_files": 150,
-    "generated_at": "2026-11-10T08:57:04Z"
+    "declaration_digest": "6e20b7602c78d6f1449fc3d6b3d3ed0af6799f7c180586114656b4e7b6ea4a5e",
+    "declaration_files": 151,
+    "generated_at": "2026-11-10T18:24:49Z"
   },
   "views": {
     "CapabilityView": {

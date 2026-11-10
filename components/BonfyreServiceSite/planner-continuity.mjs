@@ -107,33 +107,6 @@ export function useReviewedRefresh(plan, previous, current, expected, owner) {
   return { plan: structuredClone(review.candidate), receipt: null };
 }
 
-/** Resolve an absent exact product option only through a customer's reviewed choice.
- * The returned plan is a candidate for the host's revision-checked save, never an effect. */
-export function resolveMissingPlanOptions(plan,previous,current,expected,choices,owner){
-  const review=reviewPlanRefresh(plan,previous,current,owner);
-  if(!plain(expected)||expected.previous_digest!==review.previous_digest||
-     expected.current_digest!==review.current_digest||
-     canonical(expected.original)!==canonical(review.original))
-    fail('The plan or catalogue changed after review. Review it again.');
-  const old=index(previous),next=index(current),missing=new Set(review.missing.map(row=>row.fixture));
-  if(!plain(choices)||Object.keys(choices).some(id=>!missing.has(id))||
-     [...missing].some(id=>typeof choices[id]!=='string'||!choices[id]))
-    fail('Each missing source option requires an explicit choice.');
-  const candidate=structuredClone(plan);candidate.catalogue=current.digest;
-  candidate.items=candidate.items.filter(item=>{
-    const previousProduct=old.aliases.get(item.product);
-    if(!previousProduct)fail('Saved product identity is missing.');
-    const exact=next.exact.get(identity(previousProduct));
-    if(exact){item.product=exact.id;return true;}
-    const choice=choices[previousProduct.id];
-    if(choice==='remove')return false;
-    if(!choice.startsWith('replace:')||!next.aliases.has(choice.slice(8)))
-      fail('Choose a current product option or explicitly remove placements.');
-    item.product=choice.slice(8);return true;
-  });
-  owner.validatePlan(candidate,current);
-  return {plan:candidate,receipt:null,approval_carried_forward:false,effect:'none'};
-}
 /** Plain text for an existing review region. Render with textContent. */
 export function refreshBrief(review) {
   const cents = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n / 100);

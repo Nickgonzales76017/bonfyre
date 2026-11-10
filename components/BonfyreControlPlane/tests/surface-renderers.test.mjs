@@ -1,12 +1,11 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 
 const repo = resolve(import.meta.dir, '../../..');
 const surfaces = resolve(repo, 'site/matrix/surfaces');
 const kit = readFileSync(resolve(surfaces, '_kit.js'), 'utf8');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const names = ['vertical', 'stage', 'thread', 'board', 'community', 'market',
   'search', 'spatial', 'work', 'inspector', 'watch'];
 const groups = ['social', 'visual', 'economic', 'work', 'inspect'];
@@ -117,9 +116,8 @@ test('a view lights only where deployed', () => {
 });
 
 test('shared chrome mounts the view control', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  expect(unit).toContain('BF_VIEW_MOUNT');
-  expect(unit).toContain("K.viewControl('bf-view')");
+  expect(main).toContain('BF_VIEW_MOUNT');
+  expect(main).toContain("K.viewControl('bf-view')");
 });
 
 live('compiled estate page mounts the view control', async () => {
@@ -189,15 +187,13 @@ for (const attack of ['../../../etc/passwd', '..%2f..%2fetc%2fpasswd', '.ssh/id_
 }
 
 test('receipt cannot name arbitrary file', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  const fn = unit.slice(unit.indexOf('static int serve_foreign_body'), unit.indexOf('static int serve_foreign_twins'));
+  const fn = main.slice(main.indexOf('static int serve_foreign_body'), main.indexOf('static int serve_foreign_twins'));
   expect(fn).toContain('strncmp(bpath, bodies, strlen(bodies))');
   expect(fn).toContain('strstr(bpath, "..")');
 });
 
 test('safe-file check is stricter than identifier check', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  const fn = unit.slice(unit.indexOf('static int foreign_safe_file'), unit.indexOf('/* Retained foreign bytes'));
+  const fn = main.slice(main.indexOf('static int foreign_safe_file'), main.indexOf('/* Retained foreign bytes'));
   expect(fn).toContain("text[i + 1] == '.'");
 });
 

@@ -1,10 +1,9 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 
 const repo = resolve(import.meta.dir, '../../..');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const live = test.skipIf(!process.env.BONFYRE_LIVE_WITNESS);
 
 async function get(path, accept = 'text/html') {
@@ -153,11 +152,10 @@ live('offered operation links to its form', async () => {
 });
 
 function subjectConditions() {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  const start = unit.indexOf('static size_t subject_conditions(');
+  const start = main.indexOf('static size_t subject_conditions(');
   expect(start).toBeGreaterThanOrEqual(0);
-  const end = unit.indexOf('\nstatic ', start);
-  return unit.slice(start, end);
+  const end = main.indexOf('\nstatic ', start);
+  return main.slice(start, end);
 }
 
 test('closure domains dispatch by authored state, not C domain names', () => {

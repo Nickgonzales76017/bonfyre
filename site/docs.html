@@ -1,84 +1,133 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bonfÿre technical map — architecture, maturity, quick checks</title>
-  <meta name="description" content="Technical map for Bonfÿre and Aurekai: WorkGraph, projection, evidence, Frappe, Model Commons, Partner Commons, operational and financial metabolism, and runnable checks.">
-  <meta name="theme-color" content="#090d12">
-  <style>
-    :root{--bg:#090d12;--panel:#111923;--line:#273444;--text:#edf3f8;--muted:#9aaabd;--fire:#ff8a3d;--gold:#ffc857;--cyan:#64d8e8;--green:#6ee7a8;--mono:"SFMono-Regular",Consolas,monospace;--sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 var(--sans)}a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}.wrap{width:min(1080px,calc(100% - 36px));margin:auto}.nav{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 0;background:rgba(9,13,18,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}.brand{font-weight:800;color:var(--text)}.links{display:flex;gap:15px;flex-wrap:wrap}.links a{color:var(--muted);font-size:.9rem}header{padding:70px 0 48px}.eyebrow{color:var(--gold);font:700 .78rem/1 var(--mono);letter-spacing:.13em;text-transform:uppercase}h1{font-size:clamp(2.6rem,7vw,5rem);line-height:1;letter-spacing:-.055em;margin:20px 0}.lede,.sub{color:var(--muted);max-width:800px}.lede{font-size:1.15rem}.section{padding:52px 0;border-top:1px solid var(--line)}h2{font-size:2rem;margin:0 0 8px}.sub{margin:0 0 25px}.map,pre{background:#070a0e;border:1px solid var(--line);border-radius:12px;padding:22px;overflow:auto;font:13px/1.75 var(--mono);color:#d8e7f0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}.card h3{margin:0 0 8px;color:var(--green)}.card p{margin:0;color:var(--muted)}table{width:100%;border-collapse:collapse;border:1px solid var(--line)}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}th{color:var(--gold);font-size:.8rem;text-transform:uppercase;letter-spacing:.07em}td:last-child{color:var(--muted)}code{font-family:var(--mono);color:var(--green)}.note{border-left:4px solid var(--gold);background:#17170f;padding:20px;color:var(--muted)}footer{padding:38px 0;color:var(--muted)}@media(max-width:760px){.grid{grid-template-columns:1fr}.nav{align-items:flex-start}.links{justify-content:flex-end}table{font-size:.86rem}}
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Bonfÿre native architecture: Matrix, WorkGraph, data infrastructure, integrated applications, Model Commons, agent orchestration, commerce and connected public surfaces.">
+<meta name="theme-color" content="#f5f3eb">
+<meta property="og:title" content="Bonfÿre — Native architecture and systems">
+<meta property="og:description" content="Native software, account applications, distributed work, model systems and the public operating estate.">
+<link rel="canonical" href="https://nickgonzales76017.github.io/bonfyre/docs.html">
+<link rel="stylesheet" href="assets/aurekai-field-guide.css">
+<title>Bonfÿre — How the native platform works</title>
+<link rel="stylesheet" href="assets/aurekai-research.css">
 </head>
 <body>
-  <div class="wrap">
-    <nav class="nav"><a class="brand" href="index.html">🔥 Bonfÿre / Aurekai</a><div class="links"><a href="#map">Map</a><a href="#maturity">Maturity</a><a href="#projection">Projection</a><a href="#start">Run</a><a href="explore.html">Explore</a></div></nav>
-    <header><div class="eyebrow">Technical front door</div><h1>The architecture, without the archaeology.</h1><p class="lede">Generation-10/V8.1 supplies the cumulative semantic map. The live repository and Architecture Atlas supply implementation truth. This page connects them without turning a public overview into the full textbook.</p></header>
+<a class="skip" href="#main">Skip to technical content</a>
+<header class="top"><div class="shell"><a class="brand" href="./"><span class="mark">B</span> BONFŸRE <small>/ TECHNICAL GUIDE</small></a><nav aria-label="Technical navigation"><a href="./">Home</a><a href="explore.html">Product guide</a><a href="market.html">Research</a><a href="blog/">Journal</a><a href="#architecture">Architecture</a><a href="#install">Start here</a><a href="modules/">Source atlas</a></nav></div></header>
+<main id="main">
+<section class="hero"><div class="shell hero-grid"><div>
+<span class="eyebrow">Bonfÿre / technical guide</span>
+<h1>How Bonfÿre<br><em>works.</em></h1>
+<p class="lead">Bonfÿre is the software we use to build and operate Aurekai. It handles the things our different products need in common: people and organizations, their records, business applications, external information, models, agents, transactions and public websites. The same identity or record can appear in several places while each application keeps control of its own work.</p>
+<div class="actions"><a class="button primary" href="https://github.com/Nickgonzales76017/bonfyre">Browse canonical source ↗</a><a class="button" href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Read source architecture ↗</a></div></div>
+<aside class="plate"><span class="eyebrow">Native source and applications</span><h2>Start with the system you want to build.</h2><p>Need an account workspace, local search, a media pipeline, an external integration or an agent that can carry out a specific task? The native source has owners for each of those jobs, alongside the shared records and services they use.</p></aside></div></section>
+<div class="ribbon"><div class="shell"><span>C / ZIG COMPONENTS</span><span>DATA AND APPLICATIONS</span><span>AGENTS AND MODELS</span><span>BUSINESS AND WEB SYSTEMS</span></div></div>
+<section class="block" id="architecture"><div class="shell">
+<div class="head"><div><span class="eyebrow">The architecture</span><h2>One identity can have a lot of useful places.</h2></div><p>Think about a publisher, a business or an item for sale. It may have a public page, a workspace record, an API address, material in a feed and relationships to other people and organizations. Bonfÿre's Matrix keeps the subject and its relationships together so a change to its identity or relationships can be reflected across its different views. This is similar to the problem <a class="intext-source" href="https://support.gs1.org/support/solutions/articles/43000729075-what-is-gs1-digital-link-">GS1 Digital Link</a> addresses for products: one identifier can point to several kinds of useful information. Matrix applies the idea more broadly to people, organizations, publications, accounts and work.</p></div>
+<p style="max-width:950px;font-size:1.06rem;line-height:1.85;color:var(--muted)">An address is more than a URL. The same subject might appear under an Aurekai subdomain, a customer's own domain, an internal account application or an external API. Which parts someone can see depends on the account, the audience and the state of the record. Matrix and Bonfÿre's address owners handle those relationships. The web renderer then builds the view appropriate to that destination.</p>
+<div class="grid" id="architecture-deep">
+<article class="card"><span class="num">MATRIX</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#network"></use></svg></span><h3>People, businesses and sources</h3><p>Shared subject identities, addresses, relationships, organizations and the original material behind a record. A profile and a job listing can refer to the same company without inventing two companies.</p><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Matrix architecture ↗</a></article>
+<article class="card"><span class="num">APPLICATIONS</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#layers"></use></svg></span><h3>Where people do the work</h3><p>Each account has its own installed applications and records. CRM handles relationships; finance handles money; a creator studio handles media; a catalogue handles products. They can share references and continue work across one another.</p><a href="#inventory">Application families ↗</a></article>
+<article class="card"><span class="num">WORKGRAPH</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#briefcase"></use></svg></span><h3>How work gets done</h3><p>WorkGraph manages tasks, dependencies and recovery. CapabilityClosure matches each step with an available implementation. The native tool, model, agent or remote application does the work under that destination's rules.</p><a href="#operators">Execution architecture ↗</a></article>
+</div>
+</div></section>
+<section class="block soft" id="inventory"><div class="shell">
+<div class="head"><div><span class="eyebrow">Bonfÿre today</span><h2>What the installed system contains.</h2></div><p>Bonfÿre is built across native application infrastructure, data systems, agent tools, media, models and commerce. This inventory comes from the installed Bonfÿre V6.1.0 and Architecture Atlas on November 7, 2026.</p></div>
+<div class="grid">
+<article class="card"><span class="num">APPLICATIONS</span><h3>Business &amp; account apps</h3><p>ERPNext, CRM, HRMS, Helpdesk, LMS, Wiki, Drive and Insights grammar integration, account destinations, records and workflows.</p></article>
+<article class="card"><span class="num">IDENTITY</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#people"></use></svg></span><h3>Matrix &amp; Source Library</h3><p>People, organizations, addresses, collections, publications, listings, retained sources and relationships across products.</p></article>
+<article class="card"><span class="num">OPERATIONS</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cpu"></use></svg></span><h3>WorkGraph &amp; capability fabric</h3><p>Dependent work, native commands, models, agent orchestration, resource admission, schedules, automation and replay.</p></article>
+<article class="card"><span class="num">MEDIA</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#mic"></use></svg></span><h3>Creation &amp; publishing</h3><p>Transcription, speech, audio and video, channels, creator studios, content processing and distribution.</p></article>
+<article class="card"><span class="num">ECONOMY</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#bag"></use></svg></span><h3>Finance &amp; commerce</h3><p>Products, catalogues, prices, procurement, accounting, payments, offers, markets and configurable spatial shopping.</p></article>
+<article class="card"><span class="num">COMPUTE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#database"></use></svg></span><h3>Model &amp; data systems</h3><p>Local models, FPQ, SIMD/native backends, warehouse/query tools, embeddings, structured analysis and external compute providers.</p></article>
+</div>
+<div class="table-scroll" style="margin-top:32px"><table><thead><tr><th>Installed V6 / Atlas</th><th>Recorded scope</th></tr></thead><tbody>
+<tr><td>Native command families</td><td>93</td></tr>
+<tr><td>Frappe-derived DocTypes</td><td>1,840 across 51 modules</td></tr>
+<tr><td>WorkGraph</td><td>20,487 nodes / 45,412 edges</td></tr>
+<tr><td>Active backend adapters</td><td>14</td></tr>
+<tr><td>Architecture Atlas</td><td>556 entries: 346 implemented, 152 measured, 24 declared, 34 architectural</td></tr>
+</tbody></table></div>
+</div></section>
+<section class="block" id="example"><div class="shell">
+<div class="head"><div><span class="eyebrow">A cross-application example</span><h2>What happens to a job posting.</h2></div><p>One of our ongoing integration examples starts with a job posted by a company. Several Aurekai applications may want to work with that information, but they don't all have the same job.</p></div>
+<p style="max-width:965px;font-size:1.06rem;line-height:1.83;color:var(--muted)">The source system retains the posting and the company it belongs to. The public discovery page can show the opportunity. An account's CRM can use it as a relationship or sales opportunity, if that installed application accepts this kind of item. A media tool might use the same text to prepare a narrated update. Each application receives the part it needs and keeps its own work; it doesn't take over the original listing.</p>
+<p style="max-width:965px;font-size:1.06rem;line-height:1.83;color:var(--muted)">That sounds simple when it's one record. It becomes harder across thousands of publishers, companies, catalogues, identities, accounts and external services. Bonfÿre handles the common address, application and capability relationships so each new continuation doesn't need its own custom integration from scratch.</p>
+<pre aria-label="Illustrative source and application continuation">Company + original job listing
+       ├── Public discovery and company profile
+       ├── Account CRM, when that app accepts job records
+       └── Media/narration tool, when installed and requested
 
-    <section class="section" id="map"><h2>Whole-machine topology</h2><p class="sub">Bonfÿre owns deterministic semantic and effect boundaries. Aurekai learns above them and remains proof-gated.</p><div class="map">world / foreign state / intent
-        ↓
-BoundaryCompiler + contract spine
-        ↓
-Identity · Occurrence · Capability · Authority · Commitment
-        ↓
-WorkGraph · CapabilityClosure · ProviderGraph · Context · Resources · Money
-        ↓
-EffectKernel · AgentSession · execution phenotype
-        ↓
-ReceiptEnvelope · WitnessDAG · EvidenceGraph · TraceDivergence
-        ↓
-Replay · Shadow · Simulation · Backtesting · Gyms
-        ↓
-Aurekai candidate → proof → promote / cool / thaw</div></section>
+Each application manages its own information and work.</pre>
+</div></section>
+<section class="block alt" id="binaries"><div class="shell">
+<div class="head"><div><span class="eyebrow">04 / NATIVE ENGINE</span><h2>Native tools and business applications.</h2></div><p>The installed V6.1.0 inventory includes 93 native command families. The Frappe application sources contribute 1,840 DocTypes across 51 modules, covering ERPNext, CRM, HRMS, Helpdesk, learning, documents and analysis. WorkGraph holds 20,487 nodes and 45,412 edges. There are 14 active backend adapters. These are different parts of the implementation, not a single binary or one standalone app.</p></div>
+<div class="table-scroll"><table><thead><tr><th>Area</th><th>Owner concerns</th><th>Inspect</th></tr></thead><tbody>
+<tr><td>Data &amp; CMS</td><td>SQLite, source-preserving records, query, indexing and retained source state</td><td><a href="https://github.com/Nickgonzales76017/bonfyre/tree/main/cmd">Native commands</a></td></tr>
+<tr><td>Work &amp; authority</td><td>WorkGraph, leases, capabilities, grants, scoped execution and final effect decisions</td><td><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Architecture</a></td></tr>
+<tr><td>Media &amp; creator</td><td>Source intake, transcription, processing, narration and reviewed publication</td><td><a href="https://nickgonzales76017.github.io/pages-podcast-plant/studio/">Creator example</a></td></tr>
+<tr><td>Business apps</td><td>Frappe/ERPNext/CRM/HRMS/Helpdesk/LMS/Insights/Wiki/Drive grammar projection</td><td><a href="https://github.com/Nickgonzales76017/bonfyre/tree/main/integrations">Integration source</a></td></tr>
+<tr><td>Web &amp; experience</td><td>Matrix addressing, SurfaceIR, public readback, products and account-scoped editors</td><td><a href="./">Product index</a></td></tr>
+<tr><td>Compute</td><td>Model routes, optimization, agents, physical resources and placement</td><td><a href="#fpq">Model systems</a></td></tr>
+</tbody></table></div>
+<div class="note"><strong>Native-format policy:</strong> internal semantics and retained artifacts use typed owner contracts (including YAFF/CUE where applicable). JSON, HTTP and provider-specific formats can be emitted at declared interoperability boundaries; generating JSON is not a substitute for defining the underlying authoritative model.</div>
+</div></section>
+<section class="block soft" id="operators"><div class="shell">
+<div class="head"><div><span class="eyebrow">05 / AGENTIC EXECUTION</span><h2>How agents work with native tools.</h2></div><p>A task starts with a goal and a destination. WorkGraph tracks the dependencies and stages. CapabilityClosure identifies the native command, installed application, model, agent or outside service that can perform each part. Claude Code, Codex and local models are possible workers alongside deterministic C tools. The receiving application decides what information it accepts and what action the operator may take. The <a class="intext-source" href="https://hai.stanford.edu/ai-index/2026-ai-index-report/economy">2026 Stanford AI Index</a> found widespread organizational AI use in 2025 but much earlier deployment of AI agents inside specific business functions; that's the kind of practical integration gap we're engineering for.</p></div>
+<div class="flow"><div><span>01</span><strong>Goal</strong><span>Expected result and constraints</span></div><div><span>02</span><strong>Plan</strong><span>Reuse and dependency closure</span></div><div><span>03</span><strong>Preflight</strong><span>Resources, cost and authority</span></div><div><span>04</span><strong>Execute</strong><span>Bounded native or agent work</span></div><div><span>05</span><strong>Check the result</strong><span>Read back the state of the receiving application</span></div></div>
+<div class="grid" id="relay" style="margin-top:30px">
+<article class="card"><span class="num">TRANSPORT</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#plug"></use></svg></span><h3>MCP &amp; external adapters</h3><p>Applications and providers expose declared capabilities. A reachable service is not permission to read, spend or write.</p><a href="https://github.com/Nickgonzales76017/bonfyre/tree/main/mcp">MCP source ↗</a></article>
+<article class="card"><span class="num">SCHEDULE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#briefcase"></use></svg></span><h3>WorkGraph &amp; retries</h3><p>Typed dependencies, recovery, admission and effect review replace implicit “someone checked the ticket” assumptions.</p><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Execution model ↗</a></article>
+<article class="card"><span class="num">COMMERCE</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cart"></use></svg></span><h3>Financial operations</h3><p>A cost estimate is not expenditure; a quote is not a paid invoice; a proposal is not accepted work.</p><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/aurekai-bonfyre-model.md">Operating contract ↗</a></article>
+</div>
+</div></section>
+<section class="block" id="fpq"><div class="shell">
+<div class="head"><div><span class="eyebrow">06 / MODELS AND COMPUTE</span><h2>Models, compute and media.</h2></div><p>Model Commons deals with the practical details of running models: loading weights, choosing a machine or backend, using a tokenizer, managing context, compressing and quantizing models, and evaluating the result. Other Bonfÿre components handle speech, transcription, audio, video and publishing. These services are available to the applications that need them.</p></div>
+<div class="grid">
+<article class="card" id="fpqx"><span class="num">REPRESENTATION</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#cpu"></use></svg></span><h3>FPQ / FPQx</h3><p>Quantized and aligned model representations are workload- and quality-dependent research/engineering concerns—not a universal compression guarantee.</p><a href="https://github.com/Nickgonzales76017/bonfyre/tree/main/cmd/BonfyreFPQ">Inspect FPQ source ↗</a></article>
+<article class="card" id="kvcache"><span class="num">CONTEXT</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#archive"></use></svg></span><h3>KV and prepared context</h3><p>Retained context and cache behavior require explicit compatibility, model identity, freshness and invalidation checks.</p><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Context architecture ↗</a></article>
+<article class="card" id="hardware-fits"><span class="num">PLACEMENT</span><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#trending"></use></svg></span><h3>CPU, GPU and providers</h3><p>CPU, Metal, accelerator kernels and external backends offer different feasible realizations. Probe the current environment and price/capacity.</p><a href="https://github.com/Nickgonzales76017/bonfyre">Source &amp; tests ↗</a></article>
+</div>
+</div></section>
+<section class="block alt" id="benchmarks"><div class="shell">
+<div class="head"><div><span class="eyebrow">Development</span><h2>Code, tests and releases.</h2></div><p>The Architecture Atlas currently lists 556 entries, including 346 marked implemented and 152 marked measured. Entries link responsibilities to actual source and tests. GitHub Actions builds the public source, and the separate deployment processes release and check the public websites. The installed local runtime and a website can be on different revisions.</p></div>
+<div class="table-scroll" id="fpq-benchmarks"><table><thead><tr><th>Engineering state</th><th>What it records</th><th>Scope</th></tr></thead><tbody>
+<tr><td>Declared</td><td>A named contract and architectural owner</td><td>That a callable implementation exists</td></tr>
+<tr><td>Implemented</td><td>Source, version, direct tests and supported dependencies</td><td>That a remote service is running</td></tr>
+<tr><td>Measured</td><td>Test protocol, corpus, baseline, hardware, results and witness</td><td>General performance across unrelated tasks</td></tr>
+<tr><td>Publicly deployed</td><td>Exact release and destination readback</td><td>Successful customer completion or settlement</td></tr>
+<tr><td>Commercially completed</td><td>Acceptance, invoice/payment and actual deliverable records</td><td>Universal deployment or endorsement</td></tr>
+</tbody></table></div>
+<p class="note">Historical FPQ and performance experiments are retained in the <a href="https://github.com/Nickgonzales76017/bonfyre/blob/a82e93343db16c390ca709cf3196e7c1b1576b8d/site/docs.html">research archive</a>. Current architectural implementation and version details live in the source Atlas.</p>
+</div></section>
+<section class="block alt" id="technical-journal"><div class="shell">
+<div class="head"><div><span class="eyebrow">Engineering notes</span><h2>What we learned while building it.</h2></div>
+<p>These articles came out of the actual implementation work: native model runtimes, application grammars, parallel coding agents and shipping public experiences.</p></div>
+<div class="grid">
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#database"></use></svg></span><h3>Frappe as an application language</h3><p>Taking the useful business vocabulary of DocTypes into native applications.</p><a href="blog/frappe-as-an-application-language/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#network"></use></svg></span><h3>When two coding agents disagree</h3><p>Planning, implementation, review and separate source revisions.</p><a href="blog/two-coding-agents-one-worktree/">Read the article ↗</a></article>
+<article class="card"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="assets/product-icons.svg#globe"></use></svg></span><h3>The deployment passed. Why was the site old?</h3><p>Why public delivery has to follow the destination rather than the build log.</p><a href="blog/the-deployment-was-green-but-the-site-was-old/">Read the article ↗</a></article>
+</div></div></section>
+<section class="block" id="install"><div class="shell">
+<div class="head"><div><span class="eyebrow">08 / GET STARTED</span><h2>Getting started with the source.</h2></div><p>Explore the native source, architectural registry and component families. The public GitHub source and installed operating runtime are maintained as separate versioned cuts.</p></div>
+<pre>git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
 
-    <section class="section"><h2>Primary organs</h2><div class="grid">
-      <article class="card"><h3>91 public Powers</h3><p>Capability identities cross an explicit ladder from defined to promoted. Names, installed tools, healthy tools, and proven workloads are not interchangeable.</p></article>
-      <article class="card"><h3>Frappe ×9</h3><p>Core, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki, and Drive donate institutional product grammars over shared Bonfÿre meaning.</p></article>
-      <article class="card"><h3>Model Commons</h3><p>Model packs, tokenizers, FPQ/FPQx, local inference, context/cache, retrieval, reasoning, placement, evaluation, and speech retain specialized contracts.</p></article>
-      <article class="card"><h3>Agentic execution</h3><p>AgentSession routes native Powers, local models, Claude/Codex carriers, distributed execution, verification, and irreducible human work.</p></article>
-      <article class="card"><h3>Evidence and replay</h3><p>Receipts and witnesses feed divergence, proof bundles, deterministic replay, shadow worlds, simulation, risk, and institutional backtesting.</p></article>
-      <article class="card"><h3>Partner Commons</h3><p>112 frozen profiles and 82 deep-promoted specialties connect through explicit roles and non-ownership laws.</p></article>
-      <article class="card"><h3>Operational metabolism</h3><p>Provider freshness, price, credit, quota, rate limits, resources, schedules, tools, artifacts, and worker dependencies shape admission and routing.</p></article>
-      <article class="card"><h3>Financial metabolism</h3><p>Agreement, spend intent, funding, authorization, capture, settlement, allocation, and ERPNext accounting remain distinct evidenced transitions.</p></article>
-    </div></section>
-
-    <section class="section" id="maturity"><h2>Live maturity is explicit</h2><p class="sub">This snapshot is a readable projection. Atlas entries and their witnesses remain authoritative.</p><table>
-      <thead><tr><th>Area</th><th>Live registry status</th></tr></thead>
-      <tbody>
-        <tr><td>WorkGraph + Occurrence</td><td>Implemented</td></tr>
-        <tr><td>Capability lattice + composition</td><td>Implemented</td></tr>
-        <tr><td>CapabilityClosure + transport</td><td>Measured</td></tr>
-        <tr><td>Proof frontier + ForeignTwin + result receipts</td><td>Measured</td></tr>
-        <tr><td>Nine Frappe product grammars</td><td>Implemented; remaining write-back gaps recorded</td></tr>
-        <tr><td>Model view</td><td>Mixed implemented, measured, and declared</td></tr>
-        <tr><td>SurfaceIR renderer</td><td>Architectural</td></tr>
-        <tr><td>Full Aurekai promotion loop</td><td>Architectural</td></tr>
-      </tbody>
-    </table></section>
-
-    <section class="section" id="projection"><h2>Contract Projection Kernel v2</h2><p class="sub">The kernel emits only ActiveClosure-demanded materializations rather than maintaining every combination by hand.</p><div class="grid">
-      <article class="card"><h3>Execution and data</h3><p>C, Zig, C++, Rust, Python, TypeScript, WIT/Wasm, Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata.</p></article>
-      <article class="card"><h3>Institutions and boundaries</h3><p>Frappe ×9, APIs, MCP/A2A, ActivityPub/MoQ, finance, evidence, evolution, migrations, conformance, gyms, and deployment packs.</p></article>
-    </div></section>
-
-    <section class="section" id="start"><h2>Runnable checks</h2><p class="sub">Start read-only, then move to semantic tests or native builds.</p><pre><code># Architecture registry
+# Inspect the canonical registry and current source
 bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs summary
 bun architecture/atlas.mjs expand ExecutionView
-bun architecture/atlas.mjs expand ModelView
-bun architecture/atlas.mjs loss
 
-# Frozen semantic reference / conformance oracle
-cd components/BonfyreControlPlane
-python3 -m pytest tests/ -q
-
-# Native capability surface
-cd ../..
-make
-./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
-./cmd/BonfyreCLI/bonfyre list --health</code></pre></section>
-
-    <section class="section"><div class="note"><strong>Authority fence.</strong> A reachable provider, generated plan, rendered control, agent recommendation, or successful local test is not permission to create an external effect. Authority and EffectKernel remain the final boundary.</div></section>
-    <footer>Deeper source docs: <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/docs/architecture.md">architecture</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/architecture/README.md">Atlas</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/QUICKSTART.md">quickstart</a></footer>
-  </div>
-</body>
-</html>
+# Optional, pinned public donor inventory
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh status products</pre>
+<div class="items" id="use-cases">
+<a class="item" href="https://github.com/Nickgonzales76017/bonfyre/blob/main/QUICKSTART.md"><span class="n">01</span><strong>Quickstart</strong><span>Exact commands, preconditions and source-release boundaries.</span><b>↗</b></a>
+<a class="item" href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md"><span class="n">02</span><strong>Architecture owners</strong><span>Authoritative responsibility boundaries and current Atlas discipline.</span><b>↗</b></a>
+<a class="item" href="https://github.com/Nickgonzales76017/bonfyre/blob/main/CONTRIBUTING.md"><span class="n">03</span><strong>Contributing</strong><span>Native ownership, typed artifact requirements, test evidence and release policy.</span><b>↗</b></a>
+<a class="item" href="modules/"><span class="n">04</span><strong>Source atlas</strong><span>Exact-pinned public sources and independent licensing.</span><b>↗</b></a>
+</div>
+</div></section>
+</main>
+<footer class="footer"><div class="shell"><span>Bonfÿre / Aurekai · Technical guide</span><span><a href="./">Home</a> · <a href="explore.html">Products</a> · <a href="market.html">Research</a> · <a href="https://docs.aurekai.work/">Guides</a></span></div></footer>
+</body></html>

@@ -1,0 +1,345 @@
+name: Federated submodules
+
+on:
+  pull_request:
+    paths:
+      - '.gitmodules'
+      - 'integrations/federated/**'
+      - 'examples/federated/**'
+      - 'scripts/federated_modules.sh'
+      - 'scripts/performance_equivalence.mjs'
+      - 'scripts/performance_physical_receipts.mjs'
+      - 'scripts/tests/performance_physical_receipts.test.mjs'
+      - 'scripts/tests/performance_equivalence.test.mjs'
+      - 'site/modules/**'
+      - '.github/workflows/federated-submodules.yml'
+      - '.gitignore'
+      - 'Aurekai/.gitignore'
+      - 'Aurekai/README.md'
+      - 'Aurekai/bin/akai.mjs'
+      - 'Aurekai/package.json'
+      - 'Aurekai/kernel/package.json'
+      - 'Aurekai/kernel/src/**'
+      - 'Aurekai/src/continuity-core.mjs'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/integration-connectors.mjs'
+      - 'Aurekai/src/policy-family-evaluator.mjs'
+      - 'Aurekai/src/residual-calibrator.mjs'
+      - 'Aurekai/tests/**'
+      - 'Aurekai/registry/**'
+      - 'Aurekai/generated/integration-repos/**'
+  push:
+    branches: [main]
+    paths:
+      - '.gitmodules'
+      - 'integrations/federated/**'
+      - 'examples/federated/**'
+      - 'scripts/federated_modules.sh'
+      - 'scripts/performance_equivalence.mjs'
+      - 'scripts/performance_physical_receipts.mjs'
+      - 'scripts/tests/performance_physical_receipts.test.mjs'
+      - 'scripts/tests/performance_equivalence.test.mjs'
+      - 'site/modules/**'
+      - '.github/workflows/federated-submodules.yml'
+      - '.gitignore'
+      - 'Aurekai/.gitignore'
+      - 'Aurekai/README.md'
+      - 'Aurekai/bin/akai.mjs'
+      - 'Aurekai/package.json'
+      - 'Aurekai/kernel/package.json'
+      - 'Aurekai/kernel/src/**'
+      - 'Aurekai/src/continuity-core.mjs'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/integration-connectors.mjs'
+      - 'Aurekai/src/policy-family-evaluator.mjs'
+      - 'Aurekai/src/residual-calibrator.mjs'
+      - 'Aurekai/tests/**'
+      - 'Aurekai/registry/**'
+      - 'Aurekai/generated/integration-repos/**'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Validate script and pinned public source references without fetching
+        run: |
+          bash -n scripts/federated_modules.sh
+          bash scripts/federated_modules.sh verify all
+          bash scripts/federated_modules.sh verify products
+          bash scripts/federated_modules.sh verify aurekai
+          bash scripts/federated_modules.sh verify frappe
+          bash scripts/federated_modules.sh verify interfaces
+          bash scripts/federated_modules.sh verify performance
+          bash scripts/federated_modules.sh verify perf-memory
+          bash scripts/federated_modules.sh verify perf-model
+          bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install bundled Aurekai kernel offline
+        run: npm install --prefix Aurekai --offline --ignore-scripts --no-audit --no-fund
+      - name: Validate read-only no-loss performance receipt review
+        run: node --test scripts/tests/performance_equivalence.test.mjs
+      - name: Read back native physical CopyReceipts without mutations
+        run: node --test scripts/tests/performance_physical_receipts.test.mjs
+      - name: Verify generated integration stubs are reproducible, not tracked pseudo-repositories
+        run: |
+          test ! -e Aurekai/generated/integration-repos
+          git check-ignore -q Aurekai/generated/integration-repos/autogen/integration.manifest.json
+          node --input-type=module <<'JS'
+          import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          import { tmpdir } from 'node:os';
+          import { join, resolve } from 'node:path';
+          import { scaffoldIntegrationRepos } from './Aurekai/src/integration-repo-scaffold.mjs';
+          const destination = mkdtempSync(join(tmpdir(), 'aurekai-integration-scaffolds-'));
+          try {
+            const index = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: destination });
+            if (index.count !== 108 || index.repos.length !== index.count) {
+              throw Error('Expected the 108 declared May-2026 starter targets to regenerate');
+            }
+            const names = new Set();
+            for (const repo of index.repos) {
+              if (names.has(repo.slug)) throw Error('Duplicate scaffold slug ' + repo.slug);
+              names.add(repo.slug);
+              const manifest = JSON.parse(readFileSync(join(destination, repo.slug, 'integration.manifest.json'), 'utf8'));
+              if (manifest.slug !== repo.slug || manifest.repo_name !== 'aurekai-integration-' + repo.slug ||
+                  !existsSync(join(destination, repo.slug, 'src/index.mjs')) ||
+                  !existsSync(join(destination, repo.slug, 'test-vectors/continuity-pass.json')) ||
+                  !existsSync(join(destination, repo.slug, 'test-vectors/continuity-fail.json'))) {
+                throw Error('Incomplete generated scaffold ' + repo.slug);
+              }
+            }
+            // The same source contract must yield exact artifact digests
+            // through both virtual (zero emitted files) and physical cuts.
+            const virtualDest = join(destination, 'never-created-virtual-cut');
+            const virtualCut = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: virtualDest, mode: 'virtual' });
+            if (existsSync(virtualDest)) throw Error('Virtual integration cut materialized files');
+            if (virtualCut.count !== index.count) throw Error('Virtual cut lost integration targets');
+            const checked = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: destination, mode: 'verify' });
+            if (checked.recipe_sha256 !== virtualCut.recipe_sha256) {
+              throw Error('Virtual and physical regeneration differ in byte-level recipe');
+            }
+            const scoped = scaffoldIntegrationRepos(resolve('Aurekai'), {
+              outDir: virtualDest, mode: 'virtual', target: virtualCut.repos[0].slug
+            });
+            if (scoped.count !== 1 || scoped.repos[0].slug !== virtualCut.repos[0].slug || existsSync(virtualDest)) {
+              throw Error('Scoped virtual integration cut expanded or mutated');
+            }
+            // Exercise the actual public akai front door without installing
+            // the production runtime or exporting generated artifacts.
+            const akai = resolve('Aurekai/bin/akai.mjs');
+            const cli = (...args) => spawnSync(process.execPath, [akai, 'integrate:scaffold-repos', ...args],
+              { encoding: 'utf8' });
+            const viaCli = cli('--target', scoped.repos[0].slug,
+              '--out-dir', virtualDest, '--virtual', '--json');
+            if (viaCli.status !== 0) throw Error('akai virtual scaffold failed: ' + viaCli.stderr);
+            const readback = JSON.parse(viaCli.stdout);
+            if (readback.mode !== 'virtual' || readback.recipe_sha256 !== scoped.recipe_sha256 ||
+                existsSync(virtualDest)) throw Error('akai virtual route changed or materialized output');
+            const cannotMix = cli('--target', scoped.repos[0].slug, '--virtual', '--verify');
+            if (cannotMix.status !== 2) throw Error('akai accepted conflicting scaffold modes');
+            if (existsSync('Aurekai/generated/integration-repos')) throw Error('Generator wrote into tracked checkout');
+            console.log('Verified ' + index.count + ' exact virtual-to-physical template cuts plus akai virtual routing');
+          } finally {
+            rmSync(destination, { recursive: true, force: true });
+          }
+          JS
+      - name: Verify Aurekai runtime and connector parity
+        run: npm test --prefix Aurekai
+      - name: Verify bundled kernel subpaths and shared execution cut
+        run: |
+          node --input-type=module <<'JS'
+          import { resolve } from 'node:path';
+          import { compileKernelIntegrationCut } from './Aurekai/src/continuity-core.mjs';
+          const wrappers = [
+            'kernel-state-runtime.mjs', 'kernel-transition-runtime.mjs',
+            'kernel-trajectory-runtime.mjs', 'kernel-claim-runtime.mjs',
+            'kernel-policy-registry.mjs', 'kernel-chart-registry.mjs',
+            'kernel-schema-registry.mjs', 'kernel-trajectory-calculus.mjs'
+          ];
+          for (const name of wrappers) await import('./Aurekai/src/' + name);
+          const cut = compileKernelIntegrationCut(resolve('Aurekai'));
+          const target = cut.targets({surface:'hard-fork'})[0];
+          if (!target) throw Error('Missing compiled integration cut');
+          const result = cut.execute(target.target, {event:{event_id:'synthetic',run_id:'kernel-cut-test'}});
+          if (result.envelope.target !== target.target || !result.envelope.committed_state.state_hash) {
+            throw Error('Bundled kernel did not execute the exact target cut');
+          }
+          console.log('Bundled kernel and all declared subpath exports verified');
+          JS
+      - name: Verify exact nonmaterializing Creator render plans and akai route
+        run: |
+          node --test Aurekai/tests/creator-render-program.test.mjs Aurekai/tests/creator-native-pcm.test.mjs
+          node --input-type=module <<'JS'
+          import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+          import {tmpdir} from 'node:os';
+          import {join,resolve} from 'node:path';
+          import {spawnSync} from 'node:child_process';
+          const dir=mkdtempSync(join(tmpdir(),'aurekai-creator-'));
+          const hex=ch=>ch.repeat(64);
+          const timeline={
+            schema:'aurekai.creator.timeline.v1',
+            scope:{owner:'fixture',purpose:'preview',authority_digest:hex('a'),frontier_digest:hex('b')},
+            fps:{num:30000,den:1001},sample_rate:48000,frames:8,
+            sources:[{id:'s',kind:'audio',sha256:hex('c'),frames:8},
+              {id:'unused',kind:'audio',sha256:hex('d'),frames:8}],
+            tracks:[{id:'t',kind:'audio',clips:[{id:'c',source_id:'s',at:0,in:0,frames:8}]}]
+          };
+          try {
+            const input=join(dir,'timeline.json');
+            writeFileSync(input,JSON.stringify(timeline));
+            const cli=(...args)=>spawnSync(process.execPath,[resolve('Aurekai/bin/akai.mjs'),...args],
+              {encoding:'utf8'});
+            const r=cli('creator:compile','--input',input,'--shard-frames','3','--from','3','--to','5','--json');
+            if(r.status!==0)throw Error('Creator compile route failed: '+r.stderr);
+            const planned=JSON.parse(r.stdout);
+            if(planned.windows.length!==1||planned.windows[0].index!==1||planned.state!=='planned_unexecuted')
+              throw Error('Creator CLI did not compile requested exact cut');
+            const compact=cli('creator:compile','--input',input,'--shard-frames','3',
+              '--from','3','--to','5','--source-projection','used','--json');
+            if(compact.status!==0)throw Error('Creator demanded-source route failed: '+compact.stderr);
+            const demanded=JSON.parse(compact.stdout);
+            if(demanded.source_projection!=='used'||demanded.source_bases.length!==1||
+                planned.source_bases.length!==2||
+                demanded.source_bases[demanded.windows[0].segments[0].source_basis].sha256!==hex('c')||
+                demanded.windows[0].body_key!==planned.windows[0].body_key)
+              throw Error('Creator CLI changed render identity or carried unused source bases');
+            const invalidProjection=cli('creator:compile','--input',input,'--source-projection','unknown');
+            if(invalidProjection.status===0)throw Error('Creator CLI accepted unknown source projection');
+            const program=join(dir,'compiled.json'),bound=join(dir,'bound.json'),pcmOut=join(dir,'output.f32');
+            writeFileSync(program,JSON.stringify(planned));
+            writeFileSync(bound,JSON.stringify({s:{path:join(dir,'source.f32'),sha256:hex('c')}}));
+            const pcm=cli('creator:pcm-plan','--plan',program,'--bindings',bound,
+              '--window-index','1','--channels','1','--output',pcmOut);
+            if(pcm.status!==0)throw Error('akai native candidate route failed: '+pcm.stderr);
+            const demand=JSON.parse(pcm.stdout);
+            if(demand.state!=='candidate_requires_owner_approval'||
+               demand.execution_authority_inferred!==false||
+               demand.source_file_digest_verified!==false||demand.argv[1]!==planned.windows[0].samples||
+               demand.window_body_key!==planned.windows[0].body_key)
+              throw Error('akai changed authority or exact audio demand');
+            const sparseRoute=cli('creator:pcm-plan','--plan',program,'--bindings',bound,
+              '--window-index','1','--channels','1','--output',pcmOut,'--sparse-silence');
+            if(sparseRoute.status!==0)
+              throw Error('akai sparse PCM candidate route failed: '+sparseRoute.stderr);
+            const sparseCandidate=JSON.parse(sparseRoute.stdout);
+            if(sparseCandidate.state!=='candidate_requires_owner_approval'||
+               sparseCandidate.execution_authority_inferred!==false||
+               sparseCandidate.source_file_digest_verified!==false||
+               sparseCandidate.window_body_key!==demand.window_body_key||
+               sparseCandidate.sparse_silence_requested!==true||
+               sparseCandidate.argv.at(-1)!=='--sparse-silence')
+              throw Error('akai sparse PCM candidate changed authority or source');
+            const pcmBatch=cli('creator:pcm-batch','--plan',program,'--bindings',bound,
+              '--channels','1','--output-directory',dir,'--sparse-silence');
+            if(pcmBatch.status!==0)throw Error('akai PCM batch refusal: '+pcmBatch.stderr);
+            const grouped=JSON.parse(pcmBatch.stdout);
+            if(grouped.state!=='candidate_requires_owner_approval'||
+               grouped.execution_authority_inferred!==false||
+               grouped.media_bytes_materialized!==0||
+               grouped.requested_windows!==planned.windows.length||
+               grouped.unique_render_candidates<1)
+              throw Error('akai PCM batch changed owner or execution boundary');
+            const edit=join(dir,'edit.json');
+            writeFileSync(edit,JSON.stringify({expected_digest:planned.timeline_digest,op:'gain',
+              track_id:'t',clip_id:'c',value:0.7}));
+            const candidate=cli('creator:edit','--input',input,'--edit',edit,'--json');
+            if(candidate.status!==0||JSON.parse(candidate.stdout).edit.state!=='candidate_uncommitted')
+              throw Error('Creator CLI mutation boundary did not preserve candidate state');
+            const bad=cli('creator:compile','--input',input,'--from','4','--json');
+            if(bad.status===0)throw Error('Creator CLI admitted an incomplete range');
+            console.log('akai Creator typed cut and candidate edit verified');
+          } finally {rmSync(dir,{recursive:true,force:true});}
+          JS
+      - name: Verify atlas reflects pinned Git modules and URLs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          catalog = Path("site/modules/index.html").read_text(encoding="utf-8")
+          listed = re.findall(r'data-path="([^"]+)" data-pin="([0-9a-f]{40})"', catalog)
+          pins = dict(listed)
+          if len(listed) != len(pins):
+              raise SystemExit("Duplicate atlas path")
+          # Read the manifest and tracked Gitlinks once each, rather than
+          # invoking git twice per module. NUL records preserve literal paths.
+          config = subprocess.check_output(
+              ["git", "config", "-z", "-f", ".gitmodules", "--get-regexp",
+               r"^submodule\..*\.(path|url)$"]
+          )
+          definitions = {}
+          for entry in config.split(b"\0"):
+              if not entry:
+                  continue
+              name, sep, value = entry.partition(b"\n")
+              if not sep:
+                  raise SystemExit("Malformed submodule manifest entry")
+              key = name.decode("utf-8")
+              item = re.fullmatch(r"submodule\.(.+)\.(path|url)", key)
+              if not item:
+                  raise SystemExit(f"Unexpected submodule key {key}")
+              definitions.setdefault(item.group(1), {})[item.group(2)] = value.decode("utf-8")
+          tree = subprocess.check_output(["git", "ls-tree", "-rz", "HEAD"])
+          tracked = {}
+          for entry in tree.split(b"\0"):
+              if not entry:
+                  continue
+              metadata, sep, path_bytes = entry.partition(b"\t")
+              if not sep:
+                  raise SystemExit("Malformed Git tree entry")
+              mode, kind, digest = metadata.decode("ascii").split(" ")
+              if mode == "160000":
+                  if kind != "commit" or not re.fullmatch(r"[0-9a-f]{40}", digest):
+                      raise SystemExit("Invalid Gitlink object")
+                  tracked[path_bytes.decode("utf-8")] = digest
+          expected, urls = {}, {}
+          for name, fields in definitions.items():
+              if set(fields) != {"path", "url"}:
+                  raise SystemExit(f"Incomplete submodule entry: {name}")
+              path, url = fields["path"], fields["url"]
+              if path in expected or path not in tracked:
+                  raise SystemExit(f"Missing or duplicate pinned Gitlink: {path}")
+              expected[path], urls[path] = tracked[path], url
+          if set(expected) != set(tracked):
+              raise SystemExit(f"Unregistered Gitlinks: {sorted(set(tracked)-set(expected))}")
+          # The visible PIN label and its source URL must agree with the
+          # Gitlink; updating only data-pin once left a stale human label.
+          blocks = re.findall(r'<article class="module".*?</article>', catalog, re.S)
+          if len(blocks) != len(expected):
+              raise SystemExit("Source atlas module rows are missing or duplicated")
+          for block in blocks:
+              marker = re.search(r'data-path="([^"]+)" data-pin="([0-9a-f]{40})"', block)
+              shown = re.search(r'>PIN ([0-9a-f]{12}) ↗</a>', block)
+              if not marker or not shown or shown.group(1) != marker.group(2)[:12]:
+                  raise SystemExit("Source atlas has a stale visible PIN label")
+              path, pin = marker.groups()
+              submodule_url = urls[path]
+              if submodule_url.endswith(".git"):
+                  submodule_url = submodule_url[:-4]
+              if f'href="{submodule_url}/tree/{pin}"' not in block:
+                  raise SystemExit(f"Source atlas pinned URL mismatch: {path}")
+          if pins != expected:
+              missing = sorted(set(expected) - set(pins))
+              extra = sorted(set(pins) - set(expected))
+              drift = sorted(p for p in pins.keys() & expected.keys() if pins[p] != expected[p])
+              raise SystemExit(f"Stale atlas; missing={missing}, extra={extra}, drift={drift}")
+          manifest_sha = subprocess.check_output(["git", "hash-object", ".gitmodules"], text=True).strip()
+          if f'<meta name="bonfyre-manifest-sha" content="{manifest_sha}">' not in catalog:
+              raise SystemExit("Atlas does not match manifest blob")
+          print(f"Verified {len(expected)} pinned repositories, manifest {manifest_sha[:12]}")
+          PY

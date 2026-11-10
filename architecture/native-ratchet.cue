@@ -10,10 +10,25 @@ package nativeratchet
 budget: {
 	// Authored .mjs in the working tree (tracked or untracked, not ignored,
 	// vendored code excluded).
-	authored_mjs_files: 1484
-	authored_mjs_lines: 166489
+	// Raised 2026-11-06 by Nick's review: the Warehouse, JOSH repository-cut,
+	// FPQ review, command-review and Antithesis integrations landed as +34
+	// files / +4,460 lines of browser and test JS. They are the next port
+	// target; the budget only goes down from these figures.
+	// Same review, 2026-11-06: site/matrix/surfaces/build was cited by the
+	// atlas but never committed; it lands as +3 files / +185 lines (the
+	// authored-row installer and the two tests now run by WebAddress), with
+	// its 17-line link contract ported into link_workspace_test.sh.
+	// +12 lines: Aurekai's creator CLI refuses unknown and repeated options,
+	// and tests that read the machine-local observed corpus skip without it.
+	// Merge 2026-11-10: union with the run8 line lands +8 files / +441 lines
+	// net (converge authoring JS plus restored provider boundary, minus the
+	// retired resurrections). Budgets reset to the merged actual; down only.
+	authored_mjs_files: 1562
+	authored_mjs_lines: 172088
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
-	other_script_files: 71
+	// 53 after the Swarm transfer test and product-review renderer went to C.
+	// Merge 2026-11-10: reset to the merged actual; down only.
+	other_script_files: 73
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
@@ -32,7 +47,9 @@ installed: {
 	// at link time (its code alone is ~3.1MB). This budget is raised to its
 	// standalone floor; it drops again only if WebAddress itself shrinks.
 	largest_bin_bytes: 3197392
-	installed_bonfyre_bytes: 11827082
+	// +124,808 bytes 2026-11-06: the native C organs bonfyre-warehouse and
+	// bonfyre-repository-fabric installed for the JOSH/Warehouse integration.
+	installed_bonfyre_bytes: 11891892
 }
 
 #Measure: {

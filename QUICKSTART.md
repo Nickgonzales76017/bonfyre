@@ -1,107 +1,131 @@
 # Bonfÿre quickstart
 
-Choose the shortest path that answers your question. You do not need to build
-the whole estate to understand the machine.
+**Aurekai** invests engineering, AI, reusable software and distribution in
+public products and digital opportunities. **Bonfÿre** is its native engine:
+source context, identity, capabilities, work, authority, execution and evidence.
 
-To see finished work before building anything, open the
-[work samples](https://aurekai-work-samples.pages.dev/) or the
-[guides](https://docs.aurekai.work/).
+AI can generate software quickly; what matters here is whether a result is
+composable, authorized, verified and reusable. Choose the shortest path that
+answers your question. You do not need the entire development estate to begin.
 
-## Path A — inspect architecture and maturity
+[Business and technical model](docs/aurekai-bonfyre-model.md) ·
+[Aurekai Work](https://aurekai.work) ·
+[Life](https://aurekai.life) ·
+[Live](https://aurekai.live) ·
+[Shop](https://aurekai.shop)
 
-This is the safest first path. The Architecture Atlas is the canonical live
-registry; its views are reversible and every nontrivial maturity claim points
-to source or a witness.
+## 1. See the public work
 
-```bash
-git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
-cd bonfyre-oss
+The [work samples](https://aurekai-work-samples.pages.dev/) have browser tools
+you can try, including fixture planning, a product editor and an intake check.
+The [guides](https://docs.aurekai.work/) cover white-label sites, migrations,
+document workspaces and a studio app. These examples use public or fictional
+material; they are not receipts for paid customer deployments.
 
-bun architecture/atlas.mjs validate
-bun architecture/atlas.mjs expand ExecutionView
-bun architecture/atlas.mjs expand CapabilityView
-bun architecture/atlas.mjs expand EvidenceView
-bun architecture/atlas.mjs get work-graph
-bun architecture/atlas.mjs loss
+## 2. Inspect the currently published source
+
+```sh
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
 ```
 
-Read maturity literally:
+Public `main` contains a published source cut, Architecture Atlas, demos,
+components and reviewed documents. The **local operating runtime and public
+source can differ in revision and capability**. A named architecture, buildable
+command, external provider profile and deployed service each require separate
+verification. Read the command's own dependencies and tests before using it.
 
-- `architectural` or `declared` names a contract or intended organ.
-- `implemented` has a real source path.
-- `measured` or `proven` requires a witness.
-- A public capability identity is not necessarily installed, callable, or
-  workload-proven.
+The present source is organized under `cmd/`, `lib/`, `engine/` and
+`integrations/`. Historical notebook material is under
+[`evidence/origins/notebook-era/`](evidence/origins/notebook-era/), rather than
+being an alternative source root.
 
-## Path B — run the semantic evidence
+### Optional: work across the other repositories
 
-The control-plane suite is the conformance oracle. Running it verifies work,
-capability, authority, provider/resource, evidence, and replay semantics
-without pretending it is the production runtime. (The old Python suite it
-replaced is archived; the `.mjs` suite below is the live one.)
+The default clone does **not** initialize the federated source donors.
+The current public source atlas enumerates **70 pinned source references**
+(69 companions plus an upstream reference); these are not automatically
+installed integrations. Select only the repositories relevant to the job:
+
+```bash
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh init products
+bash scripts/federated_modules.sh init extractions
+bash scripts/federated_modules.sh status products
+```
+
+Profiles include `products`, `extractions`, `examples`, `aurekai`,
+`performance`, `lineage`, `upstream`, `frappe`, `interfaces`, `one PATH`,
+and `all`. Run `init lineage` only for older source histories. The Frappe and interface donor families are large
+and source-only; fetch just one project when possible:
+
+```bash
+bash scripts/federated_modules.sh init one integrations/federated/interfaces/opentui
+```
+
+To deliberately fetch an entire large family, set the opt-in explicitly:
+
+```bash
+BONFYRE_ALLOW_LARGE_MODULES=1 bash scripts/federated_modules.sh init frappe
+```
+
+Avoid `init all` on a storage-constrained machine. No
+submodule contents are needed for the top-level native `make` target.
+
+The `extractions` group follows the reviewed nested `bonfyre-core` and
+Lambda Tensors gitlinks, so the extracted command sources have their shared
+library dependencies. All other profiles remain non-recursive by default.
+
+Submodule SHAs are pinned in Git, not pulled from `main` on every run. To
+change a pin, review the referenced repository and commit its new gitlink in
+a focused PR. Each companion retains its own license and build contract.
+
+## 3. Build and inspect a native command
+
+With a C toolchain and the dependencies specified by the [Makefile](Makefile):
+
+```sh
+make
+./cmd/BonfyreWire/bonfyre-wire --help
+./cmd/BonfyreCLI/bonfyre list --health
+```
+
+The result of a build is not proof of authority to perform an effect or of
+support on every operating system. If a command has its own README or Makefile,
+use that command's stated requirements.
+
+## 4. Turn an authorized capture into a reviewable recipe
+
+Only use a capture you own or are authorized to inspect:
+
+```sh
+./cmd/BonfyreWire/bonfyre-wire ingest-pcap capture.pcap --dumb-device --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire probe <capture_id> --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire artifacts <capture_id> --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
+```
+
+This example demonstrates an observation → artifacts → proposed-recipe
+boundary. The redirect to `recipe.json` is a compatibility output for this
+specific command, not the platform's canonical internal interchange format.
+Modern native owners use typed artifacts and declared contracts. Inspect the
+output and exact source revision before any downstream compiler or executor.
+Generating a recipe is **not** authority to execute it.
+
+## 5. Continue with the right guide
+
+### Run the conformance oracle
 
 ```bash
 bun test components/BonfyreControlPlane/tests
 ```
 
-Useful focused checks:
+Focused checks: `obligation-work`, `occurrence-origin`, `protocol-authority`,
+`protocol-contract` under the same directory. Where the GPU backend is
+absent or denied (sandboxes, CI, VMs), the three transcription tests need
+`BONFYRE_TRANSCRIBE_NO_GPU=1` on the same command.
 
-```bash
-bun test components/BonfyreControlPlane/tests/obligation-work.test.mjs
-bun test components/BonfyreControlPlane/tests/occurrence-origin.test.mjs
-bun test components/BonfyreControlPlane/tests/protocol-authority.test.mjs
-bun test components/BonfyreControlPlane/tests/protocol-contract.test.mjs
-```
-
-Where the GPU backend is absent or denied (sandboxes, CI, VMs), the three
-transcription tests need `BONFYRE_TRANSCRIBE_NO_GPU=1` on the same command.
-
-## Path C — build and inspect native powers
-
-```bash
-make
-./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
-./cmd/BonfyreIndex/bonfyre-index layers --root layeros/state
-./cmd/BonfyreCLI/bonfyre list --health
-./cmd/BonfyreWorkflow/build/bonfyre-workflow list
-./cmd/BonfyreRecipe/build/bonfyre-recipe list
-./cmd/BonfyreLayer/bonfyre-layer registry --root layeros/state
-```
-
-The health output matters more than a fixed binary count. Bonfÿre separates a
-defined Power from a built, resolvable, health-probed, or workload-proven
-realization.
-
-Two state surfaces are relevant:
-
-- `layeros/state` holds LayerArtifact, graph, queue, and wire operating state.
-- `~/.local/share/bonfyre/catalog.db` supports smaller workflow, recipe, family,
-  and model browsing projections.
-
-After `cmd/`, `lib/`, or registry changes, repeat the sync and index commands.
-
-## Path D — turn an authorized observation into a replayable plan
-
-Use a PCAP you own or are authorized to inspect:
-
-```bash
-./cmd/BonfyreWire/bonfyre-wire ingest-pcap capture.pcap --dumb-device --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire probe <capture_id> --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire artifacts <capture_id> --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
-./cmd/BonfyreStitch/bonfyre-stitch compile recipe.json --output recipe-program
-```
-
-This demonstrates a small but real observation-to-program path:
-
-```text
-observation → typed artifacts → recipe → compiled composition program
-```
-
-Inspect the recipe before compilation or execution. A generated program is not authority to
-perform an effect.
-
-## Path E — inspect institutional projections
+### Inspect institutional projections
 
 The nine Frappe products are installed under `integrations/frappe-bench/apps`.
 Their DocType grammars are extracted by `BonfyreFrappeCompiler` and witnessed
@@ -116,23 +140,11 @@ The contract witnesses there (`native_schema_ingest_smoke.sh`,
 `cms_status_roundtrip_test.sh`) run against a built compiler binary passed as
 their argument.
 
-## Path F — inspect a model/runtime surface
-
-Model Commons is larger than one model or quantizer. Begin by inspecting the
-live Model view and a native command's contract:
-
-```bash
-bun architecture/atlas.mjs expand ModelView
-bun architecture/atlas.mjs get fpq-transform
-make -C cmd/BonfyreFPQ
-./cmd/BonfyreFPQ/bonfyre-fpq --help
-```
-
 ## Next docs
 
-- [README](README.md)
+- [Bonfÿre overview](README.md)
 - [Architecture](docs/architecture.md)
-- [Architecture Atlas](architecture/README.md)
-- [Status and drift](docs/bonfyre_status_and_drift.md)
+- [Public client delivery portfolio](docs/client-operations-portfolio.md)
 - [Wire](docs/bonfyre_wire.md)
-- [Pages runtime](docs/pages-runtime.md)
+- [Published guides](https://docs.aurekai.work/)
+- [Work samples](https://aurekai-work-samples.pages.dev/)

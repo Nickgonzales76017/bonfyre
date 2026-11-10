@@ -11545,8 +11545,8 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreAuth/tests/institution_members_test.py exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
-        "cmd/BonfyreAuth/tests/institution_members_test.py checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh exercises existing-account team changes, generated ancestry, scope isolation, expiry-bounded delegation, self-change denial, escaped member output, pagination and revocation while a mutation waits for the writer lock",
+        "cmd/BonfyreAuth/tests/institution_members_test.sh checks stale review refusal including a concurrent writer, no-grant expectations, expired grants, expiry preservation and temporary administrator caps",
         "components/BonfyreServiceSite/tests/training-creator.test.mjs verifies credential stdin login, actor closure, institution-authorize-stdin and logout-stdin against real native sessions and revoked grants",
         "scripts/tests/catalog_persona_retirement.test.mjs invokes the real persona provisioner with mocked SSH, validates all DEMO contract rows before account calls, rejects malformed signup IDs before grants, keeps passwords off argv/stdout, and preserves an existing credential file on failure; it does not provision live accounts",
         "packs/no-simulation/command-evidence-20261010.tsv",
@@ -14742,8 +14742,8 @@
       "views": [],
       "witnesses": [
         "cmd/BonfyreModel/tests/representation_passport_test.sh",
-        "cmd/BonfyreModel/tests/manifest_test.py",
-        "cmd/BonfyreModel/tests/file_verification_test.py verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
+        "cmd/BonfyreModel/tests/manifest_test.sh",
+        "cmd/BonfyreModel/tests/file_verification_test.sh verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
         "packs/no-simulation/model-hash-20261013/benchmark.json records five alternating native verify runs on 128 MiB plus 17 synthetic bytes with exact digests; median 0.718 to 0.127 seconds on this Mac",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreModel/tests/local_test.sh checks bonfyre-model local against a fixture ledger: a held checkpoint reads loaded, one larger than spendable memory reads waits"

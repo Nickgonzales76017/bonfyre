@@ -40,6 +40,19 @@ function readChartFamily(repoRoot, chartFamily) {
   }
 }
 
+// A batch needs one coherent read of policy inputs, not a new JSON tree
+// for every target. Single-target calls remain fresh by default.
+export function loadCalibrationContext(repoRoot) {
+  const { profiles, defaultProfile } = readProfiles(repoRoot);
+  const path = join(repoRoot, "registry", "chart-families.json");
+  let chartFamilies = [];
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8"));
+    chartFamilies = Array.isArray(parsed?.families) ? parsed.families : [];
+  } catch { /* Existing missing/unreadable chart fallback is unchanged. */ }
+  return { profiles, defaultProfile, chartFamilies };
+}
+
 function pickProfile(profiles, chartFamily, defaultProfile) {
   const byChart = profiles.find((item) => item?.chart_family === chartFamily);
   if (byChart) return byChart;
@@ -77,9 +90,12 @@ function taxonomyForSeverity(taxonomy, severity) {
 
 export function calibrateResidual(repoRoot, input) {
   const chartFamily = input.chartFamily || "generic";
-  const { profiles, defaultProfile } = readProfiles(repoRoot);
+  const calibration = input.calibrationContext ?? null;
+  const { profiles, defaultProfile } = calibration || readProfiles(repoRoot);
   const profile = pickProfile(profiles, chartFamily, defaultProfile);
-  const chart = readChartFamily(repoRoot, chartFamily);
+  const chart = calibration
+    ? calibration.chartFamilies.find((item) => item?.id === chartFamily) || null
+    : readChartFamily(repoRoot, chartFamily);
 
   const raw = {
     deformation_score: clamp01(input.event?.deformation_score),

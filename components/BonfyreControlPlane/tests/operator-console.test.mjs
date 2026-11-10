@@ -1,12 +1,11 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 
 const repo = resolve(import.meta.dir, '../../..');
 const surfaces = resolve(repo, 'site/matrix/surfaces');
 const kit = readFileSync(resolve(surfaces, '_kit.js'), 'utf8');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const extents = ['chip', 'card', 'section', 'page', 'workspace'];
 const tiers = ['FLASH', 'CHAT', 'MOMENT', 'SOCIAL', 'SAVED', 'INSTITUTIONAL',
   'EVIDENTIARY', 'ECONOMIC'];
@@ -219,9 +218,8 @@ live('surface takes withheld action layer from organ', async () => {
 test('estate pages carry the dial', () => {
   expect(kit).toContain('K.shapeBar');
   expect(kit).toContain('K.applyExtentToFragments');
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  expect(unit).toContain("K.shapeBar('bf-shape')");
-  expect(unit).toContain('BF_SHAPE_MOUNT');
+  expect(main).toContain("K.shapeBar('bf-shape')");
+  expect(main).toContain('BF_SHAPE_MOUNT');
 });
 
 test('dial is absent where nothing can narrow', () => {

@@ -1,5 +1,6 @@
 export {
   CONTINUITY_CORE_VERSION,
+  compileKernelIntegrationCut,
   archiveStateObject,
   createAttachmentArtifact,
   createStateSnapshot,

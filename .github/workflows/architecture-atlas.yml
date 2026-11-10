@@ -39,6 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The hvm4 entry cites source in this one public submodule; the
+      # federated submodules are not needed and do not all resolve.
+      - name: Check out the hvm4 submodule
+        run: git submodule update --init vendor/hvm4
+
+      # check-organ-callers and check-falsifiable-claims list files with rg.
+      - name: Install ripgrep
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+
       - uses: oven-sh/setup-bun@v2
 
       - uses: actions/setup-node@v4
@@ -49,7 +58,12 @@ jobs:
         with:
           version: v0.17.1
 
+      # The public checkout lacks machine-local evidence (ignored and
+      # out-of-tree paths); those are counted here and opened by the estate
+      # machine's pre-commit validation. Every tracked path must still open.
       - name: Validate the atlas constitution
+        env:
+          BONFYRE_ATLAS_PUBLIC_CHECKOUT: "1"
         run: bun architecture/atlas.mjs validate
 
       - name: Report architecture loss (informational)

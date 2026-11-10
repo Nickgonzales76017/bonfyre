@@ -1,13 +1,12 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 import { liveSurfaceEnabled, surface, surfaceHtml } from './live-surface.mjs';
 
 const repo = resolve(import.meta.dir, '../../..');
 const home = readFileSync(resolve(repo, 'site/matrix/surfaces/home.html'), 'utf8');
 const kit = readFileSync(resolve(repo, 'site/matrix/surfaces/_kit.js'), 'utf8');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const live = test.skipIf(!liveSurfaceEnabled);
 
 live('same address answers human and machine', async () => {
@@ -59,9 +58,8 @@ live('a record carries its own actionable affordance', async () => {
 });
 
 test('affordance template drops an unserved field', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  expect(unit).toContain('drops the whole affordance');
-  expect(unit).toContain('checked before');
+  expect(main).toContain('drops the whole affordance');
+  expect(main).toContain('checked before');
 });
 
 test('kit asks estate whether a person is signed in', () => {

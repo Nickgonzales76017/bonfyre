@@ -5,6 +5,15 @@ ifeq ($(shell uname -s),Darwin)
 # Expose no-follow descriptor traversal before system headers are parsed.
 CFLAGS += -D_DARWIN_C_SOURCE
 endif
+DEAD_STRIP := -Wl,-dead_strip
+ifeq ($(shell uname -s),Linux)
+DEAD_STRIP := -Wl,--gc-sections
+# glibc hides strcasestr, strptime and timegm behind _GNU_SOURCE once a source
+# file asks for _POSIX_C_SOURCE. GCC's -Wall also reports brace-less one-line
+# guards and possible snprintf truncation, which clang does not; the bounded
+# writers check their own lengths.
+CFLAGS += -D_GNU_SOURCE -Wno-misleading-indentation -Wno-format-truncation
+endif
 CFLAGS += -I../BonfyreLex/src
 # Packed receipts are read where zstd is present; without it the organ reads
 # loose receipts only, as it always did. Linked statically when the archive is there.
@@ -63,10 +72,16 @@ $(SOURCE_HIERARCHY_TEST): tests/source_hierarchy_projection_test.c $(SOURCE_HIER
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) tests/source_hierarchy_projection_test.c $(SOURCE_HIERARCHY_SOURCE) -lsqlite3 -o $@
 .PHONY: source-hierarchy-witness
 all: native-link-footprint-witness source-hierarchy-witness
+ifeq ($(shell uname -s),Darwin)
 all: native-compact-footprint-witness
+endif
 test: source-hierarchy-witness
 .PHONY: preview-snapshot-witness
+# The preview copies live stores with APFS copy-on-write clones and refuses
+# without them, so its witness runs on macOS.
+ifeq ($(shell uname -s),Darwin)
 test: preview-snapshot-witness
+endif
 preview-snapshot-witness:
 	sh tools/preview-snapshot.test.sh
 source-hierarchy-witness: $(SOURCE_HIERARCHY_TEST)
@@ -333,7 +348,7 @@ surface-home:
 	@! grep -q '/external-estate/' "$(HOME_SURFACE)"
 	@! grep -q "localStorage.getItem('bonfyre_token')" "$(HOME_SURFACE)"
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -Wl,-dead_strip -o $@ $(OBJECTS) -lsqlite3 -lm -lz $(ZSTD_LIBS)
+	$(CC) $(CFLAGS) $(DEAD_STRIP) -o $@ $(OBJECTS) -lsqlite3 -lm -lz $(ZSTD_LIBS)
 
 # Size experiment only: link the same verified objects without static zstd.
 # A smaller file is not a release without an attested runtime and full tests.
@@ -341,7 +356,7 @@ $(TARGET): $(OBJECTS)
 native-link-footprint-witness: $(TARGET) build/bonfyre-web-address-link-candidate
 	@wc -c $(TARGET) build/bonfyre-web-address-link-candidate
 build/bonfyre-web-address-link-candidate: $(OBJECTS)
-	$(CC) $(CFLAGS) -Wl,-dead_strip -o $@ $(OBJECTS) -lsqlite3 -lm -lz $(if $(ZSTD_PREFIX),-L$(ZSTD_PREFIX)/lib -lzstd,)
+	$(CC) $(CFLAGS) $(DEAD_STRIP) -o $@ $(OBJECTS) -lsqlite3 -lm -lz $(if $(ZSTD_PREFIX),-L$(ZSTD_PREFIX)/lib -lzstd,)
 
 # Reproducible size-first objects from current source, never installed.
 COMPACT_FLAGS = $(CFLAGS) -Oz -flto=full -fno-unwind-tables -fno-asynchronous-unwind-tables -fvisibility=hidden
@@ -353,7 +368,10 @@ build/compact/.full-lto-hidden-verified: | build/compact
 native-compact-footprint-witness: $(TARGET) build/bonfyre-web-address-compact-stripped
 	@wc -c $(TARGET) build/bonfyre-web-address-compact build/bonfyre-web-address-compact-stripped
 .PHONY: native-compact-product-witness
+# The compact product is a full-LTO Mach-O build (-exported_symbol); macOS only.
+ifeq ($(shell uname -s),Darwin)
 all test: native-compact-product-witness
+endif
 native-compact-product-witness: build/bonfyre-web-address-compact-stripped
 	@echo "Testing size-first WebAddress against the isolated site-product contract"
 	sh tests/site_product_test.sh ./build/bonfyre-web-address-compact-stripped
@@ -844,7 +862,7 @@ authored-publication-browser: $(TARGET)
 .PHONY: account-source-cohesion-witness
 test: account-source-cohesion-witness
 account-source-cohesion-witness: $(TARGET)
-	bun test tests/account_source_integrated.test.mjs ../../site/matrix/surfaces/build/source_cut.test.mjs
+	bun test tests/account_source_integrated.test.mjs ../../site/matrix/surfaces/build/source_cut.test.mjs ../../site/matrix/surfaces/build/authored_rows.test.mjs
 	sh ../../site/matrix/surfaces/build/link_workspace_test.sh
 
 # Shared visible/device seeking can be checked without a browser or live media.

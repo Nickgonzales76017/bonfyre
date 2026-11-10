@@ -192,7 +192,8 @@ architecture food-combination-graph
   layer economic/food
   semantic_question Which source-bound food offers can be lawfully composed into exact cash, delayed-rebate, points, fulfillment, recipe-lead and travel-aware strategy dimensions?
   purpose Normalizes observed food offers and performs bounded native exact composition. It permits promotion composition only on explicit source-provided stack pairs; it projects recipe lexical leads without promoting them to substitution, availability, nutrition, or complete-basket facts. Its fulfillment route layer exhaustively binds cash-valued components to source-stated modes and order minima, with observed origins furnishing only geodesic travel lower bounds.
-  maturity implemented
+  maturity declared
+  known_gap sources are archived (.archive) and the run8-r2c observation path is machine-local and absent; no live implementation exists
   owns FoodOfferObservation
   owns PromotionEffect
   owns QuantityPromotion
@@ -234,7 +235,6 @@ architecture food-combination-graph
   source_path tools/food_offer_observations.py.archive
   source_path components/BonfyreControlPlane/food_combination_engine.py.archive
   source_path components/BonfyreControlPlane/food_fulfillment_route.py.archive
-  source_path .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl
   witness components/BonfyreControlPlane/tests/test_food_offer_observations.py.archive
   witness components/BonfyreControlPlane/tests/test_food_combination_engine.py.archive
   witness components/BonfyreControlPlane/tests/test_food_fulfillment_route.py.archive
@@ -522,7 +522,6 @@ architecture demand-book
   internal_calculus a credential is four problems wearing one word, and treating them as one turned a decomposition into a shrug. A public identifier is published on purpose -- an x402 payTo is a destination and is meaningless if secret -- so it needs a declaration and not a secret store. A signature is produced by a key this estate holds. An issued token needs a registration, which is a commitment a person makes. And a keyless service needs none of it, which is what x402 was built for
   invariant the estate does not classify an address or a payTo as a secret. Doing so counted 29 of 38 credential asks as unsolvable when what they need is one institutional identity that a person chooses
   cannot_infer a blocked credential class -> an unsolvable one; each of the three has a different and named fix
-  known_gap the produced class is blocked by a real defect rather than by policy. bf_crypto advertises Ed25519 signing in its header and implements a symmetric HMAC tag: `pk` is H(seed) and cannot verify anything, and bf_crypto_sign_verify is a stub returning -1 for every input. Nothing calls it today, so nothing is broken in production, but a caller reading sign_keygen(pk, sk) would reasonably publish pk and ship a signature no counterparty can check. The header now says what it implements; the fix is libsodium and not a hand-rolled curve
   known_gap the issued class needs 19 registrations and every one of them is a commitment a person makes rather than a capability this estate can add
   known_gap github.com carries 2,670 of the MCP occurrences because their primary_url is a repository rather than an endpoint. The per-host cap removed them and the service behind each repository was never reached
 

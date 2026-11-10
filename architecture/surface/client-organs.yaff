@@ -328,9 +328,11 @@ architecture service-site
   source_path components/BonfyreServiceSite/README.md
   source_path components/BonfyreServiceSite/tests/catalogue-baseline.test.mjs
   source_path components/BonfyreServiceSite/tests/catalogue-live-intake.test.mjs
-  source_path components/BonfyreServiceSite/tools/product-review-pdf.py
-  source_path components/BonfyreServiceSite/tools/product-review-requirements.txt
+  source_path components/BonfyreServiceSite/tools/product-review.c
+  source_path components/BonfyreServiceSite/tools/product-review-test.sh
+  source_path components/BonfyreServiceSite/tools/Makefile
   witness 2026-10-08 product-review-pdf.py rendered the RED3 easel sample from retained product-copy JSON and the observed image into output/pdf/red3-easel-copy-review.pdf; pdfinfo reported one page and the final Poppler rendering was visually inspected. The sample includes proposed copy and unresolved supplier facts and is referenced by native project 21
+  witness 2026-11-06 product-review.c (C over bf_json/bf_jsonw) replaced the reportlab renderer: product-review-test.sh renders a fixture with quotes, markup, \u escapes and a surrogate pair to HTML and, through real headless Chrome with a throwaway profile and a dead proxy, to a one-page PDF whose text pdftotext reads back; a draft review and an unknown output kind are refused. The PDF page was rendered with pdftoppm and inspected. The retained RED3 input JSON is not on disk, so the RED3 sheet itself was not re-rendered
   forbidden_inference a rendered product review sheet -> client-approved copy, verified missing specifications, new browser editor fields, image reuse rights or merchant publication
   source_path components/BonfyreServiceSite/catalogue-review.mjs
   source_path components/BonfyreServiceSite/tests/catalogue-review.test.mjs

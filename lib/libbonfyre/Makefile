@@ -12,6 +12,7 @@ INCDIR  = include
 OBJDIR  = obj
 
 SRCS    = $(SRCDIR)/bf_decision_head.c \
+          $(SRCDIR)/bf_factor.c \
           $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_common.c \
           $(SRCDIR)/bf_discipl.c \
@@ -104,7 +105,14 @@ dylib: $(DYLIB)
 clean:
 	rm -rf $(OBJDIR) $(TARGET) $(SHARED) $(DYLIB) test_bonfyre
 
-test: $(TARGET) test-lz4 test-sqlite-policy test-sha256 test-catalog-model-sync
+test: $(TARGET) test-lz4 test-sqlite-policy test-sha256 test-catalog-model-sync test-factor
+
+# Exact factor-graph counting against brute-force enumeration.
+.PHONY: test-factor
+test-factor:
+	mkdir -p build
+	$(CC) $(CFLAGS) -Werror -DBONFYRE_SHA256_PORTABLE -I$(INCDIR) src/bf_factor.c src/bf_sha256.c tests/factor_count_test.c -o build/factor_count_test
+	./build/factor_count_test
 
 .PHONY: test-sha256
 test-sha256:

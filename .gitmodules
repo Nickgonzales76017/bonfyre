@@ -1,3 +1,279 @@
 [submodule "vendor/hvm4"]
 	path = vendor/hvm4
 	url = https://github.com/HigherOrderCO/HVM4.git
+
+[submodule "integrations/federated/extractions/core"]
+	path = integrations/federated/extractions/core
+	url = https://github.com/Nickgonzales76017/bonfyre-core.git
+
+[submodule "integrations/federated/extractions/embed"]
+	path = integrations/federated/extractions/embed
+	url = https://github.com/Nickgonzales76017/bonfyre-embed.git
+
+[submodule "integrations/federated/extractions/intake"]
+	path = integrations/federated/extractions/intake
+	url = https://github.com/Nickgonzales76017/bonfyre-intake.git
+
+[submodule "integrations/federated/extractions/cms"]
+	path = integrations/federated/extractions/cms
+	url = https://github.com/Nickgonzales76017/bonfyre-cms.git
+
+[submodule "integrations/federated/extractions/pipeline"]
+	path = integrations/federated/extractions/pipeline
+	url = https://github.com/Nickgonzales76017/bonfyre-pipeline.git
+
+[submodule "integrations/federated/extractions/tel"]
+	path = integrations/federated/extractions/tel
+	url = https://github.com/Nickgonzales76017/bonfyre-tel.git
+
+[submodule "integrations/federated/extractions/lambda-tensors"]
+	path = integrations/federated/extractions/lambda-tensors
+	url = https://github.com/Nickgonzales76017/liblambda-tensors.git
+
+[submodule "integrations/federated/products/statement-import"]
+	path = integrations/federated/products/statement-import
+	url = https://github.com/Nickgonzales76017/bonfyre-statement-import.git
+
+[submodule "integrations/federated/products/agent-trace-verifier"]
+	path = integrations/federated/products/agent-trace-verifier
+	url = https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier.git
+
+[submodule "examples/federated/quickstart"]
+	path = examples/federated/quickstart
+	url = https://github.com/Nickgonzales76017/bonfyre-example-quickstart.git
+
+[submodule "examples/federated/semantic-search"]
+	path = examples/federated/semantic-search
+	url = https://github.com/Nickgonzales76017/bonfyre-example-semantic-search.git
+
+[submodule "examples/federated/transcribe"]
+	path = examples/federated/transcribe
+	url = https://github.com/Nickgonzales76017/bonfyre-example-transcribe.git
+
+[submodule "examples/federated/compress"]
+	path = examples/federated/compress
+	url = https://github.com/Nickgonzales76017/bonfyre-example-compress.git
+
+[submodule "examples/federated/saas-stack"]
+	path = examples/federated/saas-stack
+	url = https://github.com/Nickgonzales76017/bonfyre-example-saas-stack.git
+
+[submodule "examples/federated/creator-starter"]
+	path = examples/federated/creator-starter
+	url = https://github.com/Nickgonzales76017/bonfyre-creator-starter.git
+
+[submodule "examples/federated/recipes"]
+	path = examples/federated/recipes
+	url = https://github.com/Nickgonzales76017/bonfyre-recipes.git
+
+[submodule "integrations/federated/lineage/bonfyre-oss"]
+	path = integrations/federated/lineage/bonfyre-oss
+	url = https://github.com/Nickgonzales76017/bonfyre-oss.git
+
+[submodule "integrations/federated/lineage/hcp-whisper"]
+	path = integrations/federated/lineage/hcp-whisper
+	url = https://github.com/Nickgonzales76017/hcp-whisper.git
+
+[submodule "integrations/federated/aurekai/platform"]
+	path = integrations/federated/aurekai/platform
+	url = https://github.com/aurekai/aurekai.git
+
+[submodule "integrations/federated/aurekai/native-runtime"]
+	path = integrations/federated/aurekai/native-runtime
+	url = https://github.com/aurekai/native-runtime.git
+
+[submodule "integrations/federated/aurekai/setup-action"]
+	path = integrations/federated/aurekai/setup-action
+	url = https://github.com/aurekai/setup-aurekai.git
+
+[submodule "integrations/federated/aurekai/vscode"]
+	path = integrations/federated/aurekai/vscode
+	url = https://github.com/aurekai/aurekai-vscode.git
+
+[submodule "integrations/federated/aurekai/dvc"]
+	path = integrations/federated/aurekai/dvc
+	url = https://github.com/aurekai/aurekai-dvc.git
+
+[submodule "integrations/federated/aurekai/mlflow"]
+	path = integrations/federated/aurekai/mlflow
+	url = https://github.com/aurekai/aurekai-mlflow.git
+
+[submodule "integrations/federated/aurekai/nix"]
+	path = integrations/federated/aurekai/nix
+	url = https://github.com/aurekai/aurekai-nix.git
+
+[submodule "integrations/federated/aurekai/kestra"]
+	path = integrations/federated/aurekai/kestra
+	url = https://github.com/aurekai/aurekai-kestra.git
+
+[submodule "integrations/federated/aurekai/argo-workflows"]
+	path = integrations/federated/aurekai/argo-workflows
+	url = https://github.com/aurekai/aurekai-argo-workflows.git
+
+[submodule "integrations/federated/aurekai/pulumi"]
+	path = integrations/federated/aurekai/pulumi
+	url = https://github.com/aurekai/aurekai-pulumi.git
+
+[submodule "integrations/federated/aurekai/semantic-kernel"]
+	path = integrations/federated/aurekai/semantic-kernel
+	url = https://github.com/aurekai/aurekai-semantic-kernel.git
+
+[submodule "integrations/federated/aurekai/openvsx"]
+	path = integrations/federated/aurekai/openvsx
+	url = https://github.com/aurekai/aurekai-openvsx.git
+
+[submodule "integrations/federated/frappe/frappe"]
+	path = integrations/federated/frappe/frappe
+	url = https://github.com/frappe/frappe.git
+
+[submodule "integrations/federated/frappe/erpnext"]
+	path = integrations/federated/frappe/erpnext
+	url = https://github.com/frappe/erpnext.git
+
+[submodule "integrations/federated/frappe/lms"]
+	path = integrations/federated/frappe/lms
+	url = https://github.com/frappe/lms.git
+
+[submodule "integrations/federated/frappe/hrms"]
+	path = integrations/federated/frappe/hrms
+	url = https://github.com/frappe/hrms.git
+
+[submodule "integrations/federated/frappe/crm"]
+	path = integrations/federated/frappe/crm
+	url = https://github.com/frappe/crm.git
+
+[submodule "integrations/federated/frappe/helpdesk"]
+	path = integrations/federated/frappe/helpdesk
+	url = https://github.com/frappe/helpdesk.git
+
+[submodule "integrations/federated/frappe/insights"]
+	path = integrations/federated/frappe/insights
+	url = https://github.com/frappe/insights.git
+
+[submodule "integrations/federated/frappe/wiki"]
+	path = integrations/federated/frappe/wiki
+	url = https://github.com/frappe/wiki.git
+
+[submodule "integrations/federated/frappe/drive"]
+	path = integrations/federated/frappe/drive
+	url = https://github.com/frappe/drive.git
+
+[submodule "integrations/federated/interfaces/opentui"]
+	path = integrations/federated/interfaces/opentui
+	url = https://github.com/anomalyco/opentui.git
+
+[submodule "integrations/federated/interfaces/mcp-apps"]
+	path = integrations/federated/interfaces/mcp-apps
+	url = https://github.com/modelcontextprotocol/ext-apps.git
+
+[submodule "integrations/federated/interfaces/a2ui"]
+	path = integrations/federated/interfaces/a2ui
+	url = https://github.com/a2ui-project/a2ui.git
+
+[submodule "integrations/federated/interfaces/json-render"]
+	path = integrations/federated/interfaces/json-render
+	url = https://github.com/vercel-labs/json-render.git
+
+[submodule "integrations/federated/interfaces/bubbletea"]
+	path = integrations/federated/interfaces/bubbletea
+	url = https://github.com/charmbracelet/bubbletea.git
+
+[submodule "integrations/federated/interfaces/lipgloss"]
+	path = integrations/federated/interfaces/lipgloss
+	url = https://github.com/charmbracelet/lipgloss.git
+
+[submodule "integrations/federated/interfaces/ratatui"]
+	path = integrations/federated/interfaces/ratatui
+	url = https://github.com/ratatui/ratatui.git
+
+[submodule "integrations/federated/interfaces/ghost"]
+	path = integrations/federated/interfaces/ghost
+	url = https://github.com/TryGhost/Ghost.git
+
+[submodule "integrations/federated/performance/memory/nanoarrow"]
+	path = integrations/federated/performance/memory/nanoarrow
+	url = https://github.com/apache/arrow-nanoarrow.git
+
+[submodule "integrations/federated/performance/memory/simdjson"]
+	path = integrations/federated/performance/memory/simdjson
+	url = https://github.com/simdjson/simdjson.git
+
+[submodule "integrations/federated/performance/memory/simdutf"]
+	path = integrations/federated/performance/memory/simdutf
+	url = https://github.com/simdutf/simdutf.git
+
+[submodule "integrations/federated/performance/memory/blake3"]
+	path = integrations/federated/performance/memory/blake3
+	url = https://github.com/BLAKE3-team/BLAKE3.git
+
+[submodule "integrations/federated/performance/memory/xxhash"]
+	path = integrations/federated/performance/memory/xxhash
+	url = https://github.com/Cyan4973/xxHash.git
+
+[submodule "integrations/federated/performance/memory/zstd"]
+	path = integrations/federated/performance/memory/zstd
+	url = https://github.com/facebook/zstd.git
+
+[submodule "integrations/federated/performance/memory/lz4"]
+	path = integrations/federated/performance/memory/lz4
+	url = https://github.com/lz4/lz4.git
+
+[submodule "integrations/federated/performance/memory/croaring"]
+	path = integrations/federated/performance/memory/croaring
+	url = https://github.com/RoaringBitmap/CRoaring.git
+
+[submodule "integrations/federated/performance/memory/mimalloc"]
+	path = integrations/federated/performance/memory/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
+
+[submodule "integrations/federated/performance/search/usearch"]
+	path = integrations/federated/performance/search/usearch
+	url = https://github.com/unum-cloud/USearch.git
+
+[submodule "integrations/federated/performance/search/diskann"]
+	path = integrations/federated/performance/search/diskann
+	url = https://github.com/microsoft/DiskANN.git
+
+[submodule "integrations/federated/performance/search/hnswlib"]
+	path = integrations/federated/performance/search/hnswlib
+	url = https://github.com/nmslib/hnswlib.git
+
+[submodule "integrations/federated/performance/incremental/duckdb"]
+	path = integrations/federated/performance/incremental/duckdb
+	url = https://github.com/duckdb/duckdb.git
+
+[submodule "integrations/federated/performance/incremental/datafusion"]
+	path = integrations/federated/performance/incremental/datafusion
+	url = https://github.com/apache/datafusion.git
+
+[submodule "integrations/federated/performance/incremental/velox"]
+	path = integrations/federated/performance/incremental/velox
+	url = https://github.com/facebookincubator/velox.git
+
+[submodule "integrations/federated/performance/incremental/feldera"]
+	path = integrations/federated/performance/incremental/feldera
+	url = https://github.com/feldera/feldera.git
+
+[submodule "integrations/federated/performance/edge/liburing"]
+	path = integrations/federated/performance/edge/liburing
+	url = https://github.com/axboe/liburing.git
+
+[submodule "integrations/federated/performance/edge/libbpf"]
+	path = integrations/federated/performance/edge/libbpf
+	url = https://github.com/libbpf/libbpf.git
+
+[submodule "integrations/federated/performance/edge/xdp-tools"]
+	path = integrations/federated/performance/edge/xdp-tools
+	url = https://github.com/xdp-project/xdp-tools.git
+
+[submodule "integrations/federated/performance/model/llama-cpp"]
+	path = integrations/federated/performance/model/llama-cpp
+	url = https://github.com/ggml-org/llama.cpp.git
+
+[submodule "integrations/federated/performance/model/vllm"]
+	path = integrations/federated/performance/model/vllm
+	url = https://github.com/vllm-project/vllm.git
+
+[submodule "integrations/federated/performance/model/sglang"]
+	path = integrations/federated/performance/model/sglang
+	url = https://github.com/sgl-project/sglang.git

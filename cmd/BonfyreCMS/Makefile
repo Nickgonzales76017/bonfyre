@@ -5,6 +5,11 @@ CFLAGS += -I../../cmd/BonfyreLex/src
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
 LDFLAGS  = ../../lib/libbonfyre/libbonfyre.a
 TARGET = bonfyre-cms
+# Mach-O ld spells section GC -dead_strip; GNU ld spells it --gc-sections.
+DEAD_STRIP := -Wl,--gc-sections
+ifeq ($(shell uname -s),Darwin)
+DEAD_STRIP := -Wl,-dead_strip
+endif
 COMPACT_PROBE = tests/compact-probe
 
 # liblambda-tensors (standalone compression library)
@@ -59,7 +64,7 @@ $(LT_LIB):
 	$(MAKE) -C $(LT_DIR) liblambda-tensors.a
 
 $(TARGET): $(SRC) $(HDR) ../../cmd/BonfyreLex/src/bf_lex.h ../../lib/libbonfyre/include/bf_command_lookup.h $(LT_LIB)
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) $(LT_INC) -Wl,-dead_strip -o $(TARGET) $(SRC) $(LT_LIB) -lsqlite3 -lpthread -lm -lz $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) $(LT_INC) $(DEAD_STRIP) -o $(TARGET) $(SRC) $(LT_LIB) -lsqlite3 -lpthread -lm -lz $(LDFLAGS)
 
 install-bin: $(TARGET)
 	@mkdir -p $(dir $(SYNC_BIN))

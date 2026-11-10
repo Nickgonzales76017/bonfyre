@@ -1,0 +1,1325 @@
+{
+  "tools": [
+    {
+      "name": "mesh_status",
+      "description": "Return live local-project, Oracle, runtime, release, MCP database, and timer status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "project_status",
+      "description": "Return the current project branch, HEAD, dirty files, and recent delta metadata from the Mac project node.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "project_tree",
+      "description": "List project files under a relative path with bounded depth and count.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8,
+            "default": 3
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 500
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_search",
+      "description": "Search the live local Bonfyre project using ripgrep and return source-aligned matches.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "glob": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 200
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_read",
+      "description": "Read a bounded line range from a live project file.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 400
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_diff",
+      "description": "Return git status and a bounded working-tree or staged diff from the live project.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "staged": {
+            "type": "boolean",
+            "default": false
+          },
+          "stat_only": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_recent_deltas",
+      "description": "Return the latest file-change deltas pushed by the Mac project watcher.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 100
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_patch_preview",
+      "description": "Check a unified diff against the local project without applying it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_apply_patch",
+      "description": "Apply a previously reviewed unified diff to the local project. Disabled unless the project node write gate and approval token are enabled.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          },
+          "approval_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch",
+          "approval_token"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "project_apply_low_risk_patch",
+      "description": "Apply a bounded low-risk patch under local autonomous path, size, clean-file, and receipt gates.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "project_revert_receipt",
+      "description": "Revert a previously applied operator patch by receipt ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "receipt_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "project_test_profile",
+      "description": "Run an allowlisted local project verification profile.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string",
+            "enum": [
+              "git-diff-check",
+              "bonfyre-zig-build",
+              "bonfyre-final",
+              "cmd-make",
+              "python-compile",
+              "shell-syntax"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "project_commit_receipt",
+      "description": "Commit only files attached to a verified operator patch receipt when local auto-commit is enabled.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "receipt_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    },
+    {
+      "name": "operator_status",
+      "description": "Return autonomous operator mode, queue, pause state, recent runs, and recent failures.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "operator_goal_add",
+      "description": "Add or reprioritize a persistent autonomous operator goal.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "source": {
+            "type": "string"
+          },
+          "dedupe_key": {
+            "type": "string"
+          },
+          "recurring": {
+            "type": "boolean"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_client_register",
+      "description": "Register a client engagement in the identity graph (old or new). Returns the resolved entity id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_client_list",
+      "description": "List registered client engagements from the identity graph.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_fleming_watch",
+      "description": "Add a tax account to the Fleming watchlist as a durable WorkGraph mission.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_fleming_query",
+      "description": "Read the Fleming observation estate. named projection: estate | coverage | markets | owners.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "projection"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "membrane_state",
+      "description": "The machine membrane, both directions: which foreign sources this institution can read and at what cost on the carrier ladder, and which machine consumers arrive here and what they were answered. A passport records how a source publishes and what our probes saw, never what its documents assert; a reader row records a declared identity, which is a claim and not a credential.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "foreign_discover",
+      "description": "Ask a domain how it wants to be read by machines, and record the answer. Probes robots, the document head, conventional addresses and .well-known, then names the cheapest carrier that can answer: push, feed, sitemap, structured metadata, or -- last -- HTML extraction. Use before watching any external source; fetching the page and interpreting it is the most expensive rung, not the default.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "domain or https:// root"
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "sitemap_delta",
+      "description": "What moved on a source since last time: addresses added, changed by lastmod, and removed. Removed matters most -- a withdrawn address is a withdrawal of support for whatever it said, and every copy never told keeps asserting it. An unchanged sitemap costs a digest comparison.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sitemap_url": {
+            "type": "string"
+          },
+          "from_robots_host": {
+            "type": "string",
+            "description": "read the sitemaps robots declares instead"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "institutional_measure",
+      "description": "Run a declared measurement against this institution and read its receipt: gym ceilings and residuals, representation preservation envelopes, resource admission decisions, funding closure and frontier, reconciliation consequences, identity closure under deformation, and the failure cohort. Which measurements exist is declared in the CMS, not compiled here, so a new one is a row rather than a release -- call it with op=list to see what this estate can currently measure. Every measurement is read-only: the runners write nothing and perform no effect. Cannot infer: a measured ceiling is not a promise, a residual is not a defect, and a computed consequence is not an approval.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "list",
+              "run"
+            ]
+          },
+          "measure": {
+            "type": "string",
+            "description": "declared measure name, for op=run"
+          },
+          "subject": {
+            "type": "string",
+            "description": "the instance to measure: a gym, an institution, a namespace"
+          }
+        },
+        "required": [
+          "op"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "architecture_atlas",
+      "description": "Query the canonical architecture registry: summary, search, get, cannot-infer, expand, loss. The registry is lossless and large; this is the cheap read path, so ask it rather than loading atlas.index.json into context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "summary",
+              "search",
+              "get",
+              "cannot_infer",
+              "expand",
+              "loss"
+            ]
+          },
+          "arg": {
+            "type": "string",
+            "description": "query for search, id for get/cannot_infer, view name for expand"
+          }
+        },
+        "required": [
+          "op"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "model_local_inventory",
+      "description": "What local generation is actually runnable here: the registered model catalogue, whether each model's weights are present on disk, and which native organs can run them. Ask this before routing bounded work locally, and when a remote provider is exhausted.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "model_local_generate",
+      "description": "Generate through a native local organ rather than a remote provider. Use when a mission constrains work to local paths, or when a provider returns credit_balance_exhausted. Refuses with the specific missing weight rather than falling back to a remote provider, because a silent fallback would violate the routing constraint that sent the work here.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "organ": {
+            "type": "string",
+            "enum": [
+              "qwen-fpq",
+              "moe"
+            ],
+            "description": "default qwen-fpq"
+          },
+          "max_tokens": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "estate_query",
+      "description": "Read-only SQL over the mature receipted estate: 6.5M observations, hot SQLite rows shadowing cold Parquet, composed in one view. Tables: observation, page, parcel_flat. SELECT and WITH only.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "a single SELECT or WITH statement"
+          }
+        },
+        "required": [
+          "sql"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "finance_book",
+      "description": "The service book every commerce grammar quotes from: each service, its carrying cost, its asking price, its margin, and whether it can actually be sold. An unpriced service is not free -- it answers not_for_sale to x402, MPP, UCP, ACP and Beckn alike.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "finance_price_set",
+      "description": "Price a service in the book. This is the one write that makes a capability sellable through every commerce grammar at once, because they all read this book.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "buy_usd": {
+            "type": "number"
+          },
+          "sell_usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "buy_usd",
+          "sell_usd"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "protocol_fetch",
+      "description": "Speak one of the live carrier protocols over the same institutional state. Carriers: x402, mpp, a2a, cloudevents, ogc, ogc_items, reso, mismo, activitypub, activitypub_outbox, webfinger, beckn, ucp, acp, wot, cap, epcis, openrtb. A protocol is a projection, never a second owner of the data, so two carriers cannot disagree about a price or a parcel. Carriers that answer empty do so with a stated reason rather than a sample record.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "carrier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "capability name, for x402 and mpp"
+          }
+        },
+        "required": [
+          "carrier"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "desk_open_decisions",
+      "description": "What the institution is holding open right now, computed from the stores that hold it: capabilities advertised without a price, notes written but not published, offers in the book at zero, and work started but not finished. Each count is counted, not inferred from a page size.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_membrane_status",
+      "description": "Read the financial membrane: budget caps, recorded cost, and the service book, together.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_membrane_budget_set",
+      "description": "Set a budget cap for a recipe on the financial membrane.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipe": {
+            "type": "string"
+          },
+          "usd_cap": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "recipe",
+          "usd_cap"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_work_claim",
+      "description": "Claim the next ready WorkGraph mission for a worker. Returns the mission, node and the lease token required to complete it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "worker": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "worker"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_work_complete",
+      "description": "Complete a claimed WorkGraph node. Requires the lease token issued by studio_work_claim; the queue refuses any other holder.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "string"
+          },
+          "node": {
+            "type": "string"
+          },
+          "worker": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission",
+          "node",
+          "worker",
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_fleming_opportunity",
+      "description": "Open a Fleming opportunity on a tax account as a durable WorkGraph mission.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "studio_economy_cost_record",
+      "description": "Record what a run actually cost against a recipe on the financial membrane.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipe": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "usd": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "recipe",
+          "stage",
+          "model",
+          "usd"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "operator_pause",
+      "description": "Pause autonomous operator work through the local kill switch.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "operator_resume",
+      "description": "Resume autonomous operator work.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "runtime_get",
+      "description": "Read a Bonfyre runtime route from Oracle. Paths are restricted to /health and /api/*.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "runtime_preview",
+      "description": "Call an allowlisted read-only or preview POST route such as MCP graph preview, runtime parity live-read, or interaction fixtures.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "default": {}
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "oracle_service_status",
+      "description": "Inspect allowlisted Bonfyre systemd services and timers with journal tail.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string"
+          },
+          "journal_lines": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "default": 120
+          }
+        },
+        "required": [
+          "unit"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "oracle_command_describe",
+      "description": "Describe a native Bonfyre command family and its Linux executable, file type, links, and help contract.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "oracle_command_probe",
+      "description": "Run only --version or --help against one native command with a strict timeout.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "version",
+              "help"
+            ],
+            "default": "version"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "default": 8
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "oracle_profile_run",
+      "description": "Start an allowlisted Phase 94 hypercycle profile and return its real Result and ExecMainStatus.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false
+      }
+    },
+    {
+      "name": "oracle_profile_receipts",
+      "description": "Read recent profile receipts, including failures that Phase 94 previously masked.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2000,
+            "default": 200
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "oracle_deep_flow",
+      "description": "Run an allowlisted existing MCP/runtime deep-flow script and return its exact exit code and bounded output.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "flow": {
+            "type": "string",
+            "enum": [
+              "local_oracle_execution_matrix",
+              "local_oracle_recursive_interaction",
+              "mcp_resource_matrix",
+              "oracle_mcp_capture",
+              "oracle_auth_money_mcp",
+              "opportunity_mcp_matrix",
+              "operator_action_loop",
+              "power_user_reconcile",
+              "aggressive_operator_firehose",
+              "max_compounding_cycle",
+              "total_recursive_closure",
+              "model_department_total",
+              "power_user_model_closure",
+              "power_user_product_activation",
+              "power_user_provider_fanout"
+            ]
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 3600,
+            "default": 900
+          }
+        },
+        "required": [
+          "flow"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "task_start",
+      "description": "Start a long-running allowlisted Oracle profile or deep flow as a transient systemd task and return an explicit handle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "flow"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "task_status",
+      "description": "Return state, exit status, and journal tail for an explicit long-task handle.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "journal_lines": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000,
+            "default": 200
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "artifact_search",
+      "description": "Search Oracle output artifact paths and optionally grep text content.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "contains": {
+            "type": "string",
+            "default": ""
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2000,
+            "default": 200
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "artifact_read",
+      "description": "Read a bounded text range from an Oracle output artifact.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "max_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "default": 200000
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "release_attest",
+      "description": "Verify the sealed current release, 93 Linux ELFs, runtime health, portable custom dependencies, and active timers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      }
+    },
+    {
+      "name": "mcp_call_history",
+      "description": "Return recent MCP tool calls with trace IDs, durations, and states.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2000,
+            "default": 200
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "bonfyre://mesh/status",
+      "name": "Bonfyre MCP mesh status",
+      "description": "Current local-project, Oracle, release, runtime and transport state.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://project/status",
+      "name": "Live project status",
+      "description": "Current branch, HEAD, dirty files and recent delta journal.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://oracle/release",
+      "name": "Current Oracle release",
+      "description": "Sealed release and portable dependency attestation.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://phase94/receipts",
+      "name": "Phase 94 receipts",
+      "description": "Recent hypercycle profile receipts, including failed tools.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/calls",
+      "name": "MCP call ledger",
+      "description": "Recent MCP calls with trace IDs and durations.",
+      "mimeType": "application/json"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "diagnose_live_system",
+      "description": "Diagnose the live Bonfyre project and Oracle mesh from current evidence.",
+      "arguments": [
+        {
+          "name": "focus",
+          "description": "Optional subsystem focus",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "implement_project_change",
+      "description": "Inspect source, prepare a patch, validate it, then use the approval-gated patch tool.",
+      "arguments": [
+        {
+          "name": "request",
+          "description": "Requested project change",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "certify_oracle",
+      "description": "Attest release, services, routes, commands, receipts, and parity.",
+      "arguments": []
+    }
+  ]
+}

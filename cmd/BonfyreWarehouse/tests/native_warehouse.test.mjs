@@ -279,9 +279,6 @@ test("query plan is pinned and returns candidate local or distributed resource s
       "--operation","aggregate","--generation","1","--memory-limit-bytes","1048576",
       "--workers","4","--input-bound-bytes","4096"];
     expect(run(...base).code).not.toBe(0);
-    const observed=new Database(join(estate,"representation-manifold.db"));
-    observed.query("UPDATE representation_instance SET frontier='f1;rows:17' WHERE id='current'").run();
-    observed.close();
     expect(run("seed","--apply","--estate",estate).code).toBe(0);
     const local=run(...base);
     expect(local.code).toBe(0);
@@ -290,7 +287,7 @@ test("query plan is pinned and returns candidate local or distributed resource s
       operation:"aggregate",proposed_route:"local-duckdb-candidate",
       input_bound_bytes:4096,worker_count:4,actor_closure_verified:false,
       packgraph_verified:false,scheduler_admitted:false,exchange_executed:false,
-      physical_bytes_verified:false,left:{semantic_kind:"example",generation:1,digest:hex("a"),frontier_rows:17}});
+      physical_bytes_verified:false,left:{semantic_kind:"example",generation:1,digest:hex("a")}});
     const big=base.map(x=>x==="4096"?"600000":x);
     expect(run(...big).data).toMatchObject({decision:"DISTRIBUTED_CANDIDATE",
       proposed_route:"distributed-exchange-candidate",aggregate_stage_budget_bytes:1048576,
@@ -329,7 +326,7 @@ test("query planning binds both join inputs and refuses drift rather than silent
       operation:"join",input_bound_bytes:900000,
       proposed_stages:["bounded-scan","partition-exchange","join-stage","result-merge"],
       left:{representation_id:"current",digest:hex("a"),generation:1},
-      right:{representation_id:"right-rep",digest:hex("b"),generation:1,frontier_rows:null},
+      right:{representation_id:"right-rep",digest:hex("b"),generation:1},
       worker_recovery_verified:false,scheduler_admitted:false});
     expect(run(...args.map(x=>x==="400000"?"1":x)).code).not.toBe(0);
     const edit=new Database(join(estate,"representation-manifold.db"));

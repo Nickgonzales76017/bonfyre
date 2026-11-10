@@ -29,6 +29,7 @@ test('operator reference uses a verified run from the selected compiled generati
   try {
     compile(join(root, 'estate/profiles.yaff'));
     db = new Database(join(temp, 'fabric.db'));
+    expect(run('operator', 'reference', 'command.tel')).not.toContain('In the same family'); expect(reference()).toContain('In the same family'); // service_dependent is a status, not a family
     const input = join(temp, 'input.txt');
     writeFileSync(input, 'A retained native reference fixture.\n');
     const uri = run('artifact', 'ingest', input, 'text/plain').match(/^uri=(.+)$/m)[1];
@@ -122,7 +123,6 @@ test('reference excerpts require exact public disclosure and unchanged retained 
     run('effect', 'approve', effect);
     run('effect', 'commit', effect);
     expect(reference().stdout).not.toContain('PRIVATE FIXTURE CONTENT');
-
     const publicRead = reference(policy);
     expect(publicRead.status, publicRead.stderr).toBe(0);
     expect(publicRead.stdout).toContain('````text In\n' + text + '````');

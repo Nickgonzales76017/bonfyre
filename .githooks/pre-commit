@@ -40,4 +40,11 @@ if ! sh "$repo_root/scripts/native-ratchet.sh" check; then
   exit 1
 fi
 
+# 3. The native ratchet: the JS/script estate and installed JS runtimes may only
+#    shrink (architecture/native-ratchet.cue). Port to C or retire to pay.
+if ! sh "$repo_root/scripts/native-ratchet.sh" check; then
+  echo "pre-commit: native ratchet refused the commit (see above)." >&2
+  exit 1
+fi
+
 exit 0

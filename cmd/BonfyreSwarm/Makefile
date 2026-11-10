@@ -14,8 +14,15 @@ bonfyre-swarm: src/main.c src/scoped_transfer.h
 
 # Uses the actual native SHA, crypto and MessagePack owners. Each test binds
 # only loopback and creates all grants, bytes and receipts in a temporary dir.
+# Both the organ and the harness compile from the owner sources, so the test
+# needs no prebuilt libbonfyre.a.
+LIBSRC = ../../lib/libbonfyre/src/bf_sha256.c ../../lib/libbonfyre/bf_crypto.c
+TESTFLAGS = -std=c11 -O1 -g -Wall -Wextra -Werror=implicit-function-declaration -DBONFYRE_SHA256_PORTABLE -I../../lib/libbonfyre/include
+TESTDIR ?= $(or $(TMPDIR),/tmp)
 test-scoped-transfer:
-	python3 tests/scoped_transfer_test.py
+	$(CC) $(TESTFLAGS) -o $(TESTDIR)/bonfyre-swarm-scoped src/main.c $(LIBSRC) ../../lib/libbonfyre/bf_msgpack.c -lsqlite3
+	$(CC) $(TESTFLAGS) -o $(TESTDIR)/bonfyre-swarm-scoped-test tests/scoped_transfer_test.c $(LIBSRC) -lsqlite3
+	$(TESTDIR)/bonfyre-swarm-scoped-test $(TESTDIR)/bonfyre-swarm-scoped
 
 clean:
 	rm -f bonfyre-swarm

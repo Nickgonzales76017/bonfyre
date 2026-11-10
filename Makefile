@@ -162,10 +162,14 @@ native-dispatch-audit:
 	bun scripts/analysis/native_dispatch_audit.mjs
 
 control-plane-native-test:
+	$(MAKE) -C lib/libbonfyre
+	$(MAKE) -C cmd/BonfyreQueue bonfyre-queue
+	$(MAKE) -C cmd/BonfyreTime bonfyre-time
 	bun test components/BonfyreControlPlane/tests/*.test.mjs
 
 .PHONY: decision-plane-test
 decision-plane-test:
+	$(MAKE) -C components/BonfyreDecision/native
 	bun test components/BonfyreDecision/tests cmd/BonfyreExternalEstate/tests/decision_program_plane.test.mjs scripts/tests/residual-to-work.test.mjs
 
 .PHONY: operator-entrypoints-test

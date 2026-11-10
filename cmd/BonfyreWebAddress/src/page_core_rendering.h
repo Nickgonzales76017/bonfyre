@@ -2894,7 +2894,8 @@ static void page_surface_scene_digest(const PageDocument *doc, const PageCompatS
     public_projection_fingerprint(owner_fingerprint, archive, frontier, fabric);
     bf_sha256_init(&sha);
 #define PAGE_SCENE_HASH_TEXT(value) do { \
-        const char *value_ = (value) ? (value) : ""; \
+        const char *value_ = (value); /* arrays decay first: no -Waddress */ \
+        if (!value_) value_ = ""; \
         bf_sha256_update(&sha, (const uint8_t *)value_, strlen(value_)); \
         bf_sha256_update(&sha, (const uint8_t *)"\0", 1); \
     } while (0)

@@ -114,7 +114,7 @@ architecture aurekai-activity
   witness integrations/browser/tests/provider-continuation.test.mjs
   witness integrations/browser/tests/provider-continuation.browser.test.mjs
   witness integrations/mcp/tests/fabric_push.test.mjs verifies encrypted RFC8291 packets, actual loopback HTTP signature and content verification, recipient isolation, revocation, bounded retries and uncertain-send preservation
-  witness cmd/BonfyreAuth/tests/background_access_test.py compiles the current native account policy helper and verifies active-user, institution-role and household-access parity
+  witness cmd/BonfyreAuth/tests/background_access_test.sh compiles the current native account policy helper and verifies active-user, institution-role and household-access parity
   witness integrations/browser/tests/aurekai-push.test.mjs
   witness integrations/browser/tests/aurekai-push.browser.test.mjs
   witness integrations/browser/tests/aurekai-push-rail.browser.test.mjs

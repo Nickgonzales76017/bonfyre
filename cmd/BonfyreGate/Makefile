@@ -23,4 +23,5 @@ clean:
 
 # A license gate with no test is a license gate that fails both ways in silence.
 guard-witness: $(TARGET)
+	$(MAKE) -C ../BonfyreSign
 	./tests/guard_test.sh ./$(TARGET)

@@ -37,7 +37,8 @@
     "./kernel/policy": "./src/kernel-policy-registry.mjs",
     "./kernel/chart": "./src/kernel-chart-registry.mjs",
     "./kernel/schema-registry": "./src/kernel-schema-registry.mjs",
-    "./kernel/trajectory-calculus": "./src/kernel-trajectory-calculus.mjs"
+    "./kernel/trajectory-calculus": "./src/kernel-trajectory-calculus.mjs",
+    "./creator-program": "./src/creator-render-program.mjs"
   },
   "publishConfig": {
     "access": "public"

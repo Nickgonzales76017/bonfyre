@@ -31,5 +31,20 @@ jobs:
           sh lib/libbonfyre/tests/bf_re_parity.sh
       - name: bonfyre-operator golden vectors
         run: make -C cmd/BonfyreOperator test parity
+
+  # Decide's golden vectors were recorded on macOS arm64 and pass there. On
+  # the x86_64 Linux runner three of 47 differ by 1-2 bytes in 20-360 KB
+  # reports (floating-point output, cause not yet isolated), so byte parity
+  # runs on the platform that recorded the vectors.
+  decide-parity:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cue-lang/setup-cue@v1.0.0
+        with:
+          version: v0.17.1
       - name: bonfyre-decide (books, monitor, manifest) golden vectors
-        run: bash cmd/BonfyreDecide/tests/parity.sh
+        run: |
+          make -C lib/libbonfyre
+          bash cmd/BonfyreDecide/tests/parity.sh
+          make -C cmd/BonfyreDecide test-plane

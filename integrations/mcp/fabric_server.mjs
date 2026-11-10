@@ -159,7 +159,7 @@ export async function createFabricServer({ token, home, projectRoot, worktreeRoo
     routes: [
       { method: 'GET', path: '/events', run: () => ({events: store.safeEvents(500).events.map(row => {
         if (!['codex','claude'].includes(row.source)) return row;
-        const evidence = hookEvidence({ ...(row.payload || {}), source: row.source, kind: row.kind });
+        const evidence = hookEvidence({ ...row.payload, source: row.source, kind: row.kind });
         return { ...row, payload: evidence || {source: row.source, kind: row.kind, legacy_redacted: true} };
       })}) },
       { method: 'POST', path: '/hook', status: 202, serialize: true, schema: { type: 'object', properties: {

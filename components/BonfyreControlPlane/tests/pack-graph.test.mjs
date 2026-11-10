@@ -1,10 +1,10 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 
 const repo = resolve(import.meta.dir, '../../..');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const src = resolve(repo, 'cmd/BonfyreWebAddress/src'); // every source: the overlay owner lives in a header
+const main = readdirSync(src).filter(n => /\.(c|h)$/.test(n)).map(n => readFileSync(resolve(src, n), 'utf8')).join('\n');
 const surfaces = resolve(repo, 'site/matrix/surfaces');
 const layers = ['official', 'institution', 'community', 'household', 'scenario'];
 const verbs = ['hide', 'add', 'specialize', 'present', 'tighten', 'default'];
@@ -68,17 +68,15 @@ live('pack overlay cannot widen native authority', async () => {
 });
 
 test('unknown overlay verb is refused out loud', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  expect(unit).toContain('refused_count');
-  expect(unit.includes('reported as refused') || unit.includes('refused rather than quietly ignored')).toBe(true);
-  expect(unit.includes('no verb for granting authority') ||
-    unit.includes('granting authority, widening disclosure')).toBe(true);
+  expect(main).toContain('refused_count');
+  expect(main.includes('reported as refused') || main.includes('refused rather than quietly ignored')).toBe(true);
+  expect(main.includes('no verb for granting authority') ||
+    main.includes('granting authority, widening disclosure')).toBe(true);
 });
 
 test('tighten narrows and never widens', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  const fn = unit.slice(unit.indexOf('static int pack_audience_rank'));
-  const body = unit.slice(unit.indexOf('!strcmp(verb, "tighten")')).split('} else')[0];
+  const fn = main.slice(main.indexOf('static int pack_audience_rank'));
+  const body = fn.slice(fn.indexOf('!strcmp(verb, "tighten")')).split('} else')[0];
   expect(body).toContain('r < audience_rank');
   const order = [...fn.slice(0, fn.indexOf('\n}')).matchAll(/"([a-z]+)"/g)].map(m => m[1]);
   expect(order[0]).toBe('self');
@@ -217,8 +215,7 @@ live('composition order is the authored order', async () => {
 });
 
 test('dependency cycle is bounded rather than hung', () => {
-  const unit = translationUnit(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'));
-  const fn = unit.slice(unit.indexOf('static int pack_close('));
+  const fn = main.slice(main.indexOf('static int pack_close('));
   expect(fn.slice(0, 600)).toContain('depth > 8');
 });
 

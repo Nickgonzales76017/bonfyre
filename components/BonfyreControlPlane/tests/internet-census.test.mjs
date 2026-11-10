@@ -1,7 +1,6 @@
 import { test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { translationUnit } from './translation-unit.mjs';
 
 const root = join(import.meta.dir, '../../..');
 const read = path => readFileSync(join(root, path), 'utf8');
@@ -9,7 +8,7 @@ const home = read('site/matrix/surfaces/home.html');
 const kit = read('site/matrix/surfaces/_kit.js');
 const consolePage = read('site/matrix/surfaces/console.html');
 const project = read('components/BonfyreProject/src/main.c');
-const web = read('cmd/BonfyreWebAddress/src/main.c');
+const web = [join(root, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(join(root, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => join(root, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const service = read('deploy/systemd/bonfyre-reheat.service');
 const timer = read('deploy/systemd/bonfyre-reheat.timer');
 const host = process.env.BONFYRE_LIVE_BASE_URL ||
@@ -92,16 +91,14 @@ test('retained bodies are staged atomically and served from the newest receipt',
   expect(observe).toContain('.staging');
   expect(observe).not.toContain('/tmp/%s.staging');
   expect(observe).toContain('body_bytes > 0');
-  const serve = functionBody(translationUnit(join(root, 'cmd/BonfyreWebAddress/src/main.c')), 'static int serve_foreign_body', 'static int serve_foreign_weather');
+  const serve = functionBody(web, 'static int serve_foreign_body', 'static int serve_foreign_weather');
   expect(serve).toMatch(/Take the last line|last line/);
   expect(serve).toContain('memmove(receipt, last');
 });
 
 test('an absent JSON field clears the output and cannot reuse another twin body', () => {
-  const studio = translationUnit(join(root, 'cmd/BonfyreWebAddress/src/main.c'));
-  const definition = studio.indexOf('static int studio_json_field(', studio.indexOf('static int studio_json_field(') + 1);
-  expect(definition).toBeGreaterThan(0);
-  const body = studio.slice(definition, studio.indexOf('\n}\n', definition) + 3);
+  const definition = web.search(/static int studio_json_field\([^;{]*\)\s*\{/); expect(definition).toBeGreaterThan(0);
+  const body = web.slice(definition, web.indexOf('\n}\n', definition) + 3);
   expect(body).toContain("out[0] = '\\0'");
 });
 

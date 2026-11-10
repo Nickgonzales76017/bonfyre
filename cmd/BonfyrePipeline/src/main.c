@@ -78,53 +78,32 @@ static long current_max_rss_kb(void) {
 /* Delegates to the one implementation. This copy stopped at the first quote,
  * never unescaped, and on overflow wrote a prefix and returned success -- so a
  * truncated value was indistinguishable from a whole one at a gate. */
-static int gate_json_str(const char *json, const char *key, char *out, size_t sz) {
-    return bf_lex_json_string(json, key, out, sz);
-}
 
-static int pipeline_gate(const char *key, const char *key_file,
-                         const char *tier, const char *required_op, const char *ts) {
-    /* Full enforcement if a key file is provided */
-    if (key_file && key_file[0]) {
-        FILE *f = fopen(key_file, "rb");
-        if (!f) {
-            fprintf(stderr, "[pipeline:gate] DENIED: cannot read key file %s\n", key_file);
-            return 1;
-        }
-        fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
-        if (sz <= 0 || sz > 8192) { fclose(f); return 1; }
-        char json[8193];
-        fread(json, 1, (size_t)sz, f); json[sz] = '\0';
-        fclose(f);
-
-        char status[32], expires[64], ops[1024];
-        gate_json_str(json, "status", status, sizeof(status));
-        gate_json_str(json, "expires_at", expires, sizeof(expires));
-        gate_json_str(json, "allowed_ops", ops, sizeof(ops));
-
-        if (strcmp(status, "revoked") == 0) {
-            fprintf(stderr, "[pipeline:gate] DENIED: key revoked\n");
-            return 1;
-        }
-        if (expires[0] && strcmp(ts, expires) > 0) {
-            fprintf(stderr, "[pipeline:gate] DENIED: key expired (%s)\n", expires);
-            return 1;
-        }
-        if (required_op && strcmp(ops, "*") != 0 && !strstr(ops, required_op)) {
-            fprintf(stderr, "[pipeline:gate] DENIED: op '%s' not in entitlements\n", required_op);
-            return 1;
-        }
-        fprintf(stderr, "[pipeline:gate] PASS (key-file validated)\n");
+/* The gate is bonfyre-gate's: a key file is checked by `bonfyre-gate guard`,
+ * which verifies the institution's signature (BONFYRE_GATE_BIN overrides the
+ * bonfyre-gate on PATH). This used to re-read the key itself -- no signature,
+ * a substring test on allowed_ops, the wrong JSON depth -- and with no key
+ * file at all it printed PASS for the literal "default-key". A run with no key
+ * file is now said to be unchecked, which is what it is. */
+static int pipeline_gate(const char *key_file, const char *required_op) {
+    if (!key_file || !key_file[0]) {
+        fprintf(stderr, "[pipeline:gate] not checked: no --key-file, so no licence was verified\n");
         return 0;
     }
-
-    /* Fallback: basic string key check (backward compatible with parity tests) */
-    if (!key || strlen(key) < 3) {
-        fprintf(stderr, "[pipeline:gate] Invalid key\n");
+    const char *gate = getenv("BONFYRE_GATE_BIN");
+    if (!gate || !*gate) gate = "bonfyre-gate";
+    char *argv[] = {(char *)gate, "guard", (char *)key_file, "--op", (char *)required_op, NULL};
+    pid_t pid = 0;
+    if (posix_spawnp(&pid, gate, NULL, NULL, argv, environ) != 0) {
+        fprintf(stderr, "[pipeline:gate] DENIED: %s is not available to check the key\n", gate);
         return 1;
     }
-    (void)tier;
-    fprintf(stderr, "[pipeline:gate] PASS key=%s tier=%s\n", key, tier ? tier : "free");
+    int st = 0;
+    if (waitpid(pid, &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+        fprintf(stderr, "[pipeline:gate] DENIED by bonfyre-gate\n");
+        return 1;
+    }
+    fprintf(stderr, "[pipeline:gate] PASS (bonfyre-gate verified the key)\n");
     return 0;
 }
 
@@ -669,16 +648,6 @@ static pid_t pipeline_compress_start(const char *input, const char *outdir) {
  * STEP 5: Meter — record usage event (in-process, libsqlite3)
  * ================================================================ */
 
-static double op_cost(const char *op, long bytes) {
-    switch (op[0]) {
-    case 'I': return (op[1]=='n') ? 0.001 : 0.001;  /* Ingest / Index */
-    case 'B': return 0.01;   /* Brief */
-    case 'P': return 0.02;   /* Proof */
-    case 'O': return 0.05;   /* Offer */
-    case 'C': return 0.0001 * ((double)bytes / (1024.0 * 1024.0));  /* Compress */
-    }
-    return 0.0;
-}
 
 static int pipeline_meter(const char *outdir, const char *key, const char *op,
                           long bytes, const char *ts) {
@@ -697,8 +666,8 @@ static int pipeline_meter(const char *outdir, const char *key, const char *op,
         "CREATE INDEX IF NOT EXISTS idx_events_key ON events(key_id);",
         NULL, NULL, NULL);
 
-    /* #13: ts passed from main — no redundant iso_timestamp call */
-    double cost = op_cost(op, bytes);
+    /* Usage only. A price is an admitted rate, which is BonfyreMeter's to hold;
+     * this step used to write $0.0010 per Ingest from a table of its own. */
 
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
@@ -709,12 +678,12 @@ static int pipeline_meter(const char *outdir, const char *key, const char *op,
     sqlite3_bind_text(stmt, 2, op, -1, SQLITE_STATIC);
     sqlite3_bind_int64(stmt, 3, bytes);
     sqlite3_bind_text(stmt, 4, ts, -1, SQLITE_STATIC);
-    sqlite3_bind_double(stmt, 5, cost);
+    sqlite3_bind_null(stmt, 5);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
-    fprintf(stderr, "[pipeline:meter] key=%s op=%s cost=$%.4f\n", key, op, cost);
+    fprintf(stderr, "[pipeline:meter] key=%s op=%s bytes=%ld cost=unpriced (no admitted rate)\n", key, op, bytes);
     return 0;
 }
 
@@ -786,7 +755,7 @@ int main(int argc, char *argv[]) {
     const char *artifacts_dir = NULL;
     const char *key = "default-key";
     const char *key_file = NULL;  /* #15 */
-    const char *tier = "free";
+    const char *tier = "free"; /* accepted for old callers; a key's tier is the signed key's */
 
     enum { PL_RUN };
     static const BfCommandEntry pipeline_commands[] = {
@@ -852,7 +821,8 @@ int main(int argc, char *argv[]) {
 
     /* 1. Gate (#15: real enforcement if key-file provided) */
     gate_started = monotonic_ns();
-    rc = pipeline_gate(key, key_file, tier, "Ingest", ts);
+    (void)tier;
+    rc = pipeline_gate(key_file, "Ingest");
     gate_ns = monotonic_ns() - gate_started;
     if (rc) return rc;
 

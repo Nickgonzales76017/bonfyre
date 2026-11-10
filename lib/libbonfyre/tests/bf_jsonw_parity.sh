@@ -5,6 +5,7 @@ here=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 cc -O2 -std=c11 -I"$here/../include" "$here/bf_jsonw_parity.c" "$here/../libbonfyre.a" -lm -o "$tmp/parity"
 cat > "$tmp/cases.jsonl" <<'J'
+[123456789012345680000,99999999999999990000,-123456789012345680000,9223372036854775807,9007199254740993,18446744073709551616]
 {"b":1,"a":[1,2.5,-0.000001,1e21,123456789012,0.1,1e-7,-3,100,1.5e300,5e-324],"c":{},"d":[],"e":null,"f":true}
 {"s":"quote \" back \\ slash \/ tab \t nl \n ctl \u0001 \u001f uni é é astral 😀 😀"}
 {"10":0,"2":1,"b":2,"01":3,"1":4,"z":{"y":[{"x":[]},{}],"w":"v"},"é":1,"E":2,"a b":3,"":4}

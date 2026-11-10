@@ -29,7 +29,7 @@ test('all seven IRs bind the shared semantic task plan instead of trusting suppl
 });
 
 const roots = [], stores = [];
-const binary = process.env.BONFYRE_TOKEN_FABRIC_BIN ?? join(homedir(), '.local/bin/bonfyre-token-fabric');
+const binary = process.env.BONFYRE_TOKEN_FABRIC_BIN ?? join(homedir(), '.local/bin/bonfyre-token-fabric'); const nativeTest = test.skipIf(!existsSync(binary)); // installed organ; no source in this repository
 function fixture(extra = {}) {
   const root = mkdtempSync(join(tmpdir(), 'recursive-store-test-')); roots.push(root);
   const store = createRecursiveStore({ home: join(root, 'owner'), tokenBinary: binary, now: () => 1800000000, ...extra });
@@ -132,7 +132,7 @@ test('motifs distinguish structural heuristic from exact match; BFP remains gate
   expect(plan.activation.requires_authority_gate).toBe(true);
 });
 
-test('real native tokens share body across distinct semantic owners and refuse corrupted cache', async () => {
+nativeTest('real native tokens share body across distinct semantic owners and refuse corrupted cache', async () => {
   const { store } = fixture();
   const a = store.ingestArtifact({text:'hello ÿ\n',kind:'text'}), b = store.ingestArtifact({text:'hello ÿ\n',kind:'mission'});
   const first = await store.compileTokenArtifact(a.artifact_id);
@@ -144,7 +144,7 @@ test('real native tokens share body across distinct semantic owners and refuse c
   await expect(store.compileTokenArtifact(b.artifact_id)).rejects.toThrow('invalid token span');
 });
 
-test('concurrent native compilation keeps one valid body; empty tokens retain exact byte coverage', async () => {
+nativeTest('concurrent native compilation keeps one valid body; empty tokens retain exact byte coverage', async () => {
   const { store } = fixture(); const item = store.ingestArtifact({text:'same body'});
   const pair = await Promise.all([store.compileTokenArtifact(item.artifact_id),store.compileTokenArtifact(item.artifact_id)]);
   expect(pair[0].id ?? pair[0].artifact_id).toBe(pair[1].id ?? pair[1].artifact_id);
@@ -155,7 +155,7 @@ test('concurrent native compilation keeps one valid body; empty tokens retain ex
   expect(store.verifyReceipts().verified).toBe(true);
 });
 
-test('native output injection is refused and never gets a token row', async () => {
+nativeTest('native output injection is refused and never gets a token row', async () => {
   const { store } = fixture({run:async argv => {
     const out = argv[argv.indexOf('--out')+1];
     writeFileSync(out, canonicalJson({schema:'bonfyre.token-artifact.v1',artifact_id:sha('x'),tokenizer:{id:'lexeme-v1',version:'1',exact:true},canonical_path:'/etc/passwd',chunks:[]}));
@@ -166,7 +166,7 @@ test('native output injection is refused and never gets a token row', async () =
   const db = new Database(store.dbPath,{readonly:true}); expect(db.query('SELECT count(*) AS n FROM token_artifacts').get().n).toBe(0); db.close();
 });
 
-test('native multichunk spans overlap at byte boundaries; deltas bind all chunk digests', async () => {
+nativeTest('native multichunk spans overlap at byte boundaries; deltas bind all chunk digests', async () => {
   const { store } = fixture();
   const a = await store.compileTokenArtifact(store.ingestArtifact({text:'hello'}).artifact_id);
   const b = await store.compileTokenArtifact(store.ingestArtifact({text:Array.from({length:6000},(_,i)=>`word${i}`).join(' ')}).artifact_id);
@@ -181,7 +181,7 @@ test('native multichunk spans overlap at byte boundaries; deltas bind all chunk 
   expect(store.verifyFlux().verified).toBe(true);
 }, 10000);
 
-test('forged delta chunk source cannot commit a delta receipt', async () => {
+nativeTest('forged delta chunk source cannot commit a delta receipt', async () => {
   const { store } = fixture({run:async (argv, options) => {
     const result = await projectRun(argv, options);
     if (argv[1] === 'delta') {
@@ -198,7 +198,7 @@ test('forged delta chunk source cannot commit a delta receipt', async () => {
   const db = new Database(store.dbPath,{readonly:true}); expect(db.query('SELECT count(*) AS n FROM deltas').get().n).toBe(0); db.close();
 });
 
-test('native status preserves actual failure and timeout receipt instead of inventing missing binary', async () => {
+nativeTest('native status preserves actual failure and timeout receipt instead of inventing missing binary', async () => {
   const receipt = {exit_code:124,stdout:'',stderr:'deadline',duration_ms:10,timeout:true};
   const {store} = fixture({run:async()=>receipt}); expect((await store.status()).token_binary_status).toEqual(receipt);
 });

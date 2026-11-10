@@ -24,3 +24,4 @@ package-lock.json
 
 # Generator output: bun bin/akai.mjs integrate:scaffold-repos --all
 generated/
+# Independently regenerable adapter scaffolds, not published repositories.

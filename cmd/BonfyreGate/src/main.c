@@ -24,6 +24,7 @@
  *
  * Entitlements control: max_artifacts, max_bytes, allowed_ops, rate_limit/hr
  */
+#include <ctype.h>
 #include <errno.h>
 #include "bf_lex.h"
 #include <limits.h>
@@ -101,79 +102,176 @@ static TierEntitlements tier_config(const char *tier) {
 
 /* ---------- commands ---------- */
 
+/* ---------- signing ----------
+ *
+ * A key is a statement by the institution: these entitlements, for this org,
+ * until this date. Until 2026-11-07 nothing made it one -- the JSON carried
+ * no signature, so editing allowed_ops in key.json granted the edited
+ * operation. A key now carries an Ed25519 signature by the institution
+ * identity (cmd/BonfyreSign) over every field but the signature itself, and
+ * check/guard verify it against a public key this machine was told to trust
+ * (BONFYRE_GATE_TRUST: 64 hex or a file holding them). Never against a key the
+ * file names: whoever edits the file can name their own. With nothing trusted,
+ * every key is refused.
+ *
+ *   issue  needs BONFYRE_GATE_KEY_DIR, the bonfyre-sign key directory
+ *   BONFYRE_SIGN_BIN overrides the bonfyre-sign found on PATH
+ */
+#include <sys/wait.h>
+#include "bf_jv.h"
+#include "bf_jsonw.h"
+
+static int run_capture(char *const argv[], char *out, size_t cap) {
+    int fds[2];
+    if (pipe(fds) != 0) return -1;
+    pid_t pid = fork();
+    if (pid < 0) { close(fds[0]); close(fds[1]); return -1; }
+    if (pid == 0) {
+        dup2(fds[1], 1); close(fds[0]); close(fds[1]);
+        execvp(argv[0], argv); _exit(127);
+    }
+    close(fds[1]);
+    size_t len = 0; ssize_t got;
+    while (len + 1 < cap && (got = read(fds[0], out + len, cap - 1 - len)) > 0) len += (size_t)got;
+    out[len] = '\0';
+    char sink[256]; while (read(fds[0], sink, sizeof sink) > 0) {}
+    close(fds[0]);
+    int st = 0; if (waitpid(pid, &st, 0) < 0) return -1;
+    return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+static const char *sign_bin(void) {
+    const char *b = getenv("BONFYRE_SIGN_BIN");
+    return b && *b ? b : "bonfyre-sign";
+}
+
+/* The signed body: the key without its signature, keys sorted, no spaces. */
+static char *signed_body(const bf_jv *key) {
+    bf_jv *c = bf_jv_clone(key);
+    bf_jv_del(c, "signature"); bf_jv_del(c, "signed_by");
+    size_t n = 0; char *body = bf_jv_dump(c, 0, 1, &n);
+    bf_jv_free(c);
+    return body;
+}
+
+static int write_temp(const char *body, char *path, size_t cap) {
+    const char *dir = getenv("TMPDIR"); if (!dir || !*dir) dir = "/tmp";
+    snprintf(path, cap, "%s/bonfyre-gate.XXXXXX", dir);
+    int fd = mkstemp(path); if (fd < 0) return -1;
+    size_t n = strlen(body);
+    int ok = write(fd, body, n) == (ssize_t)n;
+    close(fd);
+    if (!ok) { unlink(path); return -1; }
+    return 0;
+}
+
+static int trusted_public(char hex[65]) {
+    const char *t = getenv("BONFYRE_GATE_TRUST");
+    if (!t || !*t) return -1;
+    char buf[256] = {0};
+    int is_hex = strlen(t) == 64;
+    for (int i = 0; is_hex && i < 64; i++) is_hex = isxdigit((unsigned char)t[i]) != 0;
+    if (is_hex) snprintf(buf, sizeof buf, "%s", t);
+    else { char *f = bf_read_file(t, NULL); if (!f) return -1; snprintf(buf, sizeof buf, "%.64s", f); free(f); }
+    for (int i = 0; i < 64; i++) if (!isxdigit((unsigned char)buf[i])) return -1;
+    memcpy(hex, buf, 64); hex[64] = '\0';
+    return 0;
+}
+
+/* 0 when the key's signature verifies under the trusted public key. */
+static int verify_key(const bf_jv *key, const char **why) {
+    char pub[65];
+    if (trusted_public(pub) != 0) { *why = "no trusted gate public key (set BONFYRE_GATE_TRUST)"; return -1; }
+    const char *sig = bf_jv_s(bf_jv_get(key, "signature"));
+    if (!sig || strlen(sig) != 128) { *why = "key is unsigned"; return -1; }
+    char *body = signed_body(key), path[1024];
+    if (!body || write_temp(body, path, sizeof path) != 0) { free(body); *why = "cannot stage key for verification"; return -1; }
+    free(body);
+    char *argv[] = {(char *)sign_bin(), "verify", "--file", path, "--public", pub, "--signature", (char *)sig, NULL};
+    char out[2048];
+    int rc = run_capture(argv, out, sizeof out);
+    unlink(path);
+    if (rc != 0) { *why = rc == 127 ? "bonfyre-sign is not available" : "signature does not verify under the trusted key"; return -1; }
+    return 0;
+}
+
+static bf_jv *load_key(const char *path) {
+    size_t n = 0; char *text = bf_read_file(path, &n);
+    if (!text) return NULL;
+    char err[128]; bf_jv *v = bf_jv_parse(text, n, err, sizeof err);
+    free(text);
+    return v;
+}
+
 static int cmd_issue(const char *tier, const char *org, const char *out) {
+    const char *key_dir = getenv("BONFYRE_GATE_KEY_DIR");
+    if (!key_dir || !*key_dir) { fprintf(stderr, "[gate] issuing needs BONFYRE_GATE_KEY_DIR, the institution's bonfyre-sign key directory\n"); return 2; }
     char ts[64], expires[64], key_id[128];
     iso_timestamp(ts, sizeof(ts));
     TierEntitlements e = tier_config(tier);
     iso_timestamp_future(expires, sizeof(expires), e.days_valid);
     generate_key_id(tier, org, ts, key_id, sizeof(key_id));
 
+    bf_jv *key = bf_jv_obj(), *ent = bf_jv_obj();
+    bf_jv_set(key, "key_id", bf_jv_str(key_id));
+    bf_jv_set(key, "version", bf_jv_str(VERSION));
+    bf_jv_set(key, "tier", bf_jv_str(tier));
+    bf_jv_set(key, "org", bf_jv_str(org));
+    bf_jv_set(key, "issued_at", bf_jv_str(ts));
+    bf_jv_set(key, "expires_at", bf_jv_str(expires));
+    bf_jv_set(ent, "max_artifacts", bf_jv_num(e.max_artifacts));
+    bf_jv_set(ent, "max_bytes", bf_jv_num((double)e.max_bytes));
+    bf_jv_set(ent, "rate_limit_hr", bf_jv_num(e.rate_limit_hr));
+    bf_jv_set(ent, "allowed_ops", bf_jv_str(e.allowed_ops));
+    bf_jv_set(key, "entitlements", ent);
+    bf_jv_set(key, "status", bf_jv_str("active"));
+
+    char *body = signed_body(key), path[1024];
+    if (!body || write_temp(body, path, sizeof path) != 0) { free(body); bf_jv_free(key); fprintf(stderr, "[gate] cannot stage key for signing\n"); return 1; }
+    free(body);
+    char *argv[] = {(char *)sign_bin(), "sign", "--key-dir", (char *)key_dir, "--file", path, NULL};
+    char att[4096];
+    int rc = run_capture(argv, att, sizeof att);
+    unlink(path);
+    char err[128]; bf_jv *a = rc == 0 ? bf_jv_parse(att, strlen(att), err, sizeof err) : NULL;
+    const char *sig = a ? bf_jv_s(bf_jv_get(a, "signature")) : NULL, *pub = a ? bf_jv_s(bf_jv_get(a, "public_key")) : NULL;
+    if (!sig || !pub) { fprintf(stderr, "[gate] bonfyre-sign did not sign the key (exit %d)\n", rc); bf_jv_free(a); bf_jv_free(key); return 1; }
+    bf_jv_set(key, "signature", bf_jv_str(sig));
+    bf_jv_set(key, "signed_by", bf_jv_str(pub));
+    bf_jv_free(a);
+
+    size_t n = 0; char *json = bf_jv_dump(key, 2, 0, &n);
+    bf_jv_free(key);
     FILE *f = fopen(out, "w");
-    if (!f) { fprintf(stderr, "Cannot write: %s\n", out); return 1; }
-    fprintf(f,
-        "{\n"
-        "  \"key_id\": \"%s\",\n"
-        "  \"version\": \"%s\",\n"
-        "  \"tier\": \"%s\",\n"
-        "  \"org\": \"%s\",\n"
-        "  \"issued_at\": \"%s\",\n"
-        "  \"expires_at\": \"%s\",\n"
-        "  \"entitlements\": {\n"
-        "    \"max_artifacts\": %d,\n"
-        "    \"max_bytes\": %ld,\n"
-        "    \"rate_limit_hr\": %d,\n"
-        "    \"allowed_ops\": \"%s\"\n"
-        "  },\n"
-        "  \"status\": \"active\"\n"
-        "}\n",
-        key_id, VERSION, tier, org, ts, expires,
-        e.max_artifacts, e.max_bytes, e.rate_limit_hr, e.allowed_ops);
-    fclose(f);
+    if (!f) { free(json); fprintf(stderr, "Cannot write: %s\n", out); return 1; }
+    fwrite(json, 1, n, f); fputc('\n', f); fclose(f); free(json);
 
     fprintf(stderr, "[gate] Issued %s key: %s (expires %s)\n", tier, key_id, expires);
     printf("%s\n", key_id);
     return 0;
 }
 
-static char *read_file_full(const char *path) {
-    return bf_read_file(path, NULL);
-}
-
-static int json_str(const char *json, const char *key, char *out, size_t sz) {
-    /* Delegates to the one implementation. This copy searched for "key" rather
-     * than "key": so it matched inside values, and stopped at the first quote
-     * so an escaped one truncated the result -- the bug that silently broke
-     * conditional re-observation elsewhere. Six binaries carried it; a seventh
-     * had been fixed locally and the fix never reached the others. */
-    return bf_lex_json_string(json, key, out, sz);
-}
-
 static int cmd_check(const char *key_path) {
-    char *json = read_file_full(key_path);
-    if (!json) { fprintf(stderr, "Cannot read: %s\n", key_path); return 1; }
-
-    char key_id[128], tier[64], org[256], expires[64], status[32], ops[1024];
-    json_str(json, "key_id", key_id, sizeof(key_id));
-    json_str(json, "tier", tier, sizeof(tier));
-    json_str(json, "org", org, sizeof(org));
-    json_str(json, "expires_at", expires, sizeof(expires));
-    json_str(json, "status", status, sizeof(status));
-    json_str(json, "entitlements.allowed_ops", ops, sizeof(ops));
-
-    /* Check expiration */
+    bf_jv *key = load_key(key_path);
+    if (!key) { fprintf(stderr, "Cannot read: %s\n", key_path); return 1; }
+    const char *why = NULL;
+    int bad = verify_key(key, &why) != 0;
+    const char *key_id = bf_jv_s(bf_jv_get(key, "key_id")), *tier = bf_jv_s(bf_jv_get(key, "tier"));
+    const char *org = bf_jv_s(bf_jv_get(key, "org")), *expires = bf_jv_s(bf_jv_get(key, "expires_at"));
+    const char *status = bf_jv_s(bf_jv_get(key, "status")), *ops = bf_jv_s(bf_jv_path(key, "entitlements.allowed_ops"));
     char now[64]; iso_timestamp(now, sizeof(now));
-    int expired = strcmp(now, expires) > 0;
-    int revoked = strcmp(status, "revoked") == 0;
+    int expired = !expires || strcmp(now, expires) > 0;
+    int revoked = status && strcmp(status, "revoked") == 0;
 
-    printf("Key:     %s\n", key_id);
-    printf("Tier:    %s\n", tier);
-    printf("Org:     %s\n", org);
-    printf("Expires: %s\n", expires);
-    printf("Status:  %s\n", revoked ? "REVOKED" : expired ? "EXPIRED" : "ACTIVE");
-    printf("Ops:     %s\n", ops);
-
-    free(json);
-    return (expired || revoked) ? 2 : 0;
+    printf("Key:     %s\n", key_id ? key_id : "");
+    printf("Tier:    %s\n", tier ? tier : "");
+    printf("Org:     %s\n", org ? org : "");
+    printf("Expires: %s\n", expires ? expires : "");
+    printf("Status:  %s\n", bad ? "INVALID" : revoked ? "REVOKED" : expired ? "EXPIRED" : "ACTIVE");
+    printf("Ops:     %s\n", ops ? ops : "");
+    if (bad) fprintf(stderr, "[gate] %s\n", why);
+    bf_jv_free(key);
+    return (bad || expired || revoked) ? 2 : 0;
 }
 
 /* Is this operation one of the entitled ones?
@@ -219,30 +317,21 @@ static int op_entitled(const char *ops, const char *operation) {
 }
 
 static int cmd_guard(const char *key_path, const char *operation) {
-    char *json = read_file_full(key_path);
-    if (!json) { fprintf(stderr, "DENIED: cannot read key\n"); return 1; }
-
-    char status[32], expires[64], ops[1024];
-    json_str(json, "status", status, sizeof(status));
-    json_str(json, "expires_at", expires, sizeof(expires));
-    json_str(json, "entitlements.allowed_ops", ops, sizeof(ops));
-
+    bf_jv *key = load_key(key_path);
+    if (!key) { fprintf(stderr, "DENIED: cannot read key\n"); return 1; }
+    const char *why = NULL;
+    if (verify_key(key, &why) != 0) { fprintf(stderr, "DENIED: %s\n", why); bf_jv_free(key); return 1; }
+    const char *status = bf_jv_s(bf_jv_get(key, "status")), *expires = bf_jv_s(bf_jv_get(key, "expires_at"));
+    const char *ops = bf_jv_s(bf_jv_path(key, "entitlements.allowed_ops"));
     char now[64]; iso_timestamp(now, sizeof(now));
-
-    if (strcmp(status, "revoked") == 0) {
-        fprintf(stderr, "DENIED: key revoked\n"); free(json); return 1;
-    }
-    if (strcmp(now, expires) > 0) {
-        fprintf(stderr, "DENIED: key expired\n"); free(json); return 1;
-    }
-    if (strcmp(ops, "*") != 0 && !op_entitled(ops, operation)) {
+    int rc = 1;
+    if (status && strcmp(status, "revoked") == 0) fprintf(stderr, "DENIED: key revoked\n");
+    else if (!expires || strcmp(now, expires) > 0) fprintf(stderr, "DENIED: key expired\n");
+    else if (!ops || (strcmp(ops, "*") != 0 && !op_entitled(ops, operation)))
         fprintf(stderr, "DENIED: operation '%s' not in entitlements\n", operation);
-        free(json); return 1;
-    }
-
-    fprintf(stderr, "ALLOWED: %s\n", operation);
-    free(json);
-    return 0;
+    else { fprintf(stderr, "ALLOWED: %s\n", operation); rc = 0; }
+    bf_jv_free(key);
+    return rc;
 }
 
 /* ---------- main ---------- */

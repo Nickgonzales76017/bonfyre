@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { VERSION } from "../src/version.mjs";
@@ -18,12 +18,8 @@ import {
   validateIntegrationEvent,
 } from "../src/integration-connectors.mjs";
 import { scaffoldIntegrationRepos } from "../src/integration-repo-scaffold.mjs";
-import {
-  composeExternalWorld,
-  getExternalOccurrence,
-  listExternalEstate,
-  probeExternalOccurrence,
-} from "../src/external-estate-runtime.mjs";
+import { compileCreatorProgram, editCreatorTimeline } from "../src/creator-render-program.mjs";
+import { planNativePcmWindow, planNativePcmBatch } from "../src/creator-native-pcm.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(__dirname);
@@ -35,9 +31,6 @@ function printHelp() {
   console.log("Usage:");
   console.log("  akai doctor --deep");
   console.log("  akai dashboard");
-  console.log("  akai creator:compile --input timeline.json [--shard-frames N] [--from N --to N] [--source-projection all|used]");
-  console.log("  akai creator:edit --input timeline.json --edit edit.json");
-  console.log("  akai creator:pcm-plan --plan plan.json --bindings bindings.json --window-index N --channels N --output FILE [--sparse-silence]");
   console.log("  akai run <recipe> [--input FILE] [--sae-audit] [--semantic-cache]");
   console.log("  akai install --user|--system [--service]");
   console.log("  akai uninstall --user|--system [--service]");
@@ -45,13 +38,9 @@ function printHelp() {
   console.log("  akai model:inspect ...");
   console.log("  akai fpqx:align-sae ...");
   console.log("  akai integrations [--json]");
-  console.log("  akai external-estate:list [--query TEXT] [--domain DOMAIN] [--world WORLD] [--affordance NAME] [--json]");
-  console.log("  akai external-estate:inspect --id EXT-00001|external:ext-00001 [--json]");
-  console.log("  akai external-estate:world --world WORLD [--limit N] [--json]");
-  console.log("  akai external-estate:probe --id EXT-00001 [--timeout-ms N] [--json]  # explicit HEAD only");
   console.log("  akai forks [--json]");
   console.log("  akai integrate:list [--surface hard-fork|soft-fork|adapter|observer|state-machine] [--group NAME] [--json]");
-  console.log("  akai integrate:run --target NAME [--surface SURFACE] [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
+  console.log("  akai integrate:run --target NAME [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:batch --surface hard-fork|soft-fork|adapter|observer|state-machine [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:state-machine --type TYPE [--event-json JSON|--event-file FILE] [--enforce-doctrine] [--persist] [--json]");
   console.log("  akai integrate:ingest --target NAME [--endpoint URL|--input-file FILE|--event-json JSON] [--use-template ID] [--environment NAME] [--request-body-json JSON|--request-body-file FILE] [--strict] [--persist] [--json]");
@@ -60,6 +49,10 @@ function printHelp() {
   console.log("  akai integrate:templates [--target NAME] [--environment NAME] [--json]");
   console.log("  akai integrate:validate-event --target NAME [--input-file FILE|--event-json JSON] [--json]");
   console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
+  console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--source-projection used] [--json]");
+  console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
+  console.log("  akai creator:pcm-plan --plan CUT.json --bindings SOURCE.json --window-index N --channels N --output FILE [--sparse-silence]  # uncommitted");
+  console.log("  akai creator:pcm-batch --plan CUT.json --bindings SOURCE.json --channels N --output-directory DIR [--sparse-silence]  # candidates only");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -193,13 +186,91 @@ if (rawArgs.length === 0 || rawArgs[0] === "--help" || rawArgs[0] === "-h" || ra
   process.exit(0);
 }
 
-if (["creator:compile", "creator:edit", "creator:pcm-plan"].includes(rawArgs[0])) {
+if (rawArgs[0] === "creator:compile" || rawArgs[0] === "creator:edit") {
+  const args=rawArgs.slice(1), input=getFlagValue(args,"--input");
+  const allowed=["--input","--json",...(rawArgs[0]==="creator:edit"?["--edit"]:["--shard-frames","--from","--to","--source-projection"])], flags=args.filter(a=>a.startsWith("--"));
+  if (new Set(flags).size!==flags.length || flags.some(f=>!allowed.includes(f))) { console.error("Creator options must be known and given once"); process.exit(2); }
+  if (!input || !existsSync(input)) {
+    console.error("Creator timeline requires an existing --input JSON file");
+    process.exit(2);
+  }
   try {
-    const { runCreatorCommand } = await import("../src/creator-cli.mjs");
-    printPayload(runCreatorCommand(rawArgs[0], rawArgs.slice(1)), true);
+    // Project metadata only; the media body never enters the CLI heap.
+    const readBounded=path=>{
+      if (!path || !existsSync(path) || !statSync(path).isFile() || statSync(path).size > 16*1024*1024)
+        throw Error("creator input is absent or exceeds the 16 MiB metadata limit");
+      return JSON.parse(readFileSync(path,"utf8"));
+    };
+    const timeline=readBounded(input);
+    if (rawArgs[0] === "creator:edit") {
+      printPayload(editCreatorTimeline(timeline,readBounded(getFlagValue(args,"--edit"))),true);
+    } else {
+      const number=(name,fallback)=>{
+        const raw=getFlagValue(args,name);
+        if (raw===null) return fallback;
+        if (!/^[0-9]+$/.test(raw)) throw Error("creator requires an unsigned integer "+name);
+        return Number(raw);
+      };
+      const from=getFlagValue(args,"--from"),to=getFlagValue(args,"--to");
+      if ((from===null)!==(to===null)) throw Error("--from and --to must be supplied together");
+      const range=from===null?null:{start:number("--from",0),end:number("--to",0)};
+      printPayload(compileCreatorProgram(timeline,{shardFrames:number("--shard-frames",256),range,
+        sourceProjection:getFlagValue(args,"--source-projection")??'all'}),true);
+    }
     process.exit(0);
   } catch (error) {
-    console.error(error?.message || String(error));
+    console.error(error?.message||String(error));
+    process.exit(1);
+  }
+}
+
+/* Native PCM lowering is a pure candidate. The CLI does not read source PCM,
+ * execute the mixer or borrow authority from a caller-supplied render plan. */
+if (rawArgs[0] === "creator:pcm-plan") {
+  const args=rawArgs.slice(1);
+  const bounded=(flag)=>{
+    const path=getFlagValue(args,flag);
+    if(!path||!existsSync(path)||!statSync(path).isFile()||statSync(path).size>16*1024*1024)
+      throw Error("creator PCM plan metadata is missing or too large: "+flag);
+    return JSON.parse(readFileSync(path,"utf8"));
+  };
+  const numeric=flag=>{
+    const raw=getFlagValue(args,flag);
+    if(!raw||!/^[0-9]+$/.test(raw))throw Error("creator PCM plan requires "+flag);
+    return Number(raw);
+  };
+  try {
+    const result=planNativePcmWindow(bounded("--plan"),bounded("--bindings"),{
+      windowIndex:numeric("--window-index"),channels:numeric("--channels"),
+      output:getFlagValue(args,"--output"),
+      sparseSilence:args.includes("--sparse-silence")
+    });
+    printPayload(result,true);
+    process.exit(0);
+  } catch(error) {
+    console.error(error?.message||String(error));
+    process.exit(1);
+  }
+}
+
+if (rawArgs[0] === "creator:pcm-batch") {
+  const args=rawArgs.slice(1);
+  const bounded=flag=>{
+    const path=getFlagValue(args,flag);
+    if(!path||!existsSync(path)||!statSync(path).isFile()||statSync(path).size>16*1024*1024)
+      throw Error('creator PCM batch metadata is missing or too large: '+flag);
+    return JSON.parse(readFileSync(path,'utf8'));
+  };
+  try{
+    const n=getFlagValue(args,'--channels');
+    if(!/^[1-8]$/.test(n||''))throw Error('creator PCM batch requires channels 1–8');
+    const result=planNativePcmBatch(bounded('--plan'),bounded('--bindings'),{
+      channels:Number(n),outputDirectory:getFlagValue(args,'--output-directory'),
+      sparseSilence:args.includes('--sparse-silence')});
+    printPayload(result,true);
+    process.exit(0);
+  }catch(error){
+    console.error(error?.message||String(error));
     process.exit(1);
   }
 }
@@ -239,7 +310,6 @@ if (rawArgs[0] === "integrate:list" || (rawArgs[0] === "integrate" && rawArgs[1]
 if (rawArgs[0] === "integrate:run" || (rawArgs[0] === "integrate" && rawArgs[1] === "run")) {
   const args = rawArgs[0] === "integrate" ? rawArgs.slice(2) : rawArgs.slice(1);
   const target = getFlagValue(args, "--target");
-  const surface = getFlagValue(args, "--surface");
   const asJson = args.includes("--json");
   const persist = args.includes("--persist");
   const enforceDoctrine = args.includes("--enforce-doctrine");
@@ -251,11 +321,10 @@ if (rawArgs[0] === "integrate:run" || (rawArgs[0] === "integrate" && rawArgs[1] 
 
   const event = parseEventPayload(args);
   try {
-    const result = runKernelIntegration(repoRoot, { target, surface, event, persist, enforceDoctrine });
+    const result = runKernelIntegration(repoRoot, { target, event, persist, enforceDoctrine });
     printPayload({
       schema_version: "aurekai.integration_run_result.v1",
       target,
-      surface: result.envelope.surface,
       persisted_to: result.persistedTo,
       execution: result.envelope,
     }, asJson);
@@ -482,51 +551,6 @@ if (rawArgs[0] === "integrate:presets" || (rawArgs[0] === "integrate" && rawArgs
     presets,
   }, asJson);
   process.exit(0);
-}
-
-/* The external estate is a read-only candidate corpus.  These commands never
- * make a provider relationship; only `probe` performs a caller-requested HEAD
- * request, without following redirects or retaining a response body. */
-if (rawArgs[0].startsWith("external-estate:")) {
-  const commandArgs = rawArgs.slice(1);
-  const asJson = commandArgs.includes("--json");
-  const estateRoot = dirname(repoRoot);
-  const id = getFlagValue(commandArgs, "--id");
-  const query = getFlagValue(commandArgs, "--query");
-  const domain = getFlagValue(commandArgs, "--domain");
-  const world = getFlagValue(commandArgs, "--world");
-  const affordance = getFlagValue(commandArgs, "--affordance");
-  const sourceKind = getFlagValue(commandArgs, "--source-kind");
-  const limit = getFlagValue(commandArgs, "--limit");
-  try {
-    if (rawArgs[0] === "external-estate:list") {
-      printPayload(listExternalEstate(estateRoot, { query, domain, world, affordance, sourceKind, limit }), asJson);
-      process.exit(0);
-    }
-    if (rawArgs[0] === "external-estate:inspect") {
-      if (!id) throw new Error("Missing --id for external-estate:inspect");
-      const record = getExternalOccurrence(estateRoot, id);
-      if (!record) throw new Error(`Unknown external occurrence: ${id}`);
-      printPayload(record, asJson);
-      process.exit(0);
-    }
-    if (rawArgs[0] === "external-estate:world") {
-      if (!world) throw new Error("Missing --world for external-estate:world");
-      printPayload(composeExternalWorld(estateRoot, world, { limit }), asJson);
-      process.exit(0);
-    }
-    if (rawArgs[0] === "external-estate:probe") {
-      if (!id) throw new Error("Missing --id for external-estate:probe");
-      const record = getExternalOccurrence(estateRoot, id);
-      if (!record) throw new Error(`Unknown external occurrence: ${id}`);
-      printPayload(await probeExternalOccurrence(record, { timeoutMs: getFlagValue(commandArgs, "--timeout-ms") }), asJson);
-      process.exit(0);
-    }
-    throw new Error(`Unknown external-estate command: ${rawArgs[0]}`);
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
 }
 
 const args = normalizeArgs(rawArgs);

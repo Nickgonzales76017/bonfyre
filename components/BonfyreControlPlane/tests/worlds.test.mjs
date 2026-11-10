@@ -7,7 +7,7 @@ const repo = resolve(import.meta.dir, '../../..');
 const surfaces = resolve(repo, 'site/matrix/surfaces');
 const reader = readFileSync(resolve(surfaces, 'world.html'), 'utf8');
 const kit = readFileSync(resolve(surfaces, '_kit.js'), 'utf8');
-const main = readFileSync(resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), 'utf8');
+const main = [resolve(repo, 'cmd/BonfyreWebAddress/src/main.c'), ...readdirSync(resolve(repo, 'cmd/BonfyreWebAddress/src')).filter(n => /\.(c|h)$/.test(n) && n !== 'main.c').sort().map(n => resolve(repo, 'cmd/BonfyreWebAddress/src', n))].map(p => readFileSync(p, 'utf8')).join('\n');
 const spec = JSON.parse(readFileSync(resolve(repo, 'cmd/BonfyreCMS/content-types/world.json'), 'utf8'));
 const live = test.skipIf(!liveSurfaceEnabled);
 

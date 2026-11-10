@@ -87,7 +87,7 @@ export function validateSourceFiles(files) {
     if (!item || typeof item !== 'object' || Array.isArray(item) || Object.keys(item).some(key => !['path','sha256'].includes(key)))
       throw new Error('invalid source file');
     const {path,sha256} = item;
-    if (typeof path !== 'string' || !path || path.length > 2048 || /[\\\x00-\x1f\x7f]/.test(path) ||
+    if (typeof path !== 'string' || !path || path.length > 2048 || /[\\\x00-\x1f\x7f]/.test(path) || // oxlint-disable-line no-control-regex -- refuses control characters
         isAbsolute(path) || path.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === '.git'))
       throw new Error('invalid source path');
     if (sha256 !== null && (typeof sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(sha256))) throw new Error('source file requires a SHA-256 or null for absence');
@@ -562,7 +562,7 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
       'commit-tree',tree,'-p',commit,'-m','Isolated relay source baseline'],path,60000,signal,checkTask)).trim();
     if (!/^[a-f0-9]{40,64}$/.test(snapshotCommit)) throw new Error('invalid source baseline identity');
     const value = {schema:'bonfyre.relay-source-snapshot.v1',base_commit:commit,commit:snapshotCommit,
-      files:captured.map(({body,...item})=>item),scope:'Explicit current-source files over Git base; unselected paths remain at that base'};
+      files:captured.map(({body:_body,...item})=>item),scope:'Explicit current-source files over Git base; unselected paths remain at that base'};
     verifySourceSnapshot(value);
     const seeded = captureSources(value.files.map(({path,sha256})=>({path,sha256})),path);
     if (seeded.some((item,i)=>item.mode !== value.files[i].mode)) throw new Error('isolated source mode changed');

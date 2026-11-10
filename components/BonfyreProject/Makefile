@@ -1,5 +1,10 @@
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections
+# Mach-O ld spells section GC -dead_strip; GNU ld spells it --gc-sections.
+DEAD_STRIP := -Wl,--gc-sections
+ifeq ($(shell uname -s),Darwin)
+DEAD_STRIP := -Wl,-dead_strip
+endif
 CFLAGS += -I../../cmd/BonfyreLex/src -I../../cmd/BonfyreWebAddress/generated
 JSON_CFLAGS = -I../../lib/libbonfyre/include -I../../engine/core/include -I../../cmd/BonfyreLex/src -I../../cmd/BonfyreWebAddress/generated
 JSON_SRC = ../../lib/libbonfyre/bf_json.c ../../lib/libbonfyre/src/bf_sha256.c ../../engine/core/src/matrix.c ../../engine/core/src/authority.c ../../engine/core/src/service_lifecycle.c ../../engine/core/src/activation.c
@@ -22,7 +27,7 @@ bonfyre-project: ../../cmd/BonfyreWebAddress/generated/native_destination_releas
                  ../../cmd/BonfyreWebAddress/generated/native_missing_cells.h
 
 bonfyre-project: src/main.c src/message_review.h ../../cmd/BonfyreLex/src/bf_lex.h $(JSON_SRC)
-	$(CC) $(CFLAGS) $(JSON_CFLAGS) $(ZSTD_CFLAGS) -Wl,-dead_strip -o $@ src/main.c $(JSON_SRC) -lsqlite3 $(ZSTD_LIBS)
+	$(CC) $(CFLAGS) $(JSON_CFLAGS) $(ZSTD_CFLAGS) $(DEAD_STRIP) -o $@ src/main.c $(JSON_SRC) -lsqlite3 $(ZSTD_LIBS)
 
 # Receipts as a typed table, for questions over the whole set. Needs a
 # packaged Arrow C++ SDK, simdjson and zstd; it is not part of `all`.

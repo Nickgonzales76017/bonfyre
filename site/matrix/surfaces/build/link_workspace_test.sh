@@ -6,7 +6,52 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 page="$root/surfaces/link.html"
 test -s "$page"
-bun "$root/surfaces/build/link_workspace_contract.mjs"
+# Structural contract: the live carrier and publication path stay present, the
+# retired browser plan and two-write publisher stay gone, and every inline
+# script still parses.
+while IFS= read -r token; do
+  grep -qF -- "$token" "$page" || { echo "Missing source-workbench contract: $token" >&2; exit 1; }
+done <<'TOKENS'
+Find · Understand · Distribute · Connect
+/foreign/twins
+K.foreignEdges()
+K.observeForeign
+openSourcePublication
+/apps/source-publication.mjs
+requestId:recovering[1]
+source:B(selectedSource).source
+subject:selectedSource.subject_id
+Review collection + World
+source-comparison
+source-destinations
+catalogue_generation
+snapshot_mismatch
+Retry next page
+Inspect known authorization endpoints
+TOKENS
+while IFS= read -r old; do
+  if grep -qF -- "$old" "$page"; then echo "Retired browser plan or two-write publisher returned: $old" >&2; exit 1; fi
+done <<'RETIRED'
+localStorage.setItem(key,JSON.stringify(x))
+foreign-twin-plan.json
+async function cmsDraft(
+RETIRED
+scripts=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-link-scripts.XXXXXX")
+awk -v dir="$scripts" '
+  { line = $0
+    while (length(line)) {
+      if (!inside) { i = match(line, /<script[^>]*>/); if (!i) break; n++; inside = 1; line = substr(line, RSTART + RLENGTH) }
+      j = index(line, "</script>")
+      if (j) { printf "%s\n", substr(line, 1, j - 1) >> (dir "/" n ".js"); inside = 0; line = substr(line, j + 9) }
+      else { print line >> (dir "/" n ".js"); line = "" }
+    } }' "$page"
+for script in "$scripts"/*.js; do
+  [ -e "$script" ] || continue
+  grep -q '[^[:space:]]' "$script" || continue
+  node --check "$script" >/dev/null 2>&1 || { echo "link.html inline script does not parse: $script" >&2; exit 1; }
+done
+rm -rf "$scripts"
+echo 'ForeignTwin carrier and native publication contract pass.'
 
 # The UI writes existing source-selection and World owners, not a browser
 # object. The public World can only compose already-published material from its

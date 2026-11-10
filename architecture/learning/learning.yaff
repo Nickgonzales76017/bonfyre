@@ -88,7 +88,7 @@ architecture live-gym
   source_path scripts/failure_cohort.py.archive
   witness cmd/BonfyreWebAddress/tests/gym_test.sh
   witness scripts/gym_native.test.mjs
-  known_gap the current source of cmd/BonfyreProject/src/main.c does not dispatch `foreign` commands despite the existing gym, provider-trial and WebAddress callers expecting them; native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability
+  known_gap native fixture witnesses prove cohort and receipt contracts, not live foreign-owner availability (the installed bonfyre-project, built from components/BonfyreProject, does dispatch `foreign`: `foreign observe` returned an allowed receipt on 2026-11-07; the unbuilt cmd/BonfyreProject/src/main.c shim that lacked it was retired)
   measured first run over 16 foreign twins: InternalizedCeiling 13/16, TemporalCeiling 16/16, IdentityResidual 9, RetentionResidual 3/16
   known_gap MarketCeiling is unmeasured because no external supplier is declared as a provider_route yet; the estate holds provider credentials in a secrets store this process is not permitted to read, so the routes must be declared by name before the same contract can measure the market
   known_gap DirectSourceCeiling is declared and not exercised per run, because re-fetching every source is an outbound cost against third parties; a refresh is a separate rate-aware act

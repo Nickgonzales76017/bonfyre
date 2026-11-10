@@ -1,0 +1,1 @@
+{"model":"systemone-revision-7","answers":{"phenotype":{"type":"choice","choice":"cand:0","confidence":0.7,"probabilities":{"cand:0":0.7,"cand:1":0.1,"cand:2":0.1,"none":0.1}},"urgency":{"type":"score","score":0.45,"confidence":0.7,"probabilities":{"0":0.7,"1":0.15,"2":0.15}},"needs_review":{"type":"noul","noul":0.73}},"usage":{"input_tokens":11,"output_tokens":0}}
