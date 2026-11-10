@@ -765,6 +765,12 @@ $(PUBLIC_HOME_SEARCH_TEST): tests/public_home_search_test.c $(PUBLIC_HOME_SEARCH
 	$(CC) $(CFLAGS) -Isrc -o $@ tests/public_home_search_test.c $(PUBLIC_HOME_SEARCH_SOURCE)
 public-home-search-witness: $(PUBLIC_HOME_SEARCH_TEST)
 	./$(PUBLIC_HOME_SEARCH_TEST)
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: $(TARGET)
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-web-address.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-web-address.next" "$(MANAGED_PREFIX)/bin/bonfyre-web-address"
+
 clean:
 	rm -f $(TARGET) $(SITE_TARGET) $(PEOPLE_STATIC_MANIFEST) $(PROJECTION_TEST) $(TERRITORY_HOME_TEST) $(PUBLIC_HOME_SEARCH_TEST) $(DOMAIN_PROFILE_TEST) $(PEOPLE_PROJECTION_TEST) $(ATOM_FEED_TEST) $(SUBJECT_ADDRESS_TEST) $(BOUNDED_OUTPUT_TEST) $(OBJECTS) $(OBJECTS:.o=.d)
 
