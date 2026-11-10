@@ -17,6 +17,16 @@ endif
 .PHONY: all
 all: bonfyre-queue test-account-activity test-account-inbox test-account-wire test-account-work-index test-command-dispatch
 
+# Suites already run under all; this is the uniform entry point.
+.PHONY: test
+test: all
+
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 bonfyre-queue "$(MANAGED_PREFIX)/bin/.bonfyre-queue.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-queue.next" "$(MANAGED_PREFIX)/bin/bonfyre-queue"
+
 .PHONY: test-account-wire test-account-work-index test-command-dispatch
 test-command-dispatch: bonfyre-queue
 	sh tests/dispatch_test.sh ./bonfyre-queue

@@ -25,7 +25,13 @@ $(LIB): force-library
 $(TARGET): $(SRC) $(LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LIB) $(FABRIC) $(LDFLAGS)
 
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-model.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-model.next" "$(MANAGED_PREFIX)/bin/bonfyre-model"
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean test force-library
+.PHONY: all clean test install force-library
