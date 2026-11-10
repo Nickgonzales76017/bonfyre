@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+# Retired: scripts/file-sought-family.mjs reads CUE-authored search-family law.
+"""File what this estate went looking for under the family it went looking for.
+
+A territory composes from the family it asks for.  Two of them -- .work asking
+for vulnerabilities, .shop asking for gaming -- were empty not because nothing
+was read but because the qualifier files every feed it admits as "news" unless
+the census already knows that publisher.  A publisher nobody has filed before
+is news, which is a sensible default and the wrong answer for material this
+estate deliberately went out to find.
+
+The provenance is already recorded: a channel imported under a
+FAMILY_<NAME> label is one this estate looked for by asking for that kind of
+material.  That is a fact about the search, so it may set the family the
+channel is filed under -- and only until the estate has read enough of the
+channel to measure what it actually carries, which outranks any intent.
+
+  file_sought_family.py [--apply]
+"""
+import argparse, json, os, sqlite3, sys
+
+# The label a search was imported under, and the family it was looking for.
+SOUGHT = {"FAMILY_VULNERABILITIES": "vulnerabilities", "FAMILY_GAMING": "gaming",
+          "FAMILY_VULNERABILITIES_DECLARED": "vulnerabilities",
+          "FAMILY_GAMING_DECLARED": "gaming"}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    ledger = sqlite3.connect(os.path.join(args.estate, "frontier.db"))
+    ledger.row_factory = sqlite3.Row
+    cms = sqlite3.connect(os.path.join(args.estate, "cms.db"))
+
+    filed, already, waiting = 0, 0, 0
+    report = {}
+    for label, family in sorted(SOUGHT.items()):
+        rows = ledger.execute(
+            "SELECT c.channel_id, COALESCE(c.census_source,'') AS census_source,"
+            " COALESCE(c.material,'') AS material, c.state"
+            " FROM channel c JOIN channel_origin o ON o.channel_id=c.channel_id"
+            " WHERE o.label=? AND c.state IN ('eligible','admitted','active')", (label,)).fetchall()
+        for row in rows:
+            if row["material"] == family:
+                already += 1
+                continue
+            if not row["census_source"]:
+                # Admitted but not yet carrying a census row: nothing to file.
+                waiting += 1
+                continue
+            if args.apply:
+                ledger.execute("UPDATE channel SET material=? WHERE channel_id=?",
+                               (family, row["channel_id"]))
+                cms.execute("UPDATE internet_source SET family=? WHERE source=? AND status='published'",
+                            (family, row["census_source"]))
+            filed += 1
+        report[family] = {"admitted": len(rows)}
+
+    if args.apply:
+        ledger.commit()
+        cms.commit()
+    ledger.close()
+    cms.close()
+    print(json.dumps({
+        "families": report, "filed": filed, "already_filed": already,
+        "admitted_without_a_census_row": waiting, "applied": args.apply,
+        "cannot_infer": "a family here is the kind of material this estate asked for when it "
+                        "went looking; it is not a measurement of what the channel carries, and "
+                        "measured carriage replaces it once enough has been read",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

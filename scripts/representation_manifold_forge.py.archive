@@ -1,0 +1,628 @@
+"""Archived historical one-shot worker. Do not execute in production.
+
+The installed forge is representation-manifold-forge.mjs and its demand-driven
+native/Bun lowerers. Lance and Iceberg realization remain unimplemented native
+boundaries, not license to revive this unverified eager Python worker.
+"""
+"""
+Bonfyre Representation Manifold — Shift 1.4.1 Forge — Resource Aware
+
+Purpose:
+  Turn Shift 1.3's discovered adjacency into executable representation machinery.
+
+This is intentionally aggressive, but it preserves semantic source databases.
+It creates an isolated representation runtime, installs modern Arrow-native
+lowerers there, actualizes the existing Parquet estate into Delta/Lance/Iceberg/
+Zarr execution forms, builds a schema-aware graph body, verifies DataFusion,
+Polars and ADBC execution, and optionally compiles local Rust substrate sources.
+
+Network access is only used with --allow-network.
+Native substrate builds are only attempted with --build-native.
+
+No representation target is deleted.
+"""
+
+from __future__ import annotations
+import argparse, datetime as dt, hashlib, importlib.util, itertools, json, os
+import re, shutil, sqlite3, subprocess, sys, traceback, venv
+from pathlib import Path
+
+PKGS = [
+    "pyarrow",
+    "duckdb",
+    "datafusion",
+    "deltalake",
+    "pylance",
+    "zarr",
+    "pyiceberg[pyarrow,sql-sqlite]",
+    "polars",
+    "adbc-driver-manager",
+    "adbc-driver-sqlite",
+]
+
+NATIVE_PRIORITY = ["feldera","lance","automerge","egglog","verus","cubecl","yaff"]
+
+ID_EXACT = {
+    "id","key","source","source_id","target","target_id","subject","subject_id",
+    "object","object_id","actor","actor_id","parent","parent_id","child","child_id",
+    "from","from_id","to","to_id","route","route_id","item","item_id","member",
+    "member_id","institution","institution_id","world","world_id","program","program_id",
+    "channel","channel_id","root","root_id","address","address_id","provider","provider_id",
+}
+ID_SUFFIX = ("_id","_key","_ref","_source","_target","_subject","_object","_address")
+
+def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
+def sha(v):
+    if not isinstance(v,(bytes,bytearray)): v=str(v).encode()
+    return hashlib.sha256(v).hexdigest()
+def sha_file(p,chunk=8<<20):
+    h=hashlib.sha256()
+    with open(p,"rb") as f:
+        for b in iter(lambda:f.read(chunk),b""): h.update(b)
+    return h.hexdigest()
+
+def disk_free_bytes(path):
+    try:
+        return shutil.disk_usage(path).free
+    except Exception:
+        return 0
+
+def human_bytes(n):
+    units=["B","KiB","MiB","GiB","TiB"]
+    x=float(n)
+    for u in units:
+        if x < 1024 or u==units[-1]:
+            return f"{x:.1f}{u}"
+        x/=1024
+
+def has_rep(c, sk, kind):
+    return c.execute(
+        "select 1 from representation_instance where schema_ref=? and kind=? and state in ('physical','executable') limit 1",
+        (sk,kind)
+    ).fetchone() is not None
+
+def mark_deferred(c, sk, kind, detail):
+    started=now()
+    forge_event(c,"deferred",f"{kind}:{sk}","resource_pressure",detail,started)
+    c.execute(
+        "update representation_target set status='deferred_resource_pressure',reason=? "
+        "where semantic_kind=? and representation_kind=? and status!='physical'",
+        (detail,sk,kind)
+    )
+def safe_name(s):
+    s=re.sub(r"[^A-Za-z0-9_]+","_",str(s))
+    if not s or s[0].isdigit(): s="_"+s
+    return s[:180]
+def run(cmd,cwd=None,timeout=None,env=None):
+    try:
+        p=subprocess.run(cmd,cwd=cwd,text=True,capture_output=True,timeout=timeout,env=env)
+        return p.returncode,p.stdout,p.stderr
+    except Exception as e:
+        return 255,"",f"{type(e).__name__}: {e}"
+def module(name):
+    try: return importlib.util.find_spec(name) is not None
+    except Exception: return False
+
+MIGRATION="""
+CREATE TABLE IF NOT EXISTS forge_event(
+ id TEXT PRIMARY KEY, kind TEXT NOT NULL, subject TEXT NOT NULL, state TEXT NOT NULL,
+ detail TEXT, started_at TEXT NOT NULL, finished_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS native_build(
+ substrate TEXT NOT NULL, source_root TEXT NOT NULL, state TEXT NOT NULL,
+ artifact TEXT, detail TEXT, checked_at TEXT NOT NULL,
+ PRIMARY KEY(substrate,source_root));
+CREATE TABLE IF NOT EXISTS execution_binding(
+ semantic_kind TEXT NOT NULL, engine TEXT NOT NULL, coordinate TEXT NOT NULL,
+ state TEXT NOT NULL, proof_digest TEXT, checked_at TEXT NOT NULL,
+ PRIMARY KEY(semantic_kind,engine));
+CREATE TABLE IF NOT EXISTS graph_projection(
+ semantic_kind TEXT NOT NULL, source_column TEXT NOT NULL, target_column TEXT NOT NULL,
+ coordinate TEXT NOT NULL, rows INTEGER, digest TEXT, checked_at TEXT NOT NULL,
+ PRIMARY KEY(semantic_kind,source_column,target_column));
+"""
+
+def db_open(estate):
+    p=estate/"representation-manifold.db"
+    if not p.exists(): raise SystemExit(f"missing Shift 1 manifold: {p}")
+    c=sqlite3.connect(p); c.executescript(MIGRATION); c.commit(); return c
+
+def forge_event(c,kind,subject,state,detail,started):
+    eid=sha("|".join([kind,subject,state,started]))
+    c.execute("insert or replace into forge_event values(?,?,?,?,?,?,?)",
+              (eid,kind,subject,state,(detail or "")[-12000:],started,now()))
+
+def record_rep(c,parent,sk,kind,coordinate,digest,frontier,state="physical",
+               carrier="local",temperature="warm",transform=None):
+    rid=sha(f"{kind}|{sk}|{frontier}|{digest}|{coordinate}")
+    ts=now()
+    c.execute("""insert or replace into representation_instance
+      (id,subject_id,kind,authority,frontier,digest,schema_ref,created_at,reconstructable,state)
+      values(?,?,?,?,?,?,?,?,?,?)""",
+      (rid,None,kind,"derived",frontier,digest,sk,ts,1,state))
+    p=Path(str(coordinate).split("#",1)[0]); n=None
+    if p.exists() and p.is_file():
+        try: n=p.stat().st_size
+        except OSError: pass
+    c.execute("""insert or replace into physical_realization
+      (id,representation_id,carrier,coordinate,bytes,digest,temperature,available,checked_at)
+      values(?,?,?,?,?,?,?,?,?)""",
+      (sha(f"{carrier}|{coordinate}"),rid,carrier,str(coordinate),n,digest,temperature,1,ts))
+    if parent:
+        c.execute("""insert or ignore into representation_edge
+          (parent_representation_id,child_representation_id,transform,proof_state,created_at)
+          values(?,?,?,?,?)""",(parent,rid,transform or f"parquet->{kind}","materialized",ts))
+    return rid
+
+def parquet_roots(c):
+    return c.execute("""SELECT ri.id,ri.schema_ref,pr.coordinate,ri.digest,ri.frontier
+      FROM representation_instance ri JOIN physical_realization pr ON pr.representation_id=ri.id
+      WHERE ri.kind='parquet' AND ri.state='physical' AND pr.available=1
+      ORDER BY ri.schema_ref""").fetchall()
+
+def best_python():
+    candidates=["python3.13","python3.12","python3.11","python3.10",sys.executable,"python3"]
+    seen=set()
+    for x in candidates:
+        p=shutil.which(x) if not os.path.isabs(str(x)) else str(x)
+        if not p or p in seen: continue
+        seen.add(p)
+        rc,out,err=run([p,"-c","import sys; print(sys.version_info[0],sys.version_info[1])"],timeout=10)
+        if rc==0:
+            try:
+                a,b=map(int,out.strip().split())
+                if (a,b)>=(3,10): return p
+            except Exception: pass
+    return sys.executable
+
+def ensure_runtime(root,allow_network):
+    root.mkdir(parents=True,exist_ok=True)
+    vdir=root/"venv"
+    py=vdir/"bin/python"
+    if not py.exists():
+        base=best_python()
+        rc,out,err=run([base,"-m","venv",str(vdir)],timeout=300)
+        if rc: raise RuntimeError(f"venv creation failed: {err or out}")
+    if allow_network:
+        rc,out,err=run([str(py),"-m","pip","install","--upgrade","pip","wheel","setuptools"],timeout=1200)
+        print("[runtime] pip bootstrap", "ok" if rc==0 else "failed", flush=True)
+        rc,out,err=run([str(py),"-m","pip","install","--upgrade",*PKGS],timeout=7200)
+        if rc:
+            print("[runtime] package install returned nonzero; continuing into worker",flush=True)
+            print((err or out)[-3000:],flush=True)
+        else:
+            print("[runtime] Arrow/DataFusion/Delta/Lance/Zarr/Iceberg/ADBC runtime ready",flush=True)
+    return py
+
+def install_manifest(root,py):
+    rc,out,err=run([str(py),"-m","pip","list","--format=json"],timeout=60)
+    data={"generated_at":now(),"python":str(py),"packages":[]}
+    if rc==0:
+        try: data["packages"]=json.loads(out)
+        except Exception: pass
+    (root/"runtime-manifest.json").write_text(json.dumps(data,indent=2),encoding="utf-8")
+
+def native_builds(c,substrates,allow_network):
+    cargo=shutil.which("cargo")
+    if not cargo:
+        print("[native] cargo absent",flush=True); return
+    for name in NATIVE_PRIORITY:
+        root=substrates/name
+        if not root.exists(): continue
+        manifests=[]
+        if (root/"Cargo.toml").exists(): manifests=[root/"Cargo.toml"]
+        else:
+            for p in root.glob("*/Cargo.toml"):
+                manifests.append(p)
+            if not manifests and (root/"source").exists():
+                manifests=list((root/"source").glob("Cargo.toml"))
+        for manifest in manifests[:2]:
+            src=manifest.parent; started=now()
+            print(f"[native] {name}: {src}",flush=True)
+            args=[cargo,"build","--release","--manifest-path",str(manifest)]
+            if not allow_network: args.insert(2,"--offline")
+            rc,out,err=run(args,cwd=src,timeout=14400)
+            state="built" if rc==0 else "failed"
+            artifacts=[]
+            rel=src/"target/release"
+            if rel.exists():
+                for p in rel.iterdir():
+                    if p.is_file() and os.access(p,os.X_OK): artifacts.append(str(p))
+            c.execute("insert or replace into native_build values(?,?,?,?,?,?)",
+                      (name,str(src),state,artifacts[0] if artifacts else None,(err or out)[-8000:],now()))
+            forge_event(c,"native-build",name,state,err or out,started)
+            c.commit()
+
+def actualize_delta(c,estate,rows):
+    import pyarrow as pa, pyarrow.parquet as pq
+    from deltalake import write_deltalake
+    root=estate/"representations/delta"; root.mkdir(parents=True,exist_ok=True)
+    n=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        if has_rep(c,sk,"delta"):
+            continue
+        started=now(); out=root/safe_name(sk)
+        try:
+            pf=pq.ParquetFile(pqpath)
+            reader=pa.RecordBatchReader.from_batches(pf.schema_arrow,pf.iter_batches(batch_size=65536))
+            write_deltalake(str(out),reader,mode="overwrite")
+            files=sorted(p for p in out.rglob("*") if p.is_file())
+            dg=sha("|".join(f"{p.relative_to(out)}:{sha_file(p)}" for p in files))
+            record_rep(c,parent,sk,"delta",str(out),dg,frontier,transform="parquet->delta")
+            forge_event(c,"lower","delta:"+sk,"physical","",started); n+=1
+        except Exception:
+            forge_event(c,"lower","delta:"+sk,"failed",traceback.format_exc(),started)
+        if n%25==0 and n: c.commit()
+    c.commit(); return n
+
+def actualize_lance(c,estate,rows,scratch,min_free_gb=2.0):
+    import pyarrow as pa, pyarrow.parquet as pq, lance
+    root=estate/"representations/lance"; root.mkdir(parents=True,exist_ok=True)
+    scratch.mkdir(parents=True,exist_ok=True)
+    os.environ["TMPDIR"]=str(scratch); os.environ["TMP"]=str(scratch); os.environ["TEMP"]=str(scratch)
+
+    # High-leverage families first. Everything else remains an obligation, never discarded.
+    hot=("embedding","ann","tensor","eigen","latent","vector","media","entity","observation",
+         "publication","relation","kin","neighbour","surface","world","source","item")
+    ordered=sorted(rows,key=lambda r:(0 if any(x in r[1].lower() for x in hot) else 1,r[1]))
+
+    n=0; deferred=0
+    floor=int(min_free_gb*(1024**3))
+    for parent,sk,pqpath,pdigest,frontier in ordered:
+        if has_rep(c,sk,"lance"):
+            continue
+        started=now(); out=root/(safe_name(sk)+".lance")
+        try:
+            psize=Path(pqpath).stat().st_size
+        except OSError:
+            psize=0
+
+        # Preserve enough room for APFS metadata + Lance spill. This is a temporary
+        # resource gate, not a semantic decision.
+        need=max(floor, psize*3 + 256*(1024**2))
+        free=disk_free_bytes(scratch)
+        if free < need:
+            detail=f"free={human_bytes(free)} need≈{human_bytes(need)} scratch={scratch}; Lance obligation retained"
+            mark_deferred(c,sk,"lance",detail); deferred+=1
+            continue
+
+        try:
+            pf=pq.ParquetFile(pqpath)
+            reader=pa.RecordBatchReader.from_batches(
+                pf.schema_arrow,pf.iter_batches(batch_size=8192)
+            )
+            lance.write_dataset(reader,str(out),mode="overwrite")
+            files=sorted(p for p in out.rglob("*") if p.is_file())
+            dg=sha("|".join(f"{p.relative_to(out)}:{sha_file(p)}" for p in files))
+            record_rep(c,parent,sk,"lance",str(out),dg,frontier,transform="parquet->lance")
+            forge_event(c,"lower","lance:"+sk,"physical","",started); n+=1
+        except BaseException:
+            # pyo3_runtime.PanicException inherits BaseException on some builds.
+            detail=traceback.format_exc()
+            forge_event(c,"lower","lance:"+sk,"failed",detail,started)
+            if "No space left on device" in detail or "StorageFull" in detail:
+                mark_deferred(c,sk,"lance","Lance spill hit storage pressure; obligation retained")
+        if (n+deferred)%20==0:
+            c.commit()
+    c.commit(); return n,deferred
+
+
+def actualize_iceberg(c,estate,rows):
+    import pyarrow as pa, pyarrow.parquet as pq
+    from pyiceberg.catalog import load_catalog
+    root=estate/"representations/iceberg"; warehouse=root/"warehouse"; warehouse.mkdir(parents=True,exist_ok=True)
+    catalog_db=root/"catalog.db"
+    catalog=load_catalog("bonfyre",type="sql",uri=f"sqlite:///{catalog_db}",warehouse=f"file://{warehouse}")
+    try: catalog.create_namespace_if_not_exists("estate")
+    except Exception: pass
+    n=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        if has_rep(c,sk,"iceberg"):
+            continue
+        started=now(); name="estate."+safe_name(sk).lower()
+        try:
+            pf=pq.ParquetFile(pqpath)
+            schema=pf.schema_arrow
+            try:
+                table=catalog.load_table(name)
+            except Exception:
+                table=catalog.create_table(name,schema=schema)
+            reader=pa.RecordBatchReader.from_batches(schema,pf.iter_batches(batch_size=65536))
+            table.overwrite(reader)
+            meta=table.metadata_location
+            dg=sha_file(Path(meta.replace("file://",""))) if str(meta).startswith("file://") and Path(str(meta).replace("file://","")).exists() else sha(str(meta))
+            record_rep(c,parent,sk,"iceberg",str(meta),dg,frontier,
+                       carrier="iceberg-sql-catalog",transform="parquet->iceberg")
+            forge_event(c,"lower","iceberg:"+sk,"physical",str(meta),started); n+=1
+        except Exception:
+            forge_event(c,"lower","iceberg:"+sk,"failed",traceback.format_exc(),started)
+        if n%20==0 and n: c.commit()
+    c.commit(); return n
+
+def actualize_zarr(c,estate,rows):
+    import pyarrow.parquet as pq, zarr
+    root=estate/"representations/zarr"; root.mkdir(parents=True,exist_ok=True)
+    n=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        if has_rep(c,sk,"zarr"):
+            continue
+        if not any(x in sk.lower() for x in ("tensor","eigen","embedding","latent","vector","feature","projection","activation")):
+            continue
+        started=now(); out=root/(safe_name(sk)+".zarr")
+        try:
+            table=pq.read_table(pqpath); group=zarr.open_group(str(out),mode="w"); written=0
+            for name in table.column_names:
+                try:
+                    arr=table[name].to_numpy(zero_copy_only=False)
+                    if getattr(arr.dtype,"kind","") in "biufc":
+                        group.create_array(safe_name(name),data=arr,
+                            chunks=(min(max(len(arr),1),65536),),overwrite=True)
+                        written+=1
+                except Exception: pass
+            if not written: raise RuntimeError("no numeric/tensor columns")
+            group.attrs["semantic_kind"]=sk; group.attrs["source_parquet_sha256"]=pdigest
+            files=sorted(p for p in out.rglob("*") if p.is_file())
+            dg=sha("|".join(f"{p.relative_to(out)}:{sha_file(p)}" for p in files))
+            record_rep(c,parent,sk,"zarr",str(out),dg,frontier,transform="parquet->zarr")
+            forge_event(c,"lower","zarr:"+sk,"physical",f"{written} arrays",started); n+=1
+        except Exception:
+            forge_event(c,"lower","zarr:"+sk,"failed",traceback.format_exc(),started)
+    c.commit(); return n
+
+def id_columns(schema_names):
+    exact=[]; fuzzy=[]
+    for col in schema_names:
+        lc=col.lower()
+        if lc in ID_EXACT: exact.append(col)
+        elif lc.endswith(ID_SUFFIX): fuzzy.append(col)
+    cols=[]
+    for x in exact+fuzzy:
+        if x not in cols: cols.append(x)
+    return cols
+
+def actualize_graph(c,estate,rows):
+    import pyarrow as pa, pyarrow.compute as pc, pyarrow.parquet as pq
+    root=estate/"representations/graph/edges"; root.mkdir(parents=True,exist_ok=True)
+    n=0; total=0
+    for parent,sk,pqpath,pdigest,frontier in rows:
+        try:
+            pf=pq.ParquetFile(pqpath); ids=id_columns(pf.schema_arrow.names)
+        except Exception: continue
+        if len(ids)<2: continue
+        # Maximal but bounded: first anchor to every other identity column + source/target if explicit.
+        pairs=[]
+        anchor=ids[0]
+        for dst in ids[1:6]:
+            pairs.append((anchor,dst))
+        explicit=[("source","target"),("src","dst"),("from","to"),("parent","child"),("subject","object")]
+        low={x.lower():x for x in ids}
+        for a,b in explicit:
+            if a in low and b in low and (low[a],low[b]) not in pairs:
+                pairs.append((low[a],low[b]))
+        for src,dst in pairs:
+            started=now(); out=root/(safe_name(sk)+"__"+safe_name(src)+"__"+safe_name(dst)+".parquet")
+            try:
+                writer=None; rows_written=0
+                for batch in pf.iter_batches(batch_size=65536,columns=[src,dst]):
+                    s=pc.cast(batch.column(0),pa.string(),safe=False)
+                    d=pc.cast(batch.column(1),pa.string(),safe=False)
+                    mask=pc.and_(pc.is_valid(s),pc.is_valid(d))
+                    s=pc.filter(s,mask); d=pc.filter(d,mask)
+                    if len(s)==0: continue
+                    tab=pa.table({
+                        "semantic_kind":pa.array([sk]*len(s)),
+                        "source_column":pa.array([src]*len(s)),
+                        "src":s,
+                        "target_column":pa.array([dst]*len(s)),
+                        "dst":d,
+                        "relation":pa.array([f"{src}->{dst}"]*len(s)),
+                        "source_parquet":pa.array([pqpath]*len(s)),
+                    })
+                    if writer is None: writer=pq.ParquetWriter(out,tab.schema,compression="zstd")
+                    writer.write_table(tab); rows_written+=len(tab)
+                if writer: writer.close()
+                if not out.exists(): continue
+                dg=sha_file(out)
+                rid=record_rep(c,parent,sk,"graph-edge-parquet",str(out),dg,frontier,
+                               transform=f"parquet->{src}->{dst}")
+                c.execute("insert or replace into graph_projection values(?,?,?,?,?,?,?)",
+                          (sk,src,dst,str(out),rows_written,dg,now()))
+                forge_event(c,"graph",f"{sk}:{src}->{dst}","physical",f"{rows_written} rows",started)
+                n+=1; total+=rows_written
+            except Exception:
+                forge_event(c,"graph",f"{sk}:{src}->{dst}","failed",traceback.format_exc(),started)
+        c.commit()
+    # Manifest over graph fragments.
+    manifest=root.parent/"manifest.json"
+    items=[{"semantic_kind":a,"source_column":b,"target_column":d,"coordinate":e,"rows":f,"digest":g}
+           for a,b,d,e,f,g in c.execute("select semantic_kind,source_column,target_column,coordinate,rows,digest from graph_projection order by semantic_kind,source_column,target_column")]
+    manifest.write_text(json.dumps({"generated_at":now(),"edges":items},indent=2),encoding="utf-8")
+    return n,total
+
+def verify_execution(c,estate,rows):
+    out={}
+    # DataFusion: register every Parquet source and actually collect one row.
+    try:
+        from datafusion import SessionContext
+        ctx=SessionContext(); good=0
+        for parent,sk,pqpath,pdigest,frontier in rows:
+            name=safe_name(sk)
+            try:
+                ctx.register_parquet(name,pqpath)
+                ctx.table(name).limit(1).collect()
+                dg=sha(f"datafusion|{sk}|{pdigest}")
+                record_rep(c,parent,sk,"datafusion",f"datafusion://estate/{name}",dg,frontier,
+                           state="executable",carrier="execution-program",temperature="hot",
+                           transform="parquet->datafusion-provider")
+                c.execute("insert or replace into execution_binding values(?,?,?,?,?,?)",
+                          (sk,"datafusion",f"datafusion://estate/{name}","executable",dg,now()))
+                good+=1
+            except Exception:
+                forge_event(c,"execution","datafusion:"+sk,"failed",traceback.format_exc(),now())
+        out["datafusion"]=good
+    except Exception:
+        out["datafusion"]=0
+
+    # Polars: validate lazy scan and schema planning for every table.
+    try:
+        import polars as pl
+        good=0
+        for parent,sk,pqpath,pdigest,frontier in rows:
+            try:
+                lf=pl.scan_parquet(pqpath)
+                _=lf.collect_schema()
+                dg=sha(f"polars|{sk}|{pdigest}")
+                record_rep(c,parent,sk,"polars",f"polars://scan/{pqpath}",dg,frontier,
+                           state="executable",carrier="execution-program",temperature="hot",
+                           transform="parquet->polars-lazy")
+                c.execute("insert or replace into execution_binding values(?,?,?,?,?,?)",
+                          (sk,"polars",f"polars://scan/{pqpath}","executable",dg,now()))
+                good+=1
+            except Exception: pass
+        out["polars"]=good
+    except Exception: out["polars"]=0
+
+    # ADBC: prove Arrow-native access to the manifold itself.
+    try:
+        import adbc_driver_sqlite.dbapi as adbcs
+        db=str(estate/"representation-manifold.db")
+        with adbcs.connect(db) as conn:
+            cur=conn.cursor(); cur.execute("select kind,count(*) n from representation_instance group by kind")
+            tab=cur.fetch_arrow_table()
+            dg=sha(str(tab.to_pylist()))
+        c.execute("insert or replace into executable_projection values(?,?,?,?,?,?)",
+                  (sha("adbc-manifold"),"adbc",f"sqlite:///{db}",dg,"executable",now()))
+        out["adbc"]=1
+    except Exception:
+        out["adbc"]=0
+    c.commit(); return out
+
+def refresh_targets(c):
+    states={}
+    for kind,n in c.execute("select kind,count(*) from representation_instance where state in ('physical','executable') group by kind"):
+        states[kind]="physical" if c.execute("select count(*) from representation_instance where kind=? and state='physical'",(kind,)).fetchone()[0] else "executable"
+    for kind,state in states.items():
+        c.execute("update representation_target set status=?,reason='Shift-1.4 forge actualized' where representation_kind=?",
+                  (state,kind))
+    c.commit()
+
+def report(c,estate,runtime):
+    root=estate/"representations"; root.mkdir(parents=True,exist_ok=True)
+    physical=[(k,n) for k,n in c.execute("""select kind,count(*) from representation_instance
+      where state='physical' group by kind order by count(*) desc,kind""")]
+    execs=[(k,n) for k,n in c.execute("""select kind,count(*) from representation_instance
+      where state='executable' group by kind order by count(*) desc,kind""")]
+    targets=[(s,n) for s,n in c.execute("select status,count(*) from representation_target group by status order by status")]
+    builds=[(a,b,d,e) for a,b,d,e in c.execute("select substrate,state,source_root,artifact from native_build order by substrate")]
+    failures=[(k,s,n) for k,s,n in c.execute("""select kind,state,count(*) from forge_event
+      group by kind,state order by kind,state""")]
+    obj={"schema":"bonfyre-shift-1.4.1-forge.v1","generated_at":now(),"runtime":str(runtime),
+         "physical":physical,"executable":execs,"targets":targets,"native_builds":builds,"events":failures}
+    (root/"forge-report.json").write_text(json.dumps(obj,indent=2),encoding="utf-8")
+    lines=["BONFŸRE SHIFT 1.4 FORGE","="*80,"","PHYSICAL"]
+    lines += [f"  {k:28} {n:,}" for k,n in physical]
+    lines += ["","EXECUTABLE"]+[f"  {k:28} {n:,}" for k,n in execs]
+    lines += ["","TARGET STATES"]+[f"  {k:28} {n:,}" for k,n in targets]
+    lines += ["","NATIVE BUILDS"]+[f"  {a:18} {b:10} {d} {e or ''}" for a,b,d,e in builds]
+    lines += ["","FORGE EVENTS"]+[f"  {k:22} {s:12} {n:,}" for k,s,n in failures]
+    (root/"forge-report.txt").write_text("\n".join(lines)+"\n",encoding="utf-8")
+
+def worker(args):
+    estate=Path(args.estate).expanduser().resolve(); repo=Path(args.repo).expanduser().resolve()
+    scratch=Path(args.scratch).expanduser().resolve()
+    scratch.mkdir(parents=True,exist_ok=True)
+    os.environ["TMPDIR"]=str(scratch); os.environ["TMP"]=str(scratch); os.environ["TEMP"]=str(scratch)
+
+    c=db_open(estate); rows=parquet_roots(c)
+    print(f"=== SHIFT 1.4.1 WORKER: {len(rows)} PARQUET ROOTS ===",flush=True)
+    print(f"scratch={scratch} free={human_bytes(disk_free_bytes(scratch))}",flush=True)
+
+    print("[1/7] Delta (resume)",flush=True)
+    try: print("  newly physical",actualize_delta(c,estate,rows),flush=True)
+    except BaseException: print(traceback.format_exc(),flush=True)
+
+    print("[2/7] Iceberg",flush=True)
+    try: print("  newly physical",actualize_iceberg(c,estate,rows),flush=True)
+    except BaseException: print(traceback.format_exc(),flush=True)
+
+    print("[3/7] Zarr",flush=True)
+    try: print("  newly physical",actualize_zarr(c,estate,rows),flush=True)
+    except BaseException: print(traceback.format_exc(),flush=True)
+
+    print("[4/7] schema-aware graph",flush=True)
+    try:
+        n,total=actualize_graph(c,estate,rows); print(f"  projections={n} edges={total}",flush=True)
+    except BaseException: print(traceback.format_exc(),flush=True)
+
+    print("[5/7] execution fabrics",flush=True)
+    try: print(" ",verify_execution(c,estate,rows),flush=True)
+    except BaseException: print(traceback.format_exc(),flush=True)
+
+    print("[6/7] Lance — resource-aware, high-leverage-first",flush=True)
+    try:
+        n,d=actualize_lance(c,estate,rows,scratch,args.lance_min_free_gb)
+        print(f"  newly physical={n} deferred_resource_pressure={d}",flush=True)
+    except BaseException:
+        print(traceback.format_exc(),flush=True)
+
+    print("[7/7] frontier refresh",flush=True)
+    refresh_targets(c)
+    report(c,estate,Path(sys.executable).parent.parent)
+    c.close()
+    return 0
+
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--repo",default=".")
+    ap.add_argument("--estate",default="~/.bonfyre/estate-local")
+    ap.add_argument("--substrates",default="~/.bonfyre/substrates/v6.1")
+    ap.add_argument("--runtime",default="~/.bonfyre/representation-runtime")
+    ap.add_argument("--scratch",default="~/.bonfyre/representation-runtime/tmp")
+    ap.add_argument("--lance-min-free-gb",type=float,default=2.0)
+    ap.add_argument("--apply",action="store_true")
+    ap.add_argument("--allow-network",action="store_true")
+    ap.add_argument("--build-native",action="store_true")
+    ap.add_argument("--worker",action="store_true")
+    args=ap.parse_args()
+
+    if args.worker: return worker(args)
+    if not args.apply:
+        print("Use --apply. Add --allow-network for isolated runtime package installation and --build-native for local substrate compilation.")
+        return 0
+
+    repo=Path(args.repo).expanduser().resolve()
+    estate=Path(args.estate).expanduser().resolve()
+    substrates=Path(args.substrates).expanduser().resolve()
+    runtime=Path(args.runtime).expanduser().resolve()
+    c=db_open(estate)
+
+    print("=== SHIFT 1.4.1 FORGE — RESOURCE AWARE ===",flush=True)
+    print("[1/4] representation runtime",flush=True)
+    py=ensure_runtime(runtime,args.allow_network); install_manifest(runtime,py)
+
+    if args.build_native:
+        print("[2/4] compiling local substrate sources",flush=True)
+        native_builds(c,substrates,args.allow_network)
+    else:
+        print("[2/4] native build skipped (use --build-native)",flush=True)
+
+    # Copy canonical worker into repo so the runtime is reproducible.
+    canonical=repo/"scripts/representation_manifold_forge.py"
+    canonical.parent.mkdir(parents=True,exist_ok=True)
+    if Path(__file__).resolve()!=canonical:
+        shutil.copy2(Path(__file__).resolve(),canonical); canonical.chmod(0o755)
+
+    print("[3/4] re-entering through isolated runtime",flush=True)
+    call=[str(py),str(canonical),"--worker","--repo",str(repo),"--estate",str(estate),
+          "--substrates",str(substrates),"--runtime",str(runtime),
+          "--scratch",str(Path(args.scratch).expanduser().resolve()),
+          "--lance-min-free-gb",str(args.lance_min_free_gb)]
+    rc,out,err=run(call,timeout=28800)
+    print(out,end="")
+    if err: print(err,file=sys.stderr,end="")
+    print("[4/4] forge complete" if rc==0 else f"[4/4] worker exited {rc}",flush=True)
+    c.close()
+    return rc
+
+if __name__=="__main__":
+    raise SystemExit(main())

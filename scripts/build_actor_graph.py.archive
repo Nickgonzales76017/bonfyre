@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Archived after native cutover. The people the archive credits, as actors this estate can be honest about.
+
+Nearly every thing the estate kept names a maker, and the estate had no model
+of who any of them are -- /people listed names with nothing underneath. The
+organ that models them carried a mandatory provenance and a confidence tier
+that is never collapsed, and nothing had ever called it.
+
+A byline is `asserted`: someone printed a name beside a thing. It is not
+`verified`, which means a human confirmed it, and this never writes that.
+Where two independent sources print the same name that is recorded as
+corroboration, which is still not verification: two publishers printing one
+name is not one person.
+
+  build_actor_graph.py [--min-items 2] [--apply]
+"""
+import argparse, hashlib, json, os, re, sqlite3, subprocess, sys
+
+
+def slug(text, cap=72):
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", (text or "").lower())).strip("-")[:cap]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--min-items", type=int, default=1)
+    ap.add_argument("--limit", type=int, default=100000)
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    actors_bin = os.path.join(args.repo, "cmd/BonfyreActors/bonfyre-actors")
+    store = os.path.join(args.estate, "actors.db")
+    archive = sqlite3.connect("file:%s/items.db?mode=ro" % args.estate, uri=True)
+    archive.row_factory = sqlite3.Row
+
+    makers = archive.execute(
+        "SELECT source, by AS name, COUNT(*) AS made"
+        " FROM item WHERE COALESCE(by,'') <> '' GROUP BY source, by"
+        " HAVING made >= ? ORDER BY made DESC, source, by LIMIT ?",
+        (args.min_items, args.limit)).fetchall()
+    repeated_names = archive.execute(
+        "SELECT COUNT(*) FROM (SELECT by FROM item WHERE COALESCE(by,'') <> ''"
+        " GROUP BY by HAVING COUNT(DISTINCT source) > 1)").fetchone()[0]
+    archive.close()
+
+    if not args.apply:
+        print(json.dumps({"makers": len(makers),
+                          "same_name_across_multiple_sources": repeated_names,
+                          "sample": [m["name"][:48] for m in makers[:5]]}, indent=1))
+        return 0
+
+    recorded, refused = 0, 0
+    for maker in makers:
+        # The archive's author field carries whatever a feed put in it: a
+        # person, the publication itself, or a contact address. Recording a
+        # masthead as a person would be a false kind, so the shape of the name
+        # decides, and anything that does not look like a person is filed as a
+        # publication rather than guessed at.
+        looks_like_a_host = ("." in maker["name"] and " " not in maker["name"].strip())
+        node_kind = "publication" if looks_like_a_host else "person"
+        # A source printing a string is an asserted actor observation, not an
+        # identity claim.  The old name-only key merged Alice from two
+        # publishers into one person and then called the merge corroboration.
+        # Keep the source coordinate in the stable key so equal spellings stay
+        # separately observable until an entitled identity process relates
+        # them.  The digest prevents punctuation, Unicode, and long-source
+        # collisions without turning it into a semantic address.
+        key = (maker["source"] + "\0" + maker["name"]).encode("utf-8")
+        actor = "%s:%s--%s" % (node_kind, slug(maker["name"]) or "unnamed",
+                                hashlib.sha256(key).hexdigest()[:16])
+        done = subprocess.run(
+            [actors_bin, "upsert", "--db", store, "--id", actor, "--kind", node_kind,
+             "--name", maker["name"][:180],
+             # Exactly what this estate knows: this source printed this name.
+             "--provenance", "source %s credited this name on %d things this estate kept"
+                             % (maker["source"], maker["made"]),
+             "--confidence", "asserted"],
+            capture_output=True, text=True)
+        if done.returncode == 0:
+            recorded += 1
+        else:
+            refused += 1
+            continue
+
+    standing = subprocess.run([actors_bin, "standing", "--db", store],
+                              capture_output=True, text=True)
+    try:
+        unverified = json.loads(standing.stdout).get("unverified")
+    except Exception:
+        unverified = None
+
+    print(json.dumps({
+        "source_bound_name_observations": len(makers), "actors_recorded": recorded,
+        "refused": refused, "same_name_across_multiple_sources": repeated_names,
+        "unverified_actors": unverified, "store": store,
+        "cannot_infer": "every actor here is a source-bound asserted name observation. None is "
+                        "verified, and equal names from different sources are never merged or "
+                        "counted as corroboration of one person",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""Archived after Bun/CUE cutover. What prevents every plausible funding path from closing, for one institution.
+
+The wrong question is "who will fund this", and the wrong answer is DECLINED. A
+decline collapses a dozen separable conditions into one word, and the conditions
+are not the same kind of problem: one is cheaply resolvable, one needs a partner,
+one needs time, and only some of them need money. Reporting them separately is
+what makes the remainder actionable.
+
+The ceilings are the ones the gym already measures, scoped to an institution:
+
+    InternalizedCeiling   what this institution's own state can already satisfy
+    TemporalCeiling       how much of that is still fresh enough to rely on
+    MarketCeiling         what admitted external routes actually returned
+
+MarketCeiling obeys the same rung ladder as everywhere else: a route declared is
+not a route executed, and a market nobody asked is unmeasured rather than zero.
+
+The scoping is load-bearing and not bookkeeping. Capital observed for one
+institution is not capital available to another, however much of it the estate
+can see. An InternalizedCeiling that summed across institutions would report
+capacity that does not exist and cannot be drawn.
+
+Cannot infer: a satisfied requirement is not funding, a residual is not a loan
+that must be raised, and an unmeasured market is not an absent one.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+# What each unmet requirement actually costs to resolve. The classes are the
+# point: only one of them is answered with money.
+RESIDUAL_CLASS = {
+    "cheaply": "EvidenceResidual",
+    "capital": "CapitalResidual",
+    "partner": "PartnerResidual",
+    "market": "MarketResidual",
+    "time": "TemporalResidual",
+}
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def rows(table: str, where: str = "", args: tuple = ()) -> list[dict]:
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        sql = f"SELECT * FROM {table} WHERE status='published'"
+        if where:
+            sql += f" AND {where}"
+        out = [dict(r) for r in db.execute(sql, args)]
+        db.close()
+        return out
+    except sqlite3.Error:
+        return []
+
+
+def rows_any_status(table: str, where: str = "", args: tuple = ()) -> list[dict]:
+    """Every row, whatever its publication status.
+
+    Publication governs what a reader is shown; it does not govern whether a
+    stated need exists. A funding view that only counted published demand
+    reported no demand at all while the institution had sixty-five drafted
+    requests."""
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        sql = f"SELECT * FROM {table}"
+        if where:
+            sql += f" WHERE {where}"
+        out = [dict(r) for r in db.execute(sql, args)]
+        db.close()
+        return out
+    except sqlite3.Error:
+        return []
+
+
+def market_ceiling(institution: str) -> dict:
+    """What the external capital market actually returned for this institution.
+
+    Same ladder as every other market in the estate: declared, admissible,
+    executed, measured. A capital route nobody declared cannot be measured, and
+    one declared but never exercised is not evidence of capacity."""
+    routes = [r for r in rows("provider_route")
+              if str(r.get("capability", "")).startswith("capital")]
+    if not routes:
+        return {"measured": False, "rung": "declared", "amount": None,
+                "unmeasured_because": "no provider_route declares a capital capability, "
+                                      "so the capital market has not been named, let alone asked"}
+    return {"measured": False, "rung": "executed", "amount": None,
+            "declared_routes": [r["route"] for r in routes],
+            "unmeasured_because": "capital routes are declared but no trial has been "
+                                  "executed against this institution's requirement set"}
+
+
+def main() -> int:
+    institution = None
+    for i, a in enumerate(sys.argv):
+        if a == "--institution" and i + 1 < len(sys.argv):
+            institution = sys.argv[i + 1]
+    if not institution:
+        print("usage: funding_closure.py --institution <id> [--json]", file=sys.stderr)
+        return 2
+
+    reqs = rows("funding_requirement", "institution = ?", (institution,))
+    if not reqs:
+        print(f"no funding requirements are declared for {institution}", file=sys.stderr)
+        return 2
+
+    # Demand is scoped to the institution for the same reason capacity is, and it
+    # is counted at every status rather than only the published one. Filtering to
+    # published reported zero demand beside a ceiling that had counted it, which
+    # is worse than either number alone: the demand is real and it is drafted.
+    #
+    # Drafted, proposed and committed are then reported apart, because the
+    # difference between them is the whole question. An expression of interest is
+    # not a commitment, and summing them into one figure would state a certainty
+    # nobody gave.
+    demand_rows = rows_any_status("budget_request", "institution = ?", (institution,))
+    def total(pred):
+        return round(sum(float(r.get("amount") or 0) for r in demand_rows if pred(r)), 2)
+    demand = total(lambda r: True)
+    committed = total(lambda r: str(r.get("lifecycle_state")) in ("approved", "committed"))
+    by_state: dict[str, dict] = {}
+    for r in demand_rows:
+        key = f"{r.get('status','?')}/{r.get('lifecycle_state','?')}"
+        b = by_state.setdefault(key, {"count": 0, "amount": 0.0})
+        b["count"] += 1
+        b["amount"] = round(b["amount"] + float(r.get("amount") or 0), 2)
+
+    satisfied = [r for r in reqs if r["state"] == "SATISFIED"]
+    unmet = [r for r in reqs if r["state"] != "SATISFIED"]
+
+    internalized = round(sum(float(r.get("amount") or 0) for r in satisfied), 2)
+    residual: dict[str, dict] = {}
+    for r in unmet:
+        cls = RESIDUAL_CLASS.get(r["resolvable_by"], "UnclassifiedResidual")
+        bucket = residual.setdefault(cls, {"requirements": [], "count": 0})
+        bucket["requirements"].append({"requirement": r["requirement"],
+                                       "state": r["state"],
+                                       "because": r.get("notes", "")})
+        bucket["count"] += 1
+
+    market = market_ceiling(institution)
+    # The declarations this closure rests on, summarised so a suite can pin them.
+    # Mutation testing changed a requirement's name, kind, state and resolution
+    # class to nonsense and all thirteen checks stayed green: the arithmetic was
+    # witnessed and the world it read was not.
+    declared = {
+        "requirement_names": sorted(r["requirement"] for r in reqs),
+        "by_kind": {k: sum(1 for r in reqs if str(r.get("kind")) == k)
+                    for k in sorted({str(r.get("kind")) for r in reqs})},
+        "by_state": {k: sum(1 for r in reqs if str(r.get("state")) == k)
+                     for k in sorted({str(r.get("state")) for r in reqs})},
+        "by_resolvable_by": {k: sum(1 for r in reqs if str(r.get("resolvable_by")) == k)
+                             for k in sorted({str(r.get("resolvable_by")) for r in reqs})},
+        "cannot_infer": "a stable fingerprint -> correct requirements; it says the "
+                        "shape of what was read has not moved",
+    }
+
+    receipt = {
+        "schema": "bonfyre-funding-closure.v1",
+        "declared": declared,
+        "institution": institution,
+        "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "declared_demand": demand,
+        "committed_demand": committed,
+        "demand_by_state": by_state,
+        "requirements": len(reqs),
+        "satisfied": len(satisfied),
+        "unmet": len(unmet),
+        "ceilings": {
+            "InternalizedCeiling": {
+                "measured": True, "amount": internalized,
+                "means": "what this institution's own declared state already satisfies; "
+                         "capital observed for another institution is not counted",
+            },
+            "TemporalCeiling": {
+                "measured": False, "rung": "observed",
+                "unmeasured_because": "no requirement carries an observed_at, so nothing "
+                                      "can be said about whether its evidence is still fresh",
+            },
+            "MarketCeiling": market,
+        },
+        "residual": residual,
+        "verdict": ("not declined; " + ", ".join(
+            f"{v['count']} {k}" for k, v in sorted(residual.items()))) if residual
+            else "every declared requirement is satisfied",
+        "cannot_infer": [
+            "a satisfied requirement -> funding",
+            "a residual -> a loan that must be raised",
+            "an unmeasured market -> an absent one",
+            "capital observed for one institution -> capital available to another",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  institution {institution}")
+    print(f"  declared demand ${demand:,.2f} across {len(demand_rows)} requests")
+    for key, b in sorted(by_state.items()):
+        print(f"    {key:<22} {b['count']:>3} requests   ${b['amount']:,.2f}")
+    print(f"    committed              {'':>3}             ${committed:,.2f}")
+    print()
+    print(f"  requirements {len(reqs)}: {len(satisfied)} satisfied, {len(unmet)} unmet")
+    for name, c in receipt["ceilings"].items():
+        if c["measured"]:
+            print(f"    {name:<22} ${c['amount']:,.2f}  {c['means'][:44]}")
+        else:
+            print(f"    {name:<22} {'--':>12}  unmeasured at rung "
+                  f"{c.get('rung','?')}: {c['unmeasured_because'][:40]}…")
+    print()
+    print("  the answer is not DECLINED; it is what each unmet condition costs:")
+    for cls, bucket in sorted(residual.items()):
+        print(f"    {cls:<20} {bucket['count']}")
+        for r in bucket["requirements"]:
+            print(f"      - {r['requirement']:<24} {r['because'][:52]}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+"""Change one declared fact. See whether the institution notices.
+
+The atlas forbids maturity laundering: `measured` requires a real witness. That
+rule has been enforced as "a witness exists and can be opened". It has never been
+enforced as "the witness would notice if the thing it witnesses were false",
+which is the only version of the rule that means anything.
+
+A suite that passes proves nothing on its own. A suite that passes, and then goes
+red the moment a fact it claims to check is changed underneath it, has proven it
+is load-bearing. The difference is the whole difference between a test and a
+decoration, and nothing in this estate has ever measured it.
+
+So: take the store the suites read, mutate one field of one published row to a
+plausible wrong value, run the suites, and record which of them noticed. Restore.
+Repeat per field.
+
+Two results come out, and the second is the interesting one:
+
+  guarded   a field whose corruption turns some suite red
+  blind     a field that can be changed to anything and the estate stays green
+
+A blind field is a declared fact this institution asserts, publishes, and cannot
+defend. It is not necessarily a defect -- plenty of fields are prose nobody
+should test -- but the estate has never had the list, and could not have told you
+which of its own claims were load-bearing.
+
+Cannot infer: a guarded field -> a correct one. Mutation shows a suite reacts to
+a change; it says nothing about whether the unmutated value is right. And a blind
+field is not proof no test exists, only that none of the suites run here reacted.
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sqlite3
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Fields that are prose, identity or bookkeeping. Mutating a `notes` string
+# proves nothing about anything, and mutating an id detaches a row rather than
+# falsifying a claim.
+SKIP_FIELDS = {
+    "id", "namespace", "created_at", "updated_at", "published_at",
+    "notes", "cannot_infer", "caption", "detail", "description", "title",
+    "because", "answers", "cost_note", "semantic_question",
+}
+
+
+def rows_of(db_path: Path, table: str) -> list[dict]:
+    db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    try:
+        out = [dict(r) for r in db.execute(f"SELECT * FROM {table} LIMIT 200")]
+    except sqlite3.Error:
+        out = []
+    db.close()
+    return out
+
+
+def wrong_value(current):
+    """A plausible wrong value of the same shape.
+
+    Same shape on purpose: replacing a number with the word "corrupt" would be
+    caught by a type check rather than by anything that understands the field.
+    A number becomes a different number, a token becomes a different token, a
+    boolean flips. The mutation has to be the kind of mistake a person makes."""
+    if current is None:
+        return "unset-by-mutation"
+    if isinstance(current, (int, float)) and not isinstance(current, bool):
+        return current + 7 if current == 0 else round(current * 3 + 1, 4)
+    s = str(current)
+    if s == "":
+        return "nonempty-by-mutation"
+    low = s.lower()
+    if low in ("true", "1", "yes"):
+        return "false" if low == "true" else "0"
+    if low in ("false", "0", "no"):
+        return "true" if low == "false" else "1"
+    try:
+        n = float(s)
+        return str(round(n * 3 + 1, 4))
+    except ValueError:
+        pass
+    if "," in s:                      # a token list loses a member
+        parts = [p for p in s.split(",") if p.strip()]
+        return ",".join(parts[:-1]) if len(parts) > 1 else s + "-mutated"
+    return s + "-mutated"
+
+
+# A suite that skips is not a suite that passed.
+#
+# Several of these exit 0 and print "(no funding requirements declared; skipping)"
+# when the world they read is empty. Counting that as green is fatal here: mutate
+# the field that made the world findable, the suite skips, exits 0, and the field
+# is recorded as one nothing defends. That is a manufactured blind spot -- the
+# tool inventing exactly the finding it exists to detect.
+SKIP_MARKERS = ("skipping", "(no ", "not reachable; skip", "no store reachable")
+
+
+def run_suite(cmd: str, env: dict, timeout: int) -> tuple[str, str]:
+    """Returns one of pass / fail / skipped, and the last line of output."""
+    try:
+        p = subprocess.run(cmd, shell=True, capture_output=True, text=True,
+                           timeout=timeout, cwd=str(ROOT), env=env)
+    except subprocess.TimeoutExpired:
+        return "fail", "timeout"
+    out = (p.stdout or "").strip()
+    tail = out.splitlines()[-1] if out else f"exit {p.returncode}"
+    low = out.lower()
+    if p.returncode == 0 and any(m in low for m in SKIP_MARKERS):
+        return "skipped", tail
+    return ("pass" if p.returncode == 0 else "fail"), tail
+
+
+def receipt_of(cmd: str, env: dict, timeout: int):
+    """The producing script's own JSON answer, for comparing before and after.
+
+    This is what separates a guard that understands a field from one that merely
+    notices it was touched."""
+    try:
+        p = subprocess.run(cmd, shell=True, capture_output=True, text=True,
+                           timeout=timeout, cwd=str(ROOT), env=env)
+    except subprocess.TimeoutExpired:
+        return None
+    for text in (p.stdout or "",):
+        text = text.strip()
+        if text.startswith("{"):
+            try:
+                return json.loads(text)
+            except ValueError:
+                return None
+    return None
+
+
+# Keys that move on their own. Discovered by running each producer twice at
+# baseline and diffing, never assumed: representation_trial carries a `trials`
+# block whose contents differ between two identical runs, and with it left in,
+# every mutation looked like it had changed a computed answer. The phase-one
+# gate never fired, and every guard would have been graded a consequence. A
+# comparison against a moving target reports motion.
+UNSTABLE: dict[str, set] = {}
+
+STRIP_ALWAYS = ("declared", "ran_at", "generated_at", "seconds")
+
+
+def strip_fingerprint(receipt, producer: str = ""):
+    """The answer with the fingerprint and any self-moving keys removed.
+
+    A fingerprint is a copy of the inputs, so leaving it in would let a mutation
+    count as having changed the answer -- exactly the confusion being measured.
+    A key that differs between two identical runs is worse: it makes every
+    mutation look load-bearing."""
+    if not isinstance(receipt, dict):
+        return receipt
+    drop = set(STRIP_ALWAYS) | UNSTABLE.get(producer, set())
+    return {k: v for k, v in receipt.items() if k not in drop}
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    if len(args) < 2:
+        print("usage: witness_mutation.py <cms.db> <plan.json> [--json] [--limit N]",
+              file=sys.stderr)
+        return 2
+    db_path = Path(args[0])
+    plan = json.loads(Path(args[1]).read_text())
+    # Progress goes to stderr whenever a receipt is asked for, so stdout carries
+    # the receipt and nothing else. Interleaving them made --json unparseable.
+    want_json = "--json" in args
+    def say(*a):
+        print(*a, file=sys.stderr if want_json else sys.stdout)
+    limit = int(next((a.split("=")[1] for a in args if a.startswith("--limit=")), "0"))
+
+    work = db_path.with_suffix(".mutation.db")
+    baseline: dict[str, bool] = {}
+    env = {**os.environ, "BONFYRE_CMS_DB": str(work)}
+    shutil.copy(db_path, work)
+
+    # Every suite must be green before anything is mutated. A suite that is
+    # already red cannot demonstrate that it noticed the mutation, and counting
+    # it as guarded would be the laundering this exists to detect.
+    say("== baseline: every suite must pass before a fact is changed ==")
+    for name, spec in plan["suites"].items():
+        verdict, tail = run_suite(spec["cmd"], env, spec.get("timeout", 600))
+        baseline[name] = verdict
+        mark = {"pass": "ok  ", "fail": "RED ", "skipped": "SKIP"}[verdict]
+        say(f"  {mark} {name:<26} {tail[:70]}")
+    usable = [n for n, v in baseline.items() if v == "pass"]
+    # The unmutated answer of each producing script, to compare against.
+    # Each producer is run twice on the untouched store first. Any key that
+    # differs between those two runs cannot carry evidence about a mutation, so
+    # it is excluded from every later comparison and reported.
+    baseline_answers = {}
+    for _tbl, producer in plan.get("producers", {}).items():
+        if producer in baseline_answers:
+            continue
+        first = receipt_of(producer, env, 600)
+        second = receipt_of(producer, env, 600)
+        if isinstance(first, dict) and isinstance(second, dict):
+            moving = {k for k in set(first) | set(second)
+                      if json.dumps(first.get(k), sort_keys=True, default=str)
+                      != json.dumps(second.get(k), sort_keys=True, default=str)}
+            moving -= set(STRIP_ALWAYS)
+            if moving:
+                UNSTABLE[producer] = moving
+                say(f"  unstable   {', '.join(sorted(moving))} differ between two "
+                    f"identical runs and are excluded")
+        baseline_answers[producer] = strip_fingerprint(first, producer)
+    live_producers = sum(1 for v in baseline_answers.values() if v is not None)
+    say(f"  {live_producers} of {len(baseline_answers)} producing scripts answer at baseline")
+    if not usable:
+        print("no suite passes at baseline; nothing can be demonstrated", file=sys.stderr)
+        return 1
+
+    guarded, blind, skipped, inert = [], [], [], []
+    tested = 0
+    started = time.time()
+
+    for table, suite_names in plan["tables"].items():
+        rows = rows_of(db_path, table)
+        if not rows:
+            skipped.append((table, "no rows"))
+            continue
+        published = [r for r in rows if str(r.get("status", "published")) == "published"]
+        # More than one row. Mutating only the first tests whichever row happens
+        # to sit at the top of the table, and a field can be load-bearing in one
+        # row and inert in another -- a declared conflict matters only on the row
+        # that declares one.
+        per_table = int(plan.get("rows_per_table", 1))
+        chosen = (published or rows)[:per_table]
+        watchers = [n for n in suite_names if n in usable]
+        if not watchers:
+            skipped.append((table, "no passing suite claims to read it"))
+            continue
+        for row in chosen:
+            for field, current in row.items():
+                if field in SKIP_FIELDS or field.endswith("_at"):
+                    continue
+                if limit and tested >= limit:
+                    break
+                new = wrong_value(current)
+                if str(new) == str(current):
+                    continue
+                shutil.copy(db_path, work)
+                db = sqlite3.connect(work)
+                try:
+                    db.execute(f"UPDATE {table} SET {field} = ? WHERE id = ?",
+                               (new, row["id"]))
+                    db.commit()
+                except sqlite3.Error as e:
+                    db.close()
+                    skipped.append((f"{table}.{field}", str(e)[:60]))
+                    continue
+                db.close()
+
+                # Phase one: does the institution compute differently at all?
+                #
+                # Suite redness is downstream of this and a hundred times dearer
+                # to measure: every suite for every field of every table is nine
+                # hours, every producing script is two seconds, and it answers
+                # the sharper question. A fact whose change moves no computed
+                # answer anywhere is inert -- no test can be faulted for missing
+                # it, because there is nothing to miss. A fact that moves an
+                # answer and trips no suite is the real finding, and only those
+                # are worth a full suite run.
+                moved = []
+                for pname, pcmd in plan.get("producers", {}).items():
+                    before_p = baseline_answers.get(pcmd)
+                    if before_p is None:
+                        continue
+                    after_p = strip_fingerprint(receipt_of(pcmd, env, 120), pcmd)
+                    if after_p is None or json.dumps(after_p, sort_keys=True) != \
+                            json.dumps(before_p, sort_keys=True):
+                        moved.append(pname)
+                if not moved:
+                    inert.append({"table": table, "field": field,
+                                  "was": str(current)[:40], "became": str(new)[:40]})
+                    tested += 1
+                    say(f"  inert   {table}.{field:<28} no computed answer moved")
+                    continue
+
+                noticed, went_blank = [], []
+                for name in watchers:
+                    verdict, _tail = run_suite(plan["suites"][name]["cmd"], env,
+                                               plan["suites"][name].get("timeout", 600))
+                    if verdict == "fail":
+                        noticed.append(name)
+                    elif verdict == "skipped":
+                        went_blank.append(name)
+
+                # Why did it notice? Two very different answers.
+                #
+                # If the producing script's own answer changed once the declaration
+                # fingerprint is removed, the mutation propagated into a computed
+                # result and the guard understands the field. If only the fingerprint
+                # moved, the suite detected tampering with an input it never used --
+                # a real guard against silent edits, and no evidence at all that the
+                # field does any work. Pinning fingerprints raised the guarded count
+                # in this estate by eleven, and without this distinction that number
+                # would flatter the fix rather than describe it.
+                strength = ""
+                producer = plan.get("producers", {}).get(table)
+                if noticed and producer:
+                    after = strip_fingerprint(receipt_of(producer, env, 600), producer)
+                    before = baseline_answers.get(producer)
+                    if before is None or after is None:
+                        strength = "unknown"
+                    elif json.dumps(after, sort_keys=True) != json.dumps(before, sort_keys=True):
+                        strength = "consequence"
+                    else:
+                        strength = "fingerprint-only"
+                tested += 1
+                entry = {"table": table, "field": field,
+                         "was": str(current)[:40], "became": str(new)[:40],
+                         "noticed_by": noticed, "skipped_after_mutation": went_blank,
+                         "guard": strength}
+                if noticed:
+                    guarded.append(entry)
+                    mark = {"consequence": "GUARDED", "fingerprint-only": "weak   ",
+                            "unknown": "guarded", "": "guarded"}[strength]
+                    who = ", ".join(noticed) + (f"  [{strength}]" if strength else "")
+                elif went_blank:
+                    # The mutation made the world unfindable and the suite stopped
+                    # looking. Neither guarded nor blind: the observation was never
+                    # made, and saying either would be a claim nobody checked.
+                    skipped.append((f"{table}.{field}",
+                                    "suite skipped after the mutation: "
+                                    + ", ".join(went_blank)))
+                    mark, who = "n/a    ", "suite skipped; no observation made"
+                else:
+                    blind.append(entry)
+                    mark, who = "BLIND  ", "nothing noticed"
+                say(f"  {mark} {table}.{field:<28} {who}")
+
+    shutil.copy(db_path, work)
+    receipt = {
+        "schema": "bonfyre-witness-mutation.v1",
+        "effect_class": "PURE",
+        "store": str(db_path),
+        "suites_at_baseline": dict(baseline),
+        "fields_mutated": tested,
+        "inert": inert,
+        "guarded": guarded,
+        "guard_strength": {
+            "consequence": sum(1 for g in guarded if g.get("guard") == "consequence"),
+            "fingerprint_only": sum(1 for g in guarded if g.get("guard") == "fingerprint-only"),
+            "ungraded": sum(1 for g in guarded if g.get("guard") in ("", "unknown", None)),
+        },
+        "blind": blind,
+        "skipped": skipped,
+        "seconds": round(time.time() - started, 1),
+        "cannot_infer": [
+            "a guarded field -> a correct value; the suite reacted to a change, "
+            "which says nothing about whether the original was right",
+            "a blind field -> an untested one; only that no suite run here reacted",
+            "a passing suite -> a load-bearing one, until it has gone red for a reason",
+        ],
+    }
+    if "--json" in args:
+        print(json.dumps(receipt, indent=2))
+    else:
+        print()
+        say(f"  {tested} declared field(s) mutated in {receipt['seconds']}s")
+        say(f"  {len(guarded)} guarded -- some suite went red")
+        say(f"  {len(blind)} blind -- the estate stayed green with the fact changed")
+        if blind:
+            print()
+            say("  facts this institution asserts and cannot defend:")
+            for b in blind:
+                say(f"    {b['table']}.{b['field']:<30} {b['was']!r} -> {b['became']!r}")
+    try:
+        work.unlink()
+    except OSError:
+        pass
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

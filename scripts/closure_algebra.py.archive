@@ -1,0 +1,415 @@
+#!/usr/bin/env python3
+"""Archived after native work-list closure cutover. The fixed point of a declared domain: what closes, what blocks, what unlocks.
+
+Four things in this estate turned out to be the same shape. Reconciliation asks
+whether obligations settle. Funding asks whether capital routes close. Event
+feasibility asks whether a desired future can exist. A birth operation asks
+whether an object may enter the world. Each is:
+
+    a desired state
+    conditions, in several states of satisfaction
+    resolvers that close conditions and may themselves have conditions
+    a closure repeated until nothing new closes
+
+    Closure(S) = mu X . ( S  U  { effects(r) : r in admissible(X) } )
+
+So the algebra is generic and the grammar is not. Which conditions exist, what a
+resolver closes, and what any of it means are domain facts that live in the
+declaration; this evaluates them and has no opinion about capital, events or
+reconciliation.
+
+Three things it will not do.
+
+It will not treat an unknown condition as an unmet one. UNKNOWN means nobody
+asked, and collapsing it into BLOCKED reports a wall where there is only silence.
+
+It will not net a resolver's own unmet conditions against what it would close. A
+resolver that needs three things to close one is not a net gain of nothing; it is
+a chain, and the chain is the answer.
+
+It will not rank a counterfactual it did not recompute. Every "what would this
+unlock" is the whole closure run again with that condition treated as met.
+
+Cannot infer: a closed condition is a satisfied one in the world, a reachable
+world is a chosen one, and a fixed point is a plan.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# The commitment ladder, in order. Universal across domains: a venue that is
+# available is not held and not booked; a creator who is interested is not
+# confirmed; a lender that matched a product has not approved anything; an
+# advertised API has not been paid.
+#
+# Only a resolver at or above the admitting rung may close a condition. This is
+# the law that stops a pipeline of interest from reading as a closed plan, and it
+# is the same correction the funding view needed when drafted demand was being
+# counted as demand.
+COMMITMENT = ["observed", "candidate", "interested", "quoted", "proposed",
+              "conditional", "reserved", "authorized", "committed", "executed",
+              "settled"]
+ADMITTING_RUNG = COMMITMENT.index("conditional")
+
+
+def commitment_rank(state: str) -> int:
+    state = (state or "").strip().lower()
+    if state in COMMITMENT:
+        return COMMITMENT.index(state)
+    # Capacity language predates the ladder and maps onto it: something the
+    # estate can evidence is at least conditional; something unknown is not.
+    return {"evidenced": ADMITTING_RUNG, "unknown": COMMITMENT.index("candidate"),
+            "blocked": 0}.get(state, -1)
+
+
+def load_domain(domain: str) -> dict:
+    db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    row = db.execute("SELECT * FROM closure_domain WHERE domain=? AND status='published'",
+                     (domain,)).fetchone()
+    db.close()
+    if not row:
+        raise SystemExit(f"no closure_domain declares {domain!r}; a domain is added by "
+                         "declaration, not by another evaluator")
+    return dict(row)
+
+
+def rows(table: str, field: str, value: str) -> list[dict]:
+    import re
+    if not re.fullmatch(r"[a-z_][a-z0-9_]*", table) or not re.fullmatch(r"[a-z_][a-z0-9_]*", field):
+        raise SystemExit("a declaration names a table and a column, never an expression")
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        out = [dict(r) for r in db.execute(
+            f"SELECT * FROM {table} WHERE {field} = ? AND status='published'", (value,))]
+        db.close()
+        return out
+    except sqlite3.Error:
+        return []
+
+
+def split(value) -> set[str]:
+    return {v.strip() for v in str(value or "").split(",") if v.strip()}
+
+
+def admissible_by_commitment(r: dict) -> bool:
+    """Whether this resolver has committed enough to close anything.
+
+    A resolver below the admitting rung is real and is not yet load-bearing.
+    Counting it would let a list of expressions of interest present itself as a
+    feasible world."""
+    rank = commitment_rank(str(r.get("commitment") or r.get("capacity_state") or ""))
+    return rank >= ADMITTING_RUNG
+
+
+def declaration_faults(resolvers: list[dict], reqs: list[dict], d: dict) -> list[dict]:
+    """Declared values that cannot be true, whatever the world is like.
+
+    Mutation testing set a resolver's success_probability to 2.2 and every suite
+    stayed green while the algebra went on multiplying by it. That is not an
+    untested field; it is an impossible one, and the estate accepted it. A
+    probability outside [0,1], a negative cost and a negative contribution are
+    arithmetic errors rather than opinions about the world, so they are refused
+    here rather than tested for somewhere downstream.
+
+    Reported, never repaired. A wrong declaration is the declarer's to fix, and
+    silently clamping it would hide the fault that this exists to surface.
+    """
+    faults = []
+    for r in resolvers:
+        name = str(r.get(d.get("resolver_field", "resolver"), "") or "?")
+        p = r.get("success_probability")
+        if p not in (None, ""):
+            try:
+                value = float(p)
+                if not 0.0 <= value <= 1.0:
+                    faults.append({"resolver": name, "field": "success_probability",
+                                   "value": value,
+                                   "because": "a probability outside [0,1] is not a "
+                                              "probability, and it is multiplied into "
+                                              "every expected value here"})
+            except (TypeError, ValueError):
+                faults.append({"resolver": name, "field": "success_probability",
+                               "value": str(p)[:40],
+                               "because": "not a number"})
+        c = r.get("cost_usd")
+        if c not in (None, ""):
+            try:
+                if float(c) < 0:
+                    faults.append({"resolver": name, "field": "cost_usd",
+                                   "value": float(c),
+                                   "because": "a negative cost inverts every "
+                                              "leverage-per-dollar comparison"})
+            except (TypeError, ValueError):
+                faults.append({"resolver": name, "field": "cost_usd",
+                               "value": str(c)[:40], "because": "not a number"})
+    return faults
+
+
+def closure(satisfied: set[str], resolvers: list[dict], d: dict) -> tuple[set[str], list[dict]]:
+    """The fixed point. Repeat until no resolver newly becomes admissible.
+
+    Bounded by the resolver count: each pass must admit at least one new resolver
+    or the loop ends, so a cycle cannot spin."""
+    met = set(satisfied)
+    used: list[dict] = []
+    for _ in range(len(resolvers) + 1):
+        grew = False
+        for r in resolvers:
+            if r in used or not admissible_by_commitment(r):
+                continue
+            needs = split(r.get(d["requires_field"]))
+            if needs <= met:
+                gained = split(r.get(d["satisfies_field"])) - met
+                used.append(r)
+                if gained:
+                    met |= gained
+                    grew = True
+        if not grew:
+            break
+    return met, used
+
+
+def main() -> int:
+    domain = subject = None
+    for i, a in enumerate(sys.argv):
+        if a == "--domain" and i + 1 < len(sys.argv): domain = sys.argv[i + 1]
+        if a == "--subject" and i + 1 < len(sys.argv): subject = sys.argv[i + 1]
+    if not domain or not subject:
+        print("usage: closure_algebra.py --domain <d> --subject <s> [--json]", file=sys.stderr)
+        return 2
+
+    d = load_domain(domain)
+    reqs = rows(d["requirement_type"], d["scope_field"], subject)
+    res = rows(d["resolver_type"], d["scope_field"], subject)
+    if not reqs:
+        print(f"no {d['requirement_type']} rows for {subject!r} in domain {domain!r}",
+              file=sys.stderr)
+        return 2
+
+    state = d["state_field"]
+    sat_state = d["satisfied_state"]
+    all_conditions = {r[d["requirement_type"] and "requirement"] if "requirement" in r
+                      else list(r.values())[0] for r in reqs} if False else set()
+    # The condition's own name field is the first declared string column that is
+    # not the scope; declarations name it by convention as the type's own key.
+    key = d["requirement_type"].split("_")[-1]
+    if key not in reqs[0]:
+        key = next((k for k in reqs[0] if k not in ("id", "namespace", "status") and
+                    isinstance(reqs[0][k], str)), None)
+    all_conditions = {str(r[key]) for r in reqs}
+    satisfied_now = {str(r[key]) for r in reqs if str(r.get(state)) == sat_state}
+    unknown = {str(r[key]) for r in reqs if str(r.get(state)) == "UNKNOWN"}
+
+    met, admitted = closure(satisfied_now, res, d)
+    uncommitted = [
+        {"resolver": str(r.get(d["resolver_type"].split("_")[-1], r.get("route", "?"))),
+         "commitment": str(r.get("commitment") or r.get("capacity_state") or ""),
+         "rung_needed": COMMITMENT[ADMITTING_RUNG]}
+        for r in res if not admissible_by_commitment(r)]
+    blocked = []
+    for r in res:
+        if not admissible_by_commitment(r):
+            continue
+        needs = split(r.get(d["requires_field"]))
+        if not needs <= met:
+            blocked.append({"resolver": str(list(r.values())[
+                                [i for i, k in enumerate(r) if k not in
+                                 ("id", "namespace", "status")][0]]) if False else
+                            str(r.get(d["resolver_type"].split("_")[-1], r.get("route", "?"))),
+                            "waiting_on": sorted(needs - met),
+                            "class": str(r.get(d.get("resolver_class_field") or "", "") or "")})
+
+    # Counterfactuals: the whole closure run again with one condition treated as
+    # met. Never an estimate of what it might unlock.
+    hypotheses = []
+    base_met = len(met & all_conditions)
+    base_admitted = len(admitted)
+    for cond in sorted(all_conditions - satisfied_now):
+        m2, a2 = closure(satisfied_now | {cond}, res, d)
+        hypotheses.append({
+            "condition": cond,
+            "conditions_closed_before": base_met,
+            "conditions_closed_after": len(m2 & all_conditions),
+            "resolvers_admitted_before": base_admitted,
+            "resolvers_admitted_after": len(a2),
+            "gain": len(a2) - base_admitted,
+            "was_unknown": cond in unknown,
+        })
+    hypotheses.sort(key=lambda h: -h["gain"])
+
+    # What each resolver is actually worth: remove it and recompute. A resolver
+    # closing one condition directly may be the only reason three others become
+    # reachable, and pricing it against the one condition understates it by the
+    # rest of its closure.
+    #
+    # This is the reuse law made exact. A revenue history is not three lenders'
+    # documents; a spatial capture is not a virtual tour. Each is one artifact
+    # whose value is the set of conditions that stop closing without it.
+    leverage = []
+    for r in res:
+        name = str(r.get(d["resolver_type"].split("_")[-1], r.get("route", "?")))
+        without = [x for x in res if x is not r]
+        m2, a2 = closure(satisfied_now, without, d)
+        lost = sorted((met & all_conditions) - (m2 & all_conditions))
+        leverage.append({
+            "resolver": name,
+            "class": str(r.get(d.get("resolver_class_field") or "", "") or ""),
+            "closes_directly": sorted(split(r.get(d["satisfies_field"]))),
+            "conditions_lost_without_it": lost,
+            "closure_contribution": len(lost),
+            "capacity_state": str(r.get("capacity_state", "") or ""),
+        })
+    # Marginal closure value. A resolver is worth what its whole closure unlocks,
+    # weighted by how likely it is to work, divided by what it costs.
+    #
+    # The cost and the probability are declared, not inferred. A resolver with no
+    # declared cost is ranked by contribution alone and says so, because guessing
+    # a price to make a ratio computable produces a number that looks like
+    # economics and is arithmetic on an invention.
+    for l in leverage:
+        row = next((r for r in res
+                    if str(r.get(d["resolver_type"].split("_")[-1], r.get("route", "?")))
+                    == l["resolver"]), {})
+        try:
+            cost = float(row.get("cost_usd") or 0)
+        except (TypeError, ValueError):
+            cost = 0.0
+        try:
+            prob = float(row.get("success_probability") or 0)
+        except (TypeError, ValueError):
+            prob = 0.0
+        declared_cost = row.get("cost_usd") not in (None, "")
+        l["cost_usd"] = cost if declared_cost else None
+        l["success_probability"] = prob if 0 < prob <= 1 else None
+        # Free and unpriced are different claims. A resolver declared at zero
+        # costs nothing and its leverage is pure gain; a resolver with no
+        # declared cost is one nobody has priced, and treating the two alike
+        # buried the best trades among the unknowns.
+        if declared_cost and cost == 0 and l["success_probability"]:
+            l["marginal_closure_value"] = None
+            l["priced"] = True
+            l["free"] = True
+        elif declared_cost and cost > 0 and l["success_probability"]:
+            l["marginal_closure_value"] = round(
+                l["closure_contribution"] * l["success_probability"] / cost, 6)
+            l["priced"] = True
+            l["free"] = False
+        else:
+            l["marginal_closure_value"] = None
+            l["priced"] = False
+            l["free"] = False
+            l["unpriced_because"] = ("no declared cost or probability; ranked by closure "
+                                     "contribution alone rather than by an invented price")
+    # Free resolvers with leverage rank above priced ones; unpriced rank last,
+    # because an unknown price is not a good one.
+    def rank(x):
+        tier = 0 if x.get("free") else (1 if x["priced"] else 2)
+        return (tier, -(x["marginal_closure_value"] or 0), -x["closure_contribution"])
+    leverage.sort(key=rank)
+
+    # And the reverse: a condition required by several resolvers is an artifact
+    # acquired once and drawn on many times.
+    reuse = []
+    for cond in sorted(all_conditions):
+        needed_by = sorted(
+            str(r.get(d["resolver_type"].split("_")[-1], r.get("route", "?")))
+            for r in res if cond in split(r.get(d["requires_field"])))
+        if len(needed_by) > 1:
+            reuse.append({"condition": cond, "required_by": needed_by,
+                          "reuse_factor": len(needed_by)})
+    reuse.sort(key=lambda x: -x["reuse_factor"])
+
+    receipt = {
+        "schema": "bonfyre-closure.v1",
+        "resolver_leverage": leverage,
+        "evidence_reuse": reuse,
+        "domain": domain, "subject": subject,
+        "ran_at": iso_now(), "effect_class": "PURE", "effect_performed": False,
+        "conditions": len(all_conditions),
+        "satisfied_at_start": len(satisfied_now),
+        "unknown_not_counted_as_blocked": sorted(unknown),
+        "closed_at_fixed_point": sorted(met & all_conditions),
+        "condition_kinds": {str(r[key]): str(r.get("kind", "") or "")
+                            for r in reqs},
+        "condition_resolvable_by": {str(r[key]): str(r.get("resolvable_by", "") or "")
+                                    for r in reqs},
+        "resolvers": len(res),
+        "declaration_faults": declaration_faults(res, reqs, d),
+        "resolvers_admitted": len(admitted),
+        "resolvers_blocked": blocked,
+        "resolvers_below_commitment": uncommitted,
+        "admitting_rung": COMMITMENT[ADMITTING_RUNG],
+        "commitment_ladder": COMMITMENT,
+        "closure_hypotheses": hypotheses,
+        "cannot_infer": [c.strip() for c in str(d["cannot_infer"]).split(";") if c.strip()] + [
+            "a closed condition -> a condition satisfied in the world",
+            "a fixed point -> a plan",
+            "an UNKNOWN condition -> an unmet one; nobody asked",
+            "an interested resolver -> a committed one; a list of interest is not a plan",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  domain {domain}, subject {subject}")
+    print(f"  {len(all_conditions)} conditions, {len(satisfied_now)} satisfied at start, "
+          f"{len(met & all_conditions)} closed at the fixed point")
+    print(f"  {len(unknown)} unknown and not counted as blocked: "
+          f"{', '.join(sorted(unknown)) or 'none'}")
+    print(f"  {len(admitted)} of {len(res)} resolvers admitted "
+          f"(a resolver must be at least {COMMITMENT[ADMITTING_RUNG]} to close anything)")
+    for u in uncommitted:
+        print(f"    not yet load-bearing  {u['resolver']:<22}at "
+              f"{u['commitment'] or 'no stated commitment'}")
+    for b in blocked:
+        print(f"    blocked {b['resolver']:<24}{b['class']:<12} waiting on "
+              f"{', '.join(b['waiting_on'])}")
+    print()
+    print("  what each resolver is worth, measured by removing it:")
+    for l in leverage:
+        if l["closure_contribution"] == 0:
+            continue
+        direct = ",".join(l["closes_directly"]) or "-"
+        if l.get("free"):
+            mcv = f"free, {l['success_probability']:.0%} likely"
+        elif l["priced"]:
+            mcv = f"MCV {l['marginal_closure_value']:.4f}"
+        else:
+            mcv = "unpriced"
+        cost = ("free" if l.get("free") else
+                (f"${l['cost_usd']:,.0f}" if l["cost_usd"] else "-"))
+        print(f"    {l['resolver']:<22}{l['class']:<10}{l['closure_contribution']} lost "
+              f"without it   {cost:>9}   {mcv}")
+    dead = [l for l in leverage if l["closure_contribution"] == 0]
+    if dead:
+        print(f"    ({len(dead)} resolver(s) change nothing on their own: "
+              f"{', '.join(x['resolver'] for x in dead)})")
+    if reuse:
+        print()
+        print("  conditions drawn on by several resolvers:")
+        for u in reuse:
+            print(f"    {u['condition']:<24}needed by {u['reuse_factor']}: "
+                  f"{', '.join(u['required_by'])[:44]}")
+    print()
+    print("  what each unmet condition would unlock, recomputed:")
+    for h in hypotheses:
+        mark = " (unknown)" if h["was_unknown"] else ""
+        print(f"    {h['condition']:<26} +{h['gain']:>2} resolvers{mark}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

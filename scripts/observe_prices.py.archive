@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+# Historical witness retained after native price-observation cutover.
+"""What things cost in the world, taken from whoever states the price.
+
+The estate had two prices, both for services it buys. That is enough to say
+what its own reading costs and nothing else. To price work that has not been
+done yet -- or to know whether a figure in a headline is ordinary or absurd --
+it needs a price observatory: many prices, from many vendors and registries,
+each carrying the document that stated it.
+
+This is not the meter. The meter prices *usage this estate performed*, in units
+it can actually apply, and admitting a bushel of wheat there would corrupt what
+accrual means. The observatory records what a thing costs according to whoever
+published that, and nothing in it is a rate this estate will be charged.
+
+The sources are chosen for one property: the vendor or registry publishes its
+own price list openly, in machine-readable form, without a key. A price taken
+from such an endpoint is the publisher quoting itself. Nothing is scraped off a
+marketing page, averaged across competitors, or carried forward because it
+looked stable.
+
+  observe_prices.py [--source NAME ...] [--limit N] [--write]
+"""
+import argparse, json, os, sqlite3, sys, time, urllib.parse, urllib.request
+
+AGENT = "Aurekai/1.0 (price observation; honours robots.txt; contact via aurekai.live)"
+STORE = os.path.expanduser("~/.bonfyre/estate-local/prices.db")
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS observed_price (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL,          -- which published list this came from
+  publisher TEXT NOT NULL,       -- who is quoting
+  item TEXT NOT NULL,            -- what is priced
+  amount REAL NOT NULL,
+  currency TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  region TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL,            -- compute | inference | award | commodity
+  evidence_ref TEXT NOT NULL,    -- the endpoint that stated it, and when
+  observed_at TEXT NOT NULL,
+  UNIQUE(source, publisher, item, unit, region, amount)
+);
+CREATE INDEX IF NOT EXISTS idx_price_kind ON observed_price(kind, publisher);
+"""
+
+
+def fetch(url, patience=30, post=None):
+    data = json.dumps(post).encode() if post is not None else None
+    headers = {"User-Agent": AGENT, "Accept": "application/json"}
+    if data:
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, headers=headers)
+    with urllib.request.urlopen(req, timeout=patience) as answer:
+        return json.load(answer)
+
+
+def from_openrouter(limit):
+    """Inference, priced per token by the router that resells it."""
+    d = fetch("https://openrouter.ai/api/v1/models")
+    out, now = [], time.strftime("%Y-%m-%d")
+    for m in d.get("data", [])[:limit]:
+        p = m.get("pricing") or {}
+        for field, unit in (("prompt", "token in"), ("completion", "token out")):
+            try:
+                amount = float(p.get(field))
+            except (TypeError, ValueError):
+                continue
+            # A negative or zero price is not a price; it is the router saying
+            # "not sold that way". Recording it as free would be a claim.
+            if amount <= 0:
+                continue
+            out.append({
+                "source": "openrouter/models", "publisher": m.get("id", "").split("/")[0] or "openrouter",
+                "item": m.get("id", ""), "amount": amount, "currency": "USD",
+                "unit": unit, "region": "", "kind": "inference",
+                "evidence_ref": "openrouter.ai/api/v1/models stated pricing.%s=%s for %s on %s"
+                                % (field, p.get(field), m.get("id", ""), now)})
+    return out
+
+
+def from_azure(limit):
+    """Cloud compute, from the vendor's own retail price list."""
+    out, now = [], time.strftime("%Y-%m-%d")
+    url = "https://prices.azure.com/api/retail/prices?$top=1000"
+    while url and len(out) < limit:
+        d = fetch(url)
+        for i in d.get("Items", []):
+            try:
+                amount = float(i.get("unitPrice"))
+            except (TypeError, ValueError):
+                continue
+            if amount <= 0:
+                continue
+            out.append({
+                "source": "azure/retail-prices", "publisher": "microsoft-azure",
+                "item": "%s / %s" % (i.get("productName", ""), i.get("meterName", "")),
+                "amount": amount, "currency": i.get("currencyCode", "USD"),
+                "unit": i.get("unitOfMeasure", ""), "region": i.get("armRegionName", ""),
+                "kind": "compute",
+                "evidence_ref": "prices.azure.com/api/retail/prices stated unitPrice=%s %s per %s for %s on %s"
+                                % (i.get("unitPrice"), i.get("currencyCode"), i.get("unitOfMeasure"),
+                                   i.get("meterName"), now)})
+            if len(out) >= limit:
+                break
+        url = d.get("NextPageLink")
+    return out
+
+
+def from_usaspending(limit):
+    """What a government actually paid, which is a price with a signature on it."""
+    out, now = [], time.strftime("%Y-%m-%d")
+    page, per = 1, 100
+    while len(out) < limit and page <= 20:
+        d = fetch("https://api.usaspending.gov/api/v2/search/spending_by_award/", post={
+            "filters": {"award_type_codes": ["A", "B", "C", "D"]},
+            "fields": ["Award ID", "Recipient Name", "Award Amount", "Awarding Agency"],
+            "limit": per, "page": page})
+        rows = d.get("results", [])
+        if not rows:
+            break
+        for r in rows:
+            try:
+                amount = float(r.get("Award Amount"))
+            except (TypeError, ValueError):
+                continue
+            if amount <= 0:
+                continue
+            out.append({
+                "source": "usaspending/spending_by_award", "publisher": r.get("Awarding Agency") or "us-federal",
+                "item": "%s to %s" % (r.get("Award ID", ""), r.get("Recipient Name", "")),
+                "amount": amount, "currency": "USD", "unit": "award", "region": "US",
+                "kind": "award",
+                "evidence_ref": "api.usaspending.gov spending_by_award stated Award Amount=%s for %s on %s"
+                                % (r.get("Award Amount"), r.get("Award ID"), now)})
+            if len(out) >= limit:
+                break
+        page += 1
+    return out
+
+
+def from_openprices(limit):
+    """What a person actually paid in a shop, contributed by whoever paid it."""
+    out, now, page = [], time.strftime("%Y-%m-%d"), 1
+    while len(out) < limit and page <= 40:
+        d = fetch("https://prices.openfoodfacts.org/api/v1/prices?size=100&page=%d" % page)
+        rows = d.get("items", [])
+        if not rows:
+            break
+        for r in rows:
+            try:
+                amount = float(r.get("price"))
+            except (TypeError, ValueError):
+                continue
+            if amount <= 0:
+                continue
+            out.append({
+                "source": "openfoodfacts/open-prices",
+                "publisher": (r.get("location") or {}).get("osm_name") or "a shop",
+                "item": r.get("product_name") or r.get("product_code") or "",
+                "amount": amount, "currency": r.get("currency") or "",
+                "unit": "item", "region": ((r.get("location") or {}).get("osm_address_country") or ""),
+                "kind": "consumer",
+                "evidence_ref": "prices.openfoodfacts.org/api/v1/prices stated price=%s %s for %s on %s"
+                                % (r.get("price"), r.get("currency"), r.get("product_code"), now)})
+            if len(out) >= limit:
+                break
+        page += 1
+    return out
+
+
+def from_nadac(limit):
+    """What pharmacies pay for a drug, as a government survey publishes it."""
+    out, now, offset = [], time.strftime("%Y-%m-%d"), 0
+    while len(out) < limit and offset < 20000:
+        d = fetch("https://data.medicaid.gov/api/1/datastore/query/"
+                  "dfa2ab14-06c2-457a-9e36-5cb6d80f8d93/0?limit=500&offset=%d" % offset)
+        rows = d.get("results", [])
+        if not rows:
+            break
+        for r in rows:
+            try:
+                amount = float(r.get("nadac_per_unit"))
+            except (TypeError, ValueError):
+                continue
+            if amount <= 0:
+                continue
+            out.append({
+                "source": "medicaid/nadac", "publisher": "us-medicaid",
+                "item": "%s (%s)" % (r.get("ndc_description", ""), r.get("ndc", "")),
+                "amount": amount, "currency": "USD", "unit": "unit", "region": "US",
+                "kind": "medicine",
+                "evidence_ref": "data.medicaid.gov NADAC stated nadac_per_unit=%s for NDC %s effective %s, read %s"
+                                % (r.get("nadac_per_unit"), r.get("ndc"), r.get("effective_date"), now)})
+            if len(out) >= limit:
+                break
+        offset += 500
+    return out
+
+
+def from_wikidata(limit):
+    """Everything the world has written down a price for, through a channel
+    this estate had already admitted."""
+    query = ("PREFIX wdt: <http://www.wikidata.org/prop/direct/> "
+             "PREFIX p: <http://www.wikidata.org/prop/> "
+             "PREFIX psv: <http://www.wikidata.org/prop/statement/value/> "
+             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+             "SELECT ?item ?name ?amount ?unit WHERE { ?item p:P2284 ?st . ?st psv:P2284 ?v . "
+             "?v <http://wikiba.se/ontology#quantityAmount> ?amount ; "
+             "<http://wikiba.se/ontology#quantityUnit> ?unit . "
+             "?item rdfs:label ?name . FILTER(LANG(?name)=\"en\") } LIMIT %d" % limit)
+    url = "https://qlever.dev/api/wikidata?" + urllib.parse.urlencode({"query": query})
+    req = urllib.request.Request(url, headers={"User-Agent": AGENT,
+                                               "Accept": "application/sparql-results+json"})
+    with urllib.request.urlopen(req, timeout=60) as answer:
+        d = json.load(answer)
+    out, now = [], time.strftime("%Y-%m-%d")
+    for r in d.get("results", {}).get("bindings", []):
+        g = lambda k: (r.get(k) or {}).get("value", "")
+        try:
+            amount = float(g("amount"))
+        except ValueError:
+            continue
+        if amount <= 0:
+            continue
+        out.append({
+            "source": "wikidata/P2284", "publisher": "wikidata",
+            "item": g("name"), "amount": amount,
+            # The unit is a Q-number; naming it a currency would be inventing one.
+            "currency": g("unit").rsplit("/", 1)[-1],
+            "unit": "stated", "region": "", "kind": "catalogued",
+            "evidence_ref": "wikidata P2284 via qlever stated %s for %s (%s) on %s"
+                            % (g("amount"), g("name"), g("item").rsplit("/", 1)[-1], now)})
+    return out
+
+
+SOURCES = {"openrouter": from_openrouter, "azure": from_azure,
+           "usaspending": from_usaspending, "openprices": from_openprices,
+           "nadac": from_nadac, "wikidata": from_wikidata}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--source", action="append", choices=sorted(SOURCES), default=None)
+    ap.add_argument("--limit", type=int, default=2000, help="per source")
+    ap.add_argument("--store", default=STORE)
+    ap.add_argument("--write", action="store_true")
+    args = ap.parse_args()
+    chosen = args.source or sorted(SOURCES)
+
+    db = None
+    if args.write:
+        db = sqlite3.connect(args.store)
+        db.executescript(SCHEMA)
+
+    tally, refused = {}, {}
+    for name in chosen:
+        try:
+            rows = SOURCES[name](args.limit)
+        except Exception as why:
+            refused[name] = str(why)[:140]
+            continue
+        tally[name] = len(rows)
+        if db:
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            db.executemany(
+                "INSERT OR IGNORE INTO observed_price"
+                "(source,publisher,item,amount,currency,unit,region,kind,evidence_ref,observed_at)"
+                " VALUES(:source,:publisher,:item,:amount,:currency,:unit,:region,:kind,:evidence_ref,:now)",
+                [dict(r, now=now) for r in rows])
+            db.commit()
+
+    held = 0
+    if db:
+        held = db.execute("SELECT COUNT(*) FROM observed_price").fetchone()[0]
+        db.close()
+
+    print(json.dumps({
+        "observed": tally,
+        "sources_that_refused": refused,
+        "held_in_store": held,
+        "store": args.store if args.write else "(not written)",
+        "cannot_infer":
+            "an observed price is what a publisher stated on the date recorded. It is not a price "
+            "this estate has been quoted, not one it will be charged, not evidence that anyone paid "
+            "it, and not a rate: rates live in the meter, apply only to usage this estate performed, "
+            "and are admitted separately. A publisher that states no price is absent here rather "
+            "than assumed to be free.",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

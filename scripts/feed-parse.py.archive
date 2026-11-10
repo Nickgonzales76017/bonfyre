@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Turn a receipted feed body into candidate observations, without asserting them.
+
+A feed is not a list of articles. It is a changing list with stable item
+identity, which is exactly what makes it a cheap external-state sensor: the same
+document fetched twice tells you what is new by id, not by diffing prose.
+
+Two rules govern everything here.
+
+**Parse only what still hashes to its receipt.** The body on disk is checked
+against `content_sha256` before a single element is read. If it does not match,
+nothing is parsed -- the bytes are no longer the bytes that were observed, and
+anything derived from them would be a claim with no evidence behind it.
+
+**Emit candidates, never facts.** Every item becomes `source declares X`, with
+the receipt, the source URL and the observation time carried alongside. A feed
+saying an event happens on Saturday is evidence that a publisher said so. It is
+not evidence that it will happen, and the shape of the output keeps that
+distinction rather than flattening it.
+
+    feed-parse.py <receipt.json> [--json]
+    feed-parse.py --twin <twin-id>
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+ROOT = os.environ.get("BONFYRE_FOREIGN_ROOT", "/var/lib/bonfyre/foreign")
+NS = {
+    "atom": "http://www.w3.org/2005/Atom",
+    "dc": "http://purl.org/dc/elements/1.1/",
+}
+
+
+def digest_matches(body_path: str, expected: str) -> tuple[bool, str]:
+    h = hashlib.sha256()
+    try:
+        with open(body_path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+    except OSError as exc:
+        return False, f"unreadable: {exc}"
+    got = h.hexdigest()
+    return got == (expected or ""), got
+
+
+def text_of(node, *paths: str) -> str:
+    for p in paths:
+        found = node.find(p, NS)
+        if found is not None:
+            if found.text and found.text.strip():
+                return found.text.strip()
+            href = found.get("href")
+            if href:
+                return href.strip()
+    return ""
+
+
+def parse_xml(raw: bytes) -> tuple[str, list[dict]]:
+    root = ET.fromstring(raw)
+    items: list[dict] = []
+    tag = root.tag.split("}")[-1].lower()
+    if tag == "feed":
+        kind = "atom"
+        for e in root.findall("atom:entry", NS):
+            items.append({
+                "declared_id": text_of(e, "atom:id") or text_of(e, "atom:link"),
+                "title": text_of(e, "atom:title"),
+                "url": text_of(e, "atom:link"),
+                "declared_time": text_of(e, "atom:updated", "atom:published"),
+                "summary": text_of(e, "atom:summary", "atom:content")[:600],
+                "author": text_of(e, "atom:author/atom:name"),
+            })
+    else:
+        kind = "rss"
+        for e in root.iter("item"):
+            items.append({
+                "declared_id": text_of(e, "guid") or text_of(e, "link"),
+                "title": text_of(e, "title"),
+                "url": text_of(e, "link"),
+                "declared_time": text_of(e, "pubDate") or text_of(e, "dc:date"),
+                "summary": text_of(e, "description")[:600],
+                "author": text_of(e, "dc:creator") or text_of(e, "author"),
+            })
+    return kind, items
+
+
+def parse_json_feed(raw: bytes) -> tuple[str, list[dict]]:
+    doc = json.loads(raw)
+    items = []
+    for e in doc.get("items") or []:
+        items.append({
+            "declared_id": str(e.get("id") or e.get("url") or ""),
+            "title": e.get("title") or "",
+            "url": e.get("url") or "",
+            "declared_time": e.get("date_modified") or e.get("date_published") or "",
+            "summary": (e.get("summary") or e.get("content_text") or "")[:600],
+            "author": ((e.get("authors") or [{}])[0].get("name")
+                       if e.get("authors") else (e.get("author") or {}).get("name", "")),
+        })
+    return "json-feed", items
+
+
+def main(argv: list[str]) -> int:
+    as_json = "--json" in argv
+    argv = [a for a in argv if a != "--json"]
+    if len(argv) >= 2 and argv[0] == "--twin":
+        receipt_path = f"{ROOT}/receipts/{argv[1]}.json"
+    elif argv:
+        receipt_path = argv[0]
+    else:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+
+    try:
+        with open(receipt_path) as fh:
+            receipt = json.load(fh)
+    except OSError as exc:
+        print(f"no receipt: {exc}", file=sys.stderr)
+        return 1
+
+    body_path = receipt.get("body_path") or ""
+    ok, got = digest_matches(body_path, receipt.get("content_sha256"))
+    if not ok:
+        # Refusing here is the point. Bytes that no longer hash to their receipt
+        # are not the bytes that were observed, and a candidate derived from them
+        # would carry a receipt that does not describe it.
+        print(json.dumps({
+            "error": "body_does_not_match_receipt",
+            "receipt": receipt_path,
+            "expected_sha256": receipt.get("content_sha256"),
+            "actual_sha256": got,
+            "detail": ("Nothing was parsed. Re-observe the source; a body that has "
+                       "drifted from its receipt cannot support any claim."),
+        }, indent=2))
+        return 3
+
+    raw = open(body_path, "rb").read()
+    try:
+        if raw.lstrip()[:1] == b"{":
+            kind, items = parse_json_feed(raw)
+        else:
+            kind, items = parse_xml(raw)
+    except Exception as exc:
+        print(json.dumps({
+            "error": "not_a_feed", "receipt": receipt_path,
+            "detail": f"{type(exc).__name__}: {exc}",
+            "note": "The body is receipted and intact; it simply is not a feed.",
+        }, indent=2))
+        return 4
+
+    seen, candidates = set(), []
+    for it in items:
+        ident = it["declared_id"] or it["url"] or it["title"]
+        if not ident or ident in seen:
+            continue
+        seen.add(ident)
+        candidates.append({
+            "kind": "ForeignOccurrenceCandidate",
+            "declares": {k: v for k, v in it.items() if v},
+            # Provenance travels with the candidate, not in a side table. A
+            # candidate that loses its receipt becomes an unsourced assertion.
+            "observed": {
+                "source_url": receipt.get("source_url"),
+                "observed_at": receipt.get("observed_at"),
+                "content_sha256": receipt.get("content_sha256"),
+                "twin_id": receipt.get("twin_id"),
+                "receipt": receipt_path,
+                "carrier": kind,
+            },
+            "status": "source_declares",
+        })
+
+    out = {
+        "carrier": kind,
+        "source_url": receipt.get("source_url"),
+        "items_declared": len(items),
+        "candidates": len(candidates),
+        "forbidden_inference": (
+            "a candidate is evidence that a publisher declared something at an "
+            "observed time; it is not evidence that the thing is true, current, "
+            "or will occur"
+        ),
+    }
+    if as_json:
+        out["items"] = candidates
+    print(json.dumps(out, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

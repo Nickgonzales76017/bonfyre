@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: give retained publishers estate-owned addresses.
+
+Two hundred and nine institutions had addresses because the ledger recorded an
+admitted channel under a root.  But the archive holds material published under
+a thousand more names: the ledger tracks channels, and the names come from what
+those channels actually carried.  A publisher this estate has read fifty
+articles from and cannot address is a publisher this estate is hiding.
+
+So the addressable set is defined by retained material rather than by ledger
+bookkeeping: a name appears here because this estate holds things published
+under it, which is the same standard the existing addresses were meant to meet.
+
+Three published facts per publisher, all in machinery that already exists:
+
+  matrix            the institution, the subject that is that institution, and
+                    the host it stands on, stated through the organ that owns
+                    those invariants rather than written behind its back
+
+  site_presentation the host, and the subject standing on it, so a surface can
+                    name whose address it is
+
+  subject fabric    that subject's readers -- the sources this estate reads
+                    that published under that name, carrying the family each
+                    one actually carried
+
+Being addressed is this estate's own decision to read a publisher.  It is never
+a relationship either party agreed to, an endorsement, or a page the publisher
+controls, and the address does not imply the publisher still publishes any of
+it.
+
+  address_every_publisher.py [--min-items 3] [--territory life] [--apply]
+"""
+import argparse, hashlib, json, os, re, sqlite3, subprocess, sys, time
+
+NOW = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+CANNOT_INFER = ("these are the sources this estate reads that published under this name; "
+                "the page is this estate reading them, not the publisher's own site, and "
+                "not anything the publisher agreed to")
+
+
+def slug(text, cap=48):
+    flat = re.sub(r"[^a-z0-9]", "-", (text or "").lower())
+    return re.sub(r"-+", "-", flat).strip("-")[:cap].strip("-")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--territory", default="life")
+    ap.add_argument("--min-items", type=int, default=3)
+    ap.add_argument("--limit", type=int, default=4000)
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    web = os.path.join(args.repo, "cmd/BonfyreWebAddress/bonfyre-web-address")
+    archive = sqlite3.connect("file:%s/items.db?mode=ro" % args.estate, uri=True)
+    archive.row_factory = sqlite3.Row
+
+    # What this estate holds, by the name it was published under.
+    publishers = archive.execute(
+        "SELECT publisher, COUNT(*) AS items, COUNT(DISTINCT source) AS sources"
+        " FROM item WHERE COALESCE(publisher,'')<>''"
+        " GROUP BY publisher HAVING items >= ?"
+        " ORDER BY items DESC LIMIT ?", (args.min_items, args.limit)).fetchall()
+
+    # A standing publish has short, legitimate CMS writer windows while its
+    # owner projections settle. Addressing the full estate must wait through
+    # one instead of abandoning thousands of publishers on SQLITE_BUSY.
+    cms = sqlite3.connect(os.path.join(args.estate, "cms.db"), timeout=60)
+    cms.execute("PRAGMA busy_timeout=60000")
+    taken = {row[0] for row in cms.execute(
+        "SELECT host FROM site_presentation WHERE status='published'")}
+
+    fabric = sqlite3.connect(os.path.join(args.estate, "subject_fabric.db"), timeout=60)
+    fabric.execute("PRAGMA busy_timeout=60000")
+
+    planned, skipped, clashed = [], 0, 0
+    seen = set()
+    for row in publishers:
+        label = slug(row["publisher"])
+        if not label:
+            skipped += 1
+            continue
+        host = "%s.aurekai.%s" % (label, args.territory)
+        if host in taken or host in seen:
+            # Either already addressed, or two names that flatten to one label.
+            # A second publisher must not quietly take over the first's address.
+            clashed += 1
+            continue
+        seen.add(host)
+        planned.append((label, host, row["publisher"], row["items"], row["sources"]))
+
+    if not args.apply:
+        print(json.dumps({"candidates": len(publishers), "to_address": len(planned),
+                          "already_addressed_or_clashing": clashed, "unlabelable": skipped,
+                          "sample": [p[1] for p in planned[:8]]}, indent=1))
+        return 0
+
+    addressed, refused, readers_written = 0, 0, 0
+    for label, host, name, items, sources in planned:
+        subject = "institution:publisher:%s" % label
+        institution = "inst:%s" % label
+        digest = hashlib.sha256(name.encode()).hexdigest()
+
+        # The organ owns these invariants; they are stated through it.
+        ok = True
+        for argv in (
+            [web, "institution", "--db", os.path.join(args.estate, "matrix.db"),
+             "--id", institution, "--kind", "publisher", "--world", "live",
+             "--evidence", "a publisher whose material this estate holds"],
+            [web, "subject", "--db", os.path.join(args.estate, "matrix.db"),
+             "--id", "org:%s" % label, "--kind", "institution", "--digest", digest,
+             "--evidence", "a publisher whose material this estate holds"],
+            [web, "domain", "--db", os.path.join(args.estate, "matrix.db"), "--host", host,
+             "--institution", institution, "--territory", args.territory, "--scope", "public",
+             "--world", "live", "--repr", "HTML",
+             "--evidence", "an address this estate gives a publisher it reads"]):
+            done = subprocess.run(argv, capture_output=True, text=True)
+            if done.returncode != 0 and argv[1] == "domain":
+                ok = False
+        if not ok:
+            refused += 1
+            continue
+
+        cms.execute(
+            "INSERT INTO site_presentation(namespace,created_at,updated_at,published_at,status,"
+            " site_id,host,subject_address,profile,territory,navigation)"
+            " VALUES('root',?,?,'','published',?,?,?,'newsroom',?,'[]')",
+            (NOW, NOW, "publisher-%s" % label, host, subject, args.territory))
+
+        # That subject's readers: the sources this estate reads which published
+        # under this name, each carrying the family it actually carried.
+        fabric.execute("DELETE FROM subject_reader WHERE subject=? AND scope='public'", (subject,))
+        rows = archive.execute(
+            "SELECT source, COALESCE(family,'') AS family, COALESCE(kind,'') AS kind,"
+            " COUNT(*) AS n, MAX(COALESCE(at,0)) AS latest"
+            " FROM item WHERE publisher=? GROUP BY source, family", (name,)).fetchall()
+        for reader in rows:
+            fabric.execute(
+                "INSERT OR REPLACE INTO subject_reader(subject,scope,census_source,root_id,"
+                " channel_id,material,protocol,state,last_contributed,contributions,first_seen)"
+                " VALUES(?,'public',?,?,?,?,?,'admitted',?,?,'')",
+                (subject, reader["source"], label, reader["source"], reader["family"],
+                 reader["kind"],
+                 time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(reader["latest"]))
+                 if reader["latest"] else "",
+                 reader["n"]))
+            readers_written += 1
+
+        payload = {"subject": subject, "host": host, "publisher": name,
+                   "cannot_infer": CANNOT_INFER}
+        seed = json.dumps(payload, sort_keys=True).encode()
+        fabric.execute(
+            "INSERT OR REPLACE INTO subject_bundle(subject,scope,bundle_digest,closure_digest,"
+            " scene_digest,compiled_at,counts_json,payload_json) VALUES(?,'public',?,?,'',?,?,?)",
+            (subject, hashlib.sha256(seed).hexdigest(),
+             hashlib.sha256("|".join(r["source"] for r in rows).encode()).hexdigest(),
+             NOW, json.dumps({"readers": len(rows), "items": items, "sources": sources}),
+             json.dumps(payload)))
+        addressed += 1
+        # Matrix commands above can take materially longer than the CMS row.
+        # Keep a complete, idempotent prefix rather than holding the estate's
+        # only writer lock for the entire publisher census.
+        if addressed % 50 == 0:
+            cms.commit()
+            fabric.commit()
+
+    cms.commit(); cms.close()
+    fabric.commit(); fabric.close()
+    archive.close()
+    print(json.dumps({
+        "addressed": addressed, "refused": refused, "readers": readers_written,
+        "already_addressed_or_clashing": clashed, "territory": args.territory,
+        "cannot_infer": CANNOT_INFER,
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

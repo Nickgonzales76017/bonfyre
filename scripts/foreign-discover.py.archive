@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+"""Ask a domain how it wants to be read by machines, before reading it like a human.
+
+The outbound half of this system publishes sitemaps, feeds, JSON-LD and Open
+Graph. The inbound half did not consume any of them: there is no RSS, Atom,
+JSON Feed, WebSub, sitemap or structured-metadata reader anywhere in the tree,
+so every foreign observation started at the most expensive layer -- fetch the
+page, strip it, hand it to a model, guess what changed.
+
+That ordering is backwards. Publishers already tell machines what changed, in
+formats that are deterministic and cheap. This probes what a site offers and
+emits a passport describing how to consume it, so the expensive layers are
+reached only when the cheap ones cannot answer.
+
+    1  authenticated push / event
+    2  WebSub          publisher pushes; no polling at all
+    3  ActivityPub     foreign actor delivers activities
+    4  first-party API / protocol
+    5  RSS / Atom / JSON Feed
+    6  sitemap lastmod delta
+    7  JSON-LD / structured metadata
+    8  machine-readable files
+    9  conditional HTTP (ETag / Last-Modified / 304)
+   10  HTML semantic extraction
+   11  browser rendering
+   12  model-assisted interpretation
+
+Discovery itself is an observation and obeys the same admission law as any
+other: robots is read first and honoured, nothing is fetched from a host that
+declines, and every body that matters is passed to `bonfyre-project foreign
+observe` so it is receipted and digested rather than merely downloaded.
+"""
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+import urllib.parse
+from dataclasses import dataclass, field, asdict
+
+UA = "BonfyreForeignDiscover/1.0 (+https://aurekai.life/protocols)"
+TIMEOUT = "20"
+
+LADDER = [
+    "authenticated-push", "websub", "activitypub", "first-party-api",
+    "feed", "sitemap", "structured-metadata", "machine-files",
+    "conditional-http", "html-extraction", "browser", "model",
+]
+
+
+@dataclass
+class Passport:
+    root: str
+    observed_at: str = ""
+    robots_status: int = 0
+    robots_allows_us: bool = True
+    crawl_delay: float | None = None
+    sitemaps: list[str] = field(default_factory=list)
+    feeds: list[dict] = field(default_factory=list)
+    websub_hubs: list[str] = field(default_factory=list)
+    activitypub: list[str] = field(default_factory=list)
+    well_known: list[str] = field(default_factory=list)
+    protocol_descriptors: list[dict] = field(default_factory=list)
+    structured_types: list[str] = field(default_factory=list)
+    open_graph: dict = field(default_factory=dict)
+    canonical: str = ""
+    conditional: dict = field(default_factory=dict)
+    best_carrier: str = "html-extraction"
+    why: str = ""
+    notes: list[str] = field(default_factory=list)
+
+
+def curl(url: str, *extra: str, head: bool = False) -> tuple[int, str, dict]:
+    argv = ["curl", "-sS", "-m", TIMEOUT, "-A", UA, "-L", "--max-redirs", "3",
+            "-w", "\n__S__%{http_code}", *extra]
+    if head:
+        argv += ["-I"]
+    argv.append(url)
+    try:
+        out = subprocess.run(argv, capture_output=True, text=True, timeout=40).stdout
+    except Exception:
+        return 0, "", {}
+    body, _, code = out.rpartition("\n__S__")
+    headers = {}
+    if head or body.startswith("HTTP/"):
+        for line in body.splitlines():
+            if ":" in line:
+                k, _, v = line.partition(":")
+                headers[k.strip().lower()] = v.strip()
+    return (int(code) if code.strip().isdigit() else 0), body, headers
+
+
+def read_robots(p: Passport) -> None:
+    """Robots is read first and honoured. A site that declines is not probed."""
+    code, body, _ = curl(urllib.parse.urljoin(p.root, "/robots.txt"))
+    p.robots_status = code
+    if code != 200:
+        p.notes.append("no robots.txt; proceeding with generic public assumptions only")
+        return
+    agent_applies = False
+    for raw in body.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        key, val = key.strip().lower(), val.strip()
+        if key == "user-agent":
+            agent_applies = val in ("*",) or "bonfyre" in val.lower()
+        elif key == "sitemap":
+            p.sitemaps.append(val)
+        elif key == "crawl-delay" and agent_applies:
+            try:
+                p.crawl_delay = float(val)
+            except ValueError:
+                pass
+        elif key == "disallow" and agent_applies and val == "/":
+            p.robots_allows_us = False
+            p.notes.append("robots disallows everything for our agent; no further fetch")
+
+
+def read_head(p: Passport) -> None:
+    """The document head is where a site declares its machine affordances."""
+    code, body, _ = curl(p.root)
+    if code != 200:
+        p.notes.append(f"root returned {code}; head not inspected")
+        return
+    head = body[:200_000]
+
+    for m in re.finditer(r'<link\b[^>]*>', head, re.I):
+        tag = m.group(0)
+        rel = (re.search(r'rel=["\']([^"\']+)', tag, re.I) or [None, ""])[1].lower()
+        href = (re.search(r'href=["\']([^"\']+)', tag, re.I) or [None, ""])[1]
+        typ = (re.search(r'type=["\']([^"\']+)', tag, re.I) or [None, ""])[1].lower()
+        if not href:
+            continue
+        href = urllib.parse.urljoin(p.root, href)
+        if "hub" in rel.split():
+            p.websub_hubs.append(href)
+        elif "canonical" in rel.split():
+            p.canonical = href
+        elif "alternate" in rel.split() and typ:
+            if any(t in typ for t in ("rss", "atom", "feed+json", "json")):
+                p.feeds.append({"url": href, "type": typ})
+
+    for m in re.finditer(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>',
+                         head, re.I | re.S):
+        try:
+            doc = json.loads(m.group(1).strip())
+        except Exception:
+            continue
+        for node in (doc if isinstance(doc, list) else [doc]):
+            if isinstance(node, dict) and node.get("@type"):
+                t = node["@type"]
+                p.structured_types += t if isinstance(t, list) else [t]
+
+    for m in re.finditer(r'<meta[^>]+property=["\']og:([^"\']+)["\'][^>]*content=["\']([^"\']*)',
+                         head, re.I):
+        p.open_graph[m.group(1)] = m.group(2)[:300]
+
+
+def looks_like(kind: str, body: str) -> bool:
+    """Does the body actually contain the thing, or merely answer 200?
+
+    A status code is not a fact about content. Many sites sit behind a WAF that
+    answers 200 with an HTML "Request Rejected" page for every unusual path --
+    dallascityhall.com does exactly this for every .well-known address -- and a
+    probe that trusts the code records affordances the source does not have.
+    That is worse than missing them: it routes every future read down a carrier
+    that will never answer, instead of the sitemap and feed that do exist."""
+    head = body.lstrip()[:600].lower()
+    if not head:
+        return False
+    if head.startswith("<!doctype html") or head.startswith("<html"):
+        return False           # an HTML page is never a feed, sitemap or JSON doc
+    if kind == "sitemap":
+        return "<urlset" in head or "<sitemapindex" in head
+    if kind == "feed":
+        return ("<rss" in head or "<feed" in head
+                or (head.startswith("{") and "\"items\"" in body[:4000].lower()))
+    if kind == "json":
+        try:
+            json.loads(body)
+            return True
+        except Exception:
+            return False
+    return False
+
+
+def probe_known_paths(p: Passport) -> None:
+    """The addresses a machine-legible site is expected to answer at.
+
+    Each candidate is fetched and inspected rather than merely HEADed: the
+    question is whether the representation is there, not whether the server
+    said 200."""
+    for path in ("/sitemap.xml", "/sitemap_index.xml", "/feed", "/feed.xml",
+                 "/rss.xml", "/atom.xml", "/feed.json"):
+        full = urllib.parse.urljoin(p.root, path)
+        code, body, _ = curl(full)
+        if code != 200:
+            continue
+        kind = "sitemap" if "sitemap" in path else "feed"
+        if not looks_like(kind, body):
+            p.notes.append(f"{path} answered 200 but is not a {kind}; ignored")
+            continue
+        if kind == "sitemap":
+            p.sitemaps.append(full)
+        else:
+            p.feeds.append({"url": full, "type": "discovered-by-convention"})
+    for wk, family in (
+        ("/.well-known/webfinger", "activitypub-discovery"),
+        ("/.well-known/nodeinfo", "activitypub-discovery"),
+        ("/.well-known/host-meta", "activitypub-discovery"),
+        # These paths are conventions rather than universal protocol mandates.
+        # A successful JSON document is therefore a declared descriptor
+        # candidate, never a claim that an MCP/A2A endpoint works or that its
+        # advertised tools are authorized for Bonfyre.
+        ("/.well-known/mcp.json", "mcp-descriptor-candidate"),
+        ("/.well-known/agent.json", "a2a-agent-card-candidate"),
+        ("/.well-known/oauth-protected-resource", "oauth-resource-candidate"),
+        ("/.well-known/oauth-authorization-server", "oauth-server-candidate"),
+        ("/.well-known/openid-configuration", "openid-configuration-candidate"),
+        ("/.well-known/assetlinks.json", "android-app-link-candidate"),
+        ("/.well-known/apple-app-site-association", "apple-universal-link-candidate"),
+        ("/.well-known/ai-plugin.json", "ai-plugin-candidate"),
+    ):
+        full = urllib.parse.urljoin(p.root, wk)
+        code, body, _ = curl(full)
+        if code != 200 or not looks_like("json", body):
+            continue
+        p.well_known.append(full)
+        if "nodeinfo" in wk or "webfinger" in wk:
+            p.activitypub.append(full)
+        p.protocol_descriptors.append({
+            "family": family,
+            "descriptor": full,
+            "truth_level": "declared_descriptor",
+            "limit": "A descriptor is a candidate carrier only; it is not a live endpoint, admitted provider, authorized tool, payment route, identity assertion, or effect right.",
+        })
+
+    # auth.md is deliberately a prose companion to OAuth/OIDC discovery, not
+    # authority metadata.  Keep it as a separately typed registration-guide
+    # candidate so an external actor cannot turn a public Markdown file into a
+    # Bonfyre identity, credential, account binding, or permission.
+    auth_md = urllib.parse.urljoin(p.root, "/auth.md")
+    code, body, _ = curl(auth_md)
+    if code == 200 and len(body) <= 200_000 and body.lstrip().startswith("#"):
+        p.protocol_descriptors.append({
+            "family": "auth-md-candidate",
+            "descriptor": auth_md,
+            "truth_level": "declared_descriptor",
+            "limit": "An auth.md file is a candidate registration guide only; it is not an identity assertion, credential, remote account binding, authorized tool, authorization, payment approval, or effect right.",
+        })
+
+
+def check_conditional(p: Passport) -> None:
+    """Whether re-reading this source can cost headers instead of a body."""
+    _, _, h = curl(p.root, head=True)
+    for key in ("etag", "last-modified", "cache-control"):
+        if h.get(key):
+            p.conditional[key] = h[key]
+
+
+def choose(p: Passport) -> None:
+    if not p.robots_allows_us:
+        p.best_carrier, p.why = "none", "the source declines automated reading"
+        return
+    for carrier, present, why in (
+        ("websub", p.websub_hubs, "a hub will push changes, so nothing needs polling"),
+        ("activitypub", p.activitypub, "a federated actor can deliver activities to us"),
+        ("feed", p.feeds, "a feed enumerates changes with stable item identity"),
+        ("sitemap", p.sitemaps, "lastmod says what moved without refetching the site"),
+        ("structured-metadata", p.structured_types,
+         "the pages declare typed entities, so nothing needs to be inferred from prose"),
+        ("conditional-http", p.conditional,
+         "a validator lets a re-read cost headers rather than a body"),
+    ):
+        if present:
+            p.best_carrier, p.why = carrier, why
+            return
+    p.best_carrier = "html-extraction"
+    p.why = ("nothing machine-legible was declared, so reading this source costs a "
+             "full fetch and an interpretation; that is the expensive path and it is "
+             "the last resort, not the default")
+
+
+
+def observe(url: str, twin: str) -> dict:
+    """Record a foreign body through the organ that owns foreign observation.
+
+    Discovery decides *what* to read; it must not become a second way to read
+    it. Every body that matters goes through `bonfyre-project foreign observe`,
+    which does the robots preflight, retains the exact bytes, digests them and
+    writes a receipt. A parser then works from a body that still hashes to its
+    receipt, or it does not work at all -- so nothing here can quietly become an
+    assertion about the world that no receipt supports."""
+    import os
+    root = os.environ.get("BONFYRE_FOREIGN_ROOT", "/var/lib/bonfyre/foreign")
+    binary = os.environ.get("BONFYRE_PROJECT_BIN", "/usr/local/bin/bonfyre-project")
+    if not os.access(binary, os.X_OK):
+        return {"error": "bonfyre-project is not installed here",
+                "detail": "discovery can probe, but only that organ may admit a body"}
+    receipt = f"{root}/receipts/{twin}.json"
+    body = f"{root}/bodies/{twin}.body"
+    argv = [binary, "foreign", "observe", twin, url,
+            "--receipt", receipt, "--body", body, "--observe-right", "public"]
+    proc = subprocess.run(argv, capture_output=True, text=True, timeout=120)
+    try:
+        with open(receipt) as fh:
+            rec = json.load(fh)
+    except Exception:
+        return {"error": "no receipt written", "exit": proc.returncode,
+                "stderr": proc.stderr[-400:]}
+    return {"twin_id": twin, "content_sha256": rec.get("content_sha256"),
+            "http_status": rec.get("http_status"),
+            "policy_decision": rec.get("policy_decision"),
+            "body_bytes": rec.get("body_bytes"), "receipt": receipt}
+
+
+def main(argv: list[str]) -> int:
+    do_observe = "--observe" in argv
+    argv = [a for a in argv if a != "--observe"]
+    if not argv:
+        print(__doc__.strip().splitlines()[0], file=sys.stderr)
+        print("usage: foreign-discover.py [--observe] <https://root> [...]", file=sys.stderr)
+        return 2
+    out = []
+    for root in argv:
+        if not root.startswith(("http://", "https://")):
+            root = "https://" + root
+        p = Passport(root=root)
+        p.observed_at = subprocess.run(
+            ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"], capture_output=True, text=True
+        ).stdout.strip()
+        read_robots(p)
+        if p.robots_allows_us:
+            read_head(p)
+            probe_known_paths(p)
+            check_conditional(p)
+        choose(p)
+        # De-duplicate without losing order.
+        p.sitemaps = list(dict.fromkeys(p.sitemaps))
+        p.websub_hubs = list(dict.fromkeys(p.websub_hubs))
+        p.structured_types = list(dict.fromkeys(p.structured_types))
+        seen_descriptors, descriptors = set(), []
+        for descriptor in p.protocol_descriptors:
+            key = (descriptor["family"], descriptor["descriptor"])
+            if key not in seen_descriptors:
+                seen_descriptors.add(key)
+                descriptors.append(descriptor)
+        p.protocol_descriptors = descriptors
+        seen, feeds = set(), []
+        for f in p.feeds:
+            if f["url"] not in seen:
+                seen.add(f["url"])
+                feeds.append(f)
+        p.feeds = feeds
+        record = asdict(p)
+        if do_observe and p.robots_allows_us:
+            # Receipt the single best-carrier document, not the whole site. The
+            # point of the ladder is to read one cheap authoritative thing.
+            target = None
+            if p.feeds:
+                target = p.feeds[0]["url"]
+            elif p.sitemaps:
+                target = p.sitemaps[0]
+            if target:
+                host = urllib.parse.urlparse(p.root).netloc.replace(".", "-")
+                stamp = p.observed_at.replace(":", "-")
+                record["observation"] = observe(target, f"discover-{host}-{stamp}")
+                record["observed_url"] = target
+            else:
+                record["observation"] = {
+                    "skipped": "no cheap carrier to receipt; reading this source "
+                               "means paying for HTML extraction, which is a "
+                               "deliberate decision rather than a default"}
+        out.append(record)
+    print(json.dumps(out if len(out) > 1 else out[0], indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""Register observation sources as ForeignTwin subjects.
+
+Registration is not activation: this establishes that a stable foreign identity
+exists, and binds no presence. Whether a source is *present* in this
+institution's world is a separate act with its own authority.
+
+The estate observes two shapes of external thing and they do not identify the
+same way.
+
+A URL twin is one resource fetched repeatedly. Its identity is the digest of
+the bytes it last returned, and it has a web address because we observed one.
+That is what `bonfyre-project foreign promote` handles.
+
+A source is different. `src:dallas-tax-parcels` is an endpoint observed across
+hundreds of pages and half a million rows; no single page digest identifies it,
+and the estate holds no URL for it -- the id names the source, not a route. So:
+
+  identity   a digest over the source's distinct page digests, which changes
+             when what the source serves changes, and is stable when it does not
+  address    none. Binding an invented URL would assert a route this estate
+             cannot resolve, which is worse than having no address.
+  presence   still bound, because the source is a real thing observed in the
+             live world and must be addressable as a subject even when it has
+             no web address.
+
+Composes two owners rather than reimplementing either: BonfyreQuery reads the
+observation corpus, BonfyreWebAddress writes the Matrix.
+
+Cannot infer: a promoted source is not a claimed, licensed or authorized one.
+It is a thing this institution observed at scale and chose to be able to name.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+
+DEFAULT_PARQUET = "/var/lib/bonfyre/state/fleming/estate.parquet"
+
+
+def query(db: str, sql: str) -> list[dict]:
+    out = subprocess.run(["/usr/local/bin/bonfyre-query", "sql", db, sql],
+                         capture_output=True, text=True, timeout=600).stdout
+    body = "\n".join(l for l in out.splitlines() if not l.startswith("[query]"))
+    try:
+        return json.loads(body)
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--parquet", default=DEFAULT_PARQUET)
+    ap.add_argument("--scratch", default="/tmp/source-promote.duckdb")
+    ap.add_argument("--matrix", default="/var/lib/bonfyre/matrix.db")
+    ap.add_argument("--organ", default="/usr/local/bin/bonfyre-web-address")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    # The set digest is computed here rather than in SQL so the rule is legible:
+    # sorted distinct page digests, joined, hashed. Sorting matters -- an
+    # identity that depended on row order would change when nothing did.
+    rows = query(args.scratch, f"""
+        SELECT src_id, dialect, COUNT(*) AS observations,
+               COUNT(DISTINCT page_sha256) AS pages,
+               string_agg(DISTINCT page_sha256, ',' ORDER BY page_sha256) AS page_set,
+               MAX(observed_at) AS last_seen
+        FROM read_parquet('{args.parquet}')
+        GROUP BY src_id, dialect ORDER BY observations DESC
+    """)
+    if not rows:
+        print(f"no observation sources found in {args.parquet}", file=sys.stderr)
+        return 1
+    if args.limit:
+        rows = rows[: args.limit]
+
+    promoted, failed = 0, 0
+    for r in rows:
+        src = str(r["src_id"])
+        page_set = r.get("page_set") or ""
+        digest = hashlib.sha256(page_set.encode()).hexdigest()
+        sid = "foreign_twin:" + src.replace("src:", "src-").replace(":", "-")
+        evidence = (f"observation-corpus:{r['observations']}:{r['pages']}pages:"
+                    f"{str(r.get('last_seen'))[:32]}")
+        if args.dry_run:
+            promoted += 1
+            continue
+        subject = subprocess.run(
+            [args.organ, "subject", "--id", sid, "--kind", "ForeignTwin",
+             "--digest", digest, "--evidence", evidence, "--db", args.matrix],
+            capture_output=True, text=True, timeout=60)
+        if subject.returncode != 0:
+            failed += 1
+            continue
+        # Registration only. A source having been observed does not make it
+        # present in this institution's world -- that is a separate decision,
+        # and binding a presence here made 115 parcel endpoints publicly
+        # present merely because they had been read.
+        promoted += 1
+
+    print(json.dumps({
+        "schema": "bonfyre.observation-source.promote.v1",
+        "sources": len(rows),
+        "promoted": promoted,
+        "failed": failed,
+        "dry_run": bool(args.dry_run),
+        "identity_rule": "sha256 over the source's sorted distinct page digests",
+        "forbidden_inference": (
+            "a promoted source is not a claimed, licensed or authorized one; it is a "
+            "thing observed at scale and chosen to be nameable, and it carries no web "
+            "address because this estate holds no route to it"
+        ),
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

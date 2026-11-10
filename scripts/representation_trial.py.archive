@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+"""Measure what a compressed representation preserves, against the exact one.
+
+A representation is chosen the way a supplier is chosen: on measured cost
+against a stated requirement, never on reputation. So the rungs are the same
+ones the provider market already uses, and each has to be climbed:
+
+    representation declared
+      != admissible for this body kind
+      != executed against this cohort
+      != preservation measured
+      != envelope
+
+The measurement that matters is not average error. It is what the compressed
+form does to the candidate set, reported as two separate numbers:
+
+    false prune   the exact answer was dropped   -- a lost candidate
+    false keep    something else was admitted    -- a wasted rehydration
+
+They are never netted. A false prune removes a real candidate from every stage
+downstream and nothing later can recover it; a false keep costs one exact check.
+A representation that trades ten false keeps for one fewer false prune is a good
+trade, and a single number would hide the trade entirely.
+
+Cannot infer: preservation on this corpus is not preservation on another; these
+embeddings come from a hashed-token backend, whose geometry is not a learned
+model's, so an envelope measured here does not transfer to one that is; and a
+preserved candidate is not a correct answer.
+"""
+from __future__ import annotations
+
+import glob
+import json
+import math
+import os
+import sqlite3
+import sys
+import time
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def load_corpus(directory: str) -> list[tuple[str, list[float]]]:
+    out = []
+    for path in sorted(glob.glob(os.path.join(directory, "*.json"))):
+        if path.endswith(".json.json"):
+            continue
+        try:
+            with open(path) as f:
+                doc = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        vec = doc.get("vector") or doc.get("embedding")
+        if isinstance(vec, list) and vec:
+            out.append((os.path.basename(path)[:-5], [float(x) for x in vec]))
+    return out
+
+
+def unit(v: list[float]) -> list[float]:
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / n for x in v]
+
+
+def cosine(a: list[float], b: list[float]) -> float:
+    return sum(x * y for x, y in zip(a, b))
+
+
+# --- the representations under trial -------------------------------------
+#
+# Each returns (encoded_bodies, bytes_per_body, scorer). The scorer takes two
+# encoded bodies and returns a similarity that is only required to *rank*
+# comparably -- an envelope is about the candidate set, not about reproducing
+# the exact number.
+
+def rep_exact(vectors):
+    return vectors, 4 * len(vectors[0]), cosine
+
+
+def rep_int8(vectors):
+    """Symmetric int8, one byte per dimension.
+
+    The scale is per body, so it has to be carried and multiplied back when two
+    bodies are compared. A first version quantised with a per-body peak and then
+    compared the raw codes, which ranks by whichever body happened to have the
+    larger peak rather than by similarity -- and reported int8 at 0.357 recall,
+    defaming the representation for a bug in its harness. A tournament that
+    mis-implements a candidate is worse than one that omits it."""
+    enc = []
+    for v in vectors:
+        peak = max(abs(x) for x in v) or 1.0
+        codes = [max(-127, min(127, int(round(x / peak * 127)))) for x in v]
+        enc.append((codes, peak / 127.0))
+    def score(a, b):
+        ca, sa = a
+        cb, sb = b
+        return sum(x * y for x, y in zip(ca, cb)) * sa * sb
+    return enc, len(vectors[0]), score
+
+
+def rep_sign(vectors):
+    """One bit per dimension. The most aggressive thing that still ranks.
+
+    Scale-free by construction, so unlike int8 there is nothing to carry back."""
+    enc = [[1 if x >= 0 else -1 for x in v] for v in vectors]
+    return enc, math.ceil(len(vectors[0]) / 8), lambda a, b: sum(
+        x * y for x, y in zip(a, b))
+
+
+def rep_halved(vectors):
+    """Keep the first half of the dimensions. A crude projection, included
+    because a bad representation has to be measurable or the tournament only
+    ever confirms the ones already believed good."""
+    half = len(vectors[0]) // 2
+    return [v[:half] for v in vectors], 4 * half, cosine
+
+
+REPRESENTATIONS = {
+    "exact-f32": (rep_exact, "the reference; every other envelope is relative to it"),
+    "int8": (rep_int8, "one byte per dimension, per-body scale"),
+    "sign-1bit": (rep_sign, "one bit per dimension"),
+    "halved-f32": (rep_halved, "first half of the dimensions, kept as a control"),
+}
+
+
+def topk(scores: list[tuple[str, float]], k: int) -> list[str]:
+    return [i for i, _ in sorted(scores, key=lambda p: -p[1])[:k]]
+
+
+def trial(corpus, name, k: int) -> dict:
+    ids = [i for i, _ in corpus]
+    vectors = [unit(v) for _, v in corpus]
+    maker, note = REPRESENTATIONS[name]
+    started = time.time()
+    encoded, per_body, score = maker(vectors)
+    exact_encoded, _, exact_score = rep_exact(vectors)
+
+    false_prunes = false_keeps = overlap_total = 0
+    for qi in range(len(ids)):
+        want = topk([(ids[j], exact_score(exact_encoded[qi], exact_encoded[j]))
+                     for j in range(len(ids)) if j != qi], k)
+        got = topk([(ids[j], score(encoded[qi], encoded[j]))
+                    for j in range(len(ids)) if j != qi], k)
+        ws, gs = set(want), set(got)
+        false_prunes += len(ws - gs)
+        false_keeps += len(gs - ws)
+        overlap_total += len(ws & gs)
+    queries = len(ids)
+    return {
+        "representation": name,
+        "note": note,
+        "queries": queries,
+        "k": k,
+        "bytes_per_body": per_body,
+        "compression_vs_exact": round((4 * len(vectors[0])) / per_body, 2),
+        "false_prunes": false_prunes,
+        "false_keeps": false_keeps,
+        "recall_at_k": round(overlap_total / (queries * k), 4),
+        "seconds": round(time.time() - started, 4),
+        "rung": "preservation_measured",
+    }
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    directory = args[0] if args else None
+    if not directory or not os.path.isdir(directory):
+        print("usage: representation_trial.py <embeddings-dir> [--k N] [--json]",
+              file=sys.stderr)
+        return 2
+    k = 5
+    for i, a in enumerate(sys.argv):
+        if a == "--k" and i + 1 < len(sys.argv):
+            k = int(sys.argv[i + 1])
+
+    corpus = load_corpus(directory)
+    if len(corpus) < k + 2:
+        print(f"corpus of {len(corpus)} is too small to measure recall at k={k}",
+              file=sys.stderr)
+        return 2
+
+    trials = [trial(corpus, name, k) for name in REPRESENTATIONS]
+    exact = next(t for t in trials if t["representation"] == "exact-f32")
+    # The reference must reproduce itself, or the measurement is meaningless.
+    if exact["false_prunes"] or exact["recall_at_k"] != 1.0:
+        print("the exact reference did not reproduce its own ranking; "
+              "the harness is wrong before any representation is judged",
+              file=sys.stderr)
+        return 1
+
+    receipt = {
+        "schema": "bonfyre-representation-trial.v1",
+        "cohort": os.path.basename(directory.rstrip("/")),
+        "bodies": len(corpus),
+        "dimensions": len(corpus[0][1]),
+        "k": k,
+        "ran_at": iso_now(),
+        "trials": sorted(trials, key=lambda t: (-t["recall_at_k"], t["bytes_per_body"])),
+        "cannot_infer": [
+            "preservation on this corpus -> preservation on another",
+            "an envelope measured on hashed-token embeddings -> the same envelope "
+            "on a learned model, whose geometry differs",
+            "a preserved candidate -> a correct answer",
+            "recall at k -> recall at any other k",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  cohort {receipt['cohort']}: {receipt['bodies']} bodies, "
+          f"{receipt['dimensions']} dims, k={k}")
+    print()
+    print(f"  {'representation':<16}{'bytes':>7}{'ratio':>8}{'recall@k':>10}"
+          f"{'false prunes':>14}{'false keeps':>13}")
+    for t in receipt["trials"]:
+        print(f"  {t['representation']:<16}{t['bytes_per_body']:>7}"
+              f"{t['compression_vs_exact']:>7}x{t['recall_at_k']:>10.3f}"
+              f"{t['false_prunes']:>14}{t['false_keeps']:>13}")
+    print()
+    print("  a false prune loses a candidate every later stage will never see;")
+    print("  a false keep costs one exact check. They are not netted.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

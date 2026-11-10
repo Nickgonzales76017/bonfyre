@@ -1,0 +1,148 @@
+{
+  "schema": "bonfyre.installed-workspace-contract-fixture.v1",
+  "observedAt": "2026-10-22T23:32:27.265Z",
+  "scope": "Release and prefix coordinates observed in the current account; test records and accounts are isolated and synthetic.",
+  "workspaces": [
+    {
+      "family": "connected-instruments",
+      "release": "f0ba0407caab55e591416e453bbcb26d4afa843b9925c288b4c2e934b71a8dd9",
+      "entry": "instruments/",
+      "pack": "experience.connected-instruments.workspace",
+      "prefixes": [
+        "draft:instruments:checks:",
+        "draft:instruments:composition:",
+        "draft:instruments:incoming:",
+        "draft:instruments:product:",
+        "draft:instruments:research:",
+        "draft:instruments:schema:",
+        "draft:instruments:traces:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "connections",
+      "release": "7b9ab7acc533b273dc4e2f9ba2597370c599912a6aeee976a7a4c08e68e66bf0",
+      "entry": "connections/",
+      "pack": "experience.connection-studio.workspace",
+      "prefixes": [
+        "connections:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "creator-audio",
+      "release": "8477c3eb1e14b4b6aca5fe95ef9a332b0872c8fed7f5fc5ba59bfcea85ac5f2b",
+      "entry": "audio/",
+      "pack": "experience.native-creator-studio.workspace",
+      "prefixes": [
+        "draft:creator:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "e85c444cba4adb75002045198fcd31bfb291e95a9951a0b53dfeba3463f02ef6"
+    },
+    {
+      "family": "financial-workbooks",
+      "release": "13ea2a5f45889fd5d18e29e4df17705138abf38be15c86132008a2ddb35a6264",
+      "entry": "finance/",
+      "pack": "experience.finance-workbooks.workspace",
+      "prefixes": [
+        "finance-workbook:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "recurring-programs",
+      "release": "a2393d0e4c9fc80fa2e4b6ba0b99e2f08d8dc42e0dc78f97211a8521750292a2",
+      "entry": "programs/",
+      "pack": "experience.source-programs.workspace",
+      "prefixes": [
+        "draft:",
+        "observation:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "e85c444cba4adb75002045198fcd31bfb291e95a9951a0b53dfeba3463f02ef6"
+    },
+    {
+      "family": "shipment-review",
+      "release": "ebfd306ef1d231176904272078d91ced6005ee9236ef63cc59b8bac1df5754f1",
+      "entry": "shipments/",
+      "pack": "experience.shipment-archive.workspace",
+      "prefixes": [
+        "shipment-batch:"
+      ],
+      "store": "components/bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "skill-instruments",
+      "release": "e31963ee412df0379f314bcdbb0a8e906e901ea8b607c65c7e2a5129e16dfb54",
+      "entry": "instruments/",
+      "pack": "experience.skill-instruments.workspace",
+      "prefixes": [
+        "opportunity:",
+        "plan:",
+        "price-work:",
+        "process-model:",
+        "review-project:",
+        "schema-plan:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "source-campaign",
+      "release": "a1687b37c122c57045f9a7d3e7974549bf878397806e6f73a346065004354468",
+      "entry": "campaigns/",
+      "pack": "experience.source-campaign.workspace",
+      "prefixes": [
+        "source-campaign:"
+      ],
+      "store": "components/bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "source-materials",
+      "release": "a2cad1e582fa6ce66717db7f45facfdbbe19f0eba4e4863c70132fbf1102e6d7",
+      "entry": "sources/",
+      "pack": "experience.source-library.workspace",
+      "prefixes": [
+        "source-material:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "6bd949652c5057535222264abc3cd61de672e67b4827dab16474eb177a394e7b"
+    },
+    {
+      "family": "spaces",
+      "release": "a5b379ab187e523c3d1eb090a33d014287491c4d37594520bbb7b4c151183e5a",
+      "entry": "catalogue/",
+      "pack": "experience.multi-merchant-catalogue.workspace",
+      "prefixes": [
+        "draft:catalogue:",
+        "fixture-plan:",
+        "product-model:",
+        "release:catalogue:",
+        "review:catalogue:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "e85c444cba4adb75002045198fcd31bfb291e95a9951a0b53dfeba3463f02ef6"
+    },
+    {
+      "family": "spaces",
+      "release": "a5b379ab187e523c3d1eb090a33d014287491c4d37594520bbb7b4c151183e5a",
+      "entry": "product-room/",
+      "pack": "experience.retail-procurement.workspace",
+      "prefixes": [
+        "draft:catalogue:",
+        "fixture-plan:",
+        "product-model:",
+        "release:catalogue:",
+        "review:catalogue:"
+      ],
+      "store": "bridge/workspace-store.mjs",
+      "storeSha256": "e85c444cba4adb75002045198fcd31bfb291e95a9951a0b53dfeba3463f02ef6"
+    }
+  ]
+}

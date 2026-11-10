@@ -1,0 +1,347 @@
+#!/usr/bin/env python3
+"""An edition: what this estate has, composed the way a magazine composes.
+
+A magazine does not show you its CMS, its photo desk, its archive or its
+layout engine. It hands you one artifact whose hierarchy tells you what
+matters, and the machinery stays out of sight. This estate has been publishing
+the machinery -- lists of sources, counts of channels, grids of rows -- and
+calling that a front page.
+
+So this composes an edition instead. The material is real and retained: the
+cover is the best image this estate actually holds right now, the strip is
+comparable photographs beside it, the player carries a video or a recording it
+kept, and the chart is drawn from what it kept per day. The art direction is
+not invented here either: one of the estate's own published presentation
+templates dresses it, and the page names which one.
+
+What a magazine does not do, and this must: every piece says who published it
+and what the estate cannot infer from having it. Editorial confidence is not a
+licence to drop provenance -- it is the reason provenance has to survive the
+layout.
+
+  publish_edition.py --out DIR [--territory live]
+"""
+import argparse, re, html, json, os, random, sqlite3, sys, time
+
+NOW = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
+
+BOUNDARY = ("Everything here is material this estate read and kept, arranged by it. A piece "
+            "appearing in this edition is not a claim that its source still publishes it, that "
+            "what it says is true, or that anyone involved knows this estate exists.")
+
+
+ESCAPED_MARK = re.compile(r"\\+([\"'/])")
+LONE_SLASHES = re.compile(r"\\{2,}")
+
+
+def clean(v):
+    """A title as the publisher meant it, not as its encoder left it.
+
+    Feeds arrive having escaped their own quotes, and a title that has passed
+    through several hands arrives escaped several times over -- this estate has
+    read one carrying twenty-four backslashes before a single quotation mark.
+    That depth is an artifact of how the value was carried, not part of what
+    was published, so it is collapsed until it stops changing rather than
+    stripped one layer deep. Printing it back would be printing the transport.
+    """
+    text = str(v if v is not None else "")
+    for _ in range(8):
+        undone = ESCAPED_MARK.sub(r"\1", text)
+        undone = undone.replace("\\n", " ").replace("\\t", " ")
+        undone = LONE_SLASHES.sub("", undone)
+        if undone == text:
+            break
+        text = undone
+    return " ".join(text.split())
+
+
+def esc(v):
+    return html.escape(clean(v))
+
+
+def pick_template(cms):
+    """The art direction, taken from the estate's own published templates.
+
+    These are real reference contracts -- a family, a hero mode, a typographic
+    mode and a full token set. Choosing one and naming it is the difference
+    between a designed page and a page that merely looks designed.
+    """
+    rows = cms.execute(
+        "SELECT template, reference_name, reference_url, family, hero_mode, typography_mode,"
+        " density, layout_tokens FROM presentation_template"
+        " WHERE family='magazine' AND COALESCE(layout_tokens,'') <> '' ORDER BY id").fetchall()
+    if not rows:
+        return None
+    # Stable for a day: an edition should not re-dress itself on every reload,
+    # and should not look the same for ever either.
+    day = int(time.time() // 86400)
+    row = rows[day % len(rows)]
+    try:
+        tokens = json.loads(row[7])
+    except Exception:
+        return None
+    return {"template": row[0], "name": row[1], "url": row[2], "family": row[3],
+            "hero": row[4], "type": row[5], "density": row[6], "tokens": tokens}
+
+
+def material(archive):
+    """The pieces an edition needs, each one a real retained row."""
+    archive.row_factory = sqlite3.Row
+    def q(sql, args=()):
+        return [dict(r) for r in archive.execute(sql, args)]
+
+    # A feed is free to date a thing in 2105, and several do. Ordering by that
+    # would let the worst-behaved clock in the estate pick the cover, so every
+    # selection below is bounded to the window this estate can speak for.
+    SANE = ("AND at BETWEEN strftime('%s','now') - 86400*45 "
+            "AND strftime('%s','now') + 86400 ")
+
+    cover = q("""SELECT title, body, href, image, publisher, by, at, source FROM item
+                 WHERE COALESCE(image,'') LIKE 'http%' AND length(COALESCE(body,'')) > 240
+                   AND COALESCE(publisher,'') <> '' AND length(title) BETWEEN 24 AND 110
+                 """ + SANE + "ORDER BY at DESC LIMIT 1")
+    strip = q("""SELECT title, href, image, publisher, at FROM item
+                 WHERE kind='photo' AND COALESCE(image,'') LIKE 'http%'
+                   AND COALESCE(publisher,'') <> ''
+                 """ + SANE + "ORDER BY at DESC LIMIT 3")
+    watch = q("""SELECT title, body, href, image, publisher, at FROM item
+                 WHERE kind='video' AND COALESCE(image,'') LIKE 'http%'
+                 """ + SANE + "ORDER BY at DESC LIMIT 1")
+    listen = q("""SELECT title, body, href, image, publisher, at FROM item
+                  WHERE kind='audio' AND COALESCE(image,'') LIKE 'http%'
+                    AND COALESCE(publisher,'') <> ''
+                  """ + SANE + "ORDER BY at DESC LIMIT 4")
+    # One headline, once. A feed that republishes the same item hourly should
+    # not take three slots in an edition.
+    reading = q("""SELECT title, MIN(href) AS href, MIN(publisher) AS publisher, MAX(at) AS at
+                   FROM item WHERE kind='story' AND COALESCE(publisher,'') <> ''
+                     AND length(title) BETWEEN 20 AND 120
+                     AND title GLOB '*[A-Za-z]*'
+                   """ + SANE + "GROUP BY lower(title) ORDER BY at DESC LIMIT 14")
+    # A feed may date a thing in 1970 or in 2105. Those are facts about the
+    # feed, not about when this estate kept anything, so the chart is bounded
+    # to the window it can actually speak for.
+    kept = q("""SELECT strftime('%Y-%m-%d', at, 'unixepoch') AS day, COUNT(*) AS n
+                FROM item
+                WHERE at BETWEEN strftime('%s','now') - 86400*30 AND strftime('%s','now') + 86400
+                GROUP BY day ORDER BY day""")
+    reach = archive.execute(
+        "SELECT COUNT(*) n, COUNT(DISTINCT publisher) p FROM item").fetchone()
+    return {"cover": cover[0] if cover else None, "strip": strip,
+            "watch": watch[0] if watch else None, "listen": listen,
+            "reading": reading, "kept": kept, "n": reach[0], "publishers": reach[1]}
+
+
+def when(unix):
+    if not unix:
+        return ""
+    return time.strftime("%-d %B, %H:%M UTC", time.gmtime(int(unix)))
+
+
+def dress(tokens):
+    """The template's tokens, as the page's own variables."""
+    t = tokens
+    return (
+      ":root{"
+      f"--ground:{t.get('ground','#0c0d0f')};--ink:{t.get('ink','#f2efe9')};"
+      f"--display:{t.get('display', t.get('ink','#fff'))};--accent:{t.get('accent','#c8a24a')};"
+      f"--muted:{t.get('muted','#8a867e')};--rule:{t.get('rule','rgba(0,0,0,.14)')};"
+      f"--panel:{t.get('panel','#fff')};"
+      f"--face-display:{t.get('face_display','Georgia,serif')};"
+      f"--face-body:{t.get('face_body','system-ui,sans-serif')};"
+      f"--face-mono:{t.get('face_mono','ui-monospace,monospace')};"
+      f"--display-size:{t.get('display_size','clamp(2.4rem,6vw,5rem)')};"
+      f"--display-weight:{t.get('display_weight','600')};"
+      f"--display-tracking:{t.get('display_tracking','-.02em')};"
+      f"--display-leading:{t.get('display_leading','1.04')};"
+      "}")
+
+
+WAYS = ('<nav class="ways"><a href="/press">the press</a><a href="/edition">the edition</a><a href="/archive">the reading room</a><a href="/field">the field</a></nav>')
+
+STYLE = """
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--face-body);
+     font-size:clamp(1rem,1.05vw,1.12rem);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:78rem;margin:0 auto;padding:0 clamp(1rem,3.5vw,3rem)}
+a{color:inherit}
+h1,h2,h3{font-family:var(--face-display);color:var(--display);
+         letter-spacing:var(--display-tracking);line-height:var(--display-leading);margin:0}
+.masthead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+          padding:1.4rem 0 1rem;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.masthead .mark{font-family:var(--face-display);font-weight:700;letter-spacing:.14em;
+                text-transform:uppercase;font-size:.82rem}
+.masthead .when{font-family:var(--face-mono);font-size:.74rem;color:var(--muted)}
+.ways{display:flex;gap:.9rem;font-family:var(--face-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}.ways a{color:var(--muted);text-decoration:none}.ways a:hover{color:var(--accent)}
+/* The cover is the page's argument about what matters. It gets the room. */
+.cover{padding:clamp(2rem,5vw,4.5rem) 0 clamp(1.5rem,3vw,2.5rem)}
+.cover figure{margin:0 0 clamp(1.2rem,2.6vw,2rem)}
+.cover img{width:100%;height:clamp(16rem,52vh,34rem);object-fit:cover;display:block;
+           background:var(--panel)}
+.cover h1{font-size:var(--display-size);font-weight:var(--display-weight);max-width:22ch}
+.cover .dek{margin:1rem 0 0;max-width:62ch;font-size:clamp(1.05rem,1.3vw,1.3rem);color:var(--ink)}
+.by{font-family:var(--face-mono);font-size:.74rem;color:var(--muted);letter-spacing:.04em;
+    margin-top:.9rem;display:flex;gap:.9rem;flex-wrap:wrap}
+.rule{border:0;border-top:1px solid var(--rule);margin:clamp(2rem,4vw,3.2rem) 0}
+.label{font-family:var(--face-mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+       color:var(--muted);margin:0 0 1.1rem}
+/* Comparable things stand beside each other; this is a strip, not a deck of cards. */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:clamp(1rem,2vw,1.8rem)}
+.strip figure{margin:0}
+.strip img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--panel)}
+.strip h3{font-size:1.05rem;margin:.7rem 0 0;font-weight:600}
+.watch img{width:100%;height:clamp(14rem,46vh,28rem);object-fit:cover;display:block}
+.watch h2{font-size:clamp(1.5rem,2.6vw,2.4rem);margin:1rem 0 0;max-width:26ch}
+.listen{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:1.4rem}
+.listen .one{display:flex;gap:.9rem;align-items:flex-start}
+.listen img{width:4.6rem;height:4.6rem;object-fit:cover;flex:none;background:var(--panel)}
+.listen h3{font-size:.98rem;font-weight:600;margin:0}
+.reading{columns:2 18rem;column-gap:clamp(1.6rem,3vw,3rem)}
+.reading li{break-inside:avoid;margin:0 0 .95rem;list-style:none}
+.reading h3{font-size:1.02rem;font-weight:600;margin:0}
+.reading ol{margin:0;padding:0}
+figcaption{font-family:var(--face-mono);font-size:.72rem;color:var(--muted);margin-top:.5rem}
+.kept{margin:0 0 .8rem;min-height:170px;width:100%}
+.src{font-size:.82rem;color:var(--muted);max-width:64ch}
+.colophon{padding:clamp(2rem,4vw,3rem) 0 4rem;border-top:1px solid var(--rule);
+          font-size:.84rem;color:var(--muted)}
+.colophon a{text-decoration:underline}
+.big{font-family:var(--face-display);color:var(--display);font-size:clamp(1.8rem,4vw,3rem);
+     display:block;line-height:1.1}
+@media (prefers-reduced-motion:no-preference){
+  .cover img,.watch img{transition:filter .4s ease}
+}
+"""
+
+
+def piece_by(row):
+    bits = []
+    if row.get("publisher"):
+        bits.append(esc(row["publisher"]))
+    if row.get("by"):
+        bits.append(esc(row["by"]))
+    if row.get("at"):
+        bits.append(esc(when(row["at"])))
+    return "".join("<span>%s</span>" % b for b in bits)
+
+
+def compose(look, m, territory):
+    tokens = look["tokens"] if look else {}
+    out = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+           '<title>The edition · Aurekai</title>',
+           '<meta name="bonfyre:cannot-infer" content="', esc(BOUNDARY), '">',
+           '<link rel="stylesheet" href="/assets/vendor-uplot.min.css">',
+           '<style>', dress(tokens), STYLE, '</style>',
+           '<script src="/assets/client-organs.js" defer></script>',
+           '</head><body><div class="wrap">']
+
+    out.append('<header class="masthead"><span class="mark">Aurekai · %s</span>'
+               '%s<span class="when">%s</span></header>' % (esc(territory), WAYS, esc(NOW)))
+
+    cover = m["cover"]
+    if cover:
+        out.append('<section class="cover"><figure>')
+        out.append('<img src="%s" alt="" loading="eager" decoding="async">' % esc(cover["image"]))
+        out.append('</figure><h1>')
+        out.append('<a href="%s" rel="noopener nofollow">%s</a>' % (esc(cover["href"]), esc(cover["title"]))
+                   if cover.get("href") else esc(cover["title"]))
+        out.append('</h1>')
+        body = (cover.get("body") or "").strip()
+        if body:
+            out.append('<p class="dek">%s</p>' % esc(body[:420] + ("…" if len(body) > 420 else "")))
+        out.append('<p class="by">%s</p>' % piece_by(cover))
+        out.append('<p class="src">This estate read this and kept it. That it is here is this '
+                   'estate\'s arrangement of its own reading, not the publisher\'s.</p>')
+        out.append('</section>')
+
+    if m["strip"]:
+        out.append('<hr class="rule"><section><p class="label">Also seen</p><div class="strip">')
+        for one in m["strip"]:
+            out.append('<figure><img src="%s" alt="" loading="lazy" decoding="async">'
+                       % esc(one["image"]))
+            out.append('<h3>%s</h3><figcaption>%s</figcaption></figure>'
+                       % (esc(one["title"]), piece_by(one).replace("<span>", "").replace("</span>", " · ")))
+        out.append('</div></section>')
+
+    if m["watch"]:
+        w = m["watch"]
+        out.append('<hr class="rule"><section class="watch"><p class="label">Watch</p>')
+        out.append('<a href="%s" rel="noopener nofollow"><img src="%s" alt="" loading="lazy"></a>'
+                   % (esc(w.get("href") or "#"), esc(w["image"])))
+        out.append('<h2>%s</h2><p class="by">%s</p>' % (esc(w["title"]), piece_by(w)))
+        out.append('<p class="src">A moving picture this estate observed being published. It is '
+                   'played from the publisher, not from here.</p></section>')
+
+    if m["listen"]:
+        out.append('<hr class="rule"><section><p class="label">Listen</p><div class="listen">')
+        for one in m["listen"]:
+            out.append('<div class="one"><img src="%s" alt="" loading="lazy">'
+                       '<div><h3>%s</h3><p class="by">%s</p></div></div>'
+                       % (esc(one["image"]), esc(one["title"]), piece_by(one)))
+        out.append('</div></section>')
+
+    if m["kept"] and len(m["kept"]) > 2:
+        series = [[int(time.mktime(time.strptime(r["day"], "%Y-%m-%d"))), r["n"]] for r in m["kept"]]
+        out.append('<hr class="rule"><section><p class="label">What this estate kept, by day</p>')
+        out.append('<div class="kept" data-bf-series=\'%s\' data-bf-height="150" '
+                   'data-bf-label="things kept" role="img" aria-label="things kept per day"></div>'
+                   % json.dumps(series))
+        out.append('<p class="src">One point per day. Nothing is drawn between them, because a '
+                   'line between two observations is a claim nobody made.</p></section>')
+
+    if m["reading"]:
+        out.append('<hr class="rule"><section><p class="label">Reading</p><div class="reading"><ol>')
+        for one in m["reading"]:
+            out.append('<li><h3><a href="%s" rel="noopener nofollow">%s</a></h3>'
+                       '<p class="by">%s</p></li>'
+                       % (esc(one.get("href") or "#"), esc(one["title"]), piece_by(one)))
+        out.append('</ol></div></section>')
+
+    out.append('<footer class="colophon">')
+    out.append('<p><span class="big">%s</span>things kept, from <strong>%s</strong> publishers.</p>'
+               % (format(m["n"], ","), format(m["publishers"], ",")))
+    if look:
+        out.append('<p>Dressed by <strong>%s</strong>, one of this estate\'s own published '
+                   'presentation templates (%s, %s hero, %s typography). The edition changes its '
+                   'dress daily and says which one it is wearing.</p>'
+                   % (esc(look["name"] or look["template"]), esc(look["family"]),
+                      esc(look["hero"]), esc(look["type"])))
+    out.append('<p class="src">%s</p>' % esc(BOUNDARY))
+    out.append('<p>The whole population this edition is drawn from is at '
+               '<a href="/field">the field</a>. What reading it costs is at '
+               '<a href="/economics">economics</a>.</p>')
+    out.append('</footer></div></body></html>')
+    return "".join(out)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--territory", default="live")
+    args = ap.parse_args()
+
+    archive = sqlite3.connect("file:%s/items.db?mode=ro" % args.estate, uri=True)
+    cms = sqlite3.connect("file:%s/cms.db?mode=ro" % args.estate, uri=True)
+    look = pick_template(cms)
+    m = material(archive)
+    page = compose(look, m, args.territory)
+    archive.close(); cms.close()
+
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "edition.html"), "w") as f:
+        f.write(page)
+    print(json.dumps({
+        "bytes": len(page), "template": (look or {}).get("name"),
+        "cover": (m["cover"] or {}).get("title"),
+        "strip": len(m["strip"]), "listen": len(m["listen"]),
+        "reading": len(m["reading"]), "days_charted": len(m["kept"]),
+        "kept": m["n"], "publishers": m["publishers"],
+        "cannot_infer": BOUNDARY,
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

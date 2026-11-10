@@ -9,7 +9,12 @@ db=${BONFYRE_FABRIC_DB:-"$state/fabric.db"}
 output=${BONFYRE_COMMAND_EVIDENCE:-"$state/completion/command-evidence.tsv"}
 
 [ -f "$db" ] || { echo "fabric database not found: $db" >&2; exit 1; }
-mkdir -p "$(dirname "$output")"
+umask 077
+directory=$(dirname "$output")
+mkdir -p "$directory"
+temporary=$(mktemp "$directory/.bonfyre-command-evidence.XXXXXXXX")
+trap 'rm -f "$temporary"' 0
+printf 'operator\tfamily\tbinding_state\tcontract_generation\tworkload_command\tinput_artifact\toutput_artifact\tevent_id\treceipt_id\texit_status\tquality_result\tmaturity\n' >"$temporary"
 
 sqlite3 -tabs "$db" '
 WITH active AS (
@@ -49,15 +54,14 @@ LEFT JOIN latest_event e ON e.operator_id = c.id AND e.ordinal = 1
 LEFT JOIN receipts r ON r.id = e.receipt_id
 WHERE c.id LIKE "command.%"
 ORDER BY c.id;
-' | {
-  printf 'operator\tfamily\tbinding_state\tcontract_generation\tworkload_command\tinput_artifact\toutput_artifact\tevent_id\treceipt_id\texit_status\tquality_result\tmaturity\n'
-  cat
-} >"$output"
+' >>"$temporary"
 
-rows=$(awk 'NR > 1 { count++ } END { print count + 0 }' "$output")
-unique=$(awk -F '\t' 'NR > 1 { seen[$1] = 1 } END { print length(seen) }' "$output")
+rows=$(awk 'NR > 1 { count++ } END { print count + 0 }' "$temporary")
+unique=$(awk -F '\t' 'NR > 1 { seen[$1] = 1 } END { print length(seen) }' "$temporary")
 [ "$rows" -eq 93 ] && [ "$unique" -eq 93 ] || {
   echo "invalid command evidence matrix: rows=$rows unique=$unique" >&2
   exit 1
 }
+mv "$temporary" "$output"
+trap - 0
 printf '%s\n' "$output"

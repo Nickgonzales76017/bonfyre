@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""Bind the columnar observation estate as a material closure contribution.
+
+Parquet has been a file this estate happens to query. That is not the same as a
+representation the closure knows about: a subject's closure could describe its
+identity, its address and its presence while saying nothing about the 544MB of
+observation facts that actually back it.
+
+The body/field estate has four representations with different optimal
+workloads -- Arrow for in-memory typed batches, Parquet for durable columnar
+observation facts, Zarr for chunked N-dimensional fields, Lance for searchable
+indexed datasets. Parquet's role here is the durable factual one, and it earns a
+contribution on the *material* plane.
+
+What a contribution is not:
+
+  a Parquet row        is not an admitted Matrix fact
+  a subject_candidate  is not a MatrixSubject
+  an observation       is not a RelationshipGraph edge
+
+The columnar estate is a compressed factual representation; AssertionBoundary
+still controls admission. Binding it says these bytes back this subject, not
+that their contents are true.
+
+The resource URI carries the slice selector because one file holds every
+source: the contribution is this source's slice of a shared columnar body, and
+pretending each had its own file would misdescribe what is stored.
+
+Cannot infer: a bound body -> an admitted fact, or a licence to redistribute it.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+def file_digest(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 22), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def body_identity(path: Path) -> tuple[str, int, int]:
+    """Digest, byte size and member count for a columnar body.
+
+    A Parquet dataset is commonly a directory of part files rather than one
+    file, and this estate's is: estate.parquet holds observation.parquet. A
+    single-file digest would therefore have failed on the real layout, and
+    digesting only the first member would describe part of the body as though
+    it were all of it.
+
+    For a directory the digest is a manifest: each member's relative name and
+    content digest, sorted, hashed together. Sorting matters -- a digest that
+    depended on directory order would change when nothing did. Adding or
+    removing a part changes it, which is correct: that is a different body.
+    """
+    if path.is_file():
+        return file_digest(path), path.stat().st_size, 1
+    members = sorted(q for q in path.rglob("*") if q.is_file())
+    manifest = "\n".join(f"{q.relative_to(path)}:{file_digest(q)}" for q in members)
+    total = sum(q.stat().st_size for q in members)
+    return hashlib.sha256(manifest.encode()).hexdigest(), total, len(members)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--parquet", default="/var/lib/bonfyre/state/fleming/estate.parquet")
+    ap.add_argument("--matrix", default="/var/lib/bonfyre/matrix.db")
+    ap.add_argument("--organ", default="/usr/local/bin/bonfyre-web-address")
+    ap.add_argument("--query", default="/usr/local/bin/bonfyre-query")
+    ap.add_argument("--scratch", default="/tmp/parquet-bind.duckdb")
+    ap.add_argument("--field", default="/var/lib/bonfyre/state/fields/observation-density.zarr")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    body = Path(args.parquet)
+    if not body.exists():
+        print(f"no columnar body at {body}", file=sys.stderr)
+        return 1
+
+    # One digest for one body. Every slice contributes the same bytes; the slice
+    # is identified by the selector, not by pretending the body differs.
+    body_digest, size, members = body_identity(body)
+
+    out = subprocess.run(
+        [args.query, "sql", args.scratch,
+         f"SELECT DISTINCT src_id FROM read_parquet('{body}') ORDER BY src_id"],
+        capture_output=True, text=True, timeout=600).stdout
+    rows = json.loads("\n".join(l for l in out.splitlines() if not l.startswith("[query]")))
+
+    bound, skipped = 0, 0
+    for r in rows:
+        src = r["src_id"]
+        sid = "foreign_twin:" + src.replace("src:", "src-").replace(":", "-")
+        pid = f"presence:{sid}:observed"
+        # bonfyre:// rather than a filesystem path. A closure contribution is
+        # meant to be portable, and a local path is a reference only this host
+        # can follow -- the validator refuses file:// for exactly that reason.
+        resource = f"bonfyre://observation-estate/{body.name}#src_id={src}"
+        if args.dry_run:
+            bound += 1
+            continue
+        res = subprocess.run(
+            [args.organ, "closure-contribution", "--db", args.matrix,
+             "--subject", sid, "--presence", pid, "--plane", "material",
+             "--owner", "BonfyreQuery", "--resource", resource,
+             "--representation", "Parquet", "--digest", body_digest,
+             "--evidence", f"columnar-estate:{size}bytes:{body_digest[:16]}"],
+            capture_output=True, text=True, timeout=60)
+        if res.returncode == 0:
+            bound += 1
+        else:
+            skipped += 1
+
+    # The derived field, bound beside the body it was lowered from.
+    #
+    # A field is not a second copy of the observations; it is one arrangement of
+    # them, and binding it here is what lets a closure show both what backs a
+    # subject and what was computed from that. Its own .zattrs carries the
+    # lineage -- source digest, derivation, frontier -- so a cell remains
+    # traceable to the rows it counts.
+    field = Path(args.field)
+    field_bound = 0
+    if field.exists() and not args.dry_run:
+        fdigest, fsize, fmembers = body_identity(field)
+        try:
+            axes = json.loads((field / ".zattrs").read_text())
+            order = axes.get("bonfyre:sources", [])
+        except Exception:  # noqa: BLE001
+            order = []
+        for r in rows:
+            src = r["src_id"]
+            if src not in order:
+                continue
+            sid = "foreign_twin:" + src.replace("src:", "src-").replace(":", "-")
+            res = subprocess.run(
+                [args.organ, "closure-contribution", "--db", args.matrix,
+                 "--subject", sid, "--presence", f"presence:{sid}:observed",
+                 "--plane", "material", "--owner", "BonfyreQuery",
+                 "--resource", f"bonfyre://observation-field/{field.name}#row={order.index(src)}",
+                 "--representation", "Zarr", "--digest", fdigest,
+                 "--evidence", f"lowered-from:{body_digest[:16]}:{fsize}bytes"],
+                capture_output=True, text=True, timeout=60)
+            if res.returncode == 0:
+                field_bound += 1
+
+    print(json.dumps({
+        "schema": "bonfyre.parquet.material-binding.v1",
+        "field_rows_bound": field_bound,
+        "body": str(body),
+        "body_bytes": size,
+        "body_members": members,
+        "body_digest": body_digest,
+        "representation": "Parquet",
+        "plane": "material",
+        "slices": len(rows),
+        "bound": bound,
+        "skipped": skipped,
+        "dry_run": bool(args.dry_run),
+        "forbidden_inference": (
+            "a bound body is not an admitted fact and not a licence to redistribute it; "
+            "the columnar estate is a compressed factual representation and "
+            "AssertionBoundary still controls admission"
+        ),
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

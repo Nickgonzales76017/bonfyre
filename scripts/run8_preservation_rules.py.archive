@@ -1,0 +1,417 @@
+#!/usr/bin/env python3
+"""Generic preservation-value rules for the Run8 V5 ExtremeGC reclaim path.
+
+The V5 operator (`bin/converge_estate.py`) treats Downloads as default-delete
+physical cache.  Its first implementation expressed two of its preservation
+bindings as *names*: a substring whitelist for the current authority archive
+(`is_current_authority_name`) and an environment variable for the executing
+operator root (`RUN8_OPERATOR_ROOT`).  Both are the failure mode the Run8
+mission forbids -- "do not maintain a growing filename whitelist of things
+agents are scared to delete" -- and both were observed to misclassify real
+local state:
+
+* false preservation -- the canonical V8.1 zip, its byte-identical duplicate
+  and the Generation-10 system map stayed protected forever purely on a name
+  match, although every byte of all three is already absorbed into the
+  protected ``.bonfyre/run8/canonical/`` spine;
+* false deletion -- with ``RUN8_OPERATOR_ROOT`` absent (any direct invocation
+  of ``converge_estate.py``), the executing operator bundle itself is a
+  Downloads top-level entry and classified ``DELETE``.
+
+This module replaces both with predicates over observable state instead of
+names:
+
+``executing_operator_root``
+    the operator is preserved because it is *executing*, derived from the
+    importing module's own location.
+``absorption_status``
+    preservation value falls to zero once content is byte-present inside the
+    protected durable spine, whatever the file is called.
+``is_hot``
+    a path a live process is still writing is never a deletion candidate,
+    regardless of how large or how "archaeological" it looks.
+``reconstructable_payload_roots``
+    a structural, vendor-neutral reclaim class (purgeable per-user caches and
+    abandoned install/update staging) so ExtremeGC can find capacity outside
+    the exhausted Downloads tree.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import pathlib
+import subprocess
+import time
+import zipfile
+from typing import Iterable
+
+# Apple's File System Programming Guide defines ~/Library/Caches as purgeable:
+# an application must tolerate its loss.  That is a platform contract, not a
+# per-vendor whitelist, so the whole root is a legal reclaim class.
+PURGEABLE_CACHE_ROOTS = ("Library/Caches",)
+
+# Install/update staging lives under a per-user support root and is re-fetched
+# by the owning updater.  Matched structurally (a staging marker directory)
+# rather than by vendor name.
+STAGING_MARKERS = ("in_progress", "update", "pending", "downloading", "partial")
+
+ARCHIVE_SUFFIXES = {".zip", ".jar", ".whl", ".egg"}
+
+DEFAULT_HOT_SECONDS = 600.0
+DEFAULT_STALE_DAYS = 1.0
+DEFAULT_ABSORPTION_BUDGET_BYTES = 512 * 1024 * 1024
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: pathlib.Path, chunk: int = 1 << 20) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(chunk), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+# --------------------------------------------------------------------------
+# 1. The executing operator preserves itself from its own location.
+# --------------------------------------------------------------------------
+
+def _looks_like_operator_root(path: pathlib.Path) -> bool:
+    return (path / "bin").is_dir() and (
+        (path / "config/authority.json").is_file() or (path / "run8.sh").is_file()
+    )
+
+
+def executing_operator_root(module_file: str | os.PathLike[str] | None = None) -> pathlib.Path | None:
+    """Locate the operator bundle that is currently executing.
+
+    Derived from the caller's own file location so that a direct
+    ``python3 bin/converge_estate.py`` invocation protects the same tree that
+    ``run8.sh`` protects.  ``RUN8_OPERATOR_ROOT`` remains an accepted override
+    but is no longer the only binding.
+    """
+    raw = os.environ.get("RUN8_OPERATOR_ROOT")
+    if raw:
+        try:
+            return pathlib.Path(raw).expanduser().resolve()
+        except OSError:
+            pass
+    if module_file is None:
+        module_file = __file__
+    try:
+        here = pathlib.Path(module_file).expanduser().resolve()
+    except OSError:
+        return None
+    for candidate in here.parents:
+        if _looks_like_operator_root(candidate):
+            return candidate
+    return None
+
+
+def within(path: pathlib.Path, root: pathlib.Path | None) -> bool:
+    """True when *path* is the root, inside it, or an ancestor of it."""
+    if root is None:
+        return False
+    try:
+        resolved = path.expanduser().resolve()
+    except OSError:
+        resolved = path
+    return resolved == root or root in resolved.parents or resolved in root.parents
+
+
+# --------------------------------------------------------------------------
+# 2. Preservation value falls to zero once content is durably absorbed.
+# --------------------------------------------------------------------------
+
+def durable_digest_index(spine_roots: Iterable[pathlib.Path]) -> dict[str, str]:
+    """sha256 -> durable location, for every file inside the protected spine."""
+    index: dict[str, str] = {}
+    for root in spine_roots:
+        root = pathlib.Path(root)
+        if not root.exists():
+            continue
+        if root.is_file():
+            try:
+                index.setdefault(sha256_file(root), str(root))
+            except OSError:
+                pass
+            continue
+        for path in root.rglob("*"):
+            if not path.is_file() or path.is_symlink():
+                continue
+            try:
+                index.setdefault(sha256_file(path), str(path))
+            except OSError:
+                continue
+    return index
+
+
+def _member_digests(path: pathlib.Path, budget: int) -> list[str] | None:
+    """Digests of the content units inside *path*, or None when unreadable."""
+    if path.is_dir():
+        digests = []
+        spent = 0
+        for child in sorted(path.rglob("*")):
+            if not child.is_file() or child.is_symlink():
+                continue
+            try:
+                spent += child.stat().st_size
+                if spent > budget:
+                    return None
+                digests.append(sha256_file(child))
+            except OSError:
+                return None
+        return digests
+    if path.suffix.lower() in ARCHIVE_SUFFIXES:
+        try:
+            with zipfile.ZipFile(path) as zf:
+                names = [n for n in zf.namelist() if not n.endswith("/")]
+                if sum(zf.getinfo(n).file_size for n in names) > budget:
+                    return None
+                return [sha256_bytes(zf.read(n)) for n in names]
+        except (OSError, zipfile.BadZipFile):
+            return None
+    try:
+        if path.stat().st_size > budget:
+            return None
+        return [sha256_file(path)]
+    except OSError:
+        return None
+
+
+def absorption_status(
+    path: pathlib.Path,
+    index: dict[str, str],
+    *,
+    budget: int = DEFAULT_ABSORPTION_BUDGET_BYTES,
+) -> dict:
+    """Classify how much of *path* already exists inside the durable spine.
+
+    ``state`` is one of ``absorbed`` (every content unit is byte-present in the
+    spine, so local preservation value is zero), ``partial``, ``unique`` or
+    ``unknown`` (too large / unreadable to decide -- preservation is retained).
+    """
+    path = pathlib.Path(path)
+    result = {"path": str(path), "state": "unknown", "units": 0, "present": 0}
+    try:
+        own = sha256_file(path) if path.is_file() else None
+    except OSError:
+        own = None
+    if own and own in index:
+        result.update(state="absorbed", units=1, present=1, whole_file_digest=own,
+                      durable_location=index[own])
+        return result
+    digests = _member_digests(path, budget)
+    if digests is None:
+        return result
+    present = sum(1 for d in digests if d in index)
+    result["units"] = len(digests)
+    result["present"] = present
+    if not digests:
+        result["state"] = "unique"
+    elif present == len(digests):
+        result["state"] = "absorbed"
+        result["durable_location"] = index[digests[0]]
+    elif present:
+        result["state"] = "partial"
+    else:
+        result["state"] = "unique"
+    return result
+
+
+# --------------------------------------------------------------------------
+# 3. A path a live process is still writing is never a deletion candidate.
+# --------------------------------------------------------------------------
+
+def newest_mtime(path: pathlib.Path, limit: int = 4096) -> float:
+    try:
+        newest = path.stat().st_mtime
+    except OSError:
+        return 0.0
+    if path.is_file():
+        return newest
+    seen = 0
+    for child in path.rglob("*"):
+        try:
+            newest = max(newest, child.stat().st_mtime)
+        except OSError:
+            continue
+        seen += 1
+        if seen >= limit:
+            break
+    return newest
+
+
+def open_by_running_process(path: pathlib.Path, timeout: float = 10.0) -> bool:
+    """Best-effort: is any live process holding *path* open?
+
+    An lsof failure is not evidence of absence, so callers must treat this as a
+    positive-only signal and keep the mtime guard as the primary rule.
+    """
+    lsof = "/usr/sbin/lsof" if os.path.exists("/usr/sbin/lsof") else "lsof"
+    argv = [lsof, "-t", "--"] if path.is_file() else [lsof, "-t", "+D"]
+    try:
+        cp = subprocess.run(argv + [str(path)], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return bool(cp.stdout.strip())
+
+
+def is_hot(path: pathlib.Path, *, hot_seconds: float = DEFAULT_HOT_SECONDS,
+           now: float | None = None, probe_lsof: bool = False) -> bool:
+    """True when *path* is still being produced and must not be reclaimed."""
+    now = time.time() if now is None else now
+    if now - newest_mtime(path) < hot_seconds:
+        return True
+    return bool(probe_lsof and open_by_running_process(path))
+
+
+# --------------------------------------------------------------------------
+# 4. A structural reclaim class outside the exhausted Downloads tree.
+# --------------------------------------------------------------------------
+
+def reconstructable_payload_roots(
+    home: pathlib.Path | None = None,
+    *,
+    stale_days: float = DEFAULT_STALE_DAYS,
+    now: float | None = None,
+) -> list[tuple[pathlib.Path, str]]:
+    """Purgeable per-user caches and abandoned install/update staging."""
+    home = pathlib.Path.home() if home is None else pathlib.Path(home)
+    now = time.time() if now is None else now
+    cutoff = stale_days * 86400.0
+    out: list[tuple[pathlib.Path, str]] = []
+
+    for rel in PURGEABLE_CACHE_ROOTS:
+        root = home / rel
+        if not root.is_dir():
+            continue
+        for entry in sorted(root.iterdir()):
+            if entry.name.startswith("."):
+                continue
+            if now - newest_mtime(entry) < cutoff:
+                continue
+            out.append((entry, "purgeable_cache"))
+
+    support = home / "Library/Application Support"
+    if support.is_dir():
+        for entry in sorted(support.iterdir()):
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            for marker in entry.iterdir() if entry.is_dir() else []:
+                if not marker.is_dir():
+                    continue
+                if not any(marker.name.lower().startswith(m) for m in STAGING_MARKERS):
+                    continue
+                if now - newest_mtime(marker) < cutoff:
+                    continue
+                out.append((marker, "abandoned_staging"))
+    return out
+
+
+# --------------------------------------------------------------------------
+# 5. Live growth that must be bounded rather than deleted.
+# --------------------------------------------------------------------------
+
+def unbounded_growth_candidates(
+    roots: Iterable[pathlib.Path],
+    *,
+    min_bytes: int = 1 << 30,
+    hot_seconds: float = DEFAULT_HOT_SECONDS,
+    now: float | None = None,
+) -> list[dict]:
+    """Large single files a live process keeps appending to.
+
+    These are the opposite of a deletion candidate: the correct reclaim is a
+    bounded retention policy inside the owning subsystem.  Reporting them keeps
+    a "biggest file wins" GC from destroying live state.
+    """
+    now = time.time() if now is None else now
+    found: list[dict] = []
+    for root in roots:
+        root = pathlib.Path(root)
+        if not root.exists():
+            continue
+        candidates = [root] if root.is_file() else root.rglob("*")
+        for path in candidates:
+            try:
+                st = path.stat()
+            except OSError:
+                continue
+            if not path.is_file() or st.st_size < min_bytes:
+                continue
+            found.append({
+                "path": str(path),
+                "bytes": st.st_size,
+                "gib": round(st.st_size / 1024 ** 3, 3),
+                "hot": is_hot(path, hot_seconds=hot_seconds, now=now),
+                "fate": "BLOCK",
+                "reason": "live unbounded growth; reclaim via bounded retention, never deletion",
+            })
+    found.sort(key=lambda e: -e["bytes"])
+    return found
+
+
+def preservation_decision(
+    path: pathlib.Path,
+    *,
+    index: dict[str, str] | None = None,
+    operator_root: pathlib.Path | None = None,
+    hot_seconds: float = DEFAULT_HOT_SECONDS,
+    now: float | None = None,
+) -> dict:
+    """The generic replacement for name-based preservation."""
+    path = pathlib.Path(path)
+    if within(path, operator_root):
+        return {"preserve": True, "rule": "executing-operator",
+                "reason": "the operator bundle currently executing preserves itself"}
+    if is_hot(path, hot_seconds=hot_seconds, now=now):
+        return {"preserve": True, "rule": "hot-live-writer",
+                "reason": "a live process is still producing this path"}
+    if index is not None:
+        status = absorption_status(path, index)
+        if status["state"] == "absorbed":
+            return {"preserve": False, "rule": "absorbed-into-durable-spine",
+                    "reason": "every byte is already present in protected durable state",
+                    "absorption": status}
+        if status["state"] in {"partial", "unknown"}:
+            return {"preserve": True, "rule": "not-fully-absorbed",
+                    "reason": "content is not provably byte-present in durable state",
+                    "absorption": status}
+    return {"preserve": False, "rule": "no-preservation-binding",
+            "reason": "no observable preservation binding matched"}
+
+
+def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Run8 generic preservation-value probe")
+    ap.add_argument("--repo", default=os.environ.get("BONFYRE_REPO", str(pathlib.Path.home() / "Documents/Bonfyre")))
+    ap.add_argument("--target", action="append", default=[])
+    args = ap.parse_args()
+    repo = pathlib.Path(args.repo).expanduser().resolve()
+    spine = [repo / ".bonfyre/run8/canonical"]
+    index = durable_digest_index(spine)
+    operator = executing_operator_root()
+    targets = [pathlib.Path(t).expanduser() for t in args.target] or sorted(
+        (pathlib.Path.home() / "Downloads").iterdir()
+    )
+    report = {
+        "observed_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "durable_digests": len(index),
+        "executing_operator_root_detected": bool(operator),
+        "decisions": [
+            dict(path=str(t), **preservation_decision(t, index=index, operator_root=operator))
+            for t in targets
+        ],
+    }
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

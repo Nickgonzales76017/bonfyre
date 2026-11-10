@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""Persist the machine membrane, so it is state rather than a script's output.
+
+Discovery, deltas and readership have each been producing JSON to a terminal.
+That is fine for a probe and useless as institutional memory: nothing can render
+it, nothing accumulates, and a source's history exists only in whoever ran the
+command last.
+
+This is the store behind both directions of the membrane.
+
+    inbound   which foreign sources exist, how each wishes to be consumed,
+              what it costs to read, and what it has actually cost
+    outbound  which machine consumers arrive, what they ask for, and what
+              they were answered
+
+Neither table is a claim about the world. A passport records how an institution
+publishes and what our probes observed; a readership row records that a request
+arrived carrying a declared identity. A user agent is a claim, not a credential,
+and nothing here treats it as one.
+
+    membrane-store.py refresh <host> [...]   probe and record a source
+    membrane-store.py sources                what is known, worst-cost first
+    membrane-store.py descriptors            declared external carrier candidates
+    membrane-store.py readership [log]       fold access log into the store
+    membrane-store.py summary                both directions, for a surface
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+
+DB = os.environ.get("BONFYRE_MEMBRANE_DB", "/var/lib/bonfyre/state/membrane.db")
+DISCOVER = os.environ.get("BONFYRE_DISCOVER_BIN", "/usr/local/bin/bonfyre-foreign-discover")
+
+# Ordered cheapest-first: the position is the point, not the name.
+LADDER = ["websub", "activitypub", "first-party-api", "feed", "sitemap",
+          "structured-metadata", "conditional-http", "html-extraction", "none"]
+
+
+def db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB, timeout=15)
+    conn.row_factory = sqlite3.Row
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS source_passport(
+      root TEXT PRIMARY KEY,
+      best_carrier TEXT, why TEXT, rung INTEGER,
+      robots_status INTEGER, robots_allows INTEGER,
+      sitemaps INTEGER DEFAULT 0, feeds INTEGER DEFAULT 0,
+      hubs INTEGER DEFAULT 0, structured INTEGER DEFAULT 0,
+      conditional INTEGER DEFAULT 0,
+      descriptors INTEGER DEFAULT 0,
+      declined_reason TEXT,
+      first_seen TEXT, last_probed TEXT, probes INTEGER DEFAULT 0);
+    CREATE TABLE IF NOT EXISTS source_protocol_descriptor(
+      root TEXT NOT NULL, family TEXT NOT NULL, descriptor TEXT NOT NULL,
+      truth_level TEXT NOT NULL CHECK(truth_level = 'declared_descriptor'),
+      active INTEGER NOT NULL DEFAULT 1,
+      first_seen TEXT NOT NULL, last_probed TEXT NOT NULL,
+      PRIMARY KEY(root, family, descriptor));
+    CREATE INDEX IF NOT EXISTS source_protocol_descriptor_active
+      ON source_protocol_descriptor(active, family, root);
+    CREATE TABLE IF NOT EXISTS machine_reader(
+      agent TEXT PRIMARY KEY, family TEXT,
+      requests INTEGER DEFAULT 0, answered_200 INTEGER DEFAULT 0,
+      answered_404 INTEGER DEFAULT 0, top_path TEXT, last_seen TEXT);
+    """)
+    # Existing observatory databases predate descriptor candidates.  The
+    # migration is intentionally additive: descriptor observations cannot
+    # rewrite a source passport into a provider or authority record.
+    try:
+        conn.execute("ALTER TABLE source_passport ADD COLUMN descriptors INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    return conn
+
+
+def refresh(hosts: list[str]) -> list[dict]:
+    out = []
+    for host in hosts:
+        proc = subprocess.run([sys.executable, DISCOVER, host],
+                              capture_output=True, text=True, timeout=300)
+        try:
+            p = json.loads(proc.stdout)
+        except Exception:
+            out.append({"root": host, "error": "probe produced no passport"})
+            continue
+        carrier = p.get("best_carrier", "html-extraction")
+        rung = LADDER.index(carrier) if carrier in LADDER else len(LADDER) - 1
+        # A source that declines is recorded as declining, not as broken.
+        declined = None
+        if not p.get("robots_allows_us"):
+            declined = "robots disallows our agent"
+        elif carrier == "html-extraction":
+            declined = "declares nothing machine-legible"
+        descriptors = [
+            d for d in (p.get("protocol_descriptors") or [])
+            if d.get("truth_level") == "declared_descriptor"
+            and d.get("family") and d.get("descriptor")
+        ]
+        conn = db()
+        conn.execute("""
+          INSERT INTO source_passport(root,best_carrier,why,rung,robots_status,
+            robots_allows,sitemaps,feeds,hubs,structured,conditional,
+            descriptors,declined_reason,first_seen,last_probed,probes)
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'),1)
+          ON CONFLICT(root) DO UPDATE SET
+            best_carrier=excluded.best_carrier, why=excluded.why, rung=excluded.rung,
+            robots_status=excluded.robots_status, robots_allows=excluded.robots_allows,
+            sitemaps=excluded.sitemaps, feeds=excluded.feeds, hubs=excluded.hubs,
+            structured=excluded.structured, conditional=excluded.conditional,
+            descriptors=excluded.descriptors,
+            declined_reason=excluded.declined_reason,
+            last_probed=datetime('now'), probes=probes+1
+        """, (p["root"], carrier, p.get("why", ""), rung,
+              p.get("robots_status", 0), 1 if p.get("robots_allows_us") else 0,
+              len(p.get("sitemaps") or []), len(p.get("feeds") or []),
+              len(p.get("websub_hubs") or []), len(p.get("structured_types") or []),
+              1 if p.get("conditional") else 0, len(descriptors), declined))
+        # A disappeared descriptor cools rather than vanishing.  It remains
+        # historical observation, never an admitted endpoint or provider.
+        conn.execute("UPDATE source_protocol_descriptor SET active=0 WHERE root=?", (p["root"],))
+        for descriptor in descriptors:
+            conn.execute("""
+              INSERT INTO source_protocol_descriptor(
+                root,family,descriptor,truth_level,active,first_seen,last_probed)
+              VALUES(?,?,?,'declared_descriptor',1,datetime('now'),datetime('now'))
+              ON CONFLICT(root,family,descriptor) DO UPDATE SET
+                active=1, last_probed=datetime('now')
+            """, (p["root"], descriptor["family"], descriptor["descriptor"]))
+        conn.commit(); conn.close()
+        out.append({"root": p["root"], "carrier": carrier, "rung": rung,
+                    "declined": declined})
+    return out
+
+
+FAMILIES = {
+    "ai": r"(gptbot|claudebot|anthropic|perplexitybot|ccbot|bytespider|amazonbot|google-extended|meta-externalagent)",
+    "search": r"(googlebot|bingbot|applebot|duckduckbot|yandexbot|baiduspider)",
+    "social": r"(twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|whatsapp|telegrambot)",
+    "seo": r"(ahrefsbot|semrushbot|mj12bot|dotbot)",
+    "archive": r"(ia_archiver|archive\.org_bot)",
+}
+LINE = re.compile(r'^\S+.*?"\w+ (\S+) [^"]*" (\d{3}) \S+(?: "[^"]*")? "([^"]*)"')
+
+
+def readership(path: str) -> dict:
+    from collections import Counter, defaultdict
+    stats = defaultdict(lambda: {"n": 0, "ok": 0, "miss": 0,
+                                 "paths": Counter(), "family": ""})
+    total = 0
+    with open(path, errors="replace") as fh:
+        for line in fh:
+            m = LINE.match(line)
+            if not m:
+                continue
+            url, status, agent = m.groups()
+            low = agent.lower()
+            fam = name = None
+            for f, pat in FAMILIES.items():
+                hit = re.search(pat, low)
+                if hit:
+                    fam, name = f, hit.group(0)
+                    break
+            if not name:
+                continue
+            total += 1
+            s = stats[name]
+            s["family"] = fam
+            s["n"] += 1
+            s["ok"] += status == "200"
+            s["miss"] += status == "404"
+            s["paths"][url.split("?")[0]] += 1
+    conn = db()
+    for name, s in stats.items():
+        conn.execute("""
+          INSERT INTO machine_reader(agent,family,requests,answered_200,
+            answered_404,top_path,last_seen)
+          VALUES(?,?,?,?,?,?,datetime('now'))
+          ON CONFLICT(agent) DO UPDATE SET family=excluded.family,
+            requests=excluded.requests, answered_200=excluded.answered_200,
+            answered_404=excluded.answered_404, top_path=excluded.top_path,
+            last_seen=datetime('now')
+        """, (name, s["family"], s["n"], s["ok"], s["miss"],
+              s["paths"].most_common(1)[0][0] if s["paths"] else ""))
+    conn.commit(); conn.close()
+    return {"agents": len(stats), "machine_requests": total}
+
+
+def summary() -> dict:
+    conn = db()
+    src = [dict(r) for r in conn.execute(
+        "SELECT * FROM source_passport ORDER BY rung DESC, root")]
+    rdr = [dict(r) for r in conn.execute(
+        "SELECT * FROM machine_reader ORDER BY requests DESC LIMIT 20")]
+    descriptors = [dict(r) for r in conn.execute(
+        "SELECT root,family,descriptor,truth_level,active,first_seen,last_probed "
+        "FROM source_protocol_descriptor ORDER BY active DESC,family,root")]
+    conn.close()
+    served = sum(r["answered_200"] for r in rdr)
+    missed = sum(r["answered_404"] for r in rdr)
+    return {
+        "inbound": {
+            "sources": len(src),
+            "readable_cheaply": sum(1 for s in src if s["rung"] <= 4),
+            "declining_or_expensive": sum(1 for s in src if s["declined_reason"]),
+            "passports": src,
+            "declared_descriptor_candidates": descriptors,
+        },
+        "outbound": {
+            "declared_agents": len(rdr),
+            "answered": served, "missed": missed,
+            "readers": rdr,
+        },
+        "forbidden_inference": (
+            "a passport records how a source publishes and what our probes saw, "
+            "never what its documents assert; a reader row records that a request "
+            "arrived carrying a declared identity, which is a claim and not a "
+            "credential"
+        ),
+    }
+
+
+def main(argv: list[str]) -> int:
+    if not argv:
+        print(__doc__.strip(), file=sys.stderr); return 2
+    if argv[0] == "refresh" and len(argv) > 1:
+        print(json.dumps(refresh(argv[1:]), indent=2)); return 0
+    if argv[0] == "readership":
+        print(json.dumps(readership(argv[1] if len(argv) > 1
+                                    else "/var/log/nginx/access.log"), indent=2)); return 0
+    if argv[0] == "sources":
+        conn = db()
+        rows = [dict(r) for r in conn.execute(
+            "SELECT root,best_carrier,rung,declined_reason,last_probed "
+            "FROM source_passport ORDER BY rung DESC")]
+        conn.close(); print(json.dumps(rows, indent=2)); return 0
+    if argv[0] == "descriptors":
+        conn = db()
+        rows = [dict(r) for r in conn.execute(
+            "SELECT root,family,descriptor,truth_level,active,first_seen,last_probed "
+            "FROM source_protocol_descriptor ORDER BY active DESC,family,root")]
+        conn.close()
+        print(json.dumps({
+            "descriptors": rows,
+            "forbidden_inference": (
+                "a declared descriptor is a candidate carrier only; it is not a live "
+                "endpoint, admitted provider, authorized tool, payment route, identity "
+                "assertion, or effect right"
+            ),
+        }, indent=2))
+        return 0
+    if argv[0] == "summary":
+        print(json.dumps(summary(), indent=2)); return 0
+    print(__doc__.strip(), file=sys.stderr); return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

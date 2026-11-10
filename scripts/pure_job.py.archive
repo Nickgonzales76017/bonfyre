@@ -1,0 +1,876 @@
+#!/usr/bin/env python3
+"""Archived Python PURE tier; the supported owner is pure-job.mjs. Run one pure closure job across every available backend and receipt the
+difference.
+
+The tier this belongs to is deliberately narrow. Bonfyre decides what may be
+computed; a reducer computes the pure search space; Bonfyre decides what the
+result means and whether anything may happen because of it. A backend here is a
+compiler target, never an owner: it holds no truth, no identity, no authority,
+no money, and it cannot perform an effect. HVM2's lack of any external-call
+layer is not a limitation for this purpose, it is the property that makes it
+safe to hand a computation to.
+
+Two rules keep that boundary real:
+
+  Purity is checked before dispatch, not assumed from the job's name. A job that
+  declares any effect is refused, because a reducer that could call out would be
+  a second effect path beside the one the estate governs.
+
+  A backend that is not installed is reported unavailable, never skipped. A
+  skipped backend disappears from the comparison and its absence reads as
+  agreement.
+
+The receipt records what each backend returned and what it cost. Where two
+backends disagree on a pure computation, that is the finding -- a pure job with
+the same inputs must produce the same result, and a difference is either a bug
+in a lowering or a bug in the reducer.
+
+Cannot infer: agreement between backends is not correctness, an interaction
+count is not wall time or energy, and a candidate frontier is not a decision.
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sqlite3
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+RECEIPTS = os.environ.get("BONFYRE_PURE_RECEIPTS", "/var/lib/bonfyre/gym/pure")
+
+# What makes a job ineligible for a pure reducer. These are not stylistic: each
+# one is a way for a computation to reach outside itself, and a reducer that
+# performed any of them would be an effect path the estate does not govern.
+EFFECT_MARKERS = (
+    "network", "http", "fetch", "write", "publish", "send", "pay", "charge",
+    "delete", "mutate", "effect", "submit", "email", "sms",
+)
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def profiles() -> list[dict]:
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        rows = [dict(r) for r in db.execute(
+            "SELECT backend, kind, purity, availability, COALESCE(version,'') version, "
+            "       COALESCE(cost_metric,'') cost_metric "
+            "FROM execution_profile WHERE status='published' ORDER BY backend")]
+        db.close()
+        return rows
+    except sqlite3.Error:
+        return []
+
+
+def hvm4_binary() -> str:
+    """Where the shadow runtime is.
+
+    It is built from vendored source rather than installed, so PATH is the wrong
+    place to look first; an override exists so the estate can point at its own
+    build without editing this."""
+    override = os.environ.get("BONFYRE_HVM4")
+    if override and os.path.isfile(override):
+        return override
+    vendored = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "vendor", "hvm4", "src", "hvm4")
+    if os.path.isfile(vendored):
+        return vendored
+    return "hvm4"
+
+
+def availability(profile: dict) -> tuple[str, str]:
+    """What is declared, checked against this machine.
+
+    A declaration is a claim about the estate; whether a binary is on PATH is a
+    fact about where this process is running, and the two are reported apart."""
+    backend = profile["backend"]
+    if backend == "reference":
+        return "available", ""
+    if backend == "hvm4":
+        path = hvm4_binary()
+        if os.path.isfile(path):
+            return "available", ""
+        return "unavailable", "no hvm4 binary; build vendor/hvm4 or set BONFYRE_HVM4"
+    binary = {"hvm2": "hvm", "bend": "bend"}.get(backend, backend)
+    if shutil.which(binary):
+        return "available", ""
+    return "unavailable", f"{binary} is not on PATH here"
+
+
+def refuse_if_effectful(job: dict) -> str | None:
+    """Refuse a job that could reach outside itself.
+
+    The scan runs over the job's own field names and string values, with the
+    declaration field removed first. Scanning the whole document matched
+    `effect` inside `effect_class` and refused every correctly declared pure
+    job -- a guard that rejects exactly the input it exists to admit.
+
+    Matching is on whole words, not substrings: `network` must not fire on
+    `networked_venue_name`, and a marker that appears as part of a longer word
+    is not a way out of the reduction."""
+    import re
+    declared = str(job.get("effect_class", "")).upper()
+    if declared != "PURE":
+        return f"job declares effect_class={declared or 'unset'}; only PURE may be lowered"
+
+    scanned = {k: v for k, v in job.items() if k != "effect_class"}
+    words: set[str] = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                words.update(re.split(r"[^a-z0-9]+", str(k).lower()))
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+        elif isinstance(node, str):
+            words.update(re.split(r"[^a-z0-9]+", node.lower()))
+
+    walk(scanned)
+    hit = words & set(EFFECT_MARKERS)
+    if hit:
+        return (f"job names {sorted(hit)[0]!r}, which is a way to reach outside "
+                "a pure reduction")
+    return None
+
+
+# The comparisons a numeric predicate may use. Kept as a fixed set rather than
+# an eval, because a predicate language that can express anything can express
+# reaching outward, and the purity guarantee of this tier rests on the lowering
+# being total over a vocabulary somebody chose.
+SUBSET_MAX_ITEMS = 20
+
+NUMERIC_OPS = {
+    "<=": lambda a, b: a <= b,
+    "<":  lambda a, b: a < b,
+    ">=": lambda a, b: a >= b,
+    ">":  lambda a, b: a > b,
+    "==": lambda a, b: a == b,
+    "!=": lambda a, b: a != b,
+}
+
+
+def numeric_holds(cand: dict, require_numeric: dict) -> bool:
+    """Whether one candidate satisfies every numeric clause."""
+    for field, clause in require_numeric.items():
+        op = NUMERIC_OPS.get(clause["op"])
+        value = cand.get(field)
+        if op is None or not isinstance(value, int) or isinstance(value, bool):
+            return False
+        if not op(value, int(clause["value"])):
+            return False
+    return True
+
+
+def numeric_refusal(job: dict) -> str | None:
+    """Why a numeric predicate cannot be lowered, if it cannot.
+
+    The tier's rule is that a lowering states the shape it can express and
+    refuses the rest rather than approximating it, so every reason a clause is
+    unusable is named here once and each backend asks the same question.
+
+    Integers only, and integers on purpose. A price is carried as micro-USD
+    because a float comparison that disagrees with the reference in the last
+    bit would look exactly like a backend disagreeing about money, and chasing
+    that would cost more than carrying the scale."""
+    for field, clause in job.get("require_numeric", {}).items():
+        if not isinstance(clause, dict) or "op" not in clause or "value" not in clause:
+            return f"numeric clause on {field!r} needs an op and a value"
+        if clause["op"] not in NUMERIC_OPS:
+            return (f"operator {clause['op']!r} is not one of "
+                    f"{', '.join(sorted(NUMERIC_OPS))}")
+        if not isinstance(clause["value"], int) or isinstance(clause["value"], bool):
+            return (f"numeric clause on {field!r} compares against "
+                    f"{clause['value']!r}; this lowering is total on integers only "
+                    f"and will not approximate a float")
+        for cand in job["candidate_space"]:
+            v = cand.get(field)
+            if not isinstance(v, int) or isinstance(v, bool):
+                return (f"field {field!r} on {cand.get('id')!r} is {v!r}, not an "
+                        f"integer; the numeric lowering refuses rather than rounds")
+    return None
+
+
+def subset_refusal(job: dict) -> str | None:
+    """Why a subset-budget job cannot be lowered, if it cannot."""
+    spec = job.get("subset_budget")
+    if not spec:
+        return None
+    field, budget = spec.get("field"), spec.get("budget")
+    if not field or not isinstance(budget, int) or isinstance(budget, bool):
+        return "subset_budget needs a field and an integer budget"
+    n = len(job["candidate_space"])
+    if n > SUBSET_MAX_ITEMS:
+        # The collapse emits one line per subset, so this is a real wall and
+        # not a tuning knob. Refusing at the boundary is the only honest
+        # option: a truncated lattice answers a different question and looks
+        # like the same one.
+        return (f"{n} candidates is 2^{n} subsets; this lowering enumerates the "
+                f"lattice and refuses past {SUBSET_MAX_ITEMS} rather than "
+                f"returning part of it")
+    for cand in job["candidate_space"]:
+        v = cand.get(field)
+        if not isinstance(v, int) or isinstance(v, bool):
+            return (f"field {field!r} on {cand.get('id')!r} is {v!r}, not an integer")
+    return None
+
+
+def run_reference_subsets(job: dict) -> dict:
+    """Every subset whose total is within budget, by enumeration.
+
+    This is the definition of agreement for the lattice, and it is deliberately
+    the dumb implementation: the whole point of comparing it against an
+    interaction net is that the two arrive by different routes."""
+    started = time.time()
+    space = job["candidate_space"]
+    spec = job["subset_budget"]
+    field, budget = spec["field"], int(spec["budget"])
+    costs = [int(c[field]) for c in space]
+    n = len(space)
+    feasible = []
+    for mask in range(1 << n):
+        total = sum(costs[i] for i in range(n) if mask >> i & 1)
+        if total <= budget:
+            feasible.append(mask)
+    return {"result": [str(m) for m in feasible],
+            "cost": {"wall_seconds": round(time.time() - started, 6),
+                     "subsets": 1 << n}}
+
+
+def run_hvm4_subsets(job: dict) -> dict:
+    """The same lattice as one term.
+
+    Distinct superposition labels give a cross product rather than a pairwise
+    combination, so n labels describe all 2^n subsets in a single expression
+    and the sum reduces across them with sharing. A mask built from the same
+    labels pairs elementwise with the total, so each branch carries which
+    subset it is.
+
+    Masks are shifted by one. Without the shift the empty subset and a refused
+    subset both collapse to 0 and the result cannot be decoded -- the encoding
+    was written that way first and the ambiguity was found by reading output,
+    not by reasoning about it.
+
+    Cannot infer: this does not beat enumeration. Measured on real price data
+    the cost is roughly constant per branch -- 22.5 interactions per subset at
+    n=4, 17.6 at n=16 -- and the collapse emits one line per subset. What the
+    net provides is the lattice as one declarative term, not a smaller
+    complexity class."""
+    space = job["candidate_space"]
+    spec = job["subset_budget"]
+    field, budget = spec["field"], int(spec["budget"])
+    n = len(space)
+    labels = [chr(ord("A") + i) for i in range(n)]
+
+    def acc(terms: list[str]) -> str:
+        out = terms[0]
+        for t in terms[1:]:
+            out = "(%s + %s)" % (out, t)
+        return out
+
+    total = acc(["&%s{0,%d}" % (l, int(c[field])) for l, c in zip(labels, space)])
+    mask = acc(["&%s{0,%d}" % (l, 1 << i) for i, l in enumerate(labels)])
+    src = ("@keep = \u03bbm. \u03bbp. \u03bb{0: 0; \u03bbk. m}(p)\n"
+           "@main = @keep((%s + 1), ((%s <= %d) * 1))\n" % (mask, total, budget))
+    path = os.path.join("/tmp", f"bonfyre-subset-{os.getpid()}.hvm")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+    started = time.time()
+    try:
+        p = subprocess.run([hvm4_binary(), path, f"-C{1 << n}", "-s"],
+                           capture_output=True, text=True, timeout=300)
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        return {"result": None, "error": str(e)[:100], "cost": {}}
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    import re
+    itrs = None
+    feasible = []
+    emitted = 0
+    for line in p.stdout.splitlines():
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+        if plain.startswith("- Itrs:"):
+            itrs = int("".join(c for c in plain if c.isdigit()) or 0)
+            continue
+        if plain.startswith("-") or not plain:
+            continue
+        token = plain.split()[0]
+        if not token.isdigit():
+            continue
+        emitted += 1
+        if token != "0":
+            feasible.append(str(int(token) - 1))
+    if emitted != (1 << n):
+        return {"result": None,
+                "error": f"expected 2^{n} branches, read {emitted}", "cost": {}}
+    return {"result": sorted(feasible, key=int), "lowered": "subset_lattice_in_net",
+            "cost": {"interactions": itrs,
+                     "wall_seconds": round(time.time() - started, 6),
+                     "subsets": 1 << n,
+                     "interactions_per_subset": round(itrs / (1 << n), 1) if itrs else None}}
+
+
+def run_reference(job: dict) -> dict:
+    """The baseline: evaluate the candidate space in plain Python.
+
+    This is the definition of agreement, not of truth."""
+    if job.get("subset_budget"):
+        return run_reference_subsets(job)
+    started = time.time()
+    space = job["candidate_space"]
+    keep = []
+    for cand in space:
+        if not all(cand.get(k) == v for k, v in job.get("require", {}).items()):
+            continue
+        if not numeric_holds(cand, job.get("require_numeric", {})):
+            continue
+        keep.append(cand["id"])
+    return {"result": sorted(keep), "cost": {"wall_seconds": round(time.time() - started, 6)}}
+
+
+def run_hvm2(job: dict) -> dict:
+    """Lower the candidate frontier to an interaction net and let HVM compute it.
+
+    Each candidate becomes a pair `(index passes)`; the whole space becomes one
+    superposition of those pairs; and `@keep` destructures a pair and switches on
+    `passes`, yielding the candidate's index when it survives and 0 when it does
+    not. HVM reduces the predicate across every candidate in the superposition
+    rather than once per candidate, and the result comes back as a superposition
+    of verdicts which is decoded here.
+
+    An earlier version lowered only the fan-out and reported an interaction
+    count beside a result computed elsewhere. That measured the runtime and
+    answered nothing, so it is gone: this backend now produces the frontier or
+    it produces an error.
+
+    Cannot infer: a frontier computed here is not a decision, and the encoding
+    is total on booleans only -- a predicate needing arithmetic or ordering is
+    not expressible in this lowering and must not be silently approximated."""
+    space = job["candidate_space"]
+    require = job.get("require", {})
+    if job.get("subset_budget"):
+        return {"result": None,
+                "error": "a subset lattice needs arithmetic over superposed "
+                         "sums; this lowering has neither and refuses",
+                "cost": {}}
+    if job.get("require_numeric"):
+        # Refused, not approximated. This lowering encodes a boolean predicate
+        # as a superposition of flags and has no arithmetic; dropping the
+        # numeric clause would leave it answering a different, easier question
+        # and calling the result agreement.
+        return {"result": None,
+                "error": "this lowering is boolean-only; a numeric clause is not "
+                         "expressible here and is refused rather than dropped",
+                "cost": {}}
+    for cand in space:
+        for key in require:
+            if not isinstance(cand.get(key), bool):
+                return {"result": None,
+                        "error": f"field {key!r} on {cand.get('id')!r} is not boolean; "
+                                 "this lowering encodes boolean predicates only"}
+
+    passes = [1 if all(c.get(k) == v for k, v in require.items()) else 0 for c in space]
+    pairs = [f"({i + 1} {p})" for i, p in enumerate(passes)]
+
+    def sup(items: list[str]) -> str:
+        if len(items) == 1:
+            return items[0]
+        mid = len(items) // 2
+        return "{%s %s}" % (sup(items[:mid]), sup(items[mid:]))
+
+    src = ("@keep = (c r)\n"
+           "  & c ~ (id p)\n"
+           "  & ?((0 id) r) ~ p\n\n"
+           "@main = r\n"
+           "  & @keep ~ (%s r)\n" % sup(pairs))
+    path = os.path.join("/tmp", f"bonfyre-pure-{os.getpid()}.hvm")
+    with open(path, "w") as f:
+        f.write(src)
+    started = time.time()
+    try:
+        p = subprocess.run(["hvm", "run", path], capture_output=True, text=True, timeout=120)
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        return {"result": None, "error": str(e)[:100], "cost": {}}
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+    itrs = None
+    verdicts_raw = None
+    for line in p.stdout.splitlines():
+        if line.startswith("Result:"):
+            verdicts_raw = line[len("Result:"):].strip()
+        if "ITRS" in line:
+            itrs = int("".join(c for c in line if c.isdigit()) or 0)
+    if verdicts_raw is None:
+        return {"result": None, "error": (p.stderr or p.stdout)[:120], "cost": {}}
+
+    # The superposition comes back in the same left-to-right order it was built,
+    # so the nth verdict belongs to the nth candidate. Anything that is not a
+    # bare number means the net did not fully reduce, and a partial reduction
+    # must not be read as a frontier.
+    import re
+    tokens = re.findall(r"[0-9]+|[^\s{}]+", verdicts_raw)
+    if any(not t.isdigit() for t in tokens):
+        return {"result": None,
+                "error": f"net did not fully reduce: {verdicts_raw[:60]}", "cost": {}}
+    verdicts = [int(t) for t in tokens]
+    if len(verdicts) != len(space):
+        return {"result": None,
+                "error": f"expected {len(space)} verdicts, decoded {len(verdicts)}",
+                "cost": {}}
+    survivors = sorted(space[v - 1]["id"] for v in verdicts if v != 0)
+    return {
+        "result": survivors,
+        "lowered": "predicate_and_fan_out",
+        "cost": {"interactions": itrs,
+                 "wall_seconds": round(time.time() - started, 6),
+                 "candidates": len(space)},
+    }
+
+
+def run_hvm4(job: dict) -> dict:
+    """The shadow backend, on the same job and the same encoding.
+
+    HVM4 is a different calculus, not a faster HVM2: its own banner calls it a
+    sequential runtime, so a promotion argument that assumed more parallelism
+    would have been assuming the wrong thing. What it does have that HVM2's core
+    lacks here is arithmetic and numeric pattern matching, which is the gap the
+    boolean-only lowering was recorded against.
+
+    Two superpositions sharing a label combine pairwise, so the candidate
+    indices and their verdicts pair off elementwise rather than forming a cross
+    product. Collapse then flattens the result to one line per candidate."""
+    if job.get("subset_budget"):
+        refusal = subset_refusal(job)
+        if refusal:
+            return {"result": None, "error": refusal, "cost": {}}
+        return run_hvm4_subsets(job)
+    space = job["candidate_space"]
+    require = job.get("require", {})
+    require_numeric = job.get("require_numeric", {})
+    for cand in space:
+        for key in require:
+            if not isinstance(cand.get(key), bool):
+                return {"result": None,
+                        "error": f"field {key!r} on {cand.get('id')!r} is not boolean"}
+    if require_numeric:
+        refusal = numeric_refusal(job)
+        if refusal:
+            return {"result": None, "error": refusal, "cost": {}}
+        return run_hvm4_numeric(job)
+    passes = [1 if all(c.get(k) == v for k, v in require.items()) else 0 for c in space]
+    # A superposition is binary. `&A{1,2,3}` is a parse error, so both trees are
+    # nested -- and nested identically, because the ids and the verdicts pair off
+    # by position and a different shape would pair a candidate with someone
+    # else's answer.
+    def sup4(items: list[str]) -> str:
+        if len(items) == 1:
+            return items[0]
+        mid = len(items) // 2
+        return "&A{%s,%s}" % (sup4(items[:mid]), sup4(items[mid:]))
+    ids = sup4([str(i + 1) for i in range(len(space))])
+    flags = sup4([str(p) for p in passes])
+    src = ("@keep = \u03bbid. \u03bbp. \u03bb{0: 0; \u03bbk. id}(p)\n"
+           "@main = @keep(%s, %s)\n" % (ids, flags))
+    path = os.path.join("/tmp", f"bonfyre-pure4-{os.getpid()}.hvm")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+    started = time.time()
+    try:
+        p = subprocess.run([hvm4_binary(), path, f"-C{len(space) + 4}", "-s"],
+                           capture_output=True, text=True, timeout=120)
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        return {"result": None, "error": str(e)[:100], "cost": {}}
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    import re
+    itrs = None
+    verdicts = []
+    for line in p.stdout.splitlines():
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+        if plain.startswith("- Itrs:"):
+            itrs = int("".join(c for c in plain if c.isdigit()) or 0)
+            continue
+        if plain.startswith("-") or not plain:
+            continue
+        token = plain.split()[0]
+        if token.isdigit():
+            verdicts.append(int(token))
+    if len(verdicts) != len(space):
+        return {"result": None,
+                "error": f"expected {len(space)} collapsed verdicts, read {len(verdicts)}",
+                "cost": {}}
+    survivors = sorted(space[v - 1]["id"] for v in verdicts if v != 0)
+    return {"result": survivors, "lowered": "predicate_and_fan_out",
+            "cost": {"interactions": itrs,
+                     "wall_seconds": round(time.time() - started, 6),
+                     "candidates": len(space)}}
+
+
+def run_hvm4_numeric(job: dict) -> dict:
+    """Compute the comparison inside the interaction net.
+
+    This is the difference between a backend that answers and one that
+    reformats. In the boolean lowering the predicate is evaluated in Python and
+    the net is handed the verdicts to fan out: the differential still catches a
+    broken lowering, but no backend is computing what the predicate means, so a
+    predicate that is wrong is wrong identically in all four places.
+
+    HVM4's operators distribute over superpositions -- `(&X{10,20} + 5)`
+    reduces to `&X{15,25}` -- so a whole candidate space compares against a
+    threshold in one net, with the sharing that makes interaction nets worth
+    reaching for. `(&A{500,1500,250} <= 1000)` becomes `&A{1,0,1}` and the
+    comparison has happened here rather than in the caller.
+
+    That is also what lets this tier reach money at all. The boolean lowering
+    could express "is this source priced" and could not express "is it under
+    budget", and every financial question is the second kind.
+
+    Values are integers by construction -- micro-USD for a price -- because a
+    float disagreeing with the reference in the last bit would present as a
+    backend disagreeing about money.
+
+    Cannot infer: a survivor here is affordable under the stated threshold, not
+    affordable in fact, not quoted, not committed, and not something anyone has
+    agreed to sell."""
+    space = job["candidate_space"]
+    require = job.get("require", {})
+    require_numeric = job["require_numeric"]
+
+    def sup4(items: list[str]) -> str:
+        if len(items) == 1:
+            return items[0]
+        mid = len(items) // 2
+        return "&A{%s,%s}" % (sup4(items[:mid]), sup4(items[mid:]))
+
+    # Boolean clauses stay a Python-side mask; what moves into the net is the
+    # comparison, which is the part the net can do and the caller could not
+    # express. Both are reported so a reader knows which is which.
+    bool_mask = [1 if all(c.get(k) == v for k, v in require.items()) else 0 for c in space]
+    ids = sup4([str(i + 1) for i in range(len(space))])
+
+    # Each numeric clause is its own reduction over the whole space, and the
+    # clauses multiply: a candidate survives when every comparison returned 1.
+    clause_terms = []
+    for field, clause in sorted(require_numeric.items()):
+        values = sup4([str(int(c[field])) for c in space])
+        clause_terms.append("(%s %s %d)" % (values, clause["op"], int(clause["value"])))
+    mask = sup4([str(b) for b in bool_mask])
+    product = clause_terms[0]
+    for term in clause_terms[1:]:
+        product = "(%s * %s)" % (product, term)
+    product = "(%s * %s)" % (product, mask)
+
+    src = ("@keep = \u03bbid. \u03bbp. \u03bb{0: 0; \u03bbk. id}(p)\n"
+           "@main = @keep(%s, %s)\n" % (ids, product))
+    path = os.path.join("/tmp", f"bonfyre-pure4num-{os.getpid()}.hvm")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+    started = time.time()
+    try:
+        p = subprocess.run([hvm4_binary(), path, f"-C{len(space) + 4}", "-s"],
+                           capture_output=True, text=True, timeout=120)
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        return {"result": None, "error": str(e)[:100], "cost": {}}
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    import re
+    itrs = None
+    verdicts = []
+    for line in p.stdout.splitlines():
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+        if plain.startswith("- Itrs:"):
+            itrs = int("".join(c for c in plain if c.isdigit()) or 0)
+            continue
+        if plain.startswith("-") or not plain:
+            continue
+        token = plain.split()[0]
+        if token.isdigit():
+            verdicts.append(int(token))
+    if len(verdicts) != len(space):
+        return {"result": None,
+                "error": f"expected {len(space)} collapsed verdicts, read {len(verdicts)}"
+                         + (f"; stderr {p.stderr.strip()[:80]}" if p.stderr.strip() else ""),
+                "cost": {}}
+    survivors = sorted(space[v - 1]["id"] for v in verdicts if v != 0)
+    return {"result": survivors, "lowered": "numeric_comparison_in_net",
+            "cost": {"interactions": itrs,
+                     "wall_seconds": round(time.time() - started, 6),
+                     "candidates": len(space),
+                     "clauses": len(clause_terms)}}
+
+
+def run_bend(job: dict) -> dict:
+    """Compile the predicate with Bend and fold it over a candidate tree.
+
+    This is the frontend the doctrine assumes and the estate did not have: every
+    lowering here was hand-written against a runtime core, which is why the same
+    predicate had to be re-expressed once per backend and each re-expression was
+    a chance to get it wrong.
+
+    What Bend returns is an aggregate, not the frontier. A fold over a tree
+    yields one value, so this produces the count of survivors and the sum of
+    their indices -- a checksum the reference computes the same way. That is a
+    real differential on a real computation and it is deliberately not compared
+    for set equality, because the two backends are not being asked the same
+    question and pretending otherwise is how a weaker check passes for a
+    stronger one."""
+    space = job["candidate_space"]
+    require = job.get("require", {})
+    if job.get("subset_budget"):
+        return {"result": None,
+                "error": "a subset lattice needs arithmetic over superposed "
+                         "sums; this lowering has neither and refuses",
+                "cost": {}}
+    if job.get("require_numeric"):
+        return {"result": None,
+                "error": "the Bend fold encodes a boolean predicate; a numeric "
+                         "clause is not expressible in it and is refused",
+                "cost": {}}
+    for cand in space:
+        for key in require:
+            if not isinstance(cand.get(key), bool):
+                return {"result": None,
+                        "error": f"field {key!r} on {cand.get('id')!r} is not boolean"}
+    passes = [1 if all(c.get(k) == v for k, v in require.items()) else 0 for c in space]
+
+    def tree(lo: int, hi: int) -> str:
+        if hi - lo == 1:
+            return f"Cand/Leaf({lo + 1}, {passes[lo]})"
+        mid = (lo + hi) // 2
+        return f"Cand/Node({tree(lo, mid)}, {tree(mid, hi)})"
+
+    src = (
+        "type Cand:\n"
+        "  Leaf { id, pass_ }\n"
+        "  Node { ~left, ~right }\n\n"
+        "def keep(id, pass_):\n"
+        "  switch pass_:\n"
+        "    case 0:\n"
+        "      return 0\n"
+        "    case _:\n"
+        "      return id\n\n"
+        "def tally(t):\n"
+        "  fold t:\n"
+        "    case Cand/Leaf:\n"
+        "      k = keep(t.id, t.pass_)\n"
+        "      switch k:\n"
+        "        case 0:\n"
+        "          return (0, 0)\n"
+        "        case _:\n"
+        "          return (k, 1)\n"
+        "    case Cand/Node:\n"
+        "      (ls, lc) = t.left\n"
+        "      (rs, rc) = t.right\n"
+        "      return (ls + rs, lc + rc)\n\n"
+        "def main():\n"
+        f"  return tally({tree(0, len(space))})\n")
+    path = os.path.join("/tmp", f"bonfyre-pure-{os.getpid()}.bend")
+    with open(path, "w") as f:
+        f.write(src)
+    started = time.time()
+    try:
+        p = subprocess.run(["bend", "run-rs", path], capture_output=True,
+                           text=True, timeout=180)
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        return {"result": None, "error": str(e)[:100], "cost": {}}
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+    import re
+    m = re.search(r"Result:\s*\((\d+),\s*(\d+)\)", p.stdout)
+    if not m:
+        return {"result": None,
+                "error": (p.stderr or p.stdout or "no result")[:140], "cost": {}}
+    checksum, count = int(m.group(1)), int(m.group(2))
+    expected_sum = sum(i + 1 for i, ok in enumerate(passes) if ok)
+    expected_n = sum(passes)
+    return {
+        "aggregate": {"survivors": count, "index_checksum": checksum},
+        "agrees_with_reference": (count == expected_n and checksum == expected_sum),
+        "reference_aggregate": {"survivors": expected_n, "index_checksum": expected_sum},
+        "lowered": "predicate_compiled_by_bend",
+        "answers": "an aggregate over the frontier, not the frontier itself",
+        "cost": {"wall_seconds": round(time.time() - started, 6),
+                 "candidates": len(space)},
+    }
+
+
+RUNNERS = {"reference": run_reference, "hvm2": run_hvm2, "hvm4": run_hvm4,
+           "bend": run_bend}
+
+
+
+def admission_for(job: dict) -> dict:
+    """Ask ResourceAdmission where this job may run, before dispatching anything.
+
+    The tier and admission were built beside each other and neither consulted the
+    other, so a job declaring `work_class: money` over institution-private data
+    was dispatched to reducers on a machine cleared only for public input. The
+    job said what it was; nothing read it.
+
+    Placement is asked per backend because the answer differs per backend: the
+    machine holding the data runs only the reference implementation, and the
+    machine holding the reducers is not cleared to receive the input."""
+    import subprocess
+    work_class = str(job.get("work_class", "discovery"))
+    data_scope = str(job.get("data_scope", "public"))
+    out = {"work_class": work_class, "data_scope": data_scope, "per_backend": {}}
+    for backend in ("reference", "hvm2", "hvm4", "bend"):
+        try:
+            proc = subprocess.run(
+                ["bun", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "resource-admission.mjs"),
+                 "--class", work_class, "--data-scope", data_scope,
+                 "--backend", backend, "--json"],
+                capture_output=True, text=True,
+                env={**os.environ, "BONFYRE_CMS_DB": CMS_DB})
+            decision = json.loads(proc.stdout)
+            out["per_backend"][backend] = decision["placement"]
+        except (subprocess.SubprocessError, json.JSONDecodeError, KeyError):
+            out["per_backend"][backend] = {"site": None,
+                                           "because": "admission could not be reached; "
+                                                      "a backend is not placed by default"}
+    return out
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    path = args[0] if args else None
+    if not path or not os.path.isfile(path):
+        print("usage: pure_job.py <job.json> [--json] [--receipt]", file=sys.stderr)
+        return 2
+    with open(path) as f:
+        job = json.load(f)
+
+    refusal = refuse_if_effectful(job) or subset_refusal(job)
+    if refusal:
+        out = {"schema": "bonfyre-pure-job.v1", "job": job.get("job", "?"),
+               "refused": True, "reason": refusal}
+        print(json.dumps(out, indent=2) if "--json" in sys.argv
+              else f"  refused: {refusal}")
+        return 1
+
+    declared = profiles()
+    if not declared:
+        # A silent empty list reads exactly like "every backend agreed".
+        msg = (f"no execution_profile rows are readable at {CMS_DB}; "
+               "the backends are declared in the CMS and this process cannot see it")
+        out = {"schema": "bonfyre-pure-job.v1", "job": job.get("job", "?"),
+               "refused": True, "reason": msg}
+        print(json.dumps(out, indent=2) if "--json" in sys.argv else f"  refused: {msg}")
+        return 1
+
+    admission = admission_for(job)
+    backends = []
+    for prof in declared:
+        state, why = availability(prof)
+        row = {"backend": prof["backend"], "declared": prof["availability"],
+               "here": state, "cost_metric": prof["cost_metric"]}
+        placement = admission.get("per_backend", {}).get(prof["backend"], {})
+        row["placement"] = placement.get("site")
+        if state == "available" and not placement.get("site"):
+            # Available is a fact about this machine; placed is a decision about
+            # whether the input may be seen here. Capability is not permission.
+            row["refused_by_admission"] = placement.get("because", "not placed")
+        elif state == "available" and prof["backend"] in RUNNERS:
+            row.update(RUNNERS[prof["backend"]](job))
+        elif state == "available":
+            row["skipped_because"] = "available but no lowering is written for this backend"
+        else:
+            row["unavailable_because"] = why
+        backends.append(row)
+
+    produced = [b for b in backends if b.get("result") is not None]
+    # A backend returning an aggregate is not answering the set question, so it
+    # is checked against the reference's own aggregate and kept out of the
+    # set-equality vote. Counting it there would let a weaker agreement stand in
+    # for a stronger one.
+    aggregates = [b for b in backends if b.get("aggregate") is not None]
+    agree = len({json.dumps(b["result"]) for b in produced}) <= 1
+    receipt = {
+        "schema": "bonfyre-pure-job.v1",
+        "job": job.get("job", "?"),
+        "effect_class": "PURE",
+        "admission": admission,
+        "candidates": len(job["candidate_space"]),
+        "ran_at": iso_now(),
+        "backends": backends,
+        "backends_producing_a_result": len(produced),
+        "agreement": agree if len(produced) > 1 else None,
+        "aggregate_backends": [
+            {"backend": b["backend"], "aggregate": b["aggregate"],
+             "agrees_with_reference": b["agrees_with_reference"],
+             "answers": b["answers"]} for b in aggregates],
+        "agreement_note": ("only one backend produced a result, so agreement is undetermined"
+                           if len(produced) < 2 else
+                           "every backend that produced a result produced the same one"
+                           if agree else
+                           "backends disagree on a pure computation; this is the finding"),
+        "cannot_infer": [
+            "agreement between backends -> correctness",
+            "an interaction count -> wall time or energy",
+            "a candidate frontier -> a decision",
+            "a backend exercising a job's shape -> a backend that computed its result",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+    else:
+        print(f"  job {receipt['job']}  candidates={receipt['candidates']}  effect_class=PURE")
+        print(f"  admission: work={admission['work_class']} scope={admission['data_scope']}")
+        for b in backends:
+            if b.get("result") is not None:
+                print(f"    {b['backend']:<12} {len(b['result']):>4} survivors   "
+                      f"{b['cost'].get('wall_seconds','?')}s")
+            elif b.get("aggregate") is not None:
+                a = b["aggregate"]
+                mark = "agrees" if b["agrees_with_reference"] else "DISAGREES"
+                print(f"    {b['backend']:<12} {a['survivors']:>4} survivors   "
+                      f"checksum {a['index_checksum']} ({mark} with reference)")
+            elif "cost" in b and b["cost"].get("interactions") is not None:
+                c = b["cost"]
+                print(f"    {b['backend']:<12} {'--':>4}             "
+                      f"{c['interactions']} interactions vs "
+                      f"{c['separate_applications_would_cost']} separate ({b['lowered']})")
+            else:
+                # An errored backend rendered as a blank line, which is the same
+                # silent disappearance the unavailable case was written to avoid.
+                why = (b.get("refused_by_admission") or b.get("unavailable_because")
+                       or b.get("skipped_because") or b.get("error")
+                       or "produced no result and gave no reason")
+                print(f"    {b['backend']:<12} {'--':>4}             {why[:58]}")
+        print(f"  {receipt['agreement_note']}")
+    if "--receipt" in sys.argv:
+        os.makedirs(RECEIPTS, exist_ok=True)
+        rp = os.path.join(RECEIPTS, f"{receipt['job']}-{receipt['ran_at'].replace(':','')}.json")
+        with open(rp, "w") as f:
+            json.dump(receipt, f, indent=2)
+        print(f"  receipt: {rp}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

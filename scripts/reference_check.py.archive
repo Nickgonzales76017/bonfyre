@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Archived after native Bun cutover. Resolve every declared reference, and refuse the ones that name nothing.
+
+Friendly authoring stays friendly: an author types names into a comma-separated
+field. What changes is that the naming is checked once, here, instead of being
+split at runtime by whichever surface happens to read it -- three of which had
+already drifted apart on how they split.
+
+The contracts are authored (reference_contract), so a new reference is a row.
+This names no type and no field of its own; it reads what the estate declared
+about itself and reports what no longer resolves.
+
+Cannot infer: a resolving reference is not a useful one. This says the name
+finds a row, never that the row carries anything worth showing.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sqlite3
+import sys
+
+DEFAULT_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+_IDENT = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+
+
+def _ident(name: str) -> bool:
+    """A declaration names tables and columns; it is not a place for free text."""
+    return bool(name) and all(c in _IDENT for c in name) and not name[0].isdigit()
+
+
+def _opt(row, name):
+    """A contract may omit a field this checker understands; an older row that
+    predates it is not a broken one."""
+    try:
+        return (row[name] or "").strip()
+    except (IndexError, KeyError):
+        return ""
+
+
+def _known(db, kind, target_type, target_key):
+    """What a name may resolve to: a table, a column of one, or a row's key.
+
+    A pattern naming a column that does not exist serves that field as nothing,
+    which is the same silence as a missing row and has to be caught the same way.
+    """
+    if kind == "table":
+        return {r[0] for r in db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")}
+    if kind == "column":
+        return {r[1] for r in db.execute(f"PRAGMA table_info({target_type})")}
+    if not target_key or not _ident(target_key):
+        return None
+    return {r[0] for r in db.execute(f"SELECT {target_key} FROM {target_type}") if r[0]}
+
+
+def _table_exists(db, name):
+    row = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                     (name,)).fetchone()
+    return row is not None
+
+
+def check(db_path=DEFAULT_DB):
+    db = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    out = {"schema": "bonfyre-reference-check.v1", "references": [],
+           "checked": 0, "dangling": 0, "undeclarable": 0}
+
+    if not _table_exists(db, "reference_contract"):
+        out["error"] = "no reference contracts are declared"
+        return out
+
+    contracts = db.execute(
+        "SELECT * FROM reference_contract WHERE status = 'published' "
+        "ORDER BY reference").fetchall()
+
+    for c in contracts:
+        rec = {"reference": c["reference"],
+               "holder": f'{c["holder_type"]}.{c["holder_field"]}',
+               "target": f'{c["target_type"]}.{c["target_key"]}',
+               "cardinality": c["cardinality"],
+               "on_dangling": c["on_dangling"],
+               "checked": 0, "dangling": []}
+
+        kind = (_opt(c, "target_kind") or "row").lower()
+        rec["target_kind"] = kind
+        type_field = _opt(c, "target_type_field")
+        skip_field = _opt(c, "skip_when_empty")
+
+        fields = [c["holder_type"], c["holder_key"], c["holder_field"]]
+        if kind == "table":
+            pass                      # the target is the schema itself
+        elif not type_field:
+            fields += [c["target_type"], c["target_key"]]
+        else:
+            fields.append(type_field)
+        if not all(_ident(f) for f in fields):
+            rec["undeclarable"] = "a declaration names a table or column that is not an identifier"
+            out["undeclarable"] += 1
+            out["references"].append(rec)
+            continue
+        if not _table_exists(db, c["holder_type"]):
+            rec["undeclarable"] = "the holder type is not a table here"
+            out["undeclarable"] += 1
+            out["references"].append(rec)
+            continue
+        if kind != "table" and not type_field and not _table_exists(db, c["target_type"]):
+            rec["undeclarable"] = "the target type is not a table here"
+            out["undeclarable"] += 1
+            out["references"].append(rec)
+            continue
+
+        # A reference whose target type is named by a field of the holder row
+        # resolves per row; one declared as a literal resolves once.
+        fixed = None
+        if not type_field:
+            fixed = _known(db, kind, c["target_type"], c["target_key"])
+            if fixed is None:
+                rec["undeclarable"] = "the target names no rows and no columns here"
+                out["undeclarable"] += 1
+                out["references"].append(rec)
+                continue
+
+        sep = c["separator"] or ""
+        required = (c["required_ref"] or "").lower() in ("yes", "true", "1")
+
+        cols = [f'{c["holder_key"]} AS k', f'COALESCE({c["holder_field"]}, "") AS v']
+        if type_field:
+            cols.append(f'COALESCE({type_field}, "") AS t')
+        if skip_field and _ident(skip_field):
+            cols.append(f'COALESCE({skip_field}, "") AS s')
+        for row in db.execute(f'SELECT {", ".join(cols)} FROM {c["holder_type"]}'):
+            keys = row.keys()
+            # Some holders are backed by something other than a table and name
+            # no target at all; those are skipped rather than reported broken.
+            if "s" in keys and (row["s"] or "").strip():
+                continue
+            known = fixed
+            if type_field:
+                tname = (row["t"] or "").strip()
+                if not tname:
+                    continue
+                if not _ident(tname) or not _table_exists(db, tname):
+                    rec["dangling"].append({"holder": row["k"], "names": tname,
+                                            "why": "target type is not a table"})
+                    out["dangling"] += 1
+                    continue
+                known = _known(db, kind, tname, c["target_key"])
+                if known is None:
+                    continue
+            raw = row["v"] or ""
+            names = ([x.strip() for x in raw.split(sep)] if sep else [raw.strip()])
+            names = [n for n in names if n]
+            if not names:
+                if required:
+                    # Counted, not only listed: it was appended to the record
+                    # and never added to the total, so a run reported DANGLING
+                    # in its listing and still exited clean -- the exact silent
+                    # failure this checker exists to close.
+                    rec["dangling"].append({"holder": row["k"], "names": None,
+                                            "why": "required and empty"})
+                    out["dangling"] += 1
+                continue
+            for n in names:
+                rec["checked"] += 1
+                out["checked"] += 1
+                if n not in known:
+                    # Say which thing is missing: a column that was never in
+                    # the table and a row that was removed are different
+                    # repairs, and "no such row" for a column sends the reader
+                    # looking in the wrong place.
+                    rec["dangling"].append(
+                        {"holder": row["k"], "names": n,
+                         "why": {"column": "no such column",
+                                 "table": "no such table"}.get(kind, "no such row")})
+                    out["dangling"] += 1
+        out["references"].append(rec)
+
+    db.close()
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", default=DEFAULT_DB)
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args()
+    r = check(a.db)
+    if a.json:
+        print(json.dumps(r, indent=2))
+    elif r.get("error"):
+        # An empty run and a clean run must not look alike: "nothing declared"
+        # is a different answer from "everything resolves".
+        print(f"reference check: {r['error']}")
+    else:
+        for ref in r["references"]:
+            bad = ref.get("dangling") or []
+            note = ref.get("undeclarable")
+            state = ("UNDECLARABLE" if note else
+                     (f"{len(bad)} DANGLING" if bad else "ok"))
+            print(f"{ref['reference']:32} {ref['holder']:38} -> "
+                  f"{ref['target']:34} {ref['checked']:4} {state}")
+            if note:
+                print(f"    {note}")
+            for b in bad[:8]:
+                print(f"    {b['holder']} -> {b['names']!r}  ({b['why']})")
+        print(f"\n{r['checked']} references resolved, {r['dangling']} dangling, "
+              f"{r['undeclarable']} undeclarable")
+    return 1 if (r["dangling"] or r["undeclarable"] or r.get("error")) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

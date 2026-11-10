@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+import argparse, json, sqlite3, urllib.request, datetime as dt, hashlib  # archived after native Bun cutover
+
+def sha(v):
+    return hashlib.sha256(str(v).encode()).hexdigest()
+
+def now():
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--db",required=True)
+    ap.add_argument("--url",default="http://127.0.0.1:8080")
+    ap.add_argument("--pipeline",required=True)
+    ap.add_argument("--view",required=True)
+    ap.add_argument("--program",required=True)
+    a=ap.parse_args()
+
+    c=sqlite3.connect(a.db)
+    endpoint=(a.url.rstrip("/")+"/v0/pipelines/"+a.pipeline+
+              "/egress/"+a.view+"?format=json&backpressure=true")
+    req=urllib.request.Request(endpoint,method="POST")
+    with urllib.request.urlopen(req,timeout=None) as r:
+        for raw in r:
+            raw=raw.strip()
+            if not raw:
+                continue
+            try:
+                doc=json.loads(raw)
+            except Exception:
+                continue
+            events=doc if isinstance(doc,list) else [doc]
+            for ev in events:
+                for op in ("insert","delete","update"):
+                    if op not in ev:
+                        continue
+                    payload=ev[op]
+                    pjson=json.dumps(payload,sort_keys=True,separators=(",",":"))
+                    pdg=sha(pjson)
+                    stamp=now()
+                    oid=sha(a.program+"|"+a.view+"|"+op+"|"+pdg+"|"+stamp)
+                    pid=sha("external-derivation|"+a.program)
+                    c.execute("""insert or ignore into derived_occurrence
+                      values(?,?,?,?,?,?,?,?,?,?)""",
+                      (oid,pid,a.view,op,pdg,pjson,None,stamp,"derived",stamp))
+                    c.commit()
+
+if __name__=="__main__":
+    main()

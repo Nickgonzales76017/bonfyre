@@ -9,7 +9,7 @@ echo "Bonfyre workspace inventory"
 echo
 
 echo "Vault top-level code dirs:"
-find "$ROOT/10-Code" -mindepth 1 -maxdepth 1 -type d | wc -l | awk '{print "  " $1}'
+find "$ROOT/components" -mindepth 1 -maxdepth 1 -type d | wc -l | awk '{print "  " $1}'
 
 echo "bonfyre-oss cmd entrypoints:"
 find "$OSS/cmd" -mindepth 1 -maxdepth 1 -type d | wc -l | awk '{print "  " $1}'
@@ -22,5 +22,5 @@ echo "bonfyre-oss command list:"
 find "$OSS/cmd" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort
 
 echo
-echo "Vault 10-Code list:"
-find "$ROOT/10-Code" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort
+echo "Vault components list:"
+find "$ROOT/components" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort

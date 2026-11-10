@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Archived after native Bun/CUE cutover. Deform a reference every way a real caller would, then ask whether each one
+still closes onto the same subject.
+
+A retrieval benchmark that only ever asks with the canonical URL measures
+nothing about identity. Real references arrive damaged: a tracking parameter
+appended by whatever shared them, a missing trailing slash, a host in the wrong
+case, an alias, a scheme that changed years ago. Each of those is the same
+resource, and an institution that cannot recognise it holds the same thing twice
+and answers "not found" to a reference it already has.
+
+So the family is generated mechanically from one canonical address, and each
+member is scored on three separate questions:
+
+    closed        it resolved to the subject it should have
+    missed        it resolved to nothing
+    false_merge   it resolved to a DIFFERENT subject
+
+The third is the dangerous one. A canonicalizer that folds aggressively enough
+to close every deformation will eventually fold two resources into one, and that
+is a worse failure than not closing at all -- a miss is visible, a false merge
+is a wrong answer wearing a right answer's clothes. So the score reports them
+separately and never nets them off.
+
+Cannot infer: a closed deformation is not a correct retrieval, and this measures
+the estate's own identity closure, not any supplier's.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+
+BIN = os.environ.get("BONFYRE_BIN_DIR", "/usr/local/bin")
+
+# Parameters that identify who shared a link rather than what it points at.
+# Removing them is a policy this institution declares, not a rule the standards
+# give: the server may legally treat them as significant, and a resource whose
+# content genuinely varies by campaign would be folded wrongly. Declared here so
+# the choice is visible and arguable.
+TRACKING = {
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "utm_id", "fbclid", "gclid", "msclkid", "mc_cid", "mc_eid",
+    "igshid", "ref_src", "ref_url", "_ga", "yclid",
+}
+
+
+def canonical(url: str) -> str:
+    """One address for one resource, folding only what is safe to fold.
+
+    Every rule below is either required by RFC 3986 or declared as this
+    institution's policy. Nothing folds the path: paths are case-sensitive and
+    a canonicalizer that lowercases them will merge two different documents on
+    a case-sensitive server."""
+    try:
+        parts = urlsplit(url.strip())
+    except ValueError:
+        return url.strip()
+    scheme = parts.scheme.lower()                      # RFC 3986: case-insensitive
+    host = parts.hostname.lower() if parts.hostname else ""   # RFC 3986: case-insensitive
+    port = parts.port
+    # A default port carries no information.
+    if (scheme == "http" and port == 80) or (scheme == "https" and port == 443):
+        port = None
+    netloc = host + (f":{port}" if port else "")
+    path = parts.path
+    # RFC 3986 6.2.3: an empty path and "/" are equivalent for http(s).
+    if path == "":
+        path = "/"
+    # Query order does not change what is addressed; tracking does not address.
+    pairs = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+             if k.lower() not in TRACKING]
+    query = urlencode(sorted(pairs))
+    # A fragment is never sent to the server, so it cannot identify a resource
+    # the server distinguishes.
+    return urlunsplit((scheme, netloc, path, query, ""))
+
+
+def deformations(url: str) -> list[tuple[str, str]]:
+    """The family. Each member is a reference a real caller could plausibly hold.
+
+    They are generated, not authored, so adding a subject costs nothing and the
+    family cannot drift per-subject."""
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    path = parts.path or "/"
+    out = [("canonical", url)]
+    # A decoy that equals its own subject is not a decoy. Enforced below rather
+    # than trusted, because two generator bugs in a row produced exactly that.
+    # Shared through anything that appends attribution.
+    joiner = "&" if parts.query else "?"
+    out.append(("tracking_noise", f"{url}{joiner}utm_source=newsletter&utm_medium=email"))
+    # Typed or copied without the trailing slash. This is a lawful equivalence
+    # ONLY at the root: RFC 3986 makes an empty path and "/" equivalent, and says
+    # nothing of the sort about "/feed.xml" and "/feed.xml/". Those are two
+    # resources, and a server is entitled to serve different bytes at each.
+    #
+    # This was first generated as one deformation for every subject, so six
+    # correct refusals were counted as misses and the canonicalizer was blamed
+    # for declining to break the rule.
+    if path == "/":
+        if url.endswith("/"):
+            out.append(("no_trailing_slash", url.rstrip("/")))
+        else:
+            out.append(("added_trailing_slash", url + "/"))
+    else:
+        # Toggle, never append. `rstrip("/") + "/"` reproduces the original
+        # string for a path that already ends in a slash, so the decoy became
+        # its own subject and was scored as a false merge -- the estate was
+        # blamed for recognising a URL as itself.
+        out.append(("decoy_trailing_slash",
+                    url.rstrip("/") if url.endswith("/") else url + "/"))
+    # Copied out of a document that upper-cased the host.
+    if host:
+        out.append(("host_case", url.replace(host, host.upper(), 1)))
+    # An older reference from before the site moved to TLS.
+    if parts.scheme == "https":
+        out.append(("stale_scheme", "http://" + url.split("://", 1)[1]))
+    # An explicit default port, which some tools emit.
+    if host and parts.scheme in ("http", "https"):
+        default = "443" if parts.scheme == "https" else "80"
+        out.append(("default_port", url.replace(host, f"{host}:{default}", 1)))
+    # A fragment picked up from a deep link.
+    out.append(("fragment", url + "#section-2"))
+    # A genuinely different resource on the same host. This one MUST NOT close:
+    # it is the false-merge probe, and a canonicalizer that folds it has broken
+    # something worse than it fixed.
+    out.append(("decoy_other_path", url.rstrip("/") + "/definitely-not-the-same-resource"))
+    # The invariant: a probe that must be refused must differ from the address
+    # it is probing against, both literally and after canonicalization. A decoy
+    # equal to its subject measures nothing and reports a false merge.
+    canon_url = canonical(url)
+    out = [(name, value) for name, value in out
+           if not (name.startswith("decoy_")
+                   and (value == url or canonical(value) == canon_url))]
+    return out
+
+
+def resolves_to(url: str) -> int:
+    """Ask the owner. Returns the observation count it holds for this address."""
+    try:
+        p = subprocess.run(
+            [os.path.join(BIN, "bonfyre-project"), "foreign", "resolve", url],
+            capture_output=True, text=True, timeout=45)
+        if p.returncode != 0 or not p.stdout.strip():
+            return 0
+        return int(json.loads(p.stdout).get("observations", 0) or 0)
+    except (subprocess.SubprocessError, json.JSONDecodeError, ValueError):
+        return 0
+
+
+def main() -> int:
+    limit = 8
+    for i, a in enumerate(sys.argv):
+        if a == "--limit" and i + 1 < len(sys.argv):
+            limit = int(sys.argv[i + 1])
+    use_canonical = "--canonicalize" in sys.argv
+
+    p = subprocess.run([os.path.join(BIN, "bonfyre-project"), "foreign", "twins"],
+                       capture_output=True, text=True, timeout=90)
+    doc = json.loads(p.stdout) if p.returncode == 0 and p.stdout.strip() else {}
+    twins = doc.get("twins", doc if isinstance(doc, list) else [])
+    subjects = [t for t in twins
+                if str(t.get("url", "")).startswith("http") and int(t.get("observations", 0) or 0) > 0]
+    subjects = subjects[:limit]
+
+    tally: dict[str, dict[str, int]] = {}
+    rows = []
+    for t in subjects:
+        url = t["url"]
+        for name, deformed in deformations(url):
+            asked = canonical(deformed) if use_canonical else deformed
+            found = resolves_to(asked)
+            decoy = name.startswith("decoy_")
+            if decoy:
+                verdict = "false_merge" if found else "correctly_refused"
+            else:
+                verdict = "closed" if found else "missed"
+            tally.setdefault(name, {}).setdefault(verdict, 0)
+            tally[name][verdict] += 1
+            rows.append({"subject": t.get("subject_id", ""), "deformation": name,
+                         "asked": asked, "verdict": verdict})
+
+    total = sum(sum(v.values()) for v in tally.values())
+    closed = sum(v.get("closed", 0) for v in tally.values())
+    missed = sum(v.get("missed", 0) for v in tally.values())
+    false_merges = sum(v.get("false_merge", 0) for v in tally.values())
+    refused = sum(v.get("correctly_refused", 0) for v in tally.values())
+
+    if "--json" in sys.argv:
+        print(json.dumps({
+            "schema": "bonfyre-deformation-closure.v1",
+            "canonicalized": use_canonical,
+            "subjects": len(subjects), "probes": total,
+            "closed": closed, "missed": missed,
+            "false_merges": false_merges, "correctly_refused": refused,
+            "by_deformation": tally, "rows": rows,
+            "cannot_infer": [
+                "a closed deformation -> a correct retrieval",
+                "a closure rate -> a supplier's quality (this measures our own identity closure)",
+                "no false merge on this cohort -> no false merge (the decoy is one probe, not a proof)",
+                "two addresses that canonicalize alike -> the same resource; folding is a "
+                "strong heuristic over addressing, and identity is settled by retained bytes",
+            ],
+        }, indent=2))
+        return 0
+
+    mode = "with canonicalization" if use_canonical else "as the estate resolves today"
+    print(f"  {len(subjects)} subjects x {len(tally)} deformations = {total} probes, {mode}")
+    print()
+    print(f"  {'deformation':<22}{'closed':>8}{'missed':>8}{'merged':>8}{'refused':>9}")
+    for name in sorted(tally):
+        v = tally[name]
+        print(f"  {name:<22}{v.get('closed',0):>8}{v.get('missed',0):>8}"
+              f"{v.get('false_merge',0):>8}{v.get('correctly_refused',0):>9}")
+    # http and https are different origins, and an http address may lawfully
+    # serve different bytes. Folding them is possible but requires the digests
+    # to agree, which requires fetching -- an outbound act, so it is a declared
+    # non-fold rather than a silent one, and it is reported apart from the rest.
+    declared_nonfold = tally.get("stale_scheme", {}).get("missed", 0)
+    lawful = closed + missed - declared_nonfold
+    rate = (closed / lawful * 100) if lawful else 0.0
+    print()
+    print(f"  identity closure: {closed}/{lawful} ({rate:.0f}%) over lawful equivalences")
+    print(f"  false merges: {false_merges}   correctly refused: {refused}")
+    if declared_nonfold:
+        print(f"  declared non-fold: {declared_nonfold} scheme changes; http and https are "
+              f"different origins and folding them needs digest agreement, which needs a fetch")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

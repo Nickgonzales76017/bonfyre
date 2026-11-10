@@ -1,0 +1,38 @@
+{
+  "schema": "bonfyre.native-static-analysis.v1",
+  "date": "2026-10-02",
+  "scope": ["lib/libbonfyre/src/bf_decision_head.c", "components/BonfyreDecision/native/head_binding.c"],
+  "source_sha256": {
+    "lib/libbonfyre/src/bf_decision_head.c": "3fc480b5096123f3928ecd2d3de298c9408a7e944952fdcea43c607885ce4858",
+    "lib/libbonfyre/include/bf_decision_head.h": "4cd0a31e7624b894ee5d441ff3c657bd3aef315c6e6517cb7438420bc5ab2499",
+    "components/BonfyreDecision/native/head_binding.c": "f171829f3c8adbe47eecb19304c391f30895b00f86c4df90c19afa7104c00d2c"
+  },
+  "configurations": ["scalar: -UBF_DECISION_ACCELERATE", "Accelerate: -DBF_DECISION_ACCELERATE -DACCELERATE_NEW_LAPACK"],
+  "shared_flags": "-std=c11 -DNAPI_VERSION=8 -Ilib/libbonfyre/include -I/Users/nickgonzales/.vite-plus/js_runtime/node/24.21.0/include/node",
+  "clang": {
+    "version": "Apple clang 17.0.0 (clang-1700.0.13.5), arm64-apple-darwin24.5.0",
+    "arguments": "--analyze -Wall -Wextra -Werror -Xanalyzer -analyzer-output=text",
+    "diagnostics_per_configuration": 0,
+    "exit_code_per_configuration": 0
+  },
+  "cppcheck": {
+    "version": "2.22.0",
+    "arguments": "--check-level=exhaustive --enable=warning,style,performance,portability,information --inconclusive --platform=unix64",
+    "active_checkers": "120/189",
+    "warning_count_per_configuration": 2,
+    "style_count_per_configuration": 16,
+    "confirmed_safety_defects": 0,
+    "triage": [
+      "bf_decision_head.c:511,554 funcArgOrderDifferent: naming heuristic false positives; unnamed pointer parameters precede header count parameters called fields, while definitions name the pointers fields and counts q. ABI types/order match.",
+      "bf_decision_head.c:88-141,527-552: twelve declaration/definition parameter naming style diagnostics, including unnamed header parameters.",
+      "bf_decision_head.c:202 shadowFunction: local parameter weight shadows layout helper weight; no mistaken call.",
+      "bf_decision_head.c:324,325 constParameterPointer: validator only inspects workspace/logits pointers; public executor must still write buffers.",
+      "head_binding.c:103 constVariable: local size_t values array could be const."
+    ]
+  },
+  "limitations": [
+    "Translation-unit analysis does not analyze external Node-API or Accelerate BLAS implementations, JS engine reentrancy, concurrent mutation or model numerical parity.",
+    "No model/runtime binary, passport or production state was changed by this audit.",
+    "No emitted safety diagnostic is not a proof of memory safety, semantic correctness or performance."
+  ]
+}

@@ -1,0 +1,614 @@
+#!/usr/bin/env python3
+"""The estate's standing automation: what used to be done by hand, on a clock.
+
+Daily:
+  census-items   the census as items, exactly as pages read it
+  archive        every item kept once, so a page outlives its source's feed slot
+  neighbourhood  every placed thing's neighbours, computed once on the vGPU
+  contributions  what each public route would show now, by source, into the ledger
+  frontier-state attention (HOT/WARM/COOL/COLD), typed gaps and starvation diagnostics
+  qualify        a bounded slice of candidate channels asked, and what answers admitted
+  connection-describe  leased source hosts observed for machine API descriptions; auth lands in Credentials and retained descriptors project through DemandBook
+  subject-fabric precompute full public subject/source/scene/query/action closures
+  atlas          every item projected into the words chart (unchanged words are skipped)
+  link           mentions and film identities written as typed relations
+  acoustic       up to --acoustic-per-run new audio recordings sampled into the sound charts,
+                 selected round-robin across every retained audio source so a large
+                 podcast/news source cannot bury music or live material; their family
+                 groups recompute and the atlas refreshes
+  credentials    generate what the estate can make; check every ready provider
+Weekly (--weekly):
+  sources        compile live sources from identity; admitted rows written through the CMS binary
+  inventories    every list the estate holds, imported into the source ledger with its provenance
+  channels       machine channels named inside bodies already retained, as SHADOW candidates
+  catalogues     public catalogues enumerated through the observer into virtual channels
+  calendars      ask known hosts for the calendars their platforms publish
+  lattice        the channels each publisher's own grammar addresses, as shadows
+  free-backfill  identities and machine channels the public record answers for nothing
+  needs          legacy clock-sliced API-needs discovery when no WorkGraph DB is configured
+  reclaim        compress retained bodies older than the raw window; prune caches
+
+Every step runs even if an earlier one failed, and the run is recorded with each
+step's outcome under the automation directory.  Nothing here holds or prints a
+credential; nothing publishes beyond census rows the compiler admitted with
+receipts.
+
+  bonfyre_automate.py [--weekly] [--only STEP,...] [paths...]
+"""
+import argparse, base64, hashlib, json, os, sqlite3, subprocess, sys, time, traceback
+
+
+class ToolMissing(Exception):
+    """A step's tool is not installed here.  That is a gap in this estate's
+    installation, not a failure of the work, so the run records it and keeps
+    going instead of turning the whole clock red."""
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def default_root():
+    for candidate in (os.path.join(HERE, ".."), "/opt/bonfyre/native-src"):
+        if os.path.exists(os.path.join(candidate, "cmd", "BonfyreLatentAtlas", "tools", "link_identities.mjs")):
+            return os.path.abspath(candidate)
+    return os.path.abspath(os.path.join(HERE, ".."))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--weekly", action="store_true")
+    ap.add_argument("--only")
+    ap.add_argument("--root", default=default_root())
+    ap.add_argument("--state", default="/var/lib/bonfyre/automation")
+    ap.add_argument("--cms", default="/var/lib/bonfyre/cms/bonfyre_cms.db")
+    ap.add_argument("--cms-schemas", default="/var/lib/bonfyre/cms/internet-source-type")
+    ap.add_argument("--site-root", default="/opt/bonfyre/site/matrix")
+    ap.add_argument("--foreign", default="/var/lib/bonfyre/foreign")
+    ap.add_argument("--atlas-db", default="/var/lib/bonfyre/latent-atlas/census-recordings.db")
+    ap.add_argument("--credentials-db", default="/var/lib/bonfyre/credentials/credentials.db")
+    ap.add_argument("--credentials-key", default="/etc/bonfyre/credentials.key")
+    ap.add_argument("--providers", default="/usr/local/share/bonfyre/provider-credentials.json")
+    ap.add_argument("--bin", default="/usr/local/bin")
+    ap.add_argument("--acoustic-per-run", type=int, default=8)
+    ap.add_argument("--frontier-db", default="/var/lib/bonfyre/source-frontier/frontier.db")
+    ap.add_argument("--archive-db", default="/var/lib/bonfyre/items/items.db")
+    ap.add_argument("--external-estate-db", default="/var/lib/bonfyre/external-estate.db")
+    ap.add_argument("--scoped-frontier-db", default="/var/lib/bonfyre/scoped-frontier/frontier.db")
+    ap.add_argument("--subject-fabric-db", default="/var/lib/bonfyre/subject-fabric/subject-fabric.db")
+    ap.add_argument("--catalogue-members", type=int, default=3000)
+    ap.add_argument("--qualify-per-run", type=int, default=30)
+    ap.add_argument("--workgraph-db", default=os.environ.get("BONFYRE_WORKGRAPH_DB", ""),
+                    help="existing BonfyreQueue/WorkGraph DB; enables leased standing connection work")
+    ap.add_argument("--activation-db", default=os.environ.get("BONFYRE_ACTIVATION_DB", ""),
+                    help="shared native owner DB for ResourceActivation; if unset, a canonical ControlPlane owner store is detected by schema")
+    ap.add_argument("--connection-describe-per-run", type=int, default=40,
+                    help="maximum connection-describe leases consumed by one standing run")
+    ap.add_argument("--connection-describe-lease-ms", type=int, default=1800000,
+                    help="lease for a descriptor batch; ForeignTwin observations may take minutes")
+    ap.add_argument("--compute-backend", default="auto", help="vGPU where it exists, deterministic CPU where it does not")
+    args = ap.parse_args()
+    os.makedirs(os.path.join(args.state, "runs"), exist_ok=True)
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-%d" % os.getpid()
+    work = os.path.join(args.state, "work"); os.makedirs(work, exist_ok=True)
+    items = os.path.join(work, "census-items.jsonl")
+    env = dict(os.environ, BONFYRE_CMS_DB=args.cms, BONFYRE_FOREIGN_ROOT=args.foreign)
+    b = lambda name: os.path.join(args.bin, name)
+    tools = lambda *p: os.path.join(args.root, *p)
+
+    def resolve_activation_db():
+        """Find the existing shared native owner store without creating one.
+
+        Explicit configuration wins.  Otherwise the checkout ControlPlane DB is
+        accepted only when its existing schema already proves it is the shared
+        owner store (Authority + ProviderGraph observations/bids).  Merely
+        finding a writable SQLite file is not enough.
+        """
+        if args.activation_db:
+            return os.path.abspath(args.activation_db)
+        candidate = tools("components", "BonfyreControlPlane", "control_plane.db")
+        if not os.path.exists(candidate):
+            return ""
+        try:
+            con = sqlite3.connect("file:%s?mode=ro" % os.path.abspath(candidate), uri=True)
+            tables = {row[0] for row in con.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'")}
+            con.close()
+        except sqlite3.Error:
+            return ""
+        required = {"authority_edges", "provider_bids", "provider_observations"}
+        return os.path.abspath(candidate) if required.issubset(tables) else ""
+
+    only = set(args.only.split(",")) if args.only else None
+    record = {"schema": "bonfyre-automation-run.v1", "started": stamp, "weekly": args.weekly, "steps": []}
+
+    def step(name, weekly_only=False):
+        def wrap(fn):
+            if (weekly_only and not args.weekly) or (only and name not in only):
+                return
+            started = time.time()
+            try:
+                outcome = fn()
+                record["steps"].append({"step": name, "ok": True, "seconds": round(time.time() - started, 1), "outcome": outcome})
+            except ToolMissing as missing:
+                record["steps"].append({"step": name, "ok": True, "seconds": round(time.time() - started, 1),
+                                        "outcome": {"skipped": str(missing)}})
+            except Exception as error:
+                record["steps"].append({"step": name, "ok": False, "seconds": round(time.time() - started, 1), "error": str(error)[:400],
+                                        "trace": traceback.format_exc()[-800:]})
+        return wrap
+
+    def require_current_step(name):
+        """A dependent compiler may use only inputs completed in this run."""
+        matches = [entry for entry in record["steps"] if entry["step"] == name]
+        if not matches or not matches[-1]["ok"] or "skipped" in matches[-1].get("outcome", {}):
+            raise RuntimeError("required current-run step did not complete: %s" % name)
+
+    def run(argv, **kw):
+        for token in argv[:2]:
+            if isinstance(token, str) and ("/" in token) and token != sys.executable and not os.path.exists(token):
+                raise ToolMissing("not installed here: %s" % token)
+        done = subprocess.run(argv, capture_output=True, text=True, env=dict(env, **kw.get("env_extra", {})), timeout=kw.get("timeout", 3600))
+        if done.returncode != 0:
+            raise RuntimeError("%s exited %d: %s" % (os.path.basename(argv[0]), done.returncode, done.stderr.strip()[:300]))
+        lines = [l for l in done.stdout.splitlines() if l.strip()]
+        try:
+            return json.loads(lines[-1]) if lines else None
+        except ValueError:
+            return lines[-1][:300] if lines else None
+
+    def run_json_lines(argv, **kw):
+        for token in argv[:2]:
+            if isinstance(token, str) and ("/" in token) and token != sys.executable and not os.path.exists(token):
+                raise ToolMissing("not installed here: %s" % token)
+        done = subprocess.run(argv, capture_output=True, text=True,
+                              env=dict(env, **kw.get("env_extra", {})),
+                              timeout=kw.get("timeout", 3600))
+        if done.returncode != 0:
+            raise RuntimeError("%s exited %d: %s" % (os.path.basename(argv[0]), done.returncode, done.stderr.strip()[:300]))
+        rows = []
+        for line in done.stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                raise RuntimeError("%s returned non-JSON batch output: %s" % (os.path.basename(argv[0]), line[:200]))
+        return rows
+
+    def connection_token(host):
+        return base64.urlsafe_b64encode(host.encode("utf-8")).decode("ascii").rstrip("=")
+
+    def host_from_connection_mission(mission):
+        prefix = "connection-describe:"
+        if not mission.startswith(prefix):
+            raise RuntimeError("unexpected connection mission: %s" % mission)
+        token = mission[len(prefix):]
+        token += "=" * ((4 - len(token) % 4) % 4)
+        return base64.urlsafe_b64decode(token.encode("ascii")).decode("utf-8")
+
+    def connection_candidates():
+        discover = tools("cmd", "BonfyreCredentials", "tools", "discover_credential_needs.mjs")
+        argv = ["bun", discover, "--cms", args.cms, "--list-hosts"]
+        if args.frontier_db:
+            argv += ["--frontier-db", args.frontier_db]
+        done = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=300)
+        if done.returncode != 0:
+            raise RuntimeError("discover_credential_needs.mjs --list-hosts exited %d: %s" %
+                               (done.returncode, done.stderr.strip()[:300]))
+        rows = []
+        for line in done.stdout.splitlines():
+            if not line.strip():
+                continue
+            host, _, priority = line.partition("\t")
+            host = host.strip()
+            if host:
+                rows.append((host, int(priority or "100")))
+        return rows
+
+    def seed_connection_work(queue, candidates):
+        os.makedirs(os.path.dirname(args.workgraph_db) or ".", exist_ok=True)
+        seed = os.path.join(work, "connection-describe-work.tsv")
+        material = []
+        with open(seed, "w") as out:
+            for host, priority in candidates:
+                token = connection_token(host)
+                line = "connection-describe:%s\tconnection.describe\thttps://%s/\tconnection-describe\t%d\t4\t30000\n" % (
+                    token, host, priority)
+                out.write(line)
+                material.append(line)
+        digest = hashlib.sha256("".join(material).encode("utf-8")).hexdigest()
+        marker_path = os.path.join(args.state, "connection-describe-seed.json")
+        previous = {}
+        if os.path.exists(marker_path):
+            try:
+                previous = json.load(open(marker_path))
+            except (ValueError, OSError):
+                previous = {}
+        # `depth` is deliberately read-only and therefore cannot initialize a
+        # brand-new WorkGraph database.  A missing DB is exactly depth zero; the
+        # first enqueue-batch below is the existing owner that creates/schema-
+        # initializes it.
+        if os.path.exists(args.workgraph_db):
+            depth = run([queue, "depth", "--family", "connection-describe", "--db", args.workgraph_db])
+        else:
+            depth = {"family": "connection-describe", "total": 0, "claimable": 0,
+                     "running": 0, "complete": 0, "dead_letter": 0}
+        if (previous.get("sha256") != digest
+                or previous.get("workgraph_db") != os.path.abspath(args.workgraph_db)
+                or int((depth or {}).get("total", 0)) < len(candidates)):
+            seeded = run([queue, "enqueue-batch", seed, "--db", args.workgraph_db], timeout=1800)
+            json.dump({"sha256": digest, "hosts": len(candidates),
+                       "workgraph_db": os.path.abspath(args.workgraph_db), "updated": stamp},
+                      open(marker_path, "w"), indent=1)
+            return seeded, depth, digest
+        return {"accepted": 0, "failed": 0, "idempotent": True, "unchanged_candidate_set": True}, depth, digest
+
+    @step("sources", weekly_only=True)
+    def _sources():
+        rows = os.path.join(work, "live-sources.json")
+        compiled = run(["bun", tools("cmd", "BonfyreExternalEstate", "tools", "compile_live_sources.mjs"), "--project", b("bonfyre-project"),
+                        "--foreign", args.foreign, "--out", rows, "--evidence", os.path.join(args.state, "live-sources-evidence-%s.jsonl" % stamp)], timeout=7200)
+        applied = run(["bun", tools("cmd", "BonfyreWebAddress", "tools", "apply_census_sources.mjs"), "--json", rows, "--cms", b("bonfyre-cms"),
+                       "--db", args.cms, "--schemas", args.cms_schemas])
+        return {"compiled": compiled, "applied": applied}
+
+    @step("inventories", weekly_only=True)
+    def _inventories():
+        os.makedirs(os.path.dirname(args.frontier_db), exist_ok=True)
+        listed = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "compile_inventories.mjs"),
+                      "--db", args.frontier_db, "--frontier", b("bonfyre-source-frontier"),
+                      "--out", os.path.join(work, "listings"),
+                      "--v4-sqlite", args.external_estate_db,
+                      "--live-sources", os.path.join(work, "live-sources.json")], timeout=1800)
+        linked = run([b("bonfyre-source-frontier"), "census-link", "--db", args.frontier_db, "--cms", args.cms])
+        return {"listed": listed, "census": linked}
+
+    @step("channels", weekly_only=True)
+    def _channels():
+        found = os.path.join(work, "retained-channels.jsonl")
+        discovered = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "expand_retained_channels.mjs"),
+                          "--cms", args.cms, "--foreign", args.foreign, "--out", found], timeout=1800)
+        imported = run([b("bonfyre-source-frontier"), "import", "--db", args.frontier_db,
+                        "--label", "RETAINED_BODY_DISCOVERY", "--jsonl", found])
+        return {"discovered": discovered, "imported": imported}
+
+    @step("catalogues", weekly_only=True)
+    def _catalogues():
+        found = os.path.join(work, "catalogue-channels.jsonl")
+        enumerated = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "expand_catalogues.mjs"),
+                          "--project", b("bonfyre-project"), "--foreign", args.foreign, "--out", found,
+                          "--evidence", os.path.join(args.state, "catalogue-evidence.jsonl"),
+                          "--per-catalogue", str(args.catalogue_members)], timeout=7200)
+        imported = run([b("bonfyre-source-frontier"), "import", "--db", args.frontier_db,
+                        "--label", "PUBLIC_CATALOGUE", "--jsonl", found])
+        return {"enumerated": enumerated, "imported": imported}
+
+    @step("census-items")
+    def _items():
+        temporary = "%s.%d.tmp" % (items, os.getpid())
+        try:
+            with open(temporary, "w") as out:
+                done = subprocess.run([b("bonfyre-web-address"), "census-items"], stdout=out, stderr=subprocess.PIPE, text=True, env=env, timeout=900)
+            if done.returncode != 0:
+                raise RuntimeError(done.stderr[-300:])
+            os.replace(temporary, items)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        return {"items": sum(1 for _ in open(items))}
+
+    @step("carriage")
+    def _carriage():
+        # What each admitted channel actually publishes, read from what it sent.
+        # A channel filed under its publisher's main business may also hand out
+        # recordings, films or pictures, and until this is measured no page can
+        # draw it for those.
+        return run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "measure_carried_material.mjs"),
+                    "--cms", args.cms, "--foreign", args.foreign, "--frontier", args.frontier_db, "--apply"],
+                   timeout=1800)
+
+    @step("archive")
+    def _archive():
+        os.makedirs(os.path.dirname(args.archive_db), exist_ok=True)
+        return run([b("bonfyre-web-address"), "archive-items", "--items", items],
+                   env_extra={"BONFYRE_ITEM_ARCHIVE_DB": args.archive_db})
+
+    @step("neighbourhood")
+    def _neighbourhood():
+        return run(["bun", tools("cmd", "BonfyreSurfaceScene", "tools", "compile_neighbourhood.mjs"),
+                    "--items", items, "--db", args.archive_db, "--k", "8", "--tile", "2048",
+                    "--backend", args.compute_backend, "--max-km", "4"], timeout=3600)
+
+    @step("atlas")
+    def _atlas():
+        return run([b("bonfyre-latent-atlas"), "project-items", "--db", args.atlas_db, "--items", items])
+
+    @step("kin")
+    def _kin():
+        # The same story told twice: every item's coordinate in the estate's own
+        # chart, compared with every other on the vGPU, once.  Runs after the
+        # atlas step has projected this run's items.
+        return run(["bun", tools("cmd", "BonfyreSurfaceScene", "tools", "compile_kin.mjs"),
+                    "--atlas", args.atlas_db, "--db", args.archive_db, "--k", "8",
+                    "--tile", "1024", "--min", "0.85", "--backend", args.compute_backend], timeout=3600)
+
+    @step("link")
+    def _link():
+        return run(["bun", tools("cmd", "BonfyreLatentAtlas", "tools", "link_identities.mjs"), "--items", items, "--cms", args.cms,
+                    "--atlas", b("bonfyre-latent-atlas"), "--db", args.atlas_db])
+
+    @step("acoustic")
+    def _acoustic():
+        return run(["bun", tools("cmd", "BonfyreLatentAtlas", "tools", "compile_acoustic_sweep.mjs"),
+                    "--items", items, "--atlas-db", args.atlas_db, "--atlas-bin", b("bonfyre-latent-atlas"),
+                    "--project", b("bonfyre-project"), "--foreign", args.foreign, "--work", work,
+                    "--per-run", str(args.acoustic_per_run)], timeout=3600)
+
+    @step("contributions")
+    def _contributions():
+        receipts = os.path.join(work, "page-contributions.jsonl")
+        os.makedirs(os.path.dirname(args.frontier_db), exist_ok=True)
+        # What the pages read is what the ledger admits: relinking daily keeps a
+        # newly published census row from looking like a channel nobody reads.
+        run([b("bonfyre-source-frontier"), "census-link", "--db", args.frontier_db, "--cms", args.cms])
+        with open(receipts, "w") as out:
+            done = subprocess.run([b("bonfyre-web-address"), "page-contributions"], stdout=out, stderr=subprocess.PIPE,
+                                  text=True, env=dict(env, BONFYRE_SOURCE_FRONTIER_DB=args.frontier_db), timeout=1800)
+        if done.returncode != 0:
+            raise RuntimeError(done.stderr[-300:])
+        surfaces = [json.loads(l) for l in open(receipts) if '"surface_receipt"' in l]
+        landed = run([b("bonfyre-source-frontier"), "contributions", "--db", args.frontier_db, "--jsonl", receipts])
+        return {"routes": len(surfaces), "thin_routes": [s["surface_receipt"] for s in surfaces if s["visible_items"] < 3],
+                "receipts": landed}
+
+    @step("frontier-state")
+    def _frontier_state():
+        gaps = run([b("bonfyre-source-frontier"), "gaps", "--db", args.frontier_db])
+        attention = run([b("bonfyre-source-frontier"), "attention", "--db", args.frontier_db, "--days", "7"])
+        starvation = run([b("bonfyre-source-frontier"), "starvation", "--db", args.frontier_db, "--days", "7", "--limit", "5"])
+        forward = subprocess.run([b("bonfyre-source-frontier"), "forward", "--db", args.frontier_db, "--limit", "60"],
+                                 capture_output=True, text=True, env=env, timeout=600)
+        open(os.path.join(args.state, "source-forward.jsonl"), "w").write(forward.stdout)
+        report = run([b("bonfyre-source-frontier"), "report", "--db", args.frontier_db])
+        for name, value in (("source-gaps", gaps), ("source-attention", attention),
+                            ("source-starvation", starvation), ("source-frontier-report", value_report := report)):
+            json.dump(value, open(os.path.join(args.state, "%s.json" % name), "w"), indent=1)
+        return {"report": {k: value_report.get(k) for k in ("roots", "families", "channels")} if isinstance(value_report, dict) else value_report,
+                "starved": {k: v.get("count") for k, v in starvation.items() if isinstance(v, dict)} if isinstance(starvation, dict) else starvation}
+
+    @step("subject-fabric")
+    def _subject_fabric():
+        os.makedirs(os.path.dirname(args.subject_fabric_db), exist_ok=True)
+        argv = [
+            "bun", tools("cmd", "BonfyreExternalEstate", "tools", "precompute_subject_fabric.mjs"),
+            "--cms-db", args.cms,
+            "--demand-db", args.external_estate_db,
+            "--frontier-db", args.frontier_db,
+            "--scoped-demand-bin", b("bonfyre-scoped-demand"),
+            "--surface-scene-bin", b("bonfyre-surface-scene"),
+            "--scene-db", args.cms,
+            "--subject", "institution:aurekai:life",
+            "--subject", "institution:aurekai:live",
+            "--subject", "institution:aurekai:shop",
+            "--subject", "institution:aurekai:work",
+            "--subject", "institution:aurekai:internet",
+            "--out", args.subject_fabric_db,
+            "--manifest", os.path.join(args.state, "subject-fabric-summary.json"),
+        ]
+        if os.path.exists(args.scoped_frontier_db):
+            argv += ["--scoped-frontier-db", args.scoped_frontier_db]
+        return run(argv, timeout=3600)
+
+    @step("subject-projection")
+    def _subject_projection():
+        for dependency in ("census-items", "subject-fabric"):
+            if only is None or dependency in only:
+                require_current_step(dependency)
+        common = [
+            "--fabric-db", args.subject_fabric_db,
+            "--cms-db", args.cms,
+            "--items", items,
+            "--page-composition", tools("cmd", "BonfyreWebAddress", "generated", "native-page-composition.json"),
+            "--surface-programs", tools("cmd", "BonfyreWebAddress", "generated", "native-surface-programs.json"),
+            "--manifest", os.path.join(args.state, "subject-projection-summary.json"),
+        ]
+        compiled = run([
+            "bun", tools("cmd", "BonfyreExternalEstate", "tools", "compile_subject_projection.mjs"),
+            *common,
+        ], timeout=3600)
+        verified = run([
+            "bun", tools("cmd", "BonfyreExternalEstate", "tools", "verify_subject_projection.mjs"),
+            *common,
+        ], timeout=3600)
+        return {"compiled": compiled, "verified": verified}
+
+    @step("qualify")
+    def _qualify():
+        rows = os.path.join(work, "qualified-sources.json")
+        asked = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "qualify_channels.mjs"),
+                     "--db", args.frontier_db, "--frontier", b("bonfyre-source-frontier"), "--project", b("bonfyre-project"),
+                     "--foreign", args.foreign, "--cms", args.cms, "--out", rows,
+                     "--limit", str(args.qualify_per_run),
+                     "--evidence", os.path.join(args.state, "qualify-evidence.jsonl")], timeout=3600)
+        applied = run(["bun", tools("cmd", "BonfyreWebAddress", "tools", "apply_census_sources.mjs"), "--json", rows,
+                       "--cms", b("bonfyre-cms"), "--db", args.cms, "--schemas", args.cms_schemas])
+        return {"asked": asked, "applied": applied}
+
+    @step("warm")
+    def _warm():
+        # Compose every public route once, so the first person through the door
+        # is not the one who pays for it.  Reads exactly what a request reads.
+        return run([b("bonfyre-web-address"), "page-warm", "--site-root", args.site_root,
+                    "--host", "aurekai.life"],
+                   env_extra={"BONFYRE_SOURCE_FRONTIER_DB": args.frontier_db,
+                              "BONFYRE_ITEM_ARCHIVE_DB": args.archive_db},
+                   timeout=900)
+
+    @step("connection-describe")
+    def _connection_describe():
+        if not args.workgraph_db:
+            return {"skipped": "configure --workgraph-db or BONFYRE_WORKGRAPH_DB; legacy weekly needs remains available"}
+        queue = b("bonfyre-queue")
+        candidates = connection_candidates()
+        seeded, before, digest = seed_connection_work(queue, candidates)
+        reaped = subprocess.run([queue, "reap-expired", "--db", args.workgraph_db],
+                                capture_output=True, text=True, env=env, timeout=120)
+        if reaped.returncode != 0:
+            payload = {}
+            try:
+                payload = json.loads(reaped.stdout.strip().splitlines()[-1])
+            except (ValueError, IndexError):
+                payload = {}
+            if payload.get("error_code") != "no_expired_leases":
+                raise RuntimeError("bonfyre-queue reap-expired exited %d: %s %s" %
+                                   (reaped.returncode, reaped.stderr.strip()[:300],
+                                    reaped.stdout.strip()[:300]))
+        worker = "standing-connection-%d" % os.getpid()
+        claimed = run_json_lines([queue, "claim-batch", worker,
+                                  "--family", "connection-describe",
+                                  "--count", str(args.connection_describe_per_run),
+                                  "--lease-ms", str(args.connection_describe_lease_ms),
+                                  "--db", args.workgraph_db])
+        if not claimed:
+            return {"candidates": len(candidates), "seed": seeded, "before": before,
+                    "claimed": 0, "candidate_sha256": digest}
+
+        host_file = os.path.join(work, "connection-describe-hosts.txt")
+        finish_file = os.path.join(work, "connection-describe-finish.tsv")
+        hosts = []
+        with open(host_file, "w") as out:
+            for claim in claimed:
+                host = host_from_connection_mission(claim["mission_id"])
+                hosts.append(host)
+                out.write(host + "\n")
+
+        discover = tools("cmd", "BonfyreCredentials", "tools", "discover_credential_needs.mjs")
+        descriptor_evidence = os.path.join(args.state, "credential-needs-evidence.jsonl")
+        argv = ["bun", discover,
+                "--project", b("bonfyre-project"),
+                "--credentials", b("bonfyre-credentials"),
+                "--db", args.credentials_db,
+                "--cms", args.cms,
+                "--foreign", args.foreign,
+                "--evidence", descriptor_evidence,
+                "--host-file", host_file]
+        if args.frontier_db:
+            argv += ["--frontier-db", args.frontier_db]
+
+        try:
+            observed = run(argv, timeout=3600)
+            # DemandBook already owns machine-readable declarations. The newer
+            # connection observer retains the same declarations under ForeignTwin
+            # instead of the legacy discovery directory, so project those retained
+            # bodies through the existing DemandBook matcher before the WorkGraph
+            # mission is complete. No network request occurs here.
+            demand_match = tools("components", "BonfyreProject", "tools", "demand-match.sh")
+            estate_dir = os.path.dirname(os.path.abspath(args.cms))
+            demand_evidence = os.path.join(estate_dir, "demand-evidence.jsonl")
+            demand_book = run(["sh", demand_match, demand_evidence],
+                              env_extra={"ESTATE_DIR": estate_dir,
+                                         "DEMAND_DESCRIPTOR_EVIDENCE": descriptor_evidence,
+                                         "BONFYRE_FOREIGN_ROOT": args.foreign},
+                              timeout=600)
+
+            # SupplyMatch's `eligible` is exactly the input ResourceActivation
+            # accepts.  Project it through the native owner before acknowledging
+            # the connection lease, but do not invent authority, an actor,
+            # mechanism binding, spend approval, or activation.
+            activation_db = resolve_activation_db()
+            if activation_db:
+                activation = {
+                    "projection": run([b("bonfyre-project"), "activation", "project-demand",
+                                       demand_evidence, "--db", activation_db], timeout=600),
+                    # Reconciliation reads actual AuthorityGraph and explicit
+                    # ServiceLifecycle bindings. It cannot create either fact.
+                    "reconciliation": run([b("bonfyre-project"), "activation", "reconcile",
+                                             "--db", activation_db], timeout=600),
+                }
+            else:
+                activation = {
+                    "skipped": "no existing shared ResourceActivation owner DB was explicitly configured or detected"
+                }
+        except Exception:
+            with open(finish_file, "w") as out:
+                for claim in claimed:
+                    out.write("%s\t%s\t%s\t%s\t\n" % (
+                        claim["mission_id"], claim["node_id"], claim["worker_id"], claim["claim_token"]))
+            subprocess.run([queue, "fail-batch", finish_file,
+                            "--class", "transient",
+                            "--message", "connection descriptor or DemandBook projection failed",
+                            "--db", args.workgraph_db],
+                           capture_output=True, text=True, env=env, timeout=120)
+            raise
+
+        with open(finish_file, "w") as out:
+            for claim, host in zip(claimed, hosts):
+                out.write("%s\t%s\t%s\t%s\tbonfyre://connection-observation/%s\n" % (
+                    claim["mission_id"], claim["node_id"], claim["worker_id"],
+                    claim["claim_token"], connection_token(host)))
+        ack = run([queue, "ack-batch", finish_file, "--db", args.workgraph_db], timeout=120)
+        return {"candidates": len(candidates), "seed": seeded, "before": before,
+                "claimed": len(claimed), "observed": observed, "demand_book": demand_book,
+                "resource_activation": activation,
+                "ack": ack, "candidate_sha256": digest}
+
+    @step("credentials")
+    def _credentials():
+        keyed = ["--db", args.credentials_db, "--key", args.credentials_key, "--providers", args.providers]
+        return {"bootstrap": run([b("bonfyre-credentials"), "bootstrap"] + keyed), "verify": run([b("bonfyre-credentials"), "verify-all"] + keyed)}
+
+    @step("calendars", weekly_only=True)
+    def _calendars():
+        rows = os.path.join(work, "event-sources.json")
+        found = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "probe_event_channels.mjs"),
+                     "--project", b("bonfyre-project"), "--foreign", args.foreign, "--out", rows,
+                     "--channels", os.path.join(work, "event-channels.jsonl"),
+                     "--cms", args.cms, "--frontier", args.frontier_db,
+                     "--evidence", os.path.join(args.state, "calendar-evidence.jsonl")], timeout=7200)
+        applied = run(["bun", tools("cmd", "BonfyreWebAddress", "tools", "apply_census_sources.mjs"), "--json", rows,
+                       "--cms", b("bonfyre-cms"), "--db", args.cms, "--schemas", args.cms_schemas])
+        imported = run([b("bonfyre-source-frontier"), "import", "--db", args.frontier_db, "--label", "EVENT_CALENDAR",
+                        "--jsonl", os.path.join(work, "event-channels.jsonl")])
+        return {"found": found, "applied": applied, "imported": imported}
+
+    @step("reclaim")
+    def _reclaim():
+        return run(["bun", tools("scripts", "reclaim_space.mjs"), "--apply", "--json",
+                    "--keep-raw-days", "7"], timeout=3600)
+
+    @step("lattice", weekly_only=True)
+    def _lattice():
+        found = os.path.join(work, "publisher-lattice.jsonl")
+        expanded = run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "expand_publisher_lattice.mjs"),
+                        "--cms", args.cms, "--foreign", args.foreign, "--out", found], timeout=3600)
+        imported = run([b("bonfyre-source-frontier"), "import", "--db", args.frontier_db,
+                        "--label", "PUBLISHER_LATTICE", "--jsonl", found])
+        return {"expanded": expanded, "imported": imported}
+
+    @step("free-backfill", weekly_only=True)
+    def _free_backfill():
+        return run(["bun", tools("cmd", "BonfyreSourceFrontier", "tools", "close_gaps_freely.mjs"),
+                    "--db", args.frontier_db, "--frontier", b("bonfyre-source-frontier"), "--project", b("bonfyre-project"),
+                    "--foreign", args.foreign, "--limit", "60",
+                    "--evidence", os.path.join(args.state, "free-backfill-evidence.jsonl")], timeout=3600)
+
+    @step("needs", weekly_only=True)
+    def _needs():
+        if args.workgraph_db:
+            return {"superseded_by": "connection-describe", "reason": "WorkGraph owns host selection/lease/retry"}
+        argv = ["bun", tools("cmd", "BonfyreCredentials", "tools", "discover_credential_needs.mjs"), "--project", b("bonfyre-project"),
+                "--credentials", b("bonfyre-credentials"), "--db", args.credentials_db, "--cms", args.cms, "--foreign", args.foreign,
+                "--evidence", os.path.join(args.state, "credential-needs-evidence.jsonl")]
+        if args.frontier_db:
+            argv += ["--frontier-db", args.frontier_db]
+        return run(argv, timeout=3600)
+
+    record["finished"] = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    path = os.path.join(args.state, "runs", "%s.json" % stamp)
+    json.dump(record, open(path, "w"), indent=1)
+    print(json.dumps({"run": path, "steps": [(s["step"], s["ok"]) for s in record["steps"]]}))
+    return 0 if all(s["ok"] for s in record["steps"]) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

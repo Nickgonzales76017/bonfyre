@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""Evaluate a product's reconciliation obligations before anything is written.
+
+Generic machinery. It is given a namespace, discovers the pack that namespace
+declares, reads the reconciliation law that pack states, and executes it. It
+contains no product's table names, no product's column names, no product's
+schema string and no product's identifier prefix -- those are domain grammar and
+they live in the declaration.
+
+This replaces a version that carried one product's grammar in its filename, its
+SQL, its default arguments and its schema version. Named things should be named;
+the mistake was putting the names inside the machinery rather than in the
+contract the machinery consumes. A second product added that way costs another
+compiled code path, which is the thing the namespace work exists to remove.
+
+    product_close_consequence.py --namespace upper90/managed/ai-loss
+
+Cannot infer: a computed consequence is not an approval, a closable obligation
+is not a closed one, and a law read from a contract is not a law anyone
+validated -- the contract records its own witness for that.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import shutil
+import sqlite3
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+NAMESPACES = os.path.join(ROOT, "architecture", "institutional", "namespaces.yaff")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def pack_for(namespace: str) -> str | None:
+    """Which pack carries this namespace's grammar.
+
+    Read from the namespace contract, never inferred from the namespace's name:
+    a path built by convention is a hardcoded path with extra steps."""
+    current = None
+    for raw in open(NAMESPACES):
+        if raw.startswith("namespace "):
+            current = raw[len("namespace "):].strip()
+        elif current == namespace and raw.strip().startswith("product_pack "):
+            return os.path.join(ROOT, raw.strip().split(" ", 1)[1].strip())
+    return None
+
+
+def law_from(pack_path: str) -> dict:
+    """The reconciliation law the pack declares, as fields rather than code."""
+    law: dict[str, str] = {}
+    keys = {
+        "obligation_prefix", "obligation_target", "reconcile_entity",
+        "reconcile_entity_key", "reconcile_entity_amount", "reconcile_allocation",
+        "reconcile_allocation_key", "reconcile_allocation_amount",
+        "reconcile_allocation_active", "reconcile_tolerance", "reconcile_note",
+        "reconcile_witness", "credential_env",
+    }
+    for raw in open(pack_path):
+        line = raw.strip()
+        for key in keys:
+            if line.startswith(key + " "):
+                law.setdefault(key, line[len(key) + 1:].strip())
+    return law
+
+
+SAFE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def source_amounts(law: dict, ids: list[str]) -> tuple[dict, str]:
+    """Ask the system of record, using only identifiers the contract declared.
+
+    Every table and column is checked against a plain identifier shape before it
+    reaches a query. A contract is content, and content must not be able to
+    write SQL.
+
+    Returns the amounts and why the set is what it is. The second value is the
+    point: an empty result from a database that answered and an empty result from
+    a database that was never reached are the same dict, and reporting them the
+    same way made 101 obligations each say "the system of record returned no row
+    for it" while the client had failed to connect at all. Nothing asked, nothing
+    answered, and a claim about the answer either way."""
+    env_file = os.environ.get(law.get("credential_env", "") or "___unset", "")
+    if not env_file:
+        env_file = os.path.expanduser("~/Work/u90.env") \
+            if law.get("credential_env") else ""
+    if not env_file or not os.path.isfile(env_file):
+        return {}, "no credentials file is configured for this pack"
+    if not shutil.which("mysql"):
+        return {}, "the mysql client is not on PATH, so the system of record was not asked"
+    for key in ("reconcile_entity", "reconcile_entity_key", "reconcile_entity_amount",
+                "reconcile_allocation", "reconcile_allocation_key",
+                "reconcile_allocation_amount", "reconcile_allocation_active"):
+        if not SAFE.match(law.get(key, "")):
+            return {}, f"the pack's {key} is not a plain identifier and was refused"
+    cfg = {}
+    for line in open(env_file):
+        line = line.strip().removeprefix("export ").strip()
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            cfg[k.strip()] = v.strip().strip('"').strip("'")
+    host = next((cfg[k] for k in cfg if k.endswith("_DB_HOST")), None)
+    user = next((cfg[k] for k in cfg if k.endswith("_DB_USER")), None)
+    pw = next((cfg[k] for k in cfg if k.endswith("_DB_PASS")), None)
+    name = next((cfg[k] for k in cfg if k.endswith("_DB_NAME")), None)
+    port = next((cfg[k] for k in cfg if k.endswith("_DB_PORT")), "3306")
+    if not all((host, user, pw, name)):
+        return {}, "the credentials file does not name a host, user, password and database"
+    numeric = ",".join(i for i in ids if i.isdigit()) or "0"
+    sql = (
+        f"SELECT e.{law['reconcile_entity_key']}, e.{law['reconcile_entity_amount']}, "
+        f"COALESCE(SUM(CASE WHEN a.{law['reconcile_allocation_active']}=1 "
+        f"THEN a.{law['reconcile_allocation_amount']} END),0) "
+        f"FROM {law['reconcile_entity']} e "
+        f"LEFT JOIN {law['reconcile_allocation']} a "
+        f"ON a.{law['reconcile_allocation_key']} = e.{law['reconcile_entity_key']} "
+        f"WHERE e.{law['reconcile_entity_key']} IN ({numeric}) "
+        f"GROUP BY e.{law['reconcile_entity_key']}, e.{law['reconcile_entity_amount']}"
+    )
+    proc = subprocess.run(
+        ["mysql", f"--host={host}", f"--port={port}", f"--user={user}",
+         f"--database={name}", "--batch", "--skip-column-names",
+         "--connect-timeout=20", "-e", sql],
+        capture_output=True, text=True, env={**os.environ, "MYSQL_PWD": pw})
+    if proc.returncode != 0:
+        # The exit status was discarded here, so a refused connection produced the
+        # same empty dict as a successful query over an empty table. Only the
+        # error line is kept, and only its tail: it names the host and the failure
+        # and carries no credential.
+        why = next((l for l in reversed(proc.stderr.splitlines())
+                    if l.strip().startswith("ERROR")), "").strip()
+        return {}, ("the system of record could not be reached: "
+                    + (why[:200] or f"mysql exited {proc.returncode}"))
+    out = {}
+    for line in proc.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3 and parts[0].isdigit():
+            paid, alloc = float(parts[1]), float(parts[2])
+            out[parts[0]] = {"amount": paid, "allocated": alloc,
+                             "amount_left": round(paid - alloc, 2)}
+    return out, "the system of record answered"
+
+
+def main() -> int:
+    namespace = None
+    store = os.environ.get("BONFYRE_OBLIGATION_DB", "")
+    for i, a in enumerate(sys.argv):
+        if a == "--namespace" and i + 1 < len(sys.argv): namespace = sys.argv[i + 1]
+        if a == "--obligations" and i + 1 < len(sys.argv): store = sys.argv[i + 1]
+    if not namespace:
+        print("usage: product_close_consequence.py --namespace <ns> "
+              "[--obligations <sqlite>] [--json]", file=sys.stderr)
+        return 2
+    pack = pack_for(namespace)
+    if not pack or not os.path.isfile(pack):
+        print(f"namespace {namespace!r} declares no product_pack, or it is missing; "
+              "a product is added by declaration, not by another code path",
+              file=sys.stderr)
+        return 2
+    law = law_from(pack)
+    missing = [k for k in ("obligation_prefix", "reconcile_entity",
+                           "reconcile_allocation_amount") if k not in law]
+    if missing:
+        print(f"{os.path.basename(pack)} declares no reconciliation law; missing {missing}",
+              file=sys.stderr)
+        return 2
+
+    rows = []
+    if store and os.path.isfile(store):
+        db = sqlite3.connect(f"file:{store}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        prefix = law["obligation_prefix"]
+        rows = [{"obligation": r["id"], "entity": r["id"].split(":", 1)[1],
+                 "state": r["state"]}
+                for r in db.execute(
+                    "SELECT id, state FROM target_obligations WHERE id LIKE ?",
+                    (prefix + "%",))]
+        db.close()
+
+    tol = float(law.get("reconcile_tolerance", "0.005"))
+    source, source_status = source_amounts(law, [r["entity"] for r in rows])
+    source_reached = source_status == "the system of record answered"
+    resolved = unresolved = 0
+    under = over = 0
+    net = 0.0
+    detail = []
+    for r in rows:
+        src = source.get(r["entity"])
+        if not src:
+            unresolved += 1
+            detail.append({"obligation": r["obligation"], "verdict": "unresolvable",
+                           "because": ("the system of record returned no row for it"
+                                       if source_reached else source_status)})
+            continue
+        resolved += 1
+        left = src["amount_left"]
+        net += left
+        if abs(left) < tol:
+            detail.append({"obligation": r["obligation"], "verdict": "reconciled"})
+        else:
+            direction = "under-allocated" if left > 0 else "over-allocated"
+            under += direction == "under-allocated"
+            over += direction == "over-allocated"
+            detail.append({"obligation": r["obligation"], "verdict": "unreconciled",
+                           "direction": direction, "amount_left": left})
+
+    receipt = {
+        "schema": "bonfyre-product-close-consequence.v1",
+        "namespace": namespace,
+        "pack": os.path.relpath(pack, ROOT),
+        "law_declared_by_pack": {k: law[k] for k in sorted(law)},
+        "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "effect_performed": False,
+        "source_of_record": {
+            "reached": source_reached,
+            "status": source_status,
+            "cannot_infer": "an unreachable system of record -> an obligation that "
+                            "cannot reconcile; nothing was asked, so nothing is known",
+        },
+        "obligations": len(rows),
+        "resolved_against_source": resolved,
+        "unresolvable": unresolved,
+        "unreconciled_under": under,
+        "unreconciled_over": over,
+        "net_amount_left": round(net, 2),
+        "detail": detail,
+        "cannot_infer": [
+            "a computed consequence -> an approval",
+            "a closable obligation -> a closed one",
+            "a law read from a contract -> a law anyone validated; the pack carries "
+            "its own witness for that",
+            "a net position -> money owed",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  namespace {namespace}")
+    print(f"  grammar from {receipt['pack']}")
+    print(f"  law: {law['reconcile_entity']}.{law['reconcile_entity_amount']} - "
+          f"SUM({law['reconcile_allocation']}.{law['reconcile_allocation_amount']} "
+          f"WHERE {law['reconcile_allocation_active']}=1)")
+    print(f"  witness: {law.get('reconcile_witness', '(none declared)')}")
+    print()
+    print(f"  obligations {receipt['obligations']}   resolved {resolved}   "
+          f"unresolvable {unresolved}")
+    print(f"  unreconciled: {under} under, {over} over   net ${receipt['net_amount_left']:,.2f}")
+    print()
+    print("  nothing was written; this is the consequence, not the act")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

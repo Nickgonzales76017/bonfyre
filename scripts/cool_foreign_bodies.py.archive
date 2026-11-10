@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Cool retained bodies a regime says should not be kept.
+
+Every observation retains its body today, which applies MIRROR-LIKE to
+everything including a resource fetched once for a single decision. A regime is
+the decision about what a twin is worth holding; cooling is that decision taking
+effect.
+
+What is removed and what is not:
+
+  removed   the body file, for a twin whose authored regime sets retain_body=0
+  kept      the receipt, always -- it records what was observed, when, under
+            what policy, and what the bytes hashed to. Cooling reduces what we
+            hold, never what we know we saw.
+
+A cooled body is not a drifted one. The drift check refuses to derive an
+identity from a body that no longer hashes to its receipt; a body that is
+absent because a regime said not to keep it is a different fact, and the policy
+is what distinguishes them. Deleting bodies without recording why would make
+those two indistinguishable, which is why this only ever acts on an authored
+regime and never on a heuristic.
+
+Cannot infer: a cooled twin -> a forgotten one. Its identity, its receipts and
+everything derived from them remain.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+
+def subject_id(url: str) -> str:
+    """The id a URL is registered under -- the same rule promotion uses.
+
+    Policies are keyed on the subject, not the address: a twin observed at two
+    URLs is one thing, and keying on the address would give it two policies.
+    """
+    body = url.split("://", 1)[-1].lower()
+    slug = "".join(c if c.isalnum() else "-" for c in body).strip("-")
+    while "--" in slug:
+        slug = slug.replace("--", "-")
+    return "foreign_twin:" + slug
+
+
+def policies(cms_db: str) -> dict[str, dict]:
+    out: dict[str, dict] = {}
+    try:
+        db = sqlite3.connect(f"file:{cms_db}?mode=ro", uri=True)
+        for subject, regime, retain in db.execute(
+                "SELECT twin_subject, regime, retain_body FROM twin_policy "
+                "WHERE status = 'published'"):
+            out[subject] = {"regime": regime, "retain_body": int(retain or 0)}
+        db.close()
+    except Exception as error:  # noqa: BLE001
+        print(f"cannot read twin policies: {error}", file=sys.stderr)
+    return out
+
+
+def hydration(binary: str, receipts: str) -> list[dict]:
+    env_cmd = ["env", f"BONFYRE_FOREIGN_RECEIPTS={receipts}", binary, "foreign", "hydration"]
+    out = subprocess.run(env_cmd, capture_output=True, text=True, timeout=120).stdout
+    try:
+        return json.loads(out)["twins"]
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def bodies_for(receipts: str, url: str) -> list[Path]:
+    found: list[Path] = []
+    for path in Path(receipts).glob("*.json"):
+        try:
+            d = json.loads(path.read_text())
+        except Exception:  # noqa: BLE001
+            continue
+        if d.get("source_url") != url:
+            continue
+        body = d.get("body_path")
+        if body and Path(body).is_file():
+            found.append(Path(body))
+    return found
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--receipts", default="/var/lib/bonfyre/foreign/receipts")
+    ap.add_argument("--cms", default="/var/lib/bonfyre/cms/bonfyre_cms.db")
+    ap.add_argument("--binary", default="/usr/local/bin/bonfyre-project")
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    pol = policies(args.cms)
+    freed, cooled, kept, unpoliced = 0, [], 0, 0
+
+    for twin in hydration(args.binary, args.receipts):
+        url = twin["url"]
+        p = pol.get(subject_id(url)) or pol.get(url)
+        if not p:
+            unpoliced += 1
+            continue
+        if p["retain_body"]:
+            kept += 1
+            continue
+        for body in bodies_for(args.receipts, url):
+            size = body.stat().st_size
+            if args.apply:
+                try:
+                    body.unlink()
+                except Exception:  # noqa: BLE001
+                    continue
+            freed += size
+            cooled.append({"url": url, "regime": p["regime"],
+                           "body": body.name, "bytes": size})
+
+    print(json.dumps({
+        "schema": "bonfyre.foreign.cool.v1",
+        "applied": bool(args.apply),
+        "cooled": cooled,
+        "bodies_cooled": len(cooled),
+        "bytes_freed": freed,
+        "retained_by_regime": kept,
+        "unpoliced": unpoliced,
+        "note": ("receipts are never removed; cooling reduces what is held, never what "
+                 "is known to have been seen"),
+        "forbidden_inference": (
+            "a cooled twin is not a forgotten one, and a cooled body is not a drifted "
+            "one -- the authored regime is what distinguishes an absent body that was "
+            "not meant to be kept from one that no longer matches its receipt"
+        ),
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

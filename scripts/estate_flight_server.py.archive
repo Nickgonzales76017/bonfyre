@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+# Historical generated Flight server. The native Arrow fabric now owns transport.
+import argparse, json
+from pathlib import Path
+import pyarrow.flight as flight
+import pyarrow.parquet as pq
+
+class EstateFlight(flight.FlightServerBase):
+    def __init__(self, location, catalog):
+        super().__init__(location)
+        self.tables={x["name"]:x for x in json.loads(Path(catalog).read_text())["tables"]}
+    def _info(self,name):
+        row=self.tables[name]; path=row["parquet"]
+        schema=pq.read_schema(path); md=pq.read_metadata(path)
+        desc=flight.FlightDescriptor.for_path(name)
+        ep=flight.FlightEndpoint(flight.Ticket(name.encode()),[])
+        return flight.FlightInfo(schema,desc,[ep],md.num_rows,Path(path).stat().st_size)
+    def list_flights(self,context,criteria):
+        for name in sorted(self.tables): yield self._info(name)
+    def get_flight_info(self,context,descriptor):
+        name=descriptor.path[0].decode() if descriptor.path else descriptor.command.decode()
+        if name not in self.tables: raise flight.FlightUnavailableError(f"unknown dataset {name}")
+        return self._info(name)
+    def do_get(self,context,ticket):
+        name=ticket.ticket.decode()
+        if name not in self.tables: raise flight.FlightUnavailableError(f"unknown ticket {name}")
+        pf=pq.ParquetFile(self.tables[name]["parquet"])
+        return flight.GeneratorStream(pf.schema_arrow,pf.iter_batches(batch_size=65536))
+
+def main():
+    ap=argparse.ArgumentParser(); ap.add_argument("--catalog",required=True)
+    ap.add_argument("--host",default="127.0.0.1"); ap.add_argument("--port",type=int,default=8815)
+    a=ap.parse_args(); s=EstateFlight(f"grpc://{a.host}:{a.port}",a.catalog)
+    print(f"Bonfyre Estate Flight listening on grpc://{a.host}:{a.port}",flush=True); s.serve()
+if __name__=="__main__": main()

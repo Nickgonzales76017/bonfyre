@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""Historical parity oracle: shopping feeds read as commerce rather than news.
+
+bringatrailer.com was admitted months ago and filed under `news`, so every
+auction lot in it arrived as an article: a headline and a link, with no price,
+no deadline, and nothing an account could act on. The feed had no maturity to
+integrate with anything financial because nothing said it was commerce.
+
+The estate already owns the right spine and had never run it. CommerceChain
+keeps fifteen non-interchangeable stages, each requiring exactly the one
+before, each naming the owner entitled to establish it and what it still does
+not establish -- and `bf_commerce_record` had no caller anywhere in the tree.
+
+What an observation of a marketplace feed entitles this estate to say is
+exactly two facts:
+
+  product   a thing is described in a catalogue
+  listing   a marketplace ForeignTwin carries it
+
+and nothing further. Inventory belongs to the merchant's system of record,
+availability to a receipted observation, offer and quote to the merchant, and
+everything past checkout to the buyer, the rails and the carrier. So those
+thirteen stages are recorded as outstanding, each with its owner. That list is
+the honest answer to "what can be done here": not a button this estate owns,
+but the next fact and the party who alone could establish it.
+
+A lot is told from an article by its address, not by its words: a marketplace
+publishes lots under a path it reserves for them, and an editorial post in the
+same feed is not a lot no matter what it is called.
+
+  project_listings.py [--source S] [--apply]
+"""
+import argparse, json, os, re, sqlite3, subprocess, sys, time
+
+# How a marketplace addresses a lot, as opposed to everything else it writes.
+# The pattern is evidence about that publisher's own URL space; a feed with no
+# entry here is read as it always was rather than guessed at.
+LOT_ADDRESS = {
+    "bringatrailer.com": re.compile(r"/listing/", re.I),
+    "ebay.com": re.compile(r"/itm/", re.I),
+    "etsy.com": re.compile(r"/listing/", re.I),
+    "carsandbids.com": re.compile(r"/auctions/", re.I),
+    "hemmings.com": re.compile(r"/classified", re.I),
+}
+
+CANNOT_INFER = (
+    "this estate observed a marketplace publish a lot; it is not a claim that the thing "
+    "exists, is in stock, is theirs to sell, is still obtainable, or has any price this "
+    "estate has seen, and this estate performs no part of the exchange")
+
+
+def host_of(url):
+    m = re.match(r"https?://([^/]+)", url or "")
+    host = (m.group(1).lower() if m else "")
+    return host[4:] if host.startswith("www.") else host
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--source", default="")
+    ap.add_argument("--limit", type=int, default=60000)
+    ap.add_argument("--cms", default="", help="BonfyreCMS binary (defaults to this repo's build)")
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    commerce = os.path.join(args.repo, "cmd/BonfyreCommerce/bonfyre-commerce")
+    cms_bin = args.cms or os.path.join(args.repo, "cmd/BonfyreCMS/bonfyre-cms")
+    schemas = os.path.join(args.repo, "cmd/BonfyreCMS/content-types")
+    store = os.path.join(args.estate, "commerce.db")
+    archive = sqlite3.connect("file:%s/items.db?mode=ro" % args.estate, uri=True)
+    archive.row_factory = sqlite3.Row
+    cms = sqlite3.connect(os.path.join(args.estate, "cms.db"))
+
+    rows = archive.execute(
+        "SELECT source, key, title, COALESCE(href,'') AS href, COALESCE(publisher,'') AS publisher,"
+        " COALESCE(at,0) AS at FROM item WHERE COALESCE(href,'') <> ''"
+        "   AND (?1 = '' OR source = ?1) ORDER BY at DESC LIMIT ?2",
+        (args.source, args.limit)).fetchall()
+
+    lots, editorial, by_source = [], 0, {}
+    for row in rows:
+        marketplace = host_of(row["href"])
+        pattern = LOT_ADDRESS.get(marketplace)
+        if not pattern:
+            continue
+        if not pattern.search(row["href"]):
+            # Same feed, different kind of writing. A marketplace's editorial is
+            # not a lot, and calling it one would put a price on an article.
+            editorial += 1
+            continue
+        lots.append(dict(row, marketplace=marketplace))
+        by_source[row["source"]] = by_source.get(row["source"], 0) + 1
+
+    if not args.apply:
+        print(json.dumps({"lots": len(lots), "editorial_in_the_same_feeds": editorial,
+                          "by_source": by_source,
+                          "marketplaces_this_estate_can_read": sorted(LOT_ADDRESS),
+                          "sample": [l["title"][:60] for l in lots[:5]]}, indent=1))
+        return 0
+
+    if not os.path.exists(commerce) or not os.path.exists(cms_bin):
+        print(json.dumps({"error": "a required owner is not built", "commerce": commerce,
+                          "cms": cms_bin}))
+        return 2
+
+    # The schema is applied by BonfyreCMS itself. A marketplace observation is
+    # canonical owner material, not a hand-made convenience table beside the
+    # page that happens to show it.
+    schema = os.path.join(schemas, "service_offer.json")
+    applied = subprocess.run([cms_bin, "schema", "apply", schema,
+                              "--db", os.path.join(args.estate, "cms.db"),
+                              "--schemas", schemas], capture_output=True, text=True)
+    if applied.returncode:
+        print(json.dumps({"error": "service_offer schema refused",
+                          "detail": applied.stderr[-600:]}))
+        return 2
+
+    established, refused, owner_written, owner_refused = 0, 0, 0, 0
+    for lot in lots:
+        exchange = "lot:%s:%s" % (lot["marketplace"], lot["key"])
+        when = (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(lot["at"]))
+                if lot["at"] else "")
+        receipt = "foreign/receipts/%s.json" % lot["source"]
+        # Product first, because the chain requires it and because a lot is a
+        # thing described before it is a thing carried.
+        for stage, owner, detail in (
+                ("product", "ObjectContract / catalogue",
+                 lot["title"][:200]),
+                ("listing", "merchant or marketplace ForeignTwin",
+                 "%s -- observed in %s, receipt %s" % (lot["href"][:120], lot["source"], receipt))):
+            done = subprocess.run(
+                [commerce, "record", "--db", store, "--exchange", exchange,
+                 "--stage", stage, "--owner", owner, "--detail", detail, "--at", when],
+                capture_output=True, text=True)
+            if done.returncode == 0:
+                established += 1
+            else:
+                refused += 1
+
+        # A source that did not state an observation time cannot become a
+        # current offer merely because this projector ran today.
+        if when:
+            offer = {
+                "offer_id": exchange, "source_ref": lot["source"],
+                "marketplace": lot["marketplace"], "canonical_href": lot["href"],
+                "title": lot["title"][:400], "observed_at": when,
+                "receipt_ref": receipt, "assertion_state": "OBSERVED",
+                "offer_status": "observed", "cannot_infer": CANNOT_INFER,
+                "status": "published",
+            }
+            existing = cms.execute("SELECT id FROM service_offer WHERE namespace=? AND offer_id=?",
+                                   ("root", exchange)).fetchone()
+            action = "update" if existing else "create"
+            command = [cms_bin, "entry", action, "service_offer"]
+            if existing:
+                command.extend([str(existing[0]), json.dumps(offer, separators=(",", ":"))])
+            else:
+                command.append(json.dumps(offer, separators=(",", ":")))
+            command.extend(["--ns", "root", "--db", os.path.join(args.estate, "cms.db"),
+                            "--schemas", schemas])
+            written = subprocess.run(command, capture_output=True, text=True)
+            if written.returncode == 0:
+                owner_written += 1
+            else:
+                owner_refused += 1
+
+        # commerce_lot was a temporary presentation-owned compatibility table.
+        # Existing rows are deliberately left intact for recoverability, but
+        # new observations are owned only by service_offer above.
+
+    cms.commit()
+    cms.close()
+    archive.close()
+
+    # The feed itself should stop calling this news.
+    refiled = 0
+    if lots:
+        cms2 = sqlite3.connect(os.path.join(args.estate, "cms.db"))
+        for source in sorted(by_source):
+            cms2.execute("UPDATE internet_source SET family='commerce' WHERE source=? AND status='published'",
+                         (source,))
+            refiled += 1
+        cms2.commit()
+        cms2.close()
+
+    print(json.dumps({
+        "lots": len(lots), "stages_established": established, "refused": refused,
+        "canonical_offers_written": owner_written, "canonical_offers_refused": owner_refused,
+        "editorial_left_alone": editorial, "sources_refiled_as_commerce": refiled,
+        "store": store, "cannot_infer": CANNOT_INFER,
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

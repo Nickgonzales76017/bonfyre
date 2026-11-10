@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Namecheap Dynamic DNS updater for the estate's six domains.
+
+Answers the open question about the Namecheap API: for this estate, don't use
+it. The full API needs static-IP allowlisting, a separate API key, and exists
+mainly for registration and bulk zone management. All six domains already have
+auto-renew and privacy ON, so registration management buys nothing. What is
+actually wanted is "point this name at this host", and Namecheap Dynamic DNS
+does exactly that with one authenticated GET per record and no allowlisting:
+
+    https://dynamicdns.park-your-domain.com/update
+        ?host=<host>&domain=<domain>&password=<ddns-password>&ip=<ip>
+
+Cloudflare would be the better DNS-as-code path, but CLOUDFLARE_API_TOKEN is
+currently invalid (token verify returns success=false, 0 zones), so this is the
+credentialed path that works today.
+
+DRY RUN BY DEFAULT. DNS is outward-facing and a wrong A record takes a domain
+down, so nothing is sent without --apply. Pass --apply only when the target IP
+is the one you actually want published.
+
+    python3 akai_ddns.py                      # show current state, change nothing
+    python3 akai_ddns.py --ip 1.2.3.4         # show what WOULD change
+    python3 akai_ddns.py --ip 1.2.3.4 --apply # publish it
+    python3 akai_ddns.py --only aurekai.live --ip 1.2.3.4 --apply
+"""
+import argparse
+import subprocess
+import sys
+import urllib.parse
+from pathlib import Path
+
+SECRETS = Path.home() / ".bonfyre/secrets/provider.refs.env"
+ENDPOINT = "https://dynamicdns.park-your-domain.com/update"
+
+# domain -> the env var holding its DDNS password
+DOMAINS = {
+    "aurekai.life":               "AUREKAI_LIFE_DNS_PASSWORD",
+    "aurekai.live":               "AUREKAI_LIVE_DNS_PASSWORD",
+    "aurekai.shop":               "AUREKAI_SHOP_DNS_PASSWORD",
+    "aurekai.work":               "AUREKAI_WORK_DNS_PASSWORD",
+    "automaticdoorrepair.online": "AUREKAI_AUTOMATICDOORREPAIR_ONLINE_PASSWORD",
+    "theleaflounge.store":        "THE_LEAF_LOUNGE_STORE_DNS_PASSWORD",
+}
+
+# Namecheap parking ranges. A domain still on one of these is published but
+# serving a registrar placeholder, not the estate.
+PARKING_PREFIXES = ("162.255.119.", "192.64.119.", "198.54.117.")
+
+
+def secrets():
+    out = {}
+    if not SECRETS.exists():
+        return out
+    for line in SECRETS.read_text().splitlines():
+        line = line.strip().removeprefix("export ")
+        if "=" in line and not line.startswith("#"):
+            k, _, v = line.partition("=")
+            out[k.strip()] = v.strip().strip("'\"")
+    return out
+
+
+def dig(domain, rtype="A"):
+    r = subprocess.run(["dig", "+short", rtype, domain],
+                       capture_output=True, text=True, timeout=15)
+    vals = [x for x in r.stdout.strip().split("\n") if x]
+    return vals[0] if vals else ""
+
+
+def update(domain, host, password, ip, timeout=25):
+    q = urllib.parse.urlencode({"host": host, "domain": domain,
+                                "password": password, "ip": ip})
+    r = subprocess.run(["curl", "-s", "-m", str(timeout), f"{ENDPOINT}?{q}"],
+                       capture_output=True, text=True)
+    body = r.stdout
+    # Namecheap answers with XML carrying an ErrCount element
+    ok = "<ErrCount>0</ErrCount>" in body
+    return ok, body.strip()[:200]
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ip", help="A record value to publish")
+    ap.add_argument("--host", default="@", help="record host, default @ (apex)")
+    ap.add_argument("--only", help="operate on a single domain")
+    ap.add_argument("--apply", action="store_true",
+                    help="actually send the update; without this nothing is sent")
+    a = ap.parse_args()
+
+    sec = secrets()
+    targets = {a.only: DOMAINS[a.only]} if a.only else DOMAINS
+    if a.only and a.only not in DOMAINS:
+        print(f"unknown domain {a.only}", file=sys.stderr)
+        return 2
+
+    print(f"{'domain':<30}{'current A':<18}{'state':<12}{'password':<10}action")
+    changed = 0
+    for domain, var in targets.items():
+        cur = dig(domain)
+        parked = cur.startswith(PARKING_PREFIXES)
+        have = bool(sec.get(var))
+        state = "parked" if parked else ("live" if cur else "unresolved")
+        if not a.ip:
+            action = "inspect only"
+        elif not have:
+            action = f"BLOCKED: {var} unset"
+        elif cur == a.ip:
+            action = "already correct"
+        elif a.apply:
+            ok, body = update(domain, a.host, sec[var], a.ip)
+            action = "UPDATED" if ok else f"FAILED: {body[:60]}"
+            changed += ok
+        else:
+            action = f"would set -> {a.ip}  (dry run)"
+        print(f"  {domain:<28}{cur or '—':<18}{state:<12}"
+              f"{'yes' if have else 'NO':<10}{action}")
+
+    if a.ip and not a.apply:
+        print("\n  dry run: nothing was sent. Re-run with --apply to publish.")
+    elif a.apply:
+        print(f"\n  {changed} record(s) updated")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

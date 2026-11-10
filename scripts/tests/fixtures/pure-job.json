@@ -1,0 +1,12 @@
+{
+  "job": "native-pure-parity",
+  "effect_class": "PURE",
+  "candidate_space": [
+    {"id": "a", "held": true, "fresh": true, "price_micro_usd": 500},
+    {"id": "b", "held": false, "fresh": true, "price_micro_usd": 250},
+    {"id": "c", "held": true, "fresh": false, "price_micro_usd": 1250},
+    {"id": "d", "held": true, "fresh": true, "price_micro_usd": 800},
+    {"id": "e", "held": true, "fresh": true, "price_micro_usd": 1500}
+  ],
+  "require": {"held": true, "fresh": true}
+}

@@ -1,0 +1,252 @@
+#!/usr/bin/env python3
+"""Execute one declared supplier route against one gym cohort and receipt it.
+
+This exists because the first version of the gym could call a market ceiling
+"measured" on the strength of an environment variable being non-empty. That
+encoded the implication:
+
+    a credential exists -> a supplier was measured
+
+which is false, and it is the exact class of claim this estate spends its effort
+refusing. The real ladder has seven rungs and each one has to be climbed:
+
+    route declared
+      != route admissible for this capability
+      != provider executed
+      != result retrieved
+      != canonical evidence recovered
+      != gold matched
+      != ceiling measured
+
+A trial receipt is the evidence that a particular rung was reached, for a
+particular cohort, at a particular time. A ceiling may then be constructed from
+receipts and from nothing else.
+
+Two gates matter as much as the execution:
+
+Capability. Possessing an API key is irrelevant to whether a supplier belongs in
+a retrieval tournament. A completion endpoint closes `completion.*`; it does not
+close `retrieval.search`, and admitting it because a key happens to exist would
+put a model that cannot search into a search market.
+
+Frontier. A receipt is scoped to the cohort it ran against. When the cohort
+moves, the old receipt stops being evidence about the new one -- otherwise a
+supplier keeps credit for a question it was never asked.
+
+Cannot infer: an executed trial is not a good result, a returned resource is not
+relevant evidence, and a receipt is not permission to route real work to that
+supplier.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+BIN = os.environ.get("BONFYRE_BIN_DIR", "/usr/local/bin")
+TRIALS = os.environ.get("BONFYRE_TRIAL_RECEIPTS", "/var/lib/bonfyre/gym/trials")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def cohort_digest(subjects: list[str], gym: str) -> str:
+    """Identity of the question, not of the answer, and not of who was asked.
+
+    A receipt carries this so a trial run against an older cohort cannot be
+    counted toward a newer one. Sorted, so ordering cannot change the identity
+    of the same set.
+
+    The capability is deliberately not part of this material. It was, and that
+    gave every capability its own "cohort" over the same subjects, so a
+    direct-source trial could never be counted toward the cohort the gym had
+    just built. Who is asked belongs on the receipt; what is asked is the cohort.
+    """
+    material = "\n".join(sorted(subjects)) + "\n--\ngym=" + gym
+    return hashlib.sha256(material.encode()).hexdigest()[:32]
+
+
+def gym_cohort(gym: str, limit: int | None = None) -> list[str]:
+    """The cohort, selected the one way both the runner and the trial select it.
+
+    Two selection rules over one estate produce two cohorts that look like one:
+    a different size and a different ordering, and a trial receipt written
+    against subjects the gym never examined. It is then correctly refused, which
+    reads as "the supplier was never run" rather than "we asked the wrong
+    question"."""
+    size = limit
+    if size is None:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        row = db.execute("SELECT COALESCE(cohort_size,12) FROM live_gym "
+                         "WHERE gym=? AND status='published'", (gym,)).fetchone()
+        db.close()
+        size = int(row[0]) if row else 12
+    rc = subprocess.run([os.path.join(BIN, "bonfyre-project"), "foreign", "twins"],
+                        capture_output=True, text=True, timeout=90)
+    doc = json.loads(rc.stdout) if rc.returncode == 0 and rc.stdout.strip() else {}
+    twins = doc.get("twins", doc if isinstance(doc, list) else [])
+    twins = [t for t in twins if str(t.get("url", "")).startswith("http")]
+    # Oldest-seen first, the same ordering the gym uses, so the run always looks
+    # at what is most likely to have moved.
+    twins.sort(key=lambda t: t.get("last_seen") or "")
+    return [t["url"] for t in twins[:size]]
+
+
+def routes_for(capability: str) -> list[dict]:
+    """Routes admissible for a capability.
+
+    Admissibility is the route's declared capability closing the one asked for.
+    It is deliberately not `has a credential`: those are different questions and
+    conflating them is what produced a measured market with nothing measured."""
+    db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+    db.row_factory = sqlite3.Row
+    rows = [dict(r) for r in db.execute(
+        "SELECT route, capability, kind, COALESCE(endpoint,'') endpoint, "
+        "       COALESCE(credential_env,'') credential_env "
+        "FROM provider_route WHERE status='published' ORDER BY route")]
+    db.close()
+    out = []
+    for r in rows:
+        declared = r["capability"]
+        # A route closes a capability when it declares that capability or a
+        # narrower one beneath it. `completion.chat` does not close
+        # `retrieval.search`, however many keys are present.
+        if declared == capability or declared.startswith(capability + "."):
+            out.append(r)
+    return out
+
+
+def execute(route: dict, target: str, timeout: int = 45) -> dict:
+    """Actually call the supplier. The only function here that reaches outward.
+
+    A credential is passed through the environment to the organ that needs it
+    and is never read into this process's variables, never logged, and never
+    placed in a receipt."""
+    started = time.time()
+    kind = route["kind"]
+    if kind == "direct_source":
+        args = [os.path.join(BIN, "bonfyre-project"), "foreign", "observe",
+                f"trial:{hashlib.sha256(target.encode()).hexdigest()[:12]}", target]
+        try:
+            p = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+            ok = p.returncode == 0 and '"http_status":200' in p.stdout
+            digest = ""
+            if ok:
+                marker = '"content_sha256":"'
+                i = p.stdout.find(marker)
+                if i >= 0:
+                    digest = p.stdout[i + len(marker):i + len(marker) + 64]
+            return {"outcome": "retrieved" if ok else "no_result",
+                    "resources": [target] if ok else [],
+                    "evidence_digest": digest,
+                    "latency_ms": int((time.time() - started) * 1000),
+                    "error": "" if ok else "source did not answer 200"}
+        except subprocess.TimeoutExpired:
+            return {"outcome": "timeout", "resources": [], "evidence_digest": "",
+                    "latency_ms": timeout * 1000, "error": "timed out"}
+        except FileNotFoundError:
+            return {"outcome": "route_unavailable", "resources": [], "evidence_digest": "",
+                    "latency_ms": 0, "error": "organ not installed"}
+    if kind == "internal_organ":
+        return {"outcome": "not_applicable", "resources": [], "evidence_digest": "",
+                "latency_ms": 0,
+                "error": "this route answers analytics, not per-subject retrieval"}
+    # An external supplier declared but with no adapter written is honestly
+    # reported as such. Returning an empty success here would be the same
+    # falsehood in a new place.
+    if route["credential_env"] and not os.environ.get(route["credential_env"]):
+        return {"outcome": "not_credentialed", "resources": [], "evidence_digest": "",
+                "latency_ms": 0,
+                "error": f"no value present for {route['credential_env']} in this process"}
+    return {"outcome": "no_adapter", "resources": [], "evidence_digest": "",
+            "latency_ms": 0,
+            "error": f"no execution adapter is written for kind={kind}; "
+                     "a declared route is not an executable one"}
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) < 2:
+        print("usage: provider_trial.py <capability> <gym> [--limit N] [--json]", file=sys.stderr)
+        return 2
+    capability, gym = args[0], args[1]
+    limit = None
+    for i, a in enumerate(sys.argv):
+        if a == "--limit" and i + 1 < len(sys.argv):
+            limit = int(sys.argv[i + 1])
+
+    # The cohort comes from one place. Selecting it here as well produced two
+    # cohorts that looked like one -- a different size and a different ordering
+    # -- so a trial receipt could be written against subjects the gym had never
+    # examined, and then correctly refused to count.
+    subjects = gym_cohort(gym, limit)
+    frontier = f"gym={gym}"
+    digest = cohort_digest(subjects, gym)
+
+    admissible = routes_for(capability)
+    receipts = []
+    for route in admissible:
+        for url in subjects:
+            result = execute(route, url)
+            receipts.append({
+                "schema": "bonfyre-provider-trial.v1",
+                "gym": gym,
+                "cohort_digest": digest,
+                "cohort_size": len(subjects),
+                "query": url,
+                "deformation": "canonical",
+                "route": route["route"],
+                "capability": route["capability"],
+                "route_kind": route["kind"],
+                "source_frontier": frontier,
+                "executed_at": iso_now(),
+                **result,
+                "cannot_infer": [
+                    "an executed trial -> a good result",
+                    "a returned resource -> relevant evidence",
+                    "a receipt -> permission to route real work here",
+                ],
+            })
+
+    os.makedirs(TRIALS, exist_ok=True)
+    written = 0
+    for r in receipts:
+        name = f"{gym}-{r['route']}-{digest[:12]}-{hashlib.sha256(r['query'].encode()).hexdigest()[:8]}.json"
+        with open(os.path.join(TRIALS, name), "w") as f:
+            json.dump(r, f, indent=2)
+        written += 1
+
+    summary = {
+        "schema": "bonfyre-provider-trial-summary.v1",
+        "gym": gym, "capability": capability, "cohort_digest": digest,
+        "cohort_size": len(subjects),
+        "admissible_routes": [r["route"] for r in admissible],
+        "receipts_written": written,
+        "outcomes": {},
+    }
+    for r in receipts:
+        summary["outcomes"].setdefault(r["route"], {}).setdefault(r["outcome"], 0)
+        summary["outcomes"][r["route"]][r["outcome"]] += 1
+
+    if "--json" in sys.argv:
+        print(json.dumps(summary, indent=2))
+    else:
+        print(f"  capability {capability}, gym {gym}, cohort {len(subjects)} ({digest[:12]})")
+        if not admissible:
+            print("  no route declares this capability; nothing was executed")
+        for route, outs in summary["outcomes"].items():
+            line = ", ".join(f"{k}={v}" for k, v in sorted(outs.items()))
+            print(f"    {route:<22} {line}")
+        print(f"  {written} trial receipt(s) in {TRIALS}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

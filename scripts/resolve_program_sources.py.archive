@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""Turn what a running program needs into sources this estate actually reads.
+
+A program's source_collection is written as a demand -- the kind of program and
+the capability families it needs -- and no source at all, because guessing feeds
+for a programme nobody has run would be inventing material.  This is the step
+that resolves the demand: it asks for exactly what the program says it needs,
+imports what comes back as candidates, qualifies them through the ordinary
+admission chain, and then names the ones that answered in the collection.
+
+Nothing here shortens that chain.  A candidate is an address a search returned;
+an admitted source is one that answered and parsed; a source in the collection
+is one this estate now reads.  A program whose needs nothing answers keeps an
+empty collection, which is the true state of its evidence.
+
+  Historical Python oracle; live command is resolve_program_sources.mjs.
+"""
+import argparse, json, os, re, subprocess, sqlite3, sys, time
+
+NOW = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+
+# What each archetype of program is short of, said the way a person would ask
+# for it. These are the estate's words for the demand, not the pack's prose.
+NEEDS_BY_ARCHETYPE = {
+    "housing-human-services": [
+        "municipal permit portal open data", "zoning ordinance dataset",
+        "parcel records open data portal", "building code amendments RSS feed",
+        "planning commission agenda calendar feed", "housing inspection records dataset",
+        "code enforcement case open data", "fee schedule municipal publication",
+    ],
+    "mobility-public-safety": [
+        "traffic crash open data portal", "roadway safety plan publication",
+        "transit service alerts RSS feed", "speed limit and signal dataset",
+        "police incident open data", "street closure notices feed",
+    ],
+    "resilience-infrastructure": [
+        "hazard mitigation plan publication", "flood risk dataset portal",
+        "utility outage feed", "infrastructure condition open data",
+        "emergency management alerts RSS",
+    ],
+    "health-care-access": [
+        "public health department RSS feed", "health facility directory dataset",
+        "communicable disease surveillance report feed",
+        "environmental health inspection open data",
+    ],
+    "workforce-economic-development": [
+        "workforce board publication feed", "apprenticeship programme registry",
+        "labour market information dataset", "job posting open data feed",
+    ],
+    "food-capacity-market": [
+        "food safety inspection open data", "farmers market directory dataset",
+        "food assistance programme publication", "agricultural extension RSS feed",
+    ],
+    "knowledge-culture": [
+        "museum collection open data", "library catalogue API",
+        "cultural grant announcements feed", "digital archive OAI-PMH endpoint",
+    ],
+    "public-systems-cyber": [
+        "government security advisory feed", "public sector incident notice RSS",
+        "procurement notices open data", "broadband deployment dataset",
+    ],
+    "community-service-fabric": [
+        "community services directory dataset", "volunteer opportunity feed",
+        "nonprofit filings open data",
+    ],
+}
+
+
+def run(argv, **kw):
+    return subprocess.run(argv, capture_output=True, text=True, **kw)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", default=os.path.expanduser("~/.bonfyre/estate-local"))
+    ap.add_argument("--repo", default=os.path.expanduser("~/Developer/Bonfyre"))
+    ap.add_argument("--instance", required=True)
+    ap.add_argument("--needs", default="")
+    ap.add_argument("--queries", type=int, default=8)
+    ap.add_argument("--per-query", type=int, default=25)
+    ap.add_argument("--apply", action="store_true")
+    args = ap.parse_args()
+
+    cms = sqlite3.connect(os.path.join(args.estate, "cms.db"))
+    row = cms.execute(
+        "SELECT i.archetype, i.owner_subject, t.name FROM program_instance i"
+        " LEFT JOIN program_template t ON t.template_id=i.template_id AND t.status='published'"
+        " WHERE i.instance_id=? AND i.status='published'", (args.instance,)).fetchone()
+    if not row:
+        print(json.dumps({"error": "no such program instance", "instance": args.instance}))
+        return 2
+    archetype, subject, name = row
+    needs = ([x.strip() for x in re.split(r"[\n;]", args.needs) if x.strip()]
+             or NEEDS_BY_ARCHETYPE.get(archetype, []))
+    if not needs:
+        print(json.dumps({"error": "nothing states what this program needs",
+                          "archetype": archetype}))
+        return 2
+
+    if not args.apply:
+        print(json.dumps({"instance": args.instance, "program": name,
+                          "archetype": archetype, "would_ask_for": needs}, indent=1))
+        return 0
+
+    label = "PROGRAM_" + re.sub(r"[^A-Z0-9]+", "_", args.instance.upper())[:56]
+    discovery = os.path.join(args.estate, "discovery")
+    os.makedirs(discovery, exist_ok=True)
+    found = os.path.join(discovery, "program-%s-%s.jsonl" % (re.sub(r"[^a-z0-9]+", "-", args.instance)[:40], NOW))
+    frontier = os.path.join(args.repo, "cmd/BonfyreSourceFrontier/bonfyre-source-frontier")
+
+    asked = run(["bun", os.path.join(args.repo, "cmd/BonfyreSourceFrontier/tools/discover_with_exa.mjs"),
+                 "--out", found, "--subjects", "; ".join(needs),
+                 "--queries", str(args.queries), "--per-query", str(args.per_query)])
+    listed = 0
+    if os.path.exists(found):
+        listed = sum(1 for _ in open(found))
+    if not listed:
+        print(json.dumps({"instance": args.instance, "asked_for": needs, "listed": 0,
+                          "why": (asked.stderr or asked.stdout or "").strip()[:160],
+                          "collection_left": "empty, which is the true state of this program's evidence"}))
+        return 0
+
+    imported = run([frontier, "import", "--db", os.path.join(args.estate, "frontier.db"),
+                    "--label", label, "--jsonl", found])
+
+    # The ordinary admission chain, aimed at what this program asked for rather
+    # than at the front of a queue of a hundred thousand older candidates.
+    out = "/tmp/%s.json" % label
+    declared = "/tmp/%s-declared.jsonl" % label
+    qualified = run(["bun", os.path.join(args.repo, "cmd/BonfyreSourceFrontier/tools/qualify_channels.mjs"),
+                     "--db", os.path.join(args.estate, "frontier.db"), "--frontier", frontier,
+                     "--project", os.path.join(args.repo, "components/BonfyreProject/bonfyre-project"),
+                     "--foreign", os.path.join(args.estate, "foreign"), "--out", out,
+                     "--limit", "80", "--workers", "8",
+                     "--cms", os.path.join(args.estate, "cms.db"),
+                     "--only-label", label, "--discovered", declared,
+                     "--evidence", "/tmp/%s-evidence.jsonl" % label])
+
+    # A search result is usually a page, and the feeds it declares are the real
+    # channels. Those are asked for in the same pass rather than left behind.
+    second = {}
+    if os.path.exists(declared) and os.path.getsize(declared):
+        run([frontier, "import", "--db", os.path.join(args.estate, "frontier.db"),
+             "--label", label + "_DECLARED", "--jsonl", declared])
+        again = run(["bun", os.path.join(args.repo, "cmd/BonfyreSourceFrontier/tools/qualify_channels.mjs"),
+                     "--db", os.path.join(args.estate, "frontier.db"), "--frontier", frontier,
+                     "--project", os.path.join(args.repo, "components/BonfyreProject/bonfyre-project"),
+                     "--foreign", os.path.join(args.estate, "foreign"),
+                     "--out", out + ".declared", "--limit", "80", "--workers", "8",
+                     "--cms", os.path.join(args.estate, "cms.db"),
+                     "--only-label", label + "_DECLARED",
+                     "--evidence", "/tmp/%s-declared-evidence.jsonl" % label])
+        try:
+            second = json.loads((again.stdout or "{}").strip().splitlines()[-1])
+        except Exception:
+            second = {}
+        for produced in (out + ".declared",):
+            if os.path.exists(produced) and os.path.getsize(produced):
+                run(["bun", os.path.join(args.repo, "cmd/BonfyreWebAddress/tools/apply_census_sources.mjs"),
+                     "--json", produced, "--db", os.path.join(args.estate, "cms.db"),
+                     "--schemas", os.path.join(args.estate, "schemas"),
+                     "--cms", os.path.join(args.repo, "cmd/BonfyreCMS/bonfyre-cms")])
+    if os.path.exists(out) and os.path.getsize(out):
+        run(["bun", os.path.join(args.repo, "cmd/BonfyreWebAddress/tools/apply_census_sources.mjs"),
+             "--json", out, "--db", os.path.join(args.estate, "cms.db"),
+             "--schemas", os.path.join(args.estate, "schemas"),
+             "--cms", os.path.join(args.repo, "cmd/BonfyreCMS/bonfyre-cms")])
+
+    # What answered, named in the program's own collection.
+    ledger = sqlite3.connect(os.path.join(args.estate, "frontier.db"))
+    admitted = [r[0] for r in ledger.execute(
+        "SELECT DISTINCT c.census_source FROM channel c JOIN channel_origin o ON o.channel_id=c.channel_id"
+        " WHERE o.label IN (?,?) AND c.state IN ('eligible','admitted','active')"
+        "   AND COALESCE(c.census_source,'')<>''", (label, label + "_DECLARED"))]
+    ledger.close()
+
+    collection = "%s-sources" % args.instance
+    existing = cms.execute("SELECT source_selector FROM source_collection"
+                           " WHERE collection_id=? AND status='published'", (collection,)).fetchone()
+    selector = json.loads(existing[0]) if existing and existing[0] else {}
+    selector["source_refs"] = sorted(set(selector.get("source_refs", [])) | set(admitted))[:300]
+    selector["asked_for"] = needs
+    selector["resolved_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    cms.execute("UPDATE source_collection SET source_selector=?, updated_at=?"
+                " WHERE collection_id=? AND status='published'",
+                (json.dumps(selector), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), collection))
+
+    # The requirement this closes is the one that said the program had no
+    # sources. Requirements are never closed silently: this names what closed it.
+    if admitted:
+        cms.execute(
+            "UPDATE program_requirement SET state='met', satisfied_by=?, updated_at=?"
+            " WHERE instance_id=? AND kind='capability' AND requirement_id LIKE '%-needs-source-intake'",
+            ("source_collection:" + collection, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+             args.instance))
+    cms.commit()
+    cms.close()
+
+    print(json.dumps({
+        "instance": args.instance, "program": name, "archetype": archetype,
+        "asked_for": len(needs), "listed": listed,
+        "first_pass": (qualified.stdout or "").strip().splitlines()[-1:],
+        "declared_pass": second,
+        "sources_now_in_the_collection": len(selector["source_refs"]),
+        "cannot_infer": "a source in this collection is one this estate reads that answered a "
+                        "question this program asked; it is not evidence the program has what it "
+                        "needs, and not a claim the source is about this program at all",
+    }, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

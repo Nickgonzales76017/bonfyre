@@ -1,0 +1,12 @@
+id: native-command-string-dispatch
+language: C
+severity: info
+message: CLI verb is compared as a string; resolve it through the owner's command index.
+rule:
+  any:
+    - pattern: strcmp(argv[1], $VERB)
+    - pattern: strcmp($VERB, argv[1])
+    - pattern: strcasecmp(argv[1], $VERB)
+    - pattern: strcasecmp($VERB, argv[1])
+    - pattern: strncmp(argv[1], $VERB, $LIMIT)
+    - pattern: strncmp($VERB, argv[1], $LIMIT)

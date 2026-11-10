@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""Archived after native bitset cutover. Which combinations of capital routes would close, and what stops the rest.
+
+Routes are not alternatives to pick between. One form of capital routinely
+satisfies the condition that unlocks a much larger one -- a grant and a landlord
+contribution closing an equity condition can make a bank facility executable, so
+three small closures unlock a rail an order of magnitude bigger. A list of
+lenders cannot express that; a combination search over routes and the conditions
+they satisfy can.
+
+The search is genuinely combinatorial, and it is pure: no capital moves, nothing
+is applied for, and no route is contacted. It therefore runs on the pure tier
+under the same admission the rest of the estate uses -- money work, so exact
+representation, placed where the data already lives.
+
+Three states are kept apart and never collapsed:
+
+    EVIDENCED   the estate can point at what makes this capacity real
+    UNKNOWN     nobody has asked; this is not zero
+    BLOCKED     a condition this route needs is unmet
+
+Reporting UNKNOWN as zero would understate the frontier and send the planner
+looking for money it may already be able to reach. Reporting it as capacity
+would overstate it, which is worse.
+
+Cannot infer: a closing combination is not funding, an unblocked route is not an
+offer, and a capacity the estate cannot evidence is not one it has.
+"""
+from __future__ import annotations
+
+import itertools
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def load(table: str, institution: str) -> list[dict]:
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        out = [dict(r) for r in db.execute(
+            f"SELECT * FROM {table} WHERE status='published' AND institution = ?",
+            (institution,))]
+        db.close()
+        return out
+    except sqlite3.Error:
+        return []
+
+
+def split(value: str) -> set[str]:
+    return {v.strip() for v in (value or "").split(",") if v.strip()}
+
+
+def main() -> int:
+    institution = None
+    for i, a in enumerate(sys.argv):
+        if a == "--institution" and i + 1 < len(sys.argv):
+            institution = sys.argv[i + 1]
+    if not institution:
+        print("usage: funding_frontier.py --institution <id> [--json]", file=sys.stderr)
+        return 2
+
+    routes = load("funding_route", institution)
+    reqs = load("funding_requirement", institution)
+    if not routes:
+        print(f"no funding routes are declared for {institution}", file=sys.stderr)
+        return 2
+
+    satisfied_now = {r["requirement"] for r in reqs if r["state"] == "SATISFIED"}
+    all_reqs = {r["requirement"] for r in reqs}
+
+    # A combination is admissible when, for every route in it, that route's
+    # conditions are met either already or by another route in the same
+    # combination. Order does not matter and the closure is computed to a fixed
+    # point, because one route unlocking another can unlock a third.
+    def closes(combo: tuple[str, ...]) -> dict:
+        chosen = [r for r in routes if r["route"] in combo]
+        met = set(satisfied_now)
+        for _ in range(len(chosen) + 1):
+            grew = False
+            for r in chosen:
+                if split(r["requires"]) <= met:
+                    new = split(r["satisfies"]) - met
+                    if new:
+                        met |= new
+                        grew = True
+            if not grew:
+                break
+        blocked = [{"route": r["route"],
+                    "missing": sorted(split(r["requires"]) - met)}
+                   for r in chosen if not split(r["requires"]) <= met]
+        evidenced = round(sum(float(r["capacity"] or 0) for r in chosen
+                              if r["capacity_state"] == "EVIDENCED"
+                              and not any(b["route"] == r["route"] for b in blocked)), 2)
+        unknown = [r["route"] for r in chosen if r["capacity_state"] == "UNKNOWN"
+                   and not any(b["route"] == r["route"] for b in blocked)]
+        return {"routes": list(combo), "unblocked": len(chosen) - len(blocked),
+                "blocked": blocked, "evidenced_capacity": evidenced,
+                "unknown_capacity_routes": unknown,
+                "requirements_closed": sorted(met & all_reqs)}
+
+    names = [r["route"] for r in routes]
+    worlds = []
+    for size in range(1, len(names) + 1):
+        for combo in itertools.combinations(names, size):
+            worlds.append(closes(combo))
+
+    fully = [w for w in worlds if not w["blocked"]]
+    best = max(worlds, key=lambda w: (len(w["requirements_closed"]), w["unblocked"]))
+    # The route every larger rail waits on: the condition blocking the most
+    # routes across every world considered.
+    blockers: dict[str, int] = {}
+    for w in worlds:
+        for b in w["blocked"]:
+            for m in b["missing"]:
+                blockers[m] = blockers.get(m, 0) + 1
+
+    # The planner. Rather than searching for another lender, ask what each unmet
+    # condition would unlock if it were satisfied -- because a funding gap
+    # resolves through information, partner, time or operations at least as often
+    # as through capital, and those are usually cheaper.
+    #
+    # This is a counterfactual over the same world set, not an estimate: the
+    # frontier is recomputed with the condition treated as met, and the answer is
+    # how many worlds stop having a blocked route.
+    hypotheses = []
+    for cond in sorted(all_reqs - satisfied_now):
+        was = len(fully)
+        saved = set(satisfied_now)
+        satisfied_now.add(cond)
+        now = sum(1 for size in range(1, len(names) + 1)
+                  for combo in itertools.combinations(names, size)
+                  if not closes(combo)["blocked"])
+        satisfied_now.clear(); satisfied_now.update(saved)
+        req = next((r for r in reqs if r["requirement"] == cond), {})
+        hypotheses.append({
+            "condition": cond,
+            "resolvable_by": req.get("resolvable_by", "unknown"),
+            "worlds_unblocked_before": was,
+            "worlds_unblocked_after": now,
+            "worlds_gained": now - was,
+        })
+    hypotheses.sort(key=lambda h: -h["worlds_gained"])
+
+    # Evidence produced once is drawn on many times. A revenue history is not a
+    # bank's document, a grant's document and a lessor's document -- it is one
+    # artifact three routes each require, and pricing the work of producing it
+    # against a single route understates its value by however many other routes
+    # were waiting on the same thing.
+    reuse = []
+    for cond in sorted(all_reqs):
+        needed_by = sorted(r["route"] for r in routes if cond in split(r["requires"]))
+        produced_by = sorted(r["route"] for r in routes if cond in split(r["satisfies"]))
+        if len(needed_by) > 1 or produced_by:
+            req = next((r for r in reqs if r["requirement"] == cond), {})
+            reuse.append({
+                "artifact": cond,
+                "state": req.get("state", "?"),
+                "required_by_routes": needed_by,
+                "produced_by_routes": produced_by,
+                "reuse_factor": len(needed_by),
+            })
+    reuse.sort(key=lambda x: -x["reuse_factor"])
+
+    receipt = {
+        "schema": "bonfyre-funding-frontier.v1",
+        "closure_hypotheses": hypotheses,
+        "evidence_reuse": reuse,
+        "institution": institution,
+        "ran_at": iso_now(),
+        "effect_class": "PURE",
+        "effect_performed": False,
+        "routes": len(names),
+        "worlds_evaluated": len(worlds),
+        "worlds_with_no_blocked_route": len(fully),
+        "best_world": best,
+        "binding_conditions": sorted(blockers.items(), key=lambda kv: -kv[1])[:5],
+        "evidenced_capacity_ceiling": round(max((w["evidenced_capacity"] for w in worlds),
+                                                default=0.0), 2),
+        "routes_of_unknown_capacity": sorted({r["route"] for r in routes
+                                              if r["capacity_state"] == "UNKNOWN"}),
+        "cannot_infer": [
+            "a closing combination -> funding",
+            "an unblocked route -> an offer",
+            "UNKNOWN capacity -> zero capacity",
+            "an evidenced ceiling -> money that can be drawn today",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+
+    print(f"  institution {institution}")
+    print(f"  {len(names)} routes, {len(worlds)} combinations evaluated, "
+          f"{len(fully)} with no blocked route")
+    print(f"  evidenced capacity ceiling ${receipt['evidenced_capacity_ceiling']:,.2f}")
+    print(f"  routes whose capacity nobody has asked for: "
+          f"{', '.join(receipt['routes_of_unknown_capacity']) or 'none'}")
+    print()
+    print("  the conditions the most routes are waiting on:")
+    for cond, n in receipt["binding_conditions"]:
+        print(f"    {cond:<26} blocks a route in {n} combinations")
+    print()
+    b = best
+    print(f"  furthest reachable world: {', '.join(b['routes'])}")
+    print(f"    closes {len(b['requirements_closed'])} requirement(s), "
+          f"{b['unblocked']} route(s) unblocked")
+    for x in b["blocked"]:
+        print(f"    blocked {x['route']:<20} waiting on {', '.join(x['missing'])}")
+    print()
+    print("  what each unmet condition would unlock if it were satisfied:")
+    for h in receipt["closure_hypotheses"]:
+        if h["worlds_gained"] <= 0:
+            continue
+        print(f"    {h['condition']:<26} +{h['worlds_gained']:>3} worlds   "
+              f"resolved by {h['resolvable_by']}")
+    none = [h for h in receipt["closure_hypotheses"] if h["worlds_gained"] <= 0]
+    if none:
+        print(f"    ({len(none)} condition(s) unlock nothing on their own: "
+              f"{', '.join(h['condition'] for h in none)})")
+    print()
+    print("  evidence produced once, drawn on many times:")
+    for e in receipt["evidence_reuse"]:
+        if e["reuse_factor"] < 1:
+            continue
+        by = ", ".join(e["required_by_routes"]) or "-"
+        print(f"    {e['artifact']:<26} {e['state']:<10} needed by {e['reuse_factor']}: {by[:44]}")
+    print()
+    print("  nothing was applied for; no capital moved")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

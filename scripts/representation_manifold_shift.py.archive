@@ -1,0 +1,347 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse, datetime as dt, hashlib, json, shutil, sqlite3, subprocess
+from pathlib import Path
+
+PORTFOLIO={
+"table":["parquet","arrow","iceberg","hudi","delta","paimon","xtable"],
+"stream":["fluss","feldera","materialize","risingwave"],
+"graph":["graphar","kuzu"],"multimodal":["lance","zarr"],
+"query":["datafusion","duckdb","flight-sql","adbc"],
+"kv":["lmdb","slatedb","foundationdb"],"candidate":["automerge"],
+"carrier":["r2","iroh","ipfs","bonfyrefs"],
+"catalog":["polaris","nessie","gravitino"]}
+UNLOCKS={
+"parquet":["columnar_scan","range_query","cross_engine_read"],
+"iceberg":["snapshot_query","schema_evolution","time_travel"],
+"hudi":["incremental_read","cdc","mutation_history"],
+"delta":["optimized_layout","deletion_vector","versioned_table"],
+"paimon":["keyed_stream_state","changelog_read"],
+"fluss":["realtime_table","stream_scan","hot_kv"],
+"feldera":["incremental_consequence","retraction_propagation"],
+"materialize":["maintained_relational_view"],
+"risingwave":["streaming_application_view"],
+"graphar":["out_of_core_graph","csr_csc_traversal"],
+"kuzu":["interactive_property_graph","cypher_query"],
+"lance":["ann","multimodal_retrieval","similarity_join"],
+"zarr":["tensor_window","multiscale_array"],
+"datafusion":["native_columnar_query"],"duckdb":["local_analytics","browser_analytics"],
+"flight-sql":["arrow_native_remote_query"],"adbc":["arrow_native_database_interop"],
+"lmdb":["zero_copy_local_lookup"],"slatedb":["object_store_lsm"],
+"foundationdb":["distributed_transactional_coordination"],
+"automerge":["offline_candidate_state","collaborative_merge"],
+"r2":["durable_object_carrier"],"iroh":["content_addressed_transfer"],
+"ipfs":["federated_content_retrieval"],"bonfyrefs":["filesystem_projection"],
+"polaris":["iceberg_rest_catalog"],"nessie":["branchable_lake_state"],
+"gravitino":["federated_physical_metadata"],"xtable":["multi_format_metadata"],
+"arrow":["zero_copy_interchange"]}
+
+CUE='''package storage
+#Temperature: "absent" | "reconstructable" | "cold" | "warm" | "hot" | "pinned"
+#Authority: "semantic-owner" | "evidence" | "derived" | "cache" | "candidate"
+#Representation: {
+  kind: string
+  authority: #Authority
+  required: bool
+  reconstructable: bool
+  temperature: #Temperature
+  unlocks: [...string]
+}
+#RepresentationPortfolio: {
+  semantic_kind: string
+  representations: [...#Representation]
+}
+#Invariant: {
+  one_semantic_identity: true
+  physical_representation_never_mints_authority: true
+  transformations_are_receipted: true
+  frontier_equivalence_is_provable: true
+  evicted_derived_forms_remain_reconstructable: true
+}
+'''
+
+YAFF='''architecture representation-manifold
+  canonical_name Representation Manifold
+  family storage
+  domain Bonfyre
+  layer substrate
+  semantic_question Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?
+  purpose Compile every semantic owner into every computationally useful physical representation without multiplying semantic truth.
+  maturity architectural
+  source_path scripts/representation_manifold_shift.py
+  source_path scripts/representation_manifold_fabric.py
+  source_path scripts/representation_manifold_forge.py
+  source_path scripts/representation_manifold_zero_copy.py
+  source_path cmd/BonfyreExternalEstate/tools/compile_subject_projection.mjs
+  source_path cmd/BonfyreExternalEstate/tools/verify_subject_projection.py.archive
+  witness cmd/BonfyreExternalEstate/tests/subject_projection_precompute_test.sh proves one derived route representation commits its input/output identity with the cut, changes its route digest when rendered material changes, preserves its prior complete cut when a replacement compile fails, and refuses changed inputs or output rows
+  known_gap the manifest and route digest are one implemented representation family; the full manifold capability and eviction laws have not been proven across every semantic owner
+  invariant one semantic identity may have arbitrarily many RepresentationInstances
+  invariant a RepresentationInstance never becomes semantic authority by materialization
+  invariant every derived representation records exact input frontier, compiler identity, output digest, and reconstruction path
+  invariant representation overlap is useful when it unlocks a distinct algebra or delivery property
+  invariant semantics determine representation eligibility; ResourceWeather determines materialization temperature
+  invariant semantic GC may evict reconstructable bytes but preserves lineage
+  internal_calculus SemanticObject -> OccurrenceSpine -> RepresentationGraph -> PhysicalRealization[] -> CapabilityUnlockGraph
+  internal_calculus MaterialRepresentation + MetadataRepresentation + IndexRepresentation + ExecutionRepresentation + PresentationRepresentation
+  forbidden_inference physical duplication -> semantic duplication
+  forbidden_inference cached/current representation -> institutional authority
+'''
+
+SCHEMA='''
+PRAGMA journal_mode=WAL;
+CREATE TABLE IF NOT EXISTS manifold_meta(k TEXT PRIMARY KEY,v TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS semantic_object(
+ id TEXT PRIMARY KEY,kind TEXT NOT NULL,owner TEXT NOT NULL,
+ source_coordinate TEXT,discovered_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS occurrence(
+ id TEXT PRIMARY KEY,kind TEXT NOT NULL,subject_id TEXT,
+ observed_at TEXT NOT NULL,valid_from TEXT,valid_to TEXT,
+ evidence_ref TEXT,source_coordinate TEXT);
+CREATE TABLE IF NOT EXISTS representation_instance(
+ id TEXT PRIMARY KEY,subject_id TEXT,kind TEXT NOT NULL,
+ authority TEXT NOT NULL DEFAULT 'derived',frontier TEXT,digest TEXT,
+ schema_ref TEXT,created_at TEXT NOT NULL,reconstructable INTEGER NOT NULL DEFAULT 1,
+ state TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS physical_realization(
+ id TEXT PRIMARY KEY,representation_id TEXT NOT NULL,carrier TEXT NOT NULL,
+ coordinate TEXT NOT NULL,bytes INTEGER,digest TEXT,temperature TEXT NOT NULL,
+ available INTEGER NOT NULL DEFAULT 1,checked_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS transformation_occurrence(
+ id TEXT PRIMARY KEY,transform TEXT NOT NULL,compiler TEXT NOT NULL,
+ input_ref TEXT NOT NULL,output_ref TEXT NOT NULL,input_digest TEXT,
+ output_digest TEXT,occurred_at TEXT NOT NULL,proof_state TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS capability_unlock(
+ representation_kind TEXT NOT NULL,capability TEXT NOT NULL,
+ PRIMARY KEY(representation_kind,capability));
+CREATE TABLE IF NOT EXISTS source_binding(
+ source_db TEXT NOT NULL,source_table TEXT NOT NULL,semantic_kind TEXT NOT NULL,
+ representation_kind TEXT NOT NULL,primary_coordinate TEXT,
+ PRIMARY KEY(source_db,source_table));
+CREATE TABLE IF NOT EXISTS representation_target(
+ semantic_kind TEXT NOT NULL,representation_kind TEXT NOT NULL,status TEXT NOT NULL,
+ substrate_path TEXT,reason TEXT,PRIMARY KEY(semantic_kind,representation_kind));
+CREATE TABLE IF NOT EXISTS frontier_proof(
+ id TEXT PRIMARY KEY,semantic_kind TEXT NOT NULL,frontier TEXT NOT NULL,
+ member_count INTEGER NOT NULL,digest TEXT NOT NULL,created_at TEXT NOT NULL);
+'''
+
+def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
+def sha(s): return hashlib.sha256(s if isinstance(s,bytes) else str(s).encode()).hexdigest()
+def sha_file(p):
+    h=hashlib.sha256()
+    with open(p,"rb") as f:
+        for b in iter(lambda:f.read(8<<20),b""): h.update(b)
+    return h.hexdigest()
+def q(s): return '"'+str(s).replace('"','""')+'"'
+def lit(s): return "'"+str(s).replace("'","''")+"'"
+
+def tables(db):
+    c=sqlite3.connect(f"file:{db}?mode=ro",uri=True)
+    r=[x[0] for x in c.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%' order by name")]
+    c.close(); return r
+def cols(db,t):
+    c=sqlite3.connect(f"file:{db}?mode=ro",uri=True)
+    r=[x[1] for x in c.execute(f"pragma table_info({q(t)})")]; c.close(); return r
+def parquet_rows(path):
+    """Best-effort row count from the derived Parquet, never from the source DB."""
+    cli=shutil.which("duckdb")
+    sql=f"SELECT count(*) FROM read_parquet({lit(path)});"
+    if cli:
+        try:
+            p=subprocess.run([cli,"-csv","-noheader","-c",sql],text=True,capture_output=True,timeout=120)
+            if p.returncode==0:
+                return int((p.stdout or "").strip().splitlines()[-1])
+        except Exception:
+            pass
+    try:
+        import duckdb
+        c=duckdb.connect()
+        n=c.execute(sql).fetchone()[0]
+        c.close()
+        return int(n)
+    except Exception:
+        return None
+
+def duck_export(db,t,out):
+    out.parent.mkdir(parents=True,exist_ok=True)
+    sql=f"LOAD sqlite; ATTACH {lit(db)} AS s (TYPE SQLITE); COPY (SELECT * FROM s.{q(t)}) TO {lit(out)} (FORMAT PARQUET, COMPRESSION ZSTD);"
+    cli=shutil.which("duckdb")
+    if cli:
+        p=subprocess.run([cli,"-c",sql],text=True,capture_output=True)
+        return p.returncode==0,(p.stderr or p.stdout)[-1600:]
+    try:
+        import duckdb
+        c=duckdb.connect(); c.execute("LOAD sqlite")
+        c.execute(f"ATTACH {lit(db)} AS s (TYPE SQLITE)")
+        c.execute(f"COPY (SELECT * FROM s.{q(t)}) TO {lit(out)} (FORMAT PARQUET, COMPRESSION ZSTD)")
+        c.close(); return True,""
+    except Exception as e: return False,str(e)
+
+def substrate(root,name):
+    special={"datafusion":["feldera/source"],"iceberg":["feldera/source"],
+             "delta":["feldera/source"],"lmdb":[],"bonfyrefs":[]}
+    for rel in special.get(name,[name]):
+        p=root/rel
+        if p.exists(): return str(p)
+    return None
+
+def seed(m,estate):
+    ts=now(); cms=estate/"cms.db"; items=estate/"items.db"; fr=estate/"frontier.db"
+    if cms.exists() and "internet_source" in tables(cms):
+        c=sqlite3.connect(f"file:{cms}?mode=ro",uri=True)
+        for (src,) in c.execute("select source from internet_source where source is not null"):
+            sid="internet_source:"+str(src)
+            m.execute("insert or ignore into semantic_object values(?,?,?,?,?)",
+                      (sid,"InternetSource","BonfyreCMS",f"{cms}#internet_source:{src}",ts))
+        c.close()
+    if items.exists() and "item" in tables(items):
+        c=sqlite3.connect(f"file:{items}?mode=ro",uri=True)
+        for src,key,kind in c.execute("select source,key,kind from item"):
+            sid=f"retained:{src}:{key}"
+            m.execute("insert or ignore into semantic_object values(?,?,?,?,?)",
+                      (sid,"RetainedMaterial","BonfyreItemArchive",f"{items}#item:{src}:{key}",ts))
+            m.execute("insert or ignore into occurrence(id,kind,subject_id,observed_at,source_coordinate) values(?,?,?,?,?)",
+                      (sha("occ|"+sid),str(kind),sid,ts,f"{items}#item:{src}:{key}"))
+        c.close()
+    if fr.exists() and "channel" in tables(fr):
+        cc=cols(fr,"channel")
+        ic=next((x for x in ["id","channel","url","href","census_source"] if x in cc),None)
+        if ic:
+            c=sqlite3.connect(f"file:{fr}?mode=ro",uri=True)
+            for (v,) in c.execute(f"select {q(ic)} from channel where {q(ic)} is not null"):
+                sid="channel:"+str(v)
+                m.execute("insert or ignore into semantic_object values(?,?,?,?,?)",
+                          (sid,"SourceChannel","BonfyreSourceFrontier",f"{fr}#channel:{v}",ts))
+            c.close()
+    m.commit()
+
+def materialize(m,estate):
+    root=estate/"representations"; manifest=[]; ts=now()
+    dbs=[p for p in estate.glob("*.db") if p.name!="representation-manifold.db"]
+    for db in sorted(dbs):
+        try:
+            db_tables=tables(db)
+        except Exception as e:
+            manifest.append({"source":str(db),"target":"parquet","state":"source_unreadable","error":str(e)})
+            print(f"[source-unreadable] {db.name}: {e}",flush=True)
+            continue
+        for t in db_tables:
+            sk=f"{db.stem}.{t}"; out=root/"parquet"/db.stem/(t+".parquet")
+            m.execute("insert or replace into source_binding values(?,?,?,?,?)",
+                      (str(db),t,sk,"sqlite",f"{db}#{t}"))
+            if out.exists() and out.stat().st_size > 0:
+                ok,msg=True,"reused existing parquet"
+            else:
+                ok,msg=duck_export(db,t,out)
+            if not ok:
+                manifest.append({"source":f"{db}#{t}","kind":sk,"target":"parquet","state":"pending","error":msg})
+                print(f"[pending] {db.name}:{t} {msg[:120]}",flush=True); continue
+            dg=sha_file(out)
+            rows=parquet_rows(out)
+            frontier=(f"rows:{rows}" if rows is not None else f"parquet-sha256:{dg}")
+            rid=sha("parquet|"+sk+"|"+dg)
+            m.execute("insert or replace into representation_instance values(?,?,?,?,?,?,?,?,?,?)",
+                      (rid,None,"parquet","derived",frontier,dg,sk,ts,1,"physical"))
+            m.execute("insert or replace into physical_realization values(?,?,?,?,?,?,?,?,?)",
+                      (sha("file|"+str(out)),rid,"local",str(out),out.stat().st_size,dg,"warm",1,ts))
+            m.execute("insert or replace into transformation_occurrence values(?,?,?,?,?,?,?,?,?)",
+                      (sha("sqlite->parquet|"+sk+"|"+dg),"sqlite->parquet","duckdb",
+                       f"{db}#{t}",str(out),None,dg,ts,"materialized"))
+            manifest.append({"source":f"{db}#{t}","kind":sk,"target":str(out),
+                             "state":"physical","digest":dg,"frontier":frontier})
+            print(f"[parquet] {db.name}:{t}",flush=True)
+    m.commit(); root.mkdir(parents=True,exist_ok=True)
+    (root/"manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
+
+def install_portfolio(m,estate):
+    sub=Path.home()/".bonfyre/substrates/v6.1"
+    for k,cs in UNLOCKS.items():
+        for c in cs: m.execute("insert or ignore into capability_unlock values(?,?)",(k,c))
+    kinds=[x[0] for x in m.execute("select distinct semantic_kind from source_binding")]
+    targets=[x for group in PORTFOLIO.values() for x in group]
+    for sk in kinds:
+        for target in targets:
+            sp=substrate(sub,target)
+            state="physical" if target=="parquet" else ("substrate_present" if sp else "declared_target")
+            m.execute("insert or replace into representation_target values(?,?,?,?,?)",
+                      (sk,target,state,sp,"Shift-1 maximal representation portfolio"))
+    m.commit()
+    (estate/"representation-portfolio.json").write_text(json.dumps({
+      "schema":"bonfyre-representation-portfolio.v1","generated_at":now(),
+      "law":"one semantic identity; every useful representation; representations never own semantics",
+      "classes":PORTFOLIO,"capability_unlocks":UNLOCKS},indent=2),encoding="utf-8")
+
+def architecture(repo):
+    p=repo/"schemas/storage"; p.mkdir(parents=True,exist_ok=True)
+    (p/"representation-manifold.cue").write_text(CUE,encoding="utf-8")
+    p=repo/"architecture/storage"; p.mkdir(parents=True,exist_ok=True)
+    (p/"representation-manifold.yaff").write_text(YAFF,encoding="utf-8")
+
+def dispatch(repo,estate,script):
+    target=Path.home()/".local/bin/bonfyre-estate"
+    if not target.exists(): return "bonfyre-estate absent; dispatch skipped"
+    try: txt=target.read_text("utf-8",errors="ignore")
+    except Exception: txt=""
+    if "BONFYRE_MANIFOLD_DISPATCH" in txt: return "dispatch already installed"
+    stamp=dt.datetime.now().strftime("%Y%m%d%H%M%S")
+    old=target.with_name("bonfyre-estate.pre-manifold."+stamp); shutil.copy2(target,old)
+    wrapper=f'''#!/bin/sh
+# BONFYRE_MANIFOLD_DISPATCH
+if [ "$1" = "manifold" ]; then
+  shift
+  case "${{1:-status}}" in
+    apply) shift; exec python3 "{script}" --repo "{repo}" --estate "{estate}" --apply "$@" ;;
+    status) exec python3 "{script}" --repo "{repo}" --estate "{estate}" --status ;;
+    *) echo "usage: bonfyre estate manifold [status|apply]"; exit 2 ;;
+  esac
+fi
+exec "{old}" "$@"
+'''
+    target.write_text(wrapper,encoding="utf-8"); target.chmod(0o755)
+    return f"wrapped {target}; previous executable {old}"
+
+def status(repo,estate):
+    db=estate/"representation-manifold.db"
+    print("BONFŸRE REPRESENTATION MANIFOLD"); print("repo  ",repo); print("estate",estate)
+    if not db.exists(): print("state NOT MATERIALIZED"); return
+    c=sqlite3.connect(db)
+    for t in ["semantic_object","occurrence","representation_instance","physical_realization",
+              "transformation_occurrence","capability_unlock","representation_target","frontier_proof"]:
+        print(f"{t:32} {c.execute(f'select count(*) from {t}').fetchone()[0]:,}")
+    print("target states")
+    for s,n in c.execute("select status,count(*) from representation_target group by status order by status"):
+        print(f"  {s:22} {n:,}")
+    c.close()
+
+def main():
+    a=argparse.ArgumentParser()
+    a.add_argument("--repo",default="."); a.add_argument("--estate",default="~/.bonfyre/estate-local")
+    a.add_argument("--apply",action="store_true"); a.add_argument("--status",action="store_true")
+    a.add_argument("--no-dispatch",action="store_true"); x=a.parse_args()
+    repo=Path(x.repo).expanduser().resolve(); estate=Path(x.estate).expanduser().resolve()
+    if x.status or not x.apply: status(repo,estate); return 0
+    print("=== SHIFT 1: REPRESENTATION MANIFOLD ===",flush=True)
+    architecture(repo)
+    canonical=repo/"scripts/representation_manifold_shift.py"; canonical.parent.mkdir(parents=True,exist_ok=True)
+    if Path(__file__).resolve()!=canonical:
+        shutil.copy2(Path(__file__).resolve(),canonical); canonical.chmod(0o755)
+    m=sqlite3.connect(estate/"representation-manifold.db"); m.executescript(SCHEMA)
+    m.execute("insert or replace into manifold_meta values('shift','representation-manifold-v1.1-resumable')")
+    m.execute("insert or replace into manifold_meta values('applied_at',?)",(now(),)); m.commit()
+    print("[1/5] semantic + occurrence spine",flush=True); seed(m,estate)
+    print("[2/5] materializing every estate table to Parquet",flush=True); materialize(m,estate)
+    print("[3/5] installing maximal representation portfolio",flush=True); install_portfolio(m,estate)
+    print("[4/5] frontier proofs",flush=True)
+    for sk,n in m.execute("select semantic_kind,count(*) from source_binding group by semantic_kind").fetchall():
+        dg=sha(f"{sk}|{n}")
+        m.execute("insert or replace into frontier_proof values(?,?,?,?,?,?)",
+                  (sha("frontier|"+dg),sk,f"bindings:{n}",n,dg,now()))
+    m.commit(); m.close()
+    print("[5/5] estate manifold dispatch",flush=True)
+    if not x.no_dispatch: print(dispatch(repo,estate,canonical))
+    status(repo,estate)
+    print("SHIFT 1 APPLIED. Existing source DBs were preserved; the manifold was added beside them.")
+    return 0
+
+if __name__=="__main__": raise SystemExit(main())

@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Choose the cheapest representation whose measured envelope satisfies this
+work's loss budget, and refuse when none does.
+
+This is what the envelopes were measured for. Without it the market reports
+numbers nobody acts on, which is the same as not measuring: the estate would
+still hydrate everything exactly, and the compression work would be a fact about
+a benchmark rather than about how anything runs.
+
+Four refusals matter more than the choice:
+
+    a representation with no measured envelope is never admitted, however
+    plausible it looks -- an envelope is earned by an executed trial
+
+    a representation measured on a different axis is never admitted for this
+    axis -- a cosine over model tensors does not bound retrieval loss
+
+    an envelope measured at another k does not satisfy a budget stated at this
+    k -- recall is not monotone in k and pretending otherwise is a guess
+
+    when no representation satisfies the budget, the answer is exact, never the
+    closest miss; silently degrading is how a loss budget becomes a suggestion
+
+And a class of work can forbid approximation outright. An authority decision has
+no loss budget to spend: it is exact or it does not happen.
+
+Cannot infer: an admitted representation is not a correct one, and satisfying a
+budget on the cohort the envelope was measured over is not satisfying it here.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timezone
+
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+# Work whose result carries an institutional effect cannot buy speed with loss.
+# These are not a policy knob; they are the classes where a dropped candidate is
+# a wrong answer rather than a slower one.
+EXACT_ONLY = {"authority", "money", "identity", "publication", "effect"}
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def envelopes() -> list[dict]:
+    """What each representation is known to preserve.
+
+    Parsed from the measured envelope rather than restated here, so a profile
+    that was never trialled has nothing to parse and is unusable by
+    construction."""
+    import re
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        rows = [dict(r) for r in db.execute(
+            "SELECT representation, axis, availability, "
+            "       COALESCE(bytes_per_body,'') bytes_per_body, "
+            "       COALESCE(envelope,'') envelope "
+            "FROM representation_profile WHERE status='published'")]
+        db.close()
+    except sqlite3.Error as e:
+        return []
+    out = []
+    for r in rows:
+        text = r["envelope"]
+        recall = re.search(r"recall@(\d+)\s+([0-9.]+)", text)
+        prunes = re.search(r"([0-9]+)\s+false prunes", text)
+        r["measured_k"] = int(recall.group(1)) if recall else None
+        r["recall"] = float(recall.group(2)) if recall else None
+        r["false_prunes"] = int(prunes.group(1)) if prunes else (0 if recall else None)
+        try:
+            r["bytes"] = int(r["bytes_per_body"])
+        except ValueError:
+            r["bytes"] = None
+        out.append(r)
+    return out
+
+
+
+# How much disclosure a scope tolerates. Ordered, and deliberately not compared
+# as strings: `restricted` sorts before `public` alphabetically, and a placement
+# rule that got that backwards would send the most sensitive input to the least
+# trusted machine.
+SCOPE_ORDER = ["public", "partner-shared", "institution-private", "self-private", "restricted"]
+
+
+def sites() -> list[dict]:
+    try:
+        db = sqlite3.connect(f"file:{CMS_DB}?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        rows = [dict(r) for r in db.execute(
+            "SELECT site, cores, backends, holds_live_data, max_data_scope, "
+            "       COALESCE(reach_seconds,'0') reach_seconds "
+            "FROM compute_site WHERE status='published'")]
+        db.close()
+        return rows
+    except sqlite3.Error:
+        return []
+
+
+def place(backend: str, data_scope: str) -> dict:
+    """Where this closure may run.
+
+    Two questions in a fixed order, because they are not the same kind of
+    question. First: may this input be seen here at all -- a disclosure
+    question, answered by the scope the site is cleared for, and not tradeable
+    against speed. Only among the sites that pass does the second question
+    apply: which is cheapest.
+
+    A site holding the live data has nothing to disclose by computing on it. A
+    site that must receive the input is disclosing it, however briefly, and
+    capability is not permission: having every reducer does not make a machine
+    allowed to see institution-private state."""
+    considered = []
+    eligible = []
+    want = SCOPE_ORDER.index(data_scope) if data_scope in SCOPE_ORDER else len(SCOPE_ORDER)
+    for site in sorted(sites(), key=lambda x: -int(x["cores"] or 0)):
+        row = {"site": site["site"], "cores": site["cores"]}
+        known = site["max_data_scope"] in SCOPE_ORDER
+        cleared = SCOPE_ORDER.index(site["max_data_scope"]) if known else -1
+        if backend not in [b.strip() for b in site["backends"].split(",")]:
+            row["verdict"] = f"does not run {backend}"
+        elif not known:
+            # Fail closed, and say which kind of closed. An unrecognised scope
+            # used to render as "cleared for institution_private, this input is
+            # public", which reads as a wider clearance refusing narrower data
+            # and sends the reader looking for a policy bug. The site had
+            # written `institution_private` where the vocabulary says
+            # `institution-private`, and a typo was being reported as a rule.
+            row["verdict"] = (f"max_data_scope '{site['max_data_scope']}' is not one of "
+                              f"{', '.join(SCOPE_ORDER)}; an unrecognised clearance is "
+                              f"cleared for nothing")
+        elif cleared < want:
+            row["verdict"] = (f"cleared for {site['max_data_scope']}, this input is "
+                              f"{data_scope}; capability is not permission")
+        else:
+            row["verdict"] = "eligible"
+            eligible.append(site)
+        considered.append(row)
+
+    if not eligible:
+        return {"site": None, "considered": considered,
+                "because": f"no declared site both runs {backend} and may see "
+                           f"{data_scope} input; the work cannot be placed"}
+    # Among sites allowed to see it, prefer the one that need not receive it,
+    # then the one with more cores. Moving 693MB of live state to save seconds
+    # of compute is not a saving.
+    best = sorted(eligible, key=lambda x: (-int(x["holds_live_data"] or 0),
+                                           -int(x["cores"] or 0)))[0]
+    return {"site": best["site"], "cores": best["cores"],
+            "considered": considered,
+            "because": ("the data is already here, so nothing is disclosed and nothing moves"
+                        if int(best["holds_live_data"] or 0)
+                        else f"the only eligible site running {backend}, and this input is "
+                             f"{data_scope} so moving it discloses nothing")}
+
+
+def admit(work_class: str, axis: str, k: int, min_recall: float) -> dict:
+    """The decision, with every rejection carrying its reason."""
+    considered = []
+    chosen = None
+
+    if work_class in EXACT_ONLY:
+        return {
+            "work_class": work_class, "axis": axis, "k": k, "min_recall": min_recall,
+            "admitted": "exact-f32",
+            "because": f"{work_class} work has no loss budget to spend; a dropped "
+                       "candidate here is a wrong answer rather than a slower one",
+            "considered": [],
+            "exact_only": True,
+        }
+
+    for rep in sorted(envelopes(), key=lambda r: (r["bytes"] is None, r["bytes"] or 0)):
+        row = {"representation": rep["representation"], "bytes": rep["bytes"]}
+        if rep["representation"] == "exact-f32":
+            row["verdict"] = "reserved as the fallback"
+            considered.append(row)
+            continue
+        if rep["availability"] != "available" or rep["recall"] is None:
+            row["verdict"] = "no measured envelope; an envelope is earned by an executed trial"
+            considered.append(row)
+            continue
+        if rep["axis"] != axis:
+            row["verdict"] = (f"measured on axis {rep['axis']}, not {axis}; "
+                              "an envelope does not cross axes")
+            considered.append(row)
+            continue
+        if rep["measured_k"] != k:
+            row["verdict"] = (f"envelope measured at k={rep['measured_k']}, budget stated "
+                              f"at k={k}; recall is not monotone in k")
+            considered.append(row)
+            continue
+        if rep["recall"] < min_recall:
+            row["verdict"] = f"preserves {rep['recall']}, budget requires {min_recall}"
+            considered.append(row)
+            continue
+        row["verdict"] = f"satisfies the budget at {rep['recall']}"
+        row["recall"] = rep["recall"]
+        considered.append(row)
+        if chosen is None:
+            chosen = rep
+
+    if chosen is None:
+        return {
+            "work_class": work_class, "axis": axis, "k": k, "min_recall": min_recall,
+            "admitted": "exact-f32",
+            "because": "no representation with a measured envelope satisfies this budget, "
+                       "so the work runs exact; the closest miss is not admitted, because "
+                       "a budget that bends is a suggestion",
+            "considered": considered,
+            "exact_only": False,
+        }
+    return {
+        "work_class": work_class, "axis": axis, "k": k, "min_recall": min_recall,
+        "admitted": chosen["representation"],
+        "because": (f"cheapest representation at {chosen['bytes']} bytes per body whose "
+                    f"measured envelope ({chosen['recall']} at k={k}) satisfies the budget"),
+        "bytes_per_body": chosen["bytes"],
+        "measured_recall": chosen["recall"],
+        "considered": considered,
+        "exact_only": False,
+    }
+
+
+def main() -> int:
+    work_class = "discovery"
+    data_scope = "public"
+    backend = "reference"
+    axis = "latent_geometry"
+    k = 5
+    min_recall = 0.95
+    argv = sys.argv
+    for i, a in enumerate(argv):
+        if a == "--class" and i + 1 < len(argv): work_class = argv[i + 1]
+        if a == "--axis" and i + 1 < len(argv): axis = argv[i + 1]
+        if a == "--k" and i + 1 < len(argv): k = int(argv[i + 1])
+        if a == "--min-recall" and i + 1 < len(argv): min_recall = float(argv[i + 1])
+        if a == "--data-scope" and i + 1 < len(argv): data_scope = argv[i + 1]
+        if a == "--backend" and i + 1 < len(argv): backend = argv[i + 1]
+
+    decision = admit(work_class, axis, k, min_recall)
+    decision["placement"] = place(backend, data_scope)
+    decision["backend"] = backend
+    decision["data_scope"] = data_scope
+    decision.update({"schema": "bonfyre-resource-admission.v1", "decided_at": iso_now(),
+                     "cannot_infer": [
+                         "an admitted representation -> a correct one",
+                         "satisfying a budget on the cohort the envelope was measured "
+                         "over -> satisfying it on this one",
+                         "a cheaper representation -> a better one",
+                         "a site that may see this input -> a site that may see any input",
+                         "capability -> permission",
+                     ]})
+    if "--json" in argv:
+        print(json.dumps(decision, indent=2))
+        return 0
+    print(f"  work={work_class} axis={axis} k={k} budget=recall>={min_recall}")
+    print(f"  admitted: {decision['admitted']}")
+    print(f"  because:  {decision['because']}")
+    pl = decision["placement"]
+    print(f"  placed:   {pl['site'] or 'REFUSED'} ({backend}, {data_scope} input)")
+    print(f"  because:  {pl['because']}")
+    for c in pl["considered"]:
+        print(f"    {c['site']:<14}{str(c['cores']):>3} cores  {c['verdict'][:58]}")
+    if decision["considered"]:
+        print()
+        for c in decision["considered"]:
+            print(f"    {c['representation']:<19}{str(c['bytes'] or '-'):>6}  {c['verdict'][:64]}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

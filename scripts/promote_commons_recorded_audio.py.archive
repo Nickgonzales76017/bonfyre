@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Promote the *entire* retained Commons recorded-audio frontier lawfully.
+
+This is deliberately not a downloader that writes URLs into ``media_program``.
+The retained Wikidata set contains article narration and film material beside
+music; a readable Commons file is not a redistribution right; and a work is
+not its particular audio file.  Each candidate must therefore cross five
+independent gates before it can become publicly playable:
+
+  1. the retained row names a Wikidata subject and a Commons File page;
+  2. Commons metadata independently says the file is musical;
+  3. its declared licence is explicitly reusable (no NC/ND/unknown terms);
+  4. BonfyreProject obtains a robots-checked receipt and immutable body;
+  5. the CMS receives distinct Work, Recording, Right/Credit evidence, and
+     MediaProgram rows.  The MediaProgram only points at the digest-verified
+     same-origin twin, never a provider URL.
+
+Default is a full-frontier plan.  ``--apply`` performs only the candidates
+whose plan is ADMIT; every other retained row receives a refusal record so a
+future compiler change can revisit it without pretending it was invisible.
+"""
+import argparse, hashlib, html, json, os, re, shutil, subprocess, sys, time
+from pathlib import Path
+from urllib.parse import quote, unquote, urlparse
+from urllib.request import Request, urlopen
+
+AGENT = "BonfyreMediaCanonicalizer/1.0 (+https://aurekai.work/)"
+API = "https://commons.wikimedia.org/w/api.php"
+MUSIC = re.compile(r"\b(music|musical|song|songs|classical|instrumental|opera|symphon|orchestra|piano|violin|choir|vocal|audio files of music)\b", re.I)
+DENIED = re.compile(r"\b(nc|nd|non[- ]commercial|no[- ]derivatives)\b", re.I)
+
+
+def clean(value):
+    value = html.unescape(str(value or ""))
+    value = re.sub(r"<[^>]*>", " ", value)
+    return " ".join(value.split())
+
+
+def json_get(url):
+    req = Request(url, headers={"User-Agent": AGENT, "Accept": "application/json"})
+    with urlopen(req, timeout=45) as response:
+        return json.load(response)
+
+
+def commons_title(row):
+    path = unquote(urlparse(row["origin_href"]).path)
+    marker = "/wiki/File:"
+    if marker not in path:
+        return None
+    return "File:" + path.split(marker, 1)[1]
+
+
+def metadata(title, api):
+    params = ("?action=query&format=json&formatversion=2&prop=imageinfo|categories"
+              "&iiprop=url|size|mime|extmetadata&cllimit=500&titles=" + quote(title, safe=""))
+    pages = json_get(api + params).get("query", {}).get("pages", [])
+    if not pages or pages[0].get("missing"):
+        return None
+    page = pages[0]
+    info = (page.get("imageinfo") or [{}])[0]
+    meta = info.get("extmetadata") or {}
+    categories = [str(c.get("title", "")) for c in page.get("categories") or []]
+    return {"title": title, "page_url": "https://commons.wikimedia.org/wiki/" + quote(title.replace(" ", "_")),
+            "download_url": info.get("url", ""), "bytes": int(info.get("size") or 0),
+            "mime": str(info.get("mime") or ""), "metadata": {k: clean(v.get("value", "")) for k, v in meta.items()},
+            "categories": categories}
+
+
+def license_law(info):
+    meta = info["metadata"]
+    terms = " | ".join(meta.get(k, "") for k in ("LicenseShortName", "UsageTerms", "License", "Copyrighted"))
+    normalized = terms.lower()
+    if DENIED.search(terms):
+        return False, "licence_excludes_public_redistribution", terms
+    if "cc0" in normalized or "public domain" in normalized or "publicdomain" in normalized:
+        return True, "declared_public_domain_or_cc0", terms
+    if ("cc by" in normalized or "cc-by" in normalized or "creativecommons.org/licenses/by" in normalized) and not DENIED.search(terms):
+        return True, "declared_cc_by_family", terms
+    return False, "no_explicit_reusable_licence", terms
+
+
+def extension(info):
+    mime = info.get("mime", "").lower()
+    by_mime = {"audio/ogg": "ogg", "application/ogg": "ogg", "audio/flac": "flac",
+               "audio/mpeg": "mp3", "audio/wav": "wav", "audio/x-wav": "wav"}
+    if mime in by_mime:
+        return by_mime[mime]
+    path = urlparse(info.get("download_url", "")).path.lower()
+    for suffix in (".ogg", ".oga", ".opus", ".flac", ".mp3", ".wav"):
+        if path.endswith(suffix):
+            return "ogg" if suffix in (".ogg", ".oga", ".opus") else suffix[1:]
+    return None
+
+
+def is_music(info):
+    haystack = " ".join(info.get("categories", []) + list(info.get("metadata", {}).values()))
+    return bool(MUSIC.search(haystack))
+
+
+def run(args, check=True):
+    result = subprocess.run(args, text=True, capture_output=True)
+    if check and result.returncode:
+        raise RuntimeError("%s: %s" % (" ".join(args[:4]), result.stderr.strip()[:500]))
+    return result
+
+
+def latest_receipt(path):
+    rows = [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip().startswith("{")]
+    return rows[-1] if rows else None
+
+
+def ffprobe_duration(path):
+    result = run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", path], check=False)
+    try:
+        return int(round(float(json.loads(result.stdout)["format"]["duration"]) * 1000))
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def cms_create(cms_bin, cms_db, schemas, kind, value):
+    result = run([str(cms_bin), "entry", "create", kind, json.dumps(value, ensure_ascii=False), "--db", str(cms_db), "--schemas", str(schemas)], check=False)
+    # CMS's uniqueness law makes repeat materialization harmless.  We still
+    # treat other failures as a failed promotion rather than quietly claiming
+    # the program exists.
+    if result.returncode and "unique" not in (result.stderr + result.stdout).lower():
+        raise RuntimeError("CMS %s: %s" % (kind, (result.stderr or result.stdout).strip()[:500]))
+
+
+def apply_one(plan, cfg):
+    row, info = plan["row"], plan["commons"]
+    digest_seed = row["key"]
+    twin = "commons-audio-" + digest_seed
+    receipt = cfg.foreign / "receipts" / (twin + ".json")
+    body = cfg.foreign / "bodies" / (twin + ".body")
+    receipt.parent.mkdir(parents=True, exist_ok=True); body.parent.mkdir(parents=True, exist_ok=True)
+    run([str(cfg.project), "foreign", "observe", twin, info["download_url"], "--receipt", str(receipt),
+         "--body", str(body), "--observe-right", "public", "--robots", "https://commons.wikimedia.org/robots.txt"])
+    observed = latest_receipt(receipt)
+    if not observed or observed.get("policy_decision") != "allow" or not observed.get("content_sha256"):
+        raise RuntimeError("foreign observation did not retain a usable body")
+    digest = observed["content_sha256"]
+    actual = Path(observed.get("body_path") or body)
+    if not actual.exists():
+        raise RuntimeError("receipted body is unavailable")
+    ext = plan["extension"]
+    duration = ffprobe_duration(str(actual))
+    evidence = {"schema": "bonfyre-commons-recorded-audio-evidence.v1", "source_item": row,
+                "commons": info, "licence_decision": plan["licence_decision"], "receipt": observed,
+                "content_sha256": digest, "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    evidence_path = cfg.evidence / (digest + ".json")
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n")
+    work_id = "wikidata-" + row["ident"].lower()
+    recording_id = "commons-" + digest[:24]
+    attribution = "attribution:commons-file:" + digest
+    subject = "recording:" + recording_id
+    # The topic's retained QID is admitted only after the Commons file itself
+    # proved musical.  The exact performer identity remains an attribution
+    # coordinate: a display string from Commons never silently becomes a person.
+    cannot = "a retained Commons file and its declared licence do not establish performer identity, ownership, release order, royalty share, or a delivery grant beyond the stated reusable licence"
+    cms_create(cfg.cms_bin, cfg.cms, cfg.schemas, "music_work", {"work_id": work_id, "title": row["title"],
+        "evidence_refs": [row["href"], info["page_url"]], "cannot_infer": cannot, "status": "published"})
+    rec = {"recording_id": recording_id, "work_ref": "work:" + work_id, "title": row["title"],
+           "primary_artist_ref": attribution, "master_asset_ref": "asset:" + digest,
+           "evidence_refs": [str(evidence_path), row["origin_href"]], "cannot_infer": cannot, "status": "published"}
+    if duration: rec["duration_ms"] = duration
+    cms_create(cfg.cms_bin, cfg.cms, cfg.schemas, "music_recording", rec)
+    cms_create(cfg.cms_bin, cfg.cms, cfg.schemas, "music_right", {"right_id": "commons-license-" + digest[:24], "subject_ref": subject,
+        "right_type": "public_redistribution_under_declared_license", "holder_ref": "licensor:commons-file:" + digest,
+        "evidence_ref": info["page_url"], "cannot_infer": cannot, "status": "published"})
+    credited = info["metadata"].get("Artist") or info["metadata"].get("Credit") or "Commons file attribution retained in evidence"
+    cms_create(cfg.cms_bin, cfg.cms, cfg.schemas, "music_credit", {"credit_id": "commons-attribution-" + digest[:24], "subject_ref": subject,
+        "actor_ref": attribution, "role": "source_attribution", "credited_as": credited,
+        "evidence_ref": info["page_url"], "cannot_infer": "a Commons attribution string is not a resolved person, ownership claim, employment relation, or royalty share", "status": "published"})
+    program = {"program_id": recording_id + ":audio", "subject_ref": subject, "media_kind": "audio",
+               "asset_ref": "/assets/twin/%s.%s" % (digest, ext), "publication_state": "published",
+               "cannot_infer": cannot, "status": "published"}
+    if duration: program["duration_ms"] = duration
+    cms_create(cfg.cms_bin, cfg.cms, cfg.schemas, "media_program", program)
+    return {"recording_id": recording_id, "work_id": work_id, "digest": digest, "asset_ref": program["asset_ref"],
+            "duration_ms": duration, "evidence": str(evidence_path)}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--estate", required=True, type=Path)
+    ap.add_argument("--items", type=Path)
+    ap.add_argument("--cms", type=Path)
+    ap.add_argument("--cms-bin", type=Path, default=Path("cmd/BonfyreCMS/bonfyre-cms"))
+    ap.add_argument("--schemas", type=Path, default=Path("cmd/BonfyreCMS/content-types"))
+    ap.add_argument("--project", type=Path, default=Path("components/BonfyreProject/bonfyre-project"))
+    ap.add_argument("--api", default=API)
+    ap.add_argument("--max-bytes", type=int, default=64 * 1024 * 1024)
+    ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--out", type=Path)
+    cfg = ap.parse_args()
+    cfg.items = cfg.items or cfg.estate / "items.jsonl"; cfg.cms = cfg.cms or cfg.estate / "cms.db"
+    cfg.foreign = cfg.estate / "foreign"; cfg.evidence = cfg.estate / "media-evidence" / "commons-recorded-audio"
+    if cfg.apply:
+        run([str(cfg.cms_bin), "schema", "migrate", "--db", str(cfg.cms), "--schemas", str(cfg.schemas)])
+    rows = []
+    for line in cfg.items.read_text().splitlines():
+        row = json.loads(line)
+        if row.get("source") == "wikidata-recorded-music" and row.get("kind") == "audio": rows.append(row)
+    results = []
+    def checkpoint():
+        """The foreign observer is intentionally slow and one public body may
+        take tens of seconds.  A completed row is already durable in both the
+        receipt log and CMS, so the control receipt must be durable too; a
+        process timeout must not erase its refusal/admission accounting."""
+        summary = {"schema": "bonfyre-commons-recorded-audio-promotion.v1", "candidates": len(rows),
+                   "admitted": sum(r["state"] == "ADMITTED" for r in results), "eligible": sum(r["state"] == "ADMIT" for r in results),
+                   "refused": sum(r["state"] == "REFUSED" for r in results), "processed": len(results), "results": results,
+                   "cannot_infer": "a retained row, a Commons file, its licence, a Work, a Recording, a credit, a right, a program, and a playback event are distinct claims"}
+        if cfg.out:
+            staged = cfg.out.with_suffix(cfg.out.suffix + ".staging")
+            cfg.out.parent.mkdir(parents=True, exist_ok=True)
+            staged.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
+            staged.replace(cfg.out)
+        return summary
+    for row in rows:
+        result = {"key": row.get("key"), "title": row.get("title"), "state": "REFUSED"}
+        if not row.get("ident") or not row.get("origin_href"):
+            result["reason"] = "missing_wikidata_subject_or_commons_file"; results.append(result); checkpoint(); continue
+        title = commons_title(row)
+        if not title:
+            result["reason"] = "origin_is_not_a_commons_file_page"; results.append(result); checkpoint(); continue
+        try: info = metadata(title, cfg.api)
+        except Exception as err:
+            result["reason"] = "commons_metadata_unavailable"; result["detail"] = str(err)[:180]; results.append(result); checkpoint(); continue
+        if not info or not info.get("download_url"):
+            result["reason"] = "commons_file_unavailable"; results.append(result); checkpoint(); continue
+        ext = extension(info)
+        if not ext:
+            result["reason"] = "not_an_admitted_audio_carrier"; results.append(result); checkpoint(); continue
+        if info["bytes"] <= 0 or info["bytes"] > cfg.max_bytes:
+            result["reason"] = "outside_physical_carrier_limit"; result["bytes"] = info["bytes"]; results.append(result); checkpoint(); continue
+        if not is_music(info):
+            result["reason"] = "commons_metadata_does_not_prove_music_subject"; results.append(result); checkpoint(); continue
+        reusable, law, terms = license_law(info)
+        if not reusable:
+            result["reason"] = law; result["licence"] = terms; results.append(result); checkpoint(); continue
+        plan = {"row": row, "commons": info, "extension": ext, "licence_decision": {"law": law, "terms": terms}}
+        result.update({"state": "ADMIT", "commons_file": info["page_url"], "bytes": info["bytes"], "licence": terms, "extension": ext})
+        if cfg.apply:
+            try: result["admission"] = apply_one(plan, cfg); result["state"] = "ADMITTED"
+            except Exception as err: result["state"] = "REFUSED"; result["reason"] = "promotion_failed"; result["detail"] = str(err)[:500]
+        results.append(result); checkpoint()
+    summary = checkpoint()
+    text = json.dumps(summary, indent=2, ensure_ascii=False) + "\n"
+    print(text, end="")
+
+if __name__ == "__main__": main()

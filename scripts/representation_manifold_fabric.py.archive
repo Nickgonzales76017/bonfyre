@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+# Historical Shift 1.6 Fabric bootstrap. The installed Bun apply consumer owns
+# orchestration; this file is not an executable entry point.
+from __future__ import annotations
+import argparse, datetime as dt, hashlib, json, os, re, shutil, sqlite3, subprocess, sys, traceback, urllib.request
+from pathlib import Path
+
+XTABLE_JAR="xtable-spark-runtime_2.12-0.4.0-incubating.jar"
+XTABLE_URL="https://repo1.maven.org/maven2/org/apache/xtable/xtable-spark-runtime_2.12/0.4.0-incubating/"+XTABLE_JAR
+
+def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
+def sha(v):
+    if not isinstance(v,(bytes,bytearray)): v=str(v).encode()
+    return hashlib.sha256(v).hexdigest()
+def sha_file(p,chunk=8<<20):
+    h=hashlib.sha256()
+    with open(p,"rb") as f:
+        for b in iter(lambda:f.read(chunk),b""): h.update(b)
+    return h.hexdigest()
+def safe(s):
+    s=re.sub(r"[^A-Za-z0-9_]+","_",str(s))
+    if not s or s[0].isdigit(): s="_"+s
+    return s[:180]
+def run(cmd,cwd=None,timeout=None):
+    try:
+        p=subprocess.run(cmd,cwd=cwd,text=True,capture_output=True,timeout=timeout)
+        return p.returncode,p.stdout,p.stderr
+    except Exception as e:
+        return 255,"",f"{type(e).__name__}: {e}"
+
+def db_open(estate,repo):
+    p=estate/"representation-manifold.db"
+    if not p.exists(): raise SystemExit(f"missing manifold: {p}")
+    schema=repo/"schemas/storage/representation-manifold.sql"
+    c=sqlite3.connect(p); c.execute("PRAGMA busy_timeout=30000")
+    c.executescript(schema.read_text(encoding="utf-8")); c.commit(); return c
+
+def roots(c):
+    return c.execute("""SELECT ri.id,ri.schema_ref,pr.coordinate,ri.digest,ri.frontier
+      FROM representation_instance ri JOIN physical_realization pr ON pr.representation_id=ri.id
+      WHERE ri.kind='parquet' AND ri.state='physical' AND pr.available=1 ORDER BY ri.schema_ref""").fetchall()
+
+def substrait(c,repo,estate):
+    cli=repo/"scripts/representation-manifold-substrait.mjs"
+    if not cli.is_file(): raise RuntimeError(f"native Substrait scan compiler missing: {cli}")
+    expected=c.execute("select count(*) from representation_target where representation_kind='substrait'").fetchone()[0]
+    rc,so,se=run(["bun",str(cli),"materialize-all","--estate",str(estate)],timeout=3600)
+    if rc: raise RuntimeError(f"native Substrait compilation failed: {(se or so)[-4000:]}")
+    result=json.loads(so)
+    if result.get("state")!="MATERIALIZED" or result.get("plans")!=expected:
+        raise RuntimeError("native Substrait compiler returned an unexpected target frontier")
+    return result["plans"],0
+
+def make_flight(c,repo,estate,rows,bundle):
+    # Compatibility orchestrator only. Native build/registration owns the
+    # transport proof; do not recreate the former generated Python server.
+    if not bundle:
+        return "native_bundle_required",None,None,"pass --arrow-runtime-bundle to bind Flight"
+    cli=repo/"scripts/representation-manifold-fabric.mjs"
+    if not cli.is_file(): raise RuntimeError(f"native fabric CLI missing: {cli}")
+    rc,so,se=run(["bun",str(cli),"bind","--bundle",str(bundle),"--estate",str(estate)],timeout=1800)
+    if rc: raise RuntimeError(f"native Flight registration failed: {(se or so)[-4000:]}")
+    result=json.loads(so)
+    if result.get("state")!="INSTALLED_UNSERVED" or result.get("tables")!=len(rows):
+        raise RuntimeError("native Flight registration returned an unexpected frontier")
+    return result["state"],bundle,result["catalog"],"native C++/Arrow; not served"
+
+def native_fs_bind(repo,estate,rows):
+    # Local filesystem only. This does not implement OpenDAL's other backends.
+    cli=repo/"scripts/representation-manifold-carrier.mjs"
+    if not cli.is_file(): raise RuntimeError(f"native filesystem carrier missing: {cli}")
+    rc,so,se=run(["bun",str(cli),"bind","--estate",str(estate)],timeout=1800)
+    if rc: raise RuntimeError(f"native filesystem carrier failed: {(se or so)[-4000:]}")
+    result=json.loads(so)
+    if result.get("state")!="BOUND_VERIFIED" or result.get("representations")!=len(rows):
+        raise RuntimeError("native filesystem carrier returned an unexpected frontier")
+    return result["representations"],0
+
+def xtable_config(c,estate,rows):
+    out=estate/"representations/xtable/estate-iceberg-to-delta-hudi.yaml"; out.parent.mkdir(parents=True,exist_ok=True)
+    sets=[]
+    for _,sk,p,_,_ in rows:
+        r=c.execute("select coordinate from metadata_overlay where semantic_kind=? and format='iceberg' and state='physical_zero_copy'",(sk,)).fetchone()
+        if not r: continue
+        meta=Path(str(r[0]).replace("file://","")); sets.append((sk,meta.parent.parent,Path(p).parent))
+    lines=["sourceFormat: ICEBERG","targetFormats:","  - DELTA","  - HUDI","datasets:"]
+    for sk,base,data in sets:
+        lines+=["  -",f'    tableBasePath: "file://{base}"',f'    tableDataPath: "file://{data}"',
+                f'    tableName: "{safe(sk).lower()}"','    namespace: "bonfyre.estate"']
+    out.write_text("\n".join(lines)+"\n",encoding="utf-8")
+    c.execute("insert or replace into metadata_fabric values(?,?,?,?,?)",("xtable-dataset-config",str(out),"config_ready",f"{len(sets)} datasets",now()))
+    c.commit(); return out,len(sets)
+
+def stage_xtable(c,runtime,net):
+    root=runtime/"xtable"; root.mkdir(parents=True,exist_ok=True); jar=root/XTABLE_JAR
+    if not jar.exists() and net:
+        try: urllib.request.urlretrieve(XTABLE_URL,jar)
+        except Exception:
+            c.execute("insert or replace into fabric_event values(?,?,?,?,?)",(sha(f"xtable-download|{now()}"),"xtable","download_failed",traceback.format_exc()[-8000:],now())); c.commit()
+    spark=shutil.which("spark-submit")
+    state=("runtime_staged" if jar.exists() else "jar_missing")+("+spark_ready" if spark else "+spark_missing")
+    c.execute("insert or replace into metadata_fabric values(?,?,?,?,?)",("xtable-runtime",str(jar),state,f"spark-submit={spark}",now())); c.commit()
+    return (jar if jar.exists() else None),spark,state
+
+def run_xtable(c,jar,spark,cfg):
+    if not jar or not spark: return None
+    rc,so,se=run([spark,"--class","org.apache.xtable.spark.XTableSparkSync","--master","local[*]",
+                  str(jar),"--datasetconfig",str(cfg)],timeout=7200)
+    c.execute("insert or replace into fabric_event values(?,?,?,?,?)",(sha(f"xtable-run|{now()}"),"xtable","physical_metadata" if rc==0 else "failed",(se or so)[-12000:],now())); c.commit()
+    return rc,(so or "")[-1500:],(se or "")[-3000:]
+
+def flightsql_client(repo,estate,driver,probe):
+    if not driver or not probe: return "explicit_native_driver_and_probe_required"
+    cli=repo/"scripts/representation-manifold-adbc.mjs"
+    if not cli.is_file(): raise RuntimeError(f"native ADBC admission missing: {cli}")
+    rc,so,se=run(["bun",str(cli),"bind","--estate",str(estate),
+                  "--driver",str(driver),"--probe",str(probe)],timeout=120)
+    if rc: raise RuntimeError(f"native ADBC admission failed: {(se or so)[-4000:]}")
+    receipt=json.loads(so)
+    if receipt.get("state")!="driver_initialized_unserved":
+        raise RuntimeError("native ADBC admission did not preserve unserved state")
+    return receipt["state"]
+
+def report(repo,estate):
+    cli=repo/"scripts/representation-manifold-report.mjs"
+    if not cli.is_file(): raise RuntimeError(f"native fabric report missing: {cli}")
+    rc,so,se=run(["bun",str(cli),"write","--estate",str(estate)],timeout=120)
+    if rc: raise RuntimeError(f"native fabric report failed: {(se or so)[-4000:]}")
+    result=json.loads(so)
+    if result.get("state")!="DERIVED_REPORT": raise RuntimeError("native fabric report did not confirm publication")
+    return result
+
+def worker(a):
+    repo=Path(a.repo).expanduser().resolve(); estate=Path(a.estate).expanduser().resolve(); runtime=Path(a.runtime).expanduser().resolve()
+    c=db_open(estate,repo); rows=roots(c)
+    print(f"=== SHIFT 1.6 FABRIC: {len(rows)} canonical roots ===",flush=True)
+    print("[1/6] Substrait",flush=True); print(" ",substrait(c,repo,estate),flush=True)
+    print("[2/6] Arrow Flight",flush=True); print(" ",make_flight(c,repo,estate,rows,a.arrow_runtime_bundle)[:2],flush=True)
+    print("[3/6] native filesystem carrier",flush=True); print(" ",native_fs_bind(repo,estate,rows),flush=True)
+    print("[4/6] XTable",flush=True); cfg,n=xtable_config(c,estate,rows); print("  datasets",n,flush=True)
+    jar,spark,state=stage_xtable(c,runtime,a.allow_network); print(" ",state,jar,spark,flush=True)
+    if a.run_xtable: print("  run",run_xtable(c,jar,spark,cfg),flush=True)
+    print("[5/6] ADBC Flight SQL driver",flush=True); print(" ",flightsql_client(repo,estate,a.adbc_driver,a.adbc_probe),flush=True)
+    print("[6/6] report",flush=True); report(repo,estate); c.close()
+    print("report:",estate/"representations/fabric-report.txt",flush=True); return 0
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--repo",default="."); ap.add_argument("--estate",default="~/.bonfyre/estate-local")
+    ap.add_argument("--runtime",default="~/.bonfyre/representation-runtime"); ap.add_argument("--apply",action="store_true")
+    ap.add_argument("--worker",action="store_true"); ap.add_argument("--allow-network",action="store_true")
+    ap.add_argument("--run-xtable",action="store_true")
+    ap.add_argument("--arrow-runtime-bundle"); ap.add_argument("--adbc-driver"); ap.add_argument("--adbc-probe"); a=ap.parse_args()
+    if a.worker: return worker(a)
+    if not a.apply: print("Use --apply; native ADBC requires explicit --adbc-driver and --adbc-probe."); return 0
+    repo=Path(a.repo).expanduser().resolve(); runtime=Path(a.runtime).expanduser().resolve(); py=runtime/"venv/bin/python"
+    if not py.exists(): raise SystemExit(f"runtime missing: {py}")
+    print("=== SHIFT 1.6 FABRIC BOOTSTRAP ===",flush=True)
+    canonical=repo/"scripts/representation_manifold_fabric.py"; canonical.parent.mkdir(parents=True,exist_ok=True)
+    if Path(__file__).resolve()!=canonical: shutil.copy2(Path(__file__).resolve(),canonical); canonical.chmod(0o755)
+    cmd=[str(py),str(canonical),"--worker","--repo",str(repo),"--estate",str(Path(a.estate).expanduser().resolve()),"--runtime",str(runtime)]
+    if a.allow_network: cmd.append("--allow-network")
+    if a.run_xtable: cmd.append("--run-xtable")
+    if a.arrow_runtime_bundle: cmd += ["--arrow-runtime-bundle",str(Path(a.arrow_runtime_bundle).expanduser().resolve())]
+    if a.adbc_driver: cmd += ["--adbc-driver",str(Path(a.adbc_driver).expanduser().resolve())]
+    if a.adbc_probe: cmd += ["--adbc-probe",str(Path(a.adbc_probe).expanduser().resolve())]
+    rc,so,se=run(cmd,timeout=14400); print(so,end="")
+    if se: print(se,file=sys.stderr,end="")
+    return rc
+
+if __name__=="__main__": raise SystemExit(main())

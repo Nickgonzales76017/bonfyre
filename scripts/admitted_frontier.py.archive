@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""Run a retrieval closure on the representation ResourceAdmission admitted, and
+check what the envelope predicted against what the run actually cost.
+
+This closes the chain the market exists for:
+
+    measure an envelope   -> what a representation preserves, on a cohort
+    admit a representation -> the cheapest one whose envelope meets the budget
+    execute on it          -> the candidate frontier the work will actually use
+    verify the prediction  -> what it cost here, against what was promised
+
+The last step is the one that keeps the rest honest. An envelope is measured on
+one cohort; this run is another. Reporting only the envelope would let a number
+from yesterday stand in for a result from today, which is the same substitution
+the market was built to stop. So the run reports its own realised loss beside the
+predicted one, and says plainly when they disagree.
+
+Cannot infer: a frontier is not a decision, and a realised loss on this cohort is
+not a new envelope -- an envelope comes from a trial across the whole cohort, not
+from one query.
+"""
+from __future__ import annotations
+
+import glob
+import json
+import math
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CMS_DB = os.environ.get("BONFYRE_CMS_DB", "/var/lib/bonfyre/cms/bonfyre_cms.db")
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _stated_places(value: float) -> int:
+    """How precisely an envelope was written down. A number recorded to three
+    places makes no claim about the fourth."""
+    text = repr(float(value))
+    return len(text.split(".")[1]) if "." in text else 0
+
+
+def unit(v):
+    n = math.sqrt(sum(x * x for x in v)) or 1.0
+    return [x / n for x in v]
+
+
+def load(directory):
+    out = []
+    for path in sorted(glob.glob(os.path.join(directory, "*.json"))):
+        if path.endswith(".json.json"):
+            continue
+        try:
+            with open(path) as f:
+                doc = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        vec = doc.get("vector") or doc.get("embedding")
+        if isinstance(vec, list) and vec:
+            out.append((os.path.basename(path)[:-5], unit([float(x) for x in vec])))
+    return out
+
+
+def encode(vectors, representation):
+    """Only representations with a measured envelope are reachable here, because
+    admission will not name one that has none."""
+    if representation == "exact-f32":
+        return vectors, lambda a, b: sum(x * y for x, y in zip(a, b))
+    if representation == "int8":
+        enc = []
+        for v in vectors:
+            peak = max(abs(x) for x in v) or 1.0
+            enc.append(([max(-127, min(127, int(round(x / peak * 127)))) for x in v],
+                        peak / 127.0))
+        return enc, lambda a, b: sum(x * y for x, y in zip(a[0], b[0])) * a[1] * b[1]
+    if representation == "sign-1bit":
+        return ([[1 if x >= 0 else -1 for x in v] for v in vectors],
+                lambda a, b: sum(x * y for x, y in zip(a, b)))
+    if representation == "halved-f32":
+        half = len(vectors[0]) // 2
+        return ([v[:half] for v in vectors],
+                lambda a, b: sum(x * y for x, y in zip(a, b)))
+    raise SystemExit(f"no encoder for admitted representation {representation!r}; "
+                     "admission named something this runner cannot execute, which is "
+                     "a worse failure than refusing to admit it")
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    directory = args[0] if args else None
+    work_class, k, budget = "discovery", 5, 0.95
+    for i, a in enumerate(sys.argv):
+        if a == "--class" and i + 1 < len(sys.argv): work_class = sys.argv[i + 1]
+        if a == "--k" and i + 1 < len(sys.argv): k = int(sys.argv[i + 1])
+        if a == "--min-recall" and i + 1 < len(sys.argv): budget = float(sys.argv[i + 1])
+    if not directory or not os.path.isdir(directory):
+        print("usage: admitted_frontier.py <embeddings-dir> [--class C] [--k N] "
+              "[--min-recall R] [--json]", file=sys.stderr)
+        return 2
+
+    decision = json.loads(subprocess.run(
+        [sys.executable, os.path.join(HERE, "resource_admission.py"),
+         "--class", work_class, "--k", str(k), "--min-recall", str(budget), "--json"],
+        capture_output=True, text=True,
+        env={**os.environ, "BONFYRE_CMS_DB": CMS_DB}).stdout)
+
+    corpus = load(directory)
+    if len(corpus) < k + 2:
+        print(f"corpus of {len(corpus)} is too small for k={k}", file=sys.stderr)
+        return 2
+    ids = [i for i, _ in corpus]
+    vectors = [v for _, v in corpus]
+
+    admitted = decision["admitted"]
+    enc, score = encode(vectors, admitted)
+    ex_enc, ex_score = encode(vectors, "exact-f32")
+
+    prunes = keeps = hits = 0
+    frontier = {}
+    for qi in range(len(ids)):
+        want = [i for i, _ in sorted(
+            ((ids[j], ex_score(ex_enc[qi], ex_enc[j])) for j in range(len(ids)) if j != qi),
+            key=lambda p: -p[1])[:k]]
+        got = [i for i, _ in sorted(
+            ((ids[j], score(enc[qi], enc[j])) for j in range(len(ids)) if j != qi),
+            key=lambda p: -p[1])[:k]]
+        frontier[ids[qi]] = got
+        ws, gs = set(want), set(got)
+        prunes += len(ws - gs); keeps += len(gs - ws); hits += len(ws & gs)
+
+    realised = round(hits / (len(ids) * k), 4)
+    predicted = decision.get("measured_recall")
+    receipt = {
+        "schema": "bonfyre-admitted-frontier.v1",
+        "ran_at": iso_now(),
+        "work_class": work_class, "k": k, "budget_min_recall": budget,
+        "admitted_representation": admitted,
+        "admitted_because": decision["because"],
+        "bodies": len(ids),
+        "frontier_size": sum(len(v) for v in frontier.values()),
+        "predicted_recall": predicted,
+        "realised_recall": realised,
+        "realised_false_prunes": prunes,
+        "realised_false_keeps": keeps,
+        "budget_met_on_this_cohort": realised >= budget,
+        "prediction_note": (
+            "no envelope was predicted; the work ran exact" if predicted is None else
+            # Compare at the precision the envelope was stated to. An envelope
+            # recorded as 0.987 does not disagree with a run of 0.9872; treating
+            # rounding as drift would cry wolf on every run and the real
+            # divergences would stop being read.
+            "the run matched what the envelope promised"
+            if abs(realised - predicted) <= 0.5 * 10 ** -_stated_places(predicted) else
+            f"the run realised {realised} where the envelope promised {predicted}; an "
+            "envelope is a fact about the cohort it was measured over, and this is a "
+            "different cohort"),
+        "cannot_infer": [
+            "a frontier -> a decision",
+            "a realised loss on one cohort -> a new envelope",
+            "budget met here -> budget met on another cohort",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  work={work_class} k={k} budget=recall>={budget}")
+    print(f"  admitted: {admitted}  ({decision['because'][:60]})")
+    print(f"  ran over {len(ids)} bodies, frontier of {receipt['frontier_size']} candidates")
+    print(f"  predicted {predicted}   realised {realised}   "
+          f"prunes {prunes}  keeps {keeps}")
+    print(f"  budget met on this cohort: {receipt['budget_met_on_this_cohort']}")
+    print(f"  {receipt['prediction_note']}")
+    return 0 if receipt["budget_met_on_this_cohort"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

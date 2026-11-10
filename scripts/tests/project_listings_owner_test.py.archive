@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""The marketplace projector writes observed offers through BonfyreCMS."""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import sqlite3
+import subprocess
+import sys
+import tempfile
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    commerce = ROOT / "cmd/BonfyreCommerce/bonfyre-commerce"
+    cms = ROOT / "cmd/BonfyreCMS/bonfyre-cms"
+    projector = ROOT / "scripts/project_listings.mjs"
+    if not commerce.exists() or not cms.exists():
+        print("project listings owner: required binaries missing", file=sys.stderr)
+        return 2
+    with tempfile.TemporaryDirectory(prefix="bonfyre-listings-owner.") as temp:
+        estate = pathlib.Path(temp) / "estate"
+        estate.mkdir()
+        archive = sqlite3.connect(estate / "items.db")
+        archive.execute("CREATE TABLE item(source TEXT,key TEXT,title TEXT,href TEXT,publisher TEXT,at INTEGER)")
+        archive.executemany("INSERT INTO item VALUES(?,?,?,?,?,?)", [
+            ("bat", "lot-1", "A lawful observed lot", "https://bringatrailer.com/listing/example/", "Bring a Trailer", 1789999200),
+            ("bat", "news-1", "Editorial post", "https://bringatrailer.com/features/example/", "Bring a Trailer", 1789999100),
+        ])
+        archive.commit()
+        archive.close()
+        for attempt in range(2):
+            result = subprocess.run(["bun", str(projector), "--estate", str(estate),
+                                     "--repo", str(ROOT), "--cms", str(cms), "--apply"],
+                                    capture_output=True, text=True, check=False)
+            if result.returncode:
+                print(result.stdout, result.stderr, file=sys.stderr)
+                return 1
+            report = json.loads(result.stdout)
+            if report["lots"] != 1 or report["canonical_offers_written"] != 1:
+                print("project listings owner: projector did not write exactly one offer on pass %d" % (attempt + 1),
+                      file=sys.stderr)
+                return 1
+        if os.environ.get("BONFYRE_VERIFY_LEGACY") == "1":
+            legacy = subprocess.run([sys.executable, str(ROOT / "scripts/project_listings.py.archive"),
+                                     "--estate", str(estate), "--repo", str(ROOT),
+                                     "--cms", str(cms), "--apply"],
+                                    capture_output=True, text=True, check=False)
+            if legacy.returncode:
+                print(legacy.stdout, legacy.stderr, file=sys.stderr)
+                return 1
+            if json.loads(legacy.stdout) != report:
+                print("project listings owner: native report differs from legacy", file=sys.stderr)
+                return 1
+        db = sqlite3.connect(estate / "cms.db")
+        if db.execute("SELECT COUNT(*) FROM service_offer").fetchone()[0] != 1:
+            print("project listings owner: repeat projection duplicated the offer", file=sys.stderr)
+            return 1
+        row = db.execute("SELECT offer_id,source_ref,marketplace,canonical_href,observed_at,"
+                         "assertion_state,offer_status,status,cannot_infer FROM service_offer").fetchone()
+        if not row:
+            print("project listings owner: canonical service_offer missing", file=sys.stderr)
+            return 1
+        offer_id, source, marketplace, href, observed, assertion, offer_status, status, cannot = row
+        checks = [offer_id == "lot:bringatrailer.com:lot-1", source == "bat",
+                  marketplace == "bringatrailer.com", href.endswith("/listing/example/"),
+                  observed == "2026-09-21T14:00:00Z", assertion == "OBSERVED",
+                  offer_status == "observed", status == "published",
+                  "not a claim that the thing exists" in cannot]
+        if not all(checks):
+            print("project listings owner: canonical offer weakened observation boundary", file=sys.stderr)
+            return 1
+        db.close()
+    print("project listings owner: PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

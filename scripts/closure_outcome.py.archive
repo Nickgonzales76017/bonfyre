@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Archived after Bun cutover. Score what the closure predicted against what actually happened.
+
+Every counterfactual this estate computes is a claim about the future: satisfy
+this condition and that many resolvers become admissible. A claim nobody scores
+is a claim nobody can be wrong about, and a planner whose priors are never
+corrected drifts toward whatever it already believed.
+
+So a prediction is written down before the change, the closure is run again
+after, and the two are compared. The comparison is the point, not the score: a
+prediction that missed is the only thing that can improve the next one.
+
+What it refuses:
+
+    it will not score a prediction against a different subject or domain
+    it will not treat an unchanged closure as a confirmed prediction, because
+      nothing happening is not evidence that the prediction was right
+    it will not call a match proof; one cohort agreeing is one cohort
+
+Cannot infer: a correct prediction is a good decision, or a wrong one a bad
+model. The world moves for reasons the closure never saw.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+LEDGER = os.environ.get("BONFYRE_PREDICTION_LEDGER",
+                        os.path.expanduser("~/.bonfyre/gym/predictions"))
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def closure_of(domain: str, subject: str) -> dict:
+    p = subprocess.run(["bun", os.path.join(HERE, "closure-algebra.mjs"),
+                        "--domain", domain, "--subject", subject, "--json"],
+                       capture_output=True, text=True, env={**os.environ})
+    if not p.stdout.strip():
+        raise SystemExit(f"the closure produced nothing: {(p.stderr or '')[-160:]}")
+    return json.loads(p.stdout)
+
+
+def key(domain: str, subject: str) -> str:
+    import hashlib
+    return hashlib.sha256(f"{domain}|{subject}".encode()).hexdigest()[:16]
+
+
+def main() -> int:
+    domain = subject = None
+    mode = "record"
+    for i, a in enumerate(sys.argv):
+        if a == "--domain" and i + 1 < len(sys.argv): domain = sys.argv[i + 1]
+        if a == "--subject" and i + 1 < len(sys.argv): subject = sys.argv[i + 1]
+        if a == "--score": mode = "score"
+    if not domain or not subject:
+        print("usage: closure_outcome.py --domain <d> --subject <s> [--score] [--json]",
+              file=sys.stderr)
+        return 2
+
+    os.makedirs(LEDGER, exist_ok=True)
+    path = os.path.join(LEDGER, f"{key(domain, subject)}.json")
+    now = closure_of(domain, subject)
+
+    if mode == "record":
+        record = {
+            "schema": "bonfyre-closure-prediction.v1",
+            "domain": domain, "subject": subject, "recorded_at": iso_now(),
+            "conditions_closed": len(now["closed_at_fixed_point"]),
+            "resolvers_admitted": now["resolvers_admitted"],
+            "predictions": {h["condition"]: h["gain"]
+                            for h in now.get("closure_hypotheses", [])},
+            "closed_set": sorted(now["closed_at_fixed_point"]),
+        }
+        with open(path, "w") as f:
+            json.dump(record, f, indent=2)
+        if "--json" in sys.argv:
+            print(json.dumps(record, indent=2))
+        else:
+            print(f"  recorded {len(record['predictions'])} prediction(s) for "
+                  f"{domain}/{subject}")
+            print(f"  baseline: {record['conditions_closed']} closed, "
+                  f"{record['resolvers_admitted']} resolvers admitted")
+            print(f"  ledger: {path}")
+        return 0
+
+    if not os.path.isfile(path):
+        print(f"no prediction was recorded for {domain}/{subject}; a score needs a "
+              "claim made before the change, not after", file=sys.stderr)
+        return 2
+    with open(path) as f:
+        before = json.load(f)
+    if before["domain"] != domain or before["subject"] != subject:
+        print("the recorded prediction is for a different subject", file=sys.stderr)
+        return 2
+
+    newly_closed = sorted(set(now["closed_at_fixed_point"]) - set(before["closed_set"]))
+    delta_resolvers = now["resolvers_admitted"] - before["resolvers_admitted"]
+    unchanged = (not newly_closed and delta_resolvers == 0)
+
+    scored = []
+    for cond in newly_closed:
+        predicted = before["predictions"].get(cond)
+        scored.append({
+            "condition": cond,
+            "predicted_gain": predicted,
+            "was_predicted": predicted is not None,
+            "note": ("closed, and the prediction said it would unlock "
+                     f"{predicted} resolver(s)" if predicted is not None else
+                     "closed, and no prediction had been recorded for it"),
+        })
+    receipt = {
+        "schema": "bonfyre-closure-outcome.v1",
+        "domain": domain, "subject": subject, "scored_at": iso_now(),
+        "recorded_at": before["recorded_at"],
+        "baseline_closed": before["conditions_closed"],
+        "now_closed": len(now["closed_at_fixed_point"]),
+        "newly_closed": newly_closed,
+        "resolver_delta": delta_resolvers,
+        "predictions_made": len(before["predictions"]),
+        "scored": scored,
+        "nothing_changed": unchanged,
+        "verdict": ("nothing changed since the prediction was recorded, which is not "
+                    "evidence the prediction was right" if unchanged else
+                    f"{len(newly_closed)} condition(s) closed and "
+                    f"{delta_resolvers:+d} resolver(s) became admissible"),
+        "cannot_infer": [
+            "a correct prediction -> a good decision",
+            "a wrong prediction -> a bad model; the world moves for reasons the closure never saw",
+            "an unchanged closure -> a confirmed prediction",
+            "one cohort agreeing -> a validated planner",
+        ],
+    }
+    if "--json" in sys.argv:
+        print(json.dumps(receipt, indent=2))
+        return 0
+    print(f"  {domain} / {subject}")
+    print(f"  predicted at {before['recorded_at']}, scored at {receipt['scored_at']}")
+    print(f"  {receipt['verdict']}")
+    for s in scored:
+        print(f"    {s['condition']:<26}{s['note']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+"""Lower the columnar observation corpus into a Zarr field, with lineage.
+
+Parquet and Zarr are not redundant: Parquet holds durable columnar observation
+facts, Zarr holds chunked N-dimensional fields. Going from one to the other is
+an ordinary derivation -- rows aggregated onto a grid -- and the whole point is
+that the resulting field value stays traceable to the rows, sources,
+observations and owners it came from.
+
+So the field carries its lineage in .zattrs: the exact digest of the Parquet
+body it was derived from, the derivation definition that produced it, the
+observation frontier at derivation time, and the axes. A field without that is a
+grid of numbers nobody can account for, which is worse than no field.
+
+Zarr v2 is written directly rather than through a library. The format is a JSON
+descriptor beside raw chunk files, this estate has no zarr dependency, and
+adding one to write four kilobytes of int32 would be a poor trade.
+
+Cannot infer: a field cell -> a fact about the world. It counts observations
+this institution made, and inherits every limit of those observations --
+including that a source observed twice as often is not twice as real.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import struct
+import subprocess
+import sys
+from pathlib import Path
+
+BUCKET = "5 minutes"
+
+
+def query(binary: str, scratch: str, sql: str) -> list[dict]:
+    out = subprocess.run([binary, "sql", scratch, sql],
+                         capture_output=True, text=True, timeout=900).stdout
+    body = "\n".join(l for l in out.splitlines() if not l.startswith("[query]"))
+    return json.loads(body) if body.strip() else []
+
+
+def file_digest(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 22), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def body_digest(path: Path) -> str:
+    """Manifest digest for a body that may be a directory of parts."""
+    if path.is_file():
+        return file_digest(path)
+    members = sorted(q for q in path.rglob("*") if q.is_file())
+    manifest = "\n".join(f"{q.relative_to(path)}:{file_digest(q)}" for q in members)
+    return hashlib.sha256(manifest.encode()).hexdigest()
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--parquet", default="/var/lib/bonfyre/state/fleming/estate.parquet")
+    ap.add_argument("--out", default="/var/lib/bonfyre/state/fields/observation-density.zarr")
+    ap.add_argument("--query", default="/usr/local/bin/bonfyre-query")
+    ap.add_argument("--scratch", default="/tmp/lower.duckdb")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    body = Path(args.parquet)
+    if not body.exists():
+        print(f"no columnar body at {body}", file=sys.stderr)
+        return 1
+
+    # The derivation definition travels with the field, so a cell can be traced
+    # to the exact aggregation that produced it rather than to a description of
+    # one.
+    derivation = (
+        "SELECT src_id, "
+        f"time_bucket(INTERVAL '{BUCKET}', CAST(observed_at AS TIMESTAMP)) AS bucket, "
+        "COUNT(*) AS observations "
+        f"FROM read_parquet('{body}') GROUP BY src_id, bucket ORDER BY src_id, bucket"
+    )
+    rows = query(args.query, args.scratch, derivation)
+    if not rows:
+        print("derivation produced no rows", file=sys.stderr)
+        return 1
+
+    sources = sorted({r["src_id"] for r in rows})
+    buckets = sorted({r["bucket"] for r in rows})
+    si = {s: i for i, s in enumerate(sources)}
+    bi = {b: i for i, b in enumerate(buckets)}
+    grid = [[0] * len(buckets) for _ in sources]
+    for r in rows:
+        grid[si[r["src_id"]]][bi[r["bucket"]]] = int(r["observations"])
+
+    frontier = max(buckets)
+    source_digest = body_digest(body)
+
+    if args.dry_run:
+        print(json.dumps({"sources": len(sources), "buckets": len(buckets),
+                          "cells": len(sources) * len(buckets),
+                          "source_digest": source_digest, "frontier": frontier,
+                          "dry_run": True}, indent=2))
+        return 0
+
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # One chunk: the whole field is a few kilobytes, and splitting it would add
+    # structure that buys nothing at this size.
+    (out / ".zarray").write_text(json.dumps({
+        "zarr_format": 2,
+        "shape": [len(sources), len(buckets)],
+        "chunks": [len(sources), len(buckets)],
+        "dtype": "<i4",
+        "compressor": None,
+        "fill_value": 0,
+        "order": "C",
+        "filters": None,
+    }, indent=2) + "\n")
+
+    (out / ".zattrs").write_text(json.dumps({
+        "bonfyre:derivedFrom": {
+            "representation": "Parquet",
+            "resource": f"bonfyre://observation-estate/{body.name}",
+            "digest": source_digest,
+            "owner": "BonfyreQuery",
+        },
+        "bonfyre:derivation": derivation,
+        "bonfyre:frontier": frontier,
+        "bonfyre:axes": {"0": "src_id", "1": f"observed_at bucketed by {BUCKET}"},
+        "bonfyre:sources": sources,
+        "bonfyre:buckets": buckets,
+        "bonfyre:forbiddenInference": (
+            "a field cell is not a fact about the world; it counts observations this "
+            "institution made and inherits every limit of those observations, including "
+            "that a source observed twice as often is not twice as real"
+        ),
+    }, indent=2) + "\n")
+
+    flat = [v for row in grid for v in row]
+    (out / "0.0").write_bytes(struct.pack(f"<{len(flat)}i", *flat))
+
+    field_digest = body_digest(out)
+    print(json.dumps({
+        "schema": "bonfyre.parquet-to-zarr.lowering.v1",
+        "field": str(out),
+        "shape": [len(sources), len(buckets)],
+        "cells": len(flat),
+        "nonzero": sum(1 for v in flat if v),
+        "total_observations": sum(flat),
+        "field_digest": field_digest,
+        "derived_from_digest": source_digest,
+        "frontier": frontier,
+        "forbidden_inference": (
+            "a derived field is not a new observation; it is one arrangement of the rows "
+            "it was computed from, and it is stale the moment they change"
+        ),
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

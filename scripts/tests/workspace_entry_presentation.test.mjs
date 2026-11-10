@@ -1,0 +1,51 @@
+import {test,expect,beforeAll,afterAll} from 'bun:test';
+import {join} from 'node:path';
+import {createRequire} from 'node:module';
+import {mkdtempSync,rmSync,writeFileSync,mkdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {workspaceFixture,root} from '../../cmd/BonfyreWebAddress/tests/workspace_fixture.mjs';
+import {workbookPackage} from '../../components/BonfyreServiceSite/workbook-package.mjs';
+import {projectFinanceWorkspaceSetup,publishSetups} from '../publish_experience_setups.mjs';
+import {workspaceNavigationCSS} from '../workspace_continuation.mjs';
+import {readWorkbookReview} from '../../components/BonfyreServiceSite/workbook-record.mjs';
+import * as XLSX from '../../components/BonfyreDecision/vendor/sheetjs-0.20.3/xlsx.mjs';
+let f,pack,binding,browser,temp,original;
+const prior={BONFYRE_WORKSPACE_RELEASE:process.env.BONFYRE_WORKSPACE_RELEASE,BONFYRE_WORKSPACE_PACKAGES:process.env.BONFYRE_WORKSPACE_PACKAGES};
+beforeAll(async()=>{temp=mkdtempSync(join(tmpdir(),'workspace-entry-'));pack=await workbookPackage({packageRoot:join(temp,'packages')});process.env.BONFYRE_WORKSPACE_RELEASE=pack.id;process.env.BONFYRE_WORKSPACE_PACKAGES=join(temp,'packages');f=await workspaceFixture();publishSetups({records:projectFinanceWorkspaceSetup(pack.id),binary:f.cms,db:f.db,schemas:join(f.home,'schemas'),apply:true});binding=await f.install('experience.finance-workbooks.workspace','institution:workspace-team');const pp=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');browser=await pp.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',args:['--no-sandbox','--disable-dev-shm-usage']});const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet([['Amount','Multiplier','Total'],[120.5,2,{t:'n',f:'A2*B2',v:241}]]),'Review');XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet([['Date','Description','Amount','Account'],['2026-10-20','Illustrative inspection',120.5,'Service income'],['2026-10-20','Illustrative inspection',120.5,'Service income'],['2026-10-20','Illustrative supplies',-22.25,'Supplies'],['2026-10-20','Unconfirmed example','','']]),'Transactions');original=XLSX.write(book,{type:'buffer',bookType:'xlsx'});writeFileSync(join(temp,'illustrative.xlsx'),original);},60000);
+afterAll(async()=>{await browser?.close();await f?.close();if(temp)rmSync(temp,{recursive:true,force:true});for(const [k,v]of Object.entries(prior))if(v===undefined)delete process.env[k];else process.env[k]=v;});
+test('the shared entrance leaves a domain-owned canvas alone',async()=>{const p=await browser.newPage();try{await p.setContent('<style>'+workspaceNavigationCSS+'</style><nav data-native-workspace><a href="#work">Work</a></nav><main id="domain" class="specialized"><h1 style="font-size:22px">Domain editor</h1></main>');expect(await p.$eval('#domain',n=>getComputedStyle(n).backgroundImage)).toBe('none');expect(await p.$eval('#domain h1',n=>getComputedStyle(n).fontSize)).toBe('22px');}finally{await p.close();}});
+test('real finance entrance, import, native save and reopened working canvas retain styling',async()=>{
+ const context=await browser.createBrowserContext(),p=await context.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));const [name,...v]=f.owner.cookie.split('=');await p.setCookie({name,value:v.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});
+ try{for(const width of [1440,390]){await p.setViewport({width,height:1000});await p.goto(f.base+binding.path,{waitUntil:'networkidle0'});await p.waitForSelector('[data-workbook-file]');
+  const s=await p.evaluate(()=>({heading:parseFloat(getComputedStyle(document.querySelector('main>h1')).fontSize),radius:parseFloat(getComputedStyle(document.querySelector('[data-workbook-open]')).borderRadius),background:getComputedStyle(document.querySelector('[data-workbook-open]')).backgroundImage,overflow:document.documentElement.scrollWidth>innerWidth}));expect(s.heading).toBeGreaterThanOrEqual(42);expect(s.radius).toBeGreaterThanOrEqual(18);expect(s.background).toContain('gradient');expect(s.overflow).toBe(false);
+ }await p.setViewport({width:1440,height:1000});await (await p.$('[data-workbook-file]')).uploadFile(join(temp,'illustrative.xlsx'));await p.click('[data-workbook-open] button');await p.waitForSelector('[data-workbook-editor][data-ready=true]',{timeout:30000});
+ expect(await p.$eval('[data-workbook-open]',n=>getComputedStyle(n).display)).toBe('none');expect(await p.$eval('main>h1',n=>parseFloat(getComputedStyle(n).fontSize))).toBeLessThanOrEqual(46);
+ await p.evaluate(()=>{const n=[...document.querySelectorAll('.finance-workbook-toolbar button')].find(n=>n.textContent==='Save review');if(!n)throw Error('Native save control missing');n.dataset.saveProof='';});await p.click('[data-save-proof]');await p.waitForFunction(()=>document.querySelector('[data-workbook-editor]')?.textContent.includes('Saved review'),{timeout:20000});
+ const key=new URL(p.url()).searchParams.get('workbook'),row=await f.store(binding).readVersion(key),saved=await readWorkbookReview(row);expect(row.revision).toBe(1);expect(saved.snapshot.sheets['sheet-0'].cellData[1][2].v).toBe(241);expect(Buffer.from(await saved.source.original.arrayBuffer())).toEqual(Buffer.from(original));
+ await p.reload({waitUntil:'networkidle0'});await p.waitForSelector('[data-workbook-editor][data-ready=true]');expect(new URL(p.url()).searchParams.get('workbook')).toBe(key);
+ for(const width of [1440,390]){await p.setViewport({width,height:1000});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(await p.$eval('[data-workbook-open]',n=>getComputedStyle(n).display)).toBe('none');}
+ await p.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);expect(await p.$eval('[data-native-workspace] a',n=>getComputedStyle(n).transitionDuration)).toBe('0s');expect(errors).toEqual([]);
+ const out=process.env.BONFYRE_ENTRY_SCREENSHOTS;if(out){mkdirSync(out,{recursive:true});await p.screenshot({path:join(out,'finance-working-mobile.png'),fullPage:true});await p.setViewport({width:1440,height:1000});await p.screenshot({path:join(out,'finance-working-desktop.png'),fullPage:true});}
+ }finally{await context.close();}
+},90000);
+
+test('style changes add no provider calls, draft store, or financial operation',()=>{
+ expect(workspaceNavigationCSS).not.toMatch(/https?:|@import|data-workbook|finance-workbook/);
+ expect(workspaceNavigationCSS).toContain('prefers-reduced-motion');expect(workspaceNavigationCSS).toContain('>form[hidden]');
+});
+
+
+test('finance transaction view shows native account totals, row inspection and persistent review decisions',async()=>{
+ const context=await browser.createBrowserContext(),p=await context.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(20000);const[name,...v]=f.owner.cookie.split('=');await p.setCookie({name,value:v.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});
+ try{await p.setViewport({width:1440,height:1000});await p.goto(f.base+binding.path,{waitUntil:'networkidle0'});await (await p.$('[data-workbook-file]')).uploadFile(join(temp,'illustrative.xlsx'));await p.click('[data-workbook-open] button');await p.waitForSelector('[data-workbook-editor][data-ready=true]');
+ await p.$$eval('.finance-workbook-tabs button',nodes=>nodes.find(n=>n.textContent==='Transaction review').click());await p.waitForFunction(()=>document.querySelector('[data-review-accounts] tbody')?.children.length===3);expect(await p.$eval('.finance-workbook',n=>n.dataset.view)).toBe('transactions');expect(await p.$eval('.finance-workbook-tabs [aria-pressed=true]',n=>n.textContent)).toBe('Transaction review');
+ const amounts=await p.$$eval('[data-review-accounts] tbody tr',rows=>rows.map(r=>[...r.cells].map(c=>c.textContent)));expect(amounts).toContainEqual(['Service income','2','0','241.00','0']);expect(amounts).toContainEqual(['Supplies','1','0','-22.25','0']);expect(amounts).toContainEqual(['Unassigned','1','0','0.00','1']);
+ expect(await p.$$eval('.fr-metrics strong',n=>n.map(n=>n.textContent))).toEqual(['4','0','1','2']);await p.click('.fr-account-summary>summary');
+ await p.waitForSelector('[data-review-grid] [row-id="1"] [col-id="description"]',{visible:true});await p.click('[data-review-grid] [row-id="1"] [col-id="description"]');await p.waitForSelector('[data-review-inspector]:not([hidden])');expect(await p.$eval('[data-review-inspector]',n=>n.textContent)).toContain('Imported');
+ for(const width of [1440,390]){await p.setViewport({width,height:1000});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);expect(await p.$eval('.fr-metrics',n=>getComputedStyle(n).display)).toBe('grid');expect(await p.$eval('.finance-workbook-toolbar',n=>parseFloat(getComputedStyle(n).borderTopLeftRadius))).toBe(20);}
+ await p.setViewport({width:1440,height:1000});await p.click('.ag-selection-checkbox input[type=checkbox]');await p.type('[data-review-note]','Illustrative duplicate reviewed against the fixture source.');await p.click('[data-review-accept]');await p.waitForFunction(()=>Number(document.querySelectorAll('.fr-metrics strong')[1].textContent)>0);
+ await p.click('[data-workbook-action=save]');await p.waitForFunction(()=>document.querySelector('.finance-workbook-status').textContent.startsWith('Saved review'));const key=new URL(p.url()).searchParams.get('workbook'),row=await f.store(binding).readVersion(key),saved=await readWorkbookReview(row);expect(saved.review.decisions.length).toBeGreaterThan(0);expect(Buffer.from(await saved.source.original.arrayBuffer())).toEqual(Buffer.from(original));
+ await p.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);expect(await p.$eval('[data-review-accept]',n=>getComputedStyle(n).transitionDuration)).toBe('0s');expect(errors).toEqual([]);
+ const out=process.env.BONFYRE_ENTRY_SCREENSHOTS;if(out){mkdirSync(out,{recursive:true});await p.screenshot({path:join(out,'finance-transactions-desktop.png'),fullPage:true});await p.setViewport({width:390,height:1000});await p.screenshot({path:join(out,'finance-transactions-mobile.png'),fullPage:true});}
+ }finally{await context.close();}
+},90000);

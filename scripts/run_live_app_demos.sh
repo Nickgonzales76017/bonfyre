@@ -10,12 +10,16 @@ if [ ! -f "$TEST_WAV" ]; then
   exit 1
 fi
 
-log() { echo "[demo] $@"; }
+log() { printf '[demo] %s\n' "$*"; }
 run_bin() {
   local name="$1"; shift
   local outdir="$DEMOS_DIR/${name}"
   mkdir -p "$outdir"
-  echo "--- running $name $@ ---" > "$outdir/run.log"
+  {
+    printf -- '--- running %q' "$name"
+    printf ' %q' "$@"
+    printf ' ---\n'
+  } > "$outdir/run.log"
   if [ -x "$BIN_DIR/${name}/${name}" ]; then
     (cd "$BIN_DIR/${name}" && ./"${name}" "$@") >> "$outdir/run.log" 2>&1 || echo "ERROR: $name failed (see run.log)" >> "$outdir/run.log"
   else
