@@ -11,7 +11,6 @@ SRC      = src/main.c
 
 all: $(TARGET)
 
-.PHONY: test
 test: $(TARGET)
 	bash tests/width_admission_test.sh
 	sh tests/delete_test.sh
@@ -19,5 +18,13 @@ test: $(TARGET)
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-vec.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-vec.next" "$(MANAGED_PREFIX)/bin/bonfyre-vec"
+
 clean:
 	rm -f $(TARGET)
+
+.PHONY: all clean test install
