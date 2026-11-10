@@ -671,9 +671,11 @@ export async function ingestIntegrationTarget(repoRoot, input) {
       http_status: fetched.status,
       http_ok: fetched.ok,
     };
-  } else if (preset?.mock_event) {
-    rawEvent = preset.mock_event;
-    sourceInfo = { mode: "preset-mock", preset_id: preset.id };
+  } else {
+    // An event is something that arrived. A canned one from a preset, or an
+    // empty object standing in for none, is not; both used to be processed
+    // here as though a source had sent them.
+    throw new Error(`No event source for ${descriptor.target}: pass an event, a file, or an endpoint`);
   }
 
   const event = normalizeConnectorEvent(descriptor, rawEvent, {

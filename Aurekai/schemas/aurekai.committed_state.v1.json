@@ -13,22 +13,80 @@
     "canonical_state"
   ],
   "properties": {
-    "schema_version": { "const": "aurekai.committed_state.v1" },
-    "state_id": { "type": "string" },
-    "state_hash": { "type": "string" },
-    "target": { "type": "string" },
-    "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
-    "category": { "type": "string" },
-    "runtime_depth": { "type": "string" },
-    "ingress_depth": { "type": "string" },
-    "trust_level": { "type": "string" },
-    "required_kernel_layers": { "type": "array", "items": { "type": "string" } },
-    "chart_family": { "type": "string" },
-    "residual_assessment": { "type": "object" },
-    "mutation_boundary": { "type": ["object", "null"] },
-    "state_machine_types": { "type": "array", "items": { "type": "string" } },
-    "committed_at": { "type": "string", "format": "date-time" },
-    "host_event": { "type": "object" },
-    "canonical_state": { "type": "object" }
+    "schema_version": {
+      "const": "aurekai.committed_state.v1"
+    },
+    "state_id": {
+      "type": "string"
+    },
+    "state_hash": {
+      "type": "string"
+    },
+    "run_hash": {
+      "type": "string"
+    },
+    "commitment_basis": {
+      "enum": [
+        "semantic"
+      ]
+    },
+    "target": {
+      "type": "string"
+    },
+    "surface": {
+      "enum": [
+        "hard-fork",
+        "soft-fork",
+        "adapter",
+        "observer",
+        "state-machine"
+      ]
+    },
+    "category": {
+      "type": "string"
+    },
+    "runtime_depth": {
+      "type": "string"
+    },
+    "ingress_depth": {
+      "type": "string"
+    },
+    "trust_level": {
+      "type": "string"
+    },
+    "required_kernel_layers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "chart_family": {
+      "type": "string"
+    },
+    "residual_assessment": {
+      "type": "object"
+    },
+    "mutation_boundary": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "state_machine_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "committed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "host_event": {
+      "type": "object"
+    },
+    "canonical_state": {
+      "type": "object"
+    }
   }
 }

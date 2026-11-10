@@ -4,6 +4,8 @@
 # Build output
 dist/
 node_modules/
+# Reconstructable integration scaffolds; extracted repositories retain their own source.
+/generated/integration-repos/
 
 # macOS
 .DS_Store
@@ -19,3 +21,6 @@ node_modules/
 # Bun lockfile (keep bun.lockb)
 yarn.lock
 package-lock.json
+
+# Generator output: bun bin/akai.mjs integrate:scaffold-repos --all
+generated/
