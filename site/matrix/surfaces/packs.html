@@ -1,0 +1,474 @@
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Packs · Aurekai</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="description" content="The pack graph and a closure resolved live: what behaviour is running for one actor, what an overlay hid, what was refused, and what the closure needs of the world.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0b0d10; --p1:#13161c; --p2:#191d25; --p3:#20252f;
+  --line:#252b36; --line2:#333b49;
+  --tx:#e8eaef; --dim:#8b94a8; --dim2:#616b80;
+  --acc:#ffb020; --acc-ink:#170f02; --ok:#4ad07a; --no:#ff5f6d;
+  --official:#5aa9ff; --institution:#b388ff; --community:#4ad07a;
+  --household:#ffb020; --scenario:#ff5f6d;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--tx);font-family:var(--sans);
+     font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+a{color:inherit;text-decoration:none}
+code,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+
+.rig{display:grid;grid-template-rows:auto auto minmax(0,1fr);height:100dvh}
+.strip{display:flex;align-items:center;gap:.9rem;padding:.42rem .7rem;
+       border-bottom:1px solid var(--line);background:var(--p1)}
+.strip .who{display:flex;flex-direction:column;line-height:1.2;white-space:nowrap}
+.strip .who b{font-size:.84rem}
+.strip .who span{font-family:var(--mono);font-size:.62rem;color:var(--dim2)}
+.gauges{display:flex;margin-left:.3rem;overflow-x:auto;flex:1 1 auto}
+.g{display:flex;flex-direction:column;padding:0 .62rem;border-left:1px solid var(--line);
+   line-height:1.15;white-space:nowrap}
+.g b{font-family:var(--mono);font-size:.82rem;font-weight:600;letter-spacing:-.02em}
+.g span{font-family:var(--mono);font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;
+        color:var(--dim2)}
+.g.hot b{color:var(--acc)}
+.back{font-family:var(--mono);font-size:.66rem;color:var(--dim);border:1px solid var(--line2);
+      border-radius:5px;padding:.12rem .45rem}
+.back:hover{color:var(--acc);border-color:var(--acc)}
+
+.actors{display:flex;align-items:center;gap:.35rem;padding:.3rem .7rem;overflow-x:auto;
+        border-bottom:1px solid var(--line);background:var(--p1)}
+.actors>i{font-style:normal;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--dim2);margin-right:.2rem}
+.actors button{font:inherit;font-family:var(--mono);font-size:.66rem;cursor:pointer;
+  padding:.1rem .45rem;border-radius:4px;border:1px solid var(--line2);background:transparent;
+  color:var(--dim);white-space:nowrap}
+.actors button:hover{color:var(--tx)}
+.actors button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink);
+  border-color:var(--acc);font-weight:600}
+.actors .sp{margin-left:auto;font-family:var(--mono);font-size:.62rem;color:var(--dim2)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);
+      gap:1px;background:var(--line);min-height:0}
+@media (max-width:1150px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .c3{display:none}}
+@media (max-width:800px){.cols{grid-template-columns:minmax(0,1fr)}.c1{display:none}}
+.col{background:var(--ink);overflow:auto;min-height:0}
+.ch{position:sticky;top:0;z-index:5;display:flex;align-items:baseline;gap:.4rem;
+    padding:.35rem .6rem;background:var(--p1);border-bottom:1px solid var(--line)}
+.ch h2{margin:0;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
+       text-transform:uppercase;color:var(--dim);font-weight:600}
+.ch em{font-style:normal;font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
+.ch .r{margin-left:auto}
+.why{margin:.4rem .6rem .45rem;font-size:.73rem;color:var(--dim);max-width:64ch}
+
+.lbar{padding:.25rem .6rem .1rem;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--dim2);border-bottom:1px solid var(--line);
+      position:sticky;top:26px;background:var(--ink);z-index:3}
+.pk{display:grid;grid-template-columns:.55rem minmax(0,1fr) auto;gap:.45rem;align-items:start;
+    padding:.28rem .6rem;border-bottom:1px solid rgba(37,43,54,.5);cursor:pointer}
+.pk:hover{background:var(--p2)}
+.pk[aria-selected="true"]{background:var(--p3)}
+.pk .bar{width:3px;height:100%;min-height:1.6rem;border-radius:2px;background:var(--dim2)}
+.pk.official .bar{background:var(--official)} .pk.institution .bar{background:var(--institution)}
+.pk.community .bar{background:var(--community)} .pk.household .bar{background:var(--household)}
+.pk.scenario .bar{background:var(--scenario)}
+.pk .n{font-family:var(--mono);font-size:.7rem;overflow-wrap:anywhere}
+.pk .p{font-size:.68rem;color:var(--dim2);margin-top:.08rem;
+       display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pk .e{display:flex;gap:.35rem;font-family:var(--mono);font-size:.58rem;color:var(--dim2);
+       margin-top:.1rem}
+.pk .e b{color:var(--dim);font-weight:500}
+.pk .rt{font-family:var(--mono);font-size:.58rem;color:var(--dim2);text-align:right;
+        white-space:nowrap}
+.pk .rt b{display:block;color:var(--acc);font-weight:500}
+.fork{color:var(--community)}
+
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem;align-items:baseline;
+     padding:.24rem .6rem;border-bottom:1px solid rgba(37,43,54,.5);font-size:.72rem}
+.row .k{font-family:var(--mono);font-size:.68rem;overflow-wrap:anywhere}
+.row .v{font-family:var(--mono);font-size:.6rem;color:var(--dim2);white-space:nowrap}
+.row .v.on{color:var(--ok)} .row .v.off{color:var(--dim2)}
+.row.dep{opacity:.62}
+
+.ov{display:grid;grid-template-columns:4.6rem minmax(0,1fr);gap:.5rem;align-items:baseline;
+    padding:.22rem .6rem;border-bottom:1px solid rgba(37,43,54,.5);font-size:.7rem}
+.ov .verb{font-family:var(--mono);font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;
+          color:var(--acc)}
+.ov .t{font-family:var(--mono);font-size:.66rem;overflow-wrap:anywhere}
+.ov .w{font-size:.65rem;color:var(--dim2);margin-top:.05rem}
+.ov.refused .verb{color:var(--no)}
+.ov.refused .t{text-decoration:line-through;opacity:.7}
+
+.views{display:flex;flex-wrap:wrap;gap:.25rem;padding:.4rem .6rem}
+.v{font-family:var(--mono);font-size:.66rem;padding:.1rem .45rem;border-radius:4px;
+   border:1px solid var(--line2);color:var(--tx)}
+.v.pref{border-color:var(--acc);color:var(--acc);font-weight:600}
+.v.hid{opacity:.4;text-decoration:line-through}
+
+.pol{display:flex;gap:.5rem;padding:.35rem .6rem;flex-wrap:wrap}
+.pol div{flex:1 1 8rem;border:1px solid var(--line);border-radius:6px;padding:.3rem .45rem;
+         background:var(--p1)}
+.pol dt{font-family:var(--mono);font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;
+        color:var(--dim2)}
+.pol dd{margin:.1rem 0 0;font-family:var(--mono);font-size:.78rem;color:var(--acc)}
+
+.dm{padding:.3rem .6rem;border-bottom:1px solid rgba(37,43,54,.5)}
+.dm .h{display:flex;gap:.4rem;align-items:baseline}
+.dm .h b{font-family:var(--mono);font-size:.62rem;color:var(--acc)}
+.dm .h span{font-family:var(--mono);font-size:.58rem;color:var(--dim2)}
+.dm .needs{font-size:.72rem;margin-top:.1rem}
+.dm .meta{display:grid;grid-template-columns:5.2rem minmax(0,1fr);gap:.02rem .45rem;
+          margin-top:.15rem;font-size:.64rem}
+.dm .meta dt{font-family:var(--mono);font-size:.55rem;letter-spacing:.05em;
+             text-transform:uppercase;color:var(--dim2)}
+.dm .meta dd{margin:0;color:var(--dim)}
+.dm .opt{margin-top:.12rem;font-size:.64rem;color:var(--dim2);font-style:italic}
+
+.ladder{padding:.35rem .6rem .5rem}
+.ladder .l{display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:.5rem;
+           align-items:baseline;padding:.14rem 0;font-size:.66rem}
+.ladder .l b{font-family:var(--mono);font-size:.6rem;color:var(--dim)}
+.ladder .l span{color:var(--dim2)}
+.ladder .l.here b{color:var(--acc)}
+.ladder .l.here span{color:var(--tx)}
+
+.note{margin:.45rem .6rem;padding:.4rem .5rem;border:1px solid var(--line);
+      border-left:2px solid var(--acc);border-radius:5px;background:var(--p2);font-size:.7rem}
+.note.bad{border-left-color:var(--no)}
+.note strong{display:block;margin-bottom:.12rem}
+.note p{margin:.15rem 0 0;color:var(--dim)}
+.note code{color:var(--acc);font-family:var(--mono)}
+.k-note{margin:.45rem .6rem;padding:.4rem .5rem;border:1px solid var(--line);
+        border-left:2px solid var(--no);border-radius:5px;background:var(--p2);font-size:.7rem}
+.k-note.k-empty{border-left-color:var(--dim2)}
+.k-note strong{display:block;margin-bottom:.12rem}
+.k-note p{margin:.15rem 0 0;color:var(--dim)}
+.k-note code{color:var(--acc)}
+.src{padding:.35rem .6rem 1rem;font-family:var(--mono);font-size:.58rem;color:var(--dim2);
+     line-height:1.55}
+.src code{color:var(--dim)}
+.wait{padding:.6rem;color:var(--dim2);font-family:var(--mono);font-size:.68rem}
+</style>
+</head>
+<body>
+<div class="rig">
+  <header class="strip">
+    <span id="bf-mk"></span>
+    <span class="who"><b id="whoName">&hellip;</b><span id="whoAddr"></span></span>
+    <div class="gauges" id="gauges"></div>
+    <a class="back" href="/console">console &rarr;</a>
+  </header>
+
+  <div class="actors" id="actors"><i>closure for</i></div>
+
+  <div class="cols">
+    <section class="col c1">
+      <div class="ch"><h2>Pack graph</h2><em id="graphCount"></em></div>
+      <p class="why">A pack is an addressed behaviour artifact &mdash; not a subject, not an
+        institution, not an internet cut, not a surface. Keeping it a fifth thing is what
+        lets a community fork behaviour without forking Bonf&yuml;re.</p>
+      <div id="graph"><p class="wait">reading the graph&hellip;</p></div>
+    </section>
+
+    <section class="col c2">
+      <div class="ch"><h2>Closure</h2><em id="closureFor"></em></div>
+      <p class="why">The smallest sufficient set for this actor. Activated, not merely
+        installed: forking is not installing, installing is not activating, and activating
+        is not authorizing.</p>
+      <div id="closure"><p class="wait">&hellip;</p></div>
+      <div class="ch"><h2>Overlays</h2><em id="ovCount"></em></div>
+      <div id="overlays"></div>
+      <div class="ch"><h2>Views</h2><em id="viewCount"></em></div>
+      <div class="views" id="views"></div>
+      <div class="ch"><h2>Policy</h2><em>tightened, never widened</em></div>
+      <div class="pol" id="policy"></div>
+    </section>
+
+    <section class="col c3">
+      <div class="ch"><h2>Demand</h2><em id="demandCount"></em></div>
+      <p class="why">What this closure needs of the world, declared rather than fetched.
+        Most external material should live at address-and-receipt; a body is retained when
+        a claim depends on it, not because it was seen.</p>
+      <div id="demand"><p class="wait">&hellip;</p></div>
+      <div class="ch"><h2>Retention ladder</h2><em>where this closure sits</em></div>
+      <div class="ladder" id="ladder"></div>
+      <p class="src" id="src"></p>
+    </section>
+  </div>
+</div>
+
+<!-- The kit is served from the site root, because emit_file_response_cached
+     refuses an asset name containing a slash and that guard is not worth
+     weakening for a convenience. -->
+<script src="/assets/bonfyre-kit.js?v=BFKITVERSIONXXXX"></script>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const el = (t, c, x) => { const n = document.createElement(t);
+    if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+
+  { const slot = $('bf-mk'); if (slot) slot.replaceWith(K.mark({small: true})); }
+
+  const here = await K.address();
+  const person = (here.institution || '')
+    .replace(/^(person|institution|community|world|place|market|foreign_twin):/, '')
+    .replace(/:/g, ' · ');
+  $('whoName').textContent = person || here.host;
+  $('whoAddr').textContent = here.host + ' · ' + (here.territory || '') + ' · '
+                           + (here.audience || '');
+
+  /* Section 13: most internet material should live at L1-L2. The ladder is
+   * shown against what this closure actually demands, so "hold almost nothing"
+   * is a position on a scale rather than a slogan. */
+  const LADDER = [
+    ['L0', 'ADDRESS', 'URL, actor or endpoint only'],
+    ['L1', 'CANDIDATE', 'a candidate address and a discovery receipt'],
+    ['L2', 'INDEXED', 'identity, digest, metadata, relations, source passport'],
+    ['L3', 'HOT', 'a temporary body, held while something needs it'],
+    ['L4', 'EVIDENTIARY', 'retained because a claim depends on it'],
+    ['L5', 'CARRIED', 'intentionally retained and distributed']
+  ];
+
+  const graphRes = await K.get('/packs');
+  if (!graphRes.ok) {
+    $('graph').innerHTML = '';
+    $('graph').appendChild(K.note(graphRes, 'The pack graph'));
+    return;
+  }
+  const G = graphRes.body;
+  const packs = G.packs || [];
+
+  const actorsOf = () => {
+    const seen = new Set();
+    const out = [];
+    for (const p of packs) if (!seen.has(p.publisher)) { seen.add(p.publisher); out.push(p.publisher); }
+    return out;
+  };
+
+  let actor = new URLSearchParams(location.search).get('actor')
+            || here.institution || actorsOf()[0];
+
+  $('gauges').innerHTML = '';
+  const gauge = (label, value, hot) => {
+    const d = el('div', 'g' + (hot ? ' hot' : ''));
+    d.appendChild(el('b', null, value)); d.appendChild(el('span', null, label));
+    $('gauges').appendChild(d);
+  };
+  gauge('packs', String(packs.length), true);
+  gauge('layers', String(G.layers.length));
+  gauge('verbs', String(G.overlay_verbs.length));
+  gauge('deps', String(packs.reduce((a, p) => a + p.dependencies, 0)));
+  gauge('overlays', String(packs.reduce((a, p) => a + p.overlays, 0)));
+  gauge('demands', String(packs.reduce((a, p) => a + p.demands, 0)));
+  gauge('installs', String(packs.reduce((a, p) => a + p.installations, 0)));
+  gauge('active', String(packs.reduce((a, p) => a + p.activations, 0)), true);
+
+  /* ---------------------------------------------------------- the graph */
+  $('graphCount').textContent = packs.length + ' artifacts';
+  const gbox = $('graph'); gbox.innerHTML = '';
+  let lastLayer = null;
+  for (const p of packs) {
+    if (p.layer !== lastLayer) {
+      lastLayer = p.layer;
+      gbox.appendChild(el('div', 'lbar', p.layer));
+    }
+    const d = el('div', 'pk ' + p.layer);
+    d.appendChild(el('div', 'bar'));
+    const mid = el('div');
+    const n = el('div', 'n', p.pack);
+    mid.appendChild(n);
+    mid.appendChild(el('div', 'p', p.purpose));
+    const e = el('div', 'e');
+    if (p.forks_from) {
+      const f = el('b', 'fork', 'forks ' + p.forks_from);
+      e.appendChild(f);
+    }
+    if (p.dependencies) e.appendChild(el('span', null, p.dependencies + ' deps'));
+    if (p.overlays) e.appendChild(el('span', null, p.overlays + ' overlays'));
+    if (p.demands) e.appendChild(el('span', null, p.demands + ' demands'));
+    if (p.installations) e.appendChild(el('span', null, p.installations + ' installs'));
+    e.appendChild(el('span', null, p.activations ? p.activations + ' active' : 'not active'));
+    mid.appendChild(e);
+    d.appendChild(mid);
+    const rt = el('div', 'rt');
+    rt.appendChild(el('b', null, p.head || '—'));
+    rt.appendChild(el('span', null, (p.root || '').slice(0, 10)));
+    d.appendChild(rt);
+    d.title = p.canonical_name + '\nby ' + p.publisher
+            + '\ngoverned by ' + p.governed_by
+            + '\ncannot infer: ' + p.cannot_infer;
+    d.onclick = () => { actor = p.publisher; draw(); };
+    gbox.appendChild(d);
+  }
+
+  /* ---------------------------------------------------------- the actors */
+  function drawActors() {
+    const box = $('actors');
+    box.innerHTML = '';
+    box.appendChild(Object.assign(el('i', null, 'closure for'), {}));
+    for (const a of actorsOf()) {
+      const b = el('button', null, a.replace(/^(person|institution|community):/, ''));
+      b.type = 'button';
+      b.title = a;
+      b.setAttribute('aria-pressed', String(a === actor));
+      b.onclick = () => { actor = a; draw(); };
+      box.appendChild(b);
+    }
+    const sp = el('span', 'sp');
+    sp.textContent = 'one kernel, one internet estate';
+    box.appendChild(sp);
+  }
+
+  /* --------------------------------------------------------- the closure */
+  async function draw() {
+    drawActors();
+    const p = new URLSearchParams(location.search);
+    p.set('actor', actor);
+    history.replaceState(null, '', location.pathname + '?' + p.toString());
+
+    for (const id of ['closure', 'overlays', 'views', 'policy', 'demand', 'ladder'])
+      $(id).innerHTML = '';
+    $('closureFor').textContent = actor;
+    $('closure').appendChild(el('p', 'wait', 'resolving…'));
+
+    const res = await K.get('/packs/closure?actor=' + encodeURIComponent(actor));
+    $('closure').innerHTML = '';
+    if (!res.ok) { $('closure').appendChild(K.note(res, 'This closure')); return; }
+    const c = res.body;
+
+    if (!c.packs.length) {
+      $('closure').appendChild(K.empty('This actor’s closure',
+        '/packs/closure?actor=' + actor));
+    }
+    for (const q of c.packs) {
+      const d = el('div', 'row' + (q.reached === 'dependency' ? ' dep' : ''));
+      const k = el('div', 'k', q.pack);
+      d.appendChild(k);
+      const v = el('div', 'v ' + (q.reached === 'activated' ? 'on' : 'off'),
+                   q.version + '  ' + q.reached);
+      d.appendChild(v);
+      d.title = q.layer + ' · ' + q.kind + ' · root ' + q.root;
+      $('closure').appendChild(d);
+    }
+    for (const h of (c.hidden || [])) {
+      const d = el('div', 'row dep');
+      d.appendChild(el('div', 'k', h.pack));
+      d.appendChild(el('div', 'v off', 'hidden by ' + h.hidden_by));
+      $('closure').appendChild(d);
+    }
+
+    /* Overlays applied and refused. The refused list is the point. */
+    $('ovCount').textContent = c.applied_count + ' applied · ' + c.refused_count + ' refused';
+    for (const o of c.applied) {
+      const d = el('div', 'ov');
+      d.appendChild(el('div', 'verb', o.verb));
+      const t = el('div');
+      t.appendChild(el('div', 't', o.target + (o.value ? '  →  ' + o.value : '')));
+      t.appendChild(el('div', 'w', o.why));
+      d.appendChild(t);
+      d.title = o.overlay + ' over ' + o.overrides + '  ·  ' + o.layer + ' layer';
+      $('overlays').appendChild(d);
+    }
+    for (const o of (c.refused || [])) {
+      const d = el('div', 'ov refused');
+      d.appendChild(el('div', 'verb', o.verb));
+      const t = el('div');
+      t.appendChild(el('div', 't', o.overlay));
+      t.appendChild(el('div', 'w', o.reason));
+      d.appendChild(t);
+      $('overlays').appendChild(d);
+    }
+    if (c.refused_count) {
+      const n = el('div', 'note bad');
+      n.innerHTML = '<strong>Refused out loud.</strong><p>An overlay used a verb outside '
+        + 'the closed list. Silently dropping it is how a community ends up believing it '
+        + 'configured something it did not.</p>';
+      $('overlays').appendChild(n);
+    }
+
+    /* Views. */
+    $('viewCount').textContent = c.views.length + ' offered · '
+                               + (c.views_hidden || []).length + ' hidden';
+    for (const v of c.views) {
+      const s = el('span', 'v' + (v.why.startsWith('preferred') ? ' pref' : ''), v.view);
+      s.title = v.why;
+      $('views').appendChild(s);
+    }
+    for (const v of (c.views_hidden || [])) {
+      const s = el('span', 'v hid', v);
+      s.title = 'an overlay in this closure hides it; the pattern behind it still answers';
+      $('views').appendChild(s);
+    }
+
+    /* Policy. */
+    for (const [label, value, hint] of [
+      ['audience ceiling', c.policy.audience_ceiling || 'none set',
+       'an overlay may tighten disclosure and may never widen it'],
+      ['keep floor', c.policy.keep_floor || 'none set',
+       'the retention tier this actor admits; nothing is promoted up the lattice for being popular']
+    ]) {
+      const d = el('div');
+      d.appendChild(el('dt', null, label));
+      d.appendChild(el('dd', null, value));
+      d.title = hint;
+      $('policy').appendChild(d);
+    }
+
+    /* Demand. */
+    let dn = 0;
+    for (const kind of ['internet', 'capability', 'renderer', 'surface']) {
+      for (const m of (c[kind + '_demand'] || [])) {
+        const d = el('div', 'dm');
+        const h = el('div', 'h');
+        h.appendChild(el('b', null, kind));
+        h.appendChild(el('span', null, m.pack));
+        d.appendChild(h);
+        d.appendChild(el('div', 'needs', m.needs));
+        const meta = el('dl', 'meta');
+        const put = (k, v) => { if (!v) return;
+          meta.appendChild(el('dt', null, k)); meta.appendChild(el('dd', null, v)); };
+        put('sources', m.preferred_sources);
+        put('fields', m.fields);
+        put('body', m.body_regime);
+        put('reheat', m.reheat_when);
+        if (meta.children.length) d.appendChild(meta);
+        if (m.optional) d.appendChild(el('div', 'opt', 'optional: ' + m.optional));
+        $('demand').appendChild(d);
+        dn++;
+      }
+    }
+    $('demandCount').textContent = dn + ' declared';
+    if (!dn) $('demand').appendChild(K.empty('Demand for this closure', '/packs/closure'));
+
+    /* Where this closure sits on the retention ladder. */
+    const remote = (c.internet_demand || []).every(m => (m.body_regime || '') === 'REMOTE');
+    for (const [id, tier, holds] of LADDER) {
+      const d = el('div', 'l' + ((remote && (id === 'L1' || id === 'L2')) ? ' here' : ''));
+      d.appendChild(el('b', null, id + ' ' + tier));
+      d.appendChild(el('span', null, holds));
+      $('ladder').appendChild(d);
+    }
+    const n = el('div', 'note');
+    n.innerHTML = remote
+      ? '<strong>Every internet demand in this closure is REMOTE.</strong>'
+        + '<p>Meaning and reproducibility are retained; bytes are not. A body moves to L3 '
+        + 'when something needs it and to L4 only when a claim depends on it.</p>'
+      : '<strong>Some demand in this closure asks for bodies.</strong>'
+        + '<p>That is a cost, and it should be justified by a claim rather than by having '
+        + 'seen the source.</p>';
+    $('ladder').appendChild(n);
+  }
+
+  K.mount($('src'), K.sourceLine(['/packs', '/packs/closure?actor=', '/_surface/renderers']));
+  await draw();
+})();
+</script>
+</body></html>

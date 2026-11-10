@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>The press · Aurekai</title>
+<link rel="stylesheet" href="/assets/vendor-uplot.min.css">
+<script src="/assets/client-organs.js" defer></script>
+<meta name="description" content="A front page for anything, composed in your own tab from what this estate kept, ranked by how many separate publishers carry the same wording.">
+<meta name="bonfyre:cannot-infer" content="Corroboration here counts publishers whose headlines share uncommon words. It measures wording, not truth, not agreement, and not independence: syndicated copy is one newsroom printed many times and will count as many. A story said by one publisher is not thereby doubtful, and a story said by twelve is not thereby true.">
+<script type="importmap">{ "imports": { "apache-arrow": "/assets/apache-arrow.mjs?b=87b6553fdf" } }</script>
+<style>
+  :root {
+    --ground: #0c0d0f; --ink: #f2efe9; --display: #f2efe9; --accent: #c8a24a;
+    --muted: #8a867e; --rule: rgba(242,239,233,.16); --panel: #15171a;
+    --face-display: Georgia, serif; --face-body: system-ui, sans-serif;
+    --face-mono: ui-monospace, monospace;
+    --display-size: clamp(2.2rem, 5.4vw, 4.4rem); --display-weight: 700;
+    --display-tracking: -.022em; --display-leading: 1.02;
+    color-scheme: light dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--face-body); font-size: clamp(1rem, 1.04vw, 1.1rem);
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  h1, h2, h3, h4 {
+    font-family: var(--face-display); color: var(--display); margin: 0;
+    letter-spacing: var(--display-tracking); line-height: var(--display-leading);
+  }
+  .wrap { max-width: 82rem; margin: 0 auto; padding: 0 clamp(1rem, 3.4vw, 3rem); }
+  .mono, .by, .kicker, .stamp, .ways, .ask label {
+    font-family: var(--face-mono); font-size: .7rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .masthead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; flex-wrap: wrap; padding: 1.2rem 0 .8rem;
+  }
+  .mark {
+    font-family: var(--face-display); font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; font-size: .82rem;
+  }
+  .ways { display: flex; gap: .9rem; }
+  .ways a { text-decoration: none; }
+  .ways a:hover { color: var(--accent); }
+
+  .ask { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap;
+         padding: .2rem 0 1rem; border-bottom: 3px solid var(--ink); }
+  .ask input {
+    flex: 1 1 22rem; background: transparent; color: var(--ink);
+    border: 0; border-bottom: 1px solid var(--rule); padding: .5rem .1rem;
+    font-family: var(--face-display); font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: var(--display-weight); letter-spacing: var(--display-tracking);
+  }
+  .ask input:focus { outline: 0; border-bottom-color: var(--accent); }
+  .ask input::placeholder { color: var(--muted); opacity: .5; }
+  .ask button {
+    font: inherit; font-family: var(--face-mono); font-size: .74rem;
+    letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+    background: var(--ink); color: var(--ground); border: 0;
+    border-radius: 2px; padding: .6rem 1.1rem;
+  }
+  .tries { display: flex; gap: .5rem; flex-wrap: wrap; padding: .7rem 0 0; }
+  .tries button {
+    font: inherit; font-family: var(--face-mono); font-size: .7rem;
+    background: transparent; color: var(--muted); border: 1px solid var(--rule);
+    border-radius: 2px; padding: .28rem .55rem; cursor: pointer;
+  }
+  .tries button:hover { color: var(--accent); border-color: var(--accent); }
+
+  .banner { padding: 1.1rem 0 .3rem; }
+  .banner .kicker { display: block; margin-bottom: .5rem; }
+  .banner .say { font-family: var(--face-mono); font-size: .74rem; color: var(--muted); }
+
+  /* the lead */
+  .lead { padding: 1rem 0 1.6rem; border-bottom: 1px solid var(--rule); }
+  .lead-grid { display: grid; gap: 1.3rem; }
+  @media (min-width: 54rem) { .lead-grid { grid-template-columns: 1.25fr .85fr; } }
+  .lead img {
+    width: 100%; aspect-ratio: 3/2; object-fit: cover; display: block;
+    background: var(--panel);
+  }
+  .lead h2 { font-size: var(--display-size); font-weight: var(--display-weight); }
+  .lead .stand { margin: .8rem 0 0; color: var(--muted); font-size: .94rem; max-width: 46ch; }
+  .carried { margin: 1rem 0 0; padding: .8rem 0 0; border-top: 1px solid var(--rule); }
+  .carried h4 { font-family: var(--face-mono); font-size: .68rem; letter-spacing: .1em;
+                text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: .5rem; }
+  .names { display: flex; flex-wrap: wrap; gap: .3rem .7rem; font-family: var(--face-mono);
+           font-size: .74rem; }
+  .names span::after { content: " ·"; color: var(--muted); }
+  .names span:last-child::after { content: ""; }
+
+  /* columns */
+  .deck { display: grid; gap: clamp(1.4rem, 3.6vw, 3rem); padding: 1.6rem 0;
+          border-bottom: 1px solid var(--rule); }
+  @media (min-width: 60rem) { .deck { grid-template-columns: 2fr 1fr; } }
+  .deck h3.col, .strip h3.col, .vocab h3.col, .alone h3.col {
+    font-family: var(--face-mono); font-size: .68rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+    margin: 0 0 .9rem; padding-bottom: .4rem; border-bottom: 1px solid var(--rule);
+  }
+  .story { margin: 0 0 1.15rem; padding-bottom: 1rem; border-bottom: 1px solid var(--rule); }
+  .story:last-child { border-bottom: 0; }
+  .story h4 { font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+  .story a { text-decoration: none; }
+  .story a:hover h4 { color: var(--accent); }
+  .by { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .35rem; }
+  .n { color: var(--accent); }
+
+  .strip { padding: 1.5rem 0; border-bottom: 1px solid var(--rule); }
+  .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .7rem; }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--panel); }
+  .shots figcaption { margin-top: .35rem; font-size: .76rem; line-height: 1.35; }
+
+  .vocab { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
+  .words { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .words button {
+    font: inherit; font-family: var(--face-mono); font-size: .76rem; cursor: pointer;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+    border-radius: 2px; padding: .3rem .55rem;
+  }
+  .words button:hover { border-color: var(--accent); color: var(--accent); }
+  .words button b { color: var(--accent); font-weight: 600; }
+
+  .alone { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
+  .alone ol { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 2.4rem; }
+  @media (max-width: 52rem) { .alone ol { columns: 1; } }
+  .alone li { break-inside: avoid; margin: 0 0 .9rem; }
+
+  .plot { min-height: 130px; width: 100%; }
+  .over-time { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); }
+
+  .dressing { padding: 1.2rem 0; }
+  .rack { display: flex; gap: .45rem; flex-wrap: wrap; }
+  .rack button {
+    font: inherit; font-family: var(--face-mono); font-size: .72rem; cursor: pointer;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+    border-radius: 2px; padding: .35rem .6rem;
+  }
+  .rack button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+  /* the figures */
+  .figures, .desk, .years { padding: 1.5rem 0; border-bottom: 1px solid var(--rule); }
+  table.ledger { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.ledger th {
+    text-align: left; font-family: var(--face-mono); font-size: .64rem;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    font-weight: 500; padding: 0 .7rem .45rem 0; border-bottom: 1px solid var(--rule);
+  }
+  table.ledger td { padding: .6rem .7rem .6rem 0; border-bottom: 1px solid var(--rule);
+                    vertical-align: baseline; }
+  table.ledger td.amt { font-family: var(--face-display); font-size: 1.15rem;
+                        font-weight: 600; white-space: nowrap; }
+  table.ledger td.n { font-family: var(--face-mono); color: var(--accent); text-align: right;
+                      width: 3.4rem; }
+  table.ledger td.sig { font-family: var(--face-mono); font-size: .68rem; color: var(--muted);
+                        white-space: nowrap; text-align: right; }
+  table.ledger td.sig em { display: block; font-style: normal; opacity: .75; }
+  table.ledger tr.loose td.amt { opacity: .55; font-weight: 400; }
+  table.ledger a { text-decoration: none; }
+  table.ledger a:hover { color: var(--accent); }
+
+  .names-list { list-style: none; margin: 0; padding: 0;
+                columns: 3; column-gap: 2rem; }
+  @media (max-width: 60rem) { .names-list { columns: 2; } }
+  @media (max-width: 38rem) { .names-list { columns: 1; } }
+  .names-list li { break-inside: avoid; margin: 0 0 .7rem; }
+  .names-list b { font-weight: 600; }
+
+  /* the years, as a spine rather than a chart */
+  .spine { list-style: none; margin: 0; padding: 0; display: flex; gap: 2px;
+           align-items: flex-end; overflow-x: auto; }
+  .spine li { display: flex; flex-direction: column; align-items: center; gap: .2rem;
+              min-width: 2.3rem; flex: 0 0 auto; }
+  .spine .bar { width: 100%; background: var(--accent); opacity: .8; display: block; }
+  .spine .yr { font-family: var(--face-mono); font-size: .6rem; color: var(--muted);
+               writing-mode: vertical-rl; }
+  .spine .ct { font-family: var(--face-mono); font-size: .58rem; color: var(--muted); opacity: .7; }
+  .note { text-transform: none; letter-spacing: 0; margin: .8rem 0 0; line-height: 1.5;
+          max-width: 62ch; }
+  .note em { font-style: normal; color: var(--accent); }
+
+  .identity { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
+  .ident-grid { display: grid; gap: 1.2rem; }
+  @media (min-width: 52rem) { .ident-grid { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+  .what { margin: 0 0 .5rem; font-size: 1.04rem; }
+  .plate { width: 100%; height: auto; background: var(--panel); border: 1px solid var(--rule); }
+  .plate .g { stroke: var(--rule); stroke-width: .5; }
+  .plate .here { fill: var(--accent); }
+  .plate .halo { fill: none; stroke: var(--accent); stroke-width: .8; opacity: .55; }
+
+  .near { padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  .subjects { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip {
+    display: inline-flex; align-items: baseline; gap: .35rem; text-decoration: none;
+    font-family: var(--face-mono); font-size: .76rem;
+    border: 1px solid var(--rule); border-radius: 2px; padding: .3rem .55rem;
+    background: var(--panel);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip i { font-style: normal; color: var(--accent); font-size: .68rem; }
+  a.thru { text-decoration: none; border-bottom: 1px solid var(--rule); }
+  a.thru:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .boundary { padding: 1.2rem 0 3rem; color: var(--muted); font-size: .8rem; max-width: 70ch; }
+  .empty { color: var(--muted); max-width: 54ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <span class="mark">Aurekai · the press</span>
+  <nav class="ways">
+    <a href="/edition">the edition</a><a href="/archive">the reading room</a><a href="/field">the field</a>
+  </nav>
+  <span class="stamp" id="stamp"></span>
+</header>
+
+<form class="ask" id="ask" autocomplete="off">
+  <input id="subject" type="search" placeholder="a subject" spellcheck="false" aria-label="a subject">
+  <button type="submit">set the page</button>
+</form>
+<div class="tries" id="tries"></div>
+
+<section class="banner">
+  <span class="kicker" id="kicker"></span>
+  <p class="say" id="say">Starting a query engine in this tab…</p>
+</section>
+
+<main id="page"></main>
+
+<section class="dressing">
+  <h3 class="col">What you are reading it in</h3>
+  <div class="rack" id="rack"></div>
+  <p class="mono" id="worn" style="text-transform:none;letter-spacing:0;margin:.7rem 0 0"></p>
+</section>
+
+<p class="boundary" id="boundary"></p>
+
+</div>
+<script type="module">
+/* The press.
+ *
+ * A reading room answers "what did you keep". A front page answers something
+ * harder: of what you kept, what is being reported, by how many separate
+ * publishers, and what is only being said once. This estate can answer that
+ * because it holds sixty-nine thousand things from thirteen hundred publishers
+ * as one table, so the comparison is a query rather than a research project.
+ *
+ * What corroboration is here: the number of distinct publishers whose
+ * headlines share at least two uncommon words with this one. What it is not:
+ * truth, agreement, or independence. Syndicated copy is one newsroom printed in
+ * forty papers and this will count it as forty. The page says so where the
+ * number appears, not only at the bottom.
+ */
+const STAMP = "?b=87b6553fdf";
+const CATALOG = location.origin + "/catalog";
+const say = (w) => { document.getElementById("say").textContent = w; };
+
+const BOUNDARY =
+  "Every piece on this page is material this estate read and kept, and this page "
+  + "was composed in your tab from tables the estate published. Corroboration counts "
+  + "publishers whose headlines share uncommon words with one another. It measures "
+  + "wording, not truth and not agreement, and it cannot see syndication: one wire "
+  + "story printed by forty papers counts as forty publishers. A thing said once is "
+  + "not thereby doubtful, and a thing said by twelve is not thereby true. Nothing "
+  + "here is a claim that a source still publishes what was kept from it.";
+
+const TRIES = ["Nepal", "Gaza", "climate", "election", "AI", "Ukraine", "housing", "strike"];
+
+let conn = null, wardrobe = [], wearing = null, composing = 0;
+
+/* ------------------------------------------------------------------- helpers */
+
+function esc(v) {
+  return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function clean(t) {
+  let out = String(t == null ? "" : t);
+  for (let i = 0; i < 8; i++) {
+    const undone = out.replace(/\\+(["'/])/g, "$1").replace(/\\n/g, " ").replace(/\\{2,}/g, "");
+    if (undone === out) break;
+    out = undone;
+  }
+  return out.split(/\s+/).join(" ").trim();
+}
+function quoted(v) { return "'" + String(v).replace(/'/g, "''") + "'"; }
+function day(sec) { return sec ? new Date(Number(sec) * 1000).toISOString().slice(0, 10) : ""; }
+
+function rows(answer) {
+  const names = answer.schema.fields.map((f) => f.name);
+  const cols = names.map((n) => answer.getChild(n));
+  const out = [];
+  for (let i = 0; i < answer.numRows; i++) {
+    const row = {};
+    names.forEach((n, c) => {
+      let v = cols[c].get(i);
+      if (v && typeof v.toArray === "function") v = Array.from(v.toArray());
+      /* The engine counts in BigInt. Comparing or sorting those against plain
+       * numbers throws, so they become numbers here, once, rather than at every
+       * place a count is read. The counts on this page are small enough that
+       * nothing is lost. */
+      row[n] = typeof v === "bigint" ? Number(v) : v;
+    });
+    out.push(row);
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------- engine */
+
+async function engine() {
+  const duckdb = await import("/assets/duckdb-browser.mjs" + STAMP);
+  if (!duckdb || !duckdb.AsyncDuckDB) throw new Error("the query engine did not load");
+  const worker = new Worker("/assets/duckdb-browser-eh.worker.js" + STAMP);
+  const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING), worker);
+  await db.instantiate("/assets/duckdb-eh.wasm" + STAMP);
+  return db.connect();
+}
+
+/* The whole of the reasoning, as three tables built once per subject.
+ *
+ * `hit`  — everything kept whose title carries the subject, in a bounded window.
+ * `sig`  — the uncommon words in those titles. A word nearly every hit uses
+ *          (the subject itself, most of the time) carries no signal and is
+ *          dropped, so "Nepal" cannot corroborate "Nepal".
+ * `pair` — two pieces from *different* publishers sharing two or more of those
+ *          words. Same publisher twice is one newsroom filing twice, which is
+ *          not a second voice. */
+async function gather(subject) {
+  const like = quoted("%" + subject + "%");
+  await conn.query(`CREATE OR REPLACE TABLE hit AS
+    SELECT address, title, publisher, kind, href, image, published_at,
+           COALESCE(body, '') AS body,
+           COALESCE(by_name, '') AS by_name,
+           COALESCE(by_kind, '') AS by_kind
+    FROM read_parquet('${CATALOG}/material.parquet')
+    WHERE title <> '' AND publisher <> '' AND lower(title) LIKE lower(${like})
+      AND published_at BETWEEN 946684800 AND epoch(now()) + 86400`);
+  await conn.query(`CREATE OR REPLACE TABLE sig AS
+    WITH w AS (
+      SELECT h.address, h.publisher, t.w
+      FROM hit h, unnest(string_split_regex(lower(h.title), '[^a-z0-9]+')) AS t(w)
+      WHERE length(t.w) > 3
+    ), common AS (
+      SELECT w FROM w GROUP BY w
+      HAVING COUNT(DISTINCT address) > GREATEST((SELECT COUNT(*) FROM hit) * 0.34, 2)
+    )
+    SELECT DISTINCT address, publisher, w FROM w WHERE w NOT IN (SELECT w FROM common)`);
+  /* What the coverage says, beyond who published it.
+   *
+   * A figure is the strongest corroboration this estate can compute. Two
+   * newsrooms sharing uncommon words might be sharing a wire story; two
+   * newsrooms reporting the same amount to the same precision are reporting the
+   * same fact. The catch is roundness: everyone says "$1 billion", so a round
+   * number collects unrelated stories and a precise one does not. The page
+   * ranks by precision and says why. */
+  await conn.query(`CREATE OR REPLACE TABLE figure AS
+    WITH found AS (
+      SELECT address, title, publisher, href,
+             regexp_extract(title || ' ' || body,
+               '(?i)([$£€])\\s?([0-9][0-9,.]*)\\s?(billion|million|trillion|bn|m)?', 1) AS cur,
+             replace(regexp_extract(title || ' ' || body,
+               '(?i)([$£€])\\s?([0-9][0-9,.]*)\\s?(billion|million|trillion|bn|m)?', 2), ',', '') AS num,
+             lower(regexp_extract(title || ' ' || body,
+               '(?i)([$£€])\\s?([0-9][0-9,.]*)\\s?(billion|million|trillion|bn|m)?', 3)) AS mag
+      FROM hit
+      WHERE regexp_matches(title || ' ' || body, '[$£€]\\s?[0-9][0-9,.]*')
+    ), valued AS (
+      SELECT *, TRY_CAST(num AS DOUBLE) * CASE
+                  WHEN mag IN ('billion','bn') THEN 1e9
+                  WHEN mag IN ('million','m') THEN 1e6
+                  WHEN mag = 'trillion' THEN 1e12 ELSE 1 END AS amount
+      FROM found WHERE TRY_CAST(num AS DOUBLE) IS NOT NULL
+    )
+    SELECT cur, amount,
+           CAST(COUNT(DISTINCT publisher) AS INTEGER) AS publishers,
+           list(DISTINCT publisher) AS who,
+           MIN(title) AS headline, MIN(href) AS href,
+           CAST(MAX(length(rtrim(replace(num, '.', ''), '0'))) AS INTEGER) AS figures
+    FROM valued WHERE amount > 0 GROUP BY cur, amount`);
+  await conn.query(`CREATE OR REPLACE TABLE pair AS
+    SELECT a.address AS x, b.publisher AS other, COUNT(*) AS shared
+    FROM sig a JOIN sig b
+      ON a.w = b.w AND a.address <> b.address AND a.publisher <> b.publisher
+    GROUP BY 1, 2 HAVING COUNT(*) >= 2`);
+}
+
+const RANKED = `
+  SELECT h.address, h.title, h.publisher, h.kind, h.href, h.image, h.published_at,
+         COUNT(DISTINCT p.other) AS carried,
+         list(DISTINCT p.other) AS carriers
+  FROM hit h LEFT JOIN pair p ON p.x = h.address
+  WHERE h.kind IN ('story', 'event')
+  GROUP BY 1,2,3,4,5,6,7`;
+
+/* ---------------------------------------------------------------------- said */
+
+function line(row, withCount) {
+  const title = clean(row.title);
+  const body = "<h4>" + esc(title) + "</h4><div class='by'>"
+    + "<span><a class='thru' href='/archive?pub=" + encodeURIComponent(row.publisher)
+    + "'>" + esc(row.publisher) + "</a></span>"
+    + (row.published_at ? "<span>" + esc(day(row.published_at)) + "</span>" : "")
+    + (withCount && row.carried
+       ? "<span class='n'>" + row.carried + " other publisher"
+         + (row.carried === 1 ? "" : "s") + " carr" + (row.carried === 1 ? "ies" : "y")
+         + " it</span>" : "")
+    + "</div>";
+  return row.href
+    ? "<a href='" + esc(row.href) + "' rel='noopener noreferrer' target='_blank'>" + body + "</a>"
+    : body;
+}
+
+function leadSize(title) {
+  /* The template states a display size for a masthead-length headline. A real
+   * one runs to fourteen words and has to be set smaller to stay a headline
+   * rather than become a wall. */
+  const n = title.length;
+  if (n <= 44) return "var(--display-size)";
+  if (n <= 76) return "clamp(1.75rem, 3.5vw, 3rem)";
+  return "clamp(1.45rem, 2.7vw, 2.3rem)";
+}
+
+function amountWords(cur, amount) {
+  const n = Number(amount);
+  const scale = n >= 1e12 ? [1e12, "trillion"] : n >= 1e9 ? [1e9, "billion"]
+              : n >= 1e6 ? [1e6, "million"] : n >= 1e3 ? [1e3, "thousand"] : [1, ""];
+  const v = n / scale[0];
+  const said = (Math.round(v * 100) / 100).toLocaleString();
+  return cur + said + (scale[1] ? " " + scale[1] : "");
+}
+
+/* ------------------------------------------------------------------ identity */
+
+/* What the subject is, if the world has a name for it.
+ *
+ * The estate resolved the names its sources keep repeating against Wikidata,
+ * through a channel it had already admitted. That gives a subject an identity
+ * that outlives any feed -- a Q-number, a description, sometimes a place on
+ * earth -- and, just as usefully, it filters: a phrase that resolves to nothing
+ * well-linked was never a thing. */
+function bandIdentity(who) {
+  if (!who) return "";
+  const placed = who.lon !== null && who.lon !== undefined;
+  let map = "";
+  if (placed) {
+    /* An equirectangular plate, drawn from the two numbers Wikidata states and
+     * nothing else. It is where the entity is, not where the story is. */
+    const x = (Number(who.lon) + 180) * (360 / 360), y = 90 - Number(who.lat);
+    map = "<svg class='plate' viewBox='0 0 360 180' role='img' aria-label='where "
+      + esc(who.name) + " is'>"
+      + "<rect width='360' height='180' fill='none'/>"
+      + [60, 120, 180, 240, 300].map((gx) =>
+          "<line x1='" + gx + "' y1='0' x2='" + gx + "' y2='180' class='g'/>").join("")
+      + [45, 90, 135].map((gy) =>
+          "<line x1='0' y1='" + gy + "' x2='360' y2='" + gy + "' class='g'/>").join("")
+      + "<circle cx='" + x.toFixed(2) + "' cy='" + y.toFixed(2) + "' r='4' class='here'/>"
+      + "<circle cx='" + x.toFixed(2) + "' cy='" + y.toFixed(2) + "' r='9' class='halo'/>"
+      + "</svg>";
+  }
+  return "<section class='identity'><h3 class='col'>What this subject is</h3>"
+    + "<div class='ident-grid'><div>"
+    + "<p class='what'>" + esc(who.about || "No description is published for it.") + "</p>"
+    + "<div class='by'><span><a href='https://www.wikidata.org/wiki/" + esc(who.qid)
+    + "' rel='noopener noreferrer' target='_blank'>" + esc(who.qid) + "</a></span>"
+    + (who.kind ? "<span>" + esc(who.kind) + "</span>" : "")
+    + "<span>" + Number(who.links).toLocaleString() + " language editions</span>"
+    + (placed ? "<span>" + Number(who.lat).toFixed(2) + ", " + Number(who.lon).toFixed(2)
+                + "</span>" : "") + "</div>"
+    + "<p class='mono note'>Identity from Wikidata, matched on the name this estate's "
+    + "sources use and resolved to whichever entity the world links to most. That a "
+    + "headline carries this name is not a claim the headline is about this entity: "
+    + "mention is not aboutness.</p></div>"
+    + (map ? "<div class='plate-wrap'>" + map + "</div>" : "")
+    + "</div></section>";
+}
+
+/* Subjects reachable from this one. Every name here is a page of its own, so a
+ * reader moves between subjects rather than between products. */
+function bandNeighbours(near, subject) {
+  const other = near.filter((n) => n.name.toLowerCase() !== String(subject).toLowerCase());
+  if (!other.length) return "";
+  return "<section class='near'><h3 class='col'>Subjects this coverage also names</h3>"
+    + "<div class='subjects'>" + other.map((n) =>
+        "<a class='chip' href='/press?of=" + encodeURIComponent(n.name) + "'>"
+        + esc(n.name) + "<i>" + n.here + "</i></a>").join("")
+    + "</div><p class='mono note'>Each is a resolved entity named in the same pieces as this "
+    + "subject, and each opens as a page of its own. The number is how many of these pieces "
+    + "name it. Being named together is co-occurrence, not a relationship.</p></section>";
+}
+
+function bandFigures(figures) {
+  if (!figures.length) return "";
+  /* A round number is a coincidence magnet: every newsroom writes "$1 billion",
+   * so the same round amount collects unrelated stories. A figure carried to
+   * three or four significant digits by two mastheads is a different claim, and
+   * the page orders by that rather than by how big the number is. */
+  const rows = figures.map((f) => {
+    /* A round number is one whose significand is a single digit -- $1bn, $500m,
+     * $10m. Twelve billion and seven point three million are exact amounts, and
+     * marking them round was calling precision imprecise. */
+    const loose = f.figures <= 1;
+    return "<tr class='" + (loose ? "loose" : "tight") + "'>"
+      + "<td class='amt'>" + esc(amountWords(f.cur, f.amount)) + "</td>"
+      + "<td class='n'>" + f.publishers + "</td>"
+      + "<td>" + (f.href
+          ? "<a href='" + esc(f.href) + "' rel='noopener noreferrer' target='_blank'>"
+            + esc(clean(f.headline)) + "</a>"
+          : esc(clean(f.headline)))
+      + "<div class='by'>" + (f.who || []).slice(0, 8).map((w) =>
+          "<span><a class='thru' href='/archive?pub=" + encodeURIComponent(w) + "'>"
+          + esc(w) + "</a></span>").join("") + "</div></td>"
+      + "<td class='sig'>" + f.figures + " s.f."
+      + (loose ? "<em>round</em>" : "") + "</td></tr>";
+  }).join("");
+  return "<section class='figures'><h3 class='col'>The figures this coverage carries</h3>"
+    + "<table class='ledger'><thead><tr><th>Amount</th><th>Publishers</th>"
+    + "<th>Reported as</th><th>Precision</th></tr></thead><tbody>" + rows + "</tbody></table>"
+    + "<p class='mono note'>An amount two newsrooms report to the same precision is a "
+    + "stronger agreement than two headlines sharing words, because a wire story can "
+    + "travel but a figure has to be got right. It is still not a verified number: this "
+    + "counts publishers that printed it, not anyone who checked it. Rows marked "
+    + "<em>round</em> carry two significant digits or fewer, where matching is as likely "
+    + "to be arithmetic as agreement.</p></section>";
+}
+
+function bandDesk(desk) {
+  if (!desk.length) return "";
+  /* Who is actually writing this, as opposed to which masthead carried it. The
+   * estate separated bylines that name a person from bylines that name a feed,
+   * so this column can exist at all. */
+  return "<section class='desk'><h3 class='col'>Who is writing this</h3><ul class='names-list'>"
+    + desk.map((d) => "<li><b>" + esc(d.name) + "</b>"
+        + "<span class='by'><span>" + d.wrote + " piece" + (d.wrote === 1 ? "" : "s") + "</span>"
+        + (d.publishers > 1 ? "<span class='n'>across " + d.publishers + " publishers</span>" : "")
+        + "</span></li>").join("")
+    + "</ul><p class='mono note'>Named people only. The estate sorted bylines into people and "
+    + "mastheads by how each was credited, and that sorting is not reliable on its own -- it "
+    + "called \u201ccontributor\u201d a person -- so a name here must also read like one: two "
+    + "parts, no address, not a desk or a role. Someone appearing under several publishers is one "
+    + "name credited in several places, which is not by itself evidence they are one person."
+    + "</p></section>";
+}
+
+function bandYears(years) {
+  const real = years.filter((y) => y.n > 1);
+  if (real.length < 3) return "";
+  const most = Math.max.apply(null, real.map((y) => y.n));
+  /* What period the coverage actually reaches into, which is not the same as
+   * when it was published. A story filed today about 1961 is about 1961. */
+  return "<section class='years'><h3 class='col'>The years this coverage reaches into</h3>"
+    + "<ol class='spine'>" + real.map((y) =>
+        "<li><span class='bar' style='height:" + Math.max(3, Math.round(y.n / most * 44))
+        + "px'></span><span class='yr'>" + y.year + "</span>"
+        + "<span class='ct'>" + y.n + "</span></li>").join("")
+    + "</ol><p class='mono note'>Every four-digit year named in a title or a body this estate "
+    + "kept. A year appearing is a year written down, not a date anything happened on.</p></section>";
+}
+
+function compose(found) {
+  const { lead, deck, alone, shots, vocab, span, watchable, word,
+          figures, desk, years, who, near } = found;
+  const page = document.getElementById("page");
+  if (!lead && !deck.length && !alone.length) {
+    page.innerHTML = "<p class='empty'>This estate has kept nothing carrying that word. "
+      + "That is a fact about what it has read, not about the world.</p>";
+    return;
+  }
+  let html = "";
+
+  html += bandIdentity(who);
+
+  if (lead) {
+    html += "<section class='lead'><div class='lead-grid'><div>"
+      + (lead.image ? "<img src='" + esc(lead.image) + "' alt='' loading='lazy'>" : "")
+      + "</div><div>"
+      + (lead.href ? "<a href='" + esc(lead.href) + "' rel='noopener noreferrer' target='_blank'>" : "")
+      + "<h2 style='font-size:" + leadSize(clean(lead.title)) + "'>"
+      + esc(clean(lead.title)) + "</h2>"
+      + (lead.href ? "</a>" : "")
+      + "<div class='by'><span><a class='thru' href='/archive?pub="
+      + encodeURIComponent(lead.publisher) + "'>" + esc(lead.publisher) + "</a></span><span>"
+      + esc(day(lead.published_at)) + "</span></div>";
+    if (lead.carried) {
+      html += "<div class='carried'><h4>" + lead.carried + " other publisher"
+        + (lead.carried === 1 ? " prints" : "s print")
+        + " a headline sharing its uncommon words</h4>"
+        + "<div class='names'>"
+        + (lead.carriers || []).slice(0, 24).map((n) =>
+            "<span><a class='thru' href='/archive?pub=" + encodeURIComponent(n) + "'>"
+            + esc(n) + "</a></span>").join("")
+        + "</div><p class='stand'>That is a count of wording, not of agreement. "
+        + "A wire story printed in forty papers would look like forty publishers here.</p></div>";
+    } else {
+      html += "<p class='stand'>No other publisher this estate reads prints a headline "
+        + "sharing its uncommon words. That makes it unusual here, not doubtful.</p>";
+    }
+    html += "</div></div></section>";
+  }
+
+  html += "<section class='deck'><div><h3 class='col'>Also being reported</h3>"
+    + (deck.length
+       ? deck.map((r) => "<article class='story'>" + line(r, true) + "</article>").join("")
+       : "<p class='empty'>Nothing else carried by more than one publisher.</p>")
+    + "</div><div>";
+  if (watchable.length) {
+    html += "<h3 class='col'>To watch and hear</h3>"
+      + watchable.map((r) => "<article class='story'>" + line(r, false) + "</article>").join("");
+  }
+  html += "</div></section>";
+
+  if (shots.length) {
+    html += "<section class='strip'><h3 class='col'>In pictures</h3><div class='shots'>"
+      + shots.map((r) => "<figure>"
+          + (r.href ? "<a href='" + esc(r.href) + "' rel='noopener noreferrer' target='_blank'>" : "")
+          + "<img src='" + esc(r.image) + "' alt='' loading='lazy'>"
+          + (r.href ? "</a>" : "")
+          + "<figcaption>" + esc(clean(r.title)) + "</figcaption>"
+          + "<div class='by'><span>" + esc(r.publisher) + "</span></div></figure>").join("")
+      + "</div></section>";
+  }
+
+  html += bandFigures(figures) + bandNeighbours(near, word)
+        + bandDesk(desk) + bandYears(years);
+
+  if (vocab.length) {
+    html += "<section class='vocab'><h3 class='col'>The words this story is being told in</h3>"
+      + "<div class='words'>"
+      + vocab.map((w) => "<button type='button' data-word='" + esc(w.w) + "'>"
+          + esc(w.w) + " <b>" + w.publishers + "</b></button>").join("")
+      + "</div><p class='mono' style='text-transform:none;letter-spacing:0;margin:.7rem 0 0'>"
+      + "The number is how many separate publishers use that word about this subject. "
+      + "Press one to set the page on it instead.</p></section>";
+  }
+
+  if (span.length > 1) {
+    html += "<section class='over-time'><h3 class='col'>When it was published</h3>"
+      + "<div class='plot' data-bf-series='" + esc(JSON.stringify(span))
+      + "' data-bf-label='pieces' data-bf-height='130' role='img' aria-label='pieces per day'></div>"
+      + "</section>";
+  }
+
+  if (alone.length) {
+    html += "<section class='alone'><h3 class='col'>Said once</h3>"
+      + "<ol>" + alone.map((r) => "<li>" + line(r, false) + "</li>").join("") + "</ol>"
+      + "<p class='mono' style='text-transform:none;letter-spacing:0;margin:.8rem 0 0'>"
+      + "No other publisher this estate reads prints a headline sharing these words. "
+      + "That is a fact about this estate's reading, not about the reporting.</p></section>";
+  }
+
+  page.innerHTML = html;
+  const shot = page.querySelector(".lead img");
+  if (shot) {
+    shot.addEventListener("error", () => {
+      /* The publisher's image did not arrive. A blank frame is worse than no
+       * frame, so the headline takes the width instead. */
+      const grid = shot.closest(".lead-grid");
+      shot.parentElement.remove();
+      if (grid) grid.style.gridTemplateColumns = "1fr";
+    });
+  }
+  page.querySelectorAll(".words button").forEach((b) => {
+    b.addEventListener("click", () => set(b.dataset.word));
+  });
+  document.dispatchEvent(new Event("bonfyre:composed"));
+}
+
+/* ------------------------------------------------------------------ composing */
+
+async function set(subject) {
+  const mine = ++composing;
+  const word = String(subject || "").trim();
+  if (!word) return;
+  document.getElementById("subject").value = word;
+  history.replaceState(null, "", "?of=" + encodeURIComponent(word));
+  document.getElementById("kicker").textContent = "The page, set on " + word;
+  say("Reading every title this estate kept…");
+  try {
+    await gather(word);
+    if (mine !== composing) return;
+    const [ranked, pics, av, words, byDay, tally, ident, near, figs, desks, yrs]
+            = await Promise.all([
+      conn.query(RANKED + " ORDER BY carried DESC, h.published_at DESC LIMIT 30"),
+      conn.query("SELECT title, publisher, href, image FROM hit WHERE image <> ''"
+                 + " AND kind IN ('photo','story') ORDER BY published_at DESC LIMIT 8"),
+      conn.query("SELECT title, publisher, href, kind, published_at FROM hit"
+                 + " WHERE kind IN ('audio','video') ORDER BY published_at DESC LIMIT 6"),
+      conn.query("SELECT w, COUNT(DISTINCT publisher) AS publishers FROM sig"
+                 + " GROUP BY w HAVING COUNT(DISTINCT publisher) > 1"
+                 + " ORDER BY publishers DESC, w LIMIT 18"),
+      conn.query("SELECT CAST(epoch(date_trunc('day', to_timestamp(published_at))) AS BIGINT)"
+                 + " AS d, COUNT(*) AS n FROM hit GROUP BY d ORDER BY d"),
+      conn.query("SELECT COUNT(*) AS n, COUNT(DISTINCT publisher) AS who FROM hit"),
+      conn.query("SELECT name, qid, about, kind, links, lon, lat FROM read_parquet('"
+                 + CATALOG + "/entity.parquet') WHERE lower(name) = lower(" + quoted(word)
+                 + ") ORDER BY links DESC LIMIT 1"),
+      conn.query("SELECT e.name, e.qid, CAST(COUNT(*) AS INTEGER) AS here"
+                 + " FROM hit h JOIN read_parquet('" + CATALOG + "/entity.parquet') e"
+                 + "   ON position(e.name IN h.title) > 0"
+                 + " GROUP BY e.name, e.qid ORDER BY here DESC LIMIT 20"),
+      conn.query("SELECT cur, amount, publishers, who, headline, href, figures FROM figure"
+                 + " WHERE publishers > 1 ORDER BY figures DESC, publishers DESC, amount DESC"
+                 + " LIMIT 10"),
+      conn.query("SELECT regexp_replace(trim(by_name), '^(?i)by[ :]+', '') AS name,"
+                 + " COUNT(*) AS wrote,"
+                 + " CAST(COUNT(DISTINCT publisher) AS INTEGER) AS publishers"
+                 + " FROM hit WHERE by_kind = 'person' AND by_name <> ''"
+                 // A person has a given name and a family name and is not a role.
+                 + "   AND by_name LIKE '% %' AND by_name NOT LIKE '%@%'"
+                 + "   AND lower(by_name) NOT IN ('wikimedia commons','getty images',"
+                 + "     'associated press','staff writer','news desk','press association')"
+                 + "   AND lower(by_name) NOT LIKE '%contributor%'"
+                 + "   AND lower(by_name) NOT LIKE '%staff%'"
+                 + "   AND lower(by_name) NOT LIKE '%newsroom%'"
+                 + " GROUP BY 1 ORDER BY wrote DESC, name LIMIT 18"),
+      conn.query("SELECT CAST(y AS INTEGER) AS year, CAST(COUNT(*) AS INTEGER) AS n FROM ("
+                 + "  SELECT unnest(regexp_extract_all(title || ' ' || body, '\\b(19|20)[0-9]{2}\\b')) AS y"
+                 + "  FROM hit) WHERE TRY_CAST(y AS INTEGER) BETWEEN 1900 AND 2100"
+                 + " GROUP BY y ORDER BY y"),
+    ]);
+    if (mine !== composing) return;
+
+    const seen = new Map();
+    rows(ranked).forEach((r) => {
+      const key = clean(r.title).toLowerCase();
+      const had = seen.get(key);
+      /* Two feeds carrying one piece is one piece. Keep whichever copy knows
+       * the most: more corroboration first, then the one that has a picture. */
+      if (!had || r.carried > had.carried
+          || (r.carried === had.carried && r.image && !had.image)) seen.set(key, r);
+    });
+    const all = [...seen.values()].sort((a, b) =>
+      b.carried - a.carried || b.published_at - a.published_at);
+    const withImage = all.filter((r) => r.image && r.carried > 0);
+    const lead = withImage[0] || all.find((r) => r.carried > 0) || all[0] || null;
+    const deck = all.filter((r) => r !== lead && r.carried > 0).slice(0, 8);
+    const alone = all.filter((r) => r !== lead && !r.carried).slice(0, 10);
+    const shots = rows(pics).filter((r) => r.image);
+    const watchable = rows(av);
+    const vocab = rows(words);
+    const span = rows(byDay).map((r) => [Number(r.d), Number(r.n)]);
+    const sum = rows(tally)[0] || { n: 0, who: 0 };
+
+    compose({ lead, deck, alone, shots, vocab, span, watchable, word,
+              figures: rows(figs), desk: rows(desks), years: rows(yrs),
+              who: rows(ident)[0] || null, near: rows(near) });
+    dress(shots.length, sum);
+    document.getElementById("kicker").innerHTML =
+      "The page, set on " + esc(word) + " · " + Number(sum.n).toLocaleString()
+      + " pieces from " + Number(sum.who).toLocaleString() + " publishers · "
+      + "<a class='thru' href='/sources'>how dense are they?</a>";
+    say("Composed here, in this tab, out of the estate's published tables. "
+        + "Nothing was asked of a server.");
+  } catch (why) {
+    if (mine !== composing) return;
+    say("The catalogue did not answer: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.");
+  }
+}
+
+/* -------------------------------------------------------------------- clothes */
+
+function lightness(colour) {
+  const c = String(colour || "").trim();
+  if (!c) return 0;
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;color:" + c;
+  document.body.append(probe);
+  const said = getComputedStyle(probe).color;
+  probe.remove();
+  const ok = /^okl(?:ab|ch)\(\s*([\d.]+)(%?)/i.exec(said);
+  if (ok) return ok[2] ? Number(ok[1]) / 100 : Number(ok[1]);
+  const rgb = /([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/.exec(said);
+  if (rgb) return (0.2126 * +rgb[1] + 0.7152 * +rgb[2] + 0.0722 * +rgb[3]) / 255;
+  return 0;
+}
+
+function wear(t) {
+  wearing = t;
+  let k = {};
+  try { k = JSON.parse(t.tokens); } catch (bad) { return; }
+  const root = document.documentElement.style;
+  const pairs = {
+    "--ground": k.ground, "--ink": k.ink, "--display": k.display || k.ink,
+    "--accent": k.accent, "--muted": k.muted, "--rule": k.rule, "--panel": k.panel,
+    "--face-display": k.face_display, "--face-body": k.face_body, "--face-mono": k.face_mono,
+    "--display-size": k.display_size, "--display-weight": k.display_weight,
+    "--display-tracking": k.display_tracking, "--display-leading": k.display_leading,
+  };
+  Object.keys(pairs).forEach((p) => { if (pairs[p]) root.setProperty(p, pairs[p]); });
+  root.setProperty("color-scheme", lightness(k.ground) > 0.5 ? "light" : "dark");
+  if (k.font_href) {
+    let link = document.getElementById("worn-faces");
+    if (!link) {
+      link = document.createElement("link");
+      link.id = "worn-faces"; link.rel = "stylesheet";
+      document.head.append(link);
+    }
+    if (link.href !== k.font_href) link.href = k.font_href;
+  }
+  document.getElementById("worn").textContent =
+    "Set in “" + t.name + "” — " + [t.family, t.hero_mode, t.typography_mode, t.density]
+      .filter(Boolean).join(", ") + ". One of " + wardrobe.length.toLocaleString()
+    + " design systems this estate has published. Wearing one is not an endorsement "
+    + "by whoever made it.";
+  document.querySelectorAll("#rack button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.family === t.family));
+  });
+}
+
+function dress(pictures, sum) {
+  /* The shape of the material picks the family. A subject this estate has
+   * pictures of is set as a magazine; one it has only words about is set as a
+   * newsroom. The reader can overrule it, which is what the rack is for. */
+  if (wearing && wearing.chosen) return;
+  const want = pictures >= 4 ? ["magazine", "gallery"]
+             : Number(sum.n) > 40 ? ["newsroom", "editorial"] : ["letter", "editorial"];
+  const pool = wardrobe.filter((t) => want.indexOf(t.family) >= 0);
+  if (pool.length) wear(pool[Math.floor(Date.now() / 86400000) % pool.length]);
+}
+
+function rack() {
+  const families = [];
+  wardrobe.forEach((t) => { if (t.family && families.indexOf(t.family) < 0) families.push(t.family); });
+  families.sort();
+  const box = document.getElementById("rack");
+  box.innerHTML = families.map((f) =>
+    "<button type='button' data-family='" + esc(f) + "' aria-pressed='false'>" + esc(f)
+    + "</button>").join("");
+  box.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const pool = wardrobe.filter((t) => t.family === b.dataset.family);
+    if (!pool.length) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    pick.chosen = true;
+    wear(pick);
+  });
+}
+
+/* ---------------------------------------------------------------------- wake */
+
+(async function () {
+  document.getElementById("boundary").textContent = BOUNDARY;
+  document.getElementById("stamp").textContent =
+    new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  document.getElementById("tries").innerHTML =
+    TRIES.map((t) => "<button type='button'>" + esc(t) + "</button>").join("");
+  document.getElementById("tries").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) set(b.textContent);
+  });
+  document.getElementById("ask").addEventListener("submit", (e) => {
+    e.preventDefault();
+    set(document.getElementById("subject").value);
+  });
+  try {
+    conn = await engine();
+    const clothes = await conn.query(
+      `SELECT name, family, hero_mode, typography_mode, density, tokens
+       FROM read_parquet('${CATALOG}/template.parquet')`);
+    wardrobe = rows(clothes).map((r) => ({
+      name: String(r.name), family: String(r.family || ""),
+      hero_mode: String(r.hero_mode || ""), typography_mode: String(r.typography_mode || ""),
+      density: String(r.density || ""), tokens: String(r.tokens || ""),
+    })).filter((t) => t.tokens);
+    if (wardrobe.length) rack();
+    const asked = new URLSearchParams(location.search).get("of");
+    await set(asked || TRIES[Math.floor(Date.now() / 86400000) % TRIES.length]);
+  } catch (why) {
+    say("The press could not open: " + String(why.message || why)
+        + ". Nothing has been guessed in its place.");
+  }
+})();
+</script>
+</body>
+</html>

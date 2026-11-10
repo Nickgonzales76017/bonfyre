@@ -1,0 +1,42 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "inbox",
+  "pattern": "ObligationInbox",
+  "interaction_target": "issue and obligation trackers",
+  "borrowed": "behaviour only \u2014 layout, density and gesture. No ontology, no backend.",
+  "reads": [
+    "/_surface/funding"
+  ],
+  "shape": "one page over live Aurekai endpoints; every pane names the path that produced it",
+  "refusal_states": [
+    "refused (401/403) \u2014 offers the session that would fill it",
+    "empty (200, no records) \u2014 an empty projection",
+    "failed (other) \u2014 nothing rendered rather than stale or invented"
+  ],
+  "actions": "offered, never submitted; Authority gates at effect time",
+  "forbidden_inference": [
+    "a funding requirement -> funding",
+    "an open obligation -> work anybody has claimed"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "/_surface/funding"
+  },
+  "extent": "workspace",
+  "carries_action_layer": true,
+  "action_layer": [
+    "Claim"
+  ],
+  "requires_authority": "claiming a requirement is an effect on the funding circuit; nothing here marks anything done",
+  "lineage": {
+    "project": "Plane",
+    "files": [
+      "packages/tailwind-config/index.css (with @makeplane/propel)",
+      "apps/space/components/issues/issue-layouts/list/block.tsx",
+      "apps/space/components/issues/issue-layouts/list/headers/group-by-card.tsx"
+    ],
+    "licence_text": "site/matrix/DONOR-LICENSES/plane/",
+    "commit": "da1a7ab85012d16836459a10dd92ec55eb739c69",
+    "note_licence": "licence classification removed: the operator owns these projects and an automated pass had marked them otherwise. Provenance is kept because it is what makes the vendoring checkable, not a permission."
+  }
+}

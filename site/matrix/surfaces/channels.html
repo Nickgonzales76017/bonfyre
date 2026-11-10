@@ -1,0 +1,1289 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Channels · Aurekai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300..700;1,300..700&amp;family=Source+Code+Pro:wght@400;600&amp;display=swap">
+<!-- The donor's own stylesheet, compiled from zulip/web/styles through Zulip's
+     PostCSS pipeline. Apache-2.0; licence and NOTICE at
+     /matrix/DONOR-LICENSES/zulip/. This page supplies Zulip's DOM and Aurekai's
+     records; the look is not an imitation of Zulip, it is Zulip's CSS. -->
+<link rel="stylesheet" href="/assets/donor-zulip.css?v=e50fe2fe">
+<style>
+/* Only what the donor sheet cannot know about this deployment. Three kinds of
+   thing live here and nothing else: the two assets Zulip ships that we do not
+   (its icon font and its avatar service), the app-shell sizing Zulip's own
+   JavaScript sets at runtime, and the one state Zulip never has to render --
+   an endpoint that refused. */
+
+/* 1. assets Zulip ships and this deployment does not */
+.inline_profile_picture{background:var(--av);color:#fff;display:grid;place-items:center;
+  font:600 11px "Source Sans 3",sans-serif;border-radius:4px;width:100%;height:100%;
+  overflow:hidden}
+.inline_profile_picture img{width:100%;height:100%;display:block;object-fit:cover}
+.user-profile-picture .inline_profile_picture{border-radius:4px}
+.zulip-icon{display:inline-block;width:1em;height:1em;background:currentColor;
+  -webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;
+  vertical-align:-.125em}
+.zulip-icon-hash{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>')}
+.zulip-icon-chevron-right{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.4" stroke-linecap="round"><path d="m9 5 7 7-7 7"/></svg>')}
+.zulip-icon-more-vertical{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>')}
+.zulip-icon-search{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>')}
+.zulip-icon-heading-triangle-right{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M8 5l9 7-9 7z"/></svg>')}
+.zulip-icon-smile{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>')}
+.zulip-icon-star{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>')}
+.zulip-icon-quote{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black"><path d="M7 7h5v5H9.5a2.5 2.5 0 0 1 2.5 2.5V17H5v-5a5 5 0 0 1 2-4zm10 0h5v5h-2.5a2.5 2.5 0 0 1 2.5 2.5V17h-7v-5a5 5 0 0 1 2-4z"/></svg>')}
+.zulip-icon-check{--m:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>')}
+
+/* 2. the app-shell sizing Zulip's JavaScript sets at runtime. The donor sheet
+      reads these variables; nothing here changes a rule that uses them. */
+html,body{height:100%}
+body{overflow:hidden}
+#navbar-fixed-container{position:fixed;top:0;left:0;right:0;z-index:100;height:auto;
+  background:var(--color-background);border-bottom:1px solid var(--color-border-sidebar-divider,#e3e3e3)}
+#navbar-fixed-container .header,#navbar-fixed-container .header-main{height:auto}
+#navbar-fixed-container .header-main{display:flex;align-items:center}
+#navbar-fixed-container .column-left{flex:0 0 var(--left-sidebar-width);
+  width:var(--left-sidebar-width);padding-left:14px}
+#navbar-fixed-container .column-right{flex:0 0 var(--right-sidebar-width);
+  width:var(--right-sidebar-width);text-align:right;padding-right:14px}
+#navbar-fixed-container .column-middle{flex:1;min-width:0}
+#message_view_header{padding:8px 14px}
+#title{display:flex;align-items:baseline;gap:12px;min-width:0}
+.message-header-navbar-title{font-size:1.15em;margin:0;white-space:nowrap;flex:0 0 auto}
+.app{box-sizing:border-box;height:100%;padding-top:var(--navbar-fixed-height)}
+.app-main{position:relative;height:100%}
+.app-main>.column-left,.app-main>.column-right{height:100%;overflow-y:auto}
+.app-main>.column-middle{display:flex;flex-direction:column;height:100%;
+  margin-left:var(--left-sidebar-width);margin-right:var(--right-sidebar-width)}
+.column-middle-inner{flex:1;min-height:0;display:flex;flex-direction:column}
+.user_sidebar_entry{display:flex;align-items:center;gap:8px;padding:3px 12px}
+.user-profile-picture{width:24px;height:24px;flex:0 0 auto}
+.user-name-and-status-emoji{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#message_feed_container{flex:1;min-height:0;overflow-y:auto;padding-top:0}
+#compose{position:static;flex:0 0 auto;padding:6px 0 12px;
+  border-top:1px solid var(--color-border-sidebar-divider,#e3e3e3)}
+#compose-container{max-width:var(--message-area-max-width);margin:0 auto;padding:0 14px}
+.message_comp{display:block}
+#compose_buttons{display:flex;align-items:center;gap:10px;padding-top:8px}
+#bf-sendwhy{font-size:12.5px;opacity:.72}
+.new_message_textarea{width:100%;min-height:56px;max-height:200px}
+.narrow_description{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60ch}
+#left-sidebar{height:100%;display:flex;flex-direction:column}
+#left_sidebar_scroll_container{flex:1;min-height:0;overflow-y:auto}
+/* Zulip collapses the topic list of every channel but the one you are in. */
+.narrow-filter:not(.stream-expanded) .topic-list{display:none}
+
+/* 3. the one state Zulip never has to render */
+.bf-refusal{margin:16px auto;max-width:var(--message-area-max-width);padding:14px 16px;
+  border-radius:6px;border:1px solid #d5a49c;background:#fff7f5}
+.bf-refusal strong{display:block;margin-bottom:5px}
+.bf-refusal p{margin:0 0 8px;font-size:13.5px;opacity:.85}
+.bf-addr{margin:6px 0 0;font:400 11.5px "Source Code Pro",ui-monospace,monospace;opacity:.62}
+.bf-addr a{color:inherit}
+.message_content blockquote{margin:8px 0 0;padding:6px 0 6px 11px;border-left:3px solid #b34;
+  font-size:13px;opacity:.9}
+.message_content blockquote p{margin:0}
+.bf-newline{max-width:var(--message-area-max-width);margin:2px auto 6px;padding:0 16px;
+  font:700 9.5px ui-monospace,monospace;letter-spacing:.13em;text-transform:uppercase;color:#b34}
+.bf-cant{margin:8px auto 20px;max-width:var(--message-area-max-width);padding-left:11px;
+  border-left:3px solid #b34;font-size:13px;line-height:1.5;opacity:.9}
+.bf-mark{font:800 15px "Source Code Pro",ui-monospace,monospace;letter-spacing:-.04em;
+  color:var(--color-text-default);text-decoration:none}
+</style></head><body class="">
+<div id="navbar-fixed-container">
+  <div id="header-container"><div class="header">
+    <div class="header-main" id="top_navbar">
+      <div class="column-left"><div class="left-sidebar-toggle-container">
+        <span id="bf-mk"></span>
+      </div></div>
+      <div class="column-middle"><div class="column-middle-inner">
+        <div id="message_view_header" class="message_view_header">
+          <div class="navbar-click-target" id="title">
+            <h1 class="message-header-navbar-title"><span class="zulip-icon zulip-icon-hash"></span>
+            <span id="bf-narrow-title">occurrences</span></h1>
+            <span class="narrow_description rendered_markdown" id="bf-narrow-desc"></span>
+          </div>
+        </div>
+      </div></div>
+      <div class="column-right"><div id="bf-hostline"></div></div>
+    </div>
+  </div></div>
+</div>
+
+<div class="app">
+  <div class="app-main">
+    <div class="column-left" id="left-sidebar-container">
+      <div class="left-sidebar" id="left-sidebar" role="navigation">
+        <div id="left-sidebar-search">
+          <div class="input-wrapper-for-tooltip">
+            <input class="left-sidebar-filter-input" id="bf-filter" type="text"
+              autocomplete="off" placeholder="Filter channels and topics">
+            <span class="zulip-icon zulip-icon-search left-sidebar-filter-icon"></span>
+          </div>
+        </div>
+        <div id="left-sidebar-navigation-area" class="left-sidebar-navigation-area">
+          <div id="views-label-container" class="left-sidebar-section-header showing-expanded-navigation">
+            <h4 class="left-sidebar-title"><span class="views-tooltip-target">Views</span></h4>
+          </div>
+          <ul id="left-sidebar-navigation-list" class="left-sidebar-navigation-list filters"></ul>
+        </div>
+        <div id="left_sidebar_scroll_container" class="scrolling_list">
+          <div id="streams_header" class="left-sidebar-section-header zoom-in-hide">
+            <h4 class="left-sidebar-title"><span class="channels-title">Streams</span></h4>
+            <div class="heading-markers-and-unreads">
+              <span class="unread_count normal-count" id="bf-total-unread"></span>
+            </div>
+          </div>
+          <div id="streams_list" class="zoom-out">
+            <div id="stream-filters-container">
+              <ul id="stream_filters" class="filters"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="column-middle" id="bf-middle">
+      <div class="column-middle-inner">
+        <div id="message_feed_container">
+          <div class="message-feed" id="main_div">
+            <div id="message-lists-container">
+              <div class="message-list focused-message-list" id="bf-message-list" role="list">
+              </div>
+            </div>
+            <div id="bottom_whitespace"></div>
+          </div>
+        </div>
+      </div>
+      <div id="compose">
+        <div id="compose-container">
+          <div class="message_comp">
+            <div class="compose-textarea-container">
+              <textarea class="new_message_textarea" id="compose-textarea"
+                placeholder="Message this topic"></textarea>
+            </div>
+            <div id="compose_buttons">
+              <button type="button" class="compose-submit-button" id="bf-send">Send</button>
+              <span id="bf-sendwhy" class="compose-limit-indicator"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="column-right" id="right-sidebar-container">
+      <div id="right-sidebar" class="right-sidebar">
+        <div id="userlist-header"><h4 class="user-list-title">In this topic</h4></div>
+        <div id="buddy_list_wrapper" class="buddy-list-column">
+          <ul id="buddy-list-users-matching-view" class="buddy-list-section"></ul>
+        </div>
+        <div id="bf-about"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* Aurekai's records inside Zulip's DOM.
+ *
+ * Nothing here restyles anything. Every class name below is Zulip's own --
+ * .stream_filters/.narrow-filter, .recipient_row/.message_header_stream,
+ * .message_row/.messagebox/.message_content -- taken from zulip/web/templates
+ * so the donor stylesheet applies to it directly. What is Aurekai's is the data
+ * and the three things Zulip never has to say: a stream can refuse, a topic can
+ * be empty rather than absent, and nothing here submits.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: true});
+  const $ = (s,r=document)=>r.querySelector(s);
+  const el = (t,c,h)=>{const n=document.createElement(t); if(c)n.className=c;
+    if(h!==undefined)n.innerHTML=h; return n;};
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const hue = s => {let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h;};
+  const initials = s => String(s).replace(/[^a-z0-9 ]/gi,' ').trim().split(/\s+/)
+    .slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+  const host = u => {try{return new URL(u).host;}catch(_){return String(u);}};
+  /* A sender here is a host, a binary or a watched source -- never a person.
+     A human face on any of them would be the surface asserting somebody. */
+  const kindOfSender = m => m.s === 4 ? 'peer'
+    : (m.s === 2 || /\./.test(m.sender)) ? 'peer' : 'machine';
+
+  const STREAMS = [
+    {id:1, name:'occurrences', path:'/events', kind:'json', color:'#76ce90',
+     desc:'CloudEvents the workgraph emitted. An occurrence records that something changed; '
+        + 'it is not a task and nobody is assigned by it.',
+     cant:'an occurrence is not work; the queue emitted it, no one accepted it'},
+    {id:2, name:'sources', path:'/observations', kind:'json', color:'#fae589',
+     desc:'Every external source this estate watches, with how often the bytes changed.',
+     cant:'a content change is not a meaningful change; the bytes differed, that is all'},
+    {id:3, name:'capabilities', path:'/_surface/capabilities', kind:'surface', color:'#a6c7e5',
+     desc:'What the estate can do, grouped by how far each capability got.',
+     cant:'a listed capability is not a purchased one; price is quoted at /mpp/quote. Most '
+        + 'of these have no address either: the estate can run them and cannot link to them'},
+    {id:4, name:'federation', path:'/_surface/federations', kind:'surface', color:'#e79ab5',
+     desc:'Peers reachable over the federation protocols, by how many hops out.',
+     cant:'a reachable peer is not an endorsement; reachability is not agreement'},
+    {id:5, name:'representations', path:'/_surface/representations', kind:'surface',
+     color:'#b5a6e5',
+     desc:'How this estate can carry a body, and what each carrying costs it. Every row '
+        + 'carries the envelope it was measured over, and what that envelope does not cover.',
+     cant:'an envelope measured on one backend is not the envelope on another; recall at 5 '
+        + 'is not recall at any other k'},
+    {id:6, name:'routes', path:'/_surface/routes', kind:'surface', color:'#a1d5c4',
+     desc:'Where an answer can come from, and what each route depends on to be right.',
+     cant:'a local answer is not a current one; reachable is not permitted'}
+  ];
+
+  /* Which capabilities this estate actually addresses. The native book lists
+     103 things it can run; /s/capability/<id> resolves for the four in the x402
+     catalogue and for nothing else. Linking the other 99 would be inventing an
+     address, so they are marked as unaddressed instead -- which is a real fact
+     about this estate rather than a gap in this page. */
+  const addressed = new Set();
+  try {
+    const cap = await K.get('/capability');
+    if (cap.ok) for (const c of (cap.body.capabilities||[])) addressed.add(c.name);
+  } catch (_) {}
+
+  const state = {}, MSGS = [];
+  await Promise.all(STREAMS.map(async s => {
+    const r = s.kind==='surface' ? await K.surface(s.path.split('/').pop())
+                                 : await K.get(s.path);
+    state[s.id] = r;
+    if (!r.ok) return;
+    if (s.name==='occurrences')
+      for (const e of (r.body||[])) MSGS.push({s:s.id,
+        topic:(e.subject||'general').replace(/^queue\./,''), sender:host(e.source),
+        time:new Date(e.time), html:'<p><strong>'+esc(e.type.replace(/^org\.bonfyre\./,''))
+          +'</strong> is ready &mdash; <code>'+esc(e.data)+'</code></p>'
+          +'<p><code>'+esc(e.id)+'</code></p>'});
+    else if (s.name==='sources')
+      for (const c of (r.body.conflicts||[])) MSGS.push({s:s.id, topic:host(c.source_url),
+        sender:host(c.source_url), time:null,
+        html:'<p><strong>'+esc(c.latest_kind.replace(/_/g,' '))+'</strong> &mdash; '
+          +c.observations+' observations, '+c.content_changes+' content changes, status '
+          +esc(c.latest_status)+'</p><p>'
+          +(c.content_still_reachable===false?'no longer reachable':'still reachable')
+          +' &middot; '+(c.ever_retained_content?'bytes retained':'never retained')+'</p>'});
+    else if (s.name==='capabilities')
+      for (const c of r.records) MSGS.push({s:s.id,
+        topic:(c.stage && c.stage!=='-') ? c.stage : 'unstaged', sender:c.binary||'native',
+        time:null, html:'<p><strong>'+esc(c.name)+'</strong></p>'
+          +'<p>latency '+esc(c.latency)+' &middot; unit cost '+esc(c.cost)
+          +(c.artifact&&c.artifact!=='-'?' &middot; '+esc(c.artifact):'')+'</p>',
+        /* only the addressed ones can be left; the rest say so */
+        subject: addressed.has(c.id) || addressed.has(c.name)
+          ? {label:'<a href="'+K.subject('capability',c.id)+'">'
+              +K.subject('capability',c.id)+'</a> &middot; <a href="'
+              +K.room('capability',c.id)+'">its room</a>'}
+          : {label:'no address on this estate — it can be run and not linked to'}});
+    else if (s.name==='federation')
+      for (const f of r.records) MSGS.push({s:s.id, topic:f.protocol||'unknown',
+        sender:f.federation, time:null,
+        html:'<p><strong>'+esc(f.role)+'</strong> at depth '+esc(f.depth)
+          +(f.version?' &middot; v'+esc(f.version):'')+'</p>'
+          +(f.peer_frontier?'<p>'+esc(f.peer_frontier)+'</p>':'')
+          +(f.instance_delta?'<p>'+esc(f.instance_delta)+'</p>':'')});
+    else if (s.name==='representations')
+      for (const c of r.records) MSGS.push({s:s.id, topic:c.axis||'unaxed',
+        sender:c.representation, time:null,
+        html:'<p><strong>'+esc(c.representation)+'</strong> &mdash; '+esc(c.availability)
+          +' &middot; <code>'+esc(c.bytes_per_body)+'</code> bytes per body</p>'
+          +'<p>'+esc(c.envelope)+'</p>',
+        cant:c.cannot_infer});
+    else
+      for (const c of r.records) MSGS.push({s:s.id, topic:c.kind||'route',
+        sender:c.route, time:null,
+        html:'<p><strong>'+esc(c.capability)+'</strong> &mdash; <code>'+esc(c.unit_cost_usd)
+          +'</code> per unit</p><p>'+esc(c.independence)+'</p>',
+        cant:c.cannot_infer});
+  }));
+
+  const key=(s,t)=>s+' '+t;
+  const byTopic={};
+  for (const m of MSGS) (byTopic[key(m.s,m.topic)] = byTopic[key(m.s,m.topic)] || []).push(m);
+  for (const k in byTopic) byTopic[k].sort((a,b)=>(a.time?a.time:0)-(b.time?b.time:0));
+
+  const SEEN='bonfyre_channels_seen';
+  let seen={}; try{seen=JSON.parse(localStorage.getItem(SEEN)||'{}');}catch(_){}
+  const save=()=>{try{localStorage.setItem(SEEN,JSON.stringify(seen));}catch(_){}};
+  const unread=k=>{const l=byTopic[k]||[],m=seen[k];
+    if(m===undefined)return l.length;
+    if(l[0]&&l[0].time)return l.filter(x=>x.time.getTime()>m).length;
+    return Math.max(0,l.length-m);};
+
+  let cur=null, tt, filterText='';
+
+  /* Zulip's sheet reads --navbar-fixed-height; Zulip's JavaScript is what sets
+     it. Measure the header we actually rendered and set it, rather than
+     hard-coding a number the donor sheet would then disagree with. */
+  const sizeNavbar = () => {
+    const h = document.getElementById('navbar-fixed-container').offsetHeight;
+    document.documentElement.style.setProperty('--navbar-fixed-height', h + 'px');
+  };
+  addEventListener('resize', sizeNavbar);
+  const toast = t => {
+    let b = $('#bf-toast');
+    if (!b) { b = el('div'); b.id='bf-toast';
+      b.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;'
+        +'background:#1b1c1d;color:#fff;border-radius:6px;padding:10px 15px;font-size:13.5px;'
+        +'max-width:min(520px,88vw);line-height:1.45;box-shadow:0 4px 18px rgba(0,0,0,.3)';
+      document.body.appendChild(b); }
+    b.textContent = t; b.style.display='block';
+    clearTimeout(tt); tt=setTimeout(function(){b.style.display='none';},4200);
+  };
+
+  /* ---- left sidebar: zulip/web/templates/stream_sidebar_row.hbs ---------- */
+  const filters = $('#stream_filters');
+  const nav = $('#left-sidebar-navigation-list');
+  const drawViews = () => {
+    const allUnread = Object.keys(byTopic).reduce((n,k)=>n+unread(k),0);
+    const refusedN = STREAMS.filter(s=>!state[s.id].ok).length;
+    nav.innerHTML = '';
+    const views = [
+      ['#', 'All messages', MSGS.length],
+      ['#', 'Unread', allUnread],
+      ['#', 'Refused', refusedN]
+    ];
+    for (const v of views) {
+      const li = el('li','top_left_row');
+      li.innerHTML = '<a href="'+v[0]+'" class="left-sidebar-navigation-label-container '
+        + 'selectable_sidebar_block"><span class="left-sidebar-navigation-label">'+v[1]
+        + '</span><span class="unread_count normal-count'+(v[2]?'':' zero_count')+'">'
+        + (v[2]||'') + '</span></a>';
+      nav.appendChild(li);
+    }
+    for (const pair of [['/discover','Discover'],['/board','Boards'],['/stage','Stage'],
+                        ['/listings','Listings'],['/parcels','Parcels'],['/inbox','Inbox'],
+                        ['/community','Community'],['/territory','Territory']]) {
+      const li = el('li','top_left_row');
+      li.innerHTML = '<a href="'+pair[0]+'" class="left-sidebar-navigation-label-container '
+        + 'selectable_sidebar_block"><span class="left-sidebar-navigation-label">'+pair[1]
+        + '</span></a>';
+      nav.appendChild(li);
+    }
+  };
+
+  const drawSidebar = () => {
+    filters.innerHTML='';
+    for (const s of STREAMS) {
+      const res = state[s.id];
+      let topics = [...new Set(MSGS.filter(m=>m.s===s.id).map(m=>m.topic))].sort();
+      const un = topics.reduce((n,t)=>n+unread(key(s.id,t)),0);
+      if (filterText) {
+        const hitStream = s.name.includes(filterText);
+        topics = topics.filter(t => hitStream || t.toLowerCase().includes(filterText));
+        if (!hitStream && !topics.length) continue;
+      }
+      const li = el('li','narrow-filter'+(cur&&cur.s===s.id||filterText?' stream-expanded':''));
+      li.dataset.streamId = s.id;
+      li.innerHTML =
+        '<div class="bottom_left_row channel-header">'
+      + '<a href="#'+s.name+'" class="subscription_block selectable_sidebar_block" draggable="false">'
+      + '<span class="stream-privacy filter-icon" style="color:'+s.color+'">'
+      + '<i class="zulip-icon zulip-icon-hash"></i></span>'
+      + '<span class="stream-name">'+esc(s.name)+'</span>'
+      + '<div class="stream-markers-and-unreads">'
+      + (res.ok ? (un?'<span class="unread_count normal-count">'+un+'</span>':'')
+                : '<span class="unread_count normal-count" style="background:#b34;color:#fff">'
+                  + (res.kind==='refused'?'403':'!')+'</span>')
+      + '</div>'
+      + '<span class="sidebar-menu-icon stream-sidebar-menu-icon" tabindex="0">'
+      + '<i class="zulip-icon zulip-icon-more-vertical"></i></span></a></div>'
+      + '<ul class="topic-list"></ul>';
+      const tl = li.querySelector('.topic-list');
+      if (!res.ok) {
+        /* one stream refusing empties one stream, never the page */
+        const n = el('li','bottom_left_row');
+        n.innerHTML = '<span class="sidebar-topic-name" style="opacity:.7;padding-left:26px">'
+          + (res.kind==='refused' ? 'refused, needs a session' : 'did not answer')
+          + '</span>';
+        n.title = K.note(res, s.id).textContent;
+        tl.appendChild(n);
+      }
+      for (const t of topics) {
+        const k = key(s.id,t), u = unread(k);
+        const isCur = cur && cur.s===s.id && cur.t===t;
+        const ti = el('li','bottom_left_row topic-list-item'
+          + (isCur?' active-sub-filter':'') + (u?'':' zero-topic-unreads'));
+        ti.dataset.topicName = t;
+        ti.innerHTML =
+          '<a href="#'+esc(s.name)+'/'+encodeURIComponent(t)+'" class="topic-box" draggable="false">'
+        + '<span class="sidebar-topic-check"></span>'
+        + '<span class="sidebar-topic-name"><span class="sidebar-topic-name-inner">'
+        + esc(t)+'</span></span>'
+        + '<div class="topic-markers-and-unreads">'
+        + '<span class="unread_count normal-count'+(u?'':' zero_count')+'">'+(u||'')+'</span>'
+        + '</div><span class="sidebar-menu-icon topic-sidebar-menu-icon" tabindex="0">'
+        + '<i class="zulip-icon zulip-icon-more-vertical"></i></span></a>';
+        ti.querySelector('a').addEventListener('click', function (ev) {
+          ev.preventDefault(); open(s.id, t); });
+        tl.appendChild(ti);
+      }
+      li.querySelector('.subscription_block').addEventListener('click', function (ev) {
+        ev.preventDefault();
+        const first = MSGS.find(m=>m.s===s.id);
+        if (first) open(s.id, first.topic); else { cur = {s:s.id, t:null}; drawSidebar(); }
+      });
+      filters.appendChild(li);
+    }
+    const total = Object.keys(byTopic).reduce((n,k)=>n+unread(k),0);
+    const tu = $('#bf-total-unread');
+    tu.textContent = total || '';
+    tu.className = 'unread_count normal-count' + (total?'':' zero_count');
+    drawViews();
+  };
+
+  /* ---- the feed: zulip/web/templates/message_group + single_message ------ */
+  const list = $('#bf-message-list');
+  const open = (sid, topic) => {
+    const s = STREAMS.find(x=>x.id===sid), k = key(sid,topic);
+    const msgs = byTopic[k] || [];
+    const mark = seen[k];
+    cur = {s:sid, t:topic};
+
+    $('#bf-narrow-title').textContent = s.name + ' > ' + topic;
+    $('#bf-narrow-desc').textContent = s.desc;
+    $('#compose-textarea').placeholder = 'Message ' + s.name + ' > ' + topic;
+    $('#bf-sendwhy').textContent = 'Offered, not wired to a write. Authority gates at effect time.';
+
+    list.innerHTML = '';
+    if (!state[sid].ok) {
+      const r = state[sid];
+      list.appendChild(el('div','bf-refusal',
+        '<strong>' + esc(s.name) + ' needs an admitted session.</strong>'
+        + '<p><code>'+esc(r.path)+'</code> answered '+r.status+'. The other streams answered '
+        + 'without one, so this is a refusal rather than an absent stream.</p>'
+        + '<p><a href="/login">Sign in</a></p>'));
+      drawSidebar(); return;
+    }
+    if (!msgs.length) {
+      list.appendChild(el('div','bf-refusal',
+        '<strong>This topic is empty.</strong><p><code>'+esc(s.path)
+        + '</code> answered and returned nothing here. An empty projection, not a refusal.</p>'));
+      drawSidebar(); return;
+    }
+
+    let group=null, lastDay=null, lastSender=null, drewDivider=false;
+    const dayOf = d => d.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+    msgs.forEach(function (m, i) {
+      const day = m.time ? dayOf(m.time) : 'no time recorded by this source';
+      if (day !== lastDay) {
+        group = el('div','recipient_row');
+        group.innerHTML =
+          '<div class="message_header message_header_stream" data-stream-id="'+sid+'">'
+        + '<div class="message-header-contents" style="background:'+s.color+'26;'
+        + 'border-left:5px solid '+s.color+'">'
+        + '<a class="message_label_clickable narrows_by_recipient stream_label" href="#">'
+        + '<span class="stream-privacy filter-icon" style="color:'+s.color+'">'
+        + '<i class="zulip-icon zulip-icon-hash"></i></span>'
+        + '<span class="message-header-stream-name">'+esc(s.name)+'</span></a>'
+        + '<span class="stream_topic_separator"><i class="zulip-icon zulip-icon-chevron-right">'
+        + '</i></span><span class="stream_topic">'
+        + '<a class="message_label_clickable narrows_by_topic" href="#">'
+        + '<span class="stream-topic-inner">'+esc(topic)+'</span></a></span>'
+        + '<span class="recipient_bar_controls no-select" style="opacity:.65;font-size:.85em">'
+        + esc(day)+'</span></div></div>';
+        list.appendChild(group);
+        lastDay = day; lastSender = null;
+      }
+      const include = m.sender !== lastSender;
+      const isUnread = mark===undefined ? true
+        : (m.time ? m.time.getTime()>mark : i >= mark);
+      if (mark !== undefined && isUnread && !drewDivider && i > 0) {
+        const d = el('div','unread_marker message_divider_unread_marker');
+        d.innerHTML = '<div class="unread-marker-fill"></div>';
+        const lbl = el('div','bf-newline');
+        lbl.textContent = 'new since you last opened this topic';
+        list.appendChild(d); list.appendChild(lbl);
+        drewDivider = true; lastSender = null;
+      }
+      const row = el('div','message_row'+(include?' messagebox-includes-sender':'')
+        +(isUnread?' unread':'')+' selectable_row');
+      row.setAttribute('role','listitem');
+      row.innerHTML =
+        '<div class="unread_marker message_unread_marker"><div class="unread-marker-fill">'
+      + '</div></div><div class="messagebox"><div class="messagebox-content">'
+      + (include
+        ? '<div class="message-avatar sender_info_hover no-select" aria-hidden="true">'
+          + '<div class="inline-profile-picture-wrapper"><div class="inline_profile_picture" '
+          + 'style="--av:hsl('+hue(m.sender)+' 38% 40%)">'
+          + '<img src="' + K.avatar(m.sender, kindOfSender(m), 70) + '" alt="" loading="lazy" '
+          + 'width="35" height="35"></div></div></div>'
+        : '')
+      + '<span class="message_sender">'
+      + (include ? '<span class="sender_info_hover sender_name" role="button" tabindex="0">'
+          + '<span class="sender_name_text">'+esc(m.sender)+'</span></span>' : '')
+      + '</span>'
+      + '<a class="message-time">'
+      + (m.time ? m.time.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) : '')
+      + '</a>'
+      + '<div class="message_content rendered_markdown">' + m.html
+      + (m.cant
+        ? '<blockquote><p><strong>Cannot be inferred.</strong> ' + esc(m.cant) + '</p>'
+          + '</blockquote>'
+        : '')
+      + (m.subject
+        ? '<p class="bf-addr">' + m.subject.label + '</p>'
+        : '')
+      + '</div>'
+      + '<div class="message_reactions">'
+      + '<div class="reaction_button" role="button" tabindex="0" data-act="React">'
+      + '<i class="zulip-icon zulip-icon-smile"></i></div></div>'
+      + '<div class="message_controls">'
+      + '<div class="message_control_button" data-act="Star" title="Star this message">'
+      + '<i class="zulip-icon zulip-icon-star"></i></div>'
+      + '<div class="message_control_button" data-act="Quote" title="Quote and reply">'
+      + '<i class="zulip-icon zulip-icon-quote"></i></div>'
+      + '<div class="message_control_button" data-act="Resolve" title="Mark resolved">'
+      + '<i class="zulip-icon zulip-icon-check"></i></div>'
+      + '</div></div></div>';
+      for (const b of row.querySelectorAll('.message_control_button,.reaction_button'))
+        b.addEventListener('click', function () { toast(b.dataset.act
+          + ' is offered here. Whether you may is decided at effect time by the owner of the '
+          + 'effect, so this surface does not submit it.'); });
+      list.appendChild(row);
+      lastSender = m.sender;
+    });
+
+    list.appendChild(el('div','bf-cant','Cannot be inferred: ' + s.cant
+      + '. And a read topic is not a handled one: unread state records where you stopped '
+      + 'reading, not that anything was dealt with.'));
+
+    seen[k] = msgs.length && msgs[0].time
+      ? Math.max.apply(null, msgs.map(m=>m.time.getTime())) : msgs.length;
+    save();
+
+    const people = [...new Set(msgs.map(m=>m.sender))];
+    $('#buddy-list-users-matching-view').innerHTML = people.map(p =>
+      '<li class="user_sidebar_entry"><span class="user-profile-picture">'
+      + '<div class="inline_profile_picture" style="--av:hsl('+hue(p)+' 38% 40%)">'
+      + '<img src="' + K.avatar(p, /\./.test(p) ? 'peer' : 'machine', 48)
+      + '" alt="" loading="lazy" width="24" height="24"></div></span>'
+      + '<span class="user-name-and-status-emoji"><span class="user-name">'+esc(p)
+      + '</span></span></li>').join('');
+    $('#userlist-header').innerHTML = '<h4 class="user-list-title">Named in this topic ('
+      + people.length + ')</h4>';
+    $('#bf-about').innerHTML = '<div style="padding:12px 14px;font-size:13px;line-height:1.5;'
+      + 'opacity:.85"><p style="margin:0 0 8px"><strong>' + esc(s.name) + '</strong></p>'
+      + '<p style="margin:0 0 8px">'+esc(s.desc)+'</p>'
+      + '<p style="margin:0"><code>'+esc(s.path)+'</code> &mdash; the same bytes a machine '
+      + 'asking for that path receives. Nobody in this list is a person with an account; they '
+      + 'are the sources the records name.</p>'
+      + '<p style="margin:10px 0 0;font-size:11.5px;opacity:.7">' + K.avatarAttribution
+      + '</p></div>';
+
+    drawSidebar();
+    const feed = $('#message_feed_container');
+    feed.scrollTop = feed.scrollHeight;
+    history.replaceState(null,'','#'+s.name+'/'+encodeURIComponent(topic));
+  };
+
+  $('#bf-send').addEventListener('click', function () { toast(
+    'Not sent. A message into this stream would be an effect on it, and this surface has no '
+    + 'standing to carry it. Your draft is still here.'); });
+  /* Whose host this is. The Matrix answers it; the hostname alone would be
+     wrong for an institution carrying a domain of its own. */
+  const here = await K.address();
+  const instName = (here.institution||'').replace(/^[a-z]+:/,'').replace(/^aurekai:/,'');
+  $('#bf-hostline').innerHTML =
+    '<span style="font-size:12px;padding-right:12px">'
+    + (instName ? '<strong>' + esc(instName) + '</strong> <span style="opacity:.55">· '
+        + esc(location.hostname) + '</span>' : esc(location.hostname))
+    + '</span>';
+  const hs = await K.hostSwitch('/channels');
+  if (hs.children.length) {
+    hs.style.cssText = 'display:inline-flex;gap:9px;padding-right:12px';
+    for (const a of hs.children) {
+      a.style.cssText = 'font-size:12px;opacity:.5;text-decoration:none;color:inherit';
+      if (a.getAttribute('aria-current')) a.style.opacity = '1';
+    }
+    $('#bf-hostline').appendChild(hs);
+  }
+
+  $('#bf-filter').addEventListener('input', function (e) {
+    filterText = e.target.value.trim().toLowerCase(); drawSidebar(); });
+
+  sizeNavbar();
+  drawSidebar();
+  const want = decodeURIComponent((location.hash||'').replace(/^#/,''));
+  const parts = want.split('/');
+  const s0 = STREAMS.find(x=>x.name===parts[0]);
+  const first = MSGS.find(m => s0 ? (m.s===s0.id && (!parts[1] || m.topic===parts[1])) : true);
+  if (first) open(first.s, first.topic);
+  else open(STREAMS[0].id, 'general');
+  sizeNavbar();
+})();
+
+</script></body></html>

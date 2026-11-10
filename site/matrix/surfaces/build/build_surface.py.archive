@@ -1,0 +1,32 @@
+"""Retired orphan builder; no live source imports this helper.
+
+Assemble a clone surface from the shared kit plus this page's own parts.
+
+The address organ serves *named* surfaces, not arbitrary files under
+/surfaces/, so a <link> or <script src> to the kit 404s. It is inlined instead,
+and inlined by this script rather than by hand so the pages cannot drift apart.
+"""
+import sys, os
+D = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "")
+SURF = "/Users/nickgonzales/Developer/Bonfyre/site/matrix/surfaces"
+
+def build(name, title, css, body, script):
+    kit_css = open(os.path.join(SURF, "_kit.css")).read()
+    kit_js  = open(os.path.join(SURF, "_kit.js")).read()
+    out = (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        f'<title>{title}</title>\n'
+        '<link rel="stylesheet" href="/assets/matrix.css">\n'
+        '<style>\n'
+        '/* kit (inlined: the organ serves named surfaces, not arbitrary\n'
+        '   files under /surfaces/, so a shared asset would 404) */\n'
+        + kit_css + "\n" + css +
+        '</style></head><body><div class="k-wrap">\n'
+        '<header class="k-top"><a class="k-mark" href="/">BONF<span>&Yuml;</span>RE</a>'
+        '<div id="nav"></div></header>\n'
+        + body +
+        '</div>\n<script>\n' + kit_js + '</script>\n<script>\n' + script + '\n</script></body></html>\n')
+    path = os.path.join(SURF, name + ".html")
+    open(path, "w").write(out)
+    print(f"{path}  {len(out)}b")

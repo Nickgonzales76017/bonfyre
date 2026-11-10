@@ -1,0 +1,1065 @@
+<!doctype html><html lang="en" class="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stage · Aurekai</title>
+<meta name="theme-color" content="#3c376e">
+<!-- Mobilizon's own Tailwind build: src/assets/tailwind.css compiled with the
+     project's tailwind.config.cjs over its own components, so .mbz-card, the
+     mbz palette and the datetime-container bands are the project's rules.
+     Licence text at /matrix/DONOR-LICENSES/mobilizon/. -->
+<link rel="stylesheet" href="/assets/donor-mobilizon.css?v=2449e071">
+<style>
+/* The donor transitions; this deployment asks first. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;
+    animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-black dark:text-white">
+<header class="bg-white dark:bg-zinc-800 border-b dark:border-zinc-700">
+  <div class="container mx-auto flex items-center gap-6 px-3 py-3 flex-wrap">
+    <span class="font-semibold tracking-wide">AUREKAI</span>
+    <nav class="flex gap-4 text-sm" id="mz-terr"><!--BF_SLOT:0--></nav>
+    <nav class="flex gap-4 text-sm ml-auto" id="mz-links"><!--BF_SLOT:1--></nav>
+    <button id="mz-theme" class="text-sm underline">Dark</button>
+  </div>
+</header>
+
+<div class="container mx-auto px-3">
+  <section class="my-4">
+    <h2 class="text-xl mt-2 font-semibold mb-2">On now</h2>
+    <div class="flex gap-4 overflow-x-auto snap-x pb-3" id="mz-rail"><!--BF_SLOT:2--></div>
+  </section>
+
+  <div class="flex flex-col mb-3" id="mz-event">
+    <div class="rounded-lg bg-gradient-to-br from-violet-title to-red-400 h-56 relative
+                overflow-hidden" id="mz-banner">
+      <!--BF_SLOT:3-->
+      <span class="absolute top-3 right-3 z-10 text-xs uppercase tracking-widest
+                   text-white/70 border border-dashed border-white/30 rounded-full px-2 py-1"
+            >notice</span>
+    </div>
+    <div class="flex flex-col relative pb-2 bg-white dark:bg-zinc-700 my-4 rounded shadow-md">
+      <div class="date-calendar-icon-wrapper relative">
+        <div class="datetime-container flex flex-col rounded-lg text-center justify-center
+                    overflow-hidden items-stretch bg-white dark:bg-gray-700 text-black
+                    dark:text-white shadow-md absolute left-3 -top-16 w-20" id="mz-cal">
+          <div class="datetime-container-header bg-red-400 dark:bg-red-900 text-white text-xs
+                    py-1"><span class="weekday" id="mz-wd"><!--BF_SLOT:4--></span></div>
+          <div class="datetime-container-content py-1">
+            <span class="day block font-semibold text-2xl" id="mz-day"><!--BF_SLOT:5--></span>
+            <span class="month font-semibold block uppercase py-1 px-0 text-xs"
+                  id="mz-mo"><!--BF_SLOT:6--></span>
+          </div>
+          <div class="datetime-container-footer bg-red-400 dark:bg-red-900 text-white text-xs
+                    py-1"><span class="year" id="mz-yr"><!--BF_SLOT:7--></span></div>
+        </div>
+      </div>
+
+      <section class="intro px-2 pt-4">
+        <div class="flex flex-wrap gap-2 justify-end">
+          <div class="flex-1 min-w-[300px] pl-24">
+            <h1 class="text-4xl lg:text-5xl font-bold m-0" id="mz-title"><!--BF_SLOT:8--></h1>
+            <div class="organizer text-sm opacity-80 mt-1 flex items-center gap-2"
+                 id="mz-org"><!--BF_SLOT:9--></div>
+            <div class="flex flex-wrap gap-2 mt-3" id="mz-tags"><!--BF_SLOT:10--></div>
+          </div>
+          <div class="flex flex-col gap-2 items-stretch min-w-[200px]" id="mz-actions"><!--BF_SLOT:11--></div>
+        </div>
+      </section>
+
+      <div class="flex flex-wrap gap-6 px-2 py-4">
+        <div class="flex-1 min-w-[320px]">
+          <h2 class="text-xl mt-2 font-semibold">Notices posted here</h2>
+          <div class="mt-2 leading-relaxed" id="mz-desc"><!--BF_SLOT:12--></div>
+          <div class="mt-4 border-l-4 border-red-400 pl-3 text-sm opacity-90"
+               id="mz-cant"><!--BF_SLOT:13--></div>
+          <div class="mt-3 text-xs font-mono opacity-60" id="mz-src">world:tonight-in-this-city</div>
+        </div>
+        <aside class="w-full sm:w-72 shrink-0">
+          <h2 class="text-xl mt-2 font-semibold">Details</h2>
+          <ul class="mt-2 flex flex-col gap-3" id="mz-meta"><!--BF_SLOT:14--></ul>
+          <h2 class="text-xl mt-5 font-semibold">Also tonight</h2>
+          <ul class="mt-2 flex flex-col gap-2" id="mz-also"><!--BF_SLOT:15--></ul>
+          <h2 class="text-xl mt-5 font-semibold">Schedule</h2>
+          <div class="mt-2 text-sm" id="mz-sched"><!--BF_SLOT:16--></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <div id="mz-notes" class="mb-10"><!--BF_SLOT:17--></div>
+</div>
+
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* Aurekai's rooms inside Mobilizon's event view.
+ *
+ * The structure is Mobilizon's, read out of the project itself:
+ * src/views/Event/EventView.vue gives the banner, the date-calendar-icon
+ * wrapper, the .intro section and the metadata aside;
+ * src/components/Event/DateCalendarIcon.vue gives .datetime-container with its
+ * header/content/footer bands; src/components/Event/EventCard.vue gives the
+ * .mbz-card snap rail. The stylesheet is Mobilizon's own Tailwind build, run
+ * from their tailwind.config.cjs over their components.
+ *
+ * What is Aurekai's: the records, and the things Mobilizon never has to say --
+ * a territory can refuse, a capacity note is not occupancy, and participating
+ * from here is offered rather than carried.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: true});
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const hue = s => {let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h;};
+  const seed = s => {let h=2166136261;for(const c of String(s))h=(h^c.charCodeAt(0))*16777619>>>0;
+    return h>>>0;};
+  const initials = s => String(s).replace(/[^a-z0-9 ]/gi,' ').trim().split(/\s+/)
+    .slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+
+  let tt; const toast = t => {
+    let b=document.getElementById('mz-toast');
+    if(!b){b=document.createElement('div');b.id='mz-toast';
+      b.className='fixed left-1/2 bottom-6 -translate-x-1/2 z-50 bg-violet-title text-white '
+        +'rounded px-4 py-3 text-sm shadow-md max-w-lg leading-relaxed';
+      document.body.appendChild(b);}
+    b.textContent=t;b.style.display='block';
+    clearTimeout(tt);tt=setTimeout(function(){b.style.display='none';},4600);
+  };
+
+  /* Mobilizon ships a dark mode on a class; use theirs. */
+  const themeBtn=document.getElementById('mz-theme');
+  const setTheme=d=>{document.documentElement.classList.toggle('dark',d);
+    themeBtn.textContent=d?'Light':'Dark';
+    try{localStorage.setItem('bonfyre_stage_dark',d?'1':'0');}catch(_){}};
+  let dark=true; try{dark=localStorage.getItem('bonfyre_stage_dark')!=='0';}catch(_){}
+  setTheme(dark);
+  themeBtn.addEventListener('click',()=>{dark=!dark;setTheme(dark);});
+
+  const HERE = K.territory;
+  const TERRS = ['live','life','shop','work'];
+  document.getElementById('mz-terr').innerHTML = TERRS.map(t =>
+    '<a class="' + (t===HERE?'font-bold underline':'opacity-70') + '" href="'
+    + location.protocol+'//'+location.hostname.replace(/\.(life|live|shop|work)$/,'.'+t)
+    + location.pathname + '">.'+t+'</a>').join('');
+  document.getElementById('mz-links').innerHTML =
+    [['/discover','Discover'],['/board','Boards'],['/channels','Channels'],
+     ['/community','Community'],['/listings','Listings'],['/territory','Territory']]
+    .map(p=>'<a class="opacity-70 hover:opacity-100" href="'+p[0]+'">'+p[1]+'</a>').join('');
+
+  const res = await K.surface('night-' + HERE);
+  const notes = document.getElementById('mz-notes');
+  if (!res.ok) {
+    document.getElementById('mz-event').classList.add('hidden');
+    notes.innerHTML = '<div class="border-l-4 border-red-400 pl-3 py-2">'
+      + '<p class="font-semibold">Tonight needs an admitted session.</p>'
+      + '<p class="text-sm opacity-90 mt-1"><span class="font-mono">'+esc(res.path)
+      + '</span> answered ' + res.status + '. Other territories answer without one, so this is '
+      + 'a refusal rather than an absent evening.</p>'
+      + '<a class="inline-flex items-center gap-2 bg-primary text-white rounded px-4 py-2 '
+      + 'font-semibold mt-3" href="/login">Sign in</a></div>';
+    return;
+  }
+  const rooms = res.records.filter(r => r.name);
+  if (!rooms.length) {
+    document.getElementById('mz-event').classList.add('hidden');
+    notes.innerHTML = '<p class="opacity-70">Nothing is on here right now. The pattern '
+      + 'answered and returned nothing: an empty projection, not a refusal.</p>';
+    return;
+  }
+
+  /* A room, an act, a way out and a programme are not the same kind of thing,
+     and night-live carries all four. */
+  const cap = n => {const m = n && n.match(/(\d[\d,]*)\s*(capacity|across)/i); return m?m[1]:null;};
+  const pct = n => {const m = n && n.match(/(\d+)\s*percent/i); return m?Number(m[1]):null;};
+  const kindOf = r =>
+      /egress|exit/i.test(r.name) ? 'way out'
+    : /collective|band|dj|quartet|trio/i.test(r.name) ? 'act'
+    : /showcase|festival|series/i.test(r.name) ? 'programme'
+    : (cap(r.capacity_note) || /doors|set|patio/i.test(r.tonight_status||'')) ? 'room'
+    : 'subject';
+  const ORDER = {room:0, programme:1, act:2, 'way out':3, subject:4};
+  rooms.sort((a,b)=>ORDER[kindOf(a)]-ORDER[kindOf(b)]);
+
+  let cur = 0;
+
+  /* The banner slot. Mobilizon puts a photograph here; these rooms never had
+     one, so it carries a field drawn from the record and says so. */
+  const canvas = document.getElementById('mz-canvas');
+  const ctx = canvas.getContext('2d', {alpha:false});
+  let cw=0,ch=0,raf=0,t=0,spec=null;
+  const sizeC=()=>{const d=Math.min(devicePixelRatio||1,1.6);
+    cw=Math.max(1,canvas.clientWidth*d);ch=Math.max(1,canvas.clientHeight*d);
+    canvas.width=cw;canvas.height=ch;};
+  new ResizeObserver(sizeC).observe(canvas);
+  const draw=()=>{
+    t+=1;
+    ctx.fillStyle='#141225'; ctx.fillRect(0,0,cw,ch);
+    if (spec) {
+      ctx.globalCompositeOperation='lighter';
+      for(const b of spec.blobs){
+        const px=(b.x+Math.sin(t*b.sx*60+b.p)*0.13)*cw;
+        const py=(b.y+Math.cos(t*b.sy*60+b.p)*0.13)*ch;
+        const r=b.r*Math.max(cw,ch)*(0.85+0.15*Math.sin(t*0.004+b.p));
+        const g=ctx.createRadialGradient(px,py,0,px,py,r);
+        const c=b.c;
+        g.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+',0.42)');
+        g.addColorStop(0.5,'rgba('+c[0]+','+c[1]+','+c[2]+',0.12)');
+        g.addColorStop(1,'rgba('+c[0]+','+c[1]+','+c[2]+',0)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,r,0,6.2832);ctx.fill();
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+    raf=requestAnimationFrame(draw);
+  };
+  const setSpec = (r) => {
+    const rnd=(()=>{let x=seed(r.name)||1;
+      return()=>((x=(x*1664525+1013904223)>>>0)/4294967296);})();
+    const E = (pct(r.capacity_note)||35)/100;
+    const A=[242,89,69], B=[60,55,110];
+    spec={blobs:Array.from({length:6},()=>({x:rnd(),y:rnd(),r:0.28+rnd()*0.4,
+      sx:(rnd()-0.5)*0.0003*(0.5+E),sy:(rnd()-0.5)*0.0003*(0.5+E),
+      c:rnd()<0.5?A:B,p:rnd()*6.28}))};
+    sizeC(); if(!raf) raf=requestAnimationFrame(draw);
+  };
+
+  const FOLLOW='bonfyre_stage_follow';
+  let following=new Set();
+  try{following=new Set(JSON.parse(localStorage.getItem(FOLLOW)||'[]'));}catch(_){}
+  const persist=()=>{try{localStorage.setItem(FOLLOW,JSON.stringify([...following]));}catch(_){}};
+
+  const related = r => rooms.filter(x => x!==r &&
+    ((x.tonight_status||'').includes(r.name) || (r.tonight_status||'').includes(x.name)));
+
+  const drawRail = () => {
+    document.getElementById('mz-rail').innerHTML = rooms.map((r,i) => {
+      const p = pct(r.capacity_note);
+      return '<button data-i="'+i+'" class="mbz-card snap-center sm:max-w-xs w-[18rem] '
+      + 'shrink-0 flex flex-col text-left p-3 rounded-lg'
+      + (i===cur ? ' border-2 border-primary' : '') + '">'
+      + '<span class="flex items-center gap-2"><img src="'
+      + K.avatar(r.name, 'subject', 48) + '" alt="" width="24" height="24" class="rounded-lg" '
+      + 'loading="lazy">'
+      + '<span class="text-xs uppercase tracking-widest opacity-70">'+esc(kindOf(r))
+      + '</span></span>'
+      + '<span class="font-semibold mt-1 truncate">'+esc(r.name)+'</span>'
+      + '<span class="text-sm opacity-90 mt-1 overflow-hidden text-ellipsis whitespace-nowrap">'
+      + esc(r.tonight_status||'no status published')+'</span>'
+      + (p!==null
+        ? '<span class="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden '
+          + 'mt-2"><span class="h-full bg-red-400 transition-all duration-700 block" '
+          + 'style="width:'+p+'%"></span></span>'
+          + '<span class="text-xs opacity-70 mt-1">'+p+'% reported</span>'
+        : '<span class="text-xs opacity-70 mt-2">no fill reported</span>')
+      + (following.has(r.name) ? '<span class="text-xs mt-1 opacity-70">following</span>' : '')
+      + '</button>';
+    }).join('');
+    for (const b of document.querySelectorAll('#mz-rail button'))
+      b.addEventListener('click', () => { cur = Number(b.dataset.i); render(); });
+  };
+
+  const render = () => {
+    const r = rooms[cur];
+    const now = new Date();
+    document.getElementById('mz-wd').textContent =
+      now.toLocaleDateString(undefined,{weekday:'short'}).toUpperCase();
+    document.getElementById('mz-day').textContent = now.getDate();
+    document.getElementById('mz-mo').textContent =
+      now.toLocaleDateString(undefined,{month:'short'});
+    document.getElementById('mz-yr').textContent = now.getFullYear();
+
+    document.getElementById('mz-title').textContent = r.name;
+    document.getElementById('mz-org').innerHTML =
+      '<img src="' + K.avatar(r.name, 'subject', 56) + '" alt="" width="28" height="28" '
+      + 'class="rounded-lg" loading="lazy">'
+      + '<span>Projected by <span class="font-semibold">.' + esc(HERE) + '</span> &middot; '
+      + esc(kindOf(r)) + '</span>';
+
+    const p = pct(r.capacity_note), c = cap(r.capacity_note);
+    const tags = [];
+    if (/doors|set|tonight|patio/i.test(r.tonight_status||'')) tags.push(['bg-red-400 text-white','on now']);
+    if (p!==null) tags.push(['bg-secondary text-violet-title', p+'% reported']);
+    if (c) tags.push(['bg-secondary text-violet-title', c+' capacity']);
+    if (r.safety_note) tags.push(['bg-secondary text-violet-title','way out published']);
+    document.getElementById('mz-tags').innerHTML = tags.map(t =>
+      '<span class="'+t[0]+' rounded-full px-3 py-1 text-xs font-semibold">'
+      + esc(t[1])+'</span>').join('');
+
+    const isF = following.has(r.name);
+    document.getElementById('mz-actions').innerHTML =
+      '<button id="mz-go" class="bg-primary hover:opacity-90 text-white rounded px-4 py-2 '
+      + 'font-semibold">Participate</button>'
+    + '<button id="mz-follow" class="border-2 border-primary text-primary bg-transparent '
+      + 'rounded px-4 py-2 font-semibold">' + (isF?'Following':'Follow') + '</button>'
+    + '<button id="mz-share" class="border-2 border-primary text-primary bg-transparent '
+      + 'rounded px-4 py-2 font-semibold">Share</button>';
+    document.getElementById('mz-go').addEventListener('click', () => toast(
+      'Participation is offered, not recorded. Nothing was sent to the room, nobody is '
+      + 'expecting you, and the capacity note is what the room published rather than what is '
+      + 'true at the door.'));
+    document.getElementById('mz-follow').addEventListener('click', () => {
+      if (following.has(r.name)) following.delete(r.name); else following.add(r.name);
+      persist(); render();
+      toast(following.has(r.name)
+        ? 'Following ' + r.name + ' in this browser only. The room was not told.'
+        : 'No longer following ' + r.name + ' here.');
+    });
+    document.getElementById('mz-share').addEventListener('click', () => toast(
+      'SHARE is offered. This surface does not publish on your behalf.'));
+
+    document.getElementById('mz-desc').innerHTML =
+      '<p>' + esc(r.tonight_status || 'Nothing published about tonight.') + '</p>'
+      + (r.safety_note
+        ? '<p class="mt-3"><span class="font-semibold">Getting out.</span> '
+          + esc(r.safety_note) + '</p>'
+        : '<p class="mt-3 opacity-70">No safety note published for this one.</p>');
+
+    document.getElementById('mz-meta').innerHTML =
+      Object.entries(r).filter(kv=>kv[1]&&kv[0]!=='name').map(kv =>
+        '<li class="list-none"><span class="block text-xs uppercase tracking-widest '
+        + 'opacity-60">'+esc(kv[0].replace(/_/g,' '))+'</span>'
+        + '<span class="text-sm">'+esc(kv[1])+'</span></li>').join('')
+      + (p!==null
+        ? '<li class="list-none"><span class="block text-xs uppercase tracking-widest '
+          + 'opacity-60">Fill the room reported</span>'
+          + '<span class="h-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden '
+          + 'block mt-1"><span class="h-full bg-red-400 transition-all duration-700 block" '
+          + 'style="width:'+p+'%"></span></span></li>'
+        : (r.capacity_note
+          ? '<li class="list-none"><span class="block text-xs uppercase tracking-widest '
+            + 'opacity-60">Described, not counted</span><span class="text-sm">'
+            + esc(r.capacity_note) + ' — the room described its capacity in words, so there is '
+            + 'no figure to draw and none is invented.</span></li>'
+          : ''));
+
+    const rel = related(r);
+    document.getElementById('mz-also').innerHTML = rel.length
+      ? rel.map(x => '<li class="list-none"><button data-n="'+esc(x.name)+'" '
+          + 'class="text-left w-full cursor-pointer underline">'+esc(x.name)+'</button>'
+          + '<span class="block text-xs opacity-70">'+esc(x.tonight_status||'')+'</span></li>')
+        .join('')
+      : '<li class="list-none opacity-70 text-sm">Nothing else tonight names this one, and it '
+        + 'names nothing else.</li>';
+    for (const b of document.querySelectorAll('#mz-also button'))
+      b.addEventListener('click', () => {
+        cur = rooms.findIndex(x=>x.name===b.dataset.n); render(); });
+
+    document.getElementById('mz-cant').innerHTML =
+      'Cannot be inferred: a capacity note is not current occupancy &mdash; it is what the room '
+      + 'published, at the time it published it. Participating here is not a reservation, and '
+      + 'the banner is generated from this record rather than being a photograph of anywhere.';
+    document.getElementById('mz-src').innerHTML =
+      'Read live from /_surface/night-' + HERE + ' — the same bytes a machine asking for that '
+      + 'path receives. ' + K.avatarAttribution;
+
+    setSpec(r);
+    drawRail();
+
+    /* night-events is the gated pattern. Everything above answered without a
+       session, so a refusal here is one pattern refusing rather than a page
+       that failed. */
+    const sched = document.getElementById('mz-sched');
+    sched.textContent = 'Reading /_surface/night-events…';
+    K.surface('night-events').then(s2 => {
+      if (!s2.ok) {
+        sched.innerHTML = '<p class="border-l-4 border-red-400 pl-3">'
+          + (s2.kind === 'refused'
+            ? 'The schedule needs an admitted session (<span class="font-mono">'
+              + s2.status + '</span>). The stage, the rail and the details above all answered '
+              + 'without one, so this is a refusal from one pattern rather than a page that '
+              + 'failed.'
+            : 'The schedule did not answer (' + s2.status + '). Nothing is rendered rather than '
+              + 'stale or invented.') + '</p>'
+          + (s2.kind === 'refused'
+            ? '<a href="/login" class="inline-flex items-center gap-2 bg-primary text-white '
+              + 'rounded px-4 py-2 font-semibold mt-3">Sign in</a>' : '');
+        return;
+      }
+      sched.innerHTML = s2.records.length
+        ? s2.records.map(e => '<p class="mb-1"><span class="font-semibold">'
+            + esc(e.name||'') + '</span> ' + esc(e.tonight_status||'') + '</p>').join('')
+        : '<p class="opacity-70">The schedule answered and returned nothing: an empty '
+          + 'projection, not a refusal.</p>';
+    });
+  };
+
+  addEventListener('keydown', e => {
+    if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+    if (e.key==='ArrowRight'||e.key==='j'){cur=Math.min(rooms.length-1,cur+1);render();}
+    else if (e.key==='ArrowLeft'||e.key==='k'){cur=Math.max(0,cur-1);render();}
+  });
+
+  render();
+})();
+
+</script>
+<p class="stage-nonvideo" style="margin:1rem auto;max-width:70ch;padding:0 1rem">No video is served by this stage. It publishes status, not pixels: the reported room, capacity and occurrence are observations, not a live stream or a guarantee that an event will happen.</p>
+</body></html>

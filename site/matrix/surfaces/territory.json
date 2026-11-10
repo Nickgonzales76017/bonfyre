@@ -1,0 +1,218 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "flow": "territory",
+  "served_by": "BonfyreWebAddress, rendering the live /_surface/ pattern catalogue",
+  "shape": "one page, four territories, six modes: the host decides the territory and .life and .work each carry two internal worlds rather than becoming separate products",
+  "reads": {
+    "life": "/_surface/night-life",
+    "live": "/_surface/night-live",
+    "shop": "/_surface/night-shop",
+    "work": "/_surface/night-work"
+  },
+  "projection_claim": "the four patterns read one content type and project different field sets over the same subjects; The Foundry Room appears in each with a different set of fields, not as four records",
+  "observed_2026_09_04": {
+    "life": "5 records, fields name/personal_note",
+    "live": "5 records, fields name/tonight_status/capacity_note/safety_note",
+    "shop": "5 records, fields name/offer_note/offer_usd",
+    "work": "403 surface-denied \u2014 authority-gated, needs an admitted session",
+    "work.business.frappe-apps": "9 records, fields app_name/doctype_count/status",
+    "work.business.backends": "4 records, fields backend/kind/availability/version/cost_metric/measured",
+    "work.business.capital-routes": "8 records, fields route/kind/capacity_state/requires/satisfies/notes",
+    "work.business.capital-transformations": "11 records, fields transform/family/requires/consumes/grants_rights/obligations/reversibility/duration_months",
+    "work.business.funding": "8 records, fields requirement/kind/state/resolvable_by/notes/cannot_infer",
+    "life.household": "no pattern served",
+    "work.business": "capital-routes, capital-transformations and funding all serve; the plane orders transformations by reversibility and marks a transform blocked when a funding requirement it names is unresolved"
+  },
+  "machine_views": [
+    "/_surface/",
+    "/.well-known/bonfyre",
+    "/protocols"
+  ],
+  "forbidden_inference": [
+    "an offered verb -> an authorized action; the action layer is an affordance and Authority gates at effect time",
+    "a rendered record -> a reservation, an offer accepted, or a completed sale",
+    "a refused projection -> an absent subject; night-work answers 403 because .work records need an admitted session, and the same subjects are projected in three other territories",
+    "a withheld pane -> a broken one; htmx does not swap on 4xx, so a surface that only sets hx-get reports loading forever instead of offering the session that would fill it",
+    "a capacity note -> current occupancy; it is what the venue published, at the time it published it",
+    "watching a room -> a plan, an obligation, or anybody expecting you",
+    "a mode -> a separate product; .life and .work each carry two internal worlds over one Matrix subject rather than a fifth territory",
+    "an unbuilt mode -> an unbuilt territory; household is declared and empty while personal is served from the same host",
+    "a capital route -> available capital; capacity_state is what the route reported about itself",
+    "a funding requirement -> funding; its state and cannot_infer field say what it is not",
+    "an installed app -> a business capability; business mode is a reachability plane over capital routes and transformations, and an inventory of doctypes answers no question a decision rests on"
+  ],
+  "modes": {
+    "life": {
+      "personal": {
+        "reads": [
+          "/_surface/night-life"
+        ],
+        "label": "Personal"
+      },
+      "household": {
+        "reads": [],
+        "label": "Household",
+        "state": "unbuilt \u2014 no household pattern is served; the mode is declared and empty"
+      }
+    },
+    "live": {
+      "tonight": {
+        "reads": [
+          "/_surface/night-live"
+        ],
+        "label": "Tonight"
+      }
+    },
+    "shop": {
+      "market": {
+        "reads": [
+          "/_surface/night-shop"
+        ],
+        "label": "Market"
+      }
+    },
+    "work": {
+      "professional": {
+        "reads": [
+          "/_surface/night-work"
+        ],
+        "label": "Professional",
+        "state": "403 surface-denied \u2014 authority-gated"
+      },
+      "business": {
+        "reads": [
+          "/_surface/capital-routes",
+          "/_surface/capital-transformations",
+          "/_surface/funding"
+        ],
+        "label": "Business",
+        "axes": [
+          "reversible",
+          "costly",
+          "irreversible"
+        ],
+        "state": "served \u2014 rendered as a capital reachability plane: transformations placed on the axis of what undoing them costs, each carrying its route capacity_state, its unmet prerequisites and its horizon"
+      }
+    }
+  },
+  "mode_verbs": {
+    "personal": [
+      "MEET",
+      "JOIN",
+      "GO",
+      "SAVE",
+      "FOLLOW",
+      "SHARE",
+      "REMEMBER"
+    ],
+    "household": [
+      "PLAN",
+      "MOVE",
+      "SAVE",
+      "HELP",
+      "REMEMBER",
+      "ASSIGN"
+    ],
+    "tonight": [
+      "WATCH",
+      "JOIN",
+      "GO",
+      "FOLLOW",
+      "SAVE",
+      "SHARE"
+    ],
+    "market": [
+      "BUY",
+      "OFFER",
+      "JOIN",
+      "SAVE",
+      "COMPARE",
+      "REQUEST",
+      "SELL",
+      "FUND",
+      "CONTRIBUTE"
+    ],
+    "professional": [
+      "APPLY",
+      "CONTACT",
+      "BOOK",
+      "DO",
+      "REVIEW",
+      "ASSIGN",
+      "RESPOND",
+      "ESCALATE",
+      "CLAIM"
+    ],
+    "business": [
+      "APPROVE",
+      "FUND",
+      "REVIEW",
+      "CLAIM",
+      "ASSIGN",
+      "ESCALATE",
+      "CONTACT"
+    ]
+  },
+  "territory_verbs": {
+    "life": [
+      "MEET",
+      "JOIN",
+      "GO",
+      "SAVE",
+      "HELP",
+      "FOLLOW",
+      "PLAN",
+      "REMEMBER",
+      "SHARE",
+      "MOVE",
+      "ASSIGN"
+    ],
+    "live": [
+      "WATCH",
+      "JOIN",
+      "GO",
+      "FOLLOW",
+      "SAVE",
+      "SHARE"
+    ],
+    "shop": [
+      "BUY",
+      "OFFER",
+      "JOIN",
+      "SAVE",
+      "COMPARE",
+      "REQUEST",
+      "SELL",
+      "FUND",
+      "CONTRIBUTE"
+    ],
+    "work": [
+      "APPLY",
+      "APPROVE",
+      "CLAIM",
+      "FUND",
+      "CONTACT",
+      "BOOK",
+      "DO",
+      "REVIEW",
+      "ASSIGN",
+      "RESPOND",
+      "ESCALATE"
+    ]
+  },
+  "verb_rule": "a mode's verbs are a subset of its territory's; a mode never carries a verb the territory does not, and the union of a territory's modes need not exhaust it",
+  "surface": "territory",
+  "pattern": "AddressPlaneDoor",
+  "owner": {
+    "kind": "organ",
+    "name": "/.well-known/bonfyre"
+  },
+  "extent": "page",
+  "carries_action_layer": true,
+  "action_layer": [],
+  "requires_authority": "none; resolution is eligibility and grants nothing",
+  "lineage": {
+    "project": null,
+    "note": "borrows nothing. Every donor is one product with one domain, and nothing in the reference estate is shaped like one subject seen four ways."
+  }
+}

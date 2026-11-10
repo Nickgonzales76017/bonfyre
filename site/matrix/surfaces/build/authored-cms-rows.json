@@ -1,0 +1,8 @@
+{
+  "datasets": [
+    {"type": "content_screen", "file": "content-screens.jsonl", "expect": 4},
+    {"type": "reference_contract", "file": "reference-contracts.jsonl", "expect": 5},
+    {"type": "presentation_template", "file": "presentation-templates.jsonl", "expect": 6},
+    {"type": "territory_presentation", "file": "../../../../cmd/BonfyreCMS/data/territory-presentations.jsonl", "expect": 4}
+  ]
+}

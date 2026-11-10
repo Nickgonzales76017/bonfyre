@@ -1,0 +1,24 @@
+{
+  "version": "bonfyre-property-surface-v1",
+  "served_by": "BonfyreWebAddress, reading the receipted Fleming estate through BonfyreQuery",
+  "shape": "a flow, not a panel: each step renders the next and carries the parcel forward",
+  "steps": [
+    { "path": "/property",                 "step": 1, "does": "search the observed roll by street address or account" },
+    { "path": "/property/search?q=",       "step": 1, "returns": "matching parcels, each leading to step 2" },
+    { "path": "/property/parcel?account=", "step": 2, "returns": "that parcel as observed, leading to its market" },
+    { "path": "/property/market?city=",    "step": 3, "returns": "anchors for the surrounding city, leading to what can be done" },
+    { "path": "/property/act?account=",    "step": 4, "returns": "what this viewer may actually do, given their scope" }
+  ],
+  "reads": {
+    "observations": 6535062,
+    "parcels_projected": 500142,
+    "source": "src:tad-parcel-view"
+  },
+  "forbidden_inference": [
+    "an assessed value -> an appraisal, a listing price, or an offer",
+    "a taxpayer name of record -> the legal owner, a sole owner, or capacity to convey",
+    "a city median -> a comparable sale or a valuation of any single parcel",
+    "watching a parcel -> an offer, an option, a lien position, or any claim on it",
+    "reading this flow -> advice"
+  ]
+}

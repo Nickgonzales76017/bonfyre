@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101713">
+<!--BF_TEMPLATE_SLOT:0-->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+:root{--paper:#0d130f;--ink:#dde6da;--display:#f5f7ee;--muted:#8c9a8d;--line:rgba(221,230,218,.17);--panel:#17211a;--accent:#b5df32;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--serif:'Instrument Serif',Georgia,serif;--pad:max(22px,calc(50vw - 620px))}
+*{box-sizing:border-box}html{background:var(--paper)}body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.5 var(--sans);letter-spacing:-.01em;overflow-x:clip}a{color:inherit;text-decoration:none}
+.wrap{padding-inline:var(--pad)}
+.rail{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:3.75rem;border-bottom:1px solid var(--line)}
+.word{font:650 1.18rem/1 var(--sans);letter-spacing:-.045em;color:var(--display)}
+.rail nav{display:flex;gap:.2rem;font-size:.9rem}.rail nav a{padding:.5rem .8rem;border-radius:999px;opacity:.72}.rail nav a:hover{opacity:1;background:color-mix(in srgb,currentColor 9%,transparent)}
+.join{padding:.62rem 1.05rem;border:1px solid currentColor;border-radius:999px;font-weight:600;font-size:.86rem;transition:background .25s,color .25s}.join:hover{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.hero{padding-block:clamp(3.5rem,9vw,8.5rem) clamp(2.5rem,5vw,4.5rem)}
+.hero h1{margin:0;max-width:12ch;font:600 clamp(3.4rem,11.5vw,11rem)/.86 var(--sans);letter-spacing:-.065em;color:var(--display);animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
+.hero h1 em{font:italic 400 1em/.86 var(--serif);letter-spacing:-.04em;color:var(--accent)}
+.hero .sub{max-width:34rem;margin:clamp(1.25rem,2.5vw,2.25rem) 0 0;font:400 clamp(1.3rem,2vw,1.85rem)/1.22 var(--serif);color:var(--ink)}
+.eyebrow{margin:0 0 clamp(1rem,2vw,1.75rem);font:500 .78rem/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+section{border-top:1px solid var(--line)}section.hero{border-top:0}
+.find,.bring,.doors,.also{padding-block:clamp(3.5rem,8vw,7rem)}
+.find{background:var(--accent);color:#0d130f;border-top:0}.find .eyebrow{color:rgba(13,19,15,.7)}
+h2{margin:0;font:600 clamp(2.4rem,6.4vw,5.75rem)/.92 var(--sans);letter-spacing:-.06em;text-wrap:balance}h2 em{font:italic 400 1em/.92 var(--serif);letter-spacing:-.035em}
+.lede{max-width:34rem;margin:1.25rem 0 0;font:400 clamp(1.1rem,1.6vw,1.4rem)/1.3 var(--serif)}
+.line{display:flex;align-items:center;gap:.75rem;margin-top:clamp(1.75rem,4vw,3rem);border-bottom:2px solid currentColor;padding-bottom:.6rem}
+.line input:not([type=hidden]){flex:1;min-width:0;border:0;outline:0;background:none;color:inherit;font:500 clamp(1.2rem,2.6vw,2.2rem)/1.2 var(--sans);letter-spacing:-.035em;padding:.4rem 0}
+.line input::placeholder{color:inherit;opacity:.45}
+.line button{flex:none;border:0;border-radius:999px;padding:1rem 1.6rem;background:#0d130f;color:var(--display);font:600 .95rem/1 var(--sans);cursor:pointer;transition:gap .25s,padding .25s}
+.line button::after{content:" \2192"}.line button:hover{padding-inline:2rem}
+.bring .line button{background:var(--accent);color:#0d130f}
+.tries{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.1rem}.tries a{padding:.5rem .95rem;border:1px solid rgba(13,19,15,.35);border-radius:999px;font-size:.9rem;transition:background .25s,color .25s}.tries a:hover{background:#0d130f;color:var(--accent)}
+.note{max-width:34rem;margin:1rem 0 0;font-size:.92rem;color:var(--muted)}.find .note{color:rgba(13,19,15,.72)}
+.estate-results,.intake-result{margin-top:1.75rem}.estate-results:empty,.intake-result:empty{display:none}
+.estate-results .bf-material-list{display:block;border-top:1px solid rgba(13,19,15,.25)}
+.estate-results :is(.bf-material-card,.bf-material-empty){padding:1.2rem 0;border-bottom:1px solid rgba(13,19,15,.25);background:none}
+.estate-results .bf-material-card h2{font:600 clamp(1.3rem,2.4vw,2rem)/1.05 var(--sans);letter-spacing:-.04em;margin:0 0 .4rem}
+.estate-results .bf-material-card p,.estate-results .bf-stream-boundary{max-width:44rem;margin:.3rem 0 0;font-size:.95rem}
+.estate-results .bf-material-card footer{display:flex;flex-wrap:wrap;gap:1.2rem;margin-top:.7rem;font:400 .76rem/1.4 var(--mono)}
+.rows{margin-top:clamp(1.75rem,4vw,3rem);border-bottom:1px solid var(--line);counter-reset:row}
+.rows a{display:grid;grid-template-columns:4.5rem minmax(0,1.1fr) minmax(0,1fr) auto;align-items:baseline;gap:clamp(1rem,3vw,3rem);padding:clamp(1.4rem,3vw,2.5rem) 0;border-top:1px solid var(--line);counter-increment:row;transition:padding .4s cubic-bezier(.2,.8,.2,1),background .4s,color .4s}
+.rows a::before{content:counter(row,decimal-leading-zero);font:500 .78rem/1 var(--mono);letter-spacing:.06em;color:var(--muted)}
+.rows h3{margin:0;font:600 clamp(1.7rem,3.7vw,3.5rem)/.98 var(--sans);letter-spacing:-.05em;color:var(--display)}
+.rows p{margin:0;max-width:30rem;color:var(--muted)}
+.rows .go{padding:.8rem 1.2rem;border:1px solid var(--line);border-radius:999px;font-size:.9rem;white-space:nowrap}
+.rows a:hover{background:var(--accent);color:#0d130f;padding-inline:clamp(.75rem,1.6vw,1.6rem)}
+.rows a:hover :is(h3,p),.rows a:hover::before{color:#0d130f}.rows a:hover .go{border-color:#0d130f}
+.also{display:flex;flex-wrap:wrap;align-items:baseline;gap:.6rem 2.5rem}
+.also a{font:600 clamp(1.4rem,2.6vw,2.3rem)/1.1 var(--sans);letter-spacing:-.045em;color:var(--display);transition:color .25s}.also a:hover{color:var(--accent)}.also a::after{content:" \2197";font-size:.7em;opacity:.6}
+.weather{margin-top:1rem;font:400 .95rem/1.5 var(--sans);color:var(--muted)}
+.foot{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding-block:clamp(2.5rem,5vw,4rem);border-top:1px solid var(--line);font:400 .78rem/1.5 var(--mono);color:var(--muted)}
+.foot-name{margin:0;padding:0 var(--pad) 1rem;font:600 clamp(4rem,19vw,19rem)/.8 var(--sans);letter-spacing:-.07em;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--ink) 40%,transparent);user-select:none}
+@keyframes rise{from{opacity:0;translate:0 .25em;filter:blur(8px)}}
+@media(prefers-reduced-motion:reduce){.hero h1{animation:none}}
+@media(max-width:760px){.rail nav{display:none}.line{flex-wrap:wrap;border-bottom:0}.line input:not([type=hidden]){flex-basis:100%;border-bottom:2px solid currentColor}.line button{width:100%}.rows a{grid-template-columns:2.75rem minmax(0,1fr);row-gap:.7rem}.rows a>:is(p,.go){grid-column:2;justify-self:start}}
+</style><style id="bf-public-search-css"></style></head>
+<body><header class="wrap rail"><a class="word" href="/"><span id="bf-mk"></span>Aurekai</a><nav><!--BF_TEMPLATE_SLOT:1--></nav><a class="join" href="/login" id="session-link">Sign in</a></header><main>
+<section class="wrap hero"><p class="eyebrow"><span id="eyebrow">Aurekai</span><span id="territory" hidden>PUBLIC</span><span id="orbit-label" hidden></span></p><h1 id="title">Start with <em>something real.</em></h1><p class="sub" id="sub">A web address, an offer, an event, a place or a question. Look it up here, or bring it in.</p></section>
+<section class="wrap find estate-try" id="estate-try"><p class="eyebrow">Search</p><h2>Find what is <em>already public.</em></h2><p class="lede estate-try-copy">Public records, registries, feeds, research and tools. A result is what a source says; nothing here vouches for it.</p><form class="line estate-search" role="search" action="/_surface/external-estate" method="get" hx-get="/_surface/external-estate" hx-target="#estate-results" hx-swap="innerHTML"><input type="hidden" name="grammar" value="observations"><input type="hidden" name="limit" value="9"><input name="q" type="search" autocomplete="off" placeholder="weather, grants, music venues, public records" aria-label="Search public sources" required><button type="submit">Search</button></form><div class="tries estate-presets" aria-label="Try a search"><a href="/_surface/external-estate?grammar=observations&amp;q=government&amp;limit=9" hx-get="/_surface/external-estate?grammar=observations&amp;q=government&amp;limit=9" hx-target="#estate-results">Public records</a><a href="/_surface/external-estate?grammar=observations&amp;q=science&amp;limit=9" hx-get="/_surface/external-estate?grammar=observations&amp;q=science&amp;limit=9" hx-target="#estate-results">Science</a><a href="/_surface/external-estate?grammar=observations&amp;q=agents&amp;limit=9" hx-get="/_surface/external-estate?grammar=observations&amp;q=agents&amp;limit=9" hx-target="#estate-results">Tools</a><a href="/_surface/external-estate?grammar=observations&amp;q=music&amp;limit=9" hx-get="/_surface/external-estate?grammar=observations&amp;q=music&amp;limit=9" hx-target="#estate-results">Music and events</a></div><div class="estate-results" id="estate-results" aria-live="polite"></div></section>
+<section class="wrap bring aperture"><p class="eyebrow">Bring something in</p><h2>Paste an address that <em>already exists.</em></h2><form class="line url-form" action="/_surface/intake" method="get" hx-get="/_surface/intake" hx-target="#intake-result" hx-swap="innerHTML"><input name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://" required aria-label="Public address"><button type="submit">Prepare route</button></form><div id="intake-result" class="intake-result" aria-live="polite"></div><p class="note ap-note">This prepares the address for a person to review. It does not fetch, publish or claim it.</p></section>
+<section class="wrap doors moves"><p class="eyebrow">Where to go next</p><h2>Three ways <em>in.</em></h2><div class="rows move-grid"><a class="move" href="/discover"><h3 id="look-title">Look around</h3><p id="look-copy">Stories, events and pictures from the publishers this site follows.</p><span class="go">Open Discover</span></a><a class="move" href="/market"><h3 id="exchange-title">See what is offered</h3><p id="exchange-copy">Offers with a stated price, from whoever is making them.</p><span class="go">Open the market</span></a><a class="move" href="/studio/"><h3 id="work-title">Pick up your work</h3><p id="work-copy">Your own drafts, decisions and records, once you are signed in.</p><span class="go">Open the studio</span></a></div></section>
+<nav class="wrap also" aria-label="More pages"><a href="/s/whats-on/all">What is on</a><a href="/s/sets/all">Collections</a><a href="/s/prices/observed">What things cost</a><a href="https://docs.aurekai.work/">Guides</a><a href="https://aurekai-work-samples.pages.dev/">Work samples</a></nav>
+<section class="wrap also signal"><div><p class="eyebrow">Weather</p><div class="weather" id="weather" hx-get="/_surface/home-weather" hx-trigger="load" hx-swap="innerHTML">Checking for public weather sources.</div></div></section>
+</main><footer class="wrap foot"><span>Bonfÿre × Aurekai</span><a href="/.well-known/bonfyre">For programs: how this address describes itself</a></footer><p class="foot-name" aria-hidden="true">Aurekai</p><script defer src="/assets/matrix-htmx.js"></script><script defer src="/assets/bonfyre-kit.js"></script></body></html>

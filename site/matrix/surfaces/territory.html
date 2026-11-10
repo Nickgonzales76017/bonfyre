@@ -1,0 +1,1284 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Territory · Aurekai</title>
+<meta name="theme-color" content="#0d120f">
+<!-- This surface borrows nothing. Every other clone here runs a donor project's
+     own front end, because each of them is one product with one domain. This
+     page is about the four domains at once: it is the AddressPlane's front
+     door, and no market product is shaped like "one subject, four addresses",
+     so there is nothing honest to clone. Bonfyre's own chrome, deliberately. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+<style>
+:root{color-scheme:dark;--ink:#eaf0e9;--dim:#9fb1a3;--faint:#6b7d70;--line:#22302a;
+      --bg:#0d120f;--panel:#131b16;--panel2:#18231c;
+      --live:#ff5a45;--life:#8fd12a;--shop:#ffc44d;--work:#6ea8ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 15px/1.55 "IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.wrap{width:min(1320px,calc(100% - 40px));margin-inline:auto}
+code{font:400 .88em "IBM Plex Mono",ui-monospace,monospace}
+
+.top{display:flex;align-items:center;gap:20px;padding:15px 0;border-bottom:1px solid var(--line);
+  flex-wrap:wrap}
+.top .mark{font:600 16px "IBM Plex Mono",monospace;letter-spacing:-.04em;color:var(--ink);
+  text-decoration:none}
+.top nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
+.top nav a{color:var(--dim);text-decoration:none}
+.top nav a:hover{color:var(--ink)}
+.top .here{margin-left:auto;font:400 12px "IBM Plex Mono",monospace;color:var(--faint)}
+
+.head{padding:34px 0 10px;max-width:78ch}
+.eyebrow{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint);margin:0}
+h1{font:600 clamp(30px,4vw,46px)/1.06 "IBM Plex Sans",system-ui,sans-serif;
+  letter-spacing:-.035em;margin:9px 0 12px;text-wrap:balance}
+.lede{color:var(--dim);font-size:16.5px;margin:0;max-width:70ch}
+
+section{padding:34px 0;border-top:1px solid var(--line);margin-top:30px}
+h2{font:600 19px "IBM Plex Sans",system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 5px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 20px;max-width:74ch}
+
+/* the four hosts, read from their own well-known document */
+.hosts{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+.host{border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden;
+  border-top:3px solid var(--t)}
+.host .hh{padding:13px 15px 10px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.host .hh b{font:600 16px "IBM Plex Mono",monospace;letter-spacing:-.02em}
+.host .hh .q{font-size:12.5px;color:var(--dim)}
+.host dl{margin:0;padding:0 15px 13px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.host dt{font:500 9.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);align-self:center}
+.host dd{margin:0;font:400 12.5px "IBM Plex Mono",monospace;word-break:break-word}
+.host .modes{padding:0 15px 14px;display:flex;gap:6px;flex-wrap:wrap}
+.mode{border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;
+  background:var(--panel2);font:500 11px "IBM Plex Mono",monospace;color:var(--dim)}
+.mode:hover{border-color:var(--t);color:var(--ink)}
+.mode[aria-pressed="true"]{background:var(--t);border-color:var(--t);color:#0d120f}
+.host .bad{padding:0 15px 14px;font-size:12.5px;color:#e6ada4}
+
+/* one subject, four addresses */
+.addr{border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden}
+.addrhead{display:flex;gap:10px;align-items:center;padding:12px 15px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.addrhead input{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:4px;padding:8px 11px;font:400 13px "IBM Plex Mono",monospace}
+.addrhead select{background:var(--panel2);border:1px solid var(--line);border-radius:4px;
+  padding:8px;font:400 12.5px "IBM Plex Mono",monospace}
+.addrhead button{background:var(--life);color:#0d120f;border:0;border-radius:4px;padding:8px 15px;
+  cursor:pointer;font:600 11.5px "IBM Plex Mono",monospace}
+.arow{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;
+  padding:10px 15px;border-bottom:1px solid var(--line);font-size:13.5px}
+.arow:last-child{border-bottom:0}
+.arow .t{font:600 12px "IBM Plex Mono",monospace}
+.arow .u{font:400 12.5px "IBM Plex Mono",monospace;color:var(--dim);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.arow .st{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:3px;padding:3px 8px;white-space:nowrap}
+.st.ok{background:#1c2c1e;color:#a8d98c}
+.st.no{background:#2c1b19;color:#e6ada4}
+.st.wait{background:#242424;color:#9a9a9a}
+
+/* the capital plane, kept */
+.plane{border:1px solid var(--line);border-radius:6px;background:var(--panel);overflow:hidden}
+.plane-hd{display:flex;align-items:baseline;gap:12px;padding:12px 15px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.plane-hd h3{margin:0;font-size:15.5px}
+.plane-hd .why{font-size:12.5px;color:var(--dim)}
+.axis{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:12px 15px;
+  border-bottom:1px solid var(--line);align-items:start}
+.axis:last-child{border-bottom:0}
+.axis .lab{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);padding-top:7px}
+.track{display:flex;gap:7px;flex-wrap:wrap}
+.node{border:1px solid var(--line);border-radius:5px;background:var(--panel2);padding:8px 11px;
+  cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:160px}
+.node:hover{border-color:var(--life)}
+.node.sel{border-color:var(--life);background:#16241a}
+.node.blocked .nm{text-decoration:line-through;opacity:.65}
+.node .nm{font-size:13px;font-weight:500}
+.node .hz{font:400 10.5px "IBM Plex Mono",monospace;color:var(--faint)}
+.node .cap{align-self:flex-start;font:500 9px "IBM Plex Mono",monospace;letter-spacing:.08em;
+  border-radius:3px;padding:2px 6px;margin-top:2px}
+.cap-EVIDENCED{background:#1c2c1e;color:#a8d98c}
+.cap-UNKNOWN{background:#242424;color:#9a9a9a}
+.rev-reversible{border-left:3px solid #6f9821}
+.rev-costly{border-left:3px solid #b8862b}
+.rev-irreversible{border-left:3px solid #8d3427}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:11px 15px;border-top:1px solid var(--line);
+  font:400 11.5px "IBM Plex Mono",monospace;color:var(--faint)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.inspect{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin-top:12px;
+  padding:14px 16px}
+.inspect:empty{display:none}
+.inspect h3{margin:0 0 3px;font-size:16px}
+.inspect .sub2{margin:0 0 10px;font:400 12px "IBM Plex Mono",monospace;color:var(--faint)}
+.chain{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.chain .link{border:1px solid var(--line);border-radius:4px;padding:3px 9px;
+  font:400 11.5px "IBM Plex Mono",monospace}
+.chain .link.miss{border-color:#8d3427;color:#e6ada4}
+.chain .arrow{color:var(--faint)}
+.grid2{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.grid2 dt{font:500 9.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);align-self:center}
+.grid2 dd{margin:0;font-size:13.5px}
+
+.verbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.verb{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:5px 11px;
+  font:500 10.5px "IBM Plex Mono",monospace;color:var(--dim);cursor:help}
+.cant{border-left:3px solid var(--live);padding-left:12px;margin:18px 0 0;font-size:13.5px;
+  color:#dcb8b1;line-height:1.55;max-width:76ch}
+.src{font:400 11.5px "IBM Plex Mono",monospace;color:var(--faint);margin:10px 0 0}
+.note{border:1px solid #7d3a31;background:#1d1312;border-radius:6px;padding:14px 16px;
+  margin:14px 0}
+foot,footer{display:block;padding:32px 0 70px;border-top:1px solid var(--line);margin-top:32px;
+  color:var(--faint);font-size:13px;line-height:1.6}
+footer p{max-width:80ch;margin:0 0 9px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+  background:#0d120f;border:1px solid var(--line);color:var(--ink);border-radius:6px;
+  padding:11px 15px;font-size:13.5px;max-width:min(600px,90vw);line-height:1.5;
+  opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style></head><body>
+<div class="wrap">
+<header class="top">
+  <span id="bf-mk"></span>
+  <nav id="tv-nav"></nav>
+  <span class="here" id="tv-here"></span>
+</header>
+
+<div class="head">
+  <p class="eyebrow">Address plane</p>
+  <h1 id="tv-h1">Whose host is this</h1>
+  <p class="lede" id="tv-lede">A host on this estate is not a deployment. It is an institution in
+  a territory. <code>leaflounge.aurekai.shop</code> is the Leaf Lounge as the market sees it;
+  <code>leaflounge.aurekai.life</code> is the same institution as its own people see it; and
+  <code>theleaflounge.store</code> is that institution again under a domain it owns. Same code,
+  same surfaces, different subject.</p>
+</div>
+
+<section>
+  <h2>This host</h2>
+  <p class="sub">Read from <code>/.well-known/bonfyre</code> on the host you are standing on.
+  Every field here comes from the Matrix, including which institution holds this address.</p>
+  <div class="hosts" id="tv-hosts"></div>
+</section>
+
+<section>
+  <h2 id="tv-sibhead">The same institution, its other territories</h2>
+  <p class="sub" id="tv-sibsub">One institution holds one host per territory it participates in,
+  and sometimes a domain of its own. This comes from the Matrix, not from cutting up the
+  hostname &mdash; which is the only way to find <code>theleaflounge.store</code>.</p>
+  <div class="hosts" id="tv-sibs"></div>
+</section>
+
+<section>
+  <h2>Every address this estate carries</h2>
+  <p class="sub">From <code>/.well-known/bonfyre/estate</code>. Grouped by the institution that
+  holds them. Follow any of these and the same surfaces answer, for a different subject.</p>
+  <div id="tv-estate"></div>
+</section>
+
+<section>
+  <h2>A subject, addressed</h2>
+  <p class="sub">A surface is a representation; the address is the subject. This estate addresses
+  a subject at <code>/s/&lt;kind&gt;/&lt;id&gt;</code> and its room at
+  <code>/room/&lt;kind&gt;/&lt;id&gt;</code> &mdash; the same path on every host, because the
+  address belongs to the subject and not to the territory. Follow one and the host answers you
+  directly.</p>
+  <div class="addr">
+    <div class="addrhead">
+      <select id="tv-kind" aria-label="Subject kind">
+        <option value="parcel">parcel</option>
+        <option value="capability">capability</option>
+        <option value="note">note</option>
+      </select>
+      <input id="tv-id" value="04111877" aria-label="Subject id"
+             placeholder="the id this estate gave it">
+      <button id="tv-resolve" type="button">Resolve</button>
+    </div>
+    <div id="tv-addrs"></div>
+  </div>
+  <p class="cant" id="tv-addrcant"></p>
+</section>
+
+<section>
+  <h2>Four territories, four sets of UX physics</h2>
+  <p class="sub">They are projections over one Matrix, not four products &mdash; but their
+  physics differ, and building them as one feed with different icons would lose exactly what
+  makes each market leader good at what it does. A verb outside its territory is a category
+  error, so nothing below merges them.</p>
+  <div class="hosts" id="tv-physics"></div>
+</section>
+
+<section>
+  <h2 id="tv-modehead">Modes</h2>
+  <p class="sub" id="tv-modesub"></p>
+  <div id="tv-modebody"></div>
+</section>
+
+<div class="verbs" id="tv-verbs"></div>
+<p class="src" id="tv-src"></p>
+
+<footer>
+  <p><strong>Every other surface on this estate runs a donor project's own front end.</strong>
+  This one does not, and that is the point: Zulip, Pixelfed, Pinry, Mobilizon and Next.js Commerce
+  are each one product with one domain. Nothing in the reference estate is shaped like &ldquo;one
+  subject seen four ways&rdquo;, so there is nothing here to borrow honestly.</p>
+  <p>An address is eligibility, not authority. Resolving a subject on a host tells you that host
+  will answer for it. It does not tell you that you may do anything to it.</p>
+</footer>
+</div>
+<div class="toast" id="tv-toast" role="status" aria-live="polite"></div>
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* The AddressPlane's front door.
+ *
+ * Three things are read live rather than written into this page: what each host
+ * says it is, whether a given subject address resolves on each host, and the
+ * capital plane behind .work's business mode. The rest is the claim the estate
+ * makes about its own shape -- four territories over one Matrix, six modes
+ * across them -- and it is stated rather than computed, because it is a
+ * decision and not an observation.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: false});
+  const $ = (s,r=document)=>r.querySelector(s);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const el = (t,c,h)=>{const n=document.createElement(t); if(c)n.className=c;
+    if(h!==undefined)n.innerHTML=h; return n;};
+  let tt; const toast = t => {
+    const b=$('#tv-toast'); b.textContent=t; b.classList.add('on');
+    clearTimeout(tt); tt=setTimeout(()=>b.classList.remove('on'), 5200);
+  };
+
+  const T = ['live','life','shop','work'];
+  const HERE = K.territory;
+  const hostFor = t => location.protocol + '//'
+    + location.hostname.replace(/\.(life|live|shop|work)$/, '.' + t);
+
+  $('#tv-nav').innerHTML = [['/discover','Discover'],['/stage','Stage'],['/channels','Channels'],
+    ['/board','Boards'],['/community','Community'],['/listings','Listings'],
+    ['/parcels','Parcels'],['/inbox','Inbox'],['/township','Township']]
+    .map(p=>'<a href="'+p[0]+'">'+p[1]+'</a>').join('');
+  $('#tv-here').textContent = location.hostname;
+
+  /* Which surface represents which mode. This is the estate's own decision, and
+     the page says so rather than pretending to have measured it. */
+  const MODES = {
+    live: [{id:'tonight', label:'Tonight',
+            q:'What deserves attention now?',
+            reads:['night-live'], surfaces:['/discover','/stage'],
+            verbs:['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE']}],
+    life: [{id:'personal', label:'Personal',
+            q:'What matters in my world?',
+            reads:['night-life'], surfaces:['/board','/discover'],
+            verbs:['MEET','JOIN','GO','SAVE','FOLLOW','SHARE','REMEMBER']},
+           {id:'household', label:'Household',
+            q:'What does the private operating world need?',
+            reads:[], surfaces:['/township'],
+            verbs:['PLAN','MOVE','SAVE','HELP','REMEMBER','ASSIGN']}],
+    shop: [{id:'market', label:'Market',
+            q:'What economic opportunity is useful?',
+            reads:['night-shop'], surfaces:['/listings','/parcels'],
+            verbs:['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND',
+                   'CONTRIBUTE']}],
+    work: [{id:'professional', label:'Professional',
+            q:'What should move forward?',
+            reads:['night-work'], surfaces:['/inbox','/channels'],
+            verbs:['APPLY','CONTACT','BOOK','DO','REVIEW','ASSIGN','RESPOND','ESCALATE','CLAIM']},
+           {id:'business', label:'Business',
+            q:'How does capital actually become reachable?',
+            reads:['capital-routes','capital-transformations','funding'],
+            surfaces:['/inbox'],
+            verbs:['APPROVE','FUND','REVIEW','CLAIM','ASSIGN','ESCALATE','CONTACT']}]
+  };
+
+  /* ---- this host, from its own address document ------------------------- */
+  const here = await K.address();
+  const estate = await K.estate();
+
+  const inst = here.institution || '';
+  const instLabel = inst.replace(/^(institution|place|world|community|market):/, '')
+                        .replace(/^aurekai:/, 'aurekai · ');
+  document.title = instLabel ? instLabel + ' · Bonfÿre' : document.title;
+  $('#tv-h1').textContent = instLabel
+    ? 'This is ' + instLabel + ', as .' + here.territory + ' sees it'
+    : 'Whose host is this';
+
+  const hostCard = (o, opts) => {
+    opts = opts || {};
+    const t = o.territory || '';
+    const card = el('div','host');
+    card.style.setProperty('--t', 'var(--' + (['live','life','shop','work'].includes(t)
+      ? t : 'life') + ')');
+    const modes = MODES[t] || [];
+    card.innerHTML =
+      '<div class="hh"><b>' + esc(o.host || '') + '</b>'
+    + (opts.mine ? '<span class="q">you are here</span>'
+                 : '<span class="q">' + esc((modes[0]||{}).q || '') + '</span>') + '</div>'
+    + '<dl>'
+    + (o.institution ? '<dt>institution</dt><dd>' + esc(o.institution) + '</dd>' : '')
+    + '<dt>territory</dt><dd>' + esc(t) + '</dd>'
+    + (o.world ? '<dt>world</dt><dd>' + esc(o.world) + '</dd>' : '')
+    + '<dt>audience</dt><dd>' + esc(o.audience || '') + '</dd>'
+    + (o.representation ? '<dt>repr</dt><dd>' + esc(o.representation) + '</dd>' : '')
+    + (o.bonfyrefs ? '<dt>fs</dt><dd>' + esc(o.bonfyrefs) + '</dd>' : '')
+    + (o.evidence ? '<dt>bound as</dt><dd>' + esc(o.evidence) + '</dd>' : '')
+    + '</dl>'
+    + (opts.link
+        ? '<div class="modes"><a class="mode" href="' + esc(location.protocol + '//' + o.host
+          + location.pathname) + '">open it</a></div>'
+        : '<div class="modes"></div>');
+    return card;
+  };
+
+  let mode = null;
+  const drawHosts = () => {
+    const box = $('#tv-hosts'); box.innerHTML = '';
+    const card = hostCard(here, {mine:true});
+    const mb = card.querySelector('.modes');
+    for (const m of (MODES[here.territory] || [])) {
+      const b = el('button','mode');
+      b.type = 'button'; b.textContent = m.label;
+      b.setAttribute('aria-pressed', String(!!mode && mode.id === m.id));
+      b.addEventListener('click', () => {
+        mode = {...m, terr: here.territory}; drawHosts(); drawMode(); });
+      mb.appendChild(b);
+    }
+    box.appendChild(card);
+  };
+
+  /* the institution's other territories */
+  const sibs = (here.institution_hosts || []).filter(h => h.host !== here.host);
+  const sibBox = $('#tv-sibs');
+  if (!sibs.length) {
+    $('#tv-sibsub').textContent = 'This institution holds only this address. That is a real '
+      + 'answer, not a missing one: participating in a territory is a decision, and this one '
+      + 'has made it once.';
+  } else {
+    for (const h of sibs) sibBox.appendChild(hostCard(h, {link:true}));
+  }
+
+  /* the whole estate, grouped by institution */
+  const estBox = $('#tv-estate');
+  if (!estate) {
+    estBox.innerHTML = '<div class="note"><strong>The estate directory did not answer.</strong>'
+      + '<p style="margin:6px 0 0;font-size:13.5px">Nothing is listed rather than a remembered '
+      + 'list. <code>/.well-known/bonfyre/estate</code> is the only thing that knows.</p></div>';
+  } else {
+    const byInst = {};
+    for (const h of estate.hosts) (byInst[h.institution] = byInst[h.institution] || []).push(h);
+    estBox.innerHTML = '<p class="sub" style="margin-bottom:14px">'
+      + estate.count + ' addresses across ' + Object.keys(byInst).length + ' institutions.</p>'
+      + Object.keys(byInst).sort().map(i => {
+          const hs = byInst[i];
+          return '<div class="arow" style="grid-template-columns:230px 1fr auto">'
+          + '<span class="t">' + esc(i) + '</span>'
+          + '<span class="u" style="white-space:normal">' + hs.map(h =>
+              '<a href="' + esc(location.protocol + '//' + h.host + '/territory')
+              + '" style="color:' + (h.host === here.host ? 'var(--ink)' : 'var(--dim)') + '">'
+              + esc(h.host) + '</a> <span style="color:var(--faint)">.' + esc(h.territory)
+              + '</span>').join(' &middot; ') + '</span>'
+          + '<span class="st ' + (hs.some(h=>h.host===here.host) ? 'ok">you are here'
+                                                                 : 'wait">' + hs.length
+              + ' address' + (hs.length===1?'':'es')) + '</span></div>';
+        }).join('');
+  }
+
+  /* ---- one subject, four addresses -------------------------------------- */
+  /* The address is derivable: the same path on every host. Whether a host
+     *carries* it is a different question, and one only that host can answer,
+     to the caller asking. This page asks the host it is on, because that is
+     same-origin and the answer is really about you. For the other three it
+     renders the address and stops -- a cross-origin probe would either be
+     refused by the browser or, if the estate opened it up, would answer for
+     an anonymous reader rather than for you, and this page would be reporting
+     somebody else's eligibility as if it were yours. */
+  const resolveSubject = async () => {
+    const kind = $('#tv-kind').value, id = $('#tv-id').value.trim();
+    const box = $('#tv-addrs');
+    if (!id) {
+      box.innerHTML = '<div class="arow"><span class="t">—</span>'
+        + '<span class="u">Put in an id this estate gave a subject.</span>'
+        + '<span class="st wait">waiting</span></div>';
+      return;
+    }
+    const path = '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+    const roomPath = '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+    box.innerHTML = T.map(t =>
+      '<div class="arow" id="ar-' + t + '"><span class="t">.' + t + '</span>'
+      + '<span class="u"><a href="' + esc(hostFor(t) + path) + '" style="color:var(--dim)">'
+      + esc(path) + '</a> &middot; <a href="' + esc(hostFor(t) + roomPath)
+      + '" style="color:var(--faint)">its room</a></span>'
+      + '<span class="st ' + (t === HERE ? 'wait">asking this host' : 'wait">ask it yourself')
+      + '</span></div>').join('');
+
+    /* only the host this page is on, and only because that answer is yours */
+    const row = $('#ar-' + HERE);
+    let carried = false, title = '';
+    try {
+      const r = await fetch(path, {headers:{Accept:'text/html'}});
+      const body = await r.text();
+      const m = body.match(/<title>(.*?)<\/title>/);
+      title = m ? m[1].replace(/\s*&middot;\s*Bonf.*$/, '') : '';
+      /* the organ answers 200 with a "Not found" page for an address it does
+         not carry, so the status alone is not the answer -- the title is */
+      carried = r.ok && title && !/not found/i.test(title);
+    } catch (e) { title = ''; }
+    row.innerHTML = '<span class="t">.' + HERE + '</span>'
+      + '<span class="u">' + (carried
+        ? '<a href="' + esc(path) + '" style="color:var(--dim)">' + esc(title) + '</a>'
+          + ' &middot; <a href="' + esc(roomPath) + '" style="color:var(--faint)">its room</a>'
+        : esc(path)) + '</span>'
+      + '<span class="st ' + (carried ? 'ok">carries it, for you' : 'no">does not carry it')
+      + '</span>';
+  };
+  $('#tv-resolve').addEventListener('click', resolveSubject);
+  $('#tv-id').addEventListener('keydown', e => { if (e.key === 'Enter') resolveSubject(); });
+  $('#tv-kind').addEventListener('change', resolveSubject);
+  $('#tv-addrcant').innerHTML =
+    'Cannot be inferred: a host carrying an address is not a host granting anything. Resolution '
+    + 'is eligibility &mdash; it says this subject is addressable here, and says nothing about '
+    + 'what you may do to it. And eligibility is <em>per caller</em>: this page only asks the '
+    + 'host it is standing on, because that answer is about you. The other three addresses are '
+    + 'shown and not tested, since an answer fetched anonymously from here would be somebody '
+    + 'else\'s, reported as yours.';
+
+  /* ---- the mode pane ------------------------------------------------------ */
+  const drawMode = async () => {
+    const body = $('#tv-modebody');
+    if (!mode) {
+      $('#tv-modehead').textContent = 'Six modes over four territories';
+      $('#tv-modesub').textContent = 'Choose a mode above. .life and .work each carry two '
+        + 'internal worlds; .live and .shop carry one each. Six modes, four territories, and '
+        + 'not a fifth territory anywhere.';
+      body.innerHTML = '';
+      $('#tv-verbs').innerHTML = ''; $('#tv-src').textContent = '';
+      return;
+    }
+    $('#tv-modehead').textContent = mode.label + ' — .' + mode.terr;
+    $('#tv-modesub').textContent = mode.q;
+    /* a mode narrows a territory; it never adds a verb the territory does not
+     carry, so the check is here rather than in a comment */
+  const outside = mode.verbs.filter(v => !K.verbsFor(mode.terr).includes(v));
+  if (outside.length) console.warn('verbs outside .' + mode.terr + ':', outside);
+  $('#tv-verbs').innerHTML = mode.verbs.map(v =>
+      '<span class="verb" title="' + esc(v) + ' is offered in this mode. Whether you may is '
+      + 'decided at effect time by the owner of the effect.">' + esc(v) + '</span>').join('');
+    $('#tv-src').textContent = mode.reads.length
+      ? 'Reading ' + mode.reads.map(r=>'/_surface/'+r).join(' · ')
+      : 'This mode reads no pattern yet.';
+
+    const links = '<p class="sub" style="margin-top:14px">Represented by '
+      + mode.surfaces.map(s=>'<a href="'+s+'" style="color:var(--life)">'+s+'</a>').join(' and ')
+      + ' on this host. A surface is a representation of the mode, never the mode itself.</p>';
+
+    if (!mode.reads.length) {
+      body.innerHTML = '<div class="note"><strong>Declared and not yet served.</strong>'
+        + '<p style="margin:6px 0 0;font-size:13.5px">No pattern answers for this mode. The other '
+        + 'mode of this territory is served from the same host, so this is an unbuilt mode '
+        + 'rather than an unbuilt territory.</p></div>' + links;
+      return;
+    }
+
+    if (mode.id !== 'business') {
+      body.innerHTML = '<p class="sub">Reading…</p>';
+      const r = await K.surface(mode.reads[0]);
+      if (!r.ok) { body.innerHTML = ''; body.appendChild(K.note(r, mode.label));
+        body.insertAdjacentHTML('beforeend', links); return; }
+      if (!r.records.length) { body.innerHTML = ''; body.appendChild(K.empty(mode.label,
+        '/_surface/' + mode.reads[0])); body.insertAdjacentHTML('beforeend', links); return; }
+      body.innerHTML = '<div class="hosts">' + r.records.map(rec =>
+        '<div class="host" style="--t:var(--'+mode.terr+')"><div class="hh"><b>'
+        + esc(rec.name || '') + '</b></div><dl>'
+        + Object.entries(rec).filter(kv=>kv[1]&&kv[0]!=='name')
+            .map(kv=>'<dt>'+esc(kv[0].replace(/_/g,' '))+'</dt><dd>'+esc(kv[1])+'</dd>').join('')
+        + '</dl></div>').join('') + '</div>' + links;
+      return;
+    }
+
+    /* business: the capital reachability plane */
+    body.innerHTML = '<p class="sub">Compiling the capital plane…</p>';
+    const [routesR, transR, fundR] = await Promise.all(
+      ['capital-routes','capital-transformations','funding'].map(n=>K.surface(n)));
+    if (!routesR.ok) { body.innerHTML=''; body.appendChild(K.note(routesR,'Capital routes'));
+      body.insertAdjacentHTML('beforeend', links); return; }
+    const routes = routesR.records, trans = transR.ok ? transR.records : [];
+    const funds = fundR.ok ? fundR.records : [];
+    const satisfied = new Set(funds.filter(f=>/resolv|met|closed/i.test(f.state||''))
+                                   .map(f=>f.requirement));
+    const REV = ['reversible','costly','irreversible'];
+    const byRev = {reversible:[],costly:[],irreversible:[]};
+    for (const t of trans) (byRev[t.reversibility] || byRev.reversible).push(t);
+    const routeOf = n => routes.find(r=>r.route===n);
+
+    let html = '<div class="plane"><div class="plane-hd"><h3>Capital reachability</h3>'
+      + '<span class="why">' + trans.length + ' transformations · ' + routes.length
+      + ' routes · ordered by what undoing them costs</span></div>';
+    for (const rev of REV) {
+      const items = byRev[rev] || [];
+      html += '<div class="axis"><div class="lab">' + rev + '</div><div class="track">';
+      if (!items.length) html += '<span class="sub" style="margin:0">none</span>';
+      for (const t of items) {
+        const r = routeOf(t.transform);
+        const cap = r ? r.capacity_state : 'UNKNOWN';
+        const reqs = (t.requires||'').split(',').filter(Boolean);
+        const blocked = reqs.some(q=>!satisfied.has(q.trim()));
+        const mo = Number(t.duration_months||0);
+        html += '<button class="node rev-'+rev+(blocked?' blocked':'')+'" type="button" '
+          + 'data-t="'+esc(t.transform)+'">'
+          + '<span class="nm">'+esc(t.transform.replace(/-/g,' '))+'</span>'
+          + '<span class="hz">'+(mo?mo+' mo':'immediate')+' · '+esc(t.family||'')+'</span>'
+          + '<span class="cap cap-'+esc(cap)+'">'+esc(cap)+'</span></button>';
+      }
+      html += '</div></div>';
+    }
+    html += '<div class="legend">'
+      + '<span><i style="background:#6f9821"></i>reversible — undo is cheap</span>'
+      + '<span><i style="background:#b8862b"></i>costly — undo has a price</span>'
+      + '<span><i style="background:#8d3427"></i>irreversible — there is no undo</span>'
+      + '<span>struck through = a prerequisite is unmet</span></div></div>'
+      + '<div class="inspect" id="tv-inspect"></div>' + links;
+    body.innerHTML = html;
+
+    const inspect = $('#tv-inspect');
+    for (const n of body.querySelectorAll('.node')) n.addEventListener('click', () => {
+      body.querySelectorAll('.node').forEach(x=>x.classList.remove('sel'));
+      n.classList.add('sel');
+      const t = trans.find(x=>x.transform===n.dataset.t);
+      const r = routeOf(t.transform);
+      const reqs = (t.requires||'').split(',').filter(Boolean).map(s=>s.trim());
+      let chain = '';
+      if (reqs.length) {
+        chain = '<div class="chain">' + reqs.map((q,i)=>(i?'<span class="arrow">+</span>':'')
+          + '<span class="link'+(satisfied.has(q)?'':' miss')+'">'+esc(q)+'</span>').join('')
+          + '<span class="arrow">&rarr;</span><span class="link">'+esc(t.transform)+'</span>'
+          + (r&&r.satisfies?'<span class="arrow">&rarr;</span><span class="link">'
+             +esc(r.satisfies)+'</span>':'') + '</div>';
+      }
+      const add=(k,v)=>v?'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>':'';
+      inspect.innerHTML = '<h3>'+esc(t.transform.replace(/-/g,' '))+'</h3>'
+        + '<p class="sub2">'+(r?'route '+esc(r.route)+' · '+esc(r.kind)
+            :'transformation only — no route records it')+'</p>'
+        + chain + '<dl class="grid2">'
+        + add('family',t.family) + add('reversibility',t.reversibility)
+        + add('horizon',(Number(t.duration_months)||0)+' months')
+        + add('grants rights',t.grants_rights||'none recorded')
+        + add('obligations',t.obligations||'none recorded')
+        + (r?add('capacity',r.capacity_state)+add('satisfies',r.satisfies):'')
+        + '</dl>'
+        + (r&&r.notes?'<p class="sub" style="margin:10px 0 0">'+esc(r.notes)+'</p>':'')
+        + '<p class="cant">A capacity state is what the estate can evidence, not what is '
+        + 'available. UNKNOWN means no record establishes it, which is different from zero.</p>';
+    });
+    const first = body.querySelector('.node'); if (first) first.click();
+  };
+
+  /* the four physics, read out of the kit so this page and every surface that
+     orders records are quoting the same source */
+  const physBox = $('#tv-physics');
+  for (const t of T) {
+    const P = K.physics(t);
+    const card = el('div','host');
+    card.style.setProperty('--t', 'var(--' + t + ')');
+    card.innerHTML =
+      '<div class="hh"><b>.' + t + '</b><span class="q">' + esc(P.principle) + '</span></div>'
+    + '<dl><dt>asks</dt><dd style="font-family:inherit">' + esc(P.question) + '</dd>'
+    + '<dt>orders by</dt><dd style="font-family:inherit">' + esc(P.orders_by) + '</dd>'
+    + '<dt>recency</dt><dd style="font-family:inherit">'
+    + (P.decays ? 'allowed to rank here' : 'never ranks here') + '</dd>'
+    + '<dt>verbs</dt><dd style="font-family:inherit">' + P.verbs.length + '</dd></dl>'
+    + '<div class="modes">' + P.verbs.map(v =>
+        '<span class="mode" style="cursor:default">' + esc(v) + '</span>').join('') + '</div>'
+    + '<p class="sub" style="padding:0 15px 14px;margin:0;font-size:12.5px">'
+    + esc(P.cant) + '</p>';
+    physBox.appendChild(card);
+  }
+
+  drawHosts();
+  drawMode();
+  await resolveSubject();
+
+  /* deep link: /territory#business, and the address if one was given */
+  const want = (location.hash||'').replace('#','');
+  if (want) {
+    for (const t of T) for (const m of (MODES[t]||[]))
+      if (m.id === want) { mode = {...m, terr:t}; drawHosts(); drawMode(); }
+  }
+})();
+
+</script></body></html>

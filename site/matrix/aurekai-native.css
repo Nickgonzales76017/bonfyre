@@ -1,0 +1,64 @@
+/* aurekai-native.css -- the one stylesheet a native surface document needs.
+ *
+ * Native documents state structure (masthead, slots, program rows) and carry
+ * no presentation of their own.  This sheet gives them the same reading
+ * language as composed pages: an off-white ground, one sans, one mono, rules
+ * instead of boxes, and the territory and section links as a quiet tab row.
+ * It styles classes only; it never hides or reorders what a slot contains.
+ */
+:root{
+  --n-ground:#faf7f2; --n-ink:#20201c; --n-display:#111; --n-muted:#77736b;
+  --n-rule:rgba(0,0,0,.13); --n-accent:#8c1c13;
+  --n-sans:'DM Sans','Inter','IBM Plex Sans','Source Sans 3',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --n-mono:'DM Mono','IBM Plex Mono','Source Code Pro',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--n-ground:#101113;--n-ink:#dedbd4;--n-display:#f4f1ea;--n-muted:#8f8b83;--n-rule:rgba(255,255,255,.14);--n-accent:#ff8a5e}
+}
+html,body.bf-native-surface{background:var(--n-ground)!important;color:var(--n-ink)!important}
+body.bf-native-surface{margin:0;font-family:var(--n-sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.bf-native-surface *{box-sizing:border-box}
+.bf-native-surface a{color:inherit;text-decoration:none}
+.bf-native-layout{width:min(1100px,calc(100% - 40px));margin:0 auto;padding:0 0 3rem}
+.bf-native-masthead{padding:1.6rem 0 1rem;border-bottom:1px solid var(--n-rule)}
+.bf-native-kicker{margin:0;font-family:var(--n-mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--n-muted)}
+.bf-native-masthead h1{margin:.35rem 0 0;font-size:clamp(2rem,5vw,3.2rem);font-weight:500;letter-spacing:-.02em;line-height:1.05;color:var(--n-display)}
+.bf-native-slot{margin:1.4rem 0 0}
+/* The first slot is navigation: territories, then sections, as one row. */
+.bf-native-slot-0{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.9rem;padding-bottom:.9rem;border-bottom:1px solid var(--n-rule)}
+.bf-native-slot-0 a{font-family:var(--n-mono);font-size:.7rem;padding:.12rem .55rem;border:1px solid var(--n-rule);border-radius:100px;color:var(--n-muted)}
+.bf-native-slot-0 a:hover{color:var(--n-display);border-color:currentColor}
+.bf-native-slot-0 a[href^="/"]{color:var(--n-ink)}
+.bf-native-slot-0 .btn{background:var(--n-display);color:var(--n-ground)!important;border-color:var(--n-display)}
+.bf-native-slot:not(.bf-native-slot-0):not(:has(.bf-program-list)){max-width:70ch;color:var(--n-muted);font-size:.9rem}
+.bf-program-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));column-gap:2rem}
+.bf-program-row{padding:.75rem 0 .8rem;border-top:1px solid var(--n-rule)}
+.bf-program-row header{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.bf-program-row header strong{font-weight:600;color:var(--n-display);font-size:1rem}
+.bf-program-row header a:hover strong{text-decoration:underline;text-underline-offset:.14em}
+.bf-program-row header span{font-family:var(--n-mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--n-muted)}
+.bf-program-row p{margin:.3rem 0 0;font-size:.88rem;line-height:1.45}
+.bf-program-row small{display:block;margin-top:.25rem;font-family:var(--n-mono);font-size:.62rem;color:var(--n-muted)}
+.bf-world-catalogue .bf-program-row header strong{font-size:1.25rem;font-weight:500;letter-spacing:-.01em}
+.bf-native-empty,.bf-refuse{color:var(--n-muted);font-size:.9rem}
+.bf-native-surface article,.bf-native-surface section{background:none!important;box-shadow:none!important}
+
+/* The estate's dress: the same ground, faces and scale as the front pages,
+ * whatever the reader's system prefers. */
+:root,html:root{--n-ground:#0d130f;--n-ink:#dde6da;--n-display:#f5f7ee;--n-muted:#8c9a8d;--n-rule:rgba(221,230,218,.17);--n-accent:#b5df32;--n-sans:'DM Sans',ui-sans-serif,system-ui,sans-serif;--n-mono:'DM Mono',ui-monospace,monospace}
+body.bf-native-surface{font-size:1rem;overflow-x:clip}
+.bf-native-layout{width:auto;margin:0;padding:0 max(22px,calc(50vw - 620px)) clamp(4rem,8vw,7rem)}
+.bf-native-masthead{padding:clamp(3.5rem,9vw,8.5rem) 0 clamp(2rem,4vw,3.5rem)}
+.bf-native-masthead h1{margin:0;font:600 clamp(3.4rem,11.5vw,11rem)/.86 var(--n-sans);letter-spacing:-.065em}
+.bf-native-slot-0{gap:.45rem;margin-top:1.4rem;padding-bottom:1.4rem}
+.bf-native-slot-0 a{padding:.5rem .95rem;font:500 .9rem/1 var(--n-sans);color:var(--n-ink);transition:background .25s,color .25s,border-color .25s}
+.bf-native-slot-0 a:hover{background:var(--n-accent);border-color:var(--n-accent);color:#0d130f}
+.bf-native-slot:not(.bf-native-slot-0):not(:has(.bf-program-list)){max-width:36rem;margin-top:clamp(2rem,5vw,4rem);font:400 clamp(1.3rem,2vw,1.85rem)/1.25 'Instrument Serif',Georgia,serif;color:var(--n-muted)}
+.bf-native-empty,.bf-refuse{font:400 clamp(1.3rem,2vw,1.85rem)/1.25 'Instrument Serif',Georgia,serif;color:var(--n-muted)}
+.bf-program-list{display:block;margin-top:clamp(2rem,5vw,4rem);border-bottom:1px solid var(--n-rule)}
+.bf-program-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:.4rem clamp(1rem,4vw,4rem);align-items:baseline;padding:clamp(1.1rem,2.4vw,2rem) 0;transition:padding .4s cubic-bezier(.2,.8,.2,1),background .4s}
+.bf-program-row header strong,.bf-world-catalogue .bf-program-row header strong{font:600 clamp(1.4rem,3vw,2.75rem)/1 var(--n-sans);letter-spacing:-.05em}
+.bf-program-row header a:hover strong{text-decoration:none;color:var(--n-accent)}
+.bf-program-row header span,.bf-program-row small{font:400 .76rem/1.4 var(--n-mono);letter-spacing:.04em;color:var(--n-muted)}
+.bf-program-row p{margin:0;font-size:1rem;color:var(--n-muted)}
+@media (max-width:700px){.bf-program-row{grid-template-columns:1fr}}

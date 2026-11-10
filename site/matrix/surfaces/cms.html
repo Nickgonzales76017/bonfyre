@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101916">
+  <title>Content · Bonfÿre Matrix</title>
+  <link rel="stylesheet" href="/assets/matrix.css">
+  <link rel="stylesheet" href="/assets/matrix-aperture.css">
+  <style>
+  /* Studio-local layout only. Every colour, face and control comes from
+     matrix.css so this surface belongs to the same world as the front page. */
+  .cms-shell{display:grid;grid-template-columns:250px minmax(0,1fr);gap:0;border-top:1px solid var(--ink);margin:34px 0 90px}
+  .cms-side{border-right:1px solid var(--ink);padding:26px 22px 22px;display:flex;flex-direction:column;gap:4px}
+  .cms-side .eyebrow{margin-bottom:14px}
+  .cms-types{display:flex;flex-direction:column}
+  .cms-types button{all:unset;cursor:pointer;padding:11px 12px;display:flex;justify-content:space-between;
+    gap:12px;font:500 13px 'DM Sans',Arial,sans-serif;letter-spacing:-.015em;border:1px solid transparent}
+  .cms-types button:hover{background:#e4e7d9}
+  .cms-types button[aria-selected="true"]{background:var(--night);color:#eaf0e5;border-color:var(--ink)}
+  .cms-types .n{font:500 10px 'DM Mono',monospace;opacity:.62}
+  .cms-side-foot{margin-top:auto;padding-top:20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}
+  .cms-start{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--ink);margin:12px 0 0}.cms-start button{all:unset;cursor:pointer;padding:17px;border-right:1px solid var(--ink)}.cms-start button:last-child{border-right:0}.cms-start button:hover{background:#e4e7d9}.cms-start strong{display:block;font-size:17px;letter-spacing:-.035em}.cms-start small{display:block;margin-top:5px;color:#657068;font:500 10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em}.cms-library{margin:24px 0 0;border-top:1px solid var(--line);padding-top:14px}.cms-library summary{cursor:pointer;font:500 10px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;color:#657068}.cms-library nav{margin-top:10px}
+  .cms-main{padding:26px 30px 40px;min-width:0}
+  .cms-main-head{display:flex;justify-content:space-between;align-items:flex-end;gap:26px;flex-wrap:wrap}
+  .cms-main-head h2{margin:0;font-size:clamp(30px,3.4vw,46px);font-weight:500;letter-spacing:-.06em;line-height:.95}
+  .cms-main-head h2 em{font-family:'Instrument Serif',Georgia,serif;font-weight:400;letter-spacing:-.045em}
+  .cms-table{width:100%;border-collapse:collapse;margin-top:26px;font-size:14px}
+  .cms-table th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--ink);
+    font:500 10px 'DM Mono',monospace;letter-spacing:.05em;text-transform:uppercase;color:#657068}
+  .cms-table td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .cms-table tr:hover td{background:#eef0e6}
+  .cms-title{font-size:16px;letter-spacing:-.03em}
+  .mono{font:500 11px 'DM Mono',monospace;color:#657068}
+  .pill{display:inline-block;padding:3px 9px;border:1px solid currentColor;
+    font:500 9px 'DM Mono',monospace;letter-spacing:.07em;text-transform:uppercase}
+  .pill.published{color:#5f8a17}.pill.draft{color:#96751d}.pill.gated{color:#8a4a17;margin-left:5px}
+  .cms-empty{padding:26px 12px;color:#657068;font:500 13px 'DM Mono',monospace}
+  .cms-home{padding:18px 0}.cms-home-intro h3{margin:5px 0 8px;font-size:34px;letter-spacing:-.06em;line-height:.95}.cms-home-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--ink);margin-top:24px}.cms-home-card{all:unset;cursor:pointer;padding:22px;border-right:1px solid var(--ink);display:grid;gap:5px}.cms-home-card:last-child{border-right:0}.cms-home-card:hover{background:#e4e7d9}.cms-home-card strong{font-size:38px;letter-spacing:-.07em;font-weight:500}.cms-home-card span{font:500 11px 'DM Mono',monospace;text-transform:uppercase;letter-spacing:.07em;color:#657068}.cms-home-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+  .cms-form{display:grid;gap:18px;margin-top:22px;max-width:760px}
+  .cms-form-head{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+    padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .cms-form-head h3{margin:0;font-size:26px;font-weight:500;letter-spacing:-.05em}
+  .cms-form label{display:grid;gap:7px}
+  .flabel{font:500 10px 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#657068}
+  .flabel em{font-style:normal;color:#8a4a17}
+  .cms-form input[type=text],.cms-form input[type=number],.cms-form select,.cms-form textarea{width:100%;padding:11px 13px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);font:500 15px/1.5 'DM Sans',Arial,sans-serif;letter-spacing:-.015em}
+  .cms-form input:focus,.cms-form select:focus,.cms-form textarea:focus{outline:none;border-color:var(--ink);box-shadow:3px 3px 0 #dce1d2}
+  .cms-form textarea{min-height:230px;resize:vertical;font:500 13px/1.65 'DM Mono',monospace}
+  .cms-flags{display:flex;gap:26px;flex-wrap:wrap}
+  .check{display:flex;align-items:center;gap:9px;font:500 12px 'DM Mono',monospace}
+  .cms-note{margin:0;color:#657068;font-size:12px;line-height:1.5;max-width:60ch}
+  .cms-status{min-height:18px;margin:0;font:500 12px 'DM Mono',monospace;color:#657068}
+  .cms-status.ok{color:#5f8a17}.cms-status.err{color:#9d2f24}
+  .fabric-strip{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--ink);border-bottom:0;margin:0 0 70px}
+  .fabric-card{padding:21px 19px;border-right:1px solid var(--ink);min-height:220px}.fabric-card:last-child{border-right:0}
+  .fabric-card h3{margin:38px 0 9px;font-size:25px;letter-spacing:-.055em;line-height:.95}.fabric-card p{color:#56665d;font-size:13px;line-height:1.48}.fabric-card select{width:100%;padding:9px;border:1px solid var(--line);background:#fff;color:var(--ink)}.cms-native-result{margin-top:16px}.cms-native-result .studio-result{padding:11px;border:1px solid var(--line);background:#eef0e6}.cms-native-result .result-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0 0}.cms-native-result dt{font:700 9px 'DM Mono',monospace;text-transform:uppercase;color:#66822b}.cms-native-result dd{margin:2px 0 0;font-size:11px;overflow-wrap:anywhere}.cms-native-result h3{margin:5px 0;font-size:15px}.cms-native-result .result-kicker{font-size:9px}
+  .htmx-request{opacity:.55;transition:opacity .12s ease}
+  @media(max-width:900px){.cms-shell{grid-template-columns:1fr}
+    .cms-side{border-right:0;border-bottom:1px solid var(--ink)}.fabric-strip,.cms-start,.cms-home-grid{grid-template-columns:1fr}.cms-start button,.cms-home-card{border-right:0;border-bottom:1px solid var(--ink)}.fabric-card{border-right:0;border-bottom:1px solid var(--ink)}}
+  </style>
+</head>
+<body>
+  <canvas class="matrix-gpu" id="matrix-gpu" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="wordmark" href="/" aria-label="Bonfyre home">BONF<span>Ÿ</span>RE</a>
+    <nav aria-label="Explore Bonfyre">
+      <a href="/habitat/">Habitat</a>
+      <a href="/cms/">Content</a>
+      <a href="/notes/">Notes</a>
+      <a href="/studio/">Studio</a>
+      <a href="/ops/">Operations</a>
+    </nav>
+    <a class="small-link" href="/account" id="session-link">Account <span>→</span></a>
+  </header>
+  <main>
+    <section class="hero wrap" style="padding:52px 0 8px">
+      <div class="eyebrow"><i></i><span>Aurekai / native content</span></div>
+      <h2 style="margin:0;font-size:clamp(44px,6vw,84px);font-weight:500;letter-spacing:-.075em;line-height:.9">
+        Start a page. <em>Grow an institution.</em></h2>
+      <p class="lede">Create a page, publish a story, build a knowledge base, or carry an institution’s work into a surface people can actually use.</p>
+    </section>
+
+    <div class="wrap">
+      <div class="cms-shell">
+        <aside class="cms-side">
+          <p class="eyebrow"><i></i>Your content</p>
+          <button class="button quiet" type="button" hx-get="/cms/parts/home" hx-target="#cms-pane" hx-swap="innerHTML">Content home <span>→</span></button>
+          <div id="cms-types" hx-get="/cms/parts/nav" hx-trigger="load" hx-swap="innerHTML"><span class="cms-empty">Loading content types…</span></div>
+          <div class="cms-side-foot">
+            <a class="small-link" href="/notes/">Public notes <span>→</span></a>
+          </div>
+        </aside>
+        <section class="cms-main">
+          <div class="cms-main-head">
+            <div>
+              <p class="eyebrow"><i></i><span id="cms-kind">—</span></p>
+              <h2 id="cms-title">Select a type</h2>
+            </div>
+            <div class="actions" style="margin-top:0"><button class="button primary" type="button" hx-get="/cms/parts/edit?type=wiki_page&amp;id=new" hx-target="#cms-pane" hx-swap="innerHTML">New page <span>+</span></button></div>
+          </div>
+          <div id="cms-start" class="cms-start" aria-label="Start creating"><button type="button" hx-get="/cms/parts/edit?type=wiki_page&amp;id=new" hx-target="#cms-pane" hx-swap="innerHTML"><strong>New page</strong><small>Public site or private workspace</small></button><button type="button" hx-get="/cms/parts/edit?type=course_lesson&amp;id=new" hx-target="#cms-pane" hx-swap="innerHTML"><strong>New lesson</strong><small>Learning and evidence</small></button><button type="button" hx-get="/cms/parts/edit?type=frappe_app&amp;id=new" hx-target="#cms-pane" hx-swap="innerHTML"><strong>New application</strong><small>Bring in app grammar</small></button></div>
+          <div id="cms-pane" hx-get="/cms/parts/home" hx-trigger="load" hx-swap="innerHTML"><div class="cms-empty">Loading your content…</div></div>
+        </section>
+      </div>
+      <section class="fabric-strip" aria-label="Institutional content operators">
+        <article class="fabric-card"><span class="eyebrow"><i></i>Frappe grammar</span><h3>Compile a real DocType estate.</h3><p>Bring the selected Frappe lineage's forms, fields, reports, and methods into a typed AppPack. Extraction never runs controllers or migrations.</p><form hx-post="/studio/v1/frappe/compile" hx-target="#cms-frappe-result" hx-swap="innerHTML"><select name="lineage" aria-label="Frappe lineage"><option value="frappe-core">Frappe core</option><option value="erpnext">ERPNext</option><option value="crm">CRM</option><option value="hrms">HRMS</option><option value="helpdesk">Helpdesk</option><option value="wiki">Wiki</option></select><button class="button quiet">Compile grammar <span>→</span></button></form><div class="cms-native-result" id="cms-frappe-result"></div></article>
+        <article class="fabric-card"><span class="eyebrow"><i></i>Financial membrane</span><h3>See the carrying boundary.</h3><p>Inspect operating caps and realized cost evidence used by this institution. It is not a cash balance, ledger settlement, or a payment authority.</p><button class="button quiet" hx-get="/studio/v1/membrane" hx-target="#cms-membrane-result" hx-swap="innerHTML">Open membrane <span>→</span></button><div class="cms-native-result" id="cms-membrane-result"></div></article>
+        <article class="fabric-card"><span class="eyebrow"><i></i>Address constellation</span><h3>Publish through one fabric.</h3><p>Content routes are one coordinate in a larger constellation. Presence, audience, aliases, and StandingAddresses are governed in Matrix Studio.</p><a class="button quiet" href="/studio/#matrix">Open Matrix publication <span>→</span></a><a class="text-link" href="/.well-known/bonfyre">Inspect this host's carriers <span>↗</span></a><p class="cms-note">AtomicForm remains the evidence and human-submit compiler; it is not reduced to a CMS submit button.</p></article>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <a class="wordmark" href="/">BONF<span>Ÿ</span>RE</a>
+    <p>Content is addressed, not filed. A page published here is reachable at its own route.</p>
+    <a href="/notes/">Read the notes ↗</a>
+  </footer>
+
+  <script defer src="/assets/matrix-htmx.js"></script>
+  <script src="/assets/matrix.js"></script>
+  <script type="module" src="/assets/matrix-vgpu.js"></script>
+  <script>
+  (function(){
+    /* CMS is server-rendered HTMX. Same-origin requests carry the HttpOnly
+       Matrix session; the browser never retains a bearer or builds a second
+       copy of the owner's grammar. */
+    const token=null;
+    return;
+    const $=id=>document.getElementById(id);
+    const esc=s=>String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+    if(!token){ $('cms-pane').innerHTML='<div class="cms-empty">Session required. '+
+      '<a class="text-link" href="/login">Sign in <span>&rarr;</span></a></div>'; return; }
+    const h={Authorization:'Bearer '+token};
+    const typesByName=new Map();
+
+    /* htmx carries the bearer on every swap; the partials are session-gated
+       server-side, so an unauthenticated swap renders a sign-in prompt. */
+    document.body.addEventListener('htmx:configRequest', e => {
+      e.detail.headers['Authorization']='Bearer '+token;
+    });
+
+    function controlFor(field,value){
+      const name=esc(field.name), required=field.required?' required':'';
+      const base=`<span class="flabel">${name}${field.required?' <em>required</em>':''}</span>`;
+      if(field.type==='boolean') return `<label class="check"><input data-field="${name}" data-kind="boolean" type="checkbox"${value?' checked':''}> ${base}</label>`;
+      if(field.enum){const options=String(field.enum).split(',').map(v=>`<option value="${esc(v.trim())}"${String(value)===v.trim()?' selected':''}>${esc(v.trim())}</option>`).join('');return `<label>${base}<select data-field="${name}" data-kind="enum"${required}>${options}</select></label>`;}
+      if(field.type==='text') return `<label>${base}<textarea data-field="${name}" data-kind="text"${required}>${esc(value||'')}</textarea></label>`;
+      const kind=['number','integer','decimal'].includes(field.type)?'number':'text';return `<label>${base}<input data-field="${name}" data-kind="${kind}" type="${kind}" value="${esc(value==null?'':value)}"${required}></label>`;
+    }
+    function editorialFields(type,attrs={}){
+      if(type.name==='wiki_page') return `<label><span class="flabel">Page title <em>required</em></span><input name="title" data-field="title" data-kind="text" value="${esc(attrs.title||'')}" required placeholder="A clear, human title"></label><label><span class="flabel">Web address <em>required</em></span><input name="route" data-field="route" data-kind="text" value="${esc(attrs.route||'')}" required placeholder="journal/first-page"></label><label><span class="flabel">Page body <em>required</em></span><textarea name="content" data-field="content" data-kind="text" required placeholder="Write the page people will read.">${esc(attrs.content||'')}</textarea></label><label><span class="flabel">Search description</span><textarea name="meta_description" data-field="meta_description" data-kind="text" placeholder="What should a reader understand before opening it?">${esc(attrs.meta_description||'')}</textarea></label><div class="cms-flags"><label class="check"><input name="published" data-field="published" data-kind="boolean" type="checkbox"${attrs.published?' checked':''}> <span class="flabel">Publish now</span></label><label class="check"><input name="allow_guest" data-field="allow_guest" data-kind="boolean" type="checkbox"${attrs.allow_guest?' checked':''}> <span class="flabel">Anyone can read it</span></label></div>`;
+      if(type.name==='course_lesson') return `<label><span class="flabel">Lesson title <em>required</em></span><input name="title" data-field="title" data-kind="text" value="${esc(attrs.title||'')}" required placeholder="What will someone learn?"></label><label><span class="flabel">Lesson body <em>required</em></span><textarea name="body" data-field="body" data-kind="text" required placeholder="Teach the material.">${esc(attrs.body||'')}</textarea></label><label><span class="flabel">Supporting material</span><textarea name="content" data-field="content" data-kind="text" placeholder="References, exercises, or media context.">${esc(attrs.content||'')}</textarea></label><label><span class="flabel">Instructor notes</span><textarea name="instructor_notes" data-field="instructor_notes" data-kind="text" placeholder="Private facilitation notes.">${esc(attrs.instructor_notes||'')}</textarea></label>`;
+      return null;
+    }
+    function renderNew(type){
+      const fields=(type.fields||[]).filter(f=>!['id','created_at','updated_at','published_at','status'].includes(f.name));
+      const editorial=editorialFields(type);
+      $('cms-pane').innerHTML=`<form class="cms-form" data-id="new" data-type="${esc(type.name)}"><div class="cms-form-head"><div><h3>New ${esc(type.displayName||type.name)}</h3><p class="cms-note">${editorial?'This is a purpose-built editing flow over the native owner.':'This record follows the native grammar that owns it.'}</p></div><div class="actions"><button type="button" class="button primary" data-act="create">${type.name==='wiki_page'?'Create page':'Create draft'} <span>&rarr;</span></button></div></div>${editorial||fields.map(controlFor).join('')}<p class="cms-status" data-status></p></form>`;
+    }
+    function renderEntry(type,id,attrs){
+      const fields=(type.fields||[]).filter(f=>!['id','created_at','updated_at','published_at','status'].includes(f.name));
+      const editorial=editorialFields(type,attrs);
+      $('cms-pane').innerHTML=`<form class="cms-form" data-id="${Number(id)}" data-type="${esc(type.name)}"><div class="cms-form-head"><div><h3>${esc(type.displayName||type.name)} <span class="mono">#${Number(id)}</span></h3><p class="cms-note">${editorial?'Edit the work itself, then save through its native owner.':'This entry is being edited through its native schema and scoped CMS API.'}</p></div><div class="actions"><button type="button" class="button primary" data-act="save">Save <span>&rarr;</span></button></div></div>${editorial||fields.map(f=>controlFor(f,attrs[f.name])).join('')}<p class="cms-status" data-status></p></form>`;
+    }
+    function selectType(button){
+      $('cms-types').querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x===button)));
+      $('cms-kind').textContent=button.dataset.t; $('cms-title').textContent=button.dataset.d;
+      $('cms-new').disabled=false; $('cms-new').dataset.type=button.dataset.t;
+    }
+    async function loadTypes(){
+      try{
+        const r=await fetch('/cms/v1/schemas',{headers:h});
+        const types=(await r.json()).data||[];
+        const names={wiki_page:'Pages',cms_article:'Imported article receipts',course_lesson:'Learning',frappe_app:'Applications',cms_generation:'Generation receipts'};
+        types.forEach(t=>{t.displayName=names[t.name]||t.displayName||t.name.replace(/[_-]/g,' ');typesByName.set(t.name,t)});
+        const button=t=>`<button type="button" data-t="${esc(t.name)}" data-d="${esc(t.displayName)}"
+             aria-selected="false" hx-get="/cms/parts/list?type=${encodeURIComponent(t.name)}"
+             hx-target="#cms-pane" hx-swap="innerHTML"><span>${esc(t.displayName)}</span><span class="n">${t.fieldCount}</span></button>`;
+        const primary=['wiki_page','course_lesson','frappe_app'];
+        $('cms-types').innerHTML=types.filter(t=>primary.includes(t.name)).map(button).join('');
+        $('cms-more-types').innerHTML=types.filter(t=>!primary.includes(t.name)).map(button).join('')||'<p class="cms-note">No additional types are registered.</p>';
+        document.querySelectorAll('#cms-types button,#cms-more-types button').forEach(b=>b.addEventListener('click',()=>selectType(b)));
+        if(window.htmx){htmx.process($('cms-types'));htmx.process($('cms-more-types'));}
+        if(window.htmx) htmx.ajax('GET','/cms/parts/home',{target:'#cms-pane',swap:'innerHTML'});
+      }catch(e){ $('cms-pane').innerHTML='<div class="cms-empty">'+esc(e.message)+'</div>'; }
+    }
+
+    document.addEventListener('click',ev=>{const start=ev.target.closest('[data-start]');if(!start)return;const type=typesByName.get(start.dataset.start);if(!type)return;const nav=document.querySelector(`[data-t="${CSS.escape(type.name)}"]`);if(nav)nav.click();renderNew(type);});
+
+    /* Writes go through the CMS service, which owns validation and the
+       published_at stamp. Create and update are the same form; the difference
+       is whether the row already has an id. */
+    document.addEventListener('click', async ev => {
+      const btn=ev.target.closest('[data-act]'); if(!btn) return;
+      const form=btn.closest('.cms-form'); if(!form) return;
+      const type=form.dataset.type, id=form.dataset.id;
+      const st=form.querySelector('[data-status]');
+      const say=(m,c)=>{ st.textContent=m; st.className='cms-status '+(c||''); };
+      const payload={};
+      [...form.elements].forEach(e=>{
+        if(!e.name) return;
+        if(e.type==='checkbox') payload[e.name]=e.checked?1:0;
+        else if(e.value!=='')   payload[e.name]=e.value;
+      });
+      if(btn.dataset.act==='publish'){
+        const pub=(payload.status||'')!=='published';
+        payload.status=pub?'published':'draft';
+        if('published' in payload) payload.published=pub?1:0;
+      }
+      const creating = (id==='new');
+      const url = creating ? `/cms/v1/api/${type}` : `/cms/v1/api/${type}/${id}`;
+      try{
+        const r=await fetch(url,{method:creating?'POST':'PUT',
+          headers:{...h,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const d=await r.json().catch(()=>({}));
+        if(r.status===403){ say('This account is signed in but not authorized to write here.','err'); return; }
+        if(!r.ok){ say('Save failed: '+(d.error||('HTTP '+r.status)),'err'); return; }
+        say(creating?('Created #'+(d.data&&d.data.id)+'.'):'Saved.','ok');
+        if(creating&&d.data&&d.data.id){
+          const opened=await fetch('/cms/v1/api/'+encodeURIComponent(type)+'/'+d.data.id,{headers:h});
+          const entry=await opened.json().catch(()=>({}));
+          if(opened.ok&&entry.data){renderEntry(typesByName.get(type),entry.data.id,entry.data.attributes||{});return;}
+        }
+        if(window.htmx) htmx.ajax('GET','/cms/parts/list?type='+encodeURIComponent(type),
+                                  {target:'#cms-pane',swap:'innerHTML'});
+      }catch(e){ say('Save failed: '+e.message,'err'); }
+    });
+
+    loadTypes();
+  })();
+  </script>
+</body>
+</html>

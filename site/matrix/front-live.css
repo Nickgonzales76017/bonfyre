@@ -1,0 +1,48 @@
+/* The live front's own blocks: the lead picture on the house field, the shows
+ * as a running programme strip, and the week, watch and listen bands.  Every
+ * colour and face is the house's (--w-*); nothing here names one. */
+
+html body[data-character] .wrap>:is(.live-lead,.live-shows,.live-block){
+  margin:0 calc(50% - 50vw + var(--ak-dock,0px)/2);padding:clamp(3rem,7vw,6rem) var(--f-pad,22px);border:0;border-radius:0;
+  background:var(--w-ground);color:var(--w-ink)}
+
+/* Lead: the picture fills the band, the words stand on the field beside it. */
+.live-lead{padding-top:0 !important}
+.live-lead-link{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(1.5rem,4vw,3.5rem);align-items:end;color:inherit}
+.live-lead-picture{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;border-radius:var(--w-radius)}
+.live-kicker{margin:0 0 1rem;font:500 .78rem/1.2 var(--w-face-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--w-accent)}
+.live-lead h2{margin:0;font-family:var(--w-face-display);font-weight:var(--w-display-weight);text-transform:var(--w-display-transform);
+  letter-spacing:var(--w-display-tracking);line-height:var(--w-display-leading,.95);font-size:clamp(2rem,4.6vw,4.4rem);color:var(--w-display);text-wrap:balance}
+.live-lead-link:hover h2{text-decoration:underline;text-decoration-thickness:.06em;text-underline-offset:.12em}
+.live-dek{margin:1.2rem 0 0;max-width:46ch;font-size:clamp(1rem,1.3vw,1.18rem);line-height:1.45;color:var(--w-ink);
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.live-lead .by{margin-top:1.4rem;display:flex;gap:1rem;font:500 .74rem/1 var(--w-face-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--w-muted)}
+
+/* Shows: one line each, the show's name loud, its newest episode under it. */
+.live-show-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:2.4rem 1.6rem}
+.live-show-list li{display:flex;flex-direction:column;gap:.45rem;padding-top:1rem;border-top:3px solid var(--w-display)}
+.live-show{display:flex;flex-direction:column;gap:.45rem;color:inherit}
+.live-show-cover{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--w-radius);margin-bottom:.5rem}
+.live-show-name{font-family:var(--w-face-display);font-weight:var(--w-display-weight);text-transform:var(--w-display-transform);
+  letter-spacing:var(--w-display-tracking);font-size:clamp(1.25rem,1.9vw,1.7rem);line-height:1;color:var(--w-display)}
+.live-show-latest{font-size:.98rem;line-height:1.35;color:var(--w-ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.live-show:hover .live-show-latest{text-decoration:underline;text-underline-offset:.15em}
+.live-show-meta{font:500 .7rem/1.3 var(--w-face-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--w-muted)}
+
+/* Put this on: one line per episode, cover, words, length, play. */
+.live-block .tracks li{display:flex;align-items:center;gap:1rem;padding:.9rem 0;border-top:1px solid var(--w-rule)}
+.live-block .tracks li .no{flex:none;width:1.6rem}
+.live-block .tracks li .art{flex:none;width:56px;height:56px;border-radius:var(--w-radius)}
+.live-block .tracks li .tt{flex:1;min-width:0}
+.live-block .tracks li .tt b{font-family:var(--w-face-body);font-size:1.02rem;font-weight:600;color:var(--w-display)}
+.live-block .tracks li .dur{flex:none}
+.live-block .tracks li .lift,.live-block .tracks li .play-on-page{flex:none;width:auto;display:inline-flex;align-items:center;gap:.35rem;
+  padding:.45rem .8rem;border:1px solid var(--w-rule);border-radius:999px;background:transparent;color:var(--w-display);font:500 .78rem/1 var(--w-face-body)}
+
+@media (max-width:760px){
+  .live-lead-link{grid-template-columns:1fr}
+  .live-lead-picture{aspect-ratio:4/3}
+}
+
+.live-lead.is-long h2{font-size:clamp(1.7rem,3.3vw,3.1rem)}
+.live-lead-link{align-items:center}

@@ -1,0 +1,21 @@
+/* Composition patterns chosen per route by route_presentation rows in the CMS
+   (cmd/BonfyreCMS/content-types/route_presentation.json). Presentation only. */
+body[data-aurekai-pattern]{--ak-comp-accent:var(--w-accent,#d0fc4f);--ak-comp-line:var(--w-rule,rgba(140,160,130,.24));--ak-comp-panel:var(--w-panel,rgba(125,145,115,.09));--ak-comp-gap:clamp(20px,3vw,44px)}
+body[data-aurekai-pattern] :is(.wrap,.bf-native-layout){width:min(calc(100% - clamp(24px,5vw,80px)),1440px);max-width:1440px;margin-inline:auto}
+body[data-aurekai-pattern] :is(.wrap>.hero,.bf-native-masthead){padding-block:clamp(28px,5vw,76px);border-bottom:1px solid var(--ak-comp-line)}
+body[data-aurekai-pattern] :is(.wrap>.hero h1,.bf-native-masthead h1){font-size:clamp(2.3rem,5vw,5.4rem);letter-spacing:-.055em;line-height:1.02;text-wrap:balance}
+body[data-aurekai-pattern] :is(.wrap>.region,.bf-native-slot){padding-block:var(--ak-comp-gap);border-bottom:1px solid var(--ak-comp-line)}
+body[data-aurekai-pattern] :is(a,button,input,select,textarea):focus-visible{outline:2px solid var(--ak-comp-accent);outline-offset:3px}
+body[data-aurekai-pattern=directory] :is(.people-members,.people-grid){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+body[data-aurekai-pattern=directory] .people-members>li{list-style:none;padding:20px;border:1px solid var(--ak-comp-line);background:var(--ak-comp-panel);border-radius:14px}
+body[data-aurekai-pattern=reader] :is(p,li){line-height:1.75}
+body[data-aurekai-pattern=reader] .wrap{max-width:1100px}
+body[data-aurekai-pattern=workbench] .bf-native-layout{max-width:1640px}
+body[data-aurekai-pattern=connections] :is(.source-desk,.bf-native-layout){max-width:1480px}
+body[data-aurekai-pattern=market] :is(.tile,.offer,.bf-native-slot){border-color:var(--ak-comp-line)}
+body[data-aurekai-pattern=spatial] :is(svg,canvas){max-width:100%}
+@media(max-width:650px){body[data-aurekai-pattern] :is(.wrap,.bf-native-layout){width:calc(100% - 20px)}
+body[data-aurekai-pattern] :is(.wrap>.hero h1,.bf-native-masthead h1){font-size:clamp(2rem,11vw,3.2rem)}
+}
+@media(prefers-reduced-motion:reduce){body[data-aurekai-pattern] *{transition:none!important}
+}

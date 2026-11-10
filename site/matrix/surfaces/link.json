@@ -1,0 +1,45 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "link",
+  "pattern": "ForeignTwinWorkspace",
+  "interaction_target": "find, understand, plan distribution for, and connect an external internet thing without collapsing its standing",
+  "borrowed": "The interaction grammar is a bounded Find / Understand / Distribute / Connect workspace. The material is this estate's own source-contract, SourceFrontier, ItemArchive, Matrix and foreign-edge projections; it does not borrow a foreign product's data or authority.",
+  "reads": [
+    "/foreign/twins",
+    "/foreign/edges",
+    "/.well-known/bonfyre"
+  ],
+  "writes": [
+    "/studio/v1/self/foreign/observe"
+  ],
+  "shape": "three persistent stages — source workset, exact release inspection, and portable distribution proposal — with a fourth relationship/claim standing read beside the proposal",
+  "refusal_states": [
+    "refused (401/403) — the native observe owner refuses; the page does not substitute a browser fetch",
+    "empty (200, no contracts) — an empty source-contract projection",
+    "failed (other) — no source rows or destination state are invented",
+    "unbound public program — source admission and ItemArchive depth are shown as real but do not masquerade as delivery"
+  ],
+  "actions": "observing one more public source, performed by the estate's own ForeignTwin owner. Destination selection only creates a browser-local, downloadable proposal; it submits no activation, price, purchase, claim, or account-link effect.",
+  "forbidden_inference": [
+    "a source contract, SourceFrontier admission, or ItemArchive item -> a public-program binding or route",
+    "a selected economic destination -> a price quote, purchase authority, payment, settlement, or funding commitment",
+    "a source field naming place -> a spatially valid local projection",
+    "a browser-local distribution plan -> a native activation or authority grant",
+    "a promoted or claimed twin -> ownership, verified control, or external account access",
+    "an observed edge -> a connection to that host"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "BonfyreProject ForeignTwin"
+  },
+  "extent": "workspace",
+  "carries_action_layer": true,
+  "action_layer": [
+    "observe"
+  ],
+  "requires_authority": "observing carries the `self` session scope; every release, frontier, archive and relation read answers without one. A proposal is locally held and demands no authority because it is explicitly not an effect.",
+  "lineage": {
+    "project": null,
+    "note": "The catalogue is a bounded source-release projection rather than the 135k-row receipt directory, so public discovery is not a bulk forensic export. Exact receipts remain separately queryable. The source stage is ForeignTwin, source admission is SourceFrontier, retained material is ItemArchive, and no missing public-program owner is fabricated."
+  }
+}

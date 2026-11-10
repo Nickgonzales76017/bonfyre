@@ -1,0 +1,195 @@
+"""Retired builder: link.html is now the authored ForeignTwin carrier.
+
+Find is a working set of actual source contracts. Understand reads their live
+owner projections. Distribute exports an inert plan. Connect reports only real
+promotion/claim/edge standing. No stage in this page creates authority.
+"""
+
+OUT = "/Users/nickgonzales/Developer/Bonfyre/site/matrix/surfaces/link.html"
+
+HTML = r'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#091019"><title>ForeignTwin · Aurekai</title><style>
+:root{--bg:#091019;--card:#111b29;--up:#162539;--line:#2a3c55;--text:#f0f6ff;--muted:#99a9bd;--green:#72e5a0;--yellow:#ffca62;--blue:#78b8ff;--red:#ff8290;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;--sans:Inter,system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:radial-gradient(80rem 45rem at 80% -10%,#1b3355,transparent 58%),var(--bg);color:var(--text);font:14px/1.45 var(--sans)}button,input{font:inherit}button{cursor:pointer}.shell{max-width:1560px;margin:auto;padding:20px}.top,.panehead,.source{display:flex;align-items:center;justify-content:space-between;gap:12px}.top{border-bottom:1px solid var(--line);padding-bottom:16px}.brand{display:flex;align-items:center;gap:10px}.mark{width:30px;height:30px;border-radius:9px;background:conic-gradient(var(--green),var(--blue),var(--yellow),var(--green))}.brand b{display:block;font-size:17px}.brand small,.muted,.hint{color:var(--muted)}.back,.ghost,.chip{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);padding:8px 10px;text-decoration:none}.hero{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:28px;padding:40px 0 24px}.eyebrow{font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}h1{max-width:830px;font-size:clamp(32px,5.4vw,64px);line-height:1;letter-spacing:-.06em;margin:8px 0 15px}p{color:#bdc9d9}.find{display:flex;gap:8px;margin-top:22px}.find input{flex:1;background:#0d1520;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:12px;outline:none}.find input:focus{border-color:var(--blue)}.primary{border:0;border-radius:8px;background:var(--green);color:#072114;padding:10px 13px;font-weight:750}.summary{border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#152541,#101824);padding:17px}.summary b{display:block;color:var(--green);font:28px var(--mono)}.summary span{color:var(--muted);font-size:12px}.summary hr{border:0;border-top:1px solid var(--line);margin:12px 0}.grammar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}.grammar div{border:1px solid var(--line);border-radius:9px;background:#0e1723;padding:10px}.grammar b{font:11px var(--mono);letter-spacing:.1em}.grammar p{font-size:12px;margin:5px 0 0}.work{display:grid;grid-template-columns:335px minmax(0,1fr) 330px;border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:630px;background:#0d1621}.pane{min-width:0;border-right:1px solid var(--line)}.pane:last-child{border:0}.panehead{padding:14px;border-bottom:1px solid var(--line)}.panehead h2{font-size:13px;margin:0}.panehead span{font:11px var(--mono);color:var(--muted)}.filters{display:flex;flex-wrap:wrap;gap:6px;padding:9px;border-bottom:1px solid var(--line)}.chip{font-size:11px;padding:6px 8px}.chip.active{background:var(--green);color:#062114;border-color:var(--green)}.list{max-height:580px;overflow:auto}.row{display:block;width:100%;border:0;border-bottom:1px solid #1f2d40;background:transparent;color:var(--text);text-align:left;padding:12px;cursor:pointer}.row:hover,.row.sel{background:#17263a}.row.sel{box-shadow:inset 3px 0 var(--green)}.row b,.row code{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row b{font-size:13px}.row code{font:10px var(--mono);color:var(--muted);margin-top:3px}.dots{display:flex;gap:5px;margin-top:7px}.dot{width:7px;height:7px;border-radius:50%;background:#637187}.dot.current{background:var(--green)}.dot.eligible{background:var(--yellow)}.detail,.plan{padding:23px;overflow:auto}.empty{padding:20px;color:var(--muted)}.avatar{display:grid;place-items:center;flex:none;width:49px;height:49px;border-radius:13px;background:linear-gradient(140deg,var(--blue),var(--green));color:#061923;font-weight:900}.source{justify-content:flex-start}.source h2{margin:0;font-size:22px;line-height:1.1}.source a{display:block;color:var(--blue);font:11px var(--mono);overflow-wrap:anywhere}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:22px 0}.fact{border:1px solid var(--line);border-radius:9px;padding:9px;background:var(--card)}.fact b{display:block;font:18px var(--mono)}.fact span{font-size:10px;color:var(--muted);text-transform:uppercase}.release{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:16px 0}.release h3{margin:0;padding:9px 11px;background:var(--up);font-size:12px}.release p{margin:4px 11px;font:11px var(--mono);color:var(--muted);overflow-wrap:anywhere}.status{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 11px;border-top:1px solid var(--line);align-items:center}.status small{font:10px var(--mono);color:var(--muted)}.badge{font:10px var(--mono);padding:4px 6px;border-radius:20px;background:#354055;color:#d6deea}.badge.current{background:#17442d;color:var(--green)}.badge.eligible{background:#563f18;color:var(--yellow)}.notice{border-left:2px solid var(--yellow);background:#1a1812;color:#d7c79d;padding:10px;font-size:12px}.choice{display:flex;gap:9px;border-top:1px solid var(--line);padding:11px 0}.choice input{accent-color:var(--green);margin-top:3px}.choice b{font-size:13px}.choice small{display:block;color:var(--muted);font-size:11px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.claim{margin-top:9px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;font:11px var(--mono);color:var(--muted);white-space:pre-line}.toast{margin-top:10px;padding:9px;border-radius:8px;background:#173e2b;color:var(--green);font-size:12px}.toast.err{background:#49212b;color:#ffb5be}@media(max-width:1040px){.hero{grid-template-columns:1fr}.work{grid-template-columns:310px 1fr}.plan{display:none}.grammar{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.shell{padding:13px}.hero{padding-top:28px}.work{display:block}.pane{border-right:0;border-bottom:1px solid var(--line)}.list{max-height:270px}.find{flex-wrap:wrap}.find input{flex-basis:100%}}
+</style></head><body><main class="shell"><header class="top"><div class="brand"><i class="mark"></i><div><b>ForeignTwin</b><small>external internet things, governed without becoming ours</small></div></div><a class="back" href="/console">operator console →</a></header><section class="hero"><div><div class="eyebrow">Find · Understand · Distribute · Connect</div><h1>Bring a useful part of the internet into Aurekai.</h1><p>One external source can participate in many legitimate contexts—while observation, retained material, public distribution, price, claim, and authority remain separate facts.</p><div class="find"><input id="url" placeholder="https://a public source to observe"><button class="primary" id="observe">Bring in URL</button></div><div id="result"></div></div><aside class="summary"><b id="sources">…</b><span>declared source contracts</span><hr><b id="frontier">…</b><span>with current SourceFrontier admission</span><hr><b id="archive">…</b><span>with retained ItemArchive material</span></aside></section><section class="grammar"><div><b>01 FIND</b><p>Shape a workset from real external-source contracts.</p></div><div><b>02 UNDERSTAND</b><p>Inspect owners, cadence, retained material, and bounds.</p></div><div><b>03 DISTRIBUTE</b><p>Draft lawful destinations; native owners must activate.</p></div><div><b>04 CONNECT</b><p>Keep claims, accounts and relationships evidence-bound.</p></div></section><section class="work"><aside class="pane"><div class="panehead"><h2>Working set</h2><span id="shown">loading</span></div><div class="filters" id="filters"><button class="chip active" data-f="all">all</button><button class="chip" data-f="current">frontier current</button><button class="chip" data-f="archive">archive</button><button class="chip" data-f="unbound">unbound program</button></div><div class="list" id="list"><p class="empty">Reading ForeignTwin catalogue…</p></div></aside><section class="pane detail" id="detail"><p class="empty">Select a source to inspect its actual release state.</p></section><aside class="plan"><div class="eyebrow">03 distribute</div><h2>Possible destinations</h2><p class="hint">A plan is a portable proposal. It is not an activation, route, licence, claim, purchase, price quote, or external authority.</p><div id="choices"></div><div class="actions"><button class="primary" id="download" disabled>Download plan</button><button class="ghost" id="clear">Clear</button></div><section style="margin-top:28px;border-top:1px solid var(--line);padding-top:16px"><div class="eyebrow">04 connect</div><h2>Relationship standing</h2><div id="connection"><p class="hint">Select a source.</p></div></section></aside></section></main><script src="/assets/bonfyre-kit.js?v=BFKITVERSIONXXXX"></script><script>
+(async()=>{const $=x=>document.getElementById(x),E=(t,c,v)=>{let n=document.createElement(t);if(c)n.className=c;if(v!==undefined)n.textContent=v;return n},host=u=>{try{return new URL(u).hostname}catch(_){return u}};let twins=[],picked=null,mode='all',edges=[];const S=t=>t.release.stages,B=t=>t.release.source_contract;
+function show(t){let s=S(t);return mode==='all'||mode==='current'&&s.frontier.state==='current'||mode==='archive'&&s.archive.items>0||mode==='unbound'&&s.public_program.state==='unbound'}function dot(state){return E('i','dot '+state)}function list(){let box=$('list');box.innerHTML='';let rows=twins.filter(show).sort((a,b)=>host(a.url).localeCompare(host(b.url)));$('shown').textContent=rows.length+' / '+twins.length;for(let t of rows){let r=E('button','row'+(t===picked?' sel':''));r.append(E('b','',host(t.url)),E('code','',B(t).source+' · '+(B(t).family||'external')));let d=E('span','dots');for(let x of [S(t).frontier.state,S(t).archive.state,S(t).public_program.state])d.append(dot(x));r.append(d);r.onclick=()=>{picked=t;list();detail();plan()};box.append(r)}if(!rows.length)box.append(E('p','empty','No source contracts match this cut.'))}
+function status(name,x,detail){let n=E('div','status');n.append(E('b','',name));let r=E('div');r.append(E('span','badge '+x.state,x.state),E('small','', ' '+detail));n.append(r);return n}function detail(){let d=$('detail');d.innerHTML='';if(!picked)return d.append(E('p','empty','Select a source.'));let b=B(picked),s=S(picked),h=E('div','source'),a=E('div','avatar',host(picked.url).slice(0,2).toUpperCase()),x=E('div');x.append(E('h2','',host(picked.url)));let link=E('a','',picked.url);link.href=picked.url;link.target='_blank';link.rel='noopener';x.append(link);h.append(a,x);d.append(h);let facts=E('div','facts');for(let [n,v] of [['channels',s.frontier.channels],['archive items',s.archive.items],['cadence',b.cadence_seconds?Math.round(b.cadence_seconds/60)+' min':'—']]){let f=E('div','fact');f.append(E('b','',v),E('span','',n));facts.append(f)}d.append(facts);let rel=E('section','release');rel.append(E('h3','','What Aurekai currently understands'));for(let [n,v] of [['source',b.source],['family',b.family],['carries',b.carries||'not declared'],['body regime',b.body_regime],['tier',b.tier],['source last seen',b.last_seen||'not projected']])rel.append(E('p','',n+'  '+v));let facets=E('section','release');facets.append(E('h3','','Declared extraction facets'));for(let [n,x] of Object.entries(picked.release.facets||{}))facets.append(E('p','',n+'  '+(x.state==='declared'?x.extractor||x.identifier:'not declared')));d.append(rel,facets,status('SourceFrontier',s.frontier,s.frontier.admitted+' admitted · '+s.frontier.eligible+' eligible'),status('ItemArchive',s.archive,s.archive.items+' retained items'),status('Public program',s.public_program,s.public_program.bindings+' actual bindings'),E('div','notice','This source is foreign. A source contract, an admitted channel, archive material, spatial/media/rights extractors, and a price-like field are not a public page, a reuse licence, a spatial fact, purchase authority, or control over its operator.'))}
+const destinations=[['search','Aurekai Search','Allow an index owner to consider this source.'],['publication','Relevant publications','Allow governed compilers to consider material.'],['local','Local / geographic contexts','Propose spatial use only where place evidence exists.'],['economic','Economic observations','Propose quote/offer comparison only with observed amount, currency, unit, region and evidence.'],['community','Community references','Let a community publication reference the twin.']];const key='bonfyre.foreign.distribution-plan.v1',read=()=>{try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(_){return {}}};function plan(){let box=$('choices');box.innerHTML='';let all=read();for(let [id,name,note] of destinations){let l=E('label','choice'),q=document.createElement('input');q.type='checkbox';q.disabled=!picked;q.checked=!!(picked&&((all[picked.url]||[]).includes(id)));q.onchange=()=>{if(!picked)return;let x=read(),a=new Set(x[picked.url]||[]);q.checked?a.add(id):a.delete(id);x[picked.url]=[...a];localStorage.setItem(key,JSON.stringify(x));$('download').disabled=false};let c=E('div');c.append(E('b','',name),E('small','',note));l.append(q,c);box.append(l)}$('download').disabled=!picked;let c=$('connection');c.innerHTML='';if(!picked)return c.append(E('p','hint','Select a source.'));let n=edges.filter(e=>e.from===picked.subject_id||e.to===picked.subject_id).length;c.append(E('div','claim','promotion: '+(picked.promoted?'addressable subject':'not promoted')+'\nclaims: '+picked.claims+'\nobserved edges: '+n),E('p','hint',picked.claims?'A claim remains an assertion until proof succeeds.':'No claim is inferred from observation.'))}
+async function observe(){let u=$('url').value.trim(),out=$('result');out.innerHTML='';if(!/^https:\/\//i.test(u))return out.append(E('div','toast err','Use a public https URL. ForeignTwin preflights its own boundary before it reads.'));$('observe').disabled=true;try{let r=await K.observeForeign(host(u).replace(/[^a-z0-9.-]/gi,'-'),u);if(!r.ok)return out.append(K.note(r,'ForeignTwin observation'));out.append(E('div','toast','Observation submitted. Its receipt records what answered—not ownership, truth, distribution, or authority.'))}finally{$('observe').disabled=false}}$('observe').onclick=observe;$('url').onkeydown=e=>{if(e.key==='Enter')observe()};$('filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;mode=b.dataset.f;for(let x of $('filters').querySelectorAll('.chip'))x.classList.toggle('active',x===b);list()};$('clear').onclick=()=>{localStorage.removeItem(key);plan()};$('download').onclick=()=>{if(!picked)return;let p=read(),o={schema:'bonfyre.foreign.twin.distribution-plan.v1',foreign_twin:{subject_id:picked.subject_id,url:picked.url,source:B(picked).source},proposed_destinations:p[picked.url]||[],effect:'none',authority:'not_requested',cannot_infer:'plan is not binding, activation, public route, price quote, purchase, reuse licence, claim, or authority'};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));a.download='foreign-twin-plan.json';a.click();URL.revokeObjectURL(a.href)};let [t,e]=await Promise.all([K.get('/foreign/twins'),K.foreignEdges()]);if(!t.ok){$('list').innerHTML='';return $('list').append(K.note(t,'ForeignTwin catalogue'))}twins=t.body.twins||[];edges=e.ok?(e.edges||[]):[];let r=t.body.release_summary||{};$('sources').textContent=r.source_contracts||twins.length;$('frontier').textContent=r.frontier_current||0;$('archive').textContent=r.archive_current||0;list();plan()})();
+</script></body></html>'''
+
+HTML = HTML.replace(
+    '<b id="archive">…</b><span>with retained ItemArchive material</span>',
+    '<b id="archive">…</b><span>with retained ItemArchive material</span>'
+    '<hr><b id="paths">…</b><span>cross-domain paths ready for a later compiler</span>',
+)
+HTML = HTML.replace(
+    "d.append(rel,facets,status('SourceFrontier'",
+    "let readiness=E('section','release');readiness.append(E('h3','','Readiness paths (not derived facts)'));for(let [n,x] of Object.entries(picked.release.readiness||{})){let v=x.state+(x.blocked_by?' · '+x.blocked_by:'');readiness.append(E('p','',n+'  '+v))}d.append(rel,facets,readiness,status('SourceFrontier'",
+)
+HTML = HTML.replace(
+    "$('archive').textContent=r.archive_current||0;list();plan()",
+    "$('archive').textContent=r.archive_current||0;let q=r.readiness||{};$('paths').textContent=(q.spatial_ready_for_extraction||0)+(q.media_ready_for_extraction||0)+(q.rights_ready_for_extraction||0);list();plan()",
+)
+HTML = HTML.replace(
+    "c.append(E('div','claim','promotion: '+(picked.promoted?'addressable subject':'not promoted')+'\\nclaims: '+picked.claims+'\\nobserved edges: '+n),E('p','hint',picked.claims?'A claim remains an assertion until proof succeeds.':'No claim is inferred from observation.'))",
+    "let account=E('a','back','Connect a public account →');account.href='/account';c.append(E('div','claim','promotion: '+(picked.promoted?'addressable subject':'not promoted')+'\\nclaims: '+picked.claims+'\\nobserved edges: '+n),E('p','hint',picked.claims?'A claim remains an assertion until proof succeeds.':'No claim is inferred from observation.'),account)",
+)
+HTML = HTML.replace(
+    "];const key='bonfyre.foreign.distribution-plan.v1'",
+    "];function destinationState(id,t){if(!t)return {state:'unselected',blocked_by:'source_not_selected'};let s=S(t),r=t.release.readiness||{};if(id==='publication')return s.archive.items?{state:'ready_for_material_selection',blocked_by:''}:{state:'awaiting_archive_material',blocked_by:'no_archived_material'};if(id==='local'){let x=r.spatial||{};return x.state==='ready_for_extraction'?{state:'awaiting_spatial_extraction',blocked_by:''}:{state:'awaiting_spatial_input',blocked_by:x.blocked_by||'spatial_input_unbound'}}if(id==='economic'){let x=r.economics||{};return x.state==='observed'?{state:'observed_not_offer',blocked_by:''}:{state:'awaiting_exact_economic_observation',blocked_by:x.blocked_by||'no_exact_source_binding'}}return {state:'proposal_only',blocked_by:''}};const key='bonfyre.foreign.distribution-plan.v2'",
+)
+HTML = HTML.replace(
+    "q.disabled=!picked;q.checked=",
+    "let readiness=destinationState(id,picked);q.disabled=!picked;q.checked=",
+)
+HTML = HTML.replace(
+    "c.append(E('b','',name),E('small','',note));",
+    "c.append(E('b','',name),E('small','',note+' '+readiness.state+(readiness.blocked_by?' · '+readiness.blocked_by:'')));",
+)
+HTML = HTML.replace(
+    "schema:'bonfyre.foreign.twin.distribution-plan.v1',foreign_twin:{subject_id:picked.subject_id,url:picked.url,source:B(picked).source},proposed_destinations:p[picked.url]||[],effect:'none'",
+    "schema:'bonfyre.foreign.twin.distribution-plan.v2',foreign_twin:{subject_id:picked.subject_id,url:picked.url,source:B(picked).source},proposed_destinations:(p[picked.url]||[]).map(destination=>({destination,...destinationState(destination,picked)})),effect:'none'",
+)
+HTML = HTML.replace(
+    "s.public_program.bindings+' actual bindings'",
+    "s.public_program.bindings+' input bindings · '+s.public_program.delivery_state",
+)
+HTML = HTML.replace(
+    "s.public_program.bindings+' input bindings · '+s.public_program.delivery_state",
+    "s.public_program.bindings+' input bindings · '+s.public_program.delivery_state+(s.public_program.programs&&s.public_program.programs.length?' · '+s.public_program.programs.join(', '):'')",
+)
+HTML = HTML.replace(
+    "+(q.rights_ready_for_extraction||0);list();plan()",
+    "+(q.rights_ready_for_extraction||0)+(q.public_program_input_bound||0);list();plan()",
+)
+HTML = HTML.replace(
+    "let twins=[],picked=null,mode='all',edges=[];",
+    "let twins=[],picked=null,mode='all',edges=[],total=0,nextOffset=null,loadingMore=false;",
+)
+HTML = HTML.replace(
+    "$('shown').textContent=rows.length+' / '+twins.length;",
+    "$('shown').textContent=rows.length+' loaded / '+total;",
+)
+HTML = HTML.replace(
+    "if(!rows.length)box.append(E('p','empty','No source contracts match this cut.'))}",
+    "if(!rows.length)box.append(E('p','empty','No source contracts match this cut.'));if(nextOffset!==null){let more=E('button','ghost',loadingMore?'Loading…':'Load next 200 sources');more.disabled=loadingMore;more.style.margin='12px';more.onclick=loadMore;box.append(more)}}",
+)
+HTML = HTML.replace(
+    "function status(name,x,detail){",
+    "async function loadMore(){if(loadingMore||nextOffset===null)return;loadingMore=true;list();let r=await K.get('/foreign/twins/page/'+nextOffset);if(r.ok){let more=r.body.twins||[];let seen=new Set(twins.map(x=>x.url));twins.push(...more.filter(x=>!seen.has(x.url)));total=r.body.total||total;nextOffset=r.body.next_offset===null?null:r.body.next_offset}else{nextOffset=null}loadingMore=false;list()}function status(name,x,detail){",
+)
+HTML = HTML.replace(
+    "twins=t.body.twins||[];edges=e.ok?(e.edges||[]):[];",
+    "twins=t.body.twins||[];total=t.body.total||twins.length;nextOffset=t.body.next_offset===null?null:t.body.next_offset;edges=e.ok?(e.edges||[]):[];",
+)
+HTML = HTML.replace(
+    "let twins=[],picked=null,mode='all',edges=[],total=0,nextOffset=null,loadingMore=false;",
+    "let twins=[],picked=null,mode='all',edges=[],total=0,estateTotal=0,nextOffset=null,loadingMore=false,searchTerm='',searchTimer=null;",
+)
+HTML = HTML.replace(
+    "$('shown').textContent=rows.length+' loaded / '+total;",
+    "$('shown').textContent=rows.length+' loaded / '+total+(total!==estateTotal?' matches · '+estateTotal+' estate':'');",
+)
+HTML = HTML.replace(
+    "async function loadMore(){if(loadingMore||nextOffset===null)return;loadingMore=true;list();let r=await K.get('/foreign/twins/page/'+nextOffset);if(r.ok){let more=r.body.twins||[];let seen=new Set(twins.map(x=>x.url));twins.push(...more.filter(x=>!seen.has(x.url)));total=r.body.total||total;nextOffset=r.body.next_offset===null?null:r.body.next_offset}else{nextOffset=null}loadingMore=false;list()}function status(name,x,detail){",
+    "function cataloguePath(offset){let p='/foreign/twins'+(offset?'/page/'+offset:'');return p+(searchTerm?'?q='+encodeURIComponent(searchTerm):'')}async function loadMore(){if(loadingMore||nextOffset===null)return;loadingMore=true;list();let r=await K.get(cataloguePath(nextOffset));if(r.ok){let more=r.body.twins||[];let seen=new Set(twins.map(x=>x.url));twins.push(...more.filter(x=>!seen.has(x.url)));total=r.body.total||total;estateTotal=r.body.estate_total||estateTotal;nextOffset=r.body.next_offset===null?null:r.body.next_offset}else{nextOffset=null}loadingMore=false;list()}async function reloadSearch(){loadingMore=true;let r=await K.get(cataloguePath(0));loadingMore=false;if(!r.ok){$('list').innerHTML='';return $('list').append(K.note(r,'ForeignTwin catalogue search'))}twins=r.body.twins||[];total=r.body.total||twins.length;estateTotal=r.body.estate_total||total;nextOffset=r.body.next_offset===null?null:r.body.next_offset;picked=null;list();plan()}function status(name,x,detail){",
+)
+HTML = HTML.replace(
+    "twins=t.body.twins||[];total=t.body.total||twins.length;nextOffset=t.body.next_offset===null?null:t.body.next_offset;edges=e.ok?(e.edges||[]):[];",
+    "twins=t.body.twins||[];total=t.body.total||twins.length;estateTotal=t.body.estate_total||total;nextOffset=t.body.next_offset===null?null:t.body.next_offset;edges=e.ok?(e.edges||[]):[];",
+)
+HTML = HTML.replace(
+    '<div class="filters" id="filters"><button class="chip active" data-f="all">all</button>',
+    '<div class="filters" id="filters"><input id="search" class="source-search" placeholder="filter source, host, publisher…"><button class="chip active" data-f="all">all</button>',
+)
+HTML = HTML.replace(
+    '.filters{display:flex;flex-wrap:wrap;gap:6px;padding:9px;border-bottom:1px solid var(--line)}',
+    '.filters{display:flex;flex-wrap:wrap;gap:6px;padding:9px;border-bottom:1px solid var(--line)}.source-search{width:100%;background:#111b2b;border:1px solid var(--line);border-radius:7px;color:var(--text);padding:7px 8px;font:11px var(--mono)}',
+)
+HTML = HTML.replace(
+    "$('filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;mode=b.dataset.f;for(let x of $('filters').querySelectorAll('.chip'))x.classList.toggle('active',x===b);list()};",
+    "$('filters').onclick=e=>{let b=e.target.closest('[data-f]');if(!b)return;mode=b.dataset.f;for(let x of $('filters').querySelectorAll('.chip'))x.classList.toggle('active',x===b);list()};$('search').oninput=e=>{searchTerm=e.target.value.trim();clearTimeout(searchTimer);searchTimer=setTimeout(reloadSearch,220)};",
+)
+HTML = HTML.replace(
+    "let [t,e]=await Promise.all([K.get('/foreign/twins'),K.foreignEdges()]);",
+    "let [t,e]=await Promise.all([K.get(cataloguePath(0)),K.foreignEdges()]);",
+)
+HTML = HTML.replace(
+    "let twins=[],picked=null,mode='all',edges=[],total=0,estateTotal=0,nextOffset=null,loadingMore=false,searchTerm='',searchTimer=null;",
+    "let twins=[],picked=null,mode='all',edges=[],total=0,estateTotal=0,nextOffset=null,loadingMore=false,searchTerm='',searchTimer=null,catalogueGeneration='';",
+)
+HTML = HTML.replace(
+    "function cataloguePath(offset){let p='/foreign/twins'+(offset?'/page/'+offset:'');return p+(searchTerm?'?q='+encodeURIComponent(searchTerm):'')}async function loadMore(){if(loadingMore||nextOffset===null)return;loadingMore=true;list();let r=await K.get(cataloguePath(nextOffset));if(r.ok){let more=r.body.twins||[];let seen=new Set(twins.map(x=>x.url));twins.push(...more.filter(x=>!seen.has(x.url)));total=r.body.total||total;estateTotal=r.body.estate_total||estateTotal;nextOffset=r.body.next_offset===null?null:r.body.next_offset}else{nextOffset=null}loadingMore=false;list()}async function reloadSearch(){loadingMore=true;let r=await K.get(cataloguePath(0));loadingMore=false;if(!r.ok){$('list').innerHTML='';return $('list').append(K.note(r,'ForeignTwin catalogue search'))}twins=r.body.twins||[];total=r.body.total||twins.length;estateTotal=r.body.estate_total||total;nextOffset=r.body.next_offset===null?null:r.body.next_offset;picked=null;list();plan()}function status(name,x,detail){",
+    "function cataloguePath(offset){let p='/foreign/twins'+(offset?'/page/'+offset:''),q=[];if(searchTerm)q.push('q='+encodeURIComponent(searchTerm));if(offset&&catalogueGeneration)q.push('snapshot='+encodeURIComponent(catalogueGeneration));return p+(q.length?'?'+q.join('&'):'')}async function loadMore(){if(loadingMore||nextOffset===null)return;loadingMore=true;list();let r=await K.get(cataloguePath(nextOffset));if(r.ok&&r.body.state==='snapshot_mismatch'){loadingMore=false;return reloadSearch()}if(r.ok){let more=r.body.twins||[];let seen=new Set(twins.map(x=>x.url));twins.push(...more.filter(x=>!seen.has(x.url)));total=r.body.total||total;estateTotal=r.body.estate_total||estateTotal;nextOffset=r.body.next_offset===null?null:r.body.next_offset}else{nextOffset=null}loadingMore=false;list()}async function reloadSearch(){loadingMore=true;let r=await K.get(cataloguePath(0));loadingMore=false;if(!r.ok||r.body.state!=='current'){$('list').innerHTML='';return $('list').append(K.note(r,'ForeignTwin catalogue search'))}twins=r.body.twins||[];total=r.body.total||twins.length;estateTotal=r.body.estate_total||total;catalogueGeneration=r.body.catalogue_generation||'';nextOffset=r.body.next_offset===null?null:r.body.next_offset;picked=null;list();plan()}function status(name,x,detail){",
+)
+HTML = HTML.replace(
+    "twins=t.body.twins||[];total=t.body.total||twins.length;estateTotal=t.body.estate_total||total;nextOffset=t.body.next_offset===null?null:t.body.next_offset;edges=e.ok?(e.edges||[]):[];",
+    "twins=t.body.twins||[];total=t.body.total||twins.length;estateTotal=t.body.estate_total||total;catalogueGeneration=t.body.catalogue_generation||'';nextOffset=t.body.next_offset===null?null:t.body.next_offset;edges=e.ok?(e.edges||[]):[];",
+)
+HTML = HTML.replace(
+    '<div id="choices"></div><div class="actions"><button class="primary" id="download" disabled>Download plan</button><button class="ghost" id="clear">Clear</button></div>',
+    '<div id="choices"></div><div class="actions"><button class="primary" id="download" disabled>Download plan</button><button class="ghost" id="clear">Clear</button></div>'
+    '<section class="formation-draft"><div class="eyebrow">Compile a working root</div><h2>Start a source collection and World draft</h2><p class="hint">This writes a typed reagent selection and a World declaration to the native CMS. Both remain private drafts: no retained body is promoted, no page or route is published, and no authority, provider, payment, claim, or external effect is created.</p><input id="world-title" maxlength="240" placeholder="Name this publication or operating world"><textarea id="world-lede" maxlength="1800" placeholder="What should this World help people understand, decide, make, or operate?"></textarea><select id="world-character"><option value="editorial">Editorial publication</option><option value="catalog">Catalog and comparison</option><option value="spatial">Place and spatial context</option><option value="community">Community workspace</option></select><button class="primary" id="create-world" disabled>Create collection + World draft</button><div id="world-result" aria-live="polite"></div></section>',
+)
+HTML = HTML.replace(
+    '.choice{display:flex;gap:9px;border-top:1px solid var(--line);padding:11px 0}',
+    '.choice{display:flex;gap:9px;border-top:1px solid var(--line);padding:11px 0}.formation-draft{margin-top:25px;padding-top:16px;border-top:1px solid var(--line)}.formation-draft h2{font-size:17px;margin:5px 0}.formation-draft input,.formation-draft textarea,.formation-draft select{width:100%;margin:6px 0;background:#0d1520;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px;font:12px var(--sans)}.formation-draft textarea{min-height:86px;resize:vertical}',
+)
+HTML = HTML.replace(
+    "async function observe(){",
+    "function formationReady(){let b=$('create-world');if(b)b.disabled=!(picked&&$('world-title').value.trim()&&$('world-lede').value.trim())}async function cmsDraft(type,payload,headers){let r=await fetch('/cms/v1/api/'+type,{method:'POST',headers,credentials:'same-origin',body:new URLSearchParams(payload).toString()}),body=await r.json().catch(()=>({}));return {ok:r.ok&&body.outcome==='saved',body,status:r.status}}async function createWorldDraft(){let title=$('world-title').value.trim(),lede=$('world-lede').value.trim(),character=$('world-character').value,out=$('world-result');out.innerHTML='';if(!picked||!title||!lede)return;let token=K.token(),headers={'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'};if(token)headers.Authorization='Bearer '+token;let suffix=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),collectionId='foreign-collection-'+suffix,worldId='foreign-world-'+suffix,source=B(picked).source,selector=JSON.stringify({source_refs:[source]}),material=JSON.stringify(['PublicationOccurrence']);$('create-world').disabled=true;try{let collection=await cmsDraft('source_collection',{collection_id:collectionId,subject_address:picked.subject_id,source_selector:selector,material_kind:material,refresh_policy:'manual',status:'draft'},headers);if(!collection.ok){out.append(E('div','toast err',collection.status===401||collection.status===403?'Sign in with a CMS write closure to create a private collection.':(collection.body.detail||'The native CMS refused this source collection.')));return}let world=await cmsDraft('world',{world:worldId,title,character,lede,subject:picked.subject_id,sources:'source_collection:'+collectionId,grammars:'discover',cannot_infer:'This World is a human-authored draft over one selected foreign source collection. It does not admit source material, create a public route, assign contributors, establish an institution, licence material, or authorize an effect.',status:'draft'},headers);if(!world.ok){out.append(E('div','toast err','The collection draft was created, but the World draft was refused. The collection remains private and can be continued in CMS. '+(world.body.detail||'')));return}out.append(E('div','toast','Typed source collection and World drafts were created in the native CMS. They are private, unlaunched inputs to later material compilation and governance.'))}catch(e){out.append(E('div','toast err','The CMS could not be reached; no unconfirmed draft was assumed created.'))}finally{formationReady()}}async function observe(){",
+)
+HTML = HTML.replace(
+    "$('observe').onclick=observe;$('url').onkeydown=e=>{if(e.key==='Enter')observe()};",
+    "$('observe').onclick=observe;$('url').onkeydown=e=>{if(e.key==='Enter')observe()};$('create-world').onclick=createWorldDraft;$('world-title').oninput=formationReady;$('world-lede').oninput=formationReady;",
+)
+HTML = HTML.replace(
+    "r.onclick=()=>{picked=t;list();detail();plan()};",
+    "r.onclick=()=>{picked=t;list();detail();plan();formationReady()};",
+)
+HTML = HTML.replace(
+    "$('download').disabled=!picked;let c=$('connection');",
+    "$('download').disabled=!picked;formationReady();let c=$('connection');",
+)
+HTML = HTML.replace(
+    'Start a source collection and World draft',
+    'Publish a source collection and World',
+)
+HTML = HTML.replace(
+    'This writes a typed reagent selection and a World declaration to the native CMS. Both remain private drafts: no retained body is promoted, no page or route is published, and no authority, provider, payment, claim, or external effect is created.',
+    'This publishes one exact source selection and a native World. Its public address composes only material that is already public and lawful for the selected sources; this action does not claim the source, connect an account, move money, or invoke an external effect.',
+)
+HTML = HTML.replace(
+    '<option value="editorial">Editorial publication</option><option value="catalog">Catalog and comparison</option><option value="spatial">Place and spatial context</option><option value="community">Community workspace</option>',
+    '<option value="zine">Editorial publication</option><option value="atlas">Catalog and comparison</option><option value="scrapbook">Place and spatial context</option><option value="dossier">Community workspace</option>',
+)
+HTML = HTML.replace('Create collection + World draft', 'Publish collection + World')
+HTML = HTML.replace("refresh_policy:'manual',status:'draft'", "refresh_policy:'manual',status:'published'")
+HTML = HTML.replace(
+    'This World is a human-authored draft over one selected foreign source collection. It does not admit source material, create a public route, assign contributors, establish an institution, licence material, or authorize an effect.',
+    'This World is a human-authored publication over one selected foreign source collection. It does not admit source material, assign contributors, establish an institution, licence material, or authorize an effect.',
+)
+HTML = HTML.replace("or authorize an effect.',status:'draft'", "or authorize an effect.',status:'published'")
+HTML = HTML.replace(
+    'Typed source collection and World drafts were created in the native CMS. They are private, unlaunched inputs to later material compilation and governance.',
+    "Published source collection and World created. Read the native composed publication at /w/'+worldId+'.",
+)
+HTML = HTML.replace(
+    "out.append(E('div','toast err',collection.status===401||collection.status===403?'Sign in with a CMS write closure to create a private collection.'",
+    "out.append(E('div','toast err',collection.status===401||collection.status===403?'Sign in with a CMS publish closure to create this World.'",
+)
+HTML = HTML.replace(
+    "The collection draft was created, but the World draft was refused. The collection remains private and can be continued in CMS. ",
+    "The published source collection was created, but its World was refused. It can be completed in CMS without selecting a different source. ",
+)
+HTML = HTML.replace(
+    "out.append(E('div','toast','Published source collection and World created. Read the native composed publication at /w/'+worldId+'.'))",
+    "out.append(E('div','toast','Published source collection and World created.'));let link=E('a','primary','Open publication →');link.href='/w/'+encodeURIComponent(worldId);out.append(link)",
+)
+HTML = HTML.replace('createWorldDraft', 'createWorld')
+HTML = HTML.replace(
+    'The CMS could not be reached; no unconfirmed draft was assumed created.',
+    'The CMS did not confirm a World. Check CMS before retrying so an already-written source selection is not duplicated.',
+)
+open(OUT, "w").write(HTML)
+print("wrote", OUT, len(HTML), "bytes")

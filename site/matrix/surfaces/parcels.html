@@ -1,0 +1,1149 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parcels · Aurekai</title>
+<meta name="theme-color" content="#0d1117">
+<!-- MapLibre GL JS, vendored (BSD-3-Clause), served from this estate rather
+     than a CDN. Licence header is in the file itself. -->
+<link rel="stylesheet" href="/assets/donor-maplibre.css?v=2255d9af">
+<style>
+:root{color-scheme:dark;--ink:#e8ecea;--dim:#9aa8a0;--faint:#6c7a72;--line:#243029;
+      --panel:#101815;--panel2:#16211c;--leaf:#8fd12a;--brick:#ff5a45;--gold:#ffc44d}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0b0f0d;color:var(--ink);overflow:hidden;
+  font:400 14.5px/1.5 "IBM Plex Sans",ui-sans-serif,system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}
+
+.shell{display:grid;grid-template-columns:400px 1fr;height:100dvh;overflow:hidden}
+.shell>*{min-height:0;min-width:0;overflow:hidden}
+@media (max-width:900px){.shell{grid-template-columns:1fr;grid-template-rows:1fr 1fr}}
+
+/* ---- the panel: the search that already worked, kept ---------------------- */
+.panel{background:var(--panel);border-right:1px solid var(--line);display:flex;
+  flex-direction:column;min-width:0}
+.brandrow{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brandrow a.brand{font:800 15px ui-monospace,SFMono-Regular,monospace;letter-spacing:-.04em;
+  color:var(--ink);text-decoration:none}
+.brandrow a.t{font-size:12.5px;color:var(--dim);text-decoration:none}
+.brandrow a.t:hover{color:var(--ink)}
+.srch{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.srch input[type=search]{flex:1;min-width:150px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:5px;padding:9px 11px}
+.srch input:focus-visible,.srch select:focus-visible{outline:2px solid var(--leaf);
+  outline-offset:1px}
+.srch select{background:var(--panel2);border:1px solid var(--line);border-radius:5px;
+  padding:9px;font:400 12.5px ui-monospace,monospace}
+.srch .go{background:var(--leaf);color:#0b0f0d;border:0;border-radius:5px;padding:9px 15px;
+  cursor:pointer;font:700 11.5px ui-monospace,monospace;letter-spacing:.06em}
+.recent{display:flex;gap:5px;flex-wrap:wrap;padding:0 14px 10px;align-items:center}
+.recent .lb{font:700 9.5px ui-monospace,monospace;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--faint)}
+.recent button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;
+  padding:3px 9px;cursor:pointer;font:400 11.5px ui-monospace,monospace;color:var(--dim)}
+.summary{display:grid;grid-template-columns:repeat(2,1fr);border-bottom:1px solid var(--line)}
+.summary div{padding:9px 14px;border-top:1px solid var(--line)}
+.summary dt{font:700 9px ui-monospace,monospace;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:2px}
+.summary dd{margin:0;font:600 16px ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.rows{flex:1;overflow-y:auto;min-height:0}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;
+  width:100%;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;
+  background:none;border-left:3px solid transparent;text-align:left}
+.prow:hover{background:var(--panel2)}
+.prow[aria-pressed="true"]{background:#16241a;border-left-color:var(--leaf)}
+.prow:focus-visible{outline:2px solid var(--leaf);outline-offset:-2px}
+.prow .ad{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .mo{font:400 11.5px ui-monospace,monospace;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.prow .va{font:600 13.5px ui-monospace,monospace;text-align:right;
+  font-variant-numeric:tabular-nums}
+.detail{border-top:1px solid var(--line);max-height:46vh;overflow-y:auto;background:var(--panel2)}
+.detail .dh{padding:12px 14px 8px;border-bottom:1px solid var(--line)}
+.detail h2{margin:0;font-size:18px;letter-spacing:-.02em}
+.detail .acct{margin:2px 0 0;font:400 11.5px ui-monospace,monospace;color:var(--dim)}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;
+  cursor:pointer;padding:9px 4px;font:700 9.5px ui-monospace,monospace;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--dim)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--leaf)}
+.dbody{padding:12px 14px 18px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0 0 12px}
+.facts dt{font:700 9px ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);align-self:center}
+.facts dd{margin:0;font:400 13px ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  word-break:break-word}
+.receipt{border-left:3px solid var(--leaf);background:#131d14;padding:8px 11px;
+  font-size:12.3px;line-height:1.5;color:#bcd6b4;margin:0 0 10px}
+.cant{border-left:3px solid var(--brick);background:#1d1312;padding:8px 11px;font-size:12.3px;
+  line-height:1.5;color:#e0b3ac;margin:0 0 10px}
+
+/* ---- the map ------------------------------------------------------------- */
+.mapwrap{position:relative;min-width:0}
+#map{position:absolute;inset:0}
+.gap{position:absolute;left:12px;right:12px;top:12px;z-index:5;background:rgba(11,15,13,.92);
+  border:1px solid var(--brick);border-left-width:4px;border-radius:5px;padding:11px 14px;
+  backdrop-filter:blur(6px);max-width:640px}
+.gap b{display:block;font-size:13px;margin-bottom:3px}
+.gap p{margin:0;font-size:12.5px;line-height:1.5;color:#dcc}
+.gap code{font:11.5px ui-monospace,monospace;background:#231615;padding:1px 5px;border-radius:3px}
+.gap button{margin-top:8px;background:none;border:1px solid var(--line);border-radius:4px;
+  color:var(--dim);padding:4px 10px;cursor:pointer;font:700 10px ui-monospace,monospace}
+.legend{position:absolute;left:12px;bottom:34px;z-index:5;background:rgba(11,15,13,.92);
+  border:1px solid var(--line);border-radius:5px;padding:10px 13px;backdrop-filter:blur(6px);
+  max-width:340px}
+.legend b{display:block;font:700 9.5px ui-monospace,monospace;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.legend p{margin:0;font-size:12px;line-height:1.5;color:var(--dim)}
+.legend .sw{display:inline-block;width:11px;height:11px;border:1.5px solid var(--gold);
+  background:rgba(255,196,77,.18);vertical-align:-1px;margin-right:5px}
+.maplibregl-popup-content{background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:5px;font:400 13px "IBM Plex Sans",system-ui,sans-serif}
+.maplibregl-popup-tip{border-top-color:var(--panel)!important;
+  border-bottom-color:var(--panel)!important}
+.k-loading{color:var(--dim);padding:16px 14px;font-size:13.5px}
+.note{margin:14px;padding:12px 14px;border:1px solid var(--brick);border-radius:5px;
+  background:#1d1312;font-size:13px;line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;
+  transition-duration:.001ms!important}}
+</style></head><body>
+<div class="shell">
+  <aside class="panel">
+    <div class="brandrow">
+      <span id="bf-mk"></span>
+      <nav style="display:flex;gap:11px;flex-wrap:wrap" id="pa-nav"></nav>
+    </div>
+    <div class="srch" role="search">
+      <input id="q" type="search" value="elm" placeholder="Street name, or an account number"
+             aria-label="Search the parcel roll">
+      <select id="band" aria-label="Assessed value">
+        <option value="">Any value</option>
+        <option value="0-100000">Under $100k</option>
+        <option value="100000-250000">$100k – $250k</option>
+        <option value="250000-500000">$250k – $500k</option>
+        <option value="500000-">Over $500k</option>
+      </select>
+      <button class="go" id="go" type="button">Search</button>
+    </div>
+    <div class="recent" id="recent"></div>
+    <dl class="summary" id="summary" hidden></dl>
+    <p id="scope" hidden style="margin:0;padding:8px 14px;border-bottom:1px solid var(--line);
+       font-size:11.5px;color:var(--faint);line-height:1.45">Computed across the rows this query
+       returned, not across the roll. A different query returns a different set, and neither one
+       is the market.</p>
+    <div class="rows" id="rows"><p class="k-loading">Searching the roll&hellip;</p></div>
+    <div class="detail" id="detail" hidden></div>
+  </aside>
+
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="gap" id="gap">
+      <b>This map cannot show you where these parcels are.</b>
+      <p>The roll carries <code>Shape.STArea()</code> and <code>Shape.STLength()</code> and no
+      coordinates &mdash; the geometry was dropped at ingest, on every source: the Tarrant roll,
+      the Dallas account points, the hosted parcels and the interactive-map extract. So no pin
+      here is placed from a parcel, because there is nothing to place one from.</p>
+      <button type="button" id="gapx">Understood &mdash; hide</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+
+<script src="/assets/donor-maplibre.js?v=cb47036b"></script>
+<script>
+/* Shared kit for the clone surfaces.
+ *
+ * Every surface below borrows a market interface's *behaviour* -- the layout,
+ * density and gesture people already know -- and reads Aurekai's own live
+ * endpoints. Nothing here imports anybody's ontology: the records are the same
+ * subjects the rest of the estate addresses, rendered in a shape a person has
+ * already learned somewhere else.
+ *
+ * Three rules hold across all of them, because each has a failure that looks
+ * fine:
+ *
+ *   a 4xx is an answer      htmx and fetch both leave a placeholder up forever
+ *                           if a refusal is treated as an outage. Every pane
+ *                           reports refused / empty / failed as three different
+ *                           things and offers the session when one is needed.
+ *
+ *   verbs are offered       Authority gates at effect time. A chip that posted
+ *                           would be asking for a decision this surface has no
+ *                           standing to carry, so nothing here submits.
+ *
+ *   the source is named     Every pane says which endpoint produced it. A
+ *                           surface that hides its source cannot be checked
+ *                           against the deployment it claims to describe.
+ */
+(() => {
+  const K = {};
+
+  K.host = location.hostname;
+  K.territory = K.host.endsWith('.life') ? 'life'
+              : K.host.endsWith('.shop') ? 'shop'
+              : K.host.endsWith('.work') ? 'work'
+              : 'live';
+
+  K.token = () => null; /* same-origin HttpOnly session cookie */
+
+  /* One fetch, three outcomes, never a silent blank. */
+  K.get = async (path, accept) => {
+    const headers = { Accept: accept || 'application/json' };
+    const t = K.token();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    let r;
+    try {
+      r = await fetch(path, { headers });
+    } catch (e) {
+      return { ok: false, kind: 'failed', status: 0, detail: String(e), path };
+    }
+    if (r.status === 401 || r.status === 403)
+      return { ok: false, kind: 'refused', status: r.status, path };
+    if (!r.ok)
+      return { ok: false, kind: 'failed', status: r.status, path };
+    const body = accept && accept.includes('html') ? await r.text() : await r.json();
+    return { ok: true, kind: 'ok', status: r.status, body, path };
+  };
+
+  /* The three refusal states, rendered. A withheld pane offers the session
+   * that would fill it; withholding without offering is a dead end wearing the
+   * clothes of a loading state. */
+  K.note = (res, what) => {
+    const el = document.createElement('div');
+    el.className = 'k-note ' + (res.kind === 'refused' ? 'k-refused' : 'k-failed');
+    if (res.kind === 'refused') {
+      el.innerHTML = '<strong>' + what + ' needs an admitted session.</strong>'
+        + '<p>Authority-gated. Other panes on this page answer without one, so this '
+        + 'is a refusal rather than an absent subject.</p>'
+        + (K.token()
+            ? '<p>You are signed in and this scope was still refused: the session you '
+              + 'hold does not carry it.</p>'
+            : '<p><a class="k-btn" href="/login">Sign in</a></p>');
+    } else {
+      el.innerHTML = '<strong>' + what + ' did not answer.</strong>'
+        + '<p><code>' + res.path + '</code> returned ' + (res.status || 'no response')
+        + '. Nothing is rendered rather than a stale or invented list.</p>';
+    }
+    return el;
+  };
+
+  K.empty = (what, path) => {
+    const el = document.createElement('div');
+    el.className = 'k-note k-empty';
+    el.innerHTML = '<strong>' + what + ' is empty.</strong><p><code>' + path
+      + '</code> answered and returned nothing. That is an empty projection, not a '
+      + 'refusal and not an absent subject.</p>';
+    return el;
+  };
+
+  /* Parse the /_surface/<name> record fragments the address organ serves.
+   * They are <dl class="surface-record"> with <dt>/<dd> pairs, and are the same
+   * bytes a machine reading that path receives. */
+  K.records = (html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('.surface-record')].map(dl => {
+      const rec = {};
+      const dts = [...dl.querySelectorAll('dt')];
+      const dds = [...dl.querySelectorAll('dd')];
+      dts.forEach((dt, i) => { rec[dt.textContent.trim()] = (dds[i] || {}).textContent || ''; });
+      return rec;
+    });
+  };
+
+  K.surface = async (name) => {
+    const res = await K.get('/_surface/' + name, 'text/html');
+    if (!res.ok) return res;
+    return { ...res, records: K.records(res.body) };
+  };
+
+  /* A verb chip. Offered, never submitted. */
+  K.verbs = (list) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'k-verbs';
+    for (const v of list) {
+      const s = document.createElement('span');
+      s.className = 'k-verb';
+      s.textContent = v;
+      s.title = v + ' is offered here. Whether you may is decided at effect time '
+              + 'by the owner of the effect, not by this surface.';
+      wrap.appendChild(s);
+    }
+    return wrap;
+  };
+
+  K.sourceLine = (paths) => {
+    const p = document.createElement('p');
+    p.className = 'k-source';
+    p.innerHTML = 'Reading ' + paths.map(x => '<code>' + x + '</code>').join(' · ')
+      + ' — the same bytes a machine asking for this path receives.';
+    return p;
+  };
+
+  K.mount = (el, node) => { el.innerHTML = ''; el.appendChild(node); };
+
+
+  /* Avatars from DiceBear (https://dicebear.com), rendered from the subject's
+   * own name as the seed, so the same room gets the same face everywhere in the
+   * estate and nothing has to be uploaded or stored.
+   *
+   * The style is chosen by what the subject *is*, because a human face on a
+   * venue or a binary would be the surface asserting a person exists:
+   *
+   *   subject   a room, a venue, an act, a programme   -> shapes
+   *   machine   a binary, a queue, an endpoint         -> identicon
+   *   peer      a federated instance                   -> rings
+   *   person    an actual human actor                  -> initials
+   *
+   * Style licences: shapes is CC BY 4.0 (Alexis Doreau); identicon, rings and
+   * initials are CC0 1.0. Attribution is carried in the page footer.
+   */
+  K.AVATAR_STYLE = { subject: 'shapes', machine: 'identicon', peer: 'rings',
+                     person: 'initials' };
+
+  K.avatar = (seed, kind, size) => {
+    const style = K.AVATAR_STYLE[kind] || K.AVATAR_STYLE.subject;
+    const p = new URLSearchParams({ seed: String(seed == null ? '' : seed) });
+    if (size) p.set('size', String(size));
+    p.set('radius', '12');
+    return 'https://api.dicebear.com/9.x/' + style + '/svg?' + p.toString();
+  };
+
+  /* An <img> that falls back to the initials block if the avatar service is
+   * unreachable. A broken image where a face should be reads as a broken page;
+   * a monogram reads as a subject that has no picture, which is the truth. */
+  K.avatarImg = (seed, kind, size) => {
+    const s = String(seed == null ? '' : seed);
+    const el = document.createElement('img');
+    el.src = K.avatar(s, kind, size);
+    el.alt = '';
+    el.loading = 'lazy';
+    el.width = size || 44; el.height = size || 44;
+    el.dataset.seed = s;
+    el.addEventListener('error', () => {
+      const box = document.createElement('span');
+      box.className = el.className;
+      box.setAttribute('style', el.getAttribute('style') || '');
+      box.textContent = s.replace(/[^a-z0-9 ]/gi, ' ').trim().split(/\s+/)
+        .slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+      el.replaceWith(box);
+    }, { once: true });
+    return el;
+  };
+
+  K.avatarAttribution = 'Avatars by <a href="https://dicebear.com">DiceBear</a>, generated '
+    + "from each subject's own name. Shapes is CC BY 4.0 (Alexis Doreau); identicon, rings "
+    + 'and initials are CC0 1.0.';
+
+
+  /* ---- the address plane -------------------------------------------------
+   *
+   * A host on this estate is not a deployment, it is an institution in a
+   * territory. leaflounge.aurekai.shop is the Leaf Lounge as the market sees
+   * it; leaflounge.aurekai.life is the same institution as its own people see
+   * it; theleaflounge.store is the same institution again, under a domain it
+   * owns. Same code, same surfaces, different subject.
+   *
+   * So a surface must not guess whose host it is on from the hostname. It asks
+   * the host, once, and the host answers from the Matrix. A page that guessed
+   * would be right for leaflounge.aurekai.shop and wrong for
+   * theleaflounge.store, which is exactly the case that matters.
+   */
+  K.here = null;
+  K.address = async () => {
+    if (K.here) return K.here;
+    try {
+      const r = await fetch('/.well-known/bonfyre', {headers:{Accept:'application/json'}});
+      K.here = r.ok ? await r.json() : {host: location.hostname, territory: K.territory};
+    } catch (_) {
+      K.here = {host: location.hostname, territory: K.territory};
+    }
+    return K.here;
+  };
+
+  /* The whole estate's address plane, for the surfaces that show it. */
+  K.estate = async () => {
+    try {
+      const r = await fetch('/.well-known/bonfyre/estate', {headers:{Accept:'application/json'}});
+      return r.ok ? await r.json() : null;
+    } catch (_) { return null; }
+  };
+
+  /* A subject's canonical address, and its room. The same path on every host,
+   * because the address belongs to the subject and not to the territory. */
+  K.subject = (kind, id) => '/s/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+  K.room    = (kind, id) => '/room/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id);
+
+  /* An <a> to the subject, so a clone is a representation you can leave. */
+  K.subjectLink = (kind, id, label, cls) => {
+    const a = document.createElement('a');
+    a.href = K.subject(kind, id);
+    a.textContent = label === undefined ? id : label;
+    a.title = 'Its address on this estate: ' + K.subject(kind, id)
+            + ' — the same path on every host. This surface is one representation of it.';
+    if (cls) a.className = cls;
+    return a;
+  };
+
+  /* The institution's other territories, from the Matrix rather than from
+   * string surgery on the hostname. Returns [] when this host holds only one. */
+  K.institutionHosts = async () => {
+    const a = await K.address();
+    return (a && a.institution_hosts) || [];
+  };
+
+  /* Renders the switch as links, marking the one you are standing on. Any
+   * surface can drop this in and become navigable across the institution. */
+  K.hostSwitch = async (current) => {
+    const hosts = await K.institutionHosts();
+    const nav = document.createElement('nav');
+    nav.className = 'k-hosts';
+    nav.setAttribute('aria-label', 'This institution across territories');
+    if (hosts.length < 2) return nav;
+    for (const h of hosts) {
+      const a = document.createElement('a');
+      a.href = location.protocol + '//' + h.host + (current || location.pathname);
+      a.textContent = '.' + h.territory;
+      a.title = h.host + ' — audience ' + (h.audience || 'unstated');
+      if (h.host === location.hostname) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+
+  /* ---- four territories, four sets of UX physics -------------------------
+   *
+   * Section 69: they are projections over one Matrix, not four products, but
+   * their physics differ -- and building them as one feed with different icons
+   * would lose exactly what makes each market leader good at what it does.
+   *
+   * So the difference here is not the chips. It is the ordering principle, and
+   * each one answers a different question about the same records:
+   *
+   *   .live  what deserves attention now      ordered by what is on, decaying
+   *   .life  what matters in my world         not ordered by attention at all
+   *   .shop  what economic opportunity is useful   ordered by the offer
+   *   .work  what should move forward         ordered by what blocks what
+   *
+   * A verb outside its territory is a category error, so the verb lists are
+   * per territory and nothing merges them.
+   */
+  K.PHYSICS = {
+    live: {
+      question: 'What deserves attention now?',
+      principle: 'fast attention / occurrence',
+      orders_by: 'what is on now, and how hard it is pressing',
+      decays: true,
+      verbs: ['WATCH','JOIN','GO','FOLLOW','SAVE','SHARE'],
+      /* attention is pressure: something happening now outranks something
+         merely published, and a room reporting its fill outranks one that did
+         not. This is the only territory where recency is allowed to rank. */
+      rank: r => {
+        const on = /doors|tonight|now|set |playing|open/i.test(r.tonight_status || '') ? 2 : 0;
+        const pct = Number((String(r.capacity_note||'').match(/(\d+)\s*percent/)||[])[1] || 0);
+        return on * 100 + pct;
+      },
+      cant: 'attention is not obligation. Nothing on this feed is expecting you, and a '
+          + 'capacity note is what the room published rather than what is true at the door.'
+    },
+    life: {
+      question: 'What matters in my world?',
+      principle: 'durable personal world',
+      orders_by: 'nothing — this is what you already keep, in a stable order',
+      decays: false,
+      verbs: ['MEET','JOIN','GO','SAVE','HELP','FOLLOW','PLAN','REMEMBER','SHARE','MOVE','ASSIGN'],
+      /* The load-bearing difference. A personal world ranked by attention
+         would be a recommendation feed wearing the clothes of a kept set, and
+         the thing that makes it yours is that it does not move when the world
+         gets loud. Stable, alphabetical, no recency anywhere. */
+      rank: null,
+      cant: 'a kept subject is not a recommended one. Nothing here was ranked for you, and '
+          + 'nothing moves up because it got busy.'
+    },
+    shop: {
+      question: 'What economic opportunity is useful?',
+      principle: 'economic opportunity / exchange',
+      orders_by: 'the offer — what is on, and at what price',
+      decays: false,
+      verbs: ['BUY','OFFER','JOIN','SAVE','COMPARE','REQUEST','SELL','FUND','CONTRIBUTE'],
+      /* An offer ranks; a description does not. A record with no offer sorts
+         below every record that has one, because in this territory a subject
+         without terms is not an opportunity. */
+      rank: r => (r.offer_usd ? 1000 - Number(r.offer_usd) : -1),
+      cant: 'an offer is terms a seller will accept. It is not a sale, a reservation, or '
+          + 'anything anybody has bought.'
+    },
+    work: {
+      question: 'What should move forward?',
+      principle: 'obligation / execution',
+      orders_by: 'what blocks what, and what undoing it would cost',
+      decays: false,
+      verbs: ['APPLY','APPROVE','CLAIM','FUND','CONTACT','BOOK','DO','REVIEW','ASSIGN',
+              'RESPOND','ESCALATE'],
+      rank: null,
+      cant: 'an obligation is not an assignment, and a requirement is not funding.'
+    }
+  };
+
+  K.physics = (t) => K.PHYSICS[t || K.territory] || K.PHYSICS.live;
+
+  /* Order a record set by its territory's own principle. .life gets a stable
+   * order on purpose: sorting a kept world by anything would be ranking it. */
+  K.order = (records, t) => {
+    const p = K.physics(t);
+    const out = records.slice();
+    if (!p.rank) {
+      out.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      return out;
+    }
+    out.sort((a, b) => p.rank(b) - p.rank(a)
+                    || String(a.name || '').localeCompare(String(b.name || '')));
+    return out;
+  };
+
+  /* A verb outside its territory is a category error, so this is the only
+   * place a surface should get its verbs from. */
+  K.verbsFor = (t) => K.physics(t).verbs.slice();
+
+
+  /* ---- the fifteen commerce facts ----------------------------------------
+   *
+   * Section 70: .shop needs its own falsehood list, and it is long.
+   *
+   *   Product != Listing != Inventory != AvailabilityObservation != Offer !=
+   *   Quote != Cart != Checkout != Commitment != Payment != Settlement !=
+   *   Fulfilment != Delivery != Satisfaction != Ownership
+   *
+   * Each stage names the one owner that can establish it, because these
+   * collapse when a subsystem is asked a question it cannot answer. The
+   * dangerous collapses *skip* rather than step -- "paid" read as "delivered",
+   * "delivered" read as "owned" -- so non-implication holds over every pair,
+   * not over adjacent ones.
+   *
+   * And no stage may be skipped in the other direction either: an exchange
+   * reporting delivery with no fulfilment is describing something the estate
+   * never saw happen.
+   */
+  K.COMMERCE = [
+    {stage:'Product', owner:'a catalogue',
+     knows:'what a product is',
+     cannot:'whether anybody has one',
+     here:'/_surface/capabilities'},
+    {stage:'Listing', owner:'a catalogue entry with terms attached',
+     knows:'that this is offered somewhere, described this way',
+     cannot:'that the description is current, or that the seller still means it',
+     here:'/capability, /ucp/catalog, /acp/products'},
+    {stage:'Inventory', owner:'the merchant',
+     knows:'a count the merchant keeps',
+     cannot:'that this buyer can obtain one',
+     here:null},
+    {stage:'AvailabilityObservation', owner:'an observer, at a time and a place',
+     knows:'that it was obtainable then, there',
+     cannot:'that it is obtainable now, here',
+     here:null},
+    {stage:'Offer', owner:'the seller',
+     knows:'terms the seller will accept',
+     cannot:'that anyone accepted them',
+     here:'/capability'},
+    {stage:'Quote', owner:'the pricing owner, for one caller',
+     knows:'what it would cost this caller now',
+     cannot:'anything held, reserved or promised',
+     here:'/mpp/quote'},
+    {stage:'Cart', owner:'the buyer, assembling',
+     knows:'what one person put together, before anybody agreed to any of it',
+     cannot:'that any of it is obtainable together',
+     here:null},
+    {stage:'Checkout', owner:'the exchange',
+     knows:'that an intent to buy was expressed',
+     cannot:'that it was accepted',
+     here:null},
+    {stage:'Commitment', owner:'CommitmentGraph',
+     knows:'who owes what to whom, under which conditions',
+     cannot:'that the resource moved',
+     here:null},
+    {stage:'Payment', owner:'a payment rail',
+     knows:'that a charge was authorized',
+     cannot:'that money settled',
+     here:'the 402 on /capability/<name>'},
+    {stage:'Settlement', owner:'the ledger, once a facilitator verifies',
+     knows:'that money moved',
+     cannot:'that anything was done for it',
+     here:null},
+    {stage:'Fulfilment', owner:'the seller, doing the thing',
+     knows:'that the seller acted',
+     cannot:'that it reached anybody',
+     here:null},
+    {stage:'Delivery', owner:'a courier',
+     knows:'that a parcel moved',
+     cannot:'that anyone wanted its contents',
+     here:'/epcis/events'},
+    {stage:'Satisfaction', owner:'the buyer, afterwards',
+     knows:'that the person who received it says it was what they wanted',
+     cannot:'that they hold it lawfully',
+     here:null},
+    {stage:'Ownership', owner:'.life, after the transaction leaves the store',
+     knows:'that this is now part of somebody\'s world',
+     cannot:'anything about how it got there',
+     here:null}
+  ];
+
+  /* Non-implication over every pair, not adjacent ones: the dangerous
+   * collapses skip. Answers for any two stages in either direction, because
+   * reading "delivered" off "paid" is as wrong as the reverse. */
+  K.commerceGap = (a, b) => {
+    const i = K.COMMERCE.findIndex(x => x.stage === a);
+    const j = K.COMMERCE.findIndex(x => x.stage === b);
+    if (i < 0 || j < 0 || i === j) return null;
+    const lo = K.COMMERCE[Math.min(i, j)], hi = K.COMMERCE[Math.max(i, j)];
+    return lo.stage + ' does not establish ' + hi.stage + ': ' + lo.owner
+         + ' knows ' + lo.knows + ' and not ' + hi.knows + '. Only ' + hi.owner
+         + ' can establish that.';
+  };
+
+  /* What this deployment actually reaches, probed rather than declared. */
+  K.commerceReached = async () => {
+    const out = {};
+    for (const s of K.COMMERCE)
+      out[s.stage] = {reached:false, why:'no owner for this is admitted here'};
+    const book = await K.surface('capabilities');
+    if (book.ok && book.records.length)
+      out.Product = {reached:true, why:book.records.length + ' in the native book'};
+    const cap = await K.get('/capability');
+    if (cap.ok && (cap.body.capabilities||[]).length) {
+      const n = cap.body.capabilities.length;
+      out.Listing = {reached:true, why:n + ' carried by three carriers'};
+      out.Offer   = {reached:true, why:n + ' with terms a seller will accept'};
+      const first = cap.body.capabilities[0];
+      const q = await K.get('/mpp/quote?capability=' + encodeURIComponent(first.name));
+      if (q.ok) out.Quote = {reached:true, why:'priced for this caller, holding nothing'};
+      try {
+        const g = await fetch(first.resource, {headers:{Accept:'application/json'}});
+        if (g.status === 402) {
+          const b = await g.json();
+          const settles = b.settlement && b.settlement.facilitator_configured;
+          out.Payment = {reached:false,
+            why:'the resource answers 402 and wants a charge; nothing has authorized one'};
+          out.Settlement = {reached:false,
+            why: settles ? 'a facilitator is configured and nothing has settled'
+                         : 'facilitator_configured is false, so nothing here can settle at all'};
+        }
+      } catch (_) {}
+    }
+    const ep = await K.get('/epcis/events');
+    if (ep.ok) out.Delivery = {reached:false,
+      why: ep.body.empty_reason || 'the event list is empty'};
+    return out;
+  };
+
+
+  /* ---- the mark ----------------------------------------------------------
+   *
+   * Aurekai x Bonfyre, as a lockup rather than a word. Bonfyre is the engine;
+   * Aurekai is the larger umbrella, and the two plates say which is which
+   * before anybody reads a sentence about it.
+   *
+   *   [ knight ]  x  [ BY ]  BONFYRE
+   *     paper          ink
+   *
+   * The knight is an engraving, so it keeps a paper ground on every theme --
+   * inverting it for dark mode would turn a woodcut into a photographic
+   * negative. The wordmark plate takes the page's ink instead, which is what
+   * makes the pair read as two things beside each other rather than one badge.
+   *
+   * Every surface here runs a different donor's chrome, so this brings its own
+   * styles, scoped and injected once, and depends on no donor class.
+   */
+  K.MARK_CSS = `
+.bf-mk{display:inline-flex;align-items:center;gap:.5rem;margin-right:1.1rem;
+  text-decoration:none;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;line-height:1;flex:0 0 auto}
+.bf-mk-plate{width:2.5rem;height:2.5rem;border-radius:.75rem;display:grid;place-items:center;
+  flex:0 0 auto;overflow:hidden;border:1px solid rgba(128,128,128,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.bf-mk:hover .bf-mk-plate{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.bf-mk-knight{background:#f4f2ec}
+.bf-mk-knight img{width:88%;height:88%;object-fit:contain;display:block;mix-blend-mode:multiply}
+.bf-mk-by{background:#0e1210;color:#f2f4f0;
+  font:800 .82rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em}
+.bf-mk-x{font:400 .78rem/1 ui-monospace,monospace;opacity:.45;flex:0 0 auto}
+.bf-mk-word{font:800 .95rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.045em;
+  white-space:nowrap}
+.bf-mk-sm .bf-mk-plate{width:1.75rem;height:1.75rem;border-radius:.5rem}
+.bf-mk-sm .bf-mk-by{font-size:.62rem}
+.bf-mk-sm .bf-mk-word{font-size:.8rem}
+.bf-mk-pop{position:fixed;z-index:2147483000;width:min(23rem,calc(100vw - 2rem));
+  background:#0e1210;color:#e9efe6;border:1px solid #2a332c;border-radius:.75rem;
+  box-shadow:0 10px 40px rgba(0,0,0,.45);padding:1rem 1.05rem;
+  font:400 .82rem/1.5 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop[hidden]{display:none}
+.bf-mk-pop h3{margin:0 0 .15rem;font:700 .95rem/1.2 ui-sans-serif,system-ui,sans-serif}
+.bf-mk-pop .bf-mk-sub{margin:0 0 .7rem;opacity:.62;
+  font:400 .72rem/1.4 ui-monospace,monospace}
+.bf-mk-pop p{margin:0 0 .6rem}
+.bf-mk-pop dl{margin:.7rem 0 0;display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;
+  font:400 .72rem/1.5 ui-monospace,monospace}
+.bf-mk-pop dt{opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-size:.62rem;
+  align-self:center}
+.bf-mk-pop dd{margin:0;word-break:break-word}
+.bf-mk-pop .bf-mk-hosts{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.7rem}
+.bf-mk-pop .bf-mk-hosts a{color:#b9d49a;text-decoration:none;
+  font:400 .72rem/1 ui-monospace,monospace;border:1px solid #2a332c;border-radius:999px;
+  padding:.28rem .55rem}
+.bf-mk-pop .bf-mk-hosts a[aria-current]{background:#1b2a1d;color:#e9efe6}
+.bf-mk-scrim{position:fixed;inset:0;z-index:2147482999;background:transparent}
+.bf-mk-scrim[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.bf-mk:hover .bf-mk-plate{transform:none}}
+`;
+
+  K.markStyles = () => {
+    if (document.getElementById('bf-mk-style')) return;
+    const st = document.createElement('style');
+    st.id = 'bf-mk-style';
+    st.textContent = K.MARK_CSS;
+    document.head.appendChild(st);
+  };
+
+  /* Aurekai x Bonfyre. Pass {word:false} for a chrome that has no room for the
+   * wordmark, {small:true} for a dense header. */
+  K.mark = (opts) => {
+    opts = opts || {};
+    K.markStyles();
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bf-mk' + (opts.small ? ' bf-mk-sm' : '');
+    b.setAttribute('aria-haspopup', 'dialog');
+    b.setAttribute('aria-expanded', 'false');
+    b.title = 'Aurekai × Bonfyre — what this is';
+    b.innerHTML =
+      '<span class="bf-mk-plate bf-mk-knight">'
+    + '<img src="/assets/aurekai-knight.png" alt="" width="40" height="40" '
+    + 'loading="eager" decoding="async"></span>'
+    + '<span class="bf-mk-x" aria-hidden="true">×</span>'
+    + '<span class="bf-mk-plate bf-mk-by">BŸ</span>'
+    + (opts.word === false ? '' : '<span class="bf-mk-word">BONFŸRE</span>');
+    b.setAttribute('aria-label', 'Aurekai times Bonfyre');
+    b.addEventListener('click', (e) => { e.preventDefault(); K.markPopover(b); });
+    return b;
+  };
+
+  /* Swap a placeholder for the mark, keeping whatever spacing classes the
+   * donor's own header put on that slot. replaceWith drops them otherwise, and
+   * the mark ends up welded to the nav beside it. */
+  K.mountMark = (id, opts) => {
+    const slot = document.getElementById(id || 'bf-mk');
+    if (!slot) return null;
+    const m = K.mark(opts);
+    if (slot.className) m.className += ' ' + slot.className;
+    slot.replaceWith(m);
+    return m;
+  };
+
+  K.markPopover = async (anchor) => {
+    let pop = document.getElementById('bf-mk-pop');
+    let scrim = document.getElementById('bf-mk-scrim');
+    if (pop && !pop.hidden) { close(); return; }
+    if (!pop) {
+      scrim = document.createElement('div');
+      scrim.id = 'bf-mk-scrim'; scrim.className = 'bf-mk-scrim'; scrim.hidden = true;
+      pop = document.createElement('div');
+      pop.id = 'bf-mk-pop'; pop.className = 'bf-mk-pop'; pop.hidden = true;
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-label', 'Aurekai and Bonfyre');
+      document.body.append(scrim, pop);
+      scrim.addEventListener('click', close);
+      addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    function close() {
+      pop.hidden = true; scrim.hidden = true;
+      if (anchor) anchor.setAttribute('aria-expanded', 'false');
+    }
+
+    const a = await K.address();
+    const inst = (a.institution || '').replace(/^[a-z]+:/, '').replace(/^aurekai:/, 'aurekai / ');
+    const hosts = a.institution_hosts || [];
+    pop.innerHTML =
+      '<h3>Aurekai × BonfŸre</h3>'
+    + '<p class="bf-mk-sub">the umbrella × the engine</p>'
+    + '<p>Bonfŷre is the engine: it addresses subjects, derives work from the difference '
+    + 'between states, routes it, records what happened and projects the result. Aurekai is '
+    + 'the larger umbrella the engine runs under.</p>'
+    + '<p>This page is one projection. The same engine answers the same subjects on every '
+    + 'host below, in that territory’s own physics.</p>'
+    + '<dl>'
+    + (inst ? '<dt>institution</dt><dd>' + inst + '</dd>' : '')
+    + '<dt>host</dt><dd>' + (a.host || location.hostname) + '</dd>'
+    + '<dt>territory</dt><dd>.' + (a.territory || '') + '</dd>'
+    + (a.audience ? '<dt>audience</dt><dd>' + a.audience + '</dd>' : '')
+    + (a.world ? '<dt>world</dt><dd>' + a.world + '</dd>' : '')
+    + '</dl>'
+    + (hosts.length > 1
+        ? '<div class="bf-mk-hosts">' + hosts.map(h =>
+            '<a href="' + location.protocol + '//' + h.host + location.pathname + '"'
+            + (h.host === location.hostname ? ' aria-current="page"' : '')
+            + '>.' + h.territory + '</a>').join('') + '</div>'
+        : '')
+    + '<div class="bf-mk-hosts"><a href="/territory">the address plane</a>'
+    + '<a href="/">the estate</a></div>';
+
+    pop.hidden = false; scrim.hidden = false;
+    if (anchor) {
+      anchor.setAttribute('aria-expanded', 'true');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top = Math.min(r.bottom + 8, innerHeight - pop.offsetHeight - 8) + 'px';
+      pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + 'px';
+    }
+  };
+
+  K.nav = (current) => {
+    const items = [
+      ['/discover', 'Discover'], ['/board', 'Boards'], ['/community', 'Community'],
+      ['/listings', 'Listings'], ['/parcels', 'Parcels'],
+      ['/inbox', 'Inbox'], ['/channels', 'Channels'], ['/stage', 'Stage'],
+      ['/territory', 'Territory']
+    ];
+    const nav = document.createElement('nav');
+    nav.className = 'k-nav';
+    nav.setAttribute('aria-label', 'Surfaces');
+    for (const [href, label] of items) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = label;
+      if (href === current) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    }
+    return nav;
+  };
+
+  window.K = K;
+})();
+</script>
+<script>
+
+/* MapLibre over a roll with no geometry.
+ *
+ * Every source in this estate carries Shape.STArea() and Shape.STLength() and
+ * no coordinates, so the honest thing a map can do here is two things:
+ *
+ *   say so, permanently and first -- a map that quietly drew pins would be
+ *   inventing the one fact the roll does not have;
+ *
+ *   use its projection for the geography the roll *does* carry. Lot area is
+ *   real. MapLibre knows metres per pixel at a given latitude and zoom, so a
+ *   parcel's lot can be drawn at true size against real streets. The square is
+ *   true in area and explicitly untrue in position, and the page says which is
+ *   which rather than letting the reader assume both.
+ */
+(async () => {
+
+  /* Aurekai x Bonfyre, one lockup, every surface. */
+  K.mountMark('bf-mk', {small: true});
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+    c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const money = n => n===null||n===undefined||Number.isNaN(n) ? '—'
+    : '$' + Math.round(n).toLocaleString();
+  const dom = h => new DOMParser().parseFromString(h,'text/html');
+  const group = v => {
+    const m = String(v).match(/^(\$?)(\d+)(?:\.0+)?$/);
+    if (!m || m[2].startsWith('0') || Number(m[2]) < 10000) return String(v);
+    return m[1] + Number(m[2]).toLocaleString();
+  };
+
+  const here = await K.address();
+  const hs = await K.hostSwitch('/parcels');
+  if (hs.children.length) {
+    hs.style.cssText='display:flex;gap:9px';
+    for (const a of hs.children) {
+      a.style.cssText='font-size:12.5px;color:var(--dim);text-decoration:none';
+      if (a.getAttribute('aria-current')) a.style.color='var(--leaf)';
+    }
+    document.querySelector('.brandrow').appendChild(hs);
+  }
+  document.getElementById('pa-nav').innerHTML =
+    [['/discover','Discover'],['/stage','Stage'],['/board','Boards'],['/channels','Channels'],
+     ['/listings','Listings'],['/township','Township'],['/territory','Territory']]
+    .map(p=>'<a class="t" href="'+p[0]+'">'+p[1]+'</a>').join('');
+  document.getElementById('gapx').addEventListener('click',
+    ()=>{document.getElementById('gap').hidden = true;});
+
+  /* ---- the map -------------------------------------------------------- */
+  /* DFW, because that is the roll this estate observes. The basemap is real
+     streets; nothing on it comes from the roll. */
+  const DFW = [-97.0403, 32.7555];
+  const map = new maplibregl.Map({
+    container: 'map',
+    /* CARTO's dark-matter GL style over OpenStreetMap data. OpenFreeMap's
+       TileJSON answers 403 to this deployment, so the streets come from the
+       basemap that actually serves them. */
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center: DFW, zoom: 10.4, attributionControl: {compact: true}
+  });
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
+  map.addControl(new maplibregl.ScaleControl({maxWidth:140, unit:'imperial'}), 'bottom-left');
+
+  let mapReady = false;
+  /* the grid gives the map its box; tell the map when that box settles */
+  new ResizeObserver(() => map.resize()).observe(document.querySelector('.mapwrap'));
+  map.on('load', () => {
+    mapReady = true;
+    map.resize();
+    map.addSource('lot', {type:'geojson', data:{type:'FeatureCollection', features:[]}});
+    map.addLayer({id:'lot-fill', type:'fill', source:'lot',
+      paint:{'fill-color':'#ffc44d','fill-opacity':0.18}});
+    map.addLayer({id:'lot-line', type:'line', source:'lot',
+      paint:{'line-color':'#ffc44d','line-width':2}});
+    map.addLayer({id:'lot-label', type:'symbol', source:'lot',
+      layout:{'text-field':['get','label'],'text-size':11,'text-offset':[0,-1.4],
+              'text-font':['Noto Sans Regular']},
+      paint:{'text-color':'#ffc44d','text-halo-color':'#0b0f0d','text-halo-width':1.4}});
+    drawLot();
+  });
+  /* If the basemap never paints, say so and fall back to MapLibre's own demo
+     tiles rather than leaving a black rectangle that reads as "no parcels". */
+  let painted = false;
+  map.on('data', ev => { if (ev.dataType === 'source' && ev.isSourceLoaded) painted = true; });
+  setTimeout(() => {
+    if (painted) return;
+    map.setStyle('https://demotiles.maplibre.org/style.json');
+    document.getElementById('gap').insertAdjacentHTML('beforeend',
+      '<p style="margin-top:8px">The street basemap did not paint, so this fell back to '
+      + 'MapLibre\'s own low-detail demo tiles. The scale bar and the lot square are still '
+      + 'true; only the streets under them are coarser.</p>');
+  }, 6000);
+
+  map.on('error', e => {
+    /* a basemap that fails is an outage, and this page says so rather than
+       showing an empty grey rectangle that reads as "no parcels here" */
+    const g = document.getElementById('gap');
+    if (g.dataset.tiles) return;
+    g.dataset.tiles = '1';
+    g.insertAdjacentHTML('beforeend',
+      '<p style="margin-top:8px">The basemap tiles did not load ('
+      + esc(String((e && e.error && e.error.message) || 'no response'))
+      + '). The panel still reads the roll; only the streets are missing.</p>');
+  });
+
+  /* A square of the parcel's real lot area, at the map's real scale, centred on
+     the view. Position is the map's, area is the roll's, and the legend says
+     exactly that. */
+  const metresPerDegLat = 110574;
+  const drawLot = () => {
+    if (!mapReady) return;
+    const src = map.getSource('lot');
+    if (!src) return;
+    if (!sel || !sel.lot) { src.setData({type:'FeatureCollection', features:[]});
+      drawLegend(); return; }
+    const sqm = sel.lot * 0.09290304;           // sq ft the roll published
+    const side = Math.sqrt(sqm);                 // metres
+    const c = map.getCenter();
+    const dLat = (side/2) / metresPerDegLat;
+    const dLon = (side/2) / (metresPerDegLat * Math.cos(c.lat * Math.PI/180));
+    const ring = [[c.lng-dLon,c.lat-dLat],[c.lng+dLon,c.lat-dLat],
+                  [c.lng+dLon,c.lat+dLat],[c.lng-dLon,c.lat+dLat],[c.lng-dLon,c.lat-dLat]];
+    src.setData({type:'FeatureCollection', features:[{type:'Feature',
+      geometry:{type:'Polygon', coordinates:[ring]},
+      properties:{label: sel.addr + ' · ' + Math.round(sel.lot).toLocaleString() + ' sq ft'}}]});
+    drawLegend();
+  };
+  map.on('moveend', drawLot);
+
+  const drawLegend = () => {
+    const el = document.getElementById('legend');
+    if (!sel) { el.innerHTML = '<b>Nothing selected</b><p>Choose a parcel. Its lot will be drawn '
+      + 'to scale against these streets &mdash; at the centre of the view, because the roll '
+      + 'records no position for it.</p>'; return; }
+    el.innerHTML = '<b>Drawn to scale, not to place</b>'
+      + '<p><span class="sw"></span>' + esc(sel.addr) + ' &mdash; '
+      + (sel.lot ? Math.round(sel.lot).toLocaleString() + ' sq ft, a square of '
+          + Math.round(Math.sqrt(sel.lot)) + ' ft a side'
+        : 'no lot area recorded')
+      + '. The size is what the assessor published. The position is the middle of your screen. '
+      + 'Pan the map and it follows you, which is the honest behaviour for a shape with no '
+      + 'coordinates.</p>';
+  };
+
+  /* ---- the roll ------------------------------------------------------- */
+  const parseResults = (html) => {
+    const d = dom(html);
+    return [...d.querySelectorAll('.flow-result')].map(b => {
+      const meta = (b.querySelector('.fr-meta')||{}).textContent || '';
+      const acct = (b.getAttribute('hx-get')||'').split('account=')[1] || '';
+      const city = (meta.match(/city\s+(\w+)/)||[])[1] || '';
+      const val  = Number((meta.match(/assessed \$([\d.]+)/)||[])[1]);
+      return {addr:(b.querySelector('.fr-addr')||{}).textContent||'(no address)',
+              acct, city, val: Number.isNaN(val) ? null : val, lot:null};
+    });
+  };
+
+  const RECENT='bonfyre_parcel_recent';
+  let recent=[]; try{recent=JSON.parse(localStorage.getItem(RECENT)||'[]');}catch(_){}
+  const putRecent=()=>{try{localStorage.setItem(RECENT,JSON.stringify(recent));}catch(_){}};
+
+  let all=[], shown=[], sel=null, si=-1, step='parcel';
+  const rowsEl=document.getElementById('rows'), detEl=document.getElementById('detail');
+
+  const bandOf=()=>{const v=document.getElementById('band').value; if(!v)return null;
+    const [lo,hi]=v.split('-'); return [Number(lo||0), hi?Number(hi):Infinity];};
+
+  const median = xs => {const s=xs.filter(v=>v!==null).sort((a,b)=>a-b);
+    return s.length ? (s.length%2 ? s[(s.length-1)/2] : (s[s.length/2-1]+s[s.length/2])/2) : null;};
+
+  const apply = () => {
+    const b=bandOf();
+    shown = all.filter(r => !b || (r.val!==null && r.val>=b[0] && r.val<b[1]));
+    shown.sort((a,b2)=>(b2.val||0)-(a.val||0));
+    const el=document.getElementById('summary');
+    document.getElementById('scope').hidden = !shown.length;
+    if (!shown.length) el.hidden = true; else {
+      el.hidden = false;
+      const vals=shown.map(r=>r.val).filter(v=>v!==null);
+      el.innerHTML =
+        '<div><dt>Parcels returned</dt><dd>'+shown.length+'</dd></div>'
+      + '<div><dt>Median, these rows</dt><dd>'+money(median(vals))+'</dd></div>'
+      + '<div><dt>Lowest</dt><dd>'+money(Math.min(...vals))+'</dd></div>'
+      + '<div><dt>Highest</dt><dd>'+money(Math.max(...vals))+'</dd></div>';
+    }
+    drawRows();
+  };
+
+  const drawRows = () => {
+    rowsEl.innerHTML='';
+    if (!shown.length) {
+      rowsEl.innerHTML = '<div class="note"><b>This query returned nothing.</b><p '
+        + 'style="margin:6px 0 0">An empty result, not a refusal.</p></div>';
+      return;
+    }
+    shown.forEach((r,i) => {
+      const b=document.createElement('button');
+      b.type='button'; b.className='prow';
+      b.setAttribute('aria-pressed', String(!!sel && sel.acct===r.acct));
+      b.innerHTML='<span><span class="ad">'+esc(r.addr)+'</span><br>'
+        +'<span class="mo">'+esc(r.acct)+' · city '+esc(r.city)+'</span></span>'
+        +'<span class="va">'+money(r.val)+'</span>';
+      b.addEventListener('click',()=>{si=i;select(r);});
+      rowsEl.appendChild(b);
+    });
+  };
+
+  const factsFrom = (article) => {
+    const out=[];
+    for (const d of article.querySelectorAll('.flow-facts div')) {
+      const dt=d.querySelector('dt'), dd=d.querySelector('dd');
+      if (dt&&dd) out.push([dt.textContent.trim(), group(dd.textContent.trim())]);
+    }
+    return out;
+  };
+
+  const select = async (r) => {
+    sel = r; drawRows(); detEl.hidden = false;
+    detEl.innerHTML = '<div class="dh"><h2>'+esc(r.addr)+'</h2>'
+      + '<p class="acct">account '+esc(r.acct)+' · city code '+esc(r.city)+'</p>'
+      + '<p class="acct" style="margin-top:5px">'
+      + '<a href="'+esc(K.subject('parcel', r.acct))+'" style="color:var(--leaf)" '
+      + 'title="Its address on this estate. The same path on every host; this page is one '
+      + 'representation of it.">'+esc(K.subject('parcel', r.acct))+'</a>'
+      + ' &middot; <a href="'+esc(K.room('parcel', r.acct))+'" style="color:var(--dim)">'
+      + 'its room</a></p></div>'
+      + '<div class="tabs">'
+      + '<button role="tab" data-p="parcel" aria-selected="true">This parcel</button>'
+      + '<button role="tab" data-p="market" aria-selected="false">Its market</button>'
+      + '<button role="tab" data-p="act" aria-selected="false">What next</button></div>'
+      + '<div class="dbody" id="dbody"><p class="k-loading">Reading…</p></div>';
+    for (const b of detEl.querySelectorAll('.tabs button'))
+      b.addEventListener('click',()=>{step=b.dataset.p;drawStep();});
+    step='parcel'; drawStep();
+  };
+
+  const drawStep = async () => {
+    const r = sel, body = document.getElementById('dbody');
+    if (!body) return;
+    for (const b of detEl.querySelectorAll('.tabs button'))
+      b.setAttribute('aria-selected', String(b.dataset.p===step));
+    body.innerHTML='<p class="k-loading">Reading…</p>';
+    const path = step==='parcel' ? '/property/parcel?account='+encodeURIComponent(r.acct)
+      : step==='market' ? '/property/market?city='+encodeURIComponent(r.city)
+                          +'&account='+encodeURIComponent(r.acct)
+      : '/property/act?account='+encodeURIComponent(r.acct);
+    const res = await K.get(path,'text/html');
+    if (!res.ok) { K.mount(body, K.note(res, 'This parcel')); return; }
+    const art = dom(res.body).querySelector('article');
+    if (!art) { K.mount(body, K.empty(step, path)); return; }
+    const facts = factsFrom(art);
+    const note = (art.querySelector('.flow-note')||{}).textContent || '';
+    const prose = [...art.querySelectorAll('p')]
+      .filter(p=>!p.classList.contains('flow-note') && !p.classList.contains('eyebrow'))
+      .map(p=>p.textContent.trim()).filter(Boolean);
+
+    /* the lot area the map can actually draw */
+    if (step==='parcel') {
+      const lot = facts.find(f=>/^lot$/i.test(f[0]));
+      const n = lot ? Number(String(lot[1]).replace(/[^0-9.]/g,'')) : NaN;
+      sel.lot = Number.isNaN(n) ? null : n;
+      drawLot();
+    }
+
+    let html='';
+    if (facts.length) html += '<dl class="facts">'
+      + facts.map(f=>'<dt>'+esc(f[0])+'</dt><dd>'+esc(f[1])+'</dd>').join('') + '</dl>';
+    for (const p of prose) html += '<p style="font-size:13px;color:#c3d2c8;line-height:1.55">'
+      + esc(p) + '</p>';
+    /* where this parcel sits inside the set that came back -- a real computed
+       number, and one that has to name the set it was computed over */
+    if (step==='parcel' && r.val !== null && shown.length > 2) {
+      const vals = shown.map(x=>x.val).filter(v=>v!==null).sort((a,b)=>a-b);
+      const rank = vals.filter(v=>v < r.val).length;
+      html += '<p class="receipt">' + (rank+1) + ' of ' + vals.length + ' by assessed value '
+        + 'among the rows this query returned, from ' + money(vals[0]) + ' to '
+        + money(vals[vals.length-1]) + '. A rank inside one query is not a rank in the market.'
+        + '</p>';
+    }
+    if (step==='parcel')
+      html += '<p class="cant">The map beside this is drawn from the lot area above and placed '
+        + 'at the centre of the view. This estate holds no coordinate for this parcel, so the '
+        + 'square is the right size in the wrong place, on purpose.</p>';
+    if (note) html += '<p class="' + (step==='act'?'cant':'receipt') + '">'+esc(note)+'</p>';
+    html += '<p style="font:400 11px ui-monospace,monospace;color:#6c7a72;margin-top:12px">'
+      + 'Read from <code>'+esc(path)+'</code>.</p>';
+    body.innerHTML = html;
+  };
+
+  const drawRecent = () => {
+    const el=document.getElementById('recent');
+    el.innerHTML = recent.length ? '<span class="lb">Recent</span>' : '';
+    for (const t of recent) {
+      const b=document.createElement('button'); b.type='button'; b.textContent=t;
+      b.addEventListener('click',()=>{document.getElementById('q').value=t;run();});
+      el.appendChild(b);
+    }
+  };
+
+  const run = async () => {
+    const q=document.getElementById('q').value.trim();
+    if (!q) return;
+    rowsEl.innerHTML='<p class="k-loading">Searching the roll…</p>';
+    const res = await K.get('/property/search?q='+encodeURIComponent(q),'text/html');
+    if (!res.ok) { K.mount(rowsEl, K.note(res,'The roll')); return; }
+    all = parseResults(res.body);
+    recent = [q, ...recent.filter(x=>x!==q)].slice(0,6); putRecent(); drawRecent();
+    sel=null; si=-1; detEl.hidden=true; drawLot(); apply();
+  };
+
+  document.getElementById('go').addEventListener('click', run);
+  document.getElementById('q').addEventListener('keydown', e=>{if(e.key==='Enter')run();});
+  document.getElementById('band').addEventListener('change', apply);
+  addEventListener('keydown', e => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      if (e.key==='Escape') document.activeElement.blur(); return; }
+    if (e.key==='/'){e.preventDefault();document.getElementById('q').focus();}
+    else if (e.key==='j'||e.key==='ArrowDown'){e.preventDefault();
+      si=Math.min(shown.length-1,si+1); const el=rowsEl.children[si];
+      if(el){el.focus();el.scrollIntoView({block:'nearest'});}}
+    else if (e.key==='k'||e.key==='ArrowUp'){e.preventDefault();
+      si=Math.max(0,si-1); const el=rowsEl.children[si];
+      if(el){el.focus();el.scrollIntoView({block:'nearest'});}}
+    else if (e.key==='Enter'&&shown[si]) select(shown[si]);
+  });
+
+  drawRecent(); drawLegend();
+  await run();
+})();
+
+</script></body></html>

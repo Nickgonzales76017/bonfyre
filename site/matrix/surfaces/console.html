@@ -1,0 +1,779 @@
+<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Console · Aurekai</title>
+<meta name="theme-color" content="#0b0d10">
+<meta name="description" content="Every subject in the estate, seen every way at once: the projection matrix, the addresses, the relations, and what was observed of the outside.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0b0d10; --p1:#13161c; --p2:#191d25; --p3:#20252f;
+  --line:#252b36; --line2:#333b49;
+  --tx:#e8eaef; --dim:#8b94a8; --dim2:#616b80;
+  --acc:#ffb020; --acc-ink:#170f02;
+  --live:#ff5f6d; --life:#4ad07a; --shop:#ffb020; --work:#5aa9ff; --ind:#b388ff;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--tx);font-family:var(--sans);
+     font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+a{color:inherit;text-decoration:none}
+.mono,code{font-family:var(--mono);font-variant-numeric:tabular-nums}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- instrument strip ---------- */
+.rig{display:grid;grid-template-rows:auto auto minmax(0,1fr);height:100dvh}
+.strip{display:flex;align-items:center;gap:.9rem;padding:.42rem .7rem;
+       border-bottom:1px solid var(--line);background:var(--p1)}
+.strip .who{display:flex;align-items:baseline;gap:.45rem;white-space:nowrap}
+.strip .who b{font-size:.86rem;letter-spacing:-.01em}
+.strip .who span{font-family:var(--mono);font-size:.66rem;color:var(--dim2)}
+.gauges{display:flex;gap:0;margin-left:.4rem;overflow-x:auto;flex:1 1 auto}
+.g{display:flex;flex-direction:column;padding:0 .62rem;border-left:1px solid var(--line);
+   line-height:1.15;white-space:nowrap}
+.g b{font-family:var(--mono);font-size:.82rem;font-weight:600;letter-spacing:-.02em}
+.g span{font-family:var(--mono);font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;
+        color:var(--dim2)}
+.g.hot b{color:var(--acc)}
+
+.dials{display:flex;align-items:center;gap:.5rem;padding:.3rem .7rem;
+       border-bottom:1px solid var(--line);background:var(--p1);overflow-x:auto}
+.dgrp{display:flex;align-items:center;gap:.18rem;white-space:nowrap}
+.dgrp>i{font-style:normal;font-family:var(--mono);font-size:.56rem;letter-spacing:.09em;
+        text-transform:uppercase;color:var(--dim2);margin-right:.2rem}
+.dials button{font:inherit;font-family:var(--mono);font-size:.66rem;cursor:pointer;
+  padding:.1rem .42rem;border-radius:4px;border:1px solid var(--line2);
+  background:transparent;color:var(--dim);white-space:nowrap}
+.dials button:hover{color:var(--tx);border-color:var(--dim2)}
+.dials button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink);
+  border-color:var(--acc);font-weight:600}
+.addr{margin-left:auto;display:flex;align-items:center;gap:.35rem;min-width:0}
+.addr input{width:min(46ch,38vw);background:var(--ink);border:1px solid var(--line);
+  border-radius:5px;padding:.16rem .45rem;color:var(--acc);font-family:var(--mono);
+  font-size:.66rem}
+
+/* ---------- three columns ---------- */
+.cols{display:grid;grid-template-columns:296px minmax(0,1fr) 336px;
+      gap:1px;background:var(--line);min-height:0}
+@media (max-width:1180px){.cols{grid-template-columns:250px minmax(0,1fr)}
+  .col3{display:none}}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}.col1{display:none}}
+.col{background:var(--ink);overflow:auto;min-height:0;display:flex;flex-direction:column}
+.ch{position:sticky;top:0;z-index:5;display:flex;align-items:baseline;gap:.4rem;
+    padding:.35rem .6rem;background:var(--p1);border-bottom:1px solid var(--line)}
+.ch h2{margin:0;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
+       text-transform:uppercase;color:var(--dim);font-weight:600}
+.ch em{font-style:normal;font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
+.ch .sp{margin-left:auto}
+
+/* ---------- rail ---------- */
+.filter{position:sticky;top:26px;z-index:4;padding:.3rem .5rem;background:var(--ink);
+        border-bottom:1px solid var(--line)}
+.filter input{width:100%;background:var(--p2);border:1px solid var(--line);border-radius:5px;
+  padding:.24rem .45rem;color:var(--tx);font:inherit;font-size:.72rem}
+.filter input:focus{outline:none;border-color:var(--acc)}
+.kinds{display:flex;flex-wrap:wrap;gap:.15rem;padding:.3rem .5rem;border-bottom:1px solid var(--line)}
+.kinds button{font-family:var(--mono);font-size:.6rem;padding:.05rem .3rem;border-radius:3px;
+  border:1px solid var(--line);background:transparent;color:var(--dim2);cursor:pointer}
+.kinds button[aria-pressed="true"]{background:var(--p3);color:var(--tx);border-color:var(--line2)}
+.kinds button b{color:var(--acc);font-weight:600;margin-left:.22rem}
+.rows{flex:1 1 auto}
+.r{display:grid;grid-template-columns:minmax(0,1fr) 2.1rem 2.1rem 2.1rem;align-items:center;
+   gap:.2rem;padding:.14rem .5rem;cursor:pointer;border-bottom:1px solid rgba(37,43,54,.45);
+   font-size:.72rem}
+.r:hover{background:var(--p2)}
+.r[aria-selected="true"]{background:var(--p3);box-shadow:inset 2px 0 0 var(--acc)}
+.r .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);
+      font-size:.68rem}
+.r .n i{font-style:normal;color:var(--dim2)}
+.r em{font-style:normal;font-family:var(--mono);font-size:.62rem;color:var(--dim2);
+      text-align:right}
+.r em.on{color:var(--tx)}
+.kindbar{padding:.22rem .5rem .1rem;font-family:var(--mono);font-size:.56rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);
+  background:var(--ink);position:sticky;top:26px;z-index:3;border-bottom:1px solid var(--line)}
+
+/* ---------- centre: the subject, every way at once ---------- */
+.subj{padding:.6rem .8rem 2rem}
+.sid{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;margin:0 0 .1rem}
+.sid h1{margin:0;font-size:1.02rem;letter-spacing:-.02em;font-family:var(--mono);
+        font-weight:600;overflow-wrap:anywhere}
+.tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;padding:.05rem .38rem;
+     border:1px solid var(--line2);border-radius:20px;color:var(--dim)}
+.slede{margin:.15rem 0 .7rem;font-size:.74rem;color:var(--dim);max-width:80ch}
+
+.blk{margin:0 0 .9rem}
+.bh{display:flex;align-items:baseline;gap:.45rem;margin:0 0 .3rem;
+    border-bottom:1px solid var(--line);padding-bottom:.16rem}
+.bh h3{margin:0;font-family:var(--mono);font-size:.6rem;letter-spacing:.11em;
+       text-transform:uppercase;color:var(--dim);font-weight:600}
+.bh em{font-style:normal;font-family:var(--mono);font-size:.6rem;color:var(--dim2)}
+
+/* the projection matrix: one subject, many projections */
+.mx{width:auto;border-collapse:collapse;font-family:var(--mono);font-size:.64rem}
+.mx th{font-weight:500;color:var(--dim2);text-align:center;padding:.16rem .2rem;
+       letter-spacing:.06em;text-transform:uppercase;font-size:.56rem;white-space:nowrap}
+.mx th.rh{text-align:left;width:9.5rem}
+.mx td{text-align:center;padding:0;border:1px solid var(--line);height:1.35rem;width:4.4rem}
+.mx td.rh{text-align:left;padding:.1rem .35rem;border-color:transparent;color:var(--dim);
+          white-space:nowrap}
+.cell{display:block;height:100%;width:100%;line-height:1.35rem;color:var(--ink);font-weight:600}
+.cell.off{background:repeating-linear-gradient(45deg,transparent,transparent 3px,
+          rgba(37,43,54,.55) 3px,rgba(37,43,54,.55) 4px)}
+.cell.t-live{background:var(--live)} .cell.t-life{background:var(--life)}
+.cell.t-shop{background:var(--shop)} .cell.t-work{background:var(--work)}
+.cell.t-independent{background:var(--ind)}
+.mxleg{margin:.3rem 0 0;font-size:.68rem;color:var(--dim2)}
+
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:6.5rem minmax(0,1fr) auto;gap:.5rem;align-items:baseline;
+    padding:.16rem 0;border-bottom:1px solid rgba(37,43,54,.5);font-size:.72rem}
+.li .k{font-family:var(--mono);font-size:.6rem;letter-spacing:.05em;text-transform:uppercase;
+       color:var(--dim2)}
+.li .v{font-family:var(--mono);font-size:.68rem;overflow-wrap:anywhere}
+.li .v a{color:var(--acc)}
+.li .x{font-family:var(--mono);font-size:.6rem;color:var(--dim2);white-space:nowrap}
+
+/* the estate grid: every subject at once, one pixel-row each */
+.field{display:grid;grid-template-columns:repeat(auto-fill,minmax(9px,1fr));gap:1px;
+       margin:.15rem 0 .1rem}
+.px{height:9px;border-radius:1px;background:var(--p3);cursor:pointer}
+.px[data-t="live"]{background:var(--live)} .px[data-t="life"]{background:var(--life)}
+.px[data-t="shop"]{background:var(--shop)} .px[data-t="work"]{background:var(--work)}
+.px[data-t="independent"]{background:var(--ind)}
+.px[data-sel="1"]{outline:1px solid #fff;outline-offset:1px}
+.px.dim{opacity:.28}
+
+/* ---------- right: closure + outside ---------- */
+.spine{display:flex;flex-direction:column;padding:.35rem .55rem}
+.sp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.45rem;align-items:baseline;
+    padding:.2rem 0;border-bottom:1px solid rgba(37,43,54,.5)}
+.sp b{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--dim);font-weight:500;width:6.6rem}
+.sp span{font-size:.7rem;color:var(--tx)}
+.sp span.no{color:var(--dim2)}
+.sp span.yes{color:var(--life)}
+
+.feed{display:flex;flex-direction:column}
+.fi{padding:.26rem .55rem;border-bottom:1px solid rgba(37,43,54,.5);font-size:.72rem}
+.mi{display:grid;grid-template-columns:64px minmax(0,1fr);gap:.5rem;align-items:center;
+    padding:.32rem .55rem;border-bottom:1px solid rgba(37,43,54,.5)}
+.mi:hover{background:var(--p2)}
+.mi img{width:64px;height:40px;object-fit:cover;border-radius:4px;background:var(--p3);
+        display:block}
+.mi .m2{min-width:0}
+.mi .m2 b{display:block;font-size:.73rem;font-weight:500;line-height:1.25;
+          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mi .m2 span{display:block;font-family:var(--mono);font-size:.56rem;color:var(--dim2);
+             margin-top:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mi .m2 span i{font-style:normal;color:var(--acc)}
+.fi a{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi .m{display:flex;gap:.4rem;font-family:var(--mono);font-size:.58rem;color:var(--dim2);
+       margin-top:.05rem}
+.fi .m b{color:var(--acc);font-weight:500}
+
+.note{margin:.4rem .55rem;padding:.4rem .5rem;border:1px solid var(--line);
+      border-left:2px solid var(--acc);border-radius:4px;background:var(--p2);font-size:.7rem}
+.note strong{display:block;margin-bottom:.12rem}
+.note p{margin:.15rem 0 0;color:var(--dim)}
+.note code{color:var(--acc);font-family:var(--mono)}
+.k-btn{display:inline-block;margin-top:.25rem;background:var(--acc);color:var(--acc-ink);
+       border-radius:4px;padding:.1rem .42rem;font-weight:600;font-size:.68rem}
+.k-note{margin:.4rem .55rem;padding:.4rem .5rem;border:1px solid var(--line);
+        border-left:2px solid var(--live);border-radius:4px;background:var(--p2);font-size:.7rem}
+.k-note.k-empty{border-left-color:var(--dim2)}
+.k-note strong{display:block;margin-bottom:.12rem}
+.k-note p{margin:.15rem 0 0;color:var(--dim)}
+.k-note code{color:var(--acc)}
+.src{padding:.3rem .55rem .6rem;font-family:var(--mono);font-size:.58rem;color:var(--dim2);
+     line-height:1.5}
+.src code{color:var(--dim)}
+.wait{padding:.6rem;color:var(--dim2);font-family:var(--mono);font-size:.68rem}
+</style>
+</head>
+<body>
+<div class="rig">
+
+  <header class="strip">
+    <span id="bf-mk"></span>
+    <span class="who"><b id="whoName">&hellip;</b><span id="whoAddr"></span></span>
+    <div class="gauges" id="gauges"></div>
+  </header>
+
+  <div class="dials">
+    <div class="dgrp" id="modes"><i>mode</i></div>
+    <div class="dgrp" id="dial"><i>density</i></div>
+    <div class="dgrp" id="tiers"><i>keep</i></div>
+    <div class="addr">
+      <input id="addrbar" readonly value="&hellip;">
+      <button id="copy">copy</button><button id="reset">reset</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <section class="col col1">
+      <div class="ch"><h2>Subjects</h2><em id="railCount"></em>
+        <span class="sp"></span><em>addr&middot;pres&middot;rel</em></div>
+      <div class="filter"><input id="q" placeholder="filter 326 subjects"></div>
+      <div class="kinds" id="kinds"></div>
+      <div class="rows" id="rail"><p class="wait">reading the matrix&hellip;</p></div>
+    </section>
+
+    <section class="col col2" id="centre">
+      <div class="ch"><h2>One subject, every projection</h2>
+        <em>&sect;43 &mdash; not a separate object per surface</em></div>
+      <div class="subj" id="subj"><p class="wait">&hellip;</p></div>
+    </section>
+
+    <section class="col col3">
+      <div class="ch"><h2>Closure</h2><em id="closureFor"></em></div>
+      <div class="spine" id="spine"></div>
+      <div class="ch"><h2>The outside</h2><em id="outCount"></em></div>
+      <div class="feed" id="feed"><p class="wait">&hellip;</p></div>
+      <p class="src" id="src"></p>
+    </section>
+  </div>
+</div>
+
+<!-- The kit is served from the site root, because emit_file_response_cached
+     refuses an asset name containing a slash and that guard is not worth
+     weakening for a convenience. -->
+<script src="/assets/bonfyre-kit.js?v=BFKITVERSIONXXXX"></script>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const el = (t, c, x) => { const n = document.createElement(t);
+    if (c) n.className = c; if (x !== undefined) n.textContent = x; return n; };
+
+  { const slot = $('bf-mk'); if (slot) slot.replaceWith(K.mark({small: true})); }
+
+  const here = await K.address();
+  const territory = here.territory || K.territory;
+  const person = (here.institution || '')
+    .replace(/^(person|institution|community|world|place|market|foreign_twin):/, '')
+    .replace(/:/g, ' · ');
+  $('whoName').textContent = person || here.host;
+  $('whoAddr').textContent = here.host + ' · ' + territory + ' · ' + (here.audience || '');
+
+  const TERRITORIES = ['live', 'life', 'shop', 'work', 'independent'];
+  const REPS = ['HTML', 'API', 'MCP', 'A2A', 'BonfyreFS', 'CMS', 'Habitat'];
+
+  let shape = K.shapeFromURL();
+  let subjects = [], kinds = {}, kindFilter = '', q = '';
+  let sel = null, selDetail = null, cat = null, twins = [], edges = [];
+
+  const push = () => {
+    const u = K.shapeToURL(shape) + (sel ? (K.shapeToURL(shape).includes('?') ? '&' : '?')
+      + 'subject=' + encodeURIComponent(sel.id) : '');
+    history.replaceState(null, '', u);
+    $('addrbar').value = location.host + u;
+  };
+
+  /* ------------------------------------------------------------- gauges */
+  function gauges(rows) {
+    const g = $('gauges'); g.innerHTML = '';
+    for (const [label, value, hot] of rows) {
+      const d = el('div', 'g' + (hot ? ' hot' : ''));
+      d.appendChild(el('b', null, value));
+      d.appendChild(el('span', null, label));
+      g.appendChild(d);
+    }
+  }
+
+  /* -------------------------------------------------------------- dials */
+  function dialRow(host, items, current, onPick, label) {
+    host.innerHTML = '';
+    host.appendChild(Object.assign(el('i', null, label), {}));
+    for (const [id, text, title] of items) {
+      const b = el('button', null, text);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(id === current));
+      if (title) b.title = title;
+      b.onclick = () => onPick(id);
+      host.appendChild(b);
+    }
+  }
+
+  function drawDials() {
+    const modes = K.modes(territory);
+    const cur = K.mode(territory, shape.mode); shape.mode = cur.id;
+    dialRow($('modes'), modes.map(m => [m.id, m.label, m.blurb]), cur.id,
+            id => { shape.mode = id; render(); }, 'mode');
+    dialRow($('dial'), K.EXTENTS.filter(e => e !== 'workspace')
+              .map(e => [e, e, K.extentActs(e)
+                ? 'whole patterns, with their action layer'
+                : e + ': at most ' + K.EXTENT_ROWS[e] + ', and no action layer']),
+            shape.extent || 'page',
+            id => { shape.extent = id; shape.density = {}; render(); }, 'density');
+    dialRow($('tiers'), K.RETENTION.map(r => [r.tier, r.tier[0] + r.tier.slice(1, 3).toLowerCase(),
+              r.tier + ' — ' + r.holds + ', lives ' + r.lives]),
+            shape.keep, id => { shape.keep = id; render(); }, 'keep');
+  }
+
+  /* The name to put in front of a person. Eighty-four rows of
+   * budgetrequest:01135de0 is a list nobody can use. The estate knows an
+   * address for most subjects; the last readable part of it is the name
+   * somebody would say out loud, and the id stays on the row as its title. */
+  const label = (s) => {
+    if (s.label) {
+      try {
+        const u = new URL(s.label);
+        const seg = u.pathname.split('/').filter(Boolean);
+        if (seg.length) {
+          const last = seg[seg.length - 1];
+          /* A hyphen inside an identifier is part of it. Turning
+           * witness-01135de0 into "witness 01135de0" reads as two words and is
+           * one name, so only phrase-shaped tails get unhyphenated. */
+          const name = /\d/.test(last) ? last : last.replace(/[-_]/g, ' ');
+          return seg.length > 1 ? seg[seg.length - 2] + '/' + name : name;
+        }
+        return u.hostname;
+      } catch (_) { /* not a url; fall through to the id */ }
+    }
+    const tail = s.id.slice(s.id.lastIndexOf(':') + 1);
+    if (/^[0-9a-f]{16,}$/i.test(tail))
+      return s.id.slice(0, s.id.lastIndexOf(':')) + ' \u00b7 ' + tail.slice(0, 8);
+    return s.id;
+  };
+
+  /* --------------------------------------------------------------- rail */
+  function railRows() {
+    const rail = $('rail'); rail.innerHTML = '';
+    const needle = q.trim().toLowerCase();
+    const shown = subjects.filter(s =>
+      (!kindFilter || s.kind === kindFilter) &&
+      (!needle || s.id.toLowerCase().includes(needle)
+                || s.kind.toLowerCase().includes(needle)
+                || (s.label || '').toLowerCase().includes(needle)));
+    $('railCount').textContent = shown.length + ' of ' + subjects.length;
+
+    let lastKind = null;
+    for (const s of shown) {
+      if (s.kind !== lastKind) {
+        lastKind = s.kind;
+        rail.appendChild(el('div', 'kindbar', s.kind + '  ' + (kinds[s.kind] || '')));
+      }
+      const r = el('div', 'r');
+      r.setAttribute('aria-selected', String(!!sel && sel.id === s.id));
+      const n = el('div', 'n');
+      const name = label(s);
+      const cut = name.indexOf(':');
+      if (cut > 0 && name === s.id) {
+        n.appendChild(el('i', null, name.slice(0, cut + 1)));
+        n.appendChild(document.createTextNode(name.slice(cut + 1)));
+      } else n.textContent = name;
+      n.title = s.id + (s.label ? '\n' + s.label : '');
+      r.appendChild(n);
+      for (const v of [s.addresses, s.presences, s.relations])
+        r.appendChild(Object.assign(el('em', v ? 'on' : '', v || '·'), {}));
+      r.onclick = () => select(s);
+      rail.appendChild(r);
+    }
+    if (!shown.length) rail.appendChild(el('p', 'wait', 'nothing matches that.'));
+  }
+
+  function drawKinds() {
+    const box = $('kinds'); box.innerHTML = '';
+    const all = el('button', null, 'all');
+    all.setAttribute('aria-pressed', String(!kindFilter));
+    all.onclick = () => { kindFilter = ''; railRows(); drawKinds(); };
+    all.appendChild(Object.assign(el('b', null, String(subjects.length)), {}));
+    box.appendChild(all);
+    for (const [k, n] of Object.entries(kinds).sort((a, b) => b[1] - a[1])) {
+      const b = el('button', null, k);
+      b.setAttribute('aria-pressed', String(kindFilter === k));
+      b.appendChild(Object.assign(el('b', null, String(n)), {}));
+      b.onclick = () => { kindFilter = kindFilter === k ? '' : k; railRows(); drawKinds(); };
+      box.appendChild(b);
+    }
+  }
+
+  /* ------------------------------------------------------------- centre */
+  function matrix(presence) {
+    const have = new Set(presence.map(p => p.territory + '|' + p.representation));
+    const terr = [...new Set(presence.map(p => p.territory))];
+    const cols = TERRITORIES.filter(t => terr.includes(t) || TERRITORIES.indexOf(t) < 4);
+    const t = el('table', 'mx');
+    const head = el('tr');
+    head.appendChild(Object.assign(el('th', 'rh', 'representation'), {}));
+    for (const c of cols) head.appendChild(el('th', null, c));
+    t.appendChild(head);
+    for (const rep of REPS) {
+      const tr = el('tr');
+      tr.appendChild(el('td', 'rh', rep));
+      for (const c of cols) {
+        const td = el('td');
+        const on = have.has(c + '|' + rep);
+        const cell = el('span', 'cell ' + (on ? 't-' + c : 'off'), on ? '●' : '');
+        cell.title = on
+          ? c + ' · ' + rep + ' — a live presence. A projection, never a permission.'
+          : 'no presence in ' + c + ' as ' + rep;
+        td.appendChild(cell);
+        tr.appendChild(td);
+      }
+      t.appendChild(tr);
+    }
+    return t;
+  }
+
+  function block(title, note) {
+    const b = el('div', 'blk');
+    const h = el('div', 'bh');
+    h.appendChild(el('h3', null, title));
+    if (note) h.appendChild(el('em', null, note));
+    b.appendChild(h);
+    return b;
+  }
+
+  function estateField() {
+    const b = block('The estate', subjects.length + ' subjects, one per cell');
+    const f = el('div', 'field');
+    const byId = {};
+    for (const s of subjects) byId[s.id] = s;
+    for (const s of subjects) {
+      const px = el('div', 'px' + (s.presences ? '' : ' dim'));
+      px.dataset.t = s._t || '';
+      if (sel && sel.id === s.id) px.dataset.sel = '1';
+      px.title = s.id + ' — ' + s.kind + ' · ' + s.addresses + ' addresses · '
+               + s.presences + ' presences';
+      px.onclick = () => select(byId[s.id]);
+      f.appendChild(px);
+    }
+    b.appendChild(f);
+    b.appendChild(el('p', 'mxleg',
+      'Every addressable subject in the estate, one cell each, coloured by the territory it '
+      + 'is present in. Faded means addressed but not projected anywhere yet.'));
+    return b;
+  }
+
+  async function select(s) {
+    sel = s;
+    railRows();
+    push();
+    const c = $('subj');
+    c.innerHTML = '';
+    const head = el('div', 'sid');
+    head.appendChild(el('h1', null, label(s)));
+    if (label(s) !== s.id) head.appendChild(el('span', 'tag', s.id));
+    head.appendChild(el('span', 'tag', s.kind));
+    head.appendChild(el('span', 'tag', s.addresses + ' addresses'));
+    head.appendChild(el('span', 'tag', s.presences + ' presences'));
+    head.appendChild(el('span', 'tag', s.relations + ' relations'));
+    c.appendChild(head);
+    c.appendChild(el('p', 'slede',
+      'One semantic definition. What follows is the same subject in every projection the '
+      + 'estate holds of it — not a social object, a market object and a work object that '
+      + 'happen to share a name.'));
+    c.appendChild(el('p', 'wait', 'reading the constellation…'));
+
+    const res = await K.get('/subjects?id=' + encodeURIComponent(s.id));
+    c.removeChild(c.lastChild);
+    if (!res.ok) { c.appendChild(K.note(res, 'This subject')); return; }
+    const d = (res.body.subjects || [])[0];
+    if (!d) { c.appendChild(K.empty('This subject', '/subjects?id=' + s.id)); return; }
+    selDetail = d;
+
+    const mb = block('Projection matrix', 'territory × representation, from live presences');
+    mb.appendChild(matrix(d.presence || []));
+    mb.appendChild(el('p', 'mxleg', (d.presence || []).length
+      ? 'Filled where a presence exists. A subject in four territories is one subject; '
+        + 'four rows here would be four objects, which is the thing the compression law '
+        + 'forbids.'
+      : 'No live presence. The subject is addressed and projected nowhere, which is a '
+        + 'different statement from not existing.'));
+    c.appendChild(mb);
+
+    /* The density dial narrows these lists as well. A subject with 53
+     * addresses at card extent is three of them and a count, the same rule the
+     * organ applies to a pattern. */
+    const budget = K.EXTENT_ROWS[shape.extent || 'page'] || 0;
+    const cut = (arr) => budget ? arr.slice(0, budget) : arr;
+    const rest = (arr) => budget && arr.length > budget ? arr.length - budget : 0;
+
+    const ab = block('Addresses', (d.address || []).length + ' held'
+      + (rest(d.address || []) ? ' · ' + rest(d.address || []) + ' withheld at '
+        + (shape.extent || 'page') + ' extent' : ''));
+    const al = el('div', 'list');
+    for (const a of cut(d.address || [])) {
+      const li = el('div', 'li');
+      li.appendChild(el('span', 'k', a.kind));
+      const v = el('span', 'v');
+      const link = el('a', null, a.address);
+      link.href = a.address; link.target = '_blank'; link.rel = 'noopener';
+      v.appendChild(link);
+      li.appendChild(v);
+      let t = '';
+      try { t = TERRITORIES.find(x => new URL(a.address).hostname.includes('.' + x)) || ''; }
+      catch (_) {}
+      li.appendChild(el('span', 'x', t));
+      al.appendChild(li);
+    }
+    if (!(d.address || []).length) al.appendChild(el('p', 'wait', 'no address held'));
+    ab.appendChild(al);
+    c.appendChild(ab);
+
+    if ((d.presence || []).length) {
+      const pb = block('Presences', 'scope and world, per projection');
+      const pl = el('div', 'list');
+      for (const p of cut(d.presence)) {
+        const li = el('div', 'li');
+        li.appendChild(el('span', 'k', p.territory));
+        li.appendChild(el('span', 'v', p.representation + '  ·  ' + p.scope));
+        li.appendChild(el('span', 'x', p.world));
+        pl.appendChild(li);
+      }
+      pb.appendChild(pl);
+      c.appendChild(pb);
+    }
+
+    if ((d.relation || []).length) {
+      const rb = block('Relations', d.relation.length + ' edges in the matrix');
+      const rl = el('div', 'list');
+      for (const r of cut(d.relation)) {
+        const li = el('div', 'li');
+        li.appendChild(el('span', 'k', r.relation));
+        li.appendChild(el('span', 'v', r.other));
+        li.appendChild(el('span', 'x', r.direction));
+        rl.appendChild(li);
+      }
+      rb.appendChild(rl);
+      c.appendChild(rb);
+    }
+
+    /* Where the subject is foreign, what was observed of it. */
+    const twin = twins.find(t => t.subject_id === s.id);
+    if (twin) {
+      const ob = block('Observed', twin.observations + ' observations');
+      const ol = el('div', 'list');
+      for (const [k, v] of [['url', twin.url], ['last seen', twin.last_seen],
+                            ['status', String(twin.latest_status)],
+                            ['kind', twin.latest_kind],
+                            ['retained', twin.ever_retained ? 'yes' : 'no'],
+                            ['changes', String(twin.content_changes)],
+                            ['claims', String(twin.claims)]]) {
+        const li = el('div', 'li');
+        li.appendChild(el('span', 'k', k));
+        li.appendChild(el('span', 'v', v == null ? '—' : v));
+        ol.appendChild(li);
+      }
+      ob.appendChild(ol);
+      ob.appendChild(el('p', 'mxleg',
+        'Observed with a receipt, observe-only. Not connected, not canonicalised, and no '
+        + 'claim about the far side. Read the retained bytes at '
+        + '/foreign/body?twin=<id> — served as text, never as a document on this origin.'));
+      c.appendChild(ob);
+    }
+
+    c.appendChild(estateField());
+    drawSpine();
+  }
+
+  /* -------------------------------------------------------------- spine */
+  function drawSpine() {
+    const box = $('spine'); box.innerHTML = '';
+    $('closureFor').textContent = sel ? sel.kind : '';
+    const d = selDetail;
+    const mode = K.mode(territory, shape.mode);
+    const rows = [
+      ['authority', mode.verbs.slice(0, 4).join(' '), 'yes'],
+      ['information', d ? (d.address || []).length + ' addresses, '
+        + (d.presence || []).length + ' presences' : '—', d ? 'yes' : 'no'],
+      ['work', 'offered by mode, decided at effect time', 'no'],
+      ['evidence', sel && twins.find(t => t.subject_id === sel.id)
+        ? 'observation receipts' : 'none held for this subject', 'no'],
+      ['provider', 'the organ that answered each pane', 'yes'],
+      ['commitment', 'nothing committed from a console', 'no'],
+      ['effect', 'never issued by shaping a surface', 'no'],
+      ['occurrence', 'what an effect would produce', 'no']
+    ];
+    for (const [k, v, ok] of rows) {
+      const r = el('div', 'sp');
+      r.appendChild(el('b', null, k));
+      r.appendChild(el('span', ok === 'yes' ? 'yes' : 'no', v));
+      box.appendChild(r);
+    }
+    const n = el('div', 'note');
+    n.innerHTML = '<strong>Reachability stops at the human line.</strong>'
+      + '<p>The console composes and never commits. Every verb above is offered; whether '
+      + 'you may is decided at effect time by the owner of the effect.</p>';
+    box.appendChild(n);
+  }
+
+  /* ------------------------------------------------------------ outside */
+  const walk = (obj, path) => {
+    if (!path) return obj;
+    return path.split('.').reduce((o, k) => {
+      if (o == null) return o;
+      if (Array.isArray(o) && /^\d+$/.test(k)) return o[+k];
+      return o[k];
+    }, obj);
+  };
+
+  async function drawOutside() {
+    const box = $('feed'); box.innerHTML = '';
+
+    /* Six federation edges from three days ago is not the outside world. The
+     * census says what this estate is actually reading and how to read it
+     * back; the panel shows the things with a picture first, because a
+     * thumbnail is the visible world and a predicate is a word about it. */
+    const census = await K.surface('internet-census');
+    const media = census.ok
+      ? census.records.filter(r => r.state === 'observed'
+          && (r.kind === 'video' || r.kind === 'post' || r.kind === 'image'))
+      : [];
+    let shown = 0;
+    for (const row of media.slice(0, 3)) {
+      let items = [];
+      try {
+        const res = await fetch('/foreign/body?twin=' + encodeURIComponent(row.twin));
+        if (res.ok) {
+          const arr = walk(await res.json(), row.extract);
+          if (Array.isArray(arr)) items = arr.slice(0, 4);
+        }
+      } catch (_) { items = []; }
+      if (!items.length) continue;
+      const h = el('div', 'ch');
+      h.appendChild(el('h2', null, row.says));
+      h.appendChild(el('em', null, row.kind));
+      box.appendChild(h);
+      for (const x of items) {
+        let img = row.image_field ? walk(x, row.image_field) : '';
+        if (typeof img === 'string' && img && !/^https?:/.test(img)) {
+          let base = row.image_base || '';
+          if (base.startsWith('@')) {
+            const hh = walk(x, base.slice(1));
+            base = hh ? 'https://' + String(hh) : '';
+          }
+          img = base ? base + img : '';
+        }
+        const a = el('a', 'mi');
+        const href = row.link_field ? walk(x, row.link_field) : '';
+        if (typeof href === 'string' && href) {
+          a.href = href; a.target = '_blank'; a.rel = 'noopener';
+        }
+        if (img) {
+          const im = document.createElement('img');
+          im.src = img; im.alt = ''; im.loading = 'lazy';
+          im.referrerPolicy = 'no-referrer';
+          im.addEventListener('error', () => im.remove(), { once: true });
+          a.appendChild(im);
+        } else a.appendChild(el('div'));
+        const m2 = el('div', 'm2');
+        m2.appendChild(el('b', null, String(walk(x, row.title_field) || '')));
+        const who = row.sub_field ? walk(x, row.sub_field) : '';
+        const meta = row.meta_field ? walk(x, row.meta_field) : '';
+        const line = el('span');
+        if (meta !== '' && meta != null) line.appendChild(el('i', null, String(meta) + '  '));
+        line.appendChild(document.createTextNode(who ? String(who) : row.source));
+        m2.appendChild(line);
+        a.appendChild(m2);
+        box.appendChild(a);
+        shown++;
+      }
+    }
+
+    const fe = await K.foreignEdges();
+    if (fe.ok) edges = fe.edges;
+    if (!shown) {
+      if (!fe.ok) box.appendChild(K.note(fe, 'The outside'));
+      else for (const e of edges.slice(0, 40)) {
+        const f = el('div', 'fi');
+        f.appendChild(el('a', null, e.from + ' → ' + e.to));
+        const m = el('div', 'm');
+        m.appendChild(Object.assign(el('b', null, e.predicate), {}));
+        m.appendChild(el('span', null, e.carrier));
+        m.appendChild(el('span', null, (e.observed_at || '').slice(0, 10)));
+        f.appendChild(m);
+        f.title = e.evidence + ' — claim state ' + e.claim_state;
+        box.appendChild(f);
+      }
+    }
+    $('outCount').textContent = shown ? shown + ' just read · ' + twins.length + ' sources'
+                                      : twins.length + ' twins · ' + edges.length + ' edges';
+    const n = el('div', 'note');
+    n.innerHTML = '<strong>Read, not held.</strong>'
+      + '<p>A thumbnail stays where it lives; this estate keeps the address, the digest '
+      + 'and a receipt. A foreign twin is a subject in the rail beside everything else, '
+      + 'not a second list. <a class="k-btn" href="/link">sources</a></p>';
+    box.appendChild(n);
+    /* Every pane names the path that produced it, in the kit's wording rather
+     * than this page's, so nine surfaces cannot each phrase it differently. */
+    K.mount($('src'), K.sourceLine(['/subjects', '/foreign/twins', '/foreign/edges',
+                                    '/_surface/']));
+  }
+
+  /* --------------------------------------------------------------- draw */
+  async function render() {
+    drawDials(); push(); drawSpine();
+    if (sel) await select(sel);
+  }
+
+  $('q').oninput = (e) => { q = e.target.value; railRows(); };
+  $('copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(location.href); $('copy').textContent = 'copied'; }
+    catch (_) { $('addrbar').select(); }
+    setTimeout(() => { $('copy').textContent = 'copy'; }, 1200);
+  };
+  $('reset').onclick = () => {
+    shape = { mode: K.modes(territory)[0].id, keep: 'FLASH', extent: null,
+              density: {}, off: [] };
+    sel = null; selDetail = null; render(); railRows();
+    $('subj').innerHTML = ''; $('subj').appendChild(estateField());
+  };
+
+  /* -------------------------------------------------------------- start */
+  const [ix, cx, tw] = await Promise.all([
+    K.get('/subjects?limit=1000'), K.catalogue(), K.get('/foreign/twins')
+  ]);
+
+  if (!ix.ok) {
+    $('rail').innerHTML = ''; $('rail').appendChild(K.note(ix, 'The subject index'));
+  } else {
+    subjects = ix.body.subjects || [];
+    kinds = ix.body.kinds || {};
+    twins = tw.ok ? (tw.body.twins || []) : [];
+    const twinIds = new Set(twins.map(t => t.subject_id));
+    for (const s of subjects) {
+      s._t = s.kind === 'HumanTerritory' ? (s.id.split(':').pop() || '')
+           : s.kind === 'Institution' ? 'work'
+           : s.kind === 'ForeignTwin' ? 'independent'
+           : s.kind === 'Event' ? 'live'
+           : s.kind === 'MarketOffer' || s.kind === 'Market' ? 'shop'
+           : s.kind === 'BudgetRequest' ? 'work'
+           : 'life';
+      s._observed = twinIds.has(s.id);
+    }
+    drawKinds(); railRows();
+  }
+
+  cat = cx.ok ? cx.surfaces : [];
+  const kindCount = Object.keys(kinds).length;
+  gauges([
+    ['subjects', String(subjects.length), true],
+    ['kinds', String(kindCount)],
+    ['addresses', String(subjects.reduce((a, s) => a + (s.addresses || 0), 0))],
+    ['presences', String(subjects.reduce((a, s) => a + (s.presences || 0), 0))],
+    ['relations', String(subjects.reduce((a, s) => a + (s.relations || 0), 0))],
+    ['patterns', String(cat.length)],
+    ['observed', String(twins.length), true],
+    ['retained', String(twins.filter(t => t.ever_retained).length)],
+    ['territories', '4'],
+    ['modes', '6'],
+    ['stages', String(K.COMMERCE.length)]
+  ]);
+
+  await render();
+  await drawOutside();
+
+  const want = new URLSearchParams(location.search).get('subject');
+  const first = (want && subjects.find(s => s.id === want)) || subjects[0];
+  if (first) await select(first);
+  else { $('subj').innerHTML = ''; $('subj').appendChild(estateField()); }
+})();
+</script>
+</body></html>

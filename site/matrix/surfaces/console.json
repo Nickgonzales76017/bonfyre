@@ -1,0 +1,51 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "console",
+  "pattern": "OperatorConsole",
+  "interaction_target": "the person whose host this is",
+  "borrowed": "nothing. There is no donor for this one: the market has settings pages, and a settings page is not what this is. The dials here are the estate's own laws, so the surface is the estate's own.",
+  "reads": [
+    "/.well-known/bonfyre",
+    "/_surface/",
+    "/_surface/<pattern>?extent=<extent>",
+    "/foreign/edges"
+  ],
+  "writes": [
+    "/studio/v1/self/foreign/observe"
+  ],
+  "shape": "one page whose entire state is the query string, so a shape is a URL somebody else can open",
+  "refusal_states": [
+    "refused (401/403) — offers the session that would fill it",
+    "empty (200, no records) — an empty projection",
+    "failed (other) — nothing rendered rather than stale or invented",
+    "extent_exceeds_authored (409) — extent narrows; it never grants an action layer"
+  ],
+  "actions": "offered, never submitted, and only where the organ reports carries_action_layer. Observing a source is the one effect this surface issues, and the estate's own ForeignTwin owner performs it.",
+  "dials": {
+    "mode": "section 76 — six modes over four territories; a mode's verbs are a subset of its territory's",
+    "extent": "section 68 — the density dial. Served by the address organ, which caps the records and withholds the effect class itself",
+    "keep": "section 61 — the retention lattice as an admission floor. Promotion up it is never automatic",
+    "shown": "which patterns are composed at all"
+  },
+  "forbidden_inference": [
+    "shaping a surface -> authority over what it reads",
+    "a narrowed extent -> a shorter set; the withheld count is reported",
+    "an observed foreign edge -> a connection to that host, or a claim about it",
+    "a mode -> a separate product; the modes are projections of one Matrix",
+    "a retention floor -> those tiers being empty"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "BonfyreWebAddress /_surface/"
+  },
+  "extent": "workspace",
+  "carries_action_layer": true,
+  "action_layer": [
+    "Observe"
+  ],
+  "requires_authority": "observing carries the `self` session scope; every read on this page answers without one, so a refusal here is a refusal and not an absent subject",
+  "lineage": {
+    "project": null,
+    "note": "authored against sections 11, 12, 60, 61, 68 and 76 of the mature-estate document rather than vendored from a reference UI"
+  }
+}

@@ -1,0 +1,17 @@
+{
+ "version": "bonfyre-flow-surface-v1",
+ "flow": "market",
+ "shape": "each step renders the next; state is carried in the fragment, not in a session",
+ "machine_views": [
+  "/capability",
+  "/mpp/quote",
+  "/ucp/catalog",
+  "/acp/products",
+  "/beckn/search"
+ ],
+ "forbidden_inference": [
+  "a listed capability -> a reservation or a completed sale",
+  "an admitted source -> a licence, or a verified fact about the world",
+  "an advertised skill -> an agreement to perform it"
+ ]
+}

@@ -1,0 +1,40 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "home",
+  "pattern": "TerritoryLanding",
+  "interaction_target": "a stranger who has a real public address, signal, offer, place, or question",
+  "borrowed": "nothing. It is the estate's own paper identity — the ink, the lime, DM Sans and Instrument Serif the compiled pages already use — at editorial scale rather than in cards.",
+  "reads": [
+    "/.well-known/bonfyre",
+    "/_surface/intake",
+    "/foreign/weather",
+    "/account",
+    "/discover",
+    "/market",
+    "/studio/"
+  ],
+  "shape": "one live aperture with four territory characters — an immediate evidence-route form, three existing-owner doors, and one public weather-carrier read",
+  "refusal_states": [
+    "refused (401/403) — named in the gate, with the authority the pattern declared and the code it answered",
+    "empty (200, no records) — an empty projection",
+    "failed (other) — nothing rendered rather than stale or invented"
+  ],
+  "actions": "GET /_surface/intake with one public URL only. The form prepares a reviewed route; it does not fetch, retain, publish, settle, or grant authority. The other links enter existing Discover, Market, Studio, and account owners.",
+  "forbidden_inference": [
+    "a public URL entered into intake -> evidence, a ForeignTwin, canonical truth, or authority over the foreign system",
+    "a public weather-carrier count -> weather truth, retained source body, or a claim about an unavailable carrier",
+    "a door into Discover, Market, Studio, or account -> permission or a completed effect",
+    "a landing page -> a product; all effects remain with the owner reached through its door"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "BonfyreWebAddress /_surface/"
+  },
+  "extent": "page",
+  "carries_action_layer": true,
+  "requires_authority": "none for the bounded intake preparation and public carrier count. Account state is fetched from the native session owner; Discover, Market, and Studio decide their own authority at the later owner boundary.",
+  "lineage": {
+    "project": null,
+    "note": "replaces the dashboard/catalogue root with a bounded immediate operation. The host chooses a distinct territory character in the browser; machine requests still receive the native discovery descriptor."
+  }
+}

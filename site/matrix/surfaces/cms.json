@@ -1,0 +1,31 @@
+{
+ "version": "bonfyre-cms-surface-v1",
+ "generated_at": "2026-08-29T08:10:14Z",
+ "served_by": "BonfyreCMS on 8790, proxied at /cms/ with the prefix stripped",
+ "endpoints": [
+  {
+   "path": "/cms/v1/health",
+   "returns": "service status and content-type count"
+  },
+  {
+   "path": "/cms/v1/schemas",
+   "returns": "registered content types"
+  },
+  {
+   "path": "/cms/v1/api/<type>",
+   "returns": "entries of a content type"
+  }
+ ],
+ "content_types": [
+  "frappe_app",
+  "cms_article",
+  "cms_generation",
+  "wiki_page",
+  "course_lesson"
+ ],
+ "note": "frappe_app carries the compiled Frappe estate: 9 apps, 959 doctypes across the 8 installed ones",
+ "forbidden_inference": [
+  "a content type -> permission to write it; writes require a scoped CMS token",
+  "an installed app -> a running instance of that app"
+ ]
+}

@@ -1,0 +1,87 @@
+"""ARCHIVED: reference-contracts.jsonl and local Bun import replace this SSH writer.
+
+Every one of these is a comma-separated string an author types, and every one
+was resolved at runtime by splitting on commas and dropping whatever did not
+match. That is the failure mode the declaration exists to close: a world naming
+a source that was removed renders less and says nothing, which looks exactly
+like a source that answered with nothing.
+
+on_dangling says what it costs when a name stops resolving, because those are
+not the same: a world losing a source shows less material, and a world naming a
+grammar no renderer carries hands a reader a link to nowhere.
+"""
+import json, subprocess
+
+KEY = "/Users/nickgonzales/.ssh/bonfyre_oracle"
+HOST = "ubuntu@aurekai.live"
+DB = "/var/lib/bonfyre/cms/bonfyre_cms.db"
+CMS = "/usr/local/bin/bonfyre-cms"
+
+ROWS = [
+ dict(reference="world-reads-sources",
+      holder_type="world", holder_key="world", holder_field="sources",
+      target_type="internet_source", target_key="source",
+      cardinality="many", separator=",", required_ref="yes",
+      on_dangling="the world renders that section as nothing, and a reader cannot "
+                  "tell it from a source that answered empty",
+      means="which observed sources this publication composes",
+      cannot_infer="a named source is not a source that answered; the reference "
+                   "resolves to a row, never to material",
+      status="published"),
+
+ dict(reference="world-descends-into-grammars",
+      holder_type="world", holder_key="world", holder_field="grammars",
+      target_type="surface_renderer", target_key="renderer",
+      cardinality="many", separator=",", required_ref="no",
+      on_dangling="the world offers a chip that routes nowhere",
+      means="which interaction grammars this world descends into",
+      cannot_infer="a grammar a world names is not a grammar carrying this "
+                   "world's material",
+      status="published"),
+
+ dict(reference="world-wears-template",
+      holder_type="world", holder_key="world", holder_field="template",
+      target_type="presentation_template", target_key="template",
+      cardinality="one", separator="", required_ref="no",
+      on_dangling="the world falls back to its character, which is the designed "
+                  "behaviour and so hides the broken name entirely",
+      means="the design language this publication is dressed in",
+      cannot_infer="a template is not the publication it was studied from",
+      status="published"),
+
+ dict(reference="door-wears-template",
+      holder_type="territory_presentation", holder_key="territory",
+      holder_field="template",
+      target_type="presentation_template", target_key="template",
+      cardinality="one", separator="", required_ref="no",
+      on_dangling="the door falls back to its character and the broken name is "
+                  "invisible",
+      means="the design language this territory's front door is dressed in",
+      cannot_infer="a door's language is not a claim about what is behind it",
+      status="published"),
+
+ dict(reference="template-suits-renderers",
+      holder_type="presentation_template", holder_key="template",
+      holder_field="renderer_mix",
+      target_type="surface_renderer", target_key="renderer",
+      cardinality="many", separator=",", required_ref="no",
+      on_dangling="the template advertises suiting a grammar the estate does "
+                  "not carry",
+      means="which interaction grammars this design language suits",
+      cannot_infer="a suited grammar is not a grammar this template has been "
+                   "used with",
+      status="published"),
+]
+
+
+def sh(a):
+    return subprocess.run(["ssh", "-i", KEY, HOST, " ".join(a)],
+                          capture_output=True, text=True)
+
+
+for r in ROWS:
+    payload = json.dumps(r, ensure_ascii=False).replace('"', '\\"')
+    out = sh([CMS, "entry", "create", "reference_contract", "--db", DB,
+              "--ns", "root", f'"{payload}"'])
+    line = ((out.stdout or out.stderr).strip().splitlines() or [""])[-1]
+    print(f"{r['reference']:30} {r['holder_type']}.{r['holder_field']:14} {line}")

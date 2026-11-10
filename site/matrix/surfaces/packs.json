@@ -1,0 +1,39 @@
+{
+  "version": "bonfyre-surface-pattern-v1",
+  "surface": "packs",
+  "pattern": "PackClosureDesk",
+  "interaction_target": "the person or community deciding what behaviour they run",
+  "borrowed": "nothing. The material is the pack graph itself, and the grammar is a three-column desk: the graph, the closure it resolves to, and what that closure needs of the world.",
+  "reads": [
+    "/packs",
+    "/packs/closure?actor=<institution or person>",
+    "/_surface/renderers",
+    "/.well-known/bonfyre"
+  ],
+  "shape": "pick an actor, watch the smallest sufficient closure resolve, and see what changes",
+  "refusal_states": [
+    "refused (401/403) — offers the session that would fill it",
+    "empty (200, no packs) — this actor activates nothing",
+    "failed (other) — nothing rendered rather than stale or invented",
+    "pack_graph_unauthored (503) — the types exist and nobody has authored a pack"
+  ],
+  "actions": "none. This surface composes and never commits; changing what an actor runs is an authoring act against pack_installation and pack_activation.",
+  "forbidden_inference": [
+    "an activated pack -> an authorized effect; Authority decides at effect time and is not this organ",
+    "a pack -> an identity; a pack is behaviour and holds no authority and no state",
+    "a resolved closure -> a permission to read what it composes",
+    "a hidden view -> a pattern that stopped answering; hiding is presentation and a machine asking for it gets the same bytes",
+    "an overlay -> the ability to widen anything; the verbs are hide, add, specialize, present, tighten and default, and there is no verb for the rest"
+  ],
+  "owner": {
+    "kind": "organ",
+    "name": "BonfyreWebAddress PackGraph"
+  },
+  "extent": "workspace",
+  "carries_action_layer": false,
+  "requires_authority": "none to read the graph; a closure names what an actor runs and never what they may do",
+  "lineage": {
+    "project": null,
+    "note": "authored against the canonical integrated architecture: five layers that must never merge, a closed overlay verb list, and the retention ladder"
+  }
+}
