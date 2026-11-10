@@ -1,0 +1,22 @@
+{
+  "hero_mode": "lead",
+  "navigation_mode": "inline",
+  "density": "regular",
+  "card_mode": "soft-panel",
+  "typography_mode": "display-grotesque",
+  "layout_tokens": {
+    "ground": "#ffd75e",
+    "ink": "#17341f",
+    "display": "#122a18",
+    "accent": "#c2255c",
+    "muted": "#4d5b2c",
+    "rule": "rgba(23,52,31,.24)",
+    "panel": "#fff0b3",
+    "measure": "40rem",
+    "radius": "30px",
+    "face_display": "\"Bricolage Grotesque\",system-ui,sans-serif",
+    "face_body": "\"Figtree\",system-ui,sans-serif",
+    "face_mono": "\"DM Mono\",ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap"
+  }
+}

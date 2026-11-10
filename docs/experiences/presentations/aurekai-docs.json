@@ -1,0 +1,22 @@
+{
+  "hero_mode": "oversized-title",
+  "navigation_mode": "rail",
+  "density": "loud",
+  "card_mode": "ruled-row",
+  "typography_mode": "mixed",
+  "layout_tokens": {
+    "ground": "#0d130f",
+    "ink": "#dde6da",
+    "display": "#f5f7ee",
+    "accent": "#b5df32",
+    "muted": "#8c9a8d",
+    "rule": "rgba(221,230,218,.17)",
+    "panel": "#17211a",
+    "measure": "44rem",
+    "radius": "14px",
+    "face_display": "\"DM Sans\",system-ui,sans-serif",
+    "face_body": "\"DM Sans\",system-ui,sans-serif",
+    "face_mono": "\"DM Mono\",ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap"
+  }
+}

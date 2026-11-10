@@ -469,5 +469,5 @@ Expected performance: 2-4 tok/s distributed
 - [COLIBRI_INTEGRATION.md](./COLIBRI_INTEGRATION.md) — Full technical architecture
 - [COLIBRI_QUICKREF.md](./COLIBRI_QUICKREF.md) — Configuration reference
 - [COLIBRI_IMPLEMENTATION_SUMMARY.md](./COLIBRI_IMPLEMENTATION_SUMMARY.md) — Implementation details
-- [BonfyreFPQ docs](../10-Code/BonfyreFPQ/INFERENCE_ARCHITECTURE.md) — Weight compression
+- [BonfyreFPQ docs](../components/BonfyreFPQ/INFERENCE_ARCHITECTURE.md) — Weight compression
 - [Bonfyre repo conventions](../AGENTS.md) — Project structure

@@ -1,0 +1,22 @@
+{
+  "hero_mode": "headline-stack",
+  "navigation_mode": "header",
+  "density": "tight",
+  "card_mode": "ruled-row",
+  "typography_mode": "condensed-sans",
+  "layout_tokens": {
+    "ground": "#0f1113",
+    "ink": "#e9e7e0",
+    "display": "#ffffff",
+    "accent": "#ff5a1f",
+    "muted": "#9b9d9c",
+    "rule": "rgba(255,255,255,.2)",
+    "panel": "#1b1f22",
+    "measure": "42rem",
+    "radius": "0px",
+    "face_display": "\"Big Shoulders Display\",Impact,sans-serif",
+    "face_body": "\"Barlow\",system-ui,sans-serif",
+    "face_mono": "\"IBM Plex Mono\",ui-monospace,monospace",
+    "font_href": "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  }
+}

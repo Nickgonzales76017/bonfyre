@@ -1,0 +1,6 @@
+opportunity_id	kind	requirement_key	owner_ref	state	evidence_ref
+brazil:amplialabs:duimp-erpnext-20261010	external	human_partner_response	AmpliaLabs	unresolved	gmail:1a1256ad6eef602b
+brazil:amplialabs:duimp-erpnext-20261010	material	approved_Siscomex_API_specs	Siscomex	unresolved	https://docs.portalunico.siscomex.gov.br/pages/webhooks/
+brazil:amplialabs:duimp-erpnext-20261010	material	nonproduction_Duimp_ERPNext_sample	AmpliaLabs	unresolved	gmail:1a1256ad6eef602b
+brazil:amplialabs:duimp-erpnext-20261010	authority	partner_scope_fee_and_permission	AmpliaLabs	unresolved	gmail:1a1256ad6eef602b
+brazil:amplialabs:duimp-erpnext-20261010	capability	reproducible_API_webhook_failover_tests	Aurekai	unresolved	docs/bonfyre-convergence-global-trade-20261010.md

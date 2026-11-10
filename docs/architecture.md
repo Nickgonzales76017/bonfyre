@@ -17,10 +17,10 @@ Two sources answer different questions:
 Generated diagrams and this page are views. They never outrank the Atlas. Run:
 
 ```bash
-python3 architecture/atlas.py validate
-python3 architecture/atlas.py expand ExecutionView
-python3 architecture/atlas.py get work-graph
-python3 architecture/atlas.py loss
+bun architecture/atlas.mjs validate
+bun architecture/atlas.mjs expand ExecutionView
+bun architecture/atlas.mjs get work-graph
+bun architecture/atlas.mjs loss
 ```
 
 No maturity laundering is allowed: `measured` and `proven` require witnesses,

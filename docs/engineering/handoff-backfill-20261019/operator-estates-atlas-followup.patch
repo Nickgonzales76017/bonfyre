@@ -1,0 +1,14 @@
+diff --git a/architecture/commands/operator-daemon.yaff b/architecture/commands/operator-daemon.yaff
+--- a/architecture/commands/operator-daemon.yaff
++++ b/architecture/commands/operator-daemon.yaff
+@@ -29,4 +29,10 @@
+   source_path integrations/mcp/operator_daemon.mjs
+   source_path integrations/mcp/operator_store.mjs
++  source_path docs/engineering/handoff-backfill-20261019/downstream-estates.mjs
++  witness docs/engineering/handoff-backfill-20261019/downstream-estates.test.mjs preserves full historical briefs, exact domain contracts, original composition references and current owner dispositions
++  witness 2026-10-21 receipt 42d5016a-53bb-450e-9354-bff6c2fa0e7b passed 38 tests and 15803 assertions, imported 750 supplemental source obligations, preserved all 1001 prior goals and STOP, and replayed without additions
++  invariant estate-history status and exact-goal views read existing native goal state and detect definition drift; retained material does not become a second workflow-state owner
++  forbidden_inference a recovered partner mechanism, institution plan or setup requirement -> current partnership, grant, executed integration, public account-rail visibility or completed product
++  known_gap the two historical intakes preserve 1553 overlapping obligations but do not execute their product work; the original 56-group 575-entry derived map and additional institution programmes remain incompletely recovered
+   source_path integrations/mcp/operator_tools.mjs
+   source_path deploy/launchd/operator_cutover.mjs

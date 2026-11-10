@@ -1,0 +1,35 @@
+diff --git a/architecture/commands/operator-daemon.yaff b/architecture/commands/operator-daemon.yaff
+--- a/architecture/commands/operator-daemon.yaff
++++ b/architecture/commands/operator-daemon.yaff
+@@ -18,3 +18,3 @@
+   internal_calculus admitted policy -> atomic budgeted claim -> bounded Responses loop -> durable action intent -> exact gated owner -> action completion -> authoritative run disposition -> receipt projection
+-  invariant STOP or disabled policy precedes database construction, event polling, catalog discovery and model requests; startup does not seed goals
++  invariant daemon STOP or disabled policy precedes database construction, event polling, catalog discovery and model requests; daemon startup does not seed goals
+   invariant configured model and credentials remain outside generated tool descriptors; every model response repeats policy instructions and accounts usage once by response identity
+@@ -43,3 +43,11 @@
+   witness packs/no-simulation/operator-local-20261016/runs.json records why it stopped: 20,777 of 23,126 runs failed on no credits and the gateway was a tunnel to the gone Oracle host; it also retains three cycles tried on a local 3B chat model that produced no usable work, after which that provider was removed
+   invariant a provider failure is recorded only from the transport that made the request; goal or tool text cannot quarantine or clear a provider
++  source_path docs/engineering/handoff-backfill-20261019/downstream.mjs
++  source_path integrations/mcp/tests/operator_goal_import.test.mjs
++  invariant explicit reviewed history intake uses the existing goal owner in one transaction; changed definitions refuse the whole batch and exact replay preserves goal identity, disposition, attempts, errors and timestamps
++  invariant the intake CLI requires the existing pause and exact reviewed source digest; it does not resume the daemon, dispatch work, add recurring schedules, change provider health or duplicate enrollment ownership
++  witness 2026-10-21 tests and source-plan receipt f0c643d7-4cb3-417f-aa6d-6017b16948a8 passed 29 tests and 3212 assertions; native readback 240ac6bd-51ba-4fe1-a1a1-4daf178341f4 imported 803 source-scoped goals while preserving all 198 prior goals, run/action counts and STOP; replay d872ce09-aa49-4b3c-be4d-b54aa9c6938b created zero goals and retained all identities
++  known_gap original 56-group 575-entry per-item artifact remains unrecovered; whole donor dependency packages still require individual review; source obligations overlap and are not distinct completed products
++  forbidden_inference source-linked queued delivery goals -> implemented domain operations, enforced WorkGraph dependencies, public account-rail visibility, unattended execution or product completion
++  interacts history-delivery-uses-operator-goals
+   known_gap the queued goals need a capable provider; the paid one has no credits, and routing them to the dual-agent fabric (dispatch_claude, dispatch_codex) is not wired
+@@ -63,3 +71,14 @@
+   forbidden_inference a reachable remote tool -> permission to invoke it or complete local owner parity
+   witness integrations/mcp/tests/operator_tools.test.mjs
+   binding integrations/mcp/operator_daemon.mjs
++
++interaction history-delivery-uses-operator-goals
++  source mcp-project-native-owner
++  destination autonomous-operator-native-owner
++  relation explicit-reviewed-source-requirement-intake
++  preserves original source identities and complete contracts, independent milestones, existing goal dispositions, native owner state and paused execution
++  drops automatic model dispatch, inferred completion, repeated enrollment and replacement task databases
++  forbidden_inference accepting an intake -> execution authority, domain readiness or live product delivery
++  witness integrations/mcp/tests/operator_goal_import.test.mjs
++  witness docs/engineering/handoff-backfill-20261019/downstream.test.mjs
++  binding docs/engineering/handoff-backfill-20261019/downstream.mjs

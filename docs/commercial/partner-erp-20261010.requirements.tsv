@@ -1,0 +1,7 @@
+opportunity_id	kind	requirement_key	owner_ref	state	evidence_ref
+partner:tzcode:erpnext-us-latam-integration-20261010	external	partner_reply	gmail:1a12715b3c1f250f	unresolved	gmail:1a12715b3c1f250f
+partner:tzcode:erpnext-us-latam-integration-20261010	authority	customer_and_partner_approved_scope	gmail:1a12715b3c1f250f	unresolved	gmail:1a12715b3c1f250f
+partner:tzcode:erpnext-us-latam-integration-20261010	material	sanitized_real_api_or_document_example	gmail:1a12715b3c1f250f	unresolved	gmail:1a12715b3c1f250f
+partner:indictrans:dgft-sapb1-erpnext-20261010	external	partner_reply	gmail:1a12715e4cda8229	unresolved	gmail:1a12715e4cda8229
+partner:indictrans:dgft-sapb1-erpnext-20261010	authority	customer_and_partner_approved_scope	gmail:1a12715e4cda8229	unresolved	gmail:1a12715e4cda8229
+partner:indictrans:dgft-sapb1-erpnext-20261010	material	sanitized_real_api_or_document_example	gmail:1a12715e4cda8229	unresolved	gmail:1a12715e4cda8229

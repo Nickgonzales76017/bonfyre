@@ -1,5 +1,13 @@
 # Demo Seeding
 
+> Retired 2026-10-27: the five April scripts this page runs
+> (`generate_demo_seed_sets`, `build_reviewed_manifest_from_queue`,
+> `assert_reference_readiness`, `stress_reference_corpora_with_bonfyre`,
+> `validate_reference_corpora`) had no caller left in the repository. They are
+> in `~/.bonfyre/archive/retired/js-unreferenced-20261027.tar.zst`. Restore them
+> from the repository root with
+> `zstd -dc --long=27 ~/.bonfyre/archive/retired/js-unreferenced-20261027.tar.zst | tar -xf -`.
+
 Bonfyre demo apps should graduate from one-off showcase records to larger reference corpora that make:
 
 - search feel real

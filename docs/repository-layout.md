@@ -5,7 +5,7 @@ one physical owner; physical placement does not grant semantic authority.
 
 | Owner | Root paths | Meaning |
 |---|---|---|
-| Production code | `engine/`, `lib/`, `cmd/`, `bin/`, `completion/`, `programs/`, `services/`, `workflow/`, `frontend/`, `bonfyre-zig/`, `bonfyre-hyper/`, `aurekai-continuity-core/`, `Aurekai/`, `feldera/`, `serm/`, `layeros/`, `components/` | Native kernels, command surfaces, shared libraries, current product components, and runtimes. |
+| Production code | `engine/`, `lib/`, `cmd/`, `bin/`, `completion/`, `programs/`, `services/`, `workflow/`, `frontend/`, `bonfyre-zig/`, `bonfyre-hyper/`, `Aurekai/`, `feldera/`, `serm/`, `layeros/`, `components/` | Native kernels, command surfaces, shared libraries, current product components, and runtimes. The obsolete generated `aurekai-continuity-core/` split is archived; the active package is `Aurekai/kernel/`. |
 | Architecture and contracts | `architecture/`, `schemas/`, `estate/`, `recipes/`, `packs/` | Canonical architecture registry, contract sources, operator catalog, and workload data. Generated diagrams never replace atlas entries. |
 | Generated projections | `generated/` | Reproducible materializations and checked-in projection witnesses. This tree is never an authoring source. |
 | Evidence and fixtures | `evidence/`, `tests/`, `test-speech/`, `examples/` | Receipts, historical origins, recovery evidence, verification artifacts, fixtures, and executable proof. |
