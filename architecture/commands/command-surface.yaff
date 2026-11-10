@@ -2228,14 +2228,14 @@ architecture cmd-workflow
   domain Command / Workflow
   semantic_question What does the BonfyreWorkflow capability organ realize, and by what contract?
   purpose Command-surface organ realizing the WorkflowCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreWorkflow
   internal_calculus  binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreWorkflow/src/main.c
   witness cmd/BonfyreWorkflow/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.workflow=pass
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes WorkflowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap builds and answers list/show/steps with passing behavior vectors (checked 2026-11-10); realizes WorkflowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
 
 architecture mcp-mesh-call-ledger

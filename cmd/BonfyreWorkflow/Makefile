@@ -7,7 +7,9 @@ SRC := src/main.c
 BUILD := build
 BIN := bonfyre-workflow
 
-.PHONY: all clean install
+.PHONY: all clean install test
+
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
 
 all: $(BUILD)/$(BIN)
 
@@ -20,8 +22,10 @@ $(BUILD):
 clean:
 	rm -rf $(BUILD)
 
+test: $(BUILD)/$(BIN)
+	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreWorkflow/tests/vectors/command_behavior.json
+
 install: $(BUILD)/$(BIN)
-	mkdir -p ~/bin
-	cp $(BUILD)/$(BIN) ~/bin/
-	@echo "Installed to ~/bin/$(BIN)"
-	@echo "Make sure ~/bin is in your PATH"
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(BUILD)/$(BIN) "$(MANAGED_PREFIX)/bin/.bonfyre-workflow.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-workflow.next" "$(MANAGED_PREFIX)/bin/bonfyre-workflow"

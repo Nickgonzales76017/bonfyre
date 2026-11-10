@@ -39,4 +39,10 @@ test-context-compare: $(TARGET)
 	$(MAKE) -C ../BonfyreQueue bonfyre-queue
 	sh tests/context_compare_test.sh ./$(TARGET) ../BonfyreQueue/bonfyre-queue
 
-.PHONY: all clean test test-work-costs test-token-evidence test-context-compare
+MANAGED_PREFIX ?= $(HOME)/.bonfyre
+install: all
+	install -d "$(MANAGED_PREFIX)/bin"
+	install -m 755 $(TARGET) "$(MANAGED_PREFIX)/bin/.bonfyre-meter.next"
+	mv -f "$(MANAGED_PREFIX)/bin/.bonfyre-meter.next" "$(MANAGED_PREFIX)/bin/bonfyre-meter"
+
+.PHONY: all clean test test-work-costs test-token-evidence test-context-compare install

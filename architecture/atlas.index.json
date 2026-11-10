@@ -11037,10 +11037,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes WorkflowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "builds and answers list/show/steps with passing behavior vectors (checked 2026-11-10); realizes WorkflowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -41390,9 +41390,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "c3ce6e457ad4c005498c013c4227ecbae87c16b64c08b01f42b0a32e13111c15",
+    "declaration_digest": "465cac03b1c3b01158edccb9a9851b7e404a50795a2a0da3686a1adb4f9c644c",
     "declaration_files": 151,
-    "generated_at": "2026-11-10T20:00:44Z"
+    "generated_at": "2026-11-10T20:02:58Z"
   },
   "views": {
     "CapabilityView": {
