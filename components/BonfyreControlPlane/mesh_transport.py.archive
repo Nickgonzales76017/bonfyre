@@ -1,0 +1,823 @@
+"""Remote mesh transport: content addressing, quarantine, idempotent export.
+
+The `run8-mesh` GitHub branch carries sanitized coordination envelopes between
+local Run8 carriers and external operator trajectories. It is transport state
+and never a merge target. This module is the Bonfyre-native semantic owner of
+that transport: WorkGraph still owns work, EvidenceGraph still owns evidence,
+ReceiptEnvelope still owns receipts. Nothing here grants authority.
+
+Three defects observed on the live 2026-08-21 mesh motivated this module.
+
+1. **A refused envelope left no durable state.** Two external events
+   (``...T0201-005``, ``...T0210-006``) declared a ``content_sha256`` that did
+   not bind their own bytes. The importer raised, appended a line to a
+   ``last-import.json`` blob that the next sync overwrote, and moved on. The
+   envelopes were then re-fetched and re-refused on every subsequent sync,
+   forever, while the external operator had no way to learn its message never
+   landed. A disagreement between two carriers about what an event *is* has to
+   be preserved as divergence, not dropped -- so a refused envelope is
+   quarantined here with BOTH the claimed and the measured address.
+
+2. **Idempotent re-export was treated as failure.** The address is the content,
+   so re-PUTting an event whose bytes are already at that path is a no-op that
+   has already succeeded. Treating the resulting 422 as a failure left the row
+   `pending` and re-pushed it every cycle -- a retry livelock between two
+   carriers that both computed the same (deterministic) event id.
+
+3. **Different content at an existing address is not a retry.** It is a
+   collision, and the transport must never resolve it by overwriting: the
+   branch is not a merge target and content addressing is the only integrity
+   the public mesh has.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import hashlib
+import json
+import pathlib
+import re
+import sqlite3
+from dataclasses import dataclass
+from typing import Any, Iterator, Optional
+
+import evidence_graphs
+
+UTC = dt.timezone.utc
+
+# Kept byte-identical to the operator's transport so this is a projection of the
+# same addressing rule rather than a second, quietly divergent one. If these
+# ever disagree, every envelope in flight is refused -- see
+# test_canonicalisation_matches_the_operator_transport.
+MESH_SCHEMA = "bonfyre.remote-mesh-event.v1"
+REQUIRED_FIELDS = frozenset(
+    {"schema", "event_id", "observed_at", "actor", "audience", "type", "subject",
+     "body", "evidence_refs", "content_sha256"}
+)
+ALLOWED_TYPES = frozenset(
+    {"work_offer", "work_claim", "handoff", "proof_challenge", "counterexample",
+     "trace_divergence", "artifact_offer", "capability_demand", "provider_delta",
+     "partner_delta", "resource_weather", "deletion_candidate", "review_request",
+     "review_result", "receipt_summary", "question", "answer"}
+)
+WORK_TYPES = frozenset(
+    {"work_offer", "proof_challenge", "trace_divergence", "capability_demand", "review_request"}
+)
+
+SECRET_RE = re.compile(
+    r"(?i)(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|authorization)\s*[:=]\s*[^\s,;]{6,}"
+)
+TOKENISH_RE = re.compile(r"(?i)\b(?:ghp|github_pat|sk-[A-Za-z0-9]|xox[baprs]-)[A-Za-z0-9_\-]{12,}")
+PRIVATE_PATH_RE = re.compile(r"/(?:Users|home)/[^/\s]+/")
+PRIVATE_PAYLOAD_KEYS = frozenset(
+    {
+        "prompt",
+        "raw_prompt",
+        "stdout",
+        "raw_stdout",
+        "stderr",
+        "raw_stderr",
+        "raw_log",
+        "provider_output",
+        "private_correspondence",
+        "private_email",
+        "authority_grant",
+        "grants_authority",
+    }
+)
+MAX_BODY = 12000
+MAX_SUBJECT = 500
+MAX_REFS = 40
+MAX_EVENT_BYTES = 64 * 1024
+# A WorkGraph id is `mesh-` plus at most this many characters of stem.
+MAX_WORK_ID_STEM = 120
+
+# Admission outcomes. `quarantined` is deliberately not `rejected`: the envelope
+# is retained as evidence of a disagreement, not discarded.
+ADMITTED = "admitted"
+DUPLICATE = "duplicate"
+QUARANTINED = "quarantined"
+
+# Export outcomes.
+EXPORT_SYNCED = "synced"          # our bytes are at that address
+EXPORT_RETRY = "retry"            # transient; try again next cycle
+EXPORT_COLLISION = "collision"    # different content at our address -- never overwrite
+EXPORT_REFUSED = "refused"        # privacy gate said no; do not retry
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS mesh_events(
+  event_id TEXT PRIMARY KEY,
+  observed_at TEXT NOT NULL,
+  actor_json TEXT NOT NULL,
+  provider TEXT,
+  audience_json TEXT NOT NULL,
+  type TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  content_sha256 TEXT NOT NULL,
+  source TEXT NOT NULL,
+  source_epoch TEXT,
+  remote_state TEXT NOT NULL DEFAULT 'pending',
+  imported_at TEXT,
+  exported_at TEXT);
+CREATE TABLE IF NOT EXISTS mesh_quarantine(
+  event_id TEXT PRIMARY KEY,
+  path TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  claimed_address TEXT,
+  measured_address TEXT,
+  raw TEXT NOT NULL,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 1,
+  divergence_reported INTEGER NOT NULL DEFAULT 0,
+  evidence_projected INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS mesh_export_state(
+  event_id TEXT PRIMARY KEY,
+  address TEXT NOT NULL,
+  state TEXT NOT NULL,
+  detail TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS mesh_delivery(
+  event_id TEXT NOT NULL,
+  consumer TEXT NOT NULL,
+  delivered_at TEXT,
+  acked_at TEXT,
+  result TEXT,
+  PRIMARY KEY(event_id,consumer));
+DROP TRIGGER IF EXISTS mesh_ack_insert_guard;
+DROP TRIGGER IF EXISTS mesh_ack_update_guard;
+CREATE TRIGGER mesh_ack_insert_guard
+BEFORE INSERT ON mesh_delivery
+WHEN NEW.acked_at IS NOT NULL AND (
+  NOT EXISTS(
+    SELECT 1 FROM mesh_delivery AS delivered
+    WHERE delivered.event_id=NEW.event_id
+      AND delivered.consumer=NEW.consumer
+      AND delivered.delivered_at IS NOT NULL)
+  OR EXISTS(
+    SELECT 1 FROM mesh_events AS event
+    WHERE event.event_id=NEW.event_id
+      AND json_extract(event.actor_json,'$.provider')=NEW.consumer
+      AND event.type IN ('work_offer','proof_challenge','trace_divergence','capability_demand','review_request')
+      AND EXISTS(
+        SELECT 1 FROM json_each(event.audience_json) AS recipient
+        WHERE recipient.value IN ('codex','claude')
+          AND recipient.value<>NEW.consumer))
+)
+BEGIN
+  SELECT RAISE(IGNORE);
+END;
+CREATE TRIGGER mesh_ack_update_guard
+BEFORE UPDATE OF acked_at ON mesh_delivery
+WHEN NEW.acked_at IS NOT NULL AND (
+  OLD.acked_at IS NOT NULL
+  OR OLD.delivered_at IS NULL
+  OR EXISTS(
+    SELECT 1 FROM mesh_events AS event
+    WHERE event.event_id=NEW.event_id
+      AND json_extract(event.actor_json,'$.provider')=NEW.consumer
+      AND event.type IN ('work_offer','proof_challenge','trace_divergence','capability_demand','review_request')
+      AND EXISTS(
+        SELECT 1 FROM json_each(event.audience_json) AS recipient
+        WHERE recipient.value IN ('codex','claude')
+          AND recipient.value<>NEW.consumer))
+)
+BEGIN
+  SELECT RAISE(IGNORE);
+END;
+"""
+
+
+def now() -> str:
+    return dt.datetime.now(UTC).isoformat()
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    columns = {row[1] for row in db.execute("PRAGMA table_info(mesh_quarantine)")}
+    if "evidence_projected" not in columns:
+        db.execute("ALTER TABLE mesh_quarantine ADD COLUMN evidence_projected INTEGER NOT NULL DEFAULT 0")
+    db.commit()
+
+
+# ------------------------------------------------------------- content address
+
+def canonical_core(event: dict[str, Any]) -> bytes:
+    """The bytes an address is taken over: the whole envelope minus the address
+    field itself, sorted, minimally separated, unescaped."""
+    value = dict(event)
+    value.pop("content_sha256", None)
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def content_address(event: dict[str, Any]) -> str:
+    return hashlib.sha256(canonical_core(event)).hexdigest()
+
+
+def address_binds_content(event: dict[str, Any]) -> tuple[bool, Optional[str], str]:
+    """Return (binds, claimed, measured). A claimed address that does not equal
+    the measured one is the definition of an unbound envelope."""
+    claimed = event.get("content_sha256")
+    measured = content_address(event)
+    return (claimed == measured, claimed if isinstance(claimed, str) else None, measured)
+
+
+def seal(event: dict[str, Any]) -> dict[str, Any]:
+    """Stamp an envelope with the address of its own content."""
+    sealed = dict(event)
+    sealed.pop("content_sha256", None)
+    sealed["content_sha256"] = content_address(sealed)
+    return sealed
+
+
+# --------------------------------------------------------------- privacy gate
+
+def _all_strings(value: Any) -> Iterator[str]:
+    """Every string anywhere in the envelope, lists included.
+
+    The list arm is the whole point. Without it the gate never sees
+    ``evidence_refs``, ``audience``, ``body.changed_paths`` or any
+    ``body.tests[].command`` -- exactly the fields that carry paths and
+    commands -- so a private absolute path reaches the public branch while the
+    gate reports safe. That is not hypothetical: locally authored receipt
+    ``local-2b5745a7e20f61978cfcdbb81409`` published a home path inside
+    ``body.tests[].command`` through this hole. Descend into lists or the gate
+    only guards the fields that were never the risk.
+    """
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for key, val in value.items():
+            yield str(key)
+            yield from _all_strings(val)
+    elif isinstance(value, list):
+        for val in value:
+            yield from _all_strings(val)
+
+
+def _all_keys(value: Any) -> Iterator[str]:
+    if isinstance(value, dict):
+        for key, val in value.items():
+            yield str(key).strip().lower().replace("-", "_")
+            yield from _all_keys(val)
+    elif isinstance(value, list):
+        for val in value:
+            yield from _all_keys(val)
+
+
+def public_safe(event: dict[str, Any], *, home: Optional[str] = None) -> tuple[bool, Optional[str]]:
+    """The mesh branch is public. This runs before export, and again on import,
+    because an envelope that leaked a private path upstream must not be
+    re-published by us when we quote it back."""
+    if len(json.dumps(event, ensure_ascii=False).encode("utf-8")) > MAX_EVENT_BYTES:
+        return False, "event exceeds 64KiB public-mesh bound"
+    forbidden_keys = PRIVATE_PAYLOAD_KEYS.intersection(_all_keys(event.get("body")))
+    if forbidden_keys:
+        return False, "event contains forbidden private payload field: " + sorted(forbidden_keys)[0]
+    home = str(pathlib.Path.home()) if home is None else home
+    for text in _all_strings(event):
+        if home and home in text:
+            return False, "event contains local home path"
+        if PRIVATE_PATH_RE.search(text):
+            return False, "event contains private absolute path"
+        if SECRET_RE.search(text) or TOKENISH_RE.search(text):
+            return False, "event contains token/secret-shaped text"
+    return True, None
+
+
+# ------------------------------------------------------------------ validation
+
+def structural_reason(event: Any) -> Optional[str]:
+    """Why this is not a well-formed envelope, or None. Structure is checked
+    before the address so a garbled envelope reports the useful reason."""
+    if not isinstance(event, dict):
+        return "mesh event must be an object"
+    missing = REQUIRED_FIELDS - set(event)
+    if missing:
+        return "missing event fields: " + ",".join(sorted(missing))
+    extra = set(event) - REQUIRED_FIELDS
+    if extra:
+        return "unexpected event fields: " + ",".join(sorted(extra))
+    if event.get("schema") != MESH_SCHEMA:
+        return "unsupported mesh schema"
+    event_id = event.get("event_id")
+    if not isinstance(event_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{6,180}", event_id):
+        return "invalid event_id"
+    if event.get("type") not in ALLOWED_TYPES:
+        return "unsupported mesh event type"
+    audience = event.get("audience")
+    if not isinstance(audience, list) or not audience or not all(isinstance(x, str) and x for x in audience):
+        return "audience must be non-empty strings"
+    subject = event.get("subject")
+    if not isinstance(subject, str) or not subject or len(subject) > MAX_SUBJECT:
+        return "subject is empty or too long"
+    if not isinstance(event.get("body"), (str, dict, list)):
+        return "body must be bounded JSON text/object/array"
+    if len(json.dumps(event["body"], ensure_ascii=False)) > MAX_BODY:
+        return "body exceeds bound"
+    refs = event.get("evidence_refs")
+    if not isinstance(refs, list) or len(refs) > MAX_REFS or not all(isinstance(x, str) for x in refs):
+        return "invalid evidence_refs"
+    return None
+
+
+# -------------------------------------------------------- WorkGraph projection
+def priority_for_type(kind: str) -> int:
+    return {
+        "proof_challenge": 210,
+        "trace_divergence": 205,
+        "capability_demand": 198,
+        "review_request": 194,
+        "work_offer": 188,
+    }.get(kind, 160)
+
+
+def class_for_type(kind: str) -> str:
+    return {
+        "proof_challenge": "proof_replay_backtest",
+        "trace_divergence": "proof_replay_backtest",
+        "capability_demand": "machine_execution",
+        "review_request": "proof_replay_backtest",
+        "work_offer": "open_world_learning",
+    }.get(kind, "open_world_learning")
+
+
+def coordination_route(event: dict[str, Any]) -> tuple[Optional[str], Optional[str]]:
+    """Return ``(avoid_provider, preferred_provider)`` for actionable mesh work.
+
+    A provider-authored challenge addressed to another local carrier must not
+    quietly route back to its author. Preference remains soft so an unavailable
+    target cannot deadlock the whole run; exclusion of the origin is the hard
+    cross-provider proof boundary.
+    """
+    audience = set(event.get("audience") or [])
+    local_recipients = audience.intersection({"codex", "claude"})
+    actor = event.get("actor") if isinstance(event.get("actor"), dict) else {}
+    origin = actor.get("provider")
+    alternatives = local_recipients - ({origin} if origin in {"codex", "claude"} else set())
+    avoid = origin if origin in {"codex", "claude"} and alternatives else None
+    preferred = next(iter(alternatives)) if len(alternatives) == 1 else None
+    if preferred is None and len(local_recipients) == 1:
+        preferred = next(iter(local_recipients))
+    return avoid, preferred
+
+
+def acknowledgement_eligibility(
+    db: sqlite3.Connection, event_id: str, consumer: str
+) -> tuple[bool, str]:
+    """Check whether ``consumer`` may close its delivery of ``event_id``.
+
+    A receipt is not allowed to manufacture delivery by acknowledging an event
+    it never received.  A carrier is also unable to satisfy a cross-provider
+    proof obligation that explicitly excludes its author.  These checks keep
+    EventGraph admission, delivery and material consumption as distinct states.
+    """
+    event_row = db.execute(
+        "SELECT actor_json,audience_json,type FROM mesh_events WHERE event_id=?",
+        (event_id,),
+    ).fetchone()
+    if event_row is None:
+        return False, "unknown mesh event"
+    delivery = db.execute(
+        "SELECT delivered_at,acked_at FROM mesh_delivery WHERE event_id=? AND consumer=?",
+        (event_id, consumer),
+    ).fetchone()
+    if delivery is None or not delivery["delivered_at"]:
+        return False, "event was not delivered to this consumer"
+    try:
+        event = {
+            "actor": json.loads(event_row["actor_json"]),
+            "audience": json.loads(event_row["audience_json"]),
+            "type": event_row["type"],
+        }
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return False, "event routing metadata is invalid"
+    avoid, _ = coordination_route(event)
+    if avoid == consumer:
+        return False, "originating provider cannot acknowledge its cross-provider obligation"
+    return True, "already acknowledged" if delivery["acked_at"] else "eligible"
+
+
+def acknowledge_delivery(
+    db: sqlite3.Connection, event_id: str, consumer: str, *, result: str
+) -> tuple[bool, str]:
+    """Close an existing eligible delivery without inventing a delivery row."""
+    eligible, reason = acknowledgement_eligibility(db, event_id, consumer)
+    if not eligible:
+        return False, reason
+    if reason == "already acknowledged":
+        return True, reason
+    db.execute(
+        """UPDATE mesh_delivery SET acked_at=?,result=?
+           WHERE event_id=? AND consumer=? AND delivered_at IS NOT NULL AND acked_at IS NULL""",
+        (now(), result[:1000], event_id, consumer),
+    )
+    return True, "acknowledged"
+
+
+def ineligible_acknowledgements(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Closed deliveries the current fence would refuse to close today.
+
+    A fence added after the fact only governs the future. The live 2026-08-21
+    mesh already held one such row: proof challenge
+    ``local-746b1d0bc6cbc4467780842d8046`` was authored by codex, routed
+    ``avoid_provider=codex``, and then acknowledged *by codex* before
+    :func:`acknowledgement_eligibility` existed. The cross-provider obligation
+    read as satisfied while no second provider had looked at it. Enumerating
+    those rows is what makes the fence retroactive rather than merely
+    prospective.
+
+    Scoped to :data:`WORK_TYPES`, matching ``mesh_ack_update_guard``: only an
+    actionable event carries an obligation a self-ack could falsely satisfy.
+    An author confirming it saw its own ``provider_delta`` or ``receipt_summary``
+    closes nothing and is left alone. A sweep broader than the trigger it
+    enforces would retract legitimate rows the database itself would accept.
+    """
+    findings: list[dict[str, Any]] = []
+    rows = db.execute(
+        "SELECT event_id,consumer,acked_at,result FROM mesh_delivery"
+        " WHERE acked_at IS NOT NULL ORDER BY event_id,consumer"
+    ).fetchall()
+    for row in rows:
+        event_row = db.execute(
+            "SELECT actor_json,audience_json,type FROM mesh_events WHERE event_id=?",
+            (row["event_id"],),
+        ).fetchone()
+        if event_row is None or event_row["type"] not in WORK_TYPES:
+            continue
+        try:
+            event = {
+                "actor": json.loads(event_row["actor_json"]),
+                "audience": json.loads(event_row["audience_json"]),
+                "type": event_row["type"],
+            }
+        except (TypeError, ValueError, json.JSONDecodeError):
+            continue
+        avoid, _ = coordination_route(event)
+        if avoid and avoid == row["consumer"]:
+            findings.append({
+                "event_id": row["event_id"],
+                "consumer": row["consumer"],
+                "acked_at": row["acked_at"],
+                "reason": "originating provider acknowledged its own cross-provider obligation",
+            })
+    return findings
+
+
+def reconcile_ineligible_acknowledgements(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Reopen those obligations while preserving that the ack happened.
+
+    The ack is not deleted -- both observations survive, per the mesh's own
+    divergence law. ``acked_at`` is cleared so the obligation is open again,
+    and the prior closure is kept verbatim inside ``result`` so the retraction
+    is auditable rather than a quiet rewrite of history.
+    """
+    findings = ineligible_acknowledgements(db)
+    stamp = now()
+    for finding in findings:
+        prior = db.execute(
+            "SELECT result FROM mesh_delivery WHERE event_id=? AND consumer=?",
+            (finding["event_id"], finding["consumer"]),
+        ).fetchone()
+        preserved = (prior["result"] or "") if prior else ""
+        db.execute(
+            "UPDATE mesh_delivery SET acked_at=NULL,result=? WHERE event_id=? AND consumer=?",
+            (
+                f"retracted {stamp}: {finding['reason']}; prior closure was: {preserved}"[:1000],
+                finding["event_id"],
+                finding["consumer"],
+            ),
+        )
+    return findings
+
+
+def work_item_id(event_id: str) -> str:
+    """The WorkGraph id for one mesh event id, injectively.
+
+    Sanitisation and truncation are both lossy, and the event id alphabet is
+    wider than the work id alphabet: ``structural_reason`` admits ``:`` and up
+    to 180 characters, while this stem folds ``:`` to ``-`` and keeps 120. Two
+    distinct, well-formed, differently-addressed envelopes could therefore land
+    on one id -- and because the projection inserts with ``INSERT OR IGNORE``,
+    the second obligation was silently dropped and reported as an ordinary
+    idempotent replay. That is the routing fence failing in the direction its
+    own proof challenge does not look: not a duplicate work item, a *missing*
+    one.
+
+    So a stem is used verbatim only while it is a faithful, in-bounds rendering
+    of the event id. The moment either is untrue, the id carries a digest of the
+    event id it came from, which restores injectivity. Every id that was already
+    lossless is unchanged, so live WorkGraph rows keep their identity and no
+    migration is implied.
+    """
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", event_id)
+    if stem != event_id or len(stem) > MAX_WORK_ID_STEM:
+        digest = hashlib.sha256(event_id.encode("utf-8")).hexdigest()[:16]
+        stem = stem[: MAX_WORK_ID_STEM - len(digest) - 1].rstrip("-.") + "-" + digest
+    return "mesh-" + stem
+
+
+def materialize_coordination_work(db: sqlite3.Connection, event: dict[str, Any]) -> bool:
+    """Project one actionable envelope into bounded, idempotent WorkGraph state.
+
+    ``work_items`` is owned and created by the Run8 supervisor. This projection
+    intentionally does not create that table or grant authority; it only turns
+    an already-admitted coordination event into a schedulable obligation.
+    """
+    if event.get("type") not in WORK_TYPES:
+        return False
+    audience = set(event.get("audience") or [])
+    if not audience.intersection({"run8-supervisor", "codex", "claude", "native-runtime", "all"}):
+        return False
+    event_id = str(event.get("event_id", ""))
+    wid = work_item_id(event_id)
+    body = event.get("body", "")
+    body_text = body if isinstance(body, str) else json.dumps(body, ensure_ascii=False, sort_keys=True)
+    actor = event.get("actor") if isinstance(event.get("actor"), dict) else {"id": str(event.get("actor"))}
+    instruction = (
+        f"MESH {event['type']} event {event_id} from {json.dumps(actor, sort_keys=True)}. "
+        f"Subject: {event['subject']}. Body: {body_text[:9000]}. Evidence refs: "
+        f"{json.dumps(event.get('evidence_refs', [])[:20])}. Execute a bounded physical response in Bonfÿre; "
+        "do not merely acknowledge. If you consume this message, include its event_id in mesh_acks. "
+        "Emit a sanitized mesh review_result, answer, or handoff with concrete evidence when useful."
+    )
+    avoid, preferred = coordination_route(event)
+    cur = db.execute(
+        """INSERT OR IGNORE INTO work_items(
+          id,class,title,instruction,priority,status,created_at,updated_at,avoid_provider,preferred_provider
+        ) VALUES(?,?,?,?,?,'ready',?,?,?,?)""",
+        (
+            wid,
+            class_for_type(str(event["type"])),
+            f"Mesh: {event['subject']}"[:500],
+            instruction,
+            priority_for_type(str(event["type"])),
+            now(),
+            now(),
+            avoid,
+            preferred,
+        ),
+    )
+    return cur.rowcount > 0
+
+
+@dataclass
+class Admission:
+    outcome: str
+    event_id: str
+    reason: Optional[str] = None
+    claimed_address: Optional[str] = None
+    measured_address: Optional[str] = None
+
+    @property
+    def admitted(self) -> bool:
+        return self.outcome == ADMITTED
+
+    @property
+    def is_divergence(self) -> bool:
+        """An address disagreement is the one refusal that means two carriers
+        disagree about content rather than that content is malformed."""
+        return self.outcome == QUARANTINED and self.reason == "content_sha256 mismatch"
+
+
+def admit(db: sqlite3.Connection, raw: str, *, path: str, home: Optional[str] = None) -> Admission:
+    """Admit one remote envelope, or quarantine it with both addresses kept.
+
+    Idempotent by event id in both directions: re-presenting a quarantined
+    envelope bumps its attempt count instead of creating a second row, so the
+    permanent re-fetch loop becomes a countable, reportable fact.
+    """
+    ensure_schema(db)
+    event_id = pathlib.PurePosixPath(path).stem
+    try:
+        parsed = json.loads(raw)
+    except Exception as exc:  # malformed JSON is still evidence of a divergence
+        return _quarantine(db, event_id, path, f"unparseable envelope: {exc}"[:400], None, None, raw)
+
+    if isinstance(parsed, dict) and isinstance(parsed.get("event_id"), str):
+        event_id = parsed["event_id"]
+
+    reason = structural_reason(parsed)
+    if reason:
+        return _quarantine(db, event_id, path, reason, None, None, raw)
+
+    binds, claimed, measured = address_binds_content(parsed)
+    if not binds:
+        return _quarantine(db, event_id, path, "content_sha256 mismatch", claimed, measured, raw)
+
+    safe, unsafe_reason = public_safe(parsed, home=home)
+    if not safe:
+        return _quarantine(db, event_id, path, unsafe_reason or "event not public-safe", claimed, measured, raw)
+
+    existing = db.execute(
+        "SELECT content_sha256 FROM mesh_events WHERE event_id=?", (event_id,)
+    ).fetchone()
+    if existing:
+        existing_address = existing[0]
+        if existing_address == measured:
+            return Admission(DUPLICATE, event_id, claimed_address=claimed, measured_address=measured)
+        return _quarantine(
+            db,
+            event_id,
+            path,
+            "event_id collision",
+            existing_address,
+            measured,
+            raw,
+        )
+    return Admission(ADMITTED, event_id, claimed_address=claimed, measured_address=measured)
+
+
+def _quarantine(db: sqlite3.Connection, event_id: str, path: str, reason: str,
+                claimed: Optional[str], measured: Optional[str], raw: str) -> Admission:
+    stamp = now()
+    cur = db.execute(
+        """INSERT OR IGNORE INTO mesh_quarantine(
+             event_id,path,reason,claimed_address,measured_address,raw,first_seen_at,last_seen_at,attempts)
+           VALUES(?,?,?,?,?,?,?,?,1)""",
+        (event_id, path, reason, claimed, measured, raw[:MAX_EVENT_BYTES], stamp, stamp),
+    )
+    if cur.rowcount == 0:
+        db.execute(
+            "UPDATE mesh_quarantine SET attempts=attempts+1,last_seen_at=?,reason=? WHERE event_id=?",
+            (stamp, reason, event_id),
+        )
+    db.commit()
+    return Admission(QUARANTINED, event_id, reason=reason, claimed_address=claimed, measured_address=measured)
+
+
+def quarantined(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    ensure_schema(db)
+    return [dict(r) for r in db.execute(
+        """SELECT event_id,path,reason,claimed_address,measured_address,attempts,
+                  first_seen_at,last_seen_at,divergence_reported,evidence_projected
+           FROM mesh_quarantine ORDER BY first_seen_at""")]
+
+
+def _quarantine_evidence_ids(row: sqlite3.Row) -> tuple[str, str]:
+    """Address a refusal without ever projecting its retained raw envelope."""
+    stable = "|".join(str(row[key] or "") for key in (
+        "event_id", "reason", "claimed_address", "measured_address",
+    ))
+    digest = hashlib.sha256(stable.encode("utf-8")).hexdigest()
+    return (
+        f"evidence:mesh-quarantine:{digest}",
+        f"claim:mesh-envelope:{row['event_id']}:address-or-structure-valid",
+    )
+
+
+def project_quarantines_into_evidence(db: sqlite3.Connection) -> int:
+    """Project retained refusals as typed falsifying evidence, idempotently.
+
+    Quarantine remains the owner of the raw disputed envelope. EvidenceGraph
+    receives only its public-safe identifiers, reason, address dimensions and
+    time planes; a refusal does not establish authority, producer identity, or
+    the truth of any claim carried by the refused bytes.
+    """
+    ensure_schema(db)
+    evidence_graphs.ensure_schema(db)
+    projected = 0
+    rows = db.execute(
+        "SELECT event_id,reason,claimed_address,measured_address,first_seen_at,last_seen_at "
+        "FROM mesh_quarantine WHERE evidence_projected=0 ORDER BY first_seen_at"
+    ).fetchall()
+    for row in rows:
+        evidence, claim = _quarantine_evidence_ids(row)
+        already = db.execute(
+            "SELECT 1 FROM evidence_relations WHERE evidence=? AND kind=? AND claim=?",
+            (evidence, evidence_graphs.FALSIFIES, claim),
+        ).fetchone() is not None
+        evidence_graphs.add_claim(db, claim, proof_state="open")
+        evidence_graphs.relate_evidence(
+            db, evidence=evidence, kind=evidence_graphs.FALSIFIES, claim=claim
+        )
+        evidence_graphs.record_provenance(
+            db, artifact=evidence, role="mesh_quarantine", node="RemoteMeshTransport"
+        )
+        evidence_graphs.record_times(db, evidence, {
+            "event_time": row["first_seen_at"],
+            "observation_time": row["last_seen_at"],
+            "retrieval_time": row["last_seen_at"],
+        })
+        db.execute("UPDATE mesh_quarantine SET evidence_projected=1 WHERE event_id=?",
+                   (row["event_id"],))
+        projected += not already
+    db.commit()
+    return projected
+
+
+def divergence_report(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Bounded, public-safe summaries of address disagreements, shaped for
+    export back through the mesh. The refused *content* is never echoed -- only
+    the two addresses, which is exactly what the producer needs to re-seal."""
+    ensure_schema(db)
+    rows = db.execute(
+        """SELECT event_id,reason,claimed_address,measured_address,attempts
+           FROM mesh_quarantine
+           WHERE reason IN ('content_sha256 mismatch','event_id collision')
+           ORDER BY first_seen_at"""
+    )
+    return [
+        {
+            "event_id": r["event_id"],
+            "reason": r["reason"],
+            "declared_address": r["claimed_address"],
+            "measured_address": r["measured_address"],
+            "refused_attempts": r["attempts"],
+        }
+        for r in rows
+    ]
+
+
+def mark_divergence_reported(db: sqlite3.Connection, event_ids: list[str]) -> int:
+    ensure_schema(db)
+    marked = 0
+    for event_id in event_ids:
+        cur = db.execute("UPDATE mesh_quarantine SET divergence_reported=1 WHERE event_id=?", (event_id,))
+        marked += cur.rowcount
+    db.commit()
+    return marked
+
+
+# ------------------------------------------------------------ export convergence
+
+def classify_export(*, returncode: int, stderr: str, remote_content: Optional[str],
+                    payload: str) -> tuple[str, str]:
+    """Decide what an export attempt actually meant.
+
+    ``remote_content`` is what is already at the address (None if absent). The
+    address is the content, so identical bytes already present is a *success*
+    that a previous attempt or a peer carrier achieved -- not a failure to
+    retry. Different bytes at our address is a collision we refuse to resolve by
+    overwriting.
+    """
+    if remote_content is not None:
+        if remote_content == payload:
+            detail = "write verified by identical remote readback" if returncode == 0 else "already present with identical content"
+            return EXPORT_SYNCED, detail
+        return EXPORT_COLLISION, "address occupied by different content"
+    if returncode == 0:
+        return EXPORT_RETRY, "write returned success but remote bytes could not be verified"
+    return EXPORT_RETRY, (stderr or "")[-400:]
+
+
+def record_export(db: sqlite3.Connection, *, event_id: str, address: str, state: str,
+                  detail: str = "") -> None:
+    ensure_schema(db)
+    # One statement is essential here: independent mesh-sync processes can
+    # observe the same pending event and record its first attempt concurrently.
+    # UPDATE-then-INSERT turns that harmless export race into a unique-key crash.
+    db.execute(
+        """INSERT INTO mesh_export_state(event_id,address,state,detail,attempts,updated_at)
+           VALUES(?,?,?,?,1,?)
+           ON CONFLICT(event_id) DO UPDATE SET
+             address=excluded.address,
+             state=excluded.state,
+             detail=excluded.detail,
+             attempts=mesh_export_state.attempts+1,
+             updated_at=excluded.updated_at""",
+        (event_id, address, state, detail, now()),
+    )
+    db.commit()
+
+
+def exportable(db: sqlite3.Connection, event_ids: list[str]) -> list[str]:
+    """Which of these still need a push. Synced, collided and refused are all
+    terminal: only `retry` and never-attempted come back."""
+    ensure_schema(db)
+    terminal = {EXPORT_SYNCED, EXPORT_COLLISION, EXPORT_REFUSED}
+    done = {
+        r["event_id"] for r in db.execute("SELECT event_id,state FROM mesh_export_state")
+        if r["state"] in terminal
+    }
+    return [e for e in event_ids if e not in done]
+
+
+def reconcile_terminal_exports(db: sqlite3.Connection) -> int:
+    """Fold durable terminal export evidence back into pending EventGraph rows.
+
+    A carrier can stop after recording exact remote readback but before updating
+    ``mesh_events``. On retry, that crash boundary must converge from the
+    durable export receipt instead of issuing another GitHub write.
+    """
+    ensure_schema(db)
+    rows = db.execute(
+        """SELECT e.event_id,s.state
+           FROM mesh_events e JOIN mesh_export_state s ON s.event_id=e.event_id
+           WHERE e.source LIKE 'local%' AND e.remote_state='pending'
+             AND s.state IN (?,?,?) AND s.address=e.content_sha256""",
+        (EXPORT_SYNCED, EXPORT_COLLISION, EXPORT_REFUSED),
+    ).fetchall()
+    stamp = now()
+    for event_id, state in rows:
+        db.execute(
+            """UPDATE mesh_events
+               SET remote_state=?, exported_at=CASE WHEN ?=? THEN COALESCE(exported_at,?) ELSE exported_at END
+               WHERE event_id=? AND remote_state='pending'""",
+            (state, state, EXPORT_SYNCED, stamp, event_id),
+        )
+    db.commit()
+    return len(rows)

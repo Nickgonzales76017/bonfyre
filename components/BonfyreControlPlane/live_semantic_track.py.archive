@@ -1,0 +1,330 @@
+"""Archived Python owner; superseded by live-semantic-track.mjs and CUE law.
+
+LiveSemanticTrack -- the machine rendition of a live occurrence.
+
+While a person watches video and chat, this produces a second track against the
+same media clock: what was said, by whom, about which place, naming which
+sponsor, asserting which claim. It is the piece that makes the rest compound.
+Without it a live stream is an opaque blob that can only be ranked by viewer
+count; with it, ranking, sponsorship, clipping and institution-formation all
+read from one structure.
+
+Three distinctions carry the design, and each is a boundary something real
+crosses in the wrong direction if it is dropped:
+
+  utterance vs claim     Somebody saying words is not somebody asserting
+                         something. A transcript line becomes a ClaimObservation
+                         only when an asserter is named, because "we might play
+                         Trees" and "we're playing Trees Friday" are different
+                         acts and the second is the one an Event can rest on.
+
+  claim vs evidence      A claim is what was said. It does not become true by
+                         being said clearly, loudly, or by a verified account.
+                         Corroboration raises how well-attested a claim is and
+                         never converts it into proof -- the EvidenceGraph and
+                         proof frontier own that, and this module only proposes.
+
+  retention lattice      Most of a live stream is exhaust. Chat, reactions and
+                         atmosphere should cool away; sponsor acknowledgements,
+                         asserted commitments and economic events should not. But
+                         a boolean cannot tell a reaction from a saved post, or a
+                         saved post from a settled payment. Retention is eight
+                         ordered tiers, declared per kind, and promotion up them
+                         is never automatic -- only an explicit action or evidence
+                         moves a record upward, never popularity or survival.
+
+The media clock is integer milliseconds from stream start. Wall-clock time is
+deliberately absent: a replay, a restart and a live edge must all address the
+same moment the same way, and a track keyed to wall-clock cannot survive being
+replayed.
+
+Forbidden inferences, falsified by the tests beside this file:
+  an utterance             -> a claim
+  a claim                  -> a fact
+  corroboration            -> proof
+  a spoken sponsor mention -> a discharged sponsor obligation
+  a clip candidate         -> a published clip
+  an expired ephemeral event -> the moment not having happened
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable, Optional
+
+# Retention is a lattice, not a boolean. An ephemeral/durable split cannot say
+# the difference between a reaction and a saved post, or between a saved post and
+# a settled payment -- and those differences are exactly what decides whether
+# something may be deleted.
+#
+# Tiers are ordered by how long the estate is willing to be responsible for the
+# record, NOT by importance. A person's saved post outranks live chat because
+# somebody chose to keep it, and an economic record outranks all of it because a
+# ledger has obligations a timeline does not.
+FLASH = "flash"                  # seconds/minutes: reactions, typing, presence
+CHAT = "chat"                    # minutes/hours: live discussion
+MOMENT = "moment"                # hours/days: casual post, local observation
+SOCIAL = "social"                # days/weeks: ordinary public publication
+SAVED = "saved"                  # a person or Circle chose to keep it
+INSTITUTIONAL = "institutional"  # Event, Offer, Membership, Work, Proposal
+EVIDENTIARY = "evidentiary"      # claim/effect witness, per policy
+ECONOMIC = "economic"            # commitment, settlement, ledger retention
+
+TIERS = (FLASH, CHAT, MOMENT, SOCIAL, SAVED, INSTITUTIONAL, EVIDENTIARY, ECONOMIC)
+TIER_RANK = {t: i for i, t in enumerate(TIERS)}
+
+# The tier above which a record is not removed by cooling. Below it, the record
+# is exhaust with a lifetime; at or above it, removing the record would destroy
+# something the estate is accountable for.
+COOLING_FLOOR = SAVED
+
+# Promotion is never automatic and never happens because something was popular,
+# referenced, or merely survived. Only these two acts move a record upward.
+PROMOTION_REASONS = frozenset({"explicit_action", "evidence"})
+
+KIND_TIER = {
+    "reaction": FLASH,
+    "presence": FLASH,
+    "chat": CHAT,
+    "utterance": CHAT,
+    "speaker": CHAT,
+    "topic": MOMENT,
+    "entity": MOMENT,
+    "place": MOMENT,
+    "chapter": MOMENT,
+    "clip_candidate": MOMENT,
+    # These are the moments an institution can rest on.
+    "claim": EVIDENTIARY,
+    "sponsor_mention": EVIDENTIARY,
+    "cta": SOCIAL,
+    "commerce": ECONOMIC,
+}
+
+# Kept as a derived view rather than a second source of truth: callers that only
+# care whether a record survives cooling should not have to know the lattice.
+EPHEMERAL = "ephemeral"
+DURABLE = "durable"
+
+
+def survives_cooling(tier: str) -> bool:
+    return TIER_RANK[tier] >= TIER_RANK[COOLING_FLOOR]
+
+
+class TrackError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class SemanticEvent:
+    """One machine-readable moment, addressed by the media clock."""
+    at_ms: int
+    kind: str
+    value: str
+    speaker: str = ""
+    source: str = "audio"       # audio | chat | vision | operator
+    confidence: float = 1.0
+    retention: str = ""         # set only by an explicit promotion
+
+    def tier(self) -> str:
+        return self.retention or KIND_TIER[self.kind]
+
+    def durability(self) -> str:
+        """The coarse view, derived from the tier rather than stored beside it."""
+        return DURABLE if survives_cooling(self.tier()) else EPHEMERAL
+
+
+@dataclass(frozen=True)
+class ClaimObservation:
+    """Something an identified party asserted, at a moment, on a subject.
+
+    `asserter` is required. An unattributed assertion is a rumour, and this
+    estate already distinguishes the two everywhere else.
+    """
+    claim_id: str
+    at_ms: int
+    asserter: str
+    subject: str
+    assertion: str
+    source: str = "audio"
+
+
+@dataclass(frozen=True)
+class Corroboration:
+    claim_id: str
+    source: str          # e.g. "foreign:trees-calendar"
+    kind: str            # e.g. "EventListingObservation"
+    independent: bool = True
+
+
+@dataclass
+class LiveSemanticTrack:
+    """The events of one live occurrence, ordered by the media clock."""
+    occurrence_id: str
+    events: list[SemanticEvent] = field(default_factory=list)
+    utterance_count: int = 0
+
+    def append(self, event: SemanticEvent) -> "LiveSemanticTrack":
+        if event.kind not in KIND_TIER:
+            raise TrackError(
+                f"unknown semantic kind {event.kind!r}; declaring a retention tier "
+                f"for a kind is part of adding it, not a later decision")
+        if event.retention and event.retention not in TIER_RANK:
+            raise TrackError(f"unknown retention tier {event.retention!r}")
+        if event.at_ms < 0:
+            raise TrackError("media clock runs from stream start; at_ms cannot be negative")
+        self.events.append(event)
+        if event.kind == "utterance":
+            self.utterance_count += 1
+        return self
+
+    def say(self, at_ms: int, text: str, speaker: str = "") -> "LiveSemanticTrack":
+        """Record a transcript line. Deliberately does NOT produce a claim."""
+        return self.append(SemanticEvent(at_ms, "utterance", text, speaker))
+
+    # ---------------------------------------------------------------- reading
+
+    def by_kind(self, kind: str) -> list[SemanticEvent]:
+        return [e for e in self.events if e.kind == kind]
+
+    def window(self, start_ms: int, end_ms: int) -> list[SemanticEvent]:
+        """Events inside a media-clock window, half-open at the end so adjacent
+        windows partition the track rather than double-counting its boundary."""
+        return [e for e in self.events if start_ms <= e.at_ms < end_ms]
+
+    def at_or_before(self, at_ms: int) -> list[SemanticEvent]:
+        """What the machine knew by this point in the stream. The ranking
+        surface reads this, so it can never be given a fact from the future."""
+        return [e for e in self.events if e.at_ms <= at_ms]
+
+    def sponsor_mentions(self, sponsor: str) -> list[SemanticEvent]:
+        return [e for e in self.by_kind("sponsor_mention")
+                if e.value.lower() == sponsor.lower()]
+
+    # ------------------------------------------------------------ compression
+
+    def compression(self) -> dict[str, int]:
+        """The hierarchy, counted. Raw volume in, institutional moments out."""
+        durable = [e for e in self.events if e.durability() == DURABLE]
+        return {
+            "utterances": self.utterance_count,
+            "semantic_events": len(self.events),
+            "durable_events": len(durable),
+            "claims": len(self.by_kind("claim")),
+        }
+
+    def by_tier(self) -> dict[str, int]:
+        counts = {t: 0 for t in TIERS}
+        for e in self.events:
+            counts[e.tier()] += 1
+        return counts
+
+    def promote(self, index: int, *, to: str, reason: str) -> SemanticEvent:
+        """Move one record up the lattice. Upward only, and only for cause.
+
+        `reason` must be an explicit action or evidence. Popularity, reference
+        count and survival are deliberately not reasons: a system that promotes
+        on those is one that keeps whatever got attention, which is the sludge
+        this lattice exists to prevent.
+        """
+        if to not in TIER_RANK:
+            raise TrackError(f"unknown retention tier {to!r}")
+        if reason not in PROMOTION_REASONS:
+            raise TrackError(
+                f"{reason!r} does not justify promotion; only "
+                f"{sorted(PROMOTION_REASONS)} move a record up the lattice")
+        current = self.events[index]
+        if TIER_RANK[to] < TIER_RANK[current.tier()]:
+            raise TrackError(
+                f"cannot demote {current.kind!r} from {current.tier()} to {to}; "
+                f"retention moves upward, and lowering it would delete something "
+                f"the estate already took responsibility for")
+        promoted = SemanticEvent(
+            current.at_ms, current.kind, current.value, current.speaker,
+            current.source, current.confidence, retention=to)
+        self.events[index] = promoted
+        return promoted
+
+    # --------------------------------------------------------------- cooling
+
+    def cool(self) -> tuple[list[SemanticEvent], list[SemanticEvent]]:
+        """(kept, expired). Durable events survive; the rest is exhaust.
+
+        Nothing here consults whether an ephemeral event was interesting. An
+        event that cooled still happened -- the track recorded a moment, and
+        expiring the record is a statement about storage, not about the world.
+        """
+        kept = [e for e in self.events if survives_cooling(e.tier())]
+        expired = [e for e in self.events if not survives_cooling(e.tier())]
+        return kept, expired
+
+
+# ------------------------------------------------------------- claim ledger
+
+@dataclass
+class ClaimLedger:
+    """Claims asserted during live occurrences, and what corroborates them.
+
+    This proposes and never creates. `crystallizable` names claims that have
+    gathered enough independent corroboration to be worth putting in front of
+    the evidence frontier; admitting an Event remains somebody else's act.
+    """
+    claims: dict[str, ClaimObservation] = field(default_factory=dict)
+    corroborations: dict[str, list[Corroboration]] = field(default_factory=dict)
+
+    def assert_claim(self, claim: ClaimObservation) -> "ClaimLedger":
+        if not claim.asserter:
+            raise TrackError(
+                f"claim {claim.claim_id!r} names no asserter; an unattributed "
+                f"assertion is a rumour and is not recorded as a claim")
+        if claim.claim_id in self.claims:
+            raise TrackError(f"claim {claim.claim_id!r} already asserted")
+        self.claims[claim.claim_id] = claim
+        self.corroborations.setdefault(claim.claim_id, [])
+        return self
+
+    def from_utterance(self, track: LiveSemanticTrack, at_ms: int, *,
+                       claim_id: str, asserter: str, subject: str,
+                       assertion: str) -> ClaimObservation:
+        """Promote a transcript moment into a claim, explicitly.
+
+        The promotion is an act with an author. Nothing in this module turns
+        speech into an assertion on its own, because deciding that somebody
+        committed to something is exactly the judgement a machine should not
+        make silently.
+        """
+        claim = ClaimObservation(claim_id, at_ms, asserter, subject, assertion)
+        self.assert_claim(claim)
+        track.append(SemanticEvent(at_ms, "claim", assertion, speaker=asserter))
+        return claim
+
+    def corroborate(self, claim_id: str, *, source: str, kind: str,
+                    independent: bool = True) -> "ClaimLedger":
+        if claim_id not in self.claims:
+            raise TrackError(f"unknown claim {claim_id!r}")
+        existing = self.corroborations[claim_id]
+        if any(c.source == source for c in existing):
+            # A source repeating itself is one source. Counting it twice is how
+            # a single noisy feed manufactures a consensus.
+            return self
+        existing.append(Corroboration(claim_id, source, kind, independent))
+        return self
+
+    def independent_sources(self, claim_id: str) -> list[str]:
+        if claim_id not in self.claims:
+            raise TrackError(f"unknown claim {claim_id!r}")
+        claim = self.claims[claim_id]
+        sources = {c.source for c in self.corroborations[claim_id] if c.independent}
+        # The asserter corroborating their own claim is not corroboration.
+        sources.discard(f"asserter:{claim.asserter}")
+        return sorted(sources)
+
+    def crystallizable(self, *, threshold: int = 2) -> list[str]:
+        """Claims worth proposing to the evidence frontier. Proposals only."""
+        return sorted(cid for cid in self.claims
+                      if len(self.independent_sources(cid)) >= threshold)
+
+    def proven(self, claim_id: str) -> bool:
+        """Always False. Kept as a named refusal rather than an absent method,
+        so a caller reaching for it is answered instead of inventing its own
+        threshold. Proof is owned by EvidenceGraph and the proof frontier."""
+        return False

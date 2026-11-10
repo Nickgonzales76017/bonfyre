@@ -11,6 +11,6 @@ Tiny native distribution utility for live offer lookup and distribution snapshot
 ## Build
 
 ```bash
-cd 10-Code/BonfyreDistribute
+cd components/BonfyreDistribute
 make
 ```

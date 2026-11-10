@@ -1,0 +1,184 @@
+"""Conformance tests for the public semantic shell adapter."""
+
+import json
+import stat
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import bonfyre_shell as shell
+import financial_metabolism as fm
+
+
+def _state(tmp_path):
+    (tmp_path / "control").mkdir(parents=True)
+    (tmp_path / "household/food").mkdir(parents=True)
+    (tmp_path / "household/housing").mkdir(parents=True)
+    (tmp_path / "household/cross-domain").mkdir(parents=True)
+    (tmp_path / "receipts").mkdir(parents=True)
+    (tmp_path / "control/continuous-provider-weather.json").write_text(json.dumps({
+        "schema": "weather.v1", "observations": [{"provider": "codex", "state": "ACTIVE"}],
+    }))
+    (tmp_path / "household/food/basket-options.json").write_text(json.dumps({"schema": "food.v1"}))
+    (tmp_path / "household/housing/effective-costs.json").write_text(json.dumps({"schema": "housing.v1"}))
+    (tmp_path / "household/cross-domain/economic-circuit.json").write_text(json.dumps({
+        "schema": "circuit.v1", "cross_domain_join": {"state": "no_explicit_residence_identity_join"},
+        "constraints": [{"name": "identity_join"}],
+    }))
+    (tmp_path / "receipts/food.json").write_text(json.dumps({"work_item": "food-state", "summary": "food receipt"}))
+    return tmp_path
+
+
+def test_provider_usage_is_a_weather_observation_not_billing(tmp_path):
+    result = shell.BonfyreShell(_state(tmp_path)).run("@provider/codex |> ?usage |> ?evidence")
+    assert result["result"]["value"]["subject"]["metered_usage"] is None
+    assert result["result"]["evidence"][0]["role"] == "provider-weather"
+    assert "billed cost" in result["result"]["non_promoting_claims"][-2]
+
+
+def test_cross_domain_economics_preserves_refused_join(tmp_path):
+    result = shell.BonfyreShell(_state(tmp_path)).run("@work/household |> ?economics |> ?WHY join |> ?PROVE total")
+    assert result["result"]["value"]["proof_state"] == "not_proven"
+    assert result["trace"][1]["owner"] == "HouseholdEconomicCircuit"
+
+
+def test_realizations_usage_evidence_chain_does_not_invent_allocation(tmp_path):
+    result = shell.BonfyreShell(_state(tmp_path)).run("@work/food |> ?realizations |> ?usage |> ?evidence")
+    subject = result["result"]["value"]["subject"]
+    assert subject["usage_state"] == "not_attributed"
+    assert result["result"]["evidence"]
+
+
+def test_akai_alias_keeps_the_native_power_identity(tmp_path, monkeypatch):
+    instance = shell.BonfyreShell(_state(tmp_path))
+    instance._advertisements["BonfyreTime"] = {
+        "identity": "BonfyreTime", "classification": "built", "binary": "bonfyre-time",
+    }
+    value = instance.address("@akai/power/BonfyreTime")
+    assert value.owner == "BonfyreTime"
+    assert value.value["compatibility_alias"] == "Akai"
+
+
+def test_native_power_probe_uses_owner_binary_without_generic_replacement(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    binary = root / "cmd/BonfyreTime/bonfyre-time"
+    binary.parent.mkdir(parents=True)
+    binary.write_text("#!/bin/sh\nprintf 'BonfyreTime help\\n'\n")
+    binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    monkeypatch.setattr(shell, "REPO", root)
+    instance = shell.BonfyreShell(_state(tmp_path))
+    instance._advertisements["BonfyreTime"] = {
+        "identity": "BonfyreTime", "classification": "built", "binary": "bonfyre-time",
+    }
+    result = instance.run("@power/BonfyreTime |> !--help")
+    assert result["result"]["owner"] == "BonfyreTime"
+    assert result["result"]["value"]["operator"] == "ProcessOccurrence"
+    assert result["result"]["value"]["stdout"] == "BonfyreTime help\n"
+    assert result["result"]["value"]["authority"]["decision"] == "admitted_read_only_probe"
+
+
+def test_governed_native_power_delegates_to_fabric_contract_abi(tmp_path, monkeypatch):
+    instance = shell.BonfyreShell(_state(tmp_path))
+    instance._advertisements["BonfyreHash"] = {
+        "identity": "BonfyreHash", "classification": "built", "binary": "bonfyre-hash",
+        "operator_id": "command.hash", "effect_class": "pure-read",
+    }
+    fabric = tmp_path / "fabric"
+    fabric.write_text("#!/bin/sh\n")
+    fabric.chmod(fabric.stat().st_mode | stat.S_IXUSR)
+    monkeypatch.setattr(shell, "FABRIC", fabric)
+    captured = {}
+
+    class Completed:
+        returncode = 0
+        stdout = ("native_power_operator=command.hash\nauthority=admitted\n"
+                  "mission=bonfyre://mission/power-test\n"
+                  "output=bonfyre://artifact/out\n"
+                  "process_receipt=bonfyre://receipt/process\n"
+                  "authority_receipt=bonfyre://receipt/authority\n")
+        stderr = ""
+
+    def fake_run(argv, **kwargs):
+        captured["argv"] = argv
+        return Completed()
+
+    monkeypatch.setattr(shell.subprocess, "run", fake_run)
+    result = instance.run(
+        "@power/BonfyreHash |> !--actor person:test --purpose semantic-power "
+        "--input bonfyre://artifact/input")
+    occurrence = result["result"]["value"]
+    assert captured["argv"][1:4] == ["operator", "invoke", "command.hash"]
+    assert occurrence["native_power"] == "BonfyreHash"
+    assert occurrence["authority"]["decision"] == "admitted"
+    assert occurrence["process_receipt"] == "bonfyre://receipt/process"
+
+
+def test_governed_native_power_requires_complete_named_options(tmp_path):
+    instance = shell.BonfyreShell(_state(tmp_path))
+    instance._advertisements["BonfyreHash"] = {
+        "identity": "BonfyreHash", "classification": "built", "binary": "bonfyre-hash",
+        "operator_id": "command.hash", "effect_class": "pure-read",
+    }
+    try:
+        instance.run("@power/BonfyreHash |> !--actor person:test --input bonfyre://artifact/input")
+    except ValueError as error:
+        assert "--purpose" in str(error)
+    else:
+        raise AssertionError("incomplete authority input was accepted")
+
+
+def test_finance_work_traversal_keeps_realization_usage_economics_and_evidence_distinct(tmp_path):
+    state = _state(tmp_path)
+    db_path = state / "finance/model-usage.sqlite"
+    db_path.parent.mkdir()
+    db = __import__("sqlite3").connect(db_path)
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "local", "model": "atlas-query", "context_bytes": 773, "wall_time_ms": 97},
+        occurrence_id="usage:local:finance", attempt_ref="attempt:local:finance",
+        realization_ref="realization:finance", receipt_ref="receipt:physical:finance",
+        observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(
+        db, observation, target_ref="work-occurrence:r2c-model-usage-finance-closure",
+        evidence_ref="evidence:finance")
+    measure = fm.unknown_cost_measure(usage, evidence_ref="evidence:finance")
+    fm.record_economic_measure(db, measure)
+    fm.allocate_measure_to_trace(db, measure,
+                                 work_item_ref="work-item:r2c-model-usage-finance-closure",
+                                 allocation_version_ref="allocation:finance-shell:v1")
+    db.close()
+    result = shell.BonfyreShell(state).run(
+        "@work/r2c-model-usage-finance-closure |> ?realizations |> ?usage |> ?economics |> ?WHY closure |> ?evidence")
+    subject = result["result"]["value"]["subject"]
+    why = subject["exact_input"]
+    assert why["physical_occurrences"][0]["physical_occurrence_ref"] == "work-occurrence:r2c-model-usage-finance-closure"
+    assert why["usage_occurrences"][0]["attempt_ref"] == "attempt:local:finance"
+    assert why["usage_occurrences"][0]["dimensions"]["context_bytes"] == 773
+    assert why["usage_occurrences"][0]["route_ref"] is None
+    assert why["economic_measures"][0]["basis"] == "unknown"
+    assert why["economic_measures"][0]["amount"] is None
+    assert subject["source_evidence"][0]["role"] == "financial-metabolism-ledger"
+
+
+def test_finance_work_address_resolves_only_an_allocated_ledger_target(tmp_path):
+    state = _state(tmp_path)
+    db_path = state / "finance/model-usage.sqlite"
+    db_path.parent.mkdir()
+    db = __import__("sqlite3").connect(db_path)
+    observation = fm.provider_model_usage_from_receipt(
+        {"provider": "codex", "input_tokens": 3}, occurrence_id="usage:codex:allocated-work",
+        attempt_ref="attempt:codex:allocated-work", realization_ref="realization:codex:allocated-work",
+        receipt_ref="receipt:codex:allocated-work", observed_at="2026-08-24T00:00:00Z")
+    usage = fm.record_provider_model_usage(db, observation, target_ref="work-occurrence:codex:allocated-work")
+    measure = fm.unknown_cost_measure(usage)
+    fm.record_economic_measure(db, measure)
+    fm.allocate_measure_to_trace(db, measure, work_item_ref="work-item:allocated-work",
+                                 allocation_version_ref="allocation:test:v1")
+    db.close()
+    result = shell.BonfyreShell(state).run("@work/allocated-work |> ?usage")
+    assert result["result"]["owner"] == "FinancialMetabolism"
+    assert result["result"]["value"]["usage_occurrences"][0]["attempt_ref"] == "attempt:codex:allocated-work"
+    with pytest.raises(ValueError, match="unsupported current work"):
+        shell.BonfyreShell(state).run("@work/unallocated-work |> ?usage")

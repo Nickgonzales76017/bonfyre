@@ -1,0 +1,124 @@
+{
+  "schema": "service-site.v1",
+  "site_id": "sample-lawn",
+  "preview": true,
+  "business": {
+    "name": "Sample Lawn Care",
+    "tagline": "A made-up business for testing the kit",
+    "page_title": "Sample Lawn Care"
+  },
+  "contact": {
+    "name": "Sam Example",
+    "role": "Owner",
+    "phone": "555-010-0100",
+    "email": "sam@example.com",
+    "location_line": "Serving Exampleville"
+  },
+  "action": "Ask for a quote",
+  "theme": {
+    "template": "ghost-ease"
+  },
+  "sections": [
+    {
+      "kind": "hero",
+      "headline": "Your yard, *looked after* every week",
+      "lede": "Mowing, edging and clean-up on a day you choose.",
+      "form": {
+        "title": "Ask for a quote",
+        "fields": [
+          {
+            "label": "Street address",
+            "icon": "location_on",
+            "placeholder": "12 Example Road",
+            "wide": true
+          },
+          {
+            "label": "Phone",
+            "type": "tel",
+            "icon": "call",
+            "placeholder": "(555) 010-0100"
+          },
+          {
+            "label": "Anything we should know",
+            "icon": "notes",
+            "placeholder": "Gate code, dog, slope",
+            "optional": true
+          }
+        ],
+        "button": "Send my request",
+        "subject": "Quote request",
+        "sent": "Your mail app has opened with your details. Press send and it comes straight to us.",
+        "id": "quote"
+      }
+    },
+    {
+      "kind": "cases",
+      "id": "work",
+      "menu": "What we do",
+      "title": "What we do",
+      "items": [
+        {
+          "icon": "grass",
+          "title": "Weekly mowing",
+          "text": "Cut, edged and blown clear."
+        },
+        {
+          "icon": "yard",
+          "title": "Seasonal clean-up",
+          "text": "Leaves, beds and hedges before the weather turns."
+        }
+      ]
+    },
+    {
+      "kind": "steps",
+      "id": "how",
+      "menu": "How it goes",
+      "title": "How it goes",
+      "items": [
+        {
+          "title": "Tell us the address",
+          "text": "We look at the lot size before we call."
+        },
+        {
+          "title": "Get a price",
+          "text": "One number, per visit."
+        },
+        {
+          "title": "Pick a day",
+          "text": "The same day each week."
+        }
+      ]
+    },
+    {
+      "kind": "reviews",
+      "id": "reviews",
+      "menu": "Reviews",
+      "items": [
+        {
+          "quote": "Showed up when they said.",
+          "name": "A. Tester",
+          "where": "Exampleville"
+        },
+        {
+          "quote": "unsigned praise is not shown"
+        }
+      ]
+    },
+    {
+      "kind": "person",
+      "id": "about",
+      "menu": "About Sam",
+      "text": "I do the work myself and answer my own phone."
+    },
+    {
+      "kind": "call",
+      "title": "Want the yard handled?"
+    }
+  ],
+  "footer": {
+    "about": "Sample Lawn Care does not exist. This record tests the kit."
+  },
+  "to_confirm": [
+    "Everything on this page is made up."
+  ]
+}

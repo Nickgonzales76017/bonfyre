@@ -1,0 +1,344 @@
+"""Archived Python witness: native Bun parity is reference-contracts.test.mjs.
+
+Every one of these fields is a comma-separated string an author types, and
+every one was resolved at runtime by splitting on commas and dropping whatever
+did not match -- silently, by three different readers that had already drifted
+apart on how they split.
+
+  a declared reference resolves
+      wrong if any authored name finds no row
+
+  the declaration is authored, not compiled in
+      wrong if the checker names a type or a field of its own, because then a
+      new reference is a code change and the estate stops describing itself
+
+  a break is loud
+      wrong if a dangling name exits zero, or reads the same as a clean run
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+CHECKER = os.path.join(REPO, "scripts", "reference-check.mjs")
+HOST = "https://aurekai.live"
+TIMEOUT = 30
+
+
+def _surface(name):
+    req = urllib.request.Request(f"{HOST}/_surface/{name}",
+                                 headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return json.loads(r.read().decode())["records"]
+    except urllib.error.HTTPError as e:
+        pytest.skip(f"{name}: {e.code}")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+def _fixture_db():
+    """A store shaped like the estate's, so the checker can be tested on
+    breakage without breaking anything."""
+    fd, path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    db = sqlite3.connect(path)
+    db.executescript("""
+      CREATE TABLE reference_contract (reference TEXT, holder_type TEXT,
+        holder_key TEXT, holder_field TEXT, target_type TEXT, target_key TEXT,
+        cardinality TEXT, separator TEXT, required_ref TEXT, on_dangling TEXT,
+        means TEXT, cannot_infer TEXT, status TEXT);
+      CREATE TABLE thing (name TEXT, uses TEXT);
+      CREATE TABLE part (part TEXT);
+      INSERT INTO reference_contract VALUES
+        ('thing-uses-parts','thing','name','uses','part','part','many',',',
+         'yes','it renders nothing','which parts','a part is not a fact','published');
+      INSERT INTO part VALUES ('a'),('b');
+    """)
+    db.commit()
+    db.close()
+    return path
+
+
+def _run(db):
+    return subprocess.run(["bun", CHECKER, "--db", db],
+                          capture_output=True, text=True)
+
+
+def test_the_checker_exists_and_is_runnable():
+    assert os.path.isfile(CHECKER), CHECKER
+
+
+def test_a_resolving_reference_passes():
+    db = _fixture_db()
+    try:
+        sqlite3.connect(db).executescript(
+            "INSERT INTO thing VALUES ('t','a,b');")
+        r = _run(db)
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert "0 dangling" in r.stdout
+    finally:
+        os.unlink(db)
+
+
+def test_a_dangling_reference_fails_loudly():
+    db = _fixture_db()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript("INSERT INTO thing VALUES ('t','a,ghost');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1, r.stdout
+        assert "DANGLING" in r.stdout
+        assert "ghost" in r.stdout, "the dead name is not reported"
+        assert "t ->" in r.stdout, "the holder is not reported"
+    finally:
+        os.unlink(db)
+
+
+def test_a_required_reference_that_is_empty_is_dangling():
+    db = _fixture_db()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript("INSERT INTO thing VALUES ('t','');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1, r.stdout
+        assert "required and empty" in r.stdout
+    finally:
+        os.unlink(db)
+
+
+def test_nothing_declared_does_not_read_as_everything_resolving():
+    """An empty run and a clean run must not look alike."""
+    fd, path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    try:
+        sqlite3.connect(path).close()
+        r = _run(path)
+        assert r.returncode == 1
+        assert "no reference contracts are declared" in r.stdout
+        assert "0 dangling" not in r.stdout
+    finally:
+        os.unlink(path)
+
+
+def test_a_declaration_naming_a_missing_table_is_undeclarable_not_clean():
+    db = _fixture_db()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript(
+            "INSERT INTO reference_contract VALUES ('bad','thing','name','uses',"
+            "'gone','x','many',',','no','','','','published');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1
+        assert "UNDECLARABLE" in r.stdout
+    finally:
+        os.unlink(db)
+
+
+def test_a_declaration_cannot_name_something_that_is_not_an_identifier():
+    """The declaration names tables and columns, so it is not a place for free
+    text; the checker interpolates those names into SQL."""
+    db = _fixture_db()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript(
+            "INSERT INTO reference_contract VALUES ('inj','thing','name','uses',"
+            "'part\";DROP TABLE part--','part','many',',','no','','','','published');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1
+        assert "UNDECLARABLE" in r.stdout
+        # and it did not run
+        con = sqlite3.connect(db)
+        assert con.execute("SELECT count(*) FROM part").fetchone()[0] == 2
+        con.close()
+    finally:
+        os.unlink(db)
+
+
+def test_the_checker_names_no_type_of_its_own():
+    """A new reference must be a row. If the checker knows what a world is,
+    the estate has stopped describing itself."""
+    with open(CHECKER) as fh:
+        src = fh.read()
+    body = src[src.index("export function check("):]
+    for named in ("world", "internet_source", "surface_renderer",
+                  "presentation_template", "territory_presentation"):
+        assert f'"{named}"' not in body and f"'{named}'" not in body, named
+
+
+# ------------------------------------------------- the live estate resolves
+
+def test_every_declared_reference_is_backed_by_a_real_field():
+    """A contract that names a field the holder does not serve is a contract
+    nothing can check."""
+    contracts = _surface("reference-contracts")
+    assert contracts, "no reference is declared"
+    for c in contracts:
+        assert c["holder_type"] and c["holder_field"], c
+        kind = (c.get("target_kind") or "row").lower()
+        # What a reference needs depends on what it names: a table target is
+        # the schema itself, and a column target reads its type from a field of
+        # the same row rather than from a literal.
+        if kind == "table":
+            pass
+        elif c.get("target_type_field"):
+            assert c["target_type_field"], c["reference"]
+        else:
+            assert c["target_type"] and c["target_key"], c
+        assert c["on_dangling"], (c["reference"], "no stated cost of breaking")
+        assert c["cannot_infer"], c["reference"]
+
+
+def test_the_live_estate_has_no_dangling_reference():
+    """The estate was consistent by care rather than by enforcement; this is
+    the enforcement."""
+    contracts = _surface("reference-contracts")
+    by_target = {}
+    for c in contracts:
+        rows = _surface_rows(c["target_type"])
+        if rows is None:
+            continue
+        by_target[c["reference"]] = {r.get(c["target_key"]) for r in rows}
+    dangling = []
+    for c in contracts:
+        if (c.get("target_kind") or "row").lower() != "row" or c.get("target_type_field"):
+            # column and table targets are resolved against the schema, which
+            # this live sweep cannot see; scripts/reference-check.mjs covers them
+            continue
+        known = by_target.get(c["reference"])
+        if known is None:
+            continue
+        holders = _surface_rows(c["holder_type"])
+        if holders is None:
+            continue
+        sep = c.get("separator") or ""
+        for h in holders:
+            raw = h.get(c["holder_field"]) or ""
+            names = [x.strip() for x in raw.split(sep)] if sep else [raw.strip()]
+            for n in [x for x in names if x]:
+                if n not in known:
+                    dangling.append((c["reference"], h.get(c["holder_key"]), n))
+    assert not dangling, dangling
+
+
+_SURFACE_FOR = {
+    "world": "worlds",
+    "internet_source": "internet-census",
+    "surface_renderer": "renderers",
+    "presentation_template": "presentation-templates",
+    "territory_presentation": "territory-presentation",
+    "reference_contract": "reference-contracts",
+}
+
+
+def _surface_rows(type_name):
+    name = _SURFACE_FOR.get(type_name)
+    if not name:
+        return None
+    return _surface(name)
+
+
+# ------------------------------- a reference may name a column, or a table
+
+def _fixture_columns():
+    """A store shaped like surface_pattern: rows that name a table in one field
+    and columns of that table in another."""
+    fd, path = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    db = sqlite3.connect(path)
+    db.executescript("""
+      CREATE TABLE reference_contract (reference TEXT, holder_type TEXT,
+        holder_key TEXT, holder_field TEXT, target_type TEXT, target_key TEXT,
+        cardinality TEXT, separator TEXT, required_ref TEXT, on_dangling TEXT,
+        means TEXT, cannot_infer TEXT, status TEXT,
+        target_kind TEXT, target_type_field TEXT, skip_when_empty TEXT);
+      CREATE TABLE pat (pattern TEXT, reads TEXT, fields TEXT, organ TEXT);
+      CREATE TABLE thing (name TEXT, colour TEXT);
+      INSERT INTO reference_contract VALUES
+        ('serves-columns','pat','pattern','fields','','','many',',','yes',
+         'the surface serves nothing','which columns','not worth publishing',
+         'published','column','reads','organ'),
+        ('reads-a-table','pat','pattern','reads','','','one','','yes',
+         'answers nothing','which type','not published','published','table','','organ');
+    """)
+    db.commit(); db.close()
+    return path
+
+
+def test_a_column_reference_resolves_against_the_type_the_row_names():
+    db = _fixture_columns()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript("INSERT INTO pat VALUES ('p','thing','name,colour','');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 0, r.stdout
+        assert "0 dangling" in r.stdout
+    finally:
+        os.unlink(db)
+
+
+def test_a_missing_column_is_caught_and_named_as_a_column():
+    """A column that was never in the table and a row that was removed are
+    different repairs; saying 'no such row' sends the reader to the wrong place."""
+    db = _fixture_columns()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript("INSERT INTO pat VALUES ('p','thing','name,ghost','');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1, r.stdout
+        assert "ghost" in r.stdout
+        assert "no such column" in r.stdout, r.stdout
+    finally:
+        os.unlink(db)
+
+
+def test_a_row_that_names_a_missing_table_is_dangling_not_undeclarable():
+    """One broken row must not make the whole reference uncheckable for every
+    other row."""
+    db = _fixture_columns()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript(
+            "INSERT INTO pat VALUES ('good','thing','name','');"
+            "INSERT INTO pat VALUES ('bad','gone','name','');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 1
+        assert "no such table" in r.stdout or "not a table" in r.stdout
+        assert "UNDECLARABLE" not in r.stdout, "one bad row disabled the whole check"
+    finally:
+        os.unlink(db)
+
+
+def test_a_holder_backed_by_something_other_than_a_table_is_skipped():
+    """A surface reading an organ names no columns of any table, and is not
+    broken for having none."""
+    db = _fixture_columns()
+    try:
+        con = sqlite3.connect(db)
+        con.executescript(
+            "INSERT INTO pat VALUES ('organ-backed','','id,name','some-binary');")
+        con.commit(); con.close()
+        r = _run(db)
+        assert r.returncode == 0, r.stdout
+        assert "organ-backed" not in r.stdout
+    finally:
+        os.unlink(db)

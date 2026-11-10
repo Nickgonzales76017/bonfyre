@@ -1,0 +1,30 @@
+{
+  "schema": "aurekai.closure-outcomes.v1",
+  "note": "Finished states people ask for, and the steps each takes. A family names every step it really needs, including the ones this estate cannot do; that is how a request is found unsolvable for a stated reason instead of being called solvable by omission. `presence` means a person has to be somewhere in the body.",
+  "families": [
+    { "id": "web_presence", "title": "A working website for a business", "recognise": ["website", "web site", "landing page", "web presence", "site for my", "need a site", "redo (my|our) site", "web design", "wordpress site", "squarespace", "wix"],
+      "steps": ["step:site_build", "step:site_copy_structure", "step:phone_layout", "step:request_form", "step:static_hosting", "step:preview_link", "step:browser_verification", "step:domain_connection"], "authority": ["authority:publish_approval", "authority:dns_access"], "material": ["material:business_facts", "material:brand_assets"] },
+    { "id": "site_repair", "title": "An existing site made to work again", "recognise": ["hacked", "site is down", "site (is )?broken", "fix (my|our) (web)?site", "malware", "site repair", "wordpress (fix|repair|help|issue)", "plugin (conflict|broke)"],
+      "steps": ["step:observe_existing_site", "step:legacy_site_access", "step:malware_cleanup", "step:site_build", "step:static_hosting", "step:browser_verification"], "authority": ["authority:hosting_credentials", "authority:publish_approval"], "material": ["material:site_address"] },
+    { "id": "online_store", "title": "A store that takes orders and payment", "recognise": ["shopify", "woocommerce", "online store", "e-?commerce", "printful", "square (is )?connected", "checkout", "sell (my )?products online", "etsy"],
+      "steps": ["step:site_build", "step:product_catalogue", "step:payment_processor_connection", "step:supplier_connection", "step:checkout_verification", "step:static_hosting", "step:browser_verification"], "authority": ["authority:payment_account", "authority:store_admin", "authority:publish_approval"], "material": ["material:item_records", "material:brand_assets"] },
+    { "id": "catalogue", "title": "A messy pile of items turned into a searchable catalogue or menu", "recognise": ["menu", "catalog", "catalogue", "price list", "inventory list", "product list", "digiti[sz]e (my|our) (menu|recipes|catalog)"],
+      "steps": ["step:catalogue_structure", "step:searchable_catalogue", "step:duplicate_folding", "step:site_build", "step:static_hosting", "step:browser_verification"], "authority": ["authority:publish_approval"], "material": ["material:item_records"] },
+    { "id": "document_digitising", "title": "Paper or scans turned into usable text or records", "recognise": ["scan(s|ned)?", "ocr", "digiti[sz]e", "type up", "transcribe (documents|handwritten|pdf)", "pdf to (word|excel|text)", "data entry from"],
+      "steps": ["step:read_scanned_text", "step:structured_record_from_photo", "step:content_record"], "authority": [], "material": ["material:scans_or_photos"] },
+    { "id": "business_email", "title": "Email on the business's own domain", "recognise": ["business email", "email (on|at|with) (my|our) domain", "custom email", "google workspace", "email setup", "mx record"],
+      "steps": ["step:email_receiving", "step:dmarc_record", "step:email_sending"], "authority": ["authority:dns_access"], "material": [] },
+    { "id": "custom_software", "title": "Software built or changed to order", "recognise": ["developer", "engineer", "react", "python", "django", "rails", "node\\.?js", "ios app", "android app", "mobile app", "api integration", "backend", "frontend", "full[- ]stack", "mvp", "saas", "machine learning", "\\bml\\b", "\\bllm\\b", "devops", "kubernetes", "rust", "golang", "typescript", "database"],
+      "steps": ["step:bespoke_software_engineering", "step:client_codebase_access", "step:acceptance_testing"], "authority": ["authority:repository_access"], "material": ["material:requirements"] },
+    { "id": "design", "title": "A logo, brand or visual design", "recognise": ["logo", "branding", "brand identity", "graphic design", "ui/?ux", "designer", "illustrat", "figma"],
+      "steps": ["step:original_visual_design", "step:client_review_rounds"], "authority": [], "material": ["material:business_facts"] },
+    { "id": "bookkeeping", "title": "Books kept, reconciled or cleaned up", "recognise": ["bookkeep", "quickbooks", "accounting", "reconcil", "payroll", "tax prep"],
+      "steps": ["step:ledger_reconciliation", "step:accounting_system_access", "step:licensed_review"], "authority": ["authority:financial_account_access"], "material": ["material:financial_records"] },
+    { "id": "social_media", "title": "Social accounts run or content produced for them", "recognise": ["social media", "instagram", "tiktok", "facebook (page|ads)", "content creator", "post(ing)? schedule", "community manager"],
+      "steps": ["step:recurring_content_production", "step:social_account_posting"], "authority": ["authority:social_account_access"], "material": ["material:brand_assets"] },
+    { "id": "writing", "title": "Writing, editing or translation", "recognise": ["copywrit", "ghostwrit", "blog post", "technical writ", "editor", "proofread", "translat"],
+      "steps": ["step:original_writing", "step:client_review_rounds"], "authority": [], "material": ["material:requirements"] },
+    { "id": "in_person_work", "title": "Work that needs a person there", "presence": true, "recognise": ["mov(e|ing) help", "junk removal", "haul", "clean(ing|er)", "lawn", "landscap", "handyman", "paint(er|ing)", "driver", "delivery", "mechanic", "cook", "bartend", "\\bdj\\b", "photograph(er|y) (for|at)", "event staff", "babysit", "caregiver", "on[- ]site", "in person"],
+      "steps": ["step:physical_presence"], "authority": [], "material": [] }
+  ]
+}

@@ -1,0 +1,110 @@
+"""Aurekai's evidence-bound PatternGraph.
+
+Run history is useful only after repeated observations are separated from a
+candidate primitive.  A cluster may propose a candidate, but cannot promote it:
+frequency is neither correctness nor authority.
+"""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from dataclasses import dataclass, field
+from typing import Sequence
+
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS pattern_clusters(
+  cluster_id TEXT PRIMARY KEY,
+  statement TEXT NOT NULL,
+  evidence_refs TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'observed'
+);
+CREATE TABLE IF NOT EXISTS pattern_members(
+  cluster_id TEXT NOT NULL REFERENCES pattern_clusters(cluster_id),
+  trace_ref TEXT NOT NULL,
+  PRIMARY KEY(cluster_id, trace_ref)
+);
+CREATE TABLE IF NOT EXISTS candidate_primitives(
+  candidate_id TEXT PRIMARY KEY,
+  cluster_id TEXT NOT NULL REFERENCES pattern_clusters(cluster_id),
+  statement TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'candidate',
+  proof_ref TEXT NOT NULL DEFAULT ''
+);
+"""
+
+OBSERVED = "observed"
+CHALLENGED = "challenged"
+CANDIDATE = "candidate"
+PROVEN = "proven"
+PROMOTED = "promoted"
+
+
+@dataclass(frozen=True)
+class PatternCluster:
+    cluster_id: str
+    statement: str
+    trace_refs: Sequence[str] = field(default_factory=tuple)
+    evidence_refs: Sequence[str] = field(default_factory=tuple)
+    status: str = OBSERVED
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.commit()
+
+
+def record_cluster(db: sqlite3.Connection, cluster: PatternCluster) -> None:
+    if cluster.status not in {OBSERVED, CHALLENGED}:
+        raise ValueError(f"a pattern cluster cannot claim status {cluster.status!r}")
+    if not cluster.trace_refs or not cluster.evidence_refs:
+        raise ValueError("a pattern cluster needs traces and evidence")
+    ensure_schema(db)
+    db.execute(
+        "INSERT INTO pattern_clusters(cluster_id,statement,evidence_refs,status)"
+        " VALUES(?,?,?,?) ON CONFLICT(cluster_id) DO UPDATE SET"
+        " statement=excluded.statement,evidence_refs=excluded.evidence_refs,"
+        " status=excluded.status",
+        (cluster.cluster_id, cluster.statement,
+         json.dumps(list(cluster.evidence_refs)), cluster.status),
+    )
+    for trace_ref in cluster.trace_refs:
+        db.execute(
+            "INSERT OR IGNORE INTO pattern_members(cluster_id,trace_ref) VALUES(?,?)",
+            (cluster.cluster_id, trace_ref),
+        )
+    db.commit()
+
+
+def propose_candidate(
+    db: sqlite3.Connection, *, candidate_id: str, cluster_id: str, statement: str
+) -> None:
+    """Propose only. Proof and constitutional promotion are separate effects."""
+    ensure_schema(db)
+    if db.execute(
+        "SELECT 1 FROM pattern_clusters WHERE cluster_id=?", (cluster_id,)
+    ).fetchone() is None:
+        raise ValueError(f"unknown pattern cluster {cluster_id!r}")
+    db.execute(
+        "INSERT INTO candidate_primitives(candidate_id,cluster_id,statement,status)"
+        " VALUES(?,?,?,'candidate') ON CONFLICT(candidate_id) DO UPDATE SET"
+        " cluster_id=excluded.cluster_id,statement=excluded.statement",
+        (candidate_id, cluster_id, statement),
+    )
+    db.commit()
+
+
+def candidate_status(db: sqlite3.Connection, candidate_id: str) -> str | None:
+    row = db.execute(
+        "SELECT status FROM candidate_primitives WHERE candidate_id=?", (candidate_id,)
+    ).fetchone()
+    return row[0] if row else None
+
+
+def cluster_traces(db: sqlite3.Connection, cluster_id: str) -> list[str]:
+    return [row[0] for row in db.execute(
+        "SELECT trace_ref FROM pattern_members WHERE cluster_id=? ORDER BY trace_ref",
+        (cluster_id,),
+    )]

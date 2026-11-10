@@ -1,0 +1,246 @@
+"""Archived Python witness: native owner is publication-program.test.mjs.
+
+Witness for PublicationProgram.
+
+The central claim is that consent is resolved before an adapter is reached, and
+that a token is not consent. Every adapter here records whether it was called, so
+a refusal that happened too late would be visible as a call that should not have
+occurred.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import information_policy as ip  # noqa: E402
+import protocol_authority as pa  # noqa: E402
+import publication_program as pp  # noqa: E402
+
+SUBJECT = "presence:creator:neon-june"
+CLIP = {
+    "subject": SUBJECT,
+    "title": "Friday at Trees",
+    "body": "we're playing Trees again Friday",
+    "creator": "Neon June",
+    "url": "https://aurekai.live/clip/friday-announcement",
+    "published_at": "2026-09-04T21:40:00Z",
+    "location": "Reno's, Deep Ellum",
+}
+
+
+@pytest.fixture()
+def adb():
+    conn = sqlite3.connect(":memory:")
+    pa.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def policy():
+    pol = ip.InformationPolicy("SocialClip")
+    for f in ("subject", "title", "body", "creator", "url", "published_at"):
+        pol.disclose(f, to=("public", "community", "institution"))
+    pol.disclose("location", to=("community", "institution"),
+                 reason="a live location is not published to the open web")
+    return pol
+
+
+@pytest.fixture()
+def program(policy):
+    prog = pp.PublicationProgram(
+        subject=SUBJECT, principal="person:nick", agent="estate:aurekai",
+        purpose="creator distribution",
+        profile=pp.social_clip_profile(policy))
+    prog.to("mastodon", carrier="activitypub", audience="public")
+    prog.to("bluesky", carrier="atproto", audience="public")
+    prog.to("shortvideo-net", carrier="shortvideo", audience="public")
+    return prog
+
+
+class Recorder:
+    """An adapter that remembers whether anybody called it."""
+
+    def __init__(self):
+        self.calls = []
+
+    def __call__(self, rendered):
+        self.calls.append(rendered)
+        return {"status": 200, "id": f"remote-{len(self.calls)}"}
+
+
+@pytest.fixture()
+def adapters():
+    return {"mastodon": Recorder(), "bluesky": Recorder(),
+            "shortvideo-net": Recorder()}
+
+
+def _grant_all(adb, program, **kw):
+    for t in program.targets:
+        pa.grant(adb, edge_id=f"g:{t.platform}", actor=program.agent,
+                 permission=f"{t.operation}:{t.platform}", subject=program.subject,
+                 purpose=program.purpose, **kw)
+
+
+# ------------------------------------- a token is not permission to publish
+
+def test_without_a_grant_nothing_reaches_an_adapter(adb, program, adapters):
+    with pytest.raises(pp.PublicationRefused) as e:
+        program.publish(adb, CLIP, adapters=adapters)
+    assert e.value.stage == "delegation"
+    # The decisive assertion: no adapter was called. A token could have existed
+    # for all three of these and it would still have gone nowhere.
+    assert all(not a.calls for a in adapters.values())
+
+
+def test_consent_gaps_name_the_missing_grant(adb, program):
+    gaps = program.consent_gaps(adb)
+    assert set(gaps) == {"mastodon", "bluesky", "shortvideo-net"}
+    assert "publish:mastodon" in gaps["mastodon"]
+    assert "creator distribution" in gaps["mastodon"]
+
+
+def test_a_grant_for_one_platform_is_not_a_grant_for_another(adb, program, adapters):
+    pa.grant(adb, edge_id="g:mastodon", actor="estate:aurekai",
+             permission="publish:mastodon", subject=SUBJECT,
+             purpose="creator distribution")
+    gaps = program.consent_gaps(adb)
+    assert "mastodon" not in gaps
+    assert set(gaps) == {"bluesky", "shortvideo-net"}
+    # Publishing somewhere the person did not agree to is the failure this
+    # per-platform check exists to prevent, so the whole program still refuses.
+    with pytest.raises(pp.PublicationRefused):
+        program.publish(adb, CLIP, adapters=adapters)
+    assert all(not a.calls for a in adapters.values())
+
+
+def test_a_grant_for_another_purpose_does_not_authorize_this_one(adb, program):
+    _grant_all(adb, program)
+    other = pp.PublicationProgram(
+        subject=SUBJECT, principal="person:nick", agent="estate:aurekai",
+        purpose="advertising", profile=program.profile)
+    other.to("mastodon", carrier="activitypub")
+    assert other.consent_gaps(adb) != {}
+    assert program.consented(adb) is True
+
+
+def test_an_expired_grant_stops_authorizing(adb, program, adapters):
+    _grant_all(adb, program, expires_at="2026-06-30T00:00:00Z")
+    assert program.consented(adb, at_iso="2026-03-01T00:00:00Z") is True
+    assert program.consented(adb, at_iso="2026-09-04T00:00:00Z") is False
+    with pytest.raises(pp.PublicationRefused) as e:
+        program.publish(adb, CLIP, adapters=adapters,
+                        at_iso="2026-09-04T00:00:00Z")
+    assert e.value.stage == "delegation"
+
+
+def test_revoking_consent_closes_publication_immediately(adb, program, adapters):
+    _grant_all(adb, program)
+    assert program.consented(adb) is True
+    pa.revoke(adb, "g:bluesky")
+    assert set(program.consent_gaps(adb)) == {"bluesky"}
+    with pytest.raises(pp.PublicationRefused):
+        program.publish(adb, CLIP, adapters=adapters)
+
+
+# ------------------------------------------ disclosure runs before projection
+
+def test_a_field_withheld_from_the_public_reaches_no_public_platform(
+        adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    for platform, r in results.items():
+        assert "Reno's, Deep Ellum" not in str(r["sent"]), platform
+
+
+def test_a_community_audience_receives_what_the_public_does_not(adb, policy):
+    prog = pp.PublicationProgram(
+        subject=SUBJECT, principal="person:nick", agent="estate:aurekai",
+        purpose="creator distribution", profile=pp.social_clip_profile(policy))
+    prog.to("members-feed", carrier="activitypub", audience="community")
+    # `location` is not carried by the activitypub projection at all, so the
+    # audience difference is proven on the policy rather than on the mapping.
+    assert policy.field_decision("location", "public")[0] is False
+    assert policy.field_decision("location", "community")[0] is True
+
+
+# --------------------------------- the adapter's word is not an observation
+
+def test_an_adapter_reporting_200_is_not_a_round_trip(adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    assert all(r["adapter_reported"]["status"] == 200 for r in results.values())
+    # Every adapter says it worked. None of it has been observed.
+    assert program.round_trip_pending(results) == [
+        "bluesky", "mastodon", "shortvideo-net"]
+
+
+def test_an_observation_requires_a_receipt(adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    with pytest.raises(pp.PublicationRefused) as e:
+        program.observe(results, "mastodon", twin_receipt="")
+    assert "confirming its own publication" in str(e.value)
+
+
+def test_observing_each_target_clears_the_round_trip(adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    for platform in list(results):
+        program.observe(results, platform, twin_receipt=f"twin:{platform}:abc")
+    assert program.round_trip_pending(results) == []
+    assert results["mastodon"]["twin_receipt"] == "twin:mastodon:abc"
+
+
+def test_observing_a_platform_this_program_never_published_to_is_refused(
+        adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    with pytest.raises(pp.PublicationRefused) as e:
+        program.observe(results, "somewhere-else", twin_receipt="twin:x")
+    assert "was not published by this program" in str(e.value)
+
+
+# ----------------------------------------- one closure, several grammars
+
+def test_one_clip_renders_into_each_platforms_grammar(adb, program, adapters):
+    _grant_all(adb, program)
+    results = program.publish(adb, CLIP, adapters=adapters)
+    ap = results["mastodon"]["sent"]["fields"]
+    at = results["bluesky"]["sent"]["fields"]
+    sv = results["shortvideo-net"]["sent"]["fields"]
+
+    assert ap["content"] == CLIP["body"]
+    assert at["text"] == CLIP["body"]
+    assert sv["caption"] == CLIP["title"]
+    # The short-video network has no federation context, and saying so is the
+    # network's shape rather than something lost.
+    assert "context" not in sv
+
+
+def test_a_target_whose_grammar_the_profile_lacks_is_refused_at_declaration(policy):
+    prog = pp.PublicationProgram(
+        subject=SUBJECT, principal="person:nick", agent="estate:aurekai",
+        purpose="creator distribution", profile=pp.social_clip_profile(policy))
+    with pytest.raises(pp.PublicationRefused) as e:
+        prog.to("some-network", carrier="rss")
+    assert e.value.stage == "projection"
+    assert prog.targets == []
+
+
+def test_a_missing_adapter_is_refused_after_consent_and_before_any_call(
+        adb, program):
+    _grant_all(adb, program)
+    partial = {"mastodon": Recorder()}
+    with pytest.raises(pp.PublicationRefused) as e:
+        program.publish(adb, CLIP, adapters=partial)
+    assert e.value.stage == "adapter"
+    # Nothing was published to the platform that did have an adapter, because a
+    # partial simulcast is a different act from the one that was consented to.
+    assert not partial["mastodon"].calls

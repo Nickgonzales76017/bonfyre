@@ -1,0 +1,121 @@
+"""What the outside publishes, kept apart from what this estate reads.
+
+An index of 4,294 external resources arrived. The census holds 269 rows and 65
+walked sources, and the tempting move was to pour one into the other. That
+would have broken the census's own law: it is a map of ways in, deliberately
+small, and most of the index is specifications, repositories and documentation
+-- citations rather than sources. Fifteen hundred of the entries are github.com.
+
+So two registers, and the tests hold them apart:
+
+  a catalogue of what exists
+      wrong if it starts claiming anything was read
+
+  a map of what this estate reads
+      wrong if it swells to the size of the catalogue
+
+  the two are addressable and sliceable
+      wrong if four thousand rows can only be listed
+"""
+
+from __future__ import annotations
+
+import json
+import socket
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import pytest
+
+HOST = "https://aurekai.live"
+TIMEOUT = 45
+
+
+def _get(path):
+    req = urllib.request.Request(HOST + path, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            return e.code, json.loads(e.read().decode())
+        except Exception:
+            return e.code, {}
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def page():
+    code, body = _get("/_surface/external-estate")
+    assert code == 200, code
+    return body
+
+
+def test_the_catalogue_is_bigger_than_the_map(page):
+    """The point of holding them apart: the estate knows of far more than it
+    reads, and saying so is more honest than either number alone."""
+    code, census = _get("/_surface/internet-census")
+    assert code == 200
+    assert page["count"] > 10 * census["count"], (page["count"], census["count"])
+
+
+def test_a_catalogued_resource_never_claims_to_have_been_read(page):
+    """A row here says the outside publishes something. It must not carry a
+    tier, a receipt, a twin or a last-seen -- those belong to a source this
+    estate has actually asked."""
+    r = page["records"][0]
+    for observed_only in ("tier", "twin", "state", "last_seen", "extract",
+                          "cadence", "http_status"):
+        assert observed_only not in r, (observed_only, "a catalogue row claims an observation")
+    assert r["cannot_infer"], "no stated limit"
+    assert "not a read one" in r["cannot_infer"].lower()
+
+
+def test_every_catalogued_resource_keeps_its_identity(page):
+    for r in page["records"]:
+        assert r["ext_id"].startswith("EXT-"), r
+        assert r["name"], r["ext_id"]
+        assert r["estate"], r["ext_id"]
+
+
+def test_a_description_does_not_repeat_the_url(page):
+    """The parse kept the link text, and where that text was the url itself
+    every description opened with the column beside it."""
+    repeats = [r["ext_id"] for r in page["records"]
+               if r.get("url") and r.get("says", "").startswith(r["url"])]
+    assert not repeats, repeats
+
+
+def test_the_catalogue_slices_the_way_every_other_surface_does():
+    """Four thousand rows that can only be listed is a file with extra steps."""
+    _, whole = _get("/_surface/external-estate")
+    _, mcp = _get("/_surface/external-estate?estate=~MCP")
+    assert 0 < mcp["count"] < whole["count"], (mcp["count"], whole["count"])
+    for r in mcp["records"]:
+        assert "MCP" in r["estate"], r["ext_id"]
+
+
+def test_slicing_the_catalogue_compounds():
+    _, one = _get("/_surface/external-estate?functions=~Government")
+    _, two = _get("/_surface/external-estate?functions=~Government&estate=~Public+API")
+    assert two["count"] <= one["count"]
+
+
+def test_an_unknown_field_is_refused_here_too():
+    code, body = _get("/_surface/external-estate?nope=1")
+    assert code == 400, code
+    assert body.get("error") == "unknown_slice"
+    assert "ext_id" in body.get("sliceable", [])
+
+
+def test_the_census_did_not_swell_to_the_catalogue():
+    """If the two ever merge, the census stops being a map and becomes an
+    integration list nobody walked."""
+    code, census = _get("/_surface/internet-census")
+    assert code == 200
+    assert census["count"] < 1000, (
+        census["count"], "the census has absorbed the catalogue")
+    observed = [r for r in census["records"] if r["state"] == "observed"]
+    assert observed, "nothing is walked"

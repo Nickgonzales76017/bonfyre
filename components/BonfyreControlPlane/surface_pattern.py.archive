@@ -1,0 +1,399 @@
+"""Archived Python prototype: CUE catalogue and Bun surface-pattern.mjs now own this model.
+
+The reference estate (vertical feeds, Twitch-like rooms, forum boards, ephemeral
+imageboards) contributes *behaviour*, never backends. A pattern names what it
+reads, at what extent, which action layer it carries and what authority that
+layer demands. The organ holds the render primitives, so adding a surface is an
+authoring act rather than a code change -- which is the existing SurfaceIR rule,
+made into a declared object instead of a paragraph.
+
+Three rules are enforced here because each has a failure that looks fine:
+
+  extent decides the action layer   Only a page or a workspace carries actions.
+                                    A chip or a card is a *reference* to a
+                                    surface, and there is no room to act inside
+                                    a reference. A card that offered BOOK would
+                                    be asking for a decision from a thumbnail.
+
+  a pattern reads one owner         A pattern that read both a CMS type and a
+                                    native organ would be two patterns sharing a
+                                    name, and its human and machine projections
+                                    could diverge without anything noticing.
+
+  offering is not authorizing       A pattern declares the authority its action
+                                    layer needs. Rendering it never grants it,
+                                    and an anonymous reader is told operations
+                                    exist and are not offered rather than shown
+                                    a menu that will fail.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a declared pattern      -> a working or permitted one
+  a rendered action layer -> an authorized action
+  a smaller extent        -> a lesser subject
+  a reference UI's look   -> its backend
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Optional
+
+import standing_address as sa
+
+# Extents, ordered by how much of one closure is shown. The subject addressed is
+# identical at every extent -- only how much of it is rendered changes.
+CHIP = "chip"
+CARD = "card"
+SECTION = "section"
+PAGE = "page"
+WORKSPACE = "workspace"
+
+EXTENTS = (CHIP, CARD, SECTION, PAGE, WORKSPACE)
+EXTENT_RANK = {e: i for i, e in enumerate(EXTENTS)}
+
+# Only these carry an action layer. Below them a surface is a reference.
+ACTION_EXTENTS = frozenset({PAGE, WORKSPACE})
+
+# What a pattern may read. Exactly one, never both.
+READS_CMS = "cms_type"
+READS_ORGAN = "native_organ"
+SOURCES = (READS_CMS, READS_ORGAN)
+
+# The four territories. Each has its own UX physics and its own verbs; a pattern
+# belongs to exactly one, because a surface built for .work's obligations is not
+# a surface for .live's attention even when it renders similar boxes.
+TERRITORIES = ("live", "life", "shop", "work")
+
+# How a reference project may be used. This is a legal distinction, not a
+# preference, and the catalogue refuses to get it wrong:
+#
+#   DONOR           code may be adapted into this estate
+#   IMPLEMENTATION  the library is used as a dependency
+#   REFERENCE       behaviour may be studied; code may not be copied
+DONOR = "donor"
+IMPLEMENTATION = "implementation"
+REFERENCE = "reference"
+USE_CLASSES = (DONOR, IMPLEMENTATION, REFERENCE)
+
+# Licenses under which adapting code into a differently-licensed estate is
+# straightforward. Everything else is REFERENCE until a human decides otherwise.
+PERMISSIVE = frozenset({"MIT", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0",
+                        "ISC"})
+
+# Licenses whose obligations or field-of-use restrictions make adaptation a
+# decision rather than a default. Named individually so the refusal can say why.
+RESTRICTED = {
+    "AGPL-3.0": "network copyleft would extend to this estate",
+    "GPL-3.0": "copyleft would extend to this estate",
+    "FSL": "field-of-use restriction forbids competing use until it converts",
+    "mixed": "licensing varies per file and needs file-level review first",
+}
+
+
+@dataclass(frozen=True)
+class ReferenceSource:
+    """A market or open-source interface whose behaviour this estate studies.
+
+    The look is borrowed; the backend never is. Recording the license and the
+    use class is what keeps that from being a slogan -- a project cannot be
+    marked a donor merely because its interface is good.
+    """
+    project: str
+    license: str
+    use: str
+    solves: str
+
+    def __post_init__(self) -> None:
+        if self.use not in USE_CLASSES:
+            raise PatternError(f"unknown use class {self.use!r}")
+        if self.use in (DONOR, IMPLEMENTATION) and self.license not in PERMISSIVE:
+            why = RESTRICTED.get(self.license, "license is not on the permissive list")
+            raise PatternError(
+                f"{self.project} is {self.license} and cannot be a {self.use}: "
+                f"{why}. Study its behaviour as a reference instead")
+
+
+class PatternError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class SurfacePattern:
+    """One declared view over addressed state."""
+    name: str
+    reads: str                      # cms_type | native_organ
+    source: str                     # the type or organ it reads
+    extent: str
+    actions: frozenset[str] = frozenset()
+    authority: str = ""
+    lineage: str = ""               # the reference UI whose behaviour it extracts
+    territory: str = "live"
+
+    def __post_init__(self) -> None:
+        if self.territory not in TERRITORIES:
+            raise PatternError(
+                f"pattern {self.name!r} declares territory {self.territory!r}; "
+                f"a pattern belongs to one of {list(TERRITORIES)}")
+        allowed = sa.TERRITORY_ACTIONS[self.territory]
+        outside = sorted(self.actions - allowed)
+        if outside:
+            raise PatternError(
+                f"pattern {self.name!r} is in .{self.territory} and offers "
+                f"{outside}, which that territory does not carry")
+        if self.reads not in SOURCES:
+            raise PatternError(
+                f"pattern {self.name!r} declares reads={self.reads!r}; a pattern "
+                f"reads a CMS type or a native organ and the catalogue names "
+                f"which, because a pattern that read both would be two patterns "
+                f"sharing a name")
+        if not self.source:
+            raise PatternError(f"pattern {self.name!r} names no source to read")
+        if self.extent not in EXTENT_RANK:
+            raise PatternError(f"unknown extent {self.extent!r}")
+        if self.actions and self.extent not in ACTION_EXTENTS:
+            raise PatternError(
+                f"pattern {self.name!r} carries actions at extent {self.extent!r}; "
+                f"only {sorted(ACTION_EXTENTS)} carry an action layer, because a "
+                f"chip, card or section is a reference to a surface and there is "
+                f"no room to act inside a reference")
+        if self.actions and not self.authority:
+            raise PatternError(
+                f"pattern {self.name!r} offers {sorted(self.actions)} and names no "
+                f"authority; an action layer states what it requires or nothing "
+                f"can refuse it")
+        for a in self.actions:
+            if a not in sa.ACTIONS:
+                raise PatternError(f"unknown action {a!r} in pattern {self.name!r}")
+
+    def carries_actions(self) -> bool:
+        return bool(self.actions)
+
+    def at(self, extent: str) -> "SurfacePattern":
+        """The same pattern at another extent.
+
+        Dropping below an action extent drops the action layer rather than
+        refusing: a workspace legitimately appears elsewhere as a card, and that
+        card is a reference to the same subject with nothing to act on.
+        """
+        if extent not in EXTENT_RANK:
+            raise PatternError(f"unknown extent {extent!r}")
+        keep = self.actions if extent in ACTION_EXTENTS else frozenset()
+        return SurfacePattern(self.name, self.reads, self.source, extent, keep,
+                              self.authority if keep else "", self.lineage,
+                              self.territory)
+
+
+@dataclass
+class PatternCatalogue:
+    patterns: dict[str, SurfacePattern] = field(default_factory=dict)
+
+    def add(self, pattern: SurfacePattern) -> "PatternCatalogue":
+        if pattern.name in self.patterns:
+            raise PatternError(f"pattern {pattern.name!r} already declared")
+        self.patterns[pattern.name] = pattern
+        return self
+
+    def get(self, name: str) -> SurfacePattern:
+        if name not in self.patterns:
+            raise PatternError(
+                f"unknown pattern {name!r}; declared: {sorted(self.patterns)}")
+        return self.patterns[name]
+
+    def offering(self, action: str) -> list[str]:
+        return sorted(n for n, p in self.patterns.items() if action in p.actions)
+
+    def by_lineage(self) -> dict[str, list[str]]:
+        out: dict[str, list[str]] = {}
+        for n, p in sorted(self.patterns.items()):
+            out.setdefault(p.lineage or "native", []).append(n)
+        return out
+
+    def by_territory(self) -> dict[str, list[str]]:
+        out: dict[str, list[str]] = {t: [] for t in TERRITORIES}
+        for n, p in sorted(self.patterns.items()):
+            out[p.territory].append(n)
+        return out
+
+
+# The reference estate. Each entry records what that project actually solved and
+# how this estate may use it -- the two facts that stop "we should look at X"
+# from turning into "we copied X".
+REFERENCES = (
+    # LIFE
+    ReferenceSource("Pinry", "BSD-2-Clause", DONOR, "collecting intent: boards, pins, tags"),
+    ReferenceSource("MapLibre GL JS", "BSD-3-Clause", DONOR, "the spatial canvas"),
+    ReferenceSource("Home Assistant frontend", "Apache-2.0", DONOR, "home, devices, rooms, control"),
+    ReferenceSource("Fedify", "MIT", IMPLEMENTATION, "ActivityPub, WebFinger, HTTP signatures"),
+    ReferenceSource("Lemmy", "AGPL-3.0", REFERENCE, "interest communities"),
+    ReferenceSource("Pixelfed", "AGPL-3.0", REFERENCE, "federated photo interaction"),
+    ReferenceSource("Immich", "AGPL-3.0", REFERENCE, "personal memory timeline and search"),
+    ReferenceSource("Mobilizon", "AGPL-3.0", REFERENCE, "federated event and group vocabulary"),
+    # SHOP
+    ReferenceSource("Spree Storefront", "MIT", DONOR, "production storefront and one-page checkout"),
+    ReferenceSource("Next.js Commerce", "MIT", DONOR, "provider-adapter separation"),
+    ReferenceSource("Hydrogen", "MIT", DONOR, "headless commerce interaction"),
+    ReferenceSource("Bagisto", "MIT", DONOR, "marketplace and multitenant patterns"),
+    ReferenceSource("Saleor storefront", "FSL", REFERENCE, "premium storefront design"),
+    # WORK
+    ReferenceSource("Zulip", "Apache-2.0", DONOR, "topic-within-stream conversation"),
+    ReferenceSource("Mattermost webapp", "mixed", REFERENCE, "team conversation shell"),
+    ReferenceSource("Plane", "AGPL-3.0", REFERENCE, "issue and cycle interaction"),
+    ReferenceSource("AppFlowy", "AGPL-3.0", REFERENCE, "block-based knowledge pages"),
+    ReferenceSource("Twenty", "AGPL-3.0", REFERENCE, "CRM relationship model"),
+    ReferenceSource("Cal.com", "AGPL-3.0", REFERENCE, "scheduling and availability"),
+)
+
+
+def references_by_use() -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {u: [] for u in USE_CLASSES}
+    for r in REFERENCES:
+        out[r.use].append(r.project)
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def reference_estate() -> PatternCatalogue:
+    """The Surface Commons across all four territories.
+
+    Each territory has its own UX physics and its own verbs. They are projections
+    over one Matrix rather than four products, which is what lets a musician be
+    one subject with a .life presence, a .live stream, .shop merchandise and a
+    .work booking instead of four accounts that happen to share a name.
+    """
+    c = PatternCatalogue()
+
+    # ---- LIVE: what deserves attention now
+    c.add(SurfacePattern("VerticalDiscovery", READS_ORGAN, "StandingAddress",
+                         CARD, lineage="short-video feeds", territory="live"))
+    c.add(SurfacePattern("LiveCreatorRoom", READS_ORGAN, "LiveSemanticTrack",
+                         WORKSPACE,
+                         actions=frozenset({sa.WATCH, sa.FOLLOW, sa.JOIN, sa.GO}),
+                         authority="participate:live", lineage="live streaming",
+                         territory="live"))
+    c.add(SurfacePattern("EphemeralBoard", READS_CMS, "Post", SECTION,
+                         lineage="imageboards", territory="live"))
+    c.add(SurfacePattern("LiveMoment", READS_ORGAN, "LiveSemanticTrack", CHIP,
+                         territory="live"))
+    c.add(SurfacePattern("LiveSemanticOverlay", READS_ORGAN, "LiveSemanticTrack",
+                         SECTION, territory="live"))
+    c.add(SurfacePattern("LiveTimeline", READS_ORGAN, "LiveSemanticTrack", PAGE,
+                         actions=frozenset({sa.SAVE}), authority="save:moment",
+                         territory="live"))
+    c.add(SurfacePattern("AudienceHandoff", READS_ORGAN, "StandingAddress",
+                         SECTION, lineage="live streaming", territory="live"))
+    c.add(SurfacePattern("ActionCard", READS_ORGAN, "StandingAddress", CARD,
+                         territory="live"))
+
+    # ---- LIFE: what matters in my world
+    c.add(SurfacePattern("PersonalWorld", READS_CMS, "Presence", PAGE,
+                         actions=frozenset({sa.PLAN, sa.SHARE}),
+                         authority="operate:self", territory="life"))
+    c.add(SurfacePattern("CollectionBoard", READS_CMS, "Collection", PAGE,
+                         actions=frozenset({sa.SAVE, sa.SHARE}),
+                         authority="curate:collection", lineage="Pinterest",
+                         territory="life"))
+    c.add(SurfacePattern("HabitatMap", READS_ORGAN, "AddressPlane", WORKSPACE,
+                         actions=frozenset({sa.GO, sa.SAVE, sa.PLAN}),
+                         authority="operate:habitat", lineage="Google Maps",
+                         territory="life"))
+    c.add(SurfacePattern("PlacePage", READS_ORGAN, "AddressPlane", PAGE,
+                         actions=frozenset({sa.GO, sa.SAVE}),
+                         authority="participate:place", territory="life"))
+    c.add(SurfacePattern("NeighborhoodPulse", READS_CMS, "Post", PAGE,
+                         actions=frozenset({sa.HELP, sa.JOIN}),
+                         authority="participate:neighborhood",
+                         lineage="Nextdoor", territory="life"))
+    c.add(SurfacePattern("InterestCommunity", READS_CMS, "Circle", PAGE,
+                         actions=frozenset({sa.JOIN, sa.FOLLOW}),
+                         authority="participate:circle", lineage="Reddit",
+                         territory="life"))
+    c.add(SurfacePattern("MemoryTimeline", READS_CMS, "Memory", PAGE,
+                         actions=frozenset({sa.REMEMBER, sa.SHARE}),
+                         authority="operate:self", lineage="Immich",
+                         territory="life"))
+    c.add(SurfacePattern("PlanBoard", READS_CMS, "Plan", PAGE,
+                         actions=frozenset({sa.PLAN, sa.SAVE}),
+                         authority="operate:self", territory="life"))
+    c.add(SurfacePattern("PeopleGraph", READS_ORGAN, "RelationshipGraph", PAGE,
+                         actions=frozenset({sa.MEET, sa.FOLLOW}),
+                         authority="operate:relationships", territory="life"))
+    c.add(SurfacePattern("HomeHabitat", READS_ORGAN, "AddressPlane", WORKSPACE,
+                         actions=frozenset({sa.MOVE, sa.PLAN}),
+                         authority="operate:habitat",
+                         lineage="Home Assistant", territory="life"))
+
+    # ---- SHOP: what economic opportunity is useful
+    c.add(SurfacePattern("MerchantPresence", READS_CMS, "Presence", PAGE,
+                         actions=frozenset({sa.BUY, sa.SAVE}),
+                         authority="transact:merchant", lineage="Shopify",
+                         territory="shop"))
+    c.add(SurfacePattern("ProductDiscovery", READS_ORGAN, "StandingAddress",
+                         CARD, territory="shop"))
+    c.add(SurfacePattern("ListingSearch", READS_ORGAN, "ForeignTwinGraph",
+                         SECTION, lineage="eBay", territory="shop"))
+    c.add(SurfacePattern("ProductDetail", READS_CMS, "Product", PAGE,
+                         actions=frozenset({sa.BUY, sa.COMPARE, sa.SAVE}),
+                         authority="transact:merchant", territory="shop"))
+    c.add(SurfacePattern("OfferCompare", READS_ORGAN, "MoneyGraph", PAGE,
+                         actions=frozenset({sa.COMPARE, sa.BUY}),
+                         authority="transact:merchant", territory="shop"))
+    c.add(SurfacePattern("LocalAvailability", READS_ORGAN, "ForeignTwinGraph",
+                         SECTION, lineage="Walmart", territory="shop"))
+    c.add(SurfacePattern("CartWorkspace", READS_CMS, "Cart", WORKSPACE,
+                         actions=frozenset({sa.BUY, sa.SAVE, sa.COMPARE}),
+                         authority="transact:cart", territory="shop"))
+    c.add(SurfacePattern("Checkout", READS_ORGAN, "CommitmentGraph", PAGE,
+                         actions=frozenset({sa.BUY}), authority="commit:purchase",
+                         territory="shop"))
+    c.add(SurfacePattern("OrderTimeline", READS_ORGAN, "OccurrenceSpine", PAGE,
+                         actions=frozenset({sa.REQUEST}),
+                         authority="transact:order", territory="shop"))
+    c.add(SurfacePattern("GroupBuy", READS_ORGAN, "CommitmentGraph", PAGE,
+                         actions=frozenset({sa.JOIN, sa.CONTRIBUTE}),
+                         authority="commit:collective", territory="shop"))
+    c.add(SurfacePattern("SellFlow", READS_CMS, "Listing", WORKSPACE,
+                         actions=frozenset({sa.SELL, sa.OFFER}),
+                         authority="operate:seller", territory="shop"))
+
+    # ---- WORK: what should move forward
+    c.add(SurfacePattern("ProfessionalPresence", READS_CMS, "Presence", PAGE,
+                         actions=frozenset({sa.CONTACT, sa.APPLY}),
+                         authority="engage:professional", lineage="LinkedIn",
+                         territory="work"))
+    c.add(SurfacePattern("WorkInbox", READS_ORGAN, "WorkGraph", WORKSPACE,
+                         actions=frozenset({sa.DO, sa.CLAIM, sa.ESCALATE}),
+                         authority="operate:work", territory="work"))
+    c.add(SurfacePattern("ChannelThread", READS_CMS, "Message", PAGE,
+                         actions=frozenset({sa.RESPOND}),
+                         authority="participate:channel", lineage="Zulip",
+                         territory="work"))
+    c.add(SurfacePattern("IssueBoard", READS_ORGAN, "WorkGraph", WORKSPACE,
+                         actions=frozenset({sa.CLAIM, sa.ASSIGN, sa.DO}),
+                         authority="operate:work", lineage="Linear",
+                         territory="work"))
+    c.add(SurfacePattern("ProjectRoadmap", READS_ORGAN, "WorkGraph", PAGE,
+                         actions=frozenset({sa.ASSIGN}), authority="operate:work",
+                         territory="work"))
+    c.add(SurfacePattern("KnowledgePage", READS_CMS, "Document", PAGE,
+                         actions=frozenset({sa.REVIEW}),
+                         authority="author:knowledge", lineage="Notion",
+                         territory="work"))
+    c.add(SurfacePattern("DecisionPage", READS_ORGAN, "EvidenceGraph", PAGE,
+                         actions=frozenset({sa.APPROVE, sa.REVIEW}),
+                         authority="decide:proposal", territory="work"))
+    c.add(SurfacePattern("CRMRecord", READS_CMS, "Account", PAGE,
+                         actions=frozenset({sa.CONTACT}),
+                         authority="operate:relationships", lineage="Salesforce",
+                         territory="work"))
+    c.add(SurfacePattern("CalendarWorkspace", READS_CMS, "Meeting", WORKSPACE,
+                         actions=frozenset({sa.BOOK, sa.RESPOND}),
+                         authority="operate:schedule", lineage="Cal.com",
+                         territory="work"))
+    c.add(SurfacePattern("ApprovalQueue", READS_ORGAN, "AuthorityGraph", WORKSPACE,
+                         actions=frozenset({sa.APPROVE, sa.ESCALATE}),
+                         authority="decide:approval", territory="work"))
+    c.add(SurfacePattern("AgentWorkmate", READS_ORGAN, "WorkGraph", WORKSPACE,
+                         actions=frozenset({sa.ASSIGN, sa.REVIEW}),
+                         authority="delegate:agent", territory="work"))
+    c.add(SurfacePattern("ActivityStream", READS_ORGAN, "OccurrenceSpine", SECTION,
+                         territory="work"))
+    return c

@@ -1,0 +1,73 @@
+"""Run 1-7 history projects into current owners without resurrecting a campaign."""
+
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import evidence_graphs as eg  # noqa: E402
+import foreign  # noqa: E402
+import partner_commons as pc  # noqa: E402
+import pattern_graph as pg  # noqa: E402
+import proof_frontier as pf  # noqa: E402
+import run_history_absorption as absorb  # noqa: E402
+
+
+def _project():
+    db = sqlite3.connect(":memory:")
+    report = absorb.project(db)
+    return db, report
+
+
+def test_absorption_replay_is_idempotent_and_compact():
+    db, first = _project()
+    second = absorb.project(db)
+    assert first["partners"] == 8
+    assert first["work_queued"] == 4
+    assert second["work_queued"] == 0
+    assert second["work_already_present"] == 4
+    fixture = json.loads(absorb.DEFAULT_FIXTURE.read_text())
+    assert "supervisor" not in fixture and "campaigns" not in fixture
+
+
+def test_partner_state_is_a_rights_limited_foreign_twin():
+    db, _ = _project()
+    twin = pc.as_foreign_twin(db, "sipyourdrink-ltd/bernstein")
+    assert twin.may(foreign.OBSERVE)
+    assert twin.may(foreign.REFERENCE)
+    assert not twin.may(foreign.BIND)
+    assert not twin.may(foreign.ACT)
+    assert pc.latest_state(db, "rajudandigam/agent-inspect") == "merged_credit"
+
+
+def test_evidence_is_directional_and_time_planes_survive():
+    db, _ = _project()
+    evidence = "run8-side-lane:2026-08-20#CrowBe/agentbranch#290"
+    claim = "provider-origin-fidelity-required"
+    assert eg.supports(db, evidence, claim)
+    assert not eg.supports(db, claim, evidence)
+    times = eg.times_of(db, "partner-state:CrowBe/agentbranch:requirements_absorbed")
+    assert times["observation_time"] != times["retrieval_time"]
+
+
+def test_anti_amnesia_knowledge_names_reheat_and_invalidation():
+    db, report = _project()
+    assert report["solved_invariants"] == 3
+    invariant = pf.cooled_invariants(
+        db, "contract:AgentSession/ReceiptEnvelope", "evidence_origin"
+    )[0]
+    assert invariant.reheat_conditions
+    noncauses = pf.noncauses_for(db, "partner:richinmrudul/agentguard#214")
+    assert len(noncauses) == 1
+    assert "production drive-root" in noncauses[0].experiment
+    fence = pf.frontier_report(db, "contract:trace-alignment", "deepeval-3056/rebased")
+    assert fence["first_open_layer"] == "native_trace_divergence_parity"
+
+
+def test_aurekai_patterns_propose_but_do_not_promote():
+    db, report = _project()
+    assert report["pattern_clusters"] == 3
+    assert len(pg.cluster_traces(db, "run-history.trace-evidence-fidelity")) == 2
+    assert pg.candidate_status(db, "candidate:origin-faithful-agent-event") == pg.CANDIDATE

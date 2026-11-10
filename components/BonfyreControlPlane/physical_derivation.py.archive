@@ -1,0 +1,271 @@
+"""Observed physical realization ABI over existing environment/provider owners."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Optional
+
+
+@dataclass(frozen=True)
+class RealizationManifest:
+    realization_id: str
+    target_ref: str
+    command: tuple[str, ...]
+    toolchain_passport_ref: str
+    expected_outputs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class PhysicalExecutionFrame:
+    source_head: str
+    cwd: str
+    environment_names: tuple[str, ...]
+    capability_environment_ref: str
+    resource_weather_ref: str
+
+
+@dataclass(frozen=True)
+class RealizationObservation:
+    exit_code: int
+    reads: tuple[str, ...]
+    writes: tuple[str, ...]
+    external_calls: tuple[str, ...]
+    artifact_digests: tuple[tuple[str, str], ...]
+
+
+@dataclass(frozen=True)
+class ProviderModelUsageObservation:
+    """Receipt-shaped provider/model consumption, before it is valued.
+
+    A provider execution receipt is allowed to be sparse.  ``None`` means the
+    carrier did not expose that dimension; it is deliberately not normalized to
+    zero.  Provider, technical account, billing account, and agreement remain
+    distinct coordinates because they often identify different institutions.
+    """
+
+    occurrence_id: str
+    # Retries are distinct physical attempts, even where their dimensions and
+    # realization agree.  Keep the carrier's stable attempt address explicit.
+    attempt_ref: str
+    realization_ref: str
+    provider_ref: str
+    model_ref: Optional[str]
+    route_ref: Optional[str]
+    receipt_ref: str
+    observed_at: str
+    request_count: Optional[int] = None
+    retry_count: Optional[int] = None
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    cached_input_tokens: Optional[int] = None
+    cache_creation_input_tokens: Optional[int] = None
+    reasoning_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    context_bytes: Optional[int] = None
+    wall_time_ms: Optional[int] = None
+    cpu_seconds: Optional[float] = None
+    gpu_seconds: Optional[float] = None
+    vram_byte_seconds: Optional[float] = None
+    provider_account_ref: Optional[str] = None
+    technical_account_ref: Optional[str] = None
+    billing_account_ref: Optional[str] = None
+    agreement_ref: Optional[str] = None
+    # No value means the receipt exposes no admissible price evidence; it is
+    # deliberately not a zero rate and cannot be backfilled from aggregates.
+    pricing_evidence_ref: Optional[str] = None
+
+    def dimensions(self) -> dict[str, Optional[float | int]]:
+        return {
+            "request_count": self.request_count,
+            "retry_count": self.retry_count,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cached_input_tokens": self.cached_input_tokens,
+            "cache_creation_input_tokens": self.cache_creation_input_tokens,
+            "reasoning_tokens": self.reasoning_tokens,
+            "completion_tokens": self.completion_tokens,
+            "context_bytes": self.context_bytes,
+            "wall_time_ms": self.wall_time_ms,
+            "cpu_seconds": self.cpu_seconds,
+            "gpu_seconds": self.gpu_seconds,
+            "vram_byte_seconds": self.vram_byte_seconds,
+        }
+
+
+def validate_provider_model_usage(observation: ProviderModelUsageObservation) -> None:
+    if not (observation.occurrence_id and observation.attempt_ref and observation.realization_ref
+            and observation.provider_ref and observation.receipt_ref):
+        raise ValueError("provider usage requires occurrence, attempt, realization, provider, and physical receipt identities")
+    for name, value in observation.dimensions().items():
+        if value is not None and value < 0:
+            raise ValueError(f"{name} must be nonnegative when observed")
+
+
+def provider_model_usage_from_receipt(receipt: Mapping[str, Any], *,
+                                      occurrence_id: str, attempt_ref: str,
+                                      realization_ref: str, receipt_ref: str,
+                                      observed_at: str) -> ProviderModelUsageObservation:
+    """Adapt the common OpenAI/Anthropic/local receipt shapes to the ABI.
+
+    This boundary accepts aliases, but its output has one stable vocabulary.
+    It never estimates missing counts and requires a stable physical-attempt,
+    realization, and physical-receipt binding.  A carrier-declared identity
+    must agree with the adapter binding rather than being silently replaced.
+    """
+    usage = receipt.get("usage", receipt)
+    if not isinstance(usage, Mapping):
+        raise ValueError("provider usage receipt must contain an object-shaped usage payload")
+
+    def first(*names: str) -> Any:
+        for name in names:
+            value = usage.get(name, receipt.get(name))
+            if value is not None:
+                return value
+        return None
+
+    def number(*names: str) -> Optional[int | float]:
+        value = first(*names)
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            raise ValueError("usage dimensions cannot be boolean")
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid numeric usage dimension {names[0]!r}") from exc
+        if parsed < 0:
+            raise ValueError(f"{names[0]} must be nonnegative")
+        return int(parsed) if parsed.is_integer() else parsed
+
+    declared_attempt = first("attempt_ref", "attempt_id", "request_id", "response_id")
+    if declared_attempt is not None and str(declared_attempt) != attempt_ref:
+        raise ValueError("carrier-declared attempt identity disagrees with adapter attempt_ref")
+    declared_realization = first("realization_ref", "realization_id")
+    if declared_realization is not None and str(declared_realization) != realization_ref:
+        raise ValueError("carrier-declared realization identity disagrees with adapter realization_ref")
+
+    observation = ProviderModelUsageObservation(
+        occurrence_id=occurrence_id,
+        attempt_ref=attempt_ref,
+        realization_ref=realization_ref,
+        provider_ref=str(first("provider", "provider_ref") or "unknown-provider"),
+        model_ref=first("model", "model_ref", "canonicalModel"),
+        route_ref=first("route", "route_ref", "endpoint"),
+        receipt_ref=receipt_ref,
+        observed_at=observed_at,
+        request_count=number("request_count", "requests"),
+        retry_count=number("retry_count", "retries"),
+        input_tokens=number("input_tokens", "prompt_tokens", "inputTokens"),
+        output_tokens=number("output_tokens", "outputTokens"),
+        cached_input_tokens=number("cached_input_tokens", "cache_read_input_tokens", "cacheReadInputTokens"),
+        cache_creation_input_tokens=number("cache_creation_input_tokens", "cacheCreationInputTokens"),
+        reasoning_tokens=number("reasoning_output_tokens", "reasoning_tokens", "reasoningTokens"),
+        completion_tokens=number("completion_tokens", "completionTokens"),
+        context_bytes=number("context_bytes"),
+        wall_time_ms=number("wall_time_ms", "duration_ms", "latency_ms"),
+        cpu_seconds=number("cpu_seconds"),
+        gpu_seconds=number("gpu_seconds"),
+        vram_byte_seconds=number("vram_byte_seconds"),
+        provider_account_ref=first("provider_account_ref"),
+        technical_account_ref=first("technical_account_ref"),
+        billing_account_ref=first("billing_account_ref"),
+        agreement_ref=first("agreement_ref"),
+        pricing_evidence_ref=first("pricing_evidence_ref", "price_evidence_ref"),
+    )
+    validate_provider_model_usage(observation)
+    return observation
+
+
+@dataclass(frozen=True)
+class PhysicalDerivationReceipt:
+    receipt_id: str
+    manifest: RealizationManifest
+    frame: PhysicalExecutionFrame
+    observation: RealizationObservation
+    outcome: str
+
+    @property
+    def digest(self) -> str:
+        body = json.dumps(asdict(self), sort_keys=True)
+        return hashlib.sha256(body.encode()).hexdigest()
+
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS body_availability(
+  derivation_key TEXT NOT NULL, body_ref TEXT NOT NULL,
+  representation TEXT, location TEXT, validity TEXT NOT NULL,
+  json TEXT NOT NULL, PRIMARY KEY(derivation_key, body_ref));
+"""
+
+
+def file_digest(path: str | Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def observe_outputs(paths: Iterable[str]) -> tuple[tuple[str, str], ...]:
+    found = []
+    for raw in paths:
+        path = Path(raw)
+        if path.is_file():
+            found.append((str(path), file_digest(path)))
+    return tuple(sorted(found))
+
+
+def record_body(db: sqlite3.Connection, *, derivation_key: str,
+                body_ref: str, representation: str, location: str,
+                validity: str, receipt_ref: str) -> None:
+    """Record a materialized body only when its declared digest reads back.
+
+    ``CURRENT`` describes the validity of the derivation, not an assertion that
+    a path still contains the body it did when the row was written.  Binding
+    the row to a readback here prevents a caller from turning a digest-shaped
+    claim into a reusable physical body.
+    """
+    path = Path(location)
+    if not path.is_file():
+        raise ValueError("a reusable body must name an existing file")
+    if file_digest(path) != body_ref:
+        raise ValueError("body_ref does not match the materialized body")
+    db.executescript(SCHEMA)
+    payload = {
+        "derivation_key": derivation_key, "body_ref": body_ref,
+        "representation": representation, "location": location,
+        "validity": validity, "receipt_ref": receipt_ref,
+    }
+    db.execute(
+        "INSERT OR REPLACE INTO body_availability"
+        "(derivation_key,body_ref,representation,location,validity,json)"
+        " VALUES(?,?,?,?,?,?)",
+        (derivation_key, body_ref, representation, location, validity,
+         json.dumps(payload, sort_keys=True)),
+    )
+    db.commit()
+
+
+def reusable_body(db: sqlite3.Connection, derivation_key: str) -> Optional[dict]:
+    row = db.execute(
+        "SELECT json FROM body_availability WHERE derivation_key=?"
+        " AND validity='CURRENT' ORDER BY body_ref LIMIT 1",
+        (derivation_key,),
+    ).fetchone()
+    if not row:
+        return None
+    body = json.loads(row[0])
+    path = Path(body["location"])
+    if not path.is_file() or file_digest(path) != body["body_ref"]:
+        return None
+    return body
+
+
+def validate_frame(frame: PhysicalExecutionFrame) -> None:
+    for name in frame.environment_names:
+        if "=" in name:
+            raise ValueError("environment dependencies record names, never values")

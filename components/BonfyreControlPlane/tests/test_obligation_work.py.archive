@@ -1,0 +1,254 @@
+"""Archived Python witness; active native witness is obligation-work.test.mjs.
+
+These drive the real bonfyre-queue binary rather than a stand-in, because the
+claim being tested is that two existing owners agree -- and a mock queue would
+prove only that the mock agrees with itself. If the binary is unavailable the
+suite skips rather than passing on a simulation.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import obligation_work as ow  # noqa: E402
+import protocol_library as lib  # noqa: E402
+
+pytestmark = pytest.mark.skipif(
+    not os.path.exists(ow.QUEUE_BIN),
+    reason=f"native bonfyre-queue not present at {ow.QUEUE_BIN}")
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    ow.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def queue_db(tmp_path):
+    return str(tmp_path / "work.db")
+
+
+def _commitment(db, cid="c1", resource="the quoted capability"):
+    cg.record_commitment(db, commitment_id=cid, committer="seller",
+                         beneficiary="buyer", resource=resource, enactment="ex1")
+    return cid
+
+
+def _claim_and(action, queue_db, mission, node, worker="w1", failure_class="transient"):
+    """Claim a specific work item through the binary and ack or fail it.
+
+    claim-next hands out whatever is ready, so with more than one lowered
+    obligation the first claim is not necessarily the one under test. Claim
+    until the target appears; the others stay claimed, which is a legitimate
+    state and not one this helper needs to undo.
+    """
+    for _ in range(8):
+        claim = ow._queue(["claim-next", worker, "--lease-ms", "60000"], queue_db)
+        if claim["mission_id"] == mission and claim["node_id"] == node:
+            break
+    else:  # pragma: no cover - only fires if the queue stops handing out items
+        raise AssertionError(f"never claimed {mission}/{node}")
+    args = [action, mission, node, worker, claim["claim_token"]]
+    if action == "fail":
+        args += ["--class", failure_class]
+    return ow._queue(args, queue_db)
+
+
+# ------------------------------------------- queued work is not a met obligation
+
+def test_lowering_creates_claimable_work_without_settling_anything(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+
+    assert mission and node
+    assert ow.work_status(db, cid) == "ready"
+    # The work exists and the promise is still open. Enqueuing is not doing.
+    assert cg.status(db, cid) == cg.OPEN
+
+
+def test_claiming_work_still_does_not_settle_the_obligation(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    ow._queue(["claim-next", "w1", "--lease-ms", "60000"], queue_db)
+
+    assert ow.work_status(db, cid) == "running"
+    assert cg.status(db, cid) == cg.OPEN
+    assert ow.settle(db, cid) == cg.OPEN
+
+
+# ------------------------------------------------ completed work discharges
+
+def test_completed_work_discharges_the_obligation(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    _claim_and("ack", queue_db, mission, node)
+
+    assert ow.work_status(db, cid) == "complete"
+    assert ow.settle(db, cid) == cg.DISCHARGED
+    assert cg.commitment_delivered(db, cid) is True
+
+
+def test_settle_all_discharges_only_the_completed_ones(db, queue_db):
+    done = _commitment(db, cid="done")
+    pending = _commitment(db, cid="pending")
+    m1, n1 = ow.lower(db, done, queue_db=queue_db)
+    ow.lower(db, pending, queue_db=queue_db)
+    _claim_and("ack", queue_db, m1, n1)
+
+    assert ow.settle_all(db) == ["done"]
+    assert cg.status(db, "done") == cg.DISCHARGED
+    assert cg.status(db, "pending") == cg.OPEN
+
+
+# ------------------------------ a failed attempt is not a broken promise
+
+def test_failed_work_does_not_violate_the_obligation(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    _claim_and("fail", queue_db, mission, node, failure_class="transient")
+
+    # The queue put the item in retry_wait: there are attempts left. Reading
+    # that as a broken promise would be the machine deciding somebody failed
+    # because one process gave up.
+    assert ow.work_status(db, cid) == "retry_wait"
+    assert cg.status(db, cid) == cg.OPEN
+    assert cg.was_ever(db, cid, cg.VIOLATED) is False
+    assert ow.settle(db, cid) == cg.OPEN
+
+
+def test_a_permanent_failure_still_does_not_violate_the_obligation(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    _claim_and("fail", queue_db, mission, node, failure_class="permanent")
+
+    # Even with no retries left, the queue's verdict is about the work and not
+    # about the promise -- another claimant or another mechanism may still meet
+    # it. Only somebody with standing decides that it was broken.
+    assert ow.work_status(db, cid) in ("dead_letter", "failed", "retry_wait")
+    assert cg.status(db, cid) == cg.OPEN
+    assert cg.was_ever(db, cid, cg.VIOLATED) is False
+
+
+def test_violation_remains_an_observation_somebody_makes(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    _claim_and("fail", queue_db, mission, node)
+
+    # Someone with standing decides, exactly as with an expiry.
+    cg.violate(db, cid, actor="institution", detail="two attempts, no delivery")
+    assert cg.status(db, cid) == cg.VIOLATED
+
+
+# ------------------------------------------------- lowering is idempotent
+
+def test_lowering_twice_returns_the_same_work_item(db, queue_db):
+    cid = _commitment(db)
+    first = ow.lower(db, cid, queue_db=queue_db)
+    second = ow.lower(db, cid, queue_db=queue_db)
+    assert first == second
+    # One promise, one claimable item. Two would let two workers each believe
+    # they owned it.
+    assert len(ow.lowered(db)) == 1
+
+
+def test_a_settled_obligation_has_no_work_to_claim(db, queue_db):
+    cid = _commitment(db)
+    cg.discharge(db, cid, detail="delivered directly")
+    with pytest.raises(ow.LoweringError) as e:
+        ow.lower(db, cid, queue_db=queue_db)
+    assert "no work to claim" in str(e.value)
+
+
+def test_an_unknown_commitment_cannot_be_lowered(db, queue_db):
+    with pytest.raises(ow.LoweringError) as e:
+        ow.lower(db, "never-promised", queue_db=queue_db)
+    assert "unknown commitment" in str(e.value)
+
+
+def test_settling_something_never_lowered_is_refused(db):
+    cid = _commitment(db)
+    with pytest.raises(ow.LoweringError) as e:
+        ow.settle(db, cid)
+    assert "never lowered" in str(e.value)
+
+
+# ------------------------------- a discharged obligation need not have run work
+
+def test_direct_discharge_does_not_require_a_work_item(db):
+    cid = _commitment(db)
+    cg.discharge(db, cid, detail="handed over in person")
+    assert cg.status(db, cid) == cg.DISCHARGED
+    assert ow.work_status(db, cid) is None
+    # Work is one mechanism for meeting a promise, not the definition of it.
+
+
+# ----------------------------------- a whole enactment lowers and settles
+
+def test_an_enactment_lowers_every_outstanding_obligation(db, queue_db):
+    escrow = lib.get("economic", "escrow")
+    escrow.enact(db, enactment_id="e1",
+                 actors={"payer": "buyer", "agent": "escrow-co",
+                         "deliverer": "seller", "releaser": "escrow-co"})
+    lowered = ow.lower_enactment(db, escrow, "e1", queue_db=queue_db)
+
+    assert sorted(c for c, _, _ in lowered) == [
+        "e1:deliver_the_agreement", "e1:release_the_held_funds"]
+    assert escrow.closed(db, "e1") is False
+
+
+def test_an_enactment_closes_when_its_lowered_work_completes(db, queue_db):
+    escrow = lib.get("economic", "escrow")
+    escrow.enact(db, enactment_id="e1",
+                 actors={"payer": "buyer", "agent": "escrow-co",
+                         "deliverer": "seller", "releaser": "escrow-co"})
+    for _cid, mission, node in ow.lower_enactment(db, escrow, "e1", queue_db=queue_db):
+        _claim_and("ack", queue_db, mission, node)
+
+    assert ow.settle_all(db) == ["e1:deliver_the_agreement",
+                                 "e1:release_the_held_funds"]
+    assert escrow.closed(db, "e1") is True
+
+
+def test_partial_completion_leaves_the_enactment_open(db, queue_db):
+    escrow = lib.get("economic", "escrow")
+    escrow.enact(db, enactment_id="e1",
+                 actors={"payer": "buyer", "agent": "escrow-co",
+                         "deliverer": "seller", "releaser": "escrow-co"})
+    lowered = ow.lower_enactment(db, escrow, "e1", queue_db=queue_db)
+    # Release the funds; do not deliver.
+    for cid, mission, node in lowered:
+        if cid.endswith("release_the_held_funds"):
+            _claim_and("ack", queue_db, mission, node)
+
+    ow.settle_all(db)
+    assert escrow.closed(db, "e1") is False
+    assert escrow.outstanding_after(db, "e1") == [
+        ("e1:deliver_the_agreement", cg.OPEN)]
+
+
+# ------------------------------------------------ the queue is the real owner
+
+def test_work_status_is_read_from_the_queues_own_database(db, queue_db):
+    cid = _commitment(db)
+    mission, node = ow.lower(db, cid, queue_db=queue_db)
+    q = sqlite3.connect(queue_db)
+    try:
+        row = q.execute("SELECT status,input_uri,operator_id FROM workgraph_nodes"
+                        " WHERE mission_id=? AND node_id=?", (mission, node)).fetchone()
+    finally:
+        q.close()
+    status, payload, operator = row
+    assert status == "ready"
+    assert cid in payload and "the quoted capability" in payload
+    assert operator == f"queue.{ow.WORK_TYPE}"
+    assert ow.work_status(db, cid) == status

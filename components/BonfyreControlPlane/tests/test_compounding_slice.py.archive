@@ -1,0 +1,122 @@
+"""Narrowing a surface, in the address rather than after the fact.
+
+A pattern filtered on one authored column and defaulted its value to the
+literal "protocols" when the caller gave none -- so a pattern with a selector
+served one arbitrary slice and said nothing. One column is also why every
+surface that wanted two conditions did it in JavaScript, which means the
+address stopped describing the screen and the narrowing could not be linked.
+
+  terms compound
+      wrong if two parameters return what one does
+
+  a slice narrows and never widens
+      wrong if any slice returns a row the unsliced surface withheld
+
+  a filter that cannot be honoured says so
+      wrong if an unknown field silently matches everything, because then a
+      caller believes a narrowing happened when it did not
+"""
+
+from __future__ import annotations
+
+import json
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+HOST = "https://aurekai.live"
+TIMEOUT = 30
+
+
+def _get(path):
+    req = urllib.request.Request(HOST + path,
+                                 headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            return e.code, json.loads(e.read().decode())
+        except Exception:
+            return e.code, {}
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+def _rows(path):
+    code, body = _get(path)
+    assert code == 200, (path, code, body)
+    return body["records"]
+
+
+def test_a_single_term_narrows():
+    everything = _rows("/_surface/worlds")
+    atlas = _rows("/_surface/worlds?character=atlas")
+    assert 0 < len(atlas) < len(everything), (len(atlas), len(everything))
+    assert all(r["character"] == "atlas" for r in atlas)
+
+
+def test_terms_compound():
+    """Two conditions must be able to return less than either alone."""
+    hot = _rows("/_surface/internet-census?tier=HOT")
+    video = _rows("/_surface/internet-census?kind=video")
+    both = _rows("/_surface/internet-census?tier=HOT&kind=video")
+    assert len(both) <= min(len(hot), len(video))
+    assert all(r["tier"] == "HOT" and r["kind"] == "video" for r in both)
+    three = _rows("/_surface/internet-census?tier=HOT&kind=video&state=observed")
+    assert len(three) <= len(both)
+
+
+def test_a_substring_term_reaches_a_column_that_holds_a_list():
+    """grammars holds several values in one cell, so exact match on it can only
+    ever mean whole-list equality."""
+    spatial = _rows("/_surface/worlds?grammars=~spatial")
+    assert spatial, "no world descends into a spatial grammar"
+    assert all("spatial" in r["grammars"] for r in spatial)
+    exact = _rows("/_surface/worlds?grammars=spatial")
+    assert len(exact) < len(spatial) or not exact
+
+
+def test_a_slice_never_widens():
+    everything = {r["source"] for r in _rows("/_surface/internet-census")}
+    for q in ("?tier=HOT", "?kind=video", "?tier=WARM&state=observed",
+              "?label=~spatial"):
+        got = {r["source"] for r in _rows("/_surface/internet-census" + q)}
+        assert got <= everything, (q, sorted(got - everything))
+
+
+def test_an_unknown_field_is_refused_with_the_list_that_would_have_worked():
+    code, body = _get("/_surface/worlds?nope=x")
+    assert code == 400, code
+    assert body.get("error") == "unknown_slice", body
+    assert "character" in body.get("sliceable", []), body
+    assert body.get("cannot_infer"), "a refusal with no limit stated"
+
+
+def test_a_refusal_does_not_leak_the_asked_field_unescaped():
+    code, body = _get("/_surface/worlds?%3Cscript%3E=1")
+    assert code == 400, code
+    assert "<script>" not in json.dumps(body)
+
+
+def test_the_hardcoded_selector_default_is_gone():
+    """A pattern with a selector and no supplied value used to filter to the
+    literal 'protocols', serving one slice as if it were everything."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "cmd", "BonfyreWebAddress", "src", "main.c")) as fh:
+        src = fh.read()
+    assert 'snprintf(value, sizeof(value), "%s", "protocols");' not in src
+
+
+def test_a_slice_keeps_the_pattern_contract():
+    """Narrowing changes which rows, never what a surface says it is."""
+    code, whole = _get("/_surface/worlds")
+    code2, part = _get("/_surface/worlds?character=zine")
+    assert code == code2 == 200
+    for field in ("pattern", "effect_class", "reads", "extent"):
+        assert whole[field] == part[field], field
+    assert part["count"] == len(part["records"])

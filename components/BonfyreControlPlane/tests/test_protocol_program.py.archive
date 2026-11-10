@@ -1,0 +1,185 @@
+"""Archived Python witness: native Bun parity is protocol-program.test.mjs.
+
+The claim being tested is the one the derivation graph forbids breaking: a
+FactDelta is not a global invalidation. Most of these check what stays valid,
+because that is the half a recompute-everything implementation gets wrong while
+looking correct.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import protocol_contract as pc  # noqa: E402
+import protocol_library as lib  # noqa: E402
+import protocol_program as pp  # noqa: E402
+
+
+@pytest.fixture()
+def quote():
+    return pc.quote_accept()
+
+
+@pytest.fixture()
+def program(quote):
+    return pp.lower(quote, enactment="ex1")
+
+
+# ------------------------------------------- the closure the contract implies
+
+def test_a_role_reads_what_it_requires_and_writes_what_it_produces(program):
+    seller = [s for s in program.steps if s.role == "seller"][0]
+    assert seller.reads == frozenset({"request"})
+    assert seller.writes == frozenset({"quote"})
+
+
+def test_the_closure_is_the_union_over_roles(program):
+    assert program.read_closure() == frozenset(
+        {"capability", "buyer_identity", "request", "quote", "acceptance"})
+    assert program.write_closure() == frozenset(
+        {"request", "quote", "acceptance", "delivery"})
+
+
+def test_each_parameter_has_exactly_one_producer(program):
+    for param in program.write_closure():
+        assert program.producer_of(param) is not None
+    # Two producers would be the safety failure the contract already refuses;
+    # the program inherits that rather than re-checking it.
+    assert program.producer_of("quote") == "seller"
+    assert program.producer_of("nothing-writes-this") is None
+
+
+# --------------------------------- a delta is not a global invalidation
+
+def test_a_delta_on_a_parameter_nobody_reads_affects_nothing(program):
+    assert program.affected_by("weather") == []
+    assert program.invalidates("weather") is False
+    # Every role stays valid. An implementation that recompiled the enactment
+    # here would look correct and be doing the thing the graph forbids.
+    assert len(program.unaffected_by("weather")) == len(program.steps)
+
+
+def test_a_delta_invalidates_the_reader_and_what_depends_on_it(program):
+    # `quote` is read by settlement, which produces acceptance, which deliverer
+    # reads. The cascade is real and it stops there.
+    assert program.affected_by("quote") == ["deliverer", "settlement"]
+    assert program.unaffected_by("quote") == ["buyer", "seller"]
+
+
+def test_a_role_upstream_of_the_change_is_never_invalidated(program):
+    assert "buyer" not in program.affected_by("quote")
+    assert "seller" not in program.affected_by("acceptance")
+    # Re-running the buyer because something downstream changed would be a
+    # recompute wearing an incremental name.
+
+
+def test_a_change_at_the_head_cascades_to_everything(program):
+    # `capability` is a given that the buyer reads, and everything descends
+    # from the buyer's output. This is the one case where the whole enactment
+    # is affected -- and it is affected by derivation, not by default.
+    assert program.affected_by("capability") == [
+        "buyer", "deliverer", "seller", "settlement"]
+
+
+def test_a_change_at_the_tail_affects_only_its_reader(program):
+    assert program.affected_by("acceptance") == ["deliverer"]
+    assert program.unaffected_by("acceptance") == ["buyer", "seller",
+                                                   "settlement"]
+
+
+def test_a_delta_carries_no_global_invalidation_flag():
+    delta = pp.fact_delta("quote", enactment="ex1")
+    assert delta["global_invalidation"] is False
+    assert delta["parameter"] == "quote"
+    # It names the address that changed and holds no opinion about who should
+    # recompute; deciding that is the derivation graph's job.
+    assert "recompute" not in delta
+
+
+def test_a_delta_must_name_an_address():
+    with pytest.raises(pp.ProgramError) as e:
+        pp.fact_delta("")
+    assert "names the address" in str(e.value)
+
+
+# ------------------------------------- enactments are independent closures
+
+def test_two_enactments_of_one_contract_do_not_share_a_closure(quote):
+    a = pp.lower(quote, enactment="ex1")
+    b = pp.lower(quote, enactment="ex2")
+    assert a.read_closure() == b.read_closure()
+    assert a.enactment != b.enactment
+
+    touched = pp.affected_programs([a, b], "quote")
+    # The shape is shared. The closure is addressed per enactment, so a caller
+    # scoping a delta to one leaves the other alone.
+    assert set(touched) == {"ex1", "ex2"}
+    assert pp.affected_programs([a], "quote") == {
+        "ex1": ["deliverer", "settlement"]}
+
+
+def test_a_program_must_be_addressed_to_an_enactment(quote):
+    with pytest.raises(pp.ProgramError) as e:
+        pp.lower(quote, enactment="")
+    assert "would share a closure" in str(e.value)
+
+
+def test_fan_out_across_an_estate_is_usually_empty(quote):
+    programs = [pp.lower(quote, enactment=f"ex{i}") for i in range(20)]
+    programs.append(pp.lower(lib.get("economic", "escrow"), enactment="e1"))
+    # A delta naming an escrow parameter touches the escrow enactment and none
+    # of the twenty quote-accepts.
+    assert pp.affected_programs(programs, "hold_confirmation") == {
+        "e1": ["deliverer", "releaser"]}
+
+
+# ------------------------------------------- lowering refuses what enact refuses
+
+def test_a_non_conformant_contract_cannot_be_lowered():
+    broken = (pc.ProtocolContract("broken", given=frozenset({"request"}))
+              .role("buyer", requires={"request"}, produces={"order"})
+              .role("shipper", requires={"payment_confirmation"},
+                    produces={"shipment"}))
+    with pytest.raises(pp.ProgramError) as e:
+        pp.lower(broken, enactment="ex1")
+    assert "non-conformant" in str(e.value)
+    # A program whose roles can never obtain their inputs has a read closure
+    # describing a computation nobody can run.
+
+
+# ------------------------------------ the whole library lowers cleanly
+
+@pytest.mark.parametrize("family,name,contract", lib.all_protocols(),
+                         ids=[f"{f}/{n}" for f, n, _ in lib.all_protocols()])
+def test_every_library_pattern_lowers_to_a_program(family, name, contract):
+    prog = pp.lower(contract, enactment=f"{name}:1")
+    assert prog.steps
+    assert prog.read_closure()
+    assert prog.write_closure()
+    # Every produced parameter has exactly one producer, which is the safety
+    # condition holding at the program level too.
+    for param in prog.write_closure():
+        producers = [s.role for s in prog.steps if param in s.writes]
+        assert len(producers) == 1, (name, param, producers)
+
+
+@pytest.mark.parametrize("family,name,contract", lib.all_protocols(),
+                         ids=[f"{f}/{n}" for f, n, _ in lib.all_protocols()])
+def test_no_pattern_is_globally_invalidated_by_an_unrelated_delta(
+        family, name, contract):
+    prog = pp.lower(contract, enactment=f"{name}:1")
+    assert prog.affected_by("an-address-this-program-never-reads") == []
+
+
+def test_a_written_parameter_is_not_a_produced_effect(program):
+    # The program says `delivery` is written by the deliverer. It says nothing
+    # about anything having been delivered: writes are addresses in a closure,
+    # and EffectKernel-shaped questions are answered elsewhere.
+    assert "delivery" in program.write_closure()
+    assert program.producer_of("delivery") == "deliverer"
+    assert not hasattr(program, "occurred")

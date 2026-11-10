@@ -1,0 +1,490 @@
+"""A world is a publication, and fifteen of them are not fifteen applications.
+
+The failure this layer exists to avoid is the obvious one: an earthquake wants
+an atlas, an underground night wants a flyer wall, a tag wants a scrapbook, and
+the cheap way to get three visual characters is three products. That answer
+scales to fifteen applications and then to fifteen backends, and every one of
+them re-answers what a subject is.
+
+So the claims here are about what did *not* get built:
+
+  a character is presentation
+      wrong if a character has its own route, its own document, or its own way
+      of reading a source -- then it is an application wearing a field name
+
+  a world composes the census and carries no scraper
+      wrong if the reader names a source, a host, or a JSON path, because then
+      the extraction contract has a second copy that can disagree with the
+      census
+
+  a world descends into grammars the estate already serves
+      wrong if a world names a grammar no renderer carries, which is a promise
+      the estate cannot keep
+
+  a world says what it is not
+      wrong if the character does the arguing -- an atlas grid that implies the
+      readings are authoritative, a flyer wall that implies the night is real
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+READER = os.path.join(SURFACES, "world.html")
+KIT = os.path.join(SURFACES, "_kit.js")
+TYPE = os.path.join(REPO, "cmd", "BonfyreCMS", "content-types", "world.json")
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+
+TIMEOUT = 30
+HOST = "https://aurekai.live"
+
+
+def _get(path, accept="application/json"):
+    req = urllib.request.Request(HOST + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode("utf-8", "replace"), dict(r.headers)
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace"), dict(e.headers)
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def worlds():
+    code, body, _ = _get("/_surface/worlds")
+    assert code == 200, code
+    rows = json.loads(body)["records"]
+    assert rows, "no world is published"
+    return rows
+
+
+@pytest.fixture(scope="module")
+def census():
+    code, body, _ = _get("/_surface/internet-census")
+    assert code == 200, code
+    return {r["source"]: r for r in json.loads(body)["records"]}
+
+
+def _reader():
+    with open(READER) as fh:
+        return fh.read()
+
+
+def _kit():
+    with open(KIT) as fh:
+        return fh.read()
+
+
+# ------------------------------------------------ a world is a published row
+
+@pytest.mark.parametrize("field", ["world", "title", "character", "lede",
+                                   "sources", "cannot_infer"])
+def test_every_world_carries_this(worlds, field):
+    for w in worlds:
+        assert w.get(field), (w.get("world"), field)
+
+
+def test_a_world_is_temporary_and_the_type_says_so():
+    spec = json.load(open(TYPE))
+    attrs = spec["attributes"]
+    assert attrs["status"]["required"], (
+        "status is optional, so a world can be published with no answer to "
+        "whether it is still running. A permanent world is a section.")
+    assert attrs["character"]["required"]
+    assert attrs["cannot_infer"]["required"]
+
+
+def test_a_world_names_its_own_slug(worlds):
+    slugs = [w["world"] for w in worlds]
+    assert len(set(slugs)) == len(slugs), slugs
+    for s in slugs:
+        assert re.fullmatch(r"[a-z0-9-]+", s), s
+
+
+# ------------------------------------------------- a character is presentation
+
+def test_the_characters_share_one_reader(worlds):
+    """Three characters, one document. This is the whole claim."""
+    docs = os.listdir(SURFACES)
+    for w in worlds:
+        ch = w["character"]
+        assert f"{ch}.html" not in docs, (
+            f"{ch}.html exists, so a character has its own document and the "
+            f"reader is no longer shared")
+        assert f"world-{ch}.html" not in docs, ch
+
+
+def test_every_character_is_a_branch_in_the_reader(worlds):
+    src = _reader()
+    for w in worlds:
+        ch = w["character"]
+        assert f"w.character === '{ch}'" in src, ch
+        assert f"body.{ch}{{" in src, (ch, "named in the reader but given no design")
+
+
+def test_no_character_is_the_default(worlds):
+    """A terminal else means a character the reader does not know comes out
+    silently as whatever the last branch happened to be -- a lie in a field
+    that exists to say what this world looks like."""
+    src = _reader()
+    chain = src[src.index("the characters"):src.index("if (!page.querySelector")]
+    assert re.search(r"\n  else \{", chain) is None, (
+        "the character chain ends in an unnamed else")
+
+
+def test_the_characters_are_actually_different(worlds):
+    """A field called character that renders the same page is a lie in a field."""
+    src = _reader()
+    grounds = {}
+    for w in worlds:
+        ch = w["character"]
+        m = re.search(r"body\.%s\{([^}]*)" % re.escape(ch), src)
+        assert m, f"body.{ch} sets nothing; the character is a class with no design"
+        bg = re.search(r"--w-ground:\s*(#[0-9a-fA-F]{3,8})", m.group(1))
+        assert bg, (ch, "no ground of its own")
+        grounds[ch] = bg.group(1).lower()
+    assert len(set(grounds.values())) == len(grounds), (
+        f"two characters render on the same ground: {grounds}")
+
+
+def test_a_character_has_no_route_of_its_own(worlds):
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    for w in worlds:
+        for bad in (f'"/{w["character"]}"', f'"/w/{w["world"]}"'):
+            assert bad not in src, (
+                f"{bad} is routed in the organ. A world or a character with its "
+                f"own route is an application, and /w/ was a prefix so it "
+                f"would not have to be")
+    assert '!strncmp(target, "/w/", 3)' in src, (
+        "the /w/ prefix is gone, so every world needs its own route entry")
+
+
+# --------------------------------------- a world composes and does not scrape
+
+def test_every_source_a_world_names_is_in_the_census(worlds, census):
+    for w in worlds:
+        for s in [x.strip() for x in w["sources"].split(",") if x.strip()]:
+            assert s in census, (w["world"], s, "not a census row")
+
+
+def test_every_source_a_world_composes_has_been_walked(worlds, census):
+    """A world over a declared-but-never-read family renders nothing."""
+    for w in worlds:
+        named = [x.strip() for x in w["sources"].split(",") if x.strip()]
+        live = [s for s in named if census[s]["state"] == "observed"]
+        assert live, (w["world"], "composes nothing that has ever been read")
+
+
+def test_every_composed_source_carries_its_extraction_contract(worlds, census):
+    """An empty extract is legal and means the body is itself the list. It is
+    the only field where blank carries meaning, and the kit is where that is
+    written down -- a source with no title field has nothing to render, and a
+    source with no twin has no retained bytes to render it from."""
+    for w in worlds:
+        for s in [x.strip() for x in w["sources"].split(",") if x.strip()]:
+            row = census[s]
+            if row["state"] != "observed":
+                continue
+            assert row.get("twin"), (s, "no twin to read a body from")
+            if (row.get("extract") or "").startswith("rss:"):
+                continue
+            assert row.get("title_field"), (s, "nothing to put on an item")
+
+
+def test_the_census_contract_has_exactly_one_interpreter():
+    """The reader lived three times -- once in the wall, once in the console,
+    once here -- and the copies had already disagreed about which sensitive
+    flags they honour and how a relative image path is completed. A contract
+    with two readers has two places to be wrong about the same source."""
+    import glob
+    kit = _kit()
+    assert "K.readSource = async (row" in kit, "the interpreter is not in the kit"
+    for path in glob.glob(os.path.join(SURFACES, "*.html")):
+        if os.path.basename(path).startswith("_"):
+            continue
+        with open(path) as fh:
+            page = fh.read()
+        if "K.readSource" not in page and "/foreign/body?twin=" not in page:
+            continue          # this surface does not read the outside at all
+        body = page.split("</head>", 1)[-1]
+        # the clone surfaces inline the kit, so the definition may be present;
+        # what must not be present is a second one.
+        assert body.count("K.readSource = ") <= 1, path
+        assert "async function readSource" not in body, (
+            f"{os.path.basename(path)} carries its own reader of the census "
+            f"contract")
+
+
+def test_the_reader_names_no_source_and_no_host(worlds, census):
+    """The moment the reader knows one source by name, the contract has a
+    second copy, and the census stops being the place that decides."""
+    src = _reader()
+    for s in census:
+        assert s not in src, (
+            f"{s} is named in the reader; the extraction contract has been "
+            f"copied out of the census")
+    hosts = re.findall(r"https?://([a-z0-9.-]+)", src)
+    allowed = {"fonts.googleapis.com", "fonts.gstatic.com"}
+    assert set(hosts) <= allowed, sorted(set(hosts) - allowed)
+
+
+@pytest.mark.parametrize("field", ["row.extract", "row.title_field",
+                                  "row.image_field", "row.image_base",
+                                  "row.twin", "row.link_field", "row.sub_field"])
+def test_the_interpreter_reads_every_part_of_the_contract(field):
+    """A contract field nothing reads is a field the census authored for
+    nobody, and the reader silently renders a source worse than the row said
+    it could be rendered."""
+    assert field in _kit(), field
+
+
+# ------------------------------------- a world descends into existing grammars
+
+def test_every_grammar_a_world_names_resolves_to_a_route(worlds):
+    kit = _kit()
+    block = re.search(r"K\.VIEW_ROUTE\s*=\s*\{(.*?)\}", kit, re.S)
+    assert block, "the kit no longer maps a grammar to a route"
+    known = set(re.findall(r"(\w+)\s*:", block.group(1)))
+    for w in worlds:
+        for g in [x.strip() for x in (w.get("grammars") or "").split(",") if x.strip()]:
+            assert g in known, (
+                w["world"], g, "a world promises a grammar no renderer carries")
+
+
+def test_a_world_descends_into_more_than_one_grammar(worlds):
+    """One grammar is a route with a stylesheet. The composition is the point."""
+    counts = {w["world"]: len([x for x in (w.get("grammars") or "").split(",") if x.strip()])
+              for w in worlds}
+    assert all(c >= 2 for c in counts.values()), counts
+
+
+def test_the_grammar_chips_link_out_through_the_kit():
+    assert "K.VIEW_ROUTE[g" in _reader(), (
+        "the world hardcodes where a grammar lives instead of asking the kit")
+
+
+# ------------------------------------------------- a world says what it is not
+
+def test_a_world_states_what_it_cannot_infer_in_plain_words(worlds):
+    banned = ["surfacepattern", "closure", "extent", "projection", "addressable",
+              "foreigntwin", "renderer"]
+    for w in worlds:
+        low = w["cannot_infer"].lower()
+        assert len(w["cannot_infer"]) > 40, (w["world"], "a shrug, not a limit")
+        for b in banned:
+            assert b not in low, (w["world"], b)
+        assert not re.search(r"\borgan\b", low), w["world"]
+
+
+def test_the_lede_is_written_for_a_stranger(worlds):
+    banned = ["surface", "pattern", "census", "extent", "closure", "subject"]
+    for w in worlds:
+        low = w["lede"].lower()
+        for b in banned:
+            assert b not in low, (w["world"], b, w["lede"])
+
+
+# ----------------------------------------------------------------- the shelf
+
+def test_the_shelf_and_every_world_are_served_by_one_document(worlds):
+    code, shelf, _ = _get("/w", accept="text/html")
+    assert code == 200, code
+    assert "<html" in shelf.lower() or "<!doctype" in shelf.lower()
+    for w in worlds:
+        code, page, _ = _get("/w/" + w["world"], accept="text/html")
+        assert code == 200, (w["world"], code)
+        assert page == shelf, (
+            f"/w/{w['world']} was served different bytes than /w; the reader "
+            f"has been specialized per world")
+
+
+def test_a_world_nobody_published_is_declined_and_not_invented():
+    code, page, _ = _get("/w/there-is-no-such-world", accept="text/html")
+    assert code == 200, code
+    assert "K.empty(" in page or "empty(" in page
+    src = _reader()
+    assert "A world by that name" in src, (
+        "the reader no longer declines a name it has no row for")
+
+
+def test_the_shelf_shows_the_worlds_rather_than_listing_them(worlds):
+    """A rack of identical cards is the catalogue shape this layer replaces,
+    and it would argue the opposite of what is behind each cover."""
+    src = _reader()
+    assert "'cover c-' + w.character" in src, (
+        "the shelf no longer sets a cover in its world's character")
+    for w in worlds:
+        m = re.search(r"\.shelf \.c-%s\{([^}]*)" % re.escape(w["character"]), src)
+        assert m, (w["character"], "has no cover style, so it renders as a bare card")
+        assert "background:" in m.group(1), (w["character"], "cover has no ground")
+
+
+def test_a_world_is_reachable_without_knowing_its_address():
+    """A publication nothing links to is a URL somebody has to be told."""
+    code, nav, _ = _get("/protocols", accept="text/html")
+    assert code == 200, code
+    assert 'href="/w"' in nav, "the estate's navigation does not reach the worlds"
+
+
+def test_the_shelf_lists_worlds_and_is_not_itself_a_world():
+    src = _reader()
+    assert "/_surface/worlds" in src
+    # the shelf branch runs when no slug was named
+    assert re.search(r"if\s*\(!\s*slug|slug\s*\?|!name", src), (
+        "the reader has no branch for being asked for nothing")
+
+
+# ------------------------------------------------- the presentation template
+
+@pytest.fixture(scope="module")
+def templates():
+    code, body, _ = _get("/_surface/presentation-templates")
+    assert code == 200, code
+    rows = json.loads(body)["records"]
+    assert rows, "no presentation template is published"
+    return rows
+
+
+def test_a_template_is_presentation_and_owns_no_state(templates):
+    """The moment a template names a content type, an organ or a subject it
+    has stopped being a way of looking and started being a thing looked at."""
+    banned = ["internet_source", "world", "subject", "sqlite", "bonfyre-",
+              "/cms/", "/studio/", "surface_pattern"]
+    for t in templates:
+        blob = json.dumps(t).lower()
+        for b in banned:
+            assert b not in blob, (t["template"], b)
+
+
+@pytest.mark.parametrize("field", ["template", "family", "reference_source",
+                                   "reference_name", "reference_url",
+                                   "layout_tokens", "cannot_infer"])
+def test_every_template_carries_this(templates, field):
+    for t in templates:
+        assert t.get(field), (t.get("template"), field)
+
+
+def test_a_template_says_where_its_language_was_studied(templates):
+    """Provenance is a record, not a dependency. A template with no reference
+    is a design nobody can check; one that implies installed theme code is a
+    claim this estate cannot make."""
+    for t in templates:
+        assert t["reference_url"].startswith("http"), t["template"]
+        assert t["reference_source"], t["template"]
+
+
+def test_every_template_ships_tokens_the_reader_can_apply(templates):
+    """A template whose tokens the reader cannot parse is a template that
+    silently does nothing, which is worse than one that refuses."""
+    roles = {"ground", "ink", "display", "accent", "muted", "rule", "panel"}
+    for t in templates:
+        tok = t["layout_tokens"]
+        if isinstance(tok, str):
+            tok = json.loads(tok)          # raises if the row is not parseable
+        assert isinstance(tok, dict), t["template"]
+        assert roles <= set(tok), (t["template"], sorted(roles - set(tok)))
+        assert tok.get("face_display") and tok.get("face_body"), t["template"]
+
+
+def test_a_template_loads_the_faces_it_names(templates):
+    """Only fonts.googleapis.com is reachable from an artifact page, so a face
+    named but not loaded renders in the fallback stack and the language is
+    quietly not the language."""
+    for t in templates:
+        tok = t["layout_tokens"]
+        if isinstance(tok, str):
+            tok = json.loads(tok)
+        href = tok.get("font_href", "")
+        assert href.startswith("https://fonts.googleapis.com/"), (
+            t["template"], "names faces with nowhere to load them from")
+
+
+def test_no_two_templates_are_the_same_language(templates):
+    """Two languages may honestly share a white ground -- a wire and a
+    publication homepage both do. What they may not share is the whole
+    fingerprint: the ground, the one accent and the display face together."""
+    seen = {}
+    for t in templates:
+        tok = t["layout_tokens"]
+        if isinstance(tok, str):
+            tok = json.loads(tok)
+        key = (tok["ground"], tok["accent"], tok["face_display"])
+        assert key not in seen, (t["template"], seen.get(key), "are the same language")
+        seen[key] = t["template"]
+
+
+def test_the_reader_takes_a_template_from_the_address(worlds):
+    """?template= is what makes a language something a reader can try rather
+    than something an author has to commit to."""
+    assert "URLSearchParams(location.search).get('template')" in _kit(), (
+        "the kit no longer reads a template out of the address")
+    assert "asked || w.template" in _reader(), (
+        "the address does not beat the authored template, or the authored one "
+        "is never consulted")
+
+
+def test_the_character_is_the_fallback_and_not_a_second_opinion():
+    """Every failure path in dress() returns null, and the page still renders
+    under the character's own defaults. A template that half-applies is worse
+    than one that does not apply."""
+    kit = _kit()
+    body = kit[kit.index("K.dress = async ("):kit.index("K.askedTemplate")]
+    for guard in ("if (!name) return null;",
+                  "if (!t) return null;",
+                  "if (!tok || typeof tok !== 'object') return null;"):
+        assert guard in body, guard
+    assert "catch (_) { tok = null; }" in body, "unparseable tokens are not caught"
+
+
+def test_a_template_can_only_set_roles_the_reader_declared():
+    """An open-ended token bag would let a row set any custom property, and
+    then a template could reach past presentation into layout the character
+    owns."""
+    kit = _kit()
+    assert "K.ROLES = [" in kit
+    assert "for (const k of K.ROLES)" in kit, (
+        "the dresser applies whatever the row happens to carry")
+
+
+def test_one_dresser_for_every_surface():
+    """home wears a language too. Two copies of the dresser would drift the
+    way the three copies of the census reader had already drifted."""
+    import glob
+    for path in glob.glob(os.path.join(SURFACES, "*.html")):
+        if os.path.basename(path).startswith("_"):
+            continue
+        with open(path) as fh:
+            body = fh.read().split("</head>", 1)[-1]
+        assert "async function dress(" not in body, path
+        assert body.count("K.dress = ") <= 1, path
+
+
+def test_every_authored_template_on_a_world_resolves(worlds, templates):
+    known = {t["template"] for t in templates}
+    for w in worlds:
+        if w.get("template"):
+            assert w["template"] in known, (
+                w["world"], w["template"], "names a template nothing publishes")
+
+
+def test_the_characters_still_declare_their_own_roles(worlds):
+    """A character that stopped declaring its palette renders in whatever the
+    last template left behind."""
+    src = _reader()
+    for w in worlds:
+        m = re.search(r"body\.%s\{([^}]*)" % re.escape(w["character"]), src)
+        assert m, w["character"]
+        assert "--w-ground:" in m.group(1), (
+            w["character"], "no longer names its own ground, so it cannot stand alone")

@@ -1,0 +1,39 @@
+{
+  "schema": "bonfyre.trained-clef-cpu-diagnostic.v1",
+  "observed_date": "2026-10-02",
+  "source_path": "components/BonfyreDecision/native/build/clef/llama-server",
+  "source_revision": "1e265f2111a894c85560d667216d4dd7930474dc",
+  "source_url": "https://github.com/ggml-org/llama.cpp/blob/1e265f2111a894c85560d667216d4dd7930474dc/src/models/clef.cpp",
+  "native_binary_sha256": "d161b42c74c8e67f974389760e8f742a4510a97db08c91ba2a5a360b68fedd0f",
+  "model_sha256": "3243a51d7a7bb205fb4fcf402a7df763f7d31e6645a9c10e5754c4395ab85b66",
+  "model_repository": "ggml-org/Clef-Flash-GGUF",
+  "model_revision": "4a7a08c09bc63baf043b62b5ba89dd67a0357d95",
+  "runtime_flags": ["--device", "none", "--gpu-layers", "0", "--no-op-offload", "--no-kv-offload", "--no-repack"],
+  "readiness": { "health_http_status": 200, "elapsed_seconds_approximately": 35 },
+  "request": {
+    "model": "bonfyre-clef-flash-q4",
+    "state": { "purpose": "Which action is read-only?" },
+    "questions": {
+      "tool": {
+        "type": "choice",
+        "instructions": "Select the read-only action.",
+        "criteria": { "read": "Read a document", "delete": "Delete a document" }
+      }
+    }
+  },
+  "response": {
+    "model": "bonfyre-clef-flash-q4",
+    "answers": {
+      "tool": {
+        "type": "choice",
+        "choice": "read",
+        "probabilities": { "delete": 0.005611180282818452, "read": 0.9943888197171815 },
+        "confidence": 0.988777639434363
+      }
+    },
+    "usage": { "input_tokens": 139, "output_tokens": 0 }
+  },
+  "request_elapsed_seconds_approximately": 23,
+  "interpretation": "One actual quantized trained-model decision succeeded on CPU with weight repacking disabled; it demonstrates native execution and identifies a GET_ROWS/repacking conflict, not accuracy, BF16 parity, calibrated confidence, or a performance advantage.",
+  "effects": "none; diagnostic child was stopped after the request"
+}

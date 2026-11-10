@@ -9,6 +9,6 @@ Tiny native package utility for assembling proof and offer artifacts into one po
 ## Build
 
 ```bash
-cd 10-Code/BonfyrePack
+cd components/BonfyrePack
 make
 ```

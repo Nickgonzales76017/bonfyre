@@ -1,0 +1,184 @@
+"""Boxing external material, without pretending it is moderation.
+
+The estate now reads thousands of external sources. Something ugly in a feed, a
+scraped page or a social source must not become a card on .life or .live
+because nobody looked. This is the screen, the boxed state, and the exclusion.
+
+What the tests refuse to let it become:
+
+  a verdict
+      wrong if a flag reads as illegal, false, malicious, or deleted
+
+  a clean bill
+      wrong if a screen that is declared-but-not-running, or installed with no
+      terms, reports an empty page that looks like nothing was found
+
+  a moderation product
+      wrong if the observation, its receipt or its bytes are touched
+
+  decoration
+      wrong if boxed material still projects into ordinary surfaces
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+SCREEN = os.path.join(REPO, "scripts", "content_screen.py")
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+HOST = "https://aurekai.live"
+TIMEOUT = 30
+
+
+def _surface(name):
+    req = urllib.request.Request(f"{HOST}/_surface/{name}",
+                                 headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        pytest.skip(f"{name}: {e.code}")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def screen_mod():
+    spec = importlib.util.spec_from_file_location("cs", SCREEN)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+# ------------------------------------------------------------- the matcher
+
+@pytest.mark.parametrize("written", [
+    "spam", "S P A M", "s-p-a-m", "5p4m", "spám", "SPAM!!!", "sp@m",
+    "s.p.a.m", "...spam...", "S.P.A.M!",
+])
+def test_a_transformed_spelling_still_reaches_the_term(screen_mod, written):
+    """A plain word list is defeated by a space, a digit or an accent, which is
+    the whole reason this normalises before matching."""
+    assert " spam " in f" {screen_mod.normalise(written)} ", written
+
+
+@pytest.mark.parametrize("written", [
+    "class pamphlet", "a spa magazine", "spammer", "spa m",
+])
+def test_ordinary_prose_is_not_folded_into_a_match(screen_mod, written):
+    """Rejoining every separated letter would turn 'class pamphlet' into a hit.
+    Only runs of single letters are rejoined."""
+    assert " spam " not in f" {screen_mod.normalise(written)} ", written
+
+
+def test_a_substitution_needs_letters_on_both_sides(screen_mod):
+    """Substituting unconditionally turned SPAM!!! into spamiii, because the
+    trailing punctuation became part of the word."""
+    assert screen_mod.normalise("SPAM!!!") == "spam"
+    assert screen_mod.normalise("hi!") == "hi"
+
+
+def test_a_matched_term_is_not_reprinted_in_full(screen_mod):
+    """A flag is read by people on a page. It records that a term matched."""
+    assert screen_mod.redact("spam") == "s***"
+    assert screen_mod.redact("x") == "x*"
+
+
+# --------------------------------------------------------- the boxed state
+
+def test_a_flag_states_what_it_is_not():
+    flags = _surface("flagged-observations")
+    if not flags["records"]:
+        pytest.skip("nothing is boxed")
+    for f in flags["records"]:
+        ci = f["cannot_infer"].lower()
+        for word in ("illegal", "false", "malicious", "deleted"):
+            assert word in ci, (f["flag"], word)
+        assert "not flagged is not safe" in ci, f["flag"]
+
+
+def test_a_flag_names_the_screen_that_raised_it():
+    flags = _surface("flagged-observations")
+    screens = {s["screen"] for s in _surface("content-screens")["records"]}
+    for f in flags["records"]:
+        assert f["screen"] in screens, (f["flag"], f["screen"])
+        assert f["signal"], f["flag"]
+        assert f["review_state"], f["flag"]
+
+
+def test_a_declared_screen_is_not_reported_as_looking():
+    """A screen that exists only as an intention produces no flags, and its
+    silence must not read as a clean estate."""
+    screens = _surface("content-screens")["records"]
+    declared = [s for s in screens if s["state"] == "declared"]
+    assert declared, "every screen claims to be installed"
+    for s in declared:
+        assert "nothing yet" in s["sees"].lower(), s["screen"]
+        assert s["reference_url"], (s["screen"], "declared with no provenance")
+        # it must say, in its own words, that its silence is not a result
+        ci = s["cannot_infer"].lower()
+        assert ("not a running one" in ci or "has been classified" in ci
+                or "not screened" in ci), (s["screen"], s["cannot_infer"])
+        assert s["reference_note"], (s["screen"], "no note on why it is not installed")
+
+
+def test_an_installed_screen_says_what_it_cannot_see():
+    for s in _surface("content-screens")["records"]:
+        assert s["cannot_see"], s["screen"]
+        assert s["cannot_infer"], s["screen"]
+
+
+def test_a_screen_with_no_terms_does_not_report_a_clean_estate(tmp_path):
+    """An empty result and a screen that looked at nothing are different
+    answers, and the second must not be served as the first. Run it rather
+    than grep it: the sentence is assembled at runtime."""
+    import subprocess, sys
+    env = dict(os.environ,
+               BONFYRE_SCREEN_TERMS=str(tmp_path / "absent.txt"),
+               BONFYRE_FOREIGN_BODIES=str(tmp_path))
+    p = subprocess.run([sys.executable, SCREEN, "--dry-run"],
+                       capture_output=True, text=True, env=env)
+    assert p.returncode == 2, (p.returncode, p.stdout, p.stderr)
+    out = json.loads(p.stdout)
+    assert out["state"] == "installed_without_terms"
+    assert out["flagged"] == 0 and out["screened"] == 0
+    ci = out["cannot_infer"].lower()
+    assert "looked at nothing" in ci
+    assert "not a finding" in ci, out["cannot_infer"]
+
+
+# ----------------------------------------------------------- the exclusion
+
+def test_ordinary_projection_skips_what_a_screen_boxed():
+    with open(KIT) as fh:
+        kit = fh.read()
+    assert "K.flaggedTwins" in kit, "the reader never asks about flags"
+    body = kit[kit.index("K.readSource = async"):]
+    body = body[:body.index("\n  };")]
+    assert "boxed.has(row.twin)" in body, "the reader does not skip boxed twins"
+    assert "includeFlagged" in body, (
+        "no caller can ask for boxed material, so the page that holds it "
+        "cannot show what it is holding")
+
+
+def test_the_boxed_reader_says_why_rather_than_returning_empty():
+    with open(KIT) as fh:
+        kit = fh.read()
+    assert "held back from ordinary projection" in kit
+
+
+def test_a_cleared_flag_stops_excluding():
+    """Boxing is a presentation state, not a deletion; resolving it has to
+    restore ordinary projection."""
+    with open(KIT) as fh:
+        kit = fh.read()
+    assert "!== 'cleared'" in kit, "a resolved flag still suppresses"

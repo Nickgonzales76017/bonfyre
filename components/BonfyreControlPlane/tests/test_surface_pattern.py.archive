@@ -1,0 +1,273 @@
+"""Archived Python witness: native Bun parity is surface-pattern.test.mjs.
+
+The rules under test are the three that each have a failure mode looking fine
+from the outside: an action offered from a thumbnail, a pattern reading two
+owners, and a rendered action layer mistaken for a grant.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import standing_address as sa  # noqa: E402
+import surface_pattern as sp  # noqa: E402
+
+
+@pytest.fixture()
+def estate():
+    return sp.reference_estate()
+
+
+# ------------------------------ extent decides whether there is an action layer
+
+def test_only_a_page_or_workspace_carries_actions(estate):
+    room = estate.get("LiveCreatorRoom")
+    assert room.extent == sp.WORKSPACE
+    assert room.carries_actions() is True
+
+    chip = estate.get("LiveMoment")
+    assert chip.extent == sp.CHIP
+    assert chip.carries_actions() is False
+
+
+def test_a_card_offering_an_action_is_refused_at_declaration():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("BookFromThumbnail", sp.READS_CMS, "Event", sp.CARD,
+                          actions=frozenset({sa.BOOK}), authority="book:event",
+                          territory="work")
+    assert "no room to act inside a reference" in str(e.value)
+    # A card offering BOOK asks for a decision from a thumbnail.
+
+
+def test_a_workspace_shown_as_a_card_drops_its_actions_not_its_subject(estate):
+    room = estate.get("LiveCreatorRoom")
+    card = room.at(sp.CARD)
+    assert card.source == room.source, "the same subject is addressed"
+    assert card.carries_actions() is False
+    assert card.authority == ""
+    # A workspace appearing elsewhere as a card is a projection, not a second
+    # implementation, and a smaller extent is not a lesser subject.
+
+
+def test_returning_to_a_page_extent_restores_nothing_by_itself(estate):
+    room = estate.get("LiveCreatorRoom")
+    back = room.at(sp.CARD).at(sp.PAGE)
+    # Actions were dropped by the narrowing and are not re-invented by widening;
+    # the declared pattern is the source of truth, not the projection chain.
+    assert back.carries_actions() is False
+    assert room.carries_actions() is True
+
+
+def test_an_unknown_extent_is_refused(estate):
+    with pytest.raises(sp.PatternError):
+        estate.get("LiveMoment").at("billboard")
+
+
+# ----------------------------------------- a pattern reads exactly one owner
+
+def test_a_pattern_declares_which_owner_it_reads(estate):
+    assert estate.get("InterestCommunity").reads == sp.READS_CMS
+    assert estate.get("LiveCreatorRoom").reads == sp.READS_ORGAN
+
+
+def test_a_pattern_that_declares_neither_owner_is_refused():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("Vague", "whatever", "Thing", sp.PAGE)
+    assert "two patterns sharing a name" in str(e.value)
+
+
+def test_a_pattern_must_name_the_source_it_reads():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("Empty", sp.READS_CMS, "", sp.PAGE)
+    assert "names no source" in str(e.value)
+
+
+# ------------------------------------- offering is not authorizing
+
+def test_an_action_layer_states_the_authority_it_requires(estate):
+    assert estate.get("PlacePage").authority == "participate:place"
+    assert estate.get("ProfessionalPresence").authority == "engage:professional"
+
+
+def test_an_action_layer_without_an_authority_is_refused():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("Open", sp.READS_CMS, "Event", sp.PAGE,
+                          actions=frozenset({sa.GO}), territory="life")
+    assert "nothing can refuse it" in str(e.value)
+
+
+def test_a_declared_authority_is_a_requirement_not_a_grant(estate):
+    pulse = estate.get("PlacePage")
+    # The pattern says what it needs. Nothing here checks or confers it: that is
+    # AuthorityGraph's job at effect time, and a rendered action layer is an
+    # affordance rather than a permission.
+    assert pulse.carries_actions() is True
+    assert pulse.authority
+    assert not hasattr(pulse, "granted")
+
+
+def test_an_unknown_action_is_refused():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("Odd", sp.READS_CMS, "Event", sp.PAGE,
+                          actions=frozenset({"SCROLL"}), authority="x")
+    # The territory check fires first and says the same thing in its own words:
+    # a verb that is not this territory's verb is not offered here.
+    assert "does not carry" in str(e.value) or "unknown action" in str(e.value)
+
+
+# --------------------------------------------- the catalogue is walkable
+
+def test_the_reference_estate_records_borrowed_behaviour(estate):
+    lineages = estate.by_lineage()
+    for borrowed in ("short-video feeds", "live streaming", "imageboards",
+                     "Pinterest", "Google Maps", "Nextdoor", "Reddit",
+                     "Shopify", "eBay", "Walmart", "LinkedIn", "Zulip",
+                     "Linear", "Notion", "Salesforce"):
+        assert borrowed in lineages, borrowed
+    # The look is borrowed; the backend never is. Recording lineage is what
+    # makes that claim checkable rather than a slogan.
+    assert "VerticalDiscovery" in lineages["short-video feeds"]
+
+
+def test_patterns_the_bidirectional_compiler_made_possible_are_native(estate):
+    native = estate.by_lineage()["native"]
+    for name in ("LiveMoment", "LiveSemanticOverlay", "LiveTimeline",
+                 "ActionCard", "PlacePage", "WorkInbox", "Checkout",
+                 "ApprovalQueue", "AgentWorkmate"):
+        assert name in native
+
+
+def test_the_catalogue_answers_which_patterns_offer_an_action(estate):
+    assert estate.offering(sa.BOOK) == ["CalendarWorkspace"]
+    assert estate.offering(sa.SELL) == ["SellFlow"]
+    assert estate.offering(sa.REMEMBER) == ["MemoryTimeline"]
+    # GO spans .live and .life: going to a stream and going to a place are the
+    # same verb in two territories, which is why territory is on the pattern.
+    go = estate.offering(sa.GO)
+    assert {estate.get(n).territory for n in go} == {"live", "life"}
+
+
+def test_a_duplicate_pattern_name_is_refused(estate):
+    with pytest.raises(sp.PatternError) as e:
+        estate.add(sp.SurfacePattern("PlacePage", sp.READS_CMS, "Event", sp.PAGE,
+                                     territory="life"))
+    assert "already declared" in str(e.value)
+
+
+def test_an_unknown_pattern_lookup_names_what_exists(estate):
+    with pytest.raises(sp.PatternError) as e:
+        estate.get("TikTokClone")
+    assert "VerticalDiscovery" in str(e.value)
+
+
+def test_every_pattern_with_actions_sits_at_an_action_extent(estate):
+    for name, p in estate.patterns.items():
+        if p.carries_actions():
+            assert p.extent in sp.ACTION_EXTENTS, name
+            assert p.authority, name
+
+
+# ------------------------------- four territories, four sets of UX physics
+
+def test_the_surface_commons_covers_all_four_territories(estate):
+    counts = {t: len(v) for t, v in estate.by_territory().items()}
+    assert set(counts) == set(sp.TERRITORIES)
+    assert all(n > 0 for n in counts.values())
+    assert sum(counts.values()) == len(estate.patterns) == 41
+
+
+def test_a_pattern_cannot_offer_a_verb_its_territory_does_not_carry():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("BuyFromTheFeed", sp.READS_CMS, "Product", sp.PAGE,
+                          actions=frozenset({sa.BUY}), authority="x",
+                          territory="live")
+    assert "does not carry" in str(e.value)
+    # BUY is .shop's verb. A .live surface offering it is the same category
+    # error the opportunity model already refuses.
+
+
+def test_each_territory_answers_its_own_question(estate):
+    live = {n for n in estate.by_territory()["live"]}
+    work = {n for n in estate.by_territory()["work"]}
+    assert "VerticalDiscovery" in live and "WorkInbox" in work
+    # Nothing in .live offers DO, and nothing in .work offers WATCH.
+    assert estate.offering(sa.DO) and all(
+        estate.get(n).territory == "work" for n in estate.offering(sa.DO))
+    assert all(estate.get(n).territory == "live"
+               for n in estate.offering(sa.WATCH))
+
+
+def test_narrowing_an_extent_keeps_the_territory(estate):
+    board = estate.get("CollectionBoard")
+    assert board.territory == "life"
+    assert board.at(sp.CHIP).territory == "life"
+
+
+def test_an_unknown_territory_is_refused():
+    with pytest.raises(sp.PatternError) as e:
+        sp.SurfacePattern("X", sp.READS_CMS, "Y", sp.PAGE, territory="metaverse")
+    assert "belongs to one of" in str(e.value)
+
+
+# ------------------------------ the licence distinction is enforced, not noted
+
+def test_a_permissive_project_may_be_a_donor():
+    r = sp.ReferenceSource("Pinry", "BSD-2-Clause", sp.DONOR, "collecting intent")
+    assert r.use == sp.DONOR
+
+
+def test_a_copyleft_project_cannot_be_marked_a_donor():
+    with pytest.raises(sp.PatternError) as e:
+        sp.ReferenceSource("Plane", "AGPL-3.0", sp.DONOR, "issue interaction")
+    assert "network copyleft would extend to this estate" in str(e.value)
+    assert "reference instead" in str(e.value)
+
+
+def test_a_field_of_use_licence_cannot_be_marked_a_donor():
+    with pytest.raises(sp.PatternError) as e:
+        sp.ReferenceSource("Saleor", "FSL", sp.DONOR, "storefront design")
+    assert "forbids competing use" in str(e.value)
+
+
+def test_a_mixed_licence_project_needs_review_before_it_is_a_donor():
+    with pytest.raises(sp.PatternError) as e:
+        sp.ReferenceSource("Mattermost webapp", "mixed", sp.DONOR, "conversation")
+    assert "file-level review" in str(e.value)
+
+
+def test_an_unknown_licence_defaults_to_refusing_donorship():
+    with pytest.raises(sp.PatternError) as e:
+        sp.ReferenceSource("Something", "Custom-1.0", sp.DONOR, "x")
+    assert "not on the permissive list" in str(e.value)
+    # Anything unrecognised is a reference until a person decides otherwise.
+    assert sp.ReferenceSource("Something", "Custom-1.0", sp.REFERENCE, "x")
+
+
+def test_every_declared_reference_is_classified_consistently():
+    for r in sp.REFERENCES:
+        if r.use in (sp.DONOR, sp.IMPLEMENTATION):
+            assert r.license in sp.PERMISSIVE, r.project
+        assert r.solves, r.project
+
+
+def test_the_copyleft_projects_are_all_references():
+    by_use = sp.references_by_use()
+    for project in ("Lemmy", "Pixelfed", "Immich", "Plane", "AppFlowy",
+                    "Twenty", "Cal.com", "Saleor storefront"):
+        assert project in by_use[sp.REFERENCE], project
+    # And the permissive ones carry the load.
+    assert "Spree Storefront" in by_use[sp.DONOR]
+    assert "Zulip" in by_use[sp.DONOR]
+    assert "Fedify" in by_use[sp.IMPLEMENTATION]
+
+
+def test_a_reference_records_what_that_project_actually_solved():
+    zulip = [r for r in sp.REFERENCES if r.project == "Zulip"][0]
+    assert "topic-within-stream" in zulip.solves
+    # Recording what a project solved is what stops "we should look at X" from
+    # becoming "we copied X".

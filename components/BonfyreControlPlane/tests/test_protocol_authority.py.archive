@@ -1,0 +1,383 @@
+"""Archived Python witness; active native witness is protocol-authority.test.mjs.
+
+The parity test compiles a small harness against engine/core/libbonfyre-fabric.a
+and asks bf_authority_has the same questions on the same database. Two
+implementations of one rule that are never compared are two rules, and this
+estate already carries the store's own warning that the schema "must match
+authority.py exactly" -- a comment is not a check.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import sqlite3
+import subprocess
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import protocol_authority as pa  # noqa: E402
+import protocol_library as lib  # noqa: E402,F401
+
+_HERE = os.path.dirname(os.path.abspath(__file__))          # .../BonfyreControlPlane/tests
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+LIB = os.path.join(REPO, "engine", "core", "libbonfyre-fabric.a")
+INC = os.path.join(REPO, "engine", "core", "include")
+
+SUBJECT = "capability:parcel-underwrite"
+ACTORS = {"buyer": "agent:acme", "seller": "aurekai.life",
+          "settlement": "aurekai.life", "deliverer": "aurekai.life"}
+
+HARNESS = r"""
+#include <stdio.h>
+#include <string.h>
+#include "bf_authority.h"
+int main(int argc, char **argv) {
+    /* db actor permission subject at purpose */
+    BfAuthority *a = NULL;
+    if (bf_authority_open(argv[1], &a, stderr) != 0) return 2;
+    const char *at = (argc > 5 && argv[5][0]) ? argv[5] : NULL;
+    const char *purpose = (argc > 6 && argv[6][0]) ? argv[6] : NULL;
+    int r = bf_authority_has(a, argv[2], argv[3], argv[4], at, purpose);
+    bf_authority_close(a);
+    printf("%d\n", r);
+    return r < 0 ? 3 : 0;
+}
+"""
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    pa.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def quote():
+    import protocol_contract as pc
+    return pc.quote_accept()
+
+
+def _grant_every_role(db, contract, actors=ACTORS, subject=SUBJECT, **kw):
+    for name, role in contract.roles.items():
+        pa.grant(db, edge_id=f"e:{name}", actor=actors[name],
+                 permission=role.authority, subject=subject, **kw)
+
+
+# ------------------------------------------ conformance is not permission
+
+def test_a_conformant_contract_is_still_refused_without_grants(db, quote):
+    assert quote.conformant() is True
+    lacks = pa.role_lacks(db, quote, ACTORS, subject=SUBJECT)
+    assert len(lacks) == 4
+    assert {l.role for l in lacks} == set(quote.roles)
+
+
+def test_granting_every_role_authorizes_the_enactment(db, quote):
+    _grant_every_role(db, quote)
+    assert pa.authorized(db, quote, ACTORS, subject=SUBJECT) is True
+
+
+def test_a_refusal_names_the_role_and_the_grant_it_lacked(db, quote):
+    _grant_every_role(db, quote)
+    pa.revoke(db, "e:deliverer")
+    lacks = pa.role_lacks(db, quote, ACTORS, subject=SUBJECT)
+    assert len(lacks) == 1
+    assert lacks[0].role == "deliverer"
+    assert "deliver:capability" in str(lacks[0])
+
+
+def test_enactment_is_refused_before_any_obligation_opens(db, quote):
+    import commitment_graph as cg
+    cdb = sqlite3.connect(":memory:")
+    cg.ensure_schema(cdb)
+    try:
+        with pytest.raises(pa.AuthorityRefused) as e:
+            pa.enact_authorized(cdb, db, quote, enactment_id="ex1",
+                                actors=ACTORS, subject=SUBJECT)
+        assert "deliver:capability" in str(e.value)
+        assert cg.status(cdb, "ex1:delivery") is None
+    finally:
+        cdb.close()
+
+
+def test_authorized_enactment_opens_its_obligations(db, quote):
+    import commitment_graph as cg
+    _grant_every_role(db, quote)
+    cdb = sqlite3.connect(":memory:")
+    cg.ensure_schema(cdb)
+    try:
+        opened = pa.enact_authorized(cdb, db, quote, enactment_id="ex1",
+                                     actors=ACTORS, subject=SUBJECT)
+        assert opened == ["ex1:delivery", "ex1:payment"]
+    finally:
+        cdb.close()
+
+
+# ---------------------------------------------- authority is never inferred
+
+def test_authority_over_one_subject_is_not_authority_over_another(db, quote):
+    _grant_every_role(db, quote)
+    assert pa.authorized(db, quote, ACTORS, subject=SUBJECT) is True
+    assert pa.authorized(db, quote, ACTORS,
+                         subject="capability:owner-concentration") is False
+
+
+def test_a_revoked_edge_grants_nothing_immediately(db):
+    pa.grant(db, edge_id="e1", actor="a", permission="p", subject="s")
+    assert pa.has_authority(db, "a", "p", "s") is True
+    assert pa.revoke(db, "e1") is True
+    assert pa.has_authority(db, "a", "p", "s") is False
+    # Revoking twice reports that nothing was revoked rather than succeeding.
+    assert pa.revoke(db, "e1") is False
+
+
+def test_an_edge_outside_its_window_grants_nothing(db):
+    pa.grant(db, edge_id="e1", actor="a", permission="p", subject="s",
+             effective_from="2026-01-01T00:00:00Z", expires_at="2026-06-30T00:00:00Z")
+    assert pa.has_authority(db, "a", "p", "s", at_iso="2026-03-01T00:00:00Z") is True
+    assert pa.has_authority(db, "a", "p", "s", at_iso="2025-12-01T00:00:00Z") is False
+    assert pa.has_authority(db, "a", "p", "s", at_iso="2026-09-01T00:00:00Z") is False
+
+
+def test_a_purpose_bound_edge_does_not_answer_another_purpose(db):
+    pa.grant(db, edge_id="e1", actor="a", permission="p", subject="s",
+             purpose="underwriting")
+    assert pa.has_authority(db, "a", "p", "s", purpose="underwriting") is True
+    assert pa.has_authority(db, "a", "p", "s", purpose="marketing") is False
+    # A general grant answers any purpose; a specific one does not generalize.
+    pa.grant(db, edge_id="e2", actor="b", permission="p", subject="s", purpose="")
+    assert pa.has_authority(db, "b", "p", "s", purpose="marketing") is True
+
+
+def test_a_role_declaring_no_authority_is_not_gated(db):
+    import protocol_contract as pc
+    p = (pc.ProtocolContract("open-read", given=frozenset({"subject"}))
+         .role("reader", requires={"subject"}, produces={"view"}))
+    assert pa.role_lacks(db, p, {"reader": "anyone"}, subject=SUBJECT) == []
+
+
+def test_an_unassigned_role_is_reported_rather_than_skipped(db, quote):
+    _grant_every_role(db, quote)
+    lacks = pa.role_lacks(db, quote, {"buyer": "agent:acme"}, subject=SUBJECT)
+    assert {l.role for l in lacks} == {"seller", "settlement", "deliverer"}
+    assert all(l.actor == "<unassigned>" for l in lacks)
+
+
+# ------------------------------------------------ parity with the C organ
+
+def _build_harness(tmp_path):
+    cc = shutil.which("cc") or shutil.which("clang") or shutil.which("gcc")
+    if cc is None or not os.path.exists(LIB):
+        return None
+    src = tmp_path / "harness.c"
+    src.write_text(HARNESS)
+    out = tmp_path / "harness"
+    proc = subprocess.run([cc, str(src), LIB, "-I", INC, "-lsqlite3", "-o", str(out)],
+                          capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None
+    return str(out)
+
+
+@pytest.fixture(scope="module")
+def harness(tmp_path_factory):
+    built = _build_harness(tmp_path_factory.mktemp("cparity"))
+    if built is None:
+        pytest.skip("no C toolchain or libbonfyre-fabric.a to link against")
+    return built
+
+
+CASES = [
+    # (actor, permission, subject, at, purpose)
+    ("a", "p", "s", "", ""),
+    ("a", "p", "other", "", ""),
+    ("nobody", "p", "s", "", ""),
+    ("a", "other", "s", "", ""),
+    ("w", "p", "s", "2026-03-01T00:00:00Z", ""),
+    ("w", "p", "s", "2025-12-01T00:00:00Z", ""),
+    ("w", "p", "s", "2026-09-01T00:00:00Z", ""),
+    ("pu", "p", "s", "", "underwriting"),
+    ("pu", "p", "s", "", "marketing"),
+    ("gen", "p", "s", "", "marketing"),
+    ("rev", "p", "s", "", ""),
+]
+
+
+def test_python_and_the_c_organ_agree_on_every_case(harness, tmp_path):
+    path = str(tmp_path / "authority.db")
+    db = sqlite3.connect(path)
+    pa.ensure_schema(db)
+    pa.grant(db, edge_id="plain", actor="a", permission="p", subject="s")
+    pa.grant(db, edge_id="win", actor="w", permission="p", subject="s",
+             effective_from="2026-01-01T00:00:00Z", expires_at="2026-06-30T00:00:00Z")
+    pa.grant(db, edge_id="pur", actor="pu", permission="p", subject="s",
+             purpose="underwriting")
+    pa.grant(db, edge_id="gen", actor="gen", permission="p", subject="s", purpose="")
+    pa.grant(db, edge_id="gone", actor="rev", permission="p", subject="s")
+    pa.revoke(db, "gone")
+    db.close()
+
+    disagreements = []
+    for actor, perm, subject, at, purpose in CASES:
+        py = pa.has_authority(sqlite3.connect(path), actor, perm, subject,
+                              at or None, purpose or None)
+        proc = subprocess.run([harness, path, actor, perm, subject, at, purpose],
+                              capture_output=True, text=True, timeout=30)
+        assert proc.returncode == 0, proc.stderr
+        c = proc.stdout.strip() == "1"
+        if py != c:
+            disagreements.append((actor, perm, subject, at, purpose, py, c))
+
+    assert disagreements == [], f"python and C disagree: {disagreements}"
+
+
+def test_the_parity_harness_can_actually_disagree(harness, tmp_path):
+    # A parity test that cannot fail proves nothing. Ask the C a question whose
+    # answer we know differs from a deliberately wrong Python rule.
+    path = str(tmp_path / "authority2.db")
+    db = sqlite3.connect(path)
+    pa.ensure_schema(db)
+    pa.grant(db, edge_id="e1", actor="a", permission="p", subject="s")
+    pa.revoke(db, "e1")
+    db.close()
+
+    proc = subprocess.run([harness, path, "a", "p", "s", "", ""],
+                          capture_output=True, text=True, timeout=30)
+    assert proc.stdout.strip() == "0", "the C organ honours revocation"
+    # And a rule that ignored `revoked` would have said yes -- which is the
+    # class of drift this comparison exists to catch.
+    naive = sqlite3.connect(path).execute(
+        "SELECT 1 FROM authority_edges WHERE actor='a' AND permission='p'"
+        " AND subject='s'").fetchone()
+    assert naive is not None
+
+
+# --------------------------------------------------- delegation, bounded downward
+
+def test_a_non_delegable_grant_cannot_be_delegated(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s")
+    with pytest.raises(pa.DelegationRefused) as e:
+        pa.delegate_authority(db, parent_edge_id="root", to_actor="child",
+                              new_edge_id="c1")
+    assert "not delegable" in str(e.value)
+    # Delegation is a declared property of a grant, not a default.
+    assert pa.has_authority(db, "child", "p", "s") is False
+
+
+def test_a_delegable_grant_yields_a_working_child(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="child",
+                          new_edge_id="c1")
+    assert pa.has_authority(db, "child", "p", "s") is True
+    assert pa.delegation_chain(db, "c1") == ["root", "c1"]
+
+
+def test_a_revoked_parent_supplies_nothing_to_derive_from(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             delegable=1)
+    pa.revoke(db, "root")
+    with pytest.raises(pa.DelegationRefused) as e:
+        pa.delegate_authority(db, parent_edge_id="root", to_actor="child",
+                              new_edge_id="c1")
+    assert "revoked" in str(e.value)
+
+
+def test_a_child_may_narrow_purpose_and_never_widen_it(db):
+    pa.grant(db, edge_id="general", actor="parent", permission="p", subject="s",
+             purpose="", delegable=1)
+    pa.delegate_authority(db, parent_edge_id="general", to_actor="child",
+                          new_edge_id="c1", purpose="underwriting")
+    assert pa.has_authority(db, "child", "p", "s", purpose="underwriting") is True
+    assert pa.has_authority(db, "child", "p", "s", purpose="marketing") is False
+
+    pa.grant(db, edge_id="bound", actor="parent2", permission="p", subject="s",
+             purpose="underwriting", delegable=1)
+    with pytest.raises(pa.DelegationRefused) as e:
+        pa.delegate_authority(db, parent_edge_id="bound", to_actor="child2",
+                              new_edge_id="c2", purpose="marketing")
+    assert "narrows and never widens" in str(e.value)
+
+
+def test_a_child_never_outlives_its_parent(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             expires_at="2026-06-30T00:00:00Z", delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="child",
+                          new_edge_id="c1", expires_at="2026-03-01T00:00:00Z")
+    assert pa.has_authority(db, "child", "p", "s",
+                            at_iso="2026-02-01T00:00:00Z") is True
+    assert pa.has_authority(db, "child", "p", "s",
+                            at_iso="2026-05-01T00:00:00Z") is False
+
+    with pytest.raises(pa.DelegationRefused) as e:
+        pa.delegate_authority(db, parent_edge_id="root", to_actor="child2",
+                              new_edge_id="c2", expires_at="2027-01-01T00:00:00Z")
+    assert "never outlives" in str(e.value)
+
+
+def test_delegation_is_one_hop_unless_regranted(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="child",
+                          new_edge_id="c1")
+    with pytest.raises(pa.DelegationRefused):
+        pa.delegate_authority(db, parent_edge_id="c1", to_actor="grandchild",
+                              new_edge_id="c2")
+
+
+def test_revoking_a_parent_closes_every_descendant(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="a", new_edge_id="c1")
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="b", new_edge_id="c2")
+    assert pa.has_authority(db, "a", "p", "s") is True
+    assert pa.has_authority(db, "b", "p", "s") is True
+
+    closed = pa.revoke_cascade(db, "root")
+    assert closed == ["c1", "c2", "root"]
+    # The child does not have to cooperate in losing what its source no longer has.
+    assert pa.has_authority(db, "a", "p", "s") is False
+    assert pa.has_authority(db, "b", "p", "s") is False
+    assert pa.has_authority(db, "parent", "p", "s") is False
+
+
+def test_revoking_only_the_parent_would_have_left_a_child_holding_authority(db):
+    pa.grant(db, edge_id="root", actor="parent", permission="p", subject="s",
+             delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="a", new_edge_id="c1")
+    # The failure mode, demonstrated: a plain revoke closes the parent only.
+    pa.revoke(db, "root")
+    assert pa.has_authority(db, "parent", "p", "s") is False
+    assert pa.has_authority(db, "a", "p", "s") is True, (
+        "this is exactly why revoke_cascade exists")
+
+
+def test_descendants_are_found_transitively(db):
+    pa.grant(db, edge_id="root", actor="p", permission="x", subject="s", delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="a", new_edge_id="c1")
+    # Re-grant the child as delegable, then go one deeper.
+    pa.grant(db, edge_id="c1", actor="a", permission="x", subject="s",
+             delegable=1, originating_authority="root")
+    pa.delegate_authority(db, parent_edge_id="c1", to_actor="b", new_edge_id="c1a")
+    assert pa.descendants(db, "root") == ["c1", "c1a"]
+    assert pa.delegation_chain(db, "c1a") == ["root", "c1", "c1a"]
+    assert pa.revoke_cascade(db, "root") == ["c1", "c1a", "root"]
+
+
+def test_the_chain_keeps_both_the_root_and_every_hop(db):
+    pa.grant(db, edge_id="root", actor="p", permission="x", subject="s", delegable=1)
+    pa.delegate_authority(db, parent_edge_id="root", to_actor="a", new_edge_id="c1")
+    pa.grant(db, edge_id="c1", actor="a", permission="x", subject="s",
+             delegable=1, originating_authority="root")
+    pa.delegate_authority(db, parent_edge_id="c1", to_actor="b", new_edge_id="c1a")
+    chain = pa.delegation_chain(db, "c1a")
+    # The original principal is chain[0] and the hop between survives, which is
+    # what a re-delegation rule needs in order to say which link to close.
+    assert chain == ["root", "c1", "c1a"]
+    assert chain[0] == "root"

@@ -1,0 +1,96 @@
+"""The public root is an aperture, not an estate catalogue.
+
+The old root enumerated capabilities, packs, refusals, and census rows. This
+contract protects one bounded real input, existing owners for later moves, and
+four territory characters without claiming an external effect or authority.
+"""
+from __future__ import annotations
+
+import os
+import re
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+HOME = os.path.join(REPO, "site", "matrix", "surfaces", "home.html")
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+
+
+def page() -> str:
+    with open(HOME, encoding="utf-8") as f:
+        return f.read()
+
+
+def test_public_root_is_authored_and_search_uses_the_native_surface():
+    src = page()
+    assert "Prepare route" in src
+    assert 'id="estate-try"' in src
+    assert 'action="/_surface/external-estate"' in src
+    assert 'hx-target="#estate-results"' in src
+    assert "/external-estate/v1/" not in src
+
+
+def test_home_leads_with_one_native_bounded_operation():
+    src = page()
+    assert 'action="/_surface/intake"' in src
+    assert 'method="get"' in src
+    assert 'name="url"' in src
+    assert "This prepares a reviewed handoff" in src
+    assert "does not fetch, publish, or claim" in src
+    assert "method=\"post\"" not in src.lower()
+
+
+def test_home_does_not_recreate_the_catalogue_it_replaced():
+    src = page().lower()
+    for absent in ("things it can do", "capabilities in the book", "estate's own parts",
+                   "data-sec=\"machine\"", "data-sec=\"retention\"", "night-live",
+                   "internet-census", "k.readsource", "foreign/body"):
+        assert absent not in src, absent
+
+
+def test_all_three_next_moves_are_existing_owner_doors():
+    src = page()
+    for href in ('href="/discover"', 'href="/market"', 'href="/studio/"'):
+        assert href in src
+    assert "doors into owners that already exist" in src
+    assert "do not make a promise" in src
+
+
+def test_territories_have_distinct_arrival_characters():
+    src = page()
+    for territory in ("life", "live", "shop", "work"):
+        assert "body." + territory in src
+    with open(os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "territory_home.c"), encoding="utf-8") as f:
+        owner = f.read()
+    assert "bf_apply_territory_home_presentation" in owner
+    assert '"<body class=\\"%s\\">"' in owner
+
+
+def test_session_indicator_uses_native_http_only_session_not_browser_bearer():
+    src = page()
+    assert 'href="/login" id="session-link"' in src
+    assert "localStorage" not in src
+    assert "bonfyre_token" not in src
+
+
+def test_public_weather_is_a_small_owner_read_not_a_weather_claim():
+    src = page()
+    assert 'hx-get="/_surface/home-weather"' in src
+    assert 'hx-trigger="load"' in src
+    assert "public observation surface" in src
+    assert "forecast" not in src.lower()
+
+
+def test_machine_root_contract_remains_owned_by_web_address():
+    with open(MAIN_C, encoding="utf-8") as f:
+        src = f.read()
+    fn = src[src.index("static int serve_authored_page"):]
+    fn = fn[:fn.index("\n    db = cms_open_ro();")]
+    assert 'surface_file(probe, sizeof(probe), root, "home")' in fn
+    assert "!wants_json(accept)" in fn
+
+
+def test_page_is_responsive_without_hiding_its_only_operation():
+    src = page()
+    assert "@media(max-width:760px)" in src
+    assert ".url-form button" in src
+    assert "width:100%" in src

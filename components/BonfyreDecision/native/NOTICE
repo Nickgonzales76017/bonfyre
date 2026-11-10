@@ -1,0 +1,15 @@
+Native Clef decision-head implementation
+
+Algorithm source: Cloudflare/clef-flash joint_schema_model.py, revision
+17f0b0ad64efb65d273590632833508766b2aae6, JointSchemaHead, EvidenceRoutingLayer,
+encode_record and its text-rendering helpers. The text port is also in
+../schema-encoder.mjs.
+https://huggingface.co/Cloudflare/clef-flash
+
+The release is licensed under Apache-2.0. Its LICENSE includes
+Copyright 2026 Alibaba Cloud. See LICENSE in this directory.
+
+Bonfyre modifications: C F32 inference implementation, caller-owned bounded
+scratch arena, streaming attention accumulation, stable Node-API binding,
+explicit shape validation, and shared DecisionPlane integration. No released
+model weights, tokenizer, multimodal processor or Qwen backbone are included.

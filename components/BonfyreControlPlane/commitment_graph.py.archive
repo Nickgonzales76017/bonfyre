@@ -1,0 +1,281 @@
+"""Archived Python CommitmentGraph; active owner is engine/core/src/commitment.c.
+
+The archived economic_graphs.py modelled a commitment with two states: it was
+recorded, and it could be marked delivered. That is enough to answer "did this
+arrive?" and not enough to answer anything an institution is actually asked. The
+three missing states are where the institutional argument lives:
+
+  delegated    the obligation moved to another party and the original obligor
+               is still accountable for it. A delegation that discharged the
+               principal would be an assignment, and the two are different acts
+               with different consequences for whoever is owed.
+
+  violated     the obligation was not met. It is still owed. A system that
+               deletes a broken promise, or that collapses it into "failed",
+               loses the only record that anybody was let down.
+
+  compensated  a violation was answered. The violation stays in the history,
+               because "this was broken and then made good" and "this was fine"
+               are different facts about a counterparty, and only one of them
+               should be visible when deciding whether to rely on them again.
+
+Two structural decisions follow from that, and both are enforced below rather
+than described:
+
+  * State is append-only. Every transition writes an event; the current status
+    is a projection of the event log, never a value that was overwritten. A
+    status column that is UPDATEd in place cannot answer "was this ever
+    violated?", which is the question that makes the state worth having.
+
+  * A terminal state is terminal. discharged and compensated accept no further
+    transition, so a violation cannot be quietly walked back by re-marking the
+    row.
+
+Forbidden inferences, enforced by the tests beside this file:
+  a commitment            -> the resource delivered
+  a delegation            -> the original obligor being released
+  a compensation          -> the violation not having happened
+  an expiry passing       -> a violation (someone must observe and record it;
+                             time alone does not decide that a promise broke)
+"""
+
+# COMPATIBILITY BOUNDARY (do not add durable mutation here): the native owner
+# is engine/core/src/commitment.c via engine/core/include/bf_commitment.h, with
+# declarations in schemas/control/commitment.{yaff,cue}.  ProtocolContract
+# still calls this reference while its enactment path is moved to bf_commitment_*;
+# archive this file only after that caller no longer creates SQLite facts itself.
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Optional
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS commitments(
+  commitment_id TEXT PRIMARY KEY,
+  committer     TEXT NOT NULL,
+  beneficiary   TEXT NOT NULL,
+  resource      TEXT NOT NULL,
+  conditions    TEXT NOT NULL DEFAULT '',
+  expires_at    TEXT NOT NULL DEFAULT '',
+  authority     TEXT NOT NULL DEFAULT '',
+  origin        TEXT NOT NULL DEFAULT '',
+  enactment     TEXT NOT NULL DEFAULT '');
+
+CREATE TABLE IF NOT EXISTS commitment_events(
+  seq           INTEGER PRIMARY KEY AUTOINCREMENT,
+  commitment_id TEXT NOT NULL,
+  state         TEXT NOT NULL,
+  actor         TEXT NOT NULL DEFAULT '',
+  detail        TEXT NOT NULL DEFAULT '',
+  at            TEXT NOT NULL DEFAULT '');
+
+CREATE INDEX IF NOT EXISTS commitment_events_by_id
+  ON commitment_events(commitment_id, seq);
+"""
+
+OPEN = "open"
+DISCHARGED = "discharged"
+DELEGATED = "delegated"
+VIOLATED = "violated"
+COMPENSATED = "compensated"
+
+STATES = frozenset({OPEN, DISCHARGED, DELEGATED, VIOLATED, COMPENSATED})
+
+# The legal transition table. A state absent as a key is terminal.
+#
+# violated -> discharged is deliberate: a late delivery still discharges the
+# obligation, and the violation remains in the log. Losing that pair would force
+# a choice between "never broken" and "never made good", and both are false.
+TRANSITIONS: dict[str, frozenset[str]] = {
+    OPEN: frozenset({DISCHARGED, DELEGATED, VIOLATED}),
+    DELEGATED: frozenset({DISCHARGED, VIOLATED}),
+    VIOLATED: frozenset({DISCHARGED, COMPENSATED}),
+}
+
+TERMINAL = frozenset({DISCHARGED, COMPENSATED})
+
+
+class CommitmentError(RuntimeError):
+    """A refused transition. It names the state it was in, because a caller that
+    only learns the move failed cannot tell a race from a logic error."""
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+# ------------------------------------------------------------------ recording
+
+def record_commitment(db: sqlite3.Connection, *, commitment_id: str, committer: str,
+                      beneficiary: str, resource: str, conditions: str = "",
+                      expires_at: str = "", authority: str = "", origin: str = "",
+                      enactment: str = "", at: str = "") -> None:
+    """Open a commitment.
+
+    `origin` names the obligor this obligation descends from, so a delegated
+    chain can be walked back to whoever originally promised. `enactment` names
+    the ProtocolContract enactment that created it, so an obligation can be
+    traced to the exchange that made it rather than appearing free-standing.
+    """
+    ensure_schema(db)
+    existing = db.execute(
+        "SELECT 1 FROM commitments WHERE commitment_id=?", (commitment_id,)).fetchone()
+    if existing:
+        # Re-recording would reopen a settled obligation by overwriting its row,
+        # which is exactly the erasure the event log exists to prevent.
+        raise CommitmentError(
+            f"commitment {commitment_id!r} already exists in state {status(db, commitment_id)!r}")
+    db.execute(
+        "INSERT INTO commitments"
+        "(commitment_id,committer,beneficiary,resource,conditions,expires_at,"
+        " authority,origin,enactment) VALUES(?,?,?,?,?,?,?,?,?)",
+        (commitment_id, committer, beneficiary, resource, conditions, expires_at,
+         authority, origin or committer, enactment))
+    _append(db, commitment_id, OPEN, actor=committer, detail=resource, at=at)
+    db.commit()
+
+
+def _append(db: sqlite3.Connection, commitment_id: str, state: str, *,
+            actor: str = "", detail: str = "", at: str = "") -> None:
+    if state not in STATES:
+        raise CommitmentError(f"unknown commitment state {state!r}")
+    db.execute(
+        "INSERT INTO commitment_events(commitment_id,state,actor,detail,at)"
+        " VALUES(?,?,?,?,?)", (commitment_id, state, actor, detail, at))
+
+
+# --------------------------------------------------------------- state reading
+
+def status(db: sqlite3.Connection, commitment_id: str) -> Optional[str]:
+    """Current state, projected from the last event. Returns None if unknown --
+    which is not the same as open, and callers must not conflate them."""
+    row = db.execute(
+        "SELECT state FROM commitment_events WHERE commitment_id=?"
+        " ORDER BY seq DESC LIMIT 1", (commitment_id,)).fetchone()
+    return row[0] if row else None
+
+
+def history(db: sqlite3.Connection, commitment_id: str) -> list[tuple[str, str, str, str]]:
+    """Every state this obligation passed through, oldest first."""
+    return [(state, actor, detail, at) for state, actor, detail, at in db.execute(
+        "SELECT state,actor,detail,at FROM commitment_events WHERE commitment_id=?"
+        " ORDER BY seq", (commitment_id,))]
+
+
+def was_ever(db: sqlite3.Connection, commitment_id: str, state: str) -> bool:
+    """Whether this obligation was ever in a state. The question compensation
+    exists to keep answerable."""
+    row = db.execute(
+        "SELECT 1 FROM commitment_events WHERE commitment_id=? AND state=? LIMIT 1",
+        (commitment_id, state)).fetchone()
+    return bool(row)
+
+
+def commitment_delivered(db: sqlite3.Connection, commitment_id: str) -> bool:
+    """A commitment is not a delivery. It counts as discharged only when
+    explicitly recorded so -- never inferred from the commitment existing."""
+    return status(db, commitment_id) == DISCHARGED
+
+
+# ---------------------------------------------------------------- transitions
+
+def _transition(db: sqlite3.Connection, commitment_id: str, to: str, *,
+                actor: str = "", detail: str = "", at: str = "") -> None:
+    current = status(db, commitment_id)
+    if current is None:
+        raise CommitmentError(f"unknown commitment {commitment_id!r}")
+    allowed = TRANSITIONS.get(current, frozenset())
+    if to not in allowed:
+        reason = "terminal" if current in TERMINAL else "not a legal move from"
+        raise CommitmentError(
+            f"commitment {commitment_id!r} is {current!r}: {reason} {current!r} -> {to!r}")
+    _append(db, commitment_id, to, actor=actor, detail=detail, at=at)
+    db.commit()
+
+
+def discharge(db: sqlite3.Connection, commitment_id: str, *, actor: str = "",
+              detail: str = "", at: str = "") -> None:
+    """The obligation was met. Legal from open, delegated and violated -- a late
+    delivery still discharges, and the violation stays in the record."""
+    _transition(db, commitment_id, DISCHARGED, actor=actor, detail=detail, at=at)
+
+
+def violate(db: sqlite3.Connection, commitment_id: str, *, actor: str = "",
+            detail: str = "", at: str = "") -> None:
+    """The obligation was not met. It remains owed; violation is not an ending."""
+    _transition(db, commitment_id, VIOLATED, actor=actor, detail=detail, at=at)
+
+
+def compensate(db: sqlite3.Connection, commitment_id: str, *, actor: str = "",
+               detail: str = "", at: str = "") -> None:
+    """A violation was answered. Only reachable from violated: compensating
+    something that never broke would record a remedy for nothing, and would let
+    a caller manufacture the appearance of a resolved failure."""
+    _transition(db, commitment_id, COMPENSATED, actor=actor, detail=detail, at=at)
+
+
+def delegate(db: sqlite3.Connection, commitment_id: str, *, to_committer: str,
+             delegated_id: str, actor: str = "", at: str = "") -> str:
+    """Move performance to another party without releasing the original obligor.
+
+    Two obligations exist afterwards, deliberately. The original stays live in
+    `delegated` and can still be violated -- because the beneficiary was
+    promised by the original obligor and did not agree to be handed to someone
+    else. The new one carries the same beneficiary and resource and records its
+    origin, so the chain is walkable back to whoever first promised.
+    """
+    row = db.execute(
+        "SELECT beneficiary,resource,conditions,expires_at,authority,origin,enactment"
+        " FROM commitments WHERE commitment_id=?", (commitment_id,)).fetchone()
+    if row is None:
+        raise CommitmentError(f"unknown commitment {commitment_id!r}")
+    beneficiary, resource, conditions, expires_at, authority, origin, enactment = row
+    _transition(db, commitment_id, DELEGATED, actor=actor or to_committer,
+                detail=delegated_id, at=at)
+    record_commitment(db, commitment_id=delegated_id, committer=to_committer,
+                      beneficiary=beneficiary, resource=resource, conditions=conditions,
+                      expires_at=expires_at, authority=authority,
+                      origin=origin, enactment=enactment, at=at)
+    return delegated_id
+
+
+def delegation_chain(db: sqlite3.Connection, commitment_id: str) -> list[str]:
+    """Every obligor accountable for this obligation, original first."""
+    row = db.execute("SELECT origin,committer FROM commitments WHERE commitment_id=?",
+                     (commitment_id,)).fetchone()
+    if row is None:
+        raise CommitmentError(f"unknown commitment {commitment_id!r}")
+    origin, committer = row
+    return [origin] if origin == committer else [origin, committer]
+
+
+# ------------------------------------------------------------------- queries
+
+def violable(db: sqlite3.Connection, now: str) -> list[str]:
+    """Open or delegated commitments whose expiry has passed.
+
+    These are *candidates*. Nothing here changes state, because an expiry
+    passing is not a violation -- someone with standing must observe it and
+    record it. A function that auto-violated on a clock tick would let the
+    machine decide that a person broke a promise.
+    """
+    out = []
+    for cid, expires in db.execute(
+            "SELECT commitment_id,expires_at FROM commitments WHERE expires_at != ''"):
+        if expires < now and status(db, cid) in (OPEN, DELEGATED):
+            out.append(cid)
+    return sorted(out)
+
+
+def outstanding(db: sqlite3.Connection, beneficiary: str) -> list[tuple[str, str]]:
+    """What is still owed to this party, with the state it is owed in. A
+    violated commitment appears here: it is unmet, which is the whole point."""
+    out = []
+    for cid, in db.execute(
+            "SELECT commitment_id FROM commitments WHERE beneficiary=?", (beneficiary,)):
+        st = status(db, cid)
+        if st not in TERMINAL:
+            out.append((cid, st))
+    return sorted(out)

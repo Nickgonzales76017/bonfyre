@@ -1,0 +1,174 @@
+"""Archived Python witness: native owner is information-policy.test.mjs.
+
+Witness for InformationPolicy.
+
+Written against the real shape the estate discloses: a Tarrant parcel row, whose
+owner name is public record, whose assessed values are public, and whose derived
+analytics are not automatically either. The tests falsify the forbidden
+inferences rather than confirming that allow-lists allow.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import information_policy as ip  # noqa: E402
+
+
+PARCEL = {
+    "account": "00000051",
+    "address": "117 E BELKNAP ST",
+    "owner": "FORT WORTH CITY OF",
+    "land_value": 450000.0,
+    "total_value": 450000.0,
+    "owner_mailing_address": "200 TEXAS ST, FORT WORTH TX",
+}
+
+
+@pytest.fixture()
+def policy():
+    return (ip.InformationPolicy("Parcel")
+            .disclose("account", to=AUDIENCES_ALL)
+            .disclose("address", to=AUDIENCES_ALL)
+            .disclose("owner", to=("public", "market", "institution"))
+            .disclose("land_value", to=("public", "market", "institution"))
+            .disclose("total_value", to=("public", "market", "institution"))
+            .disclose("owner_mailing_address", to=("self", "institution"),
+                      reason="a mailing address is contactable and is not released "
+                             "with the assessment roll")
+            .floor("owner_parcel_count", minimum_population=5))
+
+
+AUDIENCES_ALL = ip.AUDIENCES
+
+
+# ------------------------------------- addressable does not mean disclosable
+
+def test_undeclared_field_is_withheld_not_allowed(policy):
+    # A field added to a contract without a rule must not become public by
+    # having been forgotten.
+    allowed, reason = policy.field_decision("assessor_internal_note", "public")
+    assert allowed is False
+    assert "no disclosure rule" in reason
+
+
+def test_addressable_subject_still_withholds_contact_details(policy):
+    out = policy.project(PARCEL, "public")
+    assert out["account"] == "00000051"
+    assert out["owner"] == "FORT WORTH CITY OF"
+    assert policy.withheld_fields(out) == ["owner_mailing_address"]
+
+
+# ----------------------------- a withheld field is not an absent one
+
+def test_withheld_field_is_present_and_marked(policy):
+    out = policy.project(PARCEL, "public")
+    held = out["owner_mailing_address"]
+    # The caller must be able to tell "you may not see this" from "this parcel
+    # has no mailing address on record".
+    assert held[ip.WITHHELD] is True
+    assert "contactable" in held["reason"]
+    assert set(out) == set(PARCEL), "every declared field survives projection"
+
+
+def test_withholding_does_not_shrink_the_record(policy):
+    public = policy.project(PARCEL, "public")
+    owner = policy.project(PARCEL, "self")
+    assert set(public) == set(owner)
+    assert public["owner_mailing_address"][ip.WITHHELD] is True
+    assert owner["owner_mailing_address"] == PARCEL["owner_mailing_address"]
+
+
+# --------------------------------- audiences are not a permission ladder
+
+def test_audience_is_exact_not_hierarchical(policy):
+    # `market` sees the assessment roll; `household` does not, despite sitting
+    # "lower" in the listed order. Order is not a lattice of permission.
+    assert policy.field_decision("land_value", "market")[0] is True
+    assert policy.field_decision("land_value", "household")[0] is False
+
+
+def test_self_and_public_disclose_different_fields(policy):
+    assert policy.field_decision("owner_mailing_address", "self")[0] is True
+    assert policy.field_decision("owner_mailing_address", "public")[0] is False
+    # And the reverse direction is real too: self is not a superset.
+    assert policy.field_decision("owner", "self")[0] is False
+    assert policy.field_decision("owner", "public")[0] is True
+
+
+def test_unknown_audience_is_rejected_rather_than_defaulted(policy):
+    with pytest.raises(ip.PolicyError):
+        policy.field_decision("owner", "everyone")
+
+
+# ------------------------------------------- aggregates and their floor
+
+def test_aggregate_below_floor_is_withheld(policy):
+    out = policy.release_aggregate("owner_parcel_count", value=3, population=3,
+                                   audience="public")
+    assert out[ip.WITHHELD] is True
+    assert "below the disclosure floor of 5" in out["reason"]
+    assert "value" not in out, "a withheld aggregate must not carry its value"
+
+
+def test_aggregate_at_or_above_floor_is_released(policy):
+    out = policy.release_aggregate("owner_parcel_count", value=812, population=812,
+                                   audience="public")
+    assert out["value"] == 812
+    assert ip.WITHHELD not in out
+
+
+def test_refusal_does_not_echo_the_protected_population(policy):
+    out = policy.release_aggregate("owner_parcel_count", value=2, population=2,
+                                   audience="public")
+    # Naming the real population in the refusal would leak the count the floor
+    # exists to protect. The floor is policy and safe to state; the count is not.
+    assert "2" not in out["reason"]
+    assert "5" in out["reason"]
+
+
+def test_released_aggregate_does_not_release_its_constituents(policy):
+    released = policy.release_aggregate("owner_parcel_count", value=812,
+                                        population=812, audience="public")
+    assert released["value"] == 812
+    # The statistic went out; the underlying records are still governed field by
+    # field and nothing about the aggregate changed that.
+    assert policy.field_decision("owner_mailing_address", "public")[0] is False
+
+
+def test_undeclared_statistic_is_withheld(policy):
+    out = policy.release_aggregate("median_sale_price", value=1, population=9999,
+                                   audience="public")
+    assert out[ip.WITHHELD] is True
+    assert "no aggregation floor" in out["reason"]
+
+
+def test_a_floor_of_one_is_refused_at_declaration(policy):
+    # Catch it where it was written, not where it leaked.
+    with pytest.raises(ip.PolicyError) as e:
+        policy.floor("owner_parcel_count", minimum_population=1)
+    assert "discloses the individual" in str(e.value)
+
+
+# ------------------------------------ authority to act is not entitlement to read
+
+def test_evidence_release_defaults_to_nothing(policy):
+    assert ip.evidence_visible(policy, "assessment_roll_receipt") is False
+
+
+def test_evidence_release_is_exact_and_not_inherited(policy):
+    policy.evidence_release = frozenset({"assessment_roll_receipt"})
+    assert ip.evidence_visible(policy, "assessment_roll_receipt") is True
+    # A second witness kind is not carried along by the first.
+    assert ip.evidence_visible(policy, "owner_identity_proof") is False
+
+
+def test_declaring_an_unknown_audience_fails_at_declaration_time():
+    with pytest.raises(ip.PolicyError) as e:
+        ip.InformationPolicy("Parcel").disclose("owner", to=("everybody",))
+    assert "unknown audience" in str(e.value)

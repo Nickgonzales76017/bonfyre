@@ -1,0 +1,211 @@
+"""Durable semantic targets whose realizations may fail without erasing purpose.
+
+This is the persistent companion to :mod:`work_graph`.  Work items and provider
+calls are realizations; a target terminates only with proof or supersession.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import hashlib
+import json
+import sqlite3
+from dataclasses import dataclass
+from typing import Iterable, Optional
+
+OPEN = "OPEN"
+WAITING_EXTERNAL_PREDICATE = "WAITING_EXTERNAL_PREDICATE"
+PROVEN = "PROVEN"
+SUPERSEDED = "SUPERSEDED"
+TERMINAL = frozenset({PROVEN, SUPERSEDED})
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS target_obligations(
+  id TEXT PRIMARY KEY, target TEXT NOT NULL, state TEXT NOT NULL,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  source_frontier TEXT NOT NULL, terminal_reason TEXT);
+CREATE TABLE IF NOT EXISTS work_occurrences(
+  id TEXT PRIMARY KEY, target_obligation_id TEXT NOT NULL,
+  realization TEXT, state TEXT NOT NULL, created_at TEXT NOT NULL,
+  outcome_json TEXT,
+  FOREIGN KEY(target_obligation_id) REFERENCES target_obligations(id));
+CREATE TABLE IF NOT EXISTS standing_predicates(
+  id TEXT PRIMARY KEY, target_obligation_id TEXT NOT NULL,
+  predicate_json TEXT NOT NULL, satisfied INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(target_obligation_id) REFERENCES target_obligations(id));
+CREATE TABLE IF NOT EXISTS failure_fingerprints(
+  id TEXT PRIMARY KEY, realization_key TEXT NOT NULL,
+  dependency_digest TEXT NOT NULL, validator_version TEXT,
+  result TEXT NOT NULL, cooled_until_change INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL);
+"""
+
+
+def _now() -> str:
+    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.commit()
+
+
+@dataclass(frozen=True)
+class TargetObligation:
+    id: str
+    target: str
+    state: str
+    source_frontier: str
+    terminal_reason: Optional[str] = None
+
+
+def require(db: sqlite3.Connection, *, target_id: str, target: str,
+            source_frontier: str) -> TargetObligation:
+    ensure_schema(db)
+    now = _now()
+    db.execute(
+        "INSERT INTO target_obligations"
+        "(id,target,state,created_at,updated_at,source_frontier,terminal_reason)"
+        " VALUES(?,?,?, ?,?,?,NULL) ON CONFLICT(id) DO UPDATE SET"
+        " target=excluded.target,source_frontier=excluded.source_frontier,"
+        " updated_at=excluded.updated_at",
+        (target_id, target, OPEN, now, now, source_frontier),
+    )
+    db.commit()
+    return get(db, target_id)
+
+
+def get(db: sqlite3.Connection, target_id: str) -> TargetObligation:
+    row = db.execute(
+        "SELECT id,target,state,source_frontier,terminal_reason"
+        " FROM target_obligations WHERE id=?", (target_id,)
+    ).fetchone()
+    if row is None:
+        raise KeyError(target_id)
+    return TargetObligation(*row)
+
+
+def record_occurrence(db: sqlite3.Connection, *, occurrence_id: str,
+                      target_id: str, realization: str, state: str,
+                      outcome: dict) -> None:
+    target = get(db, target_id)
+    if target.state in TERMINAL:
+        raise ValueError(f"{target_id} is terminal: {target.state}")
+    db.execute(
+        "INSERT INTO work_occurrences"
+        "(id,target_obligation_id,realization,state,created_at,outcome_json)"
+        " VALUES(?,?,?,?,?,?)",
+        (occurrence_id, target_id, realization, state, _now(),
+         json.dumps(outcome, sort_keys=True)),
+    )
+    db.commit()
+
+
+def failure_fingerprint(*, realization_key: str, dependency_digest: str,
+                        validator_version: str, result: str) -> str:
+    payload = "|".join((realization_key, dependency_digest,
+                        validator_version, result))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def cool_failure(db: sqlite3.Connection, *, realization_key: str,
+                 dependency_digest: str, validator_version: str,
+                 result: str) -> str:
+    """Cool one unchanged realization.  The semantic target remains open."""
+    ensure_schema(db)
+    fingerprint = failure_fingerprint(
+        realization_key=realization_key,
+        dependency_digest=dependency_digest,
+        validator_version=validator_version,
+        result=result,
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO failure_fingerprints"
+        "(id,realization_key,dependency_digest,validator_version,result,"
+        " cooled_until_change,created_at) VALUES(?,?,?,?,?,1,?)",
+        (fingerprint, realization_key, dependency_digest, validator_version,
+         result, _now()),
+    )
+    db.commit()
+    return fingerprint
+
+
+def realization_is_cooled(db: sqlite3.Connection, realization_key: str,
+                          dependency_digest: str) -> bool:
+    return db.execute(
+        "SELECT 1 FROM failure_fingerprints WHERE realization_key=?"
+        " AND dependency_digest=? AND cooled_until_change=1",
+        (realization_key, dependency_digest),
+    ).fetchone() is not None
+
+
+def wait_for(db: sqlite3.Connection, *, target_id: str, predicate_id: str,
+             predicate: dict) -> None:
+    target = get(db, target_id)
+    if target.state in TERMINAL:
+        raise ValueError(f"{target_id} is terminal")
+    now = _now()
+    db.execute(
+        "INSERT OR REPLACE INTO standing_predicates"
+        "(id,target_obligation_id,predicate_json,satisfied,updated_at)"
+        " VALUES(?,?,?,0,?)",
+        (predicate_id, target_id, json.dumps(predicate, sort_keys=True), now),
+    )
+    db.execute("UPDATE target_obligations SET state=?,updated_at=? WHERE id=?",
+               (WAITING_EXTERNAL_PREDICATE, now, target_id))
+    db.commit()
+
+
+def satisfy_predicate(db: sqlite3.Connection, predicate_id: str) -> str:
+    row = db.execute(
+        "SELECT target_obligation_id FROM standing_predicates WHERE id=?",
+        (predicate_id,),
+    ).fetchone()
+    if row is None:
+        raise KeyError(predicate_id)
+    now = _now()
+    db.execute("UPDATE standing_predicates SET satisfied=1,updated_at=? WHERE id=?",
+               (now, predicate_id))
+    db.execute("UPDATE target_obligations SET state=?,updated_at=? WHERE id=?",
+               (OPEN, now, row[0]))
+    db.commit()
+    return row[0]
+
+
+def prove(db: sqlite3.Connection, target_id: str,
+          evidence_refs: Iterable[str]) -> None:
+    refs = tuple(ref for ref in evidence_refs if ref)
+    if not refs:
+        raise ValueError("PROVEN requires evidence")
+    _terminate(db, target_id, PROVEN, json.dumps(refs))
+
+
+def supersede(db: sqlite3.Connection, target_id: str,
+              replacement_target_id: str) -> None:
+    get(db, replacement_target_id)
+    _terminate(db, target_id, SUPERSEDED,
+               f"superseded_by:{replacement_target_id}")
+
+
+def _terminate(db: sqlite3.Connection, target_id: str, state: str,
+               reason: str) -> None:
+    if state not in TERMINAL:
+        raise ValueError(state)
+    target = get(db, target_id)
+    if target.state in TERMINAL:
+        raise ValueError(f"{target_id} already terminal")
+    db.execute(
+        "UPDATE target_obligations SET state=?,terminal_reason=?,updated_at=?"
+        " WHERE id=?", (state, reason, _now(), target_id),
+    )
+    db.commit()
+
+
+def unresolved(db: sqlite3.Connection) -> list[TargetObligation]:
+    return [TargetObligation(*row) for row in db.execute(
+        "SELECT id,target,state,source_frontier,terminal_reason"
+        " FROM target_obligations WHERE state NOT IN ('PROVEN','SUPERSEDED')"
+        " ORDER BY id"
+    )]

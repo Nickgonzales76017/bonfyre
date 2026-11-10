@@ -1,0 +1,346 @@
+"""Archived Python witness; active native witness is protocol-library.test.mjs.
+
+The strongest test here is the meta-test: every registered pattern must pass all
+three conformance conditions. A library that could ship a pattern which deadlocks
+or races would be a catalogue of plausible-looking diagrams, which is the thing
+the compiler exists to stop being.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import commitment_graph as cg  # noqa: E402
+import protocol_contract as pc  # noqa: E402
+import protocol_library as lib  # noqa: E402
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    cg.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+ALL = lib.all_protocols()
+
+
+# ------------------------------------------- the library cannot ship a bad pattern
+
+@pytest.mark.parametrize("family,name,contract",
+                         ALL, ids=[f"{f}/{n}" for f, n, _ in ALL])
+def test_every_registered_pattern_is_conformant(family, name, contract):
+    assert contract.conformance() == {"liveness": {}, "safety": {}, "integrity": {}}
+
+
+@pytest.mark.parametrize("family,name,contract",
+                         ALL, ids=[f"{f}/{n}" for f, n, _ in ALL])
+def test_every_pattern_orders_and_creates_at_least_one_obligation(family, name, contract):
+    waves = contract.causal_order()
+    assert waves, f"{name} produced no ordering"
+    assert sum(len(w) for w in waves) == len(contract.roles)
+    # A pattern that creates no commitment is a message sequence, not an
+    # interaction protocol -- nobody owes anybody anything at the end of it.
+    assert contract.commitments, f"{name} creates no obligation"
+
+
+@pytest.mark.parametrize("family,name,contract",
+                         ALL, ids=[f"{f}/{n}" for f, n, _ in ALL])
+def test_every_role_declares_the_authority_it_relies_on(family, name, contract):
+    for role in contract.roles.values():
+        assert role.authority, f"{name}.{role.name} names no authority"
+
+
+# -------------------------------------------------- the FIPA lineage, imported
+
+def test_contract_net_orders_call_before_proposal_before_award():
+    cn = lib.get("work", "contract-net")
+    assert cn.causal_order() == [["caller"], ["participant"], ["awarder"], ["awardee"]]
+
+
+def test_collapsing_the_manager_into_one_role_is_reported_as_a_cycle():
+    # The modelling note made testable: a manager that both calls and awards
+    # would need a proposal to emit the call that solicits it.
+    broken = (pc.ProtocolContract("contract-net-collapsed",
+                                  given=frozenset({"task", "deadline"}))
+              .role("manager", requires={"task", "deadline", "proposal"},
+                    produces={"call_for_proposals", "award"})
+              .role("participant", requires={"call_for_proposals"},
+                    produces={"proposal"}))
+    errors = broken.liveness_errors()
+    assert set(errors) == {"manager", "participant"}
+    with pytest.raises(pc.ProtocolError):
+        broken.causal_order()
+
+
+def test_contract_net_obliges_both_directions():
+    cn = lib.get("work", "contract-net")
+    keys = {c.key for c in cn.commitments}
+    # The awardee owes performance and the caller owes the awarded terms. A
+    # pattern carrying only the first would let a caller award and walk away.
+    assert keys == {"perform_awarded_task", "honor_the_award"}
+
+
+# ------------------------------------------------- delegation does not release
+
+def test_scoped_delegation_obliges_the_delegate_back_to_the_principal(db):
+    sd = lib.get("authority", "scoped-delegation")
+    sd.enact(db, enactment_id="d1",
+             actors={"principal": "estate:parent", "delegate": "estate:child",
+                     "performer": "estate:child"})
+    cid = "d1:perform_within_scope"
+    assert cg.status(db, cid) == cg.OPEN
+    row = db.execute("SELECT committer,beneficiary FROM commitments WHERE commitment_id=?",
+                     (cid,)).fetchone()
+    assert row == ("estate:child", "estate:parent")
+
+
+def test_delegating_the_obligation_onward_keeps_the_original_accountable(db):
+    sd = lib.get("authority", "scoped-delegation")
+    sd.enact(db, enactment_id="d1",
+             actors={"principal": "estate:parent", "delegate": "estate:child",
+                     "performer": "estate:child"})
+    cid = "d1:perform_within_scope"
+    cg.delegate(db, cid, to_committer="estate:grandchild", delegated_id=f"{cid}:sub")
+
+    assert cg.delegation_chain(db, f"{cid}:sub") == ["estate:child", "estate:grandchild"]
+    # The enactment is not closed by handing the work on.
+    assert sd.closed(db, "d1") is False
+
+
+# ---------------------------------------- escrow keeps two obligations apart
+
+def test_escrow_carries_opposing_obligations_that_do_not_discharge_each_other(db):
+    es = lib.get("economic", "escrow")
+    es.enact(db, enactment_id="e1",
+             actors={"payer": "buyer", "agent": "escrow-co",
+                     "deliverer": "seller", "releaser": "escrow-co"})
+
+    cg.discharge(db, "e1:release_the_held_funds", detail="funds released")
+    # Money moved. The goods are still owed, and a protocol modelling one
+    # obligation would now consider this finished.
+    assert es.closed(db, "e1") is False
+    assert es.outstanding_after(db, "e1") == [("e1:deliver_the_agreement", cg.OPEN)]
+
+
+def test_escrow_closes_only_when_both_directions_settle(db):
+    es = lib.get("economic", "escrow")
+    es.enact(db, enactment_id="e1",
+             actors={"payer": "buyer", "agent": "escrow-co",
+                     "deliverer": "seller", "releaser": "escrow-co"})
+    cg.discharge(db, "e1:release_the_held_funds")
+    cg.violate(db, "e1:deliver_the_agreement", detail="never shipped")
+    assert es.closed(db, "e1") is False
+    cg.compensate(db, "e1:deliver_the_agreement", detail="refunded from the release")
+    assert es.closed(db, "e1") is True
+    assert cg.was_ever(db, "e1:deliver_the_agreement", cg.VIOLATED) is True
+
+
+# ------------------------------------- partial completion has somewhere to go
+
+def test_mission_lease_disposes_of_partial_work_without_calling_it_success(db):
+    ml = lib.get("work", "mission-lease")
+    ml.enact(db, enactment_id="m1",
+             actors={"offerer": "institution", "claimant": "worker:1",
+                     "worker": "worker:1", "reviewer": "institution"})
+    # The lease obliges completion *or escalation* -- so a partial report can
+    # discharge it honestly rather than forcing the worker to overclaim.
+    cg.discharge(db, "m1:complete_or_escalate",
+                 detail="escalated: two of three sources unreachable")
+    assert ml.closed(db, "m1") is True
+    assert cg.was_ever(db, "m1:complete_or_escalate", cg.VIOLATED) is False
+
+
+# ------------------------------------------- evidence outranks assertion
+
+def test_adjudicator_reads_evidence_and_not_the_claim():
+    ec = lib.get("evidence", "evidence-challenge")
+    adjudicator = ec.roles["adjudicator"]
+    assert adjudicator.entitled_to() == frozenset({"evidence"})
+    assert "claim" not in adjudicator.entitled_to()
+    assert ec.integrity_errors() == {}
+
+
+# ----------------------------------------- a hold is not a consumption
+
+def test_reservation_obliges_availability_only():
+    r = lib.get("physical", "reservation")
+    resources = {c.resource for c in r.commitments}
+    assert resources == {"the resource, available through the reserved window"}
+    # Nothing here obliges the requester to turn up; that is a domain's business.
+    assert all(c.committer == "holder" for c in r.commitments)
+
+
+# ------------------------------------------------------ the registry is honest
+
+def test_no_family_is_carried_by_a_stub():
+    cov = lib.coverage()
+    assert set(cov) == set(lib.FAMILIES)
+    assert all(n >= 1 for n in cov.values()), "every family carries a real pattern"
+    assert cov["work"] == 4
+    # A stub would have passed conformance by having no roles at all.
+    for family, entries in lib.LIBRARY.items():
+        for name, builder in entries.items():
+            assert builder().roles, f"{family}/{name} is an empty contract"
+
+
+def test_unknown_lookups_name_what_is_available():
+    with pytest.raises(lib.UnknownProtocol) as e:
+        lib.get("work", "auction")
+    assert "contract-net" in str(e.value)
+
+    with pytest.raises(lib.UnknownProtocol) as e:
+        lib.get("nonsense", "x")
+    assert "unknown family" in str(e.value)
+
+
+def test_an_unknown_protocol_in_a_populated_family_names_what_is_there():
+    with pytest.raises(lib.UnknownProtocol) as e:
+        lib.get("meta", "agent-ensemble")
+    assert "agent-delegation" in str(e.value)
+
+
+def test_library_covers_twenty_one_patterns_across_all_ten_families():
+    assert len(ALL) == 21
+    assert lib.coverage() == {
+        "identity": 2, "authority": 2, "work": 4, "evidence": 1, "economic": 4,
+        "data_compute": 2, "foreign_world": 2, "physical": 1, "social": 2,
+        "meta": 1,
+    }
+    assert {f for f, _, _ in ALL} == set(lib.FAMILIES)
+    assert sum(lib.coverage().values()) == 21
+    assert set(lib.LIBRARY) == set(lib.FAMILIES), "no family declared twice"
+
+
+# ------------------------ the patterns that fill the previously empty families
+
+def test_an_introduction_stakes_the_introducers_reputation(db):
+    si = lib.get("identity", "subject-introduction")
+    si.enact(db, enactment_id="i1",
+             actors={"introducer": "person:nick", "recipient": "person:ana"})
+    row = db.execute("SELECT committer,beneficiary FROM commitments"
+                     " WHERE commitment_id='i1:stand_behind_the_introduction'"
+                     ).fetchone()
+    # The obligation runs from the introducer, not from the person introduced.
+    # A cold approach and a vouched-for one are different institutional acts.
+    assert row == ("person:nick", "person:ana")
+
+
+def test_a_relationship_needs_admission_and_following_does_not(db):
+    ra = lib.get("identity", "relationship-admission")
+    assert ra.causal_order() == [["proposer"], ["admitter"]]
+    ra.enact(db, enactment_id="r1",
+             actors={"proposer": "a", "admitter": "b"})
+    # Nothing is owed until the other side admits it.
+    assert cg.status(db, "r1:honour_the_relationship") == cg.OPEN
+    assert ra.closed(db, "r1") is False
+
+
+def test_a_dataset_slice_is_bounded_before_it_is_released():
+    ms = lib.get("data_compute", "minimum-dataset-slice")
+    assert ms.causal_order() == [["requester"], ["bounder"], ["holder"]]
+    # The holder reads the bound, not the original question: it releases what
+    # was authorised rather than what was asked for.
+    assert ms.roles["holder"].entitled_to() == frozenset({"slice_bound"})
+    assert "question" not in ms.roles["holder"].entitled_to()
+
+
+def test_compute_placement_obliges_the_executor_to_the_admitter(db):
+    cp = lib.get("data_compute", "compute-placement")
+    cp.enact(db, enactment_id="p1",
+             actors={"planner": "planner", "admitter": "resource-admission",
+                     "executor": "provider:x"})
+    row = db.execute("SELECT committer,beneficiary FROM commitments"
+                     " WHERE commitment_id='p1:stay_within_the_admitted_ceiling'"
+                     ).fetchone()
+    assert row == ("provider:x", "resource-admission")
+
+
+def test_foreign_observation_preflights_before_it_fetches():
+    fo = lib.get("foreign_world", "foreign-observation")
+    assert fo.causal_order() == [["preflight"], ["observer"], ["receipting"]]
+    # The decision to observe is a separate role from the observing, because it
+    # is the part that can refuse.
+
+
+def test_a_carrier_upgrade_is_adopted_against_evidence_not_advertisement():
+    cu = lib.get("foreign_world", "carrier-upgrade")
+    assert cu.causal_order() == [["prober"], ["verifier"], ["adopter"]]
+    # The adopter requires upgrade_evidence, never the raw probe: a well-known
+    # path returning 200 is not a working carrier.
+    assert cu.roles["adopter"].requires == frozenset({"upgrade_evidence"})
+
+
+def test_an_agent_owes_its_principal_and_not_its_counterparty(db):
+    ad = lib.get("meta", "agent-delegation")
+    ad.enact(db, enactment_id="a1",
+             actors={"principal": "person:nick", "agent": "agent:acme",
+                     "actor": "agent:acme", "auditor": "estate:aurekai"})
+    row = db.execute("SELECT committer,beneficiary FROM commitments"
+                     " WHERE commitment_id='a1:act_only_within_the_envelope'"
+                     ).fetchone()
+    # An agent that satisfied a counterparty by exceeding its envelope has still
+    # broken its only promise.
+    assert row == ("agent:acme", "person:nick")
+    assert ad.roles["auditor"].entitled_to() == frozenset({"agent_result", "envelope"})
+
+
+def test_a_group_buy_commits_everybody_at_the_same_moment(db):
+    gb = lib.get("economic", "collective-purchase")
+    assert gb.causal_order() == [["initiator"], ["participant"],
+                                 ["threshold_check"], ["seller"]]
+    gb.enact(db, enactment_id="g1",
+             actors={"initiator": "person:nick", "participant": "person:ana",
+                     "threshold_check": "estate:aurekai", "seller": "merchant:x"})
+    # Two obligations, opened together. Nobody is committed until the threshold
+    # is met, and everybody is at the same moment when it is.
+    assert sorted(c for c, _ in gb.outstanding_after(db, "g1")) == [
+        "g1:honour_the_group_price", "g1:pay_the_pledged_amount"]
+
+
+def test_ownership_transfer_is_separate_from_delivery():
+    ot = lib.get("economic", "ownership-transfer")
+    params = set()
+    for r in ot.roles.values():
+        params |= r.produces
+    # A parcel can arrive without title passing and title can pass without
+    # anything moving, so nothing here mentions delivery at all.
+    assert not any("deliver" in p for p in params)
+    assert "record" in params
+
+
+def test_a_reviewer_decides_from_the_application_and_nothing_else():
+    ja = lib.get("work", "job-application")
+    assert ja.roles["reviewer"].entitled_to() == frozenset({"application"})
+    assert ja.roles["decider"].entitled_to() == frozenset({"assessment"})
+    # A decision computed from information the reviewer was never given is the
+    # integrity failure this bound catches.
+    assert ja.integrity_errors() == {}
+
+
+def test_a_quorum_is_counted_by_somebody_answerable():
+    qd = lib.get("work", "quorum-decision")
+    assert qd.causal_order() == [["proposer"], ["voter"], ["teller"], ["recorder"]]
+    # "Enough people agreed" is a produced fact with an owner rather than a
+    # count somebody did in their head.
+    assert qd.roles["teller"].produces == frozenset({"quorum_result"})
+    assert qd.roles["teller"].entitled_to() == frozenset({"vote", "quorum_rule"})
+
+
+def test_mutual_aid_carries_no_money_parameter():
+    ma = lib.get("social", "mutual-aid")
+    params = set()
+    for r in ma.roles.values():
+        params |= r.requires | r.produces
+    for word in ("price", "amount", "payment", "invoice", "fee"):
+        assert not any(word in p for p in params), word
+    # An aid offer that quietly became an invoice is the failure, so there is no
+    # parameter that could carry one.
+    assert {c.committer for c in ma.commitments} == {"helper"}

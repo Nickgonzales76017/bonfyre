@@ -1,0 +1,71 @@
+import sys
+from pathlib import Path
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import food_fulfillment_route as ffr
+
+
+def _offer(offer_id, merchant, kind, price, location_id=None, modes=()):
+    return {
+        "offer_id": offer_id,
+        "merchant": merchant,
+        "merchant_kind": kind,
+        "source_url": f"https://example.test/{offer_id}",
+        "observed_at": "2026-08-24T00:00:00Z",
+        "cash_price_usd": price,
+        "product_terms": [offer_id],
+        "effects": [],
+        "explicit_stack_pairs": [],
+        "merchant_location_id": location_id,
+        "valid_fulfillment_modes": list(modes),
+    }
+
+
+def _location(location_id, merchant, options):
+    return {
+        "location_id": location_id,
+        "merchant": merchant,
+        "latitude": 32.7,
+        "longitude": -97.1,
+        "fulfillment_options": options,
+    }
+
+
+ORIGIN = [{"origin_id": "o", "label": "Observed origin", "latitude": 32.6,
+           "longitude": -97.0, "source_url": "https://example.test/origin"}]
+
+
+def _strategy(projection, kind):
+    return next(item for item in projection["by_origin"][0]["strategies"] if item["kind"] == kind)
+
+
+def test_delivery_minimum_is_a_precondition_not_an_added_cost():
+    offer = _offer("pizza", "Pizza", "restaurant", "4", "pizza-store", ("Carryout", "Delivery"))
+    location = _location("pizza-store", "Pizza", [
+        {"mode": "Carryout", "fee_usd": "0", "minimum_order_usd": "0", "customer_travels": True},
+        {"mode": "Delivery", "fee_usd": "2", "minimum_order_usd": "5", "customer_travels": False},
+    ])
+    projection = ffr.build_route_projection([offer], [location], ORIGIN, max_basket_size=1)
+
+    cheapest = _strategy(projection, "cheapest_total_cash_including_fees")["selection"]
+    assert cheapest["total_cash_usd"] == "4.0000"
+    assert cheapest["fulfillment_plan"] == {"Pizza": "Carryout"}
+    assert cheapest["travel_miles_geodesic_lower_bound"] is not None
+    assert _strategy(projection, "no_customer_travel")["selection"] is None
+
+
+def test_two_stop_hybrid_is_only_a_lower_bound_when_a_leg_has_no_observed_mode():
+    grocery = _offer("beans", "Grocer", "grocery_retailer", "1")
+    restaurant = _offer("pizza", "Pizza", "restaurant", "4", "pizza-store", ("Carryout",))
+    location = _location("pizza-store", "Pizza", [
+        {"mode": "Carryout", "fee_usd": "0", "minimum_order_usd": "0", "customer_travels": True},
+    ])
+    projection = ffr.build_route_projection([grocery, restaurant], [location], ORIGIN, max_basket_size=2)
+
+    hybrid = _strategy(projection, "grocery_restaurant_hybrid_cash_lower_bound")["selection"]
+    assert hybrid["offer_ids"] == ["beans", "pizza"]
+    assert hybrid["total_cash_usd"] is None
+    assert hybrid["total_cash_lower_bound_usd"] == "5.0000"
+    assert hybrid["travel_miles_geodesic_lower_bound"] is None
+    assert any("no observed fulfillment option" in reason for reason in hybrid["unresolved"])

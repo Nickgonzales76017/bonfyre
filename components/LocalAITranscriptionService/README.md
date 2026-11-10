@@ -17,13 +17,13 @@ The main gap is no real customer-grade file has been run through the full intake
 
 ## Run
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --transcript-file sample_transcript.txt
 ```
 
 ## Environment
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --check-env
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --bootstrap-plan
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --check-model-cache --whisper-model base
@@ -45,40 +45,39 @@ Heavy commands now use runtime guardrails by default:
 Current tuned defaults for this MacBook live in `.bonfyre-runtime/guardrails.json`:
 - `local_ai_transcription_service`: `12.0`
 - `local_ai_transcription_service:model_warmup`: `5.0`
-- `nightly_brainstorm`: `8.0`
 
 Check them with:
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --check-runtime
 ```
 
 ## Raw Audio
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --audio-file sample_audio.m4a
 ```
 
 ## Intake Handoff
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --audio-file sample_audio.m4a --intake-manifest exported-job.intake.json
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --transcript-file sample_transcript.txt --intake-manifest exported-job.intake.json
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --intake-package exported-job.intake-package.json
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --intake-dir intake-drop
 ```
 
-Browser intake manifests are exported by `10-Code/WebWorkerSaaS` and provide a reusable handoff contract:
+Browser intake manifests are exported by `components/WebWorkerSaaS` and provide a reusable handoff contract:
 - job identity
 - client context
 - output goal
 - captured notes
 
-For a smoother handoff, `10-Code/WebWorkerSaaS` can now export a one-file intake package with the source file embedded directly.
+For a smoother handoff, `components/WebWorkerSaaS` can now export a one-file intake package with the source file embedded directly.
 
 ## Fast Rebuild
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --rebuild-job outputs/founder-sample-pickfu-assumptions
 ```
 
@@ -86,7 +85,7 @@ Use this when summary or formatting logic changes and you want to rebuild an exi
 
 ## Lightweight Queue
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --enqueue-intake-package samples/intake-packages/customer-01-gaurav-conversations.intake-package.json
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --queue-status
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --process-queued --max-queued-jobs 1
@@ -96,7 +95,7 @@ Use this to stage work when the machine is busy, then drain the queue later with
 
 ## Auto-Drain
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 chmod +x drain_queue.sh
 launchctl unload ~/Library/LaunchAgents/com.bonfyre.local-ai-transcription-queue.plist 2>/dev/null || true
 cp com.bonfyre.local-ai-transcription-queue.plist ~/Library/LaunchAgents/
@@ -107,11 +106,11 @@ What it does:
 - checks the queue every 20 minutes
 - processes at most 1 queued job per run
 - still honors the shared runtime guardrails
-- writes logs to `10-Code/LocalAITranscriptionService/logs/`
+- writes logs to `components/LocalAITranscriptionService/logs/`
 
 ## Proof Promotion
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --promote-proof outputs/founder-sample-pickfu-assumptions --proof-label "Founder Sample - PickFu"
 ```
 
@@ -122,7 +121,7 @@ What it does:
 
 ## Proof Review
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --review-proof samples/proof-deliverables/founder-sample-pickfu
 ```
 
@@ -132,23 +131,24 @@ What it does:
 
 ## Speech Output
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --transcript-file sample_transcript.txt --tts
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --audio-file sample_audio.m4a --tts --tts-input deliverable
 ```
 
-Speech defaults reuse the Piper config already present in `10-Code/NightlyBrainstorm/nightly.json`.
+Speech defaults use an optional `.bonfyre-runtime/piper.json` configuration and
+the installed model under `.bonfyre-runtime/models/piper/`.
 
 ## Batch
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --transcript-dir samples/transcripts
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --audio-dir samples/audio --whisper-model base --language en
 ```
 
 ## Benchmark
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --benchmark-dir benchmarks/sample-pack --summary-bullets 3
 ```
 
@@ -170,11 +170,11 @@ Benchmark runs write:
 
 ## Browser Status Sync
 ```bash
-cd 10-Code/LocalAITranscriptionService
+cd components/LocalAITranscriptionService
 PYTHONPATH=src python3 -m local_ai_transcription_service.cli --export-status-sync outputs/founder-sample-pickfu-assumptions
 ```
 
-Each job now also writes `browser-status.json` automatically. Import that file back into `10-Code/WebWorkerSaaS` to sync:
+Each job now also writes `browser-status.json` automatically. Import that file back into `components/WebWorkerSaaS` to sync:
 - `status`
 - `completedAt`
 - `quality`

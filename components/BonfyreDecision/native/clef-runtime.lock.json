@@ -1,0 +1,56 @@
+{
+  "schema": "bonfyre.clef-native-runtime.v1",
+  "runtime": {
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "revision": "1e265f2111a894c85560d667216d4dd7930474dc",
+    "upstream_pr": 29831,
+    "status": "unmerged-text-only-implementation",
+    "source_archive_sha256": "ba1894e46655347fcd9f5b7257af794b5276b6dc6d30bf347a8e97e10c95fb12",
+    "source_patches": [
+      {
+        "file": "patches/clef-output-embedding.patch",
+        "sha256": "f71dc2c0cd04b5d23664057e34854ead36e9e942e48ceeeaaf1cc02b78ced337",
+        "purpose": "Select Clef output embeddings for GET_ROWS rather than MUL_MAT so CPU weight repacking cannot select an incompatible layout."
+      }
+    ],
+    "license": "MIT",
+    "local_build": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "compiler": "AppleClang 17.0.0.17000013",
+      "bytes": 18004160,
+      "sha256": "ad8cc437321e78a1f3fd7de83d68ba31e0320d71ec0c2285cdcb5beca90c21ae",
+      "artifact": "components/BonfyreDecision/native/build/clef/llama-server-fixed",
+      "source_patch_sha256": "f71dc2c0cd04b5d23664057e34854ead36e9e942e48ceeeaaf1cc02b78ced337",
+      "scope": "this verified local build; other toolchains/build directories must produce and approve their own binary passport"
+    }
+  },
+  "model": {
+    "repository": "ggml-org/Clef-Flash-GGUF",
+    "revision": "4a7a08c09bc63baf043b62b5ba89dd67a0357d95",
+    "file": "Clef-Flash-Q4_K_M.gguf",
+    "bytes": 6486448192,
+    "sha256": "3243a51d7a7bb205fb4fcf402a7df763f7d31e6645a9c10e5754c4395ab85b66",
+    "source_repository": "Cloudflare/clef-flash",
+    "source_revision": "17f0b0ad64efb65d273590632833508766b2aae6",
+    "license": "Apache-2.0",
+    "representation": "GGUF: Q4_K backbone mixture, Q8_0 decision matrices, Q6_K output embeddings, F32 norms"
+  },
+  "execution": {
+    "endpoint": "/v1/systemone",
+    "joint_questions": true,
+    "text_only": true,
+    "max_context_tokens": 2048,
+    "batch_tokens": 2048,
+    "microbatch_tokens": 2048,
+    "parallel_sequences": 1,
+    "device": "none",
+    "gpu_layers": 0,
+    "op_offload": false,
+    "kv_offload": false,
+    "repack_weights": true,
+    "prefix_cache": false,
+    "confidence": "typesafe-uniform-adjusted",
+    "trained_reference_parity": "not-measured; quantized weights and native floating-point kernels differ"
+  }
+}

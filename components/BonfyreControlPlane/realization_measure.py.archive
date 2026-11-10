@@ -1,0 +1,245 @@
+"""Measured realization bids -- the ProviderGraph fed by what the paths cost.
+
+ProviderGraph was implemented and tested but never fed: ``provider_bids`` did
+not exist in the live control plane, so no capability had a competing
+realization and every request fell through to the most expensive carrier by
+default. A tournament with an empty bid table does not choose the frontier; it
+just never chooses anything else.
+
+This is the first real producer. It takes one capability that genuinely spans
+the realization ladder -- *look up what the architecture atlas says about X* --
+executes each available realization, and records what each one actually spent.
+
+  frontier-read-index   an agent reads ``architecture/atlas.index.json`` into
+                        context and answers from it
+  local-grep-yaff       grep the registry sources
+  local-atlas-query     ``atlas.py get <id>`` -- bounded answer from the index
+  mcp-atlas-query       the same query semantics over the MCP transport
+
+Cost is measured in the unit that is actually scarce here: **context bytes
+delivered to answer one question**. Not an estimate of them -- the paths are
+run and their output measured.
+
+Two things this deliberately does not do. It does not decide: the tournament
+orders candidates, and authority/proof still admit them (``cheapest -> valid``
+stays forbidden). And it does not merge producer identity with artifact
+identity: two realizations having produced a byte-identical answer is a parity
+fact about the *artifact*, recorded separately from the bids that identify the
+*producers* -- the same orthogonality the external trajectory promoted from
+Bernstein's trusted-producer work.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sqlite3
+import sys
+from dataclasses import dataclass
+from typing import Optional
+
+import provider_graphs as pg
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(HERE))
+ARCH = os.path.join(REPO, "architecture")
+INDEX = os.path.join(ARCH, "atlas.index.json")
+CONTROL_DB = os.path.join(HERE, "control_plane.db")
+
+CAPABILITY = "ArchitectureLookup"
+
+# The mission's ladder, as ranks. Locality is the inverse of the rung: a native
+# or local realization is maximally local, a distributed provider is not.
+LADDER = ("native", "local", "agent", "external", "human")
+_LOCALITY = {"native": 1.0, "local": 0.9, "agent": 0.4, "external": 0.2, "human": 0.0}
+
+# Context bytes -> tokens, the conventional ~4 bytes/token for English+JSON. Only
+# used to report a human-legible number; the bid records bytes.
+BYTES_PER_TOKEN = 4
+
+
+@dataclass(frozen=True)
+class Realization:
+    provider: str
+    rung: str
+    available: bool
+    context_bytes: int
+    latency_ms: float
+    answer_digest: str          # artifact identity, orthogonal to provider identity
+    semantic_loss: float        # 0.0 = the exact registry record, 1.0 = unusable
+    note: str = ""
+
+    def metric(self) -> dict[str, float]:
+        """The bid vector in real units. ``cost``/``latency``/``semantic_loss``
+        are minimized dimensions (see ``provider_graphs.MINIMIZED_DIMS``), so
+        nothing here is pre-negated to please the scorer."""
+        return {
+            "cost": float(self.context_bytes),
+            "latency": self.latency_ms,
+            "semantic_loss": self.semantic_loss,
+            "quality": 1.0 - self.semantic_loss,
+            "trust": 1.0 if self.rung in ("native", "local") else 0.6,
+            "locality": _LOCALITY[self.rung],
+            "availability": 1.0 if self.available else 0.0,
+            # Reading the atlas is a pure read of local repo state; every path
+            # here is authorized for it. Authority is asserted per capability,
+            # never inherited from a path being cheap.
+            "authority": 1.0,
+        }
+
+
+def _timed(argv: list[str]) -> tuple[int, bytes, float]:
+    import time
+    t0 = time.perf_counter()
+    proc = subprocess.run(argv, capture_output=True, cwd=ARCH, timeout=120)
+    return proc.returncode, proc.stdout, (time.perf_counter() - t0) * 1000.0
+
+
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16]
+
+
+def _answer_key(arch_id: str) -> str:
+    """The semantic answer every path is trying to deliver, canonicalized so
+    artifact identity is comparable across producers that format differently."""
+    with open(INDEX) as fh:
+        rec = json.load(fh)["architectures"].get(arch_id, {})
+    return json.dumps({k: rec.get(k) for k in
+                       ("canonical_name", "maturity", "forbidden_inferences")},
+                      sort_keys=True)
+
+
+def measure(arch_id: str = "provider-graph") -> list[Realization]:
+    """Run every realization of one atlas lookup and measure what it spent."""
+    want = _digest(_answer_key(arch_id))
+    out: list[Realization] = []
+
+    # 1. frontier: the whole index enters the model context to answer one question
+    size = os.path.getsize(INDEX)
+    out.append(Realization(
+        provider="frontier-read-index", rung="agent", available=True,
+        context_bytes=size, latency_ms=0.0, answer_digest=want,
+        semantic_loss=0.0,
+        note="lossless but delivers the entire registry to answer one question"))
+
+    # 2. local: grep the registry sources
+    if shutil.which("grep"):
+        rc, stdout, ms = _timed(["grep", "-rn", arch_id, "--include=*.yaff", "."])
+        # grep returns matching lines, not the record: the forbidden inferences
+        # and maturity of the target are not reliably in the hit set.
+        out.append(Realization(
+            provider="local-grep-yaff", rung="local", available=rc in (0, 1),
+            context_bytes=len(stdout), latency_ms=ms,
+            answer_digest=_digest(stdout.decode("utf-8", "replace")),
+            semantic_loss=0.5,
+            note="cheap but returns lines, not the architecture record"))
+
+    # 3. local: the bounded query path
+    rc, stdout, ms = _timed([sys.executable, "atlas.py", "get", arch_id])
+    got = json.dumps(_slice_from_cli(stdout.decode("utf-8", "replace"), arch_id),
+                     sort_keys=True)
+    out.append(Realization(
+        provider="local-atlas-query", rung="local", available=rc == 0,
+        context_bytes=len(stdout), latency_ms=ms, answer_digest=_digest(got),
+        semantic_loss=0.0,
+        note="bounded answer computed from the same index"))
+
+    # 4. the MCP transport over identical query semantics
+    rc, stdout, ms = _timed([sys.executable, "atlas_query.py", "get", arch_id])
+    try:
+        rec = json.loads(stdout.decode("utf-8", "replace")).get("architecture") or {}
+        mcp_answer = json.dumps({k: rec.get(k) for k in
+                                 ("canonical_name", "maturity", "forbidden_inferences")},
+                                sort_keys=True)
+    except json.JSONDecodeError:
+        mcp_answer = ""
+    out.append(Realization(
+        provider="mcp-atlas-query", rung="local", available=rc == 0,
+        context_bytes=len(stdout), latency_ms=ms, answer_digest=_digest(mcp_answer),
+        semantic_loss=0.0,
+        note="same query semantics, JSON transport"))
+    return out
+
+
+def _slice_from_cli(text: str, arch_id: str) -> dict:
+    """Reconstruct the canonical answer from the human CLI rendering, so its
+    artifact identity is comparable with the JSON path."""
+    name = maturity = None
+    forbidden: list[str] = []
+    for line in text.splitlines():
+        if line.startswith(arch_id + "  "):
+            rest = line[len(arch_id):].strip()
+            name = rest.split("  ")[0].strip()
+            if "[" in rest and "]" in rest:
+                maturity = rest[rest.index("[") + 1:rest.index("]")]
+        marker = "forbidden_inference: "
+        if marker in line:
+            forbidden.append(line.split(marker, 1)[1].strip())
+    return {"canonical_name": name, "maturity": maturity,
+            "forbidden_inferences": forbidden}
+
+
+def record(db: sqlite3.Connection, realizations: list[Realization], *,
+           capability: str = CAPABILITY) -> None:
+    """Publish the measurement as ProviderGraph bids and artifact parity."""
+    for r in realizations:
+        pg.record_bid(db, capability=capability, provider=r.provider, metric=r.metric())
+    # Artifact parity: producers whose answer bytes agree, proven by digest. A
+    # producer that merely ran is not in the group.
+    for i, a in enumerate(realizations):
+        for b in realizations[i + 1:]:
+            pg.record_parity(db, capability=capability, carrier_a=a.provider,
+                             carrier_b=b.provider,
+                             proven=a.answer_digest == b.answer_digest
+                             and a.available and b.available)
+
+
+def report(db: sqlite3.Connection, realizations: list[Realization], *,
+           capability: str = CAPABILITY) -> dict:
+    """The context-pressure verdict: what the ladder actually costs."""
+    ranked = pg.tournament(db, capability, weights={"cost": 1.0 / 1024, "quality": 4.0,
+                                                    "locality": 2.0, "availability": 4.0})
+    by_provider = {r.provider: r for r in realizations}
+    frontier = by_provider["frontier-read-index"].context_bytes
+    winner = ranked[0][0] if ranked else None
+    cheapest_correct = min(
+        (r for r in realizations if r.available and r.semantic_loss == 0.0),
+        key=lambda r: r.context_bytes)
+    return {
+        "capability": capability,
+        "ranked": ranked,
+        "winner": winner,
+        "frontier_context_bytes": frontier,
+        "winner_context_bytes": by_provider[winner].context_bytes if winner else None,
+        "cheapest_lossless": cheapest_correct.provider,
+        "reduction_ratio": round(frontier / max(cheapest_correct.context_bytes, 1), 1),
+        "tokens_saved_per_lookup": (frontier - cheapest_correct.context_bytes) // BYTES_PER_TOKEN,
+        "parity_group": pg.parity_group(db, capability),
+    }
+
+
+def main(argv: list[str]) -> int:
+    arch_id = argv[1] if len(argv) > 1 else "provider-graph"
+    db_path = argv[2] if len(argv) > 2 else CONTROL_DB
+    rs = measure(arch_id)
+    db = sqlite3.connect(db_path)
+    record(db, rs)
+    rep = report(db, rs)
+    db.close()
+    print(f"capability {rep['capability']} -- lookup of {arch_id!r}")
+    for r in rs:
+        print(f"  {r.provider:22} [{r.rung:8}] {r.context_bytes:>7} ctx bytes  "
+              f"{r.latency_ms:6.1f} ms  loss={r.semantic_loss}  {r.note}")
+    print(f"  tournament: {' > '.join(p for p, _ in rep['ranked'])}")
+    print(f"  cheapest lossless: {rep['cheapest_lossless']} "
+          f"({rep['reduction_ratio']}x less context than reading the index, "
+          f"~{rep['tokens_saved_per_lookup']} tokens saved per lookup)")
+    print(f"  proven artifact parity: {rep['parity_group'] or 'none'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

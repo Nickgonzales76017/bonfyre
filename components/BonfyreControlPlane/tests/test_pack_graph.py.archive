@@ -1,0 +1,357 @@
+"""The architecture test, run against the deployment.
+
+The canonical integrated architecture ends with a list of designs to reject.
+Most of them are stated as questions with a FAIL attached, which makes them
+testable rather than aspirational, so this file is that list -- one test per
+line of it, checked against the live estate rather than against a diagram.
+
+The load-bearing claim underneath all of them is that Bonfyre became
+product-thin rather than capability-thin. The native kernel is still the whole
+mature estate; what left it is the branch per product. So the first test is the
+one that would catch the regression soonest: a product name appearing in the
+organ's own source as a condition.
+
+    Does adding a product require native branching?              FAIL
+    Does a community fork copy an entire pack?                   FAIL
+    Can a pack weaken native authority?                          FAIL
+    Does Internet exploration require mirroring Internet bodies? FAIL
+    Does a pack become a duplicate identity?                     FAIL
+    Does a scenario require its own institution?                 FAIL
+    Does a SurfacePattern read several semantic owners?          FAIL
+    Does a host imply identity by string parsing?                FAIL
+    Does enabling behaviour grant authority?                     FAIL
+    Does a fork silently become active?                          FAIL
+    Does Ron get social surfaces merely because they exist?      FAIL
+    Does Upper90 need a release for a new client rule?           FAIL
+    Can a community publish governed behaviour natively?         MUST PASS
+    Can two actors get different products from one engine?       MUST PASS
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+MAIN_C = os.path.join(REPO, "cmd", "BonfyreWebAddress", "src", "main.c")
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+
+TIMEOUT = 25
+HOST = "https://ron.aurekai.work"
+
+LAYERS = ["official", "institution", "community", "household", "scenario"]
+VERBS = ["hide", "add", "specialize", "present", "tighten", "default"]
+
+# The five things that must never merge.
+FIVE = ["subject", "institution", "pack", "internet cut", "surface"]
+
+
+def _get(path, host=HOST, accept="application/json"):
+    req = urllib.request.Request(host + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def graph():
+    code, body = _get("/packs")
+    assert code == 200, code
+    return json.loads(body)
+
+
+def closure(actor, scenario=None):
+    q = "/packs/closure?actor=" + urllib.parse.quote(actor)
+    if scenario:
+        q += "&scenario=" + urllib.parse.quote(scenario)
+    code, body = _get(q)
+    assert code == 200, (actor, code)
+    return json.loads(body)
+
+
+# ------------------------------------------------------------------- FAIL
+
+def test_adding_a_product_requires_no_native_branching():
+    # The one that would catch the regression soonest. A product name inside a
+    # condition in the address organ is the branch coming back.
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    products = ["dating", "grants", "grant_readiness", "nightlife", "night_out",
+                "foodpack", "lease_search", "goldwing", "ailoss"]
+    for p in products:
+        for pattern in (f'strcmp({p}', f'"{p}")', f"'{p}'"):
+            hits = [m.start() for m in re.finditer(re.escape(pattern), src)]
+            for h in hits:
+                line = src[src.rfind("\n", 0, h) + 1:src.find("\n", h)]
+                if line.strip().startswith(("*", "/*", "//")):
+                    continue          # a comment naming the thing is not a branch
+                pytest.fail(f"native branch on product {p!r}: {line.strip()[:90]}")
+
+
+def test_a_community_fork_does_not_copy_its_parent(graph):
+    fork = next(p for p in graph["packs"] if p["pack"] == "dfw-goldwing/community")
+    assert fork["forks_from"] == "bonfyre/motorcycle-community"
+    # The parent is still a dependency, not absorbed. A fork that copied it
+    # would show no dependency and a much larger closure.
+    c = closure("community:dfw-goldwing-riders")
+    reached = {p["pack"]: p["reached"] for p in c["packs"]}
+    assert reached["bonfyre/motorcycle-community"] in ("activated", "dependency")
+    assert reached["bonfyre/community-base"] == "dependency"
+    assert reached["bonfyre/base"] == "dependency"
+    # Sparse: the club's own overlay is a handful of rows, not a second estate.
+    assert fork["overlays"] <= 8, fork["overlays"]
+
+
+def test_a_pack_cannot_weaken_native_authority(graph):
+    # The defence is a closed verb list with nothing in it that widens.
+    assert graph["overlay_verbs"] == VERBS
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int pack_verb_allowed"):]
+    fn = fn[:fn.index("\n}")]
+    listed = re.findall(r'"([a-z]+)"', fn)
+    assert listed == VERBS, listed
+    for forbidden in ("grant", "widen", "authorize", "elevate", "trust", "escalate"):
+        assert forbidden not in listed, forbidden
+
+
+def test_an_overlay_using_an_unlisted_verb_is_refused_out_loud():
+    # Silently dropping it is how a community believes it configured something
+    # it did not. The estate has to be able to say no in the answer.
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    assert "refused_count" in src
+    assert "reported as refused" in src or "refused rather than quietly ignored" in src
+    assert "no verb for granting authority" in src or \
+           "granting authority, widening disclosure" in src
+
+
+def test_a_tighten_narrows_and_never_widens():
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int pack_audience_rank"):]
+    body = src[src.index('!strcmp(verb, "tighten")'):]
+    body = body[:body.index("} else")]
+    assert "r < audience_rank" in body, (
+        "the tighten comparison admits a wider audience, so a later layer could "
+        "undo an earlier one's narrowing")
+    order = re.findall(r'"([a-z]+)"', fn[:fn.index("\n}")])
+    assert order[0] == "self", ("narrowest is not first, so the comparison is "
+                                "ordering the wrong way", order)
+
+
+def test_internet_exploration_does_not_mirror_bodies():
+    c = closure("person:ron")
+    demands = c["internet_demand"]
+    assert demands, "no internet demand to check"
+    for d in demands:
+        assert d["body_regime"] == "REMOTE", (d["pack"], d["body_regime"])
+        assert d["reheat_when"], (
+            f"{d['pack']} demands external reality with no condition for reheating it, "
+            f"which is a crawl schedule wearing the clothes of a demand")
+
+
+def test_a_pack_is_not_an_identity(graph):
+    # A pack has a publisher; it is not one. Nothing in the pack graph holds
+    # authority or state, and no host resolves to a pack.
+    code, body = _get("/subjects?limit=1000")
+    kinds = json.loads(body)["kinds"]
+    assert "Pack" not in kinds and "PackArtifact" not in kinds, (
+        "a pack became an addressable subject, so it can be pointed at like an actor")
+    for p in graph["packs"]:
+        assert p["publisher"].split(":")[0] in ("person", "institution", "community"), (
+            p["pack"], p["publisher"])
+
+
+def test_a_scenario_needs_no_institution_of_its_own(graph):
+    night = next(p for p in graph["packs"] if p["pack"] == "bonfyre/night-out")
+    assert night["kind"] == "scenario"
+    assert night["publisher"] == "institution:bonfyre:commons", (
+        "the scenario was given its own institution, which is the silo it exists to avoid")
+    assert night["installations"] == 0 and night["activations"] == 0, (
+        "a scenario that has to be installed is a product")
+
+
+def test_a_scenario_is_temporary_configuration_asked_for_at_the_time():
+    plain = closure("person:ron")
+    withit = closure("person:ron", scenario="bonfyre/night-out")
+    assert len(withit["packs"]) > len(plain["packs"]), (
+        "asking for a scenario changed nothing, so it is not configuration")
+    assert any(p["pack"] == "bonfyre/night-out" for p in withit["packs"])
+    # And it did not persist.
+    again = closure("person:ron")
+    assert not any(p["pack"] == "bonfyre/night-out" for p in again["packs"]), (
+        "the scenario stuck; a temporary configuration that persists is an install")
+
+
+def test_a_surface_pattern_still_reads_exactly_one_owner():
+    # A pack declares composition. It cannot invent a pattern that reads five
+    # owners, because a pattern reading two is refused by the organ.
+    code, body = _get("/_surface/")
+    for s in json.loads(body)["surfaces"]:
+        assert s["reads"], s["pattern"]
+        assert s["source"] in ("type", "organ"), (s["pattern"], s["source"])
+
+
+def test_a_host_does_not_imply_identity_by_string_parsing():
+    # bonfyre.aurekai.work resolves to the commons because a row says so, and a
+    # host nobody registered resolves to the apex rather than to an invented
+    # institution named after its label.
+    code, body = _get("/.well-known/bonfyre", host="https://bonfyre.aurekai.work")
+    assert json.loads(body)["institution"] == "institution:bonfyre:commons"
+    code, body = _get("/.well-known/bonfyre", host="https://nobody-yet.aurekai.work")
+    if code == 200:
+        d = json.loads(body)
+        assert d["institution"] != "institution:nobody-yet", (
+            "the host string became an institution id")
+
+
+def test_enabling_behaviour_grants_no_authority():
+    c = closure("person:ron")
+    assert "Authority decides every effect at effect time" in c["cannot_infer"]
+    assert "grants nothing" in c["cannot_infer"]
+
+
+def test_a_fork_does_not_silently_become_active(graph):
+    # Four states, and the count of each is different. If forking implied
+    # activation these numbers would be equal.
+    installs = sum(p["installations"] for p in graph["packs"])
+    actives = sum(p["activations"] for p in graph["packs"])
+    assert installs > actives, (installs, actives)
+    # Concretely: a client holds the loss pack and does not run it.
+    c = closure("institution:fleming")
+    assert not any(p["pack"] == "upper90/loss-operations" for p in c["packs"]), (
+        "an installation resolved into a closure, so installing is activating")
+
+
+def test_ron_does_not_get_social_surfaces_merely_because_they_exist():
+    c = closure("person:ron")
+    views = [v["view"] for v in c["views"]]
+    assert "vertical" not in views and "stage" not in views
+    assert set(c["views_hidden"]) >= {"vertical", "stage"}
+    assert "work" == views[0], views
+    assert c["policy"]["audience_ceiling"] == "self"
+    assert c["policy"]["keep_floor"] == "SAVED"
+
+
+def test_a_downstream_publisher_needs_no_bonfyre_release(graph):
+    # Upper90 publishes into its own channel, and a client pins a version, so a
+    # new client rule is an authoring act rather than a deployment of the kernel.
+    up = next(p for p in graph["packs"] if p["pack"] == "upper90/loss-operations")
+    assert up["layer"] == "institution"
+    assert up["publisher"] == "institution:upper90"
+    code, body = _get("/packs")
+    # Two versions exist and the pinned one is not the newest.
+    assert up["head"], "no stable head"
+
+
+def test_a_pack_refers_to_shared_grammar_rather_than_packaging_it(graph):
+    # The nine absorbed Frappe lineages are dependencies, not copies. A pack
+    # that packaged ERPNext would have no dependency edge to it.
+    up = next(p for p in graph["packs"] if p["pack"] == "upper90/loss-operations")
+    assert up["dependencies"] >= 4, up["dependencies"]
+    c = closure("institution:upper90")
+    names = [p["pack"] for p in c["packs"]]
+    assert "upper90/operations" in names, names
+    # The Frappe grammars are declared as dependencies. They resolve to nothing
+    # yet because nobody has authored them as packs, and a dependency on an
+    # unauthored pack is a real gap rather than a silent copy.
+    deps = json.loads(_get("/packs")[1])
+    assert not any(p["pack"].startswith("frappe/") for p in deps["packs"]), (
+        "a frappe grammar was authored as a pack; update this test rather than "
+        "leaving the gap uncounted")
+
+
+# -------------------------------------------------------------- MUST PASS
+
+def test_a_community_publishes_governed_behaviour_without_touching_native(graph):
+    fork = next(p for p in graph["packs"] if p["pack"] == "dfw-goldwing/community")
+    assert fork["layer"] == "community"
+    assert fork["governed_by"], "a head that advances under no rule is not governed"
+    assert "approval" in fork["governed_by"] or "quorum" in fork["governed_by"] \
+        or "vote" in fork["governed_by"], fork["governed_by"]
+    c = closure("community:dfw-goldwing-riders")
+    assert c["applied_count"] >= 3, "the club's own overlays did not apply"
+    assert c["policy"]["audience_ceiling"] == "community"
+
+
+def test_two_actors_get_different_products_from_one_engine():
+    ron = closure("person:ron")
+    club = closure("community:dfw-goldwing-riders")
+    rv = [v["view"] for v in ron["views"]]
+    cv = [v["view"] for v in club["views"]]
+    assert rv != cv, (rv, cv)
+    assert set(rv) - set(cv), "Ron's views are a subset of the club's; nothing distinguishes them"
+    assert set(cv) - set(rv)
+    assert {p["pack"] for p in ron["packs"]} != {p["pack"] for p in club["packs"]}
+    # Same kernel, and both closures say so in the same words.
+    assert ron["cannot_infer"] == club["cannot_infer"]
+
+
+# ------------------------------------------------------- the five and the ten
+
+def test_the_five_things_are_five_types_and_not_one(graph):
+    # A subject, an institution, a pack, an internet cut and a surface. If any
+    # two collapsed, one of these reads would answer for the other.
+    assert json.loads(_get("/subjects?limit=1")[1])["schema"].startswith("bonfyre-subject")
+    assert graph["schema"] == "bonfyre-pack-graph.v1"
+    assert json.loads(_get("/foreign/twins")[1])["schema"].startswith("bonfyre.foreign")
+    assert json.loads(_get("/_surface/renderers")[1])["reads"] == "surface_renderer"
+    code, body = _get("/.well-known/bonfyre")
+    assert json.loads(body)["institution"].startswith("person:")
+
+
+@pytest.mark.parametrize("layer", LAYERS)
+def test_every_layer_of_the_composition_order_has_something_in_it(layer, graph):
+    # The precedence rule only means anything if there is something at each
+    # level to be overridden.
+    assert any(p["layer"] == layer for p in graph["packs"]), layer
+
+
+def test_the_composition_order_is_the_one_that_was_specified(graph):
+    assert graph["layers"] == LAYERS
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int pack_layer_rank"):]
+    fn = fn[:fn.index("\n}")]
+    got = re.findall(r'"([a-z]+)"\)\)\s+return (\d)', fn)
+    assert [g[0] for g in sorted(got, key=lambda x: x[1])] == LAYERS
+
+
+def test_a_dependency_cycle_is_bounded_rather_than_hung():
+    with open(MAIN_C) as fh:
+        src = fh.read()
+    fn = src[src.index("static int pack_close("):]
+    assert "depth > 8" in fn[:600], (
+        "pack closure recurses without a bound, so an authoring error becomes a hang")
+
+
+def test_the_surface_shows_what_was_refused():
+    with open(os.path.join(SURFACES, "packs.html")) as fh:
+        page = fh.read()
+    assert "refused" in page
+    assert "configured something it did not" in page
+    assert "hide, add, specialize, present, tighten and default" in page \
+        or "closed list" in page
+
+
+def test_the_view_control_asks_the_closure_and_not_only_the_deployment():
+    with open(os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")) as fh:
+        src = fh.read()
+    assert "K.closure = async" in src
+    block = src[src.index("K.viewsFor = async"):src.index("K.VIEW_CSS")]
+    assert "closure" in block and "views_hidden" in block
+    assert "no pack in this closure asks for this grammar" in block, (
+        "a view is lit by deployment alone, so Ron is offered a stage because the "
+        "estate happens to have one")

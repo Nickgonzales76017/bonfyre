@@ -1,0 +1,363 @@
+"""Hold the territory front end against the live surface it reads.
+
+The page in site/matrix/surfaces/territory.html fetches /_surface/night-<t> for
+whichever territory its host names. These tests check that those patterns are
+actually served, that they project one subject set into four different field
+sets rather than four record sets, and that the page's declared field
+expectations match what the deployment returns.
+
+Network test. Skips when the surface is unreachable rather than passing on a
+fixture, because a green result against a fixture asserts only that the fixture
+matches itself.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import sys
+import urllib.error
+import urllib.request
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+SURFACE_DIR = os.path.join(REPO, "site", "matrix", "surfaces")
+DESCRIPTOR = os.path.join(SURFACE_DIR, "territory.json")
+PAGE = os.path.join(SURFACE_DIR, "territory.html")
+
+TERRITORIES = ("life", "live", "shop", "work")
+TIMEOUT = 20
+
+RECORD = re.compile(r'<dl class="surface-record">(.*?)</dl>', re.S)
+DT = re.compile(r"<dt>([^<]*)</dt>")
+DD = re.compile(r"<dd>([^<]*)</dd>")
+
+
+def _get(host: str, path: str) -> str:
+    req = urllib.request.Request(f"https://aurekai.{host}{path}",
+                                 headers={"Accept": "text/html"})
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+        return resp.read().decode()
+
+
+def _records(html: str) -> list[dict]:
+    out = []
+    for block in RECORD.findall(html):
+        out.append(dict(zip(DT.findall(block), DD.findall(block))))
+    return out
+
+
+@pytest.fixture(scope="module")
+def descriptor():
+    with open(DESCRIPTOR) as fh:
+        return json.load(fh)
+
+
+@pytest.fixture(scope="module")
+def live():
+    """(status, records) per territory, read from its own host.
+
+    A refusal is an answer, not an outage: .work answers 403 because its
+    records are authority-gated, and skipping the module on that would hide the
+    behaviour these tests exist to check.
+    """
+    out = {}
+    for t in TERRITORIES:
+        try:
+            out[t] = (200, _records(_get(t, f"/_surface/night-{t}")))
+        except urllib.error.HTTPError as exc:
+            out[t] = (exc.code, _records(exc.read().decode()))
+        except (urllib.error.URLError, socket.timeout, OSError) as exc:
+            pytest.skip(f"live surface unreachable (.{t}): {exc}")
+    return out
+
+
+# --------------------------------------- the patterns the page reads exist
+
+@pytest.mark.parametrize("territory", TERRITORIES)
+def test_the_pattern_this_page_fetches_is_in_the_live_catalogue(territory):
+    try:
+        catalogue = _get(territory, "/_surface/")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"catalogue unreachable: {exc}")
+    assert f'/_surface/night-{territory}' in catalogue, (
+        f"territory.html fetches night-{territory} and the deployment does not "
+        f"list it")
+
+
+def test_the_descriptor_names_the_paths_the_page_actually_fetches(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    assert "'/_surface/' + name" in page
+    for t, path in descriptor["reads"].items():
+        assert path == f"/_surface/night-{t}"
+    # Every pattern a mode declares must appear in the page's READS table.
+    for _t, modes in descriptor["modes"].items():
+        for mode, spec in modes.items():
+            for path in spec["reads"]:
+                assert path.rsplit("/", 1)[-1] in page, (mode, path)
+
+
+# ------------------------- one subject set, four projections, not four sets
+
+def test_the_same_subject_appears_across_territories_with_different_fields(live):
+    named = {t: {r.get("name") for r in recs}
+             for t, (_c, recs) in live.items() if recs}
+    populated = [t for t in named if named[t]]
+    assert len(populated) >= 2, "need at least two populated territories to compare"
+
+    shared = set.intersection(*(named[t] for t in populated))
+    assert shared, f"no subject is projected into more than one territory: {named}"
+    # The Foundry Room is one room. Three territories describe it differently.
+    assert any("Foundry" in s for s in shared), shared
+
+
+def test_each_territory_projects_its_own_field_set(live):
+    fields = {t: {k for r in recs for k in r}
+              for t, (_c, recs) in live.items() if recs}
+    populated = sorted(fields)
+    # Every populated territory carries the name, and nothing else in common:
+    # that is the projection claim rather than four copies of one record.
+    common = set.intersection(*(fields[t] for t in populated))
+    assert common == {"name"}, common
+    for t in populated:
+        assert fields[t] - {"name"}, f".{t} adds nothing to the shared name"
+
+
+def test_the_observed_field_sets_match_what_the_descriptor_recorded(descriptor, live):
+    observed = descriptor["observed_2026_09_04"]
+    for t, (_code, recs) in live.items():
+        if not recs:
+            continue
+        fields = sorted({k for r in recs for k in r})
+        for field in fields:
+            assert field in observed[t], (
+                f".{t} now serves {field!r}, which the descriptor's recorded "
+                f"observation does not mention")
+
+
+# ----------------------------- an empty projection is reported, not hidden
+
+def test_work_is_refused_rather_than_empty(descriptor, live):
+    code, recs = live["work"]
+    # The first reading of this was "0 records", which was wrong twice over.
+    # It answers 403 with a surface-denied body: authority-gated by design.
+    assert code == 403
+    assert recs == []
+    assert "403" in descriptor["observed_2026_09_04"]["work"]
+    assert "admitted session" in descriptor["observed_2026_09_04"]["work"]
+
+
+def test_a_refusal_and_an_absence_are_recorded_as_different_things(descriptor):
+    forbidden = " ".join(descriptor["forbidden_inference"])
+    assert "a refused projection -> an absent subject" in forbidden
+    # And the page distinguishes them at render time rather than showing one
+    # message for both.
+    with open(PAGE) as fh:
+        page = fh.read()
+    assert "needs an admitted session" in page
+    # An empty projection has its own wording, its own class and its own claim.
+    assert "is empty." in page and "k-empty" in page
+    assert "an empty projection, not a" in page and "refusal" in page
+
+
+def test_the_other_three_territories_answer_without_a_session(live):
+    for t in ("life", "live", "shop"):
+        code, recs = live[t]
+        assert code == 200 and recs, f".{t} gave {code} with {len(recs)} records"
+
+
+def test_the_page_survives_the_status_htmx_will_not_swap(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # htmx does not swap on 4xx. The page reads its panes through fetch so a
+    # refusal is a value the render branches on, and the swap that never
+    # happens cannot be the failure: there is no hx-get left to leave a
+    # placeholder standing.
+    assert "hx-get" not in page
+    assert "r.status === 401 || r.status === 403" in page
+    assert "kind: 'refused'" in page
+    assert any("a withheld pane -> a broken one" in f
+               for f in descriptor["forbidden_inference"])
+
+
+def test_a_withheld_pane_offers_the_session_that_would_fill_it(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # Withholding without offering is a dead end wearing the clothes of a
+    # loading state.
+    assert 'href="/login"' in page
+    assert "Sign in" in page
+
+
+# ------------------------------------- the page offers the territory's verbs
+
+def test_the_page_offers_exactly_the_verbs_the_descriptor_declares(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # Scope to the VERBS table: the page also has a READS table keyed by the
+    # same mode names, and an unscoped search finds that one first.
+    # verbs are declared inside each mode of the MODES table
+    block = re.search(r"const MODES = \{(.*?)\n  \};", page, re.S)
+    assert block, "no MODES table in the page"
+    for mode, verbs in descriptor["mode_verbs"].items():
+        m = re.search(rf"id:'{mode}'.*?verbs:\s*\[([^\]]*)\]", block.group(1), re.S)
+        assert m, f"no verb list for {mode} in the page"
+        listed = re.findall(r"'([A-Z]+)'", m.group(1))
+        assert listed == verbs, (mode, listed, verbs)
+
+
+def test_no_mode_carries_a_verb_its_territory_does_not(descriptor):
+    for territory, modes in descriptor["modes"].items():
+        allowed = set(descriptor["territory_verbs"][territory])
+        for mode in modes:
+            outside = set(descriptor["mode_verbs"][mode]) - allowed
+            assert not outside, (territory, mode, sorted(outside))
+
+
+def test_the_page_says_the_verbs_are_offered_not_granted(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    assert "is offered in this mode" in page
+    assert "decided at effect time by the owner of the effect" in page
+    assert any("an offered verb -> an authorized action" in f
+               for f in descriptor["forbidden_inference"])
+
+
+def test_the_page_carries_no_action_that_posts_anything(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # An affordance renders; it does not submit. A verb chip that posted would
+    # be asking for a decision the surface has no authority to carry.
+    assert "hx-post" not in page
+    assert "<form" not in page
+
+
+# ------------------------------------------ the host decides the territory
+
+def test_the_page_derives_its_territory_from_the_host(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    for t in ("life", "shop", "work"):
+        assert f"endsWith('.{t}')" in page
+    # One file, four territories, six modes. The fetch target is built from
+    # the mode's declared pattern list rather than hard-coded per territory.
+    assert "'/_surface/' + name" in page
+    for t in TERRITORIES:
+        assert f"/_surface/night-{t}" not in page, (
+            f"the page hard-codes night-{t} instead of deriving it")
+
+
+def test_every_territory_host_resolves(descriptor):
+    for t in TERRITORIES:
+        try:
+            body = _get(t, "/.well-known/bonfyre")
+        except (urllib.error.URLError, socket.timeout, OSError) as exc:
+            pytest.skip(f"aurekai.{t} unreachable: {exc}")
+        doc = json.loads(body)
+        assert doc["territory"] == t
+        assert doc["world"] == "LIVE"
+
+
+# ------------------------------------- .life and .work carry two modes each
+
+def test_life_and_work_carry_two_modes_and_the_others_one(descriptor):
+    modes = descriptor["modes"]
+    assert sorted(modes["life"]) == ["household", "personal"]
+    assert sorted(modes["work"]) == ["business", "professional"]
+    assert len(modes["live"]) == 1 and len(modes["shop"]) == 1
+    # Six modes over four territories, not a fifth territory.
+    assert sum(len(m) for m in modes.values()) == 6
+    assert set(modes) == set(TERRITORIES)
+
+
+def test_a_mode_is_not_a_separate_product(descriptor):
+    forbidden = " ".join(descriptor["forbidden_inference"])
+    assert "a mode -> a separate product" in forbidden
+    assert "rather than a fifth territory" in forbidden
+
+
+def test_the_page_offers_each_modes_own_verbs(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # A household plans and moves; a business approves and funds. Offering one
+    # set for both would be the category error the opportunity model refuses.
+    assert re.search(r"id:'household'.*?verbs:\s*\['PLAN'", page, re.S)
+    assert re.search(r"id:'business'.*?verbs:\s*\['APPROVE'", page, re.S)
+    for mode in ("personal", "household", "tonight", "market",
+                 "professional", "business"):
+        assert f"id:'{mode}'" in page, mode
+
+
+def test_business_mode_reads_patterns_that_actually_serve(descriptor):
+    business = descriptor["modes"]["work"]["business"]["reads"]
+    assert business, "business mode declares no patterns"
+    for path in business:
+        try:
+            body = _get("work", path)
+        except (urllib.error.URLError, socket.timeout, OSError) as exc:
+            pytest.skip(f"{path} unreachable: {exc}")
+        assert _records(body), f"{path} serves no records"
+
+
+def test_business_mode_is_ordered_by_what_undoing_a_move_costs(descriptor):
+    # Business mode used to name five product planes, which is an inventory.
+    # The plane a decision rests on orders transformations by reversibility.
+    business = descriptor["modes"]["work"]["business"]
+    assert "planes" not in business
+    assert business["axes"] == ["reversible", "costly", "irreversible"]
+    with open(PAGE) as fh:
+        page = fh.read()
+    assert "const REV = ['reversible','costly','irreversible']" in page
+    assert "ordered by what undoing them costs" in page
+    forbidden = " ".join(descriptor["forbidden_inference"])
+    assert "an installed app -> a business capability" in forbidden
+
+
+def test_capital_and_funding_patterns_carry_what_they_cannot_infer():
+    try:
+        body = _get("work", "/_surface/funding")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"funding unreachable: {exc}")
+    recs = _records(body)
+    assert recs
+    # The estate's forbidden-inference discipline reaches the served record
+    # itself: a funding requirement carries a cannot_infer field.
+    assert "cannot_infer" in recs[0]
+
+
+def test_household_is_declared_and_unbuilt(descriptor):
+    household = descriptor["modes"]["life"]["household"]
+    assert household["reads"] == []
+    assert "unbuilt" in household["state"]
+    assert descriptor["observed_2026_09_04"]["life.household"] == "no pattern served"
+
+
+def test_an_unbuilt_mode_is_reported_as_a_mode_not_a_territory(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    assert "Declared and not yet served" in page
+    # The sentence is assembled across two string literals; both halves have to
+    # be there or the page says something weaker than the claim.
+    assert "unbuilt mode " in page
+    assert "rather than an unbuilt territory" in page
+    forbidden = " ".join(descriptor["forbidden_inference"])
+    assert "an unbuilt mode -> an unbuilt territory" in forbidden
+
+
+def test_each_pattern_gets_its_own_pane_so_a_refusal_is_attributable(descriptor):
+    with open(PAGE) as fh:
+        page = fh.read()
+    # Each mode renders one pattern and reports that pattern's own outcome, so
+    # a refusal names what refused rather than emptying the page.
+    assert "body.appendChild(K.note(r, mode.label))" in page
+    assert "K.empty(mode.label," in page
+    assert "body.appendChild(K.note(routesR,'Capital routes'))" in page
+    # Averaging five patterns into one grid would make a single refusal look
+    # like a thin result rather than a denial from a named pattern.

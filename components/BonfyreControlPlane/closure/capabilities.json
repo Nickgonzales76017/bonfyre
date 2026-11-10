@@ -1,0 +1,17 @@
+{
+  "schema": "aurekai.closure-capabilities.v1",
+  "note": "What this estate can actually do toward somebody's finished outcome, step by step. A capability is listed only with the organ that performs it and a test or witness that it ran. A step nothing here produces is a gap, and the gauntlet reports it as one.",
+  "capabilities": [
+    { "id": "service-site-build", "owner": "service-site", "produces": ["step:site_build", "step:site_copy_structure", "step:phone_layout", "step:request_form", "step:multi_page"], "needs_material": ["material:business_facts", "material:brand_assets"], "needs_authority": [], "witness": "components/BonfyreServiceSite/tests/service-site.test.mjs" },
+    { "id": "service-site-publish", "owner": "service-site", "produces": ["step:static_hosting", "step:preview_link", "step:search_noindex_preview"], "needs_material": [], "needs_authority": ["authority:publish_approval"], "witness": "components/BonfyreServiceSite/cloud.mjs" },
+    { "id": "service-site-lead-intake", "owner": "service-site", "produces": ["step:lead_capture", "step:lead_record"], "needs_material": [], "needs_authority": [], "witness": "components/BonfyreServiceSite/tests/completion.test.mjs" },
+    { "id": "domain-mail-receiving", "owner": "service-site", "produces": ["step:email_receiving", "step:dmarc_record"], "needs_material": [], "needs_authority": ["authority:dns_access"], "witness": "scripts/domain_mail.mjs" },
+    { "id": "ocr-read", "owner": "cmd-ocr", "produces": ["step:read_scanned_text"], "needs_material": ["material:scans_or_photos"], "needs_authority": [], "witness": "cmd/BonfyreOCR/tests/ocr_test.sh" },
+    { "id": "photo-to-record", "owner": "cmd-recipe", "produces": ["step:structured_record_from_photo"], "needs_material": ["material:scans_or_photos"], "needs_authority": [], "witness": "cmd/BonfyreRecipe/tests/ocr_recipe.test.mjs" },
+    { "id": "catalogue-from-records", "owner": "recipe-library-site", "produces": ["step:catalogue_structure", "step:searchable_catalogue", "step:duplicate_folding"], "needs_material": ["material:item_records"], "needs_authority": [], "witness": "components/BonfyreServiceSite/tests/service-site.test.mjs" },
+    { "id": "browser-verify", "owner": "browser-host", "produces": ["step:browser_verification"], "needs_material": [], "needs_authority": [], "witness": "integrations/browser/capture/chrome-session.mjs" },
+    { "id": "content-record", "owner": "cmd-c-m-s", "produces": ["step:content_record", "step:owner_editable_content"], "needs_material": [], "needs_authority": [], "witness": "cmd/BonfyreCMS/tests/large_update_test.sh" },
+    { "id": "public-record-lookup", "owner": "fleming-site", "produces": ["step:property_record_lookup"], "needs_material": ["material:street_address"], "needs_authority": [], "witness": "packs/fleming-equity-group/site/lead.test.mjs" },
+    { "id": "foreign-observe", "owner": "foreign-twin", "produces": ["step:observe_existing_site"], "needs_material": ["material:site_address"], "needs_authority": [], "witness": "integrations/browser/capture/page-capture.mjs" }
+  ]
+}

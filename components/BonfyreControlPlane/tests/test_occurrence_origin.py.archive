@@ -1,0 +1,167 @@
+"""Witness for occurrence origin, on the night the doc describes.
+
+The stream happens, the estate watches, the estate derives, the estate acts.
+Four things end up on one spine and only one of them is something Bonfyre did.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import occurrence_origin as oo  # noqa: E402
+
+SUBJECT = "live:neon-june-2026-09-04"
+
+
+@pytest.fixture()
+def db():
+    conn = sqlite3.connect(":memory:")
+    oo.ensure_schema(conn)
+    yield conn
+    conn.close()
+
+
+@pytest.fixture()
+def night(db):
+    """One occurrence, filed correctly."""
+    oo.record(db, occurrence_id="utt:18m", origin=oo.OBSERVED, subject=SUBJECT,
+              at="2026-09-04T21:18:00Z", source="audio:reno-s-mic")
+    oo.record(db, occurrence_id="foreign:trees-calendar", origin=oo.OBSERVED,
+              subject=SUBJECT, at="2026-09-04T21:40:00Z",
+              source="https://treesdallas.com/calendar")
+    oo.record(db, occurrence_id="claim:trees-friday", origin=oo.DERIVED,
+              subject=SUBJECT, derived_from=["utt:18m", "foreign:trees-calendar"])
+    oo.record(db, occurrence_id="publish:clip-1", origin=oo.EFFECT,
+              subject=SUBJECT, authority="publish:clip")
+    return db
+
+
+# --------------------------------- watching is not acting
+
+def test_an_observed_occurrence_is_not_something_the_estate_did(night):
+    assert oo.origin_of(night, "utt:18m") == oo.OBSERVED
+    assert oo.caused_by_us(night, "utt:18m") is False
+    assert oo.caused_by_us(night, "publish:clip-1") is True
+
+
+def test_an_observed_occurrence_may_not_carry_an_authority(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="o1", origin=oo.OBSERVED, subject=SUBJECT,
+                  source="audio:mic", authority="observe:foreign")
+    # Recording one would make watching look like acting.
+    assert "nobody exercised any" in str(e.value)
+
+
+def test_an_observed_occurrence_must_name_its_source(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="o1", origin=oo.OBSERVED, subject=SUBJECT)
+    assert "no provenance" in str(e.value)
+
+
+# --------------------------------- deriving is not acting either
+
+def test_a_derived_occurrence_is_not_an_effect(night):
+    assert oo.origin_of(night, "claim:trees-friday") == oo.DERIVED
+    assert oo.caused_by_us(night, "claim:trees-friday") is False
+    # A SponsorOccurrence candidate derived from a transcript is not the
+    # obligation being met, and settling money on it would be the defect.
+
+
+def test_a_derived_occurrence_must_name_its_inputs(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="d1", origin=oo.DERIVED, subject=SUBJECT)
+    assert "wearing an occurrence's clothes" in str(e.value)
+
+
+def test_a_derived_occurrence_may_not_carry_an_authority(db):
+    oo.record(db, occurrence_id="o1", origin=oo.OBSERVED, subject=SUBJECT,
+              source="audio:mic")
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="d1", origin=oo.DERIVED, subject=SUBJECT,
+                  derived_from=["o1"], authority="derive:claim")
+    assert "deriving is not acting" in str(e.value)
+
+
+def test_provenance_walks_a_derivation_back_to_what_was_watched(night):
+    assert oo.provenance(night, "claim:trees-friday") == [
+        "foreign:trees-calendar", "utt:18m"]
+    # An observation is its own root.
+    assert oo.provenance(night, "utt:18m") == ["utt:18m"]
+
+
+def test_a_derivation_chain_bottoms_out_at_observations(db):
+    oo.record(db, occurrence_id="o1", origin=oo.OBSERVED, subject=SUBJECT,
+              source="audio:mic")
+    oo.record(db, occurrence_id="d1", origin=oo.DERIVED, subject=SUBJECT,
+              derived_from=["o1"])
+    oo.record(db, occurrence_id="d2", origin=oo.DERIVED, subject=SUBJECT,
+              derived_from=["d1"])
+    assert oo.provenance(db, "d2") == ["o1"]
+
+
+def test_a_derivation_from_an_effect_has_no_observed_root(db):
+    oo.record(db, occurrence_id="e1", origin=oo.EFFECT, subject=SUBJECT,
+              authority="publish:clip")
+    oo.record(db, occurrence_id="d1", origin=oo.DERIVED, subject=SUBJECT,
+              derived_from=["e1"])
+    # Derived from something we did rather than something we watched. Worth
+    # being able to see rather than silently reporting an observation.
+    assert oo.provenance(db, "d1") == []
+    assert oo.inputs_of(db, "d1") == ["e1"]
+
+
+# --------------------------------- acting requires somebody answerable
+
+def test_an_effect_occurrence_must_name_its_authority(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="e1", origin=oo.EFFECT, subject=SUBJECT)
+    assert "answerable" in str(e.value)
+
+
+def test_an_effect_records_the_authority_it_happened_under(night):
+    row = night.execute("SELECT authority FROM occurrence_origin"
+                        " WHERE occurrence_id='publish:clip-1'").fetchone()
+    assert row[0] == "publish:clip"
+
+
+# --------------------------------- raw material is not an occurrence
+
+def test_an_occurrence_addresses_a_subject(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="bytes", origin=oo.OBSERVED, subject="",
+                  source="audio:mic")
+    assert "not addressed" in str(e.value)
+
+
+def test_an_unknown_origin_is_refused(db):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(db, occurrence_id="x", origin="happened", subject=SUBJECT)
+    assert "unknown origin" in str(e.value)
+
+
+def test_the_spine_does_not_accept_one_occurrence_twice(night):
+    with pytest.raises(oo.OriginError) as e:
+        oo.record(night, occurrence_id="utt:18m", origin=oo.EFFECT,
+                  subject=SUBJECT, authority="publish:clip")
+    assert "already on the spine" in str(e.value)
+    # Refiling under a different origin would be the exact laundering this
+    # module exists to stop: watching relabelled as acting.
+    assert oo.origin_of(night, "utt:18m") == oo.OBSERVED
+
+
+# --------------------------------- the spine reads back by origin
+
+def test_one_night_separates_into_three_kinds(night):
+    counts = oo.by_origin(night, SUBJECT)
+    assert counts[oo.OBSERVED] == ["foreign:trees-calendar", "utt:18m"]
+    assert counts[oo.DERIVED] == ["claim:trees-friday"]
+    assert counts[oo.EFFECT] == ["publish:clip-1"]
+    # Four occurrences on one spine; exactly one is something Bonfyre did.
+    assert sum(len(v) for v in counts.values()) == 4
+    assert len(counts[oo.EFFECT]) == 1

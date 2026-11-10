@@ -18,6 +18,7 @@
  * Entitlements control: max_artifacts, max_bytes, allowed_ops, rate_limit/hr
  */
 #include <errno.h>
+#include "bf_lex.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,15 +138,12 @@ static char *read_file_full(const char *path) {
 }
 
 static int json_str(const char *json, const char *key, char *out, size_t sz) {
-    char needle[256]; snprintf(needle, sizeof(needle), "\"%s\"", key);
-    const char *p = strstr(json, needle);
-    if (!p) return 0;
-    p += strlen(needle);
-    while (*p && (*p == ' ' || *p == ':' || *p == '\t')) p++;
-    if (*p != '"') return 0; p++;
-    size_t i = 0;
-    while (*p && *p != '"' && i < sz - 1) out[i++] = *p++;
-    out[i] = '\0'; return 1;
+    /* Delegates to the one implementation. This copy searched for "key" rather
+     * than "key": so it matched inside values, and stopped at the first quote
+     * so an escaped one truncated the result -- the bug that silently broke
+     * conditional re-observation elsewhere. Six binaries carried it; a seventh
+     * had been fixed locally and the fix never reached the others. */
+    return bf_lex_json_string(json, key, out, sz);
 }
 
 static int cmd_check(const char *key_path) {

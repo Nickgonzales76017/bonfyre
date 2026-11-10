@@ -1,0 +1,191 @@
+"""Archived Python witness; native-ingest.test.mjs drives the real command organs.
+
+Every assertion below rests on output this test did not author. BonfyreSegment
+draws the boundaries and names their kinds; BonfyreClips scores and ranks the
+candidates. If either organ changes its taxonomy, its scoring, or its output
+shape, these fail -- which is the property that makes them worth running.
+
+Skips when the binaries are absent rather than substituting a fixture, because a
+green result against a fixture would assert only that the fixture matches itself.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import live_semantic_track as lst  # noqa: E402
+import native_ingest as ni  # noqa: E402
+
+pytestmark = pytest.mark.skipif(
+    not ni.available(),
+    reason=f"BonfyreSegment/BonfyreClips not present under {ni.BIN_DIR}")
+
+LINES = [
+    (0.0, 4.2, "hey Deep Ellum we're Neon June thanks for being here tonight"),
+    (4.2, 9.8, "this next one is off the new record"),
+    (9.8, 14.1, "we recorded it right here in Dallas last winter"),
+    (30.0, 34.5, "alright so a couple things before we keep going"),
+    (34.5, 39.9, "we're playing Trees again on Friday doors at eight"),
+    (39.9, 44.0, "tickets are in our profile go grab them they move fast"),
+    (60.0, 64.4, "huge thanks to Red Bull for backing this run of shows"),
+    (64.4, 68.2, "seriously could not do this without them"),
+    (95.0, 99.6, "okay this is the last one we love you Deep Ellum"),
+    (99.6, 104.0, "see you Friday at Trees"),
+]
+
+
+@pytest.fixture(scope="module")
+def whisper(tmp_path_factory):
+    path = tmp_path_factory.mktemp("ingest") / "stream.json"
+    segments = [{"id": i, "seek": 0, "start": a, "end": b, "text": " " + t,
+                 "tokens": [], "temperature": 0.0, "avg_logprob": -0.28,
+                 "compression_ratio": 1.4, "no_speech_prob": 0.02}
+                for i, (a, b, t) in enumerate(LINES)]
+    path.write_text(json.dumps(
+        {"text": " ".join(t for _a, _b, t in LINES),
+         "segments": segments, "language": "en"}))
+    return str(path)
+
+
+@pytest.fixture(scope="module")
+def result(whisper, tmp_path_factory):
+    out = tmp_path_factory.mktemp("out")
+    return ni.ingest_stream("live:neon-june", whisper, str(out),
+                            speaker="Neon June")
+
+
+# ------------------------------------------- the transcript reaches the track
+
+def test_every_spoken_line_becomes_an_utterance(result):
+    assert result.utterances == len(LINES)
+    utterances = result.track.by_kind("utterance")
+    assert utterances[0].value.startswith("hey Deep Ellum")
+    assert utterances[0].speaker == "Neon June"
+
+
+def test_seconds_become_milliseconds_on_the_media_clock(result):
+    utterances = result.track.by_kind("utterance")
+    # 34.5s is the Trees announcement. Off by a factor of a thousand and the
+    # track still looks like a working track.
+    assert [u.at_ms for u in utterances][:3] == [0, 4200, 9800]
+    trees = [u for u in utterances if "Trees again" in u.value][0]
+    assert trees.at_ms == 34500
+
+
+def test_a_whisper_shaped_file_is_required():
+    track = lst.LiveSemanticTrack("x")
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+        json.dump({"text": "no segments here"}, fh)
+        path = fh.name
+    try:
+        with pytest.raises(ni.IngestError) as e:
+            ni.ingest_transcript(track, path)
+        assert "no segments[]" in str(e.value)
+    finally:
+        os.unlink(path)
+
+
+# --------------------------- the organ draws the boundaries, not this test
+
+def test_bonfyre_segment_finds_the_silence_gaps(result):
+    # Four spoken blocks separated by gaps at 14.1->30, 44->60, 68.2->95.
+    # The organ found them; nothing here told it where to look.
+    assert len(result.boundaries) == 4
+    starts = [b.start_ms for b in result.boundaries]
+    assert starts == [0, 30000, 60000, 95000]
+
+
+def test_the_organs_own_taxonomy_is_carried_not_remapped(result):
+    kinds = [b.kind for b in result.boundaries]
+    # intro / idea / closing are BonfyreSegment's words. A remapping here would
+    # be a second opinion that drifts silently when the organ changes.
+    assert kinds[0] == "intro"
+    assert kinds[-1] == "closing"
+    assert "idea" in kinds
+
+
+def test_boundaries_become_chapters_carrying_the_organs_label(result):
+    chapters = result.track.by_kind("chapter")
+    assert len(chapters) == 4
+    assert chapters[0].source == "native:BonfyreSegment"
+    assert chapters[0].value.startswith("Segment 1")
+
+
+# ------------------------- the organ ranks the clips, and disagrees with us
+
+def test_bonfyre_clips_ranks_the_sponsor_thank_you_first(result):
+    top = result.clips[0]
+    assert top.rank == 1
+    assert "Red Bull" in top.text
+    # A reader would probably rank the show announcement first. The organ does
+    # not, and routing through it means taking that answer rather than the
+    # intuition.
+    assert "Trees" not in top.text
+
+
+def test_the_score_and_reasons_come_from_the_organ(result):
+    top = result.clips[0]
+    second = result.clips[1]
+    assert top.score > second.score
+    assert "actionable" in top.reasons
+    assert "good-pacing" in top.reasons
+    # These strings are BonfyreClips' vocabulary. Nothing in this estate
+    # produces or validates them.
+
+
+def test_the_announcement_is_ranked_but_not_first(result):
+    announcement = [c for c in result.clips if "Trees again" in c.text]
+    assert announcement, "the organ did find it"
+    assert announcement[0].rank > 1
+
+
+def test_clip_candidates_land_in_the_track_and_still_cool(result):
+    candidates = result.track.by_kind("clip_candidate")
+    assert candidates
+    assert all(c.source == "native:BonfyreClips" for c in candidates)
+    # A scored candidate is still a candidate: MOMENT tier, below the cooling
+    # floor. A high score is not a reason to keep something forever.
+    assert all(c.tier() == lst.MOMENT for c in candidates)
+    _kept, expired = result.track.cool()
+    assert all(c in expired for c in candidates)
+
+
+def test_clip_covering_answers_whether_the_organs_found_a_moment_interesting(
+        result):
+    sponsor = ni.clip_covering(result.clips, 62_000)
+    assert sponsor is not None and sponsor.rank == 1
+    # And a moment inside no candidate answers None rather than guessing.
+    assert ni.clip_covering(result.clips, 20_000) is None
+
+
+# --------------------------------- what the ingest deliberately does not do
+
+def test_a_transcribed_line_is_not_a_claim(result):
+    assert result.track.by_kind("claim") == []
+    # "we're playing Trees again on Friday" is in the transcript and is an
+    # utterance. Promotion to a claim still needs an asserter named by somebody.
+
+
+def test_a_clip_candidate_is_not_a_published_clip(result):
+    # Nothing in the track or the result says anything was published; that
+    # needs PublicationProgram and a grant.
+    assert not any("publish" in str(e.value).lower()
+                   for e in result.track.events)
+
+
+def test_the_track_is_ordinary_and_every_downstream_organ_works(result):
+    c = result.track.compression()
+    assert c["utterances"] == 10
+    assert c["semantic_events"] == 10 + 4 + len(result.clips)
+    # Everything the organs produced is exhaust by tier: nothing survives
+    # cooling until a person or a piece of evidence promotes it.
+    kept, expired = result.track.cool()
+    assert kept == []
+    assert len(expired) == c["semantic_events"]

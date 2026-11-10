@@ -1,6 +1,7 @@
 # Personal Data Engine
 
-Vault feedback engine that scans daily logs, project files, and execution data to generate weekly reviews, signal scorecards, and priority recommendations.
+Historical-feedback engine that replays absorbed notebook logs and project files
+alongside current execution data to generate reviews and signal scorecards.
 
 ## Usage
 
@@ -23,15 +24,15 @@ python engine.py daily
 
 ## How It Works
 
-1. Scans `06-Logs/` for daily log entries
-2. Scans `02-Projects/` for execution log updates, task completion, and proof signals
+1. Replays `evidence/origins/notebook-era/06-Logs/` daily log entries
+2. Replays `evidence/origins/notebook-era/02-Projects/` project observations
 3. Scores each project on momentum, proof, and revenue proximity
 4. Generates a structured weekly review with recommendations
 
 ## Dependencies
 
 - Python 3.10+
-- An Obsidian vault with the Bonfyre folder structure
+- The absorbed notebook evidence tree in this repository
 
 ## House Style
 

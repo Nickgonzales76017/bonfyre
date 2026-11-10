@@ -10,7 +10,7 @@ Tiny native proof utility for proof-dir inspection and native proof bundle gener
 ## Build
 
 ```bash
-cd 10-Code/BonfyreProof
+cd components/BonfyreProof
 make
 ```
 

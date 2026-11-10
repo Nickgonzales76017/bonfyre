@@ -1,0 +1,217 @@
+"""Archived Python reference: native owner is publication-program.mjs.
+
+PublicationProgram -- one closure, many platforms, consent resolved first.
+
+Cross-platform simulcast is usually a set of adapters, each holding a token and
+its own idea of what it may post. That arrangement has one failure mode and it
+is severe: **an OAuth token existing is not permission to publish anything.** A
+token is a capability to reach an account. What may be sent through it, on whose
+behalf, about which subject, for what purpose, to which audience and until when
+are six separate questions, and an adapter answers none of them.
+
+So publication resolves in this order, and the adapter is last:
+
+    delegation   does the estate hold a grant from the principal for this
+                 operation, on this subject, for this purpose, right now?
+    disclosure   for each target's audience, which fields may travel?
+    projection   render the disclosed record into that platform's grammar
+    adapter      only now is a platform called
+
+Each stage can refuse, and a refusal names which stage closed and why -- an
+adapter that fails is a different problem from a principal who never consented,
+and a caller told only "publish failed" will debug the wrong one.
+
+Round-trip observation is declared here rather than assumed. Publishing is an
+effect; observing what the platform did with it afterwards is a separate act by
+a separate owner, and a program that treated the POST as the observation would
+be reporting its own intention back to itself.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a token exists          -> permission to publish
+  a grant to publish here -> a grant to publish there
+  a published projection  -> the platform having accepted it
+  a program declaring round-trip -> the round-trip having happened
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from dataclasses import dataclass, field
+from typing import Callable, Optional
+
+import domain_profile as dp
+import information_policy as ip
+import protocol_authority as pa
+
+PUBLISH = "publish"
+
+
+class PublicationRefused(PermissionError):
+    """Refused before an adapter was reached. Names the stage that closed."""
+
+    def __init__(self, stage: str, detail: str):
+        self.stage = stage
+        super().__init__(f"{stage}: {detail}")
+
+
+@dataclass(frozen=True)
+class Target:
+    """One platform this program may publish to.
+
+    `audience` is the disclosure audience that platform represents. A public
+    timeline and a members-only feed are different audiences even when the same
+    adapter reaches both, and collapsing them is how a field withheld from the
+    public arrives on a public timeline.
+    """
+    platform: str
+    carrier: str            # the DomainProfile projection to render through
+    audience: str = "public"
+    operation: str = PUBLISH
+
+
+@dataclass
+class PublicationProgram:
+    """A declared publication, not a call.
+
+    Holds what may be published, where, on whose authority, and what would count
+    as having observed the result. Nothing here reaches a network.
+    """
+    subject: str
+    principal: str                      # whose presence is being published
+    agent: str                          # who the principal delegated to
+    purpose: str
+    profile: dp.DomainProfile
+    targets: list[Target] = field(default_factory=list)
+    expires_at: Optional[str] = None
+    round_trip_required: bool = True
+
+    def to(self, platform: str, *, carrier: str, audience: str = "public",
+           operation: str = PUBLISH) -> "PublicationProgram":
+        if carrier not in self.profile.projections:
+            raise PublicationRefused(
+                "projection",
+                f"profile {self.profile.name!r} has no {carrier!r} projection, so "
+                f"{platform!r} has no grammar to be rendered into")
+        self.targets.append(Target(platform, carrier, audience, operation))
+        return self
+
+    # ----------------------------------------------------------- stage 1
+
+    def consent_gaps(self, authority_db: sqlite3.Connection,
+                     at_iso: Optional[str] = None) -> dict[str, str]:
+        """Targets the estate holds no live grant for, and what is missing.
+
+        The grant is checked per operation and per platform, because consent to
+        publish a clip to one network is not consent to publish it to another --
+        that is a decision a person makes per audience, and an estate that
+        generalized it would publish somewhere nobody agreed to.
+        """
+        gaps: dict[str, str] = {}
+        for t in self.targets:
+            permission = f"{t.operation}:{t.platform}"
+            if not pa.has_authority(authority_db, self.agent, permission,
+                                    self.subject, at_iso, self.purpose):
+                gaps[t.platform] = (
+                    f"no live grant for {permission!r} on {self.subject!r} "
+                    f"for purpose {self.purpose!r}")
+        return gaps
+
+    def consented(self, authority_db: sqlite3.Connection,
+                  at_iso: Optional[str] = None) -> bool:
+        return not self.consent_gaps(authority_db, at_iso)
+
+    # ----------------------------------------------------------- stages 2-4
+
+    def render(self, record: dict, target: Target) -> dict:
+        """Disclosure then projection, in that order, for one target."""
+        return self.profile.render(record, target.carrier, audience=target.audience)
+
+    def publish(self, authority_db: sqlite3.Connection, record: dict, *,
+                adapters: dict[str, Callable[[dict], dict]],
+                at_iso: Optional[str] = None) -> dict[str, dict]:
+        """Run the program. Consent first, adapters last.
+
+        Returns one entry per target: what was sent, and whatever the adapter
+        reported. An adapter's report is its own claim about what happened and is
+        never treated as observation of the platform -- see `round_trip_pending`.
+        """
+        gaps = self.consent_gaps(authority_db, at_iso)
+        if gaps:
+            raise PublicationRefused(
+                "delegation",
+                "; ".join(f"{p}: {why}" for p, why in sorted(gaps.items())))
+
+        missing = [t.platform for t in self.targets if t.platform not in adapters]
+        if missing:
+            raise PublicationRefused(
+                "adapter", f"no adapter supplied for {sorted(missing)}")
+
+        results: dict[str, dict] = {}
+        for t in self.targets:
+            rendered = self.render(record, t)
+            reported = adapters[t.platform](rendered)
+            results[t.platform] = {
+                "sent": rendered,
+                "adapter_reported": reported,
+                "observed": False,
+                "withheld": self.profile.withheld_in(rendered),
+            }
+        return results
+
+    def round_trip_pending(self, results: dict[str, dict]) -> list[str]:
+        """Targets whose result has not been independently observed.
+
+        An adapter returning 200 is the adapter's account of itself. Whether the
+        platform actually carries the post is a ForeignTwin observation, and
+        until one exists this program has published and not confirmed.
+        """
+        if not self.round_trip_required:
+            return []
+        return sorted(p for p, r in results.items() if not r.get("observed"))
+
+    def observe(self, results: dict[str, dict], platform: str, *,
+                twin_receipt: str) -> dict[str, dict]:
+        """Record that a round-trip observation confirmed one target.
+
+        Requires a receipt: an observation with nothing behind it is an
+        assertion, and this is the one place the estate would be tempted to
+        confirm its own publication.
+        """
+        if platform not in results:
+            raise PublicationRefused("observation",
+                                     f"{platform!r} was not published by this program")
+        if not twin_receipt:
+            raise PublicationRefused(
+                "observation",
+                "a round-trip observation names its receipt; without one it is "
+                "the estate confirming its own publication")
+        results[platform]["observed"] = True
+        results[platform]["twin_receipt"] = twin_receipt
+        return results
+
+
+def social_clip_profile(policy: Optional[ip.InformationPolicy] = None) -> dp.DomainProfile:
+    """The shape a published clip takes across the networks this estate reaches."""
+    p = dp.DomainProfile(
+        name="social-clip",
+        semantic_fields=frozenset({
+            "subject", "title", "body", "creator", "url", "published_at",
+            "location",
+        }),
+        evidence_requirements=frozenset({"publication_receipt"}),
+        policy=policy,
+    )
+    p.project_into("activitypub", "ActivityPub", {
+        "subject": "context", "body": "content", "creator": "attributedTo",
+        "url": "url", "published_at": "published",
+    })
+    p.project_into("atproto", "ATProto", {
+        "subject": "subject", "body": "text", "creator": "did",
+        "url": "uri", "published_at": "createdAt",
+    })
+    # A short-video network carries a title and a link and has no place for a
+    # federation context. Omission is the network's shape, not a loss.
+    p.project_into("shortvideo", "Short video", {
+        "title": "caption", "url": "video_url", "creator": "handle",
+    })
+    return p

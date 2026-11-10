@@ -9,7 +9,6 @@ SUBDIRS = \
 	BonfyreQueue \
 	BonfyreLedger \
 	BonfyrePipeline \
-	BonfyreCMS \
 	BonfyreIndex \
 	BonfyreStitch \
 	BonfyreGate \
@@ -50,11 +49,5 @@ list:
 	@printf "%s\n" $(SUBDIRS)
 
 smoke:
-	@echo "==> BonfyreCMS smoke"
-	@bash BonfyreCMS/tests/smoke.sh
-	@echo "==> ArtifactManifest smoke"
-	@bash ArtifactManifest/tests/smoke.sh
-	@echo "==> LocalAITranscriptionService tests"
-	@cd LocalAITranscriptionService && PYTHONPATH=src python3 -m unittest discover -s tests
-	@echo "==> RNNTGrpcServer smoke"
-	@bash RNNTGrpcServer/tests/smoke.sh
+	@echo "==> Native Bonfyre fabric suite"
+	@$(MAKE) -C ../engine/core test

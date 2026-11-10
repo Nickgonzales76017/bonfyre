@@ -1,0 +1,103 @@
+"""Adversarial replay tests for the Generation-10 executable owner topology."""
+
+import copy
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import foreign
+import system_map_stress as stress
+
+
+def test_full_owner_circuit_commits_and_replays(tmp_path):
+    proof_path = tmp_path / "proof.json"
+    proof = stress.run(state_root=tmp_path / "state", proof_path=proof_path)
+
+    assert proof["replay"]["verdict"] == "pass"
+    assert all(proof["replay"]["checks"].values())
+    assert all(proof["replay"]["counterfactuals"].values())
+    assert proof_path.exists()
+    assert json.loads(proof_path.read_text())["proof_sha256"] == proof["proof_sha256"]
+    assert proof["owner_trace"] == [
+        "ForeignTwin", "WorkGraph", "AtlasContextProvider", "ProviderGraph",
+        "AuthorityGraph", "NativeWorkGraph/EffectKernel", "ObjectFabric",
+        "ReceiptEnvelope", "EvidenceGraph", "InstitutionalReplay",
+    ]
+
+
+def test_receipt_tamper_is_refused_before_semantic_replay(tmp_path):
+    proof = stress.run(state_root=tmp_path / "state")
+    tampered = copy.deepcopy(proof["receipt_envelope"])
+    tampered["artifact"]["identity"] = "0" * 64
+
+    assert not stress._envelope_hash_valid(tampered)
+
+
+def test_foreign_act_label_cannot_replace_authority_graph(tmp_path):
+    _env, db_path = stress._native_state(tmp_path / "state")
+    db = sqlite3.connect(db_path)
+    twin = foreign.ForeignTwin(
+        "bernstein/issue/3880",
+        "sipyourdrink-ltd/bernstein",
+        "https://example.invalid/3880",
+        rights=(foreign.OBSERVE, foreign.ACT),
+    )
+    try:
+        assert not stress.admit_effect(db, actor="foreign-carrier", twin=twin)
+    finally:
+        db.close()
+
+
+def test_validation_snapshot_and_upstream_completion_are_distinct_claims(tmp_path):
+    proof = stress.run(state_root=tmp_path / "state")
+    db = sqlite3.connect(tmp_path / "state" / "fabric.db")
+    try:
+        supports = db.execute(
+            "SELECT claim FROM evidence_relations WHERE evidence=? ORDER BY claim",
+            (proof["source_event"],),
+        ).fetchall()
+        assert supports == [(stress.SNAPSHOT_CLAIM,)]
+        assert stress.UPSTREAM_CLAIM not in {row[0] for row in supports}
+    finally:
+        db.close()
+
+
+def test_relabelled_producer_can_rebind_content_but_not_owner_trace(tmp_path):
+    proof = stress.run(state_root=tmp_path / "state")
+    envelope = copy.deepcopy(proof["receipt_envelope"])
+    envelope["provider_identity"] = "different-producer"
+    envelope.pop("content_sha256")
+    envelope.pop("envelope_id")
+    envelope["content_sha256"] = stress._digest(envelope)
+    envelope["envelope_id"] = f"receipt:{envelope['content_sha256']}"
+
+    db = sqlite3.connect(tmp_path / "state" / "fabric.db")
+    try:
+        assert stress._envelope_hash_valid(envelope)
+        assert not stress._owner_consistent(db, envelope)
+    finally:
+        db.close()
+
+
+def test_second_invocation_is_replay_only_and_creates_no_effect(tmp_path):
+    state = tmp_path / "state"
+    first = stress.run(state_root=state)
+    db = sqlite3.connect(state / "fabric.db")
+    try:
+        receipts_before = db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0]
+        effects_before = db.execute("SELECT COUNT(*) FROM effects").fetchone()[0]
+    finally:
+        db.close()
+
+    second = stress.run(state_root=state)
+    db = sqlite3.connect(state / "fabric.db")
+    try:
+        assert db.execute("SELECT COUNT(*) FROM receipts").fetchone()[0] == receipts_before
+        assert db.execute("SELECT COUNT(*) FROM effects").fetchone()[0] == effects_before
+    finally:
+        db.close()
+    assert second["proof_sha256"] == first["proof_sha256"]
+    assert second["replay"]["verdict"] == "pass"

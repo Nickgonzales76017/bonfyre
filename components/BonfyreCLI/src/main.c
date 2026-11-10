@@ -116,12 +116,12 @@ static int try_exec(const char *binary, const char *sibling_dir, char **argv) {
     /* 2. Try repo-relative from current working directory */
     if (sibling_dir && sibling_dir[0]) {
         char full[PATH_MAX];
-        snprintf(full, sizeof(full), "10-Code/%s/%s", sibling_dir, binary);
+        snprintf(full, sizeof(full), "components/%s/%s", sibling_dir, binary);
         if (access(full, X_OK) == 0) {
             argv[0] = full;
             execv(full, argv);
         }
-        snprintf(full, sizeof(full), "./10-Code/%s/%s", sibling_dir, binary);
+        snprintf(full, sizeof(full), "./components/%s/%s", sibling_dir, binary);
         if (access(full, X_OK) == 0) {
             argv[0] = full;
             execv(full, argv);

@@ -12,7 +12,7 @@ Tiny native briefing binary for transcript-to-brief conversion.
 ## Build
 
 ```bash
-cd 10-Code/BonfyreBrief
+cd components/BonfyreBrief
 make
 ```
 

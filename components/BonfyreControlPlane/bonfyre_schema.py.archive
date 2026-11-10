@@ -1,0 +1,25 @@
+"""Shared schema application with explicit foreign-key enforcement semantics.
+
+Schema ownership remains in each module's ``SCHEMA`` constant.  The application
+procedure has two forms because ``PRAGMA foreign_keys`` is connection-local:
+the 15 historical Group A modules deliberately leave it unchanged, while the
+six Group B modules explicitly enable it.  Routing both groups through one
+helper would silently change Group A constraint enforcement.
+"""
+
+from __future__ import annotations
+
+import sqlite3
+
+
+def apply_schema(db: sqlite3.Connection, schema: str) -> None:
+    """Create a Group A module's tables and commit without changing pragmas."""
+    db.executescript(schema)
+    db.commit()
+
+
+def apply_schema_enforcing(db: sqlite3.Connection, schema: str) -> None:
+    """Create a Group B module's tables, enable foreign keys, and commit."""
+    db.executescript(schema)
+    db.execute("PRAGMA foreign_keys=ON")
+    db.commit()

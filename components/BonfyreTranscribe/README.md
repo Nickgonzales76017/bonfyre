@@ -19,7 +19,7 @@ Tiny native transcription binary built on top of `BonfyreMediaPrep` and Whisper 
 ## Build
 
 ```bash
-cd 10-Code/BonfyreTranscribe
+cd components/BonfyreTranscribe
 make
 ```
 

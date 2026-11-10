@@ -1,0 +1,192 @@
+"""Archived Python reference: native owners are information-policy.mjs and bf_information_policy.
+
+InformationPolicy -- what an actor may be told, which is not what they may do.
+
+AuthorityGraph answers whether an actor may act on a subject. Nothing answered
+what they may know about it, so disclosure was decided per carrier: an
+aggregation floor appears in one capability description and nowhere else in the
+estate, and each surface re-derived what to hide. That is how a system ends up
+over-disclosing on one route and refusing outright on another while believing it
+has a policy.
+
+Three decisions are enforced here rather than described:
+
+  * Disclosure is per field and per audience, never per record. A record-level
+    gate forces a choice between showing everything and showing nothing, and a
+    system given that choice will make both mistakes.
+
+  * Withholding is stated, not performed by omission. A withheld field comes
+    back marked withheld. Silently dropping it teaches the caller that the
+    subject lacks the field, which is a different and false fact.
+
+  * An aggregate is released only above a declared population floor. Below it,
+    the statistic is withheld -- because a median over two records is those two
+    records, and releasing counts over arbitrary filters lets a caller difference
+    their way back to an individual.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a subject being addressable  -> its contents being disclosable
+  a withheld field             -> the field being empty or the subject absent
+  an aggregate being released  -> its constituents being releasable
+  authority to act             -> entitlement to read the evidence it rests on
+"""
+
+# COMPATIBILITY BOUNDARY (do not add new policy law here): the native evaluator
+# is engine/core/src/information_policy.c via bf_information_policy.h and the
+# closed declaration is schemas/control/information-policy.cue. The Bun
+# projection binding is information-policy.mjs. This compatibility reference
+# remains only while active Python consumers finish native cutover.
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Iterable, Optional
+
+# The disclosure audiences this estate addresses. They are ordered by how much
+# context the viewer already lawfully has, but the order is NOT a lattice of
+# permission -- `market` is not a superset of `household`, and a rule written for
+# one never widens to the other by being "higher".
+AUDIENCES = ("self", "household", "group", "community", "public", "market", "institution")
+
+WITHHELD = "__withheld__"
+
+
+class PolicyError(ValueError):
+    """A malformed rule. Raised at declaration time rather than at read time, so
+    a policy that could never have been satisfied fails where it was written."""
+
+
+@dataclass(frozen=True)
+class FieldRule:
+    """One field's disclosure across audiences.
+
+    `audiences` is the exact set that may see the value. An audience absent from
+    the set is withheld -- there is no default-allow, because a field added to a
+    contract without a rule must not become public by having been forgotten.
+    """
+    field_name: str
+    audiences: frozenset[str]
+    reason: str = "not disclosed to this audience"
+
+    def __post_init__(self) -> None:
+        unknown = set(self.audiences) - set(AUDIENCES)
+        if unknown:
+            raise PolicyError(f"unknown audience(s) {sorted(unknown)} on field "
+                              f"{self.field_name!r}")
+
+
+@dataclass(frozen=True)
+class AggregationFloor:
+    """The population an aggregate must summarize before it may be released."""
+    statistic: str
+    minimum_population: int
+    audiences: frozenset[str] = frozenset({"public", "market", "institution"})
+
+    def __post_init__(self) -> None:
+        if self.minimum_population < 2:
+            # A floor of 1 releases the record itself wearing a statistic's name.
+            raise PolicyError(
+                f"aggregation floor for {self.statistic!r} must be at least 2; "
+                f"a floor of {self.minimum_population} discloses the individual")
+
+
+@dataclass
+class InformationPolicy:
+    """A subject kind's disclosure rules. Declared once, applied at every carrier."""
+    subject_kind: str
+    rules: dict[str, FieldRule] = field(default_factory=dict)
+    floors: dict[str, AggregationFloor] = field(default_factory=dict)
+    evidence_release: frozenset[str] = frozenset()
+
+    # ------------------------------------------------------------- declaration
+
+    def disclose(self, field_name: str, *, to: Iterable[str],
+                 reason: str = "not disclosed to this audience") -> "InformationPolicy":
+        self.rules[field_name] = FieldRule(field_name, frozenset(to), reason)
+        return self
+
+    def floor(self, statistic: str, *, minimum_population: int,
+              to: Optional[Iterable[str]] = None) -> "InformationPolicy":
+        kw = {} if to is None else {"audiences": frozenset(to)}
+        self.floors[statistic] = AggregationFloor(statistic, minimum_population, **kw)
+        return self
+
+    # ------------------------------------------------------------------ reading
+
+    def field_decision(self, field_name: str, audience: str) -> tuple[bool, str]:
+        """(allowed, reason). An undeclared field is withheld, not allowed."""
+        if audience not in AUDIENCES:
+            raise PolicyError(f"unknown audience {audience!r}")
+        rule = self.rules.get(field_name)
+        if rule is None:
+            return False, "no disclosure rule declared for this field"
+        if audience in rule.audiences:
+            return True, ""
+        return False, rule.reason
+
+    def project(self, record: dict[str, Any], audience: str) -> dict[str, Any]:
+        """Apply the policy to one record.
+
+        Every declared field appears in the output. A field the audience may not
+        see carries the WITHHELD marker and its reason, so the caller learns the
+        field exists and was withheld rather than inferring the subject lacks it.
+        """
+        out: dict[str, Any] = {}
+        for field_name in record:
+            allowed, reason = self.field_decision(field_name, audience)
+            if allowed:
+                out[field_name] = record[field_name]
+            else:
+                out[field_name] = {WITHHELD: True, "reason": reason}
+        return out
+
+    def withheld_fields(self, projected: dict[str, Any]) -> list[str]:
+        return sorted(k for k, v in projected.items()
+                      if isinstance(v, dict) and v.get(WITHHELD))
+
+    # -------------------------------------------------------------- aggregates
+
+    def aggregate_decision(self, statistic: str, population: int,
+                           audience: str) -> tuple[bool, str]:
+        if audience not in AUDIENCES:
+            raise PolicyError(f"unknown audience {audience!r}")
+        fl = self.floors.get(statistic)
+        if fl is None:
+            return False, "no aggregation floor declared for this statistic"
+        if audience not in fl.audiences:
+            return False, "this audience may not receive this aggregate"
+        if population < fl.minimum_population:
+            return False, (f"population {population} is below the disclosure floor "
+                           f"of {fl.minimum_population}")
+        return True, ""
+
+    def release_aggregate(self, statistic: str, value: Any, population: int,
+                          audience: str) -> dict[str, Any]:
+        """Release a statistic, or say precisely why it was withheld.
+
+        The refusal names the floor and not the population that failed it: the
+        floor is policy and safe to state, while echoing the real population back
+        would leak the very count the floor exists to protect.
+        """
+        allowed, reason = self.aggregate_decision(statistic, population, audience)
+        if allowed:
+            return {"statistic": statistic, "value": value, "population": population}
+        fl = self.floors.get(statistic)
+        out: dict[str, Any] = {"statistic": statistic, WITHHELD: True, "reason": reason}
+        if fl is not None and population < fl.minimum_population:
+            out["reason"] = (f"below the disclosure floor of "
+                             f"{fl.minimum_population}")
+        return out
+
+
+# --------------------------------------------------------------- evidence
+
+def evidence_visible(policy: InformationPolicy, witness_kind: str) -> bool:
+    """Whether a delegated reader may see this class of proof.
+
+    Defaults to nothing. A child estate sees exactly what its envelope names of
+    the parent's evidence, so an unlisted witness kind is invisible rather than
+    inherited -- holding authority to act never implies entitlement to read the
+    evidence that authority rests on.
+    """
+    return witness_kind in policy.evidence_release

@@ -1,0 +1,47 @@
+"""Native DisCIPL owns command grammar, bindings, and derived data-flow edges."""
+import json, sqlite3, sys, unittest
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import capability_closure as cc
+
+
+@unittest.skipUnless(cc.DISCIPL.exists(), "bonfyre-discipl not installed")
+class NativeCommandEstateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cc._ensure_discipl_root()
+
+    def test_edges_are_derived_from_data_flow_not_decreed(self):
+        # Transcribe produces transcript; Brief consumes transcript -> an edge
+        # must exist. Transcribe produces no kind Repurpose consumes -> no direct
+        # edge (it must route through Brief).
+        direct = cc._discipl_propose("T_TRANSCRIBE", "T_BRIEF", 1)
+        self.assertIn("T_TRANSCRIBE", direct["families"])
+        self.assertIn("T_BRIEF", direct["families"])
+        absent = cc._discipl_propose("T_TRANSCRIBE", "T_REPURPOSE", 1)
+        self.assertEqual(absent.get("candidate_chains"), [])
+
+    def test_native_seed_reports_its_materialized_estate(self):
+        report = cc._discipl_command("seed-commands")
+        materialized = json.loads(report.stdout)
+        self.assertEqual(materialized["actors"], 27)
+        self.assertGreater(materialized["contracts"], 0)
+
+    def test_a_command_family_binds_to_its_exact_binary(self):
+        binary = cc._command_binding("T_TRANSCRIBE")
+        self.assertIsNotNone(binary)
+        self.assertTrue(binary.endswith("bonfyre-transcribe"))
+
+    def test_distinct_hops_bind_distinct_binaries(self):
+        import command_laws as cl
+        db = sqlite3.connect(":memory:")
+        cl.build(db)
+        org = cc.close(db, src_family="T_TRANSCRIBE", dst_family="T_REPURPOSE", depth=6)
+        binaries = [h.binary for h in org.hops if h.binary]
+        # The old coarse binding put the same binary on every hop; precise
+        # binding must not.
+        self.assertEqual(len(binaries), len(set(binaries)))
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

@@ -1,0 +1,574 @@
+"""Bonfyre's small semantic shell over existing projections and native Powers.
+
+The shell is deliberately a surface adapter.  It neither owns a second state
+store nor implements any native Power: addresses select an existing projection
+or command advertisement, ``?`` reads/explains it, and ``!`` records a bounded
+read-only ProcessOccurrence against the resolved native binary.  Native command
+identity remains visible in every result.
+
+Supported programs are passed as one shell argument, for example::
+
+    bonfyre '@provider/codex |> ?usage'
+    bonfyre '@work/household |> ?economics |> ?evidence'
+    bonfyre '@power/BonfyreTime |> !--help'
+
+The ``|>`` separator is typed semantic composition.  Ordinary Unix ``|`` is
+not parsed here and remains the terminal's byte-stream composition operator.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sqlite3
+import shlex
+import subprocess
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Mapping, Sequence
+
+import command_advertisements
+
+
+REPO = Path(__file__).resolve().parents[2]
+DEFAULT_STATE = REPO / ".bonfyre/run8-r2c/20260823T032652Z-27525"
+READ_ONLY_POWER_ARGS = {"--help", "-h", "--version"}
+FABRIC = REPO / "programs" / "bonfyre" / "bonfyre"
+FINANCE_WORK_ITEMS = {
+    "r2c-model-usage-finance-closure": "work-item:r2c-model-usage-finance-closure",
+}
+
+
+def _canonical(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _digest(value: object) -> str:
+    return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _key_value_lines(output: str) -> dict[str, str]:
+    """Decode Fabric's small line ABI without treating stdout as shell syntax."""
+    return {
+        key: value
+        for line in output.splitlines()
+        if "=" in line
+        for key, value in [line.split("=", 1)]
+    }
+
+
+def _file_view(path: Path, *, role: str) -> dict[str, Any]:
+    if not path.is_file():
+        raise FileNotFoundError(f"canonical shell projection is missing: {path}")
+    data = path.read_bytes()
+    return {
+        "kind": "projection",
+        "role": role,
+        "source_path": str(path.relative_to(REPO)) if path.is_relative_to(REPO) else str(path),
+        "content_sha256": hashlib.sha256(data).hexdigest(),
+        "bytes": len(data),
+    }
+
+
+@dataclass
+class ShellValue:
+    address: str
+    owner: str
+    value: Any
+    evidence: list[dict[str, Any]] = field(default_factory=list)
+    claims: list[str] = field(default_factory=list)
+
+    def result(self) -> dict[str, Any]:
+        return {
+            "address": self.address,
+            "owner": self.owner,
+            "value": self.value,
+            "evidence": self.evidence,
+            "non_promoting_claims": self.claims,
+        }
+
+
+class BonfyreShell:
+    """Address and compose the real, current Run8 read surfaces."""
+
+    def __init__(self, state: Path) -> None:
+        self.state = state
+        self._advertisements = {
+            item["identity"]: item
+            for item in command_advertisements.inventory()["advertisements"]
+        }
+
+    def address(self, text: str) -> ShellValue:
+        if not text.startswith("@"):
+            raise ValueError("semantic programs must start with an @ address")
+        subject = text[1:]
+        if subject.startswith("provider/"):
+            provider = subject.removeprefix("provider/")
+            if provider not in {"codex", "claude"}:
+                raise ValueError(f"unsupported provider address: {text}")
+            return ShellValue(text, "ProviderState", {"provider": provider})
+        if subject.startswith("work/"):
+            work = subject.removeprefix("work/")
+            finance_target = self._allocated_finance_target(work) or FINANCE_WORK_ITEMS.get(work)
+            if finance_target:
+                finance_db = self.state / "finance/model-usage.sqlite"
+                return ShellValue(text, "FinancialMetabolism", {
+                    "work_item": work,
+                    "finance_target_ref": finance_target,
+                    "ledger_kind": "canonical_financial_metabolism_read_projection",
+                }, [_file_view(finance_db, role="financial-metabolism-ledger")], [
+                    "the shell reads the canonical FinancialMetabolism ledger; it does not reconcile, price, bill, or allocate usage",
+                ])
+            if work not in {"food", "housing", "household"}:
+                raise ValueError(f"unsupported current work address: {text}")
+            return ShellValue(text, "Run8HouseholdProjection", {"work": work})
+        if subject.startswith("power/"):
+            return self._power_value(text, subject.removeprefix("power/"), compatibility=False)
+        # Akai is a compatibility spelling, never a replacement owner.
+        if subject.startswith("akai/power/"):
+            return self._power_value(text, subject.removeprefix("akai/power/"), compatibility=True)
+        if subject.startswith("household/"):
+            return ShellValue(text, "HouseholdSemanticOperator", {"household_address": subject})
+        raise ValueError(f"unsupported semantic address: {text}")
+
+    def _allocated_finance_target(self, work: str) -> str | None:
+        """Resolve an exact work address from the ledger, never a shell shadow map."""
+        path = self.state / "finance/model-usage.sqlite"
+        if not path.is_file():
+            return None
+        target = f"work-item:{work}"
+        try:
+            with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
+                present = db.execute(
+                    "SELECT 1 FROM cost_allocations WHERE target_ref=? AND target_kind='work_item' LIMIT 1",
+                    (target,),
+                ).fetchone()
+        except sqlite3.DatabaseError:
+            return None
+        return target if present else None
+
+    def _power_value(self, address: str, identity: str, *, compatibility: bool) -> ShellValue:
+        advertisement = self._advertisements.get(identity)
+        if advertisement is None:
+            raise ValueError(f"unknown native Bonfyre Power: {identity}")
+        return ShellValue(
+            address,
+            identity,
+            {
+                "native_power": identity,
+                "command_advertisement": advertisement,
+                "compatibility_alias": "Akai" if compatibility else None,
+            },
+            claims=["semantic address selects an eligible native owner; it does not grant authority"],
+        )
+
+    def query(self, value: ShellValue, query: str) -> ShellValue:
+        name, _, argument = query.partition(" ")
+        name = name.lower()
+        argument = argument.strip()
+        if name == "usage":
+            return self._usage(value)
+        if name == "economics":
+            return self._economics(value)
+        if name == "realizations":
+            return self._realizations(value)
+        if name == "evidence":
+            return self._evidence(value)
+        if name == "why":
+            return self._why(value, argument)
+        if name == "prove":
+            return self._prove(value, argument)
+        raise ValueError(f"unsupported deterministic query: ?{name}")
+
+    def _usage(self, value: ShellValue) -> ShellValue:
+        if self._finance_target(value):
+            rows = self._finance_rows(value)
+            physical_occurrences = self._physical_occurrences(rows)
+            usages = [{
+                "usage_occurrence_id": row["usage_id"],
+                "physical_occurrence_ref": row["physical_occurrence_ref"],
+                "attempt_ref": row["attempt_ref"],
+                "realization_ref": row["realization_ref"],
+                "provider_ref": row["provider_ref"],
+                "model_ref": row["model_ref"],
+                "route_ref": row["route_ref"],
+                "dimensions": row["dimensions"],
+            } for row in rows]
+            return self._finance_value(value, {
+                "layer": "usage",
+                "physical_occurrences": physical_occurrences,
+                "usage_occurrences": usages,
+            })
+        if value.owner == "ProviderState":
+            projection = self.state / "control/continuous-provider-weather.json"
+            document = json.loads(projection.read_text(encoding="utf-8"))
+            provider = value.value["provider"]
+            observations = [row for row in document.get("observations", []) if row.get("provider") == provider]
+            return ShellValue(value.address, "ProviderState", {
+                "provider": provider,
+                "usage_state": "provider_capacity_observation",
+                "observations": observations,
+                "metered_usage": None,
+                "reason": "Current Run8 provider weather preserves capacity observations, not token or billing quantities.",
+            }, [_file_view(projection, role="provider-weather")], value.claims + [
+                "provider capacity observation is not measured usage, billed cost, or provider authority",
+            ])
+        return ShellValue(value.address, value.owner, {
+            "usage_state": "not_attributed",
+            "reason": "The current work projection has no admitted provider-usage allocation; no usage quantity is invented.",
+            "subject": value.result(),
+        }, value.evidence, value.claims + [
+            "work realization does not identify a provider usage allocation",
+        ])
+
+    def _economics(self, value: ShellValue) -> ShellValue:
+        if self._finance_target(value):
+            rows = self._finance_rows(value)
+            usages = [{
+                "usage_occurrence_id": row["usage_id"],
+                "physical_occurrence_ref": row["physical_occurrence_ref"],
+                "attempt_ref": row["attempt_ref"],
+                "realization_ref": row["realization_ref"],
+                "provider_ref": row["provider_ref"],
+                "model_ref": row["model_ref"],
+                "route_ref": row["route_ref"],
+                "dimensions": row["dimensions"],
+            } for row in rows]
+            measures = [{
+                "economic_measure_id": row["measure_id"],
+                "usage_occurrence_id": row["usage_id"],
+                "kind": row["kind"],
+                "basis": row["basis"],
+                "currency": row["currency"],
+                "amount": row["amount"],
+                "price_version_ref": row["price_version_ref"],
+                "price_effective_at": row["price_effective_at"],
+                "price_observed_at": row["price_observed_at"],
+                "unknown_reason": row["unknown_reason"],
+                "allocation_version_ref": row["allocation_version_ref"],
+            } for row in rows]
+            return self._finance_value(value, {
+                "layer": "economics",
+                "physical_occurrences": self._physical_occurrences(rows),
+                "usage_occurrences": usages,
+                "economic_measures": measures,
+            })
+        work = value.value.get("work") if isinstance(value.value, Mapping) else None
+        mapping = {
+            "food": self.state / "household/food/basket-options.json",
+            "housing": self.state / "household/housing/effective-costs.json",
+            "household": self.state / "household/cross-domain/economic-circuit.json",
+        }
+        if work not in mapping:
+            raise ValueError("?economics requires @work/food, @work/housing, or @work/household")
+        path = mapping[work]
+        document = json.loads(path.read_text(encoding="utf-8"))
+        summary: dict[str, Any] = {"work": work, "projection_schema": document.get("schema")}
+        if work == "household":
+            summary["cross_domain_join"] = document.get("cross_domain_join")
+            summary["constraints"] = document.get("constraints")
+        else:
+            summary["projection"] = document
+        return ShellValue(value.address, "HouseholdEconomicCircuit" if work == "household" else value.owner,
+                          summary, [_file_view(path, role=f"{work}-economics")], value.claims + [
+                              "economic projections are source-bound and are not billed, paid, booked, or spend-authorized truth",
+                          ])
+
+    def _realizations(self, value: ShellValue) -> ShellValue:
+        if self._finance_target(value):
+            rows = self._finance_rows(value)
+            grouped: dict[str, dict[str, Any]] = {}
+            for row in rows:
+                realization = grouped.setdefault(row["realization_ref"], {
+                    "realization_ref": row["realization_ref"],
+                    "physical_receipt_ref": row["physical_receipt_ref"],
+                    "physical_occurrences": [],
+                })
+                realization["physical_occurrences"].append({
+                    "physical_occurrence_ref": row["physical_occurrence_ref"],
+                    "usage_occurrence_id": row["usage_id"],
+                })
+            return self._finance_value(value, {
+                "layer": "realizations",
+                "realization_count": len(grouped),
+                "realizations": list(grouped.values()),
+            })
+        work = value.value.get("work") if isinstance(value.value, Mapping) else None
+        receipts_dir = self.state / "receipts"
+        if not receipts_dir.is_dir():
+            raise FileNotFoundError("Run8 receipt projection is missing")
+        matches: list[dict[str, Any]] = []
+        selected_paths: list[Path] = []
+        for path in sorted(receipts_dir.glob("*.json")):
+            document = json.loads(path.read_text(encoding="utf-8"))
+            haystack = _canonical({key: document.get(key) for key in ("work_item", "class", "summary")}).lower()
+            if work is None or work in haystack or (work == "household" and "cross-domain" in haystack):
+                selected_paths.append(path)
+                matches.append({
+                    "receipt": path.name,
+                    "work_item": document.get("work_item"),
+                    "class": document.get("class"),
+                    "summary": document.get("summary"),
+                })
+        return ShellValue(value.address, "Run8ReceiptProjection", {
+            "work": work,
+            "realization_count": len(matches),
+            "realizations": matches,
+        }, [_file_view(path, role="receipt") for path in selected_paths], value.claims)
+
+    def _evidence(self, value: ShellValue) -> ShellValue:
+        evidence = [*value.evidence]
+        if not evidence:
+            evidence.append({"kind": "none", "reason": "No durable source projection was selected by this expression."})
+        return ShellValue(value.address, value.owner, {
+            "evidence_state": "source_bound_projection",
+            "evidence": evidence,
+            "subject": value.value,
+        }, evidence, value.claims + [
+            "evidence reference does not itself prove availability, cost, authority, or payment",
+        ])
+
+    def _why(self, value: ShellValue, argument: str) -> ShellValue:
+        layers = {}
+        if isinstance(value.value, Mapping):
+            layers = {key: value.value[key] for key in (
+                "realizations", "physical_occurrences", "usage_occurrences", "economic_measures",
+            ) if key in value.value}
+        return ShellValue(value.address, value.owner, {
+            "operator": "WHY",
+            "field": argument or None,
+            "source_owner": value.owner,
+            "exact_input": value.value,
+            "distinct_layers": layers,
+            "source_evidence": value.evidence,
+            "reason": "The shell returns the selected owner and retained source projection without promoting its observed state.",
+        }, value.evidence, value.claims)
+
+    def _prove(self, value: ShellValue, argument: str) -> ShellValue:
+        return ShellValue(value.address, value.owner, {
+            "operator": "PROVE",
+            "claim": argument or "unspecified",
+            "proof_state": "not_proven",
+            "reason": "A shell address, projection, or native Power response is not independent proof.",
+            "source_evidence": value.evidence,
+        }, value.evidence, value.claims + [
+            "shell-selected observations never self-promote to proof",
+        ])
+
+    def execute(self, value: ShellValue, raw: str) -> ShellValue:
+        if value.owner not in self._advertisements:
+            raise ValueError("! requires an @power or @akai/power address")
+        args = shlex.split(raw)
+        if len(args) == 1 and args[0] in READ_ONLY_POWER_ARGS:
+            return self._read_only_power_probe(value, args)
+        return self._governed_power_invocation(value, args)
+
+    def _read_only_power_probe(self, value: ShellValue, args: list[str]) -> ShellValue:
+        ad = self._advertisements[value.owner]
+        if ad["classification"] != "built" or not ad["binary"]:
+            raise ValueError(f"native Power is not built: {value.owner}")
+        binary = REPO / "cmd" / value.owner / ad["binary"]
+        if not binary.is_file() or not binary.stat().st_mode & 0o111:
+            raise FileNotFoundError(f"advertised native Power is unavailable: {binary}")
+        completed = subprocess.run([str(binary), *args], cwd=REPO, capture_output=True, text=True,
+                                   timeout=10, check=False)
+        stdout, stderr = completed.stdout[:32768], completed.stderr[:32768]
+        occurrence = {
+            "operator": "ProcessOccurrence",
+            "native_power": value.owner,
+            "binary": str(binary.relative_to(REPO)),
+            "argv": args,
+            "exit_code": completed.returncode,
+            "stdout_sha256": hashlib.sha256(stdout.encode()).hexdigest(),
+            "stderr_sha256": hashlib.sha256(stderr.encode()).hexdigest(),
+            "stdout": stdout,
+            "stderr": stderr,
+            "effect_class": "pure_read_probe",
+            "effect_boundary": "public-shell-read-only-v1",
+            "authority": {
+                "decision": "admitted_read_only_probe",
+                "basis": "public shell permits only help/version probes",
+                "does_not_grant": "native effect authority",
+            },
+        }
+        return ShellValue(value.address, value.owner, occurrence, value.evidence + [{
+            "kind": "native-process-occurrence", "native_power": value.owner,
+            "binary": occurrence["binary"], "stdout_sha256": occurrence["stdout_sha256"],
+        }], value.claims + ["a successful help/version process does not grant execution authority"])
+
+    @staticmethod
+    def _invocation_options(args: Sequence[str]) -> dict[str, str]:
+        if len(args) != 6:
+            raise ValueError("governed ! requires --actor <actor> --purpose <purpose> --input <artifact-uri>")
+        options: dict[str, str] = {}
+        for index in range(0, len(args), 2):
+            name, option_value = args[index], args[index + 1]
+            if name not in {"--actor", "--purpose", "--input"} or name in options or not option_value:
+                raise ValueError("governed ! accepts each of --actor, --purpose, and --input exactly once")
+            options[name] = option_value
+        return options
+
+    def _governed_power_invocation(self, value: ShellValue, args: list[str]) -> ShellValue:
+        """Delegate effects to Fabric's contract executor; never run a Power here."""
+        options = self._invocation_options(args)
+        ad = self._advertisements[value.owner]
+        operator_id = str(ad.get("operator_id", ""))
+        if not operator_id:
+            raise ValueError(f"native Power has no Fabric operator-contract binding: {value.owner}")
+        if not FABRIC.is_file() or not FABRIC.stat().st_mode & 0o111:
+            raise FileNotFoundError(f"Fabric operator ABI is unavailable: {FABRIC}")
+        completed = subprocess.run(
+            [str(FABRIC), "operator", "invoke", operator_id,
+             "--actor", options["--actor"], "--purpose", options["--purpose"],
+             "--input", options["--input"]],
+            cwd=REPO, capture_output=True, text=True, timeout=190, check=False,
+        )
+        fields = _key_value_lines(completed.stdout)
+        if completed.returncode != 0:
+            detail = completed.stderr.strip() or completed.stdout.strip() or "Fabric refused invocation"
+            raise PermissionError(f"Fabric governed native Power invocation refused: {detail}")
+        occurrence = {
+            "operator": "ProcessOccurrence",
+            "native_power": value.owner,
+            "fabric_operator": operator_id,
+            "effect_class": ad.get("effect_class", "unknown"),
+            "authority": {
+                "decision": fields.get("authority", "admitted"),
+                "actor": options["--actor"],
+                "purpose": options["--purpose"],
+                "subject": operator_id,
+                "gate": "Fabric AuthorityGraph ACT + generation-current operator contract",
+            },
+            "input_artifact": options["--input"],
+            "mission": fields.get("mission"),
+            "output_artifact": fields.get("output"),
+            "process_receipt": fields.get("process_receipt"),
+            "authority_receipt": fields.get("authority_receipt"),
+            "fabric_stdout_sha256": hashlib.sha256(completed.stdout.encode()).hexdigest(),
+        }
+        return ShellValue(value.address, value.owner, occurrence, value.evidence + [{
+            "kind": "fabric-native-power-invocation",
+            "native_power": value.owner,
+            "operator_id": operator_id,
+            "process_receipt": occurrence["process_receipt"],
+            "authority_receipt": occurrence["authority_receipt"],
+        }], value.claims + [
+            "Fabric admitted this occurrence through an explicit ACT grant and compiled operator contract",
+        ])
+
+    @staticmethod
+    def _finance_target(value: ShellValue) -> str | None:
+        if isinstance(value.value, Mapping):
+            target = value.value.get("finance_target_ref")
+            return str(target) if target else None
+        return None
+
+    def _finance_rows(self, value: ShellValue) -> list[dict[str, Any]]:
+        """Read the FinancialMetabolism closure without changing its ledger."""
+        target = self._finance_target(value)
+        if not target:
+            return []
+        path = self.state / "finance/model-usage.sqlite"
+        if not path.is_file():
+            raise FileNotFoundError(f"canonical financial metabolism ledger is missing: {path}")
+        with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
+            measure_columns = {row[1] for row in db.execute("PRAGMA table_info(economic_measures)")}
+            allocation_columns = {row[1] for row in db.execute("PRAGMA table_info(cost_allocations)")}
+            price_effective = "m.price_effective_at" if "price_effective_at" in measure_columns else "NULL"
+            price_observed = "m.price_observed_at" if "price_observed_at" in measure_columns else "NULL"
+            allocation_version = ("a.allocation_version_ref" if "allocation_version_ref" in allocation_columns
+                                  else "NULL")
+            rows = db.execute(
+                "SELECT u.usage_id,u.target_ref,d.attempt_ref,d.realization_ref,d.physical_receipt_ref,"
+                "d.evidence_ref,d.provider_ref,d.model_ref,d.route_ref,d.dimensions_json,"
+                "m.measure_id,m.kind,m.basis,m.currency,m.amount,m.price_version_ref,"
+                f"{price_effective},{price_observed},m.unknown_reason,{allocation_version} "
+                "FROM cost_allocations a JOIN economic_measures m ON m.measure_id=a.measure_id "
+                "JOIN usage_occurrence_details d ON d.usage_id=m.usage_id "
+                "JOIN usage_occurrences u ON u.usage_id=d.usage_id "
+                "WHERE a.target_ref=? AND a.target_kind='work_item' ORDER BY u.usage_id",
+                (target,),
+            ).fetchall()
+        keys = ("usage_id", "physical_occurrence_ref", "attempt_ref", "realization_ref", "physical_receipt_ref",
+                "evidence_ref", "provider_ref", "model_ref", "route_ref", "dimensions", "measure_id",
+                "kind", "basis", "currency", "amount", "price_version_ref", "price_effective_at",
+                "price_observed_at", "unknown_reason", "allocation_version_ref")
+        return [dict(zip(keys, (*row[:9], json.loads(row[9]), *row[10:]))) for row in rows]
+
+    @staticmethod
+    def _physical_occurrences(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+        return [{
+            "physical_occurrence_ref": row["physical_occurrence_ref"],
+            "realization_ref": row["realization_ref"],
+            "physical_receipt_ref": row["physical_receipt_ref"],
+        } for row in rows]
+
+    def _finance_value(self, prior: ShellValue, layer: Mapping[str, Any]) -> ShellValue:
+        """Project canonical finance rows with source refs, never a parallel ledger."""
+        value = dict(prior.value) if isinstance(prior.value, Mapping) else {}
+        value.update(layer)
+        rows = self._finance_rows(prior)
+        references = sorted({ref for row in rows for ref in (
+            row["physical_receipt_ref"], row["evidence_ref"],
+        ) if ref})
+        evidence = [_file_view(self.state / "finance/model-usage.sqlite", role="financial-metabolism-ledger")]
+        evidence.extend({"kind": "canonical-reference", "role": "receipt-or-evidence", "ref": ref}
+                        for ref in references)
+        return ShellValue(prior.address, "FinancialMetabolism", value, evidence, prior.claims + [
+            "usage and economics are deterministic ledger derivations; no billing side effect or parallel ledger occurred",
+        ])
+
+    def run(self, program: str) -> dict[str, Any]:
+        parts = [part.strip() for part in program.split("|>")]
+        if not parts or not parts[0]:
+            raise ValueError("empty semantic program")
+        value = self.address(parts[0])
+        trace = [{"kind": "ADDRESS", "token": parts[0], "owner": value.owner}]
+        for part in parts[1:]:
+            if part.startswith("?"):
+                value = self.query(value, part[1:].strip())
+                trace.append({"kind": "QUERY", "token": part, "owner": value.owner})
+            elif part.startswith("!"):
+                value = self.execute(value, part[1:].strip())
+                trace.append({"kind": "PROCESS_OCCURRENCE", "token": part, "owner": value.owner})
+            else:
+                raise ValueError(f"semantic composition requires ?query or !process after |> : {part}")
+        return {
+            "schema": "bonfyre.semantic-shell.v1",
+            "program": program,
+            "program_sha256": _digest({"program": program}),
+            "typed_composition": "|>",
+            "result": value.result(),
+            "trace": trace,
+            "invariants": [
+                "shell presentation/cache != canonical truth",
+                "semantic address != authority",
+                "CLI command != implementation owner",
+                "native Power identity != generic operator",
+            ],
+        }
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", type=Path, default=DEFAULT_STATE, help="Run8 state root")
+    parser.add_argument("--output", type=Path, help="explicit optional receipt output; no other writes occur")
+    parser.add_argument("program", nargs="+", help="one quoted semantic program, or shell tokens joined by spaces")
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    result = BonfyreShell(args.state).run(" ".join(args.program))
+    output = json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(output, encoding="utf-8")
+    print(output, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

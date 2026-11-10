@@ -1,0 +1,29 @@
+"""Pure mechanical helpers shared by Bonfyre control-plane modules."""
+
+import datetime as _dt
+
+
+__all__ = ("table_exists", "iso", "parse_iso")
+
+_UTC = _dt.timezone.utc
+
+
+def table_exists(db, name):
+    return db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone() is not None
+
+
+def iso(moment):
+    return moment.astimezone(_UTC).replace(microsecond=0).isoformat()
+
+
+def parse_iso(text):
+    if not text:
+        return None
+    text = text.strip().replace(" ", "T", 1) if " " in text.strip() else text.strip()
+    try:
+        parsed = _dt.datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=_UTC)

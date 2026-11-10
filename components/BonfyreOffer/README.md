@@ -9,7 +9,7 @@ Tiny native offer utility for turning proof bundles into lightweight market pack
 ## Build
 
 ```bash
-cd 10-Code/BonfyreOffer
+cd components/BonfyreOffer
 make
 ```
 

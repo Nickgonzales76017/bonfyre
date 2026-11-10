@@ -1,0 +1,84 @@
+"""Household circuit preserves observation, scenario and accounting boundaries."""
+
+import sys
+from pathlib import Path
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import household_economic_circuit as circuit
+
+
+def _housing():
+    return {
+        "schema": "bonfyre-housing-effective-costs.v1",
+        "calculations": [{
+            "listing_id": "listing-a",
+            "base_rent_monthly_usd": 900,
+            "known_required_recurring_usd": {"trash": 15},
+            "known_monthly_before_parking_or_pets_usd": 915,
+            "reported_parking_monthly_usd": 50,
+            "reported_dog_monthly_usd": 25,
+            "reported_move_in_usd": {"deposit": 100, "fee": 75},
+            "reported_dog_one_time_usd": {"deposit": 200, "fee": 300},
+        }],
+    }
+
+
+def _routes():
+    return {
+        "schema": "bonfyre-food-fulfillment-route-projection.v1",
+        "by_origin": [{
+            "origin_id": "housing-candidate-a",
+            "origin_source_url": "https://example.test/candidate-a",
+            "strategies": [
+                {"kind": "cheapest_total_cash_including_fees", "selection": {
+                    "offer_ids": ["beans"], "merchants": ["Market"], "total_cash_usd": "2.00",
+                    "total_cash_lower_bound_usd": "2.00", "total_cash_is_exact": True,
+                    "fulfillment_fee_usd": "0", "fee_unresolved": [],
+                    "travel_miles_geodesic_lower_bound": "3.0", "customer_travels": True,
+                    "status": "observed_component_basket_not_complete_meal",
+                }},
+                {"kind": "no_customer_travel", "selection": None},
+            ],
+        }],
+    }
+
+
+def test_circuit_keeps_optional_housing_charges_conditional_and_separate():
+    result = circuit.build_circuit(_housing(), _routes())
+    scenarios = {row["scenario_id"]: row for row in result["housing_recurring_scenarios"]}
+    assert scenarios["housing:listing-a:known-required-only"]["monthly_component_sum_usd"] == "915.0000"
+    assert scenarios["housing:listing-a:reported-parking-and-dog"]["monthly_component_sum_usd"] == "990.0000"
+    assert "applicability_not_verified" in scenarios["housing:listing-a:reported-dog"]["scenario_constraints"]
+    one_time = result["housing_one_time_components"]
+    assert one_time[0]["refundability_state"] == "not_inferred_from_component_label"
+    assert one_time[1]["reported_component_sum_usd"] == "500.0000"
+
+
+def test_circuit_refuses_to_turn_candidate_route_into_combined_household_budget():
+    result = circuit.build_circuit(_housing(), _routes())
+    assert result["cross_domain_join"]["state"] == "no_explicit_residence_identity_join"
+    assert result["cross_domain_join"]["joined_scenarios"] == []
+    route = result["food_route_strategies"][0]
+    assert route["selection"]["travel_miles_geodesic_lower_bound"] == "3.0"
+    assert route["estimated_travel_or_food_budget"] is None
+    assert "monthly food budget" in result["cross_domain_join"]["blocked_projection"]
+    assert result["finance_boundary"]["owner"] == "FinancialMetabolism"
+    assert result["finance_boundary"]["economic_measure_state"] == "not_created"
+
+
+def test_circuit_reports_unrepresented_housing_and_absent_food_modes_as_gaps():
+    housing = _housing()
+    housing["calculations"].append({"listing_id": "listing-without-components"})
+    result = circuit.build_circuit(housing, _routes())
+
+    coverage = result["comparison_coverage"]
+    assert coverage["housing_calculation_count"] == 2
+    assert coverage["housing_recurring_scenario_count"] == 4
+    assert coverage["housing_calculations_excluded"] == [{
+        "listing_id": "listing-without-components",
+        "reason": "no_known_required_recurring_component_sum",
+    }]
+    assert coverage["food_route_origin_count"] == 1
+    assert coverage["food_route_origin_count_with_emitted_strategy"] == 1
+    assert "not zero-cost" in coverage["food_strategies_not_emitted"]

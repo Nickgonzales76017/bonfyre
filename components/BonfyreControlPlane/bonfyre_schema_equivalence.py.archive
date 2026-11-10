@@ -1,0 +1,122 @@
+"""Verify the schema helpers preserve every original ``ensure_schema`` behavior.
+
+Each listed module is tested against a separate fresh in-memory connection so
+that both schema objects and connection-local ``foreign_keys`` state compare
+directly.  The same comparison runs after a second invocation to prove the
+helpers preserve the original idempotence behavior.
+"""
+
+from __future__ import annotations
+
+import importlib
+import sqlite3
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from bonfyre_schema import apply_schema, apply_schema_enforcing
+
+
+GROUP_A = (
+    "authority",
+    "capability_catalog",
+    "economic_graphs",
+    "estate_catalog",
+    "evidence_graphs",
+    "external_events",
+    "fabric_publish",
+    "proof_frontier",
+    "provider_graphs",
+    "provider_state",
+    "relationship",
+    "resource_activation",
+    "resource_admission",
+    "scheduling",
+    "shadow_institution",
+)
+
+GROUP_B = (
+    "actors",
+    "partner_commons",
+    "pattern_graph",
+    "target_obligation",
+    "work_graph",
+    "verification",
+)
+
+
+@dataclass(frozen=True)
+class SchemaState:
+    tables: frozenset[str]
+    sqlite_master_sql: tuple[tuple[str, str], ...]
+    foreign_keys: int
+
+
+def schema_state(db: sqlite3.Connection) -> SchemaState:
+    rows = db.execute(
+        "SELECT name, sql FROM sqlite_master "
+        "WHERE type = 'table' ORDER BY name"
+    ).fetchall()
+    return SchemaState(
+        tables=frozenset(name for name, _ in rows),
+        sqlite_master_sql=tuple(rows),
+        foreign_keys=db.execute("PRAGMA foreign_keys").fetchone()[0],
+    )
+
+
+def compare_module(
+    module_name: str, helper: Callable[[sqlite3.Connection, str], None]
+) -> str | None:
+    module = importlib.import_module(module_name)
+    real_db = sqlite3.connect(":memory:")
+    helper_db = sqlite3.connect(":memory:")
+    try:
+        module.ensure_schema(real_db)
+        helper(helper_db, module.SCHEMA)
+        real_first = schema_state(real_db)
+        helper_first = schema_state(helper_db)
+        assert real_first == helper_first, "first-call state differs"
+
+        real_result = module.ensure_schema(real_db)
+        helper_result = helper(helper_db, module.SCHEMA)
+        real_second = schema_state(real_db)
+        helper_second = schema_state(helper_db)
+        assert real_result == helper_result, "second-call return value differs"
+        assert real_second == helper_second, "second-call state differs"
+        assert real_first == real_second, "real ensure_schema is not idempotent"
+        assert helper_first == helper_second, "helper is not idempotent"
+    except Exception as error:
+        return f"{module_name}:{error}"
+    finally:
+        real_db.close()
+        helper_db.close()
+    return None
+
+
+def main() -> int:
+    disagreements = [
+        result
+        for modules, helper in (
+            (GROUP_A, apply_schema),
+            (GROUP_B, apply_schema_enforcing),
+        )
+        for module_name in modules
+        if (result := compare_module(module_name, helper)) is not None
+    ]
+    group_a_failures = sum(item.split(":", 1)[0] in GROUP_A for item in disagreements)
+    group_b_failures = sum(item.split(":", 1)[0] in GROUP_B for item in disagreements)
+    group_a_equivalent = len(GROUP_A) - group_a_failures
+    group_b_equivalent = len(GROUP_B) - group_b_failures
+
+    print(f"GROUP_A_EQUIVALENT={group_a_equivalent}/{len(GROUP_A)}")
+    print(f"GROUP_B_EQUIVALENT={group_b_equivalent}/{len(GROUP_B)}")
+    print(f"DISAGREEMENTS={'; '.join(disagreements) or 'NONE'}")
+    print(
+        "VERDICT=SAFE_TO_MIGRATE"
+        if not disagreements
+        else "VERDICT=NOT_SAFE"
+    )
+    return 0 if not disagreements else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,64 @@
+Aurekai local document workspace — source preview
+
+Search eight fictional household documents, read the original paragraph, save a cited note and remove a document from search. This is the existing Bonfyre document workspace packaged with the native embedding and vector-search sources it uses.
+
+Requirements
+
+This build recipe currently targets Apple Silicon macOS. Install Bun, Xcode command-line tools, Homebrew SQLite and Homebrew ONNX Runtime separately. No runtime, library, model weights or precompiled executable is included. The build uses the versions installed on your machine and records the compiler, paths and binary hashes in native.build.json. The source manifest hashes every copied source; it is not a signature.
+
+Before installing dependencies, allow enough disk space for their package manager downloads. This preview does not install software or download models automatically.
+
+From this package directory:
+  bun run.mjs build
+
+Model
+
+Use Nomic Embed Text v1.5's quantized ONNX model and vocabulary:
+  https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+Pinned upstream revision:
+  ac6fcd72429d86ff25c17895e47a9bfcfc50c1b2
+
+Download onnx/model_quantized.onnx from that revision to:
+  ~/.cache/bonfyre/models/nomic-embed-text-onnx/onnx/model.onnx
+Download vocab.txt from the same revision to:
+  ~/.cache/bonfyre/models/nomic-embed-text-onnx/vocab.txt
+
+Expected SHA-256:
+  model.onnx b4342336debaea79de872370664b0aaeb67dea4605513d00ee236ea871a81f27
+  vocab.txt  07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
+
+The launcher checks both hashes and refuses alternate ONNX files that the native embedder would otherwise prefer. It does not overwrite an existing model. Downloading is a separate, explicit setup step.
+
+Run
+
+  bun run.mjs serve 4177
+
+Open http://127.0.0.1:4177 on this Mac. Use a different port if one is occupied, and keep that port for future visits because browser notes belong to their origin.
+
+Try "Where is the dishwasher receipt?", open the source, and write a note. Search for "submarine insurance policy" in Exact phrase mode to see an empty result. Remove the appliance document, stop the server with Ctrl-C, and restart; it should stay out of search. Original text and saved notes remain.
+
+What stays where
+
+The fictional source collection is packs/aurekai-work-samples/household/documents.json. Its index is in that folder's .documents directory. Native embedding caches use the usual ~/.cache/bonfyre location. Notes live in the browser's IndexedDB store, specific to the origin and profile. Index removal is not secure erasure of originals, notes, caches or backups.
+
+The service binds to loopback, loads its browser assets locally and uses local native inference. It does not offer isolation from other programs using your Mac account. Keep it off public proxies. This version accepts bounded plain-text JSON collections; it does not import PDFs, run OCR, create factual answers, execute n8n workflows or connect to cloud accounts.
+
+Licenses and source scope
+
+The included Bonfyre source and fictional sample carry the repository's MIT license in LICENSE. The copied runtime library slice contains only the functions needed to link the existing Embed command. It does not bundle the broader estate, credentials, sales records or third-party applications.
+
+The tokenizer's fold table (lib/libbonfyre/include/bf_bert_fold.h) is generated from Python 3.9.6 unicodedata / Unicode 13.0 data. The current Unicode data license and attribution are included in cmd/BonfyreEmbed/UNICODE-LICENSE.txt, retained October 8, 2026 from:
+  https://www.unicode.org/license.txt
+
+Dependencies are separately obtained and retain their own terms:
+  Nomic model repository: Apache-2.0 as declared in its model card.
+  https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+  ONNX Runtime: MIT, with its own bundled third-party notices.
+  https://github.com/microsoft/onnxruntime/blob/main/LICENSE
+  SQLite: public domain for the delivered library.
+  https://www.sqlite.org/copyright.html
+  Bun: MIT for Bun itself, with separate licenses for bundled libraries.
+  https://github.com/oven-sh/bun/blob/main/LICENSE.md
+
+This is not a completed legal review or a public release. Building on one development Mac does not establish a clean-machine installation, Linux/Windows support, general retrieval accuracy or accessibility validation.
+

@@ -14,7 +14,7 @@ Tiny native file-backed queue utility for shared local job staging.
 ## Build
 
 ```bash
-cd 10-Code/BonfyreQueue
+cd components/BonfyreQueue
 make
 ```
 

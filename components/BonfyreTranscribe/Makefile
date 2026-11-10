@@ -13,7 +13,10 @@ all: $(TARGET)
 $(TARGET): $(SRC) src/hcp_subword_freq.h
 	$(CC) $(CFLAGS) -I$(WHISPER_INC) -L$(WHISPER_LIB) -o $(TARGET) $(SRC) $(LIBS)
 
+test: $(TARGET)
+	sh tests/redecode_test.sh ./$(TARGET)
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all test clean

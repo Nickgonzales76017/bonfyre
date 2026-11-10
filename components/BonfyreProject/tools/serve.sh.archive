@@ -1,0 +1,106 @@
+#!/bin/sh
+# Archived after native Bun served-answer cutover; retained as historical witness.
+# Answer a request. End to end, with the provenance and nothing invented.
+#
+# Everything before this measured. The estate observed 3,316 sources, closed
+# 2,344 obligations, priced 39 metered services, matched 44 declared demands and
+# signed its own evidence -- and served nobody, which made all of it an
+# instrument reporting on itself.
+#
+# This takes a need, routes it to the cheapest source the estate has proven it
+# can read, fetches the answer now, and hands back the bytes with the chain that
+# justifies them: which source, why that one, what it cost, whether the content
+# still matches what was last observed, and the institution's signature over the
+# whole response.
+#
+# Cannot infer: an answer -> a correct answer. This is what the routed source
+# said when asked, not a fact the estate is asserting.
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd -P)
+cd "$root"
+need=${1:?usage: serve.sh <axis:term> [out-dir]}
+outdir=${2:-$HOME/.bonfyre/estate/served}
+estate=${ESTATE_DIR:-$HOME/.bonfyre/estate}
+plane="$root/cmd/BonfyreExternalEstate/bonfyre-external-estate"
+signer="$root/cmd/BonfyreSign/bonfyre-sign"
+identity=${IDENTITY_DIR:-$HOME/.bonfyre/identity}
+mkdir -p "$outdir"
+
+route=$("$plane" route-cost --db "$estate/estate.db" --need "$need" \
+          --price-book "$estate/price-book.jsonl" \
+          --free-proof "$estate/enactment-evidence.jsonl" 2>/dev/null)
+
+pick=$(printf '%s' "$route" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+# The route is the cheapest candidate the estate has actually proven it can
+# read. A source nobody has read is not cheaper, it is unknown, and it is not
+# offered here.
+best = None
+for c in d.get("candidates", []):
+    if c["basis"] != "proven_permitted_read":
+        continue
+    if best is None or c["cost_usd"] < best["cost_usd"]:
+        best = c
+if not best:
+    raise SystemExit(1)
+a = d["avoided_cost_usd"]
+print("\t".join([best["identity"], best["name"], "%.6f" % best["cost_usd"],
+                 "%.6f" % a["median"], str(d["frontier"]), str(d["metered"])]))
+') || { echo "{\"served\":false,\"need\":\"$need\",\"reason\":\"no proven-readable source on this coordinate\"}"; exit 1; }
+
+oid=$(printf '%s' "$pick" | cut -f1)
+name=$(printf '%s' "$pick" | cut -f2)
+cost=$(printf '%s' "$pick" | cut -f3)
+avoided=$(printf '%s' "$pick" | cut -f4)
+frontier=$(printf '%s' "$pick" | cut -f5)
+metered=$(printf '%s' "$pick" | cut -f6)
+
+url=$(sqlite3 "$estate/estate.db" "SELECT primary_url FROM occurrence WHERE id='$oid';")
+slug=$(printf '%s' "$oid" | tr -c 'A-Za-z0-9._-' '_')
+prior=$(sqlite3 "$estate/estate.db" "SELECT 1" >/dev/null 2>&1; \
+        "$root/cmd/BonfyreLex/bonfyre-lex" field --kind json_string --key content_sha256 --line last \
+          --file "$HOME/.bonfyre/foreign-sweep/receipts/$slug.json" 2>/dev/null || echo '')
+
+body="$outdir/$slug.body"
+code=$(curl -sS --max-time 20 --user-agent "BonfyreProject/1.0" -o "$body" -w '%{http_code}' "$url" 2>/dev/null || echo 000)
+now=$(shasum -a 256 "$body" 2>/dev/null | cut -d' ' -f1 || echo '')
+bytes=$(wc -c < "$body" 2>/dev/null | tr -d ' ' || echo 0)
+
+if [ "$now" = "$prior" ]; then freshness=unchanged_since_observation
+elif [ "$code" = "200" ]; then freshness=changed_since_observation
+else freshness=unreachable_now; fi
+
+answer="$outdir/$slug.answer.json"
+python3 - "$answer" "$need" "$oid" "$name" "$url" "$cost" "$avoided" "$frontier" "$metered" \
+         "$code" "$bytes" "$now" "$prior" "$freshness" "$body" <<'PY'
+import json, sys
+(out, need, oid, name, url, cost, avoided, frontier, metered,
+ code, size, now, prior, freshness, body) = sys.argv[1:16]
+json.dump({
+    "schema": "bonfyre-served-answer.v1",
+    "need": need,
+    "served": code == "200",
+    "answer": {"body_path": body, "bytes": int(size), "http_status": code,
+               "content_sha256": now},
+    "route": {
+        "source": oid, "name": name, "url": url,
+        "cost_usd": float(cost),
+        "basis": "a source this estate proved it can read under a published permission",
+        "frontier_considered": int(frontier),
+        "metered_alternatives": int(metered),
+        "avoided_cost_usd_median": float(avoided),
+    },
+    "freshness": {"state": freshness, "observed_sha256": prior or None},
+    "cannot_infer": [
+        "an answer -> a correct answer; this is what the source said when asked",
+        "a routed source -> the best source; it is the cheapest one proven readable",
+        "avoided cost -> revenue; it is a price that was never incurred",
+    ],
+}, open(out, "w"), indent=2, sort_keys=True)
+PY
+
+if [ -x "$signer" ] && [ -f "$identity/institution.ed25519.secret" ]; then
+  "$signer" sign --key-dir "$identity" --file "$answer" > "$answer.sig" 2>/dev/null || true
+fi
+cat "$answer"

@@ -1,0 +1,194 @@
+"""ARCHIVED REFERENCE — native owner: engine/core/src/evidence.c and
+engine/core/src/protocol_contract.c (bf_evidence_verdict / bf_evidence_stands /
+bf_protocol_contract_close); declaration: schemas/control/protocol-contract.*.
+
+This file remains only to explain the retired Python behavior and its migration
+boundary.  New callers must bind the native ABI: it derives the same
+precedence-ordered evidence verdict from the shared SQLite relation and closes
+a protocol only across both obligation and evidence axes.
+
+Close a ProtocolContract's evidence requirements against the real store.
+
+`evidence_required` was declared and never consulted: an enactment could reach a
+terminal state with no witness for anything it asserted. This reads
+`evidence_relations` -- the store engine/core/src/evidence.c owns, whose four
+kinds are `supports`, `contradicts`, `reproduces`, `falsifies` and whose relations
+are directional and kind-gated.
+
+The rule this adds is not "is there evidence" but "does the evidence still
+stand". Three consequences, each enforced below:
+
+  * A contradiction outranks a support. A claim with both is contested, not
+    supported, and reporting it as supported because a supporting row exists is
+    how a proof frontier gets crossed by whoever wrote last.
+
+  * A falsification is terminal. Reproduction cannot rescue a claim that was
+    falsified; it can only strengthen one that was not.
+
+  * Direction is honoured. supports(A,B) is not supports(B,A), and asking the
+    question backwards returns nothing rather than the answer to a different
+    question.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a supporting relation -> a proven claim
+  a closed enactment    -> its claims being evidenced
+  a reproduction        -> a rescued falsification
+  evidence for a claim  -> evidence for the enactment that mentioned it
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Iterable, Optional
+
+SUPPORTS = "supports"
+CONTRADICTS = "contradicts"
+REPRODUCES = "reproduces"
+FALSIFIES = "falsifies"
+
+KINDS = (SUPPORTS, CONTRADICTS, REPRODUCES, FALSIFIES)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS evidence_relations(
+  evidence TEXT NOT NULL, kind TEXT NOT NULL, claim TEXT NOT NULL,
+  PRIMARY KEY(evidence, kind, claim)
+);
+"""
+
+# Verdicts. Ordered by how much they permit, not alphabetically.
+FALSIFIED = "falsified"
+CONTESTED = "contested"
+UNEVIDENCED = "unevidenced"
+SUPPORTED = "supported"
+REPRODUCED = "reproduced"
+
+
+class EvidenceError(ValueError):
+    pass
+
+
+def ensure_schema(db: sqlite3.Connection) -> None:
+    db.executescript(SCHEMA)
+    db.commit()
+
+
+def relate(db: sqlite3.Connection, *, evidence: str, kind: str, claim: str) -> None:
+    """Record one directional, kind-gated relation. Undeclared kinds are refused
+    where they are written, exactly as the C organ refuses them."""
+    if kind not in KINDS:
+        raise EvidenceError(
+            f"undeclared evidence kind {kind!r}; the store gates on "
+            f"{list(KINDS)} and an ungated kind would be a private vocabulary")
+    if not evidence or not claim:
+        raise EvidenceError("an evidence relation needs both an evidence and a claim")
+    ensure_schema(db)
+    db.execute("INSERT OR REPLACE INTO evidence_relations(evidence,kind,claim)"
+               " VALUES(?,?,?)", (evidence, kind, claim))
+    db.commit()
+
+
+def retract(db: sqlite3.Connection, *, evidence: str, kind: str, claim: str) -> bool:
+    """Withdraw a relation. Evidence that no longer stands stops supporting.
+
+    Idempotent, matching the C organ: withdrawing a relation that was never
+    there is not an error, because a consequence plane retracting on a schedule
+    should not have to know whether it already did.
+    """
+    if kind not in KINDS:
+        raise EvidenceError(f"undeclared evidence kind {kind!r}")
+    ensure_schema(db)
+    cur = db.execute("DELETE FROM evidence_relations"
+                     " WHERE evidence=? AND kind=? AND claim=?",
+                     (evidence, kind, claim))
+    db.commit()
+    return cur.rowcount > 0
+
+
+def supporters(db: sqlite3.Connection, claim: str) -> list[str]:
+    """Distinct evidences supporting a claim, matching the C's count primitive."""
+    return sorted(e for e, _k in relations(db, claim, kind=SUPPORTS))
+
+
+def relations(db: sqlite3.Connection, claim: str,
+              kind: Optional[str] = None) -> list[tuple[str, str]]:
+    """(evidence, kind) rows pointing AT this claim. Direction is not optional:
+    rows where the claim is the evidence are a different question."""
+    ensure_schema(db)
+    if kind is not None and kind not in KINDS:
+        raise EvidenceError(f"undeclared evidence kind {kind!r}")
+    sql = "SELECT evidence,kind FROM evidence_relations WHERE claim=?"
+    args: list = [claim]
+    if kind is not None:
+        sql += " AND kind=?"
+        args.append(kind)
+    return sorted((e, k) for e, k in db.execute(sql, args))
+
+
+def verdict(db: sqlite3.Connection, claim: str) -> str:
+    """What the store currently says about a claim.
+
+    Precedence is falsified, then contested, then reproduced, then supported,
+    then unevidenced. A claim carrying both support and contradiction is
+    CONTESTED -- calling it supported because a supporting row exists would let
+    the last writer decide.
+    """
+    rows = relations(db, claim)
+    kinds = {k for _e, k in rows}
+    if FALSIFIES in kinds:
+        return FALSIFIED
+    if CONTRADICTS in kinds:
+        return CONTESTED
+    if REPRODUCES in kinds:
+        return REPRODUCED
+    if SUPPORTS in kinds:
+        return SUPPORTED
+    return UNEVIDENCED
+
+
+def stands(db: sqlite3.Connection, claim: str) -> bool:
+    """Whether a claim is currently evidenced well enough to be relied on.
+
+    Reproduced or supported and neither contradicted nor falsified. This is not
+    proof: the proof frontier owns that, and this answers only whether the
+    evidence in the store is presently on the claim's side.
+    """
+    return verdict(db, claim) in (SUPPORTED, REPRODUCED)
+
+
+# ------------------------------------------------------- protocol integration
+
+def unevidenced(db: sqlite3.Connection, contract) -> dict[str, str]:
+    """Every evidence requirement of this contract that does not currently
+    stand, with the verdict that is blocking it."""
+    out = {}
+    for requirement in sorted(contract.evidence_required):
+        v = verdict(db, requirement)
+        if v not in (SUPPORTED, REPRODUCED):
+            out[requirement] = v
+    return out
+
+
+def evidence_closed(db: sqlite3.Connection, contract) -> bool:
+    return not unevidenced(db, contract)
+
+
+def close_enactment(commitment_db: sqlite3.Connection,
+                    evidence_db: sqlite3.Connection, contract,
+                    enactment_id: str) -> dict[str, object]:
+    """Report whether an enactment may be treated as closed.
+
+    Two independent conditions, reported separately rather than reduced to one
+    boolean: every obligation terminal, and every declared evidence requirement
+    standing. An enactment can satisfy either without the other, and a caller
+    told only 'not closed' cannot tell which to chase.
+    """
+    outstanding = contract.outstanding_after(commitment_db, enactment_id)
+    missing = unevidenced(evidence_db, contract)
+    return {
+        "enactment": enactment_id,
+        "obligations_terminal": not outstanding,
+        "outstanding": outstanding,
+        "evidence_closed": not missing,
+        "unevidenced": missing,
+        "closed": not outstanding and not missing,
+    }

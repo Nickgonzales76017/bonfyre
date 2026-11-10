@@ -1,0 +1,183 @@
+"""Archived Python reference: native owner is foreign-live.mjs.
+
+Ingest a foreign live occurrence through the same grammar as a native one.
+
+A creator who streams only on Twitch still produces an occurrence. Where rights
+permit, its observable material -- captions, chat, stream metadata -- can become
+a LiveSemanticTrack exactly like a native stream, which is what lets the estate
+understand a city before everybody in it streams natively.
+
+The whole difficulty is that "we can see it" is four separate rights, and every
+one of them is routinely collapsed into the first:
+
+    OBSERVABLE     the source serves it to anyone who asks
+    RETAINABLE     we may keep a copy of what we fetched
+    DERIVABLE      we may compute over what we kept
+    REPUBLISHABLE  we may show it, or something made from it, to someone else
+
+They are strictly ordered and each is granted separately. A public timeline is
+observable and usually not republishable. Captions may be retainable and not
+derivable. A source that permits derivation has said nothing about republication
+of the derivation. Reading any one as implying the next is how an estate ends up
+redistributing somebody else's stream under its own name.
+
+Everything ingested is an OBSERVED occurrence, never an effect. A claim derived
+from foreign material is DERIVED, and its provenance walks back to the foreign
+observation rather than to anything this estate did.
+
+Forbidden inferences, falsified by the tests beside this file:
+  observable      -> retainable
+  retainable      -> derivable
+  derivable       -> republishable
+  a foreign track -> a native one
+  an ingested claim -> a claim this estate is asserting
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Optional
+
+import live_semantic_track as lst
+import occurrence_origin as oo
+
+OBSERVABLE = "observable"
+RETAINABLE = "retainable"
+DERIVABLE = "derivable"
+REPUBLISHABLE = "republishable"
+
+# Ordered. Holding a right never grants the next one, but a later right is
+# meaningless without the earlier ones -- you cannot derive from what you may
+# not retain.
+RIGHTS = (OBSERVABLE, RETAINABLE, DERIVABLE, REPUBLISHABLE)
+RIGHT_RANK = {r: i for i, r in enumerate(RIGHTS)}
+
+# What a foreign live source may plausibly serve. Kinds are mapped onto the
+# native track's vocabulary, because the point is one grammar rather than a
+# parallel foreign one.
+FOREIGN_KIND_MAP = {
+    "caption": "utterance",
+    "chat": "chat",
+    "title": "topic",
+    "category": "topic",
+    "reaction": "reaction",
+    "presence": "presence",
+}
+
+
+class RightsError(PermissionError):
+    """A refusal naming the right that was missing, not merely that it failed."""
+
+
+class IngestError(ValueError):
+    pass
+
+
+@dataclass
+class ForeignLiveSource:
+    """A live occurrence somewhere else, and what this estate may do with it.
+
+    `granted` is what the source's own terms allow, established elsewhere --
+    robots, an API's terms, an explicit licence. Nothing here infers a right; it
+    only refuses to exceed what it was told.
+    """
+    twin_id: str
+    platform: str
+    url: str
+    granted: frozenset[str] = frozenset({OBSERVABLE})
+    basis: str = ""          # what the grant rests on, for later re-examination
+
+    def holds(self, right: str) -> bool:
+        if right not in RIGHT_RANK:
+            raise RightsError(f"unknown right {right!r}")
+        return right in self.granted
+
+    def require(self, right: str, doing: str) -> None:
+        if not self.holds(right):
+            held = sorted(self.granted, key=lambda r: RIGHT_RANK[r]) or ["nothing"]
+            raise RightsError(
+                f"cannot {doing}: {self.twin_id!r} grants {held} and not "
+                f"{right!r}. Each right is granted separately and holding one "
+                f"never implies the next")
+
+
+@dataclass
+class ForeignLiveIngest:
+    """One foreign occurrence, ingested into the native grammar."""
+    source: ForeignLiveSource
+    track: lst.LiveSemanticTrack
+    retained: list[tuple[int, str, str]] = field(default_factory=list)
+
+    def retain(self, at_ms: int, foreign_kind: str, value: str,
+               speaker: str = "") -> "ForeignLiveIngest":
+        """Keep one piece of observed material. Requires RETAINABLE."""
+        self.source.require(RETAINABLE, f"retain {foreign_kind!r}")
+        if foreign_kind not in FOREIGN_KIND_MAP:
+            raise IngestError(
+                f"unknown foreign kind {foreign_kind!r}; a foreign source's "
+                f"material is mapped onto the native vocabulary rather than "
+                f"given a parallel one of its own")
+        self.retained.append((at_ms, foreign_kind, value))
+        self.track.append(lst.SemanticEvent(
+            at_ms, FOREIGN_KIND_MAP[foreign_kind], value, speaker=speaker,
+            source=f"foreign:{self.source.platform}"))
+        return self
+
+    def derive_claim(self, ledger: lst.ClaimLedger, at_ms: int, *, claim_id: str,
+                     asserter: str, subject: str, assertion: str
+                     ) -> lst.ClaimObservation:
+        """Promote retained foreign material into a claim. Requires DERIVABLE.
+
+        The asserter is whoever spoke on the foreign stream, never this estate.
+        An ingested claim is somebody else's assertion that we observed, and
+        recording it under our own name would be the collapse this exists to
+        prevent.
+        """
+        self.source.require(DERIVABLE, "derive a claim from retained material")
+        if asserter == self.source.twin_id:
+            raise IngestError(
+                "the asserter is whoever spoke on the foreign stream, not the "
+                "twin that observed it; a twin asserting its own observation "
+                "would make watching look like claiming")
+        return ledger.from_utterance(self.track, at_ms, claim_id=claim_id,
+                                     asserter=asserter, subject=subject,
+                                     assertion=assertion)
+
+    def republishable_events(self) -> list[lst.SemanticEvent]:
+        """What may be shown onward. Requires REPUBLISHABLE."""
+        self.source.require(REPUBLISHABLE, "republish foreign material")
+        return list(self.track.events)
+
+    def file_observations(self, db, *, subject: str, at: str = "") -> list[str]:
+        """Put the retained material on the occurrence spine as OBSERVED.
+
+        Never EFFECT. This estate did not cause a foreign stream, and filing it
+        under any other origin would let a later reader believe it did.
+        """
+        oo.ensure_schema(db)
+        filed = []
+        for i, (at_ms, kind, _value) in enumerate(self.retained):
+            oid = f"{self.source.twin_id}:{at_ms}:{i}"
+            oo.record(db, occurrence_id=oid, origin=oo.OBSERVED, subject=subject,
+                      at=at, source=f"{self.source.platform}:{self.source.url}")
+            filed.append(oid)
+        return filed
+
+
+def ingest(source: ForeignLiveSource, *,
+           occurrence_id: Optional[str] = None) -> ForeignLiveIngest:
+    """Open an ingest against a foreign source.
+
+    Requires OBSERVABLE to exist at all -- a source nobody may look at is not
+    ingested and then filtered, it is not opened.
+    """
+    source.require(OBSERVABLE, "open an ingest")
+    track = lst.LiveSemanticTrack(occurrence_id or f"foreign:{source.twin_id}")
+    return ForeignLiveIngest(source=source, track=track)
+
+
+def rights_gap(source: ForeignLiveSource, wanted: str) -> list[str]:
+    """Which rights are missing between what is held and what is wanted."""
+    if wanted not in RIGHT_RANK:
+        raise RightsError(f"unknown right {wanted!r}")
+    return [r for r in RIGHTS[:RIGHT_RANK[wanted] + 1] if r not in source.granted]

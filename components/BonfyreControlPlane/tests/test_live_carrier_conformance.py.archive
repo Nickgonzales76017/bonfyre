@@ -1,0 +1,203 @@
+"""Archived Python witness: native Bun parity is live-carrier-conformance.test.mjs.
+
+The profile describes three routes it does not govern: OGC, RESO and MISMO are
+served by a native organ on a separate host, and nothing stopped the declaration
+and the deployment from drifting apart. This closes half that gap. It cannot make
+the routes render through the profile, but it can make divergence fail a test --
+which is the half that catches the drift rather than merely regretting it.
+
+The strongest assertion here is the last one: every field the live carriers
+actually serve must be mapped by the profile. A deployment that grows a field the
+declaration does not know about is exactly how "one meaning, many grammars"
+quietly becomes three grammars again.
+
+Network test. It skips when the surface is unreachable rather than passing on a
+simulation, because a green result from a mock would assert nothing about the
+deployment it claims to describe.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import socket
+import sys
+import urllib.error
+import urllib.request
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import domain_profile as dp  # noqa: E402
+
+TIMEOUT = 20
+
+
+def _get(path):
+    req = urllib.request.Request(dp.LIVE_SURFACE + path,
+                                 headers={"Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+        return json.loads(resp.read().decode())
+
+
+@pytest.fixture(scope="module")
+def live():
+    """First record from each live carrier, keyed by carrier name."""
+    out = {}
+    for carrier, (path, dig_path) in dp.LIVE_ROUTES.items():
+        try:
+            payload = _get(path)
+        except (urllib.error.URLError, socket.timeout, OSError) as exc:
+            pytest.skip(f"live surface unreachable ({carrier}): {exc}")
+        try:
+            out[carrier] = dp.dig(payload, dig_path)
+        except (KeyError, IndexError) as exc:
+            pytest.fail(f"{carrier} response shape changed: {exc}")
+    return out
+
+
+@pytest.fixture(scope="module")
+def profile():
+    return dp.parcel_profile()
+
+
+# ------------------------------------- the declaration describes the deployment
+
+@pytest.mark.parametrize("carrier", sorted(dp.LIVE_ROUTES))
+def test_every_field_the_profile_maps_is_actually_served(live, profile, carrier):
+    mapped = set(profile.projections[carrier].mapping.values())
+    served = set(live[carrier])
+    missing = sorted(mapped - served)
+    assert not missing, (
+        f"{carrier} no longer serves {missing}; the profile claims a field the "
+        f"deployment does not have")
+
+
+@pytest.mark.parametrize("carrier", sorted(dp.LIVE_ROUTES))
+def test_every_field_the_deployment_serves_is_mapped(live, profile, carrier):
+    mapped = set(profile.projections[carrier].mapping.values())
+    served = set(live[carrier])
+    unmapped = sorted(served - mapped)
+    assert not unmapped, (
+        f"{carrier} serves {unmapped}, which the profile does not declare -- a "
+        f"deployment growing an undeclared field is how one meaning becomes "
+        f"three grammars again")
+
+
+# ------------------------------- the three live grammars agree about one parcel
+
+def test_the_live_carriers_agree_on_the_shared_facts(live, profile):
+    disagreements = {}
+    for semantic in sorted(profile.semantic_fields):
+        values = {}
+        for carrier, record in live.items():
+            carrier_field = profile.projections[carrier].mapping.get(semantic)
+            if carrier_field is None or carrier_field not in record:
+                continue
+            values[carrier] = record[carrier_field]
+        if len(set(map(repr, values.values()))) > 1:
+            disagreements[semantic] = values
+    assert disagreements == {}, f"live carriers disagree: {disagreements}"
+
+
+def test_the_live_row_is_the_parcel_this_profile_was_built_from(live):
+    # Not a requirement of the system -- a guard on the test itself. If the
+    # deployment starts returning a different first row, the agreement check
+    # above is still valid but the failure messages would be confusing.
+    accounts = {live["ogc"]["account"], live["reso"]["ListingKey"],
+                live["mismo"]["account"]}
+    assert len(accounts) == 1, f"carriers returned different first rows: {accounts}"
+
+
+# ----------------------------------- what the deployment does not yet do
+
+def test_the_live_routes_do_not_yet_apply_the_disclosure_policy(live, profile):
+    # Recorded as a fact rather than aspiration: the deployed carriers answer
+    # from their own assumptions, so nothing in the live response is marked
+    # withheld. When a route renders through the profile this will change, and
+    # this test is where that shows up.
+    import information_policy as ip
+    for carrier, record in live.items():
+        assert ip.WITHHELD not in json.dumps(record), (
+            f"{carrier} now carries a withheld marker -- the deployment may be "
+            f"rendering through the profile, and this test should be updated")
+
+
+def test_mismo_carries_no_owner_in_the_live_response(live):
+    # The standard's shape, confirmed against the deployment rather than assumed.
+    assert "owner" not in live["mismo"]
+    assert "OwnerName" not in live["mismo"]
+    assert live["reso"]["OwnerName"]
+
+
+# ------------------------------- the same rows, every time, in every dialect
+
+def test_the_carriers_return_the_same_page_on_repeated_reads():
+    """LIMIT without ORDER BY takes whichever rows the engine reaches first,
+    and over a UNION ALL of two columnar sources that is not the same set
+    twice. Observed live before the fix: RESO returned account 02145189 where
+    OGC and MISMO returned 00000051, seconds apart. A client paging any carrier
+    could see a row twice or never."""
+    seen = []
+    for _ in range(3):
+        row = {}
+        for carrier, (path, dig_path) in dp.LIVE_ROUTES.items():
+            try:
+                row[carrier] = dp.dig(_get(path), dig_path)
+            except (urllib.error.URLError, socket.timeout, OSError) as exc:
+                pytest.skip(f"live surface unreachable ({carrier}): {exc}")
+        seen.append(row)
+
+    # every carrier agrees with the others, on every read
+    for i, row in enumerate(seen):
+        keys = {row["ogc"]["account"], row["reso"]["ListingKey"],
+                row["mismo"]["account"]}
+        assert len(keys) == 1, f"read {i}: carriers disagree: {keys}"
+
+    # and the answer does not move between reads
+    firsts = {r["ogc"]["account"] for r in seen}
+    assert len(firsts) == 1, f"the first row moved across reads: {firsts}"
+
+
+def test_the_projection_orders_on_a_stored_column_not_a_parsed_one():
+    """Determinism has to be cheap or it will be reverted. Ordering on account
+    means parsing twelve JSON fields across six and a half million observations
+    before picking twenty-five -- measured at twenty seconds a request, and
+    enough concurrent memory to take the host off the network. observation_id
+    is a real column in both halves of the composed view."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "cmd", "BonfyreWebAddress", "src", "main.c")) as fh:
+        src = fh.read()
+    fn = src[src.index("static int parcel_projection_sql("):]
+    fn = fn[:fn.index("\n}\n") + 3]
+    assert "ORDER BY observation_id" in fn, "the projection is not deterministic"
+    assert "ORDER BY account" not in fn, (
+        "ordering on a JSON extraction; that was measured at 20s a request")
+    # the JSON is extracted for the page, not for the estate
+    assert fn.index("LIMIT") < fn.rindex("json_extract_string") or "FROM (" in fn
+
+
+def test_the_ordering_key_is_not_served(live):
+    """An internal key projected into a carrier payload is an undeclared field,
+    and a deployment growing one of those is how one meaning becomes three
+    grammars again."""
+    for carrier, record in live.items():
+        assert "observation_id" not in record, (
+            f"{carrier} serves the ordering key")
+
+
+def test_a_carrier_page_is_answered_without_scanning_the_estate():
+    """A correct carrier nobody can wait for gets reverted. This is a ceiling,
+    not a target: the unordered page answered in under a second and the ordered
+    one costs about two."""
+    import time
+    t0 = time.time()
+    try:
+        _get(dp.LIVE_ROUTES["reso"][0])
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+    elapsed = time.time() - t0
+    assert elapsed < 8.0, f"{elapsed:.1f}s to answer a carrier page"

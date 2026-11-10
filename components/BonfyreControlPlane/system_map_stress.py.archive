@@ -1,0 +1,546 @@
+"""Executable Generation-10 owner topology and institutional replay witness.
+
+This is deliberately an integration harness, not a replacement owner.  It
+drives one observation through the real owners named by the Generation-10 map:
+
+    ForeignTwin -> WorkGraph -> Atlas context -> ProviderGraph -> Authority
+    -> native WorkGraph/EffectKernel -> ObjectFabric -> ReceiptEnvelope
+    -> EvidenceGraph -> institutional replay/backtest
+
+The harness records each hand-off and then attacks it.  In particular, a
+foreign observation never grants effect authority, a content digest never
+authenticates its producer, and evidence for an owned validation snapshot never
+becomes evidence of current-upstream completion.
+"""
+
+from __future__ import annotations
+
+import copy
+import datetime as dt
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Sequence
+
+import authority
+import evidence_graphs as evidence
+import fabric_publish
+import foreign
+import provider_graphs
+import work_graph
+
+UTC = dt.timezone.utc
+PURPOSE = "generation10-system-map-stress"
+SUBJECT = "artifact:bernstein-3880-validation-snapshot"
+LOCAL_CLAIM = "claim:authorized-local-snapshot-artifact-committed"
+SNAPSHOT_CLAIM = "claim:owned-validation-snapshot-observed-green"
+UPSTREAM_CLAIM = "claim:upstream-3880-complete-and-current-base-ready"
+CAPABILITY = "Generation10SnapshotProjection"
+SCHEMA = "bonfyre.generation10-system-map-stress.v1"
+
+REPO = Path(__file__).resolve().parents[2]
+BONFYRE = REPO / "programs" / "bonfyre" / "bonfyre"
+EFFECT_WRITER = REPO / "scripts" / "bonfyre-fs-write-effect"
+EFFECT_WATCHER = REPO / "scripts" / "bonfyre-fs-effects-watch"
+ATLAS_QUERY = REPO / "architecture" / "atlas_query.py"
+
+RECEIPT_SCHEMA = """
+CREATE TABLE IF NOT EXISTS circuit_receipts(
+  envelope_id TEXT PRIMARY KEY,
+  content_sha256 TEXT NOT NULL,
+  payload TEXT NOT NULL
+);
+"""
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+
+
+def _digest(value: Any) -> str:
+    data = value if isinstance(value, bytes) else _canonical(value)
+    return hashlib.sha256(data).hexdigest()
+
+
+def _run(argv: Sequence[str], *, env: dict[str, str]) -> str:
+    done = subprocess.run(
+        list(argv), cwd=REPO, env=env, capture_output=True, text=True, timeout=60
+    )
+    if done.returncode:
+        diagnostic = (done.stderr or done.stdout).strip().splitlines()[-1:]
+        raise RuntimeError(f"command failed ({done.returncode}): {' '.join(diagnostic)}")
+    return done.stdout
+
+
+@dataclass(frozen=True)
+class Observation:
+    event_id: str
+    source_institution: str
+    validation_base: str
+    upstream_head: str
+    issue_state: str = "open"
+    checks: str = "45 success, 10 expected skips, 0 failures, 0 incomplete"
+    rights: Sequence[str] = field(
+        default_factory=lambda: (foreign.OBSERVE, foreign.REFERENCE)
+    )
+
+    def twin(self) -> foreign.ForeignTwin:
+        return foreign.ForeignTwin(
+            remote_resource_id="bernstein/issue/3880",
+            source_institution=self.source_institution,
+            url="https://github.com/sipyourdrink-ltd/bernstein/issues/3880",
+            rights=tuple(self.rights),
+        )
+
+    def projection(self) -> dict[str, str]:
+        return {
+            "event_id": self.event_id,
+            "source_institution": self.source_institution,
+            "validation_base": self.validation_base,
+            "upstream_head": self.upstream_head,
+            "issue_state": self.issue_state,
+            "checks": self.checks,
+        }
+
+
+def default_observation() -> Observation:
+    """The materially consumed mesh counterexample, as bounded input evidence."""
+    return Observation(
+        event_id="local-c18033de2d49fbf1ac88eabd5f02",
+        source_institution="sipyourdrink-ltd/bernstein",
+        validation_base="0ff62ac908f0ebfe56bd9d00b032af415fbc8053",
+        upstream_head="72f7757222695da6e72a3ff36a8d729ecb3da105",
+    )
+
+
+def _native_state(state_root: Path) -> tuple[dict[str, str], Path]:
+    state_root.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env["BONFYRE_STATE_DIR"] = str(state_root)
+    _run((str(BONFYRE), "fabric", "init"), env=env)
+    return env, state_root / "fabric.db"
+
+
+def _bounded_context() -> dict[str, Any]:
+    stdout = _run(
+        (os.environ.get("PYTHON", "python3"), str(ATLAS_QUERY), "get", "work-graph"),
+        env=dict(os.environ),
+    )
+    answer = json.loads(stdout)
+    if answer.get("architecture") is None:
+        raise RuntimeError("bounded Atlas context did not resolve work-graph")
+    return {
+        "query": "get work-graph",
+        "bytes": len(stdout.encode("utf-8")),
+        "answer_sha256": _digest(stdout.encode("utf-8")),
+    }
+
+
+def _record_realizations(db: sqlite3.Connection, context_bytes: int) -> str:
+    provider_graphs.record_bid(
+        db,
+        capability=CAPABILITY,
+        provider="native-bonfyre-effect",
+        metric={
+            "cost": float(context_bytes),
+            "quality": 1.0,
+            "latency": 1.0,
+            "trust": 1.0,
+            "authority": 1.0,
+            "locality": 1.0,
+            "semantic_loss": 0.0,
+            "availability": 1.0,
+        },
+    )
+    # A foreign carrier can be visible and cheap without being authorized.
+    provider_graphs.record_bid(
+        db,
+        capability=CAPABILITY,
+        provider="foreign-observation-carrier",
+        metric={
+            "cost": 1.0,
+            "quality": 1.0,
+            "latency": 1.0,
+            "trust": 0.6,
+            "authority": 0.0,
+            "locality": 0.0,
+            "semantic_loss": 0.0,
+            "availability": 1.0,
+        },
+    )
+    ranked = provider_graphs.tournament(
+        db,
+        CAPABILITY,
+        weights={"cost": 0.001, "quality": 1.0, "authority": 10.0},
+    )
+    if not ranked:
+        raise RuntimeError("ProviderGraph admitted no realization")
+    return ranked[0][0]
+
+
+def admit_effect(
+    db: sqlite3.Connection,
+    *,
+    actor: str,
+    twin: foreign.ForeignTwin,
+    at: dt.datetime | None = None,
+) -> bool:
+    """AuthorityGraph alone admits effects; ForeignTwin rights never mint a grant."""
+    _ = twin  # explicit evidence input, deliberately not an authority input
+    return authority.has_authority(
+        db, actor, authority.ACT, SUBJECT, purpose=PURPOSE, at=at
+    )
+
+
+def _commit_native_effect(
+    *,
+    env: dict[str, str],
+    state_root: Path,
+    payload: dict[str, Any],
+    actor: str,
+) -> tuple[Path, dict[str, str]]:
+    projection = state_root / "projection"
+    pending = projection / "effects" / "pending"
+    pending.mkdir(parents=True, exist_ok=True)
+    input_path = state_root / "observation.json"
+    output_path = state_root / "committed-snapshot.json"
+    input_path.write_bytes(_canonical(payload) + b"\n")
+    effect_path = pending / "generation10.effect"
+    spec = {
+        "mission_id": "generation10-system-map-stress",
+        "adapter": "publish-local",
+        "target_uri": output_path.as_uri(),
+        "input_artifact_uri": input_path.as_uri(),
+        "verification_policy": "sha256",
+        "rollback_contract": "remove-created-target",
+        "authority": actor,
+    }
+    _run((str(EFFECT_WRITER), str(effect_path), _canonical(spec).decode()), env=env)
+    _run((str(EFFECT_WATCHER), "tick", str(projection)), env=env)
+    receipt_path = projection / "effects" / "committed" / "generation10.effect.receipt.json"
+    if not output_path.exists() or not receipt_path.exists():
+        raise RuntimeError("native EffectKernel did not materialize output and receipt")
+    if output_path.read_bytes() != input_path.read_bytes():
+        raise RuntimeError("native effect output differs from admitted input artifact")
+    return output_path, json.loads(receipt_path.read_text())
+
+
+def _make_envelope(
+    *,
+    work_item_id: int,
+    observation: Observation,
+    context: dict[str, Any],
+    provider: str,
+    published: fabric_publish.Published,
+    native_receipt: dict[str, str],
+    actor: str,
+) -> dict[str, Any]:
+    envelope: dict[str, Any] = {
+        "schema": "bonfyre.receipt-envelope.v1",
+        "work_item_id": work_item_id,
+        "foreign_observation_id": observation.event_id,
+        "foreign_twin_id": observation.twin().remote_resource_id,
+        "foreign_rights": list(observation.rights),
+        "provider_identity": provider,
+        "transport_identity": "native-cli",
+        "context": context,
+        "authority": {"actor": actor, "permission": authority.ACT, "subject": SUBJECT,
+                      "purpose": PURPOSE},
+        "effect": {"adapter": "publish-local", "receipt_id": native_receipt["receipt_id"],
+                   "event_id": native_receipt["event_id"]},
+        "artifact": {"identity": published.digest, "uri": published.uri,
+                     "bytes": published.bytes},
+        "evidence_claims": [LOCAL_CLAIM, SNAPSHOT_CLAIM],
+        "forbidden_claims": [UPSTREAM_CLAIM],
+    }
+    envelope["content_sha256"] = _digest(envelope)
+    envelope["envelope_id"] = f"receipt:{envelope['content_sha256']}"
+    return envelope
+
+
+def _store_envelope(db: sqlite3.Connection, envelope: dict[str, Any]) -> None:
+    db.executescript(RECEIPT_SCHEMA)
+    db.execute(
+        "INSERT OR REPLACE INTO circuit_receipts(envelope_id,content_sha256,payload)"
+        " VALUES(?,?,?)",
+        (envelope["envelope_id"], envelope["content_sha256"],
+         _canonical(envelope).decode("utf-8")),
+    )
+    db.commit()
+
+
+def _envelope_hash_valid(envelope: dict[str, Any]) -> bool:
+    measured = dict(envelope)
+    claimed = measured.pop("content_sha256", "")
+    measured.pop("envelope_id", None)
+    return claimed == _digest(measured) and envelope.get("envelope_id") == f"receipt:{claimed}"
+
+
+def _owner_consistent(db: sqlite3.Connection, envelope: dict[str, Any]) -> bool:
+    ranked = provider_graphs.tournament(
+        db, CAPABILITY,
+        weights={"cost": 0.001, "quality": 1.0, "authority": 10.0},
+    )
+    winner = ranked[0][0] if ranked else None
+    return winner == envelope.get("provider_identity")
+
+
+def replay(
+    db: sqlite3.Connection,
+    *,
+    envelope: dict[str, Any],
+    output_path: Path,
+    observation: Observation,
+) -> dict[str, Any]:
+    """Replay the recorded circuit and execute bounded hostile counterfactuals."""
+    work_item = work_graph.get(db, int(envelope["work_item_id"]))
+    native_receipt = db.execute(
+        "SELECT 1 FROM receipts WHERE id=?", (envelope["effect"]["receipt_id"],)
+    ).fetchone()
+    object_row = db.execute(
+        "SELECT digest FROM artifacts WHERE uri=?", (envelope["artifact"]["uri"],)
+    ).fetchone()
+    stored = db.execute(
+        "SELECT content_sha256 FROM circuit_receipts WHERE envelope_id=?",
+        (envelope["envelope_id"],),
+    ).fetchone()
+    actor = envelope["authority"]["actor"]
+    checks = {
+        "receipt_content_address_binds_envelope": _envelope_hash_valid(envelope),
+        "workgraph_closed_only_against_receipt": work_item.state == work_graph.SATISFIED,
+        "native_effect_receipt_exists": native_receipt is not None,
+        "objectfabric_digest_matches_effect_output": bool(object_row)
+        and object_row[0] == _digest(output_path.read_bytes()) == envelope["artifact"]["identity"],
+        "receipt_envelope_is_durable": bool(stored) and stored[0] == envelope["content_sha256"],
+        "provider_owner_agrees_with_receipt": _owner_consistent(db, envelope),
+        "authority_owner_admitted_exact_effect": admit_effect(
+            db, actor=actor, twin=observation.twin()
+        ),
+        "foreign_twin_did_not_carry_act_right": not observation.twin().may(foreign.ACT),
+        "evidence_supports_local_effect_claim": evidence.supports(
+            db, envelope["envelope_id"], LOCAL_CLAIM
+        ),
+        "snapshot_evidence_does_not_support_upstream_completion": not evidence.supports(
+            db, observation.event_id, UPSTREAM_CLAIM
+        ),
+    }
+
+    tampered = copy.deepcopy(envelope)
+    tampered["artifact"]["identity"] = "0" * 64
+
+    relabelled = copy.deepcopy(envelope)
+    relabelled["provider_identity"] = "different-producer"
+    relabelled.pop("content_sha256", None)
+    relabelled.pop("envelope_id", None)
+    relabelled["content_sha256"] = _digest(relabelled)
+    relabelled["envelope_id"] = f"receipt:{relabelled['content_sha256']}"
+
+    no_grant_actor = "foreign-observation-carrier"
+    foreign_claims_act = foreign.ForeignTwin(
+        "bernstein/issue/3880", observation.source_institution,
+        observation.twin().url, rights=(foreign.OBSERVE, foreign.ACT),
+    )
+    counterfactuals = {
+        "tampered_artifact_is_refused_at_receipt_boundary": not _envelope_hash_valid(tampered),
+        "same_artifact_relabelled_producer_is_not_same_execution": _envelope_hash_valid(relabelled)
+        and not _owner_consistent(db, relabelled),
+        "foreign_act_label_without_authority_grant_is_denied": not admit_effect(
+            db, actor=no_grant_actor, twin=foreign_claims_act
+        ),
+        "green_snapshot_remains_distinct_from_upstream_completion": observation.validation_base
+        != observation.upstream_head and observation.issue_state == "open",
+    }
+    return {
+        "verdict": "pass" if all(checks.values()) and all(counterfactuals.values()) else "fail",
+        "checks": checks,
+        "counterfactuals": counterfactuals,
+    }
+
+
+def _proof_bundle(
+    *, observation: Observation, envelope: dict[str, Any], replay_report: dict[str, Any]
+) -> dict[str, Any]:
+    proof = {
+        "schema": SCHEMA,
+        "work_item": "phase0-system-map-stress",
+        "source_event": observation.event_id,
+        "owner_trace": [
+            "ForeignTwin", "WorkGraph", "AtlasContextProvider", "ProviderGraph",
+            "AuthorityGraph", "NativeWorkGraph/EffectKernel", "ObjectFabric",
+            "ReceiptEnvelope", "EvidenceGraph", "InstitutionalReplay",
+        ],
+        "receipt_envelope": envelope,
+        "replay": replay_report,
+        "boundaries": {
+            "foreign_observation_is_not_authority": True,
+            "artifact_identity_is_not_producer_identity": True,
+            "transport_identity_is_not_producer_identity": True,
+            "provenance_is_not_claim_support": True,
+            "snapshot_validation_is_not_upstream_completion": True,
+            "successful_replay_is_not_a_new_external_effect": True,
+        },
+    }
+    proof["proof_sha256"] = _digest(proof)
+    return proof
+
+
+def _write_proof(proof: dict[str, Any], proof_path: Path | None) -> None:
+    if proof_path is not None:
+        proof_path.parent.mkdir(parents=True, exist_ok=True)
+        proof_path.write_text(json.dumps(proof, indent=2, sort_keys=True) + "\n")
+
+
+def run(
+    *,
+    state_root: Path,
+    proof_path: Path | None = None,
+    observation: Observation | None = None,
+    actor: str = "codex-provider-epoch",
+) -> dict[str, Any]:
+    state_root = state_root.resolve()
+    observation = observation or default_observation()
+    env, db_path = _native_state(state_root)
+    db = sqlite3.connect(db_path)
+    try:
+        work_graph.ensure_schema(db)
+        for plane in ("boundary-compiler", "effect-kernel"):
+            work_graph.register_plane(db, plane)
+        item_id = work_graph.enqueue(
+            db,
+            source_plane="boundary-compiler",
+            target_plane="effect-kernel",
+            item_kind="project-foreign-snapshot",
+            subject_ref=SUBJECT,
+            reason="stress Generation-10 owner boundaries",
+            source_ref=observation.event_id,
+            priority=100,
+        )
+        if item_id is None:
+            row = db.execute(
+                "SELECT id FROM work_items WHERE source_ref=? AND subject_ref=?",
+                (observation.event_id, SUBJECT),
+            ).fetchone()
+            item_id = int(row[0])
+        item = work_graph.get(db, item_id)
+        if item.state == work_graph.SATISFIED:
+            row = db.execute(
+                "SELECT payload FROM circuit_receipts ORDER BY rowid DESC LIMIT 1"
+            ).fetchone()
+            output_path = state_root / "committed-snapshot.json"
+            if row is None or not output_path.exists():
+                raise RuntimeError("satisfied work is missing its durable receipt or artifact")
+            envelope = json.loads(row[0])
+            replay_report = replay(
+                db, envelope=envelope, output_path=output_path, observation=observation
+            )
+            proof = _proof_bundle(
+                observation=observation, envelope=envelope, replay_report=replay_report
+            )
+            _write_proof(proof, proof_path)
+            return proof
+        if item.state == work_graph.OPEN:
+            work_graph.claim(db, "effect-kernel")
+        elif item.state != work_graph.LEASED:
+            raise RuntimeError(f"work cannot execute from state {item.state!r}")
+
+        context = _bounded_context()
+        selected_provider = _record_realizations(db, int(context["bytes"]))
+        authority.grant(
+            db,
+            authority.AuthorityEdge(
+                edge_id="grant:generation10-system-map-stress",
+                actor=actor,
+                permission=authority.ACT,
+                subject=SUBJECT,
+                purpose=PURPOSE,
+                scope="local-state-only",
+                evidence="run8-assigned-work",
+            ),
+        )
+        if not admit_effect(db, actor=actor, twin=observation.twin()):
+            raise PermissionError("AuthorityGraph denied the local effect")
+
+        output_path, native_receipt = _commit_native_effect(
+            env=env,
+            state_root=state_root,
+            payload=observation.projection(),
+            actor=actor,
+        )
+        work_graph.mark_effected(
+            db, item_id, actor, detail=f"native-event:{native_receipt['event_id']}"
+        )
+        published = fabric_publish.publish_file(
+            db,
+            name="generation10-system-map-stress-artifact",
+            content_path=output_path,
+            content_contract="foreign-validation-snapshot.v1",
+            dedupe=True,
+        )
+        envelope = _make_envelope(
+            work_item_id=item_id,
+            observation=observation,
+            context=context,
+            provider=selected_provider,
+            published=published,
+            native_receipt=native_receipt,
+            actor=actor,
+        )
+        _store_envelope(db, envelope)
+        work_graph.satisfy(db, item_id, actor, envelope["envelope_id"])
+
+        evidence.record_transform(
+            db,
+            source=f"foreign:{observation.twin().remote_resource_id}@{observation.validation_base}",
+            operator=selected_provider,
+            derived=published.uri,
+        )
+        for role, node in (
+            ("foreign_twin", observation.twin().remote_resource_id),
+            ("provider", selected_provider),
+            ("context", context["answer_sha256"]),
+            ("receipt", envelope["envelope_id"]),
+        ):
+            evidence.record_provenance(db, artifact=published.uri, role=role, node=node)
+        evidence.relate_evidence(
+            db, evidence=envelope["envelope_id"], kind=evidence.SUPPORTS,
+            claim=LOCAL_CLAIM,
+        )
+        evidence.relate_evidence(
+            db, evidence=observation.event_id, kind=evidence.SUPPORTS,
+            claim=SNAPSHOT_CLAIM,
+        )
+        evidence.record_times(
+            db, observation.event_id,
+            {"event_time": "2026-08-21T07:25:42Z",
+             "observation_time": "2026-08-21T07:25:42Z",
+             "retrieval_time": "2026-08-21T07:25:42Z"},
+        )
+
+        replay_report = replay(
+            db, envelope=envelope, output_path=output_path, observation=observation
+        )
+        proof = _proof_bundle(
+            observation=observation, envelope=envelope, replay_report=replay_report
+        )
+        _write_proof(proof, proof_path)
+        return proof
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--state-root", type=Path, required=True)
+    parser.add_argument("--proof", type=Path)
+    args = parser.parse_args()
+    result = run(state_root=args.state_root, proof_path=args.proof)
+    print(json.dumps({"verdict": result["replay"]["verdict"],
+                      "proof_sha256": result["proof_sha256"]}, sort_keys=True))

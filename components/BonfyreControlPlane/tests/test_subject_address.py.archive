@@ -1,0 +1,296 @@
+"""The canonical address, which was answering 200 for nothing.
+
+/s/<kind>/<id> handled three hand-written kinds and replied to every other
+subject with a page saying so -- at HTTP 200. Four hundred subjects were
+listed by /subjects, linked by the kit, and none of them resolved; the status
+line said they all did, so nothing downstream could tell.
+
+Three claims:
+
+  every subject the estate holds is addressable
+      wrong if a kind appears in the index and 404s at its own address
+
+  a miss is a miss
+      wrong if an unresolvable subject answers 200, because then a crawler, a
+      link checker and this suite all believe it resolved
+
+  the canonical address is the cheapest read, not the dearest
+      wrong if resolving a subject costs more than the surfaces that project
+      it, because then it is not the URL anyone links to
+"""
+
+from __future__ import annotations
+
+import collections
+import json
+import socket
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+import pytest
+
+HOST = "https://aurekai.live"
+TIMEOUT = 30
+
+
+def _get(path, accept="text/html"):
+    req = urllib.request.Request(HOST + path, headers={"Accept": accept})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status, r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+@pytest.fixture(scope="module")
+def index():
+    code, body = _get("/subjects?limit=1000", "application/json")
+    assert code == 200, code
+    subs = json.loads(body)["subjects"]
+    assert subs, "the index lists nothing"
+    return subs
+
+
+@pytest.fixture(scope="module")
+def by_kind(index):
+    out = collections.defaultdict(list)
+    for s in index:
+        out[s["kind"]].append(s["id"])
+    return dict(out)
+
+
+def _addr(kind, ident):
+    return "/s/%s/%s" % (urllib.parse.quote(kind, safe=""),
+                         urllib.parse.quote(ident, safe=""))
+
+
+def test_every_kind_the_index_lists_is_addressable(by_kind):
+    """A subject the estate will name in a list and will not answer for is a
+    broken link the estate generated itself."""
+    broken = []
+    for kind, ids in by_kind.items():
+        code, body = _get(_addr(kind, ids[0]))
+        if code != 200 or "No subject" in body or "not addressable" in body:
+            broken.append((kind, code))
+    assert not broken, broken
+
+
+def test_a_subject_that_does_not_exist_is_a_404():
+    code, _ = _get(_addr("Institution", "institution:no-such-thing"))
+    assert code == 404, code
+
+
+def test_the_wrong_kind_for_a_real_subject_is_a_404(by_kind):
+    """One subject reachable under many kinds would mean the canonical address
+    is not canonical."""
+    kind = next(k for k in by_kind if k != "Event")
+    code, _ = _get(_addr("Event", by_kind[kind][0]))
+    assert code == 404, (kind, code)
+
+
+def test_a_miss_never_answers_200():
+    """The soft 404 is the defect that hid the other one: a page explaining
+    that nothing was found, served with a status saying something was."""
+    for path in ("/s/Institution/institution:nope",
+                 "/s/NotAKind/whatever",
+                 "/s/Institution/"):
+        code, body = _get(path)
+        assert code != 200 or "No subject" not in body, (path, code)
+
+
+def test_an_identifier_is_validated_and_not_rewritten():
+    """It was passed through a SQL-literal sanitiser that silently dropped
+    every colon, so the id that reached the store was not the id in the URL."""
+    code, _ = _get("/s/Institution/" + urllib.parse.quote("insti tution;drop", safe=""))
+    assert code == 404, code
+
+
+def test_the_canonical_address_is_not_the_slowest_path(by_kind):
+    """Everything grows outward from the subject URL, so it has to be at least
+    as cheap as the surfaces that project it."""
+    kind, ids = next(iter(by_kind.items()))
+    subject = _addr(kind, ids[0])
+    t0 = time.time(); _get(subject); subject_ms = (time.time() - t0) * 1000
+    t0 = time.time(); _get("/_surface/internet-census", "application/json")
+    surface_ms = (time.time() - t0) * 1000
+    assert subject_ms < 3000, f"{subject_ms:.0f}ms to answer its own name"
+    assert subject_ms < surface_ms * 4, (subject_ms, surface_ms)
+
+
+def test_the_subject_page_says_what_it_is_without_reconstructing_everything(by_kind):
+    """A shell on purpose: identity, ways in, projections, relations. The
+    lenses are separate reads at their own addresses."""
+    kind = max(by_kind, key=lambda k: len(by_kind[k]))
+    code, body = _get(_addr(kind, by_kind[kind][0]))
+    assert code == 200
+    for word in ("Kind", "Identifier", "Ways in", "Projected into"):
+        assert word in body, word
+    assert len(body) < 64 * 1024, f"{len(body)} bytes for a shell"
+
+
+def test_the_index_and_the_address_agree_about_a_subject(by_kind):
+    kind = "Institution" if "Institution" in by_kind else next(iter(by_kind))
+    ident = by_kind[kind][0]
+    code, body = _get("/subjects?id=" + urllib.parse.quote(ident, safe=""),
+                      "application/json")
+    assert code == 200
+    rows = json.loads(body)["subjects"]
+    assert rows and rows[0]["id"] == ident
+    code, page = _get(_addr(kind, ident))
+    assert code == 200
+    assert str(rows[0]["addresses"]) in page, "the page and the index disagree"
+
+
+# ------------------------------------------- the subject affords, not just describes
+
+def _aperture(ident):
+    code, body = _get("/_aperture?subject=" + urllib.parse.quote(ident, safe=":"),
+                      "application/json")
+    assert code == 200, (ident, code)
+    return json.loads(body)
+
+
+def test_the_page_and_the_aperture_endpoint_cannot_disagree(by_kind):
+    """Two readings of one contract table is how a page and an endpoint come to
+    afford different things for the same subject and the same session."""
+    checked = 0
+    for kind, ids in by_kind.items():
+        ident = ids[0]
+        api = _aperture(ident)
+        code, page = _get(_addr(kind, ident))
+        assert code == 200, (kind, code)
+        withheld = api["withheld_for_authority"]
+        if withheld:
+            assert f"{withheld} further operation(s)" in page, (
+                kind, ident, withheld, "the page does not say what it withheld")
+        else:
+            assert "further operation(s)" not in page, (kind, "invented a refusal")
+        for ap in api["apertures"]:
+            assert ap["operation"] in page, (kind, ap["operation"], "offered but not shown")
+        checked += 1
+    assert checked >= 5, checked
+
+
+def test_a_withheld_operation_is_counted_rather_than_hidden(by_kind):
+    """An aperture list is a statement about this actor. Operations that exist
+    and are not offered are said out loud -- a subject with operations withheld
+    is a different thing from one with none."""
+    with_ops = [(k, ids[0]) for k, ids in by_kind.items()
+                if _aperture(ids[0])["withheld_for_authority"]]
+    assert with_ops, "no subject in this estate has a gated operation to test"
+    kind, ident = with_ops[0]
+    _, page = _get(_addr(kind, ident))
+    assert "not offered to this session" in page
+    assert "Withheld" in page
+
+
+def test_the_refusal_survives_a_subject_with_many_addresses(by_kind):
+    """The withheld notice was appended after the address list, so the subject
+    with fifty-three ways in filled the buffer first and the one page that most
+    needed to say it silently did not. A refusal must never be what overflows."""
+    widest = None
+    for kind, ids in by_kind.items():
+        code, body = _get("/subjects?id=" + urllib.parse.quote(ids[0], safe=""),
+                          "application/json")
+        if code != 200:
+            continue
+        rows = json.loads(body)["subjects"]
+        if not rows:
+            continue
+        n = rows[0]["addresses"]
+        if widest is None or n > widest[2]:
+            widest = (kind, ids[0], n)
+    assert widest and widest[2] >= 10, f"no wide subject to test: {widest}"
+    kind, ident, n = widest
+    api = _aperture(ident)
+    if not api["withheld_for_authority"]:
+        pytest.skip("the widest subject has no gated operation")
+    _, page = _get(_addr(kind, ident))
+    assert f"{api['withheld_for_authority']} further operation(s)" in page, (
+        f"{n} addresses crowded out the refusal")
+
+
+def test_an_offered_operation_links_to_its_form(by_kind):
+    """An aperture that names an operation and offers nowhere to perform it is
+    a menu entry, not an affordance."""
+    for kind, ids in by_kind.items():
+        api = _aperture(ids[0])
+        if not api["apertures"]:
+            continue
+        _, page = _get(_addr(kind, ids[0]))
+        for ap in api["apertures"]:
+            assert "/_aperture/form?subject=" in page, (kind, "offered with no form")
+        return
+    pytest.skip("no aperture is offered to an anonymous caller in this estate")
+
+
+# ------------------------------------------- what is owed, not only what may start
+
+def test_a_declared_closure_domain_dispatches_by_authored_state():
+    """closure_domain says which subject kind it covers, which table holds the
+    conditions and which column scopes them. A new domain must be a row, not a
+    code change, so nothing in the organ may name a domain."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "cmd", "BonfyreWebAddress", "src", "main.c")) as fh:
+        src = fh.read()
+    fn = src[src.index("static size_t subject_conditions("):]
+    fn = fn[:fn.index("\nstatic ")]
+    assert "closure_domain" in fn
+    for authored in ("requirement_type", "scope_field", "state_field",
+                     "satisfied_state", "subject_kind"):
+        assert authored in fn, authored
+    # the organ must not know any particular domain
+    for domain in ("'capital'", '"capital"', "'feasibility'", '"feasibility"',
+                   "funding_requirement", "world_requirement"):
+        assert domain not in fn, (domain, "the organ names a domain")
+
+
+def test_unknown_is_reported_beside_unmet_and_never_folded_into_it():
+    """Nobody asked is a different answer from blocked; collapsing the two
+    reports a wall where there is only silence."""
+    import os
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    with open(os.path.join(repo, "cmd", "BonfyreWebAddress", "src", "main.c")) as fh:
+        src = fh.read()
+    fn = src[src.index("static size_t subject_conditions("):]
+    fn = fn[:fn.index("\nstatic ")]
+    assert "UNKNOWN" in fn
+    assert "nobody has asked about" in fn
+    assert "total - met - unknown" in fn, "unresolved is not net of unknown"
+
+
+def test_a_subject_no_domain_covers_invents_no_conditions(by_kind):
+    """A door that manufactures a waiting-on section for a subject nothing
+    declares conditions for is asserting institutional state."""
+    for kind, ids in by_kind.items():
+        _, page = _get(_addr(kind, ids[0]))
+        if "Waiting on" in page:
+            # if it claims conditions, they must be real and countable
+            assert "closed," in page, (kind, "a waiting-on section with no counts")
+
+
+def test_the_declared_scopes_resolve_to_addressed_subjects():
+    """Institutional conditions keyed to an identifier with no address are the
+    same defect as a link to a page that 404s: state that points at a door
+    which does not open."""
+    code, body = _get("/subjects?limit=1000", "application/json")
+    assert code == 200
+    held = {s["id"] for s in json.loads(body)["subjects"]}
+    # the estate's own closure state must scope to subjects it addresses
+    orphans = []
+    for scope in ("institution:nightgrid", "world:nightgrid-friday-900"):
+        if scope not in held:
+            orphans.append(scope)
+    if orphans:
+        pytest.xfail(
+            "closure state is scoped to identifiers the matrix does not hold: "
+            + ", ".join(orphans)
+            + " -- nightgrid gates every authored contract via nightgrid:write "
+              "and holds grants for eight accounts, but was never bound as a subject")

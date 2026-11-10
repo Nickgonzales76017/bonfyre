@@ -1,0 +1,171 @@
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools"))
+import food_offer_observations as foo
+
+
+def test_tom_thumb_store_promotion_stays_condition_only_and_fee_unresolved():
+    receipt = {
+        "twin_id": "tom-thumb-dallas-lovers-lane-current",
+        "source_url": "https://local.tomthumb.com/tx/dallas/5809-e-lovers-ln.html",
+        "observed_at": "2026-08-24T01:42:39Z",
+        "content_sha256": "digest",
+    }
+    body = b'''<meta itemprop="latitude" content="32.85225692939164">
+    <meta itemprop="longitude" content="-96.76703480185242">
+    <meta itemprop="streetAddress" content="5809 E Lovers Ln" />
+    <meta itemprop="addressLocality" content="Dallas" />
+    <abbr itemprop="addressRegion">TX</abbr>
+    <span itemprop="postalCode">75206</span>
+    https://www.tomthumb.com/set-store.html?storeId=2642&amp;target=weeklyad
+    TO SAVE $30 YOU MUST SPEND $75 OR MORE IN A SINGLE TRANSACTION FOR YOUR FIRST ONLINE PICKUP OR DELIVERY ORDER OF QUALIFYING ITEMS PURCHASED VIA A COMPANY-OWNED CHANNEL'''
+
+    offers, locations, observations = foo.parse_tom_thumb_store(receipt, body)
+
+    assert observations and len(locations) == len(offers) == 1
+    assert locations[0]["location_id"] == "tom-thumb-store-2642"
+    assert locations[0]["fulfillment_options"] == []
+    offer = offers[0]
+    assert offer["cash_price_usd"] is None
+    assert offer["merchant_location_id"] == "tom-thumb-store-2642"
+    assert offer["effects"][0]["amount"] == "30.00"
+    assert offer["explicit_stack_pairs"] == []
+    assert "company-owned Tom Thumb web or mobile channel" in offer["effects"][0]["requires"]
+
+
+def test_location_merge_preserves_a_different_source_family(tmp_path):
+    path = tmp_path / "merchant-locations.json"
+    path.write_text('{"locations":[{"location_id":"other-store","merchant":"Other"}]}')
+
+    count = foo.merge_locations(path, [{"location_id": "tom-thumb-store-2642", "merchant": "Tom Thumb"}])
+
+    assert count == 2
+    assert [item["location_id"] for item in __import__("json").loads(path.read_text())["locations"]] == [
+        "other-store", "tom-thumb-store-2642"
+    ]
+
+
+def test_normalizer_ignores_source_summary_without_calling_it_a_fetch_failure(tmp_path):
+    result = foo.normalize([{
+        "schema": foo.SOURCE_SCHEMA,
+        "source_id": "summary-only",
+        "observations": ["source family was already summarized"],
+    }], tmp_path)
+
+    assert result == {"offers": [], "locations": [], "observations": [], "boundaries": []}
+
+
+def test_source_summary_replays_only_foreign_receipts_from_a_mixed_ledger():
+    direct = {
+        "schema": "bonfyre-foreign-observation.v1",
+        "twin_id": "target-store-1339",
+        "source_url": "https://www.target.com/sl/arlington-south/1339",
+        "observed_at": "2026-08-24T01:00:00Z",
+    }
+    corpus_receipt = {
+        "schema": foo.SOURCE_SCHEMA,
+        "source_id": "ffts-corpus",
+        "archive_url": "https://example.test/ffts.zip",
+    }
+
+    projection = foo.source_summary([corpus_receipt, direct], {
+        "observations": [], "boundaries": [],
+    })
+
+    assert projection["source_urls"] == [direct["source_url"]]
+    assert projection["observed_at"] == direct["observed_at"]
+
+
+def test_tom_thumb_store_selected_weekly_ad_keeps_multibuy_and_bogo_unallocated():
+    receipt = {
+        "twin_id": "tom-thumb-store-2642-weekly-ad-api",
+        "store_id": "2642",
+        "source_url": "https://example.test/tom-thumb-weekly-ad",
+        "observed_at": "2026-08-24T02:11:51Z",
+        "valid_to": "2026-08-25T23:59:59-04:00",
+        "content_sha256": "digest",
+    }
+    body = b'''<storefront xmlns="http://schemas.flipp.com/sfml/0.1"><body>
+      <area item-id="unit" label="Lucerne Shredded Cheese, , $1.49 EA MEMBER PRICE WHEN YOU BUY 3"/>
+      <area item-id="bundle" label="Watermelon, Cantaloupe or Melon Medley, , 3 for $10.00 member price"/>
+      <area item-id="bogo" label="Guacamole or Queso, BUY 2 GET 1 FREE MEMBER PRICE"/>
+      <area item-id="off" label="Any Store Prepared Fresh Sushi, $1 OFF MEMBER PRICE"/>
+    </body></storefront>'''
+
+    offers, locations, observations = foo.parse_tom_thumb_weekly_ad(receipt, body)
+
+    assert locations == []
+    assert observations and len(offers) == 4
+    by_id = {offer["offer_id"].rsplit("-", 1)[-1]: offer for offer in offers}
+    assert by_id["unit"]["cash_price_usd"] is None
+    assert by_id["unit"]["quantity_observation"] == {
+        "kind": "price_when_buy_quantity", "required_quantity": "3", "unit_price_usd": "1.49",
+        "price_basis": "ea", "source_term": "WHEN YOU BUY 3"
+    }
+    assert by_id["bundle"]["cash_price_usd"] is None
+    assert by_id["bundle"]["quantity_observation"]["bundle_price_usd"] == "10.00"
+    assert by_id["bundle"]["quantity_promotions"] == [{
+        "promotion_id": "tom-thumb-weekly-ad-bundle-multibuy",
+        "law": "multibuy",
+        "qualifying_item_terms": ["Watermelon, Cantaloupe or Melon Medley"],
+        "qualifying_quantity": 3,
+        "bundle_cash_price_usd": "10.00",
+        "expires_at": receipt["valid_to"],
+        "stackability_status": "not_stated",
+        "conditions": ["3 for $10.00"],
+    }]
+    assert by_id["bogo"]["quantity_observation"] == {
+        "kind": "buy_get_free", "buy_quantity": "2", "free_quantity": "1", "source_term": "BUY 2 GET 1 FREE"
+    }
+    assert by_id["bogo"]["quantity_promotions"] == [{
+        "promotion_id": "tom-thumb-weekly-ad-bogo-buy-get-free",
+        "law": "buy_x_get_y",
+        "qualifying_item_terms": ["Guacamole or Queso"],
+        "qualifying_quantity": 2,
+        "free_item_terms": ["Guacamole or Queso"],
+        "free_item_quantity": 1,
+        "expires_at": receipt["valid_to"],
+        "stackability_status": "not_stated",
+        "conditions": ["BUY 2 GET 1 FREE"],
+    }]
+    assert by_id["off"]["cash_price_usd"] is None
+    assert by_id["off"]["quantity_observation"]["kind"] == "dollar_off"
+    assert all(offer["expires_at"] == receipt["valid_to"] for offer in offers)
+    assert all(offer["explicit_stack_pairs"] == [] for offer in offers)
+
+
+def test_fiestamart_specials_do_not_join_selected_store_terms_to_dallas_location():
+    receipt = {"twin_id": "fiestamart-weekly-specials-current", "source_url": "https://www.fiestamart.com/",
+               "observed_at": "2026-08-24T02:52:00Z", "content_sha256": "digest"}
+    body = b'''<strong>Valid: 08/19 &#8211; 08/25</strong>
+    <div class="product-container"><p>Fresh Pork Riblets</p><span class="notice">*Bulk or Family Pack, In Selected Stores Only, See Weekly Circular</span><p class="price">$2.99 lb</p></div>
+    <div class="product-container"><p>Green or Red Cactus Pears</p><span class="notice">*In Selected Stores Only, See Weekly Circular</span><p class="price">4/99\xc2\xa2</p></div>
+    <div class="product-container"><p>Dr. Pepper 12 Pack, 12 oz.</p><span class="notice">*When you purchase 3 in a single transaction, Single price $6.49 ea., In Selected Stores Only, See Weekly Circular</span><p class="price">$4.97 ea</p></div>'''
+
+    offers, locations, observations = foo.parse_fiestamart_weekly_specials(receipt, body)
+
+    assert locations == [] and observations and len(offers) == 3
+    pork, pears, soda = offers
+    assert pork["cash_price_usd"] == "2.99"
+    assert "merchant_location_id" not in pork
+    assert pears["cash_price_usd"] is None
+    assert pears["quantity_promotions"][0]["bundle_cash_price_usd"] == "0.99"
+    assert soda["cash_price_usd"] is None
+    assert soda["quantity_promotions"][0]["law"] == "price_when_buy_quantity"
+    assert soda["quantity_promotions"][0]["unit_cash_price_usd"] == "4.97"
+    assert all("selected stores" in item["geography"].lower() for item in offers)
+
+
+def test_fiestamart_store_identity_remains_separate_from_weekly_specials():
+    receipt = {"twin_id": "fiestamart-store-34-current", "source_url": "https://example.test/store-34",
+               "observed_at": "2026-08-24T02:52:00Z", "content_sha256": "digest"}
+    body = b'''singleStore = {"title":"Store #34","location":{"lat":"32.710488","lng":"-96.803319"},"address":"3030 S Lancaster, Dallas, TX, 75216"};'''
+
+    offers, locations, observations = foo.parse_fiestamart_store(receipt, body)
+
+    assert offers == [] and observations and len(locations) == 1
+    assert locations[0]["location_id"] == "fiestamart-store-34"
+    assert locations[0]["address"] == "3030 S Lancaster, Dallas, TX, 75216"

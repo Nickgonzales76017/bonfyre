@@ -1,0 +1,269 @@
+"""Archived Python DomainProfile; active owner is domain-profile.mjs and schemas/control/domain-profile.cue.
+
+The estate already answers OGC, RESO and MISMO for the same Tarrant parcel row.
+That works, and it works undeclared: each carrier holds its own field names, so
+the claim "one semantic state, several grammars" is true by construction today
+and would stay true if the three drifted apart tomorrow. Nothing detects that.
+
+A DomainProfile makes the shared meaning the declared thing and the grammars its
+projections. Two consequences are enforced below:
+
+  * A projection maps declared semantic fields to carrier names. A carrier that
+    projects a field the profile never declared raises at build time, because
+    that field came from somewhere other than the shared meaning and is the
+    first step of the drift this exists to prevent.
+
+  * Disclosure is applied to the semantic record *before* projection, so a field
+    withheld from an audience is withheld in every grammar. Applying policy per
+    carrier is how one route leaks what another refuses -- and with three
+    carriers over one row, that mistake is invisible until someone compares them.
+
+Forbidden inferences, falsified by the tests beside this file:
+  a domain profile existing -> that domain's external standards being satisfied
+  a shared profile          -> equivalent obligations across its domains
+  a carrier projecting      -> the field being disclosable in that carrier
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Optional
+
+import information_policy as ip
+
+
+class ProfileError(ValueError):
+    """A projection that does not correspond to the profile's declared meaning."""
+
+
+@dataclass(frozen=True)
+class CarrierProjection:
+    """One industry grammar's view of a profile.
+
+    `mapping` is semantic-field -> carrier-field. A semantic field absent from
+    the mapping is simply not carried by this grammar, which is normal: MISMO
+    has no place for an owner name and saying so is more honest than inventing
+    one. A carrier field whose semantic source is undeclared is an error.
+    """
+    carrier: str
+    standard: str
+    mapping: dict[str, str]
+    container: str = ""
+
+    def carried_fields(self) -> frozenset[str]:
+        return frozenset(self.mapping)
+
+
+@dataclass
+class DomainProfile:
+    """A domain's shared meaning, plus the grammars it may be projected into."""
+    name: str
+    semantic_fields: frozenset[str]
+    evidence_requirements: frozenset[str] = frozenset()
+    projections: dict[str, CarrierProjection] = field(default_factory=dict)
+    policy: Optional[ip.InformationPolicy] = None
+
+    def project_into(self, carrier: str, standard: str, mapping: dict[str, str],
+                     container: str = "") -> "DomainProfile":
+        undeclared = set(mapping) - set(self.semantic_fields)
+        if undeclared:
+            raise ProfileError(
+                f"carrier {carrier!r} projects field(s) {sorted(undeclared)} that "
+                f"profile {self.name!r} does not declare -- a grammar may rename "
+                f"the shared meaning and may not add to it")
+        self.projections[carrier] = CarrierProjection(carrier, standard, mapping, container)
+        return self
+
+    # ------------------------------------------------------------------ render
+
+    def render(self, record: dict[str, Any], carrier: str, *,
+               audience: str = "public") -> dict[str, Any]:
+        """Project one semantic record into one carrier's grammar.
+
+        Disclosure runs first, on the semantic record, so every carrier withholds
+        the same field for the same audience. A carrier that applied its own
+        policy afterwards would be a second answer to a question this profile
+        already answered.
+        """
+        proj = self.projections.get(carrier)
+        if proj is None:
+            raise ProfileError(f"profile {self.name!r} has no {carrier!r} projection")
+
+        disclosed = (self.policy.project(record, audience)
+                     if self.policy is not None else dict(record))
+
+        out: dict[str, Any] = {}
+        for semantic_name, carrier_name in proj.mapping.items():
+            if semantic_name not in disclosed:
+                continue
+            value = disclosed[semantic_name]
+            if isinstance(value, dict) and value.get(ip.WITHHELD):
+                # Withheld travels into the grammar as a marker rather than as a
+                # dropped key, for the same reason it does semantically: an
+                # absent key in RESO reads as "this listing has no owner name".
+                out[carrier_name] = {ip.WITHHELD: True, "reason": value["reason"]}
+            else:
+                out[carrier_name] = value
+        return {"standard": proj.standard, "container": proj.container,
+                "fields": out} if proj.container else {"standard": proj.standard,
+                                                       "fields": out}
+
+    def withheld_in(self, rendered: dict[str, Any]) -> list[str]:
+        return sorted(k for k, v in rendered["fields"].items()
+                      if isinstance(v, dict) and v.get(ip.WITHHELD))
+
+    def semantic_agreement(self, record: dict[str, Any], carriers: list[str], *,
+                           audience: str = "public") -> dict[str, set]:
+        """For each semantic field, the set of values every carrier rendered.
+
+        A field whose set has more than one member means two grammars disagree
+        about the same fact -- the failure that "one state, many carriers" is
+        supposed to make impossible, and which nothing else in the estate checks.
+        """
+        agreement: dict[str, set] = {}
+        for carrier in carriers:
+            proj = self.projections[carrier]
+            rendered = self.render(record, carrier, audience=audience)
+            for semantic_name, carrier_name in proj.mapping.items():
+                if carrier_name not in rendered["fields"]:
+                    continue
+                value = rendered["fields"][carrier_name]
+                key = (ip.WITHHELD if isinstance(value, dict) and value.get(ip.WITHHELD)
+                       else value)
+                agreement.setdefault(semantic_name, set()).add(key)
+        return agreement
+
+    def disagreements(self, record: dict[str, Any], carriers: list[str], *,
+                      audience: str = "public") -> list[str]:
+        return sorted(name for name, values
+                      in self.semantic_agreement(record, carriers, audience=audience).items()
+                      if len(values) > 1)
+
+
+# ------------------------------------------------------- the parcel profile
+
+def parcel_profile(policy: Optional[ip.InformationPolicy] = None) -> DomainProfile:
+    """The real profile behind this estate's live OGC, RESO and MISMO answers.
+
+    Field names are taken from the responses the public surface actually serves,
+    not from the standards in the abstract -- a profile that matched the spec and
+    not the deployment would be a fourth grammar rather than a description of the
+    three that exist.
+    """
+    p = DomainProfile(
+        name="parcel",
+        semantic_fields=frozenset({
+            "account", "address", "city", "postal", "owner", "year_built",
+            "living_area", "lot_sqft", "land_value", "total_value",
+            "beds", "baths", "source_id", "territory",
+            "owner_mailing_address",
+        }),
+        evidence_requirements=frozenset({"assessment_roll_receipt"}),
+        policy=policy,
+    )
+    # source_id and territory are provenance rather than description: which
+    # observed source produced the row, and which county roll it came from.
+    # Only OGC carries them, which is honest -- neither RESO nor MISMO has a
+    # place to say where a record was observed.
+    p.project_into("ogc", "OGC API Features", {
+        "account": "account", "address": "address", "city": "city",
+        "postal": "postal", "owner": "owner", "year_built": "year_built",
+        "living_area": "living_area", "lot_sqft": "lot_sqft",
+        "land_value": "land_value", "total_value": "total_value",
+        "beds": "beds", "baths": "baths",
+        "source_id": "source_id", "territory": "territory",
+    }, container="FeatureCollection")
+    p.project_into("reso", "RESO Web API", {
+        "account": "ListingKey", "address": "UnparsedAddress", "city": "City",
+        "postal": "PostalCode", "owner": "OwnerName", "year_built": "YearBuilt",
+        "living_area": "LivingArea", "lot_sqft": "LotSizeSquareFeet",
+        "land_value": "LandValue", "total_value": "TaxAssessedValue",
+        "beds": "BedroomsTotal", "baths": "BathroomsTotalInteger",
+    })
+    # MISMO carries the property, not the party: there is deliberately no owner
+    # mapping. An empty column would have been the easy answer and a false one.
+    # It also carries no lot size or room counts, which is the standard's shape
+    # rather than an omission of ours.
+    p.project_into("mismo", "MISMO 3.4", {
+        "account": "account", "address": "address", "city": "city",
+        "postal": "postal", "year_built": "year_built",
+        "living_area": "living_area", "land_value": "land_value",
+        "total_value": "total_value",
+    }, container="MESSAGE.DEAL_SETS.SUBJECT_PROPERTIES")
+    return p
+
+
+# The live deployment this profile describes. Kept here rather than in the test
+# so the profile and the routes it claims to describe stay in one place.
+LIVE_SURFACE = "https://aurekai.life"
+LIVE_ROUTES = {
+    "ogc": ("/ogc/collections/parcels/items", ("properties_rows", 0)),
+    "reso": ("/reso/Property", ("value", 0)),
+    "mismo": ("/mismo/subject-property",
+              ("MESSAGE", "DEAL_SETS", "SUBJECT_PROPERTIES", 0)),
+}
+
+
+def dig(payload, path):
+    """Walk a response to the first record, by the path its carrier uses."""
+    node = payload
+    for step in path:
+        node = node[step]
+    return node
+
+
+# ---------------------------------------------------------------- live profile
+
+def live_profile(policy: Optional[ip.InformationPolicy] = None) -> DomainProfile:
+    """The machine simulcast of a live occurrence.
+
+    One semantic moment, projected into the grammars the open web already reads:
+    CloudEvents for the event envelope, ActivityPub for social announcement,
+    ATProto for typed records, and MCP for an agent asking what is happening.
+
+    The point of routing this through a profile rather than four emitters is the
+    same as for parcels: four hand-written emitters cannot disagree visibly, and
+    a disclosure decision made per carrier is a disclosure decision made four
+    times. Here it matters more, because a live track carries speaker identity
+    and location -- a field withheld on the social carrier and shipped on the
+    machine one would be a leak nobody would notice.
+    """
+    p = DomainProfile(
+        name="live-moment",
+        semantic_fields=frozenset({
+            "occurrence", "at_ms", "kind", "value", "speaker", "source",
+        }),
+        evidence_requirements=frozenset({"media_clock_receipt"}),
+        policy=policy,
+    )
+    p.project_into("cloudevents", "CloudEvents 1.0", {
+        "occurrence": "subject", "kind": "type", "value": "data",
+        "at_ms": "time", "source": "source",
+    })
+    # ActivityPub announces; it carries no media clock, because a social
+    # timeline has no place for an offset into a stream.
+    p.project_into("activitypub", "ActivityPub", {
+        "occurrence": "context", "value": "content", "speaker": "attributedTo",
+        "kind": "type",
+    })
+    p.project_into("atproto", "ATProto", {
+        "occurrence": "subject", "kind": "$type", "value": "text",
+        "speaker": "did", "at_ms": "createdAt",
+    })
+    p.project_into("mcp", "MCP", {
+        "occurrence": "resource", "kind": "kind", "value": "value",
+        "at_ms": "at_ms", "speaker": "speaker", "source": "source",
+    })
+    return p
+
+
+def moment_record(occurrence: str, event) -> dict:
+    """One SemanticEvent as a flat semantic record this profile can render."""
+    return {
+        "occurrence": occurrence,
+        "at_ms": event.at_ms,
+        "kind": event.kind,
+        "value": event.value,
+        "speaker": event.speaker,
+        "source": event.source,
+    }

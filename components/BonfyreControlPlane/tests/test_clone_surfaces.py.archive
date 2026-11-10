@@ -1,0 +1,812 @@
+"""Archived Python witness: native Bun parity is clone-surfaces.test.mjs.
+
+Seven surfaces, each borrowing one market interface's behaviour and reading this
+estate's own live paths. These tests fail if a surface stops being served, if an
+endpoint it depends on stops answering, if a page loses the refusal handling that
+keeps a gated pane from reporting "loading" forever, or if a verb chip ever
+becomes something that posts.
+
+Network tests. They skip when the surface is unreachable rather than passing on
+a fixture.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import sys
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+
+TIMEOUT = 20
+HOSTS = ("life", "live", "shop", "work")
+
+# surface -> (the paths its page fetches, the interaction it borrows)
+CLONES = {
+    # discover derives its pattern from the host, so the literal path is not
+    # in the page; the probe below still checks one real instance answers.
+    "discover": (["/_surface/night-<territory>"], "vertical short-video feeds"),
+    # board and stage derive the pattern from the host the same way discover
+    # does, so the literal path is not in the page; the probes below still
+    # check a real instance answers.
+    "board":    (["/_surface/night-<territory>"], "visual pin boards"),
+    # community reads the ForeignTwinGraph itself rather than a CMS type that
+    # summarised it in prose
+    "community": (["/foreign/edges", "/observations"],
+                  "federated instance directories"),
+    "listings": (["/_surface/capabilities", "/capability", "/ucp/catalog",
+                  "/acp/products", "/mpp/quote?capability="],
+                 "faceted long-tail listing market"),
+    "parcels":  (["/property/search?q=", "/property/parcel?account=",
+                  "/property/market?city=", "/property/act?account="],
+                 "property and local-availability search"),
+    "inbox":    (["/_surface/funding"], "issue and obligation trackers"),
+    "channels": (["/events", "/observations", "/_surface/capabilities",
+                  "/_surface/federations"], "stream -> topic team conversation"),
+    "stage":    (["/_surface/night-<territory>", "/_surface/night-events"],
+                 "live-room layout — channel rail, stage, side track, theatre mode"),
+}
+
+
+def _get(host: str, path: str):
+    req = urllib.request.Request(f"https://aurekai.{host}{path}",
+                                 headers={"Accept": "*/*"})
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        return r.status, r.read().decode("utf-8", "replace")
+
+
+def _try(host: str, path: str):
+    try:
+        return _get(host, path)
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"aurekai.{host}{path} unreachable: {exc}")
+
+
+def _page(name: str) -> str:
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        return fh.read()
+
+
+def _descriptor(name: str) -> dict:
+    with open(os.path.join(SURFACES, name + ".json")) as fh:
+        return json.load(fh)
+
+
+# ------------------------------------------------- every surface is served
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_the_surface_is_served_on_every_host(name):
+    for host in HOSTS:
+        code, body = _try(host, "/" + name)
+        assert code == 200, f"aurekai.{host}/{name} -> {code}"
+        assert "<html" in body.lower()
+
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_the_endpoints_the_page_reads_actually_answer(name):
+    paths, _target = CLONES[name]
+    for p in paths:
+        probe = (p.replace("<territory>", "live") if "<territory>" in p
+                 else p + ("BELKNAP" if p.endswith("q=")
+                           else "00000051" if p.endswith("account=")
+                           else "026" if p.endswith("city=")
+                           else "parcel-underwrite" if p.endswith("capability=")
+                           else ""))
+        code, _ = _try("live", probe)
+        if code == 403:
+            # A gated read is an answer, not an outage — but only if the surface
+            # declared it. An undeclared 403 is a pane reporting "loading" to a
+            # person forever.
+            observed = json.dumps(_descriptor(name).get("observed_2026_09_04", {}))
+            assert "403" in observed, (
+                f"{name} reads {probe}, which refuses, and the descriptor does not "
+                f"record that it does")
+            continue
+        assert code == 200, f"{name} reads {probe} -> {code}"
+
+
+# --------------------------------- each page is self-contained after inlining
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_no_page_depends_on_an_asset_the_organ_will_not_serve(name):
+    code, body = _try("live", "/" + name)
+    # The organ serves named surfaces, not arbitrary files under /surfaces/.
+    # A shared kit file would 404 and take the whole page with it.
+    assert "/surfaces/_kit" not in body, f"{name} references a kit file"
+    assert "window.K = K" in body, f"{name} lost its inlined kit"
+
+
+def test_the_kit_asset_really_is_unserved():
+    code, _ = _try("live", "/surfaces/_kit.js")
+    assert code == 404, (
+        "the kit is now served, so inlining it into seven pages is no longer "
+        "necessary and could be undone")
+
+
+# --------------------------------- refused, empty and failed stay distinct
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_every_page_handles_a_refusal_rather_than_hanging(name):
+    body = _page(name)
+    assert "kind: 'refused'" in body or "k-refused" in body
+    assert "needs an admitted session" in body
+    assert 'href="/login"' in body
+    # And the three outcomes are separate: a refusal is not an emptiness.
+    assert "empty projection" in body or "k-empty" in body
+
+
+def test_the_work_projection_is_actually_gated_so_that_path_is_reachable():
+    code, _ = _try("work", "/_surface/night-work")
+    assert code == 403, (
+        "night-work now answers; the refusal path in /discover is no longer "
+        "exercised by the deployment and this test should change")
+
+
+# ------------------------------------------- an action is offered, never sent
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_no_surface_submits_anything(name):
+    body = _page(name)
+    assert "hx-post" not in body
+    assert "method=\"post\"" not in body.lower()
+    # /parcels carries a search form, which is a query and not an effect.
+    forms = re.findall(r"<form[^>]*>", body)
+    for f in forms:
+        assert 'role="search"' in f, f"{name} carries a non-search form: {f}"
+
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_verbs_are_rendered_as_affordances(name):
+    body = _page(name)
+    assert "k-verb" in body
+    assert "offered here" in body  # the chip's own title text
+
+
+# ------------------------------------------------ each page names its source
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_the_page_names_the_paths_that_produced_it(name):
+    body = _page(name)
+    assert "k-source" in body, f"{name} does not name its source"
+    paths, _ = CLONES[name]
+    for p in paths:
+        # discover builds its path from the host, so the page carries the
+        # prefix and the runtime supplies the territory. Every other surface
+        # names its paths literally.
+        if "<territory>" in p:
+            # the page carries the prefix and the runtime supplies the
+            # territory, which is the whole point of one page over four hosts
+            assert "'/_surface/night-'" in body or "'/_surface/' + name" in body, (
+                f"{name} does not build its pattern from the host")
+            continue
+        assert p in body, f"{name} does not name {p}"
+
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_the_descriptor_matches_the_page(name):
+    d = _descriptor(name)
+    paths, target = CLONES[name]
+    assert d["interaction_target"] == target
+    assert d["reads"] == paths
+    assert d["forbidden_inference"], f"{name} declares nothing it cannot imply"
+    assert "behaviour only" in d["borrowed"]
+
+
+# ------------------------------- the market claims each surface rests on
+
+def test_listings_shows_one_service_book_through_three_carriers():
+    seen = {}
+    for path, key in (("/capability", "capabilities"),
+                      ("/ucp/catalog", "products"),
+                      ("/acp/products", "products")):
+        code, body = _try("live", path)
+        assert code == 200
+        rows = json.loads(body)[key]
+        seen[path] = {(r.get("name") or r["descriptor"]["name"]) for r in rows}
+    # One book, three grammars: the same capability names in each.
+    assert len(set(map(frozenset, seen.values()))) == 1, seen
+
+
+def test_parcels_searches_a_roll_larger_than_any_page_could_list():
+    code, body = _try("live", "/property/market?city=026")
+    assert code == 200
+    m = re.search(r"Parcels observed here</dt><dd>([\d,]+)</dd>", body)
+    assert m, "the market anchor no longer reports its parcel count"
+    assert int(m.group(1).replace(",", "")) > 100_000
+
+
+def test_channels_reads_events_the_estate_actually_emitted():
+    code, body = _try("live", "/events")
+    assert code == 200
+    events = json.loads(body)
+    assert events
+    for e in events:
+        assert e["specversion"] == "1.0"
+        assert e["type"].startswith("org.bonfyre.")
+        assert e["source"] and e["time"]
+
+
+# ------------------------------- a live surface nobody links to is orphaned
+
+def _nav_links(host: str) -> dict:
+    code, body = _try(host, "/")
+    assert code == 200
+    # The compiled pages wear the nav as a bare <nav>; the landing page carries
+    # the same authored links as an identified sitemap. The invariant is that
+    # every served surface is reachable, not that the tag has no attributes.
+    nav = re.search(r"<nav[^>]*>(.*?)</nav>", body, re.S)
+    assert nav, f"aurekai.{host} root has no nav"
+    return {label: href for href, label in
+            re.findall(r'href="([^"]+)">([^<]+)</a>', nav.group(1))}
+
+
+@pytest.mark.parametrize("name", sorted(CLONES))
+def test_every_surface_is_reachable_from_the_root_nav(name):
+    links = _nav_links("live")
+    assert "/" + name in links.values(), (
+        f"/{name} is served and nothing links to it; a live surface nobody can "
+        f"reach is orphaned, not shipped")
+
+
+def test_the_authored_nav_reaches_every_host():
+    counts = {h: len(_nav_links(h)) for h in HOSTS}
+    assert len(set(counts.values())) == 1, counts
+    # The nav is authored once as site_nav CMS rows and projected into every
+    # territory, rather than compiled per host.
+    assert counts["live"] >= 16, counts
+
+
+def test_the_territory_surface_is_linked_too():
+    assert "/territory" in _nav_links("live").values()
+
+
+def test_every_navigated_path_actually_resolves():
+    for label, href in _nav_links("live").items():
+        code, _ = _try("live", href)
+        assert code in (200, 302), f"nav offers {label} -> {href} -> {code}"
+
+
+# ---------------------- the commerce chain, demonstrated on the live gate
+
+def test_a_quote_is_priced_and_holds_nothing():
+    code, body = _try("live", "/mpp/quote?capability=parcel-underwrite")
+    assert code == 200
+    q = json.loads(body)
+    assert q["priced"] is True
+    assert q["amount"] and q["currency"] == "USD"
+    # The quote says so itself, on the wire.
+    assert "not a reservation" in q["note"]
+
+
+def test_the_resource_still_gates_after_a_quote():
+    code, body = _try("live", "/capability/parcel-underwrite")
+    assert code == 402, "the gate is the answer; a 200 here would mean it stopped gating"
+    gate = json.loads(body)
+    accepts = gate["accepts"][0]
+    assert accepts["scheme"] and accepts["network"]
+    assert accepts["maxAmountRequired"]
+
+
+def test_the_gate_admits_it_cannot_collect():
+    _code, body = _try("live", "/capability/parcel-underwrite")
+    s = json.loads(body)["settlement"]
+    # It hands you the invoice and says plainly there is no facilitator, rather
+    # than treating a presented payment as settled.
+    assert s["facilitator_configured"] is False
+    assert "refuses rather than treating a payment as settled" in s["note"]
+
+
+def test_the_quote_amount_and_the_gate_amount_are_the_same_money():
+    _c, q = _try("live", "/mpp/quote?capability=parcel-underwrite")
+    _c2, g = _try("live", "/capability/parcel-underwrite")
+    quoted = float(json.loads(q)["amount"])
+    required = json.loads(g)["accepts"][0]
+    decimals = int(required["extra"]["decimals"])
+    assert float(required["maxAmountRequired"]) / (10 ** decimals) == quoted
+
+
+def test_every_priced_capability_quotes_and_gates():
+    _c, body = _try("live", "/capability")
+    for cap in json.loads(body)["capabilities"]:
+        if not cap.get("priced"):
+            continue
+        code, q = _try("live", "/mpp/quote?capability=" + cap["name"])
+        assert code == 200, cap["name"]
+        assert float(json.loads(q)["amount"]) == float(cap["priceUsd"]), cap["name"]
+        gate_code, _ = _try("live", cap["resource"])
+        assert gate_code == 402, f"{cap['name']} is priced and does not gate"
+
+
+def test_the_listings_page_walks_that_chain():
+    body = _page("listings")
+    assert "/mpp/quote?capability=" in body
+    assert "The gate (x402)" in body
+    assert "facilitator_configured" in body
+    # And it says what an unpriced capability is, which is the other half.
+    assert "not for sale, which is not the same as free" in body
+
+
+# --------------------- the surfaces carry real interaction, not styled lists
+
+# surface -> (donor stylesheet it loads, classes that are the donor's own)
+DONORS = {
+    "channels": ("donor-zulip.css",
+                 ["narrow-filter", "subscription_block", "topic-list-item", "topic-box",
+                  "recipient_row", "message_header_stream", "message_row", "messagebox",
+                  "message_content", "left-sidebar-navigation-list", "new_message_textarea"]),
+    "discover": ("donor-pixelfed.css",
+                 ["timeline-status-component", "card shadow-sm", "media align-items-center",
+                  "username", "text-lighter", "reaction-liked-by", "force-dark-mode",
+                  "btn btn-light font-weight-bold rounded-pill"]),
+    "community": ("donor-lemmy.css",
+                  ["post-listing", "btn-animate", "md-div", "col flex-grow-1",
+                   "col-auto small text-muted ps-1", "data-bs-theme"]),
+    "board": ("donor-pinry.css",
+              ["pins-container", "grid pin-masonry", "pin-card grid-item", "pin-footer",
+               "grid-sizer", "gutter-sizer", "pin-preview-image", "pin-info"]),
+    "stage": ("donor-mobilizon.css",
+              ["mbz-card", "snap-center", "datetime-container", "datetime-container-header",
+               "text-violet-title", "bg-primary"]),
+    "listings": ("donor-nextcommerce.css",
+                 ["line-clamp-2", "backdrop-blur-md", "bg-blue-600", "aspect-square",
+                  "grid-flow-row", "rounded-full border bg-white/70"]),
+}
+
+# Only these projects may have their code adapted. Section 71 of the estate
+# document classifies the reference estate by licence and the DONOR row is the
+# one whose code may be adapted; Pixelfed and Mobilizon are here because the
+# operator states they own that code.
+ALLOWED_DONORS = {
+    "donor-zulip.css": "zulip",
+    "donor-pixelfed.css": "pixelfed",
+    "donor-pinry.css": "pinry",
+    "donor-mobilizon.css": "mobilizon",
+    "donor-nextcommerce.css": "nextcommerce",
+    "donor-masonry.js": None,      # Masonry, MIT, carries its notice in the file
+    "donor-maplibre.css": None,
+    "donor-maplibre.js": None,
+}
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_the_surface_loads_the_donors_own_stylesheet(name):
+    css, _ = DONORS[name]
+    page = _page(name)
+    assert "/assets/" + css in page, f"{name} does not load {css}"
+    # and the estate actually serves it
+    code, body = _try("live", "/assets/" + css)
+    assert code == 200, f"/assets/{css} -> {code}"
+    assert len(body) > 10_000, f"{css} is {len(body)} bytes; that is not a real stylesheet"
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_the_surface_uses_the_donors_own_class_names(name):
+    _, classes = DONORS[name]
+    page = _page(name)
+    missing = [c for c in classes if c not in page]
+    assert not missing, (
+        f"{name} is missing {missing} -- these are the donor's own class names, and without "
+        f"them the donor stylesheet is loaded but not actually driving the page")
+
+
+@pytest.mark.parametrize("css", sorted(ALLOWED_DONORS))
+def test_every_donor_asset_is_attributed(css):
+    path = os.path.join(REPO, "site", "matrix", css)
+    assert os.path.exists(path), f"{css} is routed and not on disk"
+    with open(path) as fh:
+        head = fh.read(2000)
+    assert head.startswith("/*!"), f"{css} carries no attribution header"
+    licence_dir = ALLOWED_DONORS[css]
+    if licence_dir:
+        d = os.path.join(REPO, "site", "matrix", "DONOR-LICENSES", licence_dir)
+        assert os.path.isdir(d), f"{css} names no licence directory at {d}"
+        assert os.listdir(d), f"{d} is empty"
+        assert any(f.startswith("LICENSE") or f == "COPYING" for f in os.listdir(d)), (
+            f"{d} holds no licence text")
+        assert "COMMIT" in os.listdir(d), f"{d} does not record which commit was vendored"
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_a_donor_asset_is_versioned_so_a_rebuild_is_not_served_stale(name):
+    page = _page(name)
+    for ref in re.findall(r"/assets/(donor-[a-z0-9.-]+\.(?:css|js))(\?v=[0-9a-f]+)?", page):
+        assert ref[1], f"{name} loads {ref[0]} with no version; a rebuilt asset would be cached"
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_the_page_says_which_project_it_borrowed_from(name):
+    page = _page(name)
+    head = page[:4000]
+    assert "DONOR-LICENSES" in head, (
+        f"{name} does not name where the donor's licence is kept")
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_motion_respects_the_reduced_motion_preference(name):
+    body = _page(name)
+    if "animation" in body or "transition" in body:
+        assert "prefers-reduced-motion" in body, (
+            f"{name} animates and never asks whether motion is wanted")
+
+
+def test_business_mode_is_a_capital_plane_and_not_an_app_inventory():
+    body = _page("territory")
+    # Listing installed apps and their doctype counts told a reader nothing a
+    # decision rests on. The plane carries what does.
+    assert "Capital reachability" in body
+    assert "irreversible" in body and "reversibility" in body
+    assert "capacity_state" in body or "cap-EVIDENCED" in body
+    assert "frappe-apps" not in body, "business mode still reads the app inventory"
+    assert "doctype" not in body.replace("<!doctype html>", "")
+
+
+def test_the_capital_plane_reads_what_the_deployment_serves():
+    for name in ("capital-routes", "capital-transformations", "funding"):
+        code, body = _try("work", "/_surface/" + name)
+        assert code == 200, name
+        assert "surface-record" in body, f"{name} serves no records"
+
+
+def test_transformations_carry_reversibility_and_a_horizon():
+    _c, body = _try("work", "/_surface/capital-transformations")
+    recs = re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)
+    assert len(recs) >= 10
+    seen = set()
+    for r in recs:
+        fields = dict(zip(re.findall(r"<dt>([^<]+)</dt>", r),
+                          re.findall(r"<dd>([^<]*)</dd>", r)))
+        assert fields["reversibility"], fields
+        assert fields["duration_months"] != "", fields
+        seen.add(fields["reversibility"])
+    # All three postures are represented, which is what makes the axis worth
+    # rendering as an axis.
+    assert {"reversible", "costly", "irreversible"} <= seen, seen
+
+
+def test_routes_say_whether_capacity_is_evidenced_or_merely_unknown():
+    _c, body = _try("work", "/_surface/capital-routes")
+    recs = re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)
+    states = set()
+    for r in recs:
+        f = dict(zip(re.findall(r"<dt>([^<]+)</dt>", r),
+                     re.findall(r"<dd>([^<]*)</dd>", r)))
+        states.add(f["capacity_state"])
+    assert "UNKNOWN" in states, states
+    # UNKNOWN is not zero, and the estate says so in its own notes.
+    assert "EVIDENCED" in states, states
+
+
+def test_community_reads_the_federation_rather_than_a_scoreboard():
+    body = _page("community")
+    assert "federations" in body
+    assert "depth" in body.lower()
+    assert "publishes here" in _live_federation_text() or "publishes here" in body
+
+
+# ------------------------------------- channels: four streams, four outcomes
+
+def test_channels_reads_four_streams_and_keeps_their_outcomes_apart():
+    d = _descriptor("channels")
+    assert sorted(d["streams"]) == ["capabilities", "federation", "occurrences", "sources"]
+    for path in d["streams"].values():
+        code, _ = _try("live", path)
+        assert code == 200, f"{path} answered {code}"
+    page = _page("channels")
+    # One refusal must not empty the page: each stream renders its own note in
+    # place of its own topics.
+    # one stream refusing empties one stream, never the page: the rail marks it
+    # and the middle column offers the session
+    assert "K.note(res, s.id)" in page
+    assert "refused, needs a session" in page
+    assert "needs an admitted session" in page
+
+
+def test_channels_marks_a_topic_read_rather_than_handled():
+    page = _page("channels")
+    assert "bonfyre_channels_seen" in page
+    assert "new since you last opened this topic" in page
+    forbidden = " ".join(_descriptor("channels")["forbidden_inference"])
+    assert "a read topic -> a handled one" in forbidden
+
+
+def test_channels_sources_stream_admits_it_has_no_time():
+    # /observations carries no timestamp. A feed that invented an ordering there
+    # would be the quietest lie on the page.
+    code, body = _try("live", "/observations")
+    assert code == 200
+    rows = json.loads(body)["conflicts"]
+    assert rows and "time" not in rows[0] and "observed_at" not in rows[0]
+    assert "no time recorded" in _page("channels")
+
+
+# ---------------------------------------------- stage: a room, not a broadcast
+
+def test_the_stage_reads_rooms_that_publish_about_themselves():
+    code, body = _try("live", "/_surface/night-live")
+    assert code == 200
+    recs = re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)
+    assert len(recs) >= 4
+    fields = {f for r in recs for f in re.findall(r"<dt>([^<]*)</dt>", r)}
+    assert {"name", "tonight_status", "capacity_note", "safety_note"} <= fields
+
+
+def test_the_stage_says_on_the_stage_that_there_is_no_video():
+    page = _page("stage")
+    assert "No video" in page and "publishes status, not pixels" in page
+    forbidden = " ".join(_descriptor("stage")["forbidden_inference"])
+    assert "a stage -> a video stream" in forbidden
+
+
+def test_the_fill_meter_is_parsed_from_the_rooms_own_sentence():
+    # "220 capacity, currently 40 percent" is the room's own line. A meter that
+    # looked counted would be the inference this estate forbids.
+    code, body = _try("live", "/_surface/night-live")
+    assert code == 200 and "percent" in body
+    page = _page("stage")
+    assert "percent/i" in page
+    assert "Fill the room reported" in page
+    assert "Described, not counted" in page
+
+
+def test_the_stage_schedule_is_the_gated_pane_and_says_so():
+    code, _ = _try("live", "/_surface/night-events")
+    assert code == 403, "night-events stopped being gated; the schedule tab's claim is now wrong"
+    page = _page("stage")
+    assert "a refusal from one pattern" in page
+
+
+def test_also_tonight_comes_from_records_naming_each_other():
+    code, body = _try("live", "/_surface/night-live")
+    recs = [dict(zip(re.findall(r"<dt>([^<]*)</dt>", r), re.findall(r"<dd>([^<]*)</dd>", r)))
+            for r in re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)]
+    names = {r["name"] for r in recs}
+    linked = [(r["name"], n) for r in recs for n in names
+              if n != r["name"] and n in (r.get("tonight_status") or "")]
+    assert linked, "no record names another; the 'also tonight' panel has nothing real to show"
+    assert "(x.tonight_status||'').includes(r.name)" in _page("stage")
+
+
+# ------------------------------- listings: the tail is the market, not the four
+
+def test_the_long_tail_is_the_book_and_the_offers_are_four_of_it():
+    code, body = _try("shop", "/_surface/capabilities")
+    assert code == 200
+    book = re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)
+    assert len(book) > 50, f"only {len(book)} capabilities; the facet story needs the tail"
+    code, cap = _try("shop", "/capability")
+    offers = json.loads(cap)["capabilities"]
+    assert 0 < len(offers) < len(book), (len(offers), len(book))
+    page = _page("listings")
+    assert "no offer" in page
+    assert "not the same as free" in page
+
+
+def test_the_three_carriers_are_shown_together_so_a_disagreement_is_visible():
+    page = _page("listings")
+    assert "carriers disagree about the money" in page
+    assert "three carriers, one price" in page
+    prices = {}
+    for host_path, key in (("/capability", "capabilities"), ("/ucp/catalog", "products"),
+                           ("/acp/products", "products")):
+        code, body = _try("shop", host_path)
+        assert code == 200
+        for item in json.loads(body)[key]:
+            name = item.get("name") or item["id"]
+            amount = float(item["priceUsd"]) if "priceUsd" in item else float(item["price"]["value"])
+            prices.setdefault(name, set()).add(round(amount, 6))
+    for name, seen in prices.items():
+        assert len(seen) == 1, f"{name} is priced {seen} across the carriers"
+
+
+# -------------------------- parcels: every count says what it counted over
+
+def test_the_market_path_wants_the_city_code_the_search_returned():
+    code, body = _try("shop", "/property/search?q=elm")
+    assert code == 200
+    codes = set(re.findall(r"city (\w+)", body))
+    assert codes, "search rows no longer carry a city code"
+    page = _page("parcels")
+    # The page carries the row's own code through rather than a city name; a
+    # name returns a market of zero parcels, which reads as an empty market.
+    assert "'/property/market?city='+encodeURIComponent(r.city)" in page
+
+
+def test_every_computed_number_names_the_set_it_was_computed_over():
+    page = _page("parcels")
+    assert "Median, these rows" in page
+    assert "not across the roll" in page
+    assert "A rank inside one query is not a rank in the" in page
+    forbidden = " ".join(_descriptor("parcels")["forbidden_inference"])
+    assert "a median across these results -> the market" in forbidden
+
+
+def test_saving_a_parcel_tells_nobody():
+    # the map surface dropped the saved tray; the claim it has to keep is the
+    # one about position, which is the thing this page could most easily fake
+    page = _page("parcels")
+    assert "the right size in the wrong place, on purpose" in page
+    assert "no coordinates" in page
+    forbidden = " ".join(_descriptor("parcels")["forbidden_inference"])
+    assert "a saved parcel -> a claim" in forbidden
+
+
+def _live_federation_text() -> str:
+    code, body = _try("live", "/_surface/federations")
+    return body if code == 200 else ""
+
+
+# ------------------------------------------------- the address plane itself
+
+ESTATE_HOSTS = None
+
+
+def _estate():
+    global ESTATE_HOSTS
+    if ESTATE_HOSTS is None:
+        code, body = _try("live", "/.well-known/bonfyre/estate")
+        assert code == 200, f"the estate directory answered {code}"
+        ESTATE_HOSTS = json.loads(body)
+    return ESTATE_HOSTS
+
+
+def test_a_host_names_the_institution_that_holds_it():
+    # A surface served on leaflounge.aurekai.shop has to be able to tell it is
+    # the Leaf Lounge's. Before this was published the Matrix knew and the web
+    # did not, so every clone was a projection of nobody.
+    code, body = _try("live", "/.well-known/bonfyre")
+    assert code == 200
+    doc = json.loads(body)
+    assert doc["institution"], "the address document does not say whose host this is"
+    assert doc["territory"] and doc["world"] and doc["audience"]
+
+
+def test_an_institution_is_one_subject_across_its_territories():
+    est = _estate()
+    by_inst = {}
+    for h in est["hosts"]:
+        by_inst.setdefault(h["institution"], []).append(h)
+    multi = {i: hs for i, hs in by_inst.items() if len(hs) > 1}
+    assert multi, "no institution holds more than one address; the plane has nothing to show"
+    for inst, hs in multi.items():
+        terrs = [h["territory"] for h in hs]
+        assert len(terrs) == len(set(terrs)), (inst, terrs)
+
+
+def test_an_institution_can_hold_a_domain_its_hostname_does_not_reveal():
+    # leaf-lounge holds theleaflounge.store. No string surgery on a subdomain
+    # finds that, which is why the sibling list comes from the Matrix.
+    est = _estate()
+    owned = [h for h in est["hosts"]
+             if not h["host"].endswith(".aurekai.live")
+             and not h["host"].endswith(".aurekai.life")
+             and not h["host"].endswith(".aurekai.shop")
+             and not h["host"].endswith(".aurekai.work")
+             and not h["host"].startswith("aurekai.")]
+    assert owned, "no institution carries a domain of its own; the shortcut would work"
+    siblings = [x for x in est["hosts"] if x["institution"] == owned[0]["institution"]]
+    assert len(siblings) > 1, owned[0]
+
+
+def test_the_address_document_answers_another_territory():
+    # Cross-territory resolution is the point of an address plane. Without this
+    # header a page on .work could not ask .live what it is, and the refusal
+    # came from the browser rather than from the estate.
+    req = urllib.request.Request("https://aurekai.live/.well-known/bonfyre",
+                                 headers={"Origin": "https://aurekai.work"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            assert r.headers.get("Access-Control-Allow-Origin") == "*"
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+
+def test_a_clone_links_only_to_an_address_the_estate_carries():
+    # /s/capability/<id> resolves for the priced catalogue and for nothing in
+    # the native book. Linking all 107 would be inventing 103 addresses.
+    code, cap = _try("shop", "/capability")
+    assert code == 200
+    priced = [c["name"] for c in json.loads(cap)["capabilities"]]
+    code, body = _try("shop", "/s/capability/" + priced[0])
+    assert code == 200 and "not found" not in body.lower()[:2000]
+
+    code, body = _try("shop", "/_surface/capabilities")
+    book = [dict(zip(re.findall(r"<dt>([^<]*)</dt>", r), re.findall(r"<dd>([^<]*)</dd>", r)))
+            for r in re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)]
+    unaddressed = [b["id"] for b in book if b["id"] not in priced][:1]
+    if unaddressed:
+        code, body = _try("shop", "/s/capability/" + unaddressed[0])
+        assert "not found" in body.lower()[:2000], (
+            "the book is addressed after all; the pages should link it")
+
+    for name in ("listings", "channels"):
+        page = _page(name)
+        assert "no address on this estate" in page, (
+            f"{name} does not say when a capability has no address, so it either links one "
+            f"that does not resolve or hides that the estate runs more than it can link to")
+
+
+@pytest.mark.parametrize("name", ["listings", "parcels", "channels"])
+def test_a_clone_is_a_representation_you_can_leave(name):
+    page = _page(name)
+    assert "K.subject(" in page, f"{name} never names a subject\'s own address"
+    assert "K.hostSwitch(" in page, (
+        f"{name} does not offer the institution\'s other territories, so a reader can see "
+        f"one projection and not know the others exist")
+
+
+# ------------------------------------------------- one mark, every surface
+
+def test_the_published_kit_matches_the_one_the_surfaces_inline():
+    # The compiled estate loads /assets/bonfyre-kit.js, which is a copy of the
+    # kit the clone surfaces inline. The asset name may not contain a slash --
+    # that guard is the traversal check -- so the copy lives at the site root,
+    # and this is what stops the two drifting.
+    src = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+    pub = os.path.join(REPO, "site", "matrix", "bonfyre-kit.js")
+    assert os.path.exists(pub), "the kit is not published for the compiled estate"
+    with open(src) as a, open(pub) as b:
+        assert a.read() == b.read(), (
+            "bonfyre-kit.js has drifted from surfaces/_kit.js; republish it")
+
+
+def test_the_kit_is_served_to_the_compiled_estate():
+    code, body = _try("live", "/assets/bonfyre-kit.js")
+    assert code == 200, f"/assets/bonfyre-kit.js -> {code}"
+    assert "K.mountMark" in body and "K.PHYSICS" in body
+
+
+def test_the_knight_is_served():
+    code, body = _try("live", "/assets/aurekai-knight.png")
+    assert code == 200
+    assert len(body) > 1000
+
+
+@pytest.mark.parametrize("name", sorted(DONORS))
+def test_every_surface_carries_the_one_mark(name):
+    # Aurekai x Bonfyre, the same lockup in every donor's chrome. A surface
+    # that kept its own wordmark would be a second brand nobody decided on.
+    page = _page(name)
+    assert "K.mountMark(" in page, f"{name} does not mount the estate mark"
+    assert "BONF&Yuml;RE</a>" not in page, (
+        f"{name} still carries a hand-written wordmark beside the mark")
+
+
+def test_the_compiled_estate_carries_the_mark_too():
+    # A compiled page, not the root: the root is now a landing surface that
+    # mounts the mark itself and has no wordmark to replace. The invariant this
+    # holds is about the pages that still wear the compiled chrome.
+    # Accept matters: */* is a machine asking for anything, and /protocols
+    # answers that with its protocol descriptor. The chrome is on the human
+    # projection, so this asks for one.
+    req = urllib.request.Request("https://aurekai.live/protocols",
+                                 headers={"Accept": "text/html"})
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            code, body = r.status, r.read().decode("utf-8", "replace")
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+    assert code == 200
+    assert 'id="bf-mk"' in body, "the compiled estate has no mount point for the mark"
+    assert "/assets/bonfyre-kit.js" in body, "the compiled estate never loads the kit"
+    assert ".wordmark" in body, (
+        "the boot no longer looks for the wordmark it replaces, so a compiled page would "
+        "show two brands")
+
+
+def test_the_landing_page_carries_the_mark_without_a_wordmark_to_replace():
+    code, body = _try("live", "/")
+    assert code == 200
+    assert 'id="bf-mk"' in body
+    assert "/assets/bonfyre-kit.js" in body
+    assert "BONF" not in body.replace("BONF&Yuml;RE", ""), (
+        "the landing page carries a hand-written wordmark beside the mark")

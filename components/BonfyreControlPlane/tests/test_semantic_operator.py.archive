@@ -1,0 +1,95 @@
+"""Real-projection operator semantics: deterministic, source-bound, fail-closed."""
+
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import semantic_operator as operator
+
+
+def _book(tmp_path):
+    food = tmp_path / "household/food"
+    housing = tmp_path / "household/housing"
+    food.mkdir(parents=True)
+    housing.mkdir(parents=True)
+    (food / "current-offers.jsonl").write_text(json.dumps({
+        "offer_id": "beans", "cash_price_usd": "1.79", "merchant": "Target",
+        "source_url": "https://example.test/beans",
+    }) + "\n")
+    listings = [
+        {"listing_id": "milo-a", "property_id": "property:milo", "unit_identity": "floorplan:A",
+         "advertised_base_rent_monthly_usd": 925, "availability_status": "reported_available_now",
+         "pet_status": "reported_dog_allowed", "source_refs": ["https://example.test/milo"],
+         "evidence_ref": "housing/source-receipts.jsonl#milo"},
+        {"listing_id": "milo-a1", "property_id": "property:milo", "unit_identity": "floorplan:A1",
+         "advertised_base_rent_monthly_usd": 975, "availability_status": "reported_available_now",
+         "pet_status": "reported_dog_allowed", "source_refs": ["https://example.test/milo"],
+         "evidence_ref": "housing/source-receipts.jsonl#milo"},
+    ]
+    (housing / "current-listings.jsonl").write_text("".join(json.dumps(item) + "\n" for item in listings))
+    return operator.HouseholdAddressBook.load(tmp_path)
+
+
+def test_select_is_deterministic_and_addresses_current_records(tmp_path):
+    book = _book(tmp_path)
+    result = operator.select(book, kind="housing.listing", predicates=("pet_status=reported_dog_allowed",))
+    assert result["count"] == 2
+    assert [row["address"] for row in result["records"]] == [
+        "household:housing:listing:milo-a", "household:housing:listing:milo-a1"
+    ]
+    assert result["program"]["admitted"] is True
+
+
+def test_diff_compare_and_reconcile_preserve_distinct_units(tmp_path):
+    book = _book(tmp_path)
+    left, right = "household:housing:listing:milo-a", "household:housing:listing:milo-a1"
+    delta = operator.diff(book, left, right)
+    assert any(row["path"] == "$.advertised_base_rent_monthly_usd" for row in delta["changes"])
+    comparison = operator.compare(book, left, right)
+    assert comparison["numeric_deltas"] == [{
+        "field": "advertised_base_rent_monthly_usd", "left": 925, "right": 975, "right_minus_left": 50
+    }]
+    result = operator.reconcile(book, left, right)
+    assert result["disposition"] == "coexisting_distinct_units"
+    assert result["merge_prohibited"] is True
+
+
+def test_why_and_prove_keep_source_observation_below_proof(tmp_path):
+    book = _book(tmp_path)
+    address = "household:housing:listing:milo-a"
+    explanation = operator.why(book, address, "availability_status")
+    assert explanation["evidence_state"] == "source_bound_observation"
+    assert explanation["value"] == "reported_available_now"
+    verdict = operator.prove(book, address, "availability")
+    assert verdict["proof_state"] == "not_proven"
+    assert verdict["observed_fields"] == ["availability_status"]
+
+
+def test_project_requires_named_existing_fields(tmp_path):
+    book = _book(tmp_path)
+    result = operator.project(book, "household:food:offer:beans", ("merchant", "cash_price_usd"))
+    assert result["projection"] == {"merchant": "Target", "cash_price_usd": "1.79"}
+    try:
+        operator.project(book, "household:food:offer:beans", ("not_here",))
+    except ValueError as error:
+        assert "absent" in str(error)
+    else:
+        raise AssertionError("PROJECT must fail on an absent field")
+
+
+def test_housing_observation_uses_declared_candidate_id_not_title_or_price(tmp_path):
+    book = _book(tmp_path)
+    path = tmp_path / "household/housing/current-listings.jsonl"
+    with path.open("a") as handle:
+        handle.write(json.dumps({
+            "candidate_id": "observation-42", "schema": "bonfyre-housing-observation.v1",
+            "title": "same price and title are not identity", "price_usd_month": 550,
+            "availability_claim": False, "source_url": "https://example.test/observation",
+        }) + "\n")
+    book = operator.HouseholdAddressBook.load(tmp_path)
+    result = operator.select(book, kind="housing.observation")
+    assert [row["address"] for row in result["records"]] == ["household:housing:observation:observation-42"]
+    verdict = operator.prove(book, "household:housing:observation:observation-42", "availability")
+    assert verdict["proof_state"] == "not_proven"

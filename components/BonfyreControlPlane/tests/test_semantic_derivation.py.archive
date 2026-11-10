@@ -1,0 +1,39 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import semantic_derivation as sd
+
+
+def test_fact_delta_invalidates_only_dependency_closure():
+    graph = sd.SemanticDerivationGraph([
+        sd.SemanticProgramIR("finance", "PROJECT", frozenset({"agreement:P"}),
+                             frozenset({"position:P"})),
+        sd.SemanticProgramIR("surface", "PROJECT", frozenset({"position:P"}),
+                             frozenset({"surface:finance"})),
+        sd.SemanticProgramIR("unrelated", "PROJECT", frozenset({"customer:Q"}),
+                             frozenset({"surface:customer"})),
+    ])
+    delta = sd.FactDelta("D", frozenset({"agreement:P"}), "F1",
+                         sd.HybridLogicalClock(100))
+    result = graph.slice(delta)
+    assert result.affected_programs == ("finance", "surface")
+    assert "unrelated" not in result.affected_programs
+
+
+def test_learned_signal_cannot_satisfy_hard_constraint():
+    program = sd.SemanticProgramIR(
+        "allocate", "ALLOCATE", frozenset({"demand"}), frozenset({"decision"}),
+        (sd.ConstraintIR("authority", True, False, "authority://A"),
+         sd.ConstraintIR("latent-rank", False, True, "latent://L")),
+    )
+    decision = sd.decide(program)
+    assert not decision.admitted
+    assert decision.hard_failures == ("authority",)
+    assert decision.learned_signals == ("latent-rank",)
+
+
+def test_hlc_merge_preserves_causality():
+    left = sd.HybridLogicalClock(100, 2, "a")
+    right = sd.HybridLogicalClock(100, 4, "b")
+    assert left.merge(right, 99).logical == 5

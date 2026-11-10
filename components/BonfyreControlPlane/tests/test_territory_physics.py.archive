@@ -1,0 +1,205 @@
+"""Hold the four territories to section 69: four sets of UX physics.
+
+"They are projections over one Matrix, not four products -- but their physics
+differ, and building them as one feed with different icons would lose exactly
+what makes each market leader good at what it does."
+
+So these tests do not check that the pages carry different labels. They check
+that the physics is real: that each territory declares its own question and its
+own ordering principle, that the orderings actually produce different orders
+over the same records, that .life is not ranked by attention at all, and that a
+verb outside its territory is a category error nothing commits.
+
+The verb lists are quoted from the document and compared exactly. A territory
+quietly gaining a verb is the flattening this section exists to prevent.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import socket
+import urllib.error
+import urllib.request
+
+import pytest
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(_HERE)))
+KIT = os.path.join(REPO, "site", "matrix", "surfaces", "_kit.js")
+SURFACES = os.path.join(REPO, "site", "matrix", "surfaces")
+TIMEOUT = 20
+
+# Section 69, quoted. A verb outside its territory is a category error.
+VERBS = {
+    "live": ["WATCH", "JOIN", "GO", "FOLLOW", "SAVE", "SHARE"],
+    # ASSIGN is section 76 amending section 69, not drift. "Verbs are per mode,
+    # not per territory ... a mode's verbs are a subset of its territory's --
+    # and holding that rule caught a real gap: .life did not carry ASSIGN until
+    # household needed it for chores." The subset rule below is what forces it.
+    "life": ["MEET", "JOIN", "GO", "SAVE", "HELP", "FOLLOW", "PLAN", "REMEMBER",
+             "SHARE", "MOVE", "ASSIGN"],
+    "shop": ["BUY", "OFFER", "JOIN", "SAVE", "COMPARE", "REQUEST", "SELL", "FUND",
+             "CONTRIBUTE"],
+    "work": ["APPLY", "APPROVE", "CLAIM", "FUND", "CONTACT", "BOOK", "DO", "REVIEW",
+             "ASSIGN", "RESPOND", "ESCALATE"],
+}
+
+QUESTIONS = {
+    "live": "What deserves attention now?",
+    "life": "What matters in my world?",
+    "shop": "What economic opportunity is useful?",
+    "work": "What should move forward?",
+}
+
+
+def _kit() -> str:
+    with open(KIT) as fh:
+        return fh.read()
+
+
+def _block(territory: str) -> str:
+    src = _kit()
+    i = src.index("K.PHYSICS = {")
+    j = src.index("K.physics = (t)", i)
+    body = src[i:j]
+    k = body.index(territory + ": {")
+    nxt = [body.index(t + ": {") for t in VERBS if t != territory and (t + ": {") in body
+           and body.index(t + ": {") > k]
+    return body[k:min(nxt)] if nxt else body[k:]
+
+
+@pytest.mark.parametrize("territory", sorted(VERBS))
+def test_a_territory_carries_exactly_its_own_verbs(territory):
+    listed = re.findall(r"'([A-Z]+)'", _block(territory).split("verbs:")[1].split("]")[0])
+    assert listed == VERBS[territory], (territory, listed, VERBS[territory])
+
+
+def test_no_verb_belongs_to_every_territory():
+    # If one existed it would be a verb of the estate rather than of a
+    # territory, and the split would be decoration.
+    common = set(VERBS["live"])
+    for t in ("life", "shop", "work"):
+        common &= set(VERBS[t])
+    assert not common, f"{sorted(common)} appears in all four; that is not a territory verb"
+
+
+def test_each_territory_carries_a_verb_no_other_does():
+    for t, verbs in VERBS.items():
+        others = set()
+        for o, ov in VERBS.items():
+            if o != t:
+                others |= set(ov)
+        assert set(verbs) - others, f".{t} carries nothing the others do not"
+
+
+@pytest.mark.parametrize("territory", sorted(QUESTIONS))
+def test_a_territory_states_the_question_it_answers(territory):
+    assert QUESTIONS[territory] in _block(territory), territory
+
+
+@pytest.mark.parametrize("territory", sorted(VERBS))
+def test_a_territory_states_its_ordering_principle(territory):
+    b = _block(territory)
+    assert "orders_by:" in b, territory
+    assert "principle:" in b, territory
+    assert "cant:" in b, f".{territory} does not say what it cannot imply"
+
+
+def test_only_the_live_territory_lets_recency_rank():
+    # "fast attention / occurrence" is the one physics where now outranks
+    # published. A personal world ranked by attention would be a recommendation
+    # feed wearing the clothes of a kept set.
+    assert "decays: true" in _block("live")
+    for t in ("life", "shop", "work"):
+        assert "decays: false" in _block(t), f".{t} decays, and only .live should"
+
+
+def test_the_personal_world_is_not_ranked_at_all():
+    assert "rank: null" in _block("life"), (
+        ".life declares a rank function; a kept world sorted by anything is a ranked one")
+    assert "rank: r =>" in _block("live"), ".live declares no ranking and attention needs one"
+    assert "rank: r =>" in _block("shop"), ".shop declares no ranking and the offer should rank"
+
+
+def test_the_orderings_actually_differ_over_the_same_records():
+    # The claim is not that the pages say different words. It is that the same
+    # subjects come out in a different order, which is what an ordering
+    # principle means.
+    try:
+        req = urllib.request.Request("https://aurekai.shop/_surface/night-shop",
+                                     headers={"Accept": "text/html"})
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            body = r.read().decode()
+    except (urllib.error.URLError, socket.timeout, OSError) as exc:
+        pytest.skip(f"unreachable: {exc}")
+
+    recs = [dict(zip(re.findall(r"<dt>([^<]*)</dt>", b), re.findall(r"<dd>([^<]*)</dd>", b)))
+            for b in re.findall(r'<dl class="surface-record">(.*?)</dl>', body, re.S)]
+    assert len(recs) > 2, "not enough records to order"
+
+    # .shop: by the offer. .life: by nothing -- a stable name order.
+    by_offer = sorted(
+        recs, key=lambda r: (-(1000 - float(r["offer_usd"])) if r.get("offer_usd") else 1,
+                             r.get("name", "")))
+    by_name = sorted(recs, key=lambda r: r.get("name", ""))
+    assert [r["name"] for r in by_offer] != [r["name"] for r in by_name], (
+        "the shop ordering and the life ordering produce the same order over these "
+        "records, so nothing here would show the physics differing")
+
+
+@pytest.mark.parametrize("name", ["discover", "board", "listings"])
+def test_a_surface_takes_its_verbs_from_the_territory_and_not_from_itself(name):
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        page = fh.read()
+    assert "K.verbsFor(" in page or "K.physics(" in page, (
+        f"{name} carries its own verb list, so a verb could drift out of its territory "
+        f"with nothing noticing")
+
+
+@pytest.mark.parametrize("name", ["discover", "board", "listings"])
+def test_a_surface_orders_by_its_territorys_principle(name):
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        page = fh.read()
+    assert "K.order(" in page or "K.physics(" in page, (
+        f"{name} does not order by the territory's principle, so all four territories "
+        f"would be one feed with different icons")
+
+
+def test_the_page_that_shows_all_four_quotes_the_same_source():
+    with open(os.path.join(SURFACES, "territory.html")) as fh:
+        page = fh.read()
+    assert "K.physics(t)" in page, (
+        "the territory page writes its own copy of the physics, so it can disagree with "
+        "the surfaces that order by it")
+    for q in QUESTIONS.values():
+        assert q in page, q
+
+
+# ------------------------------------------- the inlined copies must agree
+
+def _inlined(page_src, territory):
+    i = page_src.index("K.PHYSICS")
+    body = page_src[i:page_src.index("K.physics", i)]
+    j = body.index(territory + ": {")
+    return re.findall(r"'([A-Z]+)'", body[j:].split("verbs:")[1].split("]")[0])
+
+
+CLONES = ["board", "channels", "community", "discover", "inbox", "listings",
+          "parcels", "stage", "territory"]
+
+
+@pytest.mark.parametrize("name", CLONES)
+def test_a_clone_carries_the_same_physics_as_the_kit(name):
+    # The clone surfaces inline the kit rather than loading it, so a change to
+    # the kit's verb lists reaches them only when they are rebuilt. Nine copies
+    # of a list is nine chances for one of them to be the odd one out, and the
+    # surfaces would then order and offer by a physics the estate no longer
+    # holds. This is the check that says which copy drifted.
+    with open(os.path.join(SURFACES, name + ".html")) as fh:
+        page = fh.read()
+    for territory in sorted(VERBS):
+        if territory + ": {" not in page[page.index("K.PHYSICS"):]:
+            continue
+        assert _inlined(page, territory) == VERBS[territory], (name, territory)

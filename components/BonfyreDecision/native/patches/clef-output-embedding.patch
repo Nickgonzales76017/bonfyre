@@ -1,0 +1,16 @@
+--- a/src/llama-model-loader.cpp
++++ b/src/llama-model-loader.cpp
+@@ -1175,6 +1175,13 @@
+             throw std::runtime_error(format("missing tensor info mapping for %s", tn.str().c_str()));
+         }
+ 
++        // Clef gathers lexical option embeddings from output.weight instead of
++        // multiplying it to produce vocabulary logits. Select a buffer for the
++        // actual operation: CPU_REPACK supports MUL_MAT, but not GET_ROWS.
++        if (get_arch() == LLM_ARCH_CLEF && tn_tensor == LLM_TENSOR_OUTPUT) {
++            info.op = GGML_OP_GET_ROWS;
++        }
++
+         // skip unused tensors
+         if (info.op == GGML_OP_NONE || (flags & TENSOR_SKIP)) {
+             const size_t nbytes = ggml_nbytes(t_meta);

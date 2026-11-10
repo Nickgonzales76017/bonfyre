@@ -1,0 +1,85 @@
+{
+  "schema": "bonfyre.channel-yield.offline.v1",
+  "model": "/Users/nickgonzales/.bonfyre/estate-local/channel-yield/model.json",
+  "artifact_sha256": "cb5713ef2632b532287587f5a3163601480fdb267d16f7b2c5c395262641ac51",
+  "learn": 73854,
+  "held_out": 18464,
+  "held_out_yield_rate": 0.08410961871750433,
+  "brier": 0.05219587213552978,
+  "brier_always_base_rate": 0.07703519075668738,
+  "sweep": [
+    {
+      "skip_below": 0.01,
+      "observations_skipped": 4748,
+      "skipped_share": 0.2571490467937608,
+      "yields_lost": 61,
+      "yields_lost_share": 0.039278815196394076
+    },
+    {
+      "skip_below": 0.02,
+      "observations_skipped": 9097,
+      "skipped_share": 0.4926884748700173,
+      "yields_lost": 99,
+      "yields_lost_share": 0.06374758531873792
+    },
+    {
+      "skip_below": 0.03,
+      "observations_skipped": 10773,
+      "skipped_share": 0.5834597053726169,
+      "yields_lost": 138,
+      "yields_lost_share": 0.08886027044430135
+    },
+    {
+      "skip_below": 0.05,
+      "observations_skipped": 12891,
+      "skipped_share": 0.698169410745234,
+      "yields_lost": 270,
+      "yields_lost_share": 0.17385705086928527
+    },
+    {
+      "skip_below": 0.08,
+      "observations_skipped": 14556,
+      "skipped_share": 0.7883448873483535,
+      "yields_lost": 448,
+      "yields_lost_share": 0.2884739214423696
+    },
+    {
+      "skip_below": 0.12,
+      "observations_skipped": 15935,
+      "skipped_share": 0.8630307625649913,
+      "yields_lost": 635,
+      "yields_lost_share": 0.4088860270444301
+    }
+  ],
+  "ordering": [
+    {
+      "observation_budget_share": 0.1,
+      "yields_found_ranked": 0.49645846748229233,
+      "yields_found_as_run": 0.09465550547327753
+    },
+    {
+      "observation_budget_share": 0.25,
+      "yields_found_ranked": 0.763683193818416,
+      "yields_found_as_run": 0.23116548615582744
+    },
+    {
+      "observation_budget_share": 0.5,
+      "yields_found_ranked": 0.9362524146812621,
+      "yields_found_as_run": 0.44236960721184804
+    }
+  ],
+  "cannot_infer": "a later slice of one log -> an independent holdout; the policy was fitted with this log in view, so promotion still needs the live shadow measurement",
+  "measured_on": "2026-10-16, Apple M3; evidence = ~/.bonfyre/estate-local/qualify-standing/evidence.jsonl in append order (92,018 qualifier outcomes); frontier = ~/.bonfyre/estate-local/frontier.db",
+  "first_live_slice": {
+    "claimed": 300,
+    "publishers": 5,
+    "admitted": 0,
+    "refused": 300,
+    "frozen_weight_scores": {
+      "median": 0.0031,
+      "max": 0.0319,
+      "below_0.02": 155
+    },
+    "note": "scored before its outcomes were imported; the pass ran the qualifier build without observe_ms, so it is not a timed holdout"
+  }
+}

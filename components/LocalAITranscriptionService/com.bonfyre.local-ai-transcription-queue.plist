@@ -8,20 +8,20 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/zsh</string>
-        <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/drain_queue.sh</string>
+        <string>/Users/nickgonzales/Documents/Bonfyre/components/LocalAITranscriptionService/drain_queue.sh</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService</string>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/LocalAITranscriptionService</string>
 
     <key>StartInterval</key>
     <integer>1200</integer>
 
     <key>StandardOutPath</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/logs/queue-stdout.log</string>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/LocalAITranscriptionService/logs/queue-stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/logs/queue-stderr.log</string>
+    <string>/Users/nickgonzales/Documents/Bonfyre/components/LocalAITranscriptionService/logs/queue-stderr.log</string>
 
     <key>Nice</key>
     <integer>10</integer>

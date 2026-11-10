@@ -1,0 +1,64 @@
+"""The realization ladder, measured rather than asserted."""
+
+import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import provider_graphs as pg
+import realization_measure as rm
+
+
+def _measured():
+    rs = rm.measure("provider-graph")
+    db = sqlite3.connect(":memory:")
+    rm.record(db, rs)
+    return rs, db, rm.report(db, rs)
+
+
+def test_every_rung_is_actually_executed_and_measured():
+    rs, _db, _rep = _measured()
+    providers = {r.provider for r in rs}
+    assert {"frontier-read-index", "local-atlas-query", "mcp-atlas-query"} <= providers
+    for r in rs:
+        assert r.context_bytes > 0, f"{r.provider} reported no measured cost"
+
+
+def test_bounded_realization_is_orders_of_magnitude_cheaper():
+    _rs, _db, rep = _measured()
+    assert rep["cheapest_lossless"] != "frontier-read-index"
+    assert rep["reduction_ratio"] > 50, rep
+    assert rep["tokens_saved_per_lookup"] > 10_000, rep
+
+
+def test_tournament_prefers_the_cheapest_sufficient_realization():
+    _rs, db, rep = _measured()
+    order = [p for p, _ in rep["ranked"]]
+    assert order[0] in ("local-atlas-query", "mcp-atlas-query")
+    assert order[-1] == "frontier-read-index"
+    # the lossy path is ordered, never silently promoted for being cheapest
+    assert "local-grep-yaff" in order or all(r != "local-grep-yaff" for r in order)
+    assert pg.bids(db, rm.CAPABILITY)
+
+
+def test_parity_is_artifact_identity_not_producer_identity():
+    """Two producers agreeing on the answer bytes is a fact about the artifact.
+    It does not merge them into one provider, and a producer whose answer
+    differs is excluded however cheap it is."""
+    rs, db, _rep = _measured()
+    group = {tuple(sorted(pair)) for pair in pg.parity_group(db, rm.CAPABILITY)}
+    assert ("local-atlas-query", "mcp-atlas-query") in group
+    lossy = next(r for r in rs if r.provider == "local-grep-yaff")
+    exact = next(r for r in rs if r.provider == "local-atlas-query")
+    assert lossy.answer_digest != exact.answer_digest
+    assert not any("local-grep-yaff" in pair for pair in group)
+    # distinct providers survive as distinct bids despite proven artifact parity
+    assert len({p for p, _ in pg.bids(db, rm.CAPABILITY)}) == len(rs)
+
+
+def test_bids_carry_real_units_not_pre_negated_scores():
+    rs, _db, _rep = _measured()
+    frontier = next(r for r in rs if r.provider == "frontier-read-index")
+    assert frontier.metric()["cost"] == float(frontier.context_bytes)
+    assert all(m >= 0 for m in frontier.metric().values())

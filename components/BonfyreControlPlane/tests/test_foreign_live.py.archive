@@ -1,0 +1,262 @@
+"""Archived Python witness: native owner is foreign-live.test.mjs.
+
+Witness for foreign live ingest.
+
+A Deep Ellum band that streams only on Twitch. The estate can watch, and the
+tests check that each of the four rights has to be granted separately — because
+collapsing the first into the fourth is how an estate ends up redistributing
+somebody else's stream under its own name.
+"""
+
+from __future__ import annotations
+
+import os
+import sqlite3
+import sys
+
+import pytest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import foreign_live as fl  # noqa: E402
+import live_semantic_track as lst  # noqa: E402
+import occurrence_origin as oo  # noqa: E402
+
+MIN = 60_000
+SUBJECT = "foreign:twitch:neon-june"
+
+
+def _source(*rights, twin="twin:twitch-neon-june"):
+    return fl.ForeignLiveSource(
+        twin_id=twin, platform="twitch",
+        url="https://twitch.tv/neonjune",
+        granted=frozenset(rights),
+        basis="platform terms, observed 2026-09-04")
+
+
+@pytest.fixture()
+def observable_only():
+    return _source(fl.OBSERVABLE)
+
+
+@pytest.fixture()
+def full():
+    return _source(fl.OBSERVABLE, fl.RETAINABLE, fl.DERIVABLE)
+
+
+# ---------------------------------------- each right is granted separately
+
+def test_observable_does_not_grant_retainable(observable_only):
+    ing = fl.ingest(observable_only)
+    with pytest.raises(fl.RightsError) as e:
+        ing.retain(0, "caption", "hey Deep Ellum")
+    assert "holding one never implies the next" in str(e.value)
+    assert "'retainable'" in str(e.value)
+    assert ing.track.events == []
+
+
+def test_retainable_does_not_grant_derivable():
+    src = _source(fl.OBSERVABLE, fl.RETAINABLE)
+    ing = fl.ingest(src)
+    ing.retain(18 * MIN, "caption", "we're playing Trees again Friday")
+    with pytest.raises(fl.RightsError) as e:
+        ing.derive_claim(lst.ClaimLedger(), 18 * MIN, claim_id="c1",
+                         asserter="Neon June", subject="event:trees-friday",
+                         assertion="plays Trees Friday")
+    assert "'derivable'" in str(e.value)
+    # The material is kept and unread. That is a coherent state and the one the
+    # terms actually described.
+    assert len(ing.retained) == 1
+
+
+def test_derivable_does_not_grant_republishable(full):
+    ing = fl.ingest(full)
+    ing.retain(0, "caption", "hey Deep Ellum")
+    ing.derive_claim(lst.ClaimLedger(), 0, claim_id="c1", asserter="Neon June",
+                     subject="s", assertion="a")
+    with pytest.raises(fl.RightsError) as e:
+        ing.republishable_events()
+    assert "'republishable'" in str(e.value)
+    # A source that permits derivation has said nothing about republication of
+    # the derivation.
+
+
+def test_a_source_nobody_may_look_at_is_not_opened_at_all():
+    src = _source()  # no rights whatsoever
+    with pytest.raises(fl.RightsError) as e:
+        fl.ingest(src)
+    assert "open an ingest" in str(e.value)
+    assert "nothing" in str(e.value)
+
+
+def test_the_refusal_names_what_is_held_and_what_was_needed(observable_only):
+    ing = fl.ingest(observable_only)
+    with pytest.raises(fl.RightsError) as e:
+        ing.retain(0, "chat", "hello")
+    assert "['observable']" in str(e.value)
+
+
+def test_rights_gap_reports_everything_still_missing(observable_only, full):
+    assert fl.rights_gap(observable_only, fl.REPUBLISHABLE) == [
+        fl.RETAINABLE, fl.DERIVABLE, fl.REPUBLISHABLE]
+    assert fl.rights_gap(full, fl.DERIVABLE) == []
+    assert fl.rights_gap(full, fl.REPUBLISHABLE) == [fl.REPUBLISHABLE]
+
+
+def test_an_unknown_right_is_refused(full):
+    with pytest.raises(fl.RightsError):
+        full.holds("scraping")
+    with pytest.raises(fl.RightsError):
+        fl.rights_gap(full, "scraping")
+
+
+# ------------------------------- one grammar, not a parallel foreign one
+
+def test_foreign_material_lands_in_the_native_vocabulary(full):
+    ing = fl.ingest(full)
+    ing.retain(0, "caption", "hey Deep Ellum", speaker="Neon June")
+    ing.retain(2 * MIN, "chat", "where is everybody")
+    ing.retain(3 * MIN, "title", "Neon June live from Reno's")
+
+    kinds = [e.kind for e in ing.track.events]
+    assert kinds == ["utterance", "chat", "topic"]
+    # A caption is an utterance, a title is a topic. The point is one grammar,
+    # so the retention lattice and the claim ledger work unchanged.
+    assert ing.track.events[0].tier() == lst.CHAT
+    assert ing.track.events[2].tier() == lst.MOMENT
+
+
+def test_ingested_events_record_which_platform_they_came_from(full):
+    ing = fl.ingest(full)
+    ing.retain(0, "caption", "hey")
+    assert ing.track.events[0].source == "foreign:twitch"
+    # A native track and a foreign one are distinguishable on every event, so
+    # nothing downstream has to remember which kind of track it holds.
+
+
+def test_an_unknown_foreign_kind_is_refused_rather_than_passed_through(full):
+    ing = fl.ingest(full)
+    with pytest.raises(fl.IngestError) as e:
+        ing.retain(0, "superchat", "£5")
+    assert "parallel one of its own" in str(e.value)
+
+
+def test_the_retention_lattice_applies_to_foreign_material_unchanged(full):
+    ing = fl.ingest(full)
+    ing.retain(0, "chat", "hello")
+    ing.retain(1, "caption", "we're playing Trees Friday")
+    kept, expired = ing.track.cool()
+    assert kept == []
+    assert len(expired) == 2
+    # Foreign chat is exhaust for the same reason native chat is.
+
+
+# ------------------------------- an ingested claim is somebody else's
+
+def test_the_asserter_is_whoever_spoke_not_the_twin(full):
+    ing = fl.ingest(full)
+    ing.retain(18 * MIN, "caption", "we're playing Trees again Friday")
+    claim = ing.derive_claim(lst.ClaimLedger(), 18 * MIN, claim_id="c1",
+                             asserter="Neon June", subject="event:trees-friday",
+                             assertion="Neon June plays Trees on Friday")
+    assert claim.asserter == "Neon June"
+
+
+def test_a_twin_cannot_assert_its_own_observation(full):
+    ing = fl.ingest(full)
+    ing.retain(0, "caption", "x")
+    with pytest.raises(fl.IngestError) as e:
+        ing.derive_claim(lst.ClaimLedger(), 0, claim_id="c1",
+                         asserter=full.twin_id, subject="s", assertion="a")
+    assert "watching look like claiming" in str(e.value)
+
+
+def test_an_ingested_claim_still_needs_independent_corroboration(full):
+    ing = fl.ingest(full)
+    ledger = lst.ClaimLedger()
+    ing.retain(18 * MIN, "caption", "we're playing Trees again Friday")
+    ing.derive_claim(ledger, 18 * MIN, claim_id="c1", asserter="Neon June",
+                     subject="event:trees-friday", assertion="plays Friday")
+    # Observing it on Twitch is one source. Crystallization is unchanged by the
+    # material having come from somewhere else.
+    assert ledger.crystallizable() == []
+    ledger.corroborate("c1", source="foreign:trees-calendar",
+                       kind="EventListingObservation")
+    ledger.corroborate("c1", source="foreign:dallas-observer",
+                       kind="ForeignOccurrence")
+    assert ledger.crystallizable() == ["c1"]
+    assert ledger.proven("c1") is False
+
+
+# ----------------------------- foreign material is observed, never caused
+
+def test_ingested_material_is_filed_as_observed(full):
+    db = sqlite3.connect(":memory:")
+    try:
+        ing = fl.ingest(full)
+        ing.retain(0, "caption", "hey")
+        ing.retain(2 * MIN, "chat", "hello")
+        filed = ing.file_observations(db, subject=SUBJECT)
+
+        assert len(filed) == 2
+        for oid in filed:
+            assert oo.origin_of(db, oid) == oo.OBSERVED
+            # This estate did not cause a foreign stream, and filing it as an
+            # effect would let a later reader believe it did.
+            assert oo.caused_by_us(db, oid) is False
+    finally:
+        db.close()
+
+
+def test_a_filed_observation_names_the_foreign_source(full):
+    db = sqlite3.connect(":memory:")
+    try:
+        ing = fl.ingest(full)
+        ing.retain(0, "caption", "hey")
+        oid = ing.file_observations(db, subject=SUBJECT)[0]
+        row = db.execute("SELECT source FROM occurrence_origin"
+                         " WHERE occurrence_id=?", (oid,)).fetchone()
+        assert row[0] == "twitch:https://twitch.tv/neonjune"
+    finally:
+        db.close()
+
+
+def test_the_spine_separates_foreign_observation_from_native_effect(full):
+    db = sqlite3.connect(":memory:")
+    try:
+        ing = fl.ingest(full)
+        ing.retain(0, "caption", "hey")
+        ing.file_observations(db, subject=SUBJECT)
+        oo.record(db, occurrence_id="publish:our-clip", origin=oo.EFFECT,
+                  subject=SUBJECT, authority="publish:clip")
+
+        counts = oo.by_origin(db, SUBJECT)
+        assert len(counts[oo.OBSERVED]) == 1
+        assert counts[oo.EFFECT] == ["publish:our-clip"]
+        # One subject, two kinds of occurrence, and the estate answerable for
+        # exactly one of them.
+    finally:
+        db.close()
+
+
+def test_republishing_what_was_observed_needs_its_own_grant(full):
+    # The estate may derive from this stream and may not show it onward. That
+    # is the ordinary case for a platform's public timeline.
+    ing = fl.ingest(full)
+    ing.retain(0, "caption", "hey")
+    assert full.holds(fl.DERIVABLE) is True
+    assert full.holds(fl.REPUBLISHABLE) is False
+    with pytest.raises(fl.RightsError):
+        ing.republishable_events()
+
+
+def test_a_fully_granted_source_may_be_republished():
+    src = _source(fl.OBSERVABLE, fl.RETAINABLE, fl.DERIVABLE, fl.REPUBLISHABLE)
+    ing = fl.ingest(src)
+    ing.retain(0, "caption", "hey")
+    assert len(ing.republishable_events()) == 1
+
+
+def test_the_grant_records_what_it_rests_on(full):
+    # A right with no basis cannot be re-examined when the terms change.
+    assert full.basis == "platform terms, observed 2026-09-04"

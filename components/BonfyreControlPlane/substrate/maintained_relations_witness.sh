@@ -5,6 +5,7 @@
 # withdraws only its relation's member, the others survive.
 set -euo pipefail
 BIN="$HOME/.bonfyre/substrates/v6.1/feldera/probe/target/release/maintained_relations"
+lex=$(cd "$(dirname -- "$0")/../../.." && pwd)/cmd/BonfyreLex/bonfyre-lex
 if [ ! -x "$BIN" ]; then echo "maintained_relations not built -- skipping"; exit 0; fi
 
 out=$(printf 'S\tEligibleProviders\tfpq-generate\tprovider-mac
@@ -18,11 +19,11 @@ S\tFormReadiness\tacm-form\tslots-filled
 ' | "$BIN")
 
 # after all gates up: 3 members across 3 relations
-peak=$(echo "$out" | grep '"delta":"gate_up"' | tail -1 | grep -o '"count":[0-9]*' | grep -o '[0-9]*')
+peak=$(printf '%s\n' "$out" | "$lex" field --kind json_number --key count --where delta=gate_up --line last)
 # after provider-mac down: EligibleProviders empty, others intact (count 2)
 after_prov=$(echo "$out" | grep '"delta":"gate_down"' | head -1)
 # after grant-alex down: CurrentAuthority gone too (count 1, only FormReadiness)
-final=$(echo "$out" | grep '"delta":"gate_down"' | tail -1 | grep -o '"count":[0-9]*' | grep -o '[0-9]*')
+final=$(printf '%s\n' "$out" | "$lex" field --kind json_number --key count --where delta=gate_down --line last)
 
 ok=1
 [ "$peak" = "3" ] || { echo "FAIL: peak=$peak (want 3)"; ok=0; }
