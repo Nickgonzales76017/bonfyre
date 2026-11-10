@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Aurekai beside the page</title>
+<link rel="stylesheet" href="foreign-sign-in.css">
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; max-width: 34em; }
+  h1 { font-size: 1rem; margin: 0 0 4px; }
+  p { margin: 0 0 12px; }
+  .where { overflow-wrap: anywhere; opacity: .75; }
+  ol { margin: 0 0 12px; padding-left: 1.2em; }
+  button { font: inherit; padding: 6px 12px; min-height: 44px; min-width: 44px; }
+  button[disabled] { opacity: .5; }
+  #enroll { overflow-wrap: anywhere; }
+  .enroll-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+  .enroll-actions button, .enroll-catalog button, #enroll > button { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 10px; background: transparent; color: inherit; }
+  #enroll > button { margin-bottom: 12px; }
+  .enroll-catalog { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 12px; padding: 12px; margin-bottom: 16px; }
+  .enroll-catalog form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 8px; }
+  .enroll-catalog label { display: grid; gap: 4px; min-width: 0; font-size: .85rem; }
+  .enroll-catalog input, .enroll-catalog select { font: inherit; padding: 6px; min-width: 0; width: 100%; box-sizing: border-box; }
+  .enroll-catalog ul { list-style: none; padding: 0; margin: 12px 0; }
+  .enroll-catalog li { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+  .enroll-catalog li button { text-align: left; }
+  .enroll-catalog [aria-current="true"] { font-weight: 700; }
+  .enroll-state { font-weight: 600; margin-top: 12px; }
+
+@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+</style>
+<section id="provider-work" hidden aria-labelledby="provider-work-heading">
+<h1 id="provider-work-heading">Provider work</h1>
+<p>Sign-in, MFA and consent stay in the provider tab. Closing this companion leaves that tab and your native work in place.</p>
+<p><button id="provider-return" type="button">Return to Aurekai work</button></p>
+<p id="provider-work-said" role="status"></p>
+<p><a href="panel.html">Open page tools</a></p>
+</section>
+<div id="page-tools" hidden>
+<h1>This page</h1>
+<p class="where" id="where">No page yet.</p>
+<p id="kept" aria-live="polite"></p>
+<ol id="history"></ol>
+<p><button id="keep" disabled>Keep a copy of this page</button>
+<button id="picture" disabled>Keep how it looks now</button></p>
+<h1>Something on it</h1>
+<p>Select text on the page, say what it is for, and it waits here for somebody to take up. Nothing is sent or booked.</p>
+<p><input id="note" maxlength="400" placeholder="What is this for?" style="font:inherit;width:100%;box-sizing:border-box;padding:6px"></p>
+<p><button id="hold" disabled>Hold what I selected</button></p>
+<p id="said" aria-live="polite"></p>
+<h1>Use it in a routine</h1>
+<p>Carry selected offer evidence into a local comparison or your own draft. This neither places an order nor changes a subscription.</p>
+<p><button id="carry">Compare or design from this page</button></p>
+<p id="carry-status" aria-live="polite"></p>
+<p><a href="workbench.html">Open local workbench</a> · <a href="studio.html">Open program studio</a></p>
+<h1>Accounts to set up</h1>
+<div id="enroll"></div>
+<p id="enroll-said" aria-live="polite"></p>
+</div>
+<script type="module" src="panel-bootstrap.mjs"></script>
+</html>

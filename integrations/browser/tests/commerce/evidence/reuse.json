@@ -1,0 +1,29 @@
+{
+  "compiler": {
+    "file": "extension/recurring-commerce.mjs",
+    "sha256": "5e6ff79c61ed45d29d5fdfb2d0cfe9f2a958d2812dbf0d1886b929c28e560e5d",
+    "original": "aurekai_recurring_commerce/recurring-commerce.mjs"
+  },
+  "catalog": {
+    "file": "extension/catalog.json",
+    "sha256": "10221e07c6959975c17550b0050fbfebb74a70b62c23261c26828af9c46a2c4e",
+    "original": "aurekai_recurring_commerce/catalog.json"
+  },
+  "native_panel": {
+    "file": "extension/panel.js",
+    "live_sha256": "27c43ce3560564ad175e1026f1979c96f65d321acd2b01db6b3f88df58c9580f",
+    "source": "integrations/browser/extension/panel.js",
+    "unchanged": true
+  },
+  "native_background": {
+    "file": "extension/background.js",
+    "live_sha256": "b9e4ece6f80b4188daa0fdae75aa5e168c6e2a09437c696840c624afc9c545d2",
+    "source": "integrations/browser/extension/background.js",
+    "unchanged": true
+  },
+  "base_files": {
+    "integrations/browser/extension/manifest.json": "59f0b243d7d0316276cb0e9357dd6fee0fdc242ac14c416af66e9d37a1d93bb0",
+    "integrations/browser/extension/panel.html": "2526da204ce3cbfa3d4d30cfb4469e8834c10cc9ad39d4e5ed0af7108c2e8021"
+  },
+  "scope": "Existing native BrowserHost v0.2 retained. Candidate v0.2.1 adds local commerce workbench, not a second host. Catalogue and compiler are exact copies of previous delivery for extension packaging."
+}

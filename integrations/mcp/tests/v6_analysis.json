@@ -1,0 +1,160 @@
+{
+  "schema": "bonfyre.oxlint-audit.v1",
+  "analyzer_argv": [
+    "env",
+    "NAPI_RS_NATIVE_LIBRARY_PATH=/Users/nickgonzales/.bun/install/cache/@oxlint/binding-darwin-arm64@1.86.0@@@1/oxlint.darwin-arm64.node",
+    "node",
+    "/Users/nickgonzales/.bun/install/cache/oxlint@1.86.0@@@1/bin/oxlint"
+  ],
+  "status": "pass",
+  "tool": {
+    "name": "Oxlint",
+    "version": "1.86.0"
+  },
+  "files_analyzed": 28,
+  "rules_analyzed": 96,
+  "inputs": [
+    {
+      "path": "integrations/mcp/v6_store.mjs",
+      "bytes": 9840,
+      "sha256": "a4d762cbecfd90b0916423b4da25fb45404c6288b13549829bb4db469c906449"
+    },
+    {
+      "path": "integrations/mcp/v6_server.mjs",
+      "bytes": 10630,
+      "sha256": "bb153e4724c0bb63cee8432e3c4e0a8f926679b6cdaed4b488151412568120df"
+    },
+    {
+      "path": "integrations/mcp/v6_cli.mjs",
+      "bytes": 1831,
+      "sha256": "e31a5a96c04cb310690d9029f0b0035056f287cc859091f443d269aa9431af7b"
+    },
+    {
+      "path": "integrations/mcp/v6_catalog.mjs",
+      "bytes": 3061,
+      "sha256": "b491425367ecb613173dfdb0f7c4ef9546fabd6b900b27939458bddaa5a82884"
+    },
+    {
+      "path": "integrations/mcp/v6_resources.mjs",
+      "bytes": 36657,
+      "sha256": "401daefd683917e46562966a8a06df1da4bb1782dd5ffa7bbe8a2a3ce9bd2e54"
+    },
+    {
+      "path": "integrations/mcp/v6_history.mjs",
+      "bytes": 26849,
+      "sha256": "1f891fedeb8e415167a380edcc910781fb1260fe6d256de26f1b110d220fea33"
+    },
+    {
+      "path": "integrations/mcp/v6_missions.mjs",
+      "bytes": 24506,
+      "sha256": "99811533b40b39fc0ffbc221e58e678f05ab922225f0d9675e43014b9cd3edb1"
+    },
+    {
+      "path": "integrations/mcp/v6_bfp.mjs",
+      "bytes": 15730,
+      "sha256": "c453abf88dcc45f6c329857be9236fef343d45de4de008c72060757cdc96f81b"
+    },
+    {
+      "path": "integrations/mcp/v6_bfp_worker.mjs",
+      "bytes": 1003,
+      "sha256": "a7dd3c6805610787d64952914f54412238b9dd25fb4ec77adc07912492f0aa10"
+    },
+    {
+      "path": "integrations/mcp/owned_worker_pool.mjs",
+      "bytes": 10635,
+      "sha256": "48020c2ea9d8a81abb747865fa1752253c618e6812b16ab2b79570d6e145b79b"
+    },
+    {
+      "path": "integrations/mcp/project_node.mjs",
+      "bytes": 13597,
+      "sha256": "144cdb81915bf197fce803cf28aadbbd09ea722af557b9a38c5e4f4ab530f940"
+    },
+    {
+      "path": "integrations/mcp/project_owner.mjs",
+      "bytes": 2193,
+      "sha256": "e8a9a43b9e500f5ef0ba95f9988034fd52b6fc270609d7689a0ba86e308524d3"
+    },
+    {
+      "path": "integrations/mcp/project_spines.mjs",
+      "bytes": 1018,
+      "sha256": "0e80e6ca9af1d8a06aac8708dd271568427065a23e70f6bb532ff23f97581f83"
+    },
+    {
+      "path": "integrations/mcp/project_v6.mjs",
+      "bytes": 437,
+      "sha256": "695e3de4bb644a7f549c0c8819090eccc718f0a72b9f2bf46854ee756abb593b"
+    },
+    {
+      "path": "integrations/mcp/canonical_json.mjs",
+      "bytes": 4162,
+      "sha256": "716024fd5fed4fb7978acad868dfc40575fff1049a74b65515d732d5b54ee8a2"
+    },
+    {
+      "path": "integrations/mcp/http_boundary.mjs",
+      "bytes": 10800,
+      "sha256": "b48dbd7725f4d1d4a37db4267551889808c3e8396f710ab54f955fb2bc801f57"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_store.test.mjs",
+      "bytes": 3461,
+      "sha256": "0414b35c52628712e66906964f1550f76730c3131e3eeb22619de3473a5a5158"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_transport.test.mjs",
+      "bytes": 7023,
+      "sha256": "346fdc76868bfc317094e94053181ae2465d52a78baaa8612466a256928532ce"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_resources.test.mjs",
+      "bytes": 16365,
+      "sha256": "b580a4967a0139439c6a08eb51d391b21dd84a45eebf27cf3a597de09c3e7802"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_history.test.mjs",
+      "bytes": 7035,
+      "sha256": "6b3dbf6ddd64c62234482e106ef71ffdfceaa0277040b1b50f9d04a0aac25c46"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_missions.test.mjs",
+      "bytes": 10823,
+      "sha256": "82565ba663f82ee70fdc6a81ccef93f2926b121e8dc405fa2611f9006db5afc9"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_bfp.test.mjs",
+      "bytes": 8984,
+      "sha256": "6a8bd9f558e541c20e57a205329669b91b13c2101f8ed978ccf7715b5a4c5880"
+    },
+    {
+      "path": "integrations/mcp/tests/owned_worker_pool.test.mjs",
+      "bytes": 9097,
+      "sha256": "67d9422b6ca055c8de741bce4620862dd8b3c9f58739527e46b59efd7d20f852"
+    },
+    {
+      "path": "integrations/mcp/tests/canonical_json.test.mjs",
+      "bytes": 1725,
+      "sha256": "b0b7354434a6e687da6657cdeb668e58c7203655eec31adab904366157452c4b"
+    },
+    {
+      "path": "integrations/mcp/tests/project_v6.test.mjs",
+      "bytes": 4664,
+      "sha256": "8d67dc027377e9380730550bfb0e819bc4ade3141d83e5d042973d439427afb1"
+    },
+    {
+      "path": "integrations/mcp/tests/spines_cutover_readback.mjs",
+      "bytes": 2668,
+      "sha256": "ab11cd723ef91f681914746e8e03c3e22a3fde69e91266004c5960d808b9319a"
+    },
+    {
+      "path": "integrations/mcp/tests/v6_bfp_worker_benchmark.mjs",
+      "bytes": 3258,
+      "sha256": "fb790d86cd7c367ace8b1242bc8ca4ec3be63ca4060b9bda4b24b898a50f473b"
+    },
+    {
+      "path": "tests/v6_history_witness.mjs",
+      "bytes": 6401,
+      "sha256": "ca3feaddce01451026cd7c7a343da54351c9487ccfa8851b9f79b0e769b6108c"
+    }
+  ],
+  "scope_sha256": "abf2df9fb52a12f99ffcaf8bc912545e6b0e3119310dc4412be55748b7cecfb7",
+  "diagnostics": []
+}

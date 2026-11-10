@@ -1,0 +1,48 @@
+{
+  "schema_version": "bonfyre.matrix.mcp-tools.v1",
+  "tools": [
+    {
+      "name": "matrix_address_resolve",
+      "description": "Resolve one controlled host/path through native BonfyreMatrix. Returns only the exact AddressPlane cut; never infer viewer/effect/economic authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": { "type": "string" },
+          "path": { "type": "string", "default": "/" },
+          "world": { "type": "string" },
+          "audience": { "type": "string" },
+          "representation": { "type": "string" }
+        },
+        "required": ["host"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true }
+    },
+    {
+      "name": "matrix_subject_constellation",
+      "description": "Read all native Matrix addresses/presences for one semantic subject without copying or widening it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "subject": { "type": "string" } },
+        "required": ["subject"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true }
+    },
+    {
+      "name": "matrix_closure_compile",
+      "description": "Compile one native Matrix host cut into sparse RO-Crate or Zarr v3. Material, latent, execution and economic planes stay unresolved until their owners answer.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": { "type": "string" },
+          "format": { "type": "string", "enum": ["ro-crate", "zarr"], "default": "ro-crate" },
+          "timeout_seconds": { "type": "integer", "minimum": 5, "maximum": 120, "default": 30 }
+        },
+        "required": ["host"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "bonfyre.recursive.live-witness.v1",
+  "measured_at": "2026-10-03T02:16:08.909Z",
+  "endpoint": "http://127.0.0.1:3055",
+  "version": "5.1.0-recursive-r1",
+  "runtime": "python",
+  "tool_count": 22,
+  "prompt_count": 2,
+  "catalog_sha256": "639d5c1088e88cc082835a70f962b40a06cad5715b44f3e7fefd0591005ee438",
+  "unauthorized_status_refused": true,
+  "token_binary": "/Users/nickgonzales/.local/bin/bonfyre-token-fabric",
+  "token_binary_status": {
+    "argv": [
+      "/Users/nickgonzales/.local/bin/bonfyre-token-fabric",
+      "status"
+    ],
+    "exit_code": 0,
+    "stdout": "{\"status\":\"ok\",\"service\":\"bonfyre-token-fabric\",\"version\":\"5.1.0-recursive-r1\",\"tokenizers\":[\"byte-utf8-v1\",\"unicode-scalar-v1\",\"lexeme-v1\"]}\n",
+    "stderr": "",
+    "duration_ms": 11
+  },
+  "counts": {
+    "artifacts": 60,
+    "token_artifacts": 59,
+    "token_chunks": 339,
+    "flux_events": 121,
+    "deltas": 0,
+    "dependency_edges": 72,
+    "affected_closures": 2,
+    "ir_objects": 14,
+    "lambda_motifs": 0,
+    "provider_token_bids": 0,
+    "graph_projections": 0,
+    "runtime_images": 1,
+    "bfp_successor_plans": 0,
+    "receipts": 134
+  },
+  "tokenizers": [
+    {
+      "id": "byte-utf8-v1",
+      "version": "1",
+      "implementation": "bonfyre-token-fabric-rust",
+      "exact": 1,
+      "model_compatible": 0,
+      "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+    },
+    {
+      "id": "lexeme-v1",
+      "version": "1",
+      "implementation": "bonfyre-token-fabric-rust",
+      "exact": 1,
+      "model_compatible": 0,
+      "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+    },
+    {
+      "id": "unicode-scalar-v1",
+      "version": "1",
+      "implementation": "bonfyre-token-fabric-rust",
+      "exact": 1,
+      "model_compatible": 0,
+      "metadata_json": "{\"authority\":\"native-rust\",\"scope\":\"canonical-fallback\",\"warning\":\"Not interchangeable with a model vendor tokenizer.\"}"
+    }
+  ],
+  "chains": {
+    "verified": true,
+    "receipt_chain": {
+      "verified": true,
+      "receipts": 134,
+      "head": "0efd64dedbd9b1afe287d77e7506b191d6254506fa7229d4ae1322e85af5e4dd",
+      "failures": []
+    },
+    "flux_chains": {
+      "verified": true,
+      "streams": {
+        "artifact": "5acb36d0506f1b7da7d7f497cab4a5f1766224d3abc81c2a4e4e17094e41dc59",
+        "mission": "16e980e2ab96a7cc4126e03c33ddadfb429384838f603e1f01c91d16d7f7c6b9",
+        "run6.run3.external_campaign": "29df89f04c491758b3b418d5af72e48b5c772c828da851296b7a1a18cddf7ba4",
+        "token": "0705ece07ee6ef17e3ba33526a7bdd811cc9054a8c96bcfd3ffe7156d2ad3f9b"
+      },
+      "failures": []
+    }
+  },
+  "replay_verification_http": {
+    "samples": 25,
+    "milliseconds": [
+      53.163374999999974,
+      56.723209,
+      50.830832999999984,
+      51.97054200000002,
+      51.60408399999994,
+      52.823916000000054,
+      71.18112500000007,
+      46.54466600000001,
+      48.78295800000001,
+      60.94354199999998,
+      60.60141700000008,
+      61.3588749999999,
+      52.65433400000006,
+      57.88058299999989,
+      54.96704100000011,
+      60.975625000000036,
+      58.56012499999997,
+      56.38220799999999,
+      62.39087500000005,
+      56.64220800000021,
+      56.449791000000005,
+      50.846250000000055,
+      53.77712500000007,
+      64.63479099999995,
+      61.06245799999988
+    ],
+    "p50_ms": 56.449791000000005,
+    "p95_ms": 64.63479099999995,
+    "scope": "Warm serial loopback receipt/flux verification only, not tokenization throughput or estate scaling."
+  }
+}

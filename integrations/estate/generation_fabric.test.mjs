@@ -1,3 +1,5 @@
+// What this does not prove:
+// - a dependency is replaced by an object built in this test, so the real one is not exercised.
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { writeFile } from 'node:fs/promises';

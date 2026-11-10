@@ -1,0 +1,23 @@
+{
+  "measured_at": "2026-10-03T02:29:54.896Z",
+  "scope": "Disposable copy; only receipt path columns rebased; no live writes",
+  "source_db_sha256": "0c518ac4668cef4de9d7c4a96033834c339e9d0a64ad36c6813673bb24e99dd2",
+  "store_sha256": "1f5d417d566cf2f231ca17ca476142f60a04b22d09d1875f80d32efc8f2d7316",
+  "receipt_files_copied": 134,
+  "receipts": {
+    "verified": true,
+    "receipts": 134,
+    "head": "0efd64dedbd9b1afe287d77e7506b191d6254506fa7229d4ae1322e85af5e4dd",
+    "failures": []
+  },
+  "flux": {
+    "verified": true,
+    "streams": {
+      "artifact": "5acb36d0506f1b7da7d7f497cab4a5f1766224d3abc81c2a4e4e17094e41dc59",
+      "mission": "16e980e2ab96a7cc4126e03c33ddadfb429384838f603e1f01c91d16d7f7c6b9",
+      "run6.run3.external_campaign": "29df89f04c491758b3b418d5af72e48b5c772c828da851296b7a1a18cddf7ba4",
+      "token": "0705ece07ee6ef17e3ba33526a7bdd811cc9054a8c96bcfd3ffe7156d2ad3f9b"
+    },
+    "failures": []
+  }
+}

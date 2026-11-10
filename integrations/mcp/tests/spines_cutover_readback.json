@@ -1,0 +1,174 @@
+{
+  "schema": "bonfyre.spines-cutover-readback.v1",
+  "measured_at": "2026-10-03T04:07:53.359Z",
+  "endpoint": "http://127.0.0.1:3057",
+  "runtime": "bun",
+  "tool_count": 29,
+  "catalog_sha256": "813699fdb3c828f1ade549ea72e0e7034b2fc7e731cfab8f0ded8442c3c42469",
+  "unauthorized_status_refused": true,
+  "read_models_sha256": "93ec4005e08ecd7fe9808a3d2bb17ca8ee32f2b968962ae0424fddb5a81dfb63",
+  "counts": {
+    "receipts": 177,
+    "flux_events": 18,
+    "object_state": 1,
+    "deltas": 3,
+    "dependency_edges": 1,
+    "closures": 1,
+    "materialized_views": 4,
+    "parity_runs": 1,
+    "graph_partitions": 1,
+    "rewrite_rules": 8,
+    "saturation_runs": 1,
+    "helix_artifacts": 1,
+    "reductions": 4,
+    "authority_decisions": 6,
+    "crux_proofs": 4,
+    "hardware_census": 10,
+    "model_inventory": 2,
+    "phenotype_plans": 9,
+    "kernel_parity_runs": 4,
+    "placement_nodes": 3,
+    "placement_plans": 9,
+    "fuse_plans": 9
+  },
+  "authority": {
+    "automatic_authoritative_writes": false,
+    "automatic_external_effects": false,
+    "zig_authority_required": true
+  },
+  "native_binaries": {
+    "delta_kernel": {
+      "exit_code": 0,
+      "stdout": "{\"status\":\"ok\",\"service\":\"bonfyre-delta-kernel\",\"version\":\"5.5.0-temporal-r5\",\"chunk_bytes\":4096}\n",
+      "stderr": ""
+    },
+    "helix_vm": {
+      "exit_code": 0,
+      "stdout": "{\"status\":\"ok\",\"service\":\"bonfyre-helix-vm\",\"version\":\"5.6.0-reasoning-r6\",\"effect_scope\":\"PURE\"}\n",
+      "stderr": ""
+    },
+    "kernel_probe": {
+      "exit_code": 0,
+      "stdout": "{\"status\":\"ok\",\"service\":\"bonfyre-kernel-probe\",\"version\":\"5.7.0-model-placement-r7\",\"kernels\":[\"dot_f64\",\"layernorm_f64\"]}\n",
+      "stderr": ""
+    }
+  },
+  "receipt_chain": {
+    "verified": true,
+    "receipts": 177,
+    "head": "66f5c22bb304a4e9312e6ac467ed377ffbb8b7f573626ee569ea1615f524e36b",
+    "failures": []
+  },
+  "snapshot": {
+    "source_db_sha256": "33db15cffa0a0f97a755bb4aa9d11cec137623055de508279f02ccf65239f941",
+    "tables": {
+      "metadata": {
+        "rows": 1,
+        "sha256": "eefe3593e4c393c702193b88934cfd3cbc5679bea5c2e43b0d285892b9cbec95"
+      },
+      "receipts": {
+        "rows": 177,
+        "sha256": "9ebe739c4fe49855ca596822c08b67c3494a8c2b2345d225140c606e0d9bd838"
+      },
+      "flux_streams": {
+        "rows": 1,
+        "sha256": "2d9650061ca4abfdf5ee4059a20c79f77bea41c74df52f9524960d8409991c84"
+      },
+      "flux_events": {
+        "rows": 18,
+        "sha256": "8f4f8fb625de213734dda8f5237893320eb128a847cbb9a81dc8209427794b33"
+      },
+      "object_state": {
+        "rows": 1,
+        "sha256": "812c14e7de3236c66791a0b85b62c5481996c51565a420e1e5709e8e491b5afe"
+      },
+      "deltas": {
+        "rows": 3,
+        "sha256": "070747d53d95bc6f1cdbcc78ce7740a84aacc031b4d570c0a35a9cdf3b6e9356"
+      },
+      "dependency_edges": {
+        "rows": 1,
+        "sha256": "18f9cce8f62b5ace5c56ee61893218b929e80be65a26c3846c0ddec82832e753"
+      },
+      "closures": {
+        "rows": 1,
+        "sha256": "4120be0ba0cd79eaacc61e94f3f459908b91d5ca71f295db3bdcbf1bc4bb06c7"
+      },
+      "materialized_views": {
+        "rows": 4,
+        "sha256": "6340b7e3c5dad4c63cfa163f6f431fd8beeda3ada764d1b1968d88df6a84a13a"
+      },
+      "parity_runs": {
+        "rows": 1,
+        "sha256": "67622d11178297218525b8077adbff7c0f04dbdd84a2cb98bcaed504634aa1b9"
+      },
+      "graph_partitions": {
+        "rows": 1,
+        "sha256": "8f0ae7da729513cb8077d2e8b959f68afdcd12ea47dab23360da73c16759a997"
+      },
+      "rewrite_rules": {
+        "rows": 8,
+        "sha256": "f5628a8d31b49c0fcbf57001a2c90101292acdc87b4ca12793c6cf52c57deb7a"
+      },
+      "saturation_runs": {
+        "rows": 1,
+        "sha256": "05678dcd79b95cf267cfdc3e24d49f0ad9ffe2436b9970ba10ebec4a7881a013"
+      },
+      "helix_artifacts": {
+        "rows": 1,
+        "sha256": "9fbe281b99f6aaaafd7c74c3aa2f28aace12327fb2682d8701a3228398bda44f"
+      },
+      "reductions": {
+        "rows": 4,
+        "sha256": "d829cfc5e124496aa43b9c162b847a0648ffc76ca88af6e2c8fc4886344680a5"
+      },
+      "authority_decisions": {
+        "rows": 6,
+        "sha256": "26099c68a05e35b1aa613a9cce859f00e324d61d2fd299e4c516ac476593456d"
+      },
+      "crux_proofs": {
+        "rows": 4,
+        "sha256": "5ae2ea02149ae1879d2cf5d98a97025e984aa9b4e48ad5eb8df1ba71c247d630"
+      },
+      "hardware_census": {
+        "rows": 10,
+        "sha256": "457a454c9d4c6ee7bd24ebe05b899923b1cdf23c9de0115cd09d13818ec8f3c5"
+      },
+      "model_inventory": {
+        "rows": 2,
+        "sha256": "ecea15f28916757c030b8592601dee10d0ac2192747c38eb47640dc7391bea03"
+      },
+      "phenotype_plans": {
+        "rows": 9,
+        "sha256": "315de16b49254f1db734951f0e705603692a97a92193ea69fb1e73bc1a4bac4c"
+      },
+      "kernel_parity_runs": {
+        "rows": 4,
+        "sha256": "677a63976ac0b9ba81546c71291b31967b702adc1a8bead6adda895264d10936"
+      },
+      "placement_nodes": {
+        "rows": 3,
+        "sha256": "11d70f219fa79134143557797c23c3dcd044add3a6de75e51ffe74317e246449"
+      },
+      "placement_plans": {
+        "rows": 9,
+        "sha256": "d0826c11f0d46c271724798b0c37382a0f999f24dc2700e941107c929a778d51"
+      },
+      "fuse_plans": {
+        "rows": 9,
+        "sha256": "1e84949765abb21e31ad1efa995ab9ac5658d8d8e122cc989910ae8e7cf1e5b1"
+      }
+    },
+    "receipt_chain": {
+      "verified": true,
+      "receipts": 177,
+      "head": "66f5c22bb304a4e9312e6ac467ed377ffbb8b7f573626ee569ea1615f524e36b"
+    },
+    "owned_files": 240,
+    "owned_file_map_sha256": "954bbc8c2bab6b50d94c35d15bbd257a5de2f63a4f9a777a4009f6feaaf68a64"
+  },
+  "backup_sha256": "33db15cffa0a0f97a755bb4aa9d11cec137623055de508279f02ccf65239f941",
+  "all_24_tables_equal_to_stopped_python": true,
+  "cli_unchanged": true,
+  "evidence_scope": "Fresh Bun readback and stopped-Python database comparison; current owned files and receipt chains verified. No benchmark or remote deployment inferred."
+}

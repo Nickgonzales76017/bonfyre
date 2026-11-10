@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { createWordPressBridge, normalizeWebhook, toNativeCmsEntry, verifyWebhookSignature } from './bridge.mjs';
+import { createWordPressBridge, issueSiteClaimChallenge, normalizeWebhook, toNativeCmsEntry, verifySiteClaimResponse, verifyWebhookSignature, WORDPRESS_SITE_CLAIM_SCHEMA } from './bridge.mjs';
 
 const rawBody = JSON.stringify({ post_id: 42, site: 'https://example.test', modified_gmt: '2026-07-30T12:00:00Z' });
 const secret = 'test-secret';
@@ -35,6 +35,11 @@ assert.deepEqual(nativeEntry, {
 });
 assert.throws(() => toNativeCmsEntry({}), /normalized WordPress event/i);
 assert.throws(() => toNativeCmsEntry({ ...event, idempotency_key: '' }), /replay metadata/i);
+const claim = issueSiteClaimChallenge({ site: 'https://Example.test/', nonce: 'n-42', secret });
+assert.deepEqual(claim, { schema_version: WORDPRESS_SITE_CLAIM_SCHEMA, site: 'https://example.test', nonce: 'n-42' });
+const claimProof = `sha256=${createHmac('sha256', secret).update(`${WORDPRESS_SITE_CLAIM_SCHEMA}\nhttps://example.test\nn-42`).digest('hex')}`;
+assert.equal(verifySiteClaimResponse({ challenge: claim, proof: claimProof, secret, verifiedAt: '2026-09-28T00:00:00Z' }).proof_state, 'bridge_control_verified');
+assert.throws(() => verifySiteClaimResponse({ challenge: claim, proof: 'sha256=00', secret }), /invalid WordPress site claim proof/i);
 
 let calls = 0;
 const bridge = createWordPressBridge({
@@ -51,6 +56,18 @@ assert.equal(calls, 1);
 assert.equal(bridge.cacheStats().coalesced, 1);
 bridge.invalidate(42);
 assert.equal(bridge.cacheStats().entries, 0);
+
+const publicBridge = createWordPressBridge({
+  baseUrl: 'https://public.example',
+  fetchImpl: async () => ({ ok: true, json: async () => ({ routes: {
+    '/wp/v2/posts': {}, '/wp/v2/pages': {}, '/wp/v2/media': {}, '/wp/v2/categories': {},
+    '/wc/store/v1/products': {},
+  } }) }),
+});
+const capabilities = await publicBridge.discoverPublicCapabilities();
+assert.equal(capabilities.routes.woocommerce_store, true);
+assert.equal(capabilities.routes.activitypub, false);
+assert.match(capabilities.cannot_infer, /authority/);
 
 let release;
 const pendingResponse = new Promise((resolve) => { release = resolve; });

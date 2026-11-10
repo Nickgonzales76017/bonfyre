@@ -1,0 +1,133 @@
+{
+  "schema": "bonfyre.context-residency-witness.v1",
+  "state": "passed",
+  "generated_at": "2026-10-03T05:21:34.254Z",
+  "sources": {
+    "integrations/mcp/hypervisor_store.mjs": "5e4a7000fe877e954611abc3493a45ace5b4b70055efd6b5869028fd86521155",
+    "integrations/mcp/hypervisor_schema.sql": "1097f712c280eb9e2db163a8940dd1a9ae849ca50bfafbc965673113f43cac49",
+    "integrations/mcp/hypervisor_context.mjs": "c8d1386cb5adcdcc9496f7595c6b975ea3a31f83644d1b0cd9a835128fcfa2d5",
+    "integrations/mcp/mission_plan.mjs": "d3446c8c476a28c62953417ef05df1ca82d176f95e13a7807adf5cf231051043",
+    "integrations/mcp/canonical_json.mjs": "72ab7d3f9301d1016c7354abcb1c976365728f71dca4bdc8a730eb7cbb9168ea",
+    "integrations/mcp/tests/hypervisor_context_benchmark.mjs": "c3835c8c7929d8166bde8ca857016923b76be08339ae2bb7f94edb1b4f681e9b"
+  },
+  "scope": "Twelve real disposable-store compiles; 64 tasks and a repeated synthetic UTF-8 body. Exact raw source equality verified on every cut.",
+  "limitations": [
+    "Byte-residency measurement, not production latency or model token savings.",
+    "No distributed deployment, compression ratio, or exact tokenizer budget claim.",
+    "All rendered bodies included in resident bytes; SQLite, receipt and packet manifest overhead excluded."
+  ],
+  "runtime": {
+    "bun": "1.3.13",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "sources_unchanged": true,
+  "cuts": 12,
+  "body_files": 12,
+  "raw_source_bytes_across_cuts": 13508277,
+  "unique_source_bytes_written": 1125722,
+  "resident_source_and_rendered_bytes": 1145959,
+  "avoided_repeated_source_write_bytes": 12382555,
+  "source_write_reduction_fraction": 0.9166642792415347,
+  "exact_body_parity": true,
+  "purpose_and_evidence_invalidate": true,
+  "chain_verified": true,
+  "samples": [
+    {
+      "cut": 0,
+      "elapsed_ms": 22.341875,
+      "source_bytes": 1125687,
+      "new_body_bytes": 1125687,
+      "reused_body_bytes": 0,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 1,
+      "elapsed_ms": 17.32350000000001,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 2,
+      "elapsed_ms": 17.517708,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 3,
+      "elapsed_ms": 16.892958000000007,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 4,
+      "elapsed_ms": 17.093790999999996,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 5,
+      "elapsed_ms": 14.385417000000018,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 6,
+      "elapsed_ms": 16.011832999999996,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 7,
+      "elapsed_ms": 14.597166000000016,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 8,
+      "elapsed_ms": 15.944459000000023,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 9,
+      "elapsed_ms": 17.13258400000001,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "d5e24c27e033c2f3b25b582d70a75f0f6df97c64aab05acf15da7eda72f407cd"
+    },
+    {
+      "cut": 10,
+      "elapsed_ms": 15.440750000000008,
+      "source_bytes": 1125720,
+      "new_body_bytes": 35,
+      "reused_body_bytes": 1125685,
+      "representation_digest": "a6e7adf4a7b04be01c83c88f6b93f7a8aa98d5333491d8bb909b922747a2c490"
+    },
+    {
+      "cut": 11,
+      "elapsed_ms": 15.453583000000009,
+      "source_bytes": 1125687,
+      "new_body_bytes": 0,
+      "reused_body_bytes": 1125687,
+      "representation_digest": "6a67ebfba3b92d429f0c84b6559cf8a903d58e275d53a35095e782ae3157d3f4"
+    }
+  ]
+}

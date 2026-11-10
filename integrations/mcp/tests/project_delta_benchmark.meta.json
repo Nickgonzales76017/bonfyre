@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.project-delta.benchmark.v1",
+  "date": "2026-10-02",
+  "harness": "integrations/mcp/tests/project_delta_benchmark.mjs",
+  "harness_sha256": "ba85f5df63f5cf589c293146f96cc47ad309e8b095ce8307c82a2d7f57044dd5",
+  "results": "integrations/mcp/tests/project_delta_benchmark.json",
+  "results_sha256": "8b839ab586782aca52bd10f938d518c08a5f74efdbf3b0fda96986b612708005",
+  "platform": "darwin-arm64",
+  "bun": "1.3.13",
+  "hyperfine": "1.20.0",
+  "warmup": 3,
+  "runs_per_algorithm": 20,
+  "fixture": {"tracked_files": 2000, "modified_files": 100, "staged_files": 1, "untracked_files": 100},
+  "fixture_root": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-delta-bench-WUCFiF",
+  "parity": "verify mode passed deep equality of every snapshot field and status digest",
+  "git_processes_per_poll": {"legacy": 5, "current": 4},
+  "observed_mean_ms": {"legacy": 148.49224963, "current": 111.67487473},
+  "observed_stddev_ms": {"legacy": 63.61217586, "current": 58.63515102},
+  "limitations": [
+    "Both algorithms run in Bun with the same bounded Git subprocess owner; this does not measure Python versus Bun.",
+    "Hyperfine reported outliers in this run while other work was active. The deterministic gain is one fewer Git process; these noisy timings do not establish a dependable speedup.",
+    "No live HTTP, model inference, content-level invalidation, concurrent-edit consistency, or end-to-end system throughput is measured.",
+    "The imported watcher source fingerprint was not recorded at timing start. Backoff changed afterward, outside the measured snapshot path; rerun for final-source performance attribution.",
+    "The isolated fixture is temporary and not a shipped dataset."
+  ]
+}

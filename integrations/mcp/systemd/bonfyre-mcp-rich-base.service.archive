@@ -1,0 +1,30 @@
+[Unit]
+# Archived Python loopback base; not installed by the native promotion recipe.
+Description=Bonfyre rich MCP mesh owner (legacy tool execution until native owner parity)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+Environment=BONFYRE_MCP_HOST=127.0.0.1
+Environment=BONFYRE_MCP_PORT=3054
+Environment=BONFYRE_ROOT=/opt/bonfyre
+Environment=BONFYRE_CMD_ROOT=/opt/cmd
+Environment=BONFYRE_MCP_DB=/var/lib/bonfyre/mcp/mesh.sqlite3
+Environment=BONFYRE_MCP_TASK_DIR=/var/lib/bonfyre/mcp/tasks
+LoadCredential=mcp-token:/etc/bonfyre/mcp.token
+Environment=BONFYRE_MCP_TOKEN_FILE=%d/mcp-token
+ExecStart=/usr/bin/python3 /opt/bonfyre/mcp/bonfyre_mcp_gateway.py
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/etc/bonfyre /usr/local/bin /opt/bonfyre
+ReadWritePaths=/var/lib/bonfyre
+
+[Install]
+WantedBy=multi-user.target

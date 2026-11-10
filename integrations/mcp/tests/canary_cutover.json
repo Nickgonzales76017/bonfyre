@@ -1,0 +1,162 @@
+{
+  "schema": "bonfyre.canary.cutover.v1",
+  "measured_at": "2026-10-03T02:08:51.518Z",
+  "service": "gui/503/com.bonfyre.fixture-canary-r4",
+  "previous": {
+    "pid": 96338,
+    "exited": true,
+    "program": [
+      "/opt/homebrew/bin/python3.12",
+      "/Users/nickgonzales/.bonfyre/agent-hypervisor/canary-r4/package/r4_server.py"
+    ],
+    "rollback_plist": "/private/tmp/bonfyre-canary-cutover.Poy78c/original.plist",
+    "rollback_launcher": "/private/tmp/bonfyre-canary-cutover.Poy78c/bonfyre-canary.original",
+    "database_backup": "/private/tmp/bonfyre-canary-cutover.Poy78c/canary.sqlite3"
+  },
+  "installed": {
+    "pid": 99110,
+    "program": [
+      "/Users/nickgonzales/.bun/bin/bun",
+      "/Users/nickgonzales/Developer/Bonfyre/integrations/mcp/canary_server.mjs"
+    ],
+    "non_program_configuration_unchanged": true,
+    "source_sha256": {
+      "canary_server.mjs": "a078c1ad0e0a1a339144eead3e594e6fd44ef5999230bd1c630d3fdca3e3e2f3",
+      "canary_store.mjs": "caef13cb8528dd7e8624fe273a98a047b34d25505a94d03b1a8dc9c7d93d534d",
+      "canary_fixtures.mjs": "4705009b2302efb2786217df4dea4d2341303e42ce11c4ed6eab8bcf2ea4ab3b",
+      "canary_cli.mjs": "c0dac0dc85da3812e8d3be1cc9d6c5947d4585dc0b6ae28f65758c07aafc3542",
+      "canary_catalog.json": "589f6e6852c472112a52f8938e7e437eaf8df4ae0c005610f279497db06ada7f",
+      "canary_reviewed_scripts.json": "2a33a8ad0ac112063d6c877e8827ffc9f7dc5fb8416f037b8916da656e51d417",
+      "http_boundary.mjs": "e62503a2aace08b1c89ab0aa352a3f7db675cb6a7af98fdc5ac1506974294da3",
+      "project_node.mjs": "8bc6f2c0ac4e239d4fbb32b8e24f04a011932d6cd6af035c5a9b615c3d4fb7cb"
+    }
+  },
+  "cli": {
+    "path": "/Users/nickgonzales/.local/bin/bonfyre-canary",
+    "sha256": "886095b2f1f712cc111cb97afa30018153e0c1e014770b906eeeb8dec668427d",
+    "runtime": "bun",
+    "receipt_chain_verified": true
+  },
+  "rollback_policy": "Configuration/runtime rollback only: restore the original daemon and CLI, retain the live database and certificate/receipt files. Additive indexes and version metadata are backward compatible; the backup is for explicit reconciliation, never automatic overwrite of concurrent accepted writes.",
+  "before": {
+    "schema": "bonfyre.canary.live-witness.v1",
+    "measured_at": "2026-10-03T02:08:45.190Z",
+    "endpoint": "http://127.0.0.1:3056",
+    "version": "5.4.0-fixture-canary-r4",
+    "runtime": "python",
+    "tool_count": 12,
+    "catalog_sha256": "99b473fb44390cf7a3cf393bab5c8395fbcac42c1a36358c1c530b9cd9a21c0c",
+    "unauthorized_status_refused": true,
+    "receipt_chain": {
+      "verified": true,
+      "receipts": 19,
+      "head": "7654bc8856b072c1b1ce47ec5c7fa34ccce52c0597abd6ddb29e87507112b0c6",
+      "failures": []
+    },
+    "receipt_verification_http": {
+      "samples": 25,
+      "milliseconds": [
+        52.82849999999985,
+        18.79883300000006,
+        9.390625,
+        6.152833999999984,
+        3.81833400000005,
+        4.301040999999941,
+        7.379208999999946,
+        8.057084000000032,
+        4.539582999999993,
+        4.9455840000000535,
+        12.353375000000142,
+        119.56329200000005,
+        14.515084000000115,
+        7.780582999999979,
+        7.811665999999832,
+        8.305083999999852,
+        12.414125000000013,
+        9.411082999999962,
+        9.452499999999873,
+        4.994625000000042,
+        8.157249999999976,
+        6.7657500000000255,
+        11.91099999999983,
+        5.422124999999824,
+        4.038957999999866
+      ],
+      "p50_ms": 8.057084000000032,
+      "p95_ms": 52.82849999999985,
+      "scope": "Warm serial loopback HTTP verification of the existing hash-linked receipt chain; not fixture execution or estate scaling."
+    }
+  },
+  "after": {
+    "schema": "bonfyre.canary.live-witness.v1",
+    "measured_at": "2026-10-03T02:08:46.502Z",
+    "endpoint": "http://127.0.0.1:3056",
+    "version": "5.4.0-fixture-canary-r4",
+    "runtime": "bun",
+    "tool_count": 12,
+    "catalog_sha256": "99b473fb44390cf7a3cf393bab5c8395fbcac42c1a36358c1c530b9cd9a21c0c",
+    "unauthorized_status_refused": true,
+    "receipt_chain": {
+      "verified": true,
+      "receipts": 19,
+      "head": "7654bc8856b072c1b1ce47ec5c7fa34ccce52c0597abd6ddb29e87507112b0c6",
+      "failures": []
+    },
+    "receipt_verification_http": {
+      "samples": 25,
+      "milliseconds": [
+        11.038041000000248,
+        9.595375000000331,
+        3.2896670000000086,
+        4.632458999999926,
+        7.526749999999993,
+        5.796249999999873,
+        5.480208999999832,
+        4.74737499999992,
+        3.7132080000001224,
+        7.030750000000353,
+        4.792083999999704,
+        5.455124999999953,
+        2.337417000000187,
+        4.44379200000003,
+        3.1018330000001697,
+        4.810124999999971,
+        3.8183749999998327,
+        4.128292000000329,
+        5.227958000000399,
+        5.0593330000001515,
+        4.623167000000194,
+        5.429500000000189,
+        3.8375419999997575,
+        3.828875000000153,
+        5.552624999999807
+      ],
+      "p50_ms": 4.792083999999704,
+      "p95_ms": 9.595375000000331,
+      "scope": "Warm serial loopback HTTP verification of the existing hash-linked receipt chain; not fixture execution or estate scaling."
+    }
+  },
+  "project_mcp_refresh": {
+    "pid": 99205,
+    "tool_count": 30,
+    "runtime": "bun"
+  },
+  "limitation": "Serial warm HTTP receipt verification is not fixture/provider performance. No paid agents, fixture corrections, policy promotion, routing decisions or recursive ingestion ran during this cutover.",
+  "prior_attempt": {
+    "status": "rolled_back",
+    "backup": "/private/tmp/bonfyre-canary-cutover.TkQmaK",
+    "failure": "Fixed-delay startup verification could not connect; original Python service and CLI were restored.",
+    "recovery_witness": {
+      "measured_at": "2026-10-03T02:07:42.887Z",
+      "runtime": "python",
+      "tool_count": 12,
+      "receipt_chain": {
+        "verified": true,
+        "receipts": 19,
+        "head": "7654bc8856b072c1b1ce47ec5c7fa34ccce52c0597abd6ddb29e87507112b0c6",
+        "failures": []
+      }
+    },
+    "correction": "Bounded health readiness replaces the fixed delay; rollback failures are reported and restored service health and receipt validity are checked."
+  }
+}

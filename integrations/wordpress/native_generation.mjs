@@ -14,20 +14,28 @@ function integer(value, fallback) {
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
-function run(binary, args, options, spawnImpl, timeoutMs = 120_000) {
+function boundedTimeoutMs(value, fallback = 120_000) {
+  const number = Number(value ?? fallback);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(1, Math.min(Math.trunc(number), 600_000));
+}
+
+function run(binary, args, options, spawnImpl, timeoutMs = 120_000, maxOutputBytes = 1_000_000) {
+  timeoutMs = boundedTimeoutMs(timeoutMs);
   return new Promise((resolve, reject) => {
     const child = spawnImpl(binary, args, options);
     let stderr = '';
     let stdout = '';
     let settled = false;
+    const append = (current, chunk) => current.length >= maxOutputBytes ? current : `${current}${chunk}`.slice(0, maxOutputBytes);
     const timer = setTimeout(() => {
       if (settled) return;
       child.kill('SIGKILL');
       settled = true;
       resolve({ code: null, signal: 'SIGKILL', stderr, stdout, timed_out: true });
     }, timeoutMs);
-    child.stdout?.on('data', (chunk) => { stdout += chunk.toString(); });
-    child.stderr?.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.stdout?.on('data', (chunk) => { stdout = append(stdout, chunk.toString()); });
+    child.stderr?.on('data', (chunk) => { stderr = append(stderr, chunk.toString()); });
     child.once('error', (error) => { if (!settled) { settled = true; clearTimeout(timer); reject(error); } });
     child.once('close', (code, signal) => {
       if (settled) return;
@@ -87,14 +95,16 @@ export function createNativeGenerationClient({
     throw new Error('binary, modelPack, and tokenizer are required');
   }
   if (typeof spawnImpl !== 'function') throw new Error('spawnImpl is required');
+  const configuredTimeoutMs = boundedTimeoutMs(defaultTimeoutMs);
 
-  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = defaultTimeoutMs } = {}) {
+  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = configuredTimeoutMs } = {}) {
     const sourcePrompt = typeof prompt === 'string' ? prompt : '';
     if (!sourcePrompt) throw new Error('prompt is required');
     const limit = integer(maxNewTokens, 20);
     const tempDir = await mkdtemp(join(tempRoot, 'bonfyre-generation-'));
     const promptPath = join(tempDir, 'prompt.txt');
     const outputPath = join(tempDir, 'output.txt');
+    const effectiveTimeoutMs = boundedTimeoutMs(timeoutMs, configuredTimeoutMs);
     const started = Date.now();
     try {
       await writeFile(promptPath, sourcePrompt, 'utf8');
@@ -106,8 +116,8 @@ export function createNativeGenerationClient({
       const execution = await run(binary, args, {
         env: { ...process.env, ...runtimeEnv, ...env },
         cwd: process.cwd(),
-      }, spawnImpl, timeoutMs);
-      if (execution.timed_out) throw new Error(`Native generation timed out after ${timeoutMs}ms`);
+      }, spawnImpl, effectiveTimeoutMs);
+      if (execution.timed_out) throw new Error(`Native generation timed out after ${effectiveTimeoutMs}ms`);
       if (execution.code !== 0) {
         throw new Error(`Native generation failed (${execution.code ?? execution.signal}): ${execution.stderr.trim()}`);
       }

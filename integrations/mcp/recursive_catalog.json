@@ -1,0 +1,737 @@
+{
+  "tools": [
+    {
+      "name": "recursive_status",
+      "description": "Return native token fabric, artifact, delta, IR, graph, runtime image, flux and receipt status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "tokenizer_list",
+      "description": "List exact native tokenizer descriptors. These fallback tokenizers are not represented as vendor-model tokenizers.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "artifact_ingest",
+      "description": "Canonicalize a file or text into an immutable ArtifactIR source artifact and emit a .flux event.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "default": "text"
+          },
+          "classification": {
+            "type": "string",
+            "default": "internal"
+          },
+          "schema_name": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "artifact_get",
+      "description": "Read canonical artifact metadata by ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "artifact_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "token_artifact_compile",
+      "description": "Compile exact tokenizer-qualified chunks and byte/token spans with the native Rust token fabric.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "artifact_id": {
+            "type": "string"
+          },
+          "tokenizer_id": {
+            "type": "string",
+            "default": "lexeme-v1"
+          }
+        },
+        "required": [
+          "artifact_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "token_artifact_get",
+      "description": "Read a TokenArtifact and its content-addressed chunks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "token_artifact_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token_artifact_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "token_delta_derive",
+      "description": "Derive COPY/REPLACE/INSERT/DELETE operations between tokenizer-compatible TokenArtifacts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source_token_artifact_id": {
+            "type": "string"
+          },
+          "target_token_artifact_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_token_artifact_id",
+          "target_token_artifact_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "flux_append",
+      "description": "Append an immutable hash-linked .flux event.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject_kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "stream",
+          "kind",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "delta_record",
+      "description": "Record a typed logical DeltaIR source with physical encoding candidates and invalidations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "logical_ops": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "physical_alternatives": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "invalidations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "manifest_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "logical_ops"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "dependency_register",
+      "description": "Register a typed dependency edge used by affected-closure compilation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source_kind": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "target_kind": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "edge_kind": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "source_kind",
+          "source_id",
+          "target_kind",
+          "target_id",
+          "edge_kind"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "affected_closure_compile",
+      "description": "Compute the bounded affected dependency closure from one changed artifact, token set, delta, mission, graph or runtime object.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "root_kind": {
+            "type": "string"
+          },
+          "root_id": {
+            "type": "string"
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 12
+          }
+        },
+        "required": [
+          "root_kind",
+          "root_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "ir_compile",
+      "description": "Compile one of the seven canonical IR objects.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ir_type": {
+            "type": "string",
+            "enum": [
+              "ArtifactIR",
+              "DeltaIR",
+              "EquivalenceIR",
+              "DistributedIR",
+              "ExecutionPhenotypeIR",
+              "AuthorityIR",
+              "ProofIR"
+            ]
+          },
+          "subject_kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "schema_version": {
+            "type": "string",
+            "default": "1"
+          }
+        },
+        "required": [
+          "ir_type",
+          "subject_kind",
+          "subject_id",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "ir_bundle_compile",
+      "description": "Compile all seven canonical IR projections for a mission or institutional object.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject_kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "mission": {
+            "type": "object"
+          },
+          "artifact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_artifact_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "delta_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "subject_kind",
+          "subject_id",
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "runtime_image_compile",
+      "description": "Freeze a coherent RuntimeImage over token, graph, provider, session, authority, placement and proof roots.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string"
+          },
+          "active_bfp_root": {
+            "type": "string"
+          },
+          "graph_roots": {
+            "type": "object"
+          },
+          "token_roots": {
+            "type": "object"
+          },
+          "provider_routes": {
+            "type": "object"
+          },
+          "session_pointers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "authority_state": {
+            "type": "object"
+          },
+          "placement": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "provider_token_bid_compile",
+      "description": "Compile an exact uncached-token provider bid rather than estimating from characters.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string"
+          },
+          "provider_id": {
+            "type": "string"
+          },
+          "tokenizer_id": {
+            "type": "string"
+          },
+          "required_tokens": {
+            "type": "integer"
+          },
+          "reusable_tokens": {
+            "type": "integer",
+            "default": 0
+          },
+          "expected_output_tokens": {
+            "type": "integer",
+            "default": 0
+          },
+          "latency_ms": {
+            "type": "number"
+          },
+          "cost_usd": {
+            "type": "number"
+          },
+          "privacy_class": {
+            "type": "string",
+            "default": "internal"
+          },
+          "quality_score": {
+            "type": "number"
+          },
+          "proof_score": {
+            "type": "number"
+          },
+          "compatible": {
+            "type": "boolean",
+            "default": true
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider_id",
+          "tokenizer_id",
+          "required_tokens"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "lambda_motif_register",
+      "description": "Register a reusable structural lambda motif with reconstruction evidence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "structure": {
+            "type": "object"
+          },
+          "reconstruction_checks": {
+            "type": "integer",
+            "default": 0
+          }
+        },
+        "required": [
+          "name",
+          "structure"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "lambda_motif_match",
+      "description": "Find exact or approximate reusable lambda motifs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "structure": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "structure"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "graph_projection_compile",
+      "description": "Project an affected closure into a named .graf-compatible graph partition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "graph_kind": {
+            "type": "string"
+          },
+          "root_kind": {
+            "type": "string"
+          },
+          "root_id": {
+            "type": "string"
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 12
+          }
+        },
+        "required": [
+          "graph_kind",
+          "root_kind",
+          "root_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "bfp_successor_plan",
+      "description": "Plan a sparse BFP successor using changed sections, token chunks, logical deltas and a rollback root. This does not activate it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source_root": {
+            "type": "string"
+          },
+          "target_root": {
+            "type": "string"
+          },
+          "changed_sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_chunk_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "logical_delta_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rollback_root": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "changed_sections"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "recursive_mission_bootstrap",
+      "description": "Canonicalize and tokenize the v5 mission/spec/context, emit flux, register dependencies, and compile all seven IRs before agent execution.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "spec_path": {
+            "type": "string"
+          },
+          "context_packet_path": {
+            "type": "string"
+          },
+          "tokenizer_id": {
+            "type": "string",
+            "default": "lexeme-v1"
+          }
+        },
+        "required": [
+          "mission",
+          "spec_path"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "recursive_mission_finalize",
+      "description": "Compile final graph/runtime-image/BFP successor candidates and verify substrate receipt and flux chains.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "provider_routes": {
+            "type": "object"
+          },
+          "session_pointers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "changed_sections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_bfp_root": {
+            "type": "string"
+          },
+          "target_bfp_root": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "substrate_replay_verify",
+      "description": "Verify the native substrate receipt chain and every .flux stream chain.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "recursive-mission",
+      "description": "Compile a normal v5 mission through the restored recursive substrate before agents execute.",
+      "arguments": [
+        {
+          "name": "goal",
+          "description": "Mission goal",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "tokenize-artifact",
+      "description": "Canonicalize and compile exact native TokenArtifacts.",
+      "arguments": [
+        {
+          "name": "path",
+          "description": "Local file path",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

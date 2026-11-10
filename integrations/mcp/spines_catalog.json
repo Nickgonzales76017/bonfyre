@@ -1,0 +1,793 @@
+{
+  "tools": [
+    {
+      "name": "spines_status",
+      "description": "Return cumulative R5-R7 status, native binary health, backend adapters, counts and proof chain.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "spines_verify",
+      "description": "Verify R5 flux chains, R5 incremental/full parity and the cumulative receipt chain.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_flux_append",
+      "description": "Append an immutable .flux event, derive .delta, update the affected state/view closure and emit a .graf partition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "stream": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject_kind": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "UPSERT",
+              "DELETE",
+              "INVALIDATE",
+              "RETRACT"
+            ]
+          },
+          "payload": {
+            "type": "object"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "stream",
+          "kind",
+          "subject_kind",
+          "subject_id",
+          "operation",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_dependency_register",
+      "description": "Register a typed dependency edge for affected-closure maintenance.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source_kind": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "target_kind": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "edge_kind": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "source_kind",
+          "source_id",
+          "target_kind",
+          "target_id",
+          "edge_kind"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_affected_closure",
+      "description": "Compute a bounded affected closure.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "root_kind": {
+            "type": "string"
+          },
+          "root_id": {
+            "type": "string"
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 16
+          }
+        },
+        "required": [
+          "root_kind",
+          "root_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_views_refresh",
+      "description": "Refresh the standing materialized views from canonical incremental state.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_parity_verify",
+      "description": "Replay all .flux events into a clean state and compare to incremental state.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r5_graph_partition",
+      "description": "Compile a bounded affected closure into an immutable .graf partition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "graph_kind": {
+            "type": "string"
+          },
+          "root_kind": {
+            "type": "string"
+          },
+          "root_id": {
+            "type": "string"
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 16
+          }
+        },
+        "required": [
+          "graph_kind",
+          "root_kind",
+          "root_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_rules_list",
+      "description": "List enabled and disabled bounded rewrite rules.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_rule_add",
+      "description": "Register a typed bounded rewrite rule.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "lhs": {
+            "type": "string"
+          },
+          "rhs": {
+            "type": "string"
+          },
+          "guard": {
+            "type": "object"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "lhs",
+          "rhs"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_saturate",
+      "description": "Run bounded equality saturation and extract the lowest-cost term.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "rule_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_iterations": {
+            "type": "integer",
+            "default": 12
+          },
+          "max_terms": {
+            "type": "integer",
+            "default": 2048
+          }
+        },
+        "required": [
+          "term"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_helix_compile",
+      "description": "Compile a selected pure term into immutable .helix with explicit resource bounds.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "source_run_id": {
+            "type": "string"
+          },
+          "fuel": {
+            "type": "integer",
+            "default": 10000
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 256
+          },
+          "labels": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "term"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_helix_reduce",
+      "description": "Reduce a bounded pure .helix term with the native witness VM.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "helix_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "helix_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_authority_preflight",
+      "description": "Classify a proposed effect. R6 never performs authoritative or external effects.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "actor": {
+            "type": "string"
+          },
+          "effect_class": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "proof_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "actor",
+          "effect_class"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r6_crux_seal",
+      "description": "Seal candidate inputs, witnesses and authority classification into immutable .crux.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "witnesses": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "authority_decision_id": {
+            "type": "string"
+          },
+          "classification": {
+            "type": "string",
+            "default": "candidate"
+          }
+        },
+        "required": [
+          "claim",
+          "inputs",
+          "witnesses"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_hardware_census",
+      "description": "Capture a local or declared-node hardware census.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "default": "local"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_model_discover",
+      "description": "Discover content-addressed Bonfyre and adjacent local model/runtime binaries.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_model_inventory",
+      "description": "List discovered model/runtime artifacts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_phenotype_compile",
+      "description": "Compile Gigatoken/model/KV/attention/kernel requirements and an optional PhysicalCompiler candidate cut into ExecutionPhenotypeIR without selecting a representation.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string"
+          },
+          "model_family": {
+            "type": "string"
+          },
+          "token_roots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_count": {
+            "type": "integer",
+            "default": 0
+          },
+          "privacy_class": {
+            "type": "string",
+            "default": "internal"
+          },
+          "latency_target_ms": {
+            "type": "integer"
+          },
+          "quality_floor": {
+            "type": "number"
+          },
+          "context_window": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model_family"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_kernel_parity",
+      "description": "Execute the native reference kernel probe and verify numerical parity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "backend": {
+            "type": "string",
+            "default": "bonfyre-reference-cpu"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_node_register",
+      "description": "Register a placement node and its trust, authority and capability constraints.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "trust": {
+            "type": "string"
+          },
+          "authority_zone": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "object"
+          },
+          "constraints": {
+            "type": "object"
+          },
+          "health": {
+            "type": "string",
+            "default": "candidate"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "trust",
+          "authority_zone",
+          "capabilities"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_nodes_list",
+      "description": "List placement nodes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_placement_compile",
+      "description": "Compile a deterministic candidate DistributedIR placement plan.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string"
+          },
+          "phenotype_id": {
+            "type": "string"
+          },
+          "privacy_class": {
+            "type": "string"
+          },
+          "effect_class": {
+            "type": "string"
+          },
+          "data_bytes": {
+            "type": "integer",
+            "default": 0
+          },
+          "requires_gpu": {
+            "type": "boolean",
+            "default": false
+          },
+          "remote_allowed": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "privacy_class",
+          "effect_class"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "r7_fuse_compile",
+      "description": "Compile candidate .axon, .kore and .fuse manifests from phenotype and placement.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string"
+          },
+          "phenotype_id": {
+            "type": "string"
+          },
+          "placement_id": {
+            "type": "string"
+          },
+          "token_roots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "phenotype_id",
+          "placement_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "mission_r5_bootstrap",
+      "description": "Move a Hypervisor mission through immutable temporal ingestion, dependencies, affected closure and parity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "task": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "mission_r6_reason",
+      "description": "Compile a bounded mission resource term through equivalence saturation, .helix reduction and candidate .crux.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "task": {
+            "type": "object"
+          },
+          "token_estimate": {
+            "type": "integer",
+            "default": 0
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "mission_r6_authority",
+      "description": "Run the R6 authority preflight for a Hypervisor task.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "task": {
+            "type": "object"
+          },
+          "effect_class": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "mission_r7_plan",
+      "description": "Compile hardware, model inventory, phenotype, kernel parity, placement and candidate fuse for a mission.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          },
+          "task": {
+            "type": "object"
+          },
+          "token_estimate": {
+            "type": "integer",
+            "default": 0
+          },
+          "model_family": {
+            "type": "string",
+            "default": "BonfyreQwenFPQ"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "mission_spines_finalize",
+      "description": "Verify all R5-R7 chains and seal a cumulative candidate .crux proof.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "mission"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": "bonfyre.app-lineages.contract.v1",
+  "source": "architecture/apps/app-lineages.contract.yaff",
+  "count": 9,
+  "lineages": [
+    {
+      "lineage": "frappe-core",
+      "flow_stage": "platform",
+      "representative_doctype": "DocType",
+      "company_flow_after": "",
+      "app_dir": "frappe",
+      "dialect": "frappe",
+      "owns": "DocType",
+      "consumes": "Authority",
+      "publishes": "SurfaceGrammar|Policy"
+    },
+    {
+      "lineage": "crm",
+      "flow_stage": "customer",
+      "representative_doctype": "CRM Deal",
+      "company_flow_after": "frappe-core",
+      "app_dir": "crm",
+      "dialect": "frappe",
+      "owns": "",
+      "consumes": "Actor|Relation|OccurrenceProjection",
+      "publishes": "CommunicationEvent|DealState"
+    },
+    {
+      "lineage": "helpdesk",
+      "flow_stage": "support",
+      "representative_doctype": "HD Ticket",
+      "company_flow_after": "crm",
+      "app_dir": "helpdesk",
+      "dialect": "frappe",
+      "owns": "TicketState",
+      "consumes": "Actor|WorkState|OccurrenceProjection",
+      "publishes": "TicketState"
+    },
+    {
+      "lineage": "erpnext",
+      "flow_stage": "commercial-fulfillment-accounting",
+      "representative_doctype": "Sales Order",
+      "company_flow_after": "helpdesk",
+      "app_dir": "erpnext",
+      "dialect": "frappe",
+      "owns": "Value|Receipt",
+      "consumes": "WorkState|ProviderState",
+      "publishes": "Value|Receipt"
+    },
+    {
+      "lineage": "hrms",
+      "flow_stage": "people",
+      "representative_doctype": "Attendance",
+      "company_flow_after": "erpnext",
+      "app_dir": "hrms",
+      "dialect": "frappe",
+      "owns": "HumanCapacity",
+      "consumes": "Actor|WorkState",
+      "publishes": "HumanCapacity"
+    },
+    {
+      "lineage": "lms",
+      "flow_stage": "capability",
+      "representative_doctype": "LMS Course",
+      "company_flow_after": "hrms",
+      "app_dir": "lms",
+      "dialect": "frappe",
+      "owns": "Credential",
+      "consumes": "Actor",
+      "publishes": "Credential|Evidence"
+    },
+    {
+      "lineage": "wiki",
+      "flow_stage": "knowledge",
+      "representative_doctype": "Wiki Document",
+      "company_flow_after": "lms",
+      "app_dir": "wiki",
+      "dialect": "frappe",
+      "owns": "KnowledgeClaim",
+      "consumes": "Evidence|ProofFrontier",
+      "publishes": "KnowledgeClaim"
+    },
+    {
+      "lineage": "insights",
+      "flow_stage": "analytics",
+      "representative_doctype": "Insights Query",
+      "company_flow_after": "wiki",
+      "app_dir": "insights",
+      "dialect": "frappe",
+      "owns": "DerivedView",
+      "consumes": "ReachableCapacity|Value|OpportunityEligibility|ResourcePressure",
+      "publishes": "DerivedView"
+    },
+    {
+      "lineage": "drive",
+      "flow_stage": "content",
+      "representative_doctype": "Drive Permission",
+      "company_flow_after": "insights",
+      "app_dir": "drive",
+      "dialect": "frappe",
+      "owns": "",
+      "consumes": "Artifact|Authority|RouteAdvertisement|NamespaceProjection|QueryDirectory",
+      "publishes": "ShareGrant|RepresentationHistory"
+    }
+  ],
+  "forbidden_inference": "a declared lineage is not a running application, and a dialect records where a grammar was first extracted from rather than what serves it"
+}

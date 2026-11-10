@@ -9,11 +9,15 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, ada
   }
   async function syncFleetGeneration(result) {
     if (!cmsClient || !result?.results) return result;
-    for (const task of result.results) {
-      if (task.kind === 'generate' && task.status === 'passed' && task.result) {
-        await cmsClient.syncGenerationResult(task.result);
+    const pending = result.results.filter((task) => task.kind === 'generate' && task.status === 'passed' && task.result);
+    let cursor = 0;
+    async function worker() {
+      while (cursor < pending.length) {
+        const index = cursor++;
+        await cmsClient.syncGenerationResult(pending[index].result);
       }
     }
+    await Promise.all(Array.from({ length: Math.min(4, pending.length) }, worker));
     return result;
   }
 
@@ -26,7 +30,7 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, ada
       { name: 'bonfyre_model_recovery_verify', effect: 'bounded-read', handler: (args) => fabric.verifyModelPackRecovery?.({ ...args, verifyHashes: true }) || { error: 'model recovery verifier unavailable' } },
       ...(adapterRuntime ? [
         { name: 'bonfyre_live_adapter_inventory', effect: 'read', handler: () => adapterRuntime.discover() },
-        { name: 'bonfyre_live_adapter_probe', effect: 'bounded-read', handler: (args) => adapterRuntime.probe(args) },
+        { name: 'bonfyre_live_adapter_probe', effect: 'bounded-exec', handler: (args) => adapterRuntime.probe(args) },
       ] : []),
       { name: 'bonfyre_generation_profiles', effect: 'read', handler: () => fabric.profileInventory?.() || [] },
       ...(fleet ? [

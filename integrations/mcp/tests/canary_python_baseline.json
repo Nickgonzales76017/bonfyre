@@ -1,0 +1,48 @@
+{
+  "schema": "bonfyre.canary.live-witness.v1",
+  "measured_at": "2026-10-02T23:15:02.942Z",
+  "endpoint": "http://127.0.0.1:3056",
+  "runtime": "python",
+  "tool_count": 12,
+  "catalog_sha256": "99b473fb44390cf7a3cf393bab5c8395fbcac42c1a36358c1c530b9cd9a21c0c",
+  "unauthorized_status_refused": true,
+  "receipt_chain": {
+    "verified": true,
+    "receipts": 19,
+    "head": "7654bc8856b072c1b1ce47ec5c7fa34ccce52c0597abd6ddb29e87507112b0c6",
+    "failures": []
+  },
+  "receipt_verification_http": {
+    "samples": 25,
+    "milliseconds": [
+      11.693959000000007,
+      8.745042000000012,
+      9.039540999999986,
+      7.380042000000003,
+      6.1420420000000036,
+      6.015208000000001,
+      6.60858300000001,
+      6.292749999999984,
+      6.425667000000004,
+      6.130291,
+      6.5311249999999745,
+      6.954250000000002,
+      36.214583000000005,
+      7.207165999999972,
+      4.911791999999991,
+      2.7052920000000427,
+      3.7879580000000033,
+      5.886332999999979,
+      4.924624999999992,
+      6.184875000000034,
+      6.936208000000022,
+      5.6057500000000005,
+      5.0763749999999845,
+      5.75816599999996,
+      15.208541000000025
+    ],
+    "p50_ms": 6.292749999999984,
+    "p95_ms": 15.208541000000025,
+    "scope": "Warm serial loopback HTTP verification of the existing hash-linked receipt chain; not fixture execution or estate scaling."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.canary.reviewed-provider-scripts.v1",
+  "scope": "Reviewed installed entrypoint bytes, not a proof of every transitive dependency. Changed entrypoints require fresh review.",
+  "scripts": {
+    "bonfyre-cavekit-provider": {
+      "sha256": "442010338ae429bd0b08a13d70f4a7815a35100527cdcbd8f1043881576fae43",
+      "runtime": "posix-shell",
+      "review": "Checks declared skill files and returns its version/status; no Python interpreter invocation in the complete inspected entrypoint."
+    },
+    "bonfyre-caveman-provider": {
+      "sha256": "a1911c5303bb5096175c385991f82bb82f15729df69932a644a3c12bd979e2ff",
+      "runtime": "posix-shell",
+      "review": "Checks Claude plugin listing and skill files before version/status output; the installed Claude executable was inspected as Mach-O arm64."
+    },
+    "cavemem": {
+      "sha256": "0e3a33d15a7439fc931c22ddce8882c72103ade262bcd0089a48c0c6e8a220a0",
+      "runtime": "node-via-posix-shell",
+      "review": "Sets the existing Node 22 PATH and execs its installed cavemem CLI; the target entrypoint was inspected as an env-node JavaScript program."
+    },
+    "caveman-code": {
+      "sha256": "139623b63c0d7a976873e785c225bc886d249341270c8893ea5f1ac80d971b38",
+      "runtime": "node-via-posix-shell",
+      "review": "Sets the existing Node 22 PATH and execs its installed caveman CLI; the target entrypoint was inspected as an env-node JavaScript program."
+    }
+  }
+}

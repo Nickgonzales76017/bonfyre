@@ -3,9 +3,47 @@ import { AsyncTTLCache } from '../../lib/async_cache.mjs';
 
 export const WORDPRESS_SCHEMA = 'bonfyre.wordpress.bridge.v1';
 export const NATIVE_CMS_SCHEMA = 'bonfyre.native.cms.entry.v1';
+export const WORDPRESS_SITE_CLAIM_SCHEMA = 'bonfyre.wordpress.site-claim.v1';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function canonicalSite(value) {
+  const raw = text(value);
+  if (!raw) throw new Error('site identity is required');
+  const url = new URL(raw);
+  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
+    throw new Error('site identity must be a clean HTTPS origin');
+  }
+  return url.origin;
+}
+
+function claimMac(site, nonce, secret) {
+  return createHmac('sha256', secret).update(`${WORDPRESS_SITE_CLAIM_SCHEMA}\n${site}\n${nonce}`).digest('hex');
+}
+
+// The bridge/plugin shares its installation secret with the receiving service.
+// This only verifies control of that installed bridge, not ownership of a
+// person, institution, publication, or any authority outside the bridge.
+export function issueSiteClaimChallenge({ site, nonce, secret }) {
+  const origin = canonicalSite(site);
+  const token = text(nonce);
+  if (!token || !text(secret)) throw new Error('claim nonce and bridge secret are required');
+  return { schema_version: WORDPRESS_SITE_CLAIM_SCHEMA, site: origin, nonce: token };
+}
+
+export function verifySiteClaimResponse({ challenge, proof, secret, verifiedAt = new Date().toISOString() }) {
+  if (!challenge || challenge.schema_version !== WORDPRESS_SITE_CLAIM_SCHEMA) throw new Error('WordPress site claim challenge is required');
+  const site = canonicalSite(challenge.site);
+  const nonce = text(challenge.nonce);
+  if (!nonce || !text(secret) || !text(proof)) throw new Error('claim proof and bridge secret are required');
+  const expected = claimMac(site, nonce, secret);
+  const received = text(proof).replace(/^sha256=/i, '');
+  const a = Buffer.from(received, 'hex'); const b = Buffer.from(expected, 'hex');
+  if (a.length !== b.length || !timingSafeEqual(a, b)) throw new Error('invalid WordPress site claim proof');
+  return { schema_version: WORDPRESS_SITE_CLAIM_SCHEMA, site, nonce, proof_state: 'bridge_control_verified', verified_at: verifiedAt,
+    cannot_infer: 'bridge control proof does not identify an Actor, establish institutional authority, import private WordPress data, or authorize publishing' };
 }
 
 export function verifyWebhookSignature(rawBody, signature, secret) {
@@ -74,6 +112,31 @@ export function createWordPressBridge({ baseUrl, token = '', fetchImpl = globalT
   const root = baseUrl.replace(/\/+$/, '');
   const headers = { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
 
+  async function fetchJson(path, { signal } = {}) {
+    const response = await fetchImpl(`${root}${path}`, { headers, signal });
+    if (!response.ok) throw new Error(`WordPress request failed: ${response.status}`);
+    return response.json();
+  }
+
+  // This reads the public WP REST route index. Capability output is limited to
+  // routes the site actually advertises; a WordPress-looking page alone does
+  // not claim WooCommerce, ActivityPub, write access, or private content.
+  async function discoverPublicCapabilities({ signal } = {}) {
+    const index = await responseCache.getOrLoad('site:index', () => fetchJson('/wp-json/', { signal }));
+    const routes = index && typeof index.routes === 'object' ? Object.keys(index.routes) : [];
+    const has = (prefix) => routes.some((route) => route === prefix || route.startsWith(`${prefix}/`));
+    return {
+      schema_version: 'bonfyre.wordpress.public-capabilities.v1',
+      site: root,
+      routes: {
+        posts: has('/wp/v2/posts'), pages: has('/wp/v2/pages'), media: has('/wp/v2/media'),
+        taxonomies: has('/wp/v2/categories') || has('/wp/v2/tags'),
+        woocommerce_store: has('/wc/store/v1/products'), activitypub: has('/activitypub/1.0'),
+      },
+      cannot_infer: 'an advertised public route does not establish current content, account control, private API access, institutional authority, or a right to publish',
+    };
+  }
+
   async function fetchPost(postId, { signal } = {}) {
     const id = String(postId).trim();
     if (!id) throw new Error('postId is required');
@@ -86,6 +149,7 @@ export function createWordPressBridge({ baseUrl, token = '', fetchImpl = globalT
 
   return {
     fetchPost,
+    discoverPublicCapabilities,
     invalidate(postId) { return responseCache.delete(`post:${String(postId).trim()}`); },
     cacheStats() { return responseCache.stats(); },
     normalizeWebhook(payload) { return normalizeWebhook(payload); },

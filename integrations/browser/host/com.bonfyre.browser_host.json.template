@@ -1,0 +1,7 @@
+{
+  "name": "com.bonfyre.browser_host",
+  "description": "Carries a page's address into the estate's existing native operations",
+  "path": "@HOST_LAUNCHER@",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://@EXTENSION_ID@/"]
+}

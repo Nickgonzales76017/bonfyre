@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { acquireModelMemory, defaultModelAdmission } from './model_admission.mjs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -28,6 +29,31 @@ export function extractLlamaResponse(stdout) {
     .replace(/\r?\n+$/, '');
   const fence = withoutRuntime.match(/^```[a-zA-Z0-9_-]*\n([\s\S]*?)(?:\n```)?$/);
   return fence ? fence[1].replace(/\r?\n+$/, '') : withoutRuntime;
+}
+
+// The existing llama/MoE protocol is JSON. Bound its bytes while reading, and
+// retain cancellation until the body is consumed; response.text() could buffer
+// an arbitrarily large response before its caller checked the length.
+export async function readLlamaServerPacket(response, maxOutputBytes = 1_000_000) {
+  if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 1 || maxOutputBytes > 8 * 1024 * 1024)
+    throw new Error('invalid llama.cpp response bound');
+  const declared = response.headers?.get('content-length');
+  if (declared !== null && declared !== undefined && (!/^\d+$/.test(declared) || Number(declared) > maxOutputBytes))
+    throw new Error('llama.cpp response exceeds its byte bound');
+  if (!response.body?.getReader) throw new Error('llama.cpp response body is unavailable');
+  const reader = response.body.getReader(), parts = []; let length = 0;
+  try {
+    for (;;) {
+      const {value, done} = await reader.read(); if (done) break;
+      if (!(value instanceof Uint8Array) || (length += value.length) > maxOutputBytes)
+        throw new Error('llama.cpp response exceeds its byte bound');
+      parts.push(value);
+    }
+    return new TextDecoder('utf-8', {fatal:true}).decode(Buffer.concat(parts, length));
+  } finally {
+    try { await reader.cancel(); } catch {}
+    try { reader.releaseLock(); } catch {}
+  }
 }
 
 function run(binary, args, { spawnImpl, env, timeoutMs, maxOutputBytes }) {
@@ -91,6 +117,9 @@ export function createLlamaGenerationClient({
   maxOutputBytes = 1_000_000,
   spawnImpl = spawn,
   tempRoot = '/tmp',
+  // A real llama.cpp run loads the whole checkpoint, so it asks the memory
+  // ledger first. An injected spawn loads nothing and needs no grant.
+  admission = spawnImpl === spawn ? 'default' : null,
 } = {}) {
   const model = text(modelPath) || text(modelPack);
   if (!text(binary) || !model) throw new Error('binary and modelPath are required');
@@ -101,6 +130,8 @@ export function createLlamaGenerationClient({
     if (!sourcePrompt.trim()) throw new Error('prompt is required');
     const limit = positiveInteger(maxNewTokens, 64);
     const started = Date.now();
+    const ledger = admission === 'default' ? defaultModelAdmission() : admission;
+    const grant = ledger ? acquireModelMemory({ modelPath: model, contextSize, plane: 'llama-cli', admission: ledger }) : null;
     const tempDir = await mkdtemp(join(tempRoot, 'bonfyre-llama-generation-'));
     const promptPath = join(tempDir, 'prompt.txt');
     try {
@@ -144,6 +175,7 @@ export function createLlamaGenerationClient({
         elapsed_ms: Date.now() - started,
       };
     } finally {
+      grant?.release();
       await rm(tempDir, { recursive: true, force: true });
     }
   }
@@ -152,10 +184,10 @@ export function createLlamaGenerationClient({
 }
 
 /**
- * Use a persistent llama-server rather than reloading a GGUF for every Estate
- * request.  llama.cpp exposes an OpenAI-compatible local endpoint, so this
- * keeps the Metal-resident MoE warm while retaining the same generation
- * receipt shape as the CLI client above.
+ * Use the llama-server behind `bonfyre-moe serve` rather than reloading a GGUF
+ * for every Estate request. That server loads the model on demand after a
+ * memory grant and unloads it when idle; a 503 here means admission refused the
+ * load, and the response says why. Same generation receipt shape as above.
  */
 export function createLlamaServerGenerationClient({
   serverUrl,
@@ -173,12 +205,16 @@ export function createLlamaServerGenerationClient({
   if (!modelName) throw new Error('model, modelPath, or modelPack is required');
   if (typeof fetchImpl !== 'function') throw new Error('fetchImpl is required');
 
-  async function generate({ prompt, maxNewTokens = 64, greedy = true, env: _env = {}, timeoutMs = 120_000 } = {}) {
+  async function generate({ prompt, maxNewTokens = 64, greedy = true, env: _env = {}, timeoutMs = 120_000, signal } = {}) {
     const sourcePrompt = typeof prompt === 'string' ? prompt : '';
     if (!sourcePrompt.trim()) throw new Error('prompt is required');
     const limit = positiveInteger(maxNewTokens, 64);
     const started = Date.now();
     const controller = new AbortController();
+    if (signal !== undefined && !(signal instanceof AbortSignal)) throw new Error('invalid generation cancellation signal');
+    const abort = () => controller.abort(signal.reason);
+    signal?.addEventListener('abort', abort, {once:true});
+    if (signal?.aborted) abort();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetchImpl(`${endpoint}/v1/chat/completions`, {
@@ -195,9 +231,9 @@ export function createLlamaServerGenerationClient({
           stream: false,
         }),
         signal: controller.signal,
+        redirect: 'error',
       });
-      const raw = await response.text();
-      if (Buffer.byteLength(raw) > maxOutputBytes) throw new Error(`llama.cpp server response exceeded ${maxOutputBytes} output bytes`);
+      const raw = await readLlamaServerPacket(response, maxOutputBytes);
       if (!response.ok) throw new Error(`llama.cpp server generation failed (${response.status}): ${raw.slice(-4_000)}`);
       let payload;
       try { payload = JSON.parse(raw); } catch { throw new Error('llama.cpp server returned invalid JSON'); }
@@ -215,12 +251,18 @@ export function createLlamaServerGenerationClient({
         stderr: '',
         stdout: raw,
         elapsed_ms: Date.now() - started,
+        usage: payload.usage && ['prompt_tokens','completion_tokens','total_tokens'].every(key =>
+          Number.isSafeInteger(payload.usage[key]) && payload.usage[key] >= 0)
+          ? {prompt_tokens:payload.usage.prompt_tokens,completion_tokens:payload.usage.completion_tokens,total_tokens:payload.usage.total_tokens}
+          : null,
       };
     } catch (error) {
+      if (signal?.aborted) throw new Error('llama.cpp server request cancelled; native completion was not observed');
       if (error?.name === 'AbortError') throw new Error(`llama.cpp server generation timed out after ${timeoutMs}ms`);
       throw error;
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
     }
   }
 

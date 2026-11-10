@@ -1,0 +1,132 @@
+{
+  "schema": "bonfyre.spines-history-witness.v1",
+  "measured_at": "2026-10-03T03:33:01.042Z",
+  "source_home": "/Users/nickgonzales/.bonfyre/agent-hypervisor/native-spines-r7",
+  "copied_home": "/private/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-spines-history-VdDXfi/state",
+  "source_database_sha256": "33db15cffa0a0f97a755bb4aa9d11cec137623055de508279f02ccf65239f941",
+  "copied_database_sha256": "22c3e61d60f83eb311caf48d75517aab41b6485fd7a8ba8634a4d1382f447bac",
+  "copied_files": 240,
+  "copied_bytes": 403271,
+  "missing_owned_files": [],
+  "rebased_columns": [
+    [
+      "receipts",
+      "path"
+    ],
+    [
+      "flux_events",
+      "segment_path"
+    ],
+    [
+      "deltas",
+      "native_manifest_path"
+    ],
+    [
+      "parity_runs",
+      "proof_path"
+    ],
+    [
+      "graph_partitions",
+      "path"
+    ],
+    [
+      "helix_artifacts",
+      "path"
+    ],
+    [
+      "reductions",
+      "witness_path"
+    ],
+    [
+      "crux_proofs",
+      "path"
+    ],
+    [
+      "phenotype_plans",
+      "path"
+    ],
+    [
+      "kernel_parity_runs",
+      "path"
+    ],
+    [
+      "placement_plans",
+      "path"
+    ],
+    [
+      "fuse_plans",
+      "path"
+    ]
+  ],
+  "snapshot_method": "stable-main-and-WAL-byte-copy",
+  "source_snapshot_files": {
+    "spines.sqlite3": "33db15cffa0a0f97a755bb4aa9d11cec137623055de508279f02ccf65239f941"
+  },
+  "defects": [],
+  "baseline_counts": {
+    "receipts": 177,
+    "flux_events": 18,
+    "object_state": 1,
+    "deltas": 3,
+    "dependency_edges": 1,
+    "closures": 1,
+    "materialized_views": 4,
+    "parity_runs": 1,
+    "graph_partitions": 1,
+    "rewrite_rules": 8,
+    "saturation_runs": 1,
+    "helix_artifacts": 1,
+    "reductions": 4,
+    "authority_decisions": 6,
+    "crux_proofs": 4,
+    "hardware_census": 10,
+    "model_inventory": 2,
+    "phenotype_plans": 9,
+    "kernel_parity_runs": 4,
+    "placement_nodes": 3,
+    "placement_plans": 9,
+    "fuse_plans": 9
+  },
+  "baseline_receipts": {
+    "verified": true,
+    "receipts": 177,
+    "head": "66f5c22bb304a4e9312e6ac467ed377ffbb8b7f573626ee569ea1615f524e36b",
+    "failure_count": 0,
+    "failure_sample": []
+  },
+  "baseline_flux": {
+    "verified": true,
+    "streams": {
+      "smoke": "836c9311c088136adc7384abd19b6ccc01a2ccd302dceecf46d266f8c17b1f9f"
+    },
+    "failure_count": 0,
+    "failure_sample": []
+  },
+  "rules": 8,
+  "models": 2,
+  "nodes": 3,
+  "parity": {
+    "equal": true,
+    "id": "512aa29e371322cd404bca456f959b5a8b716d9e21f70058b4119afab3c07d54",
+    "incremental_digest": "eb4f431186faa0a880d5944a77ee814a3a569c8dd5446f21c63b3d382bbadaf3",
+    "rebuild_digest": "eb4f431186faa0a880d5944a77ee814a3a569c8dd5446f21c63b3d382bbadaf3",
+    "events": 18,
+    "objects": 1,
+    "receipt": {
+      "receipt_id": "e6a47c9ee67147a784da6cbc2848073f",
+      "digest": "101ef1fe9fb819f6ef06bd93e02b5aa56ade7b2da0288e48299f800d10405f65",
+      "previous_digest": "66f5c22bb304a4e9312e6ac467ed377ffbb8b7f573626ee569ea1615f524e36b",
+      "path": "/private/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/bonfyre-spines-history-VdDXfi/state/receipts/1790998381202-e6a47c9ee67147a784da6cbc2848073f.json",
+      "state": "passed"
+    }
+  },
+  "after_parity_receipts": {
+    "verified": true,
+    "receipts": 178,
+    "head": "101ef1fe9fb819f6ef06bd93e02b5aa56ade7b2da0288e48299f800d10405f65",
+    "failure_count": 0,
+    "failure_sample": []
+  },
+  "source_unchanged": true,
+  "copy_retained": false
+}

@@ -1,0 +1,2045 @@
+{
+ "schema": "aurekai.recurring-commerce.catalog.v1",
+ "created_on": "2026-10-03",
+ "positioning": "Recurring life programs: discovery, replenishment, services, access and finite gifts.",
+ "research_boundary": {
+  "reddit": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/",
+  "rss_requested": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/.rss",
+  "rss_result": "RSS fetch failed; public HTML discussion retrieved.",
+  "evidence": "Qualitative comments from an older thread, not a representative survey.",
+  "high_income_early_adopter": "User-proposed acquisition hypothesis; no income or adoption estimates inferred.",
+  "excluded_claim": "No affiliation, merchant onboarding, stock, checkout, paid subscription, or service delivery is established."
+ },
+ "profiles": [
+  {
+   "id": "threadbeast",
+   "name": "ThreadBeast",
+   "pattern": "wardrobe_keep_all",
+   "category": "style",
+   "url": "https://www.threadbeast.com/how-it-works",
+   "summary": "Monthly personalized streetwear; preview and swaps before shipment. The package is purchased as a whole.",
+   "terms": {
+    "price_from_cents": 6000,
+    "currency": "USD",
+    "billing_basis": "box",
+    "cadence": "monthly",
+    "ownership": "keep_all",
+    "returns": "No traditional returns; consult current exchange terms.",
+    "cancellation": "Source describes a seven-day window after receipt; generic cancel-anytime marketing must not erase that detail."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://www.threadbeast.com/how-it-works"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "stitch-fix",
+   "name": "Stitch Fix",
+   "pattern": "try_before_buy",
+   "category": "style",
+   "url": "https://support.stitchfix.com/support/solutions/articles/153000250371-how-the-fix-experience-works",
+   "summary": "Human-styled deliveries with an optional schedule. The styling fee is credited toward items kept from that Fix; it is not the total box price.",
+   "terms": {
+    "styling_fee_cents": 2000,
+    "currency": "USD",
+    "billing_basis": "service_fee_plus_kept_items",
+    "cadence": "on_demand_or_scheduled",
+    "returns": "Unkept items can be returned; review current window and terms.",
+    "first_fix_promotions": "Excluded from the default comparison."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://support.stitchfix.com/support/solutions/articles/153000250371-how-the-fix-experience-works"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "crispy-club",
+   "name": "Crispy Club",
+   "pattern": "discovery_box",
+   "category": "food",
+   "url": "https://crispyclub.co/products/subscription-box",
+   "summary": "Three selected chili crisps per shipment; the product page promises variety without repeats and billing when each shipment is prepared.",
+   "terms": {
+    "listed_price_cents": 4999,
+    "currency": "USD",
+    "items_per_cycle": 3,
+    "billing_basis": "box",
+    "availability": "The retrieved product page includes Sold out; availability is not inferred."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://crispyclub.co/products/subscription-box"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "lata",
+   "name": "Lata",
+   "pattern": "discovery_box",
+   "category": "food",
+   "url": "https://lata.shop/products/monthly-discovery-box",
+   "summary": "Four curated conservas per monthly Discovery Box. Prepaid gifting options are also listed.",
+   "terms": {
+    "listed_price_cents": 4999,
+    "currency": "USD",
+    "items_per_cycle": 4,
+    "cadence": "monthly",
+    "shipping": "Charged/prepaid at checkout; not treated as included."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://lata.shop/products/monthly-discovery-box"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "fuego-box",
+   "name": "Fuego Box",
+   "pattern": "discovery_box",
+   "category": "food",
+   "url": "https://www.fuegobox.com/",
+   "summary": "User-supplied hot-sauce subscription example, including a high-heat variant. Current first-party terms could not be retrieved in this pass.",
+   "terms": {
+    "listed_price_cents": null,
+    "availability": "unverified",
+    "heat_preferences": "User-supplied description; not independently confirmed."
+   },
+   "source_status": "user_supplied_current_unverified",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://www.fuegobox.com/"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "bokksu",
+   "name": "Bokksu",
+   "pattern": "discovery_box",
+   "category": "food",
+   "url": "https://bokksu.com/products/classic-bokksu",
+   "summary": "Monthly Japanese snack-and-tea curation, with a culture guide and several prepaid terms. Allergen information is not a guarantee of dietary suitability.",
+   "terms": {
+    "listed_monthly_cents": 3999,
+    "currency": "USD",
+    "billing_basis": "box_or_prepaid_term",
+    "shipping": "Additional shipping calculated at checkout.",
+    "personalization": "Do not infer individual allergen-safe customization."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://bokksu.com/products/classic-bokksu"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "bottomless",
+   "name": "Bottomless",
+   "pattern": "replenishment",
+   "category": "food",
+   "url": "https://www.bottomless.com/kuma",
+   "summary": "Coffee replenishment driven by a connected scale rather than a fixed calendar, with a pre-order notice and controls to postpone or change the order.",
+   "terms": {
+    "billing_basis": "usage_triggered_order",
+    "cadence": "consumption_trigger",
+    "sensor_required_for_sensor_mode": true,
+    "current_membership_price": "not captured"
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://www.bottomless.com/kuma"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "rinse",
+   "name": "Rinse",
+   "pattern": "recurring_service",
+   "category": "home",
+   "url": "https://www.rinse.com/faqs/",
+   "summary": "Rinse Repeat prepays laundry bags; Rinse Go is a fee-waiver membership. These are different entitlements, not interchangeable all-inclusive laundry plans.",
+   "terms": {
+    "billing_basis": "quota_or_access_membership",
+    "coverage": "Must check the service address.",
+    "quota_terms": "Rollover terms changed in June 2026; do not inherit the older rollover assumption."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://www.rinse.com/faqs/"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "filtereasy",
+   "name": "FilterEasy",
+   "pattern": "replenishment",
+   "category": "home",
+   "url": "https://filtereasy.com/product/20x24x1",
+   "summary": "Filter subscriptions combine exact product dimensions and a replacement schedule; the cited page describes one specific filter size.",
+   "terms": {
+    "billing_basis": "replacement_order",
+    "required_preferences": [
+     "dimensions",
+     "quantity",
+     "compatible_filter_specification"
+    ],
+    "price": "No universal price inferred from a single filter size."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://filtereasy.com/product/20x24x1"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  },
+  {
+   "id": "barkbox",
+   "name": "BarkBox",
+   "pattern": "discovery_box",
+   "category": "pets",
+   "url": "https://www.barkbox.com/faq/",
+   "summary": "Themed dog toys and treats with plan-dependent customization and membership terms. Month-to-month and committed multi-month plans differ.",
+   "terms": {
+    "billing_basis": "box",
+    "cadence": "monthly",
+    "required_preferences": [
+     "dog_size",
+     "chew_style",
+     "ingredient_exclusions"
+    ],
+    "price": "Checkout-specific; no mixed-source headline price."
+   },
+   "source_status": "first_party_page_retrieved",
+   "checked_on": "2026-10-03",
+   "relationship": "independent_reference_profile",
+   "merchant_connection": "not_connected",
+   "source_urls": [
+    "https://www.barkbox.com/faq/"
+   ],
+   "capabilities": [
+    "compare",
+    "save_reference",
+    "use_pattern"
+   ],
+   "not_capabilities": [
+    "merchant_authorization",
+    "checkout",
+    "inventory",
+    "affiliate_relationship"
+   ]
+  }
+ ],
+ "patterns": {
+  "discovery_box": {
+   "label": "Curated discovery",
+   "price_basis": "per_cycle",
+   "fulfillment": "shipment",
+   "required": [
+    "shipping_cost",
+    "product_selection",
+    "substitution_policy"
+   ],
+   "stages": [
+    "preview",
+    "approve_selection",
+    "reserve_inventory",
+    "collect_payment",
+    "pack",
+    "ship",
+    "delivery_evidence",
+    "feedback"
+   ]
+  },
+  "wardrobe_keep_all": {
+   "label": "Style drop: keep it all",
+   "price_basis": "per_cycle",
+   "fulfillment": "shipment",
+   "required": [
+    "sizes",
+    "shipping_cost",
+    "swap_deadline",
+    "exchange_policy"
+   ],
+   "stages": [
+    "style_profile",
+    "preview",
+    "approve_selection",
+    "reserve_inventory",
+    "collect_payment",
+    "ship",
+    "delivery_evidence",
+    "fit_feedback"
+   ]
+  },
+  "try_before_buy": {
+   "label": "Try, then buy",
+   "price_basis": "fee_plus_kept_items",
+   "fulfillment": "returnable_shipment",
+   "required": [
+    "style_fee",
+    "item_prices",
+    "return_window",
+    "return_policy"
+   ],
+   "stages": [
+    "style_profile",
+    "preview",
+    "collect_style_fee",
+    "ship_trial",
+    "keep_return_decision",
+    "price_kept_items",
+    "credit_style_fee",
+    "collect_balance",
+    "receive_returns"
+   ]
+  },
+  "replenishment": {
+   "label": "Replenish when needed",
+   "price_basis": "per_order",
+   "fulfillment": "shipment",
+   "required": [
+    "quantity",
+    "consumption_basis",
+    "stock_observation",
+    "lead_time",
+    "max_order_value"
+   ],
+   "stages": [
+    "observe_stock",
+    "propose_reorder",
+    "member_approval",
+    "reserve_inventory",
+    "collect_payment",
+    "ship",
+    "update_stock"
+   ]
+  },
+  "recurring_service": {
+   "label": "Recurring local service",
+   "price_basis": "per_visit",
+   "fulfillment": "service_visit",
+   "required": [
+    "service_area",
+    "visit_capacity",
+    "scope",
+    "cancellation_cutoff"
+   ],
+   "stages": [
+    "scope_check",
+    "address_coverage",
+    "approve_visit",
+    "reserve_capacity",
+    "perform_service",
+    "completion_evidence",
+    "collect_payment",
+    "feedback"
+   ]
+  },
+  "access_pass": {
+   "label": "Membership and access",
+   "price_basis": "per_period",
+   "fulfillment": "entitlement",
+   "required": [
+    "entitlements",
+    "redemption_limits",
+    "period",
+    "renewal_terms"
+   ],
+   "stages": [
+    "approve_terms",
+    "collect_payment",
+    "issue_entitlement",
+    "reserve_redemption",
+    "record_use",
+    "renewal_review"
+   ]
+  },
+  "finite_gift": {
+   "label": "Gift with a real ending",
+   "price_basis": "prepaid_term",
+   "fulfillment": "shipment",
+   "required": [
+    "cycle_count",
+    "recipient_consent",
+    "delivery_preferences",
+    "end_policy"
+   ],
+   "stages": [
+    "recipient_acceptance",
+    "confirm_finite_term",
+    "collect_term_payment",
+    "prepare_cycle",
+    "ship",
+    "delivery_evidence",
+    "finish_without_renewal"
+   ]
+  },
+  "hybrid": {
+   "label": "Goods plus a service",
+   "price_basis": "separate_components",
+   "fulfillment": "mixed",
+   "required": [
+    "component_sellers",
+    "each_component_price",
+    "each_component_scope",
+    "joint_schedule"
+   ],
+   "stages": [
+    "configure_components",
+    "separate_quotes",
+    "approve_components",
+    "reserve_each_owner",
+    "fulfill_each_component",
+    "reconcile_partial_completion"
+   ]
+  }
+ },
+ "templates": [
+  {
+   "id": "recurring-heat-passport",
+   "name": "Heat Passport",
+   "pattern": "discovery_box",
+   "category": "food",
+   "promise": "Three small-batch condiments with a user-set heat ceiling and no unwanted repeats.",
+   "reference_profiles": [
+    "crispy-club",
+    "fuego-box"
+   ],
+   "configuration_fields": [
+    "heat_ceiling",
+    "flavor_preferences",
+    "ingredient_exclusions"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-conserva-supper-club",
+   "name": "Conserva Supper Club",
+   "pattern": "discovery_box",
+   "category": "food",
+   "promise": "A tinned-fish tasting with a pairing guide and an optional shared supper.",
+   "reference_profiles": [
+    "lata"
+   ],
+   "configuration_fields": [
+    "species_exclusions",
+    "spice_preference",
+    "portions"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-japan-snack-correspondence",
+   "name": "Japan Snack Correspondence",
+   "pattern": "discovery_box",
+   "category": "food",
+   "promise": "A snack-and-tea selection with maker stories and an optional tasting circle.",
+   "reference_profiles": [
+    "bokksu"
+   ],
+   "configuration_fields": [
+    "sweet_savory_balance",
+    "ingredient_exclusions",
+    "recipient"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-coffee-at-the-right-time",
+   "name": "Coffee At The Right Time",
+   "pattern": "replenishment",
+   "category": "food",
+   "promise": "Reorder from measured or explicitly reported depletion, not an arbitrary monthly clock.",
+   "reference_profiles": [
+    "bottomless"
+   ],
+   "configuration_fields": [
+    "grind",
+    "roast",
+    "stock_quantity",
+    "daily_consumption",
+    "lead_days"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-weeknight-rescue",
+   "name": "Weeknight Rescue",
+   "pattern": "recurring_service",
+   "category": "food",
+   "promise": "Prepared meals or meal preparation with an explicit maximum active cooking time.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "servings",
+    "dietary_requirements",
+    "active_minutes",
+    "delivery_window",
+    "away_dates"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-two-person-pantry",
+   "name": "Two-Person Pantry",
+   "pattern": "replenishment",
+   "category": "food",
+   "promise": "Right-size pantry staples to the household instead of accumulating subscription excess.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "household_size",
+    "stock_on_hand",
+    "consumption_rate",
+    "substitution_policy"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-hosting-without-the-errands",
+   "name": "Hosting Without The Errands",
+   "pattern": "hybrid",
+   "category": "food",
+   "promise": "A configurable dinner-party bundle: ingredients, table flowers, and optional cleanup.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "guests",
+    "occasion",
+    "menu",
+    "service_area",
+    "seller_split"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-neighborhood-bakery-round",
+   "name": "Neighborhood Bakery Round",
+   "pattern": "discovery_box",
+   "category": "food",
+   "promise": "A rotating local bakery pickup with an order cutoff and pickup window.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "pickup_point",
+    "portion_count",
+    "ingredient_exclusions"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-streetwear-rotation",
+   "name": "Streetwear Rotation",
+   "pattern": "wardrobe_keep_all",
+   "category": "style",
+   "promise": "A previewable streetwear drop with size feedback and an explicit exchange policy.",
+   "reference_profiles": [
+    "threadbeast"
+   ],
+   "configuration_fields": [
+    "sizes",
+    "style_profile",
+    "swap_deadline",
+    "keep_all_budget"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-try-on-wardrobe",
+   "name": "Try-On Wardrobe",
+   "pattern": "try_before_buy",
+   "category": "style",
+   "promise": "Curated clothing to try, with item-level keep/return decisions and a separately credited styling fee.",
+   "reference_profiles": [
+    "stitch-fix"
+   ],
+   "configuration_fields": [
+    "sizes",
+    "item_budget",
+    "style_fee",
+    "return_days"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-quarterly-closet-reset",
+   "name": "Quarterly Closet Reset",
+   "pattern": "hybrid",
+   "category": "style",
+   "promise": "A seasonal wardrobe edit combining alterations, cleaning, and optional new pieces.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "existing_wardrobe",
+    "alteration_scope",
+    "service_area",
+    "season"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-socks-when-worn-out",
+   "name": "Socks When Worn Out",
+   "pattern": "replenishment",
+   "category": "style",
+   "promise": "Replace worn basics from an explicit wear signal rather than sending novelty items forever.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "size",
+    "material",
+    "replacement_signal",
+    "quantity"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-laundry-off-my-list",
+   "name": "Laundry Off My List",
+   "pattern": "recurring_service",
+   "category": "home",
+   "promise": "Recurring pickup and cleaning, with bag quota distinguished from delivery-fee membership.",
+   "reference_profiles": [
+    "rinse"
+   ],
+   "configuration_fields": [
+    "bags_per_period",
+    "turnaround",
+    "pickup_window",
+    "service_area"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-sunday-home-reset",
+   "name": "Sunday Home Reset",
+   "pattern": "recurring_service",
+   "category": "home",
+   "promise": "A repeat cleaning visit with named tasks, arrival window, and completion evidence.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "rooms",
+    "scope",
+    "pets",
+    "access_method",
+    "away_dates"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-filters-that-fit",
+   "name": "Filters That Fit",
+   "pattern": "replenishment",
+   "category": "home",
+   "promise": "Deliver the actual filter dimensions needed, with an installation reminder and replacement cadence.",
+   "reference_profiles": [
+    "filtereasy"
+   ],
+   "configuration_fields": [
+    "filter_sizes",
+    "quantity",
+    "specification",
+    "replacement_months"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-home-steward-visit",
+   "name": "Home Steward Visit",
+   "pattern": "recurring_service",
+   "category": "home",
+   "promise": "A bounded maintenance visit for small recurring household tasks.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "task_list",
+    "visit_minutes",
+    "property_permission",
+    "service_area"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-car-ready-monday",
+   "name": "Car Ready Monday",
+   "pattern": "recurring_service",
+   "category": "home",
+   "promise": "Scheduled car washing or detailing with a real service scope and booking capacity.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "vehicle_size",
+    "service_scope",
+    "location",
+    "visit_frequency"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-lawn-and-garden-rhythm",
+   "name": "Lawn And Garden Rhythm",
+   "pattern": "recurring_service",
+   "category": "home",
+   "promise": "Season-aware garden or lawn visits with weather rescheduling and clear included work.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "plot_size",
+    "scope",
+    "season",
+    "weather_policy"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-pet-joy-without-the-pile",
+   "name": "Pet Joy Without The Pile",
+   "pattern": "discovery_box",
+   "category": "pets",
+   "promise": "Toys and treats adapted to the pet, with a skip option when unused items accumulate.",
+   "reference_profiles": [
+    "barkbox"
+   ],
+   "configuration_fields": [
+    "pet_size",
+    "chew_style",
+    "ingredient_exclusions",
+    "unused_items"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-pet-pantry-refill",
+   "name": "Pet Pantry Refill",
+   "pattern": "replenishment",
+   "category": "pets",
+   "promise": "Replenish the same compatible food from consumption and lead time rather than guessing.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "food_id",
+    "daily_quantity",
+    "stock_on_hand",
+    "lead_days"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-walks-covered",
+   "name": "Walks Covered",
+   "pattern": "recurring_service",
+   "category": "pets",
+   "promise": "Recurring dog walks with coverage area, availability, and visit completion.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "pet_needs",
+    "walk_duration",
+    "time_windows",
+    "provider_coverage"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-grooming-rhythm",
+   "name": "Grooming Rhythm",
+   "pattern": "recurring_service",
+   "category": "pets",
+   "promise": "Pre-book grooming capacity on the pet-specific interval.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "pet_size",
+    "coat_needs",
+    "interval_weeks",
+    "service_area"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-flowers-for-someone",
+   "name": "Flowers For Someone",
+   "pattern": "finite_gift",
+   "category": "gifts",
+   "promise": "A finite series of flower deliveries that ends without making the recipient a payer.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "recipient_acceptance",
+    "deliveries",
+    "occasion_dates",
+    "delivery_preferences"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-care-package-seasons",
+   "name": "Care Package Seasons",
+   "pattern": "finite_gift",
+   "category": "gifts",
+   "promise": "A finite, preference-aware care-package series for family, students, or a friend.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "recipient",
+    "cycle_count",
+    "exclusions",
+    "gift_message"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-host-gift-reserve",
+   "name": "Host Gift Reserve",
+   "pattern": "access_pass",
+   "category": "gifts",
+   "promise": "A clearly bounded gift-selection service, with goods priced separately when redeemed.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "service_entitlements",
+    "redemptions",
+    "gift_budget"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-the-local-saturday",
+   "name": "The Local Saturday",
+   "pattern": "access_pass",
+   "category": "experiences",
+   "promise": "A bookable rotation of local classes and cultural outings with real partner capacity.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "interests",
+    "distance",
+    "time_window",
+    "guest_policy"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-museum-and-makers-circle",
+   "name": "Museum And Makers Circle",
+   "pattern": "access_pass",
+   "category": "experiences",
+   "promise": "A social rhythm around existing museums and maker workshops, including free alternatives.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "interests",
+    "free_options",
+    "capacity",
+    "guest_slots"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-hobby-bench",
+   "name": "Hobby Bench",
+   "pattern": "discovery_box",
+   "category": "experiences",
+   "promise": "A skill-building kit with a workshop or project challenge rather than random surplus.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "skill_level",
+    "tools_owned",
+    "project_preferences"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-reading-and-walking-club",
+   "name": "Reading And Walking Club",
+   "pattern": "access_pass",
+   "category": "experiences",
+   "promise": "A recurring social reading/walking program that may use library access instead of another content subscription.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "reading_preferences",
+    "library_access",
+    "meeting_area",
+    "schedule"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-date-night-rotation",
+   "name": "Date Night Rotation",
+   "pattern": "hybrid",
+   "category": "experiences",
+   "promise": "A chosen-at-preview date-night package with separate venue and goods terms.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "shared_preferences",
+    "date_window",
+    "budget",
+    "venue_confirmation"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-office-commons",
+   "name": "Office Commons",
+   "pattern": "hybrid",
+   "category": "work",
+   "promise": "A team-managed pantry and consumables service with approved budget and supplier-specific orders.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "headcount",
+    "office_budget",
+    "delivery_window",
+    "component_sellers"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-remote-team-ritual",
+   "name": "Remote Team Ritual",
+   "pattern": "hybrid",
+   "category": "work",
+   "promise": "Optional distributed tastings or hobby sessions, with recipient consent and per-address eligibility.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "team_size",
+    "opt_in_members",
+    "shipping_regions",
+    "event_time"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-resident-welcome-season",
+   "name": "Resident Welcome Season",
+   "pattern": "finite_gift",
+   "category": "work",
+   "promise": "A property-sponsored finite welcome series; gift funding is separate from a resident contract.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "sponsor",
+    "recipient_acceptance",
+    "cycles",
+    "property_scope"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-room-parent-supply-round",
+   "name": "Room Parent Supply Round",
+   "pattern": "replenishment",
+   "category": "community",
+   "promise": "Voluntary class supplies coordinated with the actual school or teacher request.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "approved_need",
+    "donor_budget",
+    "school_relationship",
+    "inventory"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-community-producer-club",
+   "name": "Community Producer Club",
+   "pattern": "discovery_box",
+   "category": "community",
+   "promise": "A neighborhood producer rotation with a visible cohort size, pickup point, and maker fulfillment.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "producer_slots",
+    "minimum_cohort",
+    "pickup_window",
+    "product_exclusions"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  },
+  {
+   "id": "recurring-away-week-coordination",
+   "name": "Away-Week Coordination",
+   "pattern": "hybrid",
+   "category": "home",
+   "promise": "One proposed travel window across supported deliveries and visits; changes remain separate requests per provider.",
+   "reference_profiles": [],
+   "configuration_fields": [
+    "away_dates",
+    "affected_services",
+    "provider_controls",
+    "confirmation_receipts"
+   ],
+   "semantic_slots": [
+    "sources",
+    "work",
+    "evidence",
+    "community"
+   ],
+   "native_owners": [
+    "CMS",
+    "ActorGraph",
+    "InformationPolicy",
+    "AuthorityGraph",
+    "ProgramFabric",
+    "CommitmentGraph",
+    "ProtocolMachine",
+    "WorkGraph",
+    "Queue",
+    "Finance",
+    "Meter",
+    "ForeignTwin",
+    "WebAddress"
+   ],
+   "default_status": "draft",
+   "source_basis": "Aurekai-authored executable configuration; not a claim any named merchant offers this program."
+  }
+ ],
+ "bundles": [
+  {
+   "id": "week-back",
+   "name": "Buy Back The Week",
+   "programs": [
+    "recurring-laundry-off-my-list",
+    "recurring-sunday-home-reset",
+    "recurring-weeknight-rescue"
+   ],
+   "promise": "Time removed from errands, with explicit scopes and capacity.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "host-mode",
+   "name": "Host Mode",
+   "programs": [
+    "recurring-conserva-supper-club",
+    "recurring-hosting-without-the-errands",
+    "recurring-flowers-for-someone"
+   ],
+   "promise": "One evening, separate food/floral/service owners.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "taste-not-clutter",
+   "name": "Taste, Not Clutter",
+   "programs": [
+    "recurring-heat-passport",
+    "recurring-japan-snack-correspondence",
+    "recurring-neighborhood-bakery-round"
+   ],
+   "promise": "Rotate discoveries instead of shipping three boxes every month.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "wardrobe-complete",
+   "name": "Wardrobe, End To End",
+   "programs": [
+    "recurring-try-on-wardrobe",
+    "recurring-laundry-off-my-list",
+    "recurring-quarterly-closet-reset"
+   ],
+   "promise": "Acquisition, return, care, and alteration stay distinct.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "pet-rhythm",
+   "name": "Pet Rhythm",
+   "programs": [
+    "recurring-pet-joy-without-the-pile",
+    "recurring-pet-pantry-refill",
+    "recurring-walks-covered"
+   ],
+   "promise": "Fun follows preferences; necessities follow usage.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "new-place",
+   "name": "New Place",
+   "programs": [
+    "recurring-resident-welcome-season",
+    "recurring-filters-that-fit",
+    "recurring-home-steward-visit"
+   ],
+   "promise": "Move-in gifting transitions to opt-in useful upkeep.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "social-saturday",
+   "name": "Social Saturday",
+   "programs": [
+    "recurring-the-local-saturday",
+    "recurring-museum-and-makers-circle",
+    "recurring-reading-and-walking-club"
+   ],
+   "promise": "Regular social participation with free options included.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "family-care",
+   "name": "Keep In Touch",
+   "programs": [
+    "recurring-flowers-for-someone",
+    "recurring-care-package-seasons"
+   ],
+   "promise": "Finite gifts with recipient preferences, not surprise auto-renewal.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "team-common",
+   "name": "Team Commons",
+   "programs": [
+    "recurring-office-commons",
+    "recurring-remote-team-ritual"
+   ],
+   "promise": "Sponsored participation with per-person opt-in and budget.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "neighborhood-round",
+   "name": "Neighborhood Round",
+   "programs": [
+    "recurring-community-producer-club",
+    "recurring-room-parent-supply-round"
+   ],
+   "promise": "Aggregate declared demand into useful small local batches.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "workweek-presentable",
+   "name": "Workweek Ready",
+   "programs": [
+    "recurring-streetwear-rotation",
+    "recurring-car-ready-monday",
+    "recurring-laundry-off-my-list"
+   ],
+   "promise": "A concrete, editable operating routine rather than more browsing.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  },
+  {
+   "id": "travel-mode",
+   "name": "Away Mode",
+   "programs": [
+    "recurring-away-week-coordination",
+    "recurring-pet-pantry-refill",
+    "recurring-walks-covered"
+   ],
+   "promise": "Pause deliveries where supported while preserving pet care.",
+   "bundle_mode": "proposal_only_separate_sellers",
+   "combined_checkout": false
+  }
+ ],
+ "demand_signals": [
+  {
+   "id": "cleaning",
+   "need": "Time back from household chores",
+   "summary": "House cleaning, laundry and lawn care appear in the discussion.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  },
+  {
+   "id": "meal-friction",
+   "need": "Reduce effort and waste",
+   "summary": "Commenters describe meals spoiling and preparation taking too long.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  },
+  {
+   "id": "just-in-time",
+   "need": "Replenish by use",
+   "summary": "A coffee subscriber describes scale-triggered ordering.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  },
+  {
+   "id": "gifts",
+   "need": "Keep in touch",
+   "summary": "A commenter describes recurring flowers for a family member.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  },
+  {
+   "id": "activities",
+   "need": "A recurring reason to go",
+   "summary": "Gym, climbing, museum and audiobook examples connect membership to use.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  },
+  {
+   "id": "subscription-fatigue",
+   "need": "Control the pile",
+   "summary": "Commenters discuss unused subscriptions, unwanted goods and difficulty managing trips.",
+   "source": "https://www.reddit.com/r/AskMenOver30/comments/w3ldfr/what_are_some_subscriptions_that_just_make_life/"
+  }
+ ]
+}

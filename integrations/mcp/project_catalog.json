@@ -1,0 +1,1707 @@
+{
+  "tools": [
+    {
+      "name": "architecture_atlas",
+      "description": "Query the canonical architecture atlas (lossless registry; simplified views are generated). ops: summary | expand(view) | get(id) | cannot_infer(id) | search(query) | loss. Consult before architecture work instead of re-deriving from memory.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "summary",
+              "expand",
+              "get",
+              "cannot_infer",
+              "search",
+              "loss"
+            ]
+          },
+          "view": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "bonfyre_moe_generate",
+      "description": "Generate through the persistent local Qwen MoE Metal service and return a hashed receipt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "User request for local MoE generation"
+          },
+          "system_prompt": {
+            "type": "string",
+            "description": "Optional system instruction"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1024,
+            "default": 256
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 600,
+            "default": 180
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "bonfyre_moe_status",
+      "description": "Return the managed local MoE service health and loaded model metadata.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "bonfyre_quic_fpq_generate",
+      "description": "Generate through the managed Qwen FPQ runtime over the resident ngtcp2 QUIC service, then record the completion in CMS/LambdaTensor, Graph, Flow, and DisCIPL.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "User request for QUIC-backed FPQ generation"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128,
+            "default": 32
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 900,
+            "default": 300
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "capability_fulfillment",
+      "description": "Open, inspect, or record payment presentation for one native Capability Fulfillment ProtocolMachine shared by x402, MPP, MCP, A2A, CloudEvents, Beckn, UCP, and ACP. It uses the operating book and durable lifecycle owner; it never pretends a quote or payment claim is verified settlement, execution, or delivery.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "open_quote",
+              "present_payment",
+              "verify_payment",
+              "status"
+            ],
+            "default": "open_quote"
+          },
+          "capability": {
+            "type": "string",
+            "description": "Stable priced capability identifier"
+          },
+          "exchange": {
+            "type": "string",
+            "description": "Stable idempotency identity for this buyer/capability exchange"
+          },
+          "payment_reference": {
+            "type": "string",
+            "description": "Opaque presented payment reference; retained only as a SHA-256 receipt reference"
+          }
+        },
+        "required": [
+          "capability",
+          "exchange"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "cms_record",
+      "description": "Use the real native BonfyreCMS owner to list schemas or list/get/create/update records in a namespace. Use frappe_compile with cms_doctype first when a compiled Frappe DocType needs a safe CMS record projection. This never executes Frappe controllers, publishes content, settles money, or acts against a foreign system.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "list_types",
+              "list",
+              "get",
+              "create",
+              "update"
+            ]
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Required except list_types; native CMS content type identifier"
+          },
+          "namespace": {
+            "type": "string",
+            "default": "mcp",
+            "description": "Native CMS namespace identifier"
+          },
+          "entry_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "attributes": {
+            "type": "object",
+            "description": "Required for create/update; values are validated by the native CMS schema"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 25
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "cms_read",
+      "description": "Read the native BonfyreCMS owner without exposing create/update actions. Lists schemas or lists/gets records in one namespace. This is a read projection only: it does not publish, mutate CMS, invoke Frappe, or grant external authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {"type": "string", "enum": ["list_types", "list", "get"]},
+          "content_type": {"type": "string", "description": "Required except list_types; native CMS content type identifier"},
+          "namespace": {"type": "string", "default": "mcp"},
+          "entry_id": {"type": "integer", "minimum": 1},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 25}
+        },
+        "required": ["action"],
+        "additionalProperties": false
+      },
+      "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "training_public_programs",
+      "description": "Read current, explicitly MCP-enabled public training programmes from their native BonfyreCMS release owner. Content is digest-verified and excludes private member requests, publisher identity, training history, payment and coaching consent.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "studio": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,64}$",
+            "description": "Explicitly enabled public fitness creator studio"
+          }
+        },
+        "required": [
+          "studio"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "title": "Public training programmes"
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "commercial_state",
+      "description": "Read the estate's commercial position across the stores that own it, joined on the finance opportunity id: 'relationships' gives one line per opportunity with what was sent, what came back, its CRM deal, its commerce stage, its price and open requirements, and what is missing; 'books' gives the journal totals derived from recorded invoices, payments and costs beside the quotations, pledges and expected costs that are not on the books; 'exchange' gives one exchange's stage in the fifteen-stage commerce chain. Read-only. It sends nothing, prices nothing and settles nothing.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "view": {
+            "type": "string",
+            "enum": [
+              "relationships",
+              "books",
+              "exchange"
+            ],
+            "default": "relationships"
+          },
+          "exchange": {
+            "type": "string",
+            "description": "For view=exchange: the exchange id, e.g. opportunity:<finance opportunity id>"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "title": "Commercial state"
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "estate_recall",
+      "description": "Find passages in a store the estate built over its own records and documents, by meaning and by their own words together (local reciprocal-rank fusion; each hit says where it ranked in each). The default store, campaign, holds the operator's working thread read from its page, every outbound_message coordination record, the no-simulation ledger, the convergence plan and the library productization plan; each hit comes back with its text and an id naming its source (thread:<n>, outbound_message:<record id>, measured:<n>, work:<n>, convergence:<n>, libraries:<n>). Use it before re-reading those sources. Read-only; the store is rebuilt with 'bonfyre recall index-sources'.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "What to look for, in plain words"
+          },
+          "top": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 8
+          },
+          "collapse_exact_text": {
+            "type": "boolean",
+            "default": false,
+            "description": "Optional presentation-only grouping of byte-identical source passages. Keeps every distinct source ID."
+          },
+          "store": {
+            "type": "string",
+            "default": "campaign",
+            "description": "Store name under the estate's recall directory"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "title": "Estate recall"
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "financial_membrane",
+      "description": "Use the real native BonfyreEconomy membrane: inspect actual caps and observed costs, set a cap, route a recipe, or record an explicitly observed cost. It does not create cash, an invoice, a settlement, or spend authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "status",
+              "set_cap",
+              "route",
+              "record_observed_cost"
+            ],
+            "default": "status"
+          },
+          "recipe": {
+            "type": "string"
+          },
+          "usd_cap": {
+            "type": "number"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "usd": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "financial_read",
+      "description": "Read the native BonfyreEconomy membrane without exposing cap or cost mutations. Status reads operating caps/cost observations/service book; route returns a recommendation and estimate only. Neither action spends, settles, books cash, or commits a provider.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {"type": "string", "enum": ["status", "route"], "default": "status"},
+          "recipe": {"type": "string", "description": "Required for route; stable recipe identifier"}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "foreign_twin_observe",
+      "description": "Observe one public HTTP(S) source through the native BonfyreProject ForeignTwin owner. It performs robots preflight, retains exact permitted bytes with a receipt, and returns an observe-only boundary. It never claims, connects, canonicalizes, or acts against the source.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "twin_id": {
+            "type": "string",
+            "description": "Stable safe identifier for this observation subject"
+          },
+          "url": {
+            "type": "string",
+            "description": "Public http(s) URL to observe"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 15,
+            "maximum": 600,
+            "default": 120
+          }
+        },
+        "required": [
+          "twin_id",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "foreign_twin_release",
+      "description": "Read the actual bounded WebAddress ForeignTwin release, or resolve a multi-source case from exact published source URLs. Optional context queries return unrelated discovery candidates only. Returns generation-pinned source_refs and SHA-256 readback receipts; never observes, publishes, or joins authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "expected_generation": {
+            "type": "string",
+            "maxLength": 96
+          },
+          "case_urls": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "related_queries": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          "grant_terms": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "frappe_compile",
+      "description": "Compile one installed Frappe lineage through phase 0-12 into retained native AppPack, SchemaIR, binding derivations and rule universes. This extracts grammar only: it never executes a Frappe controller, hook, migration, site, or external effect.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lineage": {
+            "type": "string",
+            "enum": [
+              "frappe",
+              "crm",
+              "helpdesk",
+              "erpnext",
+              "hrms",
+              "lms",
+              "wiki",
+              "insights",
+              "drive",
+              "bonfyre_erpnext"
+            ]
+          },
+          "phase": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 12,
+            "default": 12
+          },
+          "cms_doctype": {
+            "type": "string",
+            "description": "Optional installed DocType to compile and register as a safe native CMS schema; requires phase 1+"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 120,
+            "maximum": 1800,
+            "default": 900
+          }
+        },
+        "required": [
+          "lineage"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "institutional_prepare",
+      "description": "Run a real non-effecting institutional preparation: native recipe compilation + economic route + local MoE or QUIC/FPQ generation, then persist the generation receipt through CMS/LambdaTensor, Merkle Graph, Flow, and DisCIPL. It always refuses outreach, payment, publication, legal submission, and foreign mutation because those need separate authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Stable Matrix subject or safe local identifier"
+          },
+          "objective": {
+            "type": "string",
+            "description": "Concrete institutional objective to prepare"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "observe",
+              "prepare"
+            ],
+            "default": "prepare"
+          },
+          "recipe": {
+            "type": "string",
+            "default": "institutional-prepare"
+          },
+          "model_route": {
+            "type": "string",
+            "enum": [
+              "moe",
+              "qwen_fpq"
+            ],
+            "default": "moe"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1024,
+            "default": 700
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 900,
+            "default": 300
+          }
+        },
+        "required": [
+          "subject",
+          "objective"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "matrix_address_resolve",
+      "description": "Resolve a host/path/world/audience/representation through the configured native BonfyreWebAddress/Matrix owner. Use before treating a URL as a Matrix coordinate. It returns an address cut plus explicit unresolved authority, evidence, provider and economic closures; it never bootstraps demo state or grants read/effect authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Normalized DNS host, e.g. aurekai.live"
+          },
+          "path": {
+            "type": "string",
+            "description": "Absolute semantic path",
+            "default": "/"
+          },
+          "world": {
+            "type": "string",
+            "enum": [
+              "live",
+              "shadow",
+              "replay",
+              "candidate"
+            ],
+            "default": "live"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "self",
+              "household",
+              "group",
+              "community",
+              "public",
+              "market",
+              "institution"
+            ],
+            "default": "public"
+          },
+          "representation": {
+            "type": "string",
+            "enum": [
+              "HTML",
+              "API",
+              "MCP",
+              "A2A",
+              "BonfyreFS",
+              "CMS",
+              "Habitat"
+            ],
+            "default": "HTML"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 120,
+            "default": 30
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "matrix_closure_compile",
+      "description": "Compile one exact native Matrix host/path cut into a sparse RO-Crate JSON-LD or Zarr v3 group. This is the shared system closure carrier for web/CMS/Frappe/MCP/agent work: Matrix identity, address and Presence resolve once; other planes are either explicitly unresolved or show only digest-and-receipt owner references. A reference never grants a body read, authority, provider route, Work, or financial claim.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Controlled Matrix hostname, e.g. aurekai.live"
+          },
+          "path": {
+            "type": "string",
+            "description": "Exact local Matrix path on that controlled host, e.g. /plants/luna",
+            "default": "/"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "ro-crate",
+              "zarr"
+            ],
+            "default": "ro-crate"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 120,
+            "default": 30
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "matrix_subject_constellation",
+      "description": "Read the lawful web/API/MCP/A2A/other coordinates already bound around one Matrix subject from the configured native owner. Use after a subject is known. Coordinates are not copies and never authorize disclosure or effects.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Stable Matrix subject identifier"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 120,
+            "default": 30
+          }
+        },
+        "required": [
+          "subject"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "native_tool_inventory",
+      "description": "Find native owners by family, capability or synopsis. Set surface=commands to read the exact public bonfyre CLI catalog from its native owner (all=true includes labs). Owner discovery does not prove runtime readiness or effect authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "surface": {
+            "type": "string",
+            "enum": ["owners", "commands"],
+            "description": "owners (default) or the canonical CLI command catalog"
+          },
+          "all": {
+            "type": "boolean",
+            "description": "With surface=commands, include lab and internal commands"
+          },
+          "query": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "detail": {
+            "type": "string",
+            "enum": [
+              "summary",
+              "full"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "Defaults to 20 when any filter or display option is supplied."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "native_tool_invoke",
+      "description": "Invoke one audited read-only command of a compiled Bonfyre native owner. Generic argv rejects all other verbs, extra arguments and mutation routes. Use destination-owned MCP/HTTP tools for effects; those require current ActorClosure, PackGraph and independent reviewed WorkGraph admission.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string",
+            "description": "Bonfyre command family, e.g. BonfyreEmbed"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "argv passed to the binary"
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 600
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "estate_capabilities",
+      "description": "Read the coalesced local estate control plane: native tools, discovered models, generation profiles, live adapters and reconciled provider fleet. Short-lived caches collapse repeated filesystem and PATH discovery; refresh bypasses them. This is discovery and health state, not provider authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "estate_adapter_probe",
+      "description": "Run bounded local health probes for installed estate adapters and retain the probe receipts. Commands and argv come only from the fixed adapter catalogue; this does not authenticate a provider, spend, publish, or mutate a foreign system.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            }
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "default": 5
+          },
+          "max_concurrency": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8,
+            "default": 4
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "native"
+    },
+    {
+      "name": "mcp_runtime_identity",
+      "description": "Report the running Project MCP release identity: active capability pack, launched source-set digest, current declared source-set digest, advertised tool count, and current/drifted/unattested/source_unavailable state. This detects source/runtime drift without claiming transitive dependency or deployment authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "node"
+    },
+    {
+      "name": "mcp_capability_lens",
+      "description": "Search the canonical MCP tool catalogue by intent, owner and read/effect class without loading the full tool wall. Summary mode returns compact routing metadata; full mode returns schemas only for the selected shortlist. This is catalogue discovery, not service-health or effect authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string", "maxLength": 256},
+          "owner": {"type": "string", "maxLength": 64},
+          "pack": {"type": "string", "enum": ["build", "operate", "work", "model", "commerce", "evidence", "connect", "institution", "account", "workspace"]},
+          "effect": {"type": "string", "enum": ["all", "read", "effect"], "default": "all"},
+          "detail": {"type": "string", "enum": ["summary", "full"], "default": "summary"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 20}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "mcp_read_bundle",
+      "description": "Run up to eight already-authorized read-only MCP tools concurrently inside one authenticated Project request. Every child is checked against its canonical schema and the active capability aperture before dispatch. Results remain independent owner reads, not an atomic snapshot and never an effect shortcut.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "calls": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"},
+                "name": {"type": "string", "minLength": 1, "maxLength": 128},
+                "arguments": {"type": "object", "default": {}}
+              },
+              "required": ["name"],
+              "additionalProperties": false
+            }
+          },
+          "max_concurrency": {"type": "integer", "minimum": 1, "maximum": 8, "default": 4}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "node"
+    },
+    {
+      "name": "mcp_pack_snapshot",
+      "description": "Read one canonical capability pack as a server-owned operational snapshot. The pack definition selects only context-free read-only entry probes; each child still crosses its own owner boundary and is validated through the same read-bundle contract. Packs that require account or address context return an empty snapshot plus their handoff plan rather than inventing context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pack": {"type": "string", "enum": ["build", "operate", "work", "model", "commerce", "evidence", "connect", "institution", "account", "workspace"]}
+        },
+        "required": ["pack"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "node"
+    },
+    {
+      "name": "mcp_product_plan",
+      "description": "Compose one capability pack into a single read-only product plan: runtime/source identity, operational snapshot, compact capability shortlist, handoffs and next effect names. pack=auto deterministically ranks declared pack routing terms from intent; narrowed endpoints remain confined to their active pack. It replaces separate pack-snapshot and capability-lens client calls without changing their owner or authority boundaries.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pack": {"type": "string", "enum": ["auto", "build", "operate", "work", "model", "commerce", "evidence", "connect", "institution", "account", "workspace"], "default": "auto"},
+          "intent": {"type": "string", "maxLength": 256, "default": ""},
+          "effect": {"type": "string", "enum": ["all", "read", "effect"], "default": "all"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 20, "default": 12}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "node"
+    },
+    {
+      "name": "mcp_portfolio_plan",
+      "description": "Compose a multi-pack Aurekai objective into one compact read-only portfolio. Auto mode selects the strongest matching capability packs; explicit packs preserve caller order. Pack plans run concurrently, exact overlapping owner reads coalesce only while in flight, and the response returns compact readiness, handoffs and next effects rather than duplicating full snapshot bodies. This is routing and readiness, never effect authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "intent": {"type": "string", "minLength": 1, "maxLength": 512},
+          "packs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {"type": "string", "enum": ["build", "operate", "work", "model", "commerce", "evidence", "connect", "institution", "account", "workspace"]}
+          },
+          "max_packs": {"type": "integer", "minimum": 1, "maximum": 5, "default": 3},
+          "effect": {"type": "string", "enum": ["all", "read", "effect"], "default": "all"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 12, "default": 8}
+        },
+        "required": ["intent"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "node"
+    },
+    {
+      "name": "operator_backlog_audit",
+      "description": "Audit one operator goal-state cohort without mutation. Returns bounded exact goal rows with run counts, source counts, repeated exact-title review cohorts, and the exact returned queued goal IDs that are eligible for zero-history supersession. Cohorts are hints for review, never semantic deduplication claims.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "state": {"type": "string", "enum": ["queued", "blocked", "retry", "superseded", "resolved", "in_progress"], "default": "queued"},
+          "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 50}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "operator_goal_supersede",
+      "description": "Retire an exact reviewed batch of never-started queued non-recurring goals from scheduling while retaining their database rows and history. Requires the operator STOP switch to remain active. Any unknown id, non-queued state, recurring goal or prior run refuses the entire transaction.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "goal_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^[a-f0-9]{32}$"}
+          },
+          "reason": {"type": "string", "minLength": 1, "maxLength": 500}
+        },
+        "required": ["goal_ids", "reason"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "operator_goal_add",
+      "description": "Add or reprioritize a persistent autonomous operator goal.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "source": {
+            "type": "string"
+          },
+          "dedupe_key": {
+            "type": "string"
+          },
+          "recurring": {
+            "type": "boolean"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "operator_pause",
+      "description": "Activate the local autonomous operator kill switch.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "operator_resume",
+      "description": "Remove the autonomous operator kill switch and resume queued work.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "operator_status",
+      "description": "Return autonomous operator mode, pause state, queued goals, recent runs, and failures.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_apply_low_risk_patch",
+      "description": "Autonomously apply a bounded patch only when path, size, clean-file, and local policy gates all pass.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_apply_patch",
+      "description": "Apply a manually approved patch using the local approval token.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          },
+          "approval_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch",
+          "approval_token"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_commit_receipt",
+      "description": "Commit only files from a verified operator patch receipt when auto-commit policy is enabled.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "receipt_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_diff",
+      "description": "Return status plus working or staged git diff.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "staged": {
+            "type": "boolean",
+            "default": false
+          },
+          "stat_only": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "project_patch_preview",
+      "description": "Before implementing, pass paths (up to 16) to inspect current preimage hashes, dirty state and configured write constraints without preparing a patch or writing receipts. Then pass patch for Git validation and low-risk eligibility. Use exactly one of paths or patch. Preflight grants no write authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_read",
+      "description": "Read one source range or up to 16 file ranges in one call, with exact whole-file SHA-256 and continuation lines. Use files for related owners/tests. if_sha256 returns only identity when unchanged. Shared batch limits: 32 MiB source, 512 KiB response. File reads are individually checked, not an atomic checkout snapshot.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 400
+          },
+          "if_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Previously observed whole-file digest. Matching bytes omit content; this does not attest prior range coverage."
+          },
+          "files": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "start_line": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 1
+                },
+                "end_line": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 400
+                },
+                "if_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$",
+                  "description": "Previously observed whole-file digest. Matching bytes omit content; this does not attest prior range coverage."
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Use instead of top-level path and range options."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "organ_drift_status",
+      "description": "Compare checkout-built native organs with the managed ~/.bonfyre/bin realizations using content digests. Optional verify fails closed on drift. Read-only: it never promotes or installs bytes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target": {"type": "string", "pattern": "^bonfyre(?:-[a-z0-9][a-z0-9-]*)?$"},
+          "verify": {"type": "boolean", "default": false}
+        },
+        "additionalProperties": false
+      },
+      "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "organ_drift_sync",
+      "description": "Atomically promote one exact existing managed native organ to the digest-verified checkout build, or explicitly install it when install_missing=true. Requires the Project write gate, serializes with operator effects, refuses while STOP is active, and verifies the target after promotion.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target": {"type": "string", "pattern": "^bonfyre(?:-[a-z0-9][a-z0-9-]*)?$"},
+          "install_missing": {"type": "boolean", "default": false}
+        },
+        "required": ["target"],
+        "additionalProperties": false
+      },
+      "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_revert_receipt",
+      "description": "Revert a patch previously applied by the operator using its receipt ID.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "receipt_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_search",
+      "description": "Ripgrep live source with line and column locations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "glob": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 200
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "project_status",
+      "description": "Current branch, HEAD, dirty files, staged files, and project root.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    },
+    {
+      "name": "project_test_profile",
+      "description": "Run an allowlisted project verification profile.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string",
+            "enum": [
+              "git-diff-check",
+              "bonfyre-zig-build",
+              "bonfyre-final",
+              "cmd-make",
+              "training-mcp-smoke",
+              "cloudflare-bridge",
+              "bun-syntax",
+              "shell-syntax",
+              "node-syntax",
+              "php-lint"
+            ]
+          },
+          "target": {
+            "type": "string"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
+      "name": "project_tree",
+      "description": "Bounded project tree listing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": "."
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8,
+            "default": 3
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000,
+            "default": 500
+          },
+          "ref": {
+            "type": "string",
+            "description": "Opt into a read-only pinned Git subtree projection: HEAD or an exact 40/64-hex commit. This mode returns regular tracked blob identities, not live files; depth must be omitted.",
+            "default": "HEAD"
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      },
+      "x-bonfyre-owner": "reads"
+    }
+  ],
+  "resources": [
+    {
+      "uri": "bonfyre://atlas/summary",
+      "name": "Bonfyre Architecture Atlas",
+      "description": "Canonical architecture summary. Read before proposing an architecture change.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://native/inventory",
+      "name": "Native capability estate",
+      "description": "Currently callable managed/native Bonfyre command owners and their observed command surfaces.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://operator/status",
+      "name": "Operator control state",
+      "description": "Goals, pause state, active runs and failures. Reading it neither resumes the operator nor authorizes work.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://models/status",
+      "name": "Local model estate",
+      "description": "Live status of the managed local MoE owner. An unavailable status is explicit and never becomes a remote fallback claim.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/runtime",
+      "name": "Project MCP runtime identity",
+      "description": "Running-versus-current Project MCP source-set identity and drift state for this process. Matching digests cover only the declared release source set.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/toolsets",
+      "name": "MCP capability toolsets",
+      "description": "Compact canonical MCP catalogue grouped by owner and read/effect class. Use mcp_capability_lens for an intent-filtered shortlist before loading full schemas.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://estate/capabilities",
+      "name": "Estate capability control plane",
+      "description": "Coalesced local tools, models, generation profiles, adapters and provider fleet from the existing estate control plane. Discovery does not grant provider or effect authority.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/service-profiles",
+      "name": "Project MCP product service profiles",
+      "description": "Candidate-only Project MCP product service profiles bound to a declared source-set digest. The catalogue includes local snapshot products and explicit continuation products; compilation is not deployment.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/products",
+      "name": "Project MCP products",
+      "description": "Source-attested Project MCP product portfolio. Each product carries contract, toolset, release, deployment, listener, continuation and secret-free connection identities.",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "bonfyre://mcp/contract",
+      "name": "Aurekai MCP operating contract",
+      "description": "How to use read, preparation and effect-bound tools without converting observations, budgets or quotes into authority.",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "resourceTemplates": [
+    {
+      "uriTemplate": "bonfyre://architecture/{id}",
+      "name": "Architecture entry",
+      "description": "Read one canonical architecture entry by atlas identifier.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "bonfyre://matrix/subject/{id}",
+      "name": "Matrix subject constellation",
+      "description": "Read the configured native Matrix owner's lawful address coordinates for one subject. It never widens disclosure or authority.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "bonfyre://mcp/toolsets/{pack}",
+      "name": "MCP capability pack",
+      "description": "Read one canonical Project MCP capability pack with its outcome, declared entry reads, primary effects and cross-aperture handoffs.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "bonfyre://mcp/snapshots/{pack}",
+      "name": "MCP capability pack snapshot",
+      "description": "Read one canonical capability pack as a current server-owned snapshot of its context-free read owners. The snapshot remains a concurrent non-atomic projection and never grants the pack's primary effects.",
+      "mimeType": "application/json"
+    },
+    {
+      "uriTemplate": "bonfyre://mcp/products/{pack}",
+      "name": "Project MCP product manifest",
+      "description": "Read one source-attested product connection and readiness manifest, including contract/toolset/release cache identities, deployment drift, listener identity and explicit cross-aperture handoffs, without constructing the full product portfolio.",
+      "mimeType": "application/json"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "institutional_circuit",
+      "title": "Run an institutional circulation pass",
+      "description": "Ground a proposed institution/market/physical-world circuit in Atlas, authority, evidence, finance and native execution owners before suggesting action.",
+      "arguments": [
+        {
+          "name": "subject",
+          "description": "Stable subject or safe working identifier",
+          "required": true
+        },
+        {
+          "name": "objective",
+          "description": "Concrete outcome to prepare",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "evidence_bound_intake",
+      "title": "Observe a foreign source without overclaiming",
+      "description": "Use the lawful ForeignTwin intake path, then separate retained observation, candidate meaning, missing proof and any later authority boundary.",
+      "arguments": [
+        {
+          "name": "url",
+          "description": "Public HTTP(S) source",
+          "required": true
+        },
+        {
+          "name": "need",
+          "description": "The exact evidence/capability gap being investigated",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "native_delivery_sprint",
+      "title": "Turn a product gap into a native verified change",
+      "description": "Use Atlas, source inspection, native capability owners and verification profiles to turn a product gap into a tested implementation rather than a demo/catalog surface.",
+      "arguments": [
+        {
+          "name": "outcome",
+          "description": "Observable user outcome that must work",
+          "required": true
+        },
+        {
+          "name": "surface",
+          "description": "Optional user-facing carrier, e.g. CMS, MCP, HTMX, API",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "addressed_participation",
+      "title": "Resolve an addressed participation cut",
+      "description": "Resolve a host/path through the native Matrix first, then separate the lawful address cut from still-required viewer, authority, provider, evidence and financial closures.",
+      "arguments": [
+        {
+          "name": "host",
+          "description": "Controlled or independent hostname",
+          "required": true
+        },
+        {
+          "name": "path",
+          "description": "Absolute semantic path",
+          "required": true
+        },
+        {
+          "name": "purpose",
+          "description": "What the participant is trying to accomplish",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "product_pack_workflow",
+      "title": "Operate a scoped Aurekai product pack",
+      "description": "Run one canonical Project MCP product aperture from runtime/source truth through snapshot readiness, compact routing, selected schema expansion, explicit handoffs and authority-bounded effects.",
+      "arguments": [
+        {
+          "name": "pack",
+          "description": "Canonical product pack: build, operate, model, commerce, connect, or account",
+          "required": true
+        },
+        {
+          "name": "objective",
+          "description": "Concrete outcome to accomplish inside that product aperture",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "schema": "bonfyre.project-mcp.catalog.v1",
+  "source": "Live local project MCP catalog captured 2026-10-02; no tool execution. Changes: retired python-compile replaced by bun-syntax; verification profiles correctly marked effecting.",
+  "retired_profiles": {
+    "python-compile": "Python execution is retired; use bun-syntax for Bun source or a native verification profile."
+  }
+}

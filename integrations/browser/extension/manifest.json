@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Aurekai beside the page",
+  "version": "0.4.0",
+  "description": "Shows what this estate has kept from the page you are on, and keeps a copy when you ask.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "sidePanel",
+    "nativeMessaging",
+    "tabs",
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "action": {
+    "default_title": "Open Aurekai beside this page"
+  },
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "host_permissions": [
+    "https://aurekai.work/*",
+    "https://aurekai.life/*",
+    "https://aurekai.live/*",
+    "https://aurekai.shop/*"
+  ],
+  "incognito": "split",
+  "content_scripts": [{
+    "matches": ["https://aurekai.work/*", "https://aurekai.life/*", "https://aurekai.live/*", "https://aurekai.shop/*"],
+    "js": ["provider-content.js"],
+    "all_frames": false,
+    "run_at": "document_start"
+  }]
+}

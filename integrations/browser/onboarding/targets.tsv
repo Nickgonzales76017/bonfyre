@@ -1,0 +1,201 @@
+source_id	platform	account_group	source_tier	gmail_state	proton_state	api_gate
+001	Bluesky / AT Protocol	001	1	lookup_required	lookup_required	protocol_or_instance_review
+002	Mastodon / ActivityPub	002	1	lookup_required	lookup_required	protocol_or_instance_review
+003	Nostr Networks	003	1	lookup_required	lookup_required	protocol_or_instance_review
+004	Farcaster	004	1	lookup_required	lookup_required	protocol_or_instance_review
+005	Matrix	005	1	lookup_required	lookup_required	protocol_or_instance_review
+006	Telegram	006	1	lookup_required	lookup_required	unverified
+007	Discord	007	1	lookup_required	lookup_required	unverified
+008	RSS / Open Podcast Feeds	008	1	lookup_required	lookup_required	protocol_or_instance_review
+009	GitHub Pages / Releases	009	1	lookup_required	second_personal_account_hold	human_account_registration
+010	Giphy	010	1	lookup_required	lookup_required	unverified
+011	YouTube (Data API v3)	011	2	lookup_required	lookup_required	unverified
+012	Twitch	012	2	lookup_required	lookup_required	unverified
+013	Vimeo	013	2	lookup_required	lookup_required	unverified
+014	DailyMotion	014	2	lookup_required	lookup_required	unverified
+015	Rumble	015	2	lookup_required	lookup_required	unverified
+016	PeerTube	016	2	lookup_required	lookup_required	protocol_or_instance_review
+017	Spotify (Web API)	017	2	lookup_required	lookup_required	unverified
+018	SoundCloud	018	2	lookup_required	lookup_required	unverified
+019	Mixcloud	019	2	lookup_required	lookup_required	unverified
+020	Bandcamp	020	2	lookup_required	lookup_required	unverified
+021	Audiomack	021	2	lookup_required	lookup_required	unverified
+022	Audible	022	2	lookup_required	lookup_required	unverified
+023	DistroKid	023	2	lookup_required	lookup_required	unverified
+024	TuneCore	024	2	lookup_required	lookup_required	unverified
+025	CD Baby	025	2	lookup_required	lookup_required	unverified
+026	Ditto Music	026	2	lookup_required	lookup_required	unverified
+027	UnitedMasters	027	2	lookup_required	lookup_required	unverified
+028	Patreon	028	2	recover_history	lookup_required	unverified
+029	Substack	029	2	lookup_required	lookup_required	unverified
+030	Buy Me a Coffee	030	2	lookup_required	lookup_required	unverified
+031	Kofi	031	2	lookup_required	lookup_required	unverified
+032	Memberful	032	2	lookup_required	lookup_required	unverified
+033	Gumroad	033	2	lookup_required	lookup_required	unverified
+034	Payhip	034	2	lookup_required	lookup_required	unverified
+035	Ghost	035	2	lookup_required	lookup_required	protocol_or_instance_review
+036	WordPress.com / Jetpack	036	2	lookup_required	lookup_required	unverified
+037	Medium	037	2	lookup_required	lookup_required	unverified
+038	Hashnode	038	2	lookup_required	lookup_required	unverified
+039	Dev.to	039	2	lookup_required	lookup_required	unverified
+040	Beehiiv	040	2	lookup_required	lookup_required	unverified
+041	Reddit	041	2	lookup_required	lookup_required	unverified
+042	Discourse	042	2	lookup_required	lookup_required	protocol_or_instance_review
+043	Lemmy	043	2	lookup_required	lookup_required	protocol_or_instance_review
+044	Product Hunt	044	2	lookup_required	lookup_required	unverified
+045	Hacker News (Algolia / Firebase)	045	2	lookup_required	lookup_required	protocol_or_instance_review
+046	Pinterest	046	3	lookup_required	lookup_required	unverified
+047	X (formerly Twitter)	047	3	lookup_required	lookup_required	unverified
+048	Kick	048	3	lookup_required	lookup_required	unverified
+049	Imgur	049	3	lookup_required	lookup_required	unverified
+050	Flickr	050	3	lookup_required	lookup_required	unverified
+051	Shopify	051	3	lookup_required	lookup_required	unverified
+052	Printify	052	3	lookup_required	lookup_required	unverified
+053	Printful	053	3	lookup_required	lookup_required	unverified
+054	Spring (Teespring)	054	3	lookup_required	lookup_required	unverified
+055	Fourthwall	055	3	lookup_required	lookup_required	unverified
+056	Slack	056	3	lookup_required	lookup_required	unverified
+057	Circle.so	057	3	lookup_required	lookup_required	unverified
+058	Mighty Networks	058	3	lookup_required	lookup_required	unverified
+059	Feedly	059	3	lookup_required	lookup_required	unverified
+060	Pocket	060	3	provider_retired	provider_retired	not_available
+061	Meta / Instagram Graph API	061	4	lookup_required	lookup_required	unverified
+062	Meta / Facebook Graph API	062	4	lookup_required	lookup_required	unverified
+063	Meta / Threads API	063	4	lookup_required	lookup_required	unverified
+064	TikTok for Developers (Display/Share API)	064	4	lookup_required	lookup_required	unverified
+065	LinkedIn API	065	4	lookup_required	lookup_required	unverified
+066	Snapchat (Snap Kit)	066	4	lookup_required	lookup_required	unverified
+067	WhatsApp Business API	067	4	lookup_required	lookup_required	unverified
+068	Line	068	4	lookup_required	lookup_required	unverified
+069	WeChat (Official Accounts API)	069	4	lookup_required	lookup_required	unverified
+070	KakaoTalk	070	4	lookup_required	lookup_required	unverified
+071	Phyllo	071	4	lookup_required	lookup_required	unverified
+072	Ayrshare	072	4	lookup_required	lookup_required	unverified
+073	Buffer API	073	4	lookup_required	lookup_required	unverified
+074	Outstand	074	4	lookup_required	lookup_required	unverified
+075	Upload-Post	075	4	lookup_required	lookup_required	unverified
+076	Amazon Associates / Product Advertising API	076	4	lookup_required	lookup_required	unverified
+077	CJ Affiliate (Commission Junction)	077	4	lookup_required	lookup_required	unverified
+078	Impact.com	078	4	lookup_required	lookup_required	unverified
+079	ShareASale	079	4	lookup_required	lookup_required	unverified
+080	Rakuten Advertising	080	4	lookup_required	lookup_required	unverified
+081	Google AdSense / AdManager API	081	4	lookup_required	lookup_required	unverified
+082	Mediavine	082	4	lookup_required	lookup_required	unverified
+083	Raptive (AdThrive)	083	4	lookup_required	lookup_required	unverified
+084	Apple Music / Apple Podcasts	084	5	lookup_required	lookup_required	unverified
+085	Netflix	085	5	lookup_required	lookup_required	unverified
+086	Hulu	086	5	lookup_required	lookup_required	unverified
+087	Disney+	087	5	lookup_required	lookup_required	unverified
+088	Amazon Prime Video	088	5	lookup_required	lookup_required	unverified
+089	Roku Channel	089	5	lookup_required	lookup_required	unverified
+090	Pluto TV	090	5	lookup_required	lookup_required	unverified
+091	Mindgeek (Aylo / Pornhub / YouPorn)	091	5	lookup_required	lookup_required	unverified
+092	OnlyFans	092	5	lookup_required	lookup_required	unverified
+093	Fansly	093	5	lookup_required	lookup_required	unverified
+094	Chaturbate	094	5	lookup_required	lookup_required	unverified
+095	iHeartMedia / iHeartRadio	095	5	lookup_required	lookup_required	unverified
+096	SiriusXM / Pandora	096	5	lookup_required	lookup_required	unverified
+097	Tidal	097	5	lookup_required	lookup_required	unverified
+098	Deezer	098	5	lookup_required	lookup_required	unverified
+099	BeReal	099	5	lookup_required	lookup_required	unverified
+100	Clubhouse	100	5	lookup_required	lookup_required	unverified
+101	Replicate	101	1	lookup_required	lookup_required	unverified
+102	Hugging Face Hub	102	1	recover_history	lookup_required	unverified
+103	Fal.ai	103	1	lookup_required	lookup_required	unverified
+104	Civitai	104	1	lookup_required	lookup_required	unverified
+105	Freesound	105	1	lookup_required	lookup_required	unverified
+106	Radio France Open API	106	1	lookup_required	lookup_required	unverified
+107	Archive.org (Internet Archive)	107	1	lookup_required	lookup_required	unverified
+108	ArtStation (Public Data)	108	1	lookup_required	lookup_required	unverified
+109	Write.as / WriteFreely	109	1	lookup_required	lookup_required	protocol_or_instance_review
+110	Castopod	110	1	lookup_required	lookup_required	protocol_or_instance_review
+111	Funkwhale	111	1	lookup_required	lookup_required	protocol_or_instance_review
+112	Pixelfed	112	1	lookup_required	lookup_required	protocol_or_instance_review
+113	BookWyrm	113	1	lookup_required	lookup_required	protocol_or_instance_review
+114	Mixer / Glimesh	114	2	lookup_required	lookup_required	unverified
+115	OwnCast	115	2	lookup_required	lookup_required	protocol_or_instance_review
+116	DLive	116	2	lookup_required	lookup_required	unverified
+117	Castr	117	2	lookup_required	lookup_required	unverified
+118	Restream.io	118	2	lookup_required	lookup_required	unverified
+119	Fanvue	119	2	lookup_required	lookup_required	unverified
+120	Fourthwall	055	2	shares_account_candidate	shares_account_candidate	unverified
+121	Ko-fi	031	2	shares_account_candidate	shares_account_candidate	unverified
+122	Thrall / Podbean	122	2	lookup_required	lookup_required	unverified
+123	RedCircle	123	2	lookup_required	lookup_required	unverified
+124	Transistor.fm	124	2	lookup_required	lookup_required	unverified
+125	Simplecast	125	2	lookup_required	lookup_required	unverified
+126	Captivate.fm	126	2	lookup_required	lookup_required	unverified
+127	Acast	127	2	lookup_required	lookup_required	unverified
+128	Behance	128	2	lookup_required	lookup_required	unverified
+129	Dribbble	129	2	lookup_required	lookup_required	unverified
+130	Unsplash	130	2	recover_history	lookup_required	unverified
+131	Pexels	131	2	recover_history	lookup_required	new_key_issuance_paused
+132	Pixabay	132	2	recover_history	lookup_required	unverified
+133	DeviantArt	133	2	lookup_required	lookup_required	unverified
+134	Roblox (Open Cloud)	134	2	lookup_required	lookup_required	unverified
+135	itch.io	135	2	lookup_required	lookup_required	unverified
+136	Mod.io	136	2	lookup_required	lookup_required	unverified
+137	Nexus Mods	137	2	lookup_required	lookup_required	unverified
+138	CurseForge	138	2	lookup_required	lookup_required	unverified
+139	Printify API	052	3	shares_account_candidate	shares_account_candidate	unverified
+140	Prodigi	140	3	lookup_required	lookup_required	unverified
+141	Gelato	141	3	lookup_required	lookup_required	unverified
+142	Gooten	142	3	lookup_required	lookup_required	unverified
+143	Storenvy	143	3	lookup_required	lookup_required	unverified
+144	ElevenLabs	144	3	lookup_required	lookup_required	unverified
+145	Suno AI	145	3	lookup_required	lookup_required	unverified
+146	Spreaker	146	3	lookup_required	lookup_required	unverified
+147	Mixcloud (Publishing)	019	3	shares_account_candidate	shares_account_candidate	unverified
+148	Audioboom	148	3	lookup_required	lookup_required	unverified
+149	Goodreads	149	3	lookup_required	lookup_required	unverified
+150	Letterboxd	150	3	lookup_required	lookup_required	unverified
+151	Last.fm	151	3	lookup_required	lookup_required	unverified
+152	Tumblr	152	3	lookup_required	lookup_required	unverified
+153	VK (VKontakte)	153	3	lookup_required	lookup_required	unverified
+154	Sina Weibo	154	3	lookup_required	lookup_required	unverified
+155	Adult Data Link	155	4	lookup_required	lookup_required	unverified
+156	FansAPI	156	4	lookup_required	lookup_required	unverified
+157	LoyalFans	157	4	lookup_required	lookup_required	unverified
+158	ManyVids	158	4	lookup_required	lookup_required	unverified
+159	Modelhub (Pornhub Network)	159	4	lookup_required	lookup_required	unverified
+160	Camsoda	160	4	lookup_required	lookup_required	unverified
+161	Stripchat	161	4	lookup_required	lookup_required	unverified
+162	Chaturbate (Affiliate/Dev API)	094	4	shares_account_candidate	shares_account_candidate	unverified
+163	Audiam	163	4	lookup_required	lookup_required	unverified
+164	Songtrust	164	4	lookup_required	lookup_required	unverified
+165	BMI (Broadcast Music, Inc.)	165	4	lookup_required	lookup_required	unverified
+166	ASCAP	166	4	lookup_required	lookup_required	unverified
+167	SoundExchange	167	4	lookup_required	lookup_required	unverified
+168	Kobalt Music	168	4	lookup_required	lookup_required	unverified
+169	Associated Press (AP Content API)	169	4	lookup_required	lookup_required	unverified
+170	Reuters Connect API	170	4	lookup_required	lookup_required	unverified
+171	Getty Images API	171	4	lookup_required	lookup_required	unverified
+172	Shutterstock API	172	4	lookup_required	lookup_required	unverified
+173	Adobe Stock API	173	4	lookup_required	lookup_required	unverified
+174	Taboola	174	4	lookup_required	lookup_required	unverified
+175	Outbrain	175	4	lookup_required	lookup_required	unverified
+176	Epic Games Store / Unreal Marketplace	176	4	lookup_required	lookup_required	unverified
+177	Unity Asset Store API	177	4	lookup_required	lookup_required	unverified
+178	VRchat	178	4	lookup_required	lookup_required	unverified
+179	OnlyFans (Native)	092	5	shares_account_candidate	shares_account_candidate	unverified
+180	Fansly (Native)	093	5	shares_account_candidate	shares_account_candidate	unverified
+181	Patreon (Video Hosting Native)	028	5	shares_account_candidate	shares_account_candidate	unverified
+182	Supercast	182	5	lookup_required	lookup_required	unverified
+183	Locals (Rumble Network)	183	5	lookup_required	lookup_required	unverified
+184	Passes	184	5	lookup_required	lookup_required	unverified
+185	Audible (Publishing)	022	5	shares_account_candidate	shares_account_candidate	unverified
+186	SiriusXM Streaming	096	5	shares_account_candidate	shares_account_candidate	unverified
+187	Tidal Masters / HighFi	097	5	shares_account_candidate	shares_account_candidate	unverified
+188	iHeartRadio Network	095	5	shares_account_candidate	shares_account_candidate	unverified
+189	Bilibili	189	5	lookup_required	lookup_required	unverified
+190	Youku	190	5	lookup_required	lookup_required	unverified
+191	IQIYI	191	5	lookup_required	lookup_required	unverified
+192	Lemon8 (ByteDance)	192	5	lookup_required	lookup_required	unverified
+193	Triller	193	5	lookup_required	lookup_required	unverified
+194	Clapper	194	5	lookup_required	lookup_required	unverified
+195	Likee	195	5	lookup_required	lookup_required	unverified
+196	VSCO	196	5	lookup_required	lookup_required	unverified
+197	Glass.photo	197	5	lookup_required	lookup_required	unverified
+198	BeReal	099	5	shares_account_candidate	shares_account_candidate	unverified
+199	SPOX / DAZN	199	5	lookup_required	lookup_required	unverified
+200	MasterClass	200	5	lookup_required	lookup_required	unverified
