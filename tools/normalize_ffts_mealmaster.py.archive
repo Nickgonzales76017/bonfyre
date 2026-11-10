@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Normalize a bounded FFTS Meal-Master archive for household deal matching.
+
+The source's units and ingredient language are preserved.  In particular, an
+ingredient note mentioning an alternative is not promoted to an interchangeable
+substitution: it remains an evidence-bound candidate for a later optimizer.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import zipfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+HEADER = "---------- Recipe via Meal-Master"
+INGREDIENT = re.compile(
+    r"^\s*(?P<quantity>(?:\d+(?:\s+\d+/\d+)?|\d+/\d+|[A-Z]))"
+    r"\s+(?:(?P<unit>[A-Za-z]+)\s+)?(?P<name>.+?)\s*$"
+)
+YIELD_NUMBER = re.compile(r"\b(\d+(?:\.\d+)?)\s+servings?\b", re.I)
+
+
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def fields(block: str) -> tuple[dict[str, str], list[str]]:
+    metadata: dict[str, str] = {}
+    body: list[str] = []
+    for line in block.splitlines():
+        match = re.match(r"^\s*(Title|Categories|Yield):\s*(.*?)\s*$", line, re.I)
+        if match:
+            metadata[match.group(1).lower()] = match.group(2)
+        else:
+            body.append(line.rstrip())
+    return metadata, body
+
+
+def parse_ingredient(part: str) -> dict[str, str] | None:
+    match = INGREDIENT.match(part)
+    if not match:
+        return None
+    name = match.group("name").strip()
+    if not name or set(name) <= {"*", "-"}:
+        return None
+    return {
+        "raw": part.strip(),
+        "quantity": match.group("quantity"),
+        "unit": (match.group("unit") or "").lower() or None,
+        "name": name.lower(),
+    }
+
+
+def recipe_records(text: str, source_url: str, archive_sha256: str, member: str):
+    ordinal = 0
+    for raw_block in text.split(HEADER):
+        if not raw_block.strip():
+            continue
+        metadata, lines = fields(raw_block)
+        title = metadata.get("title")
+        if not title:
+            continue
+        ordinal += 1
+        ingredients: list[dict[str, str]] = []
+        notes: list[str] = []
+        instructions: list[str] = []
+        reading_ingredients = True
+        found_ingredient = False
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("-----"):
+                continue
+            if stripped.startswith("*"):
+                notes.append(stripped)
+                continue
+            if reading_ingredients:
+                # Meal-Master renders two ingredients in fixed-width columns.
+                line_ingredients = []
+                for part in (line[:40], line[40:]):
+                    ingredient = parse_ingredient(part)
+                    if ingredient:
+                        line_ingredients.append(ingredient)
+                if line_ingredients:
+                    ingredients.extend(line_ingredients)
+                    found_ingredient = True
+                    continue
+                if found_ingredient:
+                    reading_ingredients = False
+            if not reading_ingredients:
+                instructions.append(stripped)
+        raw_yield = metadata.get("yield", "")
+        servings_match = YIELD_NUMBER.search(raw_yield)
+        candidates = [note for note in notes if re.search(r"\b(or|optional|try)\b", note, re.I)]
+        fingerprint = sha256((title + "\n" + raw_block).encode("utf-8", "replace"))[:16]
+        yield {
+            "schema": "bonfyre-household-recipe.v1",
+            "recipe_id": f"ffts-allrecip-{ordinal:04d}-{fingerprint}",
+            "title": title,
+            "categories": [item.strip().lower() for item in metadata.get("categories", "").split(",") if item.strip()],
+            "servings": {
+                "raw": raw_yield or None,
+                "count": float(servings_match.group(1)) if servings_match else None,
+                "unit": "servings" if servings_match else None,
+            },
+            "ingredients": ingredients,
+            "substitution_candidates": [
+                {"source_note": note, "status": "unverified_candidate"} for note in candidates
+            ],
+            "instructions": " ".join(instructions) or None,
+            "source": {
+                "publisher": "FFTS / Now You're Cooking!",
+                "catalogue_url": "https://www.ffts.com/recipes.htm",
+                "archive_url": source_url,
+                "archive_sha256": archive_sha256,
+                "archive_member": member,
+                "format": "Meal-Master",
+            },
+        }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("archive", type=Path)
+    parser.add_argument("--archive-url", required=True)
+    parser.add_argument("--body-output", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-receipts", type=Path, required=True)
+    parser.add_argument("--catalogue-git-object", required=True)
+    parser.add_argument("--catalogue-sha256", required=True)
+    args = parser.parse_args()
+
+    archive = args.archive.read_bytes()
+    archive_digest = sha256(archive)
+    with zipfile.ZipFile(args.archive) as bundle:
+        members = [name for name in bundle.namelist() if not name.endswith("/")]
+        if len(members) != 1:
+            raise SystemExit(f"expected one Meal-Master member, found {len(members)}")
+        member = members[0]
+        text = bundle.read(member).decode("cp1252", "replace")
+
+    records = list(recipe_records(text, args.archive_url, archive_digest, member))
+    if not records:
+        raise SystemExit("no Meal-Master recipes parsed")
+    args.body_output.parent.mkdir(parents=True, exist_ok=True)
+    args.body_output.write_bytes(archive)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text("".join(json.dumps(record, sort_keys=True) + "\n" for record in records), encoding="utf-8")
+    receipt = {
+        "schema": "bonfyre-household-food-source.v1",
+        "source_id": "ffts-allrecip-20260824",
+        "publisher": "FFTS / Now You're Cooking!",
+        "catalogue_url": "https://www.ffts.com/recipes.htm",
+        "catalogue_body_ref": f"git:blob:{args.catalogue_git_object}",
+        "catalogue_body_sha256": args.catalogue_sha256,
+        "archive_url": args.archive_url,
+        "archive_sha256": archive_digest,
+        "archive_member": member,
+        "archive_body_ref": str(args.body_output),
+        "retrieved_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "format": "Meal-Master",
+        "recipe_count": len(records),
+        "normalization_output": str(args.output),
+        "normalization_output_sha256": sha256(args.output.read_bytes()),
+        "fact_boundary": "Recipe text is a source observation; no current price, store availability, nutrition, or verified substitution fact is asserted.",
+    }
+    args.source_receipts.parent.mkdir(parents=True, exist_ok=True)
+    args.source_receipts.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"recipes": len(records), "ingredients": sum(len(r["ingredients"]) for r in records), "archive_sha256": archive_digest, "output_sha256": receipt["normalization_output_sha256"]}, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

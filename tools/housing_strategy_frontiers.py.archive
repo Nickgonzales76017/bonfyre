@@ -1,0 +1,430 @@
+#!/usr/bin/env python3
+"""Derive non-collapsed, source-bound housing strategy frontiers.
+
+This is deliberately a reader of the household ledgers, not a listing scraper.
+It preserves the distinction between a public candidate, a source-listed unit,
+and a verified vacancy.  It also refuses to make missing fees, pet policies, or
+concession eligibility into zero-valued fields.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Iterable
+
+
+SCHEMA = "bonfyre-housing-strategy-frontiers.v1"
+NO_AVAILABILITY = (
+    "Source-listed candidate only; no contact, application, tour, payment, or "
+    "lease action occurred, so this is not a verified vacancy."
+)
+LEGACY_SOCIAL = (
+    "legacy_social_candidate_policy_not_durably_proven"
+)
+DIRECT_CANDIDATE = "receipted_direct_portal_candidate"
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()]
+
+
+def text(*parts: Any) -> str:
+    return " ".join(str(part or "") for part in parts).lower()
+
+
+def city_for(row: dict[str, Any]) -> str | None:
+    address = row.get("unit_address") or row.get("property_address") or row.get("address") or ""
+    if isinstance(address, dict):
+        return address.get("locality")
+    match = re.search(r"\b(Dallas|Arlington)\b", str(address), re.I)
+    return match.group(1).title() if match else None
+
+
+def direct_row(row: dict[str, Any]) -> dict[str, Any]:
+    price = row.get("exact_unit_rent") if row.get("exact_unit_rent") is not None else row.get("advertised_price")
+    return {
+        "id": f"direct:{row['candidate_id']}",
+        "label": row.get("plan_name") or row.get("unit_address") or row["candidate_id"],
+        "address": row.get("unit_address") or row.get("property_address") or None,
+        "city": city_for(row),
+        "advertised_monthly_rent_usd": price,
+        "rent_basis": row.get("rent_exactness"),
+        "source_inventory_signal": row.get("source_inventory_signal"),
+        "source_available_date_text": row.get("source_available_date_text"),
+        "source_confidence": DIRECT_CANDIDATE,
+        "source_url": row.get("source_url"),
+        "source_observed_at": row.get("source_observed_at"),
+        "availability_boundary": NO_AVAILABILITY,
+    }
+
+
+def social_row(row: dict[str, Any]) -> dict[str, Any]:
+    corroborated = bool(row.get("corroboration"))
+    return {
+        "id": f"social:{row['candidate_id']}",
+        "label": row.get("title") or row["candidate_id"],
+        "city": row.get("location_text"),
+        "advertised_monthly_rent_usd": row.get("asking_price_usd_month"),
+        "rent_basis": row.get("exactness"),
+        "signals": row.get("signal_kinds", []),
+        "source_confidence": (
+            "legacy_social_candidate_detail_corroborated_policy_not_durably_proven"
+            if corroborated else LEGACY_SOCIAL
+        ),
+        "source_url": row.get("posting_url") or row.get("source_url"),
+        "source_observed_at": row.get("source_observed_at"),
+        "availability_boundary": NO_AVAILABILITY,
+    }
+
+
+def property_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": f"property:{row.get('property_key') or row.get('root_url')}",
+        "label": row.get("name") or row.get("property_key"),
+        "address": row.get("address") or None,
+        "city": (row.get("address") or {}).get("locality"),
+        "source_confidence": "receipted_property_identity_discovery",
+        "source_url": row.get("root_url"),
+        "source_facts": {
+            "seed_class": row.get("seed_class"),
+            "offer_count": row.get("offer_count"),
+            "concession_candidate_count": row.get("concession_candidate_count"),
+            "surfaces": sorted((row.get("shadow_surfaces") or {}).keys()),
+        },
+        "availability_boundary": NO_AVAILABILITY,
+    }
+
+
+def take(rows: Iterable[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
+    return list(rows)[:limit]
+
+
+def price_sort(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(rows, key=lambda row: (row.get("advertised_monthly_rent_usd") is None,
+                                         row.get("advertised_monthly_rent_usd") or 0,
+                                         row["id"]))
+
+
+def has_any(row: dict[str, Any], *words: str) -> bool:
+    haystack = text(row.get("label"), row.get("address"), row.get("signals"),
+                    row.get("reported_features"), row.get("reported_conditions"))
+    return any(word.lower() in haystack for word in words)
+
+
+def front(id_: str, label: str, basis: str, rows: list[dict[str, Any]], *,
+          caveat: str | None = None) -> dict[str, Any]:
+    return {"frontier_id": id_, "label": label, "selection_basis": basis,
+            "caveat": caveat, "candidates": rows}
+
+
+def sources_generated_at(*sources: Any) -> str:
+    values: list[str] = []
+    for source in sources:
+        if isinstance(source, dict):
+            value = source.get("observed_at") or source.get("generated_at")
+            if value:
+                values.append(value)
+    return max(values) if values else datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def derive(state: Path) -> dict[str, Any]:
+    candidates = read_jsonl(state / "availability-candidates.jsonl")
+    direct = [direct_row(row) for row in candidates
+              if row.get("schema") == "bonfyre-housing-direct-candidate.v1"]
+    social = [social_row(row) for row in candidates
+              if row.get("schema") == "bonfyre-availability-candidate.v1"
+              and row.get("surface_rental_intent") is True]
+    effective = read_json(state / "effective-costs.json")
+    concession_arbitrage = (
+        read_json(state / "concession-arbitrage.json")
+        if (state / "concession-arbitrage.json").exists() else {}
+    )
+    dog = read_json(state / "dog-access.json")
+    geography = read_json(state / "geographic-value.json") if (state / "geographic-value.json").exists() else {}
+    identities = read_json(state / "property-identity-graph.json")
+    all_priced = [row for row in direct + social if row.get("advertised_monthly_rent_usd") is not None]
+
+    economics: list[dict[str, Any]] = []
+    move_in: list[dict[str, Any]] = []
+    concessions: list[dict[str, Any]] = []
+    low_fees: list[dict[str, Any]] = []
+    quote_curve: list[dict[str, Any]] = []
+    for calc in effective.get("calculations", []):
+        listing_id = calc.get("listing_id")
+        if calc.get("known_monthly_before_parking_or_pets_usd") is not None:
+            economics.append({
+                "id": f"economics:{listing_id}", "label": listing_id,
+                "known_monthly_before_parking_or_pets_usd": calc["known_monthly_before_parking_or_pets_usd"],
+                "base_rent_monthly_usd": calc.get("base_rent_monthly_usd"),
+                "excluded": ["parking", "pets", "variable utilities", "unlisted charges"],
+                "source_confidence": "receipted_cost_components", "caveat": calc.get("caveat"),
+            })
+            reported = calc.get("reported_move_in_usd") or {}
+            if reported:
+                move_in.append({
+                    "id": f"move-in:{listing_id}", "label": listing_id,
+                    "known_reported_move_in_cash_usd": sum(reported.values()),
+                    "components": reported,
+                    "source_confidence": "receipted_cost_components",
+                    "caveat": "This is not a complete move-in quote; screening, utilities, and other charges may be unknown.",
+                })
+        promotion = calc.get("promotion") or {}
+        conditional = calc.get("conditional_12_month_economics_usd") or {}
+        if promotion:
+            row = {
+                "id": f"concession:{calc.get('calculation_id') or listing_id}", "label": listing_id,
+                "promotion": promotion, "source_confidence": "receipted_conditional_promotion",
+                "caveat": calc.get("caveat") or calc.get("reconciliation_status"),
+            }
+            concessions.append(row)
+            low_fees.append(row)
+            conditional_cash = calc.get("move_in_cash_conditional_usd")
+            if conditional_cash:
+                move_in.append({
+                    "id": f"conditional-move-in:{listing_id}", "label": listing_id,
+                    "conditional_move_in_cash_usd": conditional_cash,
+                    "source_confidence": "receipted_conditional_promotion",
+                    "caveat": calc.get("caveat"),
+                })
+        if calc.get("reported_at_signing_fees_usd") is not None:
+            low_fees.append({
+                "id": f"fees:{listing_id}", "label": listing_id,
+                "reported_at_signing_fees_usd": calc["reported_at_signing_fees_usd"],
+                "source_confidence": "receipted_community_claim",
+                "caveat": calc.get("caveat"),
+            })
+
+    curve_by_unit = {row.get("unit_id"): row for row in concession_arbitrage.get("curve", [])}
+    for curve_economics in concession_arbitrage.get("economics", []):
+        unit = curve_by_unit.get(curve_economics.get("unit_id"))
+        if not unit:
+            continue
+        quote_curve.append({
+            "id": f"quote-curve:{concession_arbitrage.get('property_id')}:{unit['unit_id']}",
+            "label": f"{concession_arbitrage.get('property_id')} unit {unit['unit_id']}",
+            "move_in_date": unit.get("move_in_date"),
+            "lease_term_months": unit.get("lease_term_months"),
+            "base_rent_monthly_usd": unit.get("base_rent_monthly_usd"),
+            "quoted_total_monthly_leasing_price_usd": unit.get("quoted_total_monthly_leasing_price_usd"),
+            "full_term_effective_monthly_excluding_variable_charges_usd": curve_economics.get("full_term_effective_monthly_excluding_variable_charges_usd"),
+            "source_confidence": "receipted_public_quote_curve_with_open_reconciliation",
+            "caveat": "The direct monthly total is retained, while a displayed mandatory fee has an unresolved monthly-versus-term cadence; conditional promotion is not subtracted.",
+        })
+
+    direct_specials = [row for row in direct if has_any(row, "special", "free")]
+    concessions.extend({**row, "promotion_visibility": "title-level promotion text only; term, eligibility, and effective cost unknown"}
+                       for row in price_sort(direct_specials))
+
+    dog_rows: list[dict[str, Any]] = []
+    park_rows: list[dict[str, Any]] = []
+    yard_rows: list[dict[str, Any]] = []
+    for item in dog.get("properties", []):
+        row = {
+            "id": f"dog:{item['property_id']}", "label": item["property_id"],
+            "dog_status": item.get("dog_status"), "reported_conditions": item.get("reported_conditions"),
+            "reported_features": item.get("reported_features", []),
+            "source_confidence": "receipted_property_feature_claim",
+            "source_urls": item.get("source_refs", []),
+            "availability_boundary": NO_AVAILABILITY,
+        }
+        dog_rows.append(row)
+        if has_any(row, "park", "trail"):
+            park_rows.append(row)
+        if has_any(row, "yard", "backyard"):
+            yard_rows.append(row)
+
+    social_yards = [row for row in social if has_any(row, "yard", "fenced")]
+    yard_rows.extend(take(price_sort(social_yards)))
+    geographic = geography.get("shortlists", {})
+    geographic_park = geographic.get("park", [])
+    geographic_dog = geographic.get("dog", [])
+    geographic_yard = geographic.get("yard_or_direct_exterior_claim", [])
+    lease_takeovers = [row for row in social if has_any(row, "lease_takeover")]
+    social_unusual = [row for row in social if has_any(row, "sublet", "takeover", "room")]
+    direct_structural = [row for row in direct if has_any(row, "townhome", "duplex", "fourplex")]
+    leaseups = [property_row(row) for row in identities.get("properties", [])
+               if row.get("seed_class") == "lease_up_concession"]
+    arlington = [row for row in direct if row.get("city") == "Arlington"]
+    dallas = [row for row in direct if row.get("city") == "Dallas"]
+    under_marketed = [row for row in direct if ".appfolio.com/" in str(row.get("source_url"))]
+
+    # Pareto axes are intentionally minimal and explicit: lower advertised rent,
+    # stronger provenance tier, and a direct exact-unit rent.  No fee, commute,
+    # pet suitability, or concession is silently filled with zero.
+    def vector(row: dict[str, Any]) -> tuple[int, int]:
+        directness = 2 if row["source_confidence"] == DIRECT_CANDIDATE else 1 if "corroborated" in row["source_confidence"] else 0
+        exact = 1 if row.get("rent_basis") == "unit_exact" else 0
+        return directness, exact
+
+    pareto: list[dict[str, Any]] = []
+    for row in all_priced:
+        price = row["advertised_monthly_rent_usd"]
+        strong, exact = vector(row)
+        dominated = any(
+            other is not row and other["advertised_monthly_rent_usd"] <= price
+            and vector(other)[0] >= strong and vector(other)[1] >= exact
+            and (other["advertised_monthly_rent_usd"] < price or vector(other) != (strong, exact))
+            for other in all_priced
+        )
+        if not dominated:
+            pareto.append({**row, "pareto_vector": {
+                "advertised_rent_lower_is_better": price,
+                "provenance_tier_higher_is_better": strong,
+                "exact_unit_rent_higher_is_better": exact,
+            }})
+
+    return {
+        "schema": SCHEMA,
+        "generated_at": sources_generated_at(effective, dog, identities),
+        "inputs": {
+            "direct_portal_candidates": len(direct), "social_candidates": len(social),
+            "effective_cost_calculations": len(effective.get("calculations", [])),
+            "property_identities": len(identities.get("properties", [])),
+        },
+        "forbidden_inference": [
+            "A strategy frontier is not a recommendation, quote, or verified vacancy.",
+            "Advertised rent is not effective cost; absent fees and utilities remain unknown.",
+            "A conditional concession is not a guaranteed reduction.",
+            "A property dog or park claim is not a unit-specific pet acceptance determination.",
+        ],
+        "frontiers": [
+            front("absolute-advertised-cheapest", "Absolute advertised cheapest", "Lowest observed advertised monthly price across direct and social candidate tiers; tiers remain visible.", take(price_sort(all_priced))),
+            front("effective-cheapest", "Effective cheapest with a known component basis", "Only rows with observed recurring components; not a complete-cost ranking.", sorted(economics, key=lambda row: row["known_monthly_before_parking_or_pets_usd"])),
+            front("public-quote-curve", "Public unit / move-date / term curve", "Direct first-party unit rows retain their quoted monthly total and stated move-date and term; unresolved fee cadence and conditional concessions remain visible.", sorted(quote_curve, key=lambda row: row["quoted_total_monthly_leasing_price_usd"])),
+            front("lowest-move-in", "Lowest reported move-in cash", "Reported components and conditional promotion scenarios are separated.", move_in),
+            front("concession", "Concession frontier", "Promotion wording is shown without assuming eligibility or an amortized effective rent.", take(concessions, 8)),
+            front("private-fenced-yard", "Private or fenced yard", "Property feature claims and social lead text remain different source tiers.", take(yard_rows, 8)),
+            front("park-access", "Park / trail access", "Reported dog-park, park, or trail text only; no proximity measure is inferred.", park_rows),
+            front("mapped-park-geography", "Mapped park / open-space geography", "Public OSM geodesic proximity from a mapped address/building coordinate; this is not a walk route, entrance distance, or vacancy claim.", geographic_park),
+            front("mapped-dog-geography", "Mapped dog geography", "Public OSM dog-park proximity or separately retained property dog terms; neither determines unit-specific dog acceptance.", geographic_dog),
+            front("yard-direct-exterior", "Yard / direct exterior claims", "Only retained source property claims; map data does not establish unit-specific exterior rights.", geographic_yard),
+            front("dog-economics", "Dog economics", "Reported pet fee/deposit terms; unknown terms are not zero.", dog_rows),
+            front("townhome-duplex", "Townhome / duplex / fourplex", "Direct candidate title or address text identifies the form.", take(price_sort(direct_structural))),
+            front("lease-takeover", "Lease takeover", "Social signal candidates only; transfer approval and lease terms are unresolved unless separately sourced.", take(price_sort(lease_takeovers))),
+            front("lease-up", "Lease-up / pre-leasing", "Property-identity surfaces with lease-up discovery provenance, not a priced unit list.", leaseups),
+            front("under-marketed", "Under-marketed direct portal", "Small-manager public portal candidates, deliberately not treated as a visibility or availability fact.", take(price_sort(under_marketed))),
+            front("low-fee", "Low-fee", "Only an explicit $0 fee claim or a conditional stated waiver enters; all other fees remain unknown.", low_fees),
+            front("arlington", "Arlington", "Source-listed direct units whose address contains Arlington.", take(price_sort(arlington))),
+            front("dallas", "Dallas", "Source-listed direct units whose address contains Dallas.", take(price_sort(dallas))),
+            front("weird-legitimate-value", "Weird legitimate value", "Unusual supply form paired with retained source evidence; no legitimacy or tenancy outcome is inferred.", take(price_sort([row for row in social_unusual if "corroborated" in row["source_confidence"]]) + price_sort(direct_specials), 8)),
+            front("overall-pareto", "Overall Pareto", "Non-dominated only on advertised rent, source provenance tier, and exact-unit-rent status; no blended score.", price_sort(pareto)),
+        ],
+    }
+
+
+def render_markdown(result: dict[str, Any]) -> str:
+    lines = ["", "## Strategy frontiers (source-bound, non-collapsed)", "",
+             "Generated from retained housing ledgers. Each row is a source candidate, not a verified vacancy; no contact or application occurred.", ""]
+    for frontier in result["frontiers"]:
+        lines.extend([f"### {frontier['label']}", "", frontier["selection_basis"], ""])
+        if not frontier["candidates"]:
+            lines.extend(["- No current source-bound candidate meets this frontier without inventing missing facts.", ""])
+            continue
+        for row in frontier["candidates"]:
+            rent = row.get("advertised_monthly_rent_usd")
+            known = row.get("known_monthly_before_parking_or_pets_usd")
+            quoted_total = row.get("quoted_total_monthly_leasing_price_usd")
+            price = f" — ${rent:,.0f}/mo advertised" if isinstance(rent, (int, float)) else ""
+            if isinstance(known, (int, float)):
+                price += f" — ${known:,.0f}/mo known before pets/parking"
+            if isinstance(quoted_total, (int, float)):
+                price += f" — ${quoted_total:,.2f}/mo quoted total"
+            details: list[str] = []
+            if isinstance(row.get("known_reported_move_in_cash_usd"), (int, float)):
+                details.append(f"${row['known_reported_move_in_cash_usd']:,.0f} reported move-in components")
+            conditional_cash = row.get("conditional_move_in_cash_usd")
+            if isinstance(conditional_cash, dict):
+                without_pet = (conditional_cash.get("without_pet") or {}).get("total")
+                with_dog = (conditional_cash.get("with_one_dog") or {}).get("total")
+                amounts = []
+                if isinstance(without_pet, (int, float)):
+                    amounts.append(f"${without_pet:,.0f} without pet")
+                if isinstance(with_dog, (int, float)):
+                    amounts.append(f"${with_dog:,.0f} with one dog")
+                if amounts:
+                    details.append("conditional move-in: " + ", ".join(amounts))
+            if isinstance(row.get("reported_at_signing_fees_usd"), (int, float)):
+                details.append(f"${row['reported_at_signing_fees_usd']:,.0f} reported at-signing fees")
+            if isinstance(row.get("lease_term_months"), int):
+                details.append(f"{row['lease_term_months']}-month term")
+            if row.get("move_in_date"):
+                details.append(f"source move-in date {row['move_in_date']}")
+            full_term = row.get("full_term_effective_monthly_excluding_variable_charges_usd")
+            if isinstance(full_term, (int, float)):
+                details.append(f"${full_term:,.2f}/mo full-term effective excluding variable charges")
+            promotion = row.get("promotion")
+            if isinstance(promotion, dict):
+                terms = promotion.get("terms_observed") or []
+                if terms:
+                    details.append("promotion terms: " + ", ".join(terms))
+            conditions = row.get("reported_conditions")
+            if isinstance(conditions, dict):
+                terms = []
+                if conditions.get("monthly_pet_fee_usd") is not None:
+                    terms.append(f"${conditions['monthly_pet_fee_usd']}/mo pet fee")
+                if conditions.get("one_time_pet_deposit_usd") is not None:
+                    terms.append(f"${conditions['one_time_pet_deposit_usd']} pet deposit")
+                if conditions.get("one_time_pet_fee_usd") is not None:
+                    terms.append(f"${conditions['one_time_pet_fee_usd']} pet fee")
+                if terms:
+                    details.append(", ".join(terms))
+            features = row.get("reported_features") or []
+            if not features:
+                features = row.get("reported_exterior_features") or []
+            if features:
+                details.append("reported features: " + ", ".join(features))
+            park = row.get("nearest_park_or_open_space") or {}
+            if isinstance(park.get("geodesic_distance_m"), (int, float)):
+                details.append(f"nearest mapped park/open space: {park.get('name') or park.get('feature_id')} at {park['geodesic_distance_m']:,.0f} m geodesic")
+            dog_park = row.get("nearest_public_dog_park") or {}
+            if isinstance(dog_park.get("geodesic_distance_m"), (int, float)):
+                details.append(f"nearest mapped dog park: {dog_park.get('name') or dog_park.get('feature_id')} at {dog_park['geodesic_distance_m']:,.0f} m geodesic")
+            walking_count = row.get("observable_walking_way_count_within_600m")
+            if isinstance(walking_count, int):
+                details.append(f"{walking_count} mapped footway/path/pedestrian ways within 600 m (not a route claim)")
+            source = row.get("source_url") or (row.get("source_urls") or [None])[0]
+            source_text = f" ([source]({source}))" if source else ""
+            suffix = f"; {'; '.join(details)}" if details else ""
+            label = row.get("label") or row.get("address") or row.get("subject_id") or row.get("id") or "source-bound subject"
+            lines.append(f"- {label}{price}{suffix} — `{row.get('source_confidence', 'source-bound')}`{source_text}")
+        if frontier.get("caveat"):
+            lines.append(f"- Boundary: {frontier['caveat']}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--append-shortlist", action="store_true")
+    args = parser.parse_args(argv)
+    result = derive(args.state)
+    output = args.output or args.state / "strategy-frontiers.json"
+    output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.append_shortlist:
+        shortlist = args.state / "shortlist.md"
+        original = shortlist.read_text(encoding="utf-8") if shortlist.exists() else ""
+        marker = "## Strategy frontiers (source-bound, non-collapsed)"
+        if marker in original:
+            original = original.split(marker, 1)[0].rstrip() + "\n"
+        shortlist.write_text(original + render_markdown(result), encoding="utf-8")
+    print(json.dumps({"output": str(output), "frontiers": len(result["frontiers"]),
+                      "direct_candidates": result["inputs"]["direct_portal_candidates"],
+                      "social_candidates": result["inputs"]["social_candidates"]}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

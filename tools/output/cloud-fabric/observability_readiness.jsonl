@@ -1,0 +1,3 @@
+{"provider_id":"sentry","readiness_status":"ready","status_code":200,"error":null}
+{"provider_id":"posthog_management","readiness_status":"ready","status_code":200,"error":null}
+{"provider_id":"posthog_ingestion","readiness_status":"ready","status_code":0,"error":null}

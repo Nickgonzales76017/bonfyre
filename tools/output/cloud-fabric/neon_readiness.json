@@ -1,0 +1,13 @@
+{
+  "provider_id": "neon",
+  "api_ok": true,
+  "db_url_ready": true,
+  "db_url_masked": "postgresql://ep-small-glade-awnq6dna.c-12.us-east-1.aws.neon.tech/neondb",
+  "api_error": null,
+  "readiness": {
+    "postgres_branch_preview": "ready",
+    "recipe_run_sandbox_db": "ready",
+    "replay_test_branch": "ready",
+    "app_surface_preview_database": "ready"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "provider_id": "supabase",
+  "management_ready": true,
+  "management_status": 200,
+  "management_error": null,
+  "db_url_ready": true,
+  "db_url_masked": "present_ref_only",
+  "service_role_ready": true,
+  "readiness": {
+    "postgres_mirror": "ready",
+    "realtime": "ready",
+    "auth_client_portal": "ready",
+    "storage": "ready",
+    "edge_functions": "ready",
+    "scheduled_functions": "ready",
+    "vault": "ready"
+  }
+}

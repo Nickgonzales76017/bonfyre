@@ -18,12 +18,19 @@ Non-collapse rules enforced here:
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import html
 import json
+import os
 import re
 import sys
+import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urljoin
+
+from housing_receipt_policy import admission_failure, evidence as policy_evidence
 
 SCHEMA_CANDIDATE = "bonfyre-availability-candidate.v1"
 # `current-listings.jsonl` is a shared durable output.  This lane used the
@@ -59,6 +66,9 @@ SIGNAL_LEXICON: dict[str, tuple[str, ...]] = {
     "immediate_move_in": (
         "immediate move", "move in today", "move-in today", "available now", "available today",
         "ready now", "move in now", "move-in now", "asap", "immediately available",
+    ),
+    "short_term_rate": (
+        "per week", "weekly", "/w", "per day", "daily", "/d",
     ),
     "manager_special": (
         "move in special", "move-in special", "manager special", "managers special",
@@ -115,6 +125,76 @@ DETAIL_MAPADDRESS_RE = re.compile(r'<div class="mapaddress">(.*?)</div>', re.S)
 DETAIL_LATLON_RE = re.compile(
     r'data-latitude="([-0-9.]+)"[^>]*data-longitude="([-0-9.]+)"')
 TAG_RE = re.compile(r'<[^>]+>')
+SUBLET_PROPERTY_RE = re.compile(r"^/property/[^/]+/?$")
+
+
+class _SubletCardParser(HTMLParser):
+    """Read the static Sublet.com property-card shape without a new dependency.
+
+    The retained page is a card grid rather than Craigslist's no-JS result list.
+    A card is recognized from its own property link plus its own location block;
+    site-wide navigation links and the source URL are never treated as listings.
+    """
+
+    _VOID_TAGS = frozenset({
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
+        "meta", "param", "source", "track", "wbr",
+    })
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._stack: list[dict] = []
+        self.cards: list[dict] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        node = {"tag": tag, "attributes": attributes, "content": []}
+        if self._stack:
+            self._stack[-1]["content"].append(node)
+        if tag not in self._VOID_TAGS:
+            self._stack.append(node)
+
+    def handle_endtag(self, tag: str) -> None:
+        for index in range(len(self._stack) - 1, -1, -1):
+            if self._stack[index]["tag"] != tag:
+                continue
+            node = self._stack[index]
+            self._stack = self._stack[:index]
+            if tag == "div" and self._is_card(node):
+                self.cards.append(node)
+            return
+
+    def handle_data(self, data: str) -> None:
+        text = " ".join(data.split())
+        if text and self._stack:
+            self._stack[-1]["content"].append(text)
+
+    def _is_card(self, node: dict) -> bool:
+        classes = set(node["attributes"].get("class", "").split())
+        return (
+            {"col-sm-6", "col-lg-4", "col-xl-3"}.issubset(classes)
+            and any(SUBLET_PROPERTY_RE.match(link) for link in self._links(node))
+            and self._has_class(node, "random-listings-rental-div")
+        )
+
+    def _links(self, node: dict) -> list[str]:
+        links: list[str] = []
+        if node["tag"] == "a":
+            href = node["attributes"].get("href")
+            if href:
+                links.append(href)
+        for child in node["content"]:
+            if isinstance(child, dict):
+                links.extend(self._links(child))
+        return links
+
+    def _has_class(self, node: dict, class_name: str) -> bool:
+        if class_name in node["attributes"].get("class", "").split():
+            return True
+        return any(
+            self._has_class(child, class_name)
+            for child in node["content"] if isinstance(child, dict)
+        )
 
 
 def text_of(fragment: str | None) -> str:
@@ -241,9 +321,74 @@ def parse_craigslist_search(body: str) -> list[dict]:
     return rows
 
 
+def _node_text(node: dict) -> str:
+    return re.sub(
+        r"\s+", " ", " ".join(
+            child if isinstance(child, str) else _node_text(child)
+            for child in node["content"]
+            if isinstance(child, str) or child["tag"] not in {"script", "style"}
+        )
+    ).strip()
+
+
+def _first_descendant(node: dict, predicate) -> dict | None:
+    if predicate(node):
+        return node
+    for child in node["content"]:
+        if not isinstance(child, dict):
+            continue
+        found = _first_descendant(child, predicate)
+        if found is not None:
+            return found
+    return None
+
+
+def parse_sublet_card_grid(body: str, source_url: str) -> list[dict]:
+    """Read published Sublet.com property cards, retaining only card-local facts."""
+    parser = _SubletCardParser()
+    parser.feed(body)
+    rows: list[dict] = []
+    for position, card in enumerate(parser.cards):
+        property_href = next(
+            (link for link in parser._links(card) if SUBLET_PROPERTY_RE.match(link)), None)
+        location = _first_descendant(
+            card,
+            lambda node: "random-listings-rental-div" in node["attributes"].get("class", "").split(),
+        )
+        price = _first_descendant(
+            card,
+            lambda node: "price-info" in node["attributes"].get("class", "").split(),
+        )
+        if not property_href or location is None or price is None:
+            continue
+        location_text = _node_text(location)
+        price_text = _node_text(price)
+        if not location_text or not price_text:
+            continue
+        rows.append({
+            "posting_url": urljoin(source_url, property_href),
+            # The grid exposes no title beyond the location.  Do not invent one.
+            "title": location_text,
+            "price_text": price_text,
+            "location_text": location_text,
+            "result_position": position,
+            "source_shape": "sublet_card_grid",
+        })
+    return rows
+
+
+def parse_search_shape(body: str, source_url: str, parser_name: str | None) -> list[dict]:
+    if parser_name == "craigslist_static":
+        return parse_craigslist_search(body)
+    if parser_name == "sublet_card_grid":
+        return parse_sublet_card_grid(body, source_url)
+    return []
+
+
 def parse_price(price_text: str) -> int | None:
     """Craigslist renders 'no price stated' as $0; that is absence, not a price."""
-    digits = re.sub(r"[^0-9]", "", price_text or "")
+    amount = re.search(r"\$\s*([0-9][0-9,]*)", price_text or "")
+    digits = amount.group(1).replace(",", "") if amount else ""
     value = int(digits) if digits else None
     return value or None
 
@@ -333,13 +478,15 @@ def build_candidates(receipts: list[dict], root: Path, surfaces: dict) -> tuple[
             continue
         if receipt.get("observation_kind") != "source_observed":
             continue
+        if admission_failure(receipt):
+            continue
         resolved = verified_body(receipt, root)
         if not resolved:
             continue
         body_path, digest = resolved
         body = body_path.read_text(encoding="utf-8", errors="replace")
-        for row in parse_craigslist_search(body):
-            text = f"{row['title']} {row['location_text']}"
+        for row in parse_search_shape(body, receipt["source_url"], surface.get("parser")):
+            text = f"{row['title']} {row['location_text']} {row['price_text']}"
             reason = rejected_reason(text)
             if reason:
                 rejections.append({
@@ -379,10 +526,13 @@ def build_candidates(receipts: list[dict], root: Path, surfaces: dict) -> tuple[
                 "bathrooms": row.get("bathrooms"),
                 "surface_category": surface.get("category"),
                 "surface_rental_intent": surface.get("rental_intent", False),
+                "source_shape": row.get("source_shape", surface.get("parser")),
                 "source_url": receipt["source_url"],
                 "source_twin_id": twin,
                 "source_observed_at": receipt.get("observed_at"),
                 "source_content_sha256": digest,
+                "source_policy_evidence": policy_evidence(receipt),
+                "provenance_status": "current_foreign_policy_evidenced",
                 "availability_claim": False,
                 "exactness": "candidate",
                 "corroboration": None,
@@ -397,6 +547,8 @@ def corroborate(candidates: list[dict], receipts: list[dict], root: Path) -> lis
         if not str(receipt.get("twin_id", "")).startswith("cl-detail-"):
             continue
         if receipt.get("observation_kind") != "source_observed":
+            continue
+        if admission_failure(receipt):
             continue
         resolved = verified_body(receipt, root)
         if not resolved:
@@ -569,6 +721,7 @@ def merge_jsonl(
     owned_schema: str,
     key: str,
     legacy_owned_schema: str | None = None,
+    mark_stale_owned_rows: bool = False,
 ) -> int:
     """Replace only the rows this tool owns.
 
@@ -577,29 +730,53 @@ def merge_jsonl(
     carrier's rows, so foreign rows are read back and preserved verbatim.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    mine = {row[key]: row for row in rows}
-    preserved: list[dict] = []
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                existing = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            is_legacy_row_this_run_owns = (
-                legacy_owned_schema is not None
-                and existing.get("schema") == legacy_owned_schema
-                and existing.get(key) in mine
-            )
-            if existing.get("schema") != owned_schema and not is_legacy_row_this_run_owns:
-                preserved.append(existing)
-    preserved = [row for row in preserved if row.get(key) not in mine]
-    with path.open("w", encoding="utf-8") as handle:
-        for row in preserved + rows:
-            handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
-    return len(preserved)
+    lock_path = path.with_name(f".{path.name}.lock")
+    temporary_path: str | None = None
+    # Atomic replacement alone does not protect two writers which each read a
+    # stale snapshot.  All housing producers hold this stable sidecar lock over
+    # the full read/merge/replace transaction.
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            mine = {row[key]: row for row in rows}
+            preserved: list[dict] = []
+            if path.exists():
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        existing = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    is_legacy_row_this_run_owns = (
+                        legacy_owned_schema is not None
+                        and existing.get("schema") == legacy_owned_schema
+                        and existing.get(key) in mine
+                    )
+                    if existing.get("schema") == owned_schema and mark_stale_owned_rows and existing.get(key) not in mine:
+                        existing["provenance_status"] = "provenance_unknown"
+                        existing["provenance_unknown_reason"] = (
+                            "legacy receipt lacks current ForeignTwin policy evidence"
+                        )
+                        preserved.append(existing)
+                    elif existing.get("schema") != owned_schema and not is_legacy_row_this_run_owns:
+                        preserved.append(existing)
+            preserved = [row for row in preserved if row.get(key) not in mine]
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=path.parent,
+                prefix=f".{path.name}.", suffix=".tmp", delete=False,
+            ) as handle:
+                temporary_path = handle.name
+                for row in preserved + rows:
+                    handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            os.replace(temporary_path, path)
+            temporary_path = None
+            return len(preserved)
+        finally:
+            if temporary_path:
+                Path(temporary_path).unlink(missing_ok=True)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -635,11 +812,12 @@ def main(argv: list[str] | None = None) -> int:
     listings = corroborate(candidates, receipts, root)
 
     merge_jsonl(state / "availability-candidates.jsonl", candidates,
-                SCHEMA_CANDIDATE, "posting_url")
+                SCHEMA_CANDIDATE, "posting_url", mark_stale_owned_rows=True)
     merge_jsonl(state / "candidate-rejections.jsonl", rejections,
                 SCHEMA_REJECTION, "posting_url")
     preserved = merge_jsonl(state / "current-listings.jsonl", listings,
-                            SCHEMA_LISTING, "posting_url", LEGACY_LISTING_SCHEMA)
+                            SCHEMA_LISTING, "posting_url", LEGACY_LISTING_SCHEMA,
+                            mark_stale_owned_rows=True)
     write_shortlist(state / "shortlist.md", render_shortlist(candidates, listings, surfaces))
 
     print(json.dumps({

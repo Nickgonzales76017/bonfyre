@@ -1,0 +1,301 @@
+#!/usr/bin/env python3
+"""Derive source-bound park, dog, yard, and observable walking geography.
+
+The collector is deliberately narrow: it only maps serious, already admitted
+housing subjects plus properties with retained dog/yard evidence.  OpenStreetMap
+coordinates and features are public observations, not lease, route, pet, or
+yard facts.  The derivation is replayable from the stored source records.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+import time
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+SCHEMA = "bonfyre-housing-geographic-arbitrage.v1"
+NOMINATIM = "https://nominatim.openstreetmap.org/search"
+OVERPASS = "https://overpass-api.de/api/interpreter"
+USER_AGENT = "Bonfyre-Run8/1.0 public-housing-geography"
+EARTH_RADIUS_M = 6_371_008.8
+NO_AVAILABILITY = "Source-listed candidate only; map proximity does not verify vacancy."
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def digest(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def read_json(path: Path, fallback: Any) -> Any:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else fallback
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()] if path.exists() else []
+
+
+def write_json(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def normalize_address(value: str) -> str:
+    """Remove a unit suffix only when a city/state/ZIP suffix proves its scope."""
+    return re.sub(
+        r"(?:,?\s*(?:unit|apt(?:artment)?|#)[-#\s\w]+?|\s+-\s*(?:[A-Z]-?)?\d+|,\s*\d{1,4})(?=,\s*[^,]+,\s*TX\s+\d{5})",
+        "", value, flags=re.I,
+    ).strip()
+
+
+def serious_subjects(state: Path, limit: int) -> list[dict[str, Any]]:
+    rows = read_jsonl(state / "availability-candidates.jsonl")
+    grouped: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if (row.get("schema") != "bonfyre-housing-direct-candidate.v1" or
+                row.get("provenance_status") != "current_foreign_policy_evidenced"):
+            continue
+        address = row.get("unit_address") or row.get("property_address")
+        rent = row.get("exact_unit_rent")
+        if not isinstance(address, str) or not isinstance(rent, (int, float)):
+            continue
+        title = str(row.get("plan_name") or "")
+        if re.search(r"\b(?:office|executive suite)\b", title, re.I):
+            continue
+        address = normalize_address(address)
+        subject = grouped.setdefault(address, {
+            "subject_id": f"address:{hashlib.sha256(address.encode()).hexdigest()[:16]}",
+            "subject_kind": "receipted_direct_housing_candidate_group",
+            "address": address, "candidate_ids": [], "minimum_advertised_monthly_rent_usd": rent,
+            "source_urls": [], "source_observed_at": [],
+        })
+        subject["candidate_ids"].append(row["candidate_id"])
+        subject["minimum_advertised_monthly_rent_usd"] = min(subject["minimum_advertised_monthly_rent_usd"], rent)
+        for key in ("source_url", "source_observed_at"):
+            if row.get(key) and row[key] not in subject["source_urls" if key == "source_url" else "source_observed_at"]:
+                subject["source_urls" if key == "source_url" else "source_observed_at"].append(row[key])
+    selected = sorted(grouped.values(), key=lambda item: (item["minimum_advertised_monthly_rent_usd"], item["address"]))[:limit]
+
+    # Existing dog/yard evidence can name a property independently of a current
+    # unit portal.  It remains a property observation, not a vacancy candidate.
+    identities = read_json(state / "property-identity-graph.json", {}).get("properties", [])
+    dog = read_json(state / "dog-access.json", {}).get("properties", [])
+    by_id = {item.get("property_id"): item for item in dog}
+    for identity in identities:
+        address = identity.get("address") or {}
+        street, locality, region, postal = (address.get("street"), address.get("locality"), address.get("region"), address.get("postal_code"))
+        if not all((street, locality, region, postal)):
+            continue
+        property_id = next((key for key in by_id if key and str(street).split()[0] in key
+                            and str(locality).lower() in key and str(postal) in key), None)
+        claim = by_id.get(property_id)
+        if not claim or not any("yard" in str(x).lower() or "dog" in str(x).lower() for x in claim.get("reported_features", [])):
+            continue
+        full = f"{street}, {locality}, {region} {postal}"
+        if any(item["address"].lower() == full.lower() for item in selected):
+            continue
+        selected.append({
+            "subject_id": property_id, "subject_kind": "receipted_property_feature_claim",
+            "label": identity.get("name"), "address": full, "candidate_ids": [],
+            "minimum_advertised_monthly_rent_usd": None, "source_urls": claim.get("source_refs", []),
+            "source_observed_at": [], "reported_exterior_features": claim.get("reported_features", []),
+            "reported_dog_status": claim.get("dog_status"),
+        })
+    return selected
+
+
+def request_json(url: str, *, data: bytes | None = None) -> tuple[int, bytes, Any]:
+    request = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        body = response.read(8 * 1024 * 1024)
+        return response.status, body, json.loads(body.decode("utf-8"))
+
+
+def geocode(subjects: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    records, mapped = [], []
+    for index, subject in enumerate(subjects):
+        query = urllib.parse.urlencode({"q": subject["address"], "format": "jsonv2", "limit": 1, "addressdetails": 1, "polygon_geojson": 0})
+        url = f"{NOMINATIM}?{query}"
+        status, body, payload = request_json(url)
+        record = {"schema": "bonfyre-public-geography-source.v1", "source_kind": "nominatim_geocode", "source_url": url,
+                  "observed_at": utc_now(), "http_status": status, "response_sha256": digest(body),
+                  "subject_id": subject["subject_id"], "query_address": subject["address"], "response": payload}
+        records.append(record)
+        if payload:
+            place = payload[0]
+            mapped.append({**subject, "latitude": float(place["lat"]), "longitude": float(place["lon"]),
+                           "coordinate_source": {"provider": "OpenStreetMap Nominatim", "osm_type": place.get("osm_type"),
+                                                 "osm_id": place.get("osm_id"), "category": place.get("category"), "type": place.get("type"),
+                                                 "display_name": place.get("display_name"), "boundingbox": place.get("boundingbox"),
+                                                 "response_sha256": record["response_sha256"], "source_url": url}})
+        # Nominatim's public policy permits a maximum of one request per second.
+        if index + 1 < len(subjects):
+            time.sleep(1.05)
+    return records, mapped
+
+
+def overpass_query(subjects: list[dict[str, Any]]) -> str:
+    clauses = []
+    for item in subjects:
+        lat, lon = item["latitude"], item["longitude"]
+        clauses.extend([
+            f'nwr(around:1500,{lat},{lon})["leisure"="park"];',
+            f'nwr(around:1500,{lat},{lon})["amenity"="dog_park"];',
+            f'nwr(around:1500,{lat},{lon})["landuse"="recreation_ground"];',
+            f'way(around:600,{lat},{lon})["highway"~"^(footway|path|pedestrian)$"];',
+        ])
+    return "[out:json][timeout:60];(" + "".join(clauses) + ");out tags center geom;"
+
+
+def haversine_m(lat_a: float, lon_a: float, lat_b: float, lon_b: float) -> float:
+    a, b = math.radians(lat_a), math.radians(lat_b)
+    d_lat, d_lon = b - a, math.radians(lon_b - lon_a)
+    h = math.sin(d_lat / 2) ** 2 + math.cos(a) * math.cos(b) * math.sin(d_lon / 2) ** 2
+    return EARTH_RADIUS_M * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
+
+
+def feature_class(tags: dict[str, str]) -> str | None:
+    if tags.get("amenity") == "dog_park":
+        return "dog_park"
+    if tags.get("leisure") == "park" or tags.get("landuse") == "recreation_ground":
+        return "park_or_open_space"
+    if tags.get("highway") in {"footway", "path", "pedestrian"}:
+        return "observable_walking_way"
+    return None
+
+
+def feature_points(element: dict[str, Any]) -> list[tuple[float, float]]:
+    geometry = element.get("geometry") or []
+    points = [(float(item["lat"]), float(item["lon"])) for item in geometry if "lat" in item and "lon" in item]
+    if points:
+        return points
+    if "lat" in element and "lon" in element:
+        return [(float(element["lat"]), float(element["lon"]))]
+    center = element.get("center") or {}
+    return [(float(center["lat"]), float(center["lon"]))] if "lat" in center and "lon" in center else []
+
+
+def observed_features(elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    output, seen = [], set()
+    for element in elements:
+        tags = element.get("tags") or {}
+        kind = feature_class(tags)
+        key = (element.get("type"), element.get("id"))
+        if not kind or key in seen:
+            continue
+        seen.add(key)
+        points = feature_points(element)
+        if not points:
+            continue
+        output.append({"feature_id": f"osm:{element.get('type')}:{element.get('id')}", "feature_class": kind,
+                       "name": tags.get("name"), "tags": {k: tags[k] for k in ("leisure", "amenity", "landuse", "highway", "route") if k in tags},
+                       "geometry_point_count": len(points), "points": points,
+                       "distance_method": "minimum_geodesic_distance_to_retained_OSM_way_nodes_or_feature_center"})
+    return output
+
+
+def nearest(subject: dict[str, Any], features: list[dict[str, Any]]) -> dict[str, Any] | None:
+    measured = []
+    for feature in features:
+        distance = min(haversine_m(subject["latitude"], subject["longitude"], lat, lon) for lat, lon in feature["points"])
+        measured.append({**{k: v for k, v in feature.items() if k != "points"}, "geodesic_distance_m": round(distance, 1)})
+    return min(measured, key=lambda item: item["geodesic_distance_m"]) if measured else None
+
+
+def derive(subjects: list[dict[str, Any]], overpass: dict[str, Any], source_records: list[dict[str, Any]]) -> dict[str, Any]:
+    features = observed_features(overpass.get("elements", []))
+    by_kind = {kind: [item for item in features if item["feature_class"] == kind] for kind in ("park_or_open_space", "dog_park", "observable_walking_way")}
+    relations = []
+    for subject in subjects:
+        park, dog = nearest(subject, by_kind["park_or_open_space"]), nearest(subject, by_kind["dog_park"])
+        walking = [nearest(subject, [item]) for item in by_kind["observable_walking_way"]]
+        walking = [item for item in walking if item and item["geodesic_distance_m"] <= 600]
+        relations.append({
+            **{key: value for key, value in subject.items() if key not in {"latitude", "longitude"}},
+            "coordinate": {"latitude": subject["latitude"], "longitude": subject["longitude"], "precision": "mapped_OSM_address_or_building_coordinate_not_unit_entrance"},
+            "source_confidence": "public_map_geodesic_proximity",
+            "nearest_park_or_open_space": park, "nearest_public_dog_park": dog,
+            "observable_walking_way_count_within_600m": len(walking),
+            "walking_environment_boundary": "Observed mapped footway/path/pedestrian ways nearby; no route, sidewalk completeness, safety, access, or walk-time is inferred.",
+            "availability_boundary": NO_AVAILABILITY,
+        })
+    park_first = []
+    features_by_id = {item["feature_id"]: item for item in features}
+    for park in by_kind["park_or_open_space"]:
+        nearby = []
+        for subject in relations:
+            measure = nearest({"latitude": subject["coordinate"]["latitude"], "longitude": subject["coordinate"]["longitude"]}, [features_by_id[park["feature_id"]]])
+            if measure and measure["geodesic_distance_m"] <= 600:
+                nearby.append({"subject_id": subject["subject_id"], "address": subject["address"], "minimum_advertised_monthly_rent_usd": subject.get("minimum_advertised_monthly_rent_usd"), "geodesic_distance_m": measure["geodesic_distance_m"]})
+        if nearby:
+            park_first.append({**{k: v for k, v in park.items() if k != "points"}, "nearby_housing_subjects": sorted(nearby, key=lambda x: x["geodesic_distance_m"])})
+    park_shortlist = [item for item in relations if item.get("nearest_park_or_open_space") and item["nearest_park_or_open_space"]["geodesic_distance_m"] <= 600]
+    dog_shortlist = [item for item in relations if (item.get("nearest_public_dog_park") and item["nearest_public_dog_park"]["geodesic_distance_m"] <= 1500) or item.get("reported_dog_status")]
+    yard_shortlist = [item for item in relations if item.get("reported_exterior_features")]
+    return {
+        "schema": SCHEMA, "generated_at": utc_now(), "source_records": source_records,
+        "forbidden_inference": [
+            "Map proximity is not a walkable route, public access guarantee, safety rating, or travel-time estimate.",
+            "A mapped coordinate is not a unit entrance, unit-specific exterior relation, or verified availability.",
+            "A reported dog park or select-unit yard remains a source property claim, not a unit-specific dog or yard entitlement.",
+        ],
+        "subjects": relations, "park_first_discovery": park_first,
+        "shortlists": {"park": park_shortlist, "dog": dog_shortlist, "yard_or_direct_exterior_claim": yard_shortlist},
+        "inputs": {"mapped_subject_count": len(subjects), "osm_feature_count": len(features)},
+    }
+
+
+def collect(state: Path, output: Path, limit: int) -> dict[str, Any]:
+    subjects = serious_subjects(state, limit)
+    geocode_records, mapped = geocode(subjects)
+    query = overpass_query(mapped)
+    status, body, payload = request_json(OVERPASS, data=query.encode("utf-8")) if mapped else (0, b"{}", {"elements": []})
+    overpass_record = {"schema": "bonfyre-public-geography-source.v1", "source_kind": "overpass_feature_query", "source_url": OVERPASS,
+                       "observed_at": utc_now(), "http_status": status, "query_sha256": digest(query.encode()), "response_sha256": digest(body),
+                       "query_scope": "parks, dog parks, recreation grounds and pedestrian/path/footway ways around mapped serious housing subjects"}
+    raw_path = output.with_name("geography-osm-features.json")
+    write_json(raw_path, payload)
+    result = derive(mapped, payload, geocode_records + [overpass_record])
+    result["raw_feature_body"] = {"path": raw_path.name, "sha256": digest(body)}
+    write_json(output, result)
+    write_json(output.with_name("geography-source-receipts.json"), result["source_records"])
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--limit", type=int, default=12)
+    parser.add_argument("--replay", action="store_true", help="derive from retained OSM and geography source records without network")
+    args = parser.parse_args(argv)
+    output = args.output or args.state / "geographic-value.json"
+    if args.replay:
+        raw = read_json(output.with_name("geography-osm-features.json"), {"elements": []})
+        prior = read_json(output, {})
+        mapped = []
+        for item in prior.get("subjects", []):
+            coordinate = item.get("coordinate") or {}
+            if coordinate.get("latitude") is not None and coordinate.get("longitude") is not None:
+                mapped.append({**{k: v for k, v in item.items() if k not in {"coordinate", "nearest_park_or_open_space", "nearest_public_dog_park", "observable_walking_way_count_within_600m", "walking_environment_boundary", "availability_boundary"}}, "latitude": coordinate["latitude"], "longitude": coordinate["longitude"]})
+        result = derive(mapped, raw, prior.get("source_records", []))
+        result["raw_feature_body"] = prior.get("raw_feature_body")
+        write_json(output, result)
+    else:
+        result = collect(args.state, output, args.limit)
+    print(json.dumps({"output": str(output), "mapped_subjects": result["inputs"]["mapped_subject_count"], "park_shortlist": len(result["shortlists"]["park"]), "dog_shortlist": len(result["shortlists"]["dog"]), "yard_shortlist": len(result["shortlists"]["yard_or_direct_exterior_claim"])}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

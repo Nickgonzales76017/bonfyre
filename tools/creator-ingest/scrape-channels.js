@@ -9,9 +9,37 @@
 //
 // The URLs are then fed into bonfyre-ingest for download + processing.
 // ──────────────────────────────────────────────────────────────
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// A kept URL list is a cache hit only when it is what this run would have
+// written: every line a watch URL, at least as many as asked for, for the same
+// channel, and the bytes the record beside it describes. An empty or cut-off
+// file left by an interrupted run is not a result.
+const WATCH = /^https:\/\/www\.youtube\.com\/watch\?v=[\w-]{6,}/;
+const digest = text => crypto.createHash('sha256').update(text).digest('hex');
+function keptUrls(outFile, handle, count) {
+  let text;
+  try { text = fs.readFileSync(outFile, 'utf8'); } catch (_) { return null; }
+  const urls = text.split('\n').filter(Boolean);
+  if (!urls.length || !urls.every(url => WATCH.test(url))) return null;
+  let record = null;
+  try { record = JSON.parse(fs.readFileSync(outFile + '.json', 'utf8')); } catch (_) {}
+  // A list written before records existed is kept if it is whole and long enough.
+  if (!record) return urls.length >= count ? urls : null;
+  if (record.handle !== handle || record.sha256 !== digest(text)) return null;
+  // A channel with fewer videos than asked for was scraped fully once already.
+  return urls.length >= count || record.requested >= count ? urls : null;
+}
+function keepUrls(outFile, handle, count, urls) {
+  const text = urls.join('\n') + '\n';
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  // Written beside the target and renamed, so a reader never sees half a list.
+  fs.writeFileSync(outFile + '.tmp', text);
+  fs.renameSync(outFile + '.tmp', outFile);
+  fs.writeFileSync(outFile + '.json', JSON.stringify({ handle, requested: count, urls: urls.length, sha256: digest(text), scraped_at: new Date().toISOString() }) + '\n');
+}
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -29,8 +57,9 @@ function parseArgs() {
 }
 
 async function scrapeChannelVideos(browser, handle, count) {
+  // The browser says what it is. A pinned identity from an old release claims
+  // a browser this is not and ages into one no site still serves.
   const page = await browser.newPage();
-  await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
   const url = `https://www.youtube.com/${handle}/videos`;
   console.error(`  Scraping ${url} for ${count} video(s)...`);
@@ -38,8 +67,10 @@ async function scrapeChannelVideos(browser, handle, count) {
   try {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // Wait for video thumbnails to appear
-    await page.waitForSelector('a#video-title-link, a#video-title', { timeout: 15000 }).catch(() => {});
+    // Any link to a video, rather than an element id the site is free to
+    // rename: the ids this used to wait for are gone and it found nothing,
+    // silently. A video is its id; the same one linked twice is one.
+    await page.waitForSelector('a[href^="/watch?v="]', { timeout: 15000 }).catch(() => {});
 
     // Scroll to load more videos if needed
     for (let scroll = 0; scroll < Math.ceil(count / 30); scroll++) {
@@ -47,15 +78,13 @@ async function scrapeChannelVideos(browser, handle, count) {
       await new Promise(r => setTimeout(r, 1500));
     }
 
-    // Extract video URLs from the page
     const videoUrls = await page.evaluate((maxCount) => {
-      const links = document.querySelectorAll('a#video-title-link, a#video-title');
-      const urls = [];
-      for (const link of links) {
-        const href = link.getAttribute('href');
-        if (href && href.startsWith('/watch?v=') && urls.length < maxCount) {
-          urls.push('https://www.youtube.com' + href);
-        }
+      const seen = new Set(), urls = [];
+      for (const link of document.querySelectorAll('a[href^="/watch?v="]')) {
+        const id = (link.getAttribute('href').match(/^\/watch\?v=([\w-]{6,})/) || [])[1];
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        if (urls.length < maxCount) urls.push('https://www.youtube.com/watch?v=' + id);
       }
       return urls;
     }, count);
@@ -72,10 +101,19 @@ async function scrapeChannelVideos(browser, handle, count) {
 async function main() {
   const opts = parseArgs();
 
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
-  });
+  // The sandbox stays on: this loads pages this estate does not control. A
+  // host that cannot run a sandboxed browser says so and stops rather than
+  // running one without it.
+  if (process.argv.includes('--check-kept')) {
+    const at = process.argv.indexOf('--check-kept');
+    const urls = keptUrls(process.argv[at + 1], opts.handle, opts.count);
+    console.log(urls ? `kept ${urls.length}` : 'not kept');
+    process.exit(urls ? 0 : 1);
+  }
+  // Loaded only when a browser is actually needed, so checking what is kept
+  // does not require one to be installed.
+  const puppeteer = require('puppeteer');
+  const browser = await puppeteer.launch({ headless: 'new' });
 
   try {
     if (opts.batch) {
@@ -88,17 +126,16 @@ async function main() {
           const slug = creator.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
           const outFile = path.join(baseDir, slug, '.video_urls');
 
-          // Skip if cache exists
-          if (fs.existsSync(outFile)) {
-            console.error(`  ${creator.name}: cached (${outFile})`);
+          const kept = keptUrls(outFile, creator.yt, opts.count);
+          if (kept) {
+            console.error(`  ${creator.name}: kept ${kept.length} URL(s) (${outFile})`);
             continue;
           }
 
           const urls = await scrapeChannelVideos(browser, creator.yt, opts.count);
 
           if (urls.length > 0) {
-            fs.mkdirSync(path.dirname(outFile), { recursive: true });
-            fs.writeFileSync(outFile, urls.join('\n') + '\n');
+            keepUrls(outFile, creator.yt, opts.count, urls);
             console.error(`  ${creator.name}: ${urls.length} URL(s) → ${outFile}`);
           } else {
             console.error(`  ${creator.name}: no videos found`);
@@ -112,10 +149,9 @@ async function main() {
       // Single-creator mode
       const urls = await scrapeChannelVideos(browser, opts.handle, opts.count);
 
-      if (opts.output) {
-        fs.mkdirSync(path.dirname(opts.output), { recursive: true });
-        fs.writeFileSync(opts.output, urls.join('\n') + '\n');
-      }
+      if (opts.output && urls.length) keepUrls(opts.output, opts.handle, opts.count, urls);
+      // Finding nothing is a failure to say out loud, not an empty success.
+      if (!urls.length) { console.error(`  ${opts.handle}: no videos found`); process.exitCode = 3; }
       // Print to stdout for piping
       urls.forEach(u => console.log(u));
     } else {

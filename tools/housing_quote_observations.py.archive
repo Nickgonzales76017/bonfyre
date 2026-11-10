@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Retain a public housing quote surface with its ForeignTwin policy evidence.
+
+This observer is deliberately read-only.  It accepts a public URL only after a
+fresh robots preflight, saves the observed body under the supplied Run state,
+and appends one digest-bound ``bonfyre-foreign-observation.v1`` receipt.  It
+does not submit an application, choose a move date, choose a lease term, or
+claim that a displayed unit is still available.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+from housing_shadow_inventory import Fetcher
+
+
+def policy_receipt(*, response, twin_id: str, source_url: str, body_path: Path,
+                   robots_url: str, robots_status: int, allowed: bool) -> dict:
+    """Build the admission evidence separately from the observed-body digest."""
+    return {
+        "schema": "bonfyre-foreign-observation.v1",
+        "twin_id": twin_id,
+        "source_url": source_url,
+        "observed_at": response.observed_at,
+        "observe_right": "public",
+        "robots_url": robots_url,
+        "robots_transport_exit": 0,
+        "robots_http_status": robots_status,
+        "policy_decision": "allow" if allowed else "deny",
+        "fetch_attempted": allowed,
+        "transport_exit": 1 if response.transport_error else 0,
+        "http_status": response.status,
+        "body_bytes": len(response.body),
+        "content_sha256": hashlib.sha256(response.body).hexdigest(),
+        "body_path": str(body_path),
+        "availability_claim": False,
+        "observation_kind": "source_observed" if response.ok else "boundary_response",
+        "observer": "housing_quote_observations",
+    }
+
+
+def policy_denial_receipt(*, twin_id: str, source_url: str, robots_url: str,
+                          robots_status: int) -> dict:
+    """Retain a robots refusal without pretending that a quote body exists."""
+    return {
+        "schema": "bonfyre-foreign-observation.v1",
+        "twin_id": twin_id,
+        "source_url": source_url,
+        "observe_right": "public",
+        "robots_url": robots_url,
+        "robots_transport_exit": 0,
+        "robots_http_status": robots_status,
+        "policy_decision": "deny",
+        "fetch_attempted": False,
+        "availability_claim": False,
+        "observation_kind": "policy_excluded",
+        "observer": "housing_quote_observations",
+    }
+
+
+def observe(*, state: Path, source_url: str, twin_id: str, body_name: str) -> dict:
+    """Fetch one robots-permitted public quote body and retain its receipt."""
+    fetcher = Fetcher(receipt_path=None)
+    robots_url = source_url.split("://", 1)[0] + "://" + source_url.split("://", 1)[1].split("/", 1)[0] + "/robots.txt"
+    robots = fetcher.get(robots_url, f"{twin_id}:robots", obey_robots=False)
+    robots_status = robots.status if robots is not None else 0
+    allowed = fetcher.robots_allows(source_url)
+    response = fetcher.get(source_url, twin_id) if allowed else None
+    if response is None:
+        receipt = policy_denial_receipt(
+            twin_id=twin_id, source_url=source_url, robots_url=robots_url,
+            robots_status=robots_status,
+        )
+        receipts_path = state / "source-receipts.jsonl"
+        with receipts_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(receipt, sort_keys=True) + "\n")
+        return {"retained": False, "receipt": receipt}
+
+    body_path = state / "bodies" / "quote-observations" / body_name
+    body_path.parent.mkdir(parents=True, exist_ok=True)
+    body_path.write_bytes(response.body)
+    receipt = policy_receipt(
+        response=response, twin_id=twin_id, source_url=source_url, body_path=body_path,
+        robots_url=robots_url, robots_status=robots_status, allowed=True,
+    )
+    receipts_path = state / "source-receipts.jsonl"
+    with receipts_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(receipt, sort_keys=True) + "\n")
+    return {"retained": True, "receipt": receipt}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", type=Path, required=True)
+    parser.add_argument("--url", required=True)
+    parser.add_argument("--twin-id", required=True)
+    parser.add_argument("--body-name", required=True)
+    args = parser.parse_args()
+    print(json.dumps(observe(
+        state=args.state, source_url=args.url, twin_id=args.twin_id, body_name=args.body_name,
+    ), indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

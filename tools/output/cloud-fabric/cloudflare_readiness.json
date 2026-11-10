@@ -1,0 +1,25 @@
+{
+  "provider_id": "cloudflare",
+  "token_verify_ok": false,
+  "account_ok": true,
+  "zone_ok": false,
+  "r2_s3_ready": true,
+  "errors": {
+    "verify": "[object Object]",
+    "account": null,
+    "zone": "missing_zone_or_token"
+  },
+  "readiness": {
+    "workers": "ready",
+    "queues": "ready",
+    "r2": "ready",
+    "d1": "ready",
+    "durable_objects": "ready",
+    "workflows": "ready",
+    "kv": "ready",
+    "pages": "ready",
+    "tunnel": "partial",
+    "turnstile": "ready",
+    "r2_s3_compatible_artifact_store": "ready"
+  }
+}

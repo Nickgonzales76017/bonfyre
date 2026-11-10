@@ -1,0 +1,22 @@
+{
+  "provider_id": "aws",
+  "sts_ok": true,
+  "profile_mode": true,
+  "region": "us-east-1",
+  "cli_present": true,
+  "caller_identity_detected": true,
+  "api_error": null,
+  "cannot_infer": "an absent CLI -> an unready provider; cli_absent means this host cannot answer the question, not that the answer is no",
+  "readiness": {
+    "eventbridge_scheduler": "ready",
+    "sqs": "ready",
+    "lambda": "ready",
+    "ecs_fargate": "ready",
+    "s3": "ready",
+    "cloudwatch": "ready",
+    "iam": "ready",
+    "budgets": "ready",
+    "parameter_store": "ready",
+    "secrets_manager": "ready"
+  }
+}

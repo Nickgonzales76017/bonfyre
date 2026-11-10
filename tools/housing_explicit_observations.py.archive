@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Reproject the retained Run 8 explicit-housing observation ledger.
+
+The initial explicit flood normalized public source summaries into the shared
+``current-listings.jsonl`` ledger.  A former social-lane whole-file write
+destroyed those rows.  This producer rehydrates that bounded projection from
+the durable source-summary/economic ledgers; it neither fetches a source nor
+upgrades an observation into a vacancy.
+"""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import json
+import os
+import tempfile
+from pathlib import Path
+
+
+SCHEMA = "bonfyre-housing-explicit-observation.v1"
+
+
+def records() -> list[dict]:
+    """The ten source-bound observations retained by the explicit flood.
+
+    They are deliberately source-labelled, including the RentCafe/Roomies
+    browser snapshots whose later native reads returned a boundary response.
+    """
+    source = {
+        "milo": ["housing/source-receipts.jsonl#milo-first-party-public-floorplans-api-20260824T013958Z"],
+        "vine": ["housing/source-receipts.jsonl#rentcafe-vine-snapshot"],
+        "liv": ["housing/source-receipts.jsonl#liv-plus-direct"],
+        "roomies": ["housing/source-receipts.jsonl#roomies-arlington-marketplace"],
+    }
+    return [
+        {"listing_id": "milo-9680-timberline-a", "property_name": "The Milo Apartments", "city": "Dallas", "plan_name": "A", "advertised_monthly_rent_usd": 925, "availability_status": "reported_available_now", "source_refs": source["milo"]},
+        {"listing_id": "milo-9680-timberline-a1", "property_name": "The Milo Apartments", "city": "Dallas", "plan_name": "A1", "advertised_monthly_rent_usd": 975, "availability_status": "reported_available_now", "source_refs": source["milo"]},
+        {"listing_id": "vine-2015", "property_name": "Vine Apartments", "city": "Arlington", "unit_id": "2015", "bedrooms": 1, "bathrooms": 1, "advertised_monthly_rent_range_usd": [1033, 1221], "availability_status": "reported_available_now", "source_refs": source["vine"]},
+        {"listing_id": "vine-1040", "property_name": "Vine Apartments", "city": "Arlington", "unit_id": "1040", "bedrooms": 1, "bathrooms": 1, "advertised_monthly_rent_range_usd": [1134, 1345], "availability_status": "reported_available_now", "source_refs": source["vine"]},
+        {"listing_id": "vine-2028", "property_name": "Vine Apartments", "city": "Arlington", "unit_id": "2028", "bedrooms": 2, "bathrooms": 2, "advertised_monthly_rent_range_usd": [1354, 2009], "availability_status": "reported_available_date", "reported_available_date_text": "Aug. 28", "source_refs": source["vine"]},
+        {"listing_id": "liv-plus-maverick-floorplan", "property_name": "LIV+ Arlington", "city": "Arlington", "plan_name": "The Maverick", "advertised_monthly_rent_usd": 570, "availability_status": "reported_floorplan", "reported_features": ["furnished", "private bedrooms/baths", "in-unit laundry", "internet included", "pet-friendly"], "source_refs": source["liv"]},
+        {"listing_id": "liv-plus-roomies-takeover-south-center", "property_name": "LIV+ Arlington", "city": "Arlington", "advertised_monthly_rent_conflict_usd": [650, 700], "availability_status": "reported_marketplace_takeover_lead", "source_refs": source["roomies"]},
+        {"listing_id": "centennial-court-roomies-takeover", "property_name": "Centennial Court", "city": "Arlington", "advertised_monthly_rent_usd": 789, "availability_status": "reported_marketplace_takeover_lead", "reported_term_text": "2026-08-15 to 2027-07-16", "source_refs": source["roomies"]},
+        {"listing_id": "101-center-roomies-private-bed", "property_name": "101 Center", "city": "Arlington", "advertised_monthly_rent_usd": 649, "availability_status": "reported_marketplace_room_lead", "reported_features": ["furnished", "private bed/bath", "4x4"], "source_refs": source["roomies"]},
+        {"listing_id": "arlington-76001-shared-furnished-room", "property_name": None, "city": "Arlington", "advertised_monthly_rent_usd": 500, "availability_status": "reported_marketplace_room_lead", "reported_features": ["shared", "furnished"], "source_refs": source["roomies"]},
+    ]
+
+
+def merge_jsonl(path: Path, rows: list[dict]) -> int:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_name(f".{path.name}.lock")
+    temporary_path: str | None = None
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            owned = {row["listing_id"]: row for row in rows}
+            preserved = []
+            if path.exists():
+                for line in path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    row = json.loads(line)
+                    if row.get("schema") != SCHEMA or row.get("listing_id") not in owned:
+                        preserved.append(row)
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                             prefix=f".{path.name}.", suffix=".tmp", delete=False) as handle:
+                temporary_path = handle.name
+                for row in preserved + rows:
+                    handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            os.replace(temporary_path, path)
+            temporary_path = None
+            return len(preserved)
+        finally:
+            if temporary_path:
+                Path(temporary_path).unlink(missing_ok=True)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", type=Path, required=True)
+    args = parser.parse_args(argv)
+    rows = [{"schema": SCHEMA, "availability_claim": False,
+             "availability_verified": False,
+             "evidence_ref": row["source_refs"][0],
+             "forbidden_inference": "A source observation is not a verified vacancy, quote, transfer approval, or application authority.",
+             **row} for row in records()]
+    preserved = merge_jsonl(args.state / "current-listings.jsonl", rows)
+    print(json.dumps({"explicit_rows": len(rows), "foreign_listing_rows_preserved": preserved}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

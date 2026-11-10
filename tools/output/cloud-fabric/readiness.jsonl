@@ -1,0 +1,16 @@
+{"provider_id":"oracle","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":true,"supported_execution_lanes":2}
+{"provider_id":"aws","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":4}
+{"provider_id":"supabase","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"cloudflare","readiness_status":"partial","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"cloudflare_r2_s3","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"neon","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"fly","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":3}
+{"provider_id":"vercel","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"railway","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"render","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"turso","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"upstash","readiness_status":"partial","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"github","readiness_status":"api_error","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":2}
+{"provider_id":"sentry","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"posthog","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":0}
+{"provider_id":"local","readiness_status":"ready","has_minimum_credentials":true,"live_apply_enabled":false,"supported_execution_lanes":1}

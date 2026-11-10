@@ -1,0 +1,53 @@
+{
+  "schema": "bonfyre.reclamation.completed.v1",
+  "observed_on": "2026-10-02",
+  "purpose": "Reclaim reconstructable bytes for the pinned local Clef-Flash trained model",
+  "status": "removed_with_user_authorization",
+  "substrate_root": "/Users/nickgonzales/.bonfyre/substrates/v6.1",
+  "removed_relative_to_substrate_root": [
+    "lance/source/target/release/deps",
+    "lance/source/target/release/build",
+    "lance/probe/target/release/deps",
+    "lance/probe/target/release/build",
+    "feldera/probe/target/release/deps",
+    "feldera/probe/target/release/build",
+    "cubecl/source/target/release/deps",
+    "cubecl/source/target/release/build",
+    "gigatoken/source/target/release/deps",
+    "gigatoken/source/target/release/build",
+    "egglog/source/target/release/deps",
+    "egglog/source/target/release/build",
+    "egglog/source/target/release/incremental",
+    "automerge/probe/target/release/deps",
+    "automerge/probe/target/release/build",
+    "cubecl/target/release/deps",
+    "_build-home/Library/Application Support/tracel/tracel-llvm-20.1.4-7",
+    "_build-home/.cache/tracel"
+  ],
+  "removed_absolute_cache_paths": [
+    "/Users/nickgonzales/Library/Caches/Homebrew/downloads",
+    "/Users/nickgonzales/Library/Caches/node-gyp/24.21.0",
+    "/Users/nickgonzales/.cache/zig",
+    "/Users/nickgonzales/Developer/Bonfyre/.zig-cache"
+  ],
+  "admission": "Read-only process/open-file checks found no active consumers of the exact removed paths. Source trees, Cargo.lock files, dependency source caches and top-level native executables were retained. Runtime dynamic dependencies inspected for preserved probe executables were system libraries.",
+  "recovery": "Build intermediates and tool caches can be regenerated; exact removed bytes are not backed up. Re-downloading versioned toolchains depends on upstream availability. This is not a byte-identical rebuild guarantee.",
+  "other_cleanup_receipt": "tools/estate/reclamation/partner-venv-and-bitnet-worktrees.json",
+  "completed_clef_build_cleanup": {
+    "observed_on": "2026-10-02",
+    "removed": [
+      "/private/tmp/bonfyre-clef-native.MRkhu3/runtime/source",
+      "/private/tmp/bonfyre-clef-native.MRkhu3/runtime/build"
+    ],
+    "pre_cleanup_du": "176 MiB extracted upstream source and 134 MiB generated CMake build; not an exact physical-space recovery measurement",
+    "admission": "All final trained witnesses and native builds completed; lsof +D reported no open handles in either exact scratch tree. Packaged binary and retained source archive hashes were reverified before removal.",
+    "retained_source_archive": "/private/tmp/bonfyre-clef-native.MRkhu3/llama-source.tar.gz",
+    "source_archive_sha256": "ba1894e46655347fcd9f5b7257af794b5276b6dc6d30bf347a8e97e10c95fb12",
+    "retained_patch": "components/BonfyreDecision/native/patches/clef-output-embedding.patch",
+    "retained_runtime": "components/BonfyreDecision/native/build/clef/llama-server-fixed",
+    "runtime_sha256": "ad8cc437321e78a1f3fd7de83d68ba31e0320d71ec0c2285cdcb5beca90c21ae",
+    "recovery": "Re-extract the retained hash-pinned archive and apply the retained patch through native/build-clef.sh. Rebuild requires the recorded toolchain; compiled intermediates are not backed up and a rebuilt binary requires renewed hash approval."
+  },
+  "excluded": ["canonical Parquet bodies", "active Qwen model and process", "active browser cache", "active provider runtime", "repository source and unrelated working changes"],
+  "storage_observation": "Free space reached 8.9 GiB after cache, inactive venv and clean worktree cleanup, before downloading the 6486448192-byte trained model. After the final trained run, child shutdown and scratch build cleanup, df reported 4.4 GiB available. APFS sharing and changing swap usage prevent attributing that change solely to deletion or treating du totals as exact physical bytes recovered."
+}
