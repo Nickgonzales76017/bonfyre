@@ -46,7 +46,11 @@ $(TARGET): $(SRC)
 $(FRAGMENT_LIB)/libfragment.a:
 	$(MAKE) -C $(FRAGMENT_LIB)
 
+test: $(TARGET)
+	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreTranscribe/tests/vectors/command_behavior.json
+	$(HOME)/.bun/bin/bun test tests/installed_caption.test.mjs
+
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean install
+.PHONY: all clean install test
