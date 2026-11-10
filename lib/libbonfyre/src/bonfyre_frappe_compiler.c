@@ -3,6 +3,7 @@
  *
  * Main compiler implementation for Bonfyre-Frappe Universal Uplift Runtime
  */
+#include <stdint.h>
 
 #include "bonfyre_frappe.h"
 #include <errno.h>
@@ -93,10 +94,19 @@ static const size_t BF_NATIVE_CAPABILITY_COUNT =
  * Helpers
  * ======================================================================== */
 
+/* Collected and said out loud.
+ *
+ * These were only collected. bonfyre_erpnext, the estate's own overlay, is a
+ * tree of empty directories and .DS_Store files with no DocType anywhere in it,
+ * and the compiler knew exactly that -- "No Frappe DocType metadata was found
+ * beneath the app path" -- while the caller printed "Compilation failed with
+ * error code: -1" and the reason went nowhere. A refusal nobody can read is
+ * indistinguishable from a crash. */
 static void bf_ctx_add_error(BfCompilerCtx *ctx, const char *msg) {
     ctx->errors = realloc(ctx->errors, sizeof(char*) * (ctx->error_count + 1));
     ctx->errors[ctx->error_count] = strdup(msg);
     ctx->error_count++;
+    fprintf(stderr, "  refused: %s\n", msg);
 }
 
 static void bf_ctx_add_warning(BfCompilerCtx *ctx, const char *msg) __attribute__((unused));
@@ -157,33 +167,6 @@ static int bf_exec_sql(sqlite3 *db, const char *sql, char **err_out) {
         sqlite3_free(err);
     }
     return rc;
-}
-
-static char *bf_shell_escape_single_quotes(const char *s) {
-    size_t extra = 0;
-    for (const char *p = s; *p; p++) {
-        if (*p == '\'') {
-            extra += 3;
-        }
-    }
-
-    size_t len = strlen(s);
-    char *out = malloc(len + extra + 1);
-    if (!out) {
-        return NULL;
-    }
-
-    char *dst = out;
-    for (const char *p = s; *p; p++) {
-        if (*p == '\'') {
-            memcpy(dst, "'\\''", 4);
-            dst += 4;
-        } else {
-            *dst++ = *p;
-        }
-    }
-    *dst = '\0';
-    return out;
 }
 
 static const char *bf_field_type_name(BfFieldType type) {
@@ -752,77 +735,119 @@ int bf_compiler_phase0_inventory(BfCompilerCtx *ctx, const char *bonfyre_root) {
  * Phase 1: Schema Graph Build
  * ======================================================================== */
 
-static int bf_run_schema_parser(BfCompilerCtx *ctx, const char *app_path, char output_path[PATH_MAX]) {
-    char parser_path[PATH_MAX];
-    const char *candidates[] = {
-        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py",
-        "./cmd/BonfyreFrappeCompiler/frappe_schema_parser.py",
-        "./frappe_schema_parser.py",
-        NULL
-    };
+/* Frappe's DocType metadata is already JSON.  The old extraction step ran a
+ * Python helper to walk it; that made the C compiler advertise a capability it
+ * could not execute after the interpreter retirement.  Keep the boundary
+ * native: walk only regular JSON files, use SQLite JSON1 to prove each is a
+ * DocType, and emit one bounded intermediate document for the compiler phases.
+ * No controller, hook, or app code is imported or executed. */
+typedef struct {
+    FILE *stream;
+    size_t document_count;
+    int first;
+} BfFrappeSchemaWriter;
 
-    bool found = false;
-    if (ctx->bonfyre_root) {
-        snprintf(parser_path, sizeof(parser_path), "%s/cmd/BonfyreFrappeCompiler/frappe_schema_parser.py",
-                 ctx->bonfyre_root);
-        if (access(parser_path, R_OK) == 0) {
-            found = true;
+static int bf_frappe_json_is_doctype(const char *json_text) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+    int accepted = 0;
+    if (!json_text || sqlite3_open(":memory:", &db) != SQLITE_OK) goto done;
+    if (sqlite3_prepare_v2(db,
+            "SELECT json_valid(?1), json_extract(?1, '$.doctype'), json_type(?1, '$.fields')",
+            -1, &stmt, NULL) != SQLITE_OK) goto done;
+    sqlite3_bind_text(stmt, 1, json_text, -1, SQLITE_STATIC);
+    if (sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_int(stmt, 0) == 1) {
+        const char *kind = (const char *)sqlite3_column_text(stmt, 1);
+        const char *fields = (const char *)sqlite3_column_text(stmt, 2);
+        accepted = kind && !strcmp(kind, "DocType") && fields && !strcmp(fields, "array");
+    }
+done:
+    if (stmt) sqlite3_finalize(stmt);
+    if (db) sqlite3_close(db);
+    return accepted;
+}
+
+static int bf_frappe_schema_walk(BfCompilerCtx *ctx, const char *directory,
+                                 BfFrappeSchemaWriter *writer, int depth) {
+    DIR *dir;
+    struct dirent *entry;
+    if (depth > 24) {
+        bf_ctx_add_warning(ctx, "Frappe metadata tree depth exceeded 24; branch skipped");
+        return 0;
+    }
+    dir = opendir(directory);
+    /* A harvested app can contain generated, vendor, or permission-limited
+     * branches beside ordinary DocType metadata. The root was already
+     * access-checked by the caller; an unreadable child is a recorded skip,
+     * never grounds to erase the complete lineage. */
+    if (!dir) {
+        char warning[PATH_MAX + 96];
+        snprintf(warning, sizeof(warning), "Unreadable Frappe subtree skipped: %s", directory);
+        bf_ctx_add_warning(ctx, warning);
+        return 0;
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        char path[PATH_MAX];
+        struct stat st;
+        size_t name_len;
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        if (snprintf(path, sizeof(path), "%s/%s", directory, entry->d_name) >= (int)sizeof(path)) continue;
+        if (lstat(path, &st) != 0 || S_ISLNK(st.st_mode)) continue;
+        if (S_ISDIR(st.st_mode)) {
+            (void)bf_frappe_schema_walk(ctx, path, writer, depth + 1);
+            continue;
         }
-    }
-
-    for (size_t i = 0; !found && candidates[i]; i++) {
-        if (access(candidates[i], R_OK) == 0) {
-            snprintf(parser_path, sizeof(parser_path), "%s", candidates[i]);
-            found = true;
+        name_len = strlen(entry->d_name);
+        if (!S_ISREG(st.st_mode) || name_len < 6 || strcmp(entry->d_name + name_len - 5, ".json") ||
+            st.st_size <= 0 || st.st_size > 2 * 1024 * 1024) continue;
+        char *json_text = bf_read_file(path);
+        if (!json_text) continue;
+        if (bf_frappe_json_is_doctype(json_text)) {
+            if (!writer->first) fputc(',', writer->stream);
+            if (fputs(json_text, writer->stream) == EOF) {
+                free(json_text); closedir(dir); return -1;
+            }
+            writer->first = 0;
+            writer->document_count++;
         }
+        free(json_text);
     }
-
-    if (!found) {
-        bf_ctx_add_error(ctx, "Unable to locate frappe_schema_parser.py");
-        return -1;
-    }
-
-    char template_path[] = "/tmp/bonfyre_frappe_schema_XXXXXX";
-    int fd = mkstemp(template_path);
-    if (fd < 0) {
-        bf_ctx_add_error(ctx, "Failed to allocate temporary schema IR path");
-        return -1;
-    }
-    close(fd);
-    snprintf(output_path, PATH_MAX, "%s", template_path);
-
-    char *parser_escaped = bf_shell_escape_single_quotes(parser_path);
-    char *app_escaped = bf_shell_escape_single_quotes(app_path);
-    char *out_escaped = bf_shell_escape_single_quotes(output_path);
-    if (!parser_escaped || !app_escaped || !out_escaped) {
-        free(parser_escaped);
-        free(app_escaped);
-        free(out_escaped);
-        bf_ctx_add_error(ctx, "Failed to allocate parser command");
-        return -1;
-    }
-
-    char command[PATH_MAX * 3];
-    snprintf(command,
-             sizeof(command),
-             "python3 '%s' '%s' '%s'",
-             parser_escaped,
-             app_escaped,
-             out_escaped);
-
-    free(parser_escaped);
-    free(app_escaped);
-    free(out_escaped);
-
-    printf("  Running schema parser: %s\n", parser_path);
-    int rc = system(command);
-    if (rc != 0) {
-        unlink(output_path);
-        bf_ctx_add_error(ctx, "Schema parser invocation failed");
-        return -1;
-    }
-
+    closedir(dir);
     return 0;
+}
+
+static int bf_run_schema_parser(BfCompilerCtx *ctx, const char *app_path, char output_path[PATH_MAX]) {
+    char template_path[] = "/tmp/bonfyre-frappe-schema-XXXXXX";
+    int fd = -1, rc = -1, failed = 0;
+    FILE *stream = NULL;
+    BfFrappeSchemaWriter writer = {0};
+    output_path[0] = '\0';
+    if (!app_path || !*app_path) return -1;
+    fd = mkstemp(template_path);
+    if (fd < 0 || !(stream = fdopen(fd, "wb"))) {
+        if (fd >= 0) close(fd);
+        bf_ctx_add_error(ctx, "Unable to create native Frappe schema intermediate file");
+        return -1;
+    }
+    writer.stream = stream;
+    writer.first = 1;
+    if (fputs("{\"doctypes\":[", stream) == EOF) failed = 1;
+    if (!failed && bf_frappe_schema_walk(ctx, app_path, &writer, 0) != 0) failed = 1;
+    if (!failed && fputs("],\"relations\":[]}", stream) == EOF) failed = 1;
+    if (fclose(stream) != 0) failed = 1;
+    if (failed) {
+        unlink(template_path);
+        bf_ctx_add_error(ctx, "Native Frappe schema walk failed");
+        return -1;
+    }
+    if (!writer.document_count) {
+        unlink(template_path);
+        bf_ctx_add_error(ctx, "No Frappe DocType metadata was found beneath the app path");
+        return -1;
+    }
+    if (snprintf(output_path, PATH_MAX, "%s", template_path) < PATH_MAX) rc = 0;
+    if (rc != 0) unlink(template_path);
+    return rc;
 }
 
 static int bf_load_doctype_fields(sqlite3 *db, const char *json_text, BfDocType *dt) {
@@ -838,7 +863,10 @@ static int bf_load_doctype_fields(sqlite3 *db, const char *json_text, BfDocType 
             "  json_extract(f.value, '$.depends_on'),"
             "  json_extract(f.value, '$.description'),"
             "  COALESCE(json_extract(f.value, '$.position'), 0),"
-            "  json_extract(f.value, '$.dynamic_link_reference_doctype') "
+            "  json_extract(f.value, '$.dynamic_link_reference_doctype'),"
+            "  json_extract(f.value, '$.mandatory_depends_on'),"
+            "  json_extract(f.value, '$.read_only_depends_on'),"
+            "  json_extract(f.value, '$.collapsible_depends_on') "
             "FROM json_each(?1, '$.doctypes') AS d "
             "JOIN json_each(json_extract(d.value, '$.fields')) AS f "
             "WHERE json_extract(d.value, '$.name') = ?2 "
@@ -864,6 +892,9 @@ static int bf_load_doctype_fields(sqlite3 *db, const char *json_text, BfDocType 
         field.position = (size_t)sqlite3_column_int64(stmt, 7);
         field.dynamic_link_reference_doctype =
             bf_strdup_nullable((const char *)sqlite3_column_text(stmt, 8));
+        field.mandatory_depends_on_expr = bf_strdup_nullable((const char *)sqlite3_column_text(stmt, 9));
+        field.read_only_depends_on_expr = bf_strdup_nullable((const char *)sqlite3_column_text(stmt, 10));
+        field.collapsible_depends_on_expr = bf_strdup_nullable((const char *)sqlite3_column_text(stmt, 11));
 
         if (field.fieldtype == BF_TYPE_DYNAMIC_LINK &&
             !field.dynamic_link_reference_doctype &&
@@ -1424,6 +1455,8 @@ static BfRuleUniverse *bf_derive_rule_universe(
     BfBinding *binding
 ) {
     BfRuleUniverse *universe = calloc(1, sizeof(BfRuleUniverse));
+    if (!universe) return NULL;
+    if (!dt || !dt->name) { free(universe); return NULL; }
     universe->doctype = strdup(dt->name);
 
     /* Derive variables from fields */
@@ -1435,6 +1468,19 @@ static BfRuleUniverse *bf_derive_rule_universe(
 
         /* Skip password fields */
         if (f->fieldtype == BF_TYPE_PASSWORD) {
+            continue;
+        }
+
+        /* A field the DocType never named cannot be a rule variable.
+         *
+         * frappe's own app ships new-doctype-1 and new-doctype-2, two
+         * scaffolds whose fields carry a label and no fieldname at all, and
+         * strdup of that absent name segfaulted the compiler partway through
+         * phase 7. The effect was that the core app -- the one every other
+         * Frappe app depends on -- could not be compiled at all, while the
+         * smaller apps compiled fine and hid it. A rule cannot refer to a
+         * field that has no name, so it is skipped rather than invented. */
+        if (!f->fieldname || !*f->fieldname) {
             continue;
         }
 
@@ -1457,7 +1503,9 @@ static BfRuleUniverse *bf_derive_rule_universe(
     /* Derive actions from capabilities */
     universe->action_count = 0;
     universe->actions = NULL;
-    for (size_t i = 0; i < binding->capability_count; i++) {
+    /* No binding means no capability was derived for this DocType, which is a
+     * universe with no actions rather than a reason to stop. */
+    for (size_t i = 0; binding && i < binding->capability_count; i++) {
         const char *cap_id = binding->capability_ids[i];
         BfRuleAction action = {0};
         action.capability_id = strdup(cap_id);
@@ -1508,16 +1556,25 @@ BfRuleUniverse **bf_compiler_phase7_rule_universe(
 
     BfRuleUniverse **universes = malloc(sizeof(BfRuleUniverse*) * schema->doctype_count);
 
+    size_t derived = 0;
     for (size_t i = 0; i < schema->doctype_count; i++) {
-        universes[i] = bf_derive_rule_universe(ctx, schema->doctypes[i], bindings[i]);
+        BfRuleUniverse *universe = bf_derive_rule_universe(ctx, schema->doctypes[i], bindings[i]);
+        if (!universe) {
+            /* Named as skipped rather than counted as derived, and left out of
+             * the array entirely: a hole in it would be dereferenced by the
+             * theorem checks further down. */
+            printf("  (a DocType with no name of its own) -> no rule universe\n");
+            continue;
+        }
+        universes[derived++] = universe;
 
         printf("  %s → %zu variables, %zu actions\n",
-               universes[i]->doctype,
-               universes[i]->variable_count,
-               universes[i]->action_count);
+               universe->doctype,
+               universe->variable_count,
+               universe->action_count);
     }
 
-    *universe_count = schema->doctype_count;
+    *universe_count = derived;
 
     printf("[Phase 7] ✓ Rule universe derivation complete: %zu universes\n", *universe_count);
     return universes;

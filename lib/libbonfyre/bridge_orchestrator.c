@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bridge_orchestrator.c — Pipeline bridge / orchestrator helpers
  *
@@ -20,6 +24,9 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
+/* CLOCK_MONOTONIC, and the Linux inotify/epoll paths this file documents,
+ * are behind a glibc feature macro. Declared here so the Linux build this
+ * targets actually compiles. */
 #include "bridge_orchestrator.h"
 
 #include <stdatomic.h>

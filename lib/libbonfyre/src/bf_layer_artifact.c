@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "bonfyre.h"
 #include "bf_json.h"
 

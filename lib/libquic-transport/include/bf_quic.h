@@ -7,8 +7,10 @@
  *   transform→ priority 2
  *   substrate→ priority 3 (lowest)
  *
- * Zero head-of-line blocking between families. 0-RTT reconnect for
- * persistent sync sessions (BonfyreSync). Bulk transfer mode for
+ * Zero head-of-line blocking between families. 0-RTT reconnect is limited
+ * to explicitly replay-safe operation phenotypes; it is never an implicit
+ * optimization for a commitment, payment, mutation, or external effect.
+ * Bulk transfer mode for
  * large corpus pushes (BonfyreDistribute).
  *
  * Wraps ngtcp2 + ngtcp2_crypto_ossl underneath.
@@ -50,6 +52,22 @@ typedef struct bf_quic_ctx        bf_quic_ctx_t;
 typedef struct bf_quic_conn       bf_quic_conn_t;
 typedef struct bf_quic_stream     bf_quic_stream_t;
 
+/* Early data can be replayed by a network peer.  This is a transport
+ * declaration, not an authority decision.  UNKNOWN fails closed whenever a
+ * connection is attempting 0-RTT. */
+typedef enum {
+    BF_QUIC_OPERATION_UNKNOWN = 0,
+    BF_QUIC_OPERATION_OBSERVE,
+    BF_QUIC_OPERATION_CACHE_FETCH,
+    BF_QUIC_OPERATION_SUBSCRIPTION_RESUME,
+    BF_QUIC_OPERATION_MUTATION,
+    BF_QUIC_OPERATION_COMMITMENT,
+    BF_QUIC_OPERATION_PAYMENT,
+    BF_QUIC_OPERATION_EFFECT
+} bf_quic_operation_t;
+
+int bf_quic_operation_allows_0rtt(bf_quic_operation_t operation);
+
 /* ── Stream metadata (per artifact family) ───────────────────── */
 
 typedef struct {
@@ -57,6 +75,7 @@ typedef struct {
     uint8_t  layer;             /* BF_LAYER_* constant            */
     uint64_t total_bytes;       /* expected payload size (0=unknown) */
     char     content_hash[65];  /* SHA-256 hex for dedup (optional) */
+    bf_quic_operation_t operation; /* governs replayable early-data use */
 } bf_quic_stream_meta_t;
 
 /* ── Transfer result (per stream) ────────────────────────────── */
@@ -92,6 +111,15 @@ typedef void (*bf_quic_recv_cb)(const char *family_key,
 typedef void (*bf_quic_done_cb)(const bf_quic_stream_result_t *result,
                                  void *user);
 
+/* Raw application streams are intentionally separate from Bonfyre's BFQS
+ * artifact framing.  Protocols such as MOQT own their own stream grammar and
+ * must never be decoded as a family artifact. */
+typedef void (*bf_quic_raw_recv_cb)(int64_t stream_id, uint64_t offset,
+                                    const uint8_t *data, size_t len, int fin,
+                                    void *user);
+typedef void (*bf_quic_datagram_recv_cb)(const uint8_t *data, size_t len,
+                                         int early_data, void *user);
+
 /* ── Context lifecycle ───────────────────────────────────────── */
 
 /* Create a QUIC transport context.
@@ -100,6 +128,17 @@ typedef void (*bf_quic_done_cb)(const bf_quic_stream_result_t *result,
 bf_quic_ctx_t *bf_quic_ctx_new(const char *cert_path,
                                 const char *key_path,
                                 const char *session_file);
+
+/* Creates an application profile with a single ALPN, optional QUIC DATAGRAM
+ * negotiation, and raw-stream delivery.  `alpn` is an unencoded token such as
+ * `moqt-21`, not a TLS length-prefixed byte string.  Callers are responsible
+ * for enforcing protocol/version compatibility above this substrate. */
+bf_quic_ctx_t *bf_quic_ctx_new_application(const char *cert_path,
+                                            const char *key_path,
+                                            const char *session_file,
+                                            const char *alpn,
+                                            int enable_datagrams,
+                                            int raw_streams);
 
 void bf_quic_ctx_free(bf_quic_ctx_t *ctx);
 
@@ -115,7 +154,9 @@ int bf_quic_ctx_set_token(bf_quic_ctx_t *ctx,
 bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
                                  const char *host, uint16_t port);
 
-/* Reconnect using stored 0-RTT token (for BonfyreSync persistent links) */
+/* Reconnect using a stored 0-RTT token.  A stream on this connection opens
+ * only when its metadata declares OBSERVE, CACHE_FETCH, or
+ * SUBSCRIPTION_RESUME.  All other operations must wait for the handshake. */
 bf_quic_conn_t *bf_quic_reconnect_0rtt(bf_quic_ctx_t *ctx,
                                          const char *host, uint16_t port);
 
@@ -128,6 +169,26 @@ void bf_quic_conn_close(bf_quic_conn_t *conn);
  * Multiple streams can be open simultaneously (one per family). */
 bf_quic_stream_t *bf_quic_stream_open(bf_quic_conn_t *conn,
                                        const bf_quic_stream_meta_t *meta);
+
+/* Open/write a protocol-owned QUIC stream without BFQS framing.  `bidi` is
+ * required for request/response protocols such as MOQT SUBSCRIBE; control and
+ * object streams can be opened unidirectionally. */
+bf_quic_stream_t *bf_quic_raw_stream_open(bf_quic_conn_t *conn, int bidi,
+                                           bf_quic_operation_t operation);
+/* Attach to a peer-initiated raw bidirectional stream in order to send its
+ * response. This does not open a new QUIC stream. */
+bf_quic_stream_t *bf_quic_raw_stream_attach(bf_quic_conn_t *conn,
+                                             int64_t stream_id);
+int bf_quic_raw_stream_write(bf_quic_stream_t *stream,
+                             const uint8_t *data, size_t len, int fin);
+int bf_quic_conn_set_raw_callbacks(bf_quic_conn_t *conn,
+                                   bf_quic_raw_recv_cb stream_cb,
+                                   bf_quic_datagram_recv_cb datagram_cb,
+                                   void *user);
+/* DATAGRAM is unreliable by construction.  The caller must select it only
+ * for a protocol phenotype that tolerates loss and reordering. */
+int bf_quic_datagram_write(bf_quic_conn_t *conn, uint64_t datagram_id,
+                           const uint8_t *data, size_t len);
 
 /* Write artifact data to a family stream.
  * Data is framed internally with content-hash for integrity.

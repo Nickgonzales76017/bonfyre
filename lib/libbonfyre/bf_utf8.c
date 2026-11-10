@@ -9,6 +9,7 @@
  * The SIMD paths handle the common case (pure ASCII) at memory bandwidth,
  * deferring to scalar only for multi-byte sequences detected in the tail.
  */
+#include <stdint.h>
 
 #include "bf_utf8.h"
 

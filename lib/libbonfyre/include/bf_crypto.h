@@ -2,7 +2,7 @@
  * bf_crypto.h — Cryptographic primitives for Bonfyre
  *
  * Lightweight wrapper inspired by libhydrogen (ISC license, ~3 KLOC).
- * Provides: password hashing, HMAC, AEAD secretbox, Ed25519 signing, KDF.
+ * Provides: password hashing, HMAC, AEAD secretbox, KDF.
  *
  * Implementation strategy:
  *   - When <sodium.h> or <hydrogen.h> is available, delegate to it.
@@ -30,9 +30,6 @@ extern "C" {
 #define BF_CRYPTO_KEY_BYTES     32
 #define BF_CRYPTO_NONCE_BYTES   24
 #define BF_CRYPTO_MAC_BYTES     16
-#define BF_CRYPTO_SIGN_BYTES    64
-#define BF_CRYPTO_SIGN_PK_BYTES 32
-#define BF_CRYPTO_SIGN_SK_BYTES 64
 #define BF_CRYPTO_PWHASH_BYTES  32
 #define BF_CRYPTO_SALT_BYTES    16
 
@@ -100,21 +97,22 @@ int bf_crypto_secretbox_open(uint8_t *plain_out,
                              const uint8_t nonce[BF_CRYPTO_NONCE_BYTES],
                              const uint8_t key[BF_CRYPTO_KEY_BYTES]);
 
-/* ── Signing (Ed25519) ───────────────────────────────────────── */
-
-/* Generate a keypair. */
-int bf_crypto_sign_keygen(uint8_t pk[BF_CRYPTO_SIGN_PK_BYTES],
-                          uint8_t sk[BF_CRYPTO_SIGN_SK_BYTES]);
-
-/* Sign a message. sig_out must be BF_CRYPTO_SIGN_BYTES. */
-int bf_crypto_sign(uint8_t sig_out[BF_CRYPTO_SIGN_BYTES],
-                   const void *msg, size_t msg_len,
-                   const uint8_t sk[BF_CRYPTO_SIGN_SK_BYTES]);
-
-/* Verify a signature. Returns 0 on valid signature. */
-int bf_crypto_sign_verify(const uint8_t sig[BF_CRYPTO_SIGN_BYTES],
-                          const void *msg, size_t msg_len,
-                          const uint8_t pk[BF_CRYPTO_SIGN_PK_BYTES]);
+/* ── Signing ─────────────────────────────────────────────────────
+ *
+ * Removed. This module used to export bf_crypto_sign_keygen, bf_crypto_sign
+ * and bf_crypto_sign_verify under names borrowed from Ed25519 while
+ * implementing a symmetric HMAC tag: `pk` was H(seed) and could verify
+ * nothing, and verify was a stub returning -1 for every input it was given.
+ *
+ * Nothing called them, so nothing broke, but the next caller to need a
+ * signature would have read `sign_keygen(pk, sk)`, published pk as a public
+ * key, and shipped an assertion no counterparty could check. Documenting that
+ * is weaker than removing it.
+ *
+ * Real Ed25519 lives in cmd/BonfyreSign, which links libsodium and holds the
+ * institution's identity key. Use it. If a caller here needs to authenticate a
+ * message to a holder of the same secret, that is what bf_crypto_hmac is for
+ * and it says so in its own name. */
 
 /* ── KDF (Key Derivation) ───────────────────────────────────── */
 

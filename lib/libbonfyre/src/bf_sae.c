@@ -1,13 +1,13 @@
 /*
  * bf_sae.c — Bonfyre .bfsae runtime: mmap, top-k activation, feature hash,
- *             manifest JSON, danger gate, and synthetic dict writer.
+ *             manifest JSON and danger gate.
  *
  * Encoder: ReLU( x · W_enc + b_enc ) — standard sparse-autoencoder forward pass.
  * The encoder matrix is stored row-major as float16[N][D]:
  *   feature_i activation = max(0, dot(residual, W_enc[i]) + bias[i])
  *
- * For the synthetic/test path the weights are float32; the fp16 path
- * converts on the fly using a portable bit-cast (no HW fp16 intrinsics needed).
+ * The fp16 weights are converted on the fly using a portable bit-cast (no HW
+ * fp16 intrinsics needed).
  *
  * Limitation: this file handles the control-plane (manifest, gate, hash, inspect).
  * Heavy fp16 matrix multiply is done via bfsae_activate_f32() which accepts
@@ -66,6 +66,14 @@ BfsaeDict *bfsae_open(const char *path) {
     const BfsaeHeader *h = (const BfsaeHeader *)base;
     if (memcmp(h->magic, BFSAE_MAGIC, BFSAE_MAGIC_LEN) != 0) {
         fprintf(stderr, "bfsae_open: bad magic in %s\n", path);
+        munmap(base, sz); close(fd); return NULL;
+    }
+
+    /* The only dictionaries ever marked this way were random encoders written
+     * for tests and then left where the gate looks for its default. Features
+     * read off one are noise with labels. */
+    if (strncmp(h->training_notes, "synthetic", 9) == 0) {
+        fprintf(stderr, "bfsae_open: %s is a synthetic dictionary, not one trained on a model; refusing it\n", path);
         munmap(base, sz); close(fd); return NULL;
     }
 
@@ -138,12 +146,11 @@ BfsaeActivation *bfsae_activate_f32(const BfsaeDict *d,
             acts[i] = dot > 0.0f ? dot : 0.0f;  /* ReLU */
         }
     } else {
-        /* No encoder loaded (synthetic stub): random stable activations */
-        for (uint32_t i = 0; i < N; i++) {
-            /* deterministic: hash (i, residual[i % D]) */
-            float v = residual[i % D] * (float)(((i * 2654435769u) >> 16) & 0xff) / 255.0f;
-            acts[i] = v > 0.0f ? v : 0.0f;
-        }
+        /* A dictionary with no encoder cannot activate anything. A hash of
+         * the residual stood in for the activations here, and was reported
+         * as which features fired. */
+        free(acts);
+        return NULL;
     }
 
     /* Partial sort: find top_k by activation descending */
@@ -306,77 +313,4 @@ void bfsae_inspect(const BfsaeDict *d) {
     printf("  decoder_offset : 0x%llx\n", (unsigned long long)h->decoder_offset);
     printf("  meta_offset    : 0x%llx\n", (unsigned long long)h->meta_offset);
     printf("  training_notes : %s\n",  h->training_notes[0] ? h->training_notes : "(none)");
-}
-
-/* ── synthetic writer ────────────────────────────────────────────────────── */
-
-int bfsae_write_synthetic(const char *path,
-                           const char *model_family,
-                           uint32_t    layer,
-                           uint32_t    hidden_dim,
-                           uint32_t    feature_count) {
-    FILE *f = fopen(path, "wb");
-    if (!f) { perror("bfsae_write_synthetic"); return -1; }
-
-    size_t meta_sz  = (size_t)feature_count * sizeof(BfsaeFeatureMeta);
-    size_t enc_sz   = (size_t)feature_count * hidden_dim * sizeof(uint16_t); /* fp16[N][D] */
-    size_t total    = sizeof(BfsaeHeader) + meta_sz + enc_sz;
-
-    BfsaeHeader hdr = {0};
-    memcpy(hdr.magic, BFSAE_MAGIC, BFSAE_MAGIC_LEN);
-    hdr.version       = BFSAE_VERSION;
-    hdr.site          = BFSAE_SITE_RESIDUAL;
-    hdr.dtype         = BFSAE_DTYPE_FP16;
-    hdr.layer         = layer;
-    hdr.hidden_dim    = hidden_dim;
-    hdr.feature_count = feature_count;
-    hdr.meta_offset   = sizeof(BfsaeHeader);
-    hdr.encoder_offset= sizeof(BfsaeHeader) + meta_sz;
-    hdr.decoder_offset= hdr.encoder_offset; /* no decoder in synthetic */
-    hdr.file_size     = total;
-    strncpy(hdr.model_family, model_family, sizeof(hdr.model_family) - 1);
-    strncpy(hdr.training_notes, "synthetic", sizeof(hdr.training_notes) - 1);
-    fwrite(&hdr, sizeof(hdr), 1, f);
-
-    /* meta: random biases and thresholds */
-    srand(layer * 31337 + feature_count);
-    for (uint32_t i = 0; i < feature_count; i++) {
-        BfsaeFeatureMeta m = {0};
-        m.feature_id        = i;
-        m.bias              = 0.0f;
-        m.mean_activation   = (float)(rand() % 100) / 1000.0f;
-        m.std_activation    = 0.1f + (float)(rand() % 50) / 100.0f;
-        m.danger_threshold  = 0.7f;
-        m.default_threshold = 0.3f;
-        m.tags              = (i % 50 == 0) ? BFSAE_TAG_DANGER : BFSAE_TAG_SEMANTIC;
-        fwrite(&m, sizeof(m), 1, f);
-    }
-
-    /* encoder: random unit-norm fp16 rows */
-    for (uint32_t i = 0; i < feature_count; i++) {
-        float norm = 0.0f;
-        float row[4096]; /* max dim we'll handle in synth */
-        uint32_t D = hidden_dim < 4096 ? hidden_dim : 4096;
-        for (uint32_t j = 0; j < D; j++) {
-            row[j] = (float)(rand() - RAND_MAX/2) / (float)(RAND_MAX/2);
-            norm  += row[j] * row[j];
-        }
-        norm = sqrtf(norm > 0.0f ? norm : 1.0f);
-        for (uint32_t j = 0; j < D; j++) {
-            /* float32 → float16 (round-to-nearest) */
-            float v = row[j] / norm;
-            uint32_t bits; memcpy(&bits, &v, 4);
-            uint32_t sign = (bits >> 31) & 1;
-            int32_t  exp  = (int32_t)((bits >> 23) & 0xff) - 127 + 15;
-            uint32_t mant = (bits >> 13) & 0x3ff;
-            uint16_t h16;
-            if (exp <= 0)       h16 = (uint16_t)(sign << 15);
-            else if (exp >= 31) h16 = (uint16_t)((sign << 15) | 0x7c00);
-            else                h16 = (uint16_t)((sign << 15) | (exp << 10) | mant);
-            fwrite(&h16, sizeof(h16), 1, f);
-        }
-    }
-
-    fclose(f);
-    return 0;
 }

@@ -28,6 +28,7 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,68 +39,6 @@
 static BfComponentDef  reg_store_[MAX_REGISTRY];
 static int             reg_n_=0;
 static int             reg_init_=0;
-
-/* ── stub transfer: passthrough (identity for analog pins) ──────────── */
-static int stub_transfer_(const BfSignal *in, size_t ni,
-                           BfSignal *out, size_t no,
-                           BfComponentState *st) {
-    (void)st;
-    size_t copy=ni<no?ni:no;
-    for(size_t i=0;i<copy;i++) out[i]=in[i];
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreTel — signal source ──────────────────────────────────────── */
-/* Fix 3: forward the injected pulse payload intact.  Prior to this fix
- * Tel silently dropped in[0].data and only emitted conductance as a
- * scalar — so every downstream node saw an eventless wire, not the
- * encoded audio/token pulse.  Now Tel is a transparent source: it stamps
- * event=1, preserves the payload, and falls back to a conductance
- * scalar only when the input is empty (i.e., pure drive mode). */
-static int tel_transfer_(const BfSignal *in, size_t ni,
-                          BfSignal *out, size_t no,
-                          BfComponentState *st) {
-    (void)no;
-    out[0].event = 1;
-    /* NOTE: BonfyreTel has n_inputs=0 (pure source), so ni==0 always.
-     * bf_spice_eval still injects the input pulse into input_buf[0] for
-     * source nodes (nodes where n_inputs==0).  We read in[0] directly
-     * rather than checking ni>0, because the pulse injection bypasses
-     * the normal pin declaration mechanism.  This is correct: input_buf
-     * is pre-allocated at BF_COMPONENT_MAX_PINS regardless of n_inputs. */
-    if (in[0].data && in[0].dim > 0) {
-        /* forward pulse payload from input (injected by bf_spice_eval) */
-        out[0].data         = in[0].data;
-        out[0].dim          = in[0].dim;
-        out[0].kind         = in[0].kind;
-        out[0].scalar       = in[0].scalar > 0.0f ? in[0].scalar : st->conductance;
-        out[0].payload      = in[0].payload;
-        out[0].payload_kind = in[0].payload_kind;
-        memcpy(out[0].hash, in[0].hash, 32);
-    } else {
-        /* drive mode: no external pulse, emit conductance as amplitude */
-        out[0].data         = NULL;
-        out[0].dim          = 0;
-        out[0].kind         = BF_PIN_SIGNAL;
-        out[0].scalar       = st->conductance;
-        out[0].payload      = NULL;
-        out[0].payload_kind = BF_PAYLOAD_NONE;
-    }
-    st->step++;
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreEmbed — vector source ────────────────────────────────────── */
-static int embed_transfer_(const BfSignal *in, size_t ni,
-                            BfSignal *out, size_t no,
-                            BfComponentState *st) {
-    (void)no;(void)st;
-    if(ni<1||!in[0].data) return BF_SPICE_OK;
-    /* pass embedding vector through as output q */
-    out[0]=in[0];
-    out[0].kind=BF_PIN_STATE;
-    return BF_SPICE_OK;
-}
 
 /* ── BonfyreKVCache — memory capacitor ───────────────────────────────── */
 /* Fix 6: emit a live BfMemoryField instead of a scalar.
@@ -265,81 +204,6 @@ static int physics_transfer_(const BfSignal *in, size_t ni,
     return rc;
 }
 
-/* ── BonfyreCMS — state latch ─────────────────────────────────────────── */
-static int cms_transfer_(const BfSignal *in, size_t ni,
-                          BfSignal *out, size_t no,
-                          BfComponentState *st) {
-    (void)no;(void)ni;
-    if(ni>0&&in[0].event){
-        out[0]=in[0];
-        out[0].event=1;
-    }
-    st->step++;
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreDisCIPL — constraint diode / rule gate ───────────────────── */
-static int discipl_transfer_(const BfSignal *in, size_t ni,
-                              BfSignal *out, size_t no,
-                              BfComponentState *st) {
-    (void)no;(void)ni;(void)st;
-    /* Diode model: forward-bias only when rule set allows */
-    if(ni>=2&&in[1].event){
-        /* rule violation detected on in[1] (rule pin) */
-        out[0].event=0;
-        out[0].scalar=0.0f;
-        return BF_SPICE_CONTRACT_BLOCK;
-    }
-    if(ni>0) out[0]=in[0];
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreMeter — current meter ────────────────────────────────────── */
-static int meter_transfer_(const BfSignal *in, size_t ni,
-                            BfSignal *out, size_t no,
-                            BfComponentState *st) {
-    (void)no;
-    float current=0.0f;
-    if(ni>0) current=in[0].scalar;
-    out[0].kind=BF_PIN_COST;
-    out[0].scalar=current*st->conductance;
-    out[0].event=1;
-    st->step++;
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreLedger — value sink ──────────────────────────────────────── */
-static int ledger_transfer_(const BfSignal *in, size_t ni,
-                             BfSignal *out, size_t no,
-                             BfComponentState *st) {
-    (void)no;(void)out;
-    float val=0.0f;
-    if(ni>0) val=in[0].scalar;
-    /* accumulate in capacitance slot */
-    st->capacitance+=val;
-    st->step++;
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreMoQ — live stream bus ────────────────────────────────────── */
-static int moq_transfer_(const BfSignal *in, size_t ni,
-                          BfSignal *out, size_t no,
-                          BfComponentState *st) {
-    (void)no;(void)st;
-    if(ni>0) out[0]=in[0];
-    out[0].kind=BF_PIN_STREAM;
-    return BF_SPICE_OK;
-}
-
-/* ── BonfyreHash — ground truth reference node ───────────────────────── */
-static int hash_transfer_(const BfSignal *in, size_t ni,
-                           BfSignal *out, size_t no,
-                           BfComponentState *st) {
-    (void)no;(void)st;
-    if(ni>0){ memcpy(out[0].hash,in[0].hash,32); out[0].kind=BF_PIN_PROOF; out[0].event=1; }
-    return BF_SPICE_OK;
-}
-
 /* ── BonfyreHeSli — dielectric isolation layer ───────────────────────
  *
  * private_in (SIGNAL) → [HE-SLI boundary] → public_out (SIGNAL)
@@ -402,18 +266,11 @@ static const struct {
     BfPinKind  out_kinds [BF_COMPONENT_MAX_PINS];
     uint32_t   out_dims  [BF_COMPONENT_MAX_PINS];
 } BUILTINS_[] = {
-    {"BonfyreTel",
-     tel_transfer_, 0, 1,
-     {}, {}, {},
-     {"signal"}, {BF_PIN_SIGNAL}, {0}},
-    {"BonfyreMoQ",
-     moq_transfer_, 1, 1,
-     {"stream"}, {BF_PIN_STREAM}, {0},
-     {"stream"}, {BF_PIN_STREAM}, {0}},
-    {"BonfyreEmbed",
-     embed_transfer_, 1, 2,
-     {"input"},  {BF_PIN_SIGNAL}, {0},
-     {"q","refs"},{BF_PIN_STATE,BF_PIN_MEMORY},{512,0}},
+    /* A component here does the work its name says. Ten more used to be
+     * listed under the names of organs -- a meter that multiplied a current by
+     * a conductance, a content store that passed an event through, a hash that
+     * copied one -- and a circuit of them ran as though the organs had. They
+     * are gone; a netlist that names one does not compile. */
     {"BonfyreKVCache",
      kv_transfer_, 1, 1,
      {"query"}, {BF_PIN_SIGNAL}, {0},
@@ -422,34 +279,6 @@ static const struct {
      physics_transfer_, 3, 3,
      {"q","field","constraints"},{BF_PIN_STATE,BF_PIN_MEMORY,BF_PIN_RULE},{512,0,0},
      {"q","entropy","hash"},{BF_PIN_STATE,BF_PIN_COST,BF_PIN_PROOF},{512,0,0}},
-    {"BonfyreCMS",
-     cms_transfer_, 1, 1,
-     {"ops"}, {BF_PIN_SIGNAL},{0},
-     {"events"},{BF_PIN_SIGNAL},{0}},
-    {"BonfyreDisCIPL",
-     discipl_transfer_, 2, 1,
-     {"op","rules"},{BF_PIN_SIGNAL,BF_PIN_RULE},{0,0},
-     {"allowed"},{BF_PIN_SIGNAL},{0}},
-    {"BonfyreMeter",
-     meter_transfer_, 1, 1,
-     {"usage"},{BF_PIN_COST},{0},
-     {"invoice"},{BF_PIN_COST},{0}},
-    {"BonfyreLedger",
-     ledger_transfer_, 1, 0,
-     {"value"},{BF_PIN_VALUE},{0},
-     {},{},{}},
-    {"BonfyreLayer",
-     stub_transfer_, 1, 1,
-     {"input"},{BF_PIN_SIGNAL},{0},
-     {"output"},{BF_PIN_SIGNAL},{0}},
-    {"BonfyreHash",
-     hash_transfer_, 1, 1,
-     {"input"},{BF_PIN_PROOF},{0},
-     {"ref"},{BF_PIN_PROOF},{0}},
-    {"BonfyreWorkflow",
-     stub_transfer_, 1, 1,
-     {"input"},{BF_PIN_SIGNAL},{0},
-     {"output"},{BF_PIN_SIGNAL},{0}},
     {"BonfyreHeSli",
      hesli_transfer_, 2, 1,
      {"private_in","policy"},{BF_PIN_SIGNAL,BF_PIN_RULE},{0,0},

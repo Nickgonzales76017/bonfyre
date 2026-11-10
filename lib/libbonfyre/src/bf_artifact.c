@@ -4,6 +4,7 @@
  * Extracts and unifies the ManifestSummary code that was previously
  * embedded only in BonfyrePipeline.
  */
+#include <stdint.h>
 #include "bonfyre.h"
 #include <ctype.h>
 #include <limits.h>

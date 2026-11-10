@@ -1,8 +1,9 @@
 # libbonfyre — shared Bonfyre runtime library
 
 CC      ?= cc
-OPTFLAGS ?= -O2 -Wall -Wextra -std=c11
+OPTFLAGS ?= -O2 -Wall -Wextra -std=c11 -ffp-contract=off
 CFLAGS   = $(OPTFLAGS) -I$(INCDIR)
+CFLAGS += -I../../cmd/BonfyreLex/src
 AR      ?= ar
 RANLIB  ?= ranlib
 
@@ -10,7 +11,8 @@ SRCDIR  = src
 INCDIR  = include
 OBJDIR  = obj
 
-SRCS    = $(SRCDIR)/bf_artifact.c \
+SRCS    = $(SRCDIR)/bf_decision_head.c \
+          $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_common.c \
           $(SRCDIR)/bf_discipl.c \
           $(SRCDIR)/bf_layer_artifact.c \
@@ -18,7 +20,8 @@ SRCS    = $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_catalog_generation.c \
           $(SRCDIR)/bf_sha256.c \
           $(SRCDIR)/bf_operators.c \
-          $(SRCDIR)/bf_sae.c
+          $(SRCDIR)/bf_sae.c \
+          $(SRCDIR)/bf_static_embed.c
 
 # Batch 1+2 modules (in project root, not src/)
 EXT_SRCS = bf_reactor.c \
@@ -30,6 +33,9 @@ EXT_SRCS = bf_reactor.c \
            bf_flatbuf.c \
            bf_picohttpparser.c \
            bf_json.c \
+           bf_jsonw.c \
+           bf_jv.c \
+           bf_re.c \
            bf_crypto.c \
            bf_bloom.c \
            bf_dns.c \
@@ -49,14 +55,6 @@ EXT_SRCS = bf_reactor.c \
            bf_embed_steer.c \
            bf_embed_index.c \
            bf_embed_refs.c \
-           bf_context_plan.c \
-           bf_context_registry.c \
-           bf_context_selector_smoke.c \
-           bf_context_compare.c \
-           bf_context_verify.c \
-           bf_context_compile.c \
-           bf_context_compile_smoke.c \
-           bf_context_compile_smoke_compare.c \
            bf_kvcache_pack.c \
            bf_embed_bvh.c \
            bf_physics.c \
@@ -76,12 +74,14 @@ TARGET  = libbonfyre.a
 SHARED  = libbonfyre.so
 DYLIB   = libbonfyre.dylib
 
-.PHONY: all clean install test dylib
+.PHONY: all clean install test test-lz4 dylib
 
 all: $(TARGET)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/bonfyre.h | $(OBJDIR)
 	$(CC) $(CFLAGS) -I$(INCDIR) -c $< -o $@
+
+$(OBJDIR)/bf_decision_head.o: $(INCDIR)/bf_decision_head.h
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -I$(INCDIR) -c $< -o $@
@@ -104,9 +104,33 @@ dylib: $(DYLIB)
 clean:
 	rm -rf $(OBJDIR) $(TARGET) $(SHARED) $(DYLIB) test_bonfyre
 
-test: $(TARGET)
+test: $(TARGET) test-lz4 test-sqlite-policy test-sha256 test-catalog-model-sync
+
+.PHONY: test-sha256
+test-sha256:
+	mkdir -p build
+	$(CC) $(CFLAGS) -Werror -Dfopen=bf_test_fopen -Dfclose=bf_test_fclose -c src/bf_sha256.c -o build/sha256_fault.o
+	$(CC) $(CFLAGS) -Werror tests/sha256_file_test.c build/sha256_fault.o -o build/sha256_file_test
+	./build/sha256_file_test
+	$(CC) $(CFLAGS) -Werror -DBONFYRE_SHA256_PORTABLE -Dfopen=bf_test_fopen -Dfclose=bf_test_fclose -c src/bf_sha256.c -o build/sha256_portable_fault.o
+	$(CC) $(CFLAGS) -Werror tests/sha256_file_test.c build/sha256_portable_fault.o -o build/sha256_portable_file_test
+	./build/sha256_portable_file_test
+
+test-sqlite-policy:
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Werror -D_DARWIN_C_SOURCE -Iinclude src/bf_sqlite.c tests/sqlite_policy_test.c -lsqlite3 -o build/sqlite_policy_test
+	./build/sqlite_policy_test
 	$(CC) $(CFLAGS) -I$(INCDIR) test/test_bonfyre.c -L. -lbonfyre -o test_bonfyre
 	./test_bonfyre
+
+test-lz4:
+	mkdir -p build
+	$(CC) $(CFLAGS) -Werror bf_lz4.c tests/lz4_boundary_test.c -o build/lz4_boundary_test
+	./build/lz4_boundary_test
+	@if pkg-config --exists liblz4; then \
+	  $(CC) $(CFLAGS) -Werror -DBONFYRE_LZ4_REFERENCE bf_lz4.c tests/lz4_boundary_test.c $$(pkg-config --cflags --libs liblz4) -o build/lz4_reference_test && \
+	  ./build/lz4_reference_test; \
+	fi
 
 install: $(TARGET)
 	install -d $(DESTDIR)$(PREFIX)/lib
@@ -114,6 +138,7 @@ install: $(TARGET)
 	install -d $(DESTDIR)$(PREFIX)/include/bonfyre
 	install -m 644 $(TARGET) $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 $(INCDIR)/bonfyre.h $(DESTDIR)$(PREFIX)/include/
+	install -m 644 $(INCDIR)/bf_decision_head.h $(DESTDIR)$(PREFIX)/include/
 	install -m 644 $(INCDIR)/bonfyre/bf_discipl.h $(DESTDIR)$(PREFIX)/include/bonfyre/
 	install -m 644 $(INCDIR)/bf_reactor.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
 	install -m 644 $(INCDIR)/bf_hotload.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
@@ -137,3 +162,9 @@ install: $(TARGET)
 	install -m 644 $(INCDIR)/bf_lz4.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
 	install -m 644 $(INCDIR)/bf_hashmap.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
 	install -m 644 $(INCDIR)/bf_csv.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
+
+.PHONY: test-catalog-model-sync
+test-catalog-model-sync: $(TARGET)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Werror tests/catalog_model_sync_test.c $(TARGET) -lsqlite3 -lm -o build/catalog_model_sync_test
+	./build/catalog_model_sync_test

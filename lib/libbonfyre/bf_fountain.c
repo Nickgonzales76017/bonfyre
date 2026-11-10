@@ -5,6 +5,7 @@
  * PRNG: SplitMix64 seeded per-symbol → deterministic neighbor list.
  * Decoder: belief propagation (peeling) — O(K·ln(K)) expected symbols.
  */
+#include <stdint.h>
 
 #include "bf_fountain.h"
 

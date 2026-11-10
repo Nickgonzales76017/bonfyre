@@ -1,3 +1,10 @@
+/* POSIX declares strdup behind its feature gate on the Linux deployment host.
+ * Without this, a native CMS promotion receives an implicit-int pointer and
+ * corrupts the family-maintenance path after a perfectly valid typed write. */
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 /* lt_core.c — liblambda-tensors: Family-aware structural JSON compression
  *
  * Five encoding tiers:

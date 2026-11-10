@@ -1,3 +1,7 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /*
  * bf_pipeline_coro.c — libdill structured concurrency for pipeline stages
  *
@@ -18,6 +22,7 @@
 #endif
 
 #ifdef BF_HAS_DILL
+#include <stdint.h>
 #include <libdill.h>
 #else
 #include <pthread.h>

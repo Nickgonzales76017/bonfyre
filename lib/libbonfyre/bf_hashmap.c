@@ -6,6 +6,7 @@
  * Robin-hood: on collision, entry with lower PSL (probe sequence length)
  * is displaced by the richer entry. Deletion uses backshift (no tombstones).
  */
+#include <stdint.h>
 
 #include "bf_hashmap.h"
 

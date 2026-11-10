@@ -211,7 +211,9 @@ void   bf_sha256_final(BfSha256 *ctx, uint8_t hash[32]);
 /* Convenience: hash data and write hex string (65 bytes including NUL). */
 void   bf_sha256_hex(const uint8_t *data, size_t len, char hex[65]);
 
-/* Convenience: hash a file and write hex string. Returns 0 on success. */
+/* Hash a file through EOF and close it. Returns 0 on success, or -1 with
+ * hex[0] cleared and errno set on open/read/close failure. This is not a
+ * snapshot: the caller must keep the file stable throughout the read. */
 int    bf_sha256_file(const char *path, char hex[65]);
 
 /* Convenience: format a pre-computed 32-byte digest as a 64-char hex string. */
@@ -241,6 +243,22 @@ void bf_normalize_token(char *dst, size_t dst_sz, const char *src);
 /* Create directory and all parents. Returns 0 on success. */
 int  bf_ensure_dir(const char *path);
 int  bf_ensure_parent_dir(const char *filepath);  /* create parent of a file path */
+
+/* Resolve a state store coordinate. Returns the resolved path, or NULL when no
+ * declaration names one -- callers refuse rather than invent a store.
+ *
+ * `explicit_path` is a --db style flag value (NULL when absent), `env_name` the
+ * variable the deployment declares (e.g. "BONFYRE_LAYER_DB"), and `relative`
+ * the store's place under a state root (e.g. "state/layers.db").
+ *
+ * Order: explicit flag, environment declaration, $BONFYRE_STATE_ROOT,
+ * /var/lib/bonfyre, then $HOME/.local/share/bonfyre -- each accepted only when
+ * its parent directory already exists. The caller's working directory is never
+ * a candidate. Eight organs defaulted to a bare filename instead, so every
+ * invocation opened or created a store beside wherever the caller stood, and
+ * the coordinates the deployment had declared went unread. */
+const char *bf_state_path(char *buf, size_t n, const char *env_name,
+                          const char *relative, const char *explicit_path);
 
 /* Write ISO-8601 UTC timestamp to buf. */
 void bf_iso_timestamp(char *buf, size_t sz);
@@ -380,8 +398,21 @@ typedef struct sqlite3 sqlite3;
 /* Open or create a SQLite database with the full Bonfyre PRAGMA bundle:
  *   journal_mode=WAL, synchronous=NORMAL, cache_size=-65536 (64 MB),
  *   mmap_size=268435456 (256 MB), temp_store=MEMORY.
- * Drop-in replacement for sqlite3_open(); same return codes. */
+ * Drop-in replacement for sqlite3_open(); same return codes.  Forgiving: a
+ * PRAGMA the store declines is not an error here.  BONFYRE_SQLITE_DURABILITY=full
+ * raises synchronous to FULL for every caller of this function. */
 int bf_sqlite3_open(const char *path, sqlite3 **db);
+
+/* Open for writing at a stated durability, and refuse if it cannot be had.
+ * BF_SQLITE_FAST: WAL + synchronous=NORMAL (rebuildable stores).
+ * BF_SQLITE_DURABLE: WAL + synchronous=FULL (ledgers, commitments, receipts). */
+#define BF_SQLITE_FAST    0
+#define BF_SQLITE_DURABLE 1
+int bf_sqlite3_open_tier(const char *path, sqlite3 **db, int tier);
+
+/* The journal mode and synchronous level a connection is actually running
+ * under, read back from SQLite. synchronous: 0 OFF, 1 NORMAL, 2 FULL, 3 EXTRA. */
+int bf_sqlite3_policy(sqlite3 *db, char *journal, size_t journal_size, int *synchronous);
 
 /* Read-only open with cache/mmap/temp_store PRAGMAs.
  * Drop-in replacement for sqlite3_open_v2(...SQLITE_OPEN_READONLY...). */
@@ -462,249 +493,6 @@ int bf_kvcache_store(const uint8_t model_hash[32], const uint8_t ctx_hash[32],
                      const void *data, size_t len);
 int bf_kvcache_fetch(const uint8_t model_hash[32], const uint8_t ctx_hash[32],
                      void **out_data, size_t *out_len);
-
-/* ── Context membrane planner (bf_context_plan.c) ───────────────────────── *
- *
- * Planner-only MVP for hybrid context selection.
- * Produces a deterministic JSON plan artifact without requiring model kernels.
- */
-
-typedef struct {
-    const char *mode;                    /* dense|compressed|membrane|state|hybrid */
-    uint32_t dense_window_tokens;
-    uint32_t sq_token_budget_blocks;
-    uint32_t sq_kv_budget_mb;
-    uint32_t compressed_kv_budget_mb;
-    uint32_t state_atom_budget;
-    uint32_t required_witnesses;
-    int witness_required;
-    int fail_on_missing_witness;
-    double residual_drift_threshold;
-    double residual_delta_estimate;
-    int continuity_fail_events;
-    int continuity_drift_events;
-} BfContextPlanConfig;
-
-typedef struct {
-    char mode[24];
-    uint32_t dense_window;
-    uint32_t selected_token_blocks;
-    uint32_t selected_state_atoms;
-    uint32_t compressed_memory_atoms;
-    uint32_t required_witnesses;
-    uint32_t estimated_kv_mb;
-    double residual_delta_estimate;
-    char continuity_verdict[24];
-} BfContextPlanSummary;
-
-void bf_context_plan_defaults(BfContextPlanConfig *cfg);
-int  bf_context_plan_summary(const BfContextPlanConfig *cfg, BfContextPlanSummary *out);
-int  bf_context_plan_json(const BfContextPlanConfig *cfg, char **out_json);
-
-/* ── Context KV registry (bf_context_registry.c) ────────────────────────── *
- *
- * Planner Phase 2: deterministic block-level KV registry artifact.
- */
-
-typedef struct {
-    const char *mode;            /* dense|compressed|membrane|state|hybrid */
-    uint32_t layers;
-    uint32_t heads;
-    uint32_t seq_tokens;
-    uint32_t block_tokens;
-    uint32_t top_blocks;
-    uint32_t hot_exact_budget_blocks;
-    uint32_t membrane_budget_blocks;
-    uint32_t compress_budget_blocks;
-    uint32_t evict_budget_blocks;
-    uint32_t required_witnesses;
-    double base_residual;
-    double continuity_fail_rate; /* 0..1 expected fraction of fail blocks */
-    const char *objective_profile; /* balanced|latency|continuity|fidelity */
-    double w_attention_predictor;
-    double w_state_relevance;
-    double w_witness_relevance;
-    double w_continuity_risk;
-    double w_layer_need;
-    double w_recency;
-    double w_objective_match;
-    double w_memory_cost;
-    double w_residual_error;
-} BfContextKVRegistryConfig;
-
-void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg);
-int  bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out_json);
-
-/* ── Context selector smoke tests (bf_context_selector_smoke.c) ────────── *
- *
- * Planner Phase 3: deterministic selector smoke contract for continuity law.
- */
-
-typedef struct {
-    const char *mode;            /* dense|compressed|membrane|state|hybrid */
-    uint32_t required_witnesses;
-    double residual_delta_estimate;
-    double residual_drift_threshold;
-    int buried_continuity_fail_present;
-    int proof_hash_present;
-    int high_residual_event_present;
-    int low_risk_irrelevant_tokens_present;
-} BfContextSelectorSmokeConfig;
-
-void bf_context_selector_smoke_defaults(BfContextSelectorSmokeConfig *cfg);
-int  bf_context_selector_smoke_json(const BfContextSelectorSmokeConfig *cfg, char **out_json);
-
-/* ── Context KV compare (bf_context_compare.c) ───────────────────────────── *
- *
- * Planner Phase 5: multi-objective compare — runs all four objective profiles
- * (balanced, latency, continuity, fidelity) against the same block set in one
- * call and emits a delta report (policy shifts + top disagreement blocks).
- */
-
-typedef struct {
-    const char *mode;            /* dense|compressed|membrane|state|hybrid */
-    uint32_t layers;
-    uint32_t heads;
-    uint32_t seq_tokens;
-    uint32_t block_tokens;
-    uint32_t top_blocks;
-    uint32_t hot_exact_budget_blocks;
-    uint32_t membrane_budget_blocks;
-    uint32_t compress_budget_blocks;
-    uint32_t evict_budget_blocks;
-    uint32_t required_witnesses;
-    double base_residual;
-    double continuity_fail_rate;
-    double w_attention_predictor;
-    double w_state_relevance;
-    double w_witness_relevance;
-    double w_continuity_risk;
-    double w_layer_need;
-    double w_recency;
-    double w_objective_match;
-    double w_memory_cost;
-    double w_residual_error;
-} BfContextKVCompareConfig;
-
-void bf_context_kv_compare_defaults(BfContextKVCompareConfig *cfg);
-int  bf_context_kv_compare_json(const BfContextKVCompareConfig *cfg, char **out_json);
-
-/* ── Context KV verifier (bf_context_verify.c) ───────────────────────────── *
- *
- * Planner Phase 6: runs the same block allocation as kv_registry, then
- * validates four correctness invariants and returns a single overall_verdict:
- *   1. witness_coverage  — RequiredWitnesses ⊆ W(C_selected)
- *   2. continuity_fail_evicted — no CONTINUITY_FAIL block in EVICT
- *   3. residual_bound    — max selected residual_norm < drift threshold
- *   4. budget_compliance — estimated KV MB < kv_budget_mb cap
- */
-
-typedef struct {
-    const char *mode;            /* dense|compressed|membrane|state|hybrid */
-    uint32_t layers;
-    uint32_t heads;
-    uint32_t seq_tokens;
-    uint32_t block_tokens;
-    uint32_t top_blocks;
-    uint32_t hot_exact_budget_blocks;
-    uint32_t membrane_budget_blocks;
-    uint32_t compress_budget_blocks;
-    uint32_t evict_budget_blocks;
-    uint32_t required_witnesses;
-    double base_residual;
-    double continuity_fail_rate;
-    const char *objective_profile; /* balanced|latency|continuity|fidelity */
-    double w_attention_predictor;
-    double w_state_relevance;
-    double w_witness_relevance;
-    double w_continuity_risk;
-    double w_layer_need;
-    double w_recency;
-    double w_objective_match;
-    double w_memory_cost;
-    double w_residual_error;
-    double residual_drift_threshold; /* max allowed residual_norm for selected blocks */
-    double kv_budget_mb;             /* hard memory cap (0 = unlimited) */
-} BfContextVerifyConfig;
-
-void bf_context_kv_verify_defaults(BfContextVerifyConfig *cfg);
-int  bf_context_kv_verify_json(const BfContextVerifyConfig *cfg, char **out_json);
-
-/* ── Context compiler (bf_context_compile.c) ───────────────────────────── *
- *
- * Planner Phase 7: builds four index views (token, kv, state, witness),
- * compiles a budgeted context selection, and returns continuity + budget
- * verdicts in one artifact.
- */
-
-typedef struct {
-    const char *mode;              /* dense|compressed|membrane|state|hybrid */
-    uint32_t heads;
-    uint32_t seq_tokens;
-    uint32_t block_tokens;
-    uint32_t token_index_blocks;
-    uint32_t kv_index_blocks;
-    uint32_t state_index_atoms;
-    uint32_t witness_index_anchors;
-    uint32_t token_budget_blocks;
-    uint32_t kv_budget_blocks;
-    uint32_t state_atom_budget;
-    uint32_t required_witnesses;
-    double kv_budget_mb;
-    double latency_budget_ms;
-    double residual_drift_threshold;
-    double base_residual;
-    double continuity_fail_rate;
-    const char *objective_profile; /* balanced|latency|continuity|fidelity */
-    int fail_on_missing_witness;
-} BfContextCompileConfig;
-
-void bf_context_compile_defaults(BfContextCompileConfig *cfg);
-int  bf_context_compile_json(const BfContextCompileConfig *cfg, char **out_json);
-
-/* ── Context compile smoke tests (bf_context_compile_smoke.c) ──────────── *
- *
- * Planner Phase 8: deterministic smoke contract for context compiler under
- * adversarial budgets.
- */
-
-typedef struct {
-    const char *mode;               /* dense|compressed|membrane|state|hybrid */
-    uint32_t required_witnesses;
-    double residual_drift_threshold;
-    double kv_budget_mb;
-    double latency_budget_ms;
-    int buried_continuity_fail_present;
-    int proof_hash_present;
-    int oracle_shock_present;
-    int multi_turn_drift_present;
-    int fail_on_missing_witness;
-} BfContextCompileSmokeConfig;
-
-void bf_context_compile_smoke_defaults(BfContextCompileSmokeConfig *cfg);
-int  bf_context_compile_smoke_json(const BfContextCompileSmokeConfig *cfg, char **out_json);
-
-/* ── Context compile smoke compare (bf_context_compile_smoke_compare.c) ── *
- *
- * Planner Phase 9: run a deterministic adversarial smoke matrix and emit
- * per-scenario deltas vs baseline.
- */
-
-typedef struct {
-    const char *mode;               /* dense|compressed|membrane|state|hybrid */
-    uint32_t required_witnesses;
-    double residual_drift_threshold;
-    double kv_budget_mb;
-    double latency_budget_ms;
-    int buried_continuity_fail_present;
-    int proof_hash_present;
-    int oracle_shock_present;
-    int multi_turn_drift_present;
-    int fail_on_missing_witness;
-} BfContextCompileSmokeCompareConfig;
-
-void bf_context_compile_smoke_compare_defaults(BfContextCompileSmokeCompareConfig *cfg);
-int  bf_context_compile_smoke_compare_json(const BfContextCompileSmokeCompareConfig *cfg, char **out_json);
 
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *

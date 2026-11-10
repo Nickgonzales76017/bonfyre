@@ -140,6 +140,55 @@ int bf_discipl_chain_to_json(const bf_discipl_chain_program_t *chain, char **out
 
 int bf_discipl_init_db(const char *root);
 int bf_discipl_tables_exist(const char *root);
+/* Seed the native command family graph from declared input/output kinds. The
+ * composition engine stays native; callers never write DisCIPL tables. */
+int bf_discipl_seed_command_estate(const char *root, unsigned *actor_count,
+                                   unsigned *contract_count);
+/* Bind the external estate's phenotypes into the command lattice through one
+ * retained body, and rejoin the command lattice to the value lattice through
+ * the output kinds they already share names with. `retention_rate` must be a
+ * rate someone measured -- the fraction of attempted observations whose body
+ * is on disk now. Returns 2 if it is not in (0,1]; the edge is not seeded with
+ * a default, because a default here would be a prior nobody took. */
+int bf_discipl_seed_estate_bridge(const char *root, double retention_rate,
+                                  unsigned *actor_count, unsigned *contract_count);
+/* Give one measured carrier its own family and let it enter every command that
+ * consumes a kind it declares. `population` is how many occurrences reached
+ * carrier_conformant for it and `detection_rate` how often a retained body
+ * turns out to be this carrier. Returns 2 for an unmeasured carrier (population
+ * zero or a rate outside (0,1]) and 3 for one the lattice declares no kinds
+ * for -- both refusals, because a carrier family with no measurement behind it
+ * is a prepared answer. */
+int bf_discipl_seed_carrier_bridge(const char *root, const char *carrier,
+                                   const char *phenotype,
+                                   double detection_rate, unsigned long population,
+                                   unsigned *actor_count, unsigned *contract_count);
+/* The phenotype families this bridge knows, so a caller can count occurrences
+ * per phenotype without keeping a second copy of the vocabulary. */
+/* Invocation forms whose argv has been checked by running the binary. */
+enum {
+    BF_INVOKE_UNBOUND = 0,
+    BF_INVOKE_INPUT_OUTDIR,   /* <bin> <input> <outdir>        */
+    BF_INVOKE_FILE_SUBCMD,    /* <bin> file <input>            */
+    BF_INVOKE_PARSE_OUTDIR,   /* <bin> parse <input> <outdir>  */
+    BF_INVOKE_TEXT_OUT        /* <bin> --text <input> --out <o>*/
+};
+/* The form for this family, and its absolute binary path when `binary` is
+ * given. BF_INVOKE_UNBOUND means no argv for this command has been checked --
+ * the runner stops rather than guessing one. */
+int bf_discipl_command_invocation(const char *family, char *binary, size_t binary_sz);
+/* Walk the declared command estate: family name and absolute binary path for
+ * index in [0, bf_discipl_command_total()). Lets a prober derive invocations
+ * from the binaries themselves instead of a hand-maintained table. */
+int bf_discipl_command_at(int index, char *family, size_t family_sz,
+                          char *binary, size_t binary_sz);
+const char *bf_discipl_command_produces(int index, int kind_index);
+/* 1 when the command behind `family` moves material between two modalities. */
+int bf_discipl_family_crossing(const char *family, int *from_modality, int *to_modality);
+int bf_discipl_command_total(void);
+int bf_discipl_phenotype_count(void);
+const char *bf_discipl_phenotype_name(int index);
+int bf_discipl_phenotype_index(const char *phenotype);
 int bf_discipl_contracts_json(const char *family_filter, char **out_json);
 int bf_discipl_upsert_actor(const char *root, const bf_discipl_actor_t *actor);
 int bf_discipl_upsert_contract(const char *root, const bf_discipl_contract_t *contract);

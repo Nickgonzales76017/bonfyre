@@ -1,7 +1,20 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+/* strtok_r and fnmatch are POSIX, not C11. macOS declares them regardless;
+ * glibc hides them without a feature macro, and gcc then parses
+ * `char *t = strtok_r(...)` inside a for-initialiser as a function
+ * declaration rather than a call. Same class of break as PATH_MAX and
+ * CLOCK_MONOTONIC elsewhere: compiles on the dev machine, fails on the host it
+ * deploys to. */
+#include <stdint.h>
 #include "bonfyre.h"
 #include "bf_json.h"
+#include "bf_jsonw.h"
 
 #include <dirent.h>
+#include <errno.h>
 #include <fnmatch.h>
 #include <limits.h>
 #include <sqlite3.h>
@@ -290,9 +303,9 @@ static int upsert_node(sqlite3 *db,
     sqlite3_bind_text(st, 8, source_hash ? source_hash : "", -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 9, json_data ? json_data : "", -1, SQLITE_STATIC);
     sqlite3_bind_int64(st, 10, (sqlite3_int64)time(NULL));
-    sqlite3_step(st);
+    int rc = sqlite3_step(st);
     sqlite3_finalize(st);
-    return 0;
+    return rc == SQLITE_DONE ? 0 : 1;
 }
 
 static int upsert_edge(sqlite3 *db, const char *src, const char *rel, const char *dst, const char *meta) {
@@ -305,9 +318,9 @@ static int upsert_edge(sqlite3 *db, const char *src, const char *rel, const char
     sqlite3_bind_text(st, 2, rel, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 3, dst, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 4, meta ? meta : "", -1, SQLITE_STATIC);
-    sqlite3_step(st);
+    int rc = sqlite3_step(st);
     sqlite3_finalize(st);
-    return 0;
+    return rc == SQLITE_DONE ? 0 : 1;
 }
 
 static void rebuild_fts(sqlite3 *db) {
@@ -799,17 +812,33 @@ int bf_catalog_projection_rules_json(char **out_json) {
 static int delete_scope(sqlite3 *db, const char *prefix) {
     sqlite3_stmt *st = NULL;
     char likepat[128];
+    int rc;
     snprintf(likepat, sizeof(likepat), "%s%%", prefix);
-    sqlite3_prepare_v2(db, "DELETE FROM catalog_edges WHERE src_node_id LIKE ? OR dst_node_id LIKE ?", -1, &st, NULL);
+    if (sqlite3_prepare_v2(db, "DELETE FROM catalog_edges WHERE src_node_id LIKE ? OR dst_node_id LIKE ?", -1, &st, NULL) != SQLITE_OK) return 1;
     sqlite3_bind_text(st, 1, likepat, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(st, 2, likepat, -1, SQLITE_TRANSIENT);
-    sqlite3_step(st);
+    rc = sqlite3_step(st);
     sqlite3_finalize(st);
-    sqlite3_prepare_v2(db, "DELETE FROM catalog_nodes WHERE node_id LIKE ?", -1, &st, NULL);
+    if (rc != SQLITE_DONE) return 1;
+    if (sqlite3_prepare_v2(db, "DELETE FROM catalog_nodes WHERE node_id LIKE ?", -1, &st, NULL) != SQLITE_OK) return 1;
     sqlite3_bind_text(st, 1, likepat, -1, SQLITE_TRANSIENT);
-    sqlite3_step(st);
+    rc = sqlite3_step(st);
     sqlite3_finalize(st);
-    return 0;
+    return rc != SQLITE_DONE;
+}
+
+/* Returns 1 for present, 0 for absent, -1 on a query error. */
+static int query_exists(sqlite3 *db, const char *sql, const char *arg) {
+    sqlite3_stmt *st = NULL;
+    int rc, found;
+    if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) != SQLITE_OK) return -1;
+    if (arg && sqlite3_bind_text(st, 1, arg, -1, SQLITE_TRANSIENT) != SQLITE_OK) {
+        sqlite3_finalize(st); return -1;
+    }
+    rc = sqlite3_step(st);
+    found = rc == SQLITE_ROW ? 1 : rc == SQLITE_DONE ? 0 : -1;
+    sqlite3_finalize(st);
+    return found;
 }
 
 static const char *category_display_name(const char *key) {
@@ -1008,7 +1037,9 @@ static int sync_yaml_dir(sqlite3 *db, const char *repo_root, const char *rel_dir
 
     join_path(dirpath, sizeof(dirpath), repo_root, rel_dir);
     dp = opendir(dirpath);
-    if (!dp) return 1;
+    /* Git keeps no empty directories: an absent recipe family is an empty one,
+     * not a failed sync that would discard every other projection. */
+    if (!dp) return errno == ENOENT ? 0 : 1;
 
     while ((de = readdir(dp)) != NULL) {
         char path[PATH_MAX];
@@ -1338,23 +1369,37 @@ static int sync_model_registry(sqlite3 *db) {
     sqlite3 *model_db = NULL;
     sqlite3_stmt *st = NULL;
     char path[PATH_MAX];
+    int step_rc, passports, prior_models, prior_passports;
+    prior_models = query_exists(db, "SELECT 1 FROM catalog_nodes WHERE (node_id LIKE 'model:%' AND (source_path IS NULL OR (source_path NOT LIKE '%.yaml' AND source_path NOT LIKE '%.yml'))) OR node_id LIKE 'model-source:%' OR node_id LIKE 'representation:%' UNION ALL SELECT 1 FROM catalog_edges WHERE rel IN ('has_source','sources_model','has_representation','represents_model') LIMIT 1", NULL);
+    prior_passports = query_exists(db, "SELECT 1 FROM catalog_nodes WHERE node_id LIKE 'representation:%' UNION ALL SELECT 1 FROM catalog_edges WHERE rel IN ('has_representation','represents_model') LIMIT 1", NULL);
+    if (prior_models < 0 || prior_passports < 0) return 1;
 
     default_model_db_path(path, sizeof(path));
-    if (!bf_is_file(path)) return 0;
+    if (!bf_is_file(path)) {
+        if (prior_models || prior_passports) return 1;
+        /* With no registry-backed projection, rebuild recipe-inferred models. */
+        return delete_scope(db, "model:") || delete_scope(db, "model-source:") ||
+               delete_scope(db, "representation:");
+    }
     if (bf_sqlite3_open_ro(path, &model_db) != SQLITE_OK) {
         sqlite3_close(model_db);
-        return 0;
+        return 1;
     }
+    if (sqlite3_exec(model_db, "BEGIN", NULL, NULL, NULL) != SQLITE_OK) { sqlite3_close(model_db); return 1; }
+    passports = query_exists(model_db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", "model_representation_passport");
+    if (passports < 0 || (!passports && prior_passports)) { sqlite3_close(model_db); return 1; }
     if (sqlite3_prepare_v2(model_db,
         "SELECT id,name,description,format,sha256,size_mb,fpq_sha256,fpq_size_mb,"
         "transform_family,geometry,geometry_condition,layer_frag_spec,mean_f1 "
         "FROM models ORDER BY id",
         -1, &st, NULL) != SQLITE_OK) {
         sqlite3_close(model_db);
-        return 0;
+        return 1;
     }
+    if (delete_scope(db, "model:") || delete_scope(db, "model-source:") ||
+        delete_scope(db, "representation:")) { sqlite3_finalize(st); sqlite3_close(model_db); return 1; }
 
-    while (sqlite3_step(st) == SQLITE_ROW) {
+    while ((step_rc = sqlite3_step(st)) == SQLITE_ROW) {
         const char *id = (const char *)sqlite3_column_text(st, 0);
         const char *name = (const char *)sqlite3_column_text(st, 1);
         const char *description = (const char *)sqlite3_column_text(st, 2);
@@ -1371,7 +1416,7 @@ static int sync_model_registry(sqlite3 *db) {
         char node_id[192];
         char json[2048];
 
-        if (!id || !id[0]) continue;
+        if (!id || !id[0]) goto fail;
         snprintf(node_id, sizeof(node_id), "model:%s", id);
         snprintf(json, sizeof(json),
                  "{\"id\":\"%s\",\"format\":\"%s\",\"sha256\":\"%s\",\"size_mb\":%.4f,"
@@ -1389,24 +1434,25 @@ static int sync_model_registry(sqlite3 *db) {
                  condition ? condition : "",
                  layer_frag ? layer_frag : "",
                  mean_f1);
-        upsert_node(db, node_id, "model", id, name ? name : id, family ? family : "model",
-                    description ? description : "", path, "", json);
+        if (upsert_node(db, node_id, "model", id, name ? name : id, family ? family : "model",
+                    description ? description : "", path, "", json)) goto fail;
 
         if (family && family[0]) {
             char family_node_id[160];
             snprintf(family_node_id, sizeof(family_node_id), "family:%s", family);
-            upsert_edge(db, node_id, "member_of_family", family_node_id, "");
-            upsert_edge(db, family_node_id, "has_model", node_id, "");
+            if (upsert_edge(db, node_id, "member_of_family", family_node_id, "") ||
+                upsert_edge(db, family_node_id, "has_model", node_id, "")) goto fail;
         }
     }
-    sqlite3_finalize(st);
+    sqlite3_finalize(st); st = NULL;
+    if (step_rc != SQLITE_DONE) goto fail;
 
     if (sqlite3_prepare_v2(model_db,
         "SELECT model_id, url, priority FROM sources ORDER BY model_id, priority, url",
         -1, &st, NULL) == SQLITE_OK) {
         int ordinal = 0;
         char current_model[128] = "";
-        while (sqlite3_step(st) == SQLITE_ROW) {
+        while ((step_rc = sqlite3_step(st)) == SQLITE_ROW) {
             const char *model_id = (const char *)sqlite3_column_text(st, 0);
             const char *url = (const char *)sqlite3_column_text(st, 1);
             int priority = sqlite3_column_int(st, 2);
@@ -1415,7 +1461,7 @@ static int sync_model_registry(sqlite3 *db) {
             char source_ext_id[256];
             char source_json[1024];
 
-            if (!model_id || !model_id[0] || !url || !url[0]) continue;
+            if (!model_id || !model_id[0] || !url || !url[0]) goto fail;
             if (strcmp(current_model, model_id) != 0) {
                 snprintf(current_model, sizeof(current_model), "%s", model_id);
                 ordinal = 0;
@@ -1427,33 +1473,103 @@ static int sync_model_registry(sqlite3 *db) {
             snprintf(source_json, sizeof(source_json),
                      "{\"model_id\":\"%s\",\"url\":\"%s\",\"priority\":%d}",
                      model_id, url, priority);
-            upsert_node(db, source_node_id, "model_source", source_ext_id, url, "source",
-                        "Model pull source", path, "", source_json);
-            upsert_edge(db, model_node_id, "has_source", source_node_id, "");
-            upsert_edge(db, source_node_id, "sources_model", model_node_id, "");
+            if (upsert_node(db, source_node_id, "model_source", source_ext_id, url, "source",
+                        "Model pull source", path, "", source_json) ||
+                upsert_edge(db, model_node_id, "has_source", source_node_id, "") ||
+                upsert_edge(db, source_node_id, "sources_model", model_node_id, "")) goto fail;
         }
-        sqlite3_finalize(st);
-    }
+        sqlite3_finalize(st); st = NULL;
+        if (step_rc != SQLITE_DONE) goto fail;
+    } else if (query_exists(model_db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", "sources") != 0 || prior_models) goto fail;
 
     if (sqlite3_prepare_v2(model_db,
         "SELECT recipe_code, model_id, role FROM recipe_models",
         -1, &st, NULL) == SQLITE_OK) {
-        while (sqlite3_step(st) == SQLITE_ROW) {
+        while ((step_rc = sqlite3_step(st)) == SQLITE_ROW) {
             const char *recipe_code = (const char *)sqlite3_column_text(st, 0);
             const char *model_id = (const char *)sqlite3_column_text(st, 1);
             const char *role = (const char *)sqlite3_column_text(st, 2);
             char recipe_node_id[160];
             char model_node_id[192];
-            if (!recipe_code || !model_id) continue;
+            if (!recipe_code || !recipe_code[0] || !model_id || !model_id[0]) goto fail;
             snprintf(recipe_node_id, sizeof(recipe_node_id), "recipe:%s", recipe_code);
             snprintf(model_node_id, sizeof(model_node_id), "model:%s", model_id);
-            upsert_edge(db, recipe_node_id, "uses_model", model_node_id, role ? role : "");
+            if (upsert_edge(db, recipe_node_id, "uses_model", model_node_id, role ? role : "")) goto fail;
+        }
+        sqlite3_finalize(st); st = NULL;
+        if (step_rc != SQLITE_DONE) goto fail;
+    } else if (query_exists(model_db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", "recipe_models") != 0 || prior_models) goto fail;
+
+    /* Representation passports. The registry has held measured passports
+     * that the served catalogue never carried, so Model Commons said nothing
+     * had been measured about a model whose registry row said otherwise. Each
+     * passport becomes a node carrying its exact fields and receipt digest,
+     * joined to its model; its admission state travels with it and nothing
+     * is inferred from it. An older registry may omit the table only before
+     * any passport has been projected. */
+    if (passports && sqlite3_prepare_v2(model_db,
+        "SELECT representation_id,model_id,representation_family,representation_version,"
+        "exactness_class,measurement_state,admission_state,admission_scope,quality_envelope,"
+        "receipt_ref,receipt_digest,physical_body_ref,physical_digest,physical_bytes,"
+        "supports_json,recorded_at FROM model_representation_passport ORDER BY model_id,representation_id",
+        -1, &st, NULL) == SQLITE_OK) {
+        static const char *const keys[] = {
+            "representation_id","model_id","representation_family","representation_version",
+            "exactness_class","measurement_state","admission_state","admission_scope","quality_envelope",
+            "receipt_ref","receipt_digest","physical_body_ref","physical_digest","physical_bytes",
+            "supports","recorded_at" };
+        while ((step_rc = sqlite3_step(st)) == SQLITE_ROW) {
+            const char *rep_id = (const char *)sqlite3_column_text(st, 0);
+            const char *model_id = (const char *)sqlite3_column_text(st, 1);
+            const char *state = (const char *)sqlite3_column_text(st, 6);
+            const char *scope = (const char *)sqlite3_column_text(st, 7);
+            const char *supports = (const char *)sqlite3_column_text(st, 14);
+            char rep_node_id[320], model_node_id[192], meta[64];
+            bf_json_doc_t *sdoc = NULL;
+            bf_jsonw w;
+            if (!rep_id || !rep_id[0] || !model_id || !model_id[0]) goto fail;
+            bf_jsonw_init(&w, 0);
+            bf_jsonw_obj(&w);
+            for (int c = 0; c < 16; c++) {
+                bf_jsonw_key(&w, keys[c]);
+                if (c == 13) bf_jsonw_int(&w, sqlite3_column_int64(st, c));
+                else if (c == 14) {
+                    if (supports && (sdoc = bf_json_parse(supports, strlen(supports), NULL, 0)) != NULL)
+                        bf_jsonw_node(&w, sdoc, bf_json_root(sdoc), 0);
+                    else { bf_jsonw_free(&w); goto fail; }
+                    if (sdoc) { bf_json_free(sdoc); sdoc = NULL; }
+                } else {
+                    const char *v = (const char *)sqlite3_column_text(st, c);
+                    bf_jsonw_str(&w, v ? v : "");
+                }
+            }
+            bf_jsonw_obj_end(&w);
+            snprintf(rep_node_id, sizeof(rep_node_id), "representation:%s", rep_id);
+            snprintf(model_node_id, sizeof(model_node_id), "model:%s", model_id);
+            snprintf(meta, sizeof(meta), "%s:%s", state ? state : "", scope ? scope : "");
+            int failed = w.oom || upsert_node(db, rep_node_id, "representation", rep_id, rep_id,
+                            state ? state : "", (const char *)sqlite3_column_text(st, 8),
+                            (const char *)sqlite3_column_text(st, 9),
+                            (const char *)sqlite3_column_text(st, 10), w.buf);
+            bf_jsonw_free(&w);
+            if (failed || upsert_edge(db, model_node_id, "has_representation", rep_node_id, meta) ||
+                upsert_edge(db, rep_node_id, "represents_model", model_node_id, meta)) {
+                sqlite3_finalize(st);
+                sqlite3_close(model_db);
+                return 1;
+            }
         }
         sqlite3_finalize(st);
-    }
+        st = NULL;
+        if (step_rc != SQLITE_DONE) goto fail;
+    } else if (passports) goto fail;
 
     sqlite3_close(model_db);
     return 0;
+fail:
+    sqlite3_finalize(st);
+    sqlite3_close(model_db);
+    return 1;
 }
 
 static int sync_layer_registry(sqlite3 *db) {
@@ -1690,15 +1806,13 @@ int bf_catalog_sync_repo(const char *db_path, const char *repo_root) {
     if (ok) BF_SYNC_STEP("delete workflow", delete_scope(db, "workflow:"));
     if (ok) BF_SYNC_STEP("delete workflow-step", delete_scope(db, "workflow-step:"));
     if (ok) BF_SYNC_STEP("delete capability", delete_scope(db, "capability:"));
-    if (ok) BF_SYNC_STEP("delete model", delete_scope(db, "model:"));
-    if (ok) BF_SYNC_STEP("delete model-source", delete_scope(db, "model-source:"));
     if (ok) BF_SYNC_STEP("delete layer", delete_scope(db, "layer:"));
     if (ok) BF_SYNC_STEP("delete recipe", delete_scope(db, "recipe:"));
     if (ok) BF_SYNC_STEP("delete transport", delete_scope(db, "transport:"));
     if (ok) BF_SYNC_STEP("delete surface", delete_scope(db, "surface:"));
     if (ok) BF_SYNC_STEP("sync family index", sync_family_index(db, repo_root));
-    if (ok) BF_SYNC_STEP("sync capability registry", sync_capability_registry(db));
     if (ok) BF_SYNC_STEP("sync model registry", sync_model_registry(db));
+    if (ok) BF_SYNC_STEP("sync capability registry", sync_capability_registry(db));
     if (ok) BF_SYNC_STEP("sync layer registry", sync_layer_registry(db));
     if (ok) BF_SYNC_STEP("sync docs recipes", sync_json_dir(db, repo_root, "docs/recipes", "workflow"));
     if (ok) BF_SYNC_STEP("sync json recipes", sync_json_dir(db, repo_root, "recipes", "recipe"));
@@ -1712,7 +1826,8 @@ int bf_catalog_sync_repo(const char *db_path, const char *repo_root) {
 #undef BF_SYNC_STEP
 
     if (ok) rebuild_fts(db);
-    end_tx(db, ok);
+    if (ok && sqlite3_exec(db, "COMMIT", NULL, NULL, NULL) != SQLITE_OK) ok = 0;
+    if (!ok) end_tx(db, 0);
     sqlite3_close(db);
     return ok ? 0 : 1;
 }

@@ -3,6 +3,7 @@
  *
  * Previously duplicated ~200 LOC per binary. Now shared.
  */
+#include <stdint.h>
 #include "bonfyre.h"
 #include <ctype.h>
 #include <errno.h>
@@ -15,6 +16,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "bf_lex.h"
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
@@ -22,6 +24,52 @@
 /* ----------------------------------------------------------------
  * Filesystem
  * ---------------------------------------------------------------- */
+
+/* A directory that already exists. A state root is declared by the operator or
+ * created by the installer; an organ that mkdir -p's its own root would just be
+ * inventing a store one level higher up. */
+static int bf_dir_present(const char *path) {
+    struct stat st;
+    return path && *path && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+static int bf_parent_present(const char *file_path) {
+    char dir[PATH_MAX];
+    const char *slash = strrchr(file_path, '/');
+    if (!slash || (size_t)(slash - file_path) >= sizeof(dir)) return 0;
+    memcpy(dir, file_path, (size_t)(slash - file_path));
+    dir[slash - file_path] = '\0';
+    return bf_dir_present(dir);
+}
+
+const char *bf_state_path(char *buf, size_t n, const char *env_name,
+                          const char *relative, const char *explicit_path) {
+    const char *env, *home;
+
+    if (explicit_path && *explicit_path) return explicit_path;
+    if (!buf || n == 0 || !relative || !*relative) return NULL;
+
+    if (env_name && *env_name) {
+        env = getenv(env_name);
+        if (env && *env) { snprintf(buf, n, "%s", env); return buf; }
+    }
+
+    env = getenv("BONFYRE_STATE_ROOT");
+    if (env && *env) {
+        snprintf(buf, n, "%s/%s", env, relative);
+        if (bf_parent_present(buf)) return buf;
+    }
+
+    snprintf(buf, n, "/var/lib/bonfyre/%s", relative);
+    if (bf_parent_present(buf)) return buf;
+
+    home = getenv("HOME");
+    if (home && *home) {
+        snprintf(buf, n, "%s/.local/share/bonfyre/%s", home, relative);
+        if (bf_parent_present(buf)) return buf;
+    }
+    return NULL;
+}
 
 int bf_ensure_dir(const char *path) {
     char tmp[PATH_MAX];
@@ -121,37 +169,19 @@ const char *bf_arg_value(int argc, char **argv, const char *key) {
  * Lightweight JSON extraction
  * ---------------------------------------------------------------- */
 
+/* Delegates to the one implementation.
+ *
+ * This was the estate's other shared JSON reader, with 47 callers, and it
+ * carried three defects at once. Its unescaping was `if (escape) out[j++] =
+ * *p`, so \n arrived as the letter n, \t as t and \u00e9 as u00e9. It
+ * searched for the key with strstr, so it matched inside a value and at any
+ * depth. And on a value too long for the buffer it wrote a prefix and returned
+ * success, so a digest truncated by one character was indistinguishable from a
+ * whole one.
+ *
+ * Two shared readers that disagree are not a shared reader. */
 int bf_json_str(const char *json, const char *key, char *out, size_t out_sz) {
-    if (!json || !key || !out || out_sz == 0) return 0;
-
-    /* Build search pattern: "key" */
-    char pattern[256];
-    int plen = snprintf(pattern, sizeof(pattern), "\"%s\"", key);
-    if (plen < 0 || (size_t)plen >= sizeof(pattern)) return 0;
-
-    const char *p = strstr(json, pattern);
-    if (!p) return 0;
-    p += plen;
-
-    /* Skip whitespace and colon */
-    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
-    if (*p != ':') return 0;
-    p++;
-    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
-
-    if (*p != '"') return 0;
-    p++;
-
-    size_t j = 0;
-    int escape = 0;
-    for (; *p && j + 1 < out_sz; p++) {
-        if (escape) { out[j++] = *p; escape = 0; continue; }
-        if (*p == '\\') { escape = 1; continue; }
-        if (*p == '"') break;
-        out[j++] = *p;
-    }
-    out[j] = '\0';
-    return 1;
+    return bf_lex_json_string(json, key, out, out_sz);
 }
 
 int bf_json_int(const char *json, const char *key, int *out) {

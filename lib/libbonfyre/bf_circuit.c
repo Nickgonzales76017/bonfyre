@@ -15,6 +15,7 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,17 +96,14 @@ BfCircuit *bf_circuit_compile(const BfNetlist *nl) {
         if(!def){
             fprintf(stderr,"circuit compile: unknown component type '%s' for instance '%s'\n",
                     nc->type,nc->instance);
-            /* register a stub */
-            BfComponentDef stub; memset(&stub,0,sizeof(stub));
-            snprintf(stub.name,sizeof(stub.name),"%s",nc->type);
-            stub.n_inputs=1; stub.n_outputs=1;
-            stub.inputs[0].kind=BF_PIN_SIGNAL; snprintf(stub.inputs[0].name,64,"input");
-            stub.outputs[0].kind=BF_PIN_SIGNAL; snprintf(stub.outputs[0].name,64,"output");
-            stub.transfer=NULL;
-            bf_component_register(&stub);
-            def=bf_component_lookup(nc->type);
+            /* A component nobody registered has no behaviour. Standing a
+             * pass-through in for it let the circuit compile and run as if
+             * the component were there. */
+            free(c->nodes);
+            free(c);
+            return NULL;
         }
-        if(def) init_node_state_(node,def);
+        init_node_state_(node,def);
     }
 
     /* allocate edges */
