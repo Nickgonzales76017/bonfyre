@@ -45,22 +45,37 @@ bun architecture/atlas.mjs loss
 No maturity laundering is allowed: `measured` and `proven` require witnesses,
 and a collapsed view must expand reversibly to real children.
 
-## Visual architecture and application relationships
+## System-wide architecture — no single demo owns a capability family
 
-The diagrams below are **native, scalable SVGs and GitHub-rendered Mermaid**, with individual source owners and boundary notes. They summarize rather than replace the [Atlas](../architecture/README.md), and do not grant publication or effect authority.
+The **[complete Aurekai / Bonfÿre architecture map](architecture-visuals/system-architecture.md)** now covers identities, organizations, communities/groups, address/presence, external estate, source observations, provider accounts, connections, native spatial/temporal query and maps, Git/Forgejo/Josh, model representation and exact masks, FPQ/BitNet, memory/data, audiovisual and narration, Frappe/CMS, commerce, agents, work, proof, protocol carriers and staged releases. It contains **13 native GitHub Mermaid visualizations** and a [capability-family index](architecture-visuals/system-architecture.md#12-coverage-index--capabilities-not-screenshot-examples).
 
-[![Aurekai organization and site hierarchy: business sites, client portals, publications and verified addresses.](architecture-visuals/site-addressing.svg)](architecture-visuals/README.md)
+The canonical [source registry](../architecture/README.md) currently has 11 expandable high-level views—IdentityView, InstitutionalView, ExternalView, ProviderResourceView, ModelView, SubstrateView, FormsView, CapabilityView, ExecutionView, EvidenceView and OpportunityView—and each zoom must retain its underlying architecture IDs, interaction contracts, forbidden inferences and measured witnesses. Those *11 summaries are not the complete domain taxonomy*; surface, spatial, social, media, application and other owner families cannot be dropped because they are missing from the shortlist.
 
-| View | What it makes explicit |
+| Core concern | Important separation |
 |---|---|
-| [Organizations, sites, subdomains and custom hosts](architecture-visuals/README.md#1-organizations-sites-and-domains) | Account ownership, independent SitePresentation, subject/address separation, proposed aliases and external origins |
-| [Source-to-application continuations](architecture-visuals/README.md#2-one-source-many-installed-applications) | Retained provenance, installed app intake and account-scoped continuations |
-| [Unified editorial publishing](architecture-visuals/README.md#3-editorial-composition-and-publication) | Design, structure, article composition, CMS revisions, review and published routes |
-| [Work and evidence](architecture-visuals/README.md#4-work-execution-and-proof) | WorkGraph, CapabilityClosure, authority, realization, receipts and verified promotion |
-| [Nine business application grammars](architecture-visuals/README.md#5-business-application-family) | Frappe, ERPNext, CRM, HRMS, Helpdesk, LMS, Wiki, Drive and Insights without collapsed authorities |
-| [Products, commerce and room planning](architecture-visuals/README.md#6-product-commerce-and-spatial-work) | Product identity moving between configuration, space planning, procurement and financial events |
+| **People / institutions** | Actor, account, organization, group, community, presence and information policy are not synonyms |
+| **Sources / installed apps** | Retained source identity differs from admission, source truth, downstream draft and effect |
+| **Maps / space** | Temporal spatial observations and indexed queries exceed any room-planning example |
+| **Models / compression** | Exact eligibility masks, SHADOW ranking, FPQ transform and ADMIT runtime parity are separate gates |
+| **Git / source** | Native Forgejo + Josh checkout, GitHub installations and GitHub Pages are distinct source/delivery routes |
+| **Work / finances** | A goal, quote, executed action, financial transaction and evidence of delivery are distinct records |
+| **Publishing / media** | Editorial content, optional audio edition, rights, recording, player, profile, community and live release do not imply one another |
+| **Frappe / applications** | DocType compilation is not controller execution; app, account and institution permissions remain with their owners |
 
-The client-domain graphic is a **design contract**: the current [site_presentation](../cmd/BonfyreCMS/content-types/site_presentation.json) binds a site to one host, while a generalized multi-host address binding and child-organization management require separate implementation and verification.
+### Specialized architectural examples
+
+The original SVG gallery remains useful as a set of **subviews**, not the system definition.
+
+| Example | Narrow scope and limits |
+|---|---|
+| [Organizations, sites and domains](architecture-visuals/README.md#1-organizations-sites-and-domains) | Host binding / SitePresentation and proposed multi-client address lifecycle |
+| [One source / installed-app continuations](architecture-visuals/README.md#2-one-source-many-installed-applications) | Intake and derived use, not a universal narration pipeline |
+| [Editorial publishing](architecture-visuals/README.md#3-editorial-composition-and-publication) | A publication/editing chain, not all media and communications |
+| [Work and evidence](architecture-visuals/README.md#4-work-execution-and-proof) | A bounded execution/proof example, not every operational program |
+| [Nine business application grammars](architecture-visuals/README.md#5-business-application-family) | Frappe-derived typed forms and records, not every enterprise service |
+| [One commerce/room offer](architecture-visuals/README.md#6-a-specific-offer-product-commerce-and-room-layout) | A single catalogue/procurement/room-planning continuation, not the spatial engine |
+
+A locally built component, a source-listed provider, an externally referenced substrate, a passed unit test, and an activated public release require different witnesses. The new diagrams indicate these boundaries instead of treating a UI illustration as deployment evidence.
 
 ## Whole-machine flow
 
