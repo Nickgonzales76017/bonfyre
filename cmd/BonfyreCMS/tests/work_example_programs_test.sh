@@ -16,7 +16,7 @@ schema="$root/cmd/BonfyreCMS/content-types/work_example.json"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/work-example-programs.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT INT TERM
 fail() { echo "FAIL: $*" >&2; exit 1; }
-install() { BONFYRE_CMS_BINARY="$cms" sh "$tool" "$@" 2>"$tmp/err"; }
+install() { BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_NAMESPACE="${BONFYRE_CMS_NAMESPACE:-root}" sh "$tool" "$@" 2>"$tmp/err"; }
 
 # Schema and data agree: every data key is declared, and nothing declared is dead.
 grep -q '"terms"' "$schema" && fail "work_example still declares the unused terms field"
@@ -53,4 +53,30 @@ sed -n 's/.*"made_with":"\([^"]*\)".*/\1/p' "$data" | tr ',' '\n' | sed 's/ and 
     case "$maker" in an\ *|a\ *|open\ *|observed\ *) continue;; esac
     grep -qiF "$maker" "$programs" && fail "template text names provenance material: $maker"
 done
+# Independently installed institutional work rows stay outside the legacy
+# root namespace. Reinstallation must retain IDs, not DELETE-and-reCREATE.
+root_id=$(sqlite3 "$db" "SELECT id FROM work_example WHERE namespace='root' ORDER BY id LIMIT 1")
+tenant=independent_test
+BONFYRE_CMS_NAMESPACE="$tenant" install "$db" >/dev/null ||
+    fail "second institution could not import its own examples"
+[ "$(sqlite3 "$db" "SELECT count(*) FROM work_example WHERE namespace='$tenant'")" = "$examples" ] ||
+    fail "tenant work examples were not isolated"
+[ "$(sqlite3 "$db" "SELECT count(*) FROM program_template WHERE namespace='$tenant'")" = "$(grep -c . "$programs")" ] ||
+    fail "tenant programs were not isolated"
+[ "$(sqlite3 "$db" "SELECT id FROM work_example WHERE namespace='root' ORDER BY id LIMIT 1")" = "$root_id" ] ||
+    fail "another institution changed root row identity"
+tenant_id=$(sqlite3 "$db" "SELECT id FROM work_example WHERE namespace='$tenant' ORDER BY id LIMIT 1")
+BONFYRE_CMS_NAMESPACE="$tenant" install "$db" >/dev/null ||
+    fail "tenant cannot reimport its own examples"
+[ "$(sqlite3 "$db" "SELECT id FROM work_example WHERE namespace='$tenant' ORDER BY id LIMIT 1")" = "$tenant_id" ] ||
+    fail "tenant reimport replaced a row instead of updating it"
+[ "$(sqlite3 "$db" "SELECT count(*) FROM work_example WHERE namespace='$tenant'")" = "$examples" ] ||
+    fail "tenant reimport duplicated examples"
+if BONFYRE_WORK_EXAMPLES="$data" BONFYRE_CMS_NAMESPACE="bad'scope" install "$db" >/dev/null; then
+    fail "unsafe tenant namespace accepted"
+fi
+if BONFYRE_WORK_EXAMPLES="$data" BONFYRE_CMS_NAMESPACE='' BONFYRE_CMS_BINARY="$cms" sh "$tool" "$db" >/dev/null 2>&1; then
+    fail "external business content admitted an implicit root namespace"
+fi
+
 echo "work example programs: ok ($examples examples bound)"
