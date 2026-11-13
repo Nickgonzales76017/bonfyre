@@ -11,6 +11,7 @@ on:
       - "architecture/institutional/root.yaff"
       - "engine/core/src/**"
       - "engine/core/include/**"
+      - "engine/core/tests/matrix_test.c"
       - "lib/libbonfyre/src/**"
       - "lib/libbonfyre/include/**"
       - "scripts/check-product-boundary.py"
@@ -22,6 +23,7 @@ on:
       - "architecture/institutional/root.yaff"
       - "engine/core/src/**"
       - "engine/core/include/**"
+      - "engine/core/tests/matrix_test.c"
       - "lib/libbonfyre/src/**"
       - "lib/libbonfyre/include/**"
       - "scripts/check-product-boundary.py"
@@ -39,3 +41,9 @@ jobs:
         run: python3 scripts/check-product-boundary.py --self-test
       - name: Refuse Aurekai-specific shipping core and collapsed product identity
         run: python3 scripts/check-product-boundary.py
+      - name: Prove engine and operating business grants do not inherit
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev
+          make -C engine/core obj/matrix_test
+          ./engine/core/obj/matrix_test
