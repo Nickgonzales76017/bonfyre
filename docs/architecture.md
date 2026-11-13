@@ -95,6 +95,34 @@ The original SVG gallery remains useful as a set of **subviews**, not the system
 
 A locally built component, a source-listed provider, an externally referenced substrate, a passed unit test, and an activated public release require different witnesses. The new diagrams indicate these boundaries instead of treating a UI illustration as deployment evidence.
 
+## The local data and frontend engineering is a first-class architecture
+
+The full source/execution map for **YAFF, CUE, PostCSS/Tailwind tokens, Puck/GrapesJS/Editor.js, ONNX embeddings, SQLite Vec, vGPU numerical compute, DuckDB-Wasm/Parquet, BitNet and FPQ** is [native data computation and presentation](native-data-compute-and-presentation.md). These are separate real mechanisms and named source interfaces, with *downstream* table, source, editor, CMS, narration and application consumers.
+
+~~~mermaid
+flowchart TB
+  YAFF["Architecture YAFF: identities, invariants, interactions"] --> CUE["CUE: typed PageRegions and lowerer contracts"]
+  CUE --> ZIG["Zig→C native application lowerers"]
+  ZIG --> WEB["WebAddress / MD4C / Mustach / typed editorial composition"]
+  EDIT["Puck / GrapesJS / Editor.js"] --> WEB
+  PCSS[".pcss + PostCSS + Tailwind + closed presentation roles"] --> WEB
+  SQL["SQLite + Parquet/Arrow local material"] --> EMBED["BonfyreEmbed actual ONNX vector"]
+  EMBED --> VEC["BonfyreVec: sqlite-vec, exact cosine"]
+  SQL --> VGPU["vGPU: numerical kin/nearest-neighbour kernels; CPU fallback"]
+  VEC -. "Only matching representations" .-> VGPU
+  VGPU --> PERSIST["Source-scoped derived kin/neighbour SQLite tables + backend/input receipts"]
+  SQL --> BROWSER["DuckDB-Wasm in-browser SQL, WebGPU estate field"]
+  PERSIST --> EXPERIENCE["Interactive table / research / article evidence rail"]
+  BROWSER --> EXPERIENCE
+  WEB --> EXPERIENCE
+  BIT["BitNet: learned rank of already eligible handles, shadow gates"] -. "After representation and quality admission" .-> EXPERIENCE
+  FPQ["FPQ model weight compression"] -. "Only after generation/task parity" .-> EMBED
+~~~
+
+**What is measured:** 6,810 archived items, 46,376,100 vGPU pair comparisons in 1.1s under the recorded kin workload, 710 retained above similarity threshold; browser field reading 109,761 Parquet rows with DuckDB-Wasm and drawing them through WebGPU. **Not a claim:** vGPU executes DuckDB SQL, all document/table operations are GPU-fast, the 90 journal articles and new PCSS bundle are live, FPQ is generation-quality proven, or BitNet may admit unverified sources.
+
+Local \`deploy/tailwind/*.pcss\` and build sources are currently ahead of public \`main\`; the existing [Tailwind config](../deploy/tailwind/tailwind.config.js) is published. The end-to-end acceptance remains a current, user-owned table → source → editorial save → published responsive page → narration/export, with releases and permission readback.
+
 ## Real, concurrent operating paths — not a universal pipeline
 
 See the [source-linked workflow and exchange ledger](real-workflows-and-interoperability.md) before describing a specific system. **WorkGraph is appropriate for scheduled or multi-step work; Matrix is appropriate for addressed subjects/presences; neither is a mandatory hub for every parser, conversion, frontend, media renderer, database, model or provider API.**
@@ -276,6 +304,8 @@ source of truth.
   envelope; otherwise the machine thaws to a proven ancestor.
 
 ## Read and run next
+
+- [Local vGPU data engines, YAFF/CUE and PCSS/Tailwind/authoring frontend](native-data-compute-and-presentation.md)
 
 - [Concrete operational workflows, formats, MCP and external platforms](real-workflows-and-interoperability.md)
 - [Unified authoring, editor and frontend source paths](authoring-frontend-architecture.md)
