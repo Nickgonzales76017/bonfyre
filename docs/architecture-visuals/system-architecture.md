@@ -287,7 +287,25 @@ A working local editor, a source candidate, a successful release build, the GitH
 
 This index describes families with different maturity, not a uniform shipped feature set. Where source was archived, local-only, SHADOW, unadmitted, review-held, or missing live readback, say so on the consuming page.
 
-## 13. Real native generated views, not manually curated demo diagrams
+## 13. Lossless registry coverage — all 25 families
+
+The registry's 2026-11-13 source-checked export contains **557 architecture entries across 25 distinct family keys**, plus **562 interaction contracts**. This table deliberately retains the **native family keys** rather than silently merging categories because a project demo makes them seem similar.
+
+| Native family | Entries | Native family | Entries | Native family | Entries |
+|---|---:|---|---:|---|---:|
+| apps | 24 | capability | 8 | command | 180 |
+| commands | 16 | commons | 16 | context | 6 |
+| economic | 19 | evidence | 15 | execution | 19 |
+| external | 39 | fabric | 6 | forms | 2 |
+| forwarding | 4 | identity | 11 | institutional | 26 |
+| learning | 6 | model | 13 | opportunity | 5 |
+| optimization | 22 | provider | 17 | representation | 2 |
+| spatial | 2 | storage | 2 | substrate | 17 |
+| surface | 80 | **Total** | **557** | | |
+
+The **surface** family alone contains 80 entries; **external** holds 39; **institutional** 26; **optimization** 22; **economic** 19; **model** 13. A handful of marketing diagrams could never represent those families without loss. The 180 `command` and 16 `commands` entries are distinct registry keys, *not* a claim of 196 deployable binaries. For individual child architectures, source paths, forbidden inferences, interactions and witnesses, use the [lossless native registry](../../architecture/README.md).
+
+## 14. Real native generated views, not manually curated demo diagrams
 
 The native [architecture registry](../../architecture/README.md) already supports `view`, `expand`, `get`, `search`, `maturity`, `loss` and `validate`. Its **11 reversible generated summaries** were checked against the current source, not invented to fit a marketing story:
 
@@ -317,7 +335,7 @@ bun architecture/atlas.mjs validate
 
 **The 11 registry views are not an exhaustive user-facing information architecture.** Social communities, spatial and geographic observations, Git provider management, business apps, editorial/media, institution tenancy, commerce and account/public composition have individual registered owners even when none of the existing generated views names them. Add a generated view without removing the underlying nodes. Do not reclassify a domain as “covered” because one client demo happens to mention it.
 
-## 14. Read and change the right source
+## 15. Read and change the right source
 
 1. **Discovery:** query [the canonical registry](../../architecture/README.md) for the owner and declared interaction, or its 11 expandable views.
 2. **Execution truth:** check the exact current source file, binary/test and witnessed receipt; never infer it from a label, theme, demo, marketing feature or old library.
