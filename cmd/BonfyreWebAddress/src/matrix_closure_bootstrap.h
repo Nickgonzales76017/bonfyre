@@ -27,15 +27,13 @@ static const char *site_root(int argc, char **argv) { const char *root=opt(argc,
  * suffix match: arbitrary subdomains must first become real AddressPlane
  * domains before they receive estate assets. */
 #include "tenant_host_binding.h"
+#include "compat/aurekai_legacy.h"
 static int native_member_session_host(const char *host) {
     int state=bf_tenant_hosts_status();
     if(state==1)return bf_tenant_is_account_host(host);
     if(state<0)return 0; /* Invalid configured map refuses every account host. */
-    /* Temporary compatibility for the current Aurekai installation. */
-    return host && (!strcmp(host, "auth.aurekai.life") ||
-                    !strcmp(host, "auth.aurekai.live") ||
-                    !strcmp(host, "auth.aurekai.shop") ||
-                    !strcmp(host, "signin.aurekai.work"));
+    /* Existing operator deployment: compatibility is isolated and temporary. */
+    return bf_legacy_aurekai_account_host_is(host);
 }
 static int session_valid(const char *bearer, const char *db);
 static int studio_auth_user(const char *bearer, const char *auth_db, char *out, size_t out_sz);
