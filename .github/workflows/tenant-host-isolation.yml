@@ -13,6 +13,10 @@ on:
       - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
       - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
       - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.c"
+      - "cmd/BonfyreWebAddress/src/territory_home.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c"
       - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
       - ".github/workflows/tenant-host-isolation.yml"
   pull_request:
@@ -28,6 +32,10 @@ on:
       - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
       - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
       - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.c"
+      - "cmd/BonfyreWebAddress/src/territory_home.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c"
       - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
       - ".github/workflows/tenant-host-isolation.yml"
   workflow_dispatch:
@@ -53,6 +61,15 @@ jobs:
             cmd/BonfyreWebAddress/tests/route_presentation_test.c \
             cmd/BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o /tmp/bf-presentation-test
           /tmp/bf-presentation-test
+      - name: Verify independent CMS namespace for routes, territory front doors and CSS
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Iengine/core/include -Ilib/libbonfyre/include -Icmd/BonfyreWebAddress/src \
+            cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c \
+            cmd/BonfyreWebAddress/src/site_presentation.c \
+            cmd/BonfyreWebAddress/src/territory_home.c \
+            -lsqlite3 -o /tmp/bf-tenant-cms-scope-test
+          /tmp/bf-tenant-cms-scope-test
       - name: Compile and verify publisher parent without inherited institution
         run: |
           cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
