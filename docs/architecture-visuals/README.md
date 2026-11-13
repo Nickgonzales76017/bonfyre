@@ -1,6 +1,6 @@
 # Bonfÿre architecture, in pictures
 
-These six SVG/Mermaid examples are **drill-downs**, not an inventory of the Aurekai or Bonfÿre system. The earlier selection overemphasized domain routing, article narration and a one-off room-planning offer while omitting the general spatial engine, source and provider estate, groups, connections, Git/Forgejo/Josh, BitNet/FPQ, masks, model execution, finance, knowledge, native UI and release/evidence lifecycles.
+These six SVG/Mermaid examples are **Bonfÿre technical drill-downs**, not a mixed inventory of an engine and an operating business. The earlier selection overemphasized domain routing, article narration and a one-off room-planning offer while omitting the general spatial engine, source and provider estate, groups, connections, Git/Forgejo/Josh, BitNet/FPQ, masks, model execution, finance, knowledge, native UI and release/evidence lifecycles.
 
 **[Real workflows and interoperability](../real-workflows-and-interoperability.md)** documents named operations and outputs: WordPress webhooks/WXR, cPanel/InterWorx/Plesk, XLSX, scanned-PDF OCR, DOCX/PDF/EPUB conversion, React/Puck vs unverified Svelte conversion, Project/Workspace/Workbook MCP, YouTube/Patreon/Spotify and Toast. These are not one Matrix pipeline.
 
