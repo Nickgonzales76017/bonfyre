@@ -11,6 +11,7 @@
 #include <sqlite3.h>
 #include "site_presentation.h"
 #include "tenant_host_binding.h"
+#include "compat/aurekai_legacy.h"
 
 static sqlite3 *cms_open_ro(void);
 
@@ -36,8 +37,10 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
                                         char pattern[65], char template_name[65]) {
     sqlite3 *db; sqlite3_stmt *st = NULL; int found = 0;
     pattern[0] = template_name[0] = '\0';
-    if (!territory || !route || (strcmp(territory, "work") && strcmp(territory, "life") &&
-        strcmp(territory, "live") && strcmp(territory, "shop"))) return 0;
+    if (!territory || !route || !bf_tenant_territory_valid(territory)) return 0;
+    int state=bf_tenant_hosts_status();
+    if (state<0 || (state==1 && !bf_tenant_public_host(territory)) ||
+        (state==0 && !bf_legacy_aurekai_public_host(territory))) return 0;
     if (!(db = cms_open_ro())) return 0;
     if (sqlite3_prepare_v2(db,
           "SELECT pattern,COALESCE(template,''),COALESCE(when_query_key,'') FROM route_presentation "
@@ -67,15 +70,9 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
  * retain their own independently published subject compositions. */
 static inline const char *bf_route_presentation_territory(const char *host) {
     int state=bf_tenant_hosts_status();
-    if(state==1) return bf_tenant_territory_for_host(host);
-    /* Invalid explicit configuration never silently switches to legacy. */
-    if(state<0 || !host) return NULL;
-    /* Release compatibility only, moved out with Aurekai-owned deployment. */
-    if (!strcmp(host,"aurekai.work") || !strcmp(host,"signin.aurekai.work")) return "work";
-    if (!strcmp(host,"aurekai.life") || !strcmp(host,"auth.aurekai.life")) return "life";
-    if (!strcmp(host,"aurekai.live") || !strcmp(host,"auth.aurekai.live")) return "live";
-    if (!strcmp(host,"aurekai.shop") || !strcmp(host,"auth.aurekai.shop")) return "shop";
-    return NULL;
+    if(state==1)return bf_tenant_territory_for_host(host);
+    if(state<0)return NULL;
+    return bf_legacy_aurekai_territory(host,1);
 }
 static inline const char *bf_route_presentation_pattern(const char *host, const char *route, const char *query) {
     static char pattern[65], template_name[65];
@@ -88,7 +85,9 @@ static inline const char *bf_route_presentation_native_pattern(const char *terri
     return bf_route_presentation_lookup(territory, route, NULL, pattern, template_name) ? pattern : NULL;
 }
 static inline void bf_route_presentation_emit_body_attribute(FILE *out, const char *pattern) {
-    if (bf_route_presentation_safe(pattern)) fprintf(out, " data-aurekai-pattern=\"%s\"", pattern);
+    if(!bf_route_presentation_safe(pattern) || bf_tenant_hosts_status()<0)return;
+    const char *attr=bf_tenant_hosts_status()==1?"data-bf-pattern":"data-aurekai-pattern";
+    fprintf(out, " %s=\"%s\"",attr,pattern);
 }
 /* Marks the body with the pattern and, when the row names a published
  * template, with data-bf-template so world.css maps the template tokens. */
@@ -106,11 +105,14 @@ static inline void bf_route_presentation_emit_head_for(FILE *out, const char *te
                                                 const char *query, const char *pattern) {
     char p[65], t[65];
     if (!bf_route_presentation_safe(pattern)) return;
-    fprintf(out, "<meta name=\"aurekai:composition\" content=\"%s\">"
-                 "<link rel=\"stylesheet\" href=\"/assets/composition.css\">", pattern);
+    if(bf_tenant_hosts_status()<0)return;
+    const char *key=bf_tenant_hosts_status()==1?"bonfyre:composition":"aurekai:composition";
+    const char *scope=bf_tenant_hosts_status()==1?"body[data-bf-pattern]":"body[data-aurekai-pattern]";
+    fprintf(out, "<meta name=\"%s\" content=\"%s\">"
+                 "<link rel=\"stylesheet\" href=\"/assets/composition.css\">",key,pattern);
     if (territory && route && bf_route_presentation_lookup(territory, route, query, p, t) && t[0]) {
         sqlite3 *db = cms_open_ro();
-        if (db) { bf_site_presentation_emit_scoped(out, db, t, "body[data-aurekai-pattern]"); sqlite3_close(db); }
+        if (db) { bf_site_presentation_emit_scoped(out, db, t, scope); sqlite3_close(db); }
     }
 }
 static inline void bf_route_presentation_emit_head(FILE *out, const char *pattern) {
