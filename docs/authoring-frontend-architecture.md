@@ -112,9 +112,9 @@ The broader [WebLowering contract](../cmd/BonfyreWebAddress/src/main.c) asks wha
 
 ## 5. The PostCSS/Tailwind/token compiler and real UI controls
 
-**Current local development direction:** \`.pcss\` is **PostCSS source**, with \`postcss-nested\` and Tailwind 3.4, not Sass. The local \`deploy/tailwind/package.json\` builds the shared \`input.pcss\`, site stylesheet families in \`deploy/tailwind/styles/*.pcss\`, and eighteen browser workspace CSS families in \`integrations/browser/**/*.pcss\`. The runtime keeps the same served \`.css\` URLs after compilation.
+**Current local development direction:** `.pcss` is **PostCSS source**, with `postcss-nested` and Tailwind 3.4, not Sass. The local `deploy/tailwind/package.json` builds the shared `input.pcss`, site stylesheet families in `deploy/tailwind/styles/*.pcss`, and eighteen browser workspace CSS families in `integrations/browser/**/*.pcss`. The runtime keeps the same served `.css` URLs after compilation.
 
-[Public Tailwind class-value extractor](../deploy/tailwind/tailwind.config.js) reads actual \`class=\` attributes from C header/implementation files, browser templates and authoring MJS. It scans C's escaped class attributes without treating arbitrary code keywords as CSS utilities. Shared semantic component selectors remain complete under safelisting; \`@apply\`, nested rules and tokenized CSS custom properties define their actual visual language. This is how a native page can have consistent focus, form, hover, density, typography, grids and dark modes without 27 independent inline style systems.
+[Public Tailwind class-value extractor](../deploy/tailwind/tailwind.config.js) reads actual `class=` attributes from C header/implementation files, browser templates and authoring MJS. It scans C's escaped class attributes without treating arbitrary code keywords as CSS utilities. Shared semantic component selectors remain complete under safelisting; `@apply`, nested rules and tokenized CSS custom properties define their actual visual language. This is how a native page can have consistent focus, form, hover, density, typography, grids and dark modes without 27 independent inline style systems.
 
 ~~~mermaid
 flowchart LR
@@ -128,7 +128,7 @@ flowchart LR
   BUILD --> PAGE
 ~~~
 
-**Source/release status:** the local PCSS sources and \`deploy/tailwind/package.json\` were inspected on November 13, 2026, but the public GitHub \`main\` cut does **not yet contain** those files. The attached Codex handoff records build/check commands and local migration, not a live four-domain CSS release. The generated stylesheets, source maps/asset URLs, responsive browser tests and completed Stitch screen routes still need synchronized acceptance.
+**Source/release status:** the local PCSS sources and `deploy/tailwind/package.json` were inspected on November 13, 2026, but the public GitHub `main` cut does **not yet contain** those files. The attached Codex handoff records build/check commands and local migration, not a live four-domain CSS release. The generated stylesheets, source maps/asset URLs, responsive browser tests and completed Stitch screen routes still need synchronized acceptance.
 
 **Accept the experience rather than just a CSS build:** users need real route flow, typed table/research layouts, durable player, rich journal composition, full editorial typography, forms and interactive controls. The central shell should own navigation and player placement once. Repeating shells, routes with old demo bodies, and added workflow blocks underneath a mockup fail the frontend criterion.
 
