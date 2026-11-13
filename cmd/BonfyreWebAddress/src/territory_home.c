@@ -225,7 +225,19 @@ static int bf_apply_territory_home_presentation_impl(sqlite3 *db, char **bodyp,
 /* Compatibility entrypoint for stores predating explicit tenant installs.
  * Do not invoke on a destination that has an installed CMS namespace. */
 int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
-    return bf_apply_territory_home_presentation_impl(db, bodyp, territory, NULL);
+    /* Older stores without namespace keep legacy behavior; modern stores
+     * must not select another tenant's more recently inserted copy. */
+    sqlite3_stmt *st=NULL;
+    int has_namespace=0;
+    if (db && sqlite3_prepare_v2(db,"PRAGMA table_info(territory_presentation)",-1,&st,NULL)==SQLITE_OK) {
+        while(sqlite3_step(st)==SQLITE_ROW) {
+            const char *name=(const char *)sqlite3_column_text(st,1);
+            if(name && !strcmp(name,"namespace")) has_namespace=1;
+        }
+    }
+    if(st) sqlite3_finalize(st);
+    return bf_apply_territory_home_presentation_impl(db,bodyp,territory,
+                                                      has_namespace?"root":NULL);
 }
 /* Authority is resolved by the request owner, then passed into this separate C
  * translation unit. No duplicated header-static host-map state or guessing. */

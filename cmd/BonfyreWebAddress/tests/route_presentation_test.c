@@ -24,8 +24,8 @@ int main(void) {
     snprintf(store, sizeof(store), "/tmp/bf-route-presentation-%d.db", (int)getpid());
     unlink(store);
     if (sqlite3_open(store, &db) != SQLITE_OK || sqlite3_exec(db,
-        "CREATE TABLE route_presentation(id INTEGER PRIMARY KEY,territory TEXT,route TEXT,when_query_key TEXT,pattern TEXT,template TEXT,status TEXT);"
-        "CREATE TABLE presentation_template(id INTEGER PRIMARY KEY,template TEXT,status TEXT,layout_tokens TEXT,hero_mode TEXT,navigation_mode TEXT,density TEXT,card_mode TEXT,typography_mode TEXT);"
+        "CREATE TABLE route_presentation(id INTEGER PRIMARY KEY,namespace TEXT NOT NULL DEFAULT 'root',territory TEXT,route TEXT,when_query_key TEXT,pattern TEXT,template TEXT,status TEXT);"
+        "CREATE TABLE presentation_template(id INTEGER PRIMARY KEY,namespace TEXT NOT NULL DEFAULT 'root',template TEXT,status TEXT,layout_tokens TEXT,hero_mode TEXT,navigation_mode TEXT,density TEXT,card_mode TEXT,typography_mode TEXT);"
         "INSERT INTO route_presentation(territory,route,when_query_key,pattern,template,status) VALUES"
         "('work','/people',NULL,'directory',NULL,'published'),"
         "('work','/people','who','detail',NULL,'published'),"
@@ -81,9 +81,9 @@ int main(void) {
     if(fd<0)return fail("tenant map tempfile");
     FILE *hostmap=fdopen(fd,"w");
     if(!hostmap)return fail("tenant map fdopen");
-    fputs("work demo.example.net login.demo.example.net\n"
-          "life people.example.net auth.people.example.net\n"
-          "research research.example.net auth.research.example.net\n",hostmap);
+    fputs("work demo.example.net login.demo.example.net root\n"
+          "life people.example.net auth.people.example.net root\n"
+          "research research.example.net auth.research.example.net root\n",hostmap);
     if(fclose(hostmap))return fail("tenant map flush");
     if(bf_tenant_hosts_load(tenant_map)!=1)return fail("tenant map admission");
     if (!(p = bf_route_presentation_pattern("demo.example.net","/people",NULL)) ||

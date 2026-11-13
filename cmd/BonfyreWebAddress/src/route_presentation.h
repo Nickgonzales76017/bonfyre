@@ -41,21 +41,20 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
     int state=bf_tenant_hosts_status();
     if (state<0 || (state==1 && !bf_tenant_public_host(territory)) ||
         (state==0 && !bf_legacy_aurekai_public_host(territory))) return 0;
-    const char *cms_namespace = state == 1 ? bf_tenant_cms_namespace(territory) : NULL;
-    const char *query_sql = cms_namespace
-        ? "SELECT pattern,COALESCE(template,''),COALESCE(when_query_key,'') FROM route_presentation "
-          "WHERE namespace=?3 AND status='published' AND territory=?1 AND "
-          "(route=?2 OR (route<>'/' AND substr(?2,1,length(route)+1)=route||'/')) "
-          "ORDER BY length(route) DESC,(COALESCE(when_query_key,'')<>'') DESC,id DESC"
-        : "SELECT pattern,COALESCE(template,''),COALESCE(when_query_key,'') FROM route_presentation "
-          "WHERE status='published' AND territory=?1 AND "
-          "(route=?2 OR (route<>'/' AND substr(?2,1,length(route)+1)=route||'/')) "
-          "ORDER BY length(route) DESC,(COALESCE(when_query_key,'')<>'') DESC,id DESC";
+    /* The no-map compatibility adapter may only read historical root.
+     * A configured but unowned tenant map must not borrow any CMS rows. */
+    const char *cms_namespace = state == 1 ? bf_tenant_cms_namespace(territory) : "root";
+    if (!cms_namespace) return 0;
+    const char *query_sql =
+        "SELECT pattern,COALESCE(template,''),COALESCE(when_query_key,'') FROM route_presentation "
+        "WHERE namespace=?3 AND status='published' AND territory=?1 AND "
+        "(route=?2 OR (route<>'/' AND substr(?2,1,length(route)+1)=route||'/')) "
+        "ORDER BY length(route) DESC,(COALESCE(when_query_key,'')<>'') DESC,id DESC";
     if (!(db = cms_open_ro())) return 0;
     if (sqlite3_prepare_v2(db,query_sql, -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, territory, -1, SQLITE_STATIC);
         sqlite3_bind_text(st, 2, route, -1, SQLITE_STATIC);
-        if (cms_namespace) sqlite3_bind_text(st, 3, cms_namespace, -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 3, cms_namespace, -1, SQLITE_STATIC);
         while (!found && sqlite3_step(st) == SQLITE_ROW) {
             const char *p = (const char *)sqlite3_column_text(st, 0);
             const char *t = (const char *)sqlite3_column_text(st, 1);
@@ -121,9 +120,8 @@ static inline void bf_route_presentation_emit_head_for(FILE *out, const char *te
         sqlite3 *db = cms_open_ro();
         if (db) {
             const char *ns = bf_tenant_hosts_status() == 1
-                ? bf_tenant_cms_namespace(territory) : NULL;
+                ? bf_tenant_cms_namespace(territory) : "root";
             if (ns) bf_site_presentation_emit_scoped_owned(out, db, t, scope, ns);
-            else bf_site_presentation_emit_scoped(out, db, t, scope);
             sqlite3_close(db);
         }
     }

@@ -85,7 +85,7 @@ static int check_owner(sqlite3 *db, const char *host, const char *ns,
 }
 int main(void) {
     sqlite3 *db=NULL;
-    char alpha[128]="", beta[128]="", empty[128]="", unsafe[128]="";
+    char alpha[128]="", beta[128]="", empty[128]="", unsafe[128]="", unowned[128]="";
     int fd;
     const char *sql =
       "CREATE TABLE route_presentation (id INTEGER PRIMARY KEY,namespace TEXT,"
@@ -118,7 +118,8 @@ int main(void) {
     if(!write_map(alpha,"work alpha.example.net login.alpha.example.net tenant_alpha") ||
        !write_map(beta,"work beta.example.net login.beta.example.net tenant_beta") ||
        !write_map(empty,"work none.example.net login.none.example.net tenant_gamma") ||
-       !write_map(unsafe,"work unsafe.example.net login.unsafe.example.net bad'owner"))
+       !write_map(unsafe,"work unsafe.example.net login.unsafe.example.net bad'owner") ||
+       !write_map(unowned,"work ghost.example.net login.ghost.example.net"))
        return fail("map files");
     if(bf_tenant_hosts_load(alpha)!=1 ||
        !check_owner(db,"alpha.example.net","tenant_alpha","alpha-mode","Alpha publication","#00aa11"))
@@ -139,11 +140,14 @@ int main(void) {
        strstr(unused,"Alpha publication") || strstr(unused,"Beta publication") ||
        !strstr(unused,"<body class=\"work\">"))return fail("CMS fallback leaked business content");
     free(unused);
+    if(bf_tenant_hosts_load(unowned)!=1)return fail("compatibility host map should parse");
+    if(bf_route_presentation_pattern("ghost.example.net","/shared",NULL))
+       return fail("unowned configured host borrowed a CMS row");
     if(bf_tenant_hosts_load(unsafe)!=-1)return fail("unsafe namespace was admitted");
     if(bf_route_presentation_pattern("unsafe.example.net","/shared",NULL))
        return fail("malformed configured map failed open");
     sqlite3_close(db);
-    unlink(store);unlink(alpha);unlink(beta);unlink(empty);unlink(unsafe);
+    unlink(store);unlink(alpha);unlink(beta);unlink(empty);unlink(unsafe);unlink(unowned);
     puts("TENANT_CMS_PRESENTATION_ISOLATION_PASS: hosts, rows, templates, home, no data borrowing");
     return 0;
 }

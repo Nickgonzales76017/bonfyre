@@ -99,13 +99,28 @@ static sqlite3_stmt *selected(sqlite3 *db,const char *profile,const char *cms_na
       "WHERE status='published' AND (template=?1 OR template=?2 OR template=?3) "
       "AND json_valid(layout_tokens) AND json_type(layout_tokens)='object' "
       "ORDER BY CASE template WHEN ?1 THEN 0 WHEN ?2 THEN 1 ELSE 2 END,id DESC LIMIT 1";
+    /* In modern stores the compatibility reader is root-only, never an
+     * unscoped cross-tenant query. Older single-owner SQLite schemas without
+     * a namespace column retain the original compatibility selection. */
+    const char *owner = cms_namespace;
+    sqlite3_stmt *columns=NULL;
+    int owns_namespace = 0;
+    if (sqlite3_prepare_v2(db,"PRAGMA table_info(presentation_template)",-1,&columns,NULL)==SQLITE_OK) {
+        while (sqlite3_step(columns)==SQLITE_ROW) {
+            const char *name=(const char *)sqlite3_column_text(columns,1);
+            if (name && !strcmp(name,"namespace")) owns_namespace=1;
+        }
+    }
+    if(columns) sqlite3_finalize(columns);
+    if(!owner && owns_namespace) owner="root";
+    if(owner && !owns_namespace) return NULL; /* cannot enforce requested scope */
     if(!profile || !*profile) return NULL;
     if(!strncmp(profile,"ghost:",6)) {bare=profile+6;snprintf(alternate,sizeof(alternate),"ghost-%s",bare);}
-    if(sqlite3_prepare_v2(db,cms_namespace&&*cms_namespace?scoped:historical,-1,&st,NULL)!=SQLITE_OK) return NULL;
+    if(sqlite3_prepare_v2(db,owner?scoped:historical,-1,&st,NULL)!=SQLITE_OK) return NULL;
     sqlite3_bind_text(st,1,profile,-1,SQLITE_STATIC);
     sqlite3_bind_text(st,2,alternate,-1,SQLITE_TRANSIENT);
     sqlite3_bind_text(st,3,bare,-1,SQLITE_STATIC);
-    if(cms_namespace&&*cms_namespace) sqlite3_bind_text(st,4,cms_namespace,-1,SQLITE_STATIC);
+    if(owner) sqlite3_bind_text(st,4,owner,-1,SQLITE_STATIC);
     if(sqlite3_step(st)!=SQLITE_ROW || !tokens_valid(db,(const char *)sqlite3_column_text(st,0),0)) {
         sqlite3_finalize(st);return NULL;
     }

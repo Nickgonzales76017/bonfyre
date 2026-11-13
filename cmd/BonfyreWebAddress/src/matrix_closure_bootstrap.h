@@ -673,15 +673,17 @@ static int emit_closure_linked_html(BfMatrix *m, const char *path, const char *h
         /* A malformed installed map refuses rather than selecting an
          * unrelated organization's historical CMS copy. */
         if (host_state < 0) { free(body); return 0; }
-        if (host_state == 1 && !bf_tenant_public_host(resolved.territory)) {
-            /* No matching installed territory: leave canonical page unchanged. */
+        if (host_state == 1 && (!bf_tenant_public_host(resolved.territory) ||
+                                !cms_namespace)) {
+            /* Unmatched or unowned host: don't borrow historical root copy. */
             presentation_ok = 1;
         } else {
             presentation_db = cms_open_ro();
-            presentation_ok = cms_namespace
-                ? bf_apply_territory_home_presentation_owned(presentation_db, &body,
-                                                              resolved.territory, cms_namespace)
-                : bf_apply_territory_home_presentation(presentation_db, &body, resolved.territory);
+            /* The legacy no-map route has an explicitly named root owner.
+             * The configured route must have its own declared CMS owner. */
+            presentation_ok = bf_apply_territory_home_presentation_owned(presentation_db, &body,
+                                                 resolved.territory,
+                                                 cms_namespace ? cms_namespace : "root");
             if (presentation_db) sqlite3_close(presentation_db);
         }
         if (!presentation_ok) { free(body); return 0; }
