@@ -1,0 +1,41 @@
+name: Bonfyre / Aurekai product boundary
+
+# Generic core is a software engine. Aurekai names belong to a separately
+# bound deployment/tenant. A README or institutional-root change may not
+# silently turn the business into the runtime identity.
+on:
+  push:
+    paths:
+      - "README.md"
+      - "docs/OWNERSHIP-BOUNDARY.md"
+      - "architecture/institutional/root.yaff"
+      - "engine/core/src/**"
+      - "engine/core/include/**"
+      - "lib/libbonfyre/src/**"
+      - "lib/libbonfyre/include/**"
+      - "scripts/check-product-boundary.py"
+      - ".github/workflows/product-boundary.yml"
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/OWNERSHIP-BOUNDARY.md"
+      - "architecture/institutional/root.yaff"
+      - "engine/core/src/**"
+      - "engine/core/include/**"
+      - "lib/libbonfyre/src/**"
+      - "lib/libbonfyre/include/**"
+      - "scripts/check-product-boundary.py"
+      - ".github/workflows/product-boundary.yml"
+  workflow_dispatch:
+
+jobs:
+  engine-vs-business:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test the boundary checker
+        run: python3 scripts/check-product-boundary.py --self-test
+      - name: Refuse Aurekai-specific shipping core and collapsed product identity
+        run: python3 scripts/check-product-boundary.py
