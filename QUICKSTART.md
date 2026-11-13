@@ -1,12 +1,12 @@
 # Bonfÿre quickstart
 
-**Aurekai** operates and develops businesses, publications, community experiences, software, and customer projects. **Bonfÿre** provides independent native tools for actual jobs: WordPress and site exchange, cPanel/InterWorx/Plesk inventory, XLSX review, scanned-PDF OCR, document delivery, typed frontend authoring, scoped MCP project/workspace operations, Git source work, model execution, and explicit account/provider onboarding. These are not all implemented by a generic identity/capability matrix.
+**Bonfÿre** provides independent native tools for actual jobs: WordPress and site exchange, cPanel/InterWorx/Plesk inventory, XLSX review, scanned-PDF OCR, document delivery, typed frontend authoring, scoped MCP project/workspace operations, Git source work, model execution, and explicit account/provider onboarding. These are not all implemented by a generic identity/capability matrix.
 
 AI can generate software quickly; what matters here is whether a result is
 composable, authorized, verified and reusable. Choose the shortest path that
 answers your question. You do not need the entire development estate to begin.
 
-[Concrete workflow and export guide](docs/real-workflows-and-interoperability.md) ·
+[Engineering and business ownership boundary](docs/OWNERSHIP-BOUNDARY.md) · [Concrete workflow and export guide](docs/real-workflows-and-interoperability.md) ·
 [MCP project/workspace tool guide](integrations/mcp/README.md) ·
 [Provider onboarding](integrations/browser/onboarding/README.md) ·
 [Business and technical model](docs/aurekai-bonfyre-model.md) ·
