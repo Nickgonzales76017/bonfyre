@@ -6,25 +6,18 @@
  * The old Aurekai apex values below are a temporary release adapter;
  * do not use them when a configured map is invalid. */
 #include "tenant_host_binding.h"
-static const char *sso_host_for(const char *t){
- int state=bf_tenant_hosts_status();
- if(state==1)return bf_tenant_public_host(t);
- if(state<0||!t)return NULL;
- if(!strcmp(t,"work"))return "aurekai.work";
- if(!strcmp(t,"life"))return "aurekai.life";
- if(!strcmp(t,"live"))return "aurekai.live";
- if(!strcmp(t,"shop"))return "aurekai.shop";
- return NULL;
+#include "compat/aurekai_legacy.h"
+static const char *sso_host_for(const char *territory){
+    int state=bf_tenant_hosts_status();
+    if(state==1)return bf_tenant_public_host(territory);
+    if(state<0)return NULL;
+    return bf_legacy_aurekai_public_host(territory);
 }
-static const char *sso_territory(const char *h){
- int state=bf_tenant_hosts_status();
- if(state==1)return bf_tenant_territory_for_host(h);
- if(state<0||!h)return NULL;
- if(!strcmp(h,"aurekai.work"))return "work";
- if(!strcmp(h,"aurekai.life"))return "life";
- if(!strcmp(h,"aurekai.live"))return "live";
- if(!strcmp(h,"aurekai.shop"))return "shop";
- return NULL;
+static const char *sso_territory(const char *host){
+    int state=bf_tenant_hosts_status();
+    if(state==1)return bf_tenant_territory_for_host(host);
+    if(state<0)return NULL;
+    return bf_legacy_aurekai_territory(host,0);
 }
 static int sso_return_address(const char *candidate,const char *host,char *out,size_t cap){
  int tenant_state=bf_tenant_hosts_status();
@@ -46,7 +39,10 @@ static int sso_return_address(const char *candidate,const char *host,char *out,s
  if(bf_tenant_hosts_status()==1) {
   const char *base=bf_tenant_public_host(territory);
   if(!base||snprintf(suffix,sizeof(suffix),".%s",base)>=(int)sizeof(suffix))return 0;
- } else if(snprintf(suffix,sizeof(suffix),".aurekai.%s",territory)>=(int)sizeof(suffix))return 0;
+ } else {
+  const char *base=bf_legacy_aurekai_public_host(territory);
+  if(!base||snprintf(suffix,sizeof(suffix),".%s",base)>=(int)sizeof(suffix))return 0;
+ }
  size_t tail=strlen(suffix);
  if(n<=tail||strcmp(domain+n-tail,suffix)||!lower_host(domain,normalized)||strcmp(domain,normalized)||
     strspn(domain,"abcdefghijklmnopqrstuvwxyz0123456789-.")!=n||!bf_auth_local_path(path?path:"/"))return 0;
