@@ -142,10 +142,38 @@ For WordPress **events**, use the [signed bridge guide](integrations/wordpress/R
 
 A real conversion requires inspecting routes, state, forms, handlers, permissions, assets, CSS and runtime requirements. [The unified frontend guide](docs/authoring-frontend-architecture.md) explains the tested typed Puck/GrapesJS/Editor.js and C rendering path. **It is not a verified automatic SvelteKit/React/PHP-to-native converter**, and cloning a repository or previewing a page cannot satisfy that acceptance.
 
-## 6. Continue with the right guide
+## 6. Try local data computation before building a frontend
+
+Bonfÿre's native numerical/data paths are designed to support real editorial and application interactions. The following are *source-defined commands*, not assertions that your checkout has the exact ONNX model, `sqlite-vec` extension or vGPU backend installed.
+
+~~~bash
+# Create a local vector store with the width your chosen representation actually uses.
+bonfyre-vec init ./research.db --dims 384
+
+# After creating an embeddings.json file using the matching model/backend:
+bonfyre-vec insert ./research.db ./embeddings.json
+bonfyre-vec neighbors ./research.db --top 8
+
+# Existing vGPU kin kernel reads raw Float32 rows + exact parallel source keys.
+# It runs on Dawn/vGPU when admitted, otherwise deterministic CPU.
+node cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs \
+  --vectors ./research-vectors.f32 --keys ./research-keys.json \
+  --dims 256 --k 8 --backend auto --min 0.85
+~~~
+
+`BonfyreEmbed` uses a pinned real ONNX model/vocabulary with an explicit hash-only fallback, and its receipt must name the backend actually used. The [local semantic index builder](scripts/build_semantic_index.sh) assembles retained source material, calls `bonfyre-embed`, populates `BonfyreVec` and optionally writes a Parquet table through DuckDB. [The vGPU kin kernel](cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs) computes related-source candidates over *one specific numeric chart*, not a universal similarity score. [The field page](site/matrix/field.html) separately demonstrates DuckDB-Wasm querying a 109,761-row Parquet source catalogue and WebGPU rendering that field.
+
+[YAFF/CUE/PCSS and the downstream data-to-editorial guide](docs/native-data-compute-and-presentation.md) explains the native editor, design token, local compute, source provenance, BitNet and FPQ stages. **BitNet's frontier ranking and FPQ weight compression remain subject to distinct admission/quality envelopes**; neither is required for the existing CPU/vGPU/Vec operations.
+
+### Styling the authored output
+
+The **latest local** frontend uses `.pcss` files under `deploy/tailwind` and `integrations/browser`, compiled with PostCSS nested and Tailwind against actual C-generated markup and shared design tokens. Current public `main` does not yet contain the full new PCSS source/build package; running a nonexistent `deploy/tailwind/package.json` command in a fresh clone is not a valid quickstart. Use the [published Tailwind scanner](deploy/tailwind/tailwind.config.js) and the [documented build boundary](docs/native-data-compute-and-presentation.md#3-the-styling-system-is-a-compiler-input-not-a-pile-of-css-overlays) to inspect the real contract, then reconcile local source before a release.
+
+## 7. Continue with the right guide
 
 - [Bonfÿre overview](README.md)
 - [Architecture](docs/architecture.md)
+- [Native CUE/YAFF/PCSS + vGPU/Embed/Vec architecture](docs/native-data-compute-and-presentation.md)
 - [Real workflows and exports](docs/real-workflows-and-interoperability.md)
 - [MCP Project/Workspace](integrations/mcp/README.md)
 - [WordPress signed events and WXR exchange](integrations/wordpress/README.md)
