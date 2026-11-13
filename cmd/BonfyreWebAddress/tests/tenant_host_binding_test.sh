@@ -28,6 +28,8 @@ cc -std=c11 -Wall -Wextra -Werror -pedantic \
   "$root/cmd/BonfyreWebAddress/tools/check_tenant_hosts.c" \
   -o "$tmp/tenant-check"
 "$tmp/tenant-check" "$tmp/valid.tsv" >"$tmp/readback.tsv"
+"$tmp/tenant-check" "$root/cmd/BonfyreWebAddress/examples/tenant-hosts.example.tsv" >"$tmp/example-readback"
+grep -q 'TENANT_HOST_MAP_VALID entries=3' "$tmp/example-readback"
 grep -q 'TENANT_HOST_MAP_VALID entries=4' "$tmp/readback.tsv"
 grep -q 'work[[:space:]]demo.example.net[[:space:]]login.demo.example.net' "$tmp/readback.tsv"
 if "$tmp/tenant-check" "$tmp/duplicate.tsv" >"$tmp/duplicate-readback" 2>&1; then
