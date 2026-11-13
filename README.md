@@ -13,6 +13,7 @@
   <a href="#federated-workspace">Federated workspace</a> ·
   <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source libraries (70)</a> ·
   <a href="#start-here">Start here</a> ·
+  <a href="#architecture-in-pictures">Visual architecture</a> ·
   <a href="#system-architecture">Architecture</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
   <a href="#whats-available-today">Available today</a> ·
@@ -182,6 +183,38 @@ separate owner.
 Bonfÿre also supplies execution history, simulation and optimization capabilities for Aurekai's operating programs. These sit alongside the application, media, commerce, finance and public experience systems.
 
 The Generation-10/V8.1 system map is the architectural basis. The architecture Atlas records component ownership, implementations, measurements and development work across the native estate.
+
+## Architecture in pictures
+
+<p align="center">
+  <a href="docs/architecture-visuals/README.md">
+    <img src="docs/architecture-visuals/site-addressing.svg" width="1160" alt="Aurekai account or organization with business site, client portal and publication; Bonfÿre WebAddress and Matrix resolve the site to Aurekai subdomains, verified custom domains and approved external hosts." />
+  </a>
+</p>
+
+An Aurekai account can operate more than one website or application. **The site owns its content and capabilities; the address points to that site.** This is the existing native separation between CMS site identity, Matrix addressing and presentation. General-purpose custom-domain enrollment, sub-organization delegation, and external-origin proxying remain separately gated extensions—not features implied by this illustration.
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <a href="docs/architecture-visuals/README.md#2-one-source-many-installed-applications"><img src="docs/architecture-visuals/source-to-apps.svg" width="370" alt="One retained source fans out through declared app intake to CRM, narration and collections." /></a>
+      <p><strong>One source, many applications</strong></p>
+      <p>Installed app intake and source-owned provenance.</p>
+    </td>
+    <td width="33%" align="center">
+      <a href="docs/architecture-visuals/README.md#3-editorial-composition-and-publication"><img src="docs/architecture-visuals/editorial-composition.svg" width="370" alt="Unified design, structure and article composition flows through CMS review to published pages and audio." /></a>
+      <p><strong>Editorial composition</strong></p>
+      <p>One document; distinct editing and publication steps.</p>
+    </td>
+    <td width="33%" align="center">
+      <a href="docs/architecture-visuals/README.md#4-work-execution-and-proof"><img src="docs/architecture-visuals/work-to-evidence.svg" width="370" alt="WorkGraph and capabilities pass the authority gate before execution and verifiable receipts." /></a>
+      <p><strong>Work and evidence</strong></p>
+      <p>Authority before effects, receipts after execution.</p>
+    </td>
+  </tr>
+</table>
+
+**[Explore all six architecture views](docs/architecture-visuals/README.md)** — sites and domains, feed-to-app continuations, editorial publishing, work and proof, nine business-application grammars, and catalogue-to-room-planning commerce. The [canonical Atlas](architecture/README.md) supplies maturity and source evidence behind these visual summaries.
 
 ## System architecture
 
