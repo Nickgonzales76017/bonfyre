@@ -31,52 +31,56 @@ Aurekai is one operating business that can support many different experiences. A
 
 This repository is the technical side of that work. Its native implementation covers Matrix identity and addressing, Source Library, data systems, business application schemas, WorkGraph, agents, Model Commons, media, commerce and public web composition. The public GitHub tree and the locally installed runtime are published on separate schedules.
 
-## Architecture — the whole system
+## What Bonfÿre actually does — source, work, software, and delivery
 
-**[Explore the complete Bonfÿre / Aurekai system architecture](docs/architecture-visuals/system-architecture.md)** · **[Unified editors and native frontend](docs/authoring-frontend-architecture.md)** · [Source-checked registry](architecture/README.md) · [Technical design](docs/architecture.md) · [Focused diagrams](docs/architecture-visuals/README.md)
+Bonfÿre is **not** a central “capability matrix” through which every product passes. A WordPress plugin does not behave like a customer database; a paper form does not behave like a creator channel; an XLSX review does not behave like a website; and an MCP tool is not an independent business application. **The native tools preserve those differences while making deliberate, testable connections between them.**
 
-The system is larger than its sites, feeds, narration, marketplace or one-off spatial offers. **Aurekai operates the businesses, accounts, communities and applications; Bonfÿre supplies the native address, data, computation, connection, work, media, economics, security and release machinery.** Each experience is one composition of those shared capabilities.
+**[See real workflows, commands, exchange formats and integration limits](docs/real-workflows-and-interoperability.md)** · [Unified Puck/GrapesJS/Editor.js authoring and C frontend](docs/authoring-frontend-architecture.md) · [All registered architectures](architecture/README.md) · [Full system map](docs/architecture-visuals/system-architecture.md)
 
 ~~~mermaid
 flowchart TB
-  A["Aurekai operating business"]
-  A --> W["WORK: companies, clients, professional workflows"]
-  A --> L["LIFE: people, groups, communities"]
-  A --> V["LIVE: creators, publications, events, media"]
-  A --> S["SHOP: source, products, markets, commerce"]
-  W & L & V & S --> M["Matrix subjects, institutions, presence, audience"]
-  M --> C["Bonfÿre native capability fabric"]
-  C --> SOURCE["Source estate, ForeignTwin, connected providers"]
-  C --> GIT["Git, Forgejo, Josh, GitHub and source lineage"]
-  C --> MODEL["Data/memory, masks, BitNet, FPQ, model runtime"]
-  C --> GEO["Spatial/temporal observation, maps and media"]
-  C --> APPS["CMS, Frappe grammars, account-owned apps"]
-  C --> EDIT["Puck, GrapesJS, Editor.js, MD4C, native C frontend"]
-  C --> WORK["WorkGraph, agents, authority, economy, proof"]
-  SOURCE & GIT & MODEL & GEO & APPS & EDIT & WORK --> R["Verified native components, public and account releases"]
+  WORDPRESS["WordPress REST + signed plugin"] --> WP["Normalized events + native CMS sync"]
+  PANELS["cPanel / InterWorx / Plesk exports"] --> BRIEF["Cited hosting inventory + migration exceptions"]
+  BOOK["Bank / Excel XLSX"] --> WORKBOOK["Books review + account workbook revisions"]
+  PAPER["Scanned paper / PDF"] --> OCR["On-device OCR + page coordinates"]
+  AUTHOR["Puck + GrapesJS + Editor.js"] --> SITE["Native CMS pages + C/MD4C/Mustach rendering"]
+  CHAT["ChatGPT / Codex / Claude clients"] --> MCP["Scoped Project MCP + revision-checked Workspace MCP"]
+  CREATORS["YouTube / Patreon / Spotify"] --> CONNECT["Public account links / provider-auth plans / owner-bound grammar"]
+  SITE --> EXPORT["Standalone HTML / WordPress WXR / Frappe records"]
+  OCR & WORKBOOK & BRIEF --> REVIEW["Source-grounded review / document / evidence"]
+  REVIEW --> EMIT["HTML5 / PDF / EPUB3 / TXT / DOCX via formatter"]
+  MCP --> SITE
+  MCP --> WORKBOOK
+  WP --> SITE
+  CONNECT -. "Only with verified authorization" .-> SITE
 ~~~
 
-**Architecture navigation** — these are independent, interacting system families, not a list of demo pages.
+### Real operations with real outputs
 
-| Area | What to inspect |
-|---|---|
-| **Identity, institutions and groups** | Matrix subjects, account/household/organization scopes, membership, presence, disclosure policies and multi-site addresses |
-| **Connection Studio and providers** | Source and provider catalogs, app installations, sealed credentials, downstream account provisioning and scoped permissions |
-| **Source Library and external estate** | Publisher/channel/endpoint discovery, ForeignTwin exact observation, retained material, provenance and deduplicated intake |
-| **Maps, space and time** | Native spatial observations, valid-time/knowledge-time reconstruction, geographic queries, estate field, civic and operational contexts |
-| **Git and source operations** | GitHub, Forgejo, Josh-filtered checkout, branch/source lineage, pinned libraries, native patch/test/commit/release gates |
-| **Compute and representation** | AddressPlane exact masks, BitNet ranking, FPQ/FPQx, representation passports, local Qwen/MoE, resource/placement decisions |
-| **Data, memory and search** | SQLite, DuckDB/Parquet, Arrow, object storage, embeddings/vectors, incremental and temporal data, reproducible context cuts |
-| **Unified authoring and frontend** | Puck, GrapesJS, Editor.js, MD4C/Mustach, stable typed document, 27 section owners, responsive tokens, 91 Stitch references / 14 patterns, C-native rendering and interactions | 
-| **CMS, publishing and community** | Sites, profiles, posts, 90-journal parity target, rich editing, review/publishing, memberships, activity and collections |
-| **Audio, video and live media** | Transcription, speech, narration as an optional source edition, clips, scene detection, recording, rights, players and channels |
-| **Installed business applications** | Frappe/ERPNext/CRM/HRMS/Helpdesk/LMS/Wiki/Drive/Insights grammars and account-scoped records |
-| **Commerce, finance and fulfillment** | Leads, offers, contracts, catalogue, supply and procurement, quotes, financial state, authorization and witnessed delivery |
-| **Work, agents, proof and protocol** | WorkGraph, execution/agents, authority/resource gates, MCP/A2A and other carriers, receipts, evidence and live readback |
+| Starting point | Native operation and preserved detail | What a person receives |
+|---|---|---|
+| **WordPress blog or legacy CMS** | HMAC-SHA256 signed event; `site + post ID + version` as idempotency key; public REST-route discovery; external-ID CMS sync | Draft/source entry that can be inspected without silently publishing back to WordPress |
+| **Existing native site** | `bonfyre site export SITE --format wordpress|frappe`; `--out` standalone HTML with local CSS inlined | WXR 1.2 XML, Frappe document exchange, or an offline script-free HTML copy |
+| **30-site legacy agency portfolio** | `bonfyre-brief inventory` reads authorized cPanel/InterWorx/Plesk exported listings; detects mismatches and avoids secret fields | Cited inventory and migration questions, not a false “migration complete” state |
+| **Spreadsheet/accounting review** | `bonfyre books inspect --workbook file.xlsx`; native XLSX read with sheet/cell identity; `workbook_review`, `workbook_preview` and `workbook_update` | New review workbook and the *same* signed-in account draft, subject to revision and permission checks |
+| **Paper/scan/image** | `bonfyre-ocr lines file.pdf` uses on-device Vision/PDFKit and returns page, box, confidence and text | Text and page positions for review; never presents OCR confidence as proof |
+| **Report/letter/publication** | `bonfyre-emit` and PandocFormatter produce targeted files via actual format conversion | HTML, PDF, EPUB, plain text, RSS or DOCX where the formatter/dependencies support it |
+| **Puck, GrapesJS, Editor.js** | One nested authoring tree retains IDs, sections, responsive roles, source/binding metadata through editors and native CMS | Editable rich experience rendered through the C/MD4C/Mustach + WebAddress path |
+| **Project or account automation** | Project MCP tools/resources/prompts; `mcp_read_bundle`; `workspace_list/records/views/preview/update` with exact revision and readback | Real project operations or edits to existing installed-product records, not shadow copies |
+| **Creator platform** | YouTube/Patreon public profile locator; Spotify/YouTube/Patreon provider-auth choices; 20 studied interaction grammars | A clearly labeled link, candidate connection or authorized use *only where the provider has been verified* |
+| **Restaurant Toast POS** | Commercial target is listed; no verified Toast-specific native API owner | No claim of synced restaurant menus, orders, checkout or settlement |
 
-[**See the native Mermaid diagrams and source-linked capability coverage**](docs/architecture-visuals/system-architecture.md). The source registry's 557 entries and 562 interactions (2026-11-13 cut) contain implemented, measured, declared and architectural work; none of those tags alone proves a capability is live for an end user.
+**The gaps are as important as the outputs:** WordPress runtime deployment is not proven by bridge tests; WXR round-trip locally does not mean a remote WordPress accepted it; React is used in the editor but a general React/Svelte conversion compiler is not verified; Spotify/YouTube/Patreon connection choices do not establish OAuth tokens; Toast has no proved native connection. See each row's source/tests in the [workflow ledger](docs/real-workflows-and-interoperability.md).
 
-The earlier vector diagrams are still useful as **individual examples**, not as the whole architecture: [sites and domains](docs/architecture-visuals/site-addressing.svg), [source-to-app use](docs/architecture-visuals/source-to-apps.svg), [editorial composition](docs/architecture-visuals/editorial-composition.svg), and [work and evidence](docs/architecture-visuals/work-to-evidence.svg). The [complete focused gallery](docs/architecture-visuals/README.md) separately labels the room-planning flow as one specific commerce/space offer.
+### MCP is a family of precise access paths, not a monolithic AI assistant
+
+[Project MCP](integrations/mcp/project_node.mjs) dispatches specific project and native owners through authenticated tools, resource URIs, prompts, provenance and measured toolset-schema size. `mcp_read_bundle` runs up to eight already-authorized **read-only** calls with schema checks and duplicate-read coalescing. [Account Workspace MCP](integrations/mcp/workspace_mcp.mjs) opens real installed-product records by binding/record/revision: its preview and update must recheck the same owner's permissions. [Workbook MCP](integrations/mcp/workbook_mcp.mjs) calls the financial workbook calculation/review owner rather than performing generic unchecked edits. An individual [WebAddress site](cmd/BonfyreWebAddress/tests/site_product_test.sh) can separately answer MCP on its own host and path.
+
+This is why a universal “matrix” description is inaccurate: the work is in **per-product operations, transport constraints, record identity, source fidelity, review, guards and downstream readback**. Matrix is one address/presence/participation concern—not a replacement for those systems.
+
+### Formats are outputs, not screenshots
+
+The [site-product test](cmd/BonfyreWebAddress/tests/site_product_test.sh) verifies WordPress WXR and Frappe export/re-import text parity and offline HTML asset closure. [Books](cmd/BonfyreDecide/src/books_xlsx.c) preserves source XLSX sheet/cell positions for a review instead of converting it to generic cards. [BonfyreOCR](cmd/BonfyreOCR/src/main.swift) handles paper/PDF positional text locally. [BonfyreEmit](cmd/BonfyreEmit/src/main.c) and [PandocFormatter](components/PandocFormatter/README.md) generate deliverables with format-specific dependencies. These do not claim complete lossless conversion of all documents or framework applications.
 
 ## Why a shared experience compiler matters
 
