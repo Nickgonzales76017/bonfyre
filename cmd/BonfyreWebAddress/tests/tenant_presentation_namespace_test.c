@@ -54,19 +54,32 @@ static int check_owner(sqlite3 *db, const char *host, const char *ns,
     FILE *memory;
     const char *resolved;
     if(!bf_tenant_cms_namespace("work") ||
-       strcmp(bf_tenant_cms_namespace("work"),ns)) return 0;
+       strcmp(bf_tenant_cms_namespace("work"),ns)) {
+        fprintf(stderr,"scope mismatch expected=%s observed=%s\n",ns,
+                bf_tenant_cms_namespace("work")?bf_tenant_cms_namespace("work"):"(none)");
+        return 0;
+    }
     resolved=bf_route_presentation_pattern(host,"/shared",NULL);
-    if(!resolved || strcmp(resolved,pattern))return 0;
+    if(!resolved || strcmp(resolved,pattern)){
+        fprintf(stderr,"route mismatch expected=%s observed=%s\n",pattern,resolved?resolved:"(none)");
+        return 0;
+    }
     memory=open_memstream(&css,&css_len);
     if(!memory)return 0;
     bf_route_presentation_emit_head_for(memory,"work","/shared",NULL,pattern);
     fclose(memory);
-    if(!css || !strstr(css,accent)) {free(css);return 0;}
+    if(!css || !strstr(css,accent)) {
+        fprintf(stderr,"CSS template mismatch expected=%s content=%s\n",accent,css?css:"(none)");
+        free(css);return 0;
+    }
     free(css);
     body=owned(home);
     if(!body)return 0;
     if(!bf_apply_territory_home_presentation(db,&body,"work") ||
-       !strstr(body,headline) || !strstr(body,accent)) {free(body);return 0;}
+       !strstr(body,headline) || !strstr(body,accent)) {
+        fprintf(stderr,"home mismatch expected=%s %s body=%s\n",headline,accent,body);
+        free(body);return 0;
+    }
     free(body);
     return 1;
 }
