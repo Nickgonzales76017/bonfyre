@@ -41,7 +41,7 @@ int main(void) {
     CHECK(exec(cms,
       "CREATE TABLE publisher_account(account_id TEXT,account_subject TEXT,name TEXT,"
       "publisher_subject TEXT,publisher_profile_url TEXT,namespace TEXT,status TEXT,source TEXT);"
-      "CREATE TABLE publisher_subaccount(publisher_account_id TEXT,namespace TEXT,"
+      "CREATE TABLE publisher_subaccount(id INTEGER PRIMARY KEY,publisher_account_id TEXT,namespace TEXT,"
       "subaccount_id TEXT,account_subject TEXT,source TEXT,display_name TEXT,host TEXT,"
       "status TEXT,identity_state TEXT);"
       "CREATE TABLE site_presentation(host TEXT,subject_address TEXT,status TEXT,"
@@ -59,7 +59,7 @@ int main(void) {
       "('acct-1','institution:publisher:desk','Paper Desk',"
       "'institution:publisher:desk','https://outside.other.net/','root','published','news');"
       "INSERT INTO publisher_subaccount VALUES"
-      "('acct-1','root','sub-1','institution:publisher:desk:writer',"
+      "(NULL,'acct-1','root','sub-1','institution:publisher:desk:writer',"
       "'news','Writer','credited-maker.stories.example.net','published','unclaimed');"),
       "account and subaccount");
     bf_credit_profile_parent(cms,archive,"Writer","news",&parent);
