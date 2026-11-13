@@ -147,7 +147,7 @@ flowchart LR
 
 The efficient frontend does not render an entire large dataset into DOM nodes, rerun the full vGPU kernel on a hover, or hand the authored editor raw private rows. **One materialized, versioned, source-scoped result** can power a table, a chart, an article's evidence rail and a reviewed narration workflow, while each receiving app retains its own edit/publish authority. That is a target for integrated browser acceptance; the current code proves several underlying lanes separately.
 
-## 5. Frontend maturity: tokens, density, accessibility, rhythm, icons and interaction
+## 7. Frontend maturity: tokens, density, accessibility, rhythm, icons and interaction
 
 ~~~mermaid
 flowchart TB
@@ -172,7 +172,7 @@ The [design fingerprint work](../cmd/BonfyreCMS/content-types/design_fingerprint
 
 The frontend upgrade should increase actual information density and affordance quality—search, navigation, readable rich media, legitimate actions, group/connection tools, responsive continuity—rather than adding collapsible demo islands or progressively more decorative widgets.
 
-## 6. A compiled experience works across noncommercial and commercial life
+## 8. A compiled experience works across noncommercial and commercial life
 
 ~~~mermaid
 flowchart TB
@@ -191,7 +191,7 @@ flowchart TB
 
 For a **group**, authoring can compose a profile, membership-aware discussion, event, information page and relevant map without duplicating the community owner. For a **research/public-interest journal**, the same tooling can combine prose, citations, data, timeline, source comparison, interactive table, map and an optional audio edition; safety and rights remain independent. For a **student or maker**, a portfolio can become an actual learning resource, lab notebook and live project surface. For an **organization**, a real DocType can become a usable account-native form or review workflow. **The innovation is in retaining the semantic continuity as the presentation and audience change**, not in promising that every one of these workflows has shipped.
 
-## 7. What is innovative — and what still needs proof
+## 9. What is innovative — and what still needs proof
 
 | Architectural proposition | Why it is useful | Evidence vs current limitation |
 |---|---|---|
@@ -206,7 +206,7 @@ For a **group**, authoring can compose a profile, membership-aware discussion, e
 
 **The libraries themselves are not novel inventions.** GrapesJS, Puck, Editor.js, MD4C, Mustach, HTMX and Markdown exist independently. The distinctive Bonfÿre/Aurekai approach, insofar as its cross-owner implementation is verified, is **one compiled experience model** that can retain institution, document, source, action and visual identity while lowering across editors, C-native web output, account apps, creator surfaces, and machine-readable views. Claims about performance superiority, full 90-journal live parity or complete donor-site fidelity require measurements and release readback.
 
-## 8. A typed editor is not itself a framework exporter or a WordPress migrator
+## 10. A typed editor is not itself a framework exporter or a WordPress migrator
 
 Three concrete operations must not be presented as the same feature.
 
@@ -233,7 +233,7 @@ flowchart LR
 
 See the [concrete integration/export ledger](real-workflows-and-interoperability.md) for the WordPress signed bridge, WXR/Frappe exports, hosting migrations, XLSX, scanned documents, MCP workspaces, and creator-platform boundaries.
 
-## 9. Acceptance: a real editor and a real experience, not another demo
+## 11. Acceptance: a real editor and a real experience, not another demo
 
 1. **Create, don't import.** Start with a blank account-owned document; author nested content, interactions and responsive variants through the installed editor. Puck/GrapesJS/Editor.js must not secretly create three competing documents.
 2. **Retain the original meaning.** Reopen after CMS save and compare exact child structure, section payloads, binding IDs, read-only source identity, citation/media provenance, and revision digest.
@@ -244,7 +244,7 @@ See the [concrete integration/export ledger](real-workflows-and-interoperability
 
 In particular, the **90-journal parity target and rich one-to-one personal site reproduction** are acceptance goals, not proofs established by this architecture document. Tests confirm important internal paths, but their existence must not be mistaken for final live readback.
 
-## 10. Source and verification map
+## 12. Source and verification map
 
 | Work | Owner/source | Test/witness |
 |---|---|---|
