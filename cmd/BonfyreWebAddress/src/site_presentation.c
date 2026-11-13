@@ -87,21 +87,35 @@ int bf_site_presentation_validate(sqlite3 *db,const char *json,const char **why)
     }
     sqlite3_finalize(st);return valid && count && rc==SQLITE_DONE;
 }
-static sqlite3_stmt *selected(sqlite3 *db,const char *profile) {
+static sqlite3_stmt *selected(sqlite3 *db,const char *profile,const char *cms_namespace) {
     sqlite3_stmt *st=NULL;char alternate[256]="";const char *bare=profile;
+    const char *scoped =
+      "SELECT layout_tokens,hero_mode,navigation_mode,density,card_mode,typography_mode FROM presentation_template "
+      "WHERE namespace=?4 AND status='published' AND (template=?1 OR template=?2 OR template=?3) "
+      "AND json_valid(layout_tokens) AND json_type(layout_tokens)='object' "
+      "ORDER BY CASE template WHEN ?1 THEN 0 WHEN ?2 THEN 1 ELSE 2 END,id DESC LIMIT 1";
+    const char *historical =
+      "SELECT layout_tokens,hero_mode,navigation_mode,density,card_mode,typography_mode FROM presentation_template "
+      "WHERE status='published' AND (template=?1 OR template=?2 OR template=?3) "
+      "AND json_valid(layout_tokens) AND json_type(layout_tokens)='object' "
+      "ORDER BY CASE template WHEN ?1 THEN 0 WHEN ?2 THEN 1 ELSE 2 END,id DESC LIMIT 1";
     if(!profile || !*profile) return NULL;
     if(!strncmp(profile,"ghost:",6)) {bare=profile+6;snprintf(alternate,sizeof(alternate),"ghost-%s",bare);}
-    if(sqlite3_prepare_v2(db,"SELECT layout_tokens,hero_mode,navigation_mode,density,card_mode,typography_mode FROM presentation_template "
-       "WHERE status='published' AND (template=?1 OR template=?2 OR template=?3) AND json_valid(layout_tokens) "
-       "AND json_type(layout_tokens)='object' ORDER BY CASE template WHEN ?1 THEN 0 WHEN ?2 THEN 1 ELSE 2 END,id DESC LIMIT 1",-1,&st,NULL)!=SQLITE_OK) return NULL;
-    sqlite3_bind_text(st,1,profile,-1,SQLITE_STATIC);sqlite3_bind_text(st,2,alternate,-1,SQLITE_TRANSIENT);sqlite3_bind_text(st,3,bare,-1,SQLITE_STATIC);
-    if(sqlite3_step(st)!=SQLITE_ROW || !tokens_valid(db,(const char *)sqlite3_column_text(st,0),0)) {sqlite3_finalize(st);return NULL;}
+    if(sqlite3_prepare_v2(db,cms_namespace&&*cms_namespace?scoped:historical,-1,&st,NULL)!=SQLITE_OK) return NULL;
+    sqlite3_bind_text(st,1,profile,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,2,alternate,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(st,3,bare,-1,SQLITE_STATIC);
+    if(cms_namespace&&*cms_namespace) sqlite3_bind_text(st,4,cms_namespace,-1,SQLITE_STATIC);
+    if(sqlite3_step(st)!=SQLITE_ROW || !tokens_valid(db,(const char *)sqlite3_column_text(st,0),0)) {
+        sqlite3_finalize(st);return NULL;
+    }
     return st;
 }
 /* Tokens are scoped by the caller: member sites use .site-composition, territory
  * pages body[data-bf-template]. One emitter, one record shape, no per-surface copy. */
-int bf_site_presentation_emit_scoped(FILE *out,sqlite3 *db,const char *profile,const char *selector) {
-    sqlite3_stmt *st=selected(db,profile),*token=NULL;
+static int bf_site_presentation_emit_with_namespace(FILE *out,sqlite3 *db,const char *profile,
+                                                    const char *selector,const char *cms_namespace) {
+    sqlite3_stmt *st=selected(db,profile,cms_namespace),*token=NULL;
     if(!st || !selector || !*selector || strpbrk(selector,"{}<>;")) {if(st) sqlite3_finalize(st); return 0;}
     sqlite3_prepare_v2(db,"SELECT key,value FROM json_each(?1)",-1,&token,NULL);
     sqlite3_bind_text(token,1,(const char *)sqlite3_column_text(st,0),-1,SQLITE_STATIC);
@@ -116,11 +130,19 @@ int bf_site_presentation_emit_scoped(FILE *out,sqlite3 *db,const char *profile,c
     }
     sqlite3_finalize(token);sqlite3_finalize(st);return 1;
 }
+int bf_site_presentation_emit_scoped(FILE *out,sqlite3 *db,const char *profile,const char *selector) {
+    return bf_site_presentation_emit_with_namespace(out,db,profile,selector,NULL);
+}
+int bf_site_presentation_emit_scoped_owned(FILE *out,sqlite3 *db,const char *profile,
+                                           const char *selector,const char *cms_namespace) {
+    if (!cms_namespace || !*cms_namespace) return 0; /* explicit owner required */
+    return bf_site_presentation_emit_with_namespace(out,db,profile,selector,cms_namespace);
+}
 void bf_site_presentation_emit(FILE *out,sqlite3 *db,const char *profile) {
     bf_site_presentation_emit_scoped(out,db,profile,".site-composition");
 }
 void bf_site_presentation_attributes(FILE *out,sqlite3 *db,const char *profile) {
-    sqlite3_stmt *st=selected(db,profile);if(!st) return;
+    sqlite3_stmt *st=selected(db,profile,NULL);if(!st) return;
     fputs(" data-template=\"",out);escaped(out,profile);fputs("\"",out);
     for(size_t i=0;i<sizeof(modes)/sizeof(modes[0]);i++) {
         const char *v=(const char *)sqlite3_column_text(st,(int)i+1);
