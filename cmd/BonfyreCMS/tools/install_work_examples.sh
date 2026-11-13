@@ -30,7 +30,7 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-work-examples.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT INT TERM
 cp "$here/content-types/work_example.json" "$here/content-types/program_template.json" "$tmp/"
 "$cms" schema migrate --db "$db" --schemas "$tmp" >/dev/null
-field() { printf '%s' "$1" | sed -n "s/.*\"$2\":\"\([A-Za-z0-9][A-Za-z0-9._-]*\)\".*/\1/p"; }
+field() { printf '%s' "$1" | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\([A-Za-z0-9][A-Za-z0-9._-]*\)\".*/\1/p"; }
 t=0 kept=0
 while IFS= read -r line; do
     [ -n "$line" ] || continue
