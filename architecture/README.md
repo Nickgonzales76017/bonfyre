@@ -11,6 +11,8 @@ the `.yaff` files are the data; the constitution below is checked in CI.
 
 **Full-system visual companion:** [Aurekai / Bonfÿre system architecture](../docs/architecture-visuals/system-architecture.md) is the broad entry point (13 GitHub-rendered Mermaid views and a source-linked coverage index). The original [six-diagram gallery](../docs/architecture-visuals/README.md) is a collection of specific examples, not a substitute for the mapping, temporal, Git/Josh, representation, group/connection, model, provider, media, finance, work and protocol systems. **No visual supersedes this registry or its witnesses.**
 
+**Frontend and authoring are system infrastructure, not a commercial demo.** [Unified authoring and native frontend](../docs/authoring-frontend-architecture.md) maps Puck, GrapesJS, Editor.js, MD4C, Mustach, typed components, native C output, responsive design, interaction grammars, scene compilation and source/permission continuity across communities, research, education, publishing, profiles and installed applications. Local development source and public GitHub source are on separate release cuts; follow the guide's verified-link distinctions.
+
 **Do not collapse a specific offer into an engine family.** A room-planning offer is not the SpatialObservation/BonfyreSpatial architecture; a narrated feed is not the media engine; a GitHub Pages site is not the entire authoring/publication system. The registry's domain → architecture → internal calculi and interaction/witness layers are the authoritative levels. A compiled or implemented declaration is not proof that its whole end-user journey has been deployed.
 
 ## Operating rule — for every call, mine and codex
