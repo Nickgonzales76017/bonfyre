@@ -7,6 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include "tenant_host_binding.h"
+#include "compat/aurekai_legacy.h"
 #include <bonfyre.h>
 
 static inline int bf_credit_profile_host(const char *by, const char *source, char out[128]) {
@@ -33,7 +36,17 @@ static inline int bf_credit_profile_host(const char *by, const char *source, cha
     bf_sha256_update(&sha, (const uint8_t *)source, m);
     bf_sha256_final(&sha, digest);
     bf_sha256_digest_hex(digest, hex);
-    int written = snprintf(out, 128, "credited-%s-%.20s.aurekai.work", label, hex);
-    return written > 0 && written < 128;
+    const char *base=NULL;
+    int tenant_state=bf_tenant_hosts_status();
+    if(tenant_state==1){
+        /* The operator must name the destination. A source hash is not
+         * permission to mint a new host in an arbitrary institution. */
+        const char *territory=getenv("BONFYRE_CREDIT_PROFILE_TERRITORY");
+        base=bf_tenant_public_host(territory);
+    }else if(tenant_state==0)base=bf_legacy_aurekai_public_host("work");
+    if(!base)return 0;
+    int written=snprintf(out,128,"credited-%s-%.20s.%s",label,hex,base);
+    if(written<=0||written>=128){out[0]=0;return 0;}
+    return 1;
 }
 #endif
