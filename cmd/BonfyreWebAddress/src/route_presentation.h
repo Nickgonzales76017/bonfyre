@@ -1,7 +1,7 @@
 #ifndef BONFYRE_ROUTE_PRESENTATION_H
 #define BONFYRE_ROUTE_PRESENTATION_H
 /* Which composition pattern (and optional presentation_template) a public
- * route wears on one Aurekai territory. Authored as route_presentation rows in
+ * route wears on a tenant-owned territory. Authored as route_presentation rows in
  * the CMS, so a design system arrives as data and every surface that reads the
  * CMS (pages, MCP, API) sees the same choice. Presentation only: the canonical
  * page owner keeps the route, its material and every action. No row, no
@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sqlite3.h>
 #include "site_presentation.h"
+#include "tenant_host_binding.h"
 
 static sqlite3 *cms_open_ro(void);
 
@@ -65,7 +66,11 @@ static inline int bf_route_presentation_lookup(const char *territory, const char
  * inherit a territory presentation. Arbitrary creator/publisher subdomains
  * retain their own independently published subject compositions. */
 static inline const char *bf_route_presentation_territory(const char *host) {
-    if (!host) return NULL;
+    int state=bf_tenant_hosts_status();
+    if(state==1) return bf_tenant_territory_for_host(host);
+    /* Invalid explicit configuration never silently switches to legacy. */
+    if(state<0 || !host) return NULL;
+    /* Release compatibility only, moved out with Aurekai-owned deployment. */
     if (!strcmp(host,"aurekai.work") || !strcmp(host,"signin.aurekai.work")) return "work";
     if (!strcmp(host,"aurekai.life") || !strcmp(host,"auth.aurekai.life")) return "life";
     if (!strcmp(host,"aurekai.live") || !strcmp(host,"auth.aurekai.live")) return "live";
