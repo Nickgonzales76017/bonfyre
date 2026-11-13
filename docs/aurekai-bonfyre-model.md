@@ -47,6 +47,27 @@ The teams and products need different interfaces, but their accounts, source sys
 
 These are **territories**, not the underlying architecture. A company or creator may also have a subdomain or independent host. A website, API resource, account workspace and media channel can refer to the same person or company, with different views and permissions.
 
+## The two compounding innovations: native experiences and local computation
+
+The engineering works in both directions. A customer or publisher can build a real app or article from owner-bound source records; a local processing run can turn an unwieldy table, archive or document collection into a small, reviewable set of findings. The output from either side can flow into the other **without copying the canonical record or inventing permission to use it**.
+
+[Source, measured examples, tests and exact maturities](native-data-compute-and-presentation.md)
+
+| Layer | Actual engineering | What downstream users experience |
+|---|---|---|
+| **YAFF + CUE** | Architectural identities/invariants in YAFF; CUE validates page regions, material readers and application lowering; strict Zig/C compilation emits native descriptors | Different real application layouts share correct data and behaviors without one universal card renderer |
+| **Frontend and editorial** | Puck/React, GrapesJS, Editor.js, native authoring tree, MD4C/Mustach and C WebAddress | Rich composed journal, personal site, workspace and publication that preserve revisions and responsive structure |
+| **PCSS/Tailwind/tokens** | Local \`.pcss\` sources through PostCSS nested/Tailwind, scan actual C-emitted class attributes, closed design roles and generated CSS at served paths | Consistent visual/interaction treatment for articles, editors, accounts and research screens; **local source not yet synced and released** |
+| **Local semantic processing** | BonfyreEmbed ONNX vectors, BonfyreVec SQLite storage and exact/nearest comparison, model-specific vector dimensions | Search tens of thousands of passages, retrieve source-linked evidence and suggest relevant material |
+| **vGPU numerical/data processing** | Tiled similarity and spatial-neighbor compute over numeric arrays, verified backend receipt, persisted source-scoped SQLite neighbor tables; separate DuckDB-Wasm/Parquet browser SQL | A large research table, ranked related items, publisher duplicates, nearby places or materialized findings without recomputing all pairs on every page |
+| **BitNet and FPQ** | Held learned reorder over already eligible candidate handles; measured FPQ transform/reconstruction of model tensor weights | Possible future improvements in search/candidate cost and model residency **after task-quality and admission parity** |
+
+The recorded **vGPU kin** run compared **46,376,100 article/source pairs for 6,810 items in 1.1 seconds** and retained 710 above its similarity floor. The separate published **estate field** read **109,761 Parquet channels** using DuckDB-Wasm in-browser and rendered them through WebGPU. These are two measured work paths. Neither implies general SQL queries run on the GPU.
+
+The connection to editorial is concrete: a source-cited table or nearest-neighbor result can open the original publisher record, then become a reviewed article section, research note, podcast script, CRM follow-up or exported document **only through the appropriate installed authoring/application owner**. The typed frontend provides the reading/interaction experience; the data engines provide bounded results; the owner decides source rights and publication. An end-to-end 100k-row table → editor → published narration test remains open.
+
+**Current source boundary:** the new \`.pcss\` build sources are in local development with a recorded build/check; GitHub \`main\` is not yet the same frontend revision, and the 90-journal/Stitch page deployment still needs its own public readback. This belongs in the business model so readers do not mistake a local compiler pass for a live product.
+
 ## What has actually been built, and why it matters
 
 **The innovation is not “everything flows through Matrix.”** The breakthrough being pursued is the ability to start with radically different source systems and human jobs, **preserve the original semantics and rights**, produce a useful deliverable in the format the receiving party actually needs, and leave a verifiable path to continue or correct the work. Each participating system keeps a distinct owner and protocol.
