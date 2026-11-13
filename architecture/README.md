@@ -9,7 +9,9 @@ every architecture, and let collapse be a **zoom**, not a deletion.
 This directory is machine-readable and self-enforcing. `atlas.mjs` is the engine;
 the `.yaff` files are the data; the constitution below is checked in CI.
 
-**Visual companion:** [Architecture in pictures](../docs/architecture-visuals/README.md) provides native SVG and Mermaid views of site addressing, installed applications, publishing, execution, business grammars and spatial commerce. The visuals never supersede this registry or its witnesses.
+**Full-system visual companion:** [Aurekai / Bonfÿre system architecture](../docs/architecture-visuals/system-architecture.md) is the broad entry point (13 GitHub-rendered Mermaid views and a source-linked coverage index). The original [six-diagram gallery](../docs/architecture-visuals/README.md) is a collection of specific examples, not a substitute for the mapping, temporal, Git/Josh, representation, group/connection, model, provider, media, finance, work and protocol systems. **No visual supersedes this registry or its witnesses.**
+
+**Do not collapse a specific offer into an engine family.** A room-planning offer is not the SpatialObservation/BonfyreSpatial architecture; a narrated feed is not the media engine; a GitHub Pages site is not the entire authoring/publication system. The registry's domain → architecture → internal calculi and interaction/witness layers are the authoritative levels. A compiled or implemented declaration is not proof that its whole end-user journey has been deployed.
 
 ## Operating rule — for every call, mine and codex
 
