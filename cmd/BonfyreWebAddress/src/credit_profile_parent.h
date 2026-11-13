@@ -3,7 +3,8 @@
 /* Every unclaimed publication byline is a subprofile in an established
  * institution scope, not a third actor kind. A published publisher presentation
  * wins only through the exact source's retained publisher name. Otherwise
- * the installed tenant supplies a managing institution; no\n * institutional owner is inferred from an unclaimed byline.
+ * the installed tenant supplies a managing institution; no
+ * institutional owner is inferred from an unclaimed byline.
  * A verified person-account binding must be a separate explicit admission. */
 #include <sqlite3.h>
 #include <stdio.h>
@@ -125,7 +126,7 @@ static void bf_credit_profile_parent(sqlite3 *cms, sqlite3 *archive,
        " AND NOT EXISTS(SELECT 1 FROM site_presentation other"
        " WHERE other.namespace='root' AND other.status='published'"
        " AND other.host=s.host AND other.subject_address<>s.subject_address)"
-       " ORDER BY s.host LIMIT 2",-1,&st,NULL)!=SQLITE_OK)return;
+       " ORDER BY s.host",-1,&st,NULL)!=SQLITE_OK)return;
     sqlite3_bind_text(st,1,subject,-1,SQLITE_TRANSIENT);
     int matches=0;char host[128]="";
     while(sqlite3_step(st)==SQLITE_ROW){
