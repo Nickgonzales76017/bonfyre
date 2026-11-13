@@ -1,6 +1,6 @@
-# Bonfÿre and Aurekai: real workflows, interfaces, exports, and interoperability
+# Bonfÿre — native workflows, interfaces, exports and interoperability
 
-**Read this before substituting “Matrix,” “capability,” “integration,” or “MCP” for an implementation.** Aurekai does not ingest every product into one registry and then magically serve it. Different systems retain their own data, commands, rights, procedures, format requirements and users. Bonfÿre implements **specific bridges, format converters, account-bound editors, first-party command organs, native web renderers, and transport protocols**, with exact handoffs between them.
+**Read this before substituting “Matrix,” “capability,” “integration,” or “MCP” for an implementation.** Bonfÿre does not ingest every consumer's product into one proprietary registry or assume ownership of their accounts. Different institutions retain their own data, commands, rights, procedures, format requirements and users. Bonfÿre implements **specific bridges, format converters, account-bound editors, first-party command organs, native web renderers and transport protocols**; they are generic software interfaces with exact handoffs, not Aurekai commercial operations.
 
 [Main README](../README.md) · [Native authoring](authoring-frontend-architecture.md) · [Architecture](architecture.md) · [Atlas of detailed contracts](../architecture/README.md)
 
