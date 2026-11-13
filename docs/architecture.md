@@ -95,38 +95,43 @@ The original SVG gallery remains useful as a set of **subviews**, not the system
 
 A locally built component, a source-listed provider, an externally referenced substrate, a passed unit test, and an activated public release require different witnesses. The new diagrams indicate these boundaries instead of treating a UI illustration as deployment evidence.
 
-## Whole-machine flow
+## Real, concurrent operating paths — not a universal pipeline
 
-```text
-foreign / digital / physical / human worlds
-                         │
-              boundary + contract fabric
-                         │
-                         ▼
- Identity · Occurrence · Capability · Authority · Commitment
-                         │
-                         ▼
-           WorkGraph + CapabilityClosure
-                         │
-      ┌──────────────────┼───────────────────┐
-      ▼                  ▼                   ▼
- ProviderGraph      ContextCompiler      Money/Resource graphs
-      └──────────────────┼───────────────────┘
-                         ▼
-         EffectKernel + execution phenotype
-                         │
-       native · local model · agent · distributed · human
-                         │
-                         ▼
-       ReceiptEnvelope + WitnessDAG + EvidenceGraph
-                         │
-                         ▼
-        replay · shadow · simulation · backtesting
-                         │
-                         ▼
-       reviewed Aurekai product / partner use
-           + learning and promotion
-```
+See the [source-linked workflow and exchange ledger](real-workflows-and-interoperability.md) before describing a specific system. **WorkGraph is appropriate for scheduled or multi-step work; Matrix is appropriate for addressed subjects/presences; neither is a mandatory hub for every parser, conversion, frontend, media renderer, database, model or provider API.**
+
+~~~mermaid
+flowchart LR
+  WP["WordPress signed webhook"] --> WPCMS["Native CMS external-ID upsert"]
+  WPCMS --> SITE["Published native site (review required)"]
+  SITE --> X["Standalone HTML / WXR / Frappe export"]
+  XLSX["XLSX archive"] --> BOOKS["BonfyreBooks: cell provenance + review"]
+  BOOKS --> WBOOK["Account-owned financial workbook"]
+  WBOOK --> WMCP["Workbook MCP: read / preview / update"]
+  DOC["Paper / scan / PDF"] --> OCR["BonfyreOCR: positional lines"]
+  MD["Authored Markdown / brief"] --> EMIT["BonfyreEmit: HTML/PDF/EPUB/TXT/RSS"]
+  INTAKE["cPanel / InterWorx / Plesk export"] --> INVENTORY["BonfyreBrief: owner statements + source discrepancies"]
+  INVENTORY --> DB["Migration review / BonfyreBridge verification"]
+  CODE["GitHub/Forgejo code + client project"] --> PROJECT["Project MCP / patch preview / tests / native receipts"]
+  EDITORS["Puck/GrapesJS/Editor.js"] --> AUTHOR["One typed CMS authoring tree"]
+  AUTHOR --> RENDER["MD4C + Mustach + C WebAddress rendering"]
+  CREATOR["YouTube/Patreon/Spotify public or provider account"] --> CLAIM["Profile declaration / separate auth and source checks"]
+  CLAIM -. "Only scoped, verified owners" .-> SITE
+~~~
+
+Each path has its *own concrete outputs and refusals*. WordPress's HMAC event and WXR export are not interchangeable. Books can preserve cells without knowing a payment account. OCR can return page geometry without confirming the words. MCP can update a native draft without posting to a remote system. The owner that validates one step does not automatically validate the next.
+
+### Native operational boundaries
+
+| Operation | Source | Transformation and output | Verification scope |
+|---|---|---|---|
+| WordPress signed post event | [bridge](../integrations/wordpress/bridge.mjs) | `site/post/version` idempotency; remote ID retained in native CMS | Bridge/static tests; not live WordPress runtime |
+| Site export | [site product](../cmd/BonfyreWebAddress/src/site_product.c) | offline HTML with embedded CSS; WXR 1.2 or Frappe records | [local export/reimport parity](../cmd/BonfyreWebAddress/tests/site_product_test.sh) |
+| Hosting migration inventory | [BonfyreBrief](../cmd/BonfyreBrief/src/inventory.c) | cites cPanel/InterWorx/Plesk exports and discrepancies | No server execution/cutover |
+| Excel financial review | [Books XLSX](../cmd/BonfyreDecide/src/books_xlsx.c), [workbook MCP](../integrations/mcp/workbook_mcp.mjs) | source sheet/cell positions, new XLSX and native-account revision | Not posting/financial approval |
+| OCR and deliverables | [OCR](../cmd/BonfyreOCR/src/main.swift), [Emit](../cmd/BonfyreEmit/src/main.c) | positioned scan text; PDF, HTML, EPUB, plain text, RSS | Recognizer/dependencies are distinct |
+| MCP project and account tools | [project MCP](../integrations/mcp/project_node.mjs), [workspace MCP](../integrations/mcp/workspace_mcp.mjs) | bounded schema-checked read bundles and revisioned saves | Each owner rechecks grants |
+| Creator platforms | [auth candidates](../integrations/browser/provider-auth-capability.mjs), [interaction grammar](../cmd/BonfyreInteractionGrammar/src/main.c) | public links/declared OAuth flows or typed grammar binding | Not automatically a token, API effect or playback |
+| React/Svelte/custom runtime | [native authoring](authoring-frontend-architecture.md) | React-backed Puck UI and C WebAddress output; Svelte not independently evidenced as an export lane | Per-framework source/build/browser parity is owed |
 
 ## Semantic owners
 
@@ -161,10 +166,10 @@ Aurekai's optimization/learning loop can discover recurring patterns and
 candidate factors. Promotion requires proof and validation; a learned route
 may never mutate semantic truth or cross an authority line.
 
-### Projection kernel
+### Projection kernel — a specific compiler, not the whole engine
 
-Contract Projection Kernel v2 materializes only the outputs demanded by an
-ActiveClosure. Its projection families include:
+Contract Projection Kernel v2 materializes selected outputs demanded by an
+ActiveClosure. Other paths above are **separate parsers, exporters, renderers and native or external application operations** and must not be rewritten as generic projection-kernel calls. Its projection families include:
 
 - native C, Zig, C++, Rust, Python, and TypeScript contracts
 - WIT/WASI/Wasm and component boundaries
@@ -251,7 +256,7 @@ The Atlas currently records:
 | Proof frontier, ForeignTwin, and result-receipt bundle | measured |
 | Nine Frappe product grammars | implemented, with write-back gaps recorded |
 | Model view | mixed implemented/measured/declared |
-| SurfaceIR renderer | architectural |
+| SurfaceIR | implemented in source registry; several legacy screens and deployed-parity paths remain incomplete |
 | Full Aurekai pattern-to-promotion loop | architectural |
 
 This table is a convenience view. The Atlas entry and its witnesses are the
@@ -271,6 +276,9 @@ source of truth.
   envelope; otherwise the machine thaws to a proven ancestor.
 
 ## Read and run next
+
+- [Concrete operational workflows, formats, MCP and external platforms](real-workflows-and-interoperability.md)
+- [Unified authoring, editor and frontend source paths](authoring-frontend-architecture.md)
 
 - [Architecture Atlas](../architecture/README.md)
 - [Quickstart](../QUICKSTART.md)
