@@ -248,7 +248,7 @@ flowchart LR
 | Distinct tool | Measured operation | What the user gets / what remains unproved |
 |---|---|---|
 | **YAFF, CUE and Zig lowering** | validated page material/topology and compiled native application readers | typed layouts and correct owners, not automatically an application with user actions |
-| **PCSS/PostCSS/Tailwind** | locally compiled C-markup and browser-workspace styles; class scan from escaped C/HTML | visual system and tokens; **new local .pcss source not yet on public GitHub \`main\` or accepted live** |
+| **PCSS/PostCSS/Tailwind** | locally compiled C-markup and browser-workspace styles; class scan from escaped C/HTML | visual system and tokens; **new local .pcss source not yet on public GitHub `main` or accepted live** |
 | **Embed and Vec** | source-identified learned ONNX vectors, 384/768-width checks, SQLite insert/search/delete | retrieval/source review, without pretending hashed-token geometry is learned |
 | **vGPU kin** | 6,810 records, 46,376,100 pairwise comparisons in 1.1s; 710 above 0.85 in one recorded source workload | candidate related materials, persisted near rows; not automatically editorial truth |
 | **DuckDB-Wasm/Parquet + WebGPU** | 109,761 source-channel rows read within a browser tab and drawn as a field | large local interactive source catalogue; **DuckDB SQL is not a vGPU SQL kernel** |
