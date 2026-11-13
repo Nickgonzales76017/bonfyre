@@ -4,7 +4,7 @@
 >
 > **Evidence cut:** architecture registry checked against 151 declaration files, generated 2026-11-13 13:02 UTC (digest 4af1cc117e76): **557 architecture entries, 562 interactions, 11 expandable views**. Registry counts are *not* proof of deployed features: 345 tagged implemented, 154 measured, 34 architectural and 24 declared. Live readiness is a separate owner-and-release question.
 
-[Repository README](../../README.md) · [Technical architecture](../architecture.md) · [Source registry](../../architecture/README.md) · [Visual guide](README.md) · [Federated source libraries](../../integrations/federated/)
+[Repository README](../../README.md) · **[Unified editors and native frontend](../authoring-frontend-architecture.md)** · [Technical architecture](../architecture.md) · [Source registry](../../architecture/README.md) · [Visual guide](README.md) · [Federated source libraries](../../integrations/federated/)
 
 ## 1. What the business and runtime actually contain
 
@@ -234,6 +234,24 @@ flowchart TB
 **Native owners:** [BonfyreCMS](../../cmd/BonfyreCMS/), [BonfyreFrappeCompiler](../../cmd/BonfyreFrappeCompiler/), [SitePresentation](../../schemas/control/site-presentation.cue), [PageComposition](../../schemas/control/page-composition.cue), [federated Frappe libraries](../../integrations/federated/frappe/).
 
 A compiled DocType/form is an extracted schema and grammar, **not execution of a Frappe controller or foreign-system mutation**. Business apps, profiles, articles, account dashboards, communities, boards, maps, search and public portals should be composed through the same contracts, with different owners and releases; disconnected demo islands are not an acceptance target.
+
+### Native authoring and frontend are a cross-cutting compiler, not a CMS sidebar
+
+The deeper **[unified authoring, frontend and innovation guide](../authoring-frontend-architecture.md)** traces how Puck, GrapesJS and Editor.js become three interaction modes over one typed document, how MD4C and Mustach lower safe rich content into C-rendered WebAddress pages, and how Source/Scene/SurfaceIR keeps data, appearance, actions, audience and revision separated.
+
+~~~mermaid
+flowchart LR
+  O["Person, group, publisher, research or app owner"] --> S["Typed source, identity and action contracts"]
+  S --> DOC["Shared nested authoring tree"]
+  P["Puck + GrapesJS + Editor.js"] <--> DOC
+  DOC --> CMS["CMS drafts, revisions, source continuity"]
+  CMS --> C["MD4C + Mustach + C native components"]
+  C --> IR["SurfaceIR / studied design / responsive roles"]
+  IR --> B["WebAddress HTML, HTMX and scoped browser interactions"]
+  B --> V["Viewer context + publication/authority readback"]
+~~~
+
+The **27-section authoring parity**, generated component vocabulary, **91 Stitch references mapped into 14 reusable patterns**, native Markdown/editorial rendering, live CMS revision boundary, and real compiled Frappe Lead example establish a more consequential architecture than visual design software on its own. These are verified development contracts and controlled test results, not a guarantee of complete 90-article public-site parity. Puck, GrapesJS and MD4C are not invented here; the distinctive design is their combined owner-preserving native compiler, shared across commercial and noncommercial experiences.
 
 ## 11. Four public entrances, site addressing and release verification
 
