@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "tenant_host_binding.h"
+#include "compat/aurekai_legacy.h"
 
 /* Authentication carries an address, never draft data or authority. */
 #define BF_AUTH_NEXT_MAX 4096
@@ -66,34 +68,49 @@ static int bf_auth_local_path(const char *value) {
     }
     return !(segment_length && segment_length <= 2 && segment_length == segment_dots);
 }
+/* Historical cross-host client redirects are a legacy Aurekai adapter.
+ * An explicitly installed tenant never inherits their allowlist. */
 static int bf_auth_work_host(const char *raw) {
-    char host[256]; size_t n = 0, suffix = strlen(".aurekai.work");
-    if (!raw) return 0;
-    while (raw[n] && raw[n] != ':' && n + 1 < sizeof(host)) { host[n] = (char)tolower((unsigned char)raw[n]); n++; }
-    host[n] = '\0';
-    if (raw[n] && raw[n] != ':') return 0;
-    return !strcmp(host, "aurekai.work") || (n > suffix && !strcmp(host + n - suffix, ".aurekai.work"));
+    char host[256]; size_t n=0;
+    if(!raw)return 0;
+    while(raw[n]&&raw[n]!=':'&&n+1<sizeof(host)){
+        host[n]=(char)tolower((unsigned char)raw[n]);n++;
+    }
+    host[n]='\0';
+    if(raw[n]&&raw[n]!=':')return 0;
+    if(bf_tenant_hosts_status()!=0)return 0;
+    if(!strcmp(host,bf_legacy_aurekai_public_host("work")))return 1;
+    return bf_legacy_aurekai_subhost(host) &&
+           n>strlen(".aurekai.work") &&
+           !strcmp(host+n-strlen(".aurekai.work"),".aurekai.work");
 }
 static int bf_auth_return_address(const char *candidate, const char *host, char *out, size_t cap) {
-    const char *path = candidate; int allowed = 0;
-    size_t n = candidate ? strlen(candidate) : 0;
-    if (!out || cap < sizeof("/account")) return 0;
-    snprintf(out, cap, "/account");
-    if (!n || n >= cap || n >= BF_AUTH_NEXT_MAX) return 0;
-    if (!strncmp(candidate, "https://", 8) && bf_auth_work_host(host)) {
-        static const char *const destinations[] = {"upper90.aurekai.work", "jrss.aurekai.work", "ai-loss.aurekai.work", "leads.aurekai.work"};
-        const char *end = candidate + 8; char target[128]; size_t size, i;
-        while (*end && *end != '/' && *end != '?' && *end != '#') end++;
-        size = (size_t)(end - (candidate + 8));
-        if (!size || size >= sizeof(target)) return 0;
-        for (i = 0; i < size; i++) target[i] = (char)tolower((unsigned char)candidate[i + 8]);
-        target[size] = '\0';
-        for (i = 0; i < sizeof(destinations) / sizeof(destinations[0]); i++) if (!strcmp(target, destinations[i])) allowed = 1;
-        if (!allowed || (*end && *end != '/')) return 0;
-        path = *end ? end : "/";
-    } else if (candidate[0] != '/') return 0;
-    if (!bf_auth_local_path(path)) return 0;
-    memcpy(out, candidate, n + 1); return 1;
+    const char *path=candidate;
+    size_t n=candidate?strlen(candidate):0;
+    if(!out||cap<sizeof("/account"))return 0;
+    snprintf(out,cap,"/account");
+    if(!n||n>=cap||n>=BF_AUTH_NEXT_MAX)return 0;
+    int state=bf_tenant_hosts_status();
+    if(state<0)return 0; /* Invalid config never falls back to old tenant. */
+    if(state==1){
+        if(!bf_tenant_territory_for_host(host)||candidate[0]!='/'||
+           !bf_auth_local_path(candidate))return 0;
+        memcpy(out,candidate,n+1);
+        return 1;
+    }
+    if(!strncmp(candidate,"https://",8)&&bf_auth_work_host(host)){
+        const char *end=candidate+8;char target[256];size_t size;
+        while(*end&&*end!='/'&&*end!='?'&&*end!='#')end++;
+        size=(size_t)(end-candidate-8);
+        if(!size||size>=sizeof(target))return 0;
+        for(size_t i=0;i<size;i++)target[i]=(char)tolower((unsigned char)candidate[i+8]);
+        target[size]='\0';
+        if(!bf_legacy_aurekai_redirect_destination(target)||(*end&&*end!='/'))return 0;
+        path=*end?end:"/";
+    }else if(candidate[0]!='/')return 0;
+    if(!bf_auth_local_path(path))return 0;
+    memcpy(out,candidate,n+1);
+    return 1;
 }
 static void bf_auth_html(FILE *out, const char *s) {
     for (; s && *s; s++) switch (*s) {
