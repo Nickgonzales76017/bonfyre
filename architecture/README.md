@@ -9,6 +9,8 @@ every architecture, and let collapse be a **zoom**, not a deletion.
 This directory is machine-readable and self-enforcing. `atlas.mjs` is the engine;
 the `.yaff` files are the data; the constitution below is checked in CI.
 
+**Visual companion:** [Architecture in pictures](../docs/architecture-visuals/README.md) provides native SVG and Mermaid views of site addressing, installed applications, publishing, execution, business grammars and spatial commerce. The visuals never supersede this registry or its witnesses.
+
 ## Operating rule — for every call, mine and codex
 
 1. **Consult the atlas before architecture work.** `bun atlas.mjs get <id>` /
