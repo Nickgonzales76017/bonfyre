@@ -31,37 +31,50 @@ Aurekai is one operating business that can support many different experiences. A
 
 This repository is the technical side of that work. Its native implementation covers Matrix identity and addressing, Source Library, data systems, business application schemas, WorkGraph, agents, Model Commons, media, commerce and public web composition. The public GitHub tree and the locally installed runtime are published on separate schedules.
 
-## Architecture in pictures
+## Architecture — the whole system
 
-<p align="center">
-  <a href="docs/architecture-visuals/README.md">
-    <img src="docs/architecture-visuals/site-addressing.svg" width="1160" alt="Aurekai account or organization with business site, client portal and publication; Bonfÿre WebAddress and Matrix resolve the site to Aurekai subdomains, verified custom domains and approved external hosts." />
-  </a>
-</p>
+**[Explore the complete Bonfÿre / Aurekai system architecture](docs/architecture-visuals/system-architecture.md)** · [Source-checked registry](architecture/README.md) · [Technical design](docs/architecture.md) · [Focused diagrams](docs/architecture-visuals/README.md)
 
-An Aurekai account can operate more than one website or application. **The site owns its content and capabilities; the address points to that site.** This is the existing native separation between CMS site identity, Matrix addressing and presentation. General-purpose custom-domain enrollment, sub-organization delegation, and external-origin proxying remain separately gated extensions—not features implied by this illustration.
+The system is larger than its sites, feeds, narration, marketplace or one-off spatial offers. **Aurekai operates the businesses, accounts, communities and applications; Bonfÿre supplies the native address, data, computation, connection, work, media, economics, security and release machinery.** Each experience is one composition of those shared capabilities.
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <a href="docs/architecture-visuals/README.md#2-one-source-many-installed-applications"><img src="docs/architecture-visuals/source-to-apps.svg" width="370" alt="One retained source fans out through declared app intake to CRM, narration and collections." /></a>
-      <p><strong>One source, many applications</strong></p>
-      <p>Installed app intake and source-owned provenance.</p>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/architecture-visuals/README.md#3-editorial-composition-and-publication"><img src="docs/architecture-visuals/editorial-composition.svg" width="370" alt="Unified design, structure and article composition flows through CMS review to published pages and audio." /></a>
-      <p><strong>Editorial composition</strong></p>
-      <p>One document; distinct editing and publication steps.</p>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/architecture-visuals/README.md#4-work-execution-and-proof"><img src="docs/architecture-visuals/work-to-evidence.svg" width="370" alt="WorkGraph and capabilities pass the authority gate before execution and verifiable receipts." /></a>
-      <p><strong>Work and evidence</strong></p>
-      <p>Authority before effects, receipts after execution.</p>
-    </td>
-  </tr>
-</table>
+~~~mermaid
+flowchart TB
+  A["Aurekai operating business"]
+  A --> W["WORK: companies, clients, professional workflows"]
+  A --> L["LIFE: people, groups, communities"]
+  A --> V["LIVE: creators, publications, events, media"]
+  A --> S["SHOP: source, products, markets, commerce"]
+  W & L & V & S --> M["Matrix subjects, institutions, presence, audience"]
+  M --> C["Bonfÿre native capability fabric"]
+  C --> SOURCE["Source estate, ForeignTwin, connected providers"]
+  C --> GIT["Git, Forgejo, Josh, GitHub and source lineage"]
+  C --> MODEL["Data/memory, masks, BitNet, FPQ, model runtime"]
+  C --> GEO["Spatial/temporal observation, maps and media"]
+  C --> APPS["CMS, Frappe grammars, account-owned apps"]
+  C --> WORK["WorkGraph, agents, authority, economy, proof"]
+  SOURCE & GIT & MODEL & GEO & APPS & WORK --> R["Verified native components, public and account releases"]
+~~~
 
-**[Explore all six architecture views](docs/architecture-visuals/README.md)** — sites and domains, feed-to-app continuations, editorial publishing, work and proof, nine business-application grammars, and catalogue-to-room-planning commerce. The [canonical Atlas](architecture/README.md) supplies maturity and source evidence behind these visual summaries.
+**Architecture navigation** — these are independent, interacting system families, not a list of demo pages.
+
+| Area | What to inspect |
+|---|---|
+| **Identity, institutions and groups** | Matrix subjects, account/household/organization scopes, membership, presence, disclosure policies and multi-site addresses |
+| **Connection Studio and providers** | Source and provider catalogs, app installations, sealed credentials, downstream account provisioning and scoped permissions |
+| **Source Library and external estate** | Publisher/channel/endpoint discovery, ForeignTwin exact observation, retained material, provenance and deduplicated intake |
+| **Maps, space and time** | Native spatial observations, valid-time/knowledge-time reconstruction, geographic queries, estate field, civic and operational contexts |
+| **Git and source operations** | GitHub, Forgejo, Josh-filtered checkout, branch/source lineage, pinned libraries, native patch/test/commit/release gates |
+| **Compute and representation** | AddressPlane exact masks, BitNet ranking, FPQ/FPQx, representation passports, local Qwen/MoE, resource/placement decisions |
+| **Data, memory and search** | SQLite, DuckDB/Parquet, Arrow, object storage, embeddings/vectors, incremental and temporal data, reproducible context cuts |
+| **CMS, publishing and community** | Sites, profiles, posts, 90-journal parity target, rich editing, review/publishing, memberships, activity and collections |
+| **Audio, video and live media** | Transcription, speech, narration as an optional source edition, clips, scene detection, recording, rights, players and channels |
+| **Installed business applications** | Frappe/ERPNext/CRM/HRMS/Helpdesk/LMS/Wiki/Drive/Insights grammars and account-scoped records |
+| **Commerce, finance and fulfillment** | Leads, offers, contracts, catalogue, supply and procurement, quotes, financial state, authorization and witnessed delivery |
+| **Work, agents, proof and protocol** | WorkGraph, execution/agents, authority/resource gates, MCP/A2A and other carriers, receipts, evidence and live readback |
+
+[**See the native Mermaid diagrams and source-linked capability coverage**](docs/architecture-visuals/system-architecture.md). The source registry's 557 entries and 562 interactions (2026-11-13 cut) contain implemented, measured, declared and architectural work; none of those tags alone proves a capability is live for an end user.
+
+The earlier vector diagrams are still useful as **individual examples**, not as the whole architecture: [sites and domains](docs/architecture-visuals/site-addressing.svg), [source-to-app use](docs/architecture-visuals/source-to-apps.svg), [editorial composition](docs/architecture-visuals/editorial-composition.svg), and [work and evidence](docs/architecture-visuals/work-to-evidence.svg). The [complete focused gallery](docs/architecture-visuals/README.md) separately labels the room-planning flow as one specific commerce/space offer.
 
 ## What the shared software makes possible
 
@@ -71,7 +84,11 @@ An Aurekai account can operate more than one website or application. **The site 
 
 **Information that has more than one use.** A job listing can be discovered publicly, continued into an account's CRM and used to prepare a narrated update. A publisher's content can belong to a profile and also appear in a collection or channel. The source stays identifiable while receiving applications manage their own work. These cross-application paths are ongoing product and integration work.
 
-**Products that go beyond a catalogue.** Aurekai's [room planner](https://nickgonzales76017.github.io/bonfyre/spaces/product-room/) and [product configuration workspace](https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/) combine product information, choices, dimensions and spatial layout. Similar source information also supports procurement and business operations.
+**Geography, spatial evidence and products.** [BonfyreSpatial](cmd/BonfyreSpatial/) and [spatial observation contracts](schemas/control/spatial-observation.cue) cover grounded location, temporal reconstruction and spatial queries across many contexts. One customer offer used those foundations for a [room planner](https://nickgonzales76017.github.io/bonfyre/spaces/product-room/) and [product configuration workspace](https://nickgonzales76017.github.io/bonfyre/spaces/catalogue/); neither defines the broader spatial architecture.
+
+**People, groups and connected accounts.** Profiles, memberships, communities, institutions and account-owned apps have distinct identity, audience and permission contracts. [Connection Studio](integrations/browser/connection-studio.mjs), [ProviderEstate](cmd/BonfyreProviderEstate/) and [RepositoryFabric](cmd/BonfyreRepositoryFabric/) connect sources, installations, provider tenants, Git hosting and native workflows. A listed provider is not necessarily an authenticated or writable connection.
+
+**Source and model infrastructure.** [AddressPlane](cmd/BonfyreWebAddress/src/subject_address.c) excludes impossible candidates through exact declared masks before costly work; [BitNet](cmd/BonfyreBitNet/) may diagnostically reorder survivors, while [FPQ](cmd/BonfyreFPQ/) and [QwenFPQ](cmd/BonfyreQwenFPQ/) explore more efficient weight representations. Their measurements and DEFER gates are recorded separately from production eligibility; they are not claimed as complete compressed-model parity.
 
 **Native tools and computation.** The Bonfÿre codebase includes C/Zig-centered commands for data, models, media, workflows, finance and integrations, alongside model runtimes, agents and external backends. A developer can inspect the [technical guide](https://nickgonzales76017.github.io/bonfyre/docs.html) or start with an individual tool.
 
