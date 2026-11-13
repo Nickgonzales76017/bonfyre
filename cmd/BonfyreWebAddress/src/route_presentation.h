@@ -86,7 +86,7 @@ static inline const char *bf_route_presentation_native_pattern(const char *terri
 }
 static inline void bf_route_presentation_emit_body_attribute(FILE *out, const char *pattern) {
     if(!bf_route_presentation_safe(pattern) || bf_tenant_hosts_status()<0)return;
-    const char *attr=bf_tenant_hosts_status()==1?"data-bf-pattern":"data-aurekai-pattern";
+    const char *attr=bf_tenant_hosts_status()==1?"data-bf-pattern":bf_legacy_aurekai_composition_attribute();
     fprintf(out, " %s=\"%s\"",attr,pattern);
 }
 /* Marks the body with the pattern and, when the row names a published
@@ -106,8 +106,8 @@ static inline void bf_route_presentation_emit_head_for(FILE *out, const char *te
     char p[65], t[65];
     if (!bf_route_presentation_safe(pattern)) return;
     if(bf_tenant_hosts_status()<0)return;
-    const char *key=bf_tenant_hosts_status()==1?"bonfyre:composition":"aurekai:composition";
-    const char *scope=bf_tenant_hosts_status()==1?"body[data-bf-pattern]":"body[data-aurekai-pattern]";
+    const char *key=bf_tenant_hosts_status()==1?"bonfyre:composition":bf_legacy_aurekai_composition_meta();
+    const char *scope=bf_tenant_hosts_status()==1?"body[data-bf-pattern]":bf_legacy_aurekai_composition_scope();
     fprintf(out, "<meta name=\"%s\" content=\"%s\">"
                  "<link rel=\"stylesheet\" href=\"/assets/composition.css\">",key,pattern);
     if (territory && route && bf_route_presentation_lookup(territory, route, query, p, t) && t[0]) {
