@@ -19,6 +19,17 @@ CORE = (
     Path("lib/libbonfyre/include"),
 )
 SHIPPING_SUFFIXES = {".c", ".h", ".zig", ".m", ".mm", ".cc", ".cpp"}
+# These have actual tenant-aware adapters. Do not allow another business host,
+# meta key or managing-institution literal to creep back into reusable code.
+NEUTRAL_WEBADDRESS = (
+    Path("cmd/BonfyreWebAddress/src/tenant_host_binding.h"),
+    Path("cmd/BonfyreWebAddress/src/session_handoff_web.h"),
+    Path("cmd/BonfyreWebAddress/src/route_presentation.h"),
+    Path("cmd/BonfyreWebAddress/src/auth_continuation.h"),
+    Path("cmd/BonfyreWebAddress/src/credit_profile_host.h"),
+    Path("cmd/BonfyreWebAddress/src/credit_profile_parent.h"),
+)
+TENANT_BRAND = re.compile(r"aurekai\\.|aurekai:|data-aurekai|institution:aurekai", re.IGNORECASE)
 BRAND = re.compile(r"aurekai|aurekai\.(?:work|life|live|shop)", re.IGNORECASE)
 FORBIDDEN_README = (
     "built on software. driven by aurekai.",
@@ -50,6 +61,15 @@ def problems(root: Path) -> list[str]:
                 if BRAND.search(line):
                     relative = source.relative_to(root)
                     failures.append(f"{relative}:{line_number}: Aurekai-specific brand/host in generic shipping core; use a tenant adapter")
+
+    for path in NEUTRAL_WEBADDRESS:
+        source = root / path
+        if not source.is_file():
+            failures.append(f"missing tenant-neutral WebAddress owner {path}")
+            continue
+        for line_number, line in enumerate(source.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if TENANT_BRAND.search(line):
+                failures.append(f"{path}:{line_number}: business-specific literal in tenant-neutral WebAddress; use explicit installation or compat adapter")
 
     readme = root / "README.md"
     if not readme.is_file():
@@ -89,6 +109,9 @@ def self_test() -> None:
         root = Path(td)
         for folder in CORE:
             (root / folder).mkdir(parents=True, exist_ok=True)
+        for path in NEUTRAL_WEBADDRESS:
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            (root / path).write_text("/* neutral tenant implementation */\\n", encoding="utf-8")
         (root / "README.md").write_text("# Bonfÿre\n\nNeutral native engine.\n", encoding="utf-8")
         (root / "docs").mkdir()
         (root / "docs/OWNERSHIP-BOUNDARY.md").write_text(
@@ -106,6 +129,10 @@ def self_test() -> None:
         brand_file.write_text('const char *host = "aurekai.work";\n', encoding="utf-8")
         assert any("brand.c:1" in item for item in problems(root)), "brand source was admitted"
         brand_file.unlink()
+        tenant_file = root / NEUTRAL_WEBADDRESS[0]
+        tenant_file.write_text('const char *bad = "aurekai.work";\\n', encoding="utf-8")
+        assert any("tenant-neutral WebAddress" in item for item in problems(root)), "new branding in neutral WebAddress was admitted"
+        tenant_file.write_text("/* neutral tenant implementation */\\n", encoding="utf-8")
         (root / "README.md").write_text(
             "# Bonfÿre\n\nBuilt on software. Driven by Aurekai.\n", encoding="utf-8")
         assert any("branding" in item for item in problems(root)), "business slogan was admitted"
