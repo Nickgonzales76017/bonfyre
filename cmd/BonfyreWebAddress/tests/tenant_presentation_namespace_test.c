@@ -1,6 +1,5 @@
 /* Release gate: two institutions can reuse identical route, territory and
  * template names without borrowing one another's editorial or CSS records. */
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
