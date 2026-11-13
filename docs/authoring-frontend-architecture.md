@@ -110,6 +110,43 @@ The browser parity test (`cmd/BonfyreSurfaceScene/tests/native_browser_authoring
 
 The broader [WebLowering contract](../cmd/BonfyreWebAddress/src/main.c) asks what HTML, CSS and the browser can already do before loading more script. Native initial HTML, owner-scoped fragments, standards-based behavior and optional browser interaction can coexist. A native C backbone is not an argument for removing all client-side interaction.
 
+## 5. The PostCSS/Tailwind/token compiler and real UI controls
+
+**Current local development direction:** \`.pcss\` is **PostCSS source**, with \`postcss-nested\` and Tailwind 3.4, not Sass. The local \`deploy/tailwind/package.json\` builds the shared \`input.pcss\`, site stylesheet families in \`deploy/tailwind/styles/*.pcss\`, and eighteen browser workspace CSS families in \`integrations/browser/**/*.pcss\`. The runtime keeps the same served \`.css\` URLs after compilation.
+
+[Public Tailwind class-value extractor](../deploy/tailwind/tailwind.config.js) reads actual \`class=\` attributes from C header/implementation files, browser templates and authoring MJS. It scans C's escaped class attributes without treating arbitrary code keywords as CSS utilities. Shared semantic component selectors remain complete under safelisting; \`@apply\`, nested rules and tokenized CSS custom properties define their actual visual language. This is how a native page can have consistent focus, form, hover, density, typography, grids and dark modes without 27 independent inline style systems.
+
+~~~mermaid
+flowchart LR
+  THEME["Authored PresentationTemplate / bounded role tokens"] --> CSSV["CSS custom properties"]
+  CUE["CUE page+application lowering"] --> C["Native C markup and class roles"]
+  PUCK["Puck / GrapesJS / Editor.js tree"] --> C
+  SCAN["Tailwind class transform over C/template classes"] --> BUILD["PostCSS + Tailwind .pcss compiler"]
+  PCSS["Site + browser workspace .pcss source"] --> BUILD
+  CSSV --> PAGE["Styled native page and real application UI"]
+  C --> PAGE
+  BUILD --> PAGE
+~~~
+
+**Source/release status:** the local PCSS sources and \`deploy/tailwind/package.json\` were inspected on November 13, 2026, but the public GitHub \`main\` cut does **not yet contain** those files. The attached Codex handoff records build/check commands and local migration, not a live four-domain CSS release. The generated stylesheets, source maps/asset URLs, responsive browser tests and completed Stitch screen routes still need synchronized acceptance.
+
+**Accept the experience rather than just a CSS build:** users need real route flow, typed table/research layouts, durable player, rich journal composition, full editorial typography, forms and interactive controls. The central shell should own navigation and player placement once. Repeating shells, routes with old demo bodies, and added workflow blocks underneath a mockup fail the frontend criterion.
+
+## 6. Large local computations belong inside editorial and account experiences
+
+[The native computation and presentation guide](native-data-compute-and-presentation.md) tracks the independent YAFF/CUE, Embed/Vec, vGPU, FPQ and BitNet source paths.
+
+| Input / numeric computation | What the editor or reader can consume | What remains independent |
+|---|---|---|
+| 109,761-channel Parquet catalogue and DuckDB-Wasm tab query | a dense, readable, source-linked browser table and discovery/research view | GPU drawing is distinct from DuckDB's SQL execution; candidate != admitted source |
+| vGPU kin kernel over one selected numeric chart | persisted top-k article/source neighbors, cross-publisher twin candidates and editorial related-reading | a similarity score is not source truth, current publication or membership |
+| vGPU spatial neighborhood kernel | bounded nearby items and location/time research aids | distance does not prove person attended, venue open or place relationship |
+| BonfyreEmbed ONNX plus BonfyreVec SQLite | cited/retrievable passages for journalist, researcher or account operator | actual representation/passport and source read rights must match |
+| BitNet rank over masked AddressPlane survivors | optional more useful ordering of eligible source candidates *if quality trials admit it* | cannot change source eligibility or grant a provider |
+| FPQ Qwen tensor transform | potential future lower-residency model used to prepare editorial summaries | reconstruction test cannot claim task/generation parity |
+
+The efficient frontend does not render an entire large dataset into DOM nodes, rerun the full vGPU kernel on a hover, or hand the authored editor raw private rows. **One materialized, versioned, source-scoped result** can power a table, a chart, an article's evidence rail and a reviewed narration workflow, while each receiving app retains its own edit/publish authority. That is a target for integrated browser acceptance; the current code proves several underlying lanes separately.
+
 ## 5. Frontend maturity: tokens, density, accessibility, rhythm, icons and interaction
 
 ~~~mermaid
