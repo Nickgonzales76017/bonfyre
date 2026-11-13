@@ -60,4 +60,27 @@ static inline int bf_legacy_aurekai_subhost(const char *host) {
     }
     return 0;
 }
+/* Only the compatibility adapter may materialize the old business
+ * institution and branded editorial tokens. Neutral code asks an interface. */
+static inline const char *bf_legacy_aurekai_managing_subject(void){
+    return "institution:aurekai:work";
+}
+static inline const char *bf_legacy_aurekai_managing_label(void){
+    return "Aurekai";
+}
+static inline const char *bf_legacy_aurekai_composition_attribute(void){
+    return "data-aurekai-pattern";
+}
+static inline const char *bf_legacy_aurekai_composition_meta(void){
+    return "aurekai:composition";
+}
+static inline const char *bf_legacy_aurekai_composition_scope(void){
+    return "body[data-aurekai-pattern]";
+}
+static inline int bf_legacy_aurekai_work_host(const char *host){
+    const char *base=bf_legacy_aurekai_public_host("work");
+    size_t n=host?strlen(host):0,m=strlen(base);
+    return host&&(!strcmp(host,base)||
+           (n>m+1&&host[n-m-1]=='.'&&!strcmp(host+n-m,base)));
+}
 #endif
