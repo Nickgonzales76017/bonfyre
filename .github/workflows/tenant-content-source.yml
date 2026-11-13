@@ -1,0 +1,24 @@
+name: Bonfyre tenant-owned CMS source
+on:
+  push:
+    paths:
+      - "cmd/BonfyreCMS/tools/install_territory_houses.mjs"
+      - "cmd/BonfyreCMS/tools/tenant_houses_source_test.mjs"
+      - ".github/workflows/tenant-content-source.yml"
+  pull_request:
+    paths:
+      - "cmd/BonfyreCMS/tools/install_territory_houses.mjs"
+      - "cmd/BonfyreCMS/tools/tenant_houses_source_test.mjs"
+      - ".github/workflows/tenant-content-source.yml"
+  workflow_dispatch:
+
+jobs:
+  tenant-input:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Prove tenant source selection, no CMS write and invalid inputs refused
+        run: bun cmd/BonfyreCMS/tools/tenant_houses_source_test.mjs
