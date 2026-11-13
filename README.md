@@ -212,78 +212,67 @@ Review the license in each companion repo separately. The three unusable
 archived gitlink coordinates remain documented in their evidence history
 rather than blocking normal submodule initialization.
 
-## Building blocks
+## Source entry points — actual code owners
 
-Bonfÿre spans core native systems and interoperable application families. The repository exposes source and integration boundaries for each:
+These are not interchangeable modules behind a single generic call. The source file or command linked here is where the **specific format, stored record, action or output behavior** lives.
 
-| Area | What it does | Where it lives |
+| Work | Actual owner | Preserved output or boundary |
 |---|---|---|
-| Data | Local SQL and vector search, with the source of every record kept | [`cmd/BonfyreVec`](cmd/BonfyreVec/), [`cmd/BonfyreEmbed`](cmd/BonfyreEmbed/), [`cmd/BonfyreCMS`](cmd/BonfyreCMS/) |
-| Contracts | Typed schemas and the code generated from them | `schemas/control` (in release review) |
-| Models | Serving, quantization and embeddings | [`cmd/BonfyreQuant`](cmd/BonfyreQuant/), [`cmd/BonfyreModel`](cmd/BonfyreModel/) |
-| Work | Requests, commitments and who may act on them | [`cmd/BonfyreQueue`](cmd/BonfyreQueue/), [`cmd/BonfyreAuth`](cmd/BonfyreAuth/), [`cmd/BonfyreWorkflow`](cmd/BonfyreWorkflow/) |
-| Apps | Frappe and WordPress integration | [`integrations/`](integrations/) |
-| Media | Preparing and transcribing recordings | [`cmd/BonfyreMediaPrep`](cmd/BonfyreMediaPrep/), [`cmd/BonfyreTranscribe`](cmd/BonfyreTranscribe/) |
-| Commerce | Moving records between systems and checking them on arrival | `cmd/BonfyreBridge` (in release review) |
-| Finance | Meters, invoices and recorded payments | [`cmd/BonfyreFinance`](cmd/BonfyreFinance/), [`cmd/BonfyrePay`](cmd/BonfyrePay/), [`cmd/BonfyreMeter`](cmd/BonfyreMeter/) |
-| Web | Sites, pages and the assistant endpoint for each | `cmd/BonfyreWebAddress` (in release review), `components/BonfyreServiceSite` (in release review) |
+| WordPress source changes | [signed bridge](integrations/wordpress/bridge.mjs) / [plugin](integrations/wordpress/plugin/aurekai-bridge.php) | HMAC, source site/post/version, idempotent native CMS entry |
+| Site export / content transfer | [site product](cmd/BonfyreWebAddress/src/site_product.c) | offline HTML/CSS, WordPress WXR 1.2, Frappe documents |
+| Legacy PHP hosting inventory | [BonfyreBrief](cmd/BonfyreBrief/src/inventory.c) | cPanel/InterWorx/Plesk counts, discrepancy exceptions, secret refusal |
+| Database content verification | [BonfyreBridge](cmd/BonfyreBridge/src/main.c) | row/value/type comparison; not a remote cutover |
+| XLSX, accounting review | [Books XLSX](cmd/BonfyreDecide/src/books_xlsx.c), [workbook MCP](integrations/mcp/workbook_mcp.mjs) | source sheet/cell coordinates, XLSX review, current account revision |
+| Paper and PDF recognition | [BonfyreOCR](cmd/BonfyreOCR/src/main.swift) | line/page/bounding box/confidence and recognized text |
+| Outbound documents | [BonfyreEmit](cmd/BonfyreEmit/src/main.c), [PandocFormatter](components/PandocFormatter/README.md) | format-dependent HTML/PDF/EPUB/TXT/RSS/DOCX |
+| Frontend and authoring | [WebAddress](cmd/BonfyreWebAddress/), [SurfaceScene](cmd/BonfyreSurfaceScene/) | Puck/GrapesJS/Editor.js local editor grammar; C/MD4C native HTML and typed interactions |
+| Business app surfaces | [Frappe compiler](cmd/BonfyreFrappeCompiler/) | real DocType fields/layout, independently governed record effects |
+| Project code and assistants | [Project MCP](integrations/mcp/project_node.mjs), [RepositoryFabric](cmd/BonfyreRepositoryFabric/src/main.c) | schema-bound tools, Git/Forgejo/Josh source, source patches/tests/receipts |
+| Installed account editors | [Workspace MCP](integrations/mcp/workspace_mcp.mjs) | same saved product record, expected revision/digest and readback |
+| Provider/account enrollment | [Onboarding](integrations/browser/onboarding/README.md), [ProviderEstate](cmd/BonfyreProviderEstate/) | candidate stages, credentials, destination scope and individual remote verification |
+| Community and group participation | [community body](cmd/BonfyreCMS/content-types/community_body.json) | membership, moderation, published conversation and expiry |
+| Creator audio/podcasting | [account audio](cmd/BonfyreCMS/src/account_world_audio.c) | station/show schedule, transcripts, sourced episodes and playback controls |
+| Spatial/temporal evidence | [spatial schema](schemas/control/spatial-observation.cue), [BonfyreSpatial](cmd/BonfyreSpatial/) | observed/effective/recorded/expiry times, indexed queries |
+| Local inference/compression | [BonfyreBitNet](cmd/BonfyreBitNet/), [BonfyreFPQ](cmd/BonfyreFPQ/), [BonfyreModel](cmd/BonfyreModel/) | candidate ranking, measured representation, model-specific admission; experimental paths remain held |
 
-The [building blocks guide](https://docs.aurekai.work/building-blocks) says
-where to start with each, and the
-[local-first guide](https://docs.aurekai.work/local-first-applications)
-walks through the data area. Known limits are written down rather than hidden:
-a vector store is made at one width (`bonfyre-vec init store.db --dims 768`),
-and changing embedding model means making a new store.
+The [real-workflow guide](docs/real-workflows-and-interoperability.md) names the **input and output contracts, test, source path, missing authority and external acceptance**. The [architecture registry](architecture/README.md) supplies additional internal algorithms and relationships, but the registry's counts are not a replacement for the source-specific explanation.
 
-## How it is put together
+## How independently owned systems connect
 
-Underneath, the **Matrix** represents each subject once and connects its
-addresses, public presence, relationships, institutions, state, economics,
-compute, external participation and interfaces. Identity, authority,
-capability, work, effects, evidence, resources and commitments each have a
-separate owner.
+**An address is not a compiler.** Matrix is responsible for semantic subject addressing, presence and institution/territory scopes when an interaction needs them. It does not read XLSX, issue a WordPress webhook, perform OCR, generate a React bundle, change a CRM record, authenticate Spotify or post a payment.
 
-Bonfÿre also supplies execution history, simulation and optimization capabilities for Aurekai's operating programs. These sit alongside the application, media, commerce, finance and public experience systems.
+**A work planner is not a document parser.** WorkGraph coordinates actual missions, dependencies, leases and completion where that behavior is needed. BonfyreBooks can inspect a local spreadsheet or BonfyreEmit can render an existing document without first making a WorkGraph claim. WorkGraph still matters for long-running migrations, multi-owner reviews, releases and accountable agents.
 
-The Generation-10/V8.1 system map is the architectural basis. The architecture Atlas records component ownership, implementations, measurements and development work across the native estate.
+**An MCP surface is not an independent data owner.** Project MCP exposes native source operations/resources; WebAddress site MCP serves a particular site's audience; Workspace MCP edits the *existing product record* under its current account grant. All three need different schemas, receivers and effects.
 
-## System architecture
+**A web component is not the business record.** A Puck/React or GrapesJS editor can reorganize an addressable Frappe form or CMS article while the source application retains the record and authorization. MD4C/Mustach/C rendering, HTMX fragments and browser interactions are presentation paths. Svelte/React/PHP full source-conversion parity remains a different, unproven task.
 
-```text
-intent / observation / foreign state
-                 │
-                 ▼
- Subject · AddressConstellation · Presence · Authority
-                 │
-                 ▼
- Bonfÿre Matrix · CapabilityClosure · WorkGraph
-                 │
-       ProviderGraph · Context · Resources · MoneyGraph
-                 │
-                 ▼
- EffectKernel · AgentSession · native/local/external realization
-                 │
-                 ▼
- ReceiptEnvelope · WitnessDAG · EvidenceGraph
-                 │
-                 ▼
- replay · shadow · simulation · backtesting
-                 │
-                 ▼
-       Aurekai: apps · networks · programs · commerce
-```
+~~~mermaid
+flowchart TB
+  DOC["XLSX, PDF, document source"] --> FORMAT["Books, OCR, Emit: format-specific outputs"]
+  CMS["WordPress signed event / CMS content"] --> PUBLISH["CMS, review, WebAddress and WXR/Frappe export"]
+  DEV["Git / Forgejo / Josh"] --> PATCH["Project tools, tests, committed source"]
+  ACC["Installed workspace record"] --> EDIT["Workspace/Workbook MCP exact revision"]
+  SERVICE["Provider/account candidate"] --> GATE["Provider auth and current-effect verification"]
+  COMPOSE["Puck/GrapesJS/Editor.js"] --> NATIVE["C / MD4C native frontend"]
+  PUBLISH --> NATIVE
+  PATCH --> RELEASE["Staged, verified deployment"]
+  NATIVE --> RELEASE
+  FORMAT --> CONSUME["Distinct receiving person or application"]
+  EDIT --> CONSUME
+  GATE -. "Only if proven" .-> CONSUME
+~~~
 
-Each part has a defined responsibility:
+### Native control systems — only where the work requires them
 
-| Organ | What it owns |
-|---|---|
-| **Bonfÿre Matrix** | Stable semantic subjects, address constellations, publication presences, and recursively delegated institutional topology. |
-| **WorkGraph** | Durable missions, dependencies, leases, cooling, and completion contracts. |
-| **CapabilityClosure** | The gap between a named capability, a callable realization, and a workload-proven one. |
-| **Authority + EffectKernel** | Who may do what, with idempotency and effect ceilings checked at execution time. |
-| **Contract Projection Kernel v2** | ActiveClosure-demanded projections into native ABIs, data/query forms, APIs, WIT/Wasm, Frappe surfaces, evidence, evolution, tests, and packs. |
-| **Evidence and replay** | Receipts, witness DAGs, trace divergence, proof bundles, deterministic replay, shadow execution, simulation, and institutional backtesting. |
-| **Optimization & learning** | Discover improvements, run simulations, backtest, evaluate, and update reusable execution strategies. Aurekai is the operating business that consumes these capabilities. |
+| Control owner | Specific responsibility | What it does not replace |
+|---|---|---|
+| **Matrix addresses** | resolve a site/subject/presence/audience | source file formats, document renderers, OAuth, model execution |
+| **WorkGraph** | dependent missions, claims, leases, cooling and completion | ordinary local parsing, one-shot format export or CMS structure |
+| **CapabilityClosure** | verify that an intended *work* operation has a realizable, admissible execution | a full taxonomy of every user-visible application or industry |
+| **Authority / EffectKernel** | final operation-specific grants and idempotency | supplier confirmation, financial settlement or source truth |
+| **Contract Projection Kernel v2** | demand-bound typed ABI/data/API projections for supported native closures | all WordPress/PDF/XLSX/reactive browser formats or arbitrary external apps |
+| **Evidence / replay** | receipts, witnesses, divergence, replay and held gaps | live publication or proof that a receiving provider accepted an export |
 
 ### Capability programs
 
