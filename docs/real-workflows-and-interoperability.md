@@ -227,7 +227,39 @@ These workflows differ in **what the person does, which authority grants it, and
 
 These three inventories overlap partially but **must never be summed** or silently described as one integration count.
 
-## 10. Current source-by-source acceptance ledger
+## 10. Computation as a first-class workflow: large local tables into editorial output
+
+The [native computation and presentation guide](native-data-compute-and-presentation.md) traces source code and measured evidence for YAFF/CUE, PCSS/Tailwind, Embed/Vec, vGPU, BitNet/FPQ and the editor stack. The materially new value is a **large locally processed source collection presented as a real, interactive application or editorial result**.
+
+~~~mermaid
+flowchart LR
+  SOURCE["Retained source rows / Excel / documents / channel Parquet"] --> SQL["SQLite and DuckDB-Wasm columnar work"]
+  SOURCE --> VECTORS["BonfyreEmbed ONNX + BonfyreVec"]
+  SQL --> KERNEL["vGPU tile kernel for applicable numeric comparison"]
+  VECTORS --> KERNEL
+  KERNEL --> CACHE["Derived SQLite top-k/neighbor rows + digest/backend"]
+  CACHE --> TABLE["Responsive source-linked table and editorial view"]
+  TABLE --> VERIFY["Open original source and review"]
+  VERIFY --> EDIT["Puck/Editor.js article or installed account app"]
+  EDIT --> RENDER["C/MD4C WebAddress + PCSS/Tailwind tokens"]
+  RENDER --> OUTPUT["Published article / Listen / exported document"]
+~~~
+
+| Distinct tool | Measured operation | What the user gets / what remains unproved |
+|---|---|---|
+| **YAFF, CUE and Zig lowering** | validated page material/topology and compiled native application readers | typed layouts and correct owners, not automatically an application with user actions |
+| **PCSS/PostCSS/Tailwind** | locally compiled C-markup and browser-workspace styles; class scan from escaped C/HTML | visual system and tokens; **new local .pcss source not yet on public GitHub \`main\` or accepted live** |
+| **Embed and Vec** | source-identified learned ONNX vectors, 384/768-width checks, SQLite insert/search/delete | retrieval/source review, without pretending hashed-token geometry is learned |
+| **vGPU kin** | 6,810 records, 46,376,100 pairwise comparisons in 1.1s; 710 above 0.85 in one recorded source workload | candidate related materials, persisted near rows; not automatically editorial truth |
+| **DuckDB-Wasm/Parquet + WebGPU** | 109,761 source-channel rows read within a browser tab and drawn as a field | large local interactive source catalogue; **DuckDB SQL is not a vGPU SQL kernel** |
+| **BitNet** | bounded reordering of a 92-survivor AddressPlane frontier | optional diagnostic rank only, with representation and usefulness limits |
+| **FPQ** | 114,688 real Qwen weights at 5.75 bits/weight and 0.999935 reconstructed cosine | representation measurement, not compressed model generation parity |
+
+A well-designed dense table should use stable row keys, page or viewport virtualization, source-bound aggregates, exact editor continuations, tested keyboard interactions and current account grants. It should **not** render 100,000 DOM rows, rerun all-pairs similarity on every interaction or turn a candidate source into a published assertion.
+
+**Downstream acceptance is separate:** opening a research row may lead to a source passage; that passage may be inserted into a reviewed article; the article may be narrated and offered through Listen or exported. Today these are distinct, partly tested owners. A complete table → editable article → released site → audio/output flow still needs one real integrated witness, not another screenshot with an appended workflow panel.
+
+## 11. Current source-by-source acceptance ledger
 
 | Path | Evidence currently observed | Release classification |
 |---|---|---|
