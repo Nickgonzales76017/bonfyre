@@ -1,6 +1,5 @@
 #include "territory_home.h"
 #include "site_presentation.h"
-#include "tenant_host_binding.h"
 
 #include <ctype.h>
 #include <stdint.h>
@@ -172,19 +171,16 @@ static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name,
     return ok;
 }
 
-int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
+static int bf_apply_territory_home_presentation_impl(sqlite3 *db, char **bodyp,
+                                                        const char *territory,
+                                                        const char *cms_namespace) {
     sqlite3_stmt *st = NULL;
     char label[32], eyebrow[512], head[1024], lede[2048], question[1024];
     char character[256], cannot_infer[2048], template_name[128];
     static const char *ids[] = {"territory", "eyebrow", "title", "sub", "orbit-label", "look-title", "look-copy"};
     const char *values[7];
-    const char *cms_namespace = NULL, *with_template, *without_template;
-    int host_state = bf_tenant_hosts_status();
+    const char *with_template, *without_template;
     if (!db || !bodyp || !*bodyp || !territory || !*territory) return 0;
-    if (host_state < 0 ||
-        (host_state == 1 && !bf_tenant_public_host(territory)))
-        return apply_body_class(bodyp, territory); /* unknown owner never selects a row */
-    cms_namespace = host_state == 1 ? bf_tenant_cms_namespace(territory) : NULL;
     with_template = cms_namespace
        ? "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,template "
          "FROM territory_presentation WHERE namespace=?2 AND territory=?1 AND status='published' "
@@ -225,4 +221,16 @@ int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *
     values[6] = cannot_infer;
     if (!apply_presentation(bodyp, label, ids, values)) return 0;
     return apply_territory_template(db, bodyp, template_name, cms_namespace);
+}
+/* Compatibility entrypoint for stores predating explicit tenant installs.
+ * Do not invoke on a destination that has an installed CMS namespace. */
+int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
+    return bf_apply_territory_home_presentation_impl(db, bodyp, territory, NULL);
+}
+/* Authority is resolved by the request owner, then passed into this separate C
+ * translation unit. No duplicated header-static host-map state or guessing. */
+int bf_apply_territory_home_presentation_owned(sqlite3 *db, char **bodyp,
+                                                const char *territory, const char *cms_namespace) {
+    if (!cms_namespace || !*cms_namespace) return 0;
+    return bf_apply_territory_home_presentation_impl(db, bodyp, territory, cms_namespace);
 }
