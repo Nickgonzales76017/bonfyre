@@ -26,7 +26,7 @@ There are several ways someone might encounter Aurekai.
 
 **A creator or publisher** may want a home for articles, channels, recordings and a community. Their work can also be useful in a reading room, topical collection, personal profile or marketplace. In our publication work, the source belongs to the publisher or creator while different parts of Aurekai give it additional ways to reach people.
 
-**A buyer or supplier** may need catalogues, product options, pricing, procurement, freight or a way to see how goods fit in a physical space. The spatial product work connects catalogue entries and selected items to 2D/3D room planning. The same product information can help several applications.
+**A buyer or supplier** may need catalogues, product options, pricing, procurement, freight or a way to see how goods fit in a physical space. The native spatial work also handles time-aware observations and geographical queries for research, local planning, publications, community/civic material and asset contexts. 2D/3D room planning is one historical offer, not the definition of the spatial engine.
 
 **An organization** may need CRM, finance, staff, projects, service tickets, training and documents. The Frappe-derived application work makes those established business grammars available within the native Bonfÿre system. A business can choose the applications it needs, and each one can handle its own records and workflows.
 
@@ -47,48 +47,52 @@ The teams and products need different interfaces, but their accounts, source sys
 
 These are **territories**, not the underlying architecture. A company or creator may also have a subdomain or independent host. A website, API resource, account workspace and media channel can refer to the same person or company, with different views and permissions.
 
-## What Bonfÿre contains
+## What has actually been built, and why it matters
 
-Bonfÿre is larger than a workflow engine or a model-serving tool. It has several interdependent systems that let the business operate.
+**The innovation is not “everything flows through Matrix.”** The breakthrough being pursued is the ability to start with radically different source systems and human jobs, **preserve the original semantics and rights**, produce a useful deliverable in the format the receiving party actually needs, and leave a verifiable path to continue or correct the work. Each participating system keeps a distinct owner and protocol.
 
-| Part of Bonfÿre | What it does in practice |
-|---|---|
-| **Matrix and addressing** | Keeps track of people, organizations, products, sources, relationships and the different places they appear, including web domains, application records and external addresses |
-| **Source Library and external estate** | Collects and connects articles, publications, job postings, product data, organisations, APIs and other outside material while retaining who published it |
-| **Native business applications** | Connects Frappe, ERPNext, CRM, HRMS, Helpdesk, LMS, Wiki, Drive and Insights schemas to account-owned records, forms, workflows and interfaces |
-| **WorkGraph and capability programs** | Organizes tasks, dependencies, schedules, native commands, agents and installed application actions; keeps the work attached to its destination |
-| **Model Commons and compute** | Runs and routes local models and external compute, handles inference, quantization, tokens, context, embeddings, speech, media and hardware placement |
-| **Page and experience composition** | Builds public and private pages, creator tools, profiles, account interfaces, catalogues and spatial workspaces from shared application and content systems |
-| **Finance and markets** | Supports financial records, costing, billing, payments, offers, procurement, supply and product catalogues |
-| **Connected services** | Integrates existing servers, databases, providers, APIs, Git services and enterprise software through account-owned capabilities |
+~~~mermaid
+flowchart LR
+  WP["WordPress posts, PHP sites, legacy panels"] --> MIG["Signed bridge, WXR exchange, migration inventory"]
+  FILE["Excel, paper scans, PDF, DOCX, captions"] --> WORK["Books review, OCR, document formatter"]
+  DEV["Git projects, React/Puck, GrapesJS, Frappe"] --> CODE["Typed editing, native renderer, source changes"]
+  CREATOR["Channels, communities, podcasts, publisher sites"] --> MEDIA["Account-linked publication, media and participation"]
+  AGENT["Claude, Codex, ChatGPT / MCP clients"] --> OP["Scoped tools, read bundles, draft preview and revisioned update"]
+  MIG & WORK & CODE & MEDIA & OP --> OUT["Independent deliverables + checked next-step rights"]
+~~~
 
-The native core is written primarily in C and Zig, with typed application and system contracts. Bun, browser technologies, SQLite, SQL/analytical engines, Wasm and external providers are used where they fit. The goal is for the software and the user experience to share a common understanding of the work.
+### Different inputs, real outputs and evidence
 
-## A few examples of that connection
+| Workstream | Technical work already present | What it concretely produces |
+|---|---|---|
+| **Legacy publishing** | WordPress REST capability discovery, HMAC-SHA256 signed webhook, stable remote site/post/version identity, native CMS external-ID sync | Observed native content entry, separate authoring/review; not unapproved WordPress publication |
+| **Content portability** | `bonfyre site export` produces standalone HTML with embedded styles, WordPress WXR 1.2 and Frappe documents; local round-trip tests check exact article text | Offline page or format-native files another system can ingest, subject to external destination tests |
+| **Hosting and PHP modernization** | `BonfyreBrief` reads authorized cPanel/InterWorx/Plesk exports and cites discrepancies; `BonfyreBridge` checks migrated database row values/type differences | Inventory, known exceptions and testable staged migration plan, not a guessed successful cutover |
+| **Excel and business finance** | Native bounded XLSX cell parser, retained sheets/coordinates, categorized review workbooks; domain-specific FinancialWorkbook with revisioned MCP read/preview/update | A reviewable spreadsheet and the *same* saved account record, without automatic ledger posting |
+| **Printed records** | On-device BonfyreOCR uses macOS Vision/PDFKit and retains each recognized line's page, position and confidence | Source-grounded extracted text for human verification, rather than “AI knows what the paper says” |
+| **Reports and published documents** | BonfyreEmit/PandocFormatter perform specific Pandoc and native RSS conversions | HTML5, PDF, EPUB3, TXT, RSS and DOCX where dependencies allow, with format-specific acceptance |
+| **Frontend and applications** | Puck uses React; GrapesJS and Editor.js attach to one typed authoring tree; MD4C/Mustach/C produce native HTML; 27 ServiceSite section owners and Frappe CRM source program have local parity tests | Editable site, article or actual application grammar without copying a donor's runtime HTML |
+| **Developer work** | Project MCP with schemas/resources/prompts, authorized patch/test tools, scoped read-bundle coalescing; GitHub/Forgejo/Josh source operations | Observable code changes and receipts; filtered checkout; a separate live release gate |
+| **Installed account software** | Workspace MCP returns installed editor/record/revision; specific workbook calls recalculate/preview; Catalogue and Room Planning can reference one saved record and attachment | One continuous workspace record across UI and agent interaction |
+| **People, groups and media** | Native community memberships, accepted posts/reactions, creator audio schedules, transcripts and channel/media grammar | Participation, articles, groups or scheduled audio tied to their actual owner and audience |
+| **Spatial research** | SpatialObservation includes observed/effective/expiry/recorded times; BonfyreSpatial has indexed reconstruction/query owners | Historical/geo/source investigation and maps; **room design is only one application** |
+| **Outside services** | 200 account-enrollment targets, 104 downstream-provider prospects and 20 studied platform interaction grammars, with separately scoped credentials | A truthful pipeline from candidate to admission to verified provider effect, not 324 fictitious integrations |
 
-### When a job posting is useful to several applications
+See the [operational source/output ledger](real-workflows-and-interoperability.md), [MCP tool guide](../integrations/mcp/README.md), [WordPress bridge](../integrations/wordpress/README.md), [provider admission](../integrations/browser/onboarding/README.md), [frontend architecture](authoring-frontend-architecture.md) and [native Atlas](../architecture/README.md). Each includes named sources and what the current tests do **not** establish.
 
-Take a vacancy posted by a company. We want that posting to have one source identity. Aurekai can show it in discovery, an account's CRM can work with it as a prospect or relationship, and a creator or accessibility tool can turn it into an audio update.
+## Why the work connects without becoming one system
 
-The applications don't all need to copy the posting and maintain a separate company record. An account installs the applications it wants, and each application declares the kinds of information it accepts. Bonfÿre connects the source to those uses. This is the feed-to-app continuation work being developed around company listings such as Lithic.
+**A job posting** retained through the source frontier may be presented in a reading experience, *optionally* offered as a CRM opportunity to an installed app, or turned into a reviewed narrated edition. No posted source becomes a financial transaction just because the CRM sees it.
 
-### When a retailer has its own website
+**A publication or community** can use a rich authoring document, membership-aware forums, a publisher page, an account-owned podcast, a shared source library and an interactive geographical feature. Those pieces do not share one database or one right-to-publish; the continued identity and the documented handoffs are what make the experience coherent.
 
-A retailer may want its own branded site, an agency-managed back office, customer enquiries and invoices. Another retailer may need a different catalogue, tone and customer journey. The web-address, CMS, app and authority systems are shared; the brands, records and customer relationships stay separate.
+**A small organization** can review a real XLSX, import files, consult a compiled Frappe CRM form, draft an offer, produce a PDF, and let a colleague or an authorized MCP client continue the exact saved version. Excel cell arithmetic, organization membership, office-document conversion and payments stay with their original owners.
 
-The Fernhollow Pottery, Tallgrass Bike Works and Juniper Lane Bakery samples illustrate that approach. The same engineering can be adapted for a real client without making their site look like an Aurekai product page.
+**A developer or agency** can read Git source, compare C/React/legacy PHP components, test a proposed patch, export a WordPress interchange file and arrange a real hosting cutover. There is **no universal React/Svelte/PHP converter** proved by the current source: frontend behavior, server effects and migration must be independently validated.
 
-### When a product appears in a room plan
+**A creator** can declare YouTube/Patreon/Spotify public profiles and compose their own Aurekai channel, program or recordings. A public profile locator is not a working OAuth grant; a studied YouTube/Spotify interface grammar is not an authenticated account or licensed playback. **Toast** remains a commercial POS target, not a proven restaurant transaction integration.
 
-A catalogue item can be useful to a shopper, an inventory manager and a room designer. We have been connecting product options, dimensions and price observations to room and catalogue applications. A person can choose an item, arrange it in a space, compare alternatives and carry a selection into the next stage of work.
-
-That's a different problem from generating a static product image. The data and applications have to agree about which product and options are being used.
-
-### When public information gets a proper home
-
-A publication has a publisher, authors, source material and readers. The publisher's profile can gather that material, and collections or communities can bring related work together while linking back to the people who made it. Work on publisher sites, reading rooms and profiles connects these pieces.
-
-This also applies to civic records, local archives and community material. The goal is for people to find the underlying source, the people involved and useful related work in the same experience.
+The company-level value comes from making these **specific, reusable, independently accountable operations** available across many engagements and noncommercial contexts—not from reducing education, creative work, communities, research, commerce and old business systems to a handful of website demos.
 
 ## Why the shared technology matters economically
 
