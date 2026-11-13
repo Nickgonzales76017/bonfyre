@@ -1,0 +1,29 @@
+name: Bonfyre tenant host isolation
+on:
+  push:
+    paths:
+      - "cmd/BonfyreWebAddress/src/tenant_host_binding.h"
+      - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
+      - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
+      - ".github/workflows/tenant-host-isolation.yml"
+  pull_request:
+    paths:
+      - "cmd/BonfyreWebAddress/src/tenant_host_binding.h"
+      - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
+      - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
+      - ".github/workflows/tenant-host-isolation.yml"
+  workflow_dispatch:
+
+jobs:
+  host-map-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile strict C tenant-binding test and prove hostile configurations refuse
+        run: sh cmd/BonfyreWebAddress/tests/tenant_host_binding_test.sh
+      - name: Confirm engine core has not acquired Aurekai product defaults
+        run: python3 scripts/check-product-boundary.py
