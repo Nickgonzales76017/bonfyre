@@ -3,13 +3,13 @@ on:
   push:
     paths:
       - "cmd/BonfyreCMS/tools/install_work_examples.sh"
-      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py"
+      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.mjs"
       - "cmd/BonfyreCMS/tests/work_example_programs_test.sh"
       - ".github/workflows/tenant-work-example-isolation.yml"
   pull_request:
     paths:
       - "cmd/BonfyreCMS/tools/install_work_examples.sh"
-      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py"
+      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.mjs"
       - "cmd/BonfyreCMS/tests/work_example_programs_test.sh"
       - ".github/workflows/tenant-work-example-isolation.yml"
   workflow_dispatch:
@@ -20,5 +20,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
       - name: Verify cross-tenant CMS write isolation and failed-update preservation
-        run: python3 cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py
+        run: bun cmd/BonfyreCMS/tests/tenant_work_examples_import_test.mjs
