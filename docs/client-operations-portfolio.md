@@ -21,6 +21,24 @@ These are working public examples or published walkthroughs. The sample business
 | **Publish reviewed member programs** | See creator-side requests, versioned programs and member views across sample studios | [Studio application](https://aurekai-work-samples.pages.dev/training/) |
 | **Find a source, not an invented answer** | Retrieve local document passages and source-linked notes | [Document search workspace](https://aurekai-work-samples.pages.dev/documents/) |
 
+## The native operations are much broader than the sample gallery
+
+The public links above are **demonstrations**, not the boundaries of Aurekai or receipts for the production estate. Source-level workflows also include:
+
+| Customer or noncommercial need | Existing technical operation | Concrete deliverable / known boundary |
+|---|---|---|
+| **WordPress publisher or PHP-era site** | [signed WordPress bridge](../integrations/wordpress/README.md); [native site export](../cmd/BonfyreWebAddress/src/site_product.c) | idempotent post intake; WXR 1.2, Frappe or offline HTML output; not a certified remote migration |
+| **Agency with older cPanel/InterWorx/Plesk portfolio** | [hosting inventory](../cmd/BonfyreBrief/src/inventory.c) and [database comparison](../cmd/BonfyreBridge/src/main.c) | source-cited account/mailer/DB inventory, conflicting claims and testable staging questions |
+| **Accounts receivable or financial review** | [native Books XLSX](../cmd/BonfyreDecide/src/books_xlsx.c) and [FinancialWorkbook MCP](../integrations/mcp/workbook_mcp.mjs) | sheet/cell-aware XLSX review, current saved account draft and human-bound financial approvals |
+| **Paper forms, school or public-archive scans** | [on-device OCR](../cmd/BonfyreOCR/src/main.swift), [Pandoc formatter](../components/PandocFormatter/README.md) | page/line positions and text for review; report in DOCX/PDF/EPUB/HTML as format allows |
+| **Personal publishing and creator media** | native CMS authoring, [Account World Audio](../cmd/BonfyreCMS/src/account_world_audio.c), [BonfyreRepurpose](../cmd/BonfyreRepurpose/src/main.c) | typed article, station/show schedule, WebVTT references or prepared media descriptions; licensing and external upload separate |
+| **People, groups, school/civic or neighborhood research** | [community membership/posts](../cmd/BonfyreCMS/content-types/community_body.json), [spatial observation](../schemas/control/spatial-observation.cue) | published moderation-aware community and time-aware place/source interfaces, not a room planner |
+| **Developer or software team's real work** | [Project MCP](../integrations/mcp/README.md) and [Forgejo/Git/Josh repository fabric](../cmd/BonfyreRepositoryFabric/src/main.c) | exact source edits, reviewed tests, filtered repository checkout and receipts; no guessed live release |
+| **Cross-product account work** | [Workspace MCP](../integrations/mcp/workspace_mcp.mjs) with native app owners | a signed-in assistant can preview/update the same persisted record the human edits |
+| **External creator or POS provider** | [200-source enrollment guide](../integrations/browser/onboarding/README.md), provider estate and interaction grammar | truthful account, scope and integration state; YouTube/Spotify/Patreon need verified grants, Toast not yet implemented |
+
+The [full workflows and export index](real-workflows-and-interoperability.md) names the source transformations, accepted outputs, format tests, provider limitations and browser/source release gaps. A prospective customer should be able to see **what is actually deliverable or still experimental**, not just count brands or demos.
+
 ## Work that compounds across industries
 
 Aurekai takes on an individual business problem, but the software below it is reusable. The same source/authority/work/receipt pattern is useful in:
