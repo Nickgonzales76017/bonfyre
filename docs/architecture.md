@@ -101,7 +101,8 @@ The full source/execution map for **YAFF, CUE, PostCSS/Tailwind tokens, Puck/Gra
 
 ~~~mermaid
 flowchart TB
-  YAFF["Architecture YAFF: identities, invariants, interactions"] --> CUE["CUE: typed PageRegions and lowerer contracts"]
+  YAFF["YAFF: architecture identities and interactions"] -. "constraints and witnesses" .-> WEB
+  CUE["CUE: typed PageRegions and lowerer contracts"]
   CUE --> ZIG["Zig→C native application lowerers"]
   ZIG --> WEB["WebAddress / MD4C / Mustach / typed editorial composition"]
   EDIT["Puck / GrapesJS / Editor.js"] --> WEB
@@ -121,7 +122,7 @@ flowchart TB
 
 **What is measured:** 6,810 archived items, 46,376,100 vGPU pair comparisons in 1.1s under the recorded kin workload, 710 retained above similarity threshold; browser field reading 109,761 Parquet rows with DuckDB-Wasm and drawing them through WebGPU. **Not a claim:** vGPU executes DuckDB SQL, all document/table operations are GPU-fast, the 90 journal articles and new PCSS bundle are live, FPQ is generation-quality proven, or BitNet may admit unverified sources.
 
-Local \`deploy/tailwind/*.pcss\` and build sources are currently ahead of public \`main\`; the existing [Tailwind config](../deploy/tailwind/tailwind.config.js) is published. The end-to-end acceptance remains a current, user-owned table → source → editorial save → published responsive page → narration/export, with releases and permission readback.
+Local `deploy/tailwind/*.pcss` and build sources are currently ahead of public `main`; the existing [Tailwind config](../deploy/tailwind/tailwind.config.js) is published. The end-to-end acceptance remains a current, user-owned table → source → editorial save → published responsive page → narration/export, with releases and permission readback.
 
 ## Real, concurrent operating paths — not a universal pipeline
 
