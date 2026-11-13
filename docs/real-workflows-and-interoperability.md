@@ -198,7 +198,36 @@ Every named platform, file format, application or protocol claim should contain:
 
 **Do not replace all of these with the sentence “flows through the capability matrix.”** An architectural diagram should show the interfaces, formats, state owners, edits, transports, rights and *actual resulting work*. New features should change the native source and tests first, then update this index.
 
-## 9. Current source-by-source acceptance ledger
+## 9. The other end-to-end systems this document must not erase
+
+The platforms named earlier are **examples of exchange boundaries**. They are not the inventory of everything built. The corresponding native owners remain independent:
+
+| Real user workflow | Concrete source and handoff | Evidence and limit |
+|---|---|---|
+| **A person runs several websites and publications** | site/profile scope, `site_page`/`site_fragment`, article author/date/media references, native WebAddress serving, audience-specific account/public routes | An editor draft is not the 90-article live/public parity acceptance; verify each host and route |
+| **A community coordinates membership and discussion** | [community_body/membership/post/reaction/presence schemas](../cmd/BonfyreCMS/content-types/community_body.json) and [community discovery](../cmd/BonfyreWebAddress/src/community_projection.c) | Current/expired membership, accepted reactions and moderation must be read from this owner; a public link is not membership |
+| **A creator runs a station or show** | [Account World Audio CMS](../cmd/BonfyreCMS/src/account_world_audio.c) → [WebAddress account audio](../cmd/BonfyreWebAddress/src/account_world_audio_web.h) | Time-zone schedule, current/next, episodes, tracks, clips and transcript marks; pasted WebVTT is not automatic transcription, enclosures require licensed source |
+| **A local publisher studies a real place or public question** | [SpatialObservation](../schemas/control/spatial-observation.cue) → [BonfyreSpatial](../cmd/BonfyreSpatial/src/main.c) with observed/effective/expiry/recorded times | Native query engine, but standalone real-workload maturity is still separately held; cannot infer camera positions, private movements or geographic facts from a map alone |
+| **A customer needs to review an installed CRM form** | [Frappe compiler](../cmd/BonfyreFrappeCompiler/) → typed record/form program → CMS/owner-specific editor | A real CRM Lead surface with many fields was tested locally; this is not an executed Frappe controller or an authenticated CRM record write |
+| **A client sources an item for a project** | native Catalogue/Room Planning shared account record and attachment, source references, options and reviewed procurement continuation | The shared-record MCP test verifies reuse without copying; a product configuration is not an order, supplier acceptance, shipment or payment |
+| **A team provisions and edits its own code repository** | [RepositoryFabric](../cmd/BonfyreRepositoryFabric/src/main.c) → Forgejo provision/view/change/hooks and plain Git/Josh checkout | Live Forgejo smoke path and Josh-filtered checkout witness; Josh push/workspace composition and generalized GitLab Gitaly not automatically provided |
+| **A researcher retrieves external publication/material** | [SourceFrontier](../cmd/BonfyreSourceFrontier/) publisher/channel/endpoint accounting → ForeignTwin observation → retained material → distinct chosen reading/application use | A catalog candidate is not a currently accessible source, a public page is not a licensed reproduction, and a feed item does not force narration |
+| **An account follows a training plan from several creators** | [MemberTraining](../components/BonfyreServiceSite/training-model.mjs), [Training publication](../components/BonfyreServiceSite/training-publishing.mjs) and retained release/adoption versions | Member history and creator program publication remain different; WordPress/Frappe training exports are files, not remote synchronization |
+| **A project uses cheap candidate elimination and local inference** | AddressPlane exact term masks → optional BitNet ranker with exact source-verifier handles → representation passport/resource admission → Qwen/FPQ or eligible native model | BitNet ranker remains diagnostic/SHADOW on its captured trial; FPQ real-tensor metrics do not prove compressed generation parity |
+| **A publisher repackages media** | [BonfyreRepurpose](../cmd/BonfyreRepurpose/src/main.c), transcription, clips, timed captions and selected creator/channel records | It refuses invented YouTube chapter timings without source timecodes; publishing/upload and media rights need distinct proof |
+| **An institution runs budgeted external work** | WorkGraph leases/recipients, ProviderEstate downstream tenancy, credentials, budget/spend gates, commerce and receipt records | A quoted plan, a provider's advertised service, a created account and a settled invoice are separate events |
+
+These workflows differ in **what the person does, which authority grants it, and what artifact survives it**. Their connection is *not* a universal object that erases the differences. Interoperability is implemented when a specific exchange proves that data and lawful actions crossed from one named owner to another.
+
+### There are two additional inventories, not a hundred automatic integrations
+
+- [`integrations/browser/onboarding/targets.tsv`](../integrations/browser/onboarding/targets.tsv) holds **200 target services** with identity-specific account status and API gates. The list includes creator platforms, federated social protocols, publication hosts, commerce providers, developer services and many other destinations. It is an **enrollment and provider-research ledger**; `unverified` does not mean callable.
+- [`cmd/BonfyreProviderEstate/providers.tsv`](../cmd/BonfyreProviderEstate/providers.tsv) has **104 downstream provider prospect records**, each with tenancy primitive, family, wave and partner route; these are not 104 verified API clients. Its companion acquisition/routing tables distinguish what must happen before Aurekai can actually create/manage a customer account.
+- [`BonfyreInteractionGrammar`](../cmd/BonfyreInteractionGrammar/src/main.c) includes **20 native interaction grammars** studied from existing platforms (creator, work, collaboration, media, commerce, knowledge, community and reservation). Grammar extraction is a way to reproduce an *interaction shape using an actual native owner*, not evidence that the external platform API or its customer data were cloned.
+
+These three inventories overlap partially but **must never be summed** or silently described as one integration count.
+
+## 10. Current source-by-source acceptance ledger
 
 | Path | Evidence currently observed | Release classification |
 |---|---|---|
