@@ -35,7 +35,7 @@ This repository is the technical side of that work. Its native implementation co
 
 Bonfÿre is **not** a central “capability matrix” through which every product passes. A WordPress plugin does not behave like a customer database; a paper form does not behave like a creator channel; an XLSX review does not behave like a website; and an MCP tool is not an independent business application. **The native tools preserve those differences while making deliberate, testable connections between them.**
 
-**[See real workflows, commands, exchange formats and integration limits](docs/real-workflows-and-interoperability.md)** · [Unified Puck/GrapesJS/Editor.js authoring and C frontend](docs/authoring-frontend-architecture.md) · [All registered architectures](architecture/README.md) · [Full system map](docs/architecture-visuals/system-architecture.md)
+**[Real workflows and exports](docs/real-workflows-and-interoperability.md)** · **[MCP operation guide](integrations/mcp/README.md)** · **[200-service and 104-provider admission guide](integrations/browser/onboarding/README.md)** · **[WordPress exchange guide](integrations/wordpress/README.md)** · [Unified editor/frontend](docs/authoring-frontend-architecture.md) · [Source-checked Atlas](architecture/README.md) · [Full system map](docs/architecture-visuals/system-architecture.md)
 
 ~~~mermaid
 flowchart TB
