@@ -104,7 +104,7 @@ The local `deploy/tailwind/input.pcss` defines real button, hover, focus and for
 
 ## 4. Puck, GrapesJS, Editor.js and the compiled frontend
 
-[Shared authoring state](../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs) retains a typed tree with known block kinds, 27 service-section shapes, nested responsive layouts, closed style tokens, editorial blocks, exact identifiers and bounded media/URL forms. The browser adapters provide distinct editing methods: Puck (React), GrapesJS (design), Editor.js (article). The native renderer uses MD4C/Mustach/C to deliver the **same retained composition** at the selected site and public audience.
+The local-only `cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs` retains a typed tree with known block kinds, 27 service-section shapes, nested responsive layouts, closed style tokens, editorial blocks, exact identifiers and bounded media/URL forms. The browser adapters provide distinct editing methods: Puck (React), GrapesJS (design), Editor.js (article). The native renderer uses MD4C/Mustach/C to deliver the **same retained composition** at the selected site and public audience.
 
 - The source allows styles such as `layout=columns`, `span=4`, `background=panel` and `typography=editorial`. It refuses arbitrary CSS objects in saved authoring state.
 - Browser-facing components use shared responsive/editorial CSS; final site styling should derive from the `.pcss` build and selected presentation tokens, rather than each route issuing its own styles.
