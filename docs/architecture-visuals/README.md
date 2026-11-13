@@ -2,6 +2,8 @@
 
 These six SVG/Mermaid examples are **drill-downs**, not an inventory of the Aurekai or Bonfÿre system. The earlier selection overemphasized domain routing, article narration and a one-off room-planning offer while omitting the general spatial engine, source and provider estate, groups, connections, Git/Forgejo/Josh, BitNet/FPQ, masks, model execution, finance, knowledge, native UI and release/evidence lifecycles.
 
+**The authoring/frontend foundation has its own [full architecture and innovation guide](../authoring-frontend-architecture.md)**: Puck, GrapesJS, Editor.js, MD4C, Mustach, native C rendering, interaction grammar, responsive tokens, 27 sections, real compiled apps, design references, group/research/public-interest uses and verified gaps.
+
 **Start with the [system-wide architecture and capability index](system-architecture.md)**: 12+ native GitHub Mermaid diagrams across the business, identities, institutions, groups, sources, connections, spatial/temporal query, audiovisual media, representation and model computation, Git/source fabric, memory/data, application composition, work/proof, finance, protocols and live delivery. It distinguishes current measured paths, implemented contracts, archived reference implementations, SHADOW/DEFER work, and unverified release claims.
 
 The [source-checked architecture registry](../../architecture/README.md) remains authoritative for exact owners and witnesses. On 2026-11-13 it enumerated 557 architecture entries and 562 interactions across 11 expandable views; **that does not mean 557 shipped applications**.
@@ -56,7 +58,7 @@ One source identity can support different applications without repeated imports.
 
 Related contracts: [capability programs](../../cmd/BonfyreCMS/content-types/capability_program.json), [site programs](../../cmd/BonfyreCMS/content-types/site_program.json), [business and applications model](../aurekai-bonfyre-model.md).
 
-## 3. Editorial composition and publication
+## 3. Editorial composition and publication — one use of the unified editor
 
 ![Design, structure and article editing converge on CMS pages and fragments, with review before public profile, audio and distribution.](editorial-composition.svg)
 
@@ -74,7 +76,7 @@ flowchart TB
     W --> X["Channel and collection continuations"]
 ```
 
-Design, structure and article content should compose **one document**, not three island editors or static imports. CMS retains the page/fragment coordinates, audience and status. An editor preview is not a public release. Narration is another edition of the article, not a competing canonical post.
+This is **one publishing use** of the [larger native authoring, application and frontend compiler](../authoring-frontend-architecture.md), which also handles community, spatial, source-oriented and typed-application experiences. Design, structure and article content should compose **one document**, not three island editors or static imports. CMS retains the page/fragment coordinates, audience and status. An editor preview is not a public release. Narration is another edition of the article, not a competing canonical post.
 
 Implementation references: [site fragments](../../cmd/BonfyreCMS/content-types/site_fragment.json), [profile publisher](../../cmd/BonfyreWebAddress/src/profile_home.h), [Pages runtime](../pages-runtime.md). Editor integration and personal-domain rollout have separate verification gates; this graphic does not assert that every site is live.
 
