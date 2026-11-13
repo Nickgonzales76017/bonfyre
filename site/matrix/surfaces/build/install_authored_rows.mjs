@@ -1,5 +1,8 @@
 #!/usr/bin/env bun
 // Local, explicit import of authored CMS rows; this tool never opens SSH.
+// --dataset-file territory_presentation=/operator/site/front-doors.jsonl
+// lets each institution own its specific content; only declared schema types
+// and exact source paths are admitted. No implicit CMS writes.
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,14 +15,17 @@ const schemas = resolve(root, 'cmd/BonfyreCMS/content-types');
 const manifest = JSON.parse(readFileSync(resolve(here, 'authored-cms-rows.json'), 'utf8'));
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-export function loadDatasets() {
+export function loadDatasets(overrides = {}) {
+  for (const type of Object.keys(overrides)) {
+    if (!manifest.datasets.some(dataset => dataset.type === type)) throw new Error(`unrecognized source owner: ${type}`);
+  }
   return manifest.datasets.map(({ type, file, expect }) => {
     if (!identifier.test(type)) throw new Error(`unsafe type ${type}`);
     const schema = JSON.parse(readFileSync(resolve(schemas, `${type}.json`), 'utf8'));
     if (schema.name !== type) throw new Error(`schema name mismatch: ${type}`);
     const unique = Object.entries(schema.attributes).filter(([, rule]) => rule.uniqueWithinNamespace).map(([name]) => name);
     if (unique.length !== 1 || !identifier.test(unique[0])) throw new Error(`${type}: expected one declared namespace key`);
-    const path = resolve(here, file);
+    const path = overrides[type] ? resolve(overrides[type]) : resolve(here, file);
     const lines = readFileSync(path, 'utf8').trimEnd().split('\n');
     if (lines.length !== expect) throw new Error(`${type}: expected ${expect} rows, got ${lines.length}`);
     const seen = new Set();
@@ -54,14 +60,23 @@ export function existingKeys(dbPath, namespace, dataset) {
 }
 
 export function main(args = process.argv.slice(2)) {
-  const options = { apply: false, type: '', db: '', ns: '', cms: resolve(root, 'cmd/BonfyreCMS/bonfyre-cms') };
+  const options = { apply: false, type: '', db: '', ns: '', cms: resolve(root, 'cmd/BonfyreCMS/bonfyre-cms'), overrides: {} };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--apply') options.apply = true;
+    else if (arg === '--dataset-file' && args[i + 1]) {
+      const binding = args[++i];
+      const equals = binding.indexOf('=');
+      const type = equals > 0 ? binding.slice(0, equals) : '';
+      const selected = equals > 0 ? binding.slice(equals + 1) : '';
+      if (!identifier.test(type) || !selected || type in options.overrides)
+        throw new Error('--dataset-file must bind one declared type to an explicit source path');
+      options.overrides[type] = selected;
+    }
     else if (['--type', '--db', '--ns', '--cms'].includes(arg) && args[i + 1]) options[arg.slice(2)] = args[++i];
     else throw new Error(`unknown or incomplete argument: ${arg}`);
   }
-  const datasets = loadDatasets();
+  const datasets = loadDatasets(options.overrides);
   if (options.type && !datasets.some(dataset => dataset.type === options.type)) throw new Error(`unknown authored type: ${options.type}`);
   const selected = options.type ? datasets.filter(dataset => dataset.type === options.type) : datasets;
   if (!options.apply) {
