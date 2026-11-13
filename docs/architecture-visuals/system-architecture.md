@@ -4,29 +4,47 @@
 >
 > **Evidence cut:** architecture registry checked against 151 declaration files, generated 2026-11-13 13:02 UTC (digest 4af1cc117e76): **557 architecture entries, 562 interactions, 11 expandable views**. Registry counts are *not* proof of deployed features: 345 tagged implemented, 154 measured, 34 architectural and 24 declared. Live readiness is a separate owner-and-release question.
 
-[Repository README](../../README.md) · **[Unified editors and native frontend](../authoring-frontend-architecture.md)** · [Technical architecture](../architecture.md) · [Source registry](../../architecture/README.md) · [Visual guide](README.md) · [Federated source libraries](../../integrations/federated/)
+[Repository README](../../README.md) · **[Workflows, exports and external platforms](../real-workflows-and-interoperability.md)** · **[Unified editors and native frontend](../authoring-frontend-architecture.md)** · [Technical architecture](../architecture.md) · [Source registry](../../architecture/README.md) · [Visual guide](README.md) · [Federated source libraries](../../integrations/federated/)
 
-## 1. What the business and runtime actually contain
+## 1. Parallel native systems with explicit bridges — not a Matrix intake funnel
+
+**Start with the [concrete workflows, exports and MCP operations](../real-workflows-and-interoperability.md).** Matrix resolves addressed subjects and presence; it does **not** receive every record, application, workbook, scanned document, feed, provider call or code repository as a generic “capability.” Identity, format conversion, human interaction, temporal evidence, execution, site publishing, accounts and effects stay distinct.
 
 ~~~mermaid
 flowchart TB
-  B["Aurekai: operating business / customer and creator network"]
-  W["WORK · organizations, jobs, clients, operations"]
-  L["LIFE · people, groups, communities, collections"]
-  V["LIVE · publications, channels, media, events"]
-  S["SHOP · sourcing, catalogs, offerings, exchange"]
-  B --> W & L & V & S
-  W & L & V & S --> A["Matrix identity + address + presence + audience"]
-  A --> C["Bonfÿre native capability fabric"]
-  C --> I["Institutions and account-owned applications"]
-  C --> X["Sources, external estate, connection fabric"]
-  C --> D["Data / memory / semantic computation"]
-  C --> M["Media, spatial, visual and interaction engines"]
-  C --> O["Work, agents, authority, economics and proof"]
-  I & X & D & M & O --> R["Versioned, tested release + audience-specific presentation"]
+  WP["WordPress event / site export"] --> CMS["CMS exact remote ID + site drafts"]
+  EXCEL["XLSX with sheet/cell provenance"] --> BOOK["Books / Workbook review owner"]
+  SCAN["Paper / scanned PDF"] --> OCR["OCR line/geometry + human source review"]
+  EDIT["Puck, GrapesJS, Editor.js"] --> SCENE["Native typed authoring document"]
+  SCENE --> CMS
+  CMS --> WEB["WebAddress native C + HTMX/browser components"]
+  WEB --> EXPORT["HTML, WXR, Frappe exchange"]
+  BOOK --> XMCP["Workbook MCP, exact account revision"]
+  PROJECT["Git, GitHub, Forgejo, Josh, project source"] --> PMCP["Project MCP + native patch/tests/receipts"]
+  HUMAN["Client / group / member / public audience"] --> ADDRESS["Matrix address + audience/disclosure"]
+  ADDRESS --> WEB
+  PROVIDER["YouTube / Patreon / Spotify / Toast candidate"] --> VERIFY["Exact provider credential and effect owner?"]
+  VERIFY -. "Only when verified and scoped" .-> WEB
+  DOC["Cited Markdown / brief"] --> EMIT["BonfyreEmit / PandocFormatter outputs"]
 ~~~
 
-No individual front door owns every feature. Addresses are coordinates for one subject; an address is not permission to read, mutate, spend or publish. Customer-specific sites and application installations must preserve their own institutional scope. Public fronts are entrances to capabilities, not duplicated canonical stores.
+The arrows denote **bounded transformations**. A Wordpress webhook does not become a published Aurekai post merely because its signature verifies. An XLSX import does not imply recalculation of arbitrary Excel formulas or ledger posting. A signed-in assistant does not own a user's workspace record; it uses the current owner's scoped read/preview/update protocol. A named external platform in the enrollment ledger does not imply provider integration.
+
+The reusable property of Bonfÿre is **verifiable continuity across otherwise different types of software**: an editor may preserve a native app binding; a WordPress exchange keeps article text through a local WXR round-trip; an XLSX review keeps cell coordinates; an MCP call shares the same revisioned account record. This is more precise than “everything composes through Matrix.”
+
+### Concrete cross-product routes
+
+| Starting material | Operable route | Output / refusal |
+|---|---|---|
+| WordPress posts | HMAC-verified bridge, idempotent native CMS event; separately WXR export | native entry or WXR 1.2; no presumed publish permission |
+| Existing site | `bonfyre site export --out … [--format wordpress|frappe]` | offline HTML with CSS; WordPress/Frappe exchange |
+| cPanel/InterWorx/Plesk exports | BonfyreBrief inventory, cited discrepancies, BonfyreBridge row checks | migration facts and tests, not live cutover |
+| Excel XLSX | BonfyreBooks native reader; Account FinancialWorkbook; workbook-specific MCP | cell-preserving review, explicit revision and held calculation |
+| Scanned PDF/image | BonfyreOCR on-device Vision/PDFKit | page, bounding boxes, confidence, text; uncertainty remains |
+| Markdown / brief | BonfyreEmit and PandocFormatter | PDF, EPUB, HTML, TXT, RSS and DOCX formatter conversion |
+| React/Puck/visual frontend | shared tree, CMS, native C/MD4C/Mustach output | authored native page; Svelte/React general export not yet verified |
+| YouTube/Spotify/Patreon | public locator, provider-auth possibilities, owner-bound InteractionGrammar | candidate account or studied interface grammar; no automatic OAuth or API effect |
+| Toast POS | commercial target reference only | **No verified Toast native connection** |
 
 ## 2. Identity, groups, institutions, permissions and domains
 
