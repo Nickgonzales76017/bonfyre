@@ -2,9 +2,11 @@
 
 These six SVG/Mermaid examples are **drill-downs**, not an inventory of the Aurekai or Bonfÿre system. The earlier selection overemphasized domain routing, article narration and a one-off room-planning offer while omitting the general spatial engine, source and provider estate, groups, connections, Git/Forgejo/Josh, BitNet/FPQ, masks, model execution, finance, knowledge, native UI and release/evidence lifecycles.
 
+**[Real workflows and interoperability](../real-workflows-and-interoperability.md)** documents named operations and outputs: WordPress webhooks/WXR, cPanel/InterWorx/Plesk, XLSX, scanned-PDF OCR, DOCX/PDF/EPUB conversion, React/Puck vs unverified Svelte conversion, Project/Workspace/Workbook MCP, YouTube/Patreon/Spotify and Toast. These are not one Matrix pipeline.
+
 **The authoring/frontend foundation has its own [full architecture and innovation guide](../authoring-frontend-architecture.md)**: Puck, GrapesJS, Editor.js, MD4C, Mustach, native C rendering, interaction grammar, responsive tokens, 27 sections, real compiled apps, design references, group/research/public-interest uses and verified gaps.
 
-**Start with the [system-wide architecture and capability index](system-architecture.md)**: 12+ native GitHub Mermaid diagrams across the business, identities, institutions, groups, sources, connections, spatial/temporal query, audiovisual media, representation and model computation, Git/source fabric, memory/data, application composition, work/proof, finance, protocols and live delivery. It distinguishes current measured paths, implemented contracts, archived reference implementations, SHADOW/DEFER work, and unverified release claims.
+**Start with the [system-wide architecture and capability index](system-architecture.md)**: 14 native GitHub Mermaid diagrams across the business, identities, institutions, groups, sources, connections, spatial/temporal query, audiovisual media, representation and model computation, Git/source fabric, memory/data, application composition, work/proof, finance, protocols and live delivery. It distinguishes current measured paths, implemented contracts, archived reference implementations, SHADOW/DEFER work, and unverified release claims.
 
 The [source-checked architecture registry](../../architecture/README.md) remains authoritative for exact owners and witnesses. On 2026-11-13 it enumerated 557 architecture entries and 562 interactions across 11 expandable views; **that does not mean 557 shipped applications**.
 
