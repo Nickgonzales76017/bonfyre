@@ -6,5 +6,8 @@
 int bf_site_presentation_validate(sqlite3 *db, const char *json, const char **why);
 void bf_site_presentation_emit(FILE *out, sqlite3 *db, const char *profile);
 int bf_site_presentation_emit_scoped(FILE *out, sqlite3 *db, const char *profile, const char *selector);
+/* Scoped business tenant: never consult a template outside its declared CMS owner. */
+int bf_site_presentation_emit_scoped_owned(FILE *out, sqlite3 *db, const char *profile,
+                                           const char *selector, const char *cms_namespace);
 void bf_site_presentation_attributes(FILE *out, sqlite3 *db, const char *profile);
 #endif
