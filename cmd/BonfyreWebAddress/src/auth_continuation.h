@@ -79,10 +79,7 @@ static int bf_auth_work_host(const char *raw) {
     host[n]='\0';
     if(raw[n]&&raw[n]!=':')return 0;
     if(bf_tenant_hosts_status()!=0)return 0;
-    if(!strcmp(host,bf_legacy_aurekai_public_host("work")))return 1;
-    return bf_legacy_aurekai_subhost(host) &&
-           n>strlen(".aurekai.work") &&
-           !strcmp(host+n-strlen(".aurekai.work"),".aurekai.work");
+    return bf_legacy_aurekai_work_host(host);
 }
 static int bf_auth_return_address(const char *candidate, const char *host, char *out, size_t cap) {
     const char *path=candidate;
