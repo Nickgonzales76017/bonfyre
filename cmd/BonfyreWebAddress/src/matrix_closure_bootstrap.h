@@ -26,7 +26,12 @@ static const char *site_root(int argc, char **argv) { const char *root=opt(argc,
  * checked-in client runtime as its native fragments.  Do not widen this to a
  * suffix match: arbitrary subdomains must first become real AddressPlane
  * domains before they receive estate assets. */
+#include "tenant_host_binding.h"
 static int native_member_session_host(const char *host) {
+    int state=bf_tenant_hosts_status();
+    if(state==1)return bf_tenant_is_account_host(host);
+    if(state<0)return 0; /* Invalid configured map refuses every account host. */
+    /* Temporary compatibility for the current Aurekai installation. */
     return host && (!strcmp(host, "auth.aurekai.life") ||
                     !strcmp(host, "auth.aurekai.live") ||
                     !strcmp(host, "auth.aurekai.shop") ||
