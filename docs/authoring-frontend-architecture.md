@@ -169,7 +169,34 @@ For a **group**, authoring can compose a profile, membership-aware discussion, e
 
 **The libraries themselves are not novel inventions.** GrapesJS, Puck, Editor.js, MD4C, Mustach, HTMX and Markdown exist independently. The distinctive Bonfÿre/Aurekai approach, insofar as its cross-owner implementation is verified, is **one compiled experience model** that can retain institution, document, source, action and visual identity while lowering across editors, C-native web output, account apps, creator surfaces, and machine-readable views. Claims about performance superiority, full 90-journal live parity or complete donor-site fidelity require measurements and release readback.
 
-## 8. Acceptance: a real editor and a real experience, not another demo
+## 8. A typed editor is not itself a framework exporter or a WordPress migrator
+
+Three concrete operations must not be presented as the same feature.
+
+~~~mermaid
+flowchart LR
+  SOURCE["Native page + ordered fragments"] --> VIS["Puck / GrapesJS / Editor.js authoring"]
+  VIS --> CMS["Revision-checked CMS save + source-bound review"]
+  CMS --> NATIVE["MD4C + Mustach + C WebAddress HTML"]
+  CMS --> X["bonfyre site export"]
+  X --> HTML["Offline HTML: CSS inlined, scripts removed"]
+  X --> WXR["WordPress WXR 1.2"]
+  X --> FRAPPE["Frappe document exchange"]
+  APP["Source React or Svelte application"] --> ANALYZE["Extract routes, components, state, effects, rights"]
+  ANALYZE -. "Not yet an end-to-end verified converter" .-> CMS
+~~~
+
+**Native page delivery:** Puck/GrapesJS/Editor.js are working modes of the source-preserving tree. `site_page` and `site_fragment` are CMS records, while the native C renderer controls final markup. Source and application action bindings do not become executable editor-injected HTML or arbitrary React components.
+
+**Portable site output:** [`bonfyre site export`](../cmd/BonfyreWebAddress/src/site_product.c) produces three materially different deliverables. The [site-product test](../cmd/BonfyreWebAddress/tests/site_product_test.sh) verifies offline HTML style inlining/script removal and WXR/Frappe export-and-reimport text preservation, including markup characters. It does not verify actual remote WordPress/Frappe imports, and offline HTML cannot reproduce every interactive JS application merely by omitting its scripts.
+
+**React and Svelte:** Puck's real browser editor uses React/ReactDOM. That does *not* mean arbitrary React source has a valid native compiler or that SvelteKit layouts, stores, hydration, effects or routes have round-tripped. A Svelte grid reference appears in a vendor helper, but no independently witnessed Svelte converter was located. A genuine framework adapter must preserve forms, stateful widgets, client/server effects, layout, identities, semantics, and build/deployment behavior; the existing typed tree and browser parity tests establish pieces of that path only.
+
+**Backend source vs frontend presentation:** PHP/WordPress sessions and hooks, Frappe controllers, authenticated APIs and SaaS permissions are not visual-component properties. They remain owner-specific integrations. The same applies to media rights, file uploads, spreadsheet formulas, spatial queries, and account changes.
+
+See the [concrete integration/export ledger](real-workflows-and-interoperability.md) for the WordPress signed bridge, WXR/Frappe exports, hosting migrations, XLSX, scanned documents, MCP workspaces, and creator-platform boundaries.
+
+## 9. Acceptance: a real editor and a real experience, not another demo
 
 1. **Create, don't import.** Start with a blank account-owned document; author nested content, interactions and responsive variants through the installed editor. Puck/GrapesJS/Editor.js must not secretly create three competing documents.
 2. **Retain the original meaning.** Reopen after CMS save and compare exact child structure, section payloads, binding IDs, read-only source identity, citation/media provenance, and revision digest.
@@ -180,7 +207,7 @@ For a **group**, authoring can compose a profile, membership-aware discussion, e
 
 In particular, the **90-journal parity target and rich one-to-one personal site reproduction** are acceptance goals, not proofs established by this architecture document. Tests confirm important internal paths, but their existence must not be mistaken for final live readback.
 
-## 9. Source and verification map
+## 10. Source and verification map
 
 | Work | Owner/source | Test/witness |
 |---|---|---|
