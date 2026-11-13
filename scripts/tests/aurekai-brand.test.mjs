@@ -62,9 +62,12 @@ test('Work Samples receives the brand; independent sites keep their names',()=>{
  assert.ok(content.navigation.some(x=>x.label==='About Aurekai'&&x.href.endsWith('/bonfyre/about/')));
  assert.match(src('components/BonfyreServiceSite/README.md'),/independent customer sites retain their own names and branding/);
 });
-test('GitHub, model and distribution documents distinguish business and native engine',()=>{
- for(const path of ['README.md','Aurekai/README.md','docs/aurekai-bonfyre-model.md','branding/social-copy.md'])
-   assert.ok(src(path).includes(signature),path+' missing approved signature');
+test('GitHub documents keep the Aurekai campaign separate from the Bonfyre native engine',()=>{
+ for(const path of ['Aurekai/README.md','branding/social-copy.md'])
+   assert.ok(src(path).includes(signature),path+' missing approved business signature');
+ assert.match(src('README.md'),/^# Bonfÿre/m,'engine README must have independent product heading');
+ assert.doesNotMatch(src('README.md'),/Built on software\. Driven by Aurekai\./,'engine README must not carry the company campaign');
+ assert.match(src('docs/aurekai-bonfyre-model.md'),/independent software engine/);
  assert.match(src('docs/client-operations-portfolio.md'),/client retains its name, customers and operating authority/);
  assert.match(src('branding/social-copy.md'),/prepared, not posted/i);
  assert.match(src('branding/README.md'),/not evidence that named market leaders already use Aurekai/);
