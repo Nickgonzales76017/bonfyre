@@ -1,6 +1,21 @@
 # Bonfÿre architecture, in pictures
 
-Native vector diagrams of how Aurekai experiences compose over Bonfÿre. These are **views of system owners**, not independent architecture registries or proof that every pictured workflow is deployed. The canonical [Architecture Atlas](../../architecture/README.md) and its witnesses remain authoritative.
+These six SVG/Mermaid examples are **drill-downs**, not an inventory of the Aurekai or Bonfÿre system. The earlier selection overemphasized domain routing, article narration and a one-off room-planning offer while omitting the general spatial engine, source and provider estate, groups, connections, Git/Forgejo/Josh, BitNet/FPQ, masks, model execution, finance, knowledge, native UI and release/evidence lifecycles.
+
+**Start with the [system-wide architecture and capability index](system-architecture.md)**: 12+ native GitHub Mermaid diagrams across the business, identities, institutions, groups, sources, connections, spatial/temporal query, audiovisual media, representation and model computation, Git/source fabric, memory/data, application composition, work/proof, finance, protocols and live delivery. It distinguishes current measured paths, implemented contracts, archived reference implementations, SHADOW/DEFER work, and unverified release claims.
+
+The [source-checked architecture registry](../../architecture/README.md) remains authoritative for exact owners and witnesses. On 2026-11-13 it enumerated 557 architecture entries and 562 interactions across 11 expandable views; **that does not mean 557 shipped applications**.
+
+## System-wide views
+
+- **[Full native Mermaid architecture and coverage index](system-architecture.md)** — the entry point for the entire engine and operating business.
+- **[Spatial and mapping capabilities](system-architecture.md#5-spatial-geographical-and-temporal-capability--not-a-room-planning-demo)** — observations, valid/knowledge time, indexed queries, public estate field, civic and location-aware applications.
+- **[Git, Forgejo, Josh and source ownership](system-architecture.md#8-git-github-forgejo-josh-and-reusable-source-ownership)** — provider-backed repositories, view filtering, source parity and release gates.
+- **[Masks, BitNet, FPQ and model admission](system-architecture.md#7-model-representation-masks-bitnet-fpq-and-runtime-placement)** — deterministic eligibility, representation proof and physical execution.
+- **[Accounts, groups and connections](system-architecture.md#2-identity-groups-institutions-permissions-and-domains)** — identity and groups; follow through to provider tenancy in section 4.
+- **[Work, authority, economics and evidence](system-architecture.md#9-work-autonomy-economics-protocol-boundaries-and-evidence)** — lifecycle and effect boundaries beyond demos.
+
+## Individual system slices (legacy six-view gallery)
 
 ## 1. Organizations, sites and domains
 
@@ -102,7 +117,7 @@ flowchart TB
 
 Nine Frappe-derived application grammars can share typed business meaning without sharing unrestricted access. Their presence in the code is not a claim of complete runtime write-back. See [Frappe ×9](../architecture.md#frappe-9) and [federated sources](../../integrations/federated/).
 
-## 6. Product, commerce and spatial work
+## 6. A specific offer: product, commerce and room layout
 
 ```mermaid
 flowchart LR
@@ -116,7 +131,7 @@ flowchart LR
     F --> E["Recorded business event and evidence"]
 ```
 
-The same product and options must survive movement between catalogue, room planning and procurement. Price observations, quotes, orders and settled payments are different facts. See [commercial operating model](../aurekai-bonfyre-model.md).
+**This is one commercial example, not the definition of spatial computing or Aurekai's mapping capabilities.** For the general spatial owner and its temporal observations, use the [system-wide spatial view](system-architecture.md#5-spatial-geographical-and-temporal-capability--not-a-room-planning-demo). The same product and options must survive movement between catalogue, room planning and procurement. Price observations, quotes, orders and settled payments are different facts. See [commercial operating model](../aurekai-bonfyre-model.md).
 
 ---
 
