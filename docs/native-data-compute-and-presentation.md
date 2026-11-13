@@ -4,7 +4,7 @@ Bonfÿre's software work becomes much easier to understand when a **native appli
 
 - **YAFF and CUE** preserve distinct architectural claims and validate narrow contracts, which are lowered to native C/Zig structures and bounded owner readers. They are not a generic universal data format or a substitute for SQL.
 - **Puck, GrapesJS and Editor.js** are editor adapters over retained typed authoring state. WebAddress/SurfaceScene/MD4C/Mustach produce browser-visible editorial, profile and application content with actual CMS/publication scope.
-- **PostCSS \`.pcss\`, Tailwind and presentation tokens** give those native pages, account applications and editor controls a common design/build path, without copying a donor frontend or inlining unrelated one-off style blocks into C.
+- **PostCSS `.pcss`, Tailwind and presentation tokens** give those native pages, account applications and editor controls a common design/build path, without copying a donor frontend or inlining unrelated one-off style blocks into C.
 - **BonfyreEmbed, BonfyreVec, vGPU and columnar stores** let a local machine calculate usable research views and semantic neighbors across thousands or hundreds of thousands of source records. A page or editor reads the resulting bounded tables instead of repeating the expensive work per visit.
 - **BitNet and FPQ** are different representation/ranking experiments. BitNet can reorder a **previously allowed** candidate frontier; FPQ encodes model weights and measures reconstruction quality. Neither becomes a source of truth, authorization or production model quality simply by running.
 
@@ -36,7 +36,7 @@ flowchart TB
     PCSS[".pcss + PostCSS nested + Tailwind + closed presentation tokens"]
     BROWSER["Article / search / research table / account workspace / publication / listening"]
   end
-  YAFF --> CUE
+  YAFF -. "Architectural evidence and constraints" .-> NATIVE
   CUE --> NATIVE
   OWNER --> EDIT
   EDIT --> NATIVE
@@ -46,7 +46,7 @@ flowchart TB
   FILE --> EMBED --> VEC
   FILE --> DUCK
   FILE --> VGPU
-  VEC --> VGPU
+  VEC -. "Only when the chart/model/passport matches" .-> VGPU
   VGPU --> MATERIAL["Persisted derived tables with input digest and backend receipt"]
   MATERIAL --> BROWSER
   DUCK --> BROWSER
@@ -67,20 +67,20 @@ The vGPU and Embed/Vec arrows are intentionally separate: an archived story's ne
 
 | File / tool | What it actually contains | Concrete consumer or witness |
 |---|---|---|
-| [\`architecture/**/*.yaff\`](../architecture/README.md) | architecture identity, source paths, status, invariants, exact interactions, what must be preserved and what cannot be inferred | native [Atlas](../architecture/README.md) and \`architecture_atlas\` MCP; CI validates unsupported maturity claims |
-| [\`architecture/interactions.yaff\`](../architecture/interactions.yaff) | source → destination relation with preserved fields, dropped claims and refused inferences | Atlas expansion and architectural regression |
-| [\`schemas/control/page-composition.cue\`](../schemas/control/page-composition.cue) | typed \`#PageRegion\` roles, reading order, materials, DOM topology, minimum/maximum items, subject schemes | CUE export into generated native page composition, not a fallback bag of generic cards |
-| [\`schemas/control/site-application-lowerers.cue\`](../schemas/control/site-application-lowerers.cue) | application layout, selected canonical material owner, reader, query key, structural operations, named style asset | strict [Zig lowerer compiler](../cmd/BonfyreWebAddress/tools/compile_site_application_lowerers.zig); unknown fields/layouts/opcodes fail |
-| [\`architecture/native-ratchet.cue\`](../architecture/native-ratchet.cue) | native program/JS budgets and tightening requirements | pre-commit, CI and native ratchet checks |
-| [\`cmd/BonfyreBrief/data/hosting-inventory.cue\`](../cmd/BonfyreBrief/data/hosting-inventory.cue) | shape of one specific cPanel/InterWorx/Plesk import inventory | \`cue vet\` tests reject source claims mislabeled as customer statements |
+| [`architecture/**/*.yaff`](../architecture/README.md) | architecture identity, source paths, status, invariants, exact interactions, what must be preserved and what cannot be inferred | native [Atlas](../architecture/README.md) and `architecture_atlas` MCP; CI validates unsupported maturity claims |
+| [`architecture/interactions.yaff`](../architecture/interactions.yaff) | source → destination relation with preserved fields, dropped claims and refused inferences | Atlas expansion and architectural regression |
+| [`schemas/control/page-composition.cue`](../schemas/control/page-composition.cue) | typed `#PageRegion` roles, reading order, materials, DOM topology, minimum/maximum items, subject schemes | CUE export into generated native page composition, not a fallback bag of generic cards |
+| [`schemas/control/site-application-lowerers.cue`](../schemas/control/site-application-lowerers.cue) | application layout, selected canonical material owner, reader, query key, structural operations, named style asset | strict [Zig lowerer compiler](../cmd/BonfyreWebAddress/tools/compile_site_application_lowerers.zig); unknown fields/layouts/opcodes fail |
+| [`architecture/native-ratchet.cue`](../architecture/native-ratchet.cue) | native program/JS budgets and tightening requirements | pre-commit, CI and native ratchet checks |
+| [`cmd/BonfyreBrief/data/hosting-inventory.cue`](../cmd/BonfyreBrief/data/hosting-inventory.cue) | shape of one specific cPanel/InterWorx/Plesk import inventory | `cue vet` tests reject source claims mislabeled as customer statements |
 
 **The useful technical distinction:** YAFF is where the architecture can tell the truth about what was implemented, measured or forbidden; CUE checks **real shapes**. The native compiler then emits bounded descriptors or uses a named source reader. CUE does not grant a customer account, and the fact that YAFF records an interaction does not execute one.
 
-For example, a CUE page region can say that an editorial page has a \`results\` or \`table\` topology consuming a normalized publication stream. It cannot silently turn a \`source_channel\` candidate into a read article, or transform a vector similarity score into an accepted recommendation.
+For example, a CUE page region can say that an editorial page has a `results` or `table` topology consuming a normalized publication stream. It cannot silently turn a `source_channel` candidate into a read article, or transform a vector similarity score into an accepted recommendation.
 
 ## 3. The styling system is a compiler input, not a pile of CSS overlays
 
-The **local development tree** has an active PostCSS/Tailwind migration. It uses **\`.pcss\`** (PostCSS source files; do not call it Sass/SCSS), \`postcss-nested@6.2.0\`, \`tailwindcss@3.4.19\`, \`@tailwindcss/typography@0.5.16\` and \`@tailwindcss/forms@0.5.10\`, pinned by \`deploy/tailwind/package.json\`.
+The **local development tree** has an active PostCSS/Tailwind migration. It uses **`.pcss`** (PostCSS source files; do not call it Sass/SCSS), `postcss-nested@6.2.0`, `tailwindcss@3.4.19`, `@tailwindcss/typography@0.5.16` and `@tailwindcss/forms@0.5.10`, pinned by `deploy/tailwind/package.json`.
 
 ~~~mermaid
 flowchart LR
@@ -94,24 +94,24 @@ flowchart LR
   PAGE --> CHECK["Build/check byte parity + responsive/browser acceptance"]
 ~~~
 
-In [\`deploy/tailwind/tailwind.config.js\`](../deploy/tailwind/tailwind.config.js), the \`content.transform\` reader extracts **class attribute values** from C header/implementation source, MJS authoring components and HTML, including the escaped class attributes emitted by C. That keeps Tailwind from interpreting arbitrary C keywords as UI classes. The semantic \`@layer components\` vocabulary is included even when one current page does not use every control. The templates provide constrained color, type, spacing, density, layout and mode roles; direct user-authored arbitrary selectors/scripts cannot bypass publication scope.
+In [`deploy/tailwind/tailwind.config.js`](../deploy/tailwind/tailwind.config.js), the `content.transform` reader extracts **class attribute values** from C header/implementation source, MJS authoring components and HTML, including the escaped class attributes emitted by C. That keeps Tailwind from interpreting arbitrary C keywords as UI classes. The semantic `@layer components` vocabulary is included even when one current page does not use every control. The templates provide constrained color, type, spacing, density, layout and mode roles; direct user-authored arbitrary selectors/scripts cannot bypass publication scope.
 
-The local \`deploy/tailwind/input.pcss\` defines real button, hover, focus and form treatment with \`@apply\` and tokenized custom properties; \`deploy/tailwind/styles/*.pcss\` compiles the main website families; \`integrations/browser/*.pcss\` compiles the browser workspace styles **beside their owning modules**. The build retains the existing deployed \`.css\` paths so serving code need not move to a new route just to adopt the compiler.
+The local `deploy/tailwind/input.pcss` defines real button, hover, focus and form treatment with `@apply` and tokenized custom properties; `deploy/tailwind/styles/*.pcss` compiles the main website families; `integrations/browser/*.pcss` compiles the browser workspace styles **beside their owning modules**. The build retains the existing deployed `.css` paths so serving code need not move to a new route just to adopt the compiler.
 
-**Source synchronization:** as inspected on 2026-11-13, public GitHub \`main\` includes the Tailwind configuration but **does not yet include** the local \`deploy/tailwind/input.pcss\` or \`deploy/tailwind/package.json\`. The attached Codex handoff records the local migration of the site styles and eighteen browser-workspace styles plus rebuild/check commands. Do **not** claim this new CSS pipeline is on published GitHub or deployed to the four live domains until the actual source, compiled assets and release readback are reconciled.
+**Source synchronization:** as inspected on 2026-11-13, public GitHub `main` includes the Tailwind configuration but **does not yet include** the local `deploy/tailwind/input.pcss` or `deploy/tailwind/package.json`. The attached Codex handoff records the local migration of the site styles and eighteen browser-workspace styles plus rebuild/check commands. Do **not** claim this new CSS pipeline is on published GitHub or deployed to the four live domains until the actual source, compiled assets and release readback are reconciled.
 
-**Open styling debt:** legacy inline \`<style>\` and route-specific styles remain in C and standalone HTML emitters. Compiling more CSS does not by itself remove duplicate headers, independent article shells, poor mobile grids or incomplete Stitch screen functionality. The acceptance is a **single coherent layout and component grammar** with real interactions and responsive screenshots, not prettier disconnected pages.
+**Open styling debt:** legacy inline `<style>` and route-specific styles remain in C and standalone HTML emitters. Compiling more CSS does not by itself remove duplicate headers, independent article shells, poor mobile grids or incomplete Stitch screen functionality. The acceptance is a **single coherent layout and component grammar** with real interactions and responsive screenshots, not prettier disconnected pages.
 
 ## 4. Puck, GrapesJS, Editor.js and the compiled frontend
 
 [Shared authoring state](../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs) retains a typed tree with known block kinds, 27 service-section shapes, nested responsive layouts, closed style tokens, editorial blocks, exact identifiers and bounded media/URL forms. The browser adapters provide distinct editing methods: Puck (React), GrapesJS (design), Editor.js (article). The native renderer uses MD4C/Mustach/C to deliver the **same retained composition** at the selected site and public audience.
 
-- The source allows styles such as \`layout=columns\`, \`span=4\`, \`background=panel\` and \`typography=editorial\`. It refuses arbitrary CSS objects in saved authoring state.
-- Browser-facing components use shared responsive/editorial CSS; final site styling should derive from the \`.pcss\` build and selected presentation tokens, rather than each route issuing its own styles.
+- The source allows styles such as `layout=columns`, `span=4`, `background=panel` and `typography=editorial`. It refuses arbitrary CSS objects in saved authoring state.
+- Browser-facing components use shared responsive/editorial CSS; final site styling should derive from the `.pcss` build and selected presentation tokens, rather than each route issuing its own styles.
 - A publication can carry formatted paragraphs, tables, figures and source links. A dense interactive result table, semantic related-story rail, financial workbook or timeline is **a typed application/record reader** and still needs its own interaction and authorization contract. The editorial canvas does not assume it is allowed to rewrite those records.
 - The existing exact account CMS review controls protect revisions, file references and site namespaces. A published section does not imply every private source becomes public.
 
-**Current acceptance gap:** the attached session reports 90 canonical journal posts and 327 sections published in the CMS, while the then-running public binary still lacked the \`/blog/\` route. It also records interrupted Stitch-family work, ongoing duplicate HTML shells and added narration controls. This is a **local/CMS/source versus live-release discrepancy**. The documentation must not mark the 90 journals or 91 Stitch designs as live-parity proven without four-apex and individual route readback.
+**Current acceptance gap:** the attached session reports 90 canonical journal posts and 327 sections published in the CMS, while the then-running public binary still lacked the `/blog/` route. It also records interrupted Stitch-family work, ongoing duplicate HTML shells and added narration controls. This is a **local/CMS/source versus live-release discrepancy**. The documentation must not mark the 90 journals or 91 Stitch designs as live-parity proven without four-apex and individual route readback.
 
 ## 5. Embed and Vec: local retrieval with exact representation identity
 
@@ -131,17 +131,17 @@ flowchart LR
 
 [BonfyreEmbed](../cmd/BonfyreEmbed/src/main.c) uses the **ONNX Runtime C API, BERT WordPiece tokenizer and mean pooling** for actual neural text embeddings. It has a separate deterministic hash backend; requesting ONNX and receiving hashed vectors without explicit degradation permission is a refusal. The cache identity includes model graph, vocabulary and runtime identity. A model name is **not** enough to decide vector geometry.
 
-[BonfyreVec](../cmd/BonfyreVec/src/main.c) uses the SQLite C API with \`sqlite-vec\` and also implements an exact SIMD cosine path. Its CLI supports \`init\`, \`insert\`, \`search\`, \`neighbors\`, \`compare\`, \`count\` and exact passage ID deletion. The store is opened at its actual configured dimension, and queries must match the full width: a former 768-dimensional query truncated to 384 floats was a real correctness bug. The native deletion test proves that metadata and vectors are removed together with transaction rollback on failure.
+[BonfyreVec](../cmd/BonfyreVec/src/main.c) uses the SQLite C API with `sqlite-vec` and also implements an exact SIMD cosine path. Its CLI supports `init`, `insert`, `search`, `neighbors`, `compare`, `count` and exact passage ID deletion. The store is opened at its actual configured dimension, and queries must match the full width: a former 768-dimensional query truncated to 384 floats was a real correctness bug. The native deletion test proves that metadata and vectors are removed together with transaction rollback on failure.
 
-The [\`build_semantic_index.sh\`](../scripts/build_semantic_index.sh) path constructs a corpus from the local archive, calls ONNX embeddings, inserts into Vec, and can write a **Parquet** table for other readers. This is local source processing and *optional publication of derived vectors*, not automatic permission to publish the original source material.
+The [`build_semantic_index.sh`](../scripts/build_semantic_index.sh) path constructs a corpus from the local archive, calls ONNX embeddings, inserts into Vec, and can write a **Parquet** table for other readers. This is local source processing and *optional publication of derived vectors*, not automatic permission to publish the original source material.
 
 **Critical invariants:** learned vs hashed-token vectors never share a distance threshold; a missing model refuses rather than claiming learned similarity; current source identity and rights are rechecked for any action; and a near vector is a candidate for review, not proof that two subjects are identical.
 
 ## 6. vGPU: numerical work over large local datasets
 
-The first production-relevant kernels are **not 3D rendering**. The pinned [vGPU Stage kernel](../cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs) computes tiled all-pairs distances among placed records. The [vGPU kin kernel](../cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs) computes cosine similarity between rows in a numeric \`float32\` chart and retains top-k comparable items. They run through vGPU 0.3.1 / Dawn-backed \`vgpu/node\` when supported, or a deterministic CPU path, with a mock compute backend for tests.
+The first production-relevant kernels are **not 3D rendering**. The pinned [vGPU Stage kernel](../cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs) computes tiled all-pairs distances among placed records. The [vGPU kin kernel](../cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs) computes cosine similarity between rows in a numeric `float32` chart and retains top-k comparable items. They run through vGPU 0.3.1 / Dawn-backed `vgpu/node` when supported, or a deterministic CPU path, with a mock compute backend for tests.
 
-The kin kernel accepts a packed numeric file plus a **parallel key list**: \`--vectors vectors.f32 --keys keys.json --dims 256 --k 8 --backend auto|mock|cpu --min 0.85\`. It tiles under workgroup dispatch limits and returns a receipt identifying which backend actually ran. The Stage neighborhood compiler persists result rows in SQLite, checks an input-and-code digest, skips identical generations without re-executing a kernel, and rolls back failed changes atomically.
+The kin kernel accepts a packed numeric file plus a **parallel key list**: `--vectors vectors.f32 --keys keys.json --dims 256 --k 8 --backend auto|mock|cpu --min 0.85`. It tiles under workgroup dispatch limits and returns a receipt identifying which backend actually ran. The Stage neighborhood compiler persists result rows in SQLite, checks an input-and-code digest, skips identical generations without re-executing a kernel, and rolls back failed changes atomically.
 
 ~~~mermaid
 flowchart LR
@@ -157,9 +157,9 @@ flowchart LR
 
 **Evidence:** the native [ItemArchive Atlas entry](../architecture/surface/item-archive.yaff) records **6,810 items, 46,376,100 candidate pairs in 1.1 seconds** on vgpu-node, with 710 above 0.85. The retained cross-publisher duplicate test identified true twins while excluding unrelated stories. The compiler's [local parity test](../cmd/BonfyreSurfaceScene/tests/compile_neighbourhood_native_test.sh) verifies deterministic CPU output, persistent rows, no repeat computation when inputs are unchanged, and transaction recovery. The measured performance is for that **one prepared estate workload and hardware**, not a guarantee for every data shape.
 
-**Browser-scale data is another real lane:** [\`site/matrix/field.html\`](../site/matrix/field.html) reads an R2-hosted Parquet channel catalogue into **DuckDB-Wasm** in the tab and visualizes it with WebGPU. The Atlas records **109,761 channel rows** read by range in September 2026, of which 2,364 were admitted channels; the majority were only candidates. A later locally tested kept-copy path used origin-private storage and conditional HTTP responses, but its edge deployment was not proven. Browser SQL and GPU drawing here are **different steps**: no claim that DuckDB SQL runs on vGPU is justified.
+**Browser-scale data is another real lane:** [`site/matrix/field.html`](../site/matrix/field.html) reads an R2-hosted Parquet channel catalogue into **DuckDB-Wasm** in the tab and visualizes it with WebGPU. The Atlas records **109,761 channel rows** read by range in September 2026, of which 2,364 were admitted channels; the majority were only candidates. A later locally tested kept-copy path used origin-private storage and conditional HTTP responses, but its edge deployment was not proven. Browser SQL and GPU drawing here are **different steps**: no claim that DuckDB SQL runs on vGPU is justified.
 
-**Separate browser compute witness:** [\`chromium-engines.mjs\`](../integrations/browser/engines/chromium-engines.mjs) runs a WGSL compute program over bounded \`u32\`, \`i32\` and \`f32\` arrays, measuring compile/upload/execute/readback independently. The Atlas recorded a 100,000/1,000,000/4,000,000-element hash exercise in which **CPU won after GPU readback overhead**, and another nearest-vector exercise where GPU beat a JavaScript reference; neither was a real estate workload against a native CPU baseline. Do not market every operation as GPU-faster.
+**Separate browser compute witness:** [`chromium-engines.mjs`](../integrations/browser/engines/chromium-engines.mjs) runs a WGSL compute program over bounded `u32`, `i32` and `f32` arrays, measuring compile/upload/execute/readback independently. The Atlas recorded a 100,000/1,000,000/4,000,000-element hash exercise in which **CPU won after GPU readback overhead**, and another nearest-vector exercise where GPU beat a JavaScript reference; neither was a real estate workload against a native CPU baseline. Do not market every operation as GPU-faster.
 
 ### What this means for enormous tables
 
@@ -215,7 +215,7 @@ The existing **source-side** and **compute-side** work supports the first severa
 | Claim | Current witness | Remaining proof |
 |---|---|---|
 | YAFF/CUE source constraints and generated application lowerers | Atlas native query/validation, page composition CUE, Zig strict lowerer parser and native tests | synchronized deployment and every additional app material reader |
-| PCSS + Tailwind tokens across site/browser styles | local \`deploy/tailwind\` build/check and saved Codex commands; Tailwind config exists publicly | **publish local PCSS sources/lockfile, reconcile built CSS assets, run release/browser parity** |
+| PCSS + Tailwind tokens across site/browser styles | local `deploy/tailwind` build/check and saved Codex commands; Tailwind config exists publicly | **publish local PCSS sources/lockfile, reconcile built CSS assets, run release/browser parity** |
 | Puck/GrapesJS/Editor.js → typed native authored site | source tree, C/MD4C renderer, page composer and browser fixtures | remove remaining independent shells; 91 Stitch routes and 90 articles live/readable |
 | Native ONNX embedding and SQLite-vector search | Embed and Vec source/tests, semantic corpus script | each selected model's dims/passport/actual model readiness; per-app search quality |
 | vGPU neighborhood and kin computations | native compiler/source tests and recorded 6,810-item run | Linux Dawn delivery; more workload families; invalidation beyond whole-generation cut |
