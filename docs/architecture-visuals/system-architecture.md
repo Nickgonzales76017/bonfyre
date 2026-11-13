@@ -1,6 +1,6 @@
-# Bonfÿre / Aurekai — complete system architecture
+# Bonfÿre — complete native engine architecture
 
-> **Coverage contract, not a demo inventory.** Bonfÿre is the native engine and source of executable contracts; Aurekai is the operating business, customer/product network and distribution estate. A room planner, narrated article, profile, map, application, or feed is an *instance* of the system, not its definition.
+> **Coverage contract, not a demo inventory.** Bonfÿre is the native engine and source of typed executable contracts. Aurekai is a separately owned operating business and one deployment example. A room planner, narrated article, profile, map, application, or feed is an *instance* of a consuming institution's use of the engine, not a proprietary engine feature or transferred business asset. [Ownership boundary](../OWNERSHIP-BOUNDARY.md).
 >
 > **Evidence cut:** architecture registry checked against 151 declaration files, generated 2026-11-13 13:02 UTC (digest 4af1cc117e76): **557 architecture entries, 562 interactions, 11 expandable views**. Registry counts are *not* proof of deployed features: 345 tagged implemented, 154 measured, 34 architectural and 24 declared. Live readiness is a separate owner-and-release question.
 
