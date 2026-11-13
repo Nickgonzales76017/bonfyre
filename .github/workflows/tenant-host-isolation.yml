@@ -9,6 +9,8 @@ on:
       - "cmd/BonfyreWebAddress/src/credit_profile_parent.h"
       - "cmd/BonfyreWebAddress/tests/auth_continuation_test.c"
       - "cmd/BonfyreWebAddress/tests/route_presentation_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c"
+      - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
       - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
       - "cmd/BonfyreWebAddress/src/route_presentation.h"
       - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
@@ -22,6 +24,8 @@ on:
       - "cmd/BonfyreWebAddress/src/credit_profile_parent.h"
       - "cmd/BonfyreWebAddress/tests/auth_continuation_test.c"
       - "cmd/BonfyreWebAddress/tests/route_presentation_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c"
+      - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
       - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
       - "cmd/BonfyreWebAddress/src/route_presentation.h"
       - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
@@ -49,5 +53,20 @@ jobs:
             cmd/BonfyreWebAddress/tests/route_presentation_test.c \
             cmd/BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o /tmp/bf-presentation-test
           /tmp/bf-presentation-test
+      - name: Compile and verify publisher parent without inherited institution
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Icmd/BonfyreWebAddress/src -Iengine/core/include -Ilib/libbonfyre/include \
+            cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c \
+            -lsqlite3 -o /tmp/bf-credit-test
+          /tmp/bf-credit-test
+      - name: Preserve exact hashed-byline host behavior
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Wno-misleading-indentation -Wno-format-truncation \
+            -Icmd/BonfyreWebAddress/src -Iengine/core/include -Ilib/libbonfyre/include \
+            cmd/BonfyreWebAddress/tests/people_projection_test.c \
+            lib/libbonfyre/src/bf_sha256.c -lsqlite3 -o /tmp/bf-people-test
+          /tmp/bf-people-test
       - name: Confirm engine core has not acquired Aurekai product defaults
         run: python3 scripts/check-product-boundary.py
