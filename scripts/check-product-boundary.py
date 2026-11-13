@@ -29,7 +29,7 @@ NEUTRAL_WEBADDRESS = (
     Path("cmd/BonfyreWebAddress/src/credit_profile_host.h"),
     Path("cmd/BonfyreWebAddress/src/credit_profile_parent.h"),
 )
-TENANT_BRAND = re.compile(r"aurekai\\.|aurekai:|data-aurekai|institution:aurekai", re.IGNORECASE)
+TENANT_BRAND = re.compile(r"aurekai\.|aurekai:|data-aurekai|institution:aurekai", re.IGNORECASE)
 BRAND = re.compile(r"aurekai|aurekai\.(?:work|life|live|shop)", re.IGNORECASE)
 FORBIDDEN_README = (
     "built on software. driven by aurekai.",
@@ -111,7 +111,7 @@ def self_test() -> None:
             (root / folder).mkdir(parents=True, exist_ok=True)
         for path in NEUTRAL_WEBADDRESS:
             (root / path).parent.mkdir(parents=True, exist_ok=True)
-            (root / path).write_text("/* neutral tenant implementation */\\n", encoding="utf-8")
+            (root / path).write_text("/* neutral tenant implementation */\n", encoding="utf-8")
         (root / "README.md").write_text("# Bonfÿre\n\nNeutral native engine.\n", encoding="utf-8")
         (root / "docs").mkdir()
         (root / "docs/OWNERSHIP-BOUNDARY.md").write_text(
@@ -130,9 +130,9 @@ def self_test() -> None:
         assert any("brand.c:1" in item for item in problems(root)), "brand source was admitted"
         brand_file.unlink()
         tenant_file = root / NEUTRAL_WEBADDRESS[0]
-        tenant_file.write_text('const char *bad = "aurekai.work";\\n', encoding="utf-8")
+        tenant_file.write_text('const char *bad = "aurekai.work";\n', encoding="utf-8")
         assert any("tenant-neutral WebAddress" in item for item in problems(root)), "new branding in neutral WebAddress was admitted"
-        tenant_file.write_text("/* neutral tenant implementation */\\n", encoding="utf-8")
+        tenant_file.write_text("/* neutral tenant implementation */\n", encoding="utf-8")
         (root / "README.md").write_text(
             "# Bonfÿre\n\nBuilt on software. Driven by Aurekai.\n", encoding="utf-8")
         assert any("branding" in item for item in problems(root)), "business slogan was admitted"
