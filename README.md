@@ -33,7 +33,7 @@ This repository is the technical side of that work. Its native implementation co
 
 ## Architecture — the whole system
 
-**[Explore the complete Bonfÿre / Aurekai system architecture](docs/architecture-visuals/system-architecture.md)** · [Source-checked registry](architecture/README.md) · [Technical design](docs/architecture.md) · [Focused diagrams](docs/architecture-visuals/README.md)
+**[Explore the complete Bonfÿre / Aurekai system architecture](docs/architecture-visuals/system-architecture.md)** · **[Unified editors and native frontend](docs/authoring-frontend-architecture.md)** · [Source-checked registry](architecture/README.md) · [Technical design](docs/architecture.md) · [Focused diagrams](docs/architecture-visuals/README.md)
 
 The system is larger than its sites, feeds, narration, marketplace or one-off spatial offers. **Aurekai operates the businesses, accounts, communities and applications; Bonfÿre supplies the native address, data, computation, connection, work, media, economics, security and release machinery.** Each experience is one composition of those shared capabilities.
 
@@ -51,8 +51,9 @@ flowchart TB
   C --> MODEL["Data/memory, masks, BitNet, FPQ, model runtime"]
   C --> GEO["Spatial/temporal observation, maps and media"]
   C --> APPS["CMS, Frappe grammars, account-owned apps"]
+  C --> EDIT["Puck, GrapesJS, Editor.js, MD4C, native C frontend"]
   C --> WORK["WorkGraph, agents, authority, economy, proof"]
-  SOURCE & GIT & MODEL & GEO & APPS & WORK --> R["Verified native components, public and account releases"]
+  SOURCE & GIT & MODEL & GEO & APPS & EDIT & WORK --> R["Verified native components, public and account releases"]
 ~~~
 
 **Architecture navigation** — these are independent, interacting system families, not a list of demo pages.
@@ -66,6 +67,7 @@ flowchart TB
 | **Git and source operations** | GitHub, Forgejo, Josh-filtered checkout, branch/source lineage, pinned libraries, native patch/test/commit/release gates |
 | **Compute and representation** | AddressPlane exact masks, BitNet ranking, FPQ/FPQx, representation passports, local Qwen/MoE, resource/placement decisions |
 | **Data, memory and search** | SQLite, DuckDB/Parquet, Arrow, object storage, embeddings/vectors, incremental and temporal data, reproducible context cuts |
+| **Unified authoring and frontend** | Puck, GrapesJS, Editor.js, MD4C/Mustach, stable typed document, 27 section owners, responsive tokens, 91 Stitch references / 14 patterns, C-native rendering and interactions | 
 | **CMS, publishing and community** | Sites, profiles, posts, 90-journal parity target, rich editing, review/publishing, memberships, activity and collections |
 | **Audio, video and live media** | Transcription, speech, narration as an optional source edition, clips, scene detection, recording, rights, players and channels |
 | **Installed business applications** | Frappe/ERPNext/CRM/HRMS/Helpdesk/LMS/Wiki/Drive/Insights grammars and account-scoped records |
@@ -75,6 +77,14 @@ flowchart TB
 [**See the native Mermaid diagrams and source-linked capability coverage**](docs/architecture-visuals/system-architecture.md). The source registry's 557 entries and 562 interactions (2026-11-13 cut) contain implemented, measured, declared and architectural work; none of those tags alone proves a capability is live for an end user.
 
 The earlier vector diagrams are still useful as **individual examples**, not as the whole architecture: [sites and domains](docs/architecture-visuals/site-addressing.svg), [source-to-app use](docs/architecture-visuals/source-to-apps.svg), [editorial composition](docs/architecture-visuals/editorial-composition.svg), and [work and evidence](docs/architecture-visuals/work-to-evidence.svg). The [complete focused gallery](docs/architecture-visuals/README.md) separately labels the room-planning flow as one specific commerce/space offer.
+
+## Why a shared experience compiler matters
+
+An Aurekai experience is **not a screenshot, a collection of disconnected UI blocks, or a website template**. Its actual meaning is retained by a person, community, publisher, institution, source, place or application owner. Bonfÿre makes that meaning available to different authorized editors, readers, applications and delivery channels without silently copying identities or inventing capabilities.
+
+The [unified authoring and frontend architecture](docs/authoring-frontend-architecture.md) covers Puck (structure), GrapesJS (visual composition), Editor.js (rich writing), MD4C (native Markdown), Mustach (compiled C templates), a shared tree, CMS revision controls, responsive tokens, published SurfaceIR/PageComposition, interaction grammar and browser-native behavior. The 27 ServiceSite section owners, compiled Frappe forms, 91 studied Stitch references and 14 reusable experience patterns point toward **one native authoring language across real kinds of software**, not a seven-block demo. Implementation witnesses and remaining production gaps are linked in the guide.
+
+That is important beyond selling customer sites: a community can author participation surfaces; a researcher can combine sources, narrative and a time-aware map; a publisher can compose longform journalism and optional audio; a learner can create a project notebook; an organization can use its actual typed forms; a person can publish multiple complete sites. **The novel proposition is their shared typed and governed lifecycle**, not the claim that any single underlying open-source editor or visual library is new.
 
 ## What the shared software makes possible
 
