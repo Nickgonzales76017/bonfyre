@@ -46,6 +46,36 @@ The reusable property of Bonfÿre is **verifiable continuity across otherwise di
 | YouTube/Spotify/Patreon | public locator, provider-auth possibilities, owner-bound InteractionGrammar | candidate account or studied interface grammar; no automatic OAuth or API effect |
 | Toast POS | commercial target reference only | **No verified Toast native connection** |
 
+### Large-scale local computation belongs beside the native frontend
+
+[Full source, measured results and build/release gaps](../native-data-compute-and-presentation.md)
+
+~~~mermaid
+flowchart TB
+  YAFF["YAFF: exact architecture/interaction invariants"] -. "A separate architectural constraint" .-> WEB["Native WebAddress and typed application frontend"]
+  CUE["CUE page regions/app reader shapes"] --> ZIG["Zig to C native lowerer"]
+  ZIG --> WEB
+  PCSS[".pcss PostCSS/Tailwind build + PresentationTemplate tokens"] --> WEB
+  CONTENT["Native CMS page/article sections"] --> PUCK["Puck / GrapesJS / Editor.js shared tree"]
+  PUCK --> WEB
+  DATA["Source/material: SQLite, Parquet, numeric charts"] --> EMBED["BonfyreEmbed + BonfyreVec"]
+  DATA --> VGPU["vGPU numerical kernels: kin and spatial neighborhood"]
+  EMBED -. "Only the same model/dims/chart" .-> VGPU
+  VGPU --> RESULTS["Persisted derived table with input/backend receipt"]
+  DATA --> DUCK["DuckDB-Wasm browser SQL over Parquet"]
+  RESULTS --> EXPERIENCE["Large interactive table, research and editorial"]
+  DUCK --> EXPERIENCE
+  WEB --> EXPERIENCE
+  BIT["BitNet candidate rank"] -. "Only eligible/passported" .-> RESULTS
+  FPQ["FPQ weight codec"] -. "Full generation parity still open" .-> EMBED
+~~~
+
+**Measured source paths:** the vGPU kin operation compared 46,376,100 pairs in one 6,810-item local workload and persisted 710 above a chosen similarity floor; the separate Web field read 109,761 Parquet source-channel rows via DuckDB-Wasm inside the tab and displayed them through WebGPU. This is local numerical analytics and data presentation, **not a 3D-asset pipeline or evidence that vGPU executes DuckDB SQL**.
+
+The frontend path uses typed Puck/GrapesJS/Editor.js authoring, the C/MD4C/Mustach public renderer, generated CUE application lowerers and locally compiled `.pcss`/Tailwind styles. New PCSS source files remain **local-only relative to public GitHub `main`** until source synchronization; screenshot, token, mobile and public release parity are still open.
+
+FPQ measures neural-weight representation (one Qwen tensor reconstruction is measured, whole-model generation is not). BitNet reorders an already allowed source frontier under passport and quality rules. **They do not decide provider truth or source rights.** The downstream product acceptance is a source-linked table/result → real authored section or installed account record → reviewed and verified public output.
+
 ## 2. Identity, groups, institutions, permissions and domains
 
 ~~~mermaid
