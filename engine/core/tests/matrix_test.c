@@ -25,6 +25,7 @@ int main(void) {
     BfMatrixSubjectSpec plant = {"object:plant:luna", "PlantPassport", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "receipt:plant:luna"};
     BfMatrixSubjectSpec copy = {"object:plant:copy", "PlantPassport", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "receipt:plant:copy"};
     BfMatrixSubjectSpec standing = {"standing:plants:life", "StandingAddress", "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "receipt:standing:plants"};
+    BfMatrixInstitutionSpec bonfyre = {"institution:bonfyre", "software-engine", BF_MATRIX_LIVE, "receipt:bonfyre"};
     BfMatrixInstitutionSpec aurekai = {"institution:aurekai", "company", BF_MATRIX_LIVE, "receipt:aurekai"};
     BfMatrixInstitutionSpec market = {"institution:plant-collective", "co-op", BF_MATRIX_LIVE, "receipt:collective"};
     BfMatrixPresenceSpec self = {"presence:luna:self", "object:plant:luna", NULL, "life", BF_MATRIX_SELF, BF_MATRIX_LIVE, "HTML", "receipt:presence:self"};
@@ -46,7 +47,20 @@ int main(void) {
     if (bf_matrix_address_bind(matrix, "object:plant:copy", "web_url", "https://aurekai.life/plants/luna", "receipt:copy") != BF_MATRIX_ADDRESS_CONFLICT) return fail("one address cannot copy a subject");
     int address_count = 0;
     if (bf_matrix_address_subject(matrix, "mcp://bonfyre/object/plant/luna", subject, sizeof(subject)) != 1 || strcmp(subject, "object:plant:luna") != 0 || bf_matrix_subject_address_count(matrix, subject) != 4 || bf_matrix_subject_addresses(matrix, subject, count_address, &address_count) != 4 || address_count != 4) return fail("addresses resolve one semantic identity");
-    if (bf_matrix_institution_bind(matrix, &aurekai) != BF_MATRIX_OK || bf_matrix_institution_bind(matrix, &market) != BF_MATRIX_OK) return fail("institution bind");
+    if (bf_matrix_institution_bind(matrix, &bonfyre) != BF_MATRIX_OK ||
+        bf_matrix_institution_bind(matrix, &aurekai) != BF_MATRIX_OK ||
+        bf_matrix_institution_bind(matrix, &market) != BF_MATRIX_OK) return fail("institution bind");
+    /* Company and engine are distinct institutions. Merely running the same
+     * binary must never make the engine Aurekai's parent, or give the company
+     * engine administrative rights. Both directions require explicit grants. */
+    if (bf_matrix_institution_delegate(matrix, authority, "person:nick",
+            "institution:bonfyre", "institution:aurekai", "grant:engine-is-not-parent",
+            "2026-11-13T00:00:00+00:00", NULL) != BF_MATRIX_UNAUTHORIZED)
+        return fail("engine cannot implicitly delegate into operating company");
+    if (bf_matrix_institution_delegate(matrix, authority, "person:nick",
+            "institution:aurekai", "institution:bonfyre", "grant:company-is-not-parent",
+            "2026-11-13T00:00:00+00:00", NULL) != BF_MATRIX_UNAUTHORIZED)
+        return fail("operator cannot implicitly delegate into engine");
     BfMatrixDomainSpec life_domain = {"aurekai.life", "institution:aurekai", "life", BF_MATRIX_SELF, BF_MATRIX_LIVE, "HTML", NULL, "receipt:domain:life"};
     BfMatrixDomainSpec leaf_domain = {"theleaflounge.store", "institution:plant-collective", "independent", BF_MATRIX_PUBLIC, BF_MATRIX_LIVE, "HTML", NULL, "receipt:domain:leaf"};
     if (bf_matrix_domain_bind(matrix, &life_domain) != BF_MATRIX_OK || bf_matrix_domain_bind(matrix, &leaf_domain) != BF_MATRIX_OK ||
