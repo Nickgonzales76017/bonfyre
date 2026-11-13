@@ -27,7 +27,17 @@ static const char *sso_territory(const char *h){
  return NULL;
 }
 static int sso_return_address(const char *candidate,const char *host,char *out,size_t cap){
- if(bf_auth_return_address(candidate,host,out,cap))return 1;
+ int tenant_state=bf_tenant_hosts_status();
+ if(tenant_state<0)return 0;
+ if(tenant_state==0) {
+  if(bf_auth_return_address(candidate,host,out,cap))return 1;
+ } else if(candidate&&candidate[0]=='/'&&bf_auth_local_path(candidate)&&strlen(candidate)<cap) {
+  snprintf(out,cap,"%s",candidate);
+  return 1;
+ }
+ /* A configured tenant's absolute return cannot reuse the historical
+  * Aurekai-specific exception list. It must name a verified subdomain
+  * of this exact tenant's selected territory and exist in Matrix. */
  const char *territory=sso_territory(host),*matrix=getenv("BONFYRE_MATRIX_DB");
  if(!candidate||strncmp(candidate,"https://",8)||!territory||!matrix||strlen(candidate)>=cap)return 0;
  const char *path=strchr(candidate+8,'/');char domain[256],normalized[256],suffix[256];
