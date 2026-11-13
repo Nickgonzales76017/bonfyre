@@ -64,7 +64,8 @@ jobs:
         run: |
           cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
             -Wno-misleading-indentation -Wno-format-truncation \
-            -Icmd/BonfyreWebAddress/src -Iengine/core/include -Ilib/libbonfyre/include \
+            -Icmd/BonfyreWebAddress/src -Icmd/BonfyreLex/src \
+            -Iengine/core/include -Ilib/libbonfyre/include \
             cmd/BonfyreWebAddress/tests/people_projection_test.c \
             lib/libbonfyre/src/bf_sha256.c -lsqlite3 -o /tmp/bf-people-test
           /tmp/bf-people-test
