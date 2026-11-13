@@ -1,10 +1,6 @@
-# Bonfÿre / Aurekai architecture
+# Bonfÿre — native software architecture
 
-**Bonfÿre is the native, typed institutional operating engine. Aurekai is
-the digital investment and operating business that builds public experiences,
-applications, services and opportunities on that engine.** Aurekai also owns a
-feedback-and-promotion loop informed by Bonfÿre evidence; that loop is *one
-function of the business*, not its full definition.
+**Bonfÿre is a native, typed software engine.** Its code, schema, runtime, source/representation machinery, interfaces and technical releases are not the assets or authority of any particular operating company. Aurekai is an independent operator and deployment example, not an engine namespace or automatically privileged tenant. See the [ownership boundary](OWNERSHIP-BOUNDARY.md).
 
 The operating reason for the architecture is concrete: AI accelerates code
 production, while lost context, specialist knowledge gaps, meetings, handoffs
