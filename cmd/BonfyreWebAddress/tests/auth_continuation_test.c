@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "../src/auth_continuation.h"
 int main(void) {
     char out[BF_AUTH_NEXT_MAX], small[12]; size_t i, length=0; char *rendered=NULL; FILE *view;
@@ -25,5 +26,29 @@ int main(void) {
     assert(strstr(rendered,"name=\"next\" value=\"/saved?a=1&amp;b=2#review\""));
     assert(strstr(rendered,"href=\"/login?next=%2Fsaved%3Fa%3D1%26b%3D2%23review\""));
     assert(strstr(rendered,"role=\"status\">Account created.</p>"));assert(!strstr(rendered,"novalidate"));assert(!strstr(rendered,"oldRedirect"));free(rendered);
+    /* A different institution must never inherit the old Aurekai client
+     * redirect allowlist or accept a login response from an unrelated host. */
+    char tenant_map[]="/tmp/bf-auth-tenant-XXXXXX";
+    int fd=mkstemp(tenant_map);
+    assert(fd>=0);
+    FILE *map=fdopen(fd,"w");
+    assert(map);
+    assert(fputs("work demo.example.net login.demo.example.net\n"
+                 "life people.example.net auth.people.example.net\n",map)>=0);
+    assert(!fclose(map));
+    assert(bf_tenant_hosts_load(tenant_map)==1);
+    assert(bf_auth_return_address("/account?tab=profile","demo.example.net",out,sizeof(out)));
+    assert(!strcmp(out,"/account?tab=profile"));
+    assert(bf_auth_return_address("/settings","login.demo.example.net",out,sizeof(out)));
+    assert(!bf_auth_return_address("/account","aurekai.work",out,sizeof(out)));
+    assert(!bf_auth_return_address("/account","malicious.demo.example.net",out,sizeof(out)));
+    assert(!bf_auth_return_address("https://jrss.aurekai.work/report","demo.example.net",out,sizeof(out)));
+    assert(!bf_auth_return_address("https://login.demo.example.net/account","demo.example.net",out,sizeof(out)));
+    assert(!bf_auth_return_address("//evil.example.net","demo.example.net",out,sizeof(out)));
+    assert(bf_tenant_hosts_load("/no/such/bonfyre-tenant-map")==-1);
+    /* The preceding missing-file result is -1, not fallback to zero. */
+    assert(bf_tenant_hosts_status()==-1);
+    assert(!bf_auth_return_address("/account","demo.example.net",out,sizeof(out)));
+    unlink(tenant_map);
     puts("auth continuation native parser and form lowering: PASS");return 0;
 }
