@@ -3,6 +3,8 @@
 // named entry APIs, not a hardcoded business identity or domain suffix.
 // --data PATH or BONFYRE_TENANT_HOUSES_FILE overrides the historical fixture.
 // --check validates the selected source without opening the CMS or writing.
+// External sources require an explicit --ns / BONFYRE_CMS_NAMESPACE on write;
+// the historical bundled fixture retains root to protect old tests.
 //
 //   bun cmd/BonfyreCMS/tools/install_territory_houses.mjs --data TENANT.json --check
 //   bun cmd/BonfyreCMS/tools/install_territory_houses.mjs --data TENANT.json --db CMS.db --cms BIN
@@ -23,6 +25,15 @@ const db = opt("--db", join(homedir(), ".bonfyre/estate-local/cms.db"));
 const cms = opt("--cms", join(homedir(), ".bonfyre/bin/bonfyre-cms"));
 const sourcePath = resolve(opt("--data", process.env.BONFYRE_TENANT_HOUSES_FILE ||
   join(root, "cmd/BonfyreCMS/data/territory-houses.json")));
+const externalSource = argv.includes("--data") || Boolean(process.env.BONFYRE_TENANT_HOUSES_FILE);
+const namespace = opt("--ns", process.env.BONFYRE_CMS_NAMESPACE || (externalSource ? "" : "root"));
+if (namespace && !/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(namespace)) {
+  throw new Error("tenant houses: invalid CMS namespace");
+}
+if (!argv.includes("--check") && !namespace) {
+  throw new Error("tenant houses: external source requires explicit --ns or BONFYRE_CMS_NAMESPACE");
+}
+
 const data = JSON.parse(readFileSync(sourcePath, "utf8"));
 if (!data || !Array.isArray(data.houses) || !data.houses.length) {
   throw new Error("territory houses: the selected source needs a nonempty houses array");
@@ -50,8 +61,13 @@ function run(args) {
   return r.stdout.trim();
 }
 // Which houses are already there, read straight from the table (read-only).
-const ids = new Map(spawnSync("sqlite3", ["-readonly", db, "SELECT template, id FROM presentation_template WHERE namespace='root' AND template LIKE 'house-%'"],
-  { encoding: "utf8" }).stdout.trim().split("\n").filter(Boolean).map(line => line.split("|")));
+const lookup = spawnSync("sqlite3", ["-readonly", db,
+  `SELECT template, id FROM presentation_template WHERE namespace='${namespace}' AND template LIKE 'house-%'`],
+  { encoding: "utf8" });
+if (lookup.error || lookup.status !== 0) {
+  throw new Error(`tenant houses: CMS namespace lookup refused: ${lookup.error?.message || lookup.stderr?.trim() || lookup.status}`);
+}
+const ids = new Map(lookup.stdout.trim().split("\n").filter(Boolean).map(line => line.split("|")));
 for (const house of data.houses) {
   const { says, layout_tokens, ...fields } = house;
   const entry = { ...fields, status: "published", family: "house", reference_categories: "publication house", reference_source: `measured:${data.distilled_from}`,
@@ -60,6 +76,6 @@ for (const house of data.houses) {
     cannot_infer: "a house is presentation only: it borrows no publication's marks, code or words, implies no affiliation with the publications it was distilled from, and cannot select material or change a word on the page" };
   const found = ids.get(house.template);
   const out = found ? run(["entry", "update", "presentation_template", found, JSON.stringify(entry)])
-                    : run(["entry", "create", "presentation_template", "--ns", "root", JSON.stringify(entry)]);
+                    : run(["entry", "create", "presentation_template", "--ns", namespace, JSON.stringify(entry)]);
   console.log(JSON.stringify({ template: house.template, territory: house.territory_affinity, written: found ? "updated" : "created", out: out.slice(0, 120) }));
 }
