@@ -10,6 +10,8 @@ These six SVG/Mermaid examples are **drill-downs**, not an inventory of the Aure
 
 The [source-checked architecture registry](../../architecture/README.md) remains authoritative for exact owners and witnesses. On 2026-11-13 it enumerated 557 architecture entries and 562 interactions across 11 expandable views; **that does not mean 557 shipped applications**.
 
+**Local numerical processing and the authored frontend:** [the two compounding engineering paths](../native-data-compute-and-presentation.md) covers YAFF, CUE, PostCSS `.pcss`, Tailwind/closed tokens, Puck/GrapesJS/Editor.js, native C/MD4C, BonfyreEmbed, BonfyreVec, the vGPU numerical kernels for big source tables, DuckDB-Wasm/Parquet and the separate FPQ/BitNet readiness gates. It includes the 46,376,100 pair vGPU measurement, 109,761-row field, local-only PCSS status and downstream editorial acceptance.
+
 ## System-wide views
 
 - **[Full native Mermaid architecture and coverage index](system-architecture.md)** — the entry point for the entire engine and operating business.
