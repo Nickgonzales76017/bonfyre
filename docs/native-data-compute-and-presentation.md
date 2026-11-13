@@ -173,6 +173,34 @@ A proper user-facing table does not need to ship a million DOM rows or run an al
 
 **This final path is a product architecture, not proof that a general-purpose vGPU table engine and all five downstream continuations are already deployed.** The present evidence covers specific vGPU numerical kernels, local derived results, DuckDB-Wasm browsing and distinct app/authoring owners. A full high-volume table/editor interaction needs end-to-end browser and release tests with the real dataset.
 
+### The next table-compute family: what should run on vGPU
+
+The *already demonstrated* vGPU work is tiled pairwise similarity and spatial distance. A full native **large-table compute product** needs more operations. These are engineering targets, **not yet verified vGPU kernels**; the owning SQL/column engine must remain authoritative until each kernel passes parity.
+
+| User interaction over a large local table | Possible physical execution | Exact result and acceptance |
+|---|---|---|
+| Select a million source rows by bounded flags, date window, account/publisher ID or confidence threshold | DuckDB/SQLite predicate scan first; GPU predicate bitmap/compaction only if the transfer and memory envelope wins | stable source keys and exact selected-row equality, including null/date semantics and deterministic ordering |
+| Group a source catalogue by provider, protocol, status or time bucket | columnar SQL aggregation first; GPU histogram/reduction only for measured numeric/encoded categories | exact integer counts/overflow handling, source-state differentiation, bounded per-group materialization |
+| Compare document/vector cohorts or find cross-publisher duplicate stories | **existing vGPU kin** dot-product tiles/top-k; BonfyreVec exact/ANN where matching embedding model is appropriate | similarity score, model/chart/dimensions, cut threshold, backend receipt, top-k parity and original publisher link |
+| Find anomalous outliers in a numerical Excel/finance or sensor/telemetry table | native numeric review + deterministic CPU baseline; GPU parallel statistics as a candidate | source sheet/cell ID, signedness/precision, missing-value behavior, exception row references, and human review |
+| Spatially cluster observations/events or ask “what is near this item?” | **existing Stage vGPU neighborhood** and persisted SQLite `neighbour` table | exact coordinates, time validity, distance tolerance, no inferred attendance/membership/current truth |
+| Join two large source tables or export a reviewed result | DuckDB/SQLite keyed join and domain writer remain primary; potential GPU join only after measured correctness | preservation of ID/provenance and stable identity across changes; format output (XLSX/PDF/Parquet) owned separately |
+| Sort, page and edit the current interactive view | bounded SQL/top-k and browser virtualized/windowed DOM; GPU only if numerical sort is proven beneficial | a single row identity and current revision, keyboard/focus behavior, source link and unchanged off-screen records |
+
+**Physical plan and economics.** The choice of GPU, SIMD CPU or DuckDB-Wasm must be based on the **whole data movement**: source bytes → decoding/column conversion → transfer to device → shader compile/reuse → kernel → *small result/readback* → serialization → page. In the Chrome WGSL hash experiment the GPU compute time alone looked good, but GPU readback made the processor faster. It would be unsound to route a 100,000-row filter through GPU because a 4-million-value kernel can run there. vGPU earns placement when the supported operation and its measured workload benefit.
+
+**Memory placement.** Columnar Arrow/Parquet source remains a data representation; SQLite/DuckDB keeps the query, validity, data type and authoritative row IDs; GPU buffers contain only a bounded numeric projection (e.g. packed `f32` vectors, `u32` category IDs and validity bitmap). Avoid sending titles, account secrets, unredacted document bodies or opaque record envelopes to a compute shader. A GPU output should be a compact selection/top-k/aggregate keyed back to the canonical source.
+
+**Incremental compilation.** Hash the source cohort, query/feature specification, representation/model identity, kernel bytes, numeric width, threshold and backend. Reuse a persisted derivation when those inputs are identical. When only part changes, a future delta compiler could update impacted partitions; the existing Stage neighborhood source notes that full-generation recompute remains a gap. Never report a stale derived table as current because its previous kernel succeeded.
+
+**Downstream ownership.** A table row can be selected for review; its original source opens in an evidence pane; the user may continue it into Puck/Editor.js as a quote/section, into a CRM with the matching declared intake, into a native workbook review, or into a narrated editorial edition. Each continuation is a **separate typed effect with exact identity, permissions, revision and release**. The same source data can supply several apps without a second user-facing demo table being copied into every app.
+
+### Benchmarks required before a general-purpose table claim
+
+A table-compute runtime should be accepted on reproducible 10,000, 100,000 and 1,000,000-row input cohorts, with numeric widths and missing data varied, using a precise reference (native C/SQLite/DuckDB as appropriate). Report CPU wall-clock, GPU compile/upload/execute/readback, peak resident/system/device memory, final result bytes, source/model/key fingerprints, ties/null behavior, output equality or numeric tolerance, fallback path, and **time to the first useful interactive viewport**. Device loss, unavailable Dawn, workload too small to amortize transfer, stale input digest and account permission change must have deterministic refusals/fallbacks. A browser screenshot of a million dots is not this test.
+
+**Editorial/UI acceptance** then checks a real filtered row → original publication source → user-authored saved section → published article with source link, responsive layout and approved narration or document output. This is the intended compounding of compute, frontend and publication, and it must remain distinguishable from the existing independent source-level tests.
+
 ## 7. FPQ and BitNet are downstream optimizations with different meanings
 
 | Mechanism | What it works on | Verified fact | What cannot follow from that fact |
