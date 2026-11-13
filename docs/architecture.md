@@ -45,6 +45,24 @@ bun architecture/atlas.mjs loss
 No maturity laundering is allowed: `measured` and `proven` require witnesses,
 and a collapsed view must expand reversibly to real children.
 
+## The authoring and frontend compiler
+
+**[Unified authoring, native frontend and innovation architecture](authoring-frontend-architecture.md)** explains why Aurekai's editor work is much more than a creator site or commercial website builder.
+
+~~~mermaid
+flowchart LR
+  A["Authoritative source / account / community / app"] --> T["Shared typed authoring tree"]
+  E["Puck / GrapesJS / Editor.js"] <--> T
+  T --> C["Revision-checked CMS fragments"]
+  C --> N["Native MD4C, Mustach and C component renderer"]
+  N --> S["SurfaceIR + SceneCompiler + responsive design roles"]
+  S --> W["WebAddress HTML, interactions, account/public release"]
+~~~
+
+The native tree preserves source references, nested components, application bindings and desktop/tablet/phone style roles through the editors; Editor.js contributes typed editorial blocks without making raw editor HTML the document model. The development tests cover all 27 ServiceSite section owners and an actual compiled Frappe CRM Lead, rather than only the old seven-block adapter. Generated templates, licensed glyphs, studied design anatomy, and 91 retained Stitch design references compiled into 14 reusable experience patterns supply frontend breadth without importing donor runtime code.
+
+**Why this matters:** a group's community page, a historical civic map, a scientific notebook, a personal publication, a creator's media article, and a real organization application can each be authored as a contextual projection of its actual source and rights. A site's visual design and local browser interaction can evolve without silently replacing the semantic owner. This *composition and continuity across kinds of software* is the proposed innovation; independent libraries are credited as upstream components, and live production parity remains separately verified.
+
 ## System-wide architecture — no single demo owns a capability family
 
 The **[complete Aurekai / Bonfÿre architecture map](architecture-visuals/system-architecture.md)** now covers identities, organizations, communities/groups, address/presence, external estate, source observations, provider accounts, connections, native spatial/temporal query and maps, Git/Forgejo/Josh, model representation and exact masks, FPQ/BitNet, memory/data, audiovisual and narration, Frappe/CMS, commerce, agents, work, proof, protocol carriers and staged releases. It contains **13 native GitHub Mermaid visualizations** and a [capability-family index](architecture-visuals/system-architecture.md#12-coverage-index--capabilities-not-screenshot-examples).
