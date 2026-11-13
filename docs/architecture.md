@@ -45,6 +45,23 @@ bun architecture/atlas.mjs loss
 No maturity laundering is allowed: `measured` and `proven` require witnesses,
 and a collapsed view must expand reversibly to real children.
 
+## Visual architecture and application relationships
+
+The diagrams below are **native, scalable SVGs and GitHub-rendered Mermaid**, with individual source owners and boundary notes. They summarize rather than replace the [Atlas](../architecture/README.md), and do not grant publication or effect authority.
+
+[![Aurekai organization and site hierarchy: business sites, client portals, publications and verified addresses.](architecture-visuals/site-addressing.svg)](architecture-visuals/README.md)
+
+| View | What it makes explicit |
+|---|---|
+| [Organizations, sites, subdomains and custom hosts](architecture-visuals/README.md#1-organizations-sites-and-domains) | Account ownership, independent SitePresentation, subject/address separation, proposed aliases and external origins |
+| [Source-to-application continuations](architecture-visuals/README.md#2-one-source-many-installed-applications) | Retained provenance, installed app intake and account-scoped continuations |
+| [Unified editorial publishing](architecture-visuals/README.md#3-editorial-composition-and-publication) | Design, structure, article composition, CMS revisions, review and published routes |
+| [Work and evidence](architecture-visuals/README.md#4-work-execution-and-proof) | WorkGraph, CapabilityClosure, authority, realization, receipts and verified promotion |
+| [Nine business application grammars](architecture-visuals/README.md#5-business-application-family) | Frappe, ERPNext, CRM, HRMS, Helpdesk, LMS, Wiki, Drive and Insights without collapsed authorities |
+| [Products, commerce and room planning](architecture-visuals/README.md#6-product-commerce-and-spatial-work) | Product identity moving between configuration, space planning, procurement and financial events |
+
+The client-domain graphic is a **design contract**: the current [site_presentation](../cmd/BonfyreCMS/content-types/site_presentation.json) binds a site to one host, while a generalized multi-host address binding and child-organization management require separate implementation and verification.
+
 ## Whole-machine flow
 
 ```text
