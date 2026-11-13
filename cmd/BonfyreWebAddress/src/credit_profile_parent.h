@@ -35,9 +35,9 @@ static void bf_credit_profile_parent(sqlite3 *cms, sqlite3 *archive,
      * institution. Use the exact owner-bound account/site record instead.
      * Only the historical installation retains this fallback. */
     if(bf_tenant_hosts_status()==0) {
-        snprintf(parent->subject,sizeof(parent->subject),"institution:aurekai:work");
+        snprintf(parent->subject,sizeof(parent->subject),"%s",bf_legacy_aurekai_managing_subject());
         snprintf(parent->host,sizeof(parent->host),"%s",bf_legacy_aurekai_public_host("work"));
-        snprintf(parent->label,sizeof(parent->label),"Aurekai");
+        snprintf(parent->label,sizeof(parent->label),"%s",bf_legacy_aurekai_managing_label());
     }
     /* Canonical source-parented subordinate account takes precedence over
      * an inferred publisher slug. It is a public presentation, not a login. */
