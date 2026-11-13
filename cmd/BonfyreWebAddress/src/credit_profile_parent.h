@@ -116,7 +116,8 @@ static void bf_credit_profile_parent(sqlite3 *cms, sqlite3 *archive,
         if (c=='-' && (!n||slug[n-1]=='-'))continue;
         slug[n++]=(char)c;
     }
-    while(n&&slug[n-1]=='-')n--;slug[n]=0;
+    while(n&&slug[n-1]=='-') n--;
+    slug[n]=0;
     if(!n) return;
     snprintf(subject,sizeof(subject),"institution:publisher:%s",slug);
     if(sqlite3_prepare_v2(cms,
