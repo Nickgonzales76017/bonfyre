@@ -75,7 +75,7 @@ static int check_owner(sqlite3 *db, const char *host, const char *ns,
     free(css);
     body=owned(home);
     if(!body)return 0;
-    if(!bf_apply_territory_home_presentation(db,&body,"work") ||
+    if(!bf_apply_territory_home_presentation_owned(db,&body,"work",ns) ||
        !strstr(body,headline) || !strstr(body,accent)) {
         fprintf(stderr,"home mismatch expected=%s %s body=%s\n",headline,accent,body);
         free(body);return 0;
@@ -135,7 +135,7 @@ int main(void) {
        return fail("missing tenant namespace borrowed another record");
     char *unused=owned(home);
     if(!unused)return fail("fallback allocation");
-    if(!bf_apply_territory_home_presentation(db,&unused,"work") ||
+    if(!bf_apply_territory_home_presentation_owned(db,&unused,"work","tenant_gamma") ||
        strstr(unused,"Alpha publication") || strstr(unused,"Beta publication") ||
        !strstr(unused,"<body class=\"work\">"))return fail("CMS fallback leaked business content");
     free(unused);
