@@ -31,56 +31,46 @@ Aurekai is one operating business that can support many different experiences. A
 
 This repository is the technical side of that work. Its native implementation covers Matrix identity and addressing, Source Library, data systems, business application schemas, WorkGraph, agents, Model Commons, media, commerce and public web composition. The public GitHub tree and the locally installed runtime are published on separate schedules.
 
-## What Bonfÿre actually does — source, work, software, and delivery
+## Two engineering paths that meet in the same product
 
-Bonfÿre is **not** a central “capability matrix” through which every product passes. A WordPress plugin does not behave like a customer database; a paper form does not behave like a creator channel; an XLSX review does not behave like a website; and an MCP tool is not an independent business application. **The native tools preserve those differences while making deliberate, testable connections between them.**
+**Bonfÿre compiles native experiences and processes substantial data locally.** The useful result is an authored page, an interactive research table, an account application, a source-backed publication, a reviewed document or a real handoff into the next tool. This rests on **distinct implementations**, not an assertion that everything goes into Matrix.
 
-**[Real workflows and exports](docs/real-workflows-and-interoperability.md)** · **[MCP operation guide](integrations/mcp/README.md)** · **[200-service and 104-provider admission guide](integrations/browser/onboarding/README.md)** · **[WordPress exchange guide](integrations/wordpress/README.md)** · [Unified editor/frontend](docs/authoring-frontend-architecture.md) · [Source-checked Atlas](architecture/README.md) · [Full system map](docs/architecture-visuals/system-architecture.md)
+**[Native computation + presentation: YAFF, CUE, PostCSS, Puck, Embed, Vec, vGPU, FPQ and BitNet](docs/native-data-compute-and-presentation.md)** · [Real end-to-end workflows](docs/real-workflows-and-interoperability.md) · [MCP tools](integrations/mcp/README.md) · [WordPress transfer](integrations/wordpress/README.md)
 
 ~~~mermaid
 flowchart TB
-  WORDPRESS["WordPress REST + signed plugin"] --> WP["Normalized events + native CMS sync"]
-  PANELS["cPanel / InterWorx / Plesk exports"] --> BRIEF["Cited hosting inventory + migration exceptions"]
-  BOOK["Bank / Excel XLSX"] --> WORKBOOK["Books review + account workbook revisions"]
-  PAPER["Scanned paper / PDF"] --> OCR["On-device OCR + page coordinates"]
-  AUTHOR["Puck + GrapesJS + Editor.js"] --> SITE["Native CMS pages + C/MD4C/Mustach rendering"]
-  CHAT["ChatGPT / Codex / Claude clients"] --> MCP["Scoped Project MCP + revision-checked Workspace MCP"]
-  CREATORS["YouTube / Patreon / Spotify"] --> CONNECT["Public account links / provider-auth plans / owner-bound grammar"]
-  SITE --> EXPORT["Standalone HTML / WordPress WXR / Frappe records"]
-  OCR & WORKBOOK & BRIEF --> REVIEW["Source-grounded review / document / evidence"]
-  REVIEW --> EMIT["HTML5 / PDF / EPUB3 / TXT / DOCX via formatter"]
-  MCP --> SITE
-  MCP --> WORKBOOK
-  WP --> SITE
-  CONNECT -. "Only with verified authorization" .-> SITE
+  YAFF["YAFF source architecture and interactions"] --> CUE["CUE checks and strict Zig/C generated lowerers"]
+  CUE --> EDIT["Typed authoring tree: Puck / GrapesJS / Editor.js"]
+  EDIT --> WEB["MD4C + Mustach + native WebAddress output"]
+  CSS[".pcss / PostCSS / Tailwind / closed design tokens"] --> WEB
+  SOURCE["SQLite / Parquet / articles / documents / source IDs"] --> EMBED["BonfyreEmbed ONNX + BonfyreVec local search"]
+  SOURCE --> VGPU["vGPU tiled numeric kernels and local derived tables"]
+  EMBED --> DATA["Exact or candidate related rows with digests"]
+  VGPU --> DATA
+  DATA --> EXPERIENCE["Browser table, investigation, editorial or installed account app"]
+  WEB --> EXPERIENCE
+  BIT["BitNet: held learned rank of eligible candidates"] -. "Only passported admissible work" .-> DATA
+  FPQ["FPQ: model-weight compression trials"] -. "Only after full-model parity" .-> EMBED
 ~~~
 
-### Real operations with real outputs
+**One innovation is in the native frontend and application pipeline.** [YAFF](architecture/README.md) retains real architectures, invariants, interactions and gaps. [CUE page composition](schemas/control/page-composition.cue) and [strict Zig lowerers](cmd/BonfyreWebAddress/tools/compile_site_application_lowerers.zig) emit typed native readers/structural operations. [The authoring tree](cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs) carries nested sections and responsive, closed style roles across Puck, GrapesJS and Editor.js; native C/MD4C/Mustach gives it a public website and article output. The **new local** \`.pcss\` + PostCSS/Tailwind build compiles shared semantic controls and tokenized presentation over C-emitted markup and browser workspace styles. As of this source cut the local \`deploy/tailwind/input.pcss\` and build package have **not yet been synchronized to public \`main\`**; [Tailwind's C-class scanning config](deploy/tailwind/tailwind.config.js) is present publicly.
 
-| Starting point | Native operation and preserved detail | What a person receives |
+**A second innovation is dense local computation feeding real interfaces.** [BonfyreEmbed](cmd/BonfyreEmbed/src/main.c) computes actual pinned-ONNX text embeddings; [BonfyreVec](cmd/BonfyreVec/src/main.c) stores/searches them with SQLite and exact vector comparison. The [vGPU kin kernel](cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs) runs tiled pairwise similarities over numeric article/source charts, then materializes selected related rows for articles and research tools. Its separate [spatial-neighborhood kernel](cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs) computes distances between placed observations. A recorded local 6,810-item run compared **46,376,100 pairs in 1.1 seconds** and retained 710 above its 0.85 similarity floor. The [Field](site/matrix/field.html) also used **DuckDB-Wasm to read 109,761 Parquet channel rows inside a browser tab**, with WebGPU visualizing the dataset. **This does not imply DuckDB SQL is executed by vGPU.** The engines and data routes are separate.
+
+[BitNet](cmd/BonfyreBitNet/src/main.c) is an optional model-passported reorder of *already eligible* AddressPlane candidates; its tested frontier has SHADOW/quality gaps. [FPQ](cmd/BonfyreFPQ/src/fpq_native.c) measures compact neural weight representations. [The actual Qwen tensor trial](cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json) achieved 0.999935 reconstruction cosine at 5.75 bits/weight on one tensor, **without proving generation parity**. These downstream optimizations can become useful only through actual preservation and task-quality trials. They do not define the reliability of the existing local data and editorial systems.
+
+### What already happens, and what would make it a complete experience
+
+| Person's task | Source and real computation | Useful next step |
 |---|---|---|
-| **WordPress blog or legacy CMS** | HMAC-SHA256 signed event; `site + post ID + version` as idempotency key; public REST-route discovery; external-ID CMS sync | Draft/source entry that can be inspected without silently publishing back to WordPress |
-| **Existing native site** | `bonfyre site export SITE --format wordpress|frappe`; `--out` standalone HTML with local CSS inlined | WXR 1.2 XML, Frappe document exchange, or an offline script-free HTML copy |
-| **30-site legacy agency portfolio** | `bonfyre-brief inventory` reads authorized cPanel/InterWorx/Plesk exported listings; detects mismatches and avoids secret fields | Cited inventory and migration questions, not a false “migration complete” state |
-| **Spreadsheet/accounting review** | `bonfyre books inspect --workbook file.xlsx`; native XLSX read with sheet/cell identity; `workbook_review`, `workbook_preview` and `workbook_update` | New review workbook and the *same* signed-in account draft, subject to revision and permission checks |
-| **Paper/scan/image** | `bonfyre-ocr lines file.pdf` uses on-device Vision/PDFKit and returns page, box, confidence and text | Text and page positions for review; never presents OCR confidence as proof |
-| **Report/letter/publication** | `bonfyre-emit` and PandocFormatter produce targeted files via actual format conversion | HTML, PDF, EPUB, plain text, RSS or DOCX where the formatter/dependencies support it |
-| **Puck, GrapesJS, Editor.js** | One nested authoring tree retains IDs, sections, responsive roles, source/binding metadata through editors and native CMS | Editable rich experience rendered through the C/MD4C/Mustach + WebAddress path |
-| **Project or account automation** | Project MCP tools/resources/prompts; `mcp_read_bundle`; `workspace_list/records/views/preview/update` with exact revision and readback | Real project operations or edits to existing installed-product records, not shadow copies |
-| **Creator platform** | YouTube/Patreon public profile locator; Spotify/YouTube/Patreon provider-auth choices; 20 studied interaction grammars | A clearly labeled link, candidate connection or authorized use *only where the provider has been verified* |
-| **Restaurant Toast POS** | Commercial target is listed; no verified Toast-specific native API owner | No claim of synced restaurant menus, orders, checkout or settlement |
+| Read or investigate many publishers | DuckDB-Wasm/Parquet source catalogue, retained source IDs, vGPU kin similarities, source checks | searchable table → exact publication → editor → article or research document |
+| Publish a composed journal | CMS \`site_page\` and nested \`site_fragment\`, Puck/GrapesJS/Editor.js, MD4C/Mustach/C, PCSS/tokens | source-bound page → reviewed publication → website/narration/export |
+| Find related passages in thousands of documents | ONNX \`bonfyre-embed\` and SQLite \`bonfyre-vec\` with model/width identity | inspect original passage → cite it → reviewed editorial or app continuation |
+| Study current and historical places | Observation time/coordinates, vGPU spatial top-k, persisted neighborhood table | bounded geo/temporal reading and map; no invented place or attendance relation |
+| Work across installed apps | account-owned records, Project/Workspace/Workbook MCP, source and revision checks | source-linked CRM, workbook, procurement, PDF or creator output under its own grant |
+| Reduce cost downstream | exact mask and owned material → optional BitNet ranking → admitted model representation/FPQ after parity | less work/less model residency only when receipts and benchmarks actually show it |
 
-**The gaps are as important as the outputs:** WordPress runtime deployment is not proven by bridge tests; WXR round-trip locally does not mean a remote WordPress accepted it; React is used in the editor but a general React/Svelte conversion compiler is not verified; Spotify/YouTube/Patreon connection choices do not establish OAuth tokens; Toast has no proved native connection. See each row's source/tests in the [workflow ledger](docs/real-workflows-and-interoperability.md).
-
-### MCP is a family of precise access paths, not a monolithic AI assistant
-
-[Project MCP](integrations/mcp/project_node.mjs) dispatches specific project and native owners through authenticated tools, resource URIs, prompts, provenance and measured toolset-schema size. `mcp_read_bundle` runs up to eight already-authorized **read-only** calls with schema checks and duplicate-read coalescing. [Account Workspace MCP](integrations/mcp/workspace_mcp.mjs) opens real installed-product records by binding/record/revision: its preview and update must recheck the same owner's permissions. [Workbook MCP](integrations/mcp/workbook_mcp.mjs) calls the financial workbook calculation/review owner rather than performing generic unchecked edits. An individual [WebAddress site](cmd/BonfyreWebAddress/tests/site_product_test.sh) can separately answer MCP on its own host and path.
-
-This is why a universal “matrix” description is inaccurate: the work is in **per-product operations, transport constraints, record identity, source fidelity, review, guards and downstream readback**. Matrix is one address/presence/participation concern—not a replacement for those systems.
-
-### Formats are outputs, not screenshots
-
-The [site-product test](cmd/BonfyreWebAddress/tests/site_product_test.sh) verifies WordPress WXR and Frappe export/re-import text parity and offline HTML asset closure. [Books](cmd/BonfyreDecide/src/books_xlsx.c) preserves source XLSX sheet/cell positions for a review instead of converting it to generic cards. [BonfyreOCR](cmd/BonfyreOCR/src/main.swift) handles paper/PDF positional text locally. [BonfyreEmit](cmd/BonfyreEmit/src/main.c) and [PandocFormatter](components/PandocFormatter/README.md) generate deliverables with format-specific dependencies. These do not claim complete lossless conversion of all documents or framework applications.
+The quality bar is a **real interactive screen with material, controls and output**, not a generic search/card dashboard. Source-size analytics, viewport rendering, revisioned editing, publication scope and a GPU/CPU receipt each need their own acceptance.
 
 ## Why a shared experience compiler matters
 
@@ -234,6 +224,9 @@ These are not interchangeable modules behind a single generic call. The source f
 | Creator audio/podcasting | [account audio](cmd/BonfyreCMS/src/account_world_audio.c) | station/show schedule, transcripts, sourced episodes and playback controls |
 | Spatial/temporal evidence | [spatial schema](schemas/control/spatial-observation.cue), [BonfyreSpatial](cmd/BonfyreSpatial/) | observed/effective/recorded/expiry times, indexed queries |
 | Local inference/compression | [BonfyreBitNet](cmd/BonfyreBitNet/), [BonfyreFPQ](cmd/BonfyreFPQ/), [BonfyreModel](cmd/BonfyreModel/) | candidate ranking, measured representation, model-specific admission; experimental paths remain held |
+| Local semantic retrieval | [BonfyreEmbed](cmd/BonfyreEmbed/src/main.c), [BonfyreVec](cmd/BonfyreVec/src/main.c) | ONNX embeddings, SQLite index, exact comparison and provenance; model/width are part of identity |
+| Large data computation | [vGPU kin](cmd/BonfyreSurfaceScene/runtime/kin-compute-vgpu.mjs), [vGPU neighborhood](cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs), [field](site/matrix/field.html) | tiled GPU/CPU comparisons, persisted derived rows, browser DuckDB-Wasm/Parquet field |
+| Source/frontend compilers | [YAFF Atlas](architecture/README.md), [CUE](schemas/control/page-composition.cue), [Tailwind config](deploy/tailwind/tailwind.config.js) | independently validated contracts, native app lowering and tokenized style build; new PCSS input remains local-only |
 
 The [real-workflow guide](docs/real-workflows-and-interoperability.md) names the **input and output contracts, test, source path, missing authority and external acceptance**. The [architecture registry](architecture/README.md) supplies additional internal algorithms and relationships, but the registry's counts are not a replacement for the source-specific explanation.
 
