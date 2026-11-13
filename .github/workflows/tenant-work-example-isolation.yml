@@ -1,0 +1,24 @@
+name: Bonfyre work-example tenant isolation
+on:
+  push:
+    paths:
+      - "cmd/BonfyreCMS/tools/install_work_examples.sh"
+      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py"
+      - "cmd/BonfyreCMS/tests/work_example_programs_test.sh"
+      - ".github/workflows/tenant-work-example-isolation.yml"
+  pull_request:
+    paths:
+      - "cmd/BonfyreCMS/tools/install_work_examples.sh"
+      - "cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py"
+      - "cmd/BonfyreCMS/tests/work_example_programs_test.sh"
+      - ".github/workflows/tenant-work-example-isolation.yml"
+  workflow_dispatch:
+jobs:
+  tenant-sqlite:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify cross-tenant CMS write isolation and failed-update preservation
+        run: python3 cmd/BonfyreCMS/tests/tenant_work_examples_import_test.py
