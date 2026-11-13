@@ -1,0 +1,6 @@
+# Example only. Installations MUST supply their own scoped domain records.
+# Territory keys are not locked to WORK/LIFE/LIVE/SHOP.
+# territory public_host account_host
+work demo.example.net login.demo.example.net
+journal stories.example.net auth.stories.example.net
+research research.example.net auth.research.example.net
