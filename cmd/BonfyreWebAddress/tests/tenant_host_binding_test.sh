@@ -38,4 +38,22 @@ fi
 if "$tmp/tenant-check" "$tmp/malformed.tsv" >"$tmp/invalid-readback" 2>&1; then
   echo "ERROR: malformed host was admitted" >&2; exit 1
 fi
+cat >"$tmp/scoped.tsv" <<'EOF'
+work demo.example.net login.demo.example.net demo_owner
+life people.example.net auth.people.example.net demo_owner
+research research.example.net auth.research.example.net independent_owner
+EOF
+cat >"$tmp/unsafe-scope.tsv" <<'EOF'
+work demo.example.net login.demo.example.net bad'owner
+EOF
+"$tmp/tenant-check" "$tmp/scoped.tsv" --require-scoped >"$tmp/scoped-readback"
+grep -q 'TENANT_HOST_MAP_VALID entries=3 scoped=1' "$tmp/scoped-readback"
+grep -q 'work[[:space:]]demo.example.net[[:space:]]login.demo.example.net[[:space:]]demo_owner' "$tmp/scoped-readback"
+grep -q 'research[[:space:]]research.example.net[[:space:]]auth.research.example.net[[:space:]]independent_owner' "$tmp/scoped-readback"
+if "$tmp/tenant-check" "$tmp/valid.tsv" --require-scoped >"$tmp/unscoped-readback" 2>&1; then
+  echo "ERROR: legacy root-scoped map admitted for tenant release" >&2; exit 1
+fi
+if "$tmp/tenant-check" "$tmp/unsafe-scope.tsv" --require-scoped >"$tmp/unsafe-scope-readback" 2>&1; then
+  echo "ERROR: invalid CMS namespace admitted" >&2; exit 1
+fi
 echo "tenant_host_release_preflight: PASS"
