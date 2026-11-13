@@ -287,7 +287,37 @@ A working local editor, a source candidate, a successful release build, the GitH
 
 This index describes families with different maturity, not a uniform shipped feature set. Where source was archived, local-only, SHADOW, unadmitted, review-held, or missing live readback, say so on the consuming page.
 
-## 13. Read and change the right source
+## 13. Real native generated views, not manually curated demo diagrams
+
+The native [architecture registry](../../architecture/README.md) already supports `view`, `expand`, `get`, `search`, `maturity`, `loss` and `validate`. Its **11 reversible generated summaries** were checked against the current source, not invented to fit a marketing story:
+
+| Native generated view | Exact registered children |
+|---|---|
+| IdentityView | ActorGraph; HashIdentityGraph |
+| InstitutionalView | AuthorityGraph; RelationshipGraph; ShadowInstitutionGraph |
+| ExternalView | ForeignTwinGraph; ServiceLifecycleGraph; ResultReceiptBundleGraph |
+| ProviderResourceView | ProviderStateFold; ResourceAdmissionGraph; ServiceLifecycleGraph; ForeignTwinGraph; ResourceActivationGraph |
+| ModelView | FPQTransformationGraph; FPQSeedProgramGraph; FPQModeSelectionGraph; SLIExecutionGraph; KVTemporalGraph |
+| SubstrateView | YaFF; Automerge; Feldera; egglog; HVM4; GigaToken; Lance; Daft; Tract; Burn; CubeCL; Hydro; Restate; Verus |
+| FormsView | FormGraph; AtomicForm |
+| CapabilityView | CapabilityLattice; DisCIPLCompositionGraph; CapabilityClosureGraph |
+| ExecutionView | WorkGraph; OccurrenceSpine; TransportPhenotypeGraph; CapabilityClosureGraph |
+| EvidenceView | ProofFrontierGraph; EvidenceBindingGraph; SERMReductionGraph |
+| OpportunityView | BlockerGraph; UnlockGraph; ResourceActivationGraph |
+
+~~~bash
+# Generate a native view from real declarations, not screenshot fixtures
+bun architecture/atlas.mjs view ModelView
+bun architecture/atlas.mjs expand ExecutionView
+bun architecture/atlas.mjs get repository-fabric
+bun architecture/atlas.mjs search spatial
+bun architecture/atlas.mjs loss
+bun architecture/atlas.mjs validate
+~~~
+
+**The 11 registry views are not an exhaustive user-facing information architecture.** Social communities, spatial and geographic observations, Git provider management, business apps, editorial/media, institution tenancy, commerce and account/public composition have individual registered owners even when none of the existing generated views names them. Add a generated view without removing the underlying nodes. Do not reclassify a domain as “covered” because one client demo happens to mention it.
+
+## 14. Read and change the right source
 
 1. **Discovery:** query [the canonical registry](../../architecture/README.md) for the owner and declared interaction, or its 11 expandable views.
 2. **Execution truth:** check the exact current source file, binary/test and witnessed receipt; never infer it from a label, theme, demo, marketing feature or old library.
