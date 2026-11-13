@@ -1,4 +1,4 @@
-# Aurekai native authoring, frontend and experience architecture
+# Bonfÿre — native authoring, frontend and experience architecture
 
 > **This is a platform capability, not a website-builder integration.** The editor work is the meeting point of source identity, presentation grammar, institutional records, rich content, spatial/media/interaction programs, native computation, and authorized publication. Puck, GrapesJS, Editor.js, MD4C and Mustach are valuable parts of the path; **none is the canonical document owner**.
 >
