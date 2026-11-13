@@ -40,6 +40,14 @@ the `.yaff` files are the data; the constitution below is checked in CI.
    FPQ lesson — *low reconstruction error is not good generation* — is a field,
    not a footnote.
 
+## Native contracts, data computation and the user-facing result
+
+The [native computation and presentation guide](../docs/native-data-compute-and-presentation.md) follows **distinct** systems through to actual readers: YAFF architecture/interactions, CUE page and lowerer validation, Zig/C native frontend descriptors, local PostCSS/Tailwind styling, Puck/GrapesJS/Editor.js, ONNX Embed, SQLite Vec, vGPU numerical neighbor/kin kernels, DuckDB-Wasm/Parquet source tables, and BitNet/FPQ representation gates.
+
+The Atlas should describe the **relation** between these operations, preserving exact input fields, reader/backends and their refusal rules. A source vector's model/dimensions and a vGPU similarity cutoff remain separate facts; a source table's candidate state is not permission to publish it; a measured FPQ tensor is not a completed model; an authored CUE layout is not a signed-in CRM write.
+
+**Concrete witnesses:** [ItemArchive](surface/item-archive.yaff) records 6,810 items and 46,376,100 kin pair comparisons in one vGPU run; [the estate field](surface/client-organs.yaff) records 109,761 Parquet rows read by DuckDB-Wasm and visualized by WebGPU. [BitNet](../cmd/BonfyreBitNet/src/main.c) remains bounded to AddressPlane survivors; [FPQ's tensor receipt](../cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json) is explicitly one reconstruction trial. New local PCSS and authoring-tree sources remain ahead of GitHub `main`.
+
 ## Commands
 
 ```
