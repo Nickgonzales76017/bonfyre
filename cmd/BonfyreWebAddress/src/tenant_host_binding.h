@@ -139,6 +139,18 @@ static inline int bf_tenant_is_account_host(const char *host) {
 static inline int bf_tenant_is_declared_subhost(const char *host, const char *territory) {
     const char *base = bf_tenant_public_host(territory);
     size_t n = host ? strlen(host) : 0, m = base ? strlen(base) : 0;
-    return n > m + 1 && host[n - m - 1] == '.' && !strcmp(host + n - m, base);
+    return bf_tenant_host_valid(host) && n > m + 1 &&
+           host[n - m - 1] == '.' && !strcmp(host + n - m, base);
+}
+/* Display eligibility only: a retained published site still needs exact
+ * subject/source review and must not inherit account/login host authority. */
+static inline int bf_tenant_is_member_site_host(const char *host) {
+    if (!host || !bf_tenant_host_valid(host) || bf_tenant_hosts_status()!=1 ||
+        bf_tenant_is_account_host(host)) return 0;
+    for(size_t i=0;i<bf_tenant_host_count;i++) {
+        if(bf_tenant_is_declared_subhost(host,bf_tenant_hosts[i].territory))
+            return 1;
+    }
+    return 0;
 }
 #endif
