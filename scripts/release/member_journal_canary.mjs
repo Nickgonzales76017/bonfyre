@@ -6,16 +6,11 @@ import {Database} from 'bun:sqlite';
 const routeOk=route=>typeof route==='string'&&/^\/blog\/[a-z0-9-]{1,96}\/$/.test(route);
 const hostOk=host=>typeof host==='string'&&host.length<=253&&/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+aurekai\.(?:work|live|life|shop)$/.test(host);
 export function selectMemberJournalCanaries(dbPath){
- // A WAL store has no shared-memory file while no connection holds it (as while
- // its service restarts), and a read-only open cannot create one.
+ // Just after a service restart the WAL store may refuse both modes for a few
+ // seconds; retry read-only, then read-write (SELECTs only), for about ten.
  let db=null;
- for(let i=0;i<4&&!db;i++){
-  try{const d=new Database(dbPath,{readonly:true,create:false});d.query('SELECT 1').get();db=d;}
-  catch{if(i<3)Bun.sleepSync(500);}
- }
- // No other connection holds the WAL index: open without create so SQLite may
- // make it; this canary still only runs SELECTs.
- if(!db)db=new Database(dbPath,{readwrite:true,create:false});
+ for(let i=0;i<20&&!db;i++){for(const mode of [{readonly:true,create:false},{readwrite:true,create:false}]){if(!db)try{const d=new Database(dbPath,mode);d.query('SELECT 1').get();db=d;}catch{}}if(!db)Bun.sleepSync(500);}
+ if(!db)throw Error('The member journal store did not open: '+dbPath);
  try{
   const selected=db.query(`SELECT s.site_id,s.host,count(*) AS total
    FROM site_presentation s JOIN site_page p ON p.namespace=s.site_id
