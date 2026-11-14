@@ -51,6 +51,11 @@ printf '%s' "$page" | grep -q 'Review profile link'
 printf '%s' "$page" | grep -q 'Choose the site you want to shape'
 printf '%s' "$page" | grep -q '/apps/account-choices.mjs'
 printf '%s' "$page" | grep -q '/assets/matrix-htmx.js'
+printf '%s' "$page" | grep -q '/assets/account-connections.css'
+if printf '%s' "$page" | grep -q 'id="ak-connections-depth"'; then
+  echo 'account connection styles are inline'; exit 1
+fi
+curl -fsS -H "$host" "$base/assets/account-connections.css" | grep -q 'connection-filters'
 # The account is deliberately served from a dedicated native sibling in the
 # public deployment.  That host has no AddressPlane domain record of its own,
 # but it must receive the exact checked-in HTMX runtime or the rendered

@@ -38,8 +38,9 @@ budget: {
 	// Down only from here. At the commit that shipped it: source-desk
 	// negotiation and all-sites journal tests from the same sessions (+1/+91).
 	// merge of main 2026-11-13: main's spaces releases, brand cuts, tenant host and editorial tests (+19 files / +1,723 lines)
+	// 2026-11-14: concurrent sessions' test edits (cms editor, community, pack setup, journal import).
 	authored_mjs_files: 1646
-	authored_mjs_lines: 182976
+	authored_mjs_lines: 182979
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.

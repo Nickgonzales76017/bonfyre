@@ -929,6 +929,12 @@ architecture human-community-body
   source_path cmd/BonfyreCMS/src/community_read.h
   source_path cmd/BonfyreCMS/src/community_discovery.h
   source_path cmd/BonfyreWebAddress/src/community_journey.h
+  source_path cmd/BonfyreWebAddress/src/community_programs.h
+  source_path deploy/tailwind/styles/composition.pcss
+  source_path deploy/tailwind/styles/page-components.pcss
+  invariant guild programme lists use the shared compiled composition stylesheet
+  invariant the public community entrance uses the compiled shared page component stylesheet
+  witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs checks programme styling delivery and membership boundaries
   source_path cmd/BonfyreWebAddress/src/front_community.h
   source_path schemas/control/community-discovery.cue
   source_path cmd/BonfyreWebAddress/src/main.c

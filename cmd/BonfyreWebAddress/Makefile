@@ -533,6 +533,9 @@ build/compact/md4c_entity.o: ../BonfyreSurfaceScene/vendor/md4c/entity.c | build
 build/compact/mini_mustach.o: ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 -include $(OBJECTS:.o=.d)
+# The compact objects write depfiles too; without reading them a header edit
+# rebuilt the full binary and left the size-first one serving old pages.
+-include $(COMPACT_OBJECTS:.o=.d)
 $(PROJECTION_TEST): tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) src/site_fragment_projection.h $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_jsonw.c
 	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
 $(AFFINITY_PROJECTION_TEST): tests/affinity_projection_test.c src/affinity_projection.c src/affinity_projection.h $(AUTHORING_SOURCES)

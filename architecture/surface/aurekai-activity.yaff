@@ -111,6 +111,8 @@ architecture aurekai-activity
   invariant long task diagnostics and attempt summaries remain escaped and available on explicit expansion; a recorded progress update on finished work is not labelled a failure
   witness cmd/BonfyreWebAddress/tests/account_inbox_web.test.mjs checks workspace changes discard the former task selection and long diagnostic text stays escaped and expandable
   source_path cmd/BonfyreWebAddress/src/work_provenance.h
+  source_path deploy/tailwind/styles/work-continuation.pcss
+  invariant saved-work navigation, feed continuations and task provenance load their compiled workspace stylesheet
   invariant when Meter cannot be read or returns malformed output, task provenance reports the records as unavailable instead of asserting that the store is empty
   witness cmd/BonfyreWebAddress/tests/work_provenance_test.sh checks a connected Meter with an invalid schema is reported unavailable, alongside the exact-source and account isolation checks
   witness integrations/browser/tests/aurekai-activity-source.test.mjs
@@ -299,6 +301,7 @@ architecture account-relationship-observations
 interaction source-credit-to-account-relationship
   source source-frontier
   destination account-relationship-observations
+  relation supplies_credited_material
   via exact retained item, native workspace review and CMS record compare-and-swap
   preserves source coordinate, credited name, reviewed fingerprint, account destination and saved record revision
   drops identity merging, inferred lead qualification and external contact authority

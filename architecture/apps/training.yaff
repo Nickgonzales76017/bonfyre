@@ -65,6 +65,7 @@ architecture member-training
 interaction service-site-serves-member-training
   source service-site
   destination member-training
+  relation renders
   via components/BonfyreServiceSite/site.mjs training
   preserves member-owned storage, creator program identity, exact local asset routes and revision conflict refusal
   drops institution effects, remote writes and provider secrets
@@ -73,6 +74,7 @@ interaction service-site-serves-member-training
 interaction member-training-reuses-browser-store
   source member-training
   destination browser-host
+  relation reuses_browser_storage_module
   via integrations/browser/extension/store.mjs
   preserves browser-local state and atomic expected-revision checks
   drops remote identity and device synchronization
@@ -97,6 +99,7 @@ architecture opengym-training-interchange
 interaction opengym-state-becomes-member-training
   source opengym-training-interchange
   destination member-training
+  relation intake_mapping
   via components/BonfyreServiceSite/training-import.mjs
   preserves stable source IDs, load units, actual completed work and original training records in a portable archive
   drops credentials and active-session execution; unprojected settings are reported in import review
@@ -124,6 +127,7 @@ architecture training-model-proposal
 interaction member-training-requests-model-proposal
   source member-training
   destination training-model-proposal
+  relation requests
   via components/BonfyreServiceSite/training-workspace.mjs /api/training/propose
   preserves the reviewed exercise request, explicit selected-session scope and hashes of the actual model request and response
   drops unrelated history, body-weight records, member identity and authority to mutate training
@@ -162,6 +166,7 @@ architecture training-creator-request
 interaction member-training-submits-creator-request
   source member-training
   destination training-creator-request
+  relation durable_submission
   via components/BonfyreServiceSite/training-workspace.mjs /api/training/requests
   preserves creator/program version, authored brief, stable retry identity and explicit adoption of the completed delivery
   drops private training history, body-weight records and automatic retries or adoption
@@ -170,6 +175,7 @@ interaction member-training-submits-creator-request
 interaction training-request-uses-native-workgraph
   source training-creator-request
   destination work-graph
+  relation bounded-native-enqueue
   via cmd/BonfyreQueue/bonfyre-queue enqueue, claim, renew, ack and mission
   preserves native lifecycle, claim ownership, lease expiry, creator routing family and completion receipt
   drops a separate application-owned work status database
@@ -219,6 +225,7 @@ architecture training-creator-access
 interaction training-creator-checks-native-auth
   source training-creator-access
   destination cmd-auth
+  relation authority_check
   via components/BonfyreServiceSite/training-creator.mjs invokes http-login, actor-closure-stdin, institution-authorize-stdin and logout-stdin
   preserves current session validity, explicit actor coordinate, per-studio request read/write grant and immediate revocation at the next operation
   drops local role toggles, subscription badges and browser-supplied worker identities
@@ -227,6 +234,7 @@ interaction training-creator-checks-native-auth
 interaction training-creator-delivers-native-request
   source training-creator-access
   destination training-creator-request
+  relation durable_submission
   via components/BonfyreServiceSite/training-creator.mjs creator request routes
   preserves exact studio/request binding, actor-derived claim owner, explicit delivery review and native completion receipt
   drops authority over another coach's active claim and automatic adoption into member training
@@ -235,6 +243,7 @@ interaction training-creator-delivers-native-request
 interaction training-draft-checkpoints-native-work
   source training-creator-access
   destination work-graph
+  relation durable_realization
   via components/BonfyreServiceSite/training-requests.mjs uses checkpoint-read, checkpoint-save and ack --checkpoint-revision
   preserves live claim ownership, immutable artifact digest, expected revision and atomic stale-review refusal
   drops browser-owned revision authority and drafts from member receipt reads
@@ -271,6 +280,7 @@ architecture training-program-publication
 interaction training-creator-publishes-cms-program
   source training-creator-access
   destination training-program-publication
+  relation publishes
   via components/BonfyreServiceSite/training-creator.mjs /studios/STUDIO/programs
   preserves native actor binding, separate current publishing grant, reviewed public fields, stable retry identity and expected program version
   drops permission inferred from coaching assignment and automatic publication after delivery
@@ -279,6 +289,7 @@ interaction training-creator-publishes-cms-program
 interaction training-program-release-uses-native-cms
   source training-program-publication
   destination cmd-c-m-s
+  relation stores_for
   via components/BonfyreServiceSite/training-publishing.mjs schema apply and namespace-scoped entry create/list/update
   preserves native content records, unique release and publication keys, publication state and private provenance
   drops a second application-owned publication database or direct SQL mutations from the training server
@@ -287,6 +298,7 @@ interaction training-program-release-uses-native-cms
 interaction member-training-adopts-published-program
   source member-training
   destination training-program-publication
+  relation reads_from
   via components/BonfyreServiceSite/training-catalogue.mjs and /api/training/programs/STUDIO
   preserves exact public program version, studio scope, offline public cache and explicit local adoption
   drops private request metadata and authority to rewrite already adopted routines
@@ -319,6 +331,7 @@ architecture training-program-authoring
 interaction training-program-authoring-uses-native-cms
   source training-program-authoring
   destination cmd-c-m-s
+  relation stores_for
   via native entry create and entry update --if-field content_sha --if-value EXPECTED
   preserves studio namespace, normalized routine, revision digest, edit identity and native operation history
   drops direct SQL writes and browser-owned publication authority
@@ -327,6 +340,7 @@ interaction training-program-authoring-uses-native-cms
 interaction training-program-authoring-publishes-review
   source training-program-authoring
   destination training-program-publication
+  relation publishes
   via /studios/STUDIO/programs with draftId and draftRevision
   preserves reviewed source revision, explicit publication action and independently versioned release
   drops a requirement to create a member request before library authoring
@@ -361,6 +375,7 @@ architecture training-studio-appearance
 interaction studio-appearance-selects-presentation-template
   source training-studio-appearance
   destination presentation-template
+  relation presents-with
   via components/BonfyreServiceSite/training-presentation.mjs native CMS template creation and digest-checked role lowering
   preserves declared roles, system font stacks, studio-owned selection and immutable template content
   drops arbitrary CSS, foreign font URLs and semantic data ownership in the template
@@ -369,6 +384,7 @@ interaction studio-appearance-selects-presentation-template
 interaction studio-appearance-uses-native-content
   source training-studio-appearance
   destination cmd-c-m-s
+  relation stores_for
   via training_studio_presentation guarded entry updates and native operation history
   preserves studio namespace, current revision, content digest and actor attribution
   drops direct application SQL writes and partial profile application
@@ -377,6 +393,7 @@ interaction studio-appearance-uses-native-content
 interaction member-training-follows-studio-appearance
   source member-training
   destination training-studio-appearance
+  relation presents-with
   via /api/training/appearance/STUDIO and training-appearance.mjs
   preserves the member's local style choice, saved public appearance and independent workout state
   drops private editor attribution from public projection and server authority over personal training
@@ -415,6 +432,7 @@ architecture training-weekly-plans
 interaction creator-plans-use-native-cms
   source training-weekly-plans
   destination cmd-c-m-s
+  relation stores_for
   via training-plan-store.mjs guarded draft updates and unique versioned release entries
   preserves studio scope, source snapshots, revision checks, actor attribution, publication retry identity and withdrawal state
   drops client authority to supply private routine data or overwrite an admitted version
@@ -423,6 +441,7 @@ interaction creator-plans-use-native-cms
 interaction weekly-plans-reference-program-versions
   source training-weekly-plans
   destination training-program-publication
+  relation references
   via studio routine choices and saved plan snapshots
   preserves routine identity, version, exercise identity and prescribed targets
   drops automatic replacement by a newer routine version
@@ -431,6 +450,7 @@ interaction weekly-plans-reference-program-versions
 interaction member-training-follows-weekly-plan
   source member-training
   destination training-weekly-plans
+  relation reads_from
   via plan adoption and start commands in the existing training state
   preserves one member-owned workout history, explicit start date, skipped sessions and exact adopted plan version
   drops a creator-owned progress ledger or completion flags disconnected from workout evidence
@@ -467,6 +487,7 @@ architecture training-device-connections
 interaction training-sensor-readings-enter-member-workout
   source training-device-connections
   destination member-training
+  relation intake_mapping
   via Bluetooth notifications and heart-rate commands in training-model.mjs
   preserves member choice, active workout identity, reading timestamps, sensor name and local revision checks
   drops raw beat intervals, device energy totals, manufacturer secrets and automatic set completion
@@ -475,6 +496,7 @@ interaction training-sensor-readings-enter-member-workout
 interaction watch-workout-files-enter-member-history
   source training-device-connections
   destination member-training
+  relation intake_mapping
   via reviewed bounded TCX activity imports
   preserves source format, activity date, duration, distance, available whole-workout average heart rate and idempotent content identity
   drops GPS tracks, free-text device notes, automatic strength-session matching and creator access
@@ -483,6 +505,7 @@ interaction watch-workout-files-enter-member-history
 interaction training-plan-opens-phone-calendar
   source training-weekly-plans
   destination training-device-connections
+  relation calendar_event_projection
   via upcoming RFC 5545 events and native share-sheet handoff where supported
   preserves planned calendar date, plan label, exercise names, set counts and stable event identity
   drops private history, sensor readings, automatic calendar subscriptions and reminder authority
@@ -506,6 +529,7 @@ architecture training-native-watch-companions
 interaction native-watch-companions-use-device-boundary
   source training-native-watch-companions
   destination training-device-connections
+  relation reads_through
   via planned native workout and connectivity adapters
   preserves member ownership, explicit sharing scope, workout identity and platform permission decisions
   drops assumption that either watch family exposes a generic browser Bluetooth heart-rate service
@@ -514,6 +538,7 @@ interaction native-watch-companions-use-device-boundary
 interaction atlas-workflow-declarations-enter-experience-map
   source atlas-provenance
   destination cmd-experience-map
+  relation declaration_provenance_binding
   via architecture/atlas-index.mjs loadVerifiedAtlas and cmd/BonfyreExperienceMap/tools/atlas_bindings.mjs
   preserves exact workflow IDs, architecture IDs, source paths, interaction references and forbidden inferences; owner_graph retains all exported architectures and interactions for read-only native resolution
   drops inferred inheritance from a schema to its parent command or neighboring files
@@ -524,6 +549,7 @@ interaction atlas-workflow-declarations-enter-experience-map
 interaction training-team-administers-native-grants
   source training-creator-access
   destination cmd-auth
+  relation delegated_grant_administration
   via components/BonfyreServiceSite/training-creator.mjs team routes invoke institution-members-stdin and institution-member-set-stdin
   preserves current session and scoped administrator checks, existing account identity, exact institution, native transaction ordering and delegation expiry
   drops arbitrary institution names from browser input, global user enumeration and implicit account creation

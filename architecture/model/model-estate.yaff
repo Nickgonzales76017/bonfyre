@@ -153,6 +153,10 @@ architecture prepared-execution-graph
   known_gap not built
 
 architecture model-commons
+  source_path cmd/BonfyreWebAddress/src/subject_and_lens.h
+  source_path integrations/browser/aurekai-model.pcss
+  invariant model price observations use the compiled model stylesheet and retain their source-provided values
+  witness cmd/BonfyreWebAddress/tests/model_commons_test.sh checks price observations and stylesheet delivery
   canonical_name ModelCommons
   family model
   domain Model / The model estate as a page

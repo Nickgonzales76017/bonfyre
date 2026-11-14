@@ -786,7 +786,11 @@ static long calls_since(const char *key_id, long seconds) {
     char since[32];
     long n = -1;
     if (!meter_db || !*meter_db) return -1;
-    if (sqlite3_open_v2(meter_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+    /* READWRITE without CREATE, as site usage does: once the meter checkpoints
+     * its WAL files away, a readonly handle cannot recreate the shared-memory
+     * index, its SELECT fails, and the count read 0 -- so no limit ever held.
+     * This handle only reads. */
+    if (sqlite3_open_v2(meter_db, &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
     sqlite3_busy_timeout(db, 1000);
     now_iso(since, sizeof(since), seconds);
     if (sqlite3_prepare_v2(db, "SELECT count(*) FROM events WHERE key_id=?1 AND timestamp>=?2", -1, &st, NULL) == SQLITE_OK) {

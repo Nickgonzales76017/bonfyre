@@ -4385,7 +4385,6 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                        (!strcmp(doc->route, "/watch") && ms_mode(page_render_host, doc->route) == MS_NONE)))
         fputs("<link rel=\"stylesheet\" href=\"/assets/reading-surface.css\">",stdout);
     fputs("<link rel=\"stylesheet\" href=\"/assets/page-components.css\">",stdout);
-    if(front_community_route(page_render_host,doc->route))front_community_styles();
     if (brand_head) fputs("<link rel=\"stylesheet\" href=\"/assets/front-brand.css\">",stdout);
     fputs("</head>",stdout);
     fputs("<body class=\"ak-app ", stdout); html(doc->character);

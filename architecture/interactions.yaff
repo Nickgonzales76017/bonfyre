@@ -2339,6 +2339,7 @@ interaction capability-discovery-refers-to-service-inquiry
 interaction native-site-wears-presentation-template
   source web-address-edge
   destination presentation-template
+  relation site_presentation_binding
   via cmd/BonfyreWebAddress/src/site_presentation.c
   preserves customer template identity and closed typography, color, layout and mode roles
   drops unknown tokens and templates that fail recognized-role validation

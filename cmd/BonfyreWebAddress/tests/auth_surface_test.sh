@@ -224,6 +224,11 @@ printf '%s' "$free_crm" | grep -q 'not authorized'
 # admitted carrier grammar; a guessed Frappe type produces no form/row leak.
 free_cms_nav=$(curl -fsS -H "$H" -H "Authorization: Bearer $token" "$base/cms/parts/nav")
 printf '%s' "$free_cms_nav" | grep -q 'physical_carrier'
+printf '%s' "$free_cms_nav" | grep -q '/assets/cms-workbench.css'
+if printf '%s' "$free_cms_nav" | grep -q 'id="cms-workbench-depth"'; then
+  echo 'CMS workbench styles are inline'; exit 1
+fi
+curl -fsS -H "$H" "$base/assets/cms-workbench.css" | grep -q 'cms-home-grid'
 if printf '%s' "$free_cms_nav" | grep -q 'frappe_crm_crm_deal'; then
   echo "free self closure exposed an institutional CMS grammar"; exit 1
 fi

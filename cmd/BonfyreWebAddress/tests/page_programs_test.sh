@@ -237,7 +237,8 @@ check("Quercus robur" not in channels, "nature is not a channel")
 check("<title>Map</title>" in mapped, "map is a composed page")
 svg_at, list_at = mapped.find('<figure class="map with-list">'), mapped.find('class="places-list"')
 check(svg_at >= 0 and list_at > svg_at, "the map sits beside its numbered list")
-points = re.findall(r'<circle class="point[^"]*" cx="([\d.]+)" cy="([\d.]+)"', mapped)
+# Points now carry data-map-point for the map's find tool between class and cx.
+points = re.findall(r'<circle class="point[^"]*"[^>]*? cx="([\d.]+)" cy="([\d.]+)"', mapped)
 check(len(points) == 4, "four placed reports become four points, 0,0 is not a place: %s" % points)
 check(("30.10", "28.70") in points, "GeoJSON lon/lat project onto the plate")
 check(("179.88", "38.50") in points, "Darwin Core decimalLatitude/decimalLongitude project too")
@@ -256,7 +257,11 @@ check("<h1>Inbox</h1>" in inbox, "a native document's title is a word, not a pro
 check(css_code == "200", "the native stylesheet is served (%s)" % css_code)
 
 life_titles = ("This morning", "Today", "Tonight", "Still open")
-check(any("<title>%s</title>" % t in front_life for t in life_titles), "aurekai.life opens on its hour-derived composed front page, not the SitePresentation bound to the apex")
+# The document title is now the territory's source-owned brand line
+# (front_brand_page_test.sh owns that); the hour-derived edition is the
+# composed front's own heading.
+front_head = front_life[front_life.find('<header class="fd-head">'):]
+check(any("<h2>%s</h2>" % t in front_head[:400] for t in life_titles), "aurekai.life opens on its hour-derived composed front page, not the SitePresentation bound to the apex")
 check("agriculture" not in front_life and "ghost:" not in front_life, "no site program vocabulary on the front page")
 territories = Navigation(front_life, 'Territories').links
 check(territories.get('https://aurekai.life/', ('', {}))[0] == 'Life' and territories.get('https://aurekai.life/', ('', {}))[1].get('aria-current') == 'page', "the front page names its territory and offers the others")

@@ -15,7 +15,17 @@ for b in $organs; do ln -s "$root/$b" "$tmp/bin/"; done
 cp "$root/cmd/BonfyreCMS/content-types/internet_source.json" "$tmp/schemas/"
 cp "$root/cmd/BonfyreCMS/content-types/publication_occurrence.json" "$tmp/schemas/"
 "$root/cmd/BonfyreCMS/bonfyre-cms" schema migrate --db "$tmp/cms.db" --schemas "$tmp/schemas" >/dev/null 2>&1
-bun "$root/cmd/BonfyreWebAddress/tools/apply_census_sources.mjs" --cms "$root/cmd/BonfyreCMS/bonfyre-cms" --db "$tmp/cms.db" --schemas "$tmp/schemas" >/dev/null 2>&1
+# The fixture retains bodies for the census's original two RSS feeds
+# (podcasting-2-0, buzzcast). The census has since declared 128 more RSS feeds
+# (feed-*) that this fixture never fetched; loading them made every tick hold
+# 128 sources with no receipt, so a clean generation could never be complete
+# and the unchanged-generation skip below was unreachable. Every non-RSS census
+# row still lands; only RSS rows without fixture evidence are left out.
+expressions=$(sed -n 's/^const expressions = \[\(.*\)\];$/\1/p' "$root/cmd/BonfyreWebAddress/tools/apply_census_sources.mjs" | tr -d '",')
+[ -n "$expressions" ]
+for e in $expressions; do (cd "$root/schemas/control" && cue export . -e "$e" --out json); done |
+  jq -s 'add | map(select(((.reading.extract // "") | startswith("rss:") | not) or .twin == "podcasting-2-0" or .twin == "buzzcast"))' >"$tmp/census.json"
+bun "$root/cmd/BonfyreWebAddress/tools/apply_census_sources.mjs" --json "$tmp/census.json" --cms "$root/cmd/BonfyreCMS/bonfyre-cms" --db "$tmp/cms.db" --schemas "$tmp/schemas" >/dev/null 2>&1
 body() {
   # The digest is written by the fixture's observed-body owner, not inferred
   # from a timestamp. An unchanged observation can skip redundant promotion.

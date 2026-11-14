@@ -138,9 +138,13 @@ assert "A route compiled from one exact CMS collection." in html
 assert "COMPILED EXACT SOURCE ITEM" in html
 assert "SAME FAMILY MUST NOT LEAK" not in html
 assert "/o/included/"+key in html
-assert 'data-bf-profile="ghost-fixture-newsroom"' in html
-assert 'data-bf-standing="reference_candidate"' in html
-assert '--w-ground:#f9f0e1;' in html
+# /discover on an apex host is that territory's edited front (front_is_apex).
+# Since the one-app shell it draws its own regions and nothing from the
+# generic page is laid under it, so a seeded presentation_template <style>
+# no longer dresses it: presentation reaches routes through route_presentation
+# records and the shell's compiled stylesheets, never a page-level <style>.
+assert 'data-bf-source="presentation_template"' not in html
+assert '--w-ground:#f9f0e1;' not in html
 assert 'type="application/atom+xml"' in html and 'href="/feed.atom"' in html
 PY
 # A committed route revision must invalidate the anonymous WebAddress cache

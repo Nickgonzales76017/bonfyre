@@ -83,6 +83,8 @@ test('guild programmes bind exact ProgrammeFabric records to a reviewed guild an
  expect((await get(route,member)).status).toBe(403);
  expect((await get(route,owner)).body).toContain('Workshop Inspection and Learning');
  const steward=await get(route,owner);expect(steward.status).toBe(200);
+ expect(steward.body).toContain('/assets/composition.css');expect(steward.body).not.toContain('<style>.cj-program-list');
+ const styles=await f.request('/assets/composition.css',{host:'aurekai.life'});expect(styles.status).toBe(200);expect(styles.body).toContain('.cj-program-list');
  expect(steward.body).toContain('data-community-programmes');expect(steward.body).toContain('Document bench inspection before supervised work');
  expect(steward.body).toContain('data-guild-role-bridge');
  expect(steward.body).toContain('/roles?scope=community%3A'+key);
@@ -278,7 +280,7 @@ test('four territory homes discover exact public conversations without private m
  for(const excluded of ['HOME-EXCLUDED-hidden','HOME-EXCLUDED-private','HOME-EXCLUDED-draft','HOME-EXCLUDED-future','HOME-EXCLUDED-reply','HOME-EXCLUDED-dotted','HOME-EXCLUDED-nonmember'])
   expect(publicRegister.body).not.toContain(excluded);
  for(const host of ['aurekai.life','aurekai.work','aurekai.live','aurekai.shop']){
-  const page=await f.request('/',{host});expect(page.status).toBe(200);expect(page.body).toContain('data-community-front');expect(page.headers.get('cache-control')).toContain('must-revalidate');
+  const page=await f.request('/',{host});expect(page.status).toBe(200);expect(page.body).toContain('data-community-front');expect(page.body).toContain('/assets/page-components.css');expect(page.body).not.toContain('id="native-community-front"');expect(page.headers.get('cache-control')).toContain('must-revalidate');
   const sitemap=await f.request('/sitemap.xml',{host});expect(sitemap.status).toBe(200);
   expect(sitemap.body).toContain('https://'+host+'/sitemap-surfaces.xml');
   if(host!=='aurekai.life')expect(sitemap.body).not.toContain('https://aurekai.life/sitemap-surfaces.xml');

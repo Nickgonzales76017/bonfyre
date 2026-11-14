@@ -71,6 +71,8 @@ sleep 1
 base="http://127.0.0.1:$port"
 
 curl -fsS -H "$H" "$base/s/models/all" >"$tmp/index.html"
+curl -fsS -H "$H" "$base/apps/aurekai-model.css" >"$tmp/model.css"
+grep -q '\.model-price-scroll' "$tmp/model.css" || { echo 'FAIL: generated model price stylesheet unavailable'; exit 1; }
 curl -fsS -H "$H" "$base/s/model/alpha" >"$tmp/alpha.html"
 curl -fsS -H "$H" "$base/s/model/beta" >"$tmp/beta.html"
 curl -fsS -H "$H" "$base/s/model/delta" >"$tmp/delta.html"
@@ -92,6 +94,8 @@ index, alpha, beta = (open(p).read() for p in sys.argv[1:4])
 def facts(t):
     return {m.group(1): m.group(2) for m in re.finditer(r'<dt>([^<]*)</dt><dd>([^<]*)</dd>', t)}
 assert 'role="region" tabindex="0" aria-labelledby="model-prices-title" aria-describedby="model-prices-note"' in index
+assert '/apps/aurekai-model.css' in index and '<style>.model-price-scroll' not in index
+assert 'style="text-align:left' not in index[index.index('id="model-prices-title"'):index.index('</table>',index.index('id="model-prices-title"'))]
 assert '<time>&lt;img src=x</time>' in index and '<time><img' not in index
 assert 'Router A' in index and '$1.00' in index and '$2.00' in index
 f = facts(index)

@@ -9,6 +9,7 @@ architecture representation-manifold
   source_path scripts/representation_manifold_shift.py.archive
   source_path scripts/representation-manifold-shift.mjs
   source_path scripts/estate-datafusion.mjs
+  source_path scripts/representation-entry.mjs
   source_path schemas/storage/representation-portfolio.cue
   source_path schemas/storage/representation-manifold.sql
   source_path scripts/Makefile

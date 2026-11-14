@@ -1,4 +1,7 @@
 architecture account-world-binding
+  source_path cmd/BonfyreWebAddress/src/account_world_room.h
+  source_path deploy/tailwind/styles/world.pcss
+  invariant the published spatial room uses the generated World stylesheet while its readable source remains authoritative
   source_path cmd/BonfyreWebAddress/src/account_world_picker.h
   source_path cmd/BonfyreWebAddress/src/account_world_audio_web.h
   source_path deploy/tailwind/styles/aurekai-native.pcss

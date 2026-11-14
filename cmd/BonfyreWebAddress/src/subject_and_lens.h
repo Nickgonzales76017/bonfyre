@@ -2575,8 +2575,8 @@ static int serve_subject(const char *method, const char *target, const char *que
                 while (sqlite3_step(ps) == SQLITE_ROW && fw < sizeof(facts) - 4096) {
                     char ei[320], ep[200], day[16], eday[96], in[48], outp[48];
                     if (!rows++) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                        "<h3 class=\"room-h\" id=\"model-prices-title\">Hosted model price observations</h3><p class=\"subj-note\" id=\"model-prices-note\">US dollars per million tokens from the same publisher observation. Listed prices can change and do not rank quality.</p><style>.model-price-scroll{overflow-x:auto;overscroll-behavior-inline:contain}.model-price-scroll:focus-visible{outline:2px solid currentColor;outline-offset:3px}.model-price-scroll table{width:100%%;min-width:600px;border-collapse:collapse}.model-price-scroll th,.model-price-scroll td{text-align:left;padding:9px 12px 9px 0;border-bottom:1px solid color-mix(in srgb,currentColor 18%%,transparent);vertical-align:top}.model-price-scroll tbody th{font-weight:500;overflow-wrap:anywhere}.model-price-scroll time{white-space:nowrap}</style><div class=\"model-price-scroll\" role=\"region\" tabindex=\"0\" aria-labelledby=\"model-prices-title\" aria-describedby=\"model-prices-note\"><table class=\"price-table\"><thead><tr><th scope=\"col\">Model</th>"
-                        "<th scope=\"col\" style=\"text-align:left\">Reading in</th><th scope=\"col\" style=\"text-align:left\">Writing out</th><th scope=\"col\" style=\"text-align:left\">Publisher</th><th scope=\"col\" style=\"text-align:left\">Read</th></tr></thead><tbody>");
+                        "<h3 class=\"room-h\" id=\"model-prices-title\">Hosted model price observations</h3><p class=\"subj-note\" id=\"model-prices-note\">US dollars per million tokens from the same publisher observation. Listed prices can change and do not rank quality.</p><div class=\"model-price-scroll\" role=\"region\" tabindex=\"0\" aria-labelledby=\"model-prices-title\" aria-describedby=\"model-prices-note\"><table class=\"price-table\"><thead><tr><th scope=\"col\">Model</th>"
+                        "<th scope=\"col\">Reading in</th><th scope=\"col\">Writing out</th><th scope=\"col\">Publisher</th><th scope=\"col\">Read</th></tr></thead><tbody>");
                     html_escape((const char *)sqlite3_column_text(ps, 0), ei, sizeof(ei));
                     html_escape((const char *)sqlite3_column_text(ps, 3), ep, sizeof(ep));
                     snprintf(day, sizeof(day), "%.10s", sqlite3_column_text(ps, 4) ? (const char *)sqlite3_column_text(ps, 4) : "");
@@ -2584,7 +2584,7 @@ static int serve_subject(const char *method, const char *target, const char *que
                     price_amount(sqlite3_column_double(ps, 1) * 1e6, in, sizeof(in));
                     if (sqlite3_column_type(ps, 2) == SQLITE_NULL) snprintf(outp, sizeof(outp), "&mdash;");
                     else { char v[40]; price_amount(sqlite3_column_double(ps, 2) * 1e6, v, sizeof(v)); snprintf(outp, sizeof(outp), "$%s", v); }
-                    fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "<tr><th scope=\"row\" style=\"text-align:left;font-weight:500\">%s</th><td>$%s</td><td>%s</td><td>%s</td><td><time>%s</time></td></tr>", ei, in, outp, ep, eday);
+                    fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "<tr><th scope=\"row\">%s</th><td>$%s</td><td>%s</td><td>%s</td><td><time>%s</time></td></tr>", ei, in, outp, ep, eday);
                 }
                 if (rows) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "</tbody></table></div>");
             }

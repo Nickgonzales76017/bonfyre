@@ -18,8 +18,14 @@ try{
  check('reading the setup directory never installs or activates a configuration',f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===0&&f.sql.query('SELECT count(*) AS n FROM pack_activation').get().n===0);
  let r=await get('');check('published configurations are reviewable without an account',r.status===200&&r.body.includes('Shared source selection')&&r.body.includes('data-pack-signin')&&!r.body.includes('data-pack-action='));
  for(const name of ['pack-setup','pack-presentation']){const asset=await f.request('/assets/'+name+'.css',{host:'aurekai.work'});check(name+' stylesheet is served',asset.status===200&&asset.body.includes('.pack-workspace'));}
+ const packStyles=await f.request('/assets/pack-setup.css',{host:'aurekai.work'});check('connection controls use the pack stylesheet',packStyles.body.includes('.cga-go'));
  const link=decode(r.body.match(/data-pack-signin href="([^"]*)"/)[1]);check('account entry retains the selected configuration',new URL(link,'https://aurekai.life').searchParams.get('next').startsWith(route));
  const first=await f.login('pack-first@example.test'),second=await f.login('pack-second@example.test');
+ const cmsNav=await get(first.cookie,'/cms/parts/nav');
+ const cmsStyle=await f.request('/assets/cms-workbench.css',{host:'aurekai.work'});
+ check('CMS navigation loads its generated workbench stylesheet',cmsNav.status===200&&cmsNav.body.includes('/assets/cms-workbench.css')&&!cmsNav.body.includes('id="cms-workbench-depth"')&&!cmsNav.body.includes('id="cms-editor-v2"')&&cmsStyle.status===200&&cmsStyle.body.includes('.cms-home-grid')&&cmsStyle.body.includes('.cms-authoring'));
+ const cmsHome=await get(first.cookie,'/cms/parts/home');
+ check('CMS home loads its generated journey styles',cmsHome.status===200&&cmsHome.body.includes('/assets/cms-workbench.css')&&!cmsHome.body.includes('id="cms-journeys-v1"')&&cmsStyle.body.includes('.cms-journeys'));
  const production=await get(first.cookie,'/cms/productions?context=self');
  check('production setup loads generated pack styles in its head',production.status===200&&/href="\/assets\/pack-setup\.css(?:\?[^\"]*)?"/.test(production.body)&&/href="\/assets\/pack-presentation\.css(?:\?[^\"]*)?"/.test(production.body)&&!production.body.includes('id="pack-presentation-v1"')&&!production.body.includes('id="ak-account-composition"'));
  const cards=await get(first.cookie,'/apps/_cards?context=self');

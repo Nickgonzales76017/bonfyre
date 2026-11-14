@@ -45,6 +45,7 @@ test('Chrome edits paragraphs, preserves exact source text, saves and reopens th
   const [name,...value]=f.writer.cookie.split('=');await page.setCookie({name,value:value.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});
   await page.setViewport({width:1440,height:1000});await page.goto(f.base+'/cms/?type=wiki_page&id=new',{waitUntil:'networkidle0'});
   await page.waitForSelector('.cms-authoring');
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.cms-authoring')).display==='grid');
   await page.type('[name=title]','A workshop publication');
   const first='First paragraph with café and <script>literal text</script>.',second='Second paragraph with an unfamiliar requirement.';
   await page.type('[name=content]',first+'\n\n'+second);

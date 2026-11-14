@@ -173,6 +173,9 @@ grep -q '<video controls preload="none" playsinline src="https://commons.wikimed
 grep -q 'src="https://openaccess-cdn.clevelandart.org/1922.1133/1922.1133_web.jpg"' "$tmp/page" || fail 'CC0 still shows'
 [ "$(public /worlds/lounge)" = 200 ] || fail 'lounge is public'
 grep -q 'data-renderer="3d"' "$tmp/page" && grep -q 'data-world-room' "$tmp/page" || fail 'published room has the native 3D scene'
+grep -q '/assets/world.css' "$tmp/page" || fail 'room links the generated World stylesheet'
+if grep -q '^\.world-room{margin:' "$tmp/page"; then fail 'room styles are emitted inline'; fi
+curl -fsS -H 'Host: aurekai.work' "$base/assets/world.css" | grep -q '\.world-room-main' || fail 'room styles are served'
 grep -q 'data-room-items' "$tmp/page" && grep -q 'data-room-jump' "$tmp/page" || fail 'room has accessible selection and readable item navigation'
 grep -q 'id="world-room-readable"' "$tmp/page" || fail '3D room retains the exact published page fallback'
 if grep -q 'data-world-flat\|Rooms are not open yet' "$tmp/page"; then fail 'spatial rooms still use the placeholder'; fi

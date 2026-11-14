@@ -44,7 +44,7 @@ static int cga_credentials(char *bin, char *db, char *key) {
 }
 static void cga_page(int code, const char *title, const char *lead) {
     psetup_start(code, title);
-    fputs("<style>.cga{max-width:720px;margin-top:28px}.cga h1{margin-bottom:8px}.cga p{line-height:1.6}.cga .cga-go{font:inherit;border:0;border-radius:999px;padding:12px 20px;cursor:pointer;background:currentColor}.cga .cga-go span{filter:invert(1)}.cga dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px}.cga dt{opacity:.7}</style><section class=\"cga\"><h1>", stdout);
+    fputs("<section class=\"cga\"><h1>", stdout);
     html(title); fputs("</h1><p>", stdout); html(lead); fputs("</p>", stdout);
 }
 static void cga_tenancy_script(void) {

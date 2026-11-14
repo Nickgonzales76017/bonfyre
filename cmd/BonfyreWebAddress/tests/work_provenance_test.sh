@@ -119,6 +119,9 @@ review=account-fabric-f-review; duel=account-fabric-f-duel; goal=account-operato
 
 # ---- a finished task: runs, usage with cache, kept output, meter --------
 [ "$(page review "/work-board?context=self&task=$review" "$owner")" = 200 ] || fail "owner task view"
+has review '/assets/work-continuation.css'
+lacks review 'id="work-provenance"'
+curl -fsS -H "$H" "$base/assets/work-continuation.css" | grep -q '\.wp-run' || fail 'workspace stylesheet is unavailable'
 for s in 'data-work-provenance' 'Cross-review the Dallas zoning summary' 'data-task-state="complete"' 'data-sum="runs">2<' 'data-sum="failed-runs">0<' \
          'data-sum="outputs">1<' '<strong>Codex</strong>' '<strong>Claude</strong>' 'Reviewer' 'Review session' 'Session recorded for token matching' \
          '1,200 in' '800 read from cache' '3,000 read from cache' '200 written to cache' 'about $0.42 estimated' '4 min 12 s' '1 min 1 s' \

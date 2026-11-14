@@ -101,17 +101,7 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
     }
     sqlite3_bind_text(s,1,subject,-1,SQLITE_TRANSIENT);
     int count=0,step=0;
-    fputs("<style>"
-          ".cj-program-list{display:grid;gap:16px;list-style:none;padding:0;margin:20px 0}"
-          ".cj-program-list>li{border:1px solid #b9ccb6;border-radius:14px;padding:clamp(14px,3vw,24px);background:#fbfcf4}"
-          ".cj-program-list h3{font:400 clamp(21px,2.6vw,29px)/1.2 Georgia,serif;margin:0 0 10px}"
-          ".cj-program-meta{font:12px/1.5 system-ui;color:#526950}"
-          ".cj-program-reqs{list-style:none;display:grid;gap:8px;padding:0;margin:12px 0}"
-          ".cj-program-reqs li{padding:12px;border-left:3px solid #9cb894;background:#f0f6e9}"
-          ".cj-program-reqs strong{font:600 13px/1.4 system-ui}"
-          ".cj-program-evidence{font:12px/1.5 system-ui;opacity:.85}"
-          "@media(max-width:390px){.cj-program-list>li{padding:14px}}"
-          "</style><ol class=\"cj-program-list\" data-program-instance-list>",stdout);
+    fputs("<ol class=\"cj-program-list\" data-program-instance-list>",stdout);
     while((step=sqlite3_step(s))==SQLITE_ROW && count<20){
         const char *instance=(const char*)sqlite3_column_text(s,0),
                    *template_id=(const char*)sqlite3_column_text(s,1),

@@ -1,13 +1,13 @@
 {
-  "binding_records": 5757,
+  "binding_records": 5758,
   "chain_stage_edges": 70007,
   "coverage": true,
-  "digest": "1bbc77b8d761b787a90b8d321dd138a67197d0482fb2a799ab4800a2ffc706ea",
-  "expected_binding_records": 5757,
+  "digest": "9175e054b20c55cd1bd5126ac94c32d3fe9df598081f53aed962f08d15323ee1",
+  "expected_binding_records": 5758,
   "human_chain_count": 52,
   "record_kind_counts": {
     "architecture": 6,
-    "cms_type": 138,
+    "cms_type": 139,
     "command": 197,
     "component": 92,
     "donor_reference": 19,
@@ -21,5 +21,5 @@
   },
   "records_with_stage_bindings": 5155,
   "schema": "bonfyre.experience-stage-map.v1",
-  "unbound_experience_references": 5085
+  "unbound_experience_references": 5086
 }

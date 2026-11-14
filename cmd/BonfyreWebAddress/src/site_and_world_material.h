@@ -710,8 +710,11 @@ static int serve_site_program_uncached(const char *method, const char *target, c
               "and an empty part means nothing has been added yet, not that nothing exists.</p></footer>",
               stdout);
         if (own) bf_site_home_extras(db, site, own_name);
+        /* The flag was cleared before this read, so an operator's own site
+         * wore the estate footer and its links that lead nowhere there. */
+        fputs(own?"</main></body></html>":"</main>" BF_ESTATE_FOOT "</body></html>",stdout);
         site_program_own_render = 0;
-        fputs(site_program_own_render?"</main></body></html>":"</main>" BF_ESTATE_FOOT "</body></html>",stdout); sqlite3_finalize(st); sqlite3_close(db); return 1;
+        sqlite3_finalize(st); sqlite3_close(db); return 1;
     }
     printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{\"schema_version\":\"bonfyre.site_program.v1\",\"site_id\":"); json(site);
     fputs(",\"program_id\":",stdout); json((const char*)sqlite3_column_text(st,0));

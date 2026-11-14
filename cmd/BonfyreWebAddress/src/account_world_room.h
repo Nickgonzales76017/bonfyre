@@ -4,11 +4,7 @@
  * PageComposition pieces. The readable list remains authoritative for media
  * visibility, licensing, publication and accessible traversal. */
 static void world_room_begin(void){
-    fputs(
-        "<style>\n.world-room{margin:24px 0;border:1px solid var(--w-rule);border-radius:20px;overflow:hidden;background:#111c19;color:#eaf2eb}\n.world-room h2{margin:0;color:#eef5e8;font:400 clamp(22px,3vw,32px)/1.15 Georgia,serif}\n.world-room-head{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:20px}\n.world-room-head p{margin:7px 0 0;font:13px/1.5 system-ui;color:#cadbd0}\n.world-room-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,260px)}\n.world-room canvas{display:block;width:100%;height:clamp(310px,52vh,560px);background:#101917;cursor:grab;touch-action:pan-y}\n.world-room canvas:active{cursor:grabbing}\n.world-room-side{padding:16px;border-left:1px solid #425c4f;display:grid;gap:12px;align-content:start}\n.world-room-side ol{list-style:none;margin:0;padding:0;max-height:250px;overflow:auto;display:"
-        "grid;gap:5px}\n.world-room [data-room-label]{font:600 16px/1.3 system-ui;overflow-wrap:anywhere}\n.world-room button,.world-room a{border:1px solid #92ab9c;border-radius:9px;background:#244037;color:#f0f5ed;min-height:44px;display:inline-flex;align-items:center;text-decoration:none;padding:9px 12px;font:600 12px/1.4 system-ui;cursor:pointer}\n.world-room-side li button{width:100%;text-align:left;display:block;overflow-wrap:anywhere}\n.world-room button[aria-pressed=true]{color:#15362b;background:#c9eba0}\n.world-room-controls{display:flex;flex-wrap:wrap;gap:7px}\n.world-room-status{margin:0;padding:8px 20px;min-height:35px;color:#bdd1c5;font:12px/1.5 system-ui}\n.world-room [hidden]{display:none!important}\n.world-room :is(a,button,canvas):focus-visible{outline:3px solid #d8fba5;outline-offset:3px}\n@media(max-width:700px){.world-room-main{grid-te"
-        "mplate-columns:1fr}.world-room-side{border-left:0;border-top:1px solid #425c4f}.world-room-side ol{max-height:145px}.world-room canvas{height:clamp(250px,44vh,410px)}}\n@media(prefers-reduced-motion:reduce){.world-room *{transition:none!important;scroll-behavior:auto!important}}\n</style>"
-        ,stdout);
+
     fputs("<section class=\"world-room\" data-world-room aria-label=\"Interactive published room\">"
           "<div class=\"world-room-head\"><div><h2>Explore this room</h2>"
           "<p>Move through a three-dimensional view of these published pieces. Their sources and rights remain in the readable page.</p></div>"

@@ -98,40 +98,7 @@ static sqlite3 *wp_index(void){
     sqlite3_busy_timeout(db,1000);return db;
 }
 static void wp_style(void){
-    fputs("<style id=\"work-provenance\">"
-    ".wp{--wp-ink:#203023;--wp-forest:#173d33;--wp-lime:#b5df32;--wp-signal:#c2412a;--wp-muted:#5d6b58;--wp-rule:#2030232b;margin:34px 0 10px;max-width:1100px;color:var(--wp-ink)}"
-    ".wp>header h2{font:400 clamp(30px,3.4vw,44px)/1.02 'Instrument Serif',Georgia,serif;letter-spacing:-.03em;margin:0 0 8px}"
-    ".wp-kicker{font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--wp-muted);margin:0 0 8px}"
-    ".wp-sum{display:flex;flex-wrap:wrap;gap:0;margin:16px 0 0;padding:14px 0 0;border-top:2px solid var(--wp-ink)}"
-    ".wp-sum>div{padding:0 24px 0 0;margin:0 24px 8px 0;border-right:1px solid var(--wp-rule)}.wp-sum>div:last-child{border:0}"
-    ".wp-sum dt{font:500 10px/1.4 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--wp-muted)}.wp-sum dd{margin:2px 0 0;font:400 30px/1 'Instrument Serif',Georgia,serif}"
-    ".wp-sum dd[data-tone=failed]{color:var(--wp-signal)}"
-    ".wp h3{display:flex;align-items:center;gap:9px;font:600 1.05rem/1.3 'DM Sans',system-ui,sans-serif;margin:34px 0 4px}.wp h3 .ak-icon{width:19px;height:19px}"
-    ".wp-note{margin:0 0 10px;color:var(--wp-muted);max-width:68ch;line-height:1.5;font-size:.93rem}"
-    ".wp-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--wp-ink)}"
-    ".wp-run{display:grid;grid-template-columns:minmax(150px,1.1fr) minmax(0,2fr) minmax(120px,.8fr);gap:4px 22px;padding:14px 0;border-bottom:1px solid var(--wp-rule);align-items:baseline}"
-    ".wp-run strong{font-size:1.02rem}.wp-run small{display:block;color:var(--wp-muted);font-size:.84rem;margin-top:2px}"
-    ".wp-run [data-run-state]{font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}"
-    ".wp-run[data-state=failed] [data-run-state],.wp-run[data-unconfirmed] [data-run-state]{color:var(--wp-signal)}.wp-run[data-state=completed] [data-run-state]{color:var(--wp-forest)}"
-    ".wp-tokens{margin:0;font-size:.9rem;line-height:1.55}.wp-tokens span{white-space:nowrap}.wp-tokens span:not(:last-child):after{content:' ·';color:var(--wp-muted)}"
-    ".wp-limit{display:inline-block;margin-top:4px;color:var(--wp-signal);font-size:.86rem}"
-    ".wp-wall{text-align:right;font-variant-numeric:tabular-nums}.wp-wall small{text-align:right}"
-    ".wp-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 28px;list-style:none;margin:0;padding:0;border-top:1px solid var(--wp-ink)}"
-    ".wp-steps li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--wp-rule);font-size:.92rem}"
-    ".wp-steps li span:last-child{font:500 11px/1.6 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}"
-    ".wp-steps li[data-step=failed] span:last-child{color:var(--wp-signal)}.wp-steps li[data-step=verified] span:last-child{color:var(--wp-forest)}"
-    ".wp-out{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:4px 22px;padding:13px 0;border-bottom:1px solid var(--wp-rule);align-items:baseline}"
-    ".wp-out a{font-weight:600;text-decoration:none;overflow-wrap:anywhere}.wp-out a:hover,.wp-out a:focus-visible{text-decoration:underline}.wp-out small{display:block;color:var(--wp-muted);font-size:.84rem}"
-    ".wp-digest{font:500 12px/1.5 'DM Mono',monospace;overflow-wrap:anywhere;user-select:all}"
-    ".wp-models{width:100%;min-width:600px;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;border-top:1px solid var(--wp-ink)}"
-    ".wp-models th,.wp-models td{text-align:right;padding:9px 8px;border-bottom:1px solid var(--wp-rule);white-space:nowrap}.wp-models th:first-child,.wp-models td:first-child{text-align:left;white-space:normal;min-width:10em}"
-    ".wp-models th{font:500 10px/1.4 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--wp-muted)}"
-    ".wp-scroll{overflow-x:auto}"
-    ".wp-next{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}.wp-next a{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--wp-ink);color:var(--wp-ink);text-decoration:none;font-size:.92rem}"
-    ".wp-next a:first-child{background:var(--wp-forest);border-color:var(--wp-forest);color:#f5f7ee}.wp-next a:hover,.wp-next a:focus-visible{background:var(--wp-lime);border-color:var(--wp-lime);color:#111913}.wp-next .ak-icon{width:16px;height:16px}"
-    ".wp-empty{padding:12px 0;color:var(--wp-muted);border-bottom:1px solid var(--wp-rule);margin:0}"
-    "@media(max-width:720px){.wp-run,.wp-out{grid-template-columns:1fr}.wp-wall,.wp-wall small{text-align:left}.wp-sum>div{padding-right:16px;margin-right:16px}.wp-sum dd{font-size:25px}}"
-    "</style>",stdout);
+    fputs("<link rel=\"stylesheet\" href=\"/assets/work-continuation.css\">",stdout);
 }
 
 /* ---------- Meter token records for this task ---------- */

@@ -54,6 +54,8 @@ interaction provider-estate-publishes-operator-goals
   witness cmd/BonfyreProviderEstate/tests/provider_estate_test.sh
 
 architecture github-app-connection
+  source_path deploy/tailwind/styles/pack-setup.pcss
+  invariant the GitHub connection page uses the compiled pack workspace stylesheet
   canonical_name GitHubAppConnection
   family identity
   domain Identity / Downstream Provider Tenancy

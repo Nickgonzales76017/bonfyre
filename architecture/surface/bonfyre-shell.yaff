@@ -50,3 +50,25 @@ architecture bonfyre-semantic-shell
   interacts bonfyre-shell-composes-existing-owners
   interacts bonfyre-shell-reads-financial-metabolism
   source_lineage Run8 native command estate closure
+
+architecture bonfyre-fabric
+  canonical_name BonfyreFabric
+  family surface
+  domain Surface / Operator ABI
+  layer substrate
+  semantic_question Which program answers `bonfyre-fabric` and the front door's `bonfyre fabric <verb>`, and what does it dispatch to?
+  purpose The installed Fabric runtime program. programs/bonfyre/main.c hands argv to bf_fabric_dispatch in engine/core, which routes root, work, effect, mission, artifact, receipt, namespace, catalog and fabric init/status/compile verbs to their engine owners. It is the executor the semantic shell delegates governed ! Power invocations to.
+  maturity implemented
+  command bonfyre-fabric
+  internal_calculus argv[0] bonfyre-fabric -> bf_fabric_dispatch(verb, subverb) -> engine/core owner
+  invariant the program holds no state of its own; every verb lands on an engine/core owner and its stores
+  invariant fabric compile, status and init reached through the front door arrive without their first word and are re-prefixed before dispatch
+  forbidden_inference the binary is installed -> any verb it dispatches is authorized for the caller
+  forbidden_inference a dispatched effect request -> an approved or committed effect
+  source_path programs/bonfyre/main.c
+  source_path engine/core/src/fabric.c
+  source_path engine/core/src/fabric_exec.c
+  source_path build.zig
+  witness engine/core/tests/operator_reference.test.mjs runs the operator reference path of the same dispatch against a temporary state
+  interacts bonfyre-semantic-shell
+  source_lineage installed organ found unmapped by BonfyreOwnerContract audit-catalog on 2026-11-13

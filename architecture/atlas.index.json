@@ -351,6 +351,7 @@
         "A binding checks an existing draft World row against its exact namespace and subject; transactional space writes check that binding, apply an optimistic revision and cap each World at 32 spaces."
       ],
       "invariants": [
+        "the published spatial room uses the generated World stylesheet while its readable source remains authoritative",
         "the private World studio, source picker and sound editor use the generated profile stylesheet instead of emitting inline style blocks",
         "The owner accepts only an already authenticated subject and authorized namespace from a trusted caller; it does not authenticate caller arguments.",
         "A bound World cannot be deleted or change identity, subject or namespace; a lifecycle owner is still needed.",
@@ -376,6 +377,8 @@
       "publishes": [],
       "semantic_question": "Which draft World and bounded spaces are bound to an authenticated account subject, what does each space point to, and which version of it may an anonymous reader see?",
       "source_paths": [
+        "cmd/BonfyreWebAddress/src/account_world_room.h",
+        "deploy/tailwind/styles/world.pcss",
         "cmd/BonfyreWebAddress/src/account_world_picker.h",
         "cmd/BonfyreWebAddress/src/account_world_audio_web.h",
         "deploy/tailwind/styles/aurekai-native.pcss",
@@ -1529,6 +1532,7 @@
         "pack setup and installed-tool cards use generated stylesheets while keeping their existing presentation order",
         "changing workspace from a focused task opens the chosen workspace without carrying the prior task identity",
         "long task diagnostics and attempt summaries remain escaped and available on explicit expansion; a recorded progress update on finished work is not labelled a failure",
+        "saved-work navigation, feed continuations and task provenance load their compiled workspace stylesheet",
         "when Meter cannot be read or returns malformed output, task provenance reports the records as unavailable instead of asserting that the store is empty",
         "the activity rail docks open on desktop only once an account or workspace is confirmed on that page; a signed-out visitor keeps the full page width and opens it from the launcher",
         "a docked rail publishes its width as --ak-dock so the bar and every full-bleed band span only the page beside it; a signed-out rail shows the sign-in line and public research links, never an empty account picker, inbox or outputs",
@@ -1610,7 +1614,8 @@
         "deploy/tailwind/styles/pack-setup.pcss",
         "deploy/tailwind/styles/pack-presentation.pcss",
         "cmd/BonfyreWebAddress/src/work_board.h",
-        "cmd/BonfyreWebAddress/src/work_provenance.h"
+        "cmd/BonfyreWebAddress/src/work_provenance.h",
+        "deploy/tailwind/styles/work-continuation.pcss"
       ],
       "subscribes": [],
       "views": [],
@@ -2229,6 +2234,48 @@
       "views": [],
       "witnesses": [
         "cmd/BonfyreWebAddress/tests/account_continuity_test.sh shows the empty state, declares a handle through BonfyreAuth, refuses a stranger's request for it, records the owner's request and shows \"requested · not run\""
+      ]
+    },
+    "bonfyre-fabric": {
+      "canonical_name": "BonfyreFabric",
+      "commands": [
+        "bonfyre-fabric"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Surface / Operator ABI",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "the binary is installed -> any verb it dispatches is authorized for the caller",
+        "a dispatched effect request -> an approved or committed effect"
+      ],
+      "internal_calculi": [
+        "argv[0] bonfyre-fabric -> bf_fabric_dispatch(verb, subverb) -> engine/core owner"
+      ],
+      "invariants": [
+        "the program holds no state of its own; every verb lands on an engine/core owner and its stores",
+        "fabric compile, status and init reached through the front door arrive without their first word and are re-prefixed before dispatch"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Which program answers `bonfyre-fabric` and the front door's `bonfyre fabric <verb>`, and what does it dispatch to?",
+      "source_paths": [
+        "programs/bonfyre/main.c",
+        "engine/core/src/fabric.c",
+        "engine/core/src/fabric_exec.c",
+        "build.zig"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/operator_reference.test.mjs runs the operator reference path of the same dispatch against a temporary state"
       ]
     },
     "bonfyre-fs": {
@@ -14455,6 +14502,7 @@
       ],
       "internal_calculi": [],
       "invariants": [
+        "account connection presentation loads its generated stylesheet without an inline style block",
         "account-link presentation labels a relationship verified only when the owner reports the exact verified state; unsafe link addresses remain non-clickable",
         "a link is exact to the authenticated account row and every list, claim, and revoke rereads the current session; a syntactically shaped, expired, disabled, or another account's session changes nothing",
         "initial state is declared. Only a separate witnessed proof/authorization ceremony may advance it; storing a profile URL never stores a token or makes a remote request",
@@ -14473,6 +14521,7 @@
       ],
       "semantic_question": "Which public remote accounts has an authenticated Bonfyre person declared as related to them, and what has actually been proven about that relationship?",
       "source_paths": [
+        "deploy/tailwind/styles/account-connections.pcss",
         "cmd/BonfyreAuth/src/main.c",
         "cmd/BonfyreWebAddress/src/main.c",
         "site/matrix/surfaces/account-native.html",
@@ -14483,6 +14532,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/external_account_surface_test.sh checks the connection stylesheet route",
         "cmd/BonfyreWebAddress/tests/account_navigation_test.mjs checks that unsafe legacy link addresses remain plain text, search and filtering remain usable, and unverified labels are not classified as verified",
         "cmd/BonfyreAuth/tests/external_account_link_test.sh proves a current account can declare and revoke only its own HTTPS public profile locator, while another account cannot read or revoke it and URL credentials/non-HTTPS input are refused",
         "cmd/BonfyreWebAddress/tests/external_account_surface_test.sh proves the same relationship is available through the HttpOnly browser session, renders as declared rather than verified, and is revocable at the native address boundary"
@@ -17125,6 +17175,7 @@
       ],
       "internal_calculi": [],
       "invariants": [
+        "the GitHub connection page uses the compiled pack workspace stylesheet",
         "only the account named BONFYRE_ACCOUNT_WORK_OWNER may start or finish the connection; each attempt has one random state bound to that session's actor for fifteen minutes and deleted on first use",
         "the one-time code reaches the credential owner on standard input, never argv; the private key, client secret and webhook secret are never rendered",
         "downstream access is per customer: github-app-installations lists each installation (account, type, repository selection); github-app-customer mints that installation's one-hour token, never printed, and reads only the repositories the customer chose; /connect/github-app/customers shows this to the owner with the install link for new customers"
@@ -17143,6 +17194,7 @@
       ],
       "semantic_question": "Is the estate's GitHub app created, are its key and secrets sealed, and does GitHub accept a request signed with that key?",
       "source_paths": [
+        "deploy/tailwind/styles/pack-setup.pcss",
         "cmd/BonfyreWebAddress/src/connect_github_app.h",
         "cmd/BonfyreCredentials/src/main.c",
         "cmd/BonfyreCredentials/tests/github_app_test.sh"
@@ -17735,6 +17787,8 @@
       ],
       "internal_calculi": [],
       "invariants": [
+        "guild programme lists use the shared compiled composition stylesheet",
+        "the public community entrance uses the compiled shared page component stylesheet",
         "/community renders accepted human posts, active reactions and temporally current active memberships from the canonical body and never substitutes federation rows",
         "a retained membership or presence past its own expiry is historical evidence and never enters the public current count",
         "public presence is an aggregate over explicitly public, current presence records whose actors still have a current membership; it never exposes an actor identity or turns presence into attendance",
@@ -17772,6 +17826,9 @@
         "cmd/BonfyreCMS/src/community_read.h",
         "cmd/BonfyreCMS/src/community_discovery.h",
         "cmd/BonfyreWebAddress/src/community_journey.h",
+        "cmd/BonfyreWebAddress/src/community_programs.h",
+        "deploy/tailwind/styles/composition.pcss",
+        "deploy/tailwind/styles/page-components.pcss",
         "cmd/BonfyreWebAddress/src/front_community.h",
         "schemas/control/community-discovery.cue",
         "cmd/BonfyreWebAddress/src/main.c",
@@ -17804,6 +17861,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/community_journey.test.mjs checks programme styling delivery and membership boundaries",
         "cmd/BonfyreWebAddress/tests/community_journey.test.mjs exercises native creation, membership, moderation and four-root discovery, cache-enabled withdrawal, exact thread continuation and script-disabled phone and desktop navigation",
         "cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh proves canonical community body, expiry-aware active member and public-presence counts, accepted posts/replies, and excludes a withdrawn reaction; live /community renders that body rather than a federation carrier",
         "2026-11-10 preview listed clubs and events, joined, RSVP-toggled with counts, filtered discovery by club, enforced superlike and plan quotas with 429s, and bypassed quotas plus badged gold after an operator grant",
@@ -21142,6 +21200,7 @@
         "catalogue prices remain observations; a reviewed run separately reads the native Meter rate effective at its attempt time. Measured output bytes and duration produce a physical usage event; absent rates remain unknown and do not become free usage"
       ],
       "invariants": [
+        "model price observations use the compiled model stylesheet and retain their source-provided values",
         "every relation figure counts only edges whose other end resolves to a registered node",
         "unresolved references are counted in their own right and named on the model that carries them",
         "reading a catalogue or native capability list never pulls a model, acquires a lease or starts inference",
@@ -21178,6 +21237,8 @@
       ],
       "semantic_question": "What models does this estate hold, which exact local native candidate can this account review, and what output and metered usage did that one admitted run produce?",
       "source_paths": [
+        "cmd/BonfyreWebAddress/src/subject_and_lens.h",
+        "integrations/browser/aurekai-model.pcss",
         "cmd/BonfyreWebAddress/src/main.c",
         "cmd/BonfyreWebAddress/src/model_catalogue_index.c",
         "cmd/BonfyreWebAddress/src/glyph_set.h",
@@ -21192,6 +21253,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/model_commons_test.sh checks price observations and stylesheet delivery",
         "cmd/BonfyreWebAddress/tests/model_catalogue_index_test.c checks catalogue card icons, escaped content and separately disclosed unresolved references",
         "cmd/BonfyreWebAddress/tests/model_catalogue_index_test.c checks public model pages describe local file sources without disclosing their machine paths while retaining external source coordinates",
         "cmd/BonfyreWebAddress/tests/model_commons_test.sh checks escaped price observation dates and a focusable scroll region for the hosted price table",
@@ -23014,6 +23076,7 @@
         "material read back from the durable record is marked as such. It fills a page a thin source would leave empty, but it is not evidence that the source still publishes it: its own page says it was kept rather than being current, and an agenda, which is a claim about what is going to happen, leaves it out"
       ],
       "invariants": [
+        "CMS workbench navigation loads its generated stylesheet rather than embedding style rules in its fragment",
         "public agenda, feed, map, media and reading surface styles are compiled assets linked by the shared page renderer",
         "native experience layout rules are compiled from PostCSS and linked at the compositor head position",
         "an apex front (/, /discover, /today on aurekai.work/.life/.live/.shop) is one composer: edition strip, headline with beat chips, lead, then the dispatch grid (work) or watch/listen/reading/what's-on/pictured regions (others), the standard band, and the page ends; no generic regions, sections or continuation blocks are laid under it",
@@ -23158,6 +23221,9 @@
       ],
       "semantic_question": "What does a person see on a subject's page or a main public route, given the kinds of material it actually has?",
       "source_paths": [
+        "cmd/BonfyreWebAddress/src/cms_workbench.h",
+        "cmd/BonfyreWebAddress/src/cms_editor.h",
+        "deploy/tailwind/styles/cms-workbench.pcss",
         "deploy/tailwind/styles/page-components.pcss",
         "deploy/tailwind/styles/reading-surface.pcss",
         "cmd/BonfyreWebAddress/src/native_experience_composition.h",
@@ -23221,6 +23287,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/pack_setup_test.mjs checks CMS navigation stylesheet delivery",
         "cmd/BonfyreWebAddress/tests/page_events_test.sh checks the native agenda and served component stylesheet",
         "cmd/BonfyreWebAddress/tests/native_experience_composition_test.c checks the stylesheet link and the absence of inline style emission",
         "cmd/BonfyreWebAddress/tests/work_entrance_test.mjs checks the account application entrance and absence of public demo cards and presentation showcases",
@@ -26556,6 +26623,7 @@
         "scripts/representation_manifold_shift.py.archive",
         "scripts/representation-manifold-shift.mjs",
         "scripts/estate-datafusion.mjs",
+        "scripts/representation-entry.mjs",
         "schemas/storage/representation-portfolio.cue",
         "schemas/storage/representation-manifold.sql",
         "scripts/Makefile",
@@ -33506,7 +33574,7 @@
       "preserves": [
         "exact workflow IDs, architecture IDs, source paths, interaction references and forbidden inferences; owner_graph retains all exported architectures and interactions for read-only native resolution"
       ],
-      "relation": "",
+      "relation": "declaration_provenance_binding",
       "source": "atlas-provenance"
     },
     "attention-reorders-without-obligating": {
@@ -34908,7 +34976,7 @@
       "preserves": [
         "studio scope, source snapshots, revision checks, actor attribution, publication retry identity and withdrawal state"
       ],
-      "relation": "",
+      "relation": "stores_for",
       "source": "training-weekly-plans"
     },
     "credential-accounts-name-obsidian-accounts": {
@@ -37625,7 +37693,7 @@
       "preserves": [
         "exact public program version, studio scope, offline public cache and explicit local adoption"
       ],
-      "relation": "",
+      "relation": "reads_from",
       "source": "member-training"
     },
     "member-training-follows-studio-appearance": {
@@ -37638,7 +37706,7 @@
       "preserves": [
         "the member's local style choice, saved public appearance and independent workout state"
       ],
-      "relation": "",
+      "relation": "presents-with",
       "source": "member-training"
     },
     "member-training-follows-weekly-plan": {
@@ -37651,7 +37719,7 @@
       "preserves": [
         "one member-owned workout history, explicit start date, skipped sessions and exact adopted plan version"
       ],
-      "relation": "",
+      "relation": "reads_from",
       "source": "member-training"
     },
     "member-training-requests-model-proposal": {
@@ -37664,7 +37732,7 @@
       "preserves": [
         "the reviewed exercise request, explicit selected-session scope and hashes of the actual model request and response"
       ],
-      "relation": "",
+      "relation": "requests",
       "source": "member-training"
     },
     "member-training-reuses-browser-store": {
@@ -37677,7 +37745,7 @@
       "preserves": [
         "browser-local state and atomic expected-revision checks"
       ],
-      "relation": "",
+      "relation": "reuses_browser_storage_module",
       "source": "member-training"
     },
     "member-training-submits-creator-request": {
@@ -37690,7 +37758,7 @@
       "preserves": [
         "creator/program version, authored brief, stable retry identity and explicit adoption of the completed delivery"
       ],
-      "relation": "",
+      "relation": "durable_submission",
       "source": "member-training"
     },
     "membership-forwards-as-a-relation-not-a-grant": {
@@ -37978,7 +38046,7 @@
       "preserves": [
         "customer template identity and closed typography, color, layout and mode roles"
       ],
-      "relation": "",
+      "relation": "site_presentation_binding",
       "source": "web-address-edge"
     },
     "native-spines-shared-wire": {
@@ -38006,7 +38074,7 @@
       "preserves": [
         "member ownership, explicit sharing scope, workout identity and platform permission decisions"
       ],
-      "relation": "",
+      "relation": "reads_through",
       "source": "training-native-watch-companions"
     },
     "notification-decided-by-condition-plan": {
@@ -38226,7 +38294,7 @@
       "preserves": [
         "stable source IDs, load units, actual completed work and original training records in a portable archive"
       ],
-      "relation": "",
+      "relation": "intake_mapping",
       "source": "opengym-training-interchange"
     },
     "operator-person-goals-to-account-inbox": {
@@ -40579,7 +40647,7 @@
       "preserves": [
         "member-owned storage, creator program identity, exact local asset routes and revision conflict refusal"
       ],
-      "relation": "",
+      "relation": "renders",
       "source": "service-site"
     },
     "service-site-transcribes-recording": {
@@ -40790,7 +40858,7 @@
       "preserves": [
         "source coordinate, credited name, reviewed fingerprint, account destination and saved record revision"
       ],
-      "relation": "",
+      "relation": "supplies_credited_material",
       "source": "source-frontier"
     },
     "source-frontier-allocates-page-sources": {
@@ -41087,7 +41155,7 @@
       "preserves": [
         "declared roles, system font stacks, studio-owned selection and immutable template content"
       ],
-      "relation": "",
+      "relation": "presents-with",
       "source": "training-studio-appearance"
     },
     "studio-appearance-uses-native-content": {
@@ -41100,7 +41168,7 @@
       "preserves": [
         "studio namespace, current revision, content digest and actor attribution"
       ],
-      "relation": "",
+      "relation": "stores_for",
       "source": "training-studio-appearance"
     },
     "surface-maturity-lake-check-feeds-live-sweep": {
@@ -41364,7 +41432,7 @@
       "preserves": [
         "current session validity, explicit actor coordinate, per-studio request read/write grant and immediate revocation at the next operation"
       ],
-      "relation": "",
+      "relation": "authority_check",
       "source": "training-creator-access"
     },
     "training-creator-delivers-native-request": {
@@ -41377,7 +41445,7 @@
       "preserves": [
         "exact studio/request binding, actor-derived claim owner, explicit delivery review and native completion receipt"
       ],
-      "relation": "",
+      "relation": "durable_submission",
       "source": "training-creator-access"
     },
     "training-creator-publishes-cms-program": {
@@ -41390,7 +41458,7 @@
       "preserves": [
         "native actor binding, separate current publishing grant, reviewed public fields, stable retry identity and expected program version"
       ],
-      "relation": "",
+      "relation": "publishes",
       "source": "training-creator-access"
     },
     "training-draft-checkpoints-native-work": {
@@ -41403,7 +41471,7 @@
       "preserves": [
         "live claim ownership, immutable artifact digest, expected revision and atomic stale-review refusal"
       ],
-      "relation": "",
+      "relation": "durable_realization",
       "source": "training-creator-access"
     },
     "training-plan-opens-phone-calendar": {
@@ -41416,7 +41484,7 @@
       "preserves": [
         "planned calendar date, plan label, exercise names, set counts and stable event identity"
       ],
-      "relation": "",
+      "relation": "calendar_event_projection",
       "source": "training-weekly-plans"
     },
     "training-program-authoring-publishes-review": {
@@ -41429,7 +41497,7 @@
       "preserves": [
         "reviewed source revision, explicit publication action and independently versioned release"
       ],
-      "relation": "",
+      "relation": "publishes",
       "source": "training-program-authoring"
     },
     "training-program-authoring-uses-native-cms": {
@@ -41442,7 +41510,7 @@
       "preserves": [
         "studio namespace, normalized routine, revision digest, edit identity and native operation history"
       ],
-      "relation": "",
+      "relation": "stores_for",
       "source": "training-program-authoring"
     },
     "training-program-release-uses-native-cms": {
@@ -41455,7 +41523,7 @@
       "preserves": [
         "native content records, unique release and publication keys, publication state and private provenance"
       ],
-      "relation": "",
+      "relation": "stores_for",
       "source": "training-program-publication"
     },
     "training-request-uses-native-workgraph": {
@@ -41468,7 +41536,7 @@
       "preserves": [
         "native lifecycle, claim ownership, lease expiry, creator routing family and completion receipt"
       ],
-      "relation": "",
+      "relation": "bounded-native-enqueue",
       "source": "training-creator-request"
     },
     "training-sensor-readings-enter-member-workout": {
@@ -41481,7 +41549,7 @@
       "preserves": [
         "member choice, active workout identity, reading timestamps, sensor name and local revision checks"
       ],
-      "relation": "",
+      "relation": "intake_mapping",
       "source": "training-device-connections"
     },
     "training-team-administers-native-grants": {
@@ -41494,7 +41562,7 @@
       "preserves": [
         "current session and scoped administrator checks, existing account identity, exact institution, native transaction ordering and delegation expiry"
       ],
-      "relation": "",
+      "relation": "delegated_grant_administration",
       "source": "training-creator-access"
     },
     "transitional-root-measures-command-law": {
@@ -41708,7 +41776,7 @@
       "preserves": [
         "source format, activity date, duration, distance, available whole-workout average heart rate and idempotent content identity"
       ],
-      "relation": "",
+      "relation": "intake_mapping",
       "source": "training-device-connections"
     },
     "weather-schedules-observation": {
@@ -41854,7 +41922,7 @@
       "preserves": [
         "routine identity, version, exercise identity and prescribed targets"
       ],
-      "relation": "",
+      "relation": "references",
       "source": "training-weekly-plans"
     },
     "work-order-ledger-reads-role-programs": {
@@ -42241,9 +42309,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "e8390f55bcbe1a413143459e4ab879b2c79f659cf4583de7615d86a694815932",
+    "declaration_digest": "0db6ba88c6ee29c9d0c035b61ce52a9be50473b1c3f89663b448fae0051db07c",
     "declaration_files": 153,
-    "generated_at": "2026-11-14T04:03:12Z"
+    "generated_at": "2026-11-14T06:01:54Z"
   },
   "views": {
     "CapabilityView": {

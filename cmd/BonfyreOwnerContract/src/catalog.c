@@ -10,7 +10,9 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
-#define MAX_ORGANS 512
+/* The atlas passed 512 architectures on 2026-11-13; every one past the cap
+ * was silently missing, so its installed binary read as unmapped. */
+#define MAX_ORGANS 4096
 #define MAX_CAPS 512
 
 typedef struct { char id[128], name[128], norm[128]; } Organ;
@@ -111,8 +113,22 @@ static void realize(Cap*c,const char*bin){
 static int match_organ(const Cap*c,const Organ*o,int n){
  char nn[256]; norm(c->name,nn,sizeof nn);
  for(int i=0;i<n;i++)if(!strcmp(c->norm_binary,o[i].norm)||!strcmp(nn,o[i].norm))return i;
+ /* An installed name that is a symlink is the program it points at:
+  * bonfyre-site -> bonfyre-web-address is WebAddress, not a missing organ. */
+ if(c->realized&&*c->realized_path){
+  char real[PATH_MAX];
+  if(realpath(c->realized_path,real)){
+   const char*b=strrchr(real,'/'); char rn[256]; norm(b?b+1:real,rn,sizeof rn);
+   if(strcmp(rn,c->norm_binary))for(int i=0;i<n;i++)if(!strcmp(rn,o[i].norm))return i;
+  }
+ }
  const char*alias=0;
- if(!strcmp(c->id,"layer-c"))alias="bonfyrelayer";
+ /* bonfyre-detect-vision is the VISION target of cmd/BonfyreDetectObjects;
+  * bonfyre-representation is the installed launcher for
+  * scripts/representation-entry.mjs, a source path of Representation Manifold. */
+ if(!strcmp(c->id,"detect-vision"))alias="bonfyredetectobjects";
+ else if(!strcmp(c->id,"representation"))alias="representationmanifold";
+ else if(!strcmp(c->id,"layer-c"))alias="bonfyrelayer";
  else if(!strcmp(c->id,"surface-ir"))alias="bonfyresurface";
  else if(!strcmp(c->id,"audio-ingest"))alias="bonfyreingest";
  if(alias)for(int i=0;i<n;i++)if(!strcmp(alias,o[i].norm))return i;
@@ -173,7 +189,8 @@ static int primary_score(const Cap*c,const Organ*o){
 
 int catalog_summary(const char *atlas,const char *capbin,BfOwnerCatalogSummary *out){
  int no=0,nc=0;
- Organ organs[MAX_ORGANS]={0}; Cap caps[MAX_CAPS]={0};
+ static Organ organs[MAX_ORGANS]; static Cap caps[MAX_CAPS];
+ memset(organs,0,sizeof organs); memset(caps,0,sizeof caps);
  if(!atlas||!capbin||!out)return 0;
  memset(out,0,sizeof(*out));
  if(!load_organs(atlas,organs,&no))return 0;
@@ -203,7 +220,8 @@ int catalog_summary(const char *atlas,const char *capbin,BfOwnerCatalogSummary *
 int catalog_audit(int argc,char**argv){
  if(argc<4){fprintf(stderr,"usage: bonfyre-owner-contract audit-catalog ATLAS_INDEX CAPABILITY_BIN [--summary]\n");return 2;}
  int summary=argc>4&&!strcmp(argv[4],"--summary"),no=0,nc=0;
- Organ organs[MAX_ORGANS]={0}; Cap caps[MAX_CAPS]={0};
+ static Organ organs[MAX_ORGANS]; static Cap caps[MAX_CAPS];
+ memset(organs,0,sizeof organs); memset(caps,0,sizeof caps);
  if(!load_organs(argv[2],organs,&no)){perror(argv[2]);return 2;}
  if(!load_caps(argv[3],caps,&nc)){fprintf(stderr,"cannot read capability owner %s\n",argv[3]);return 2;}
  const char*home=getenv("HOME"); char bindir[PATH_MAX]; snprintf(bindir,sizeof bindir,"%s/.bonfyre/bin",home?home:"");

@@ -12,9 +12,9 @@ const posts=join(import.meta.dir,"../../../editorial/posts");
 const base=(site,route)=>({schema:"bonfyre.page-snapshot.v1",digest:"b".repeat(64),id:0,
  snapshot:{namespace:site,route,page:null,fragments:[]}});
 
-test("all sixteen real journal posts enter native, isolated, editable profile drafts",async()=>{
+test("all ninety real journal posts enter native, isolated, editable profile drafts",async()=>{
  const files=readdirSync(posts).filter(name=>name.endsWith(".md")).sort();
- expect(files.length).toBe(16);
+ expect(files.length).toBe(90);
  const digests=new Set();
  for(const filename of files){
   const raw=readFileSync(join(posts,filename),"utf8");
@@ -42,7 +42,7 @@ test("all sixteen real journal posts enter native, isolated, editable profile dr
   expect(restored.blocks.map(x=>x.props.source_digest)).toEqual(draft.blocks.map(x=>x.props.source_digest));
   expect(()=>mergeJournalIntoTree(draft,article)).toThrow(/already present/);
  }
- expect(digests.size).toBe(16);
+ expect(digests.size).toBe(90);
 });
 
 test("an import cannot publish or erase another page's authored blocks",async()=>{
@@ -72,7 +72,7 @@ test("unsafe filenames, false dates, duplicate metadata and oversized sections a
  ])await expect(parseJournalMarkdown(content)).rejects.toThrow();
 });
 
-test("batch intake opens all sixteen routes before committing account-owned journal drafts",async()=>{
+test("batch intake opens all ninety routes before committing account-owned journal drafts",async()=>{
  const namespace="person-journal-life",stored=new Map(),calls=[];
  const files=readdirSync(posts).filter(x=>x.endsWith(".md")).sort();
  const articles=await Promise.all(files.map(async filename=>
@@ -98,12 +98,12 @@ test("batch intake opens all sixteen routes before committing account-owned jour
  const progress=[];
  const done=await saveJournalBatch(articles,{site:namespace,fetcher,
   onProgress:p=>progress.push(p.saved)});
- expect(done.imported).toBe(16);
+ expect(done.imported).toBe(90);
  expect(done.published).toBe(0);
- expect(stored.size).toBe(16);
- expect(progress).toEqual(Array.from({length:16},(_,i)=>i+1));
- expect(calls.slice(0,16).every(x=>x.kind==="read")).toBe(true);
- expect(calls.filter(x=>x.kind==="save")).toHaveLength(16);
+ expect(stored.size).toBe(90);
+ expect(progress).toEqual(Array.from({length:90},(_,i)=>i+1));
+ expect(calls.slice(0,90).every(x=>x.kind==="read")).toBe(true);
+ expect(calls.filter(x=>x.kind==="save")).toHaveLength(90);
  for(const article of articles){
   const page=stored.get("/blog/"+article.slug+"/").snapshot;
   expect(page.page.media_subject_ref).toBe("article:"+article.slug);

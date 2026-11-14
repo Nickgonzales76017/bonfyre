@@ -1,6 +1,11 @@
 atlas surface
 
 architecture page-composition
+  source_path cmd/BonfyreWebAddress/src/cms_workbench.h
+  source_path cmd/BonfyreWebAddress/src/cms_editor.h
+  source_path deploy/tailwind/styles/cms-workbench.pcss
+  invariant CMS workbench navigation loads its generated stylesheet rather than embedding style rules in its fragment
+  witness cmd/BonfyreWebAddress/tests/pack_setup_test.mjs checks CMS navigation stylesheet delivery
   source_path deploy/tailwind/styles/page-components.pcss
   source_path deploy/tailwind/styles/reading-surface.pcss
   invariant public agenda, feed, map, media and reading surface styles are compiled assets linked by the shared page renderer

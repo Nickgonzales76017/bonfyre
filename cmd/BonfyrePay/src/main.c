@@ -130,7 +130,11 @@ static int cmd_generate_invoice(sqlite3 *db, int user_id, const char *api_key,
      * an event the meter left unpriced is reported and not billed. Nothing is
      * priced here by operation name. */
     sqlite3 *meter=NULL;
-    if (sqlite3_open_v2(meter_path,&meter,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK) {
+    /* READWRITE without CREATE: the meter checkpoints its WAL files away on
+     * close, and a readonly handle then cannot recreate the shared-memory
+     * index, so every invoice failed with "unable to open database file".
+     * This handle only runs the SELECT below. */
+    if (sqlite3_open_v2(meter_path,&meter,SQLITE_OPEN_READWRITE,NULL)!=SQLITE_OK) {
         fprintf(stderr,"Cannot read meter store %s: %s\n",meter_path,
                 meter?sqlite3_errmsg(meter):"open failed");
         if (meter) sqlite3_close(meter);

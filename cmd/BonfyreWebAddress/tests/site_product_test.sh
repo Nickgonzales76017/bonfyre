@@ -17,7 +17,9 @@ export BONFYRE_PARAGRAPH_BINARY="$root/cmd/BonfyreParagraph/bonfyre-paragraph" B
 export BONFYRE_CMS_SCHEMAS="$root/cmd/BonfyreCMS/content-types" BONFYRE_SITE_ROOT="$root/site/matrix"
 home=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-site.XXXXXX")
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
-cleanup() { "$web" site stop --home "$home" >/dev/null 2>&1 || true; rm -rf "$home"; }
+# stop finds the server by its port; without --port it unlinked the pid file
+# and left the server running after the home was gone.
+cleanup() { "$web" site stop --home "$home" --port "$port" >/dev/null 2>&1 || true; rm -rf "$home"; }
 trap cleanup EXIT INT TERM
 fail() { echo "site product: $1" >&2; if [ -n "${BONFYRE_KEEP_FAILED_TEST:-}" ]; then cp -R "$home" "$BONFYRE_KEEP_FAILED_TEST"; fi; exit 1; }
 site() { "$web" site "$@" --home "$home" --port "$port"; }
@@ -45,7 +47,7 @@ cp "$root/site/matrix/client-organs.js" "$thin/"
 thinport=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 BONFYRE_SITE_ROOT="$thin" "$web" site new thin --no-open --home "$home/thin-home" --port "$thinport" >/dev/null
 out=$(BONFYRE_SITE_ROOT="$thin" "$web" site check thin --json --home "$home/thin-home" --port "$thinport" || true)
-"$web" site stop --home "$home/thin-home" >/dev/null 2>&1 || true
+"$web" site stop --home "$home/thin-home" --port "$thinport" >/dev/null 2>&1 || true
 printf '%s' "$out" | grep -q '"check":"styles-load","ok":false' || fail "a page whose stylesheet is missing passed: $out"
 
 if site new acme --no-open >/dev/null 2>&1; then fail "a second site took the same name"; fi
@@ -251,7 +253,7 @@ site stop >/dev/null; site serve >/dev/null
 # What the site sells, a time asked for, the contact page for people, and
 # taking things back: each one command, each read back.
 form() { curl -s -m 15 -o "$home/form.out" -w '%{http_code}' --resolve "notes.localhost:$port:127.0.0.1" -X POST "http://notes.localhost:$port/contact" "$@"; }
-site offer notes --title 'Site survey' --price '$180 per hour' --amount 180 --currency USD --unit 'per hour' --bookable --text 'One hour on site with an engineer.' | grep -q '"bookable":true,"on_page":true' || fail "offer not on its page"
+site offer notes --title 'Site survey' --price '$180 per hour' --amount 180 --currency USD --unit 'per hour' --bookable --text 'One hour on site with an engineer.' | grep -q '"bookable":true,"intake_questions":0,"on_page":true' || fail "offer not on its page"
 site offer notes --title 'Written quote' --price 'Free' --text 'A written quote in one working day.' | grep -q '"on_page":true' || fail "second offer not on its page"
 offers=$(curl -s -m 10 --resolve "notes.localhost:$port:127.0.0.1" -H 'Accept: text/html' "http://notes.localhost:$port/offers")
 printf '%s' "$offers" | grep -q '<h2>Site survey</h2><p class="offer-price">\$180 per hour</p>' || fail "offer and price are not shown together"
@@ -366,7 +368,8 @@ card=$(curl -s -m 10 --resolve "notes.localhost:$port:127.0.0.1" "http://notes.l
 printf '%s' "$card" | grep -q '"transport":{"type":"streamable-http","endpoint":"http://127.0.0.1:' || fail "the server card does not give a reachable endpoint"
 printf '%s' "$card" | grep -q '"tools":\[{"name":"site_info"' || fail "the server card does not carry the tools"
 curl -s -D - -o /dev/null --resolve "notes.localhost:$port:127.0.0.1" -H 'Accept: text/html' "http://notes.localhost:$port/contact" | grep -qi '^Link: </.well-known/mcp/server-card.json>; rel="mcp"' || fail "pages do not point to the server card"
-get notes.localhost | grep -q '<link rel="mcp" href="/.well-known/mcp/server-card.json"><script src="/assets/own-site-agent.js" defer></script>' || fail "the home page does not offer its tools to a browser assistant"
+# Shell assets now carry a content version (?v=digest) for cache busting.
+get notes.localhost | grep -Eq '<link rel="mcp" href="/.well-known/mcp/server-card.json"><script src="/assets/own-site-agent.js(\?v=[0-9a-f]+)?" defer></script>' || fail "the home page does not offer its tools to a browser assistant"
 if command -v node >/dev/null; then
   # The browser API is stood in for by an object that records what is
   # registered; the calls it makes go to the real endpoint.

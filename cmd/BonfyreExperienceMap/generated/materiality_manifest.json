@@ -301,7 +301,7 @@
     "names_provable_in_checkout": 19,
     "note": "session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"
   },
-  "primary_build_digest": "2be08decad5ba8fa3edea7acd00b5ec603701338039a540b03aa61225afba70b",
+  "primary_build_digest": "4c04b5962d09509795f6bf904eeba97fab8533265d44e60a964304a43c145d21",
   "reference_lattice": {
     "app_reference_chain_counts": {
       "agriculture": 14,
@@ -328,7 +328,7 @@
       "identity-access": 27,
       "insurance": 4,
       "investing": 4,
-      "knowledge": 154,
+      "knowledge": 155,
       "learning": 22,
       "listen": 14,
       "live-event": 10,
@@ -359,7 +359,7 @@
     },
     "app_reference_kind_counts": {
       "architecture": 6,
-      "cms_type": 138,
+      "cms_type": 139,
       "command": 197,
       "component": 92,
       "donor_reference": 19,
@@ -369,7 +369,7 @@
       "protocol_reference": 108,
       "surface": 20
     },
-    "app_reference_records": 628,
+    "app_reference_records": 629,
     "chains_with_interaction_reference": 52,
     "chains_with_market_reference": 26,
     "chains_without_any_reference_evidence": [],
@@ -460,10 +460,10 @@
   },
   "schema": "bonfyre.experience-materiality.v1",
   "stage_projection": {
-    "actual_records_in_stage_manifest": 5757,
+    "actual_records_in_stage_manifest": 5758,
     "delta": 0,
-    "expected_records_from_current_inputs": 5757,
-    "stage_manifest_digest": "1bbc77b8d761b787a90b8d321dd138a67197d0482fb2a799ab4800a2ffc706ea",
+    "expected_records_from_current_inputs": 5758,
+    "stage_manifest_digest": "9175e054b20c55cd1bd5126ac94c32d3fe9df598081f53aed962f08d15323ee1",
     "stale": false
   },
   "structural_green": true,

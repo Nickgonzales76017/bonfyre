@@ -45,6 +45,9 @@ architecture authority-graph
   source_lineage SEED-A recursive organ document
 
 architecture external-account-link
+  source_path deploy/tailwind/styles/account-connections.pcss
+  invariant account connection presentation loads its generated stylesheet without an inline style block
+  witness cmd/BonfyreWebAddress/tests/external_account_surface_test.sh checks the connection stylesheet route
   canonical_name ExternalAccountLink
   family identity
   domain Identity / External Relationship

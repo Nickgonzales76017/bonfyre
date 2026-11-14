@@ -344,7 +344,8 @@ static int ensure_server(Site *s) {
     if (!access(s->meter_bin, X_OK)) {
         sqlite3 *meter = NULL;
         long known = 0;
-        if (sqlite3_open_v2(s->meter_db, &meter, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) known = count_where(meter, "rate", "provider", "site");
+        /* Readonly cannot recreate the WAL index the meter checkpointed away. */
+        if (sqlite3_open_v2(s->meter_db, &meter, SQLITE_OPEN_READWRITE, NULL) == SQLITE_OK) known = count_where(meter, "rate", "provider", "site");
         if (meter) sqlite3_close(meter);
         if (known < 2) {
             static const char *ops[] = {"site.read", "site.write"};
