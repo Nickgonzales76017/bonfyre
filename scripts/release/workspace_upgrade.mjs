@@ -193,7 +193,9 @@ export function nativeWorkspaceUpgradeAdapter({home=homedir(),spec}={}){
  assert(isAbsolute(packages),'The workspace package root must be absolute.');
  const schemaNames=['pack_artifact','pack_version','pack_head','pack_demand','pack_installation','pack_activation','application_binding'];
  const sourceHashes=()=>[...new Set(['scripts/release/workspace_upgrade.mjs',...spec.sourcePaths])].sort().map(path=>({path,sha256:fileHash(join(root,path))}));
- const ownerHashes=()=>({servicePath,serviceSha:fileHash(servicePath),binary:realpathSync(binary),binarySha:fileHash(realpathSync(binary)),dbPath:realpathSync(dbPath),schemas:schemaNames.map(name=>({name,sha256:fileHash(join(schemas,name+'.json'))})),packages:resolve(packages),operatorPause:fileHash(join(home,'.bonfyre/operator/STOP'))});
+ const pausePath=join(home,'.bonfyre/operator/STOP');
+ const operatorPause=()=>existsSync(pausePath)?{present:true,sha256:fileHash(pausePath)}:{present:false};
+ const ownerHashes=()=>({servicePath,serviceSha:fileHash(servicePath),binary:realpathSync(binary),binarySha:fileHash(realpathSync(binary)),dbPath:realpathSync(dbPath),schemas:schemaNames.map(name=>({name,sha256:fileHash(join(schemas,name+'.json'))})),packages:resolve(packages),operatorPause:operatorPause()});
  const expectedOwner=ownerHashes();assert(expectedOwner.serviceSha===serviceSha,'The service changed while opening the upgrade owner.');
  const db=new Database(dbPath,{readonly:true});db.exec('PRAGMA query_only=ON');
  const command=args=>run([binary,...args,'--db',dbPath,'--schemas',schemas],{env});

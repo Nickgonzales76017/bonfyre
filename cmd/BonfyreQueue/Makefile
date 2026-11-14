@@ -68,7 +68,7 @@ test-command-dispatch: bonfyre-queue
 test-account-work-index: bonfyre-queue
 	sh tests/account_work_index_test.sh ./bonfyre-queue
 
-test-account-wire: bonfyre-queue
+test-account-wire-parity: bonfyre-queue
 	$(call quiet_bun,BONFYRE_TEST_QUEUE="$(CURDIR)/bonfyre-queue" bun test --reporter=dots ../../integrations/browser/tests/activity-source.test.mjs,account-activity-source)
 	$(call quiet_bun,bun test --reporter=dots ../../integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs --test-name-pattern "account work usage is visible",account-work-browser)
 	$(call quiet_bun,bun test --reporter=dots ../../integrations/mcp/tests/hook_bridge.test.mjs ../../integrations/mcp/tests/fabric_transport.test.mjs ../../integrations/mcp/tests/fabric_store.test.mjs,fabric-bridge)
@@ -77,8 +77,13 @@ test-account-wire: bonfyre-queue
 	@if [ -f "$(HOME)/.bonfyre/state/account-work.db" ]; then ./bonfyre-queue account-work audit --db "$(HOME)/.bonfyre/state/account-work.db" --subject "$${BONFYRE_TEST_ACCOUNT_SUBJECT:-user:19}" --scope self; else echo "account-work audit: SKIP (no local owner index)"; fi
 	sh tests/live_account_shadow_test.sh ./bonfyre-queue
 	sh tests/installed_footprint_witness.sh
+.PHONY: retirement-proof test-account-wire-parity
+retirement-proof: test-account-activity test-account-inbox test-account-work-index test-command-dispatch test-account-wire-parity
+test-account-wire: test-account-wire-parity
+	sh tests/installed_alias_shadow_test.sh
+	sh ../../scripts/native-ratchet.sh check
 
-bonfyre-queue: Makefile src/main.c src/account_activity.h src/account_inbox.h src/account_work.h ../../lib/libbonfyre/include/bf_command_lookup.h ../../lib/libbonfyre/include/bf_msgpack.h ../../lib/libbonfyre/bf_msgpack.c ../../engine/core/libbonfyre-fabric.a
+bonfyre-queue: Makefile src/main.c src/account_activity.h src/account_inbox.h src/account_work.h src/account_legacy_api.h ../../lib/libbonfyre/include/bf_command_lookup.h ../../lib/libbonfyre/include/bf_msgpack.h ../../lib/libbonfyre/bf_msgpack.c ../../engine/core/libbonfyre-fabric.a
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o bonfyre-queue src/main.c ../../lib/libbonfyre/bf_msgpack.c $(LDFLAGS)
 
 account-activity-test: tests/account_activity_test.c src/account_activity.h ../../engine/core/libbonfyre-fabric.a

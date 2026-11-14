@@ -12,7 +12,9 @@ const project = createProjectNative({
   env: { ...process.env, BONFYRE_PUBLIC_ORIGIN: 'https://aurekai.work' },
   run: async () => { throw new Error('no native execution allowed during public release readback'); },
 });
-const report = await project.call('foreign_twin_release', {
+// A generation may change between independent read-only pages while sources are being
+// indexed. Retry the entire case, never stitch pages from different generations.
+const request={
   case_urls: [
     'https://www.dallascitynews.net/feed',
     'https://dallastx.new.swagit.com/videos/402001',
@@ -21,7 +23,15 @@ const report = await project.call('foreign_twin_release', {
   related_queries: ['dallas', 'grants', 'district'],
   grant_terms: ['SS4A'],
   civic_event_id: 1362423,
-});
+};
+let report;
+for(let attempt=0;attempt<3;attempt++){
+  try{report=await project.call('foreign_twin_release',request);break;}
+  catch(error){
+    if(attempt===2||!String(error?.message||error).includes('ForeignTwin release generation changed during readback'))throw error;
+    console.error('ForeignTwin generation changed; retrying whole pinned public case '+(attempt+1));
+  }
+}
 if (!report.generation || !Number.isInteger(report.estate_total) || report.estate_total < 1)
   throw new Error('public source release missing a generation or source population');
 if (!report.case || !Array.isArray(report.case.exact_sources) || !Array.isArray(report.case.missing))

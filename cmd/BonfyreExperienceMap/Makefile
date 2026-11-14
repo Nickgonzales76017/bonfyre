@@ -42,7 +42,7 @@ corpus: policy-check
 	bun test tests/domain_observation_bridge.test.mjs
 	$(MAKE) protocol-derivation-bridge-witness
 	$(MAKE) protocol-observation-bridge-witness
-	bun tools/protocol_observation_bridge.mjs external:protocol-0304 --evidence generated/participation_evidence.jsonl --native-receipt generated/protocol_observation_bridge_receipt.json --output generated/participation_evidence.jsonl
+	@if [ -f generated/participation_evidence.jsonl ]; then bun tools/protocol_observation_bridge.mjs external:protocol-0304 --evidence generated/participation_evidence.jsonl --native-receipt generated/protocol_observation_bridge_receipt.json --output generated/participation_evidence.jsonl; else echo "protocol observation: retained DomainProfile evidence absent; no binding"; fi
 	bun test tests/protocol_observation_bridge.test.mjs
 	bun tools/participation_activation.mjs --write
 	bun test tests/participation_activation.test.mjs

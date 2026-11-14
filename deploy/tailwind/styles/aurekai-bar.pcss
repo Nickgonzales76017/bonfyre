@@ -182,3 +182,31 @@ body.ph-app {
 }
 /* Nothing on a shell page may scroll the phone sideways, not even a shadow. */
 html:has(body.ak-app){overflow-x:clip}
+/* Audio deck waveform, timed transcript and editorial score, moved from public_audio_deck.h. */
+.bf-audio-seek{position:relative;min-width:0;display:flex;align-items:center;isolation:isolate}.bf-audio-waveform{position:absolute;left:7px;right:7px;top:6px;bottom:6px;display:flex;align-items:center;gap:1px;pointer-events:none;z-index:0;overflow:hidden}.bf-audio-waveform[hidden]{display:none!important}.bf-audio-waveform span{display:block;flex:1;min-width:1px;background:var(--w-muted,#61776b);opacity:.65;border-radius:2px}.bf-audio-waveform span[data-played=true]{background:var(--w-accent,#225841);opacity:1}.bf-audio-seek input[type=range]{position:relative;z-index:1}.bf-audio-seek[data-waveform-active=true] input[type=range]{-webkit-appearance:none;appearance:none;cursor:pointer}.bf-audio-seek[data-waveform-active=true] input[type=range]::-webkit-slider-runnable-track{height:4px;background:transparent}.bf-audio-seek[data-waveform-active=true] input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border:2px solid var(--w-ground,#fff);border-radius:50%;background:var(--w-accent,#225841);box-shadow:0 0 0 1px var(--w-accent,#225841);margin-top:-5px}.bf-audio-seek[data-waveform-active=true] input[type=range]::-moz-range-track{background:transparent}.bf-audio-seek[data-waveform-active=true] input[type=range]::-moz-range-thumb{width:14px;height:14px;border:2px solid var(--w-ground,#fff);border-radius:50%;background:var(--w-accent,#225841)}@media(prefers-reduced-motion:reduce){.bf-audio-waveform span{transition:none}}
+.bf-audio-transcript{margin-top:16px;padding:4px 0 0;border-top:1px solid var(--w-rule,#b1c2b6)}.bf-audio-transcript[hidden]{display:none!important}.bf-audio-transcript>summary{cursor:pointer;min-height:44px;padding:11px 0;font:600 13px/1.5 var(--w-face-body,system-ui)}.bf-audio-transcript>p{font:12px/1.5 var(--w-face-body,system-ui);color:var(--w-muted,#58665d);margin:4px 0 10px}.bf-audio-transcript ol{max-height:320px;overflow-y:auto;display:grid;gap:4px;list-style:none;padding:0;margin:0}.bf-audio-transcript li{padding:0;margin:0}.wrap .deck.bf-audio .bf-audio-transcript li button{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;min-height:44px;padding:10px;border:0;border-radius:7px;font:400 13px/1.6 var(--w-face-body,system-ui);white-space:normal}.bf-audio-transcript time{flex:none;font:600 11px/1.8 var(--w-face-mono,monospace);font-variant-numeric:tabular-nums;color:var(--w-muted,#58665d)}.wrap .deck.bf-audio .bf-audio-transcript li button[aria-current=true]{box-shadow:inset 3px 0 var(--w-accent,#225841);background:var(--w-ground,#eef4ed)}.bf-audio-transcript li button:focus-visible{outline:3px solid var(--w-accent,#225841);outline-offset:-3px}
+.bf-audio-score{display:none!important}.bf-article-recording .bf-audio-score{display:flex!important}
+/* Article listening panel, shared with article_listen.h (independent sites emit it inline). */
+.bf-article-listen{margin:24px 0 26px;padding:20px 24px 18px;background:var(--w-panel,#f0f4ec);border:1px solid var(--w-rule,#b1c2b6);border-left:4px solid var(--w-accent,#315e46);border-radius:14px;color:var(--w-ink,#22382c);font:14px/1.5 system-ui}
+.bf-article-listen[hidden]{display:none!important}
+.bf-article-listen .bf-listen-heading{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:space-between}
+.bf-article-listen .bf-listen-label{font:600 11px/1.4 ui-monospace,monospace;letter-spacing:.11em;text-transform:uppercase;opacity:.75}
+.bf-article-listen h2{font:400 clamp(24px,3vw,34px)/1.12 Georgia,serif;margin:5px 0 12px;letter-spacing:-.025em}
+.bf-article-listen .bf-listen-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bf-listen-soundtrack{display:flex;align-items:center;gap:12px;margin:8px 0 0;font:12px/1.5 system-ui}.bf-listen-soundtrack label{min-height:44px}.bf-listen-soundtrack small{margin:0!important}
+.bf-article-listen button,.bf-article-listen select{min-height:44px;padding:10px 14px;border:1px solid var(--w-rule,#91a998);border-radius:999px;background:transparent;color:inherit;font:600 13px system-ui;cursor:pointer}
+.bf-article-listen button[data-listen-play]{background:var(--w-accent,#315e46);color:var(--w-ground,#fff);min-width:94px}
+.bf-article-listen button:disabled{opacity:.45;cursor:default}
+.bf-article-listen label{display:inline-flex;align-items:center;gap:7px;font:12px system-ui}
+.bf-listen-timeline{display:block;width:100%;height:8px;margin:16px 0 7px;accent-color:var(--w-accent,#315e46);border:0;border-radius:999px;overflow:hidden}
+.bf-listen-timeline::-webkit-progress-bar{background:var(--w-rule,#ced9d0);border-radius:999px}.bf-listen-timeline::-webkit-progress-value{background:var(--w-accent,#315e46);border-radius:999px}
+.bf-listen-timeline::-moz-progress-bar{background:var(--w-accent,#315e46);border-radius:999px}
+.bf-listen-status{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;font:12px/1.5 system-ui;opacity:.86}
+.bf-article-voice-choice{margin:12px 0 22px;border:1px solid var(--w-rule,#aeb9b2);border-radius:12px;overflow:hidden;background:var(--w-panel,#f6f8f4)}
+.bf-article-voice-choice>summary{cursor:pointer;display:flex;align-items:center;min-height:48px;padding:12px 18px;font:600 13px/1.5 system-ui;color:var(--w-ink,#22382c)}
+.bf-article-voice-choice[open]>summary{border-bottom:1px solid var(--w-rule,#aeb9b2)}.bf-article-voice-choice .bf-article-listen{margin:0;border:0;border-radius:0}
+.bf-article-listen small{display:block;margin-top:10px;font:12px/1.45 system-ui;opacity:.75}
+.bf-article-listen :focus-visible{outline:3px solid var(--w-accent,#315e46);outline-offset:3px}
+.thing-text p.thing-body[data-listen-active]{box-shadow:inset 3px 0 var(--w-accent,#315e46);padding-left:14px}
+@media(max-width:640px){.bf-article-listen{padding:18px 16px}.bf-listen-status{display:block}.bf-listen-controls{gap:7px}}
+@media(prefers-reduced-motion:reduce){.bf-article-listen *{transition:none!important}}

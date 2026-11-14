@@ -84,7 +84,10 @@ test('the inbox separates what needs the person from agent work, with each one n
   'Connect Twilio for customer subaccounts','href="https://console.twilio.com/us1/account/keys-credentials/api-keys" target="_blank"','value="email"','value="review"',
   'data-inbox-kind="provider-checklist"','Postmark','href="https://account.postmarkapp.com/api_tokens"','href="/apps/connections?context=self&amp;identity=gmail&amp;work=051-gmail"','href="/connect/github-app"',
   'data-inbox-kind="invitation"','Join River Guild','href="/organizations/join"','Harbor Cooperative','1 invitation not accepted yet','href="/organizations?organization='+ids.mine+'"',
-  'data-inbox-kind="execution-credit"','OpenAI API credits are exhausted. Add credits before retrying this work.','Add OpenAI API credits','href="https://platform.openai.com/settings/organization/billing/"','Agent stopped','Rebuild the search index after a schema change'])expect(b).toContain(needle);
+  'data-inbox-kind="legacy-api-hold"','Legacy API execution is discontinued. Review this work for native capabilities; do not retry the paid API.','Open native programs','href="/programs?context=self"','Agent stopped','Rebuild the search index after a schema change'])expect(b).toContain(needle);
+  expect(b).not.toContain('Add OpenAI API credits');
+  expect(b).not.toContain('platform.openai.com/settings/organization/billing/');
+  expect(b).not.toContain('data-inbox-kind="execution-credit"');
  expect(b).not.toContain('data-inbox-kind="dating-introduction"'); // No opted-in Participation owner in this fixture.
  expect(b).not.toContain('fixture-release-OLD1');
  const needsYou=b.slice(b.indexOf('id="needs-you"'),b.indexOf('id="sub-accounts"')),agents=b.slice(b.indexOf('id="agents"'));
@@ -106,7 +109,7 @@ test('the rail reads real account Inbox action owners even when recipient notifi
  for(const [kind,title] of [
   ['release','Approve release '+release],['provider','Connect Twilio for customer subaccounts'],
   ['provider-checklist','Customer accounts: 2 of 5 providers usable by customers, 3 to connect'],
-  ['invitation','Join River Guild'],['execution-credit','Refresh the Dallas permit feed']
+  ['invitation','Join River Guild'],['legacy-api-hold','Refresh the Dallas permit feed']
  ])expect(value.items.some(row=>row.kind===kind&&row.title===title)).toBe(true);
  const strangerRead=await read(stranger.cookie);expect(strangerRead.status).toBe(200);
  expect(strangerRead.value[2].items).toHaveLength(0);

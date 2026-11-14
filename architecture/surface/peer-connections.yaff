@@ -1,0 +1,36 @@
+architecture account-peer-connections
+  canonical_name AccountPeerConnections
+  family surface
+  domain Profile / Private introductions
+  layer surface
+  semantic_question How can people find common interests and introductions without turning a public profile into participation?
+  purpose Connects a signed-in person to separately chosen social contexts, source-owned public profile material and the private Participation owner.
+  maturity implemented
+  source_path cmd/BonfyreParticipation/src/peer_facets.c
+  source_path cmd/BonfyreParticipation/src/peer_facets.h
+  source_path schemas/control/peer-interests.yaff
+  source_path schemas/control/peer-interests.cue
+  source_path schemas/control/peer-message.yaff
+  source_path schemas/control/peer-message.cue
+  source_path cmd/BonfyreParticipation/tests/peer_facets_test.c
+  source_path cmd/BonfyreWebAddress/src/profile_connections_web.h
+  source_path cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs
+  witness cmd/BonfyreParticipation/tests/peer_facets_test.c checks distinct consent epochs, reciprocal choices, block, common interests and a 300-member invitation priority case
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the private connections tab against a fixture with no Participation owner: facet grammar, public refusal, sign-in redirect, same-origin mutation and the not-installed state
+  invariant joining one context does not enroll a person in another context or in dating; leaving and rejoining invalidates choices and previously selected interests
+  invariant optional interests are scoped to the current participation epoch and only their exact intersection is shown to two active members of the same context
+  invariant candidate priority is decided across the eligible set before the bounded page is selected; blocks and passes remain excluded
+  invariant private context messages require current reciprocal acceptance and preserve participation and choice revisions on every send and read
+  forbidden_inference a private context message -> public speech, dating enrollment or a message in another context
+  forbidden_inference shared interests -> consent to contact, friendship, physical proximity or a right to publish another person material
+  forbidden_inference a public profile -> private participation or a dating eligibility witness
+  known_gap the two-session browser acceptance (joins, interests, reciprocal acceptance through WebAddress) was not carried into main's profile fixture, which runs without a Participation owner; only peer_facets_test.c exercises the owner end to end
+  known_gap interest tags are not event attendance, location or a semantic compatibility score; live deployment and migration are separate from local witnesses
+
+interaction profile-connections-to-participation
+  source account-peer-connections
+  destination cmd-participation
+  relation reads_and_writes_explicit_contexts
+  preserves authenticated actor, context scope, participation revision, consent and blocks
+  drops public disclosure of private choices or a claim of geographic proximity
+  forbidden_inference a profile context -> independent authority over another person

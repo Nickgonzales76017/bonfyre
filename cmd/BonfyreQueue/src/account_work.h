@@ -8,11 +8,12 @@
  * Fleming's queue store belongs to one client and is never read here. The
  * index is a cache: it decides nothing, dispatches nothing and owns no work. */
 #include "account_activity.h"
+#include "account_legacy_api.h"
 #include <limits.h>
 
 #define AWK_STALE_MS 60000
 #define AWK_SOURCE_LIMIT 16
-#define AWK_CREDIT_ATTENTION "OpenAI API credits are exhausted. Add credits before retrying this work."
+#define AWK_CREDIT_ATTENTION BONFYRE_LEGACY_API_ATTENTION
 
 typedef struct { const char *kind, *path; } AwkSource;
 
@@ -42,11 +43,11 @@ static const char *const awk_schema =
 #define AWK_WALL_R "CASE WHEN r.completed_at IS NOT NULL AND r.completed_at>=r.started_at THEN CAST(round((r.completed_at-r.started_at)*1000) AS INTEGER) END"
 static const char *const awk_operator =
     "INSERT INTO temp.w SELECT 'account-operator-'||id,'Aurekai assistant',title,"
-    "CASE state WHEN 'resolved' THEN 'complete' WHEN 'superseded' THEN 'cancelled' WHEN 'retry' THEN 'retry_wait' "
-    "WHEN 'blocked' THEN 'blocked' WHEN 'running' THEN 'running' ELSE 'ready' END,"
+    "CASE state WHEN 'resolved' THEN 'complete' WHEN 'superseded' THEN 'cancelled' WHEN 'retry' THEN 'blocked' "
+    "WHEN 'blocked' THEN 'blocked' WHEN 'running' THEN 'running' ELSE 'blocked' END,"
     "CAST(created_at*1000 AS INTEGER),CAST(updated_at*1000 AS INTEGER),'' FROM src.goals;"
     "DELETE FROM temp.w WHERE source='Aurekai assistant' AND id IN("
-    "SELECT 'account-operator-'||g.id FROM src.goals g WHERE g.state='superseded' "
+    "SELECT 'account-operator-'||g.id FROM src.goals g WHERE g.state IN('queued','retry','superseded') "
     "AND NOT EXISTS(SELECT 1 FROM src.runs r WHERE r.goal_id=g.id));"
     "INSERT INTO temp.r(work_id,run_id,worker_id,state,created_ms,updated_ms,agent,session_kind,duration_ms) SELECT 'account-operator-'||goal_id,id,'Aurekai assistant',"
     "CASE state WHEN 'resolved' THEN 'completed' WHEN 'failed' THEN 'failed' WHEN 'running' THEN 'running' ELSE 'waiting' END,"
@@ -58,11 +59,11 @@ static const char *const awk_operator =
     "CAST(a.started_at*1000 AS INTEGER)+CASE WHEN a.duration_ms>0 THEN a.duration_ms ELSE 0 END FROM src.actions a JOIN src.runs r ON r.id=a.run_id;";
 static const char *const awk_operator_context =
     "INSERT INTO temp.w SELECT 'account-operator-'||id,'Aurekai assistant',title,"
-    "CASE state WHEN 'resolved' THEN 'complete' WHEN 'superseded' THEN 'cancelled' WHEN 'retry' THEN 'retry_wait' "
-    "WHEN 'blocked' THEN 'blocked' WHEN 'running' THEN 'running' ELSE 'ready' END,"
+    "CASE state WHEN 'resolved' THEN 'complete' WHEN 'superseded' THEN 'cancelled' WHEN 'retry' THEN 'blocked' "
+    "WHEN 'blocked' THEN 'blocked' WHEN 'running' THEN 'running' ELSE 'blocked' END,"
     "CAST(created_at*1000 AS INTEGER),CAST(updated_at*1000 AS INTEGER),'' FROM src.goals;"
     "DELETE FROM temp.w WHERE source='Aurekai assistant' AND id IN("
-    "SELECT 'account-operator-'||g.id FROM src.goals g WHERE g.state='superseded' "
+    "SELECT 'account-operator-'||g.id FROM src.goals g WHERE g.state IN('queued','retry','superseded') "
     "AND NOT EXISTS(SELECT 1 FROM src.runs r WHERE r.goal_id=g.id));"
     "INSERT INTO temp.r(work_id,run_id,worker_id,state,created_ms,updated_ms,agent,role,session_kind,duration_ms) SELECT 'account-operator-'||r.goal_id,r.id,"
     "COALESCE(NULLIF(TRIM(c.agent||CASE WHEN TRIM(c.role)='' THEN '' ELSE ' · '||c.role END),''),'Aurekai assistant'),"
@@ -184,6 +185,52 @@ static const char *const awk_operator_attention =
 static int awk_exec(sqlite3 *db, const char *sql) { return sqlite3_exec(db, sql, NULL, NULL, NULL) == SQLITE_OK; }
 static int awk_src_table(sqlite3 *db,const char *name){sqlite3_stmt *q=NULL;int found=0;if(sqlite3_prepare_v2(db,"SELECT 1 FROM src.sqlite_master WHERE type='table' AND name=?1",-1,&q,NULL)==SQLITE_OK){sqlite3_bind_text(q,1,name,-1,SQLITE_STATIC);found=sqlite3_step(q)==SQLITE_ROW;}sqlite3_finalize(q);return found;}
 
+/* ProgramFabric is work owned by the current account, not an executor.
+ * A source-only projection never upgrades requirement evidence to output. */
+static int awk_program(sqlite3 *db,const char *subject) {
+    sqlite3_stmt *q=NULL;int ok=0;
+    if(!awk_src_table(db,"program_instance") || !awk_src_table(db,"program_template") ||
+       !awk_src_table(db,"program_requirement"))return 0;
+    if(sqlite3_prepare_v2(db,
+        "SELECT COUNT(*) FROM src.program_instance WHERE namespace='root' AND owner_subject=?1 "
+        "AND status IN('draft','published')",-1,&q,NULL)!=SQLITE_OK)goto done;
+    sqlite3_bind_text(q,1,subject,-1,SQLITE_TRANSIENT);
+    if(sqlite3_step(q)!=SQLITE_ROW || sqlite3_column_int(q,0)>256)goto done;
+    sqlite3_finalize(q);q=NULL;
+    if(sqlite3_prepare_v2(db,
+        "INSERT INTO temp.w(id,source,title,state,created_ms,updated_ms,attention) "
+        "SELECT 'account-program-'||p.instance_id,'program',"
+        "COALESCE(NULLIF(t.name,''),p.template_id),"
+        "CASE WHEN EXISTS(SELECT 1 FROM src.program_requirement r "
+          "WHERE r.namespace=p.namespace AND r.instance_id=p.instance_id "
+          "AND r.status IN('draft','published') AND r.state NOT IN('satisfied','complete')) "
+          "THEN 'blocked' ELSE 'defined' END,"
+        "CAST(strftime('%s',p.opened_at) AS INTEGER)*1000,"
+        "CAST(strftime('%s',p.updated_at) AS INTEGER)*1000,'' "
+        "FROM src.program_instance p LEFT JOIN src.program_template t "
+          "ON t.namespace=p.namespace AND t.template_id=p.template_id "
+        "WHERE p.namespace='root' AND p.owner_subject=?1 AND p.status IN('draft','published')",
+        -1,&q,NULL)!=SQLITE_OK)goto done;
+    sqlite3_bind_text(q,1,subject,-1,SQLITE_TRANSIENT);
+    if(sqlite3_step(q)!=SQLITE_DONE)goto done;
+    sqlite3_finalize(q);q=NULL;
+    if(sqlite3_prepare_v2(db,
+        "INSERT INTO temp.s(work_id,node_id,operator_id,state,attempt,updated_ms,output_ref) "
+        "SELECT 'account-program-'||r.instance_id,r.requirement_id,'program.'||r.kind,"
+        "CASE r.state WHEN 'satisfied' THEN 'complete' WHEN 'complete' THEN 'complete' "
+          "WHEN 'in_progress' THEN 'running' ELSE 'blocked' END,0,"
+        "COALESCE(CAST(strftime('%s',r.updated_at) AS INTEGER)*1000,"
+          "CAST(strftime('%s',p.opened_at) AS INTEGER)*1000),'' "
+        "FROM src.program_requirement r JOIN src.program_instance p "
+          "ON p.namespace=r.namespace AND p.instance_id=r.instance_id "
+        "WHERE p.namespace='root' AND p.owner_subject=?1 AND p.status IN('draft','published') "
+          "AND r.status IN('draft','published')",
+        -1,&q,NULL)!=SQLITE_OK)goto done;
+    sqlite3_bind_text(q,1,subject,-1,SQLITE_TRANSIENT);
+    ok=sqlite3_step(q)==SQLITE_DONE;
+done:
+    sqlite3_finalize(q);return ok;
+}
 /* A completed Fabric run owns its retained stream. Only a single terminal
  * usage record with all required integer counters is a complete measurement.
  * No transcript, path or inferred price enters the account index. */
@@ -348,12 +395,12 @@ static int awk_index(const char *path, const char *subject, const char *scope, c
             continue;
         }
         const char *sql = !strcmp(sources[i].kind, "operator") ? awk_operator : !strcmp(sources[i].kind, "fabric") ? awk_fabric :
-            !strcmp(sources[i].kind, "workgraph") ? awk_workgraph : NULL;
+            !strcmp(sources[i].kind, "workgraph") ? awk_workgraph : !strcmp(sources[i].kind, "program") ? "" : NULL;
         if (!sql) { fprintf(stderr, "account-work: unknown source kind %s\n", sources[i].kind); goto done; }
         if (!awk_attach(db, sources[i].path)) { fprintf(stderr, "account-work: cannot read %s\n", sources[i].path); goto done; }
         if (!strcmp(sources[i].kind, "operator") && awk_src_table(db, "operator_run_context")) sql = awk_operator_context;
         readable++;
-        if (!awk_exec(db, sql)) {
+        if (!(!strcmp(sources[i].kind,"program") ? awk_program(db,subject) : awk_exec(db,sql))) {
             /* Fail closed; a present but invalid source must not erase Work. */
             fprintf(stderr, "account-work: %s is not a %s store: %s\n", sources[i].path, sources[i].kind, sqlite3_errmsg(db));
             awk_exec(db, "DETACH DATABASE src");

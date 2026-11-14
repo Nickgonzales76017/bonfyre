@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aurekai — Connected Performance</title>
+<style>
+:root{color-scheme:light;--ink:#1f3329;--muted:#66756b;--line:#dbe4db;--paper:#fcfdf9;--soft:#f3f6f0;--green:#266c50}*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--paper);color:var(--ink);font:14px/1.55 system-ui,-apple-system,sans-serif;max-width:1280px}
+a{color:inherit}h1{font-size:clamp(26px,4vw,40px);letter-spacing:-.04em;line-height:1.08;margin:8px 0}h2{font-size:18px;margin:0 0 8px;letter-spacing:-.02em}
+small{color:var(--muted)}button,select{font:inherit;border:1px solid var(--line);border-radius:8px;min-height:42px;padding:8px 14px;color:inherit;background:white}
+button{cursor:pointer;font-weight:600}button:disabled{opacity:.45}button:focus-visible,select:focus-visible{outline:3px solid #9ccbb1;outline-offset:2px}
+.cp-kicker{font-size:11px;font-weight:750;letter-spacing:.15em;color:var(--green);text-transform:uppercase}
+.cp-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:23px}.cp-head p{margin:0;color:var(--muted)}.cp-tools{display:flex;gap:10px;flex-wrap:wrap}
+.cp-primary{background:var(--green);border-color:var(--green);color:white}.cp-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:24px}
+.cp-stat{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:white}.cp-stat small{display:block;font-size:12px}.cp-stat strong{display:block;font-size:29px;line-height:1.3;letter-spacing:-.04em;margin-top:8px}
+.cp-tabs{display:flex;gap:7px;flex-wrap:wrap;padding-bottom:16px}.cp-tab{border-radius:100px;padding:6px 15px;min-height:37px}.cp-tab[data-active=true]{background:var(--ink);color:white}
+.cp-panel{border:1px solid var(--line);border-radius:15px;background:#fff;margin-bottom:18px;padding:21px}.cp-panel-head{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.cp-chart{min-height:210px;margin-top:10px;max-width:800px}.cp-chart svg{display:block;max-width:100%;height:auto}.cp-value{font:600 13px system-ui;fill:#284737}.cp-label{font:12px system-ui;fill:#69796d}.cp-note{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase}th,td{padding:13px 11px;border-bottom:1px solid var(--line)}td{vertical-align:top}tbody tr:last-child td{border-bottom:0}tr[data-stale=true] td:last-child{color:#ad6a21}.cp-scroll{overflow-x:auto}
+.cp-bottom{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.cp-bottom p{color:var(--muted)}.cp-bottom button{margin-right:8px;margin-bottom:8px}
+.cp-status{min-height:20px;color:var(--muted);font-size:12px}.cp-foot{padding:4px 1px;color:var(--muted);font-size:12px}
+[hidden]{display:none!important}@media(max-width:760px){body{padding:14px}.cp-head{flex-direction:column}.cp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-bottom{grid-template-columns:1fr}.cp-panel{padding:15px}th,td{padding:9px 8px}}
+</style></head><body>
+<header class="cp-head"><div><div class="cp-kicker">Aurekai / Connected Performance</div><h1>See what your connections are doing.</h1><p data-subject>Your private account · measured, not guessed</p></div><div class="cp-tools"><select data-institution aria-label="Choose organization" hidden></select><button data-refresh class="cp-primary">Refresh measurements</button></div></header>
+<section data-summary class="cp-stats" aria-label="Measurement overview"></section>
+<nav data-channels class="cp-tabs" aria-label="Filter by source"></nav>
+<section class="cp-panel" aria-label="Measurement history"><div class="cp-panel-head"><div><h2>Reported activity</h2><small>Source-reported periods, without invented estimates</small></div><label>Measurement <select data-metric aria-label="Select measurement"></select></label></div><div class="cp-chart" data-chart></div><p data-chart-note class="cp-note"></p></section>
+<section class="cp-panel"><h2>Source details</h2><div class="cp-scroll"><table><thead><tr><th>Source</th><th>Measurement</th><th>Value</th><th>Period</th><th>Observed</th></tr></thead><tbody data-records></tbody></table></div><p data-empty hidden>No measurements are available for this source.</p></section>
+<div class="cp-bottom"><section class="cp-panel"><h2>Use this information</h2><p>Work with the same account-owned sources in existing Aurekai products. Any public update still needs review.</p><button data-connection-link>Manage connections</button><button data-campaign-link>Open your installed tools</button></section><section class="cp-panel"><h2>Reporting notes</h2><div data-notes><p>Waiting for confirmed account measurements.</p></div></section></div>
+<p data-status class="cp-status" role="status" aria-live="polite">Connecting to your account…</p><footer class="cp-foot">Aurekai · Measurements are replaceable observations, not source ownership, customer consent, provider availability or publication authority.</footer>
+<!-- CONNECTED_MEASUREMENT_APP_SCRIPT -->
+</body></html>

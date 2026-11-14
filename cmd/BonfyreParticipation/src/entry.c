@@ -1,5 +1,6 @@
 #include "activation.h"
 #include "dating.h"
+#include "peer_facets.h"
 #include "evidence.h"
 #include "projection.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
@@ -24,7 +25,8 @@ static void usage(FILE *out) {
         "Usage:\n"
         "  bonfyre-participation compile [options]\n"
         "  bonfyre-participation activate [options]\n"
-        "  bonfyre-participation dating-init --db /private/path.db\n\n"
+        "  bonfyre-participation dating-init --db /private/path.db\n"
+        "  bonfyre-participation peer-init --db /private/path.db\n\n"
         "Options:\n"
         "  --external-bindings FILE  ExternalEstate compiled bindings JSONL\n"
         "  --evidence PATH           evidence JSONL file or recursive directory\n"
@@ -45,13 +47,14 @@ int main(int argc, char **argv) {
     const char *frontier;
 
     enum {
-        PA_HELP, PA_ACTIVATE, PA_COMPILE, PA_DATING_INIT,
+        PA_HELP, PA_ACTIVATE, PA_COMPILE, PA_DATING_INIT, PA_PEER_INIT,
     };
     static const BfCommandEntry participation_commands[] = {
         {"--help", PA_HELP, 0, NULL},
         {"activate", PA_ACTIVATE, 0, NULL},
         {"compile", PA_COMPILE, 0, NULL},
         {"dating-init", PA_DATING_INIT, 0, NULL},
+        {"peer-init", PA_PEER_INIT, 0, NULL},
         {"help", PA_HELP, 0, NULL},
     };
     const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(participation_commands,
@@ -61,7 +64,7 @@ int main(int argc, char **argv) {
         usage(stdout);
         return argc < 2 ? 1 : 0;
     }
-    if (command && command->id == PA_DATING_INIT) {
+    if (command && (command->id == PA_DATING_INIT || command->id == PA_PEER_INIT)) {
         const char *path = argc == 4 && !strcmp(argv[2], "--db") ? argv[3] : NULL;
         struct stat st;
         int made = 0, ok = 0;
@@ -87,7 +90,7 @@ int main(int argc, char **argv) {
         umask(0077);
         if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) == SQLITE_OK) {
             sqlite3_busy_timeout(db, 3000);
-            ok = bf_dating_store_init(db);
+            ok = bf_dating_store_init(db) && bf_peer_store_init(db);
         }
         if (db) sqlite3_close(db);
         if (!ok) {

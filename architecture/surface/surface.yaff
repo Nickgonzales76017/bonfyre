@@ -233,13 +233,16 @@ architecture surface-motif-learning
   forbidden_inference a frequent motif -> a correct or authorized one (frequency is not correctness; the fence and Authority still run)
   invariant LOWER requires equivalence evidence and a nonempty invalidation envelope
   invariant a covered dependency change LIFTs the lowered circuit without changing semantic truth
+  source_path engine/core/src/pattern.c
+  source_path engine/core/include/bf_pattern.h
   source_path components/BonfyreControlPlane/pattern_graph.py.archive
   source_path components/BonfyreControlPlane/aurekai_lowering.py.archive
+  witness engine/core/tests/pattern_test.c: a cluster needs traces and evidence and may only be observed or challenged; a proposal needs a known cluster and records only a candidate; a later proposal never resets a status proof set elsewhere; evidence refs stored as the reference stored them (make -C engine/core test, native conformance all passed 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_run_history_absorption.py.archive
   witness components/BonfyreControlPlane/tests/test_aurekai_lowering.py.archive
   source_lineage frontend fold -- variation/pattern/promotion above the deterministic fabric
   known_gap M2 builds the reversible control machinery; M9 still owes a real repeated circuit, measured equivalence and dependency-mutation LOWER-to-LIFT proof
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the PatternGraph is native; the Aurekai lowering half (aurekai_lowering.py.archive) has no native owner yet, and no organ records clusters from run history
 architecture market-interface-clones
   canonical_name MarketInterfaceClones
   family surface
@@ -803,6 +806,12 @@ architecture content-write-surface
   purpose The half of the Content Studio that only a browser could reach. /cms/v1/api/<type> had a session check, a schema check and a receipt, and answered in HTML fragments -- so an agent, a script or this estate's own tooling got markup where an answer should be, and every authoring act routed around the surface and went at the store through a shell instead. A write path with no machine projection is a write path that will be bypassed, and the session, the schema and the receipt are bypassed with it.
   maturity implemented
   source_path cmd/BonfyreWebAddress/src/main.c
+  source_path components/BonfyreServiceSite/authoring/article-narration.mjs
+  source_path cmd/BonfyreWebAddress/src/cms_page_composer.h
+  source_path cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks authenticated revision identity for sixteen journal drafts, rejects foreign and unsigned requests, and detects structured editorial edits
+  source_path cmd/BonfyreSurfaceScene/tests/article-narration.test.mjs
+  witness cmd/BonfyreSurfaceScene/tests/article-narration.test.mjs checks public same-status passages and refuses existing or read-back productions whose retained source passages differ from the current article plan
   consumes Authority
   publishes ContentRecord
   internal_calculus one surface, two projections, decided by what the caller asked for. Every refusal and the save itself go through one helper that emits either the desk's fragment or the same outcome as bonfyre-cms-write.v1. The store is still written by the organ that owns it: the type must be registered, the fields must validate, and nothing here builds SQL.
@@ -810,10 +819,22 @@ architecture content-write-surface
   invariant a refusal reads the same in both projections; a machine that is told no in markup will be read as a success by whatever parses it
   invariant the write surface is not authority to write; the session carries the scope or this refuses, and the store refuses again on its own terms
   invariant the authoring desk offers every grammar this estate registered, not the first six by name; a surface that hides the types it was built to author is a surface people go around
+  invariant article narration plans only public showcase passages from the selected page status; reopening or confirming a production checks its source passages against the current plan, and retained productions remain unreviewed drafts
+  invariant the first passage does not repeat the title when its heading matches the narration opening
+  invariant the authenticated composer supplies the native article revision for a narration draft between matching saved-page snapshot reads
+  cannot_infer a narration draft -> a published or source-verified audio edition
   cannot_infer an authored record -> authority; it says what this institution wrote, never that it is true
   cannot_infer a reachable write surface -> a permitted write
   known_gap authoring still requires a session this process does not hold, so the estate's own tooling reaches the surface and stops at the gate; the gate is right and the tooling has no service identity
   known_gap the desk generates a form from the type's columns and knows nothing about which fields are a contract -- an extraction path, a cadence, a tier -- so a census row is authorable and not guided
+
+interaction composer-to-native-article-revision
+  source content-write-surface
+  destination broadcast
+  relation obtains_scoped_article_revision
+  preserves account namespace, article route and subject, page status and native public-content revision
+  drops authority to publish audio and any claim that a recording speaks the article
+  forbidden_inference a retained article revision -> a reviewed or published audio master
 
 interaction clones-render-surface-patterns
   source market-interface-clones

@@ -33,8 +33,10 @@ try{
   const selector=`[data-clip="${i}"] [data-gesture="${action}"]`,box=await page.$eval(selector,n=>{n.scrollIntoView({block:'center'});const b=n.getBoundingClientRect(),t=n.closest('.creator-lane-track').getBoundingClientRect();return {x:b.x+b.width/2,y:b.y+b.height/2,width:t.width};});
   await page.mouse.move(box.x,box.y);await page.mouse.down();await page.mouse.move(box.x+box.width/6*seconds,box.y,{steps:12});await page.mouse.up();await ready();
  };
- await page.setViewport({width:1440,height:1050});await page.goto(origin+'/audio/',{waitUntil:'networkidle2'});await page.waitForSelector('[data-creator][data-imports-ready=true]');await ready();
- check('default route opens a populated three-track arrangement',await page.$$('[data-clip]').then(a=>a.length===3)&&await page.$eval($('workspace'),n=>!n.hidden));
+ await page.setViewport({width:1440,height:1050});await page.goto(origin+'/audio/',{waitUntil:'networkidle2'});await page.waitForSelector('[data-creator][data-imports-ready=true]');
+ check('new arrangement opens without generated tracks',await page.$$('[data-clip]').then(a=>a.length===0)&&await page.$eval($('workspace'),n=>!n.hidden));
+ await page.click('[data-audio-view="sources"]');await page.click($('sample-tracks'));await ready();
+ check('sample tracks are available when requested',await page.$$('[data-clip]').then(a=>a.length===3));
  await page.waitForSelector('[data-audio="source-wave"][data-ready=true]');
  check('self-hosted WaveSurfer source selection loads',await page.$eval($('source-wave'),n=>Boolean(n.querySelector('div')?.shadowRoot?.querySelector('[part~="region"]'))));
  check('generated samples are labeled and do not claim a saved session',await page.$eval($('saved'),n=>n.textContent==='Sample tracks · not saved.'));

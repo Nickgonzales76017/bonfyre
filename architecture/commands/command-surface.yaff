@@ -603,14 +603,14 @@ architecture cmd-family
   domain Command / Family
   semantic_question What does the BonfyreFamily capability organ realize, and by what contract?
   purpose Command-surface organ realizing the FamilyCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreFamily
   internal_calculus  binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreFamily/src/main.c
   witness cmd/BonfyreFamily/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.family=pass
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes FamilyCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreFamily (bonfyre-family; checked 2026-11-08: tests/vectors/bonfyre-vectors 1/1 cases, 7 checks; an older build is installed in ~/.bonfyre/bin); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-finance
   canonical_name BonfyreFinance
@@ -671,14 +671,14 @@ architecture cmd-fragment
   domain Command / Fragment
   semantic_question What does the BonfyreFragment capability organ realize, and by what contract?
   purpose Command-surface organ realizing the FragmentCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreFragment
   internal_calculus  binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreFragment/src/main.c
   witness cmd/BonfyreFragment/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.fragment=pass
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes FragmentCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreFragment (bonfyre-fragment; checked 2026-11-08: tests/vectors/bonfyre-vectors 2/2 cases, 11 checks; not installed in ~/.bonfyre/bin (its install target writes ~/bin, outside managed release)); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-frame-extract
   canonical_name BonfyreFrameExtract
@@ -1740,14 +1740,14 @@ architecture cmd-run
   domain Command / Run
   semantic_question What does the BonfyreRun capability organ realize, and by what contract?
   purpose Command-surface organ realizing the RunCapability capability. A first-class Bonfyre capability, advertised and composable, not a script.
-  maturity declared
+  maturity implemented
   command BonfyreRun
   internal_calculus  binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreRun/src/main.c
   witness cmd/BonfyreRun/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.run=pass
   source_lineage the 91-command capability surface
-  known_gap source-only, not built; realizes RunCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
+  known_gap built by make -C cmd/BonfyreRun (bonfyre-run; checked 2026-11-08: tests/vectors/bonfyre-vectors 2/2 cases, 9 checks, make test staged-install parity PASS; not installed in ~/.bonfyre/bin, it installs only through managed release admission); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-runtime
   canonical_name BonfyreRuntime
@@ -2787,13 +2787,14 @@ architecture cmd-material-lease
   domain Command / MaterialLease
   semantic_question What does the BonfyreMaterialLease capability organ realize, and by what contract?
   purpose Command-surface organ realizing the MaterialLeaseCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreMaterialLease
   internal_calculus BonfyreMaterialLease binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreMaterialLease/src/main.c
+  witness cmd/BonfyreMaterialLease/tests/material_lease_test.sh: two scoped demands share one physical acquire and the last release cancels it; make -C cmd/BonfyreMaterialLease test PASS (2026-11-08)
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreMaterialLease (bonfyre-material-lease; Makefile added 2026-11-08, the organ had none); not installed in ~/.bonfyre/bin; the witness runs on synthetic fixtures only, not on the live address store; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-material-weather-gate
   canonical_name BonfyreMaterialWeatherGate
@@ -3134,13 +3135,13 @@ architecture cmd-semantic-optimizer
   domain Command / SemanticOptimizer
   semantic_question What does the BonfyreSemanticOptimizer capability organ realize, and by what contract?
   purpose Command-surface organ realizing the SemanticOptimizerCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreSemanticOptimizer
   internal_calculus BonfyreSemanticOptimizer binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreSemanticOptimizer/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap built by make -C cmd/BonfyreSemanticOptimizer (bonfyre-semantic-optimizer; checked 2026-11-08: make test live_inverse_test PASS; an older build is installed in ~/.bonfyre/bin); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-showcase-crosswalk
   canonical_name BonfyreShowcaseCrosswalk
@@ -3345,7 +3346,7 @@ architecture cmd-a-d-b-c-probe
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreADBCProbe/src/main.c
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap builds with make -C cmd/BonfyreADBCProbe ADBC_INCLUDE=/opt/homebrew/opt/apache-arrow-adbc/include (Homebrew apache-arrow-adbc 25, installed 2026-11-08); it refuses a library without AdbcDriverInit (checked against libadbc_driver_manager). Homebrew ships no Flight SQL driver; the PyPI adbc-driver-flightsql wheel holds one, and loading that downloaded library awaits an explicit decision, so scripts/tests/representation-manifold-adbc.test.mjs still skips; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-arrow-flight
   canonical_name BonfyreArrowFlight
@@ -3408,13 +3409,14 @@ architecture cmd-zarr-forge
   domain Command / ZarrForge
   semantic_question What does the BonfyreZarrForge capability organ realize, and by what contract?
   purpose Command-surface organ realizing the ZarrForgeCapability capability. Its product effects require separate scope and authority.
-  maturity declared
+  maturity implemented
   command BonfyreZarrForge
   internal_calculus BonfyreZarrForge binary
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreZarrForge/src/main.cpp
+  witness cmd/BonfyreZarrForge/tests/zarr_forge.test.mjs: compiles main.cpp against an Arrow native runtime, lowers a 5-row Parquet to chunked Zarr, checks validity masks, provenance digest and tamper refusal; 3/3 runs pass (2026-11-08) with ZARR_ARROW_BUNDLE from cmd/BonfyreArrowFlight/build.mjs over Homebrew apache-arrow 25
   source_lineage current command directory and command_smoke.json census
-  known_gap source-only, not built; deeper WiringSpec fact flow and authority admission are separate work
+  known_gap no Makefile; the organ is compiled only inside its test. The test skips unless ZARR_ARROW_INCLUDE and ZARR_ARROW_BUNDLE are set, so CI never runs it, and the bundle include dir lacks arrow/buffer.h, so ZARR_ARROW_INCLUDE must point at the full Arrow headers. No installed bonfyre-zarr-forge, and no production caller has demanded a Zarr view; deeper WiringSpec fact flow and authority admission are separate work
 
 architecture cmd-envelope
   canonical_name BonfyreEnvelope

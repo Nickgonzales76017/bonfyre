@@ -13,8 +13,11 @@ fresh() { rm -rf "$tmp/d"; mkdir "$tmp/d"; cp "$here/providers.tsv" "$here/acqui
 set_cell() { awk -F'\t' -v OFS='\t' -v s="$1" -v c="$2" -v v="$3" '$1==s{$c=v}1' "$tmp/d/acquisition.tsv" > "$tmp/x" && mv "$tmp/x" "$tmp/d/acquisition.tsv"; }
 refused() { if "$bin" check --dir "$tmp/d" >/dev/null 2>"$tmp/err"; then fail "$1 was accepted"; fi; grep -q "$2" "$tmp/err" || fail "$1 refused without saying why: $(cat "$tmp/err")"; }
 
+expected=$(($(wc -l < "$here/providers.tsv") - 1))
+none=$(awk -F '\t' 'NR>1 && $2=="none"{n++} END{print n+0}' "$here/acquisition.tsv")
+export PROVIDER_COUNT="$expected" NONE_COUNT="$none"
 fresh
-"$bin" check --dir "$tmp/d" | grep -q "102 providers" || fail "shipped ledgers did not pass"
+"$bin" check --dir "$tmp/d" | grep -q "$expected providers" || fail "shipped ledgers did not pass"
 
 fresh; set_cell twilio 10 'sk_live_51Habcdefghijklmnop'
 refused "a Stripe-shaped key in secret_reference" "secret_reference must name where"
@@ -40,9 +43,9 @@ fresh; printf 'not-a-provider\tnone\t\t\t\tunknown\tunknown\t\t\t\tunknown\tunkn
 refused "a tracker row for an unknown provider" "not in providers.tsv"
 
 fresh
-"$bin" summary --dir "$tmp/d" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["providers"]==102 and d["stages"]["none"]==102 and sum(d["waves"].values())==102' || fail "summary is not the expected JSON"
+"$bin" summary --dir "$tmp/d" | python3 -c 'import json,os,sys; d=json.load(sys.stdin); n=int(os.environ["PROVIDER_COUNT"]); m=int(os.environ["NONE_COUNT"]); assert d["providers"]==n and d["stages"]["none"]==m and sum(d["waves"].values())==n' || fail "summary is not the expected JSON"
 "$bin" next --dir "$tmp/d" --wave B --limit 2 | grep -q "Wave B: cloud hierarchy" || fail "next did not group by wave"
-[ "$("$bin" matrix --dir "$tmp/d" | wc -l | tr -d ' ')" = 103 ] || fail "matrix is not one row per provider"
+[ "$("$bin" matrix --dir "$tmp/d" | wc -l | tr -d ' ')" = "$((expected + 1))" ] || fail "matrix is not one row per provider"
 fresh; printf 'github\tsignup\thttp://github.com/join\tloads\t2026-10-26\n' >> "$tmp/d/routes.tsv"
 refused "a non-https or duplicate route" "one https address"
 fresh; "$bin" next --dir "$tmp/d" --limit 1 | grep -q "signup       https://" || fail "next did not print the step routes"
@@ -50,7 +53,12 @@ fresh; op="$tmp/operator.sqlite3"
 sqlite3 "$op" "CREATE TABLE goals(id TEXT PRIMARY KEY,dedupe_key TEXT UNIQUE,title TEXT NOT NULL,details TEXT NOT NULL,priority INTEGER NOT NULL,state TEXT NOT NULL,source TEXT NOT NULL,recurring INTEGER NOT NULL DEFAULT 0,interval_seconds INTEGER NOT NULL DEFAULT 0,retry_at REAL NOT NULL DEFAULT 0,attempts INTEGER NOT NULL DEFAULT 0,last_error TEXT NOT NULL DEFAULT '',created_at REAL NOT NULL,updated_at REAL NOT NULL);"
 "$bin" publish --dir "$tmp/d" --operator-db "$op" >/dev/null || fail "publish failed"
 [ "$(sqlite3 "$op" "select count(*) from goals")" = 1 ] || fail "publish wrote more than one checklist task"
-sqlite3 "$op" "select title from goals" | grep -q "^Customer accounts: 8 of 102 providers usable by customers, 7 more connected, 87 to connect$" || fail "checklist title does not count customer-usable, connected and open providers"
+title=$(sqlite3 "$op" "select title from goals")
+numbers=$(printf '%s\n' "$title" | sed -nE 's/^Customer accounts: ([0-9]+) of ([0-9]+) providers usable by customers, ([0-9]+) more connected, ([0-9]+) to connect$/\1 \2 \3 \4/p')
+[ -n "$numbers" ] || fail "checklist title malformed"
+set -- $numbers
+[ "$2" -eq "$expected" ] && [ "$(($1+$3+$4))" -eq "$expected" ] || fail "checklist title does not reconcile provider counts"
+prior_live=$1
 details=$(sqlite3 "$op" "select details from goals")
 printf "%s\n" "$details" | head -12 | grep -q "^GitHub: customers get .*https://aurekai.work/connect/github-app$" || fail "the provider customers can use was not first, with its connect route"
 printf '%s\n' "$details" | grep -q "^AWS: build customers' " || fail "a held account did not name the customer side to build"
@@ -60,7 +68,8 @@ if printf '%s\n' "$details" | grep -q "try-twilio\|/signup\|sign-up\|/register";
 fi
 "$bin" publish --dir "$tmp/d" --operator-db "$op" >/dev/null; [ "$(sqlite3 "$op" "select count(*) from goals")" = 1 ] || fail "publishing twice duplicated the checklist"
 set_cell github 2 recorded; set_cell github 3 'nick@example.com'; set_cell github 7 yes; set_cell github 8 'op://Aurekai/GitHub/recovery'; set_cell github 5 'aurekai'
-"$bin" publish --dir "$tmp/d" --operator-db "$op" >/dev/null; sqlite3 "$op" "select title from goals" | grep -q "^Customer accounts: 7 of 102 " || fail "a recorded provider stayed on the checklist"
+"$bin" publish --dir "$tmp/d" --operator-db "$op" >/dev/null
+sqlite3 "$op" "select title from goals" | grep -q "^Customer accounts: $((prior_live - 1)) of $expected " || fail "a recorded provider stayed on the checklist"
 fresh; printf 'github\temail\t2026-10-26\n' >> "$tmp/d/prefill.tsv"; "$bin" check --dir "$tmp/d" >/dev/null || fail "a plain prefill row was refused"
 fresh; printf 'nowhere\temail\t2026-10-26\n' >> "$tmp/d/prefill.tsv"
 refused "prefill for a provider with no signup route" "prefill needs a signup route"

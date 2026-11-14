@@ -11,7 +11,8 @@ cms="$root/cmd/BonfyreCMS/bonfyre-cms"
 [ -x "$cms" ] || { echo 'native surface routes: SKIP (cms not built)'; exit 0; }
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-native-surface.XXXXXX")
 pid=''
-cleanup() { [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; rm -rf "$tmp"; }
+phase=setup; route=''
+cleanup() { result=$?; [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; [ "$result" -eq 0 ] || echo "native surface routes: FAIL (phase=$phase route=${route:-none} status=$result)" >&2; rm -rf "$tmp"; }
 trap cleanup EXIT INT TERM
 schemas="$tmp/schemas"
 mkdir -p "$schemas"
@@ -39,6 +40,7 @@ done
 # declarations. Routes with retained public material may take the
 # PageComposition compatibility adapter before the sparse native donor, but
 # neither route class may fall through to a browser-owned document.
+phase='base-routes'
 for route in /discover /stage /channels /community /board /parcels /listings /inbox /territory /sources /w /packs /link /studio /console; do
   printf 'native surface routes: checking %s\n' "$route" >&2
   page=$(curl -sSi -H 'Host: aurekai.live' -H 'Accept: text/html' "$base$route")
@@ -56,6 +58,7 @@ printf 'native surface routes: cleared core-route-sweep\n' >&2
 done
 # Shared page chrome is icon-bearing, not text-only. The native owner must emit
 # a local semantic SVG vocabulary on ordinary public routes.
+phase='icon-page'
 icon_page=$(curl -sS -H 'Host: aurekai.live' -H 'Accept: text/html' "$base/discover")
 printf '%s' "$icon_page" | grep -q 'class="glyph ak-icon"' || { echo "native surface routes: FAIL (missing native icon class)" >&2; exit 1; }
 printf '%s' "$icon_page" | grep -q 'href="/whats-on"' || { echo "native surface routes: FAIL (missing dated-events navigation)" >&2; exit 1; }
@@ -67,6 +70,7 @@ printf 'native surface routes: cleared shared-icon-contract\n' >&2
 
 # Native /link exposes the real ForeignTwin working desk rather than leaving
 # a user inside the generic Accounts section.
+phase='source-workbench'
 native_link=$(curl -sSi -H 'Host: aurekai.live' -H 'Accept: text/html' "$base/link")
 printf '%s' "$native_link" | grep -q 'data-source-desk'
 printf '%s' "$native_link" | grep -q 'href="/link?sort=most"'
@@ -76,6 +80,7 @@ style=$(curl -sS -H 'Host: aurekai.live' "$base/assets/composition.css")
 printf '%s' "$style" | grep -q '.sx-finder'
 printf 'native surface routes: cleared link-source-desk\n' >&2
 printf '%s' "$native_link" | grep -q 'href="/s/sets/all"'
+phase='foreign-workbench'
 for route in /foreign/workbench /s/work/foreign-twins; do
   printf 'native surface routes: checking %s\n' "$route" >&2
   foreign=$(curl -sSi -H 'Host: aurekai.live' -H 'Accept: text/html' "$base$route")
@@ -88,8 +93,10 @@ printf 'native surface routes: cleared foreign-workbench-routes\n' >&2
 done
 # Machine clients retain their distinct CUE and site-level contracts.
 printf 'native surface routes: cleared machine-link-contract\n' >&2
+phase='machine-contract'
 machine=$(curl -sSi -H 'Host: aurekai.live' -H 'Accept: application/json' "$base/link")
 ! printf '%s' "$machine" | grep -q '<script'
+phase='retained-data'
 packs=$(curl -sS -H 'Host: aurekai.live' -H 'Accept: text/html' "$base/packs")
 printf '%s' "$packs" | grep -q 'field-response\|weather observation'
 printf 'native surface routes: cleared account-programs\n' >&2

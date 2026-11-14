@@ -1,0 +1,31 @@
+schema PeerContextInterests
+owner cmd/BonfyreParticipation/src/peer_facets.c
+generation peer-interests-1
+
+field subject
+  type person-subject
+  required true
+
+field facet
+  type context-identity
+  required true
+
+field participation_revision
+  type positive-integer
+  required true
+
+field revision
+  type positive-integer
+  required true
+
+field topics
+  type normalized-comma-separated-topics
+  required true
+
+invariant independently-selected
+  statement only the exact shared topics of people currently joined to one context are shown within that context
+
+invariant current-epoch
+  statement leaving and rejoining a context does not restore interests from an older participation revision
+
+forbidden_inference shared topics -> friendship, romantic intent, consent to contact or geographic proximity

@@ -36,7 +36,9 @@ trap cleanup EXIT INT TERM
 # A second application into the same store: its number cards and charts are
 # read plans the room says in words.
 "$compiler" --root "$root" --emit-surface-db "$tmp/surfaces.db" -o "$tmp/pack-hrms" "$hrms" >/dev/null 2>&1
-definition=$(find "$hrms" -path '*/notification/retention_bonus/*.json' | head -1)
+# Donor roots may be symlinks; ordinary find does not descend through them.
+definition=$(find -L "$hrms" -path '*/notification/retention_bonus/*.json' -type f | head -1)
+[ -n "$definition" ] && [ -f "$definition" ] || { echo 'FAIL: retention_bonus Notification definition missing' >&2; exit 1; }
 held=$("$compiler" --prepare-notification "$definition" --event Daily --today 2026-10-01 \
   --doc '{"name":"RB-1","employee":"E-7","employee_name":"Sam","bonus_payment_date":"2026-10-15","docstatus":1}')
 "$queue" enqueue notification.compose "$held" --family held-message --mission held-fixture --if-absent --db "$tmp/queue.db" >/dev/null

@@ -65,7 +65,7 @@ The October 21 checkout adds a private Communities section and the corresponding
 public discovery, local creation, request/approval, conversation and reply flow.
 It preserves this document's account-private and per-site publication boundaries.
 The tested implementation is described in
-[Community participation](community-participation.md). The native web and CMS binaries were promoted with the participant-return
+[Community participation](/community-participation). The native web and CMS binaries were promoted with the participant-return
 release on October 21. Canonical Atlas registration remains pending.
 
 
@@ -77,7 +77,7 @@ current participation state. Local community memberships continue through
 Communities. Neither section is published on any of your profile sites.
 
 The applied release, native test results, live readback and remaining
-verification boundaries are recorded in [Participant return](participant-return-candidate.md).
+verification boundaries are recorded in [Participant return](/participant-return-candidate).
 
 
 ## Account choices and organization invitations

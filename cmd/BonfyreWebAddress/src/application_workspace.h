@@ -39,7 +39,7 @@ static const char *aw_mime(const char *path){
     if(!strcmp(dot,".woff2"))return "font/woff2";return "application/octet-stream";
 }
 static void aw_response_with_referrer(int code,const char *mime,const void *body,size_t size,int public_material,const char *referrer){
-    printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nCache-Control: %s\r\nReferrer-Policy: %s\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n",code,code==200?"OK":code==409?"Conflict":code==403?"Forbidden":code==404?"Not Found":"Unavailable",mime,public_material==1?"public, max-age=31536000, immutable":public_material==2?"public, no-cache":"private, no-store",referrer,size);
+    printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nCache-Control: %s\r\nReferrer-Policy: %s\r\nX-Content-Type-Options: nosniff\r\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n",code,code==200?"OK":code==202?"Accepted":code==400?"Bad Request":code==405?"Method Not Allowed":code==409?"Conflict":code==403?"Forbidden":code==404?"Not Found":"Unavailable",mime,public_material==1?"public, max-age=31536000, immutable":public_material==2?"public, no-cache":"private, no-store",referrer,size);
     if(size)fwrite(body,1,size,stdout);
 }
 static void aw_response(int code,const char *mime,const void *body,size_t size,int public_material){aw_response_with_referrer(code,mime,body,size,public_material,"no-referrer");}
@@ -95,6 +95,7 @@ static unsigned char *aw_replace(unsigned char *body,size_t *bytes,const char *n
 #include "activity_workspace.h"
 #include "connections_workspace.h"
 #include "program_workspace.h"
+#include "native_command_work.h"
 #include "procurement_approval_status.h"
 #include "procurement_downstream_status.h"
 #include "procurement_enactment.h"
@@ -104,6 +105,7 @@ static unsigned char *aw_replace(unsigned char *body,size_t *bytes,const char *n
 static int serve_application_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
     if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
+    if(serve_native_command_work(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_activity_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(connect_github_app(method,target,query,host,bearer,auth_db))return 1;
     if(ac_work_board_act(method,target,body,raw,host,bearer,auth_db))return 1;

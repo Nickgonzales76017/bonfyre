@@ -34,7 +34,7 @@ export const SITE_SECTION_CATALOGUE = Object.freeze([
       "title",
       "items"
     ],
-    "sha256": "9f384e5c18ece2ff32571d50c66d8bede0046e67eef010c51ca0d0de7f918d30"
+    "sha256": "1b03e86f31bb7ae26102d63c36248b4272c5fc6e471cd306000f701d725c1194"
   },
   {
     "kind": "catalogue",
@@ -43,7 +43,7 @@ export const SITE_SECTION_CATALOGUE = Object.freeze([
       "entries",
       "stores"
     ],
-    "sha256": "39216a0f30870820ffaeb71cfa2d56b36fa7712aced4ec7a4e5c0f8065c0c3ee"
+    "sha256": "965fc35619897a46d311e24f1c2c61e3acb31831e08f34062e789d6d4e170c3d"
   },
   {
     "kind": "compare",
@@ -127,7 +127,7 @@ export const SITE_SECTION_CATALOGUE = Object.freeze([
       "title",
       "catalogue"
     ],
-    "sha256": "656af3f0812b11b9db62c2320863fa4ca748fcce5f46740d9809c4b650a0c8fc"
+    "sha256": "03cb705758158c780bcdde5a0e8f76e487541865bf6ac1eeb50806f7f23d41cf"
   },
   {
     "kind": "pricing",
@@ -150,7 +150,7 @@ export const SITE_SECTION_CATALOGUE = Object.freeze([
       "title",
       "items"
     ],
-    "sha256": "072ef05834e705aa28f621ec772cf942d9d6c1ad14a74e7dbce8625d97264a78"
+    "sha256": "64d1dd157d6b23c8dc7fdf8ccbdf983e647fa7efa94f8635ea4ccc76e8fce70a"
   },
   {
     "kind": "reviews",

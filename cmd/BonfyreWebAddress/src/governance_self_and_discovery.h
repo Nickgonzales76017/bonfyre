@@ -2070,8 +2070,14 @@ static const char *asset_media_type(const unsigned char *b, size_t n) {
      * a carrier convenience for static object stores. */
     if (n >= 4 && !memcmp(b, "OggS", 4)) return "audio/ogg";
     if (n >= 4 && !memcmp(b, "fLaC", 4)) return "audio/flac";
+    /* The broadcast renderer writes AAC in an M4A MP4 container. Recognize
+     * an explicitly audio-branded file, not a suffix or generic video MP4. */
+    if (n >= 12 && !memcmp(b+4,"ftyp",4) &&
+        (!memcmp(b+8,"M4A ",4) || !memcmp(b+8,"M4B ",4))) return "audio/mp4";
     if (n >= 12 && !memcmp(b, "RIFF", 4) && !memcmp(b + 8, "WAVE", 4)) return "audio/wav";
     if (n >= 3 && !memcmp(b, "ID3", 3)) return "audio/mpeg";
+    if (n >= 6 && !memcmp(b,"WEBVTT",6) &&
+        (n==6||b[6]=='\n'||b[6]=='\r'||b[6]==' ')) return "text/vtt; charset=utf-8";
     if (n >= 2 && b[0] == 0xff && (b[1] & 0xe0) == 0xe0) return "audio/mpeg";
     if (n >= 5 && !memcmp(b, "<?xml", 5)) return "image/svg+xml";
     if (n >= 4 && !memcmp(b, "<svg", 4)) return "image/svg+xml";

@@ -41,9 +41,11 @@ sqlite3 "$tmp/store.db" "
   CREATE TABLE purchase_invoice(id INTEGER PRIMARY KEY, posting_date TEXT, base_net_total REAL, docstatus INT);
   INSERT INTO purchase_invoice(posting_date,base_net_total,docstatus) VALUES
     ('2025-10-15',100,1),('2025-10-20',50,1),('2025-11-02',7,0),('2026-03-31',25.5,1),('2026-10-01',10,1),('2024-01-01',999,1);"
-def() { find "$1" -name "$2.json" | head -1; }
+# The donor roots are often symlinks to a checked-out application.
+def() { find -L "$1" -name "$2.json" -type f | head -1; }
 read_metric() {
   definition="$1"; table="$2"; shift 2
+  [ -n "$definition" ] && [ -f "$definition" ] || { echo "FAIL: metric donor definition missing" >&2; return 1; }
   "$compiler" --read-metric "$definition" --store "$tmp/store.db" --table "$table" --today 2026-10-08 "$@"
 }
 

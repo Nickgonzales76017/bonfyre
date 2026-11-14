@@ -34,6 +34,19 @@ for _ in $(seq 1 50); do [ -s "$tmp/port" ] && break; sleep 0.05; done
 [ -s "$tmp/port" ] || { kill "$server" 2>/dev/null || true; exit 1; }
 port=$(sed -n '1p' "$tmp/port")
 
+# Canary reads without credentials, remote requests or writes.
+dry=$(env -u SUPABASE_PROJECT_REF -u SUPABASE_SERVICE_ROLE_KEY \
+  bun "$root/scripts/load_search_index.mjs" --archive "$tmp/items.db" --dry-run --max-items 1)
+printf '%s' "$dry" | grep -q '"mode":"dry-run"'
+printf '%s' "$dry" | grep -q '"inspected":1'
+printf '%s' "$dry" | grep -q '"loaded":0'
+if bun "$root/scripts/load_search_index.mjs" --archive "$tmp/items.db" --dry-run --max-items 0 >/dev/null 2>&1; then
+  echo 'Zero canary limit accepted' >&2; exit 1
+fi
+if bun "$root/scripts/load_search_index.mjs" --archive "$tmp/items.db" --dry-run --max-items 10001 >/dev/null 2>&1; then
+  echo 'Unbounded canary accepted' >&2; exit 1
+fi
+
 result=$(SUPABASE_PROJECT_REF=test SUPABASE_SERVICE_ROLE_KEY=test \
     bun "$root/scripts/load_search_index.mjs" --archive "$tmp/items.db" \
     --url "http://127.0.0.1:$port/rest/v1/estate_item")

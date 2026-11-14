@@ -2,16 +2,17 @@
 
 ## Implementation status
 
-Source integration was applied on October 21, 2026. It has not been promoted.
-The live account still uses the earlier template until release verification is
-complete; the previously deployed participant-return work remains live.
+The initial October 21 integration attempt was held after five navigation
+timeouts when the public institution directory was unavailable. Nine isolated
+checks had passed, but the proposed recovery correction was blocked before
+execution. That was a pre-release state, not the final release outcome.
 
-Nine isolated native/browser checks pass for the new account choices. The wider
-account/source suite returned five navigation timeouts when the public institution
-directory is unavailable. The reader reports the outage but does not consume or
-cancel its error response. The proposed correction was blocked before execution
-and was not retried through another route. Do not describe this source state as a
-completed or deployed account release.
+A subsequent frozen `account-choices-20261021` release was promoted. The
+[profile-sites release account](/profile-sites) records 69 native tests with
+677 assertions and HTTPS checks of the released modules on all four territories.
+Authenticated editing used isolated test accounts, not a production customer
+session. Neither the initial failure nor this later promotion demonstrates
+completion of unrelated grant programmes or all account-backed applications.
 
 ## What the applied source implements
 

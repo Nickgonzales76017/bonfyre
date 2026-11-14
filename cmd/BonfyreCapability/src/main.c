@@ -233,6 +233,13 @@ static const BuiltinCapability BUILTINS[] = {
         { "narrate", "tts", "speak", "voice", "read", "readaloud", "speech", "synthesize", NULL }
     },
     {
+        "broadcast", "Produced Audio Programs",
+        "Compose the item archive into produced audio programs: desks of cited headlines voiced by discovered engines, open-licence music and archive features, chapters, transcript and credits.",
+        "bonfyre-broadcast", "render", "outetts-0.3-500m-q4km", "cpu", "batch", "emit", "program",
+        -1.0, /* unmeasured: nothing on this estate has priced a render */
+        { "broadcast", "radio", "podcast", "program", "station", "newscast", "show", "episode", "audio", "voices", NULL }
+    },
+    {
         "pack", "Artifact Packing",
         "Bundle or compress outputs into a portable Bonfyre package.",
         "bonfyre-pack", "run", "-", "cpu", "fast", "emit", "bundle",

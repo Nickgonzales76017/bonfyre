@@ -199,7 +199,7 @@ test('private profile shows real account work without publishing work to a site'
  for(const t of ['work','life','live','shop'])expect(own.body).toContain('data-profile-territory="'+t+'"');
  expect((own.body.match(/class="ph-realm-icon"/g)||[]).length).toBe(4);
  for(const label of ['Edit introduction','View public site','Manage site'])expect(own.body).toContain(label);
- expect((own.body.match(/class="ph-tab-icon"/g)||[]).length).toBe(10);
+ expect((own.body.match(/class="ph-tab-icon"/g)||[]).length).toBe(11);
  const ownSites=await request('/profile?tab=sites');expect(ownSites.status).toBe(200);
  expect(ownSites.body).toContain('data-profile-site-overview');
  for(const t of ['work','life','live','shop'])expect(ownSites.body).toContain('data-profile-territory="'+t+'"');
@@ -266,7 +266,7 @@ test('Profile Discover Keep Create links are native, icon-mapped, private and si
   expect(own.status).toBe(200);
   expect((own.body.match(/data-pathway-stage="/g)||[]).length).toBe(3);
   expect((own.body.match(/data-pathway-link="/g)||[]).length).toBe(9);
-  for(const title of ['Sources','Recipes','Feeds','Profile','Collections','Posts','Worlds','Programs'])
+  for(const title of ['Sources','Recipes','Feeds','Profile','Collections','Operating roles','Posts','Worlds','Programs'])
    expect(own.body).toContain('data-pathway-link="'+title+'"');
   expect(own.body).toContain('One retained source identity, multiple account-owned continuations, explicit publication review.');
   expect(own.body).toContain('href="/sources"');
@@ -707,4 +707,23 @@ test('published journal articles join the same owner-composed grid without expos
  expect(index.body).toContain('Published owner journal proof');
  expect(index.body).not.toContain('Private draft library proof');
  expect((await publicPage('work',route)).status).toBe(200);
+});
+test('contextual connections are a private profile tab with exact query, origin and owner boundaries',async()=>{
+ // This fixture installs no Participation owner; the tab must say so and infer nothing.
+ const direct=await request('/profile?tab=connections',{site:'life'});
+ expect(direct.status).toBe(200);
+ expect(direct.body).toContain('data-native-peer-context');
+ expect(direct.body).toContain('Meet through what matters');
+ expect(direct.body).toContain('Private Participation is not installed here.');
+ expect(direct.body).not.toContain('data-peer-candidate');
+ expect(direct.body).toContain('href="/profile?tab=dating"');
+ expect(direct.body).not.toContain('data-native-dating');
+ expect((await request('/profile?tab=connections&facet=art',{site:'life'})).status).toBe(200);
+ for(const bad of ['/profile?tab=connections&facet=Art','/profile?tab=connections&facet=a%2Fb','/profile?tab=posts&facet=art'])
+  expect((await request(bad,{site:'life'})).status).toBe(400);
+ expect((await publicPage('life','/?tab=connections')).status).toBe(400);
+ expect((await request('/profile?tab=connections&facet=art',{user:null})).status).toBe(303);
+ const join={facet:'art',rev:'0',enable:'1',ack:'1'};
+ expect((await request('/profile/connections/join',{site:'life',form:join,headers:{Origin:'https://elsewhere.example.test'}})).status).toBe(403);
+ expect((await request('/profile/connections/join',{site:'life',form:join})).status).toBe(503);
 });

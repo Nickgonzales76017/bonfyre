@@ -32,7 +32,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 	$(OBJDIR)/filesystem_projection.o \
 	$(OBJDIR)/process_operator.o $(OBJDIR)/operator_contract.o $(OBJDIR)/bf_sha256.o \
 	$(OBJDIR)/occurrence.o $(OBJDIR)/occurrence_origin.o $(OBJDIR)/commitment.o $(OBJDIR)/retention.o $(OBJDIR)/information_policy.o $(OBJDIR)/commerce.o $(OBJDIR)/protocol_contract.o $(OBJDIR)/standing_address.o $(OBJDIR)/actor.o $(OBJDIR)/admission.o $(OBJDIR)/corroboration.o \
-	$(OBJDIR)/evidence.o $(OBJDIR)/activation.o $(OBJDIR)/service_lifecycle.o $(OBJDIR)/reservation.o $(OBJDIR)/foreign_twin.o $(OBJDIR)/authority.o $(OBJDIR)/proof.o $(OBJDIR)/target_obligation.o \
+	$(OBJDIR)/evidence.o $(OBJDIR)/pattern.o $(OBJDIR)/provider_graph.o $(OBJDIR)/economic_graph.o $(OBJDIR)/relationship.o $(OBJDIR)/serm.o $(OBJDIR)/route_ranker.o $(OBJDIR)/activation.o $(OBJDIR)/service_lifecycle.o $(OBJDIR)/reservation.o $(OBJDIR)/foreign_twin.o $(OBJDIR)/authority.o $(OBJDIR)/proof.o $(OBJDIR)/target_obligation.o \
 	$(OBJDIR)/control_provider.o $(OBJDIR)/control_admission.o \
 	$(OBJDIR)/control_attention.o $(OBJDIR)/control_capability.o \
 	$(OBJDIR)/semantic_operator.o \
@@ -46,7 +46,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 all: $(TARGET)
 
 # Native conformance tests (self-contained C; no Python needed to pass).
-TEST_SRCS := tests/workgraph_checkpoint_test.c tests/workgraph_run_evidence_test.c tests/routable_family_test.c tests/lifecycle_test.c tests/occurrence_spine_test.c tests/occurrence_origin_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c tests/activation_test.c tests/service_lifecycle_test.c tests/reservation_test.c tests/authority_test.c tests/proof_test.c tests/target_obligation_test.c tests/semantic_operator_test.c tests/semantic_derivation_test.c tests/matrix_test.c tests/matrix_closure_test.c tests/p0_loop_test.c tests/occurrence_correction_test.c tests/retraction_cascade_test.c tests/activation_retraction_test.c tests/commitment_test.c tests/retention_test.c tests/information_policy_test.c tests/commerce_test.c tests/protocol_contract_test.c tests/standing_address_test.c
+TEST_SRCS := tests/workgraph_checkpoint_test.c tests/workgraph_run_evidence_test.c tests/routable_family_test.c tests/lifecycle_test.c tests/occurrence_spine_test.c tests/occurrence_origin_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c tests/evidence_estate_test.c tests/pattern_test.c tests/provider_graph_test.c tests/economic_graph_test.c tests/relationship_test.c tests/serm_test.c tests/route_ranker_test.c tests/activation_test.c tests/service_lifecycle_test.c tests/reservation_test.c tests/authority_test.c tests/proof_test.c tests/target_obligation_test.c tests/semantic_operator_test.c tests/semantic_derivation_test.c tests/matrix_test.c tests/matrix_closure_test.c tests/p0_loop_test.c tests/occurrence_correction_test.c tests/retraction_cascade_test.c tests/activation_retraction_test.c tests/commitment_test.c tests/retention_test.c tests/information_policy_test.c tests/commerce_test.c tests/protocol_contract_test.c tests/standing_address_test.c
 TEST_BINS := $(patsubst tests/%.c,$(OBJDIR)/%,$(TEST_SRCS))
 
 $(OBJDIR)/%: tests/%.c $(TARGET) | $(OBJDIR)
@@ -133,6 +133,24 @@ $(OBJDIR)/admission.o: src/admission.c include/bf_admission.h | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/corroboration.o: src/corroboration.c include/bf_corroboration.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/route_ranker.o: src/route_ranker.c include/bf_route_ranker.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/serm.o: src/serm.c include/bf_serm.h include/bf_proof.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/relationship.o: src/relationship.c include/bf_relationship.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/economic_graph.o: src/economic_graph.c include/bf_economic_graph.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/provider_graph.o: src/provider_graph.c include/bf_provider_graph.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/pattern.o: src/pattern.c include/bf_pattern.h | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/evidence.o: src/evidence.c include/bf_evidence.h | $(OBJDIR)

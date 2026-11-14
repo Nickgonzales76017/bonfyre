@@ -27,6 +27,9 @@ test: $(TARGET)
 	sh ./tests/physical_compiler_test.sh ./$(TARGET)
 	sh ./tests/family_pipeline_test.sh ./$(TARGET)
 	sh ./tests/record_factor_test.sh ./$(TARGET)
+	bun test ./tests/dense_pack_bridge.test.mjs
+	bun test ./tests/dense_pack_memory_reader.test.mjs
+	bun test ./tests/dense_pack_memory_publisher.test.mjs
 	bash ./tests/savings_accounting_test.sh ./$(TARGET)
 ifneq ($(ZSTD_PREFIX),)
 	bun test ./tests/savings_stream.test.mjs

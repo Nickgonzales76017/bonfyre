@@ -119,6 +119,35 @@ static int unpack(sqlite3_stmt *s,int col,char **out,size_t *len,RFCodec *codec)
     if(strcmp(sha,expected)){free(p);return 1;}
     p[size]=0; *out=p; *len=(size_t)size; return 0;
 }
+/* Portable verified atom stream for replacing an external storage projection.
+ * The native factor store remains the source: this does not authorize export
+ * from a foreign institution, nor create a published or selected representation.
+ * Format: "BFAT" 1 0 0 0; repeated SHA-256 ASCII[64], u32be size, raw bytes.
+ * End of a successful process is the terminator; errors must discard stdout. */
+int bf_record_factor_atoms_export(const char *path,FILE *out) {
+    sqlite3 *db=NULL;sqlite3_stmt *dict=NULL,*items=NULL;RFCodec codec={0};
+    int rc=1,step;size_t total=0;
+    if(bf_record_factor_open(path,&db)||dictionary(db,&dict,&codec))goto done;
+    if(prep(db,&items,"SELECT raw_bytes,codec,payload,digest FROM record_atom ORDER BY id"))goto done;
+    const uint8_t header[8]={'B','F','A','T',1,0,0,0};
+    if(fwrite(header,1,sizeof(header),out)!=sizeof(header))goto done;
+    while((step=sqlite3_step(items))==SQLITE_ROW) {
+        char *raw=NULL;size_t len=0;
+        if(unpack(items,0,&raw,&len,&codec))goto done;
+        const unsigned char *sum=sqlite3_column_text(items,3);
+        if(!sum||strlen((const char*)sum)!=64||len>RF_MAX||
+           total>128u*1024u*1024u-len-68u){free(raw);goto done;}
+        uint32_t n=(uint32_t)len;
+        const uint8_t frame[4]={(uint8_t)(n>>24),(uint8_t)(n>>16),(uint8_t)(n>>8),(uint8_t)n};
+        int failed=fwrite(sum,1,64,out)!=64||fwrite(frame,1,4,out)!=4||
+          fwrite(raw,1,len,out)!=len;
+        free(raw);if(failed)goto done;total+=len+68u;
+    }
+    if(step==SQLITE_DONE&&fflush(out)==0)rc=0;
+done:
+    codec_close(&codec);sqlite3_finalize(dict);sqlite3_finalize(items);
+    if(db)sqlite3_close(db);return rc;
+}
 int bf_record_factor_read(sqlite3 *db,sqlite3_int64 row,char **body,size_t *length) {
     sqlite3_stmt *s=NULL,*p=NULL,*check=NULL,*dict=NULL;RFCodec codec={0}; char digest[65],actual[65],*out=NULL; size_t used=0;
     sqlite3_int64 bytes=0; int parts=0,seen=0,rc=1,step;

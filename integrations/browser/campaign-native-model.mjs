@@ -4,10 +4,11 @@ const check=(ok,message)=>{if(!ok)throw Error(message);};
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const text=(x,n)=>typeof x==='string'&&x.length<=n&&!/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(x);
 export const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
-export function blankCampaign(){return{version:1,content:{quote:'',cite:'',claim:'',mark:'Aurekai'},source:null,overrides:{},outputs:[]};}
+export function blankCampaign(){return{version:1,content:{quote:'',cite:'',claim:'',mark:'Aurekai',link:''},source:null,overrides:{},outputs:[]};}
 export function checkedCampaign(value){
  check(plain(value)&&value.version===1&&plain(value.content)&&plain(value.overrides)&&Array.isArray(value.outputs)&&value.outputs.length<=6,'This campaign draft has an unsupported structure.');
- const limits={quote:3000,cite:160,claim:160,mark:80},content={};for(const[k,n]of Object.entries(limits)){check(text(value.content[k],n),'The '+k+' field exceeds its reviewed bound.');content[k]=value.content[k];}
+ const limits={quote:3000,cite:160,claim:160,mark:80,link:1024},content={};for(const[k,n]of Object.entries(limits)){const entry=k==='link'&&value.content[k]===undefined?'':value.content[k];check(text(entry,n),'The '+k+' field exceeds its reviewed bound.');content[k]=entry;}
+  if(content.link)content.link=publicDestination(content.link);
  check(Object.keys(value.content).every(k=>k in limits),'Unexpected content field.');const overrides={};
  for(const[format,o]of Object.entries(value.overrides)){check(Object.hasOwn(FORMATS,format)&&plain(o)&&Object.keys(o).every(k=>['scale','theme','align'].includes(k)),'Unknown artboard adjustment.');const next={};if(o.scale!==undefined){check(Number.isFinite(o.scale)&&o.scale>=0.5&&o.scale<=1.8,'Type scale must be between 0.5 and 1.8.');next.scale=o.scale;}if(o.theme!==undefined){check(Object.hasOwn(THEMES,o.theme),'Unknown artboard theme.');next.theme=o.theme;}if(o.align!==undefined){check(['left','center'].includes(o.align),'Unknown artboard alignment.');next.align=o.align;}overrides[format]=next;}
  let source=null;if(value.source!==null){const s=value.source;check(plain(s),'The selected source is unavailable.');source=publicationInput([s.id,s.title,s.body,s.url,s.sourceRef,s.receipt,s.rightsBasis,s.retention,s.publishedAt]);if(s.sourceSubject!==undefined){check(text(s.sourceSubject,256),'The retained source subject is invalid.');source.sourceSubject=s.sourceSubject;}}
@@ -15,9 +16,40 @@ export function checkedCampaign(value){
  return{version:1,content,source,overrides,outputs};
 }
 export function quotedExactly(state){return !!state.source&&state.content.quote.trim()===state.source.body.trim();}
-export async function inputDigest(value){const state=checkedCampaign(value),ordered={version:1,content:state.content,source:state.source,overrides:Object.fromEntries(Object.keys(FORMATS).map(k=>[k,state.overrides[k]||{}]))};return digest(new TextEncoder().encode(JSON.stringify(ordered)));}
+export async function inputDigest(value){const state=checkedCampaign(value),{link:_,...visualContent}=state.content,ordered={version:1,content:visualContent,source:state.source,overrides:Object.fromEntries(Object.keys(FORMATS).map(k=>[k,state.overrides[k]||{}]))};return digest(new TextEncoder().encode(JSON.stringify(ordered)));}
 export async function restoreCampaign(value,{alive=()=>true}={}){const state=checkedCampaign(value);for(const o of state.outputs){check(alive(),'Account access changed.');check(await digest(await o.body.arrayBuffer())===o.sha256,'A retained campaign output failed its digest check.');}check(alive(),'Account access changed.');return state;}
 export async function withOutput(value,format,kind,body){
  const state=checkedCampaign(value);check(Object.hasOwn(FORMATS,format)&&['png','webm'].includes(kind)&&body instanceof Blob,'Choose a supported artboard output.');const canonical=new Blob([body],{type:kind==='png'?'image/png':'video/webm'}),out={format,kind,body:canonical,sha256:await digest(await canonical.arrayBuffer()),inputDigest:await inputDigest(state),width:FORMATS[format].w,height:FORMATS[format].h,created:new Date().toISOString()};
  return checkedCampaign({...state,outputs:[...state.outputs.filter(o=>o.format!==format||o.kind!==kind),out]});
+}
+
+// Channel-specific text is a reviewed draft, not provider execution.
+// No provider credentials, publishing rights or external state enter this model.
+function publicDestination(value){
+ let u;try{u=new URL(value);}catch{throw Error('Enter a complete public HTTPS campaign destination.');}
+ if(u.protocol!=='https:'||u.username||u.password||u.port||/[\u0000-\u0020\\]/.test(value)||
+    !u.hostname.includes('.')||/^(localhost|127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/i.test(u.hostname)||
+    u.hostname.endsWith('.local'))throw Error('Use a public HTTPS destination, not a private or credentialed URL.');
+ return u.href;
+}
+export const CHANNELS=Object.freeze({
+ google:{label:'Google Business Profile update',limit:1500},
+ linkedin:{label:'LinkedIn company update',limit:3000},
+ youtube:{label:'YouTube video description',limit:5000}
+});
+export function channelCopy(value,channel,{sourceCurrent=false}={}){
+ const state=checkedCampaign(value),spec=CHANNELS[channel];
+ check(spec,'Choose a supported destination format.');
+ const quote=state.content.quote.trim();
+ check(quote,'Write a message before preparing channel copy.');
+ if(state.source)check(sourceCurrent,'Check the retained source again before copying channel content.');
+ const parts=[state.source&&quotedExactly(state)?'“'+quote+'”':quote];
+ if(state.content.claim.trim())parts.push(state.content.claim.trim());
+ if(state.source)parts.push('Source: '+state.source.title+'\n'+state.source.url);
+ else if(state.content.cite.trim())parts.push(state.content.cite.trim());
+ if(state.content.link)parts.push(state.content.link);
+ const message=parts.join('\n\n');
+ check(message.length<=spec.limit,spec.label+' exceeds '+spec.limit+' characters. Shorten the shared words.');
+ return {channel,label:spec.label,text:message,characters:message.length,limit:spec.limit,
+  source_receipt:state.source?.receipt??null,rights_review_required:!!state.source,state:'draft_copy_only'};
 }

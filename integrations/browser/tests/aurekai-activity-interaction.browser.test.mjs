@@ -139,7 +139,7 @@ test('account actions populate the Inbox rail even with zero recipient notificat
   {id:'account-operator-g-release',kind:'release',title:'Approve current release',updated:baseTime+6000},
   {id:'account-operator-g-provider',kind:'provider',title:'Connect Twilio customer accounts',updated:baseTime+5000},
   {id:'invitation:river-guild',kind:'invitation',title:'Join River Guild',updated:0},
-  {id:'account-operator-g-credit',kind:'execution-credit',title:'Execution needs API credit',updated:baseTime+4000}
+  {id:'account-operator-g-credit',kind:'legacy-api-hold',title:'Review stopped legacy API work',updated:baseTime+4000}
  ];const page=await visit();try{
   self.notices=[];await page.evaluate(()=>window.fixtureRail.refresh());
   const list=page.locator('.ak-rail-notices'),account=list.locator('[data-notice-owner="account"]');

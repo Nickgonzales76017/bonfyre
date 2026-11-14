@@ -2,6 +2,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { pagesOf } from "./site-contract.mjs";
+import { catalogueWithoutPreparedCopy } from './catalogue-material.mjs';
 
 // Material is what a section shows that the record does not state: rows read
 // from records this estate holds. The site folder provides it by name; a
@@ -26,7 +27,12 @@ export async function withMaterial(content, siteDir) {
   for (const s of pagesOf(filled).flatMap(p => p.sections).filter(s => s.material)) {
     if (typeof provided[s.material] !== "function") throw new Error(`material "${s.material}" is not provided by ${file}`);
     if (!/^[a-z][a-z0-9-]*$/.test(s.id ?? "")) throw new Error(`a section that takes material needs an id (${s.kind})`);
-    const given = await provided[s.material]();
+    let given;
+    try { given = await provided[s.material](); }
+    catch (error) {
+      if (error?.code !== 'ELOOP' || s.kind !== 'catalogue' || s.material !== 'products') throw error;
+      given = catalogueWithoutPreparedCopy(siteDir);
+    }
     // Material may also hand over files (pieces of a large collection). They are published under the section's own name.
     if (given.files) {
       if (typeof given.files !== "object" || Array.isArray(given.files)) throw new Error("material files must be a filename-to-bytes map");

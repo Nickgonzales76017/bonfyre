@@ -7,15 +7,20 @@ import { join } from "node:path";
 
 function parse(argv) {
   const args = { archive: join(homedir(), ".bonfyre/estate-local/items.db"),
-    url: process.env.BONFYRE_SEARCH_INDEX_URL || "", attempts: 5 };
+    url: process.env.BONFYRE_SEARCH_INDEX_URL || "", attempts: 5, dryRun: false, maxItems: 0 };
   for (let i = 0; i < argv.length; i++) {
     const key = argv[i];
-    if (!["--archive", "--url", "--attempts"].includes(key) || !argv[i + 1])
+    if (key === "--dry-run") { args.dryRun = true; continue; }
+    if (!["--archive", "--url", "--attempts", "--max-items"].includes(key) || !argv[i + 1])
       throw new Error(`unknown or incomplete argument: ${key}`);
     args[key.slice(2)] = argv[++i];
   }
   args.attempts = Math.max(1, Number(args.attempts));
   if (!Number.isInteger(args.attempts)) throw new Error("--attempts must be an integer");
+  if (!Number.isInteger(Number(args.maxItems)) || Number(args.maxItems) < 0 ||
+      Number(args.maxItems) > 10000 || argv.includes("--max-items") && Number(args.maxItems) === 0) throw new Error("--max-items must be 1..10000 or omitted");
+  args.maxItems = Number(args.maxItems);
+  if (args.dryRun) return { ...args, url: "", key: "" };
   const ref = process.env.SUPABASE_PROJECT_REF;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key || (!ref && !args.url)) throw new Error("search index credentials are required");
@@ -64,14 +69,16 @@ export async function main(argv = process.argv.slice(2)) {
   const db = new Database(args.archive, { readonly: true });
   const started = performance.now();
   const seen = new Set();
-  const result = { sent: 0, failed: 0 };
+  const result = { sent: 0, failed: 0, inspected: 0 };
   let batch = [];
   try {
-    const rows = db.query("SELECT source,key,kind,COALESCE(family,'') family,title,COALESCE(body,'') body,COALESCE(href,'') href,COALESCE(image,'') image,COALESCE(publisher,'') publisher,COALESCE(at,0) at,COALESCE(first_read,'') first_read FROM item").iterate();
+    const rows = db.query("SELECT source,key,kind,COALESCE(family,'') family,title,COALESCE(body,'') body,COALESCE(href,'') href,COALESCE(image,'') image,COALESCE(publisher,'') publisher,COALESCE(at,0) at,COALESCE(first_read,'') first_read FROM item ORDER BY source,key").iterate();
     for (const row of rows) {
       const address = `o/${row.source}/${row.key}`;
       if (seen.has(address)) continue;
       seen.add(address);
+      result.inspected++;
+      if (args.dryRun) { if (args.maxItems && result.inspected >= args.maxItems) break; continue; }
       batch.push({ address, source: row.source, key: row.key, kind: row.kind,
         family: row.family, title: clipped(row.title, 600), body: clipped(row.body, 2000),
         href: clipped(row.href, 900), image: clipped(row.image, 900),
@@ -81,10 +88,12 @@ export async function main(argv = process.argv.slice(2)) {
         batch = [];
         if (result.sent % 5000 === 0) console.error(`  ${result.sent} loaded`);
       }
+      if (args.maxItems && result.inspected >= args.maxItems) break;
     }
-    await flush(batch, args, result);
+    if (!args.dryRun) await flush(batch, args, result);
   } finally { db.close(); }
-  console.log(JSON.stringify({ loaded: result.sent, refused: result.failed,
+  console.log(JSON.stringify({ mode: args.dryRun ? "dry-run" : "write",
+    loaded: result.sent, inspected: result.inspected, refused: result.failed,
     seconds: Math.round((performance.now() - started) / 100) / 10 }));
   return result.failed ? 1 : 0;
 }

@@ -1,6 +1,7 @@
 // Freeze and promote only the public WebAddress service. Operator admission,
 // Auth/CMS owners, application records and other services remain unchanged.
 import assert from 'node:assert/strict';
+import {Database} from 'bun:sqlite';
 import {constants as fsConstants,readFileSync,readSync,writeFileSync,copyFileSync,cpSync,mkdirSync,mkdtempSync,readdirSync,lstatSync,readlinkSync,realpathSync,symlinkSync,renameSync,rmSync,chmodSync,accessSync,openSync,closeSync,existsSync,constants} from 'node:fs';
 import {homedir} from 'node:os';
 import {join,resolve,relative,dirname,isAbsolute} from 'node:path';
@@ -13,6 +14,23 @@ const label='com.bonfyre.public-web-address',domain='gui/'+process.getuid(),plis
 // A carried program whose link target was removed (a self-updating CLI such as
 // claude replaces its versioned file) is re-resolved from PATH, never dropped.
 export function carriedBin(path,name){try{return terminalBin(path);}catch(error){if(error?.code!=='ENOENT')throw error;const found=Bun.which(name);assert(found,'Carried program '+name+' no longer resolves and is not on PATH.');return terminalBin(found);}}
+// A release never gains a capability by carrying a symlink whose target has
+// already vanished. Omit that unreachable alias only; cycles, missing regular
+//// files, and changed but resolvable programs still fail closed.
+export function carriedOptionalBin(path,name){
+ try{return carriedBin(path,name);}catch(error){
+  let current=path;const visited=new Set();
+  for(;;){
+   let entry;
+   try{entry=lstatSync(current);}catch(failure){
+    if(failure?.code==='ENOENT'&&visited.size>0&&!Bun.which(name))return null;
+    throw error;
+   }
+   if(!entry.isSymbolicLink()||visited.has(current)||visited.size>=1024)throw error;
+   visited.add(current);current=resolve(dirname(current),readlinkSync(current));
+  }
+ }
+}
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex'),hash=file=>digest(readFileSync(file));export function terminalBin(path){const seen=new Set();let p=path;while(lstatSync(p).isSymbolicLink()){assert(!seen.has(p)&&seen.size<1024,'Cyclic or excessive binary link chain.');seen.add(p);p=resolve(dirname(p),readlinkSync(p));}assert(lstatSync(p).isFile(),'Binary target is not a file.');return p;}
 function run(argv,{env=process.env,allowed=[0],timeout=180000}={}){
  const result=Bun.spawnSync(argv,{cwd:root,env,stdout:'pipe',stderr:'pipe',timeout});
@@ -28,7 +46,7 @@ function filesUnder(dir,prefix=''){
   if(entry.isDirectory())result.push(...filesUnder(dir,name));else if(entry.isFile())result.push(name);else throw Error('Unexpected release member.');
  }return result.sort();
 }
-const programSources=['scripts/program-workspace-owner.mjs','scripts/program-source-work.mjs','scripts/program-work-reference.mjs','scripts/project-program-service-policy.mjs','cmd/BonfyreInteractionGrammar/src/main.c','scripts/workspace_material.mjs','integrations/browser/workspace-continuation.mjs','scripts/compile-program-fabric.mjs','scripts/program-fabric.cue','integrations/browser/workspace-msgpack.mjs','integrations/browser/provider-contract.mjs','cmd/BonfyreSourceFrontier/tools/web_work.mjs','cmd/BonfyreSourceFrontier/tools/web_protocol.mjs','cmd/BonfyreSourceFrontier/tools/source_material.mjs','cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs','cmd/BonfyreExternalEstate/bonfyre-external-estate','cmd/BonfyreCMS/bonfyre-cms','cmd/BonfyreCredentials/provider-credentials.json'];
+const programSources=['scripts/program-workspace-owner.mjs','scripts/program-source-work.mjs','scripts/program-work-reference.mjs','scripts/project-program-service-policy.mjs','cmd/BonfyreInteractionGrammar/src/main.c','scripts/workspace_material.mjs','integrations/browser/workspace-continuation.mjs','scripts/compile-program-fabric.mjs','scripts/program-fabric.cue','integrations/browser/workspace-msgpack.mjs','integrations/browser/provider-contract.mjs','cmd/BonfyreSourceFrontier/tools/web_work.mjs','cmd/BonfyreSourceFrontier/tools/web_protocol.mjs','cmd/BonfyreSourceFrontier/tools/source_material.mjs','cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs','cmd/BonfyreExternalEstate/bonfyre-external-estate','cmd/BonfyreCMS/bonfyre-cms','cmd/BonfyreCredentials/provider-credentials.json','cmd/BonfyreReview/command_dispatch.mjs','cmd/BonfyreReview/command_owner.mjs','cmd/BonfyreReview/command_effects.mjs','cmd/BonfyreReview/authority.mjs','cmd/BonfyreReview/review.mjs','cmd/BonfyreReview/state.mjs','cmd/BonfyreReview/effects.mjs','components/BonfyreServiceSite/account-auth.mjs','components/BonfyreControlPlane/obligation-work.mjs','components/BonfyreControlPlane/commitment-graph.mjs','components/BonfyreControlPlane/native/commitment_cli.c','engine/core/src/commitment.c','engine/core/include/bf_commitment.h','components/BonfyreControlPlane/protocol-library.mjs','components/BonfyreDecision/frontier-adapters.mjs','components/BonfyreDecision/decision-plane.mjs','components/BonfyreDecision/typed-decision.mjs','components/BonfyreDecision/local-inference.mjs','cmd/BonfyreQueue/bonfyre-queue','schemas/control/protocol-library.cue','schemas/control/protocol-contract.cue','components/BonfyreDecision/decision-plane.cue','cmd/BonfyreCMS/content-types/pack_artifact.json','cmd/BonfyreCMS/content-types/pack_version.json','cmd/BonfyreCMS/content-types/pack_head.json','cmd/BonfyreCMS/content-types/pack_dependency.json','cmd/BonfyreCMS/content-types/pack_overlay.json','cmd/BonfyreCMS/content-types/pack_demand.json','cmd/BonfyreCMS/content-types/pack_installation.json','cmd/BonfyreCMS/content-types/pack_activation.json','cmd/BonfyreCMS/content-types/application_binding.json','cmd/BonfyreCMS/content-types/capability_program.json'];
 const programAssets=['program-workspace.mjs','program-service-continuations.mjs','program-service-policy.mjs','program-source-work.mjs','program-workspace.css'];
 const companionSources=['extension/workbench-shell.mjs','extension/panel-enrollment.mjs','extension/enrollment-integrity.mjs'];
 const browserSources=['aurekai-activity.mjs','aurekai-horde.mjs','aurekai-activity-source.mjs','aurekai-inbox-source.mjs','aurekai-activity.css','workspace-msgpack.mjs','extension/foreign-sign-in.mjs','extension/foreign-sign-in.css','aurekai-push.mjs','aurekai-push-sw.mjs','provider-contract.mjs','aurekai-model.mjs','aurekai-model.css','program-workspace.mjs','program-service-continuations.mjs','program-service-policy.mjs','program-source-work.mjs','program-workspace.css','interaction-collection.mjs','record-comparison.mjs','workspace-store.mjs','workspace-value.mjs','workspace-continuation.mjs','workspace-destinations.mjs','reference-picker.mjs','account-choices.mjs','account-choices.css','invitation-choice.mjs','connection-studio.mjs','connection-studio.css','authentication-capability-surface.mjs','provider-auth-capability.mjs','connection-source.mjs','connection-lab.mjs','publication-picker.mjs','publication-research.mjs','source-desk.mjs','source-desk.css','source-publication.mjs','source-publication.css','web-workbench.mjs','web-workbench.css',...companionSources];
@@ -59,7 +77,7 @@ export function uniqueInputs(rows){
  return [...byPath.values()];
 }
 export function freezePrograms(projectRoot,dir){
- const inputs=programSources.map(path=>frozenInput(projectRoot,dir,path,join('native',path),/\/bonfyre-(external-estate|cms)$/.test(path)?0o755:0o644));
+ const inputs=programSources.map(path=>frozenInput(projectRoot,dir,path,join('native',path),/\/bonfyre-(external-estate|cms|queue)$/.test(path)?0o755:0o644));
  return{inputs,nativeRoot:join(dir,'native'),owner:join(dir,'native/scripts/program-workspace-owner.mjs')};
 }
 export function freezeBrowser(projectRoot,dir){
@@ -76,13 +94,21 @@ function executable(path){
 function findCue(path){
  for(const directory of String(path||'').split(':')){if(!isAbsolute(directory))continue;const found=executable(join(directory,'cue'));if(found)return found;}return null;
 }
+// A file with +x may still be an incompatible or truncated Mach-O. Validate
+// the actual executable before choosing it for installed-extension acceptance.
+function workingExtensionChromium(path){
+ const resolved=executable(path);if(!resolved)return null;
+ try{const child=Bun.spawnSync([resolved,'--version'],{stdout:'pipe',stderr:'pipe',timeout:8000});
+  return child.exitCode===0?resolved:null;
+ }catch{return null;}
+}
 export function findExtensionChromium(ambient=process.env,{homeDir=home,arch=process.arch}={}){
- const explicit=executable(ambient.BONFYRE_EXTENSION_CHROMIUM_BINARY);if(explicit)return explicit;
+ const explicit=workingExtensionChromium(ambient.BONFYRE_EXTENSION_CHROMIUM_BINARY);if(explicit)return explicit;
  const cache=join(homeDir,'.cache/puppeteer/chrome');
  if(existsSync(cache)){
   const preferred=arch==='arm64'?['chrome-mac-arm64','chrome-mac-x64']:['chrome-mac-x64','chrome-mac-arm64'];
   for(const version of readdirSync(cache).sort().reverse())for(const folder of preferred){
-   const found=executable(join(cache,version,folder,'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'));if(found)return found;
+   const found=workingExtensionChromium(join(cache,version,folder,'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'));if(found)return found;
   }
  }
  const playwrightCaches=[
@@ -95,20 +121,71 @@ export function findExtensionChromium(ambient=process.env,{homeDir=home,arch=pro
   for(const version of readdirSync(playwrightCache).sort().reverse()){
    if(!/^chromium-[0-9]+$/.test(version))continue;
    for(const folder of folders)for(const [app,binary] of [['Google Chrome for Testing.app','Google Chrome for Testing'],['Chromium.app','Chromium']]){
-    const found=executable(join(playwrightCache,version,folder,app,'Contents/MacOS',binary));if(found)return found;
+    const found=workingExtensionChromium(join(playwrightCache,version,folder,app,'Contents/MacOS',binary));if(found)return found;
    }
   }
  }
  for(const candidate of ['/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing','/Applications/Chromium.app/Contents/MacOS/Chromium']){
-  const found=executable(candidate);if(found)return found;
+  const found=workingExtensionChromium(candidate);if(found)return found;
  }
- for(const name of ['chromium','chromium-browser']){const candidate=Bun.which(name),found=candidate&&executable(candidate);if(found)return found;}
+ for(const name of ['chromium','chromium-browser']){const candidate=Bun.which(name),found=candidate&&workingExtensionChromium(candidate);if(found)return found;}
  return null;
+}
+/** Refuse a zero-source public ForeignTwin cut before stage activation.
+ * Canonical CMS is only inspected; nothing is imported, published or repaired. */
+export function requirePublishedForeignSources(path){
+  assert(typeof path==='string'&&isAbsolute(path),'Canonical CMS path is required.');
+  const attempts=6;
+  for(let attempt=1;attempt<=attempts;attempt++){
+    let db;
+    try{
+      // SQLite WAL may have no -shm sidecar after the final writer closes.
+      // An existing-file RW handle can initialize that carrier; query_only
+      // prevents this verifier from modifying canonical CMS rows.
+      db=new Database(path,{readwrite:true,create:false});
+      db.exec('PRAGMA query_only=ON');
+      assert.equal(db.query('PRAGMA query_only').get()?.query_only,1,'CMS verification must remain SQL read-only.');
+      db.exec('PRAGMA busy_timeout=2500');
+      const row=db.query("SELECT COUNT(*) AS total FROM internet_source WHERE status='published' AND url<>''").get();
+      assert(Number.isSafeInteger(row?.total)&&row.total>0,
+        'Public ForeignTwin release contains zero published source contracts.');
+      return {published_source_contracts:row.total};
+    }catch(error){
+      const reason=String(error?.message||error);
+      if(reason.includes('zero published source contracts'))throw error;
+      const transient=/database is locked|database is busy|unable to open database file|SQLITE_BUSY|SQLITE_CANTOPEN/i.test(reason);
+      if(!transient||attempt===attempts)
+        throw Error('Public ForeignTwin release cannot read canonical internet_source contracts: '+reason);
+      Bun.sleepSync(400);
+    }finally{db?.close();}
+  }
+}
+// Account Work consumes canonical ProgramFabric only when all three owner
+// tables exist. A legacy CMS without these types is not a program producer.
+function hasAccountPrograms(path){
+ let db;
+ try {db=new Database(path,{readonly:true,create:false});
+   return db.query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('program_instance','program_template','program_requirement')").all().length===3;
+ } catch {return false;}
+ finally {db?.close();}
+}
+// A native command endpoint is enabled only for an already published program.
+// An absent table, malformed CMS or draft declaration does not open admission.
+function hasPublishedNativeCommands(path){
+ let db;try{db=new Database(path,{readonly:true,create:false});
+  return !!db.query("SELECT 1 FROM capability_program WHERE status='published' AND application_kind='native-command' LIMIT 1").get();
+ }catch{return false;}finally{db?.close();}
 }
 export function configurePrograms(before,dir,{bun=process.execPath,cuePath=process.env.PATH,accountHome=home}={}){
  const configuration=structuredClone(before),env=configuration.EnvironmentVariables||{};
  assert(typeof env.BONFYRE_CMS_DB==='string'&&isAbsolute(env.BONFYRE_CMS_DB),'The installed service must name its canonical CMS database.');
  assert(lstatSync(realpathSync(env.BONFYRE_CMS_DB)).isFile(),'The canonical CMS database is unavailable.');
+ const requestedMediaRoot=env.BONFYRE_MEDIA_ASSET_ROOT||join(dirname(realpathSync(env.BONFYRE_CMS_DB)),'media-assets');
+ assert(isAbsolute(requestedMediaRoot),'Published media asset root must be an absolute directory.');
+ if(!existsSync(requestedMediaRoot))mkdirSync(requestedMediaRoot,{recursive:true,mode:0o750});
+ const mediaStat=lstatSync(requestedMediaRoot);
+ assert(mediaStat.isDirectory()&&!mediaStat.isSymbolicLink(),'Media asset root cannot be a file or symlink.');
+ env.BONFYRE_MEDIA_ASSET_ROOT=realpathSync(requestedMediaRoot);
  const control=env.BONFYRE_CONTROL_DB||join(home,'.local/share/bonfyre/control.db'); // BonfyreControl's own default
  assert(typeof control==='string'&&isAbsolute(control),'The installed service must name its canonical control database.');
  assert(lstatSync(realpathSync(control)).isFile(),'The canonical control database is unavailable.');
@@ -125,6 +202,26 @@ export function configurePrograms(before,dir,{bun=process.execPath,cuePath=proce
  env.PATH=runtimeDirectory+':'+servicePath;
  assert.equal(findCue(env.PATH),cue,'The deployed service must resolve the frozen CUE executable.');
  env.BONFYRE_BUN_BINARY=bunBinary;env.BONFYRE_PROGRAM_OWNER=join(dir,'native/scripts/program-workspace-owner.mjs');
+ const commandInstalled=hasPublishedNativeCommands(env.BONFYRE_CMS_DB);
+ if(commandInstalled){
+  const argv=configuration.ProgramArguments;
+  const at=Array.isArray(argv)?argv.indexOf('--auth-db'):-1;
+  const authDb=at>=0&&argv.lastIndexOf('--auth-db')===at?argv[at+1]:null;
+  assert(typeof authDb==='string'&&isAbsolute(authDb)&&existsSync(authDb)&&lstatSync(authDb).isFile(),
+    'Native command admission requires the service-owned Auth database.');
+  const reviewHome=env.BONFYRE_COMMAND_REVIEW_HOME||join(accountHome,'.bonfyre/command-review');
+  assert(isAbsolute(reviewHome)&&(!existsSync(reviewHome)||
+    (lstatSync(reviewHome).isDirectory()&&!lstatSync(reviewHome).isSymbolicLink())),
+    'Native command review home must be a real absolute directory.');
+  env.BONFYRE_COMMAND_REVIEW_HOME=reviewHome;
+  env.BONFYRE_NATIVE_COMMAND_AUTH_DB=authDb;
+  env.BONFYRE_NATIVE_COMMAND_CMS_SCHEMAS=join(dir,'native/cmd/BonfyreCMS/content-types');
+  env.BONFYRE_NATIVE_COMMAND_DISPATCH=join(dir,'native/cmd/BonfyreReview/command_dispatch.mjs');
+  env.BONFYRE_NATIVE_COMMAND_QUEUE_BIN=join(dir,'native/cmd/BonfyreQueue/bonfyre-queue');
+ }else{
+  delete env.BONFYRE_NATIVE_COMMAND_DISPATCH;
+  delete env.BONFYRE_NATIVE_COMMAND_QUEUE_BIN;
+ }
  env.BONFYRE_PROGRAM_SOURCE_OWNER=join(dir,'native/scripts/program-source-work.mjs');
  env.BONFYRE_PROGRAM_CMS_BINARY=join(dir,'native/cmd/BonfyreCMS/bonfyre-cms');env.BONFYRE_WEB_WORK_OWNER=env.BONFYRE_WEB_WORK_OWNER||join(dir,'native/cmd/BonfyreSourceFrontier/tools/web_work.mjs');
  const accountIndex=env.BONFYRE_ACCOUNT_WORK_DB||join(accountHome,'.bonfyre/state/account-work.db');
@@ -133,7 +230,7 @@ export function configurePrograms(before,dir,{bun=process.execPath,cuePath=proce
  if(existsSync(accountIndex)){
   assert(lstatSync(accountIndex).isFile(),'Account Work index must be a regular file.');
   env.BONFYRE_ACCOUNT_WORK_DB=accountIndex;
-  env.BONFYRE_METER_DB??=join(accountHome,'.local/share/bonfyre/state/bonfyre-meter.db');if(!existsSync(env.BONFYRE_METER_DB))delete env.BONFYRE_METER_DB;else assert(isAbsolute(env.BONFYRE_METER_DB)&&lstatSync(env.BONFYRE_METER_DB).isFile(),'Meter database must be an existing absolute file.');env.BONFYRE_ACCOUNT_WORK_SOURCES=[... [['operator','operator/operator.sqlite3'],['fabric','dev-fabric/fabric.sqlite3'],['workgraph','edge-workgraph/workgraph.db'],['workgraph','estate/native-architecture-workgraph.db'],['workgraph','estate-fabric/fabric.db']].map(([kind,path])=>[kind,join(accountHome,'.bonfyre',path)]),... (env.BONFYRE_METER_DB?[['meter',env.BONFYRE_METER_DB]]:[])].filter(([,path])=>existsSync(path)).map(([kind,path])=>kind+'='+path).join(';');
+  env.BONFYRE_METER_DB??=join(accountHome,'.local/share/bonfyre/state/bonfyre-meter.db');if(!existsSync(env.BONFYRE_METER_DB))delete env.BONFYRE_METER_DB;else assert(isAbsolute(env.BONFYRE_METER_DB)&&lstatSync(env.BONFYRE_METER_DB).isFile(),'Meter database must be an existing absolute file.');env.BONFYRE_ACCOUNT_WORK_SOURCES=[... [['operator','operator/operator.sqlite3'],['fabric','dev-fabric/fabric.sqlite3'],['workgraph','edge-workgraph/workgraph.db'],['workgraph','estate/native-architecture-workgraph.db'],['workgraph','estate-fabric/fabric.db']].map(([kind,path])=>[kind,join(accountHome,'.bonfyre',path)]),...(hasAccountPrograms(env.BONFYRE_CMS_DB)?[['program',env.BONFYRE_CMS_DB]]:[]),... (env.BONFYRE_METER_DB?[['meter',env.BONFYRE_METER_DB]]:[])].filter(([,path])=>existsSync(path)).map(([kind,path])=>kind+'='+path).join(';');
  }
  const workOwner=env.BONFYRE_ACCOUNT_WORK_OWNER||process.env.BONFYRE_ACCOUNT_WORK_OWNER;
  if(workOwner){
@@ -170,6 +267,28 @@ export function inspectRelease(dir,{requireCurrentInventory=true}={}){
  for(const row of stage.runtimes||[]){assert.equal(executable(row.path),row.path,'The reviewed runtime is unavailable: '+row.role);assert.equal(hash(row.path),row.sha256,'The reviewed runtime changed: '+row.role);}
  return stage;
 }
+// Bind only this release's immutable presentation inputs. Canonical databases
+// and any existing account-specific detail index remain destination-owned.
+export function bindPublicCandidate(candidate,dir,{accountHome=home}={}){
+ const args=candidate.ProgramArguments,env=candidate.EnvironmentVariables;
+ assert(Array.isArray(args)&&objectCandidateEnv(env),'A complete public-service configuration is required');
+ const siteRoot=args.indexOf('--site-root');
+ assert(siteRoot>=0&&siteRoot+1<args.length,'Public service has no --site-root');
+ args[siteRoot+1]=join(dir,'site');
+ Object.assign(env,{
+  BONFYRE_WORKSPACE_CLIENT:join(dir,'browser'),
+  BONFYRE_BIN_DIR:join(dir,'bin'),
+  BONFYRE_PROCUREMENT_BINARY:join(dir,'bin/bonfyre-procurement'),
+  BONFYRE_CREDENTIALS_BINARY:join(dir,'bin/bonfyre-credentials'),
+  BONFYRE_PROVIDER_ESTATE_BINARY:join(dir,'bin/bonfyre-provider-estate'),
+  BONFYRE_CMS_BINARY:join(dir,'native/cmd/BonfyreCMS/bonfyre-cms'),
+  BONFYRE_CREDENTIALS_PROVIDERS:join(dir,'native/cmd/BonfyreCredentials/provider-credentials.json'),
+ });
+ env.BONFYRE_DETAIL_DEPTH_DB??=join(accountHome,'.bonfyre/estate-local/detail-depth.db');
+ return candidate;
+}
+const objectCandidateEnv=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+
 async function stage(){
  run([process.execPath,'scripts/project-program-service-policy.mjs','--check']);
  run(['node','cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs','--check']);
@@ -183,14 +302,19 @@ async function stage(){
  assert.equal(hash(join(dir,'site/front-brand.css')),hash(join(root,'site/matrix/front-brand.css')),'Staged native brand CSS differs from source bytes.');
  cpSync(env.BONFYRE_WORKSPACE_CLIENT,join(dir,'browser'),{recursive:true,dereference:true,mode:fsConstants.COPYFILE_FICLONE});mkdirSync(join(dir,'bin')); // APFS clones: releases share unchanged site/browser blocks
  const inputs=freezeBrowser(root,dir);
- for(const name of readdirSync(env.BONFYRE_BIN_DIR)){if(name==='bonfyre-site'||name==='bonfyre-meter'||name==='bonfyre-queue'||name==='bonfyre-web-address'||name==='bonfyre-procurement'||name==='bonfyre-credentials'||name==='bonfyre-provider-estate')continue;symlinkSync(carriedBin(join(env.BONFYRE_BIN_DIR,name),name),join(dir,'bin',name));}
+ for(const name of readdirSync(env.BONFYRE_BIN_DIR)){
+  if(['bonfyre-site','bonfyre-meter','bonfyre-queue','bonfyre-web-address','bonfyre-procurement','bonfyre-credentials','bonfyre-provider-estate'].includes(name))continue;
+  const binary=carriedOptionalBin(join(env.BONFYRE_BIN_DIR,name),name);
+  if(binary)symlinkSync(binary,join(dir,'bin',name));
+  else console.log('RETIRED_DANGLING_ALIAS '+name);
+ }
  for(const [family,name]of [['BonfyreQueue','bonfyre-queue'],['BonfyreMeter','bonfyre-meter'],['BonfyreProcurement','bonfyre-procurement'],['BonfyreWebAddress','bonfyre-web-address'],['BonfyreCredentials','bonfyre-credentials'],['BonfyreProviderEstate','bonfyre-provider-estate']])inputs.push(frozenInput(root,dir,join('cmd',family,name),join('bin',name),0o755));
  const siteAlias=freezeSiteAlias(dir);
  inputs.push(...freezePrograms(root,dir).inputs);
  const {configuration:candidate,runtimes}=configurePrograms(before,dir);candidate.ProgramArguments[0]=join(dir,'bin/bonfyre-web-address');
  {const w=candidate.ProgramArguments.indexOf('--workers'),want=Math.min(16,Math.max(+(process.env.BONFYRE_PUBLIC_WORKERS||6),w>=0?+candidate.ProgramArguments[w+1]||1:1));if(w>=0)candidate.ProgramArguments[w+1]=String(want);else candidate.ProgramArguments.push('--workers',String(want));}
  // Two workers queued every home behind crawler item pages; a cold release then failed its readback.
- candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--site-root')+1]=join(dir,'site');candidate.EnvironmentVariables.BONFYRE_WORKSPACE_CLIENT=join(dir,'browser');candidate.EnvironmentVariables.BONFYRE_BIN_DIR=join(dir,'bin');candidate.EnvironmentVariables.BONFYRE_PROCUREMENT_BINARY=join(dir,'bin/bonfyre-procurement');candidate.EnvironmentVariables.BONFYRE_CREDENTIALS_BINARY=join(dir,'bin/bonfyre-credentials');candidate.EnvironmentVariables.BONFYRE_PROVIDER_ESTATE_BINARY=join(dir,'bin/bonfyre-provider-estate');candidate.EnvironmentVariables.BONFYRE_CMS_BINARY=join(dir,'native/cmd/BonfyreCMS/bonfyre-cms');candidate.EnvironmentVariables.BONFYRE_CREDENTIALS_PROVIDERS=join(dir,'native/cmd/BonfyreCredentials/provider-credentials.json');// CMS and the provider list ship with the pages; database paths stay pinnedcandidate.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB??=join(process.env.HOME,'.bonfyre/estate-local/detail-depth.db');
+  bindPublicCandidate(candidate,dir);
  // plutil is the existing system format owner; the intermediate stays private.
  const temporary=join(dir,'.candidate');writeFileSync(temporary,JSON.stringify(candidate),{mode:0o600});run(['/usr/bin/plutil','-convert','xml1','-o',join(dir,'candidate-service.plist'),temporary]);rmSync(temporary);
  const material=[...filesUnder(join(dir,'site')).map(p=>'site/'+p),...filesUnder(join(dir,'browser')).map(p=>'browser/'+p),...filesUnder(join(dir,'native')).map(p=>'native/'+p),...filesUnder(join(dir,'runtime')).map(p=>'runtime/'+p),'bin/bonfyre-queue','bin/bonfyre-meter','bin/bonfyre-procurement','bin/bonfyre-web-address','bin/bonfyre-credentials','bin/bonfyre-provider-estate','candidate-service.plist','previous-service.plist'].map(path=>({path,sha256:hash(join(dir,path))})).concat(siteAlias);
@@ -253,6 +377,7 @@ async function verify(dir){
  const previousEnvironment=parsePlist(join(dir,'previous-service.plist')).EnvironmentVariables;
  run([runtimeEnv.BONFYRE_BUN_BINARY,'--no-env-file','--no-install',join(dir,'native/scripts/project-program-service-policy.mjs'),'--check','--cue',join(dir,'native/scripts/program-fabric.cue'),'--out',join(dir,'browser/program-service-policy.mjs')],{env:runtimeEnv,timeout:30000});
  for(const name of ['BONFYRE_CMS_DB','BONFYRE_SOURCE_FRONTIER_DB'])assert.equal(runtimeEnv[name],previousEnvironment[name],'A canonical database changed: '+name);
+ requirePublishedForeignSources(runtimeEnv.BONFYRE_CMS_DB);
  const previousControl=previousEnvironment.BONFYRE_CONTROL_DB||join(home,'.local/share/bonfyre/control.db');
  assert.equal(runtimeEnv.BONFYRE_CONTROL_DB,previousControl,'The canonical control database changed.');
  for(const owner of [runtimeEnv.BONFYRE_PROGRAM_OWNER,runtimeEnv.BONFYRE_PROGRAM_SOURCE_OWNER,join(dir,'native/scripts/program-work-reference.mjs')])run([runtimeEnv.BONFYRE_BUN_BINARY,'--no-env-file','--no-install','-e',"await import(process.argv[1]);",owner],{env:runtimeEnv,timeout:30000});
@@ -288,8 +413,28 @@ async function verify(dir){
  assert.equal(await acceptanceIdentity({groups,env,runtimes:[chromeBinary,env.BONFYRE_EXTENSION_CHROMIUM_BINARY,env.BONFYRE_TEST_BROWSER]}),acceptanceKey,'Acceptance dependencies changed during verification.');rmSync(join(dir,'accepted.mpk'),{force:true});
  save(join(dir,'accepted.mpk'),{stageHash,acceptanceKey,logs,accepted:new Date().toISOString()});console.log('ACCEPTED '+dir);
 }
+
+/** Enforce a byte bound on both declared and chunked HTTP bodies before allocation. */
+export async function readBoundedPublicBody(response,max=4*1024*1024){
+ assert(Number.isSafeInteger(max)&&max>0&&max<=8*1024*1024,'Invalid public body bound');
+ const length=response.headers?.get('content-length');
+ if(length!==null&&length!==undefined&&/^\d+$/.test(length))
+  assert(Number(length)<=max,'Public response exceeds byte bound');
+ if(!response.body){
+  const bytes=Buffer.from(await response.arrayBuffer());
+  assert(bytes.length<=max,'Public response exceeds byte bound');return bytes;
+ }
+ const reader=response.body.getReader(),chunks=[];let total=0;
+ try{
+  for(;;){const {done,value}=await reader.read();if(done)break;
+   total+=value.byteLength;
+   assert(total<=max,'Public response exceeds byte bound');chunks.push(value);}
+ }finally{await reader.cancel().catch(()=>{});}
+ return Buffer.concat(chunks,total);
+}
+
 async function request(base,path,host){
- try{const response=await fetch(base+path,{redirect:'manual',headers:host?{Host:host}:undefined,signal:AbortSignal.timeout(10000)});const bytes=Buffer.from(await response.arrayBuffer());return{status:response.status,type:response.headers.get('content-type'),location:response.headers.get('location'),sha256:digest(bytes),text:bytes.toString()};}
+ try{const response=await fetch(base+path,{redirect:'manual',headers:host?{Host:host}:undefined,signal:AbortSignal.timeout(10000)});const bytes=await readBoundedPublicBody(response);return{status:response.status,type:response.headers.get('content-type'),location:response.headers.get('location'),sha256:digest(bytes),text:bytes.toString()};}
  catch(error){throw Error('Readback '+base+path+(host?' (Host '+host+')':'')+' failed: '+error.message,{cause:error});}
 }
 export async function retryReadbackTransport(requestFn,base,path,host,{attempts=3,delayMs=250}={}){
@@ -314,6 +459,45 @@ export function assertStyleAsset(asset,dir,name){
  assert.equal(String(asset.type||'').split(';')[0].trim().toLowerCase(),'text/css',route+' must return CSS');
  assert.equal(asset.sha256,hash(join(dir,'site',name)),route+' differs from the frozen mature stylesheet');
 }
+
+/** Read the actual public ForeignTwin source catalogue, not a local DB guess. */
+export async function foreignCatalogueReadback(base,host,readFn=request){
+ const route='/foreign/twins',reply=await readFn(base,route,host);
+ assert.equal(reply.status,200,'ForeignTwin catalogue unavailable');
+ assert.equal(String(reply.type||'').split(';')[0],'application/json','ForeignTwin MIME invalid');
+ assert(typeof reply.text==='string'&&reply.text.length<4*1024*1024,'ForeignTwin body exceeds bound');
+ assert(/^[a-f0-9]{64}$/.test(reply.sha256||''),'ForeignTwin response digest missing');
+ let body;try{body=JSON.parse(reply.text)}catch{throw Error('ForeignTwin body is not JSON')}
+ assert(body.schema==='bonfyre.foreign.twins.v2'&&body.state==='current','ForeignTwin source release is not current');
+ assert(/^foreign-v[0-9]+-[a-f0-9]{8,}$/.test(body.catalogue_generation||''),'ForeignTwin generation invalid');
+ assert(Number.isSafeInteger(body.estate_total)&&body.estate_total>0&&
+   Number.isSafeInteger(body.release_summary?.source_contracts)&&body.release_summary.source_contracts>=body.estate_total,
+   'ForeignTwin source release has zero or inconsistent source contracts');
+ assert(Array.isArray(body.twins)&&body.twins.length<=200,'ForeignTwin source page unbounded');
+ return {route,status:200,sha256:reply.sha256,generation:body.catalogue_generation,
+   estate_total:body.estate_total,source_contracts:body.release_summary.source_contracts};
+}
+export function verifyForeignApexReadbacks(rows){
+ const hosts=['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'];
+ assert(Array.isArray(rows)&&rows.length===hosts.length,'Four ForeignTwin apex reads required');
+ const generations=new Set(),totals=new Set();
+ for(const host of hosts){
+  const matches=rows.filter(row=>row.host===host);
+  assert.equal(matches.length,1,'ForeignTwin apex missing or duplicated: '+host);
+  const row=matches[0];
+  assert.equal(row.route,'/foreign/twins');assert.equal(row.status,200);
+  assert(/^[a-f0-9]{64}$/.test(row.sha256||''),'ForeignTwin digest missing');
+  assert(/^foreign-v[0-9]+-[a-f0-9]{8,}$/.test(row.generation||''),'ForeignTwin generation missing');
+  assert(Number.isSafeInteger(row.estate_total)&&row.estate_total>0&&
+    Number.isSafeInteger(row.source_contracts)&&row.source_contracts>=row.estate_total,
+    'ForeignTwin apex has no admitted source catalogue');
+  generations.add(row.generation);totals.add(row.estate_total);
+ }
+ assert.equal(generations.size,1,'ForeignTwin generation changed across apexes');
+ assert.equal(totals.size,1,'ForeignTwin counts changed across apexes');
+ return {generation:rows[0].generation,estate_total:rows[0].estate_total,hosts:hosts.length};
+}
+
 function browserAsset(name,asset,dir){
  const route='/apps/'+name,type=String(asset.type||'').split(';')[0].trim().toLowerCase();assert.equal(asset.status,200,route);
  assert((name.endsWith('.css')?['text/css']:['text/javascript','application/javascript']).includes(type),route+' content type');
@@ -371,6 +555,7 @@ const promotionRowKey=row=>JSON.stringify([row.route,row.status,row.route==='/'?
 export function verifyPromotionReceipt(dir,stage,stageHash){
  const promoted=load(join(dir,'promoted.mpk')),expected=expectedPromotionRows(stage).map(promotionRowKey).sort(),hosts=['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'];assert.equal(promoted.stageHash,stageHash,'Promotion belongs to a different frozen stage.');assert.equal(promoted.databaseWrites,false,'Promotion must not claim database writes.');assert.equal(promoted.rollback,join(dir,'previous-service.plist'),'Promotion rollback path changed.');assert(Number.isFinite(Date.parse(promoted.activated)),'Promotion timestamp is malformed.');
  for(const [name,rows]of [['local',promoted.local],['public',promoted.publicRoutes]]){assert(Array.isArray(rows),'Promotion '+name+' readback is missing.');assert(rows.filter(row=>row.route==='/').every(row=>/^[a-f0-9]{64}$/.test(row.sha256||'')),'Promotion '+name+' home digest is malformed.');for(const host of hosts)assert.deepEqual(rows.filter(row=>row.host===host).map(promotionRowKey).sort(),expected,'Promotion '+name+' readback changed for '+host);assert(rows.every(row=>hosts.includes(row.host)),'Promotion '+name+' readback contains an unknown host.');}
+ if(promoted.foreignSources){verifyForeignApexReadbacks(promoted.foreignSources.local);verifyForeignApexReadbacks(promoted.foreignSources.public);}
  return promoted;
 }
 async function currentPublicSample(dir,stage){
@@ -415,17 +600,50 @@ async function verifyFrozen(dir){
  const sample=await currentPublicSample(dir,stage);console.log('FROZEN_VERIFIED '+dir+'\n'+JSON.stringify({stage_sha256:stageHash,acceptance_key:accepted.acceptanceKey,acceptance_logs:accepted.logs.length,promoted_at:promoted.activated,current_sample_routes:sample.length}));
 }
 
+
+// Warm all four public homes within one release-wide deadline. A cold source
+// projection must not multiply a 90s timeout by hosts and retry attempts.
+export async function warmPublicHomes(port,{hosts=['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'],
+ attempts=8,timeoutMs=90000,perAttemptMs=10000,delayMs=1000,
+ fetchFn=fetch,sleepFn=Bun.sleep,now=Date.now,onWarm=()=>{}}={}){
+ assert(/^\d{1,5}$/.test(String(port))&&+port>0&&+port<=65535,'Invalid local WebAddress port');
+ assert(Number.isSafeInteger(timeoutMs)&&timeoutMs>=1&&timeoutMs<=90000,'Invalid release warmup deadline');
+ assert(Number.isSafeInteger(perAttemptMs)&&perAttemptMs>=1&&perAttemptMs<=90000,'Invalid warmup attempt timeout');
+ assert(Number.isSafeInteger(attempts)&&attempts>=1&&attempts<=8,'Invalid warmup attempt count');
+ assert(Number.isSafeInteger(delayMs)&&delayMs>=0&&delayMs<=10000,'Invalid warmup retry delay');
+ const deadline=now()+timeoutMs;
+ await Promise.all(hosts.map(async host=>{
+  let lastError='';
+  for(let attempt=0;attempt<attempts;attempt++){
+   const remaining=deadline-now();
+   if(remaining<=0)break;
+   try{
+    const response=await fetchFn('http://127.0.0.1:'+port+'/',{
+     headers:{Host:host,Accept:'text/html'},
+     signal:AbortSignal.timeout(Math.max(1,Math.min(perAttemptMs,remaining)))
+    });
+    await readBoundedPublicBody(response);
+    if(response.status===200){onWarm(host,200);return;}
+    lastError='status '+response.status;
+   }catch(error){lastError=error?.message||String(error);}
+   const delay=Math.min(delayMs,Math.max(0,deadline-now()));
+   if(delay>0)await sleepFn(delay);
+  }
+  throw Error('Warm-up failed for '+host+(lastError?': '+lastError:' (shared deadline exhausted)'));
+ }));
+}
 async function activate(dir){
  const stage=inspectRelease(dir),conf=parsePlist(join(dir,'candidate-service.plist')),chrome=process.env.BONFYRE_CHROMIUM_BINARY||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',extensionChrome=findExtensionChromium(process.env);assert(extensionChrome,'Chrome for Testing or Chromium is required for installed-extension acceptance.');
  const env=acceptanceEnvironment(dir,conf.EnvironmentVariables,process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test',chrome,{...process.env,BONFYRE_EXTENSION_CHROMIUM_BINARY:extensionChrome}),groups=acceptanceGroups();
  const accepted=requireAcceptance(dir,hash(join(dir,'stage.mpk')),await acceptanceIdentity({groups,env,runtimes:[chrome,extensionChrome,env.BONFYRE_TEST_BROWSER]}),groups);verifyInputs(stage);
  for(const log of accepted.logs)assert.equal(hash(join(dir,log.path)),log.sha256);assert.equal(hash(plist),stage.previousHash,'Service changed since review.');
  const before=parsePlist(plist),candidate=parsePlist(join(dir,'candidate-service.plist'));assert.equal(candidate.EnvironmentVariables.BONFYRE_AUTH_BINARY,before.EnvironmentVariables.BONFYRE_AUTH_BINARY);assert(candidate.EnvironmentVariables.BONFYRE_CMS_BINARY===before.EnvironmentVariables.BONFYRE_CMS_BINARY||candidate.EnvironmentVariables.BONFYRE_CMS_BINARY===join(dir,'native/cmd/BonfyreCMS/bonfyre-cms'),'CMS must be unchanged or this release\'s own frozen copy.');assert.equal(candidate.EnvironmentVariables.BONFYRE_CMS_DB,before.EnvironmentVariables.BONFYRE_CMS_DB);
+ requirePublishedForeignSources(candidate.EnvironmentVariables.BONFYRE_CMS_DB);
  const candidateHash=hash(join(dir,'candidate-service.plist')),temporary=plist+'.activity-candidate';let stopped=false;
  try{
   copyFileSync(join(dir,'candidate-service.plist'),temporary);run(['/usr/bin/plutil','-lint',temporary]);assert.equal(hash(temporary),candidateHash);assert.equal(hash(plist),stage.previousHash);
   run(['/bin/launchctl','bootout',domain,plist]);stopped=true;renameSync(temporary,plist);run(['/bin/launchctl','bootstrap',domain,plist]);
-   {const port=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];console.log('WARM_BEGIN');for(const host of ['aurekai.work','aurekai.live','aurekai.life','aurekai.shop']){let warmed=false,lastError='';for(let i=0;i<8;i++){try{const r=await fetch('http://127.0.0.1:'+port+'/',{headers:{Host:host,Accept:'text/html'},signal:AbortSignal.timeout(90000)});await r.arrayBuffer();if(r.status===200){console.log('WARM '+host+' '+r.status);warmed=true;break;}lastError='status '+r.status;}catch(e){lastError=e.message||String(e);}await Bun.sleep(1000);}assert(warmed,'Warm-up failed for '+host+(lastError?': '+lastError:''));}}
+   {const port=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];console.log('WARM_BEGIN');await warmPublicHomes(port,{onWarm:(host,status)=>console.log('WARM '+host+' '+status)});}
    // Every publisher-approved member journal must warm and pass a complete
    // local article census before any public acceptance can be claimed.
    const memberCanaries=selectMemberJournalCanaries(candidate.EnvironmentVariables.BONFYRE_CMS_DB);
@@ -443,7 +661,12 @@ async function activate(dir){
     console.log('LOCAL_MEMBER_JOURNAL_OK '+memberCanary.host+' '+verified.routes_verified+'/'+memberCanary.total);
    }
   console.log('LOCAL_READBACK_BEGIN '+dir);let local,error;for(let i=0;i<8;i++){try{local=await smoke(dir);break;}catch(e){error=e;console.log('LOCAL_READBACK_RETRY '+(i+1)+' '+e.message);await Bun.sleep(500);}}assert(local,error?.message||'Local readback unavailable.');console.log('LOCAL_READBACK_OK '+local.length);
+  const sourcePort=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];
+  const localForeign=await Promise.all(['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'].map(async host=>({host,...await foreignCatalogueReadback('http://127.0.0.1:'+sourcePort,host)})));
+  verifyForeignApexReadbacks(localForeign);
   console.log('RENDERED_FRONTS_BEGIN');const front=await frontIntegrity({chrome,port:candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1]}),broken=front.filter(f=>f.hard);assert(!broken.length,'Rendered fronts failed: '+broken.slice(0,6).map(f=>f.host+' '+f.width+' '+f.kind+' '+f.detail).join('; '));
+  const publicForeign=await Promise.all(['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'].map(async host=>({host,...await foreignCatalogueReadback('https://'+host,undefined,(base,path)=>retryReadbackTransport(request,base,path,undefined,{attempts:3,delayMs:250}))})));
+  verifyForeignApexReadbacks(publicForeign);
   console.log('RENDERED_FRONTS_OK '+front.length+' notes');console.log('PUBLIC_READBACK_BEGIN');
    const publicRoutes=await smoke(dir,{publicRead:true});
    const memberPublic=[];

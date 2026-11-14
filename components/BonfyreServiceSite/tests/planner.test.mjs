@@ -14,6 +14,12 @@ const repo=resolve(import.meta.dir,'../../..'),scratch=mkdtempSync(join(tmpdir()
 afterAll(()=>rmSync(scratch,{recursive:true,force:true}));
 const input=JSON.parse(readFileSync(join(repo,'packs/aurekai-work-samples/site/fixture-planner.json'),'utf8'));
 const {catalogue}=plannerFiles(input),form='planner-red3-fixtures',page='/red3-planner/';
+test('planner packages the exact-passage reviewer in versioned and legacy assets',()=>{
+  const bundle=plannerFiles(input);
+  expect(bundle.files['opportunity-selection.mjs']).toBeDefined();
+  expect(bundle.files[bundle.asset_prefix+'opportunity-selection.mjs']).toBeDefined();
+  expect(Buffer.from(bundle.files['planner-client.mjs']).toString()).toContain('openPlannerSourceReview');
+});
 const plan=()=>startingPlan(catalogue,'compact','test-plan-001');
 const body=p=>planRequest(p,catalogue,{form,page,name:'Planner test',email:'planner@example.invalid'});
 const request=(data,origin='https://example.test',route='/api/lead/'+form)=>new Request('https://example.test'+route,{method:'POST',headers:{origin,'content-type':'application/json'},body:data});

@@ -237,6 +237,15 @@ int main(void) {
     if (occurrences(index, "data-person-subject='person:nick'") != 1 ||
         !strstr(index, "nick.aurekai.life") || !strstr(index, "nick.aurekai.live") || !strstr(index, "data-profile-primary href='https://nick.aurekai.work/'"))
         fail("published hosts for one exact subject were not grouped");
+    /* Published people open real profile tabs, never inert placeholders. */
+    {
+        static const char *const tabs[] = {"posts", "gallery", "communities", "organizations"};
+        for (size_t i = 0; i < sizeof(tabs) / sizeof(tabs[0]); i++) {
+            char link[160];
+            snprintf(link, sizeof(link), "data-person-bucket href='https://nick.aurekai.work/?tab=%s'", tabs[i]);
+            if (!strstr(index, link)) fail("published member bucket lacks public profile destination");
+        }
+    }
     if (strstr(index, "draft.aurekai.work") || strstr(index, "person:draft"))
         fail("draft person presentation escaped onto public people surface");
     if (!strstr(index, "who=Alex%20Rivera&amp;source=source-one") || !strstr(index, "who=Alex%20Rivera&amp;source=source-two"))

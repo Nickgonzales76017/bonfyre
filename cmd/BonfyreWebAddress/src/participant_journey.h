@@ -41,13 +41,15 @@ static int pj_encode(const char *s,char *out,size_t cap){
 /* Preserve the exact selected profile section through the existing SSO
  * handoff. This validates a destination, not an effect to replay after login. */
 static int pj_profile_login_redirect(const char *query){
-    char tab[24]="overview",site[128]="",q[160]="",cursor[24]="",item[24]="",kind[16]="",view[20]="discover",peer[192]="";
+    char tab[24]="overview",site[128]="",q[160]="",cursor[24]="",item[24]="",kind[16]="",view[20]="discover",peer[192]="",facet[32]="";
     PjField fields[]={{"tab",tab,sizeof(tab)},{"site",site,sizeof(site)},
-      {"q",q,sizeof(q)},{"cursor",cursor,sizeof(cursor)},{"item",item,sizeof(item)},{"kind",kind,sizeof(kind)},{"view",view,sizeof(view)},{"peer",peer,sizeof(peer)}};
-    if(!pj_fields(query,fields,8,2048))return 0;
-    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities","dating"};
+      {"q",q,sizeof(q)},{"cursor",cursor,sizeof(cursor)},{"item",item,sizeof(item)},{"kind",kind,sizeof(kind)},{"view",view,sizeof(view)},{"peer",peer,sizeof(peer)},{"facet",facet,sizeof(facet)}};
+    if(!pj_fields(query,fields,9,2048))return 0;
+    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities","dating","connections"};
     int found=0;for(size_t i=0;i<sizeof(allowed)/sizeof(allowed[0]);i++)if(!strcmp(tab,allowed[i]))found=1;
     if(!found||(*site&&!pj_key(site,sizeof(site)))||(*kind&&(!pj_kind(kind)||strcmp(tab,"activity")))||
+ (*facet&&(strcmp(tab,"connections")||strlen(facet)>31||
+  strspn(facet,"abcdefghijklmnopqrstuvwxyz0123456789-")!=strlen(facet)))||
  (!ak_app_tab(tab)&&(*peer||strcmp(view,"discover")))||
  (ak_app_tab(tab)&&!ak_app_tab_view(ak_app_tab(tab),view))||
  (*peer&&(!ak_app_tab(tab)||strcmp(view,ak_app_tab(tab)->peer_view)||strncmp(peer,"person:",7)||

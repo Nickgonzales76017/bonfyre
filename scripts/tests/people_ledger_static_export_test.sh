@@ -17,7 +17,9 @@ INSERT INTO item(source,key,title,kind,by) VALUES ('feed-a','a','First story','a
 "
 web="$root/cmd/BonfyreWebAddress/bonfyre-web-address"
 "$web" bootstrap-owned --db "$tmp/matrix.db" >/dev/null
-sqlite3 "$tmp/cms.db" 'CREATE TABLE fixture(id INTEGER);'
+sqlite3 "$tmp/cms.db" "CREATE TABLE internet_source(source TEXT,status TEXT,label TEXT,publisher_name TEXT);
+INSERT INTO internet_source VALUES ('feed-a','published','Fixture A','Fixture A'),
+ ('feed-b','published','Fixture B','Fixture B');"
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 BONFYRE_CMS_DB="$tmp/cms.db" BONFYRE_ITEM_ARCHIVE_DB="$tmp/items.db" \
   "$web" serve --db "$tmp/matrix.db" --auth-db "$tmp/auth.db" --port "$port" \

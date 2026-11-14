@@ -56,7 +56,9 @@ make -C integrations/browser verify-workbench
 make -C integrations/browser publish-workbench
 ```
 
-The publisher uses `components/BonfyreServiceSite/cloud.mjs` and the existing account. It verifies all served source digests and that the production deployment did not change while publishing the `browser-workbench` preview branch. An identical release is read back without another deployment. The public gallery is a separate canonical `service_site` CMS record, published by `site.mjs publish`; do not patch its generated output as a substitute for a CMS update.
+The workbench publisher uses `components/BonfyreServiceSite/cloud.mjs` and the existing account. It verifies all served source digests and that the production deployment did not change while publishing the `browser-workbench` preview branch. An identical release is read back without another deployment.
+
+The public gallery is a separate canonical `service_site` CMS record, published by `site.mjs publish`; do not patch its generated output as a substitute for a CMS update. That publication owner now refuses a missing or mismatched `public_origin` and checks every authored documentation link across the full CMS record before deploying. After Cloudflare accepts the gallery deployment, the same owner verifies the exact published bytes of all built pages, the stylesheet, robots file and sitemap. A mismatched live readback reports **deployment accepted, live unverified** rather than successful publication. These source-side guards have not themselves been promoted or proved by a fresh end-to-end gallery release; the new unit cases must run before promotion.
 
 ## Session continuity
 

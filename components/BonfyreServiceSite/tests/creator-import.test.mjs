@@ -20,6 +20,8 @@ test('truncated, forged, unsupported and oversized WAV headers are refused befor
   }
   expect(() => decodeWav(source, 100)).toThrow();
   const tooLong = wav(8000, 1, 8000 * 31); expect(() => decodeWav(tooLong)).toThrow();
+  const narration=decodeWav(tooLong,undefined,{metadataOnly:true});expect(narration.frames).toBe(8000*31);expect(narration.samples).toBeNull();
+  expect(() => decodeWav(wav(8000,1,8000*601),undefined,{metadataOnly:true})).toThrow();
 });
 test('float32 WAV validates nonfinite and out-of-range samples', () => {
   const bytes = new ArrayBuffer(48), v = new DataView(bytes), original = new Uint8Array(wav(8000, 1, 2));

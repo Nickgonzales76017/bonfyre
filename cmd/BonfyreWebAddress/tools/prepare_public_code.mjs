@@ -15,6 +15,7 @@ const digest=body=>createHash('sha256').update(body).digest('hex');
 const here=dirname(fileURLToPath(import.meta.url));
 export const buildDirectory=resolve(here,'../build');
 export const inputDirectory=join(buildDirectory,'public-code');
+export const retainedDirectory=resolve(here,'../vendor/qr-code-generator');
 export function verifyInput(body,input) {
   if(body.length!==input.bytes||digest(body)!==input.sha256)throw Error('QR build input does not match its reviewed source: '+input.name);
   if(!body.subarray(0,1800).toString('utf8').includes('Copyright (c) Project Nayuki. (MIT License)'))throw Error('QR build-input notice is missing.');
@@ -54,7 +55,7 @@ export async function prepare({paths=null,allowFetch=false}={}) {
   try {await verifyPrepared();return {cached:true,directory:inputDirectory};}
   catch(error){if(error.code!=='ENOENT')throw error;}
   if(paths&&(!Array.isArray(paths)||paths.length!==inputs.length))throw Error('Supply both retained source bodies in C/header order.');
-  if(!paths&&!allowFetch)throw Error('Missing pinned QR inputs. Run: bun tools/prepare_public_code.mjs --fetch; or supply the two retained public source body paths.');
+  if(!paths&&!allowFetch)paths=inputs.map(input=>join(retainedDirectory,input.name));
   const bodies=[];
   // Read/validate every input before making any output visible to the compiler.
   for(let i=0;i<inputs.length;i++)bodies.push(paths?await regular(paths[i],inputs[i]):await fetchInput(inputs[i]));
@@ -73,7 +74,8 @@ export async function prepare({paths=null,allowFetch=false}={}) {
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const args=process.argv.slice(2);
   if(args.length===1&&args[0]==='--check')await verifyPrepared();
+  else if(args.length===1&&args[0]==='--retained')console.log(await prepare());
   else if(args.length===1&&args[0]==='--fetch')console.log(await prepare({allowFetch:true}));
   else if(args.length===2&&!args.some(x=>x.startsWith('--')))console.log(await prepare({paths:args}));
-  else throw Error('Use --check, --fetch, or two exact retained source body paths.');
+  else throw Error('Use --check, --retained, --fetch, or two exact retained source body paths.');
 }

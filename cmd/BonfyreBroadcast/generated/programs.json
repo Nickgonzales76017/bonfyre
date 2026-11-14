@@ -1,0 +1,456 @@
+{
+    "censuses": {
+        "mainstream": [
+            "feed-apartment-therapy-home",
+            "feed-atlas-obscura",
+            "feed-bon-appetit",
+            "feed-budget-bytes",
+            "feed-candysdirt",
+            "feed-gardenista",
+            "feed-nbcdfw",
+            "feed-npr-food",
+            "feed-npr-health",
+            "feed-nyt-books",
+            "feed-nyt-travel",
+            "feed-nyt-well",
+            "feed-recipetin",
+            "feed-sallys-baking",
+            "feed-texas-monthly",
+            "feed-texas-tribune",
+            "feed-wfaa",
+            "feed-billboard",
+            "feed-cbs-sports",
+            "feed-consequence",
+            "feed-dallas-observer-music",
+            "feed-deadline",
+            "feed-eonline",
+            "feed-espn-nba",
+            "feed-espn-nfl",
+            "feed-espn-top",
+            "feed-hollywood-reporter",
+            "feed-pitchfork",
+            "feed-rolling-stone",
+            "feed-stereogum",
+            "feed-variety",
+            "feed-apartment-therapy",
+            "feed-cpsc-recalls-rss",
+            "feed-goodhousekeeping-products",
+            "feed-hypebeast",
+            "feed-kiplinger-spending",
+            "feed-modern-retail",
+            "feed-retaildive",
+            "feed-slickdeals-frontpage",
+            "feed-cnbc-personal-finance",
+            "feed-cnbc-small-business",
+            "feed-entrepreneur",
+            "feed-fast-company",
+            "feed-inc",
+            "feed-nerdwallet",
+            "feed-npr-business",
+            "feed-remotive",
+            "feed-sba-news",
+            "feed-weworkremotely",
+            "feed-refinery29",
+            "feed-indiewire",
+            "feed-bon-appetit-recipes",
+            "feed-letterboxd-journal",
+            "feed-slate",
+            "feed-the-atlantic",
+            "feed-defector",
+            "feed-the-kitchn",
+            "feed-d-magazine",
+            "feed-the-free-press",
+            "feed-highsnobiety",
+            "feed-embedded",
+            "feed-dallas-observer",
+            "feed-kottke",
+            "feed-nme",
+            "feed-blackbird-spyplane",
+            "feed-who-what-wear",
+            "feed-axios",
+            "feed-polygon",
+            "feed-hyperallergic",
+            "feed-uproxx",
+            "feed-vox",
+            "feed-eater",
+            "feed-colossal",
+            "feed-semafor",
+            "feed-the-takeout"
+        ],
+        "public-commons": [
+            "archive-feature-films",
+            "archive-dallas-live-music",
+            "archive-great-78",
+            "gbif-inaturalist-dfw",
+            "podcasting-2-0",
+            "podcast-index-recent",
+            "buzzcast"
+        ],
+        "open-content": [
+            "tvmaze-web-schedule",
+            "themealdb-b",
+            "themealdb-c",
+            "themealdb-p",
+            "themealdb-s",
+            "thecocktaildb-g",
+            "thecocktaildb-m",
+            "thecocktaildb-r",
+            "openlibrary-new-fiction",
+            "openlibrary-new-cooking",
+            "openlibrary-new-science-fiction",
+            "radio-browser-top",
+            "scryfall-sets",
+            "cheapshark-deals",
+            "openf1-meetings",
+            "inaturalist-texas",
+            "gbif-texas",
+            "nws-alerts-texas",
+            "usgs-quakes-week",
+            "hn-new",
+            "lobsters-hottest",
+            "artic-artworks",
+            "cleveland-artworks",
+            "openalex-recent",
+            "europepmc-recent",
+            "federal-register-new",
+            "cpsc-recalls",
+            "openfda-food-recalls"
+        ]
+    },
+    "runtimes": [
+        {
+            "id": "outetts",
+            "runtime": "llama-tts",
+            "model": "outetts-0.3-500m-q4km",
+            "vocoder": "wavtokenizer-large-75-f16",
+            "licence": "OuteTTS 0.3 500M, CC BY-SA 4.0; WavTokenizer, MIT",
+            "min_recall": 0.6
+        }
+    ],
+    "readback": [
+        "~/.local/share/whisper/ggml-base.en.bin",
+        "~/.local/share/whisper/ggml-tiny.en.bin"
+    ],
+    "system_exclude": [
+        "Albert",
+        "Bad News",
+        "Bahh",
+        "Bells",
+        "Boing",
+        "Bubbles",
+        "Cellos",
+        "Wobble",
+        "Jester",
+        "Good News",
+        "Organ",
+        "Superstar",
+        "Trinoids",
+        "Whisper",
+        "Zarvox",
+        "Ralph",
+        "Fred",
+        "Junior",
+        "Kathy",
+        "Eddy",
+        "Flo",
+        "Grandma",
+        "Grandpa",
+        "Reed",
+        "Rocko",
+        "Sandy",
+        "Shelley"
+    ],
+    "providers": [
+        {
+            "id": "openai-speech",
+            "url": "https://api.openai.com/v1/audio/speech",
+            "model": "gpt-4o-mini-tts",
+            "voice": "alloy",
+            "key_env": "BONFYRE_OPENAI_TTS_KEY",
+            "licence": "OpenAI usage terms; disclose the voice is AI-generated"
+        },
+        {
+            "id": "kokoro-loopback",
+            "url": "http://127.0.0.1:8880/v1/audio/speech",
+            "model": "kokoro",
+            "voice": "af_heart",
+            "licence": "Kokoro-82M, Apache 2.0"
+        }
+    ],
+    "pools": [
+        {
+            "id": "netlabel-open",
+            "query": "collection:netlabels AND mediatype:audio AND licenseurl:(\"http://creativecommons.org/licenses/by/3.0/\" OR \"http://creativecommons.org/licenses/by-sa/3.0/\" OR \"http://creativecommons.org/licenses/by/4.0/\" OR \"http://creativecommons.org/licenses/by-sa/4.0/\" OR \"http://creativecommons.org/licenses/by/2.5/\" OR \"http://creativecommons.org/licenses/by-sa/2.5/\")",
+            "rows": 80,
+            "says": "netlabel releases under CC BY or CC BY-SA"
+        },
+        {
+            "id": "nasa-archive",
+            "query": "collection:nasaaudiocollection AND licenseurl:*publicdomain*",
+            "rows": 60,
+            "says": "NASA mission audio, public domain"
+        },
+        {
+            "id": "librivox-poetry",
+            "query": "collection:librivoxaudio AND subject:poetry AND licenseurl:*publicdomain*",
+            "rows": 80,
+            "says": "LibriVox poetry readings, public domain"
+        },
+        {
+            "id": "librivox-stories",
+            "query": "collection:librivoxaudio AND subject:(short stories) AND licenseurl:*publicdomain*",
+            "rows": 80,
+            "says": "LibriVox short story readings, public domain"
+        }
+    ],
+    "programs": [
+        {
+            "id": "estate-hour",
+            "title": "The Estate Hour",
+            "station": "Aurekai Radio",
+            "says": "what the estate's sources are reporting, read by its desks, with open-licence music between",
+            "cast": {
+                "anchor": {
+                    "prefer": [
+                        "neural",
+                        "provider",
+                        "system"
+                    ],
+                    "locale": "en"
+                },
+                "co": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_GB"
+                },
+                "local": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_US"
+                },
+                "weather": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_AU"
+                },
+                "recalls": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_IE"
+                },
+                "security": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_ZA"
+                },
+                "archive": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_IN"
+                }
+            },
+            "fallback": "local",
+            "clock": [
+                {
+                    "kind": "ident",
+                    "title": "Open",
+                    "say": "This is The Estate Hour on Aurekai Radio. Every story you hear was published by the source we name, and every song is shared under open terms.",
+                    "voice": "anchor",
+                    "bed": "netlabel-open"
+                },
+                {
+                    "kind": "desk",
+                    "title": "Headlines",
+                    "families": [
+                        "news",
+                        "today",
+                        "money",
+                        "health",
+                        "local-news"
+                    ],
+                    "census": "mainstream",
+                    "count": 10,
+                    "intro": "The headlines.",
+                    "voices": [
+                        "anchor",
+                        "co"
+                    ]
+                },
+                {
+                    "kind": "music",
+                    "title": "Interlude",
+                    "pool": "netlabel-open",
+                    "seconds": 75
+                },
+                {
+                    "kind": "desk",
+                    "title": "North Texas",
+                    "families": [
+                        "local-news"
+                    ],
+                    "count": 6,
+                    "intro": "Around North Texas.",
+                    "voices": [
+                        "local"
+                    ]
+                },
+                {
+                    "kind": "desk",
+                    "title": "Weather and hazards",
+                    "family": "hazards",
+                    "count": 4,
+                    "intro": "Weather and hazard notices.",
+                    "voices": [
+                        "weather"
+                    ]
+                },
+                {
+                    "kind": "desk",
+                    "title": "Recalls",
+                    "family": "recalls",
+                    "count": 4,
+                    "intro": "Product recalls.",
+                    "voices": [
+                        "recalls"
+                    ]
+                },
+                {
+                    "kind": "music",
+                    "title": "Interlude",
+                    "pool": "netlabel-open",
+                    "seconds": 60
+                },
+                {
+                    "kind": "desk",
+                    "title": "Security desk",
+                    "family": "vulnerabilities",
+                    "count": 4,
+                    "intro": "From the security desk.",
+                    "voices": [
+                        "security"
+                    ]
+                },
+                {
+                    "kind": "desk",
+                    "title": "Books",
+                    "family": "books",
+                    "count": 3,
+                    "intro": "On the books page.",
+                    "voices": [
+                        "co"
+                    ]
+                },
+                {
+                    "kind": "feature",
+                    "title": "From the mission archive",
+                    "pool": "nasa-archive",
+                    "seconds": 40,
+                    "say": "From NASA's public archive.",
+                    "voice": "archive"
+                },
+                {
+                    "kind": "feature",
+                    "title": "A poem",
+                    "pool": "librivox-poetry",
+                    "seconds": 90,
+                    "say": "A reading from the LibriVox volunteers.",
+                    "voice": "anchor"
+                },
+                {
+                    "kind": "outro",
+                    "title": "Close",
+                    "say": "That was The Estate Hour. The sources, licences and links for everything you heard are in the show notes.",
+                    "voice": "anchor",
+                    "bed": "netlabel-open"
+                }
+            ]
+        },
+        {
+            "id": "night-library",
+            "title": "Night Library",
+            "station": "Aurekai Radio",
+            "says": "public-domain stories and poems read by LibriVox volunteers, with quiet open-licence music between",
+            "cast": {
+                "host": {
+                    "prefer": [
+                        "neural",
+                        "provider",
+                        "system"
+                    ],
+                    "locale": "en"
+                },
+                "reader": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_IE"
+                },
+                "poet": {
+                    "prefer": [
+                        "system"
+                    ],
+                    "locale": "en_GB"
+                }
+            },
+            "fallback": "reader",
+            "clock": [
+                {
+                    "kind": "ident",
+                    "title": "Open",
+                    "say": "Night Library, on Aurekai Radio. Stories and poems from the public domain.",
+                    "voice": "host",
+                    "bed": "netlabel-open"
+                },
+                {
+                    "kind": "feature",
+                    "title": "A story",
+                    "pool": "librivox-stories",
+                    "seconds": 300,
+                    "say": "Tonight's first story.",
+                    "voice": "reader"
+                },
+                {
+                    "kind": "music",
+                    "title": "Between readings",
+                    "pool": "netlabel-open",
+                    "seconds": 60
+                },
+                {
+                    "kind": "feature",
+                    "title": "A poem",
+                    "pool": "librivox-poetry",
+                    "seconds": 120,
+                    "say": "A poem.",
+                    "voice": "poet"
+                },
+                {
+                    "kind": "music",
+                    "title": "Between readings",
+                    "pool": "netlabel-open",
+                    "seconds": 60
+                },
+                {
+                    "kind": "feature",
+                    "title": "Another story",
+                    "pool": "librivox-stories",
+                    "seconds": 300,
+                    "say": "One more.",
+                    "voice": "reader"
+                },
+                {
+                    "kind": "outro",
+                    "title": "Close",
+                    "say": "Night Library is read by LibriVox volunteers. Their recordings are in the public domain.",
+                    "voice": "host",
+                    "bed": "netlabel-open"
+                }
+            ]
+        }
+    ]
+}

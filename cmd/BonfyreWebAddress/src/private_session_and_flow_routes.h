@@ -51,56 +51,110 @@ static int asset_body_for_digest(const char *digest, char *out_path, size_t sz) 
     return found;
 }
 
-static int serve_asset_twin(const char *method, const char *target) {
-    char digest[128], body_path[PATH_MAX];
-    unsigned char *buf = NULL;
-    long len = 0;
-    FILE *f;
-    char hex[65];
-
-    if (strncmp(target, "/assets/twin/", 13)) return 0;
-    if (strcmp(method, "GET")) return 0;
-    if (!asset_twin_digest_target(target, digest)) {
-        protocol_reply(404, "application/json", "{\"error\":\"asset_twin_not_found\"}\n");
-        return 1;
+/* Locally produced audio is not a foreign observation. Its content-addressed
+ * body is eligible to leave the asset store ONLY while the CMS representation
+ * owner has a published media_program naming exactly this URL. */
+static int published_local_media_body(const char *target,char *out,size_t cap){
+    const char *root=getenv("BONFYRE_MEDIA_ASSET_ROOT");
+    const char *cms=getenv("BONFYRE_CMS_DB");
+    char digest[128],base[PATH_MAX],file[PATH_MAX];
+    sqlite3 *db=NULL;sqlite3_stmt *st=NULL;
+    struct stat info={0};int allowed=0;
+    if(!root||!*root||!cms||!*cms||!asset_twin_digest_target(target,digest))return 0;
+    const char *suffix=target+13+64;
+    if(strcmp(suffix,".m4a")&&strcmp(suffix,".vtt"))return 0;
+    if(sqlite3_open_v2(cms,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(sqlite3_prepare_v2(db,
+      "SELECT 1 FROM media_program WHERE media_kind='audio' AND "
+      "publication_state='published' AND status='published' AND "
+      "(asset_ref=?1 OR transcript_ref=?1) LIMIT 1",
+      -1,&st,NULL)!=SQLITE_OK)goto done;
+    sqlite3_bind_text(st,1,target,-1,SQLITE_TRANSIENT);
+    allowed=sqlite3_step(st)==SQLITE_ROW;
+    if(!allowed||!realpath(root,base))goto done;
+    if(snprintf(file,sizeof(file),"%s/%s",base,target+13)>=(int)sizeof(file)||
+       lstat(file,&info)!=0||!S_ISREG(info.st_mode)||info.st_size<=0||
+       info.st_size>128LL*1024*1024)goto done;
+    if(snprintf(out,cap,"%s",file)>=(int)cap)goto done;
+    sqlite3_finalize(st);sqlite3_close(db);return 1;
+done:
+    sqlite3_finalize(st);
+    if(db)sqlite3_close(db);
+    return 0;
+}
+#include "asset_byte_range.h"
+static int serve_asset_twin(const char *method,const char *target,const char *request) {
+    char digest[128],path[PATH_MAX],hex[65];
+    if(strncmp(target,"/assets/twin/",13))return 0;
+    if(strcmp(method,"GET")&&strcmp(method,"HEAD"))return 0;
+    if(!asset_twin_digest_target(target,digest)){
+        protocol_reply(404,"application/json","{\"error\":\"asset_twin_not_found\"}\n");return 1;
     }
-    if (!asset_body_for_digest(digest, body_path, sizeof(body_path))) {
-        protocol_reply(404, "application/json",
-            "{\"error\":\"asset_twin_not_found\",\"note\":\"no receipted observation carries this digest\"}\n");
-        return 1;
+    if(!asset_body_for_digest(digest,path,sizeof(path))&&
+       !published_local_media_body(target,path,sizeof(path))){
+        protocol_reply(404,"application/json","{\"error\":\"asset_twin_not_found\"}\n");return 1;
     }
-    f = fopen(body_path, "rb");
-    if (!f) { protocol_reply(503, "application/json", "{\"error\":\"retained_body_unreadable\"}\n"); return 1; }
-    fseek(f, 0, SEEK_END); len = ftell(f); fseek(f, 0, SEEK_SET);
-    /* The old 16 MiB image ceiling silently made receipted audio incapable of
-     * becoming a program.  Keep an explicit bounded native read, but make it
-     * large enough for ordinary public recordings.  Static publication carries
-     * the same verified body to an object store for the large-carrier path. */
-    if (len <= 0 || len > 128 * 1024 * 1024) { fclose(f);
-        protocol_reply(503, "application/json", "{\"error\":\"retained_body_out_of_range\"}\n"); return 1; }
-    buf = (unsigned char *)malloc((size_t)len);
-    if (!buf) { fclose(f); protocol_reply(503, "application/json", "{\"error\":\"oom\"}\n"); return 1; }
-    if (fread(buf, 1, (size_t)len, f) != (size_t)len) { free(buf); fclose(f);
-        protocol_reply(503, "application/json", "{\"error\":\"retained_body_short_read\"}\n"); return 1; }
-    fclose(f);
-
-    bf_sha256_hex(buf, (size_t)len, hex);
-    if (strcmp(hex, digest) != 0) {
-        /* The bytes on disk are no longer the bytes that were receipted. */
-        free(buf);
-        protocol_reply(409, "application/json",
-            "{\"error\":\"digest_mismatch\",\"reason\":\"the retained body no longer hashes to its receipt, "
-            "so it is not served\"}\n");
-        return 1;
+    /* Verify and serve through one no-follow file descriptor. The only large
+     * allocations are the kernel's normal I/O buffers, never the full audio. */
+    int fd=open(path,O_RDONLY|O_NOFOLLOW);
+    if(fd<0){protocol_reply(503,"application/json","{\"error\":\"retained_body_unreadable\"}\n");return 1;}
+    struct stat st={0};
+    if(fstat(fd,&st)||!S_ISREG(st.st_mode)||st.st_size<=0||st.st_size>128LL*1024*1024){
+        close(fd);protocol_reply(503,"application/json","{\"error\":\"retained_body_out_of_range\"}\n");return 1;
     }
-    printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %ld\r\n"
+    long len=(long)st.st_size;
+    FILE *file=fdopen(fd,"rb");
+    if(!file){close(fd);protocol_reply(503,"application/json","{\"error\":\"retained_body_unreadable\"}\n");return 1;}
+    BfSha256 sha;uint8_t digest_bytes[32],chunk[65536],sniff[64];
+    bf_sha256_init(&sha);uint64_t total=0;size_t got;
+    while((got=fread(chunk,1,sizeof(chunk),file))>0){
+        bf_sha256_update(&sha,chunk,got);total+=got;if(total>(uint64_t)len)break;
+    }
+    if(ferror(file)||total!=(uint64_t)len||fstat(fd,&st)||st.st_size!=len){
+        fclose(file);protocol_reply(503,"application/json","{\"error\":\"retained_body_short_read\"}\n");return 1;
+    }
+    bf_sha256_final(&sha,digest_bytes);bf_sha256_digest_hex(digest_bytes,hex);
+    if(strcmp(hex,digest)){
+        fclose(file);protocol_reply(409,"application/json","{\"error\":\"digest_mismatch\"}\n");return 1;
+    }
+    if(fseek(file,0,SEEK_SET)){
+        fclose(file);protocol_reply(503,"application/json","{\"error\":\"retained_body_unreadable\"}\n");return 1;
+    }
+    size_t sampled=fread(sniff,1,len<64?(size_t)len:64,file);
+    if(!sampled||ferror(file)){
+        fclose(file);protocol_reply(503,"application/json","{\"error\":\"retained_body_unreadable\"}\n");return 1;
+    }
+    const char *mime=asset_media_type(sniff,sampled);
+    long first=0,last=len-1;int ranged=asset_range(request,len,&first,&last);
+    if(ranged<0){
+        printf("HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */%ld\r\n"
+               "Accept-Ranges: bytes\r\nContent-Length: 0\r\nCache-Control: no-store\r\n"
+               "Connection: close\r\n\r\n",len);
+        fclose(file);fflush(stdout);return 1;
+    }
+    if(fseek(file,first,SEEK_SET)){
+        fclose(file);protocol_reply(503,"application/json","{\"error\":\"retained_body_unreadable\"}\n");return 1;
+    }
+    long span=last-first+1;
+    if(ranged)
+        printf("HTTP/1.1 206 Partial Content\r\nContent-Type: %s\r\n"
+               "Content-Range: bytes %ld-%ld/%ld\r\nContent-Length: %ld\r\n",
+               mime,first,last,len,span);
+    else
+        printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %ld\r\n",mime,len);
+    printf("Accept-Ranges: bytes\r\nETag: \"%s\"\r\n"
            "Cache-Control: public, max-age=31536000, immutable\r\n"
-           "X-Bonfyre-Twin-Digest: %s\r\nConnection: close\r\n\r\n",
-           asset_media_type(buf, (size_t)len), len, digest);
-    fwrite(buf, 1, (size_t)len, stdout);
-    fflush(stdout);
-    free(buf);
-    return 1;
+           "X-Bonfyre-Twin-Digest: %s\r\nConnection: close\r\n\r\n",hex,hex);
+    if(strcmp(method,"HEAD")){
+        long remaining=span;
+        while(remaining>0){
+            size_t amount=remaining<(long)sizeof(chunk)?(size_t)remaining:sizeof(chunk);
+            got=fread(chunk,1,amount,file);
+            if(!got||fwrite(chunk,1,got,stdout)!=got)break;
+            remaining-=(long)got;
+        }
+    }
+    fflush(stdout);fclose(file);return 1;
 }
 
 /* Authorization, not just authentication.

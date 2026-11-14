@@ -155,6 +155,7 @@ static const char *opt(int argc, char **argv, const char *name) { for (int i = 2
 #include "auth_routes_and_studio_core.h"
 #include "surface_world_and_community.h"
 #include "site_and_world_material.h"
+#include "article_listen.h"
 #include "page_core_rendering.h"
 #include "page_routes_and_emitters.h"
 #include "world_cache_and_cms_route.h"
@@ -578,7 +579,12 @@ static int serve(BfMatrix *m, int argc, char **argv) {
           if(!site_client[0]){struct sockaddr_storage peer; socklen_t peer_len=sizeof(peer);
             if(!getpeername(c,(struct sockaddr *)&peer,&peer_len)) getnameinfo((struct sockaddr *)&peer,peer_len,site_client,sizeof(site_client),NULL,0,NI_NUMERICHOST);}}
          snprintf(estate_request_territory, sizeof(estate_request_territory), "%s", territory_of(host));
-         int handled=bf_site_mcp_serve(method,target,query[0]?query:"",bodyp,host,origin_hdr,site_bearer,site_client);
+          /* Published, content-addressed media has an exact route. Serve it
+           * before unrelated page and account handlers can inspect or alter
+           * the request; no general route inherits its publication decision. */
+          int handled=0;
+          if(!strncmp(target,"/assets/twin/",13))handled=serve_asset_twin(method,target,b);
+          if(!handled)handled=bf_site_mcp_serve(method,target,query[0]?query:"",bodyp,host,origin_hdr,site_bearer,site_client);
          if(!handled) handled=serve_vertical_private(method,target,bodyp,bearer,auth_db,host);
          /* The Observatory owns its human/public maintained views.  It runs
           * before generic machine-web dispatch so a host-specific closure
@@ -749,7 +755,6 @@ static int serve(BfMatrix *m, int argc, char **argv) {
          if(!handled) handled=serve_observations_page(method,target,accept_hdr);
          if(!handled) handled=serve_night_page(method,target,host,accept_hdr);
          if(!handled) handled=serve_protocols(method,target,host,accept_hdr,query);
-         if(!handled) handled=serve_asset_twin(method,target);
          if(!handled) handled=serve_site_program(method,target,query[0]?query:NULL,host,accept_hdr,bearer,auth_db);
          if(!handled) handled=serve_world_composition(method,target,query[0]?query:NULL,bearer,auth_db);
          if(!handled) handled=serve_world_fragments(method,target,query[0]?query:NULL,bearer,auth_db);

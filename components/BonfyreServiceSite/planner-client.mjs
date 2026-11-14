@@ -3,13 +3,16 @@ import {readLocal,saveLocal} from './store.mjs';
 import {copyPlan} from './planner-projects.mjs';
 import {bindProjects} from './planner-project-client.mjs';
 import {createSpatialEditor} from './planner-spatial.mjs';
+import {openPlannerSourceReview} from './planner-source-review.mjs';
+import {verifyFixtureCatalogue} from './planner-catalogue.mjs';
+import {reviewPlanRefresh,useReviewedRefresh,resolveMissingPlanOptions,refreshBrief} from './planner-continuity.mjs';
 
 const root=document.querySelector('[data-planner]');
 const cfg=JSON.parse(root.querySelector('[data-planner-config]').textContent),catalogue=cfg.catalogue;
 const ui=name=>root.querySelector(`[data-ui="${name}"]`);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const product=id=>catalogue.products.find(p=>p.id===id);
-let projectWorkspace, spatial, lastValid;
+let projectWorkspace, spatial, lastValid,staleSaved;
 const undo=[],redo=[];
 let plan,revision=0,saved=null,selected=null,receipt=null,busy=false,conflict=false,storageAvailable=true;
 const prefix='fixture-plan:'+cfg.form+':';
@@ -81,6 +84,80 @@ async function save() {
 }
 function encoded(plan) {const bytes=new TextEncoder().encode(JSON.stringify(plan));return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function decoded(hash) {if(hash.length>22000)throw Error('This plan link is too long.');const raw=atob(hash.replace(/-/g,'+').replace(/_/g,'/'));return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(raw,c=>c.charCodeAt(0))));}
+// A saved plan from a retired catalogue stays intact until the customer reviews
+// the exact retained release and accepts a revision-checked replacement.
+function reviewSavedCatalogue(row){
+  const previous=(cfg.previous_catalogues??[]).find(c=>c.digest===row.value?.plan?.catalogue);
+  if(!previous){
+    error('This saved project needs its original retained catalogue before it can be reviewed. No saved work was changed.');
+    return;
+  }
+  let review;
+  try{review=reviewPlanRefresh(row.value.plan,previous,catalogue,{validatePlan,assessPlan});}
+  catch(e){error('The saved project source could not be reviewed: '+e.message);return;}
+  const dialog=document.createElement('dialog');
+  dialog.className='fp-dialog';
+  dialog.setAttribute('aria-label','Review changed catalogue for saved project');
+  const heading=document.createElement('h2'),summary=document.createElement('pre');
+  const choices=document.createElement('div'),status=document.createElement('p');
+  const actions=document.createElement('div'),accept=document.createElement('button'),keep=document.createElement('button');
+  heading.textContent='Review updated fixture sources';
+  summary.textContent=refreshBrief(review);
+  choices.className='fp-fields';actions.className='fp-pair';status.setAttribute('role','status');
+  accept.type=keep.type='button';accept.textContent='Use reviewed catalogue and save';
+  keep.textContent='Keep older project unchanged';
+  const selectors=[];
+  for(const missing of review.missing){
+    const label=document.createElement('label'),input=document.createElement('select');
+    label.textContent=missing.label+' — choose what happens to its placements';
+    input.dataset.oldProduct=missing.fixture;
+    input.add(new Option('Select a replacement or removal',''),new Option('Remove these placements','remove'));
+    for(const product of catalogue.products)input.add(new Option('Use '+product.label+' ('+product.option+')','replace:'+product.id));
+    label.append(input);choices.append(label);selectors.push(input);
+  }
+  const initial=JSON.stringify(plan),initialRevision=revision;
+  const reviewedChoices=()=>Object.fromEntries(selectors.map(s=>[s.dataset.oldProduct,s.value]));
+  const candidate=()=>review.missing.length
+    ?resolveMissingPlanOptions(row.value.plan,previous,catalogue,review,reviewedChoices(),{validatePlan,assessPlan})
+    :useReviewedRefresh(row.value.plan,previous,catalogue,review,{validatePlan,assessPlan});
+  const update=()=>{
+    accept.disabled=selectors.some(s=>!s.value);
+    if(accept.disabled){status.textContent='Choose a decision for every changed product option.';return;}
+    try{
+      const proposed=candidate().plan;
+      const assessment=assessPlan(proposed,catalogue);
+      status.textContent='New listed subtotal: '+money(assessment.subtotal)+'. '+assessment.issues.length+' layout or budget questions remain. No supplier approval is implied.';
+    }catch(e){accept.disabled=true;status.textContent=e.message;}
+  };
+  choices.addEventListener('change',update);
+  const close=()=>{dialog.close();dialog.remove();};
+  keep.addEventListener('click',()=>{close();message('Your original saved project was kept unchanged.');});
+  accept.addEventListener('click',async()=>{
+    if(busy||accept.disabled)return;
+    if(JSON.stringify(plan)!==initial||revision!==initialRevision){
+      status.textContent='Your working plan changed. Reopen the source review.';accept.disabled=true;return;
+    }
+    if(row.key!==prefix+review.project_id||!Number.isSafeInteger(row.revision)||row.revision<1){
+      status.textContent='Saved project identity is not valid for an update.';accept.disabled=true;return;
+    }
+    busy=true;accept.disabled=true;
+    try{
+      const next=candidate().plan;
+      const savedRow=await saveLocal(row.key,{plan:next,receipt:null},row.revision);
+      undo.length=redo.length=0;lastValid=null;selected=null;
+      plan=next;revision=savedRow.revision;saved=JSON.stringify(next);receipt=null;conflict=false;staleSaved=null;
+      close();error('');fields();render();positionEditor();
+      history.replaceState(null,'',projectURL());
+      message('Reviewed catalogue saved; your layout and notes were retained, but no prior receipt or approval was carried forward.');
+      try{await projectWorkspace?.refresh();}catch{}
+    }catch(e){status.textContent='Reviewed update was not saved: '+e.message;accept.disabled=false;}
+    finally{busy=false;controls();}
+  });
+  actions.append(accept,keep);dialog.append(heading,summary,choices,status,actions);
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  root.append(dialog);update();dialog.showModal();
+}
+
 function download() {const link=document.createElement('a'),url=URL.createObjectURL(new Blob([planBrief(plan,catalogue)],{type:'text/plain;charset=utf-8'}));link.href=url;link.download='fixture-project-brief.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 ui('details').addEventListener('submit',e=>e.preventDefault());ui('details').addEventListener('input',readFields);
@@ -100,6 +177,12 @@ ui('share').addEventListener('click',async()=>{
   if(!valid())return;const url=new URL(location.href);url.hash='plan='+encoded(plan);ui('share-box').hidden=false;ui('share-url').value=url.href;
   try {await navigator.clipboard.writeText(url.href);message('Link copied. Anyone with it can open a copy of this layout and its notes.');}catch{ui('share-url').select();message('Copy the selected link to share this plan.');}
 });
+ui('source-review').addEventListener('click',()=>{if(busy||!valid())return;
+  openPlannerSourceReview({root,catalogue,current:()=>({plan,revision}),adopt:next=>{
+    validatePlan(next,catalogue);plan=next;fields();changed();
+    message('Reviewed source passage added to unsaved plan notes; save to retain it.');
+  }});
+});
 ui('review').addEventListener('click',()=>{if(!valid())return;ui('brief').textContent=planBrief(plan,catalogue);controls();ui('review-dialog').showModal();});
 ui('close-review').addEventListener('click',()=>ui('review-dialog').close());
 ui('download').addEventListener('click',download);ui('print').addEventListener('click',()=>window.print());
@@ -118,12 +201,20 @@ ui('submit-form').addEventListener('submit',async e=>{
 function projectURL(){const url=new URL(location.href);url.searchParams.set('project',plan.id);return url;}
 function replacePlan(next){undo.length=redo.length=0;lastValid=null;plan=next;revision=0;saved=null;receipt=null;conflict=false;selected=null;error('');fields();render();positionEditor();}
 async function boot() {
+  await verifyFixtureCatalogue(catalogue);
+  if(!Array.isArray(cfg.previous_catalogues)||cfg.previous_catalogues.length>20)throw Error('Invalid retained catalogue history.');
+  const seen=new Set([catalogue.digest]);
+  for(const prior of cfg.previous_catalogues){
+    await verifyFixtureCatalogue(prior);
+    if(prior.id!==catalogue.id||prior.origin!==catalogue.origin||seen.has(prior.digest))throw Error('Invalid retained catalogue source.');
+    seen.add(prior.digest);
+  }
   ui('products').innerHTML=catalogue.products.map(p=>`<article class="fp-product"><div class="fp-photo"><img src="${esc(p.image)}" alt="${esc(p.label)}" referrerpolicy="no-referrer"></div><div class="fp-product-body"><span class="fp-use">${esc(p.use)}</span><h3>${esc(p.label)}</h3><p>${esc(p.option)}</p><p class="fp-photo-note">Listing photo may show other options.</p><p>${p.dimensions?.depth?`${p.dimensions.width}″ × ${p.dimensions.depth}″ footprint`:p.dimensions?`${p.dimensions.width}″ wide · depth to confirm`:'Countertop size to confirm'}</p><p class="fp-price">${money(p.price_cents)}</p><a href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">Listing observed ${esc(p.observed_at.slice(0,10))} ↗</a><button type="button" data-add="${esc(p.id)}">+ Add to plan</button></div></article>`).join('');
   plan=startingPlan(catalogue);
   if(location.hash.startsWith('#plan=')){
     try{const incoming=decoded(location.hash.slice(6));validatePlan(incoming,catalogue);plan={...incoming,id:crypto.randomUUID()};message('You opened a shared copy. Changes you make stay in your own plan.');history.replaceState(null,'',location.pathname+location.search);}catch(e){error('Could not open the shared plan. '+e.message);}
   }else{
-    try{const rows=await readLocal(prefix),last=rows.find(r=>r.key===prefix+'latest');const requested=new URL(location.href).searchParams.get('project');const kept=rows.find(r=>r.key===prefix+(requested||last?.value.id));if(requested&&!kept)message('This project is not saved on this browser. A new plan is open.');if(kept){validatePlan(kept.value.plan,catalogue);plan=kept.value.plan;revision=kept.revision;saved=JSON.stringify(plan);receipt=/^lead:planner:[a-f0-9]{64}$/.test(kept.value.receipt)?kept.value.receipt:null;}}
+    try{const rows=await readLocal(prefix),last=rows.find(r=>r.key===prefix+'latest');const requested=new URL(location.href).searchParams.get('project');const kept=rows.find(r=>r.key===prefix+(requested||last?.value.id));if(requested&&!kept)message('This project is not saved on this browser. A new plan is open.');if(kept){try{validatePlan(kept.value.plan,catalogue);plan=kept.value.plan;revision=kept.revision;saved=JSON.stringify(plan);receipt=/^lead:planner:[a-f0-9]{64}$/.test(kept.value.receipt)?kept.value.receipt:null;}catch{staleSaved=kept;}}}
     catch(e){storageAvailable=false;error('Could not reopen the saved plan. You can still explore and download a brief. '+e.message);}
   }
   fields();render();positionEditor();
@@ -132,7 +223,7 @@ async function boot() {
   },create:()=>replacePlan(startingPlan(catalogue)),copy:()=>{if(!valid())throw Error('Correct the plan before making a copy.');replacePlan(copyPlan(plan,catalogue));message('This is a new option. Save it to keep both plans.');},
   canLeave:()=>unchanged()||confirm('Leave this plan without saving its changes?'),isBusy:()=>busy,fail:error});
   try{await projectWorkspace.init();}catch{error('Saved projects could not be opened. You can still explore and download a brief.');}
-  root.dataset.ready='true';
+  root.dataset.ready='true';if(staleSaved)reviewSavedCatalogue(staleSaved);
 }
 spatial=createSpatialEditor({root,catalogue,onSelect:select,onChange:spatialChange,canEdit:()=>{try{return !busy&&Boolean(validatePlan(plan,catalogue));}catch{return false;}},fail:error});
 boot().catch(e=>error('The planner could not open. '+e.message));

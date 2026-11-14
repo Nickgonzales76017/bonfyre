@@ -1,0 +1,83 @@
+architecture broadcast
+  canonical_name Broadcast
+  family surface
+  domain Media / Produced audio programs
+  layer surface
+  semantic_question Given the item archive, the model estate's speech runtimes, the system's voices and open-licence archives, what produced audio programme can be made now, who speaks each line, what did each line cite, and what could not be voiced or played?
+  purpose Native composer of produced audio programmes. A programme is a CUE clock (schemas/control/broadcast-programs.cue): desks read the freshest cited items of declared families or censuses, music and features cut open-terms excerpts from Internet Archive pools, idents speak over a ducked bed. Voices are cast from discovery, never named in code: neural runtimes over model-estate bodies verified by bonfyre model and loaded under an admission memory grant, the system's installed voices by locale, and speech providers whose key is present. The output is one programme audio file with Podcasting 2.0 chapters, a WebVTT transcript, credits with excerpt digests and a manifest of casts, fallbacks and skips, written as a draft MediaProgram.
+  maturity implemented
+  owns BroadcastProgramme
+  owns BroadcastPlan
+  owns BroadcastRender
+  consumes ItemArchive
+  consumes MediaProgram
+  publishes MediaProgram
+  command BonfyreBroadcast
+  internal_calculus cast roles onto discovered engines by kind preference, locale and distinctness; score desk candidates by recency plus log publisher depth, two lines per publisher, recurring dated columns dropped; open-terms check per excerpt at fetch time; loudness-normalised mixdown
+  source_path cmd/BonfyreBroadcast/src/main.c
+  source_path cmd/BonfyreBroadcast/src/narration_intake.h
+  source_path cmd/BonfyreBroadcast/tests/article_revision_test.c
+  source_path cmd/BonfyreBroadcast/src/editorial_mix.h
+  source_path cmd/BonfyreBroadcast/src/narration_assembly.h
+  source_path schemas/control/narration-assembly.yaff
+  source_path schemas/control/narration-assembly.cue
+  source_path integrations/browser/narration-production.mjs
+  source_path cmd/BonfyreBroadcast/tests/narration_assembly_test.sh
+  witness cmd/BonfyreBroadcast/tests/narration_assembly_test.sh checks a 64-take assembly plus gain, placement, a silent gap, transcript timing and a music mix; it refuses overlap and changed takes
+  invariant native narration assembly admits at most 64 ordered non-overlapping takes and ten minutes, rechecks source hashes, and produces an exclusive WAV and escaped transcript for the editorial mixer
+  invariant a browser assembly plan snapshots the production once and reuses the snapshot take buffers, so later edits cannot alter the prepared sources
+  forbidden_inference a valid assembly plan -> reviewed scripts, authorized music or an approved publication
+  known_gap the account arrangement can prepare a source-addressed assembly plan, but its UI does not yet submit retained production and blob identities to the native assembly service
+  source_path cmd/BonfyreBroadcast/tests/editorial_mix_test.sh
+  source_path cmd/BonfyreCMS/content-types/media_program.json
+  source_path cmd/BonfyreWebAddress/src/site_mcp.c
+  source_path cmd/BonfyreWebAddress/tests/site_product_test.sh
+  witness cmd/BonfyreBroadcast/tests/editorial_mix_test.sh retains the v2 revision in a draft mix and refuses publication after structured source edits
+  witness cmd/BonfyreWebAddress/tests/site_product_test.sh checks current v2 recordings are shown and structured article edits hide stale audio
+  invariant a v2-bound editorial mix carries the same published article revision through the draft media record and the public reader checks the current revision before exposing the recording
+  witness cmd/BonfyreBroadcast/tests/article_revision_test.c checks public structured article revision identity, draft to published parity, duplicate subject refusal and namespace isolation
+  invariant the v2 article revision hashes one bounded database snapshot of public editor data and keeps existing media source fingerprints unchanged
+  forbidden_inference an article revision fingerprint -> reviewed narration, music rights, or publication
+  known_gap legacy source fingerprints do not cover structured editor content; v2-bound drafts require the CMS media revision field and do not by themselves produce or publish narration
+  source_path cmd/BonfyreBroadcast/Makefile
+  source_path schemas/control/broadcast-programs.cue
+  source_path cmd/BonfyreBroadcast/tests/broadcast_test.sh
+  witness cmd/BonfyreBroadcast/tests/broadcast_test.sh: offline fixture archive and fixed engines; casting honours readiness, preference, locale and distinctness; the empty desk is dropped and recorded; two lines per publisher; future, stale and recurring-column items excluded; one title once; every desk line cites source, key and href; publish writes one draft row idempotently and never a publication (make -C cmd/BonfyreBroadcast test PASS, 2026-11-08)
+  witness 2026-11-08 real render of estate-hour against ~/.bonfyre/estate-local/items.db (88,531 items): 545.8 s programme, 39 spoken lines, 6 open-licence excerpts (netlabel CC BY / BY-SA, NASA public domain, LibriVox public domain), 12 chapters, integrated loudness -16.8 LUFS; whisper read the opening back intelligibly. The neural anchor was deferred by admission (spendable memory) and the manifest records 11 fallbacks to system voices
+  invariant every desk line carries the source, key and href of the item it reads
+  invariant an excerpt plays only when its source states public domain, CC0, CC BY or CC BY-SA at fetch time; anything else is skipped and recorded
+  invariant a neural speech load takes a memory grant first; a refused grant falls back and is recorded, never loads into swap
+  invariant a neural line is kept only when whisper's read-back recall meets the runtime's floor
+  invariant publish writes a draft; publication and hosting are the owner's
+  forbidden_inference a spoken headline -> the story is true, current or endorsed; it repeats the item's title and names its publisher and date
+  forbidden_inference an excerpt's stated licence -> a clearance; it is what the Archive item stated when fetched
+  forbidden_inference read-back recall -> voice quality, naturalness or fitness for broadcast
+  forbidden_inference a draft MediaProgram -> a published, hosted or scheduled episode
+  forbidden_inference a cast engine -> consent of any person to have their voice imitated; engines are synthetic and named in the manifest
+  known_gap the item archive's major newsrooms stop on 2026-09-19 (news) and 2026-10-19 (today, money, local-news); programmes read what is there, so the headlines desk is a month old until those reads resume
+  known_gap the neural runtime has been exercised directly (llama-tts, OuteTTS 0.3 500M, 6.1 s line, whisper read-back) but not inside a render: two publish-pass memory grants from 2026-11-01 and 2026-11-03 were still open with no expiry and the ledger deferred it
+  known_gap a draft MediaProgram is not yet attached to an AccountWorldAudio station or show (episode, chapter, source and track marks, WebVTT cues); that needs a world, a space and a hosted https asset, and hosting runs through the owner's edge publish
+  known_gap OuteTTS speaks with its default speaker only; per-role neural voices need speaker profiles, and Kokoro or provider voices are declared but absent here (no loopback server, no key)
+  known_gap the closing credit is spoken by a system voice and says the licence family, not the exact licence version, which is in the credits
+
+interaction broadcast-casts-model-estate-speech
+  source broadcast
+  destination model-commons
+  relation speech_runtime_binding_to_verified_body_under_memory_grant
+  preserves the model and vocoder ids, their verified digests, the runtime's licence and the admission verdict for each load
+  drops any engine whose body is absent or unverified, and any load the ledger defers
+  forbidden_inference a registered speech model -> an admitted load, or voice quality
+  invalidates_on model bytes, vocoder bytes, runtime binary or admission policy changing
+  witness cmd/BonfyreBroadcast/tests/broadcast_test.sh
+  binding cmd/BonfyreBroadcast/src/main.c
+
+interaction broadcast-reads-item-archive
+  source broadcast
+  destination item-archive
+  relation cited_item_selection_to_spoken_line
+  preserves source, key, href, publisher and date of every item read aloud
+  drops items dated in the future, outside the desk window, repeated titles and recurring dated columns
+  forbidden_inference a selected item -> its story is the day's most important
+  invalidates_on the item archive, the census source lists or the scoring rule changing
+  witness cmd/BonfyreBroadcast/tests/broadcast_test.sh
+  binding cmd/BonfyreBroadcast/src/main.c

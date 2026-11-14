@@ -134,6 +134,15 @@
     "maturity": "implemented",
     "publishes": ""
   },
+  "BonfyreBroadcast": {
+    "architecture": "service-creator-audio",
+    "description": "Can a visitor import or select recordings, edit their timeline, retain the source session and export a mix through the existing native kernel?",
+    "domain": "Creator / Public sample workspace",
+    "family": "surface",
+    "layer": "surface",
+    "maturity": "measured",
+    "publishes": ""
+  },
   "BonfyreCLI": {
     "architecture": "cmd-c-l-i",
     "description": "What does the BonfyreCLI capability organ realize, and by what contract?",
@@ -473,7 +482,7 @@
     "domain": "Command / Fragment",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreFragmentMigration": {
@@ -927,11 +936,11 @@
     "publishes": ""
   },
   "BonfyreParticipation": {
-    "architecture": "cmd-participation",
-    "description": "What does the BonfyreParticipation capability organ realize, and by what contract?",
-    "domain": "Command / Participation",
-    "family": "command",
-    "layer": "",
+    "architecture": "account-peer-connections",
+    "description": "How can people find common interests and introductions without turning a public profile into participation?",
+    "domain": "Profile / Private introductions",
+    "family": "surface",
+    "layer": "surface",
     "maturity": "implemented",
     "publishes": ""
   },
@@ -1166,7 +1175,7 @@
     "domain": "Command / Run",
     "family": "command",
     "layer": "",
-    "maturity": "declared",
+    "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreRuntime": {
@@ -1602,12 +1611,12 @@
     "publishes": ""
   },
   "BonfyreZarrForge": {
-    "architecture": "representation-manifold",
-    "description": "Which physical forms of one semantic subject are useful, and how can each derived form be rebuilt from its exact input frontier?",
-    "domain": "Bonfyre",
-    "family": "storage",
-    "layer": "substrate",
-    "maturity": "architectural",
+    "architecture": "cmd-zarr-forge",
+    "description": "What does the BonfyreZarrForge capability organ realize, and by what contract?",
+    "domain": "Command / ZarrForge",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
     "publishes": ""
   }
 }

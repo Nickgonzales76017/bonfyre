@@ -64,12 +64,15 @@ architecture evidence-binding
   forbidden_inference artifact exists -> supports the claim
   forbidden_inference positional slot fill -> semantic evidence match
   native_format graf
+  source_path lib/libbonfyre/src/bf_form.c
+  source_path lib/libbonfyre/include/bf_form.h
   source_path components/BonfyreControlPlane/evidence_binding.py.archive
   source_path components/BonfyreControlPlane/institution_loop.py.archive
+  witness lib/libbonfyre/tests/form_test.c (bf_form_bind_evidence): the most constrained slot takes its exact match and a loose slot gets what is left, each candidate consumed once, every binding carries its witness, a slot with no matcher never binds by position, an unmatched slot stays unbound and keeps blocking (make -C lib/libbonfyre test-form PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_evidence_binding.py.archive
   witness components/BonfyreControlPlane/tests/test_loop_evidence_binding.py.archive
   source_lineage SEED-A recursive organ document
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native binding is a library in libbonfyre; no organ binds fabric artifacts to a real form through it yet; most specific is the count of satisfied matchers, where the archived Python used witness length
 architecture serm
   canonical_name SERMReductionGraph
   family evidence
@@ -89,8 +92,11 @@ architecture serm
   invariant a measured/proven claim with no witness fails the honesty audit (laundering)
   forbidden_inference provider confidence -> evidence
   forbidden_inference a claimed plane -> a witnessed measurement
+  source_path engine/core/src/serm.c
+  source_path engine/core/include/bf_serm.h
   source_path components/BonfyreControlPlane/serm.py.archive
+  witness engine/core/tests/serm_test.c over bf_proof tables: witness-backed frontier layers and cooled invariants are sufficient and honest and cool a measured sufficiency invariant citing coverage; an untested layer is missing and earns nothing; a proven claim with no witness is laundering, fails honesty and earns nothing even when the layer looks covered (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_serm.py.archive
   source_lineage SEED-A recursive organ document
   known_gap consumes proof-frontier measurements; the full measurement-plan / HVM-reduction front-end is future
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ submits measurement contracts to it yet

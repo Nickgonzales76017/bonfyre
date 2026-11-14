@@ -2253,6 +2253,7 @@ static int emit_item_page(const char *root, const char *target, const char *host
         html(item->by[0] ? item->by : "The source");
         fputs(" no longer carries it in what it publishes now.</p>", stdout);
     }
+    if (item->kind == BF_PAGE_MATERIAL_PUBLICATION || item->kind == BF_PAGE_MATERIAL_POST) bf_article_listen_emit(stdout);
     /* What the piece says, read from the source's own retained entry; the
      * short body the census kept is the fallback. */
     if ((depth = calloc(1, sizeof(*depth))) && depth_read(source, item, depth)) depth_resolve_names(depth, &stores);

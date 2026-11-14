@@ -60,19 +60,21 @@ static void account_navigation_emit(const char *bearer,const char *auth_db) {
         char profile[512]={0};
         account_public_profile(who.id,auth_db,profile,sizeof(profile));
         fputs("<a class=\"ak-account\" data-profile-home href=\"/profile\">" BF_ICON_USER "<span>Profile</span></a>",stdout);
-        fputs("<a class=\"ak-account\" data-your-work href=\"/apps?context=self\">" BF_ICON_BRIEFCASE "<span>Your work</span></a><details class=\"ak-user\"><summary aria-label=\"Your account menu\"><span class=\"ak-avatar\" aria-hidden=\"true\">",stdout);
+        fputs("<a class=\"ak-account\" data-your-work href=\"/apps?context=self\">" BF_ICON_BRIEFCASE "<span>Your work</span></a><a class=\"ak-account\" data-account-review href=\"/account/review\">" BF_ICON_BOARD "<span>Review</span></a><details class=\"ak-user\"><summary aria-label=\"Your account menu\"><span class=\"ak-avatar\" aria-hidden=\"true\">",stdout);
         /* A decorative initial is text, never an image URL or an identity claim. */
         char initial[2]={'A',0};if(who.name[0]>='A'&&who.name[0]<='Z')initial[0]=who.name[0];else if(who.name[0]>='a'&&who.name[0]<='z')initial[0]=who.name[0]-'a'+'A';html(initial);
         fputs("</span><span class=\"ak-user-name\">",stdout);html(*who.name?who.name:"Your account");
         fputs("</span><span aria-hidden=\"true\">⌄</span></summary><nav class=\"ak-user-links\" aria-label=\"Your account\"><a data-profile-home-menu href=\"/profile\">" BF_ICON_USER "Your profile</a>",stdout);
         if(profile[0]){fputs("<a data-public-profile data-public-profile-menu href=\"",stdout);html(profile);fputs("\">" BF_ICON_WORLD "View public profile</a>",stdout);}
-        fputs("<a data-account-profile href=\"/profile?tab=sites\">" BF_ICON_WORLD_WWW "Your profile sites</a><a href=\"/account\">" BF_ICON_LINK "Account &amp; connections</a><a href=\"/apps?context=self\">" BF_ICON_APPS "Your tools &amp; saved work</a><a href=\"/saved\">" BF_ICON_BOOKMARK "Saved material</a><a href=\"/organizations\">" BF_ICON_GROUP "Organizations &amp; people</a><a href=\"/packs/setup?context=self\">" BF_ICON_SPARKLES "Explore tools</a><a href=\"/account#logout\">" BF_ICON_LOGOUT "Sign out</a></nav></details>",stdout);
+        fputs("<a data-account-profile href=\"/profile?tab=sites\">" BF_ICON_WORLD_WWW "Your profile sites</a><a href=\"/account/review\">" BF_ICON_BOARD "Review drafts and held work</a><a href=\"/account\">" BF_ICON_LINK "Account &amp; connections</a><a href=\"/apps?context=self\">" BF_ICON_APPS "Your tools &amp; saved work</a><a href=\"/saved\">" BF_ICON_BOOKMARK "Saved material</a><a href=\"/organizations\">" BF_ICON_GROUP "Organizations &amp; people</a><a href=\"/packs/setup?context=self\">" BF_ICON_SPARKLES "Explore tools</a><a href=\"/account#logout\">" BF_ICON_LOGOUT "Sign out</a></nav></details>",stdout);
     }
     fputs("</div>",stdout);
 }
+#include "account_review_web.h"
 /* Cached public shells request only this private, bounded native fragment.
  * It does not return tokens, email, account IDs or hidden destination counts. */
 static int serve_account_navigation(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db) {
+    if(!strcmp(target,"/account/review"))return serve_account_review(method,query,bearer,auth_db);
     if(strcmp(target,"/account/navigation"))return 0;
     if(strcmp(method,"GET") || (query&&*query)) {
         fputs("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nCache-Control: private, no-store\r\nConnection: close\r\n\r\nUse the current account navigation without parameters.\n",stdout);return 1;

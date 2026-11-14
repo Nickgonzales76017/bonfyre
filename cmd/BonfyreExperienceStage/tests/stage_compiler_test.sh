@@ -7,6 +7,25 @@ experience="$root/cmd/BonfyreExperienceMap"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
+# Validate the native compiler against a small source-backed contract before
+# attempting the separately retained production-size corpus.
+printf 'id\tterritories\tentry_intents\tstages\nproof\tlife\tinspect\tfield-or-herd|weather|harvest-or-output|market|sale\n' > "$tmp/fixture-chains.tsv"
+printf '%s\n' '{"id":"external:weather","projection":{"candidate_affordances":["weather"],"estate_roles":[],"direct_domains":["agriculture"]},"truth_level":"observed_candidate"}' > "$tmp/fixture-raw.jsonl"
+printf '%s\n' '{"record_kind":"external","id":"external:weather","name":"Weather","human_chains":["proof"]}' > "$tmp/fixture-external.jsonl"
+printf '%s\n' '{"record_kind":"ghost","id":"ghost:one","name":"Ghost","human_chains":["proof"],"categories":[],"presentation_families":[],"renderer_mixes":[]}' > "$tmp/fixture-ghost.jsonl"
+printf '%s\n' '{"record_kind":"app","id":"app:one","name":"Weather App","human_chains":["proof"],"reference_only":true,"source_ref":"donor"}' > "$tmp/fixture-app.jsonl"
+if ! "$bin" compile --chains "$tmp/fixture-chains.tsv" --external-bindings "$tmp/fixture-external.jsonl" --external-raw "$tmp/fixture-raw.jsonl" \
+  --ghost-bindings "$tmp/fixture-ghost.jsonl" --app-bindings "$tmp/fixture-app.jsonl" \
+  --output "$tmp/fixture-stage.jsonl" --manifest "$tmp/fixture-manifest.json" >"$tmp/fixture-run.json"; then
+  echo "experience stage native fixture compile failed" >&2; exit 1
+fi
+[ "$(wc -l < "$tmp/fixture-stage.jsonl" | tr -d ' ')" = 3 ] || { echo "experience stage fixture row count failed" >&2; exit 1; }
+grep -q '"weather"' "$tmp/fixture-stage.jsonl" || { echo "experience stage source-bound weather stage missing" >&2; exit 1; }
+echo "experience stage native compiler fixture: PASS (3 source records)"
+for required in "$experience/generated/external_bindings.jsonl" "$experience/generated/ghost_bindings.jsonl" \
+  "$experience/generated/app_bindings.jsonl" "$root/estate/generated/external-estate-v4/observed-external-estate.jsonl"; do
+  [ -r "$required" ] || { echo "experience stage corpus unavailable: $required (regenerate from canonical source, do not synthesize)" >&2; exit 2; }
+done
 "$bin" compile \
   --chains "$experience/data/experience_chains.tsv" \
   --external-bindings "$experience/generated/external_bindings.jsonl" \

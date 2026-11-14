@@ -23,7 +23,7 @@ base=${RETIRE_FROM:-$root}
 cd "$base"
 for p in "$@"; do [ -e "$p" ] || { echo "retire: no such path: $p" >&2; exit 1; }; done
 manifest=$(mktemp); entries=$(mktemp)
-find "$@" -type f -exec shasum -a 256 {} + | sort -k2 > "$manifest"
+find "$@" -type f -exec shasum -a 256 {} + | LC_ALL=C sort -k2 > "$manifest"
 # Every entry (symlinks and empty directories too), ordered by its path inside
 # its top-level tree so copies of one file across trees sit side by side where
 # zstd's window sees them (.claude/skills/density: the ordering is the lever).
@@ -37,6 +37,18 @@ ok=1
 for p in "$@"; do diff -r --no-dereference "$p" "$check/$p" >/dev/null 2>&1 || ok=0; done
 (cd "$check" && shasum -a 256 -c "$manifest" >/dev/null 2>&1) || ok=0
 rm -rf "$check" "$entries"
+# Project-owned retirement pins every path to its previously reviewed hash.
+# Check after archive creation and exact restore, before deleting source:
+# a concurrent edit must not silently retire bytes other than those approved.
+if [ -n "${BONFYRE_RETIRE_EXPECTED_MANIFEST_SHA256:-}" ]; then
+  [ "$(shasum -a 256 "$manifest" | cut -d ' ' -f 1)" = "$BONFYRE_RETIRE_EXPECTED_MANIFEST_SHA256" ] || ok=0
+fi
+# Verify sources again immediately before unlinking, after the archive test.
+# If another writer changed any file since the archive was captured, preserve it.
+current=$(mktemp)
+find "$@" -type f -exec shasum -a 256 {} + | LC_ALL=C sort -k2 > "$current"
+cmp -s "$manifest" "$current" || ok=0
+rm -f "$current"
 [ "$ok" = 1 ] || { echo "retire: archive does not restore exactly; nothing removed" >&2; rm -f "$archive" "$manifest"; exit 1; }
 cp "$manifest" "$dir/$name.sha256"; rm -f "$manifest"
 rm -rf "$@"

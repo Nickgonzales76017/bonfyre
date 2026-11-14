@@ -1,6 +1,9 @@
 #ifndef BONFYRE_ACCOUNT_INBOX_WEB_H
 #define BONFYRE_ACCOUNT_INBOX_WEB_H
 #include "account_inbox_dating.h"
+#include "../../BonfyreQueue/src/account_legacy_api.h"
+#include "../../BonfyreParticipation/src/dating.h"
+#include "../../BonfyreParticipation/src/peer_facets.h"
 /* GET /inbox for a signed-in person: what waits on them, apart from what the
  * agents are doing. A signed-out reader, or a query this page does not own,
  * falls through to the public /inbox surface unchanged.
@@ -15,7 +18,7 @@
  * page decides nothing, starts nothing and owns no work. */
 
 #define AI_AGENT_MAX 8
-#define AI_CREDIT_ATTENTION "OpenAI API credits are exhausted. Add credits before retrying this work."
+#define AI_CREDIT_ATTENTION BONFYRE_LEGACY_API_ATTENTION
 typedef struct {char id[128],title[161],worker[161],attention[241],state[24];long long updated;} AiWork;
 
 static int ai_query(const char *query,char context[96],char done[16]){
@@ -144,8 +147,8 @@ static int ai_agent_work(const char *subject,const char *scope,AiWork *rows,size
 }
 static const char *ai_origin(const char *id){return !strncmp(id,"account-operator-",17)?"Assistant":!strncmp(id,"account-fabric-",15)?"Agent":!strncmp(id,"account-workgraph-",18)?"Pipeline":"Work";}
 static void ai_execution_credit(const char *context,const AiWork *w){
-    fputs("<li class=\"ak-inbox-item\" data-needs=\"you\" data-inbox-kind=\"execution-credit\" id=\"",stdout);html(w->id);fputs("\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("warning");fputs("</span><div class=\"ak-inbox-body\">",stdout);
-    ai_meta("Needs you","Execution credit",w->updated);fputs("<h3>",stdout);html(*w->title?w->title:"Execution needs credit");fputs("</h3><p class=\"ak-inbox-warn\">",stdout);html(w->attention);fputs("</p><div class=\"ak-inbox-acts\"><a class=\"ak-inbox-signin\" data-inbox-credit href=\"https://platform.openai.com/settings/organization/billing/\" target=\"_blank\" rel=\"noopener noreferrer\">Add OpenAI API credits</a><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(w->id);fputs("\">View work</a></div></div></li>",stdout);
+    fputs("<li class=\"ak-inbox-item\" data-needs=\"you\" data-inbox-kind=\"legacy-api-hold\" id=\"",stdout);html(w->id);fputs("\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("warning");fputs("</span><div class=\"ak-inbox-body\">",stdout);
+    ai_meta("Needs review","Discontinued API",w->updated);fputs("<h3>",stdout);html(*w->title?w->title:"Stopped legacy API work");fputs("</h3><p class=\"ak-inbox-warn\">",stdout);html(w->attention);fputs("</p><div class=\"ak-inbox-acts\"><a href=\"/programs?context=",stdout);url_query_value(context);fputs("\">Open native programs</a><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(w->id);fputs("\">Review retained work</a></div></div></li>",stdout);
 }
 static void ai_agent_row(const char *context,const AiWork *w,int halted){
     fputs("<li class=\"ak-inbox-agent\" data-needs=\"agent\" data-state=\"",stdout);html(w->state);fputs("\"><span class=\"ak-inbox-pulse\" aria-hidden=\"true\"></span><div><p class=\"ak-inbox-meta\"><span class=\"ak-inbox-who\" data-who=\"",stdout);
@@ -223,7 +226,7 @@ static int serve_account_needs_summary(const char *method,const char *query,cons
             !strcmp(people[i].source,"provider-estate-checklist")?"provider-checklist":"provider";
         ok=ai_pack_need(&w,people[i].id,kind,people[i].title,(long long)(people[i].at*1000.0));
     }
-    for(int i=0;i<credit_n&&ok;i++)ok=ai_pack_need(&w,credit[i].id,"execution-credit",credit[i].title,credit[i].updated);
+    for(int i=0;i<credit_n&&ok;i++)ok=ai_pack_need(&w,credit[i].id,"legacy-api-hold",credit[i].title,credit[i].updated);
     for(int i=0;i<ni&&ok;i++){
         char id[128],title[192];snprintf(id,sizeof(id),"invitation:%s",invites[i].institution);
         snprintf(title,sizeof(title),"Join %s",invites[i].label);
@@ -260,6 +263,123 @@ static void ai_signed_out(const char *context){
  fputs("</section></div>",stdout);
  ak_app_close();
 }
+
+/* Dating conversations are an account-scoped source of the existing Inbox.
+ * Never turn public /people or a caller-provided subject into dating consent.
+ * The private Participation owner rechecks both members for each projection. */
+static int ai_dating_subject(const char *auth_db,long user,char subject[192]){
+ sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int found=0;
+ subject[0]=0;
+ if(user<1||!auth_db||sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+ if(sqlite3_prepare_v2(db,
+ "SELECT actor_subject FROM actor_closure_bindings "
+ "WHERE user_id=?1 AND state='active' LIMIT 2",-1,&st,NULL)!=SQLITE_OK)goto done;
+ sqlite3_bind_int64(st,1,user);
+ while(sqlite3_step(st)==SQLITE_ROW){
+  const char *v=(const char*)sqlite3_column_text(st,0);
+  if(++found!=1||!bf_dating_subject(v)) {found=0;break;}
+  snprintf(subject,192,"%s",v);
+ }
+done:
+ sqlite3_finalize(st);if(db)sqlite3_close(db);
+ if(found!=1)subject[0]=0;return found==1;
+}
+static void ai_dating_inbox(const char *auth_db,long uid,const char *context){
+ const char *path=getenv("BONFYRE_PARTICIPATION_DB");
+ if(!path||!*path)path=getenv("BONFYRE_DATING_DB");
+ char subject[192];sqlite3 *db=NULL;BfDatingCandidate candidates[24];size_t count=0;
+ if(strcmp(context,"self")||!path||*path!='/'||strlen(path)>4096||
+    !ai_dating_subject(auth_db,uid,subject))return;
+ if(sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);return;}
+ sqlite3_busy_timeout(db,1000);
+ if(!bf_dating_eligible(db,subject)||
+    !bf_dating_candidates(db,subject,candidates,24,&count)){sqlite3_close(db);return;}
+ /* Pending introductions are counted once, under Needs you (ai_dating_pending);
+  * this group carries only accepted conversations and date plans. */
+ int conversations=0,plans_pending=0;
+ for(size_t i=0;i<count;i++){
+  if(candidates[i].matched){
+   conversations++;
+   BfDatingPlan plans[8];size_t nplans=0;
+   if(bf_dating_plans(db,subject,candidates[i].subject,plans,8,&nplans))
+     for(size_t k=0;k<nplans;k++)
+       if(!plans[k].approved_by_me&&plans[k].approved_by_other)plans_pending++;
+  }
+ }
+ sqlite3_close(db);
+ if(!conversations&&!plans_pending)return;
+ fputs("<section class=\"ak-inbox-group\" id=\"dating-conversations\" data-inbox-group=\"dating\" data-private-dating><h2>Personal conversations</h2>"
+       "<p>Accepted conversations and date plans from your privately approved Life participation. "
+       "These are never projected into public posts or organization work.</p>"
+       "<ol class=\"ak-inbox-list\">",stdout);
+ if(plans_pending){
+  fputs("<li class=\"ak-inbox-item\" data-inbox-kind=\"dating-plan\" data-needs=\"you\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);
+  page_glyph("calendar");
+  printf("</span><div class=\"ak-inbox-body\"><p class=\"ak-inbox-meta\">Your approval</p><h3>%d proposed date plan%s</h3><p class=\"ak-inbox-text\">Review the activity and budget before agreeing. No booking or payment is implied.</p><div class=\"ak-inbox-acts\"><a href=\"/profile?tab=dating\">Review date plans</a></div></div></li>",
+    plans_pending,plans_pending==1?"":"s");
+ }
+ if(conversations){
+  fputs("<li class=\"ak-inbox-item\" data-inbox-kind=\"dating-conversation\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);
+  page_glyph("relationship");
+  printf("</span><div class=\"ak-inbox-body\"><p class=\"ak-inbox-meta\">Mutually accepted</p><h3>%d private conversation%s</h3><p class=\"ak-inbox-text\">Read and reply within your authenticated Life profile.</p><div class=\"ak-inbox-acts\"><a href=\"/profile?tab=dating\">Open conversations</a></div></div></li>",
+   conversations,conversations==1?"":"s");
+ }
+ fputs("</ol></section>",stdout);
+}
+/* The private Inbox presents context-specific peer decisions from the same
+ * Participation owner. An introduction is not a relationship, vote, role,
+ * content license, notification delivery, or the person's public presence. */
+static void ai_peer_inbox(const char *auth_db,long uid,const char *context){
+ const char *path=getenv("BONFYRE_PARTICIPATION_DB");
+ if(!path||!*path)path=getenv("BONFYRE_DATING_DB");
+ char actor[192];sqlite3 *db=NULL;
+ if(strcmp(context,"self")||!path||*path!='/'||strlen(path)>4096||
+    !ai_dating_subject(auth_db,uid,actor))return;
+ if(sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){
+  if(db)sqlite3_close(db);return;
+ }
+ sqlite3_busy_timeout(db,1000);
+ BfPeerFacet facets[16];size_t nf=0;int opened=0;
+ if(!bf_peer_facets(db,facets,16,&nf)){sqlite3_close(db);return;}
+ for(size_t f=0;f<nf;f++){
+  unsigned revision=0;
+  if(bf_peer_status(db,actor,facets[f].id,&revision)!=1)continue;
+  BfPeerCandidate peers[24];size_t count=0;
+  if(!bf_peer_candidates(db,actor,facets[f].id,peers,24,&count))continue;
+  unsigned incoming=0,connected=0;
+  for(size_t i=0;i<count;i++){
+   if(peers[i].incoming)incoming++;
+   if(peers[i].matched)connected++;
+  }
+  if(!incoming&&!connected)continue;
+  if(!opened++){
+   fputs("<section class=\"ak-inbox-group\" id=\"member-connections\" "
+    "data-inbox-group=\"member-connections\" data-private-peer-facets>"
+    "<h2>Member connections</h2><p>Separate introductions for personal, creative, civic "
+    "and project contexts. These are decisions you made, not inferred relationships.</p>"
+    "<ol class=\"ak-inbox-list\">",stdout);
+  }
+  fputs("<li class=\"ak-inbox-item\" data-inbox-kind=\"context-introduction\">"
+    "<span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);
+  page_glyph("relationship");
+  fputs("</span><div class=\"ak-inbox-body\"><p class=\"ak-inbox-meta\">",stdout);
+  html(facets[f].label);
+  if(incoming){
+   printf(" · Needs your decision</p><h3>%u private introduction%s",incoming,incoming==1?"":"s");
+   fputs("</h3>",stdout);
+  }else{
+   printf("</p><h3>%u mutually accepted connection%s",connected,connected==1?"":"s");
+   fputs("</h3>",stdout);
+  }
+  fputs("<p class=\"ak-inbox-text\">Participation is limited to the chosen context. "
+   "No civic authority or publication permission is implied.</p>"
+   "<div class=\"ak-inbox-acts\"><a href=\"/profile?tab=connections&amp;facet=",stdout);
+  url_query_value(facets[f].id);
+  fputs("\">Review this context</a></div></div></li>",stdout);
+ }
+ if(opened)fputs("</ol></section>",stdout);
+ sqlite3_close(db);
+}
 static int serve_account_inbox(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
     if(!strcmp(target,"/inbox/_summary"))return serve_account_needs_summary(method,query,bearer,auth_db);
     if(strcmp(target,"/inbox")&&strcmp(target,"/inbox/"))return 0;
@@ -294,7 +414,10 @@ static int serve_account_inbox(const char *method,const char *target,const char 
       fputs("</h3><p class=\"ak-inbox-text\">Someone has requested an introduction. Nothing becomes a conversation without your current, explicit agreement. Names and messages stay inside your private Life account.</p><div class=\"ak-inbox-acts\"><a class=\"ak-inbox-signin\" href=\"/profile?tab=dating&amp;view=matches\">Review introductions</a></div></div></li>",stdout);
     }
     if(!direct){fputs("<li class=\"ak-inbox-empty\">",stdout);fputs(person_count<0?"Approvals are not connected on this site.":(ni||checklists)?"No approvals are waiting. Your sub-account steps are just below.":"No approvals or sign-ins are waiting on you.",stdout);fputs("</li>",stdout);}
-    fputs("</ol></section><section class=\"ak-inbox-group\" id=\"sub-accounts\" data-inbox-group=\"sub-accounts\"><h2>Sub-accounts",stdout);if(ni+checklists)printf(" <small>%d need you</small>",ni+checklists);
+    fputs("</ol></section>",stdout);
+    ai_dating_inbox(auth_db,user,context);
+    ai_peer_inbox(auth_db,user,context);
+    fputs("<section class=\"ak-inbox-group\" id=\"sub-accounts\" data-inbox-group=\"sub-accounts\"><h2>Sub-accounts",stdout);if(ni+checklists)printf(" <small>%d need you</small>",ni+checklists);
     fputs("</h2><p>Organizations you belong to or run, invitations waiting for you, and the provider accounts your organizations can open.</p><ol class=\"ak-inbox-list\">",stdout);
     for(int i=0;i<ni;i++){
         fputs("<li class=\"ak-inbox-item\" data-needs=\"you\" data-inbox-kind=\"invitation\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("user");fputs("</span><div class=\"ak-inbox-body\">",stdout);ai_meta("Needs you","Invitation",0);

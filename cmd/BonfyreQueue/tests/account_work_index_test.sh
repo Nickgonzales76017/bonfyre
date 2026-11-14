@@ -70,16 +70,19 @@ sqlite3 "$tmp/fabric.sqlite3" "DROP TABLE receipts; DELETE FROM tasks WHERE id='
 sqlite3 "$tmp/operator.sqlite3" "INSERT INTO goals VALUES('superseded','Superseded import marker','superseded',strftime('%s','now'),strftime('%s','now'));"
 sqlite3 "$tmp/operator.sqlite3" "INSERT INTO goals VALUES('superseded-history','Completed historical assistant work','superseded',1792800000,1792800001);
 INSERT INTO runs VALUES('history-run','superseded-history','resolved',1792800000,1792800001,'{}');"
+sqlite3 "$tmp/operator.sqlite3" "INSERT INTO goals VALUES('queued-legacy','Unstarted paid API queue','queued',1792800000,1792800001),('retry-legacy','Unstarted paid API retry','retry',1792800000,1792800001);"
 sqlite3 "$tmp/fabric.sqlite3" "INSERT INTO tasks VALUES('cancelled','Cancelled Fabric marker','cancelled',strftime('%s','now'),strftime('%s','now'),strftime('%s','now'));"
 index --source "operator=$tmp/operator.sqlite3" --source "fabric=$tmp/fabric.sqlite3"
 "$queue" account-inbox list --db "$tmp/work.db" --subject user:19 --scope self --actor user:19 > "$tmp/filtered-inbox.mp"
 if LC_ALL=C grep -a -q -F 'Superseded import marker' "$tmp/filtered-inbox.mp"; then echo 'account inbox: superseded import flooded notifications' >&2; exit 1; fi
 LC_ALL=C grep -a -q -F 'Cancelled Fabric marker' "$tmp/filtered-inbox.mp" || { echo 'account inbox: a real Fabric cancellation was hidden' >&2; exit 1; }
 [ "$(sqlite3 "$tmp/work.db" "SELECT count(*) FROM account_work WHERE id='account-operator-superseded'")" = 0 ] || { echo 'account work: never-started superseded goal still consumes board density' >&2; exit 1; }
+[ "$(sqlite3 "$tmp/work.db" "SELECT count(*) FROM account_work WHERE id IN ('account-operator-queued-legacy','account-operator-retry-legacy')")" = 0 ] || { echo 'account work: stopped legacy API still advertises unstarted work' >&2; exit 1; }
 [ "$(sqlite3 "$tmp/work.db" "SELECT count(*) FROM account_work WHERE id='account-operator-superseded-history'")" = 1 ] || { echo 'account work: superseded run history was discarded' >&2; exit 1; }
 [ "$(sqlite3 "$tmp/work.db" "SELECT count(*) FROM account_work_run WHERE work_id='account-operator-superseded-history'")" = 1 ] || { echo 'account work: superseded run receipt was discarded' >&2; exit 1; }
 sqlite3 "$tmp/operator.sqlite3" "DELETE FROM goals WHERE id='superseded';"
 sqlite3 "$tmp/operator.sqlite3" "DELETE FROM goals WHERE id='superseded-history';DELETE FROM runs WHERE id='history-run';"
+sqlite3 "$tmp/operator.sqlite3" "DELETE FROM goals WHERE id IN ('queued-legacy','retry-legacy');"
 index --source "operator=$tmp/operator.sqlite3"
 # A blocked assistant goal waits on the person, so the rail reads it as attention, not queued.
 "$queue" account-work read --db "$tmp/work.db" --subject user:19 --scope self > "$tmp/read.mp"; LC_ALL=C grep -a -q -F "$(printf 'phase\251attention')" "$tmp/read.mp" && ! LC_ALL=C grep -a -q -F "$(printf 'phase\247pending')" "$tmp/read.mp" || { echo 'account work index: a goal waiting on the person did not read as attention' >&2; exit 1; }
@@ -89,9 +92,9 @@ index --source "operator=$tmp/operator.sqlite3"
 # The account view gets one fixed recovery sentence, never a raw provider error.
 sqlite3 "$tmp/operator.sqlite3" "ALTER TABLE goals ADD COLUMN last_error TEXT NOT NULL DEFAULT ''; UPDATE goals SET state='retry',updated_at=CAST(strftime('%s','now') AS REAL),last_error='RateLimitError: insufficient_quota; internal provider diagnostic' WHERE id='g1';"
 index --source "operator=$tmp/operator.sqlite3"
-[ "$(sqlite3 "$tmp/work.db" "select attention from account_work where id='account-operator-g1'")" = 'OpenAI API credits are exhausted. Add credits before retrying this work.' ] || { echo 'account work index: quota recovery was not classified' >&2; exit 1; }
+[ "$(sqlite3 "$tmp/work.db" "select attention from account_work where id='account-operator-g1'")" = 'Legacy API execution is discontinued. Review this work for native capabilities; do not retry the paid API.' ] || { echo 'account work index: quota recovery was not classified' >&2; exit 1; }
 "$queue" account-inbox list --db "$tmp/work.db" --subject user:19 --scope self --actor user:19 --mission account-operator-g1 > "$tmp/credit.mp"
-LC_ALL=C grep -a -q -F 'OpenAI API credits are exhausted. Add credits before retrying this work.' "$tmp/credit.mp" || { echo 'account work index: classified recovery did not reach Inbox' >&2; exit 1; }
+LC_ALL=C grep -a -q -F 'Legacy API execution is discontinued. Review this work for native capabilities; do not retry the paid API.' "$tmp/credit.mp" || { echo 'account work index: classified recovery did not reach Inbox' >&2; exit 1; }
 if LC_ALL=C grep -a -q -F 'insufficient_quota' "$tmp/credit.mp"; then echo 'account work index: provider error leaked into Inbox' >&2; exit 1; fi
 # Meter one run without inventing token counts for an unmetered second attempt.
 sqlite3 "$tmp/operator.sqlite3" "INSERT INTO runs VALUES('r2','g1','failed',1792800001,1792800002,'{}');"
@@ -273,4 +276,29 @@ grep -F 'warning: Meter unavailable; Meter token evidence omitted' "$tmp/meter-w
 sqlite3 "$tmp/meter-work.db" "INSERT INTO account_work(id,subject,scope,source,title,state,created_ms,updated_ms) VALUES('foreign','user:20','self','fabric','foreign','complete',1,2); INSERT INTO account_work_run(work_id,run_id,worker_id,state,created_ms,updated_ms,agent,provider_session_ref) VALUES('foreign','foreign-run','worker','completed',1,2,'claude','session-exact');"
 "$queue" account-work index --db "$tmp/meter-work.db" --subject user:19 --scope self --owner user:19 --source "fabric=$tmp/meter-fabric.db" --source "meter=$tmp/meter.db" >/dev/null
 [ "$(sqlite3 "$tmp/meter-work.db" 'SELECT count(*) FROM account_work_usage')" = 0 ] || { echo 'account work: cross-account session attributed' >&2; exit 1; }
+# ProgramFabric is source-owned work, not a paid agent goal. Only this account's
+# prepared instances and unmet requirements enter Work and Inbox.
+sqlite3 "$tmp/program.db" "
+ CREATE TABLE program_instance(namespace TEXT,instance_id TEXT,owner_subject TEXT,template_id TEXT,opened_at TEXT,updated_at TEXT,status TEXT);
+ CREATE TABLE program_template(namespace TEXT,template_id TEXT,name TEXT);
+ CREATE TABLE program_requirement(namespace TEXT,instance_id TEXT,requirement_id TEXT,kind TEXT,state TEXT,status TEXT,updated_at TEXT,evidence_ref TEXT);
+ INSERT INTO program_template VALUES('root','grant-plan','Community grant plan');
+ INSERT INTO program_instance VALUES('root','private-plan','user:19','grant-plan',datetime('now'),datetime('now'),'draft');
+ INSERT INTO program_instance VALUES('root','other-plan','user:20','grant-plan',datetime('now'),datetime('now'),'draft');
+ INSERT INTO program_requirement VALUES('root','private-plan','private-needs-source','source','open','draft',datetime('now'),'');
+ INSERT INTO program_requirement VALUES('root','other-plan','other-needs-finance','funding_scope','open','draft',datetime('now'),'');
+ "
+"$queue" account-work index --db "$tmp/work.db" --subject user:19 --scope self --owner user:19 --source "program=$tmp/program.db" >/dev/null
+[ "$(sqlite3 "$tmp/work.db" "SELECT state||':'||source FROM account_work WHERE id='account-program-private-plan'")" = 'blocked:program' ] || { echo 'program Work: prepared obligation missing' >&2; exit 1; }
+[ "$(sqlite3 "$tmp/work.db" "SELECT state||':'||operator_id||':'||output_ref FROM account_work_step WHERE work_id='account-program-private-plan'")" = 'blocked:program.source:' ] || { echo 'program Work: requirement state or evidence handling invalid' >&2; exit 1; }
+[ "$(sqlite3 "$tmp/work.db" "SELECT count(*) FROM account_work WHERE id='account-program-other-plan'")" = 0 ] || { echo 'program Work: cross-account instance disclosed' >&2; exit 1; }
+"$queue" account-inbox list --db "$tmp/work.db" --subject user:19 --scope self --actor user:19 > "$tmp/program-inbox.mp"
+LC_ALL=C grep -a -q -F 'account-program-private-plan' "$tmp/program-inbox.mp" || { echo 'program Inbox: unresolved native requirement missing' >&2; exit 1; }
+sqlite3 "$tmp/program.db" "UPDATE program_requirement SET state='satisfied' WHERE instance_id='private-plan';"
+"$queue" account-work index --db "$tmp/work.db" --subject user:19 --scope self --owner user:19 --source "program=$tmp/program.db" >/dev/null
+[ "$(sqlite3 "$tmp/work.db" "SELECT state FROM account_work WHERE id='account-program-private-plan'")" = defined ] || { echo 'program Work: fulfilled requirement still blocking' >&2; exit 1; }
+[ "$(sqlite3 "$tmp/work.db" "SELECT state||':'||output_ref FROM account_work_step WHERE work_id='account-program-private-plan'")" = 'complete:' ] || { echo 'program Work: unverifiable completion created an output' >&2; exit 1; }
+sqlite3 "$tmp/program.db" "DROP TABLE program_requirement;"
+if "$queue" account-work index --db "$tmp/work.db" --subject user:19 --scope self --owner user:19 --source "program=$tmp/program.db" >/dev/null 2>&1; then echo 'program Work: broken canonical source silently accepted' >&2; exit 1; fi
+[ "$(sqlite3 "$tmp/work.db" "SELECT state FROM account_work WHERE id='account-program-private-plan'")" = defined ] || { echo 'program Work: source failure erased retained index' >&2; exit 1; }
 echo 'account work index: PASS'

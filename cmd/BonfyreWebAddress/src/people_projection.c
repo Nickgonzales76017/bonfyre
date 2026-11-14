@@ -206,7 +206,7 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
                 fputs("<nav data-person-profile-buckets aria-label='Public profile'>",out);
                 static const char *const labels[]={"Posts","Gallery","Communities","Organizations"};
                 static const char *const tabs[]={"posts","gallery","communities","organizations"};
-                for(size_t i=0;i<4;i++){fputs("<a class='person-content-bucket' href='https://",out);esc(out,canonical);fputs("/?tab=",out);fputs(tabs[i],out);fputs("'>",out);esc(out,labels[i]);fputs("</a>",out);}
+                for(size_t i=0;i<4;i++){fputs("<a class='person-content-bucket' data-person-bucket href='https://",out);esc(out,canonical);fputs("/?tab=",out);fputs(tabs[i],out);fputs("'>",out);esc(out,labels[i]);fputs("</a>",out);}
                 fputs("</nav>",out);
             }
             fputs("<p class='people-hosts'>", out);

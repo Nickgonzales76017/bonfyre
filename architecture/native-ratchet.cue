@@ -39,8 +39,12 @@ budget: {
 	// negotiation and all-sites journal tests from the same sessions (+1/+91).
 	// merge of main 2026-11-13: main's spaces releases, brand cuts, tenant host and editorial tests (+19 files / +1,723 lines)
 	// 2026-11-14: concurrent sessions' test edits (cms editor, community, pack setup, journal import).
-	authored_mjs_files: 1646
-	authored_mjs_lines: 182979
+	// converge merge 2026-11-14: the last side branch's preserved WIP -- dense-pack
+	// estate bridge/reader/publisher, editorial sound design and music library,
+	// connected-measurement MCP app, planner source review, release probes and
+	// their tests (+36 files / +4,963 lines). No superseded file was found to retire.
+	authored_mjs_files: 1682
+	authored_mjs_lines: 187942
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.

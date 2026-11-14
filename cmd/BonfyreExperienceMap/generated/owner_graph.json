@@ -1,5 +1,5 @@
 {
-  "atlas_declaration_digest": "0db6ba88c6ee29c9d0c035b61ce52a9be50473b1c3f89663b448fae0051db07c",
+  "atlas_declaration_digest": "d55468ca099f5d2037f280c276da0e62c490824d881e50f96b0332d01a12a2f7",
   "interactions": [
     {
       "destination": "occurrence-spine",
@@ -1322,6 +1322,42 @@
       "source": "cmd-books"
     },
     {
+      "destination": "model-commons",
+      "drops": [
+        "any engine whose body is absent or unverified, and any load the ledger defers"
+      ],
+      "forbidden_inferences": [
+        "a registered speech model -> an admitted load, or voice quality"
+      ],
+      "id": "broadcast-casts-model-estate-speech",
+      "invalidates_on": [
+        "model bytes, vocoder bytes, runtime binary or admission policy changing"
+      ],
+      "preserves": [
+        "the model and vocoder ids, their verified digests, the runtime's licence and the admission verdict for each load"
+      ],
+      "relation": "speech_runtime_binding_to_verified_body_under_memory_grant",
+      "source": "broadcast"
+    },
+    {
+      "destination": "item-archive",
+      "drops": [
+        "items dated in the future, outside the desk window, repeated titles and recurring dated columns"
+      ],
+      "forbidden_inferences": [
+        "a selected item -> its story is the day's most important"
+      ],
+      "id": "broadcast-reads-item-archive",
+      "invalidates_on": [
+        "the item archive, the census source lists or the scoring rule changing"
+      ],
+      "preserves": [
+        "source, key, href, publisher and date of every item read aloud"
+      ],
+      "relation": "cited_item_selection_to_spoken_line",
+      "source": "broadcast"
+    },
+    {
       "destination": "foreign-twin",
       "drops": [
         "the page as the reader saw it; only the address crosses, and the owner reads the page itself"
@@ -2094,6 +2130,22 @@
       ],
       "relation": "lowers_directory_rows_as_authoring_tree_blocks",
       "source": "human-community-body"
+    },
+    {
+      "destination": "broadcast",
+      "drops": [
+        "authority to publish audio and any claim that a recording speaks the article"
+      ],
+      "forbidden_inferences": [
+        "a retained article revision -> a reviewed or published audio master"
+      ],
+      "id": "composer-to-native-article-revision",
+      "invalidates_on": [],
+      "preserves": [
+        "account namespace, article route and subject, page status and native public-content revision"
+      ],
+      "relation": "obtains_scoped_article_revision",
+      "source": "content-write-surface"
     },
     {
       "destination": "native-file-digest",
@@ -5518,6 +5570,22 @@
       "source": "witness-mutation"
     },
     {
+      "destination": "broadcast",
+      "drops": [
+        "publication authority, rights review and any implication of completed workspace-to-native execution"
+      ],
+      "forbidden_inferences": [
+        "an assembly plan -> an approved or published audio edition"
+      ],
+      "id": "narration-production-to-native-assembly",
+      "invalidates_on": [],
+      "preserves": [
+        "reviewed current take identities, passage order, frame positions, per-passage gain and scripts"
+      ],
+      "relation": "prepares_content_addressed_assembly",
+      "source": "service-creator-audio"
+    },
+    {
       "destination": "decision-plane",
       "drops": [
         "hosted provider dependency, autoregressive answer generation, unsupported media, implicit remote fallback and permanently resident idle model processes"
@@ -6381,6 +6449,22 @@
       ],
       "relation": "requests_conditional_update",
       "source": "site-presentation-composition"
+    },
+    {
+      "destination": "cmd-participation",
+      "drops": [
+        "public disclosure of private choices or a claim of geographic proximity"
+      ],
+      "forbidden_inferences": [
+        "a profile context -> independent authority over another person"
+      ],
+      "id": "profile-connections-to-participation",
+      "invalidates_on": [],
+      "preserves": [
+        "authenticated actor, context scope, participation revision, consent and blocks"
+      ],
+      "relation": "reads_and_writes_explicit_contexts",
+      "source": "account-peer-connections"
     },
     {
       "destination": "cmd-c-m-s",
@@ -10075,6 +10159,57 @@
       ]
     },
     {
+      "canonical_name": "AccountPeerConnections",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Profile / Private introductions",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "a private context message -> public speech, dating enrollment or a message in another context",
+        "shared interests -> consent to contact, friendship, physical proximity or a right to publish another person material",
+        "a public profile -> private participation or a dating eligibility witness"
+      ],
+      "id": "account-peer-connections",
+      "internal_calculi": [],
+      "invariants": [
+        "joining one context does not enroll a person in another context or in dating; leaving and rejoining invalidates choices and previously selected interests",
+        "optional interests are scoped to the current participation epoch and only their exact intersection is shown to two active members of the same context",
+        "candidate priority is decided across the eligible set before the bounded page is selected; blocks and passes remain excluded",
+        "private context messages require current reciprocal acceptance and preserve participation and choice revisions on every send and read"
+      ],
+      "known_gaps": [
+        "the two-session browser acceptance (joins, interests, reciprocal acceptance through WebAddress) was not carried into main's profile fixture, which runs without a Participation owner; only peer_facets_test.c exercises the owner end to end",
+        "interest tags are not event attendance, location or a semantic compatibility score; live deployment and migration are separate from local witnesses"
+      ],
+      "layer": "surface",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "How can people find common interests and introductions without turning a public profile into participation?",
+      "source_paths": [
+        "cmd/BonfyreParticipation/src/peer_facets.c",
+        "cmd/BonfyreParticipation/src/peer_facets.h",
+        "schemas/control/peer-interests.yaff",
+        "schemas/control/peer-interests.cue",
+        "schemas/control/peer-message.yaff",
+        "schemas/control/peer-message.cue",
+        "cmd/BonfyreParticipation/tests/peer_facets_test.c",
+        "cmd/BonfyreWebAddress/src/profile_connections_web.h",
+        "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreParticipation/tests/peer_facets_test.c checks distinct consent epochs, reciprocal choices, block, common interests and a 300-member invitation priority case",
+        "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the private connections tab against a fixture with no Participation owner: facet grammar, public refusal, sign-in redirect, same-origin mutation and the not-installed state"
+      ]
+    },
+    {
       "canonical_name": "AccountRelationshipObservations",
       "commands": [],
       "consumes": [],
@@ -11329,7 +11464,7 @@
         "the form never crosses the human submit line"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native compile is a library in libbonfyre; no organ, page or MCP tool compiles a real form through it yet"
       ],
       "layer": "forms/compile",
       "maturity": "implemented",
@@ -11343,6 +11478,9 @@
       "publishes": [],
       "semantic_question": "Is this form submit-ready, and if not, exactly what blocks it?",
       "source_paths": [
+        "lib/libbonfyre/src/bf_form.c",
+        "lib/libbonfyre/include/bf_form.h",
+        "schemas/control/form-graph.cue",
         "components/BonfyreControlPlane/atomic_forms.py.archive",
         "components/BonfyreControlPlane/institution_loop.py.archive"
       ],
@@ -11351,6 +11489,7 @@
         "FormsView"
       ],
       "witnesses": [
+        "lib/libbonfyre/tests/form_test.c: conditional requiredness resolved from values, verified-only autofill (an asserted actor never fills), exact blockers for empty fields, evidence, authority and review gate, ready only when all are satisfied, malformed graphs refused (make -C lib/libbonfyre test-form PASS 2026-11-08); ported from the archived Python on the same actor_nodes table",
         "components/BonfyreControlPlane/tests/test_atomic_forms.py.archive",
         "components/BonfyreControlPlane/tests/test_institution_loop.py.archive"
       ]
@@ -12591,6 +12730,95 @@
       ]
     },
     {
+      "canonical_name": "Broadcast",
+      "commands": [
+        "BonfyreBroadcast"
+      ],
+      "consumes": [
+        "ItemArchive",
+        "MediaProgram"
+      ],
+      "derived": [],
+      "domain": "Media / Produced audio programs",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "a valid assembly plan -> reviewed scripts, authorized music or an approved publication",
+        "an article revision fingerprint -> reviewed narration, music rights, or publication",
+        "a spoken headline -> the story is true, current or endorsed; it repeats the item's title and names its publisher and date",
+        "an excerpt's stated licence -> a clearance; it is what the Archive item stated when fetched",
+        "read-back recall -> voice quality, naturalness or fitness for broadcast",
+        "a draft MediaProgram -> a published, hosted or scheduled episode",
+        "a cast engine -> consent of any person to have their voice imitated; engines are synthetic and named in the manifest"
+      ],
+      "id": "broadcast",
+      "internal_calculi": [
+        "cast roles onto discovered engines by kind preference, locale and distinctness; score desk candidates by recency plus log publisher depth, two lines per publisher, recurring dated columns dropped; open-terms check per excerpt at fetch time; loudness-normalised mixdown"
+      ],
+      "invariants": [
+        "native narration assembly admits at most 64 ordered non-overlapping takes and ten minutes, rechecks source hashes, and produces an exclusive WAV and escaped transcript for the editorial mixer",
+        "a browser assembly plan snapshots the production once and reuses the snapshot take buffers, so later edits cannot alter the prepared sources",
+        "a v2-bound editorial mix carries the same published article revision through the draft media record and the public reader checks the current revision before exposing the recording",
+        "the v2 article revision hashes one bounded database snapshot of public editor data and keeps existing media source fingerprints unchanged",
+        "every desk line carries the source, key and href of the item it reads",
+        "an excerpt plays only when its source states public domain, CC0, CC BY or CC BY-SA at fetch time; anything else is skipped and recorded",
+        "a neural speech load takes a memory grant first; a refused grant falls back and is recorded, never loads into swap",
+        "a neural line is kept only when whisper's read-back recall meets the runtime's floor",
+        "publish writes a draft; publication and hosting are the owner's"
+      ],
+      "known_gaps": [
+        "the account arrangement can prepare a source-addressed assembly plan, but its UI does not yet submit retained production and blob identities to the native assembly service",
+        "legacy source fingerprints do not cover structured editor content; v2-bound drafts require the CMS media revision field and do not by themselves produce or publish narration",
+        "the item archive's major newsrooms stop on 2026-09-19 (news) and 2026-10-19 (today, money, local-news); programmes read what is there, so the headlines desk is a month old until those reads resume",
+        "the neural runtime has been exercised directly (llama-tts, OuteTTS 0.3 500M, 6.1 s line, whisper read-back) but not inside a render: two publish-pass memory grants from 2026-11-01 and 2026-11-03 were still open with no expiry and the ledger deferred it",
+        "a draft MediaProgram is not yet attached to an AccountWorldAudio station or show (episode, chapter, source and track marks, WebVTT cues); that needs a world, a space and a hosted https asset, and hosting runs through the owner's edge publish",
+        "OuteTTS speaks with its default speaker only; per-role neural voices need speaker profiles, and Kokoro or provider voices are declared but absent here (no loopback server, no key)",
+        "the closing credit is spoken by a system voice and says the licence family, not the exact licence version, which is in the credits"
+      ],
+      "layer": "surface",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "BroadcastProgramme",
+        "BroadcastPlan",
+        "BroadcastRender"
+      ],
+      "publishes": [
+        "MediaProgram"
+      ],
+      "semantic_question": "Given the item archive, the model estate's speech runtimes, the system's voices and open-licence archives, what produced audio programme can be made now, who speaks each line, what did each line cite, and what could not be voiced or played?",
+      "source_paths": [
+        "cmd/BonfyreBroadcast/src/main.c",
+        "cmd/BonfyreBroadcast/src/narration_intake.h",
+        "cmd/BonfyreBroadcast/tests/article_revision_test.c",
+        "cmd/BonfyreBroadcast/src/editorial_mix.h",
+        "cmd/BonfyreBroadcast/src/narration_assembly.h",
+        "schemas/control/narration-assembly.yaff",
+        "schemas/control/narration-assembly.cue",
+        "integrations/browser/narration-production.mjs",
+        "cmd/BonfyreBroadcast/tests/narration_assembly_test.sh",
+        "cmd/BonfyreBroadcast/tests/editorial_mix_test.sh",
+        "cmd/BonfyreCMS/content-types/media_program.json",
+        "cmd/BonfyreWebAddress/src/site_mcp.c",
+        "cmd/BonfyreWebAddress/tests/site_product_test.sh",
+        "cmd/BonfyreBroadcast/Makefile",
+        "schemas/control/broadcast-programs.cue",
+        "cmd/BonfyreBroadcast/tests/broadcast_test.sh"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreBroadcast/tests/narration_assembly_test.sh checks a 64-take assembly plus gain, placement, a silent gap, transcript timing and a music mix; it refuses overlap and changed takes",
+        "cmd/BonfyreBroadcast/tests/editorial_mix_test.sh retains the v2 revision in a draft mix and refuses publication after structured source edits",
+        "cmd/BonfyreWebAddress/tests/site_product_test.sh checks current v2 recordings are shown and structured article edits hide stale audio",
+        "cmd/BonfyreBroadcast/tests/article_revision_test.c checks public structured article revision identity, draft to published parity, duplicate subject refusal and namespace isolation",
+        "cmd/BonfyreBroadcast/tests/broadcast_test.sh: offline fixture archive and fixed engines; casting honours readiness, preference, locale and distinctness; the empty desk is dropped and recorded; two lines per publisher; future, stale and recurring-column items excluded; one title once; every desk line cites source, key and href; publish writes one draft row idempotently and never a publication (make -C cmd/BonfyreBroadcast test PASS, 2026-11-08)",
+        "2026-11-08 real render of estate-hour against ~/.bonfyre/estate-local/items.db (88,531 items): 545.8 s programme, 39 spoken lines, 6 open-licence excerpts (netlabel CC BY / BY-SA, NASA public domain, LibriVox public domain), 12 chapters, integrated loudness -16.8 LUFS; whisper read the opening back intelligibly. The neural anchor was deferred by admission (spendable memory) and the manifest records 11 fallbacks to system voices"
+      ]
+    },
+    {
       "canonical_name": "BrowserEngineProvider",
       "commands": [],
       "consumes": [],
@@ -13600,7 +13828,7 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables"
       ],
       "layer": "evidence",
       "maturity": "implemented",
@@ -13613,12 +13841,14 @@
       "publishes": [],
       "semantic_question": "What does this claim depend on, assume, and what is its current vs historical proof state?",
       "source_paths": [
+        "engine/core/src/evidence.c",
+        "engine/core/include/bf_evidence.h",
         "components/BonfyreControlPlane/evidence_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive"
+        "engine/core/tests/evidence_estate_test.c: bf_evidence_add_claim / bf_evidence_claim_dependencies / bf_evidence_proof_state: dependencies and counterclaims kept apart, proof state defaults open and updates, an empty dependency writes nothing (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables"
       ]
     },
     {
@@ -14022,7 +14252,7 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "builds with make -C cmd/BonfyreADBCProbe ADBC_INCLUDE=/opt/homebrew/opt/apache-arrow-adbc/include (Homebrew apache-arrow-adbc 25, installed 2026-11-08); it refuses a library without AdbcDriverInit (checked against libadbc_driver_manager). Homebrew ships no Flight SQL driver; the PyPI adbc-driver-flightsql wheel holds one, and loading that downloaded library awaits an explicit decision, so scripts/tests/representation-manifold-adbc.test.mjs still skips; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
       "maturity": "declared",
@@ -16125,10 +16355,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes FamilyCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreFamily (bonfyre-family; checked 2026-11-08: tests/vectors/bonfyre-vectors 1/1 cases, 7 checks; an older build is installed in ~/.bonfyre/bin); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -16286,10 +16516,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes FragmentCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreFragment (bonfyre-fragment; checked 2026-11-08: tests/vectors/bonfyre-vectors 2/2 cases, 11 checks; not installed in ~/.bonfyre/bin (its install target writes ~/bin, outside managed release)); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -17378,10 +17608,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreMaterialLease (bonfyre-material-lease; Makefile added 2026-11-08, the organ had none); not installed in ~/.bonfyre/bin; the witness runs on synthetic fixtures only, not on the live address store; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -17392,7 +17622,9 @@
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "cmd/BonfyreMaterialLease/tests/material_lease_test.sh: two scoped demands share one physical acquire and the last release cancels it; make -C cmd/BonfyreMaterialLease test PASS (2026-11-08)"
+      ]
     },
     {
       "canonical_name": "BonfyreMaterialWeatherGate",
@@ -19527,10 +19759,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; realizes RunCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+        "built by make -C cmd/BonfyreRun (bonfyre-run; checked 2026-11-08: tests/vectors/bonfyre-vectors 2/2 cases, 9 checks, make test staged-install parity PASS; not installed in ~/.bonfyre/bin, it installs only through managed release admission); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -20052,10 +20284,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "built by make -C cmd/BonfyreSemanticOptimizer (bonfyre-semantic-optimizer; checked 2026-11-08: make test live_inverse_test PASS; an older build is installed in ~/.bonfyre/bin); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -21480,10 +21712,10 @@
       ],
       "invariants": [],
       "known_gaps": [
-        "source-only, not built; deeper WiringSpec fact flow and authority admission are separate work"
+        "no Makefile; the organ is compiled only inside its test. The test skips unless ZARR_ARROW_INCLUDE and ZARR_ARROW_BUNDLE are set, so CI never runs it, and the bundle include dir lacks arrow/buffer.h, so ZARR_ARROW_INCLUDE must point at the full Arrow headers. No installed bonfyre-zarr-forge, and no production caller has demanded a Zarr view; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -21494,7 +21726,9 @@
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "cmd/BonfyreZarrForge/tests/zarr_forge.test.mjs: compiles main.cpp against an Arrow native runtime, lowers a 5-row Parquet to chunked Zarr, checks validity masks, provenance digest and tamper refusal; 3/3 runs pass (2026-11-08) with ZARR_ARROW_BUNDLE from cmd/BonfyreArrowFlight/build.mjs over Homebrew apache-arrow 25"
+      ]
     },
     {
       "canonical_name": "CollapseFront",
@@ -22262,6 +22496,7 @@
       "experience_chains": [],
       "family": "surface",
       "forbidden_inferences": [
+        "a narration draft -> a published or source-verified audio edition",
         "an authored record -> authority; it says what this institution wrote, never that it is true",
         "a reachable write surface -> a permitted write"
       ],
@@ -22273,7 +22508,10 @@
         "one closure, two projections; a second endpoint for machines would be two ways to write one store, which is the shape the census, the packs and the patterns all exist to avoid",
         "a refusal reads the same in both projections; a machine that is told no in markup will be read as a success by whatever parses it",
         "the write surface is not authority to write; the session carries the scope or this refuses, and the store refuses again on its own terms",
-        "the authoring desk offers every grammar this estate registered, not the first six by name; a surface that hides the types it was built to author is a surface people go around"
+        "the authoring desk offers every grammar this estate registered, not the first six by name; a surface that hides the types it was built to author is a surface people go around",
+        "article narration plans only public showcase passages from the selected page status; reopening or confirming a production checks its source passages against the current plan, and retained productions remain unreviewed drafts",
+        "the first passage does not repeat the title when its heading matches the narration opening",
+        "the authenticated composer supplies the native article revision for a narration draft between matching saved-page snapshot reads"
       ],
       "known_gaps": [
         "authoring still requires a session this process does not hold, so the estate's own tooling reaches the surface and stops at the gate; the gate is right and the tooling has no service identity",
@@ -22289,11 +22527,18 @@
       ],
       "semantic_question": "How does something get written into this estate, and does the surface or a shell do it?",
       "source_paths": [
-        "cmd/BonfyreWebAddress/src/main.c"
+        "cmd/BonfyreWebAddress/src/main.c",
+        "components/BonfyreServiceSite/authoring/article-narration.mjs",
+        "cmd/BonfyreWebAddress/src/cms_page_composer.h",
+        "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs",
+        "cmd/BonfyreSurfaceScene/tests/article-narration.test.mjs"
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks authenticated revision identity for sixteen journal drafts, rejects foreign and unsigned requests, and detects structured editorial edits",
+        "cmd/BonfyreSurfaceScene/tests/article-narration.test.mjs checks public same-status passages and refuses existing or read-back productions whose retained source passages differ from the current article plan"
+      ]
     },
     {
       "canonical_name": "ContextCutCompiler",
@@ -24543,7 +24788,7 @@
         "every binding carries a witness saying why it matched"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native binding is a library in libbonfyre; no organ binds fabric artifacts to a real form through it yet; most specific is the count of satisfied matchers, where the archived Python used witness length"
       ],
       "layer": "evidence",
       "maturity": "implemented",
@@ -24560,6 +24805,8 @@
       "publishes": [],
       "semantic_question": "Does this candidate artifact actually satisfy this evidence requirement?",
       "source_paths": [
+        "lib/libbonfyre/src/bf_form.c",
+        "lib/libbonfyre/include/bf_form.h",
         "components/BonfyreControlPlane/evidence_binding.py.archive",
         "components/BonfyreControlPlane/institution_loop.py.archive"
       ],
@@ -24568,6 +24815,7 @@
         "EvidenceView"
       ],
       "witnesses": [
+        "lib/libbonfyre/tests/form_test.c (bf_form_bind_evidence): the most constrained slot takes its exact match and a loose slot gets what is left, each candidate consumed once, every binding carries its witness, a slot with no matcher never binds by position, an unmatched slot stays unbound and keeps blocking (make -C lib/libbonfyre test-form PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_evidence_binding.py.archive",
         "components/BonfyreControlPlane/tests/test_loop_evidence_binding.py.archive"
       ]
@@ -26302,7 +26550,7 @@
         "a conditionally-required field is a blocker only when its condition holds"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native compile is a library in libbonfyre; no organ, page or MCP tool compiles a real form through it yet"
       ],
       "layer": "forms",
       "maturity": "implemented",
@@ -26318,6 +26566,9 @@
       "publishes": [],
       "semantic_question": "What is the structure of this human-boundary form, independent of any one submission?",
       "source_paths": [
+        "lib/libbonfyre/src/bf_form.c",
+        "lib/libbonfyre/include/bf_form.h",
+        "schemas/control/form-graph.cue",
         "components/BonfyreControlPlane/form_graph.py.archive"
       ],
       "subscribes": [],
@@ -26325,6 +26576,7 @@
         "FormsView"
       ],
       "witnesses": [
+        "lib/libbonfyre/tests/form_test.c: conditional requiredness resolved from values, verified-only autofill (an asserted actor never fills), exact blockers for empty fields, evidence, authority and review gate, ready only when all are satisfied, malformed graphs refused (make -C lib/libbonfyre test-form PASS 2026-11-08); ported from the archived Python on the same actor_nodes table",
         "components/BonfyreControlPlane/tests/test_form_graph.py.archive"
       ]
     },
@@ -28845,7 +29097,7 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost"
       ],
       "layer": "economic",
       "maturity": "implemented",
@@ -28857,11 +29109,14 @@
       "publishes": [],
       "semantic_question": "What does this mission actually cost across compute, model, storage, provider, human, facility?",
       "source_paths": [
+        "engine/core/src/economic_graph.c",
+        "engine/core/include/bf_economic_graph.h",
         "components/BonfyreControlPlane/economic_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment",
         "components/BonfyreControlPlane/tests/test_economic_graphs.py.archive"
       ]
     },
@@ -30051,7 +30306,7 @@
         "cross-space comparison requires an explicit comparability contract"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "bonfyre-embed and the static search index do not yet call bf_latent, so a query can still compare vectors it was never given a passport for"
       ],
       "layer": "model/latent",
       "maturity": "implemented",
@@ -30075,12 +30330,15 @@
       ],
       "semantic_question": "Which replayable learned coordinate is attached to this exact subject, under what passport, comparability and use law?",
       "source_paths": [
+        "lib/libbonfyre/src/bf_latent.c",
+        "lib/libbonfyre/include/bf_latent.h",
         "components/BonfyreControlPlane/latent_fabric.py.archive",
         "components/BonfyreControlPlane/address_plane.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "lib/libbonfyre/tests/latent_test.c: projections checked against their passport (dimension, subject and source identity); similarity only within one space or under a contract carrying a transform digest, refused without computing otherwise; only cosine spaces compare; a trajectory never crosses subjects; watch only signals (make -C lib/libbonfyre test-latent PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_latent_fabric.py.archive",
         "components/BonfyreControlPlane/tests/test_address_plane.py.archive"
       ]
@@ -31757,7 +32015,7 @@
       "invariants": [],
       "known_gaps": [
         "ERPNext accounting is the intended projection target",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost"
       ],
       "layer": "economic",
       "maturity": "implemented",
@@ -31769,11 +32027,14 @@
       "publishes": [],
       "semantic_question": "What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?",
       "source_paths": [
+        "engine/core/src/economic_graph.c",
+        "engine/core/include/bf_economic_graph.h",
         "components/BonfyreControlPlane/economic_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment",
         "components/BonfyreControlPlane/tests/test_economic_graphs.py.archive"
       ]
     },
@@ -34038,7 +34299,7 @@
       "invariants": [],
       "known_gaps": [
         "CID prefix routing gives placement partitions over content digests",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; bonfyre-provider and the R7 placement tools (JS) do not yet record bids, placements or parity through it"
       ],
       "layer": "provider",
       "maturity": "implemented",
@@ -34050,11 +34311,14 @@
       "publishes": [],
       "semantic_question": "Where does this run or reside, given locality and resource constraints?",
       "source_paths": [
+        "engine/core/src/provider_graph.c",
+        "engine/core/include/bf_provider_graph.h",
         "components/BonfyreControlPlane/provider_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/provider_graph_test.c: bids kept as an intact metric vector; tournament ranks cost, latency and semantic loss as spent; a bid without authority is not selectable unless the caller drops that policy; weights reorder without touching the vector; placement read back; parity holds only proven pairs, unordered, and a later disproof replaces the proof (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_provider_graphs.py.archive"
       ]
     },
@@ -35376,7 +35640,7 @@
       "invariants": [],
       "known_gaps": [
         "ResultReceiptBundle chain is a partial real shape",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables"
       ],
       "layer": "evidence",
       "maturity": "implemented",
@@ -35388,12 +35652,14 @@
       "publishes": [],
       "semantic_question": "Through what source, observer, actor, runtime, model, provider, transport did this arrive?",
       "source_paths": [
+        "engine/core/src/evidence.c",
+        "engine/core/include/bf_evidence.h",
         "components/BonfyreControlPlane/evidence_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive"
+        "engine/core/tests/evidence_estate_test.c: bf_evidence_record_provenance / bf_evidence_path_admits: an untrusted node on the path refuses, a clean path admits and is not support; plus bf_evidence_lineage, transitive and finite under a cycle (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables"
       ]
     },
     {
@@ -36471,7 +36737,7 @@
       "invariants": [],
       "known_gaps": [
         "UnlockGraph is the causal-reachability cousin already real",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost"
       ],
       "layer": "economic",
       "maturity": "implemented",
@@ -36483,11 +36749,14 @@
       "publishes": [],
       "semantic_question": "What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?",
       "source_paths": [
+        "engine/core/src/economic_graph.c",
+        "engine/core/include/bf_economic_graph.h",
         "components/BonfyreControlPlane/economic_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment",
         "components/BonfyreControlPlane/tests/test_economic_graphs.py.archive"
       ]
     },
@@ -36640,7 +36909,7 @@
         "two relationships to one actor under different profiles are independent"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ records relationships or shadow institutions through it yet, so opportunity chains cannot yet ask it"
       ],
       "layer": "institutional",
       "maturity": "implemented",
@@ -36655,6 +36924,8 @@
       "publishes": [],
       "semantic_question": "Where along the discovery-to-adoption trajectory is this real relationship?",
       "source_paths": [
+        "engine/core/src/relationship.c",
+        "engine/core/include/bf_relationship.h",
         "components/BonfyreControlPlane/relationship.py.archive"
       ],
       "subscribes": [],
@@ -36662,6 +36933,7 @@
         "InstitutionalView"
       ],
       "witnesses": [
+        "engine/core/tests/relationship_test.c: undeclared stages refused; advancing records a transition with evidence; backward refused unless a deliberate correction; lower stages implied, higher not; another profile is independent and an unrecorded relationship is unknown, never no; a shadow institution is observed until its public structure is mapped, stays shadow under a richer picture without an engaged relationship, establishes at engaged and activates only at collaborated (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_relationship.py.archive"
       ]
     },
@@ -38055,7 +38327,7 @@
         "richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre",
         "the canonical address resolves a shell and nothing more; the lenses that fill a subject out -- its world, its discussion, its map, its offers -- are separate reads and nothing yet hydrates them into the page",
         "subject addressing covers parcel, capability and note; the capability register that resolves is the priced catalogue, so 103 runnable capabilities have no address",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; the AddressPlane funnel does not call it yet, and the capability-estate features (estate_catalog, capability_identities) of the archived reference are not ported"
       ],
       "layer": "forwarding",
       "maturity": "implemented",
@@ -38068,11 +38340,14 @@
       "publishes": [],
       "semantic_question": "Of the eligible survivors, which few are most likely to succeed?",
       "source_paths": [
+        "engine/core/src/route_ranker.c",
+        "engine/core/include/bf_route_ranker.h",
         "components/BonfyreControlPlane/route_ranker.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/route_ranker_test.c: records read from real work_items outcomes; ternary weights from success/failure mean differences, a weak signal collapses to 0, an untrained ranker is neutral; ranking only reorders (best first, ties by id, no candidate dropped) (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_route_ranker.py.archive"
       ]
     },
@@ -38158,7 +38433,7 @@
       "invariants": [],
       "known_gaps": [
         "TransportPhenotype proved identical digest across direct/MCP already",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; bonfyre-provider and the R7 placement tools (JS) do not yet record bids, placements or parity through it"
       ],
       "layer": "provider",
       "maturity": "implemented",
@@ -38170,11 +38445,14 @@
       "publishes": [],
       "semantic_question": "Do direct, MCP, and HTTP carriers produce the same semantic result?",
       "source_paths": [
+        "engine/core/src/provider_graph.c",
+        "engine/core/include/bf_provider_graph.h",
         "components/BonfyreControlPlane/provider_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/provider_graph_test.c: bids kept as an intact metric vector; tournament ranks cost, latency and semantic loss as spent; a bid without authority is not selectable unless the caller drops that policy; weights reorder without touching the vector; placement read back; parity holds only proven pairs, unordered, and a later disproof replaces the proof (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_provider_graphs.py.archive"
       ]
     },
@@ -38565,7 +38843,7 @@
       ],
       "known_gaps": [
         "consumes proof-frontier measurements; the full measurement-plan / HVM-reduction front-end is future",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ submits measurement contracts to it yet"
       ],
       "layer": "evidence",
       "maturity": "implemented",
@@ -38580,6 +38858,8 @@
       "publishes": [],
       "semantic_question": "What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?",
       "source_paths": [
+        "engine/core/src/serm.c",
+        "engine/core/include/bf_serm.h",
         "components/BonfyreControlPlane/serm.py.archive"
       ],
       "subscribes": [],
@@ -38587,6 +38867,7 @@
         "EvidenceView"
       ],
       "witnesses": [
+        "engine/core/tests/serm_test.c over bf_proof tables: witness-backed frontier layers and cooled invariants are sufficient and honest and cool a measured sufficiency invariant citing coverage; an untested layer is missing and earns nothing; a proven claim with no witness is laundering, fails honesty and earns nothing even when the layer looks covered (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_serm.py.archive"
       ]
     },
@@ -38650,6 +38931,7 @@
       "experience_chains": [],
       "family": "surface",
       "forbidden_inferences": [
+        "a selected music stem or browser preview -> rights clearance or a published final master",
         "waveform editing and a populated arrangement -> account synchronization, collaborative editing, long-form production audio or completion of the other demo programs",
         "generated-tone parity or browser-local saves -> rights over third-party media, live collaborative editing, real-time audio guarantees or a complete DAW"
       ],
@@ -38658,6 +38940,7 @@
         "ordered native-kernel blocks render in a module worker; the client coalesces newer gain requests, transfers completed output and caches the waveform between playback frames"
       ],
       "invariants": [
+        "a music stem retained in the editorial arrangement is read back before the current selector accepts it; attribution remains review-gated",
         "arrangement gestures and source waveform regions project into the existing integer-frame clip contract; only the native WASM renderer produces mixed audio, and persisted sessions retain the existing expected-revision record",
         "WaveSurfer 8.0.2 and Regions are self-hosted with their BSD-3-Clause license inside the content-addressed audio package; they receive validated source peaks without audio uploads or a second playback engine",
         "imported WAV input is bounded to eight tracks and 24 MB encoded, with at most 32 MB decoded PCM; only PCM16 or float32 mono/stereo with one sample rate and clips within a 30-second timeline are admitted",
@@ -38686,6 +38969,8 @@
         "components/BonfyreServiceSite/creator-client.mjs",
         "components/BonfyreServiceSite/creator-import.mjs",
         "components/BonfyreServiceSite/creator-import-client.mjs",
+        "components/BonfyreServiceSite/editorial-sound-design-ui.mjs",
+        "cmd/BonfyreBroadcast/tests/editorial_mix_test.sh",
         "components/BonfyreServiceSite/creator-import-view.mjs",
         "components/BonfyreServiceSite/creator-timeline.mjs",
         "components/BonfyreServiceSite/creator-timeline-model.mjs",
@@ -38701,6 +38986,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreBroadcast/tests/editorial_mix_test.sh exercises retained music selection, complete multi-passage preview and stopping during asynchronous decoding",
         "packs/no-simulation/product-maturity-20261015/audio/local-arrangement/verification.json records pointer and keyboard arrangement edits, waveform region trim, undo and redo, synchronized zoom and scroll, cursor playback, reload, mobile fit and independently calculated exported PCM",
         "2026-10-15 creator-import.test.mjs independently checks every rendered sample for trim, placement, gain and mute; it also verifies WAV bounds, source fingerprints, same-rate admission, nonfinite rejection and clipping reports",
         "components/BonfyreServiceSite/tests/creator.test.mjs checks exact native output, every WAV sample, source-drift refusal and package bounds",
@@ -39188,7 +39474,7 @@
         "conversion to active requires a relationship at >= collaborated, not a richer public picture"
       ],
       "known_gaps": [
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "native in libbonfyre-fabric; no organ records relationships or shadow institutions through it yet, so opportunity chains cannot yet ask it"
       ],
       "layer": "institutional",
       "maturity": "implemented",
@@ -39204,6 +39490,8 @@
       "publishes": [],
       "semantic_question": "What do we know about an institution before any relationship or authority is established?",
       "source_paths": [
+        "engine/core/src/relationship.c",
+        "engine/core/include/bf_relationship.h",
         "components/BonfyreControlPlane/shadow_institution.py.archive"
       ],
       "subscribes": [],
@@ -39211,6 +39499,7 @@
         "InstitutionalView"
       ],
       "witnesses": [
+        "engine/core/tests/relationship_test.c: undeclared stages refused; advancing records a transition with evidence; backward refused unless a deliberate correction; lower stages implied, higher not; another profile is independent and an unrecorded relationship is unknown, never no; a shadow institution is observed until its public structure is mapped, stays shadow under a richer picture without an engaged relationship, establishes at engaged and activates only at collaborated (PASS 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_shadow_institution.py.archive"
       ]
     },
@@ -40613,7 +40902,7 @@
       ],
       "known_gaps": [
         "M2 builds the reversible control machinery; M9 still owes a real repeated circuit, measured equivalence and dependency-mutation LOWER-to-LIFT proof",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the PatternGraph is native; the Aurekai lowering half (aurekai_lowering.py.archive) has no native owner yet, and no organ records clusters from run history"
       ],
       "layer": "learning",
       "maturity": "implemented",
@@ -40625,12 +40914,15 @@
       ],
       "semantic_question": "Which presentation and adjacency motifs recur, and what better candidates should be proposed?",
       "source_paths": [
+        "engine/core/src/pattern.c",
+        "engine/core/include/bf_pattern.h",
         "components/BonfyreControlPlane/pattern_graph.py.archive",
         "components/BonfyreControlPlane/aurekai_lowering.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "engine/core/tests/pattern_test.c: a cluster needs traces and evidence and may only be observed or challenged; a proposal needs a known cluster and records only a candidate; a later proposal never resets a status proof set elsewhere; evidence refs stored as the reference stored them (make -C engine/core test, native conformance all passed 2026-11-08)",
         "components/BonfyreControlPlane/tests/test_run_history_absorption.py.archive",
         "components/BonfyreControlPlane/tests/test_aurekai_lowering.py.archive"
       ]
@@ -40836,7 +41128,7 @@
       "invariants": [],
       "known_gaps": [
         "the occurrence spine keeps one ordering, not the eight time planes",
-        "every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code."
+        "the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables"
       ],
       "layer": "evidence",
       "maturity": "implemented",
@@ -40848,12 +41140,14 @@
       "publishes": [],
       "semantic_question": "Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?",
       "source_paths": [
+        "engine/core/src/evidence.c",
+        "engine/core/include/bf_evidence.h",
         "components/BonfyreControlPlane/evidence_graphs.py.archive"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive"
+        "engine/core/tests/evidence_estate_test.c: bf_evidence_record_time / bf_evidence_time_of / bf_evidence_is_stale: eight declared planes kept apart, an undeclared plane refused, past expiration is stale and the row stays (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables"
       ]
     },
     {
