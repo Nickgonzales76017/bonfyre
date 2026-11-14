@@ -1,0 +1,90 @@
+name: Bonfyre tenant host isolation
+on:
+  push:
+    paths:
+      - "cmd/BonfyreWebAddress/src/tenant_host_binding.h"
+      - "cmd/BonfyreWebAddress/src/compat/aurekai_legacy.h"
+      - "cmd/BonfyreWebAddress/src/auth_continuation.h"
+      - "cmd/BonfyreWebAddress/src/credit_profile_host.h"
+      - "cmd/BonfyreWebAddress/src/credit_profile_parent.h"
+      - "cmd/BonfyreWebAddress/tests/auth_continuation_test.c"
+      - "cmd/BonfyreWebAddress/tests/route_presentation_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c"
+      - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
+      - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
+      - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.c"
+      - "cmd/BonfyreWebAddress/src/territory_home.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
+      - ".github/workflows/tenant-host-isolation.yml"
+  pull_request:
+    paths:
+      - "cmd/BonfyreWebAddress/src/tenant_host_binding.h"
+      - "cmd/BonfyreWebAddress/src/compat/aurekai_legacy.h"
+      - "cmd/BonfyreWebAddress/src/auth_continuation.h"
+      - "cmd/BonfyreWebAddress/src/credit_profile_host.h"
+      - "cmd/BonfyreWebAddress/src/credit_profile_parent.h"
+      - "cmd/BonfyreWebAddress/tests/auth_continuation_test.c"
+      - "cmd/BonfyreWebAddress/tests/route_presentation_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c"
+      - "cmd/BonfyreWebAddress/tests/people_projection_test.c"
+      - "cmd/BonfyreWebAddress/src/session_handoff_web.h"
+      - "cmd/BonfyreWebAddress/src/route_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.h"
+      - "cmd/BonfyreWebAddress/src/site_presentation.c"
+      - "cmd/BonfyreWebAddress/src/territory_home.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c"
+      - "cmd/BonfyreWebAddress/tests/tenant_host_binding_test.*"
+      - ".github/workflows/tenant-host-isolation.yml"
+  workflow_dispatch:
+
+jobs:
+  host-map-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile strict C tenant-binding test and prove hostile configurations refuse
+        run: sh cmd/BonfyreWebAddress/tests/tenant_host_binding_test.sh
+      - name: Compile and verify independent tenant authentication
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror -Icmd/BonfyreWebAddress/src \
+            cmd/BonfyreWebAddress/tests/auth_continuation_test.c -o /tmp/bf-auth-test
+          /tmp/bf-auth-test
+      - name: Compile and verify independent tenant presentation
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Iengine/core/include -Ilib/libbonfyre/include -Icmd/BonfyreWebAddress/src \
+            cmd/BonfyreWebAddress/tests/route_presentation_test.c \
+            cmd/BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o /tmp/bf-presentation-test
+          /tmp/bf-presentation-test
+      - name: Verify independent CMS namespace for routes, territory front doors and CSS
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Iengine/core/include -Ilib/libbonfyre/include -Icmd/BonfyreWebAddress/src \
+            cmd/BonfyreWebAddress/tests/tenant_presentation_namespace_test.c \
+            cmd/BonfyreWebAddress/src/site_presentation.c \
+            cmd/BonfyreWebAddress/src/territory_home.c \
+            -lsqlite3 -o /tmp/bf-tenant-cms-scope-test
+          /tmp/bf-tenant-cms-scope-test
+      - name: Compile and verify publisher parent without inherited institution
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Icmd/BonfyreWebAddress/src -Iengine/core/include -Ilib/libbonfyre/include \
+            cmd/BonfyreWebAddress/tests/tenant_credit_parent_test.c \
+            -lsqlite3 -o /tmp/bf-credit-test
+          /tmp/bf-credit-test
+      - name: Preserve exact hashed-byline host behavior
+        run: |
+          cc -std=c11 -D_GNU_SOURCE -Wall -Wextra -Werror \
+            -Wno-misleading-indentation -Wno-format-truncation \
+            -Icmd/BonfyreWebAddress/src -Icmd/BonfyreLex/src \
+            -Iengine/core/include -Ilib/libbonfyre/include \
+            cmd/BonfyreWebAddress/tests/people_projection_test.c \
+            lib/libbonfyre/src/bf_sha256.c -lsqlite3 -o /tmp/bf-people-test
+          /tmp/bf-people-test
+      - name: Confirm engine core has not acquired Aurekai product defaults
+        run: python3 scripts/check-product-boundary.py

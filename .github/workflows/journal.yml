@@ -1,0 +1,160 @@
+name: Aurekai Journal Validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'editorial/posts/**'
+      - 'editorial/authors/**'
+      - 'scripts/editorial_publication.py'
+      - 'scripts/tests/editorial-publication-bridge.py'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
+      - 'site/blog/authors.css'
+      - 'editorial/reading-bridges.tsv'
+      - 'editorial/media-sources.tsv'
+      - 'editorial/templates/**'
+      - 'editorial/art-direction.tsv'
+      - 'editorial/complexity-lenses.tsv'
+      - 'site/blog/complexity.css'
+      - 'scripts/tests/journal-discoverability.py'
+      - 'scripts/tests/journal-browser.mjs'
+      - 'scripts/tests/editorial-*.py'
+      - 'site/index.html'
+      - 'scripts/render-editorial.sh'
+      - 'scripts/retain-tested-pages.mjs'
+      - 'scripts/tests/retain-tested-pages.test.mjs'
+      - 'site/blog/**'
+      - 'site/series/**'
+      - 'site/discover/**'
+      - 'site/fieldwork/**'
+      - 'site/explore.html'
+      - 'site/market.html'
+      - 'site/matrix/index.html'
+      - 'site/modules/index.html'
+      - 'scripts/tests/public-editorial-language.py'
+      - 'scripts/tests/public-wayfinding.py'
+      - 'scripts/public-pages-live-readback.mjs'
+      - 'scripts/tests/public-pages-live-readback.test.mjs'
+      - 'scripts/pages-source-freshness.mjs'
+      - 'scripts/tests/pages-source-freshness.test.mjs'
+      - 'scripts/range-static-site.mjs'
+      - 'scripts/tests/range-static-site.test.mjs'
+      - '.github/workflows/journal.yml'
+  pull_request:
+    paths:
+      - 'editorial/**'
+      - 'scripts/editorial_publication.py'
+      - 'scripts/tests/editorial-publication-bridge.py'
+      - 'cmd/BonfyreCMS/content-types/site_page.json'
+      - '.github/workflows/journal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout journal source
+        uses: actions/checkout@v4
+      - name: Render journal from editable Markdown
+        run: sh scripts/render-editorial.sh
+      - name: Check deterministic output and public entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh scripts/render-editorial.sh --check
+          python3 scripts/tests/journal-discoverability.py
+          node --check site/blog/reader.js
+          expected="$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          # Additional Journal routes such as /about/ are not article records.
+          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$expected"
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$expected"
+          # Journal landing, About, Series, and Connections atlas supplement the article URLs.
+          test "$(grep -c '<url>' site/blog/sitemap.xml)" -eq "$((expected+7))"
+          test "$(wc -l < site/blog/post-index.tsv)" -eq "$((expected+1))"
+          grep -q "All articles / $expected" site/blog/index.html
+          grep -q 'data-filter="Debates"' site/blog/index.html
+          grep -q 'data-filter="Mathematics"' site/blog/index.html
+          grep -q 'data-filter="Markets"' site/blog/index.html
+          grep -q 'data-filter="Science"' site/blog/index.html
+          test -f site/sitemap.xml
+          grep -q 'bonfyre/blog/the-machine-told-me-so/' site/sitemap.xml
+          grep -q 'application/ld+json' site/blog/the-machine-told-me-so/index.html
+          grep -q 'BreadcrumbList' site/blog/the-machine-told-me-so/index.html
+          test -f site/blog/reader.js
+          test -f site/blog/reader.css
+          test -f site/blog/about/index.html
+          test -f site/series/index.html
+          grep -q 'id="authority"' site/series/index.html
+          grep -q 'id="operators"' site/series/index.html
+          grep -q 'reader-outline-menu' site/blog/the-machine-told-me-so/index.html
+          # The research audio contract is checked per-article: Sarah MP3 or no player.
+          ! grep -q 'data-narration-voice' site/blog/the-machine-told-me-so/index.html
+          ! grep -q 'speechSynthesis' site/blog/the-machine-told-me-so/index.html
+          grep -q 'journal-sources' site/blog/the-machine-told-me-so/index.html
+          grep -q 'itemscope itemtype="https://schema.org/BlogPosting"' site/blog/the-machine-told-me-so/index.html
+          grep -q 'og:image' site/blog/the-machine-told-me-so/index.html
+          grep -q 'journal-card-outline' site/blog/index.html
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const html=readFileSync('site/blog/index.html','utf8');
+          const n=readFileSync('site/blog/post-index.tsv','utf8').trimEnd().split('\n').length-1;
+          for(const [needle,count] of [
+            ['class="journal-card ed-card ',n],
+            ['class="ed-card-cover"',n],
+            ['class="ed-card-content"',n],
+            ['data-cover-kind=',n],
+          ]) assert.equal(html.split(needle).length-1,count,needle);
+          assert.match(html,/data-journal-view="grid"/);
+          assert.match(html,/data-journal-view="list"/);
+          assert.match(html,/data-journal-grid/);
+          assert.match(html,/const layout=document.querySelector/);
+          assert.match(html,/ ed-card--lead"/); // leading story assigned in source
+          NODE
+          test "$(grep -c 'class="essay-chapter ' site/series/index.html)" -eq 4
+      - name: Browser-check cards, list view, filters, keyboard and mobile layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix .journal-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          node scripts/range-static-site.mjs site 8765 >/tmp/aurekai-journal-browser.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export PLAYWRIGHT_MODULE="$PWD/.journal-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/journal-browser.mjs
+      - name: Verify article search and reading readiness
+        run: python3 scripts/tests/editorial-search-readiness.py
+      - name: Verify editorial-only rebase preserves the tested release
+        run: node --test scripts/tests/retain-tested-pages.test.mjs
+      - name: Verify two-way editorial reading graph and truthful publication dates
+        run: python3 scripts/tests/editorial-reading-graph.py
+      - name: Verify public labels, links and understandable language
+        run: python3 scripts/tests/public-editorial-language.py
+      - name: Verify public navigation and calls to action
+        run: python3 scripts/tests/public-wayfinding.py
+      - name: Verify latest-source protection across generated release commits
+        run: node --test scripts/tests/pages-source-freshness.test.mjs
+      - name: Check media server HTTP range and loading semantics
+        run: node --test scripts/tests/range-static-site.test.mjs
+      - name: Verify native CMS draft records and source-owned author profiles
+        run: python3 scripts/tests/editorial-publication-bridge.py
+      - name: Verify native draft reconciliation and protected publication boundaries
+        run: node --test scripts/tests/editorial-native-reconcile.test.mjs
+      - name: Verify static-site readback harness against local fixtures
+        run: node --test scripts/tests/public-pages-live-readback.test.mjs
+      - name: Preserve reviewable native CMS draft projection
+        uses: actions/upload-artifact@v4
+        with:
+          name: journal-native-cms-draft
+          path: build/publication/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Archive website output
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurekai-journal-static
+          retention-days: 14
+          path: site/blog

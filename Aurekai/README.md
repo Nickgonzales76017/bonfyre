@@ -1,6 +1,8 @@
-# Aurekai — business, public platform and retained distribution lineage
+# Aurekai — the business behind memorable software experiences
 
-**Aurekai is the digital operating business and public network. Bonfÿre is the native institutional engine underneath it.** They are not two names for the same CLI.
+**Built on software. Driven by Aurekai.**
+
+Aurekai is the operating business and public network. Bonfÿre is its native institutional engine—not a second name for the same company or CLI.
 
 AI agents can produce software faster than conventional planning, handoffs, approvals and integration processes can absorb it. Aurekai's operating model invests engineering time, AI computation, reusable software, institutional knowledge and distribution into digital assets, applications and opportunities. Bonfÿre makes the underlying work **composable, authorized, testable and reusable**. Each project should strengthen the capability base for the next.
 
@@ -68,7 +70,7 @@ Start with these instead of an old `akai` installation recipe:
 - [Architecture and semantic owners](../docs/architecture.md) — native responsibility and verification contracts
 - [Quickstart](../QUICKSTART.md) — current public source entry points
 - [Aurekai public work samples](https://aurekai-work-samples.pages.dev/) — experience-level demonstrations with their limits
-- [Current federated source atlas](https://nickgonzales76017.github.io/bonfyre/modules/) — pinned companions and upstream lineages
+- [Public source libraries](https://nickgonzales76017.github.io/bonfyre/modules/) — pinned companions and upstream lineages
 
 ## Historical reference
 

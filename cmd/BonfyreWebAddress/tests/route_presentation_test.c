@@ -41,8 +41,8 @@ int main(void) {
     snprintf(store, sizeof(store), "/tmp/bf-route-presentation-%d.db", (int)getpid());
     unlink(store);
     if (sqlite3_open(store, &db) != SQLITE_OK || sqlite3_exec(db,
-        "CREATE TABLE route_presentation(id INTEGER PRIMARY KEY,namespace TEXT DEFAULT 'root',territory TEXT,route TEXT,when_query_key TEXT,pattern TEXT,template TEXT,status TEXT,design_fingerprint TEXT,design_namespace TEXT,design_html_sha256 TEXT);"
-        "CREATE TABLE presentation_template(id INTEGER PRIMARY KEY,namespace TEXT DEFAULT 'root',template TEXT,status TEXT,layout_tokens TEXT,hero_mode TEXT,navigation_mode TEXT,density TEXT,card_mode TEXT,typography_mode TEXT);"
+        "CREATE TABLE route_presentation(id INTEGER PRIMARY KEY,namespace TEXT NOT NULL DEFAULT 'root',territory TEXT,route TEXT,when_query_key TEXT,pattern TEXT,template TEXT,status TEXT,design_fingerprint TEXT,design_namespace TEXT,design_html_sha256 TEXT);"
+        "CREATE TABLE presentation_template(id INTEGER PRIMARY KEY,namespace TEXT NOT NULL DEFAULT 'root',template TEXT,status TEXT,layout_tokens TEXT,hero_mode TEXT,navigation_mode TEXT,density TEXT,card_mode TEXT,typography_mode TEXT);"
         "CREATE TABLE design_fingerprint(id INTEGER PRIMARY KEY,namespace TEXT,fingerprint_id TEXT,status TEXT,visual_vector TEXT,reference_source TEXT,renderer_affinity TEXT,density TEXT);"
         "INSERT INTO route_presentation(territory,route,when_query_key,pattern,template,status) VALUES"
         "('work','/people',NULL,'directory',NULL,'published'),"
@@ -80,6 +80,10 @@ int main(void) {
         "('aurekai','sp8','account','person:a','foreign-account','published'),"
         "('site-a','sp9','profile','site-a','site-dress','published');",
         NULL, NULL, NULL) != SQLITE_OK) return fail("fixture");
+    if (sqlite3_exec(db,
+        "INSERT INTO route_presentation(territory,route,when_query_key,pattern,template,status)"
+        " VALUES ('research','/study',NULL,'reader','night-ledger','published')",
+        NULL,NULL,NULL)!=SQLITE_OK)return fail("research fixture");
     sqlite3_close(db);
 
     if (!(p = bf_route_presentation_pattern("aurekai.work", "/people", "page=2")) || strcmp(p, "directory")) return fail("plain row");
@@ -207,7 +211,43 @@ int main(void) {
     bf_route_presentation_emit_body_attribute(mem, "x\"y");
     fclose(mem);
     if (len) { free(out); return fail("unsafe attribute value"); }
+    free(out); out=NULL; len=0;
+
+    /* One engine may serve a different operator's explicit domains and
+     * presentation vocabulary, not merely its historical four public hosts. */
+    char tenant_map[]="/tmp/bf-route-tenant-XXXXXX";
+    int fd=mkstemp(tenant_map);
+    if(fd<0)return fail("tenant map tempfile");
+    FILE *hostmap=fdopen(fd,"w");
+    if(!hostmap)return fail("tenant map fdopen");
+    fputs("work demo.example.net login.demo.example.net root\n"
+          "life people.example.net auth.people.example.net root\n"
+          "research research.example.net auth.research.example.net root\n",hostmap);
+    if(fclose(hostmap))return fail("tenant map flush");
+    if(bf_tenant_hosts_load(tenant_map)!=1)return fail("tenant map admission");
+    if (!(p = bf_route_presentation_pattern("demo.example.net","/people",NULL)) ||
+        strcmp(p,"directory"))return fail("another operator's work front door");
+    if (!(p = bf_route_presentation_pattern("login.demo.example.net","/people",NULL)) ||
+        strcmp(p,"directory"))return fail("matching account origin inherits work");
+    if (!(p = bf_route_presentation_pattern("research.example.net","/study",NULL)) ||
+        strcmp(p,"reader"))return fail("new tenant territory is not limited to four Aurekai names");
+    if (bf_route_presentation_pattern("aurekai.work","/people",NULL))
+        return fail("configured tenant must not inherit Aurekai's site");
+    if (bf_route_presentation_pattern("bad.login.demo.example.net","/people",NULL))
+        return fail("untrusted account subdomain");
+    mem=open_memstream(&out,&len);
+    bf_route_presentation_emit_head_for(mem,"research","/study",NULL,"reader");
+    bf_route_presentation_emit_body_attribute(mem,"reader");
+    fclose(mem);
+    if(!out || !strstr(out,"name=\"bonfyre:composition\"") ||
+       !strstr(out,"body[data-bf-pattern]{--bf-ground:#0f1511;--bf-accent:#d0fc4f;}") ||
+       !strstr(out,"data-bf-pattern=\"reader\"") ||
+       strstr(out,"data-aurekai-pattern"))return fail("brand-neutral publication composition");
     free(out);
+    if(bf_tenant_hosts_load("/missing/tenant-map")!=-1)return fail("invalid configuration not refused");
+    if(bf_route_presentation_pattern("demo.example.net","/people",NULL))
+        return fail("invalid configuration must fail closed");
+    unlink(tenant_map);
     unlink(store);
     puts("route presentation: PASS");
     return 0;

@@ -37,8 +37,9 @@ budget: {
 	// The one-app rebuild itself is C; its JS edits were existing tests.
 	// Down only from here. At the commit that shipped it: source-desk
 	// negotiation and all-sites journal tests from the same sessions (+1/+91).
-	authored_mjs_files: 1627
-	authored_mjs_lines: 181253
+	// merge of main 2026-11-13: main's spaces releases, brand cuts, tenant host and editorial tests (+19 files / +1,723 lines)
+	authored_mjs_files: 1646
+	authored_mjs_lines: 182976
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
@@ -48,7 +49,8 @@ budget: {
 	// down only.
 	// 2026-11-13 reviewed raise: deploy/tailwind/postcss.config.cjs, the
 	// PostCSS pipeline that now generates every served sheet (+1).
-	other_script_files: 77
+	// merge of main 2026-11-13: editorial publication/audio .py tools and tests, blog reader/connections .js (+12)
+	other_script_files: 89
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0

@@ -1,6 +1,6 @@
 # ServiceSite
 
-The kit behind the [work samples](https://aurekai-work-samples.pages.dev/).
+The kit behind the [work samples](https://aurekai-work-samples.pages.dev/). **Built on software. Driven by Aurekai.** This signature applies to Aurekai-owned examples only; independent customer sites retain their own names and branding.
 Each site is owned by a canonical `service_site` record in BonfyreCMS;
 its folder's `content.json` is an export for review, build and publication,
 not an independently authoritative source. `site.mjs publish` pulls the

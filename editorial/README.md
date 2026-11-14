@@ -1,11 +1,79 @@
-# Aurekai Journal — editable editorial source
+# Aurekai Journal — public articles and editorial source
 
-The source articles in `editorial/posts/*.md` are public-facing essays adapted from earlier Aurekai and Bonfÿre discussions, experiments and research. They are not raw chat exports or verbatim transcripts.
+The Aurekai Journal currently holds **90 edited articles**: sixteen essays based on earlier Aurekai/Bonfÿre work, thirty additional pieces examining external research, mathematical claims, tools, markets, standards, and original posts on X, plus eight essays on living web presences and accessible software ecosystems, five essays on independent judgment and expression, and five essays on internet operators, preservation and ownership.
 
-Each article has stable front matter: slug, title, description, category, icon, date, editorial status, topics and origin. Its corresponding static page is checked into `site/blog/<slug>/index.html` and served at `https://nickgonzales76017.github.io/bonfyre/blog/<slug>/`.
+The editorial Markdown in `editorial/posts/*.md` is authoritative. Each article has a stable slug, canonical URL, category, icon, publication date, source lineage, and `status: edited-public`. Posts responding to outside material include a `source_url` for the primary source. These are independently written articles, **not raw chat exports or endorsements by the cited organizations**.
 
-The static journal also contains an article index, subject search, RSS, XML sitemap and `site/blog/post-index.tsv`. The manifest carries the subject identity `post:<slug>`, source path and canonical URL for a later move to BonfÿreCMS, Matrix and Source Library.
+## Static publication
 
-**No new JavaScript service or generator is installed.** Bonfÿre's native source-size ratchet remains unchanged. For now the Markdown is the editable source and the HTML files are committed publication artifacts. After native CMS authoring is connected, these coordinates and identities can become output from the existing native publishing owners.
+From the public repository root:
 
-Articles use public examples and link to official sources and project pages. Do not add raw chat logs, account identifiers, credentials or private customer data to the public editorial directory.
+```sh
+sh scripts/render-editorial.sh
+sh scripts/render-editorial.sh --check
+```
+
+The shell wrapper uses the Python 3 standard library available on the Pages runner. It produces `site/blog/index.html`, one HTML page per article, `feed.xml`, `sitemap.xml`, and `post-index.tsv`. The published HTML is built from source inside GitHub Actions immediately before the Pages artifact is uploaded. The independent **Aurekai Journal Validation** workflow performs the same deterministic check on every editorial change.
+
+No new installed JavaScript program is introduced, and the native code-budget ratchet remains unchanged. The original static journal's client-side search runs as a small inline enhancement; all article links and the feed work without it.
+
+## Native publishing integration later
+
+The TSV manifest maps each post to a stable `post:<slug>` identity and the original Markdown path, SHA-256, canonical URL, and cited primary source URL. BonfÿreCMS / Matrix / Source Library can consume these records later while retaining the existing public article URLs.
+
+A public article must be reviewed before setting `status: edited-public`. Do not publish raw project conversation logs, private customer details, credentials, account tokens or unpublished integration contracts. Attributed quotations should be short and linked to their original context; mathematical examples must identify hypothetical inputs instead of presenting them as measured results.
+
+## Current series: Sites are dead. Long live the web.
+
+Eight source-linked essays published November 8, 2026 examine living profiles, participatory publication, creative ecosystems, software convergence, spreadsheets, small-business access and AI-driven software abundance. Start with `sites-are-dead-long-live-the-web`. All articles distinguish product ambitions from verified shipped features.
+
+## Editorial reading series
+
+The public `site/series/index.html` is a designed reading map connecting the independent judgment, living profiles, accessible software and internet operator series to public source research and existing studio examples. The pages are static and work without client-side scripting. Their real-application links are marked as public examples rather than unverified production capabilities.
+
+## Four connected reading paths
+
+The public [four-series edition](https://nickgonzales76017.github.io/bonfyre/series/) connects **20 essays** on the living web, authority and independent verification, expressive access, and internet operators. Each article has its own attributed epigraph and closing reflection, with links back to the relevant series. Published quotations are linked to source contexts; original Aurekai editorial reflections are explicitly identified.
+
+The operators series includes digital inheritance and collective bargaining power alongside preservation, research, clipping, local media, creator rights and distribution. Rights, archival custody, access and ownership are not assumed to be interchangeable.
+
+## Editorial roadmap
+
+The long-term journal can grow toward approximately 500 articles spanning independent business operations, supplier markets, local models, application grammars, physical resources, publishing, civic information, standards, applied mathematics, and careful challenges to popular technology claims. The goal is a useful research publication, not volume alone.
+
+
+## Article-level editorial direction
+
+The 90 articles are individually assigned a nonrandom publication format and colorway in `editorial/art-direction.tsv`, with reviewed media in `editorial/media-sources.tsv`. Fourteen semantic formats distinguish reporting, dossiers, cultural features, business analysis, systems research, archives, and designed opinion columns. There are **no procedural botanical illustrations**, arbitrary species names, or autogenerated artwork in this pipeline. Some stories use **real photographs licensed as public domain/CC0 or verified first-party product screenshots**, with clear attribution linked to the underlying source. Others use typographic covers with real section headings from the authored essay, rather than a misleading decorative picture. The Journal cover uses a credited photograph by Austin Schmid (CC0 via Wikimedia Commons). The reader can inspect the article's editable Markdown and sources.
+
+Choose an article's format, colorway, and optional verified media in the TSV (columns: slug, format, colorway, media). Fourteen layout families now shape the inside of the article as well as its cover, typesetting chapter folios and introductory paragraphs from original manuscript headings. None of these choices create quotations, sources, or artwork.
+
+Keep the article-level manifest maintained when adding an essay; it is an intentional editorial decision. The existing journal check fails if any post has no art direction, if a procedural `cover.svg` remains, if credited media is not identified, or if the edition styles are missing. The site generates static HTML/CSS with no paid model or image-generation dependency.
+
+## Recorded editorial editions
+
+Aurekai Journal no longer synthesizes narration in a reader's browser. Voice pickers, synthetic passage bars, and decorative waveform controls have been retired. A reader sees a listening player only when a real Sarah (`af_sarah`) recording exists, matches the article's SHA-256 source-body fingerprint, and has `audio_file: edition.mp3` in front matter. Every other article remains a polished reading experience without an inactive listening promise.
+
+The player uses one house voice, real duration and seeking, playback speed, a native HTML audio fallback, and actual decoded audio peaks when available. It offers a small dock only during an active listening session. Recording review status and AI-voice disclosure are visible. The editorial audio producer now segments speech by sentences and paragraph breaks rather than arbitrary mid-sentence chunks. The four published Sarah pilots are provisional, and no deployment or QA green light substitutes for a listen-through.
+
+## Deterministic publication and native draft parity
+
+The canonical Journal landing is `editorial/templates/journal-index.html`, never the previously generated `site/blog/index.html`. The builder composes this authored source with reviewed articles, palettes, credited media, authors and reading relationships. A build cannot inherit stale cards or controls from the previous publish.
+
+Native BonfyreCMS drafts now retain each article's presentation choice, credited media (when present), and recorded audio metadata (when present), with exact source-file digests. These records remain `draft`, not live publication or rights clearance by themselves.
+
+## Reuse verified releases for editorial-only changes
+
+The Pages current-source job uses `scripts/pages-editorial-scope.mjs` to compare the source with the last exact bot-authored studio/instrument release. Only journal-source edits are eligible for a fast publish, and the retained studio and instrument manifests are rechecked by exact file size and SHA-256. Manual dispatch, missing receipts, Pages pipeline changes, native changes and application edits run the complete studio build. Both branches regenerate the Journal, verify its native drafts, check browser behavior, deploy and run public readback. This is a reuse of existing verified artifacts, not an inferred live provider or publication grant.
+
+## Live publication acceptance
+
+The Pages post-deployment readback verifies exact bytes for **every published article HTML**, the Journal CSS and reader JavaScript, RSS and sitemaps, source index, author pages, and the seven primary public routes. Source identities come from the generated post index, not a manually curated sample. Cache-busting digests, bounded retries and a retained per-file receipt refuse a green release when any article or editorial stylesheet is stale. This verifies public bytes only, not the rights or quality of narrated recordings.
+
+## The hidden complexity investigations
+
+The Journal now adds 24 original primary-source-grounded reports across six reader-friendly areas: people and belonging, money and markets, time and place, language and media, evidence and public institutions, and software and operations. Each follows a different operational, economic, cultural, accessibility or institutional lens, and preserves context behind the apparently simple field or protocol.
+
+The curated domain choices live in `editorial/complexity-lenses.tsv`. The accessible `/blog/complexity/` guide is derived from that source; every story also has its own authored art-direction decision, editorial question and contextual reading bridges to older and new work. The original domain source list is an internal discovery prompt and is **not** cited or reproduced. Sources in each article instead link to the named standards bodies, institutional manuals or primary technical documentation examined.
+
+These essays present hypothetical scenarios as illustrative, not as verified incidents. Publication is through the existing review-aware Journal workflow; native BonfyreCMS draft rows remain separate from live native CMS publication.

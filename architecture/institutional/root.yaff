@@ -22,11 +22,25 @@ architecture institutional-root
   edge_types owns_relationship
   edge_types manages_client
   edge_types populated_by
-  invariant Aurekai is the company umbrella and Bonfyre is the engine and product substrate; neither name is a synonym for the other
+  invariant Aurekai is an independently owned operating institution, not a Bonfyre engine namespace, product alias, source tree, release channel or implicit child grant
+  invariant Bonfyre is a separate reusable native engine, library and developer platform; its technical releases are not Aurekai business releases
+  invariant Bonfyre core cannot acquire an Aurekai tenant, domain, business record, provider credential, or commercial authority through an engine install, namespace prefix, source import, binary name, session, or generated site
+  invariant Aurekai business state belongs to Aurekai or an exact downstream customer or creator institution; no license to run software changes this ownership
+  invariant Aurekai using a Bonfyre binary requires an explicit installation or versioned interface with exact tenant grants, and cannot publish or financially act without that tenant's own approval
+  invariant Bonfyre providing a runtime to Aurekai does not entitle the engine project to any Aurekai client data, account installation, brand, revenue, rights or effect permission
+  invariant an engine release, Aurekai site publication, customer deployment, creator publication and verified financial effect have distinct revisions, acceptance owners and receipts
+  invariant an Aurekai marketing identity, WORK LIFE LIVE SHOP host set, site copy, offers or price is never a generic default of Bonfyre core or its public developer identity
+  invariant legacy akai/aurekai runtime packages and bonfyre CLI aliases are compatibility artifacts, not proof that the business and engine are synonymous; migration requires exact release and parity testing
   invariant a root product is real only when a pack or existing state populates it; a namespace without state is declared unpopulated rather than described as existing
   invariant delegation is recursive: Bonfyre delegates to an operating business, which delegates to its managed clients, which serve downstream organizations and users
   invariant a delegated estate owns its own external relationships; Bonfyre models and operates them but does not own them
   invariant capability and method may move between estates while private institutional data does not move with them
+  forbidden_inference Bonfyre building or serving a page -> Bonfyre owning the institution, customer, host, source content or publishing approval
+  forbidden_inference Bonfyre source references an Aurekai domain -> that domain or its provider credentials becoming engine defaults or engine assets
+  forbidden_inference Aurekai commissions or installs Bonfyre -> Aurekai owning all engine code, tests, users or releases
+  forbidden_inference an engine grant or session -> an Aurekai tenant grant or the reverse
+  forbidden_inference an Aurekai publication or sales claim -> a verified Bonfyre feature, and an engine test -> a commercial delivery
+  forbidden_inference historical package or command alias -> shared institutional ownership
   forbidden_inference a product namespace existing -> the product has state
   forbidden_inference Bonfyre operating a provider relationship -> Bonfyre owning that relationship
   forbidden_inference a Partner Commons profile existing -> a live relationship with that project
@@ -42,6 +56,7 @@ architecture institutional-root
   source_path architecture/institutional/worlds.yaff
   source_lineage Generation-10 product topology separation, 2026-08-26
   source_lineage disk census of populated versus declared estates
+  source_lineage 2026-11-13 Aurekai/Bonfyre brand and institutional ownership separation; core guard in scripts/check-product-boundary.py
 
 interaction root-reads-pack-state
   source institutional-root

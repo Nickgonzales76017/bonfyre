@@ -62,3 +62,38 @@
 @media(max-width:1000px){.journal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.journal-article-layout{grid-template-columns:1fr}.journal-article-side{display:none}}
 @media(max-width:720px){.journal-feature{grid-template-columns:1fr}.journal-feature-aside{border-left:0;border-top:1px solid #597164;padding:22px 0 0}.journal-grid{grid-template-columns:1fr}.journal-search-label{width:100%;align-items:flex-start;flex-direction:column}.journal-search-label input{width:100%;max-width:none}.journal-hero h1{font-size:clamp(3rem,11vw,5.5rem)}.journal-card-link{min-height:260px}}
 @media(prefers-reduced-motion:reduce){.journal-card{transition:none}.journal-card:hover{transform:none}}
+/* Source-linked research models and article topic navigation. */
+.journal-topics{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0 20px}
+.journal-topic{border:1px solid var(--line);background:var(--mist);padding:5px 9px;color:var(--forest);font:.71rem var(--sans);font-weight:650}
+
+/* Epigraphs and afterwords share the authored Journal series metadata. */
+.journal-epigraph{margin:0 0 48px;padding:27px clamp(20px,4vw,34px);border-left:3px solid var(--rust);background:var(--mist)}
+.journal-epigraph blockquote{font:italic 500 clamp(1.45rem,2.6vw,2.25rem)/1.48 Georgia,serif;color:var(--ink);margin:0}
+.journal-epigraph figcaption{font:.8rem/1.6 system-ui,sans-serif;color:var(--muted);margin-top:17px}
+.journal-epigraph figcaption a{color:var(--forest)}
+.journal-afterword{margin:64px 0 42px;padding:clamp(25px,4vw,40px);background:var(--night);color:#f5f3eb}
+.article-body .journal-afterword h2{font:500 clamp(1.5rem,3vw,2.35rem)/1.37 Georgia,serif;margin:17px 0 27px;color:#f5f3eb}
+.journal-afterword .eyebrow{color:#ebbd9e}
+.article-body .journal-afterword a{color:#f6c6ab;font-size:.87rem}
+.journal-series-promo{background:var(--mist);border-bottom:1px solid var(--line)}
+.journal-series-promo .shell{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-top:28px;padding-bottom:28px}
+.journal-series-promo h2{font:500 clamp(1.4rem,2.5vw,2.3rem)/1.25 Georgia,serif;margin:5px 0 0}
+.journal-series-promo a{border:1px solid var(--forest);padding:14px 18px;color:var(--forest);font-weight:750;text-decoration:none;white-space:nowrap}
+.journal-series-promo a:hover{background:var(--forest);color:#fff}
+@media(max-width:720px){.journal-series-promo .shell{align-items:flex-start;flex-direction:column}.journal-series-promo a{white-space:normal}}
+
+
+/* The argument itself gets a visual: one conceptual diagram and three article-specific reasoning turns. */
+.journal-argument-figure{margin:47px 0 58px;padding:0;background:#f4f0e7;border:1px solid #c6ccbe}
+.argument-head{padding:20px 23px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.argument-head span{font:.65rem/1.5 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a65b3c;font-weight:800}
+.argument-head strong{font:500 1.4rem/1.2 Georgia,serif;color:#1c3c2f}
+.journal-argument-figure img{display:block;width:100%;height:auto;background:#e8e4d8}
+.journal-argument-figure figcaption{font:.79rem/1.65 system-ui,sans-serif;padding:15px 23px;color:#4b6354}
+.article-body .journal-argument-figure figcaption a{display:inline;color:#9b5d3e}
+.argument-turns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;margin:0!important;padding:0!important;border-top:1px solid #c6ccbe}
+.argument-turns li{display:flex;flex-direction:column;gap:9px;padding:19px 20px;border-right:1px solid #c6ccbe;margin:0!important}
+.argument-turns li:last-child{border-right:0;background:#d9e8d9}
+.argument-step{font:.64rem/1.45 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.07em;font-weight:800;color:#9b573f}
+.argument-turns strong{font:550 clamp(.93rem,1.4vw,1.13rem)/1.4 Georgia,serif;color:#233f31}
+@media(max-width:700px){.argument-turns{grid-template-columns:1fr}.argument-turns li{border-right:0;border-bottom:1px solid #c6ccbe}.argument-head{padding:18px}.journal-argument-figure figcaption{padding:14px 18px}}

@@ -189,6 +189,8 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/aurekai-bar.css", "aurekai-bar.css", "text/css; charset=utf-8"},
         /* Arrival, sign-in and the trust modals: one sheet for the account path. */
         {"/assets/aurekai-trust.css", "aurekai-trust.css", "text/css; charset=utf-8"},
+        /* One cacheable public brand sheet across the four exact Aurekai apex roots. */
+        {"/assets/front-brand.css", "front-brand.css", "text/css; charset=utf-8"},
         {"/assets/own-site-agent.js", "own-site-agent.js", "text/javascript; charset=utf-8"},
         {"/assets/own-site-reading.js", "own-site-reading.js", "text/javascript; charset=utf-8"},
         {"/assets/static-embed.mjs", "static-embed.mjs", "text/javascript; charset=utf-8"},

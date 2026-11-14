@@ -4283,7 +4283,7 @@ static const char *page_search_apex_title(const char *host, const char *route) {
     if (!strcmp(host, "aurekai.life")) return "Aurekai Life | Stories, People and Communities";
     return NULL;
 }
-static void page_emit_search_identity(const PageDocument *doc) {
+static void page_emit_search_identity(const PageDocument *doc, const FrontBrandCut *brand) {
     char host[256];
     const char *title, *route;
     if (doc->actor && *doc->actor) {
@@ -4303,9 +4303,9 @@ static void page_emit_search_identity(const PageDocument *doc) {
     fputs("<meta property=\"og:url\" content=\"https://", stdout);
     html(host); html(route);
     fputs("\"><meta property=\"og:title\" content=\"", stdout);
-    html(title ? title : doc->title);
+    html(brand ? brand->headline : title ? title : doc->title);
     fputs("\"><meta property=\"og:description\" content=\"", stdout);
-    html(doc->lede ? doc->lede : "");
+    html(brand ? brand->description : doc->lede ? doc->lede : "");
     fputs("\"><meta name=\"twitter:card\" content=\"summary\">", stdout);
     if (title) {
         const char *name = !strcmp(host, "aurekai.work") ? "Aurekai Work" :
@@ -4362,10 +4362,13 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
     /* The document title is the composed page's own (an apex front is named
-     * for its hour); the territory's search identity travels in og:title and
-     * the WebSite JSON-LD emitted just below. */
-    page_emit_head(template, head_end, doc->title, doc->lede);
-    page_emit_search_identity(doc);
+     * for its hour), except on the four owned apex roots, whose source-owned
+     * brand cut names them. The territory's search identity travels in
+     * og:title, canonical and the WebSite JSON-LD emitted just below. */
+    const FrontBrandCut *brand_head=front_brand_public_host(page_render_host,doc->route);
+    page_emit_head(template, head_end, brand_head?brand_head->headline:doc->title,
+                   brand_head?brand_head->description:doc->lede);
+    page_emit_search_identity(doc, brand_head);
     bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
@@ -4383,6 +4386,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         fputs("<link rel=\"stylesheet\" href=\"/assets/reading-surface.css\">",stdout);
     fputs("<link rel=\"stylesheet\" href=\"/assets/page-components.css\">",stdout);
     if(front_community_route(page_render_host,doc->route))front_community_styles();
+    if (brand_head) fputs("<link rel=\"stylesheet\" href=\"/assets/front-brand.css\">",stdout);
     fputs("</head>",stdout);
     fputs("<body class=\"ak-app ", stdout); html(doc->character);
     if (doc->route) { fputs(" route-", stdout); html(doc->route[1] ? doc->route + 1 : "front"); }
@@ -4404,6 +4408,10 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         free(template); if (material != doc->prefilled) free(material);
         return 1;
     }
+    /* The four owned apex roots open on the canonical composed brand H1;
+     * the edited front below it then titles itself one level down. */
+    page_front_brand_opened = brand_head != NULL;
+    if (brand_head) front_brand_emit(brand_head->territory);
     /* An apex front draws its own opening, its regions and its end; nothing
      * from the generic page is laid under it. */
     if (!narrowed && front_is_apex(doc, NULL)) {
@@ -4411,6 +4419,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         page_front_shown = page_front_editorial(db, projection, doc, material, &ctx);
         if (page_front_shown) goto close_page;
     }
+    if (!brand_head) {
     fputs("<header class=\"hero\"><h1>", stdout);
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/watch") || !strcmp(doc->route, "/board"))) {
         fputs("<span class=\"reading-mark\" aria-hidden=\"true\">", stdout); page_glyph(page_nav_glyph(doc->route)); fputs("</span>", stdout);
@@ -4463,6 +4472,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         }
     }
     fputs("</header>", stdout);
+    } /* Other routes and independently owned sites retain their existing document hero. */
     if(!narrowed)page_emit_media_spaces(db,doc->route,doc->raw_query,page_render_host);
     /* A territory's front is edited before it is composed: its own program
      * leads, and the declared regions and sections follow. */

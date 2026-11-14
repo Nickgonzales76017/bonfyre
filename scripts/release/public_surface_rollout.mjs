@@ -7,6 +7,7 @@ import {join,resolve,relative,dirname,isAbsolute} from 'node:path';
 import {createHash} from 'node:crypto';
 import {encode,decode} from '../../integrations/browser/workspace-msgpack.mjs';import {frontIntegrity} from './front_integrity.mjs';
 import {selectMemberJournalCanaries,verifyMemberJournalReadback} from './member_journal_canary.mjs';
+import {inspectApex,inspectStylesheet} from '../native_apex_live_readback.mjs';
 const root=resolve(import.meta.dir,'../..'),home=homedir(),releases=join(home,'.bonfyre/releases');
 const label='com.bonfyre.public-web-address',domain='gui/'+process.getuid(),plist=join(home,'Library/LaunchAgents',label+'.plist');
 // A carried program whose link target was removed (a self-updating CLI such as
@@ -171,6 +172,7 @@ export function inspectRelease(dir,{requireCurrentInventory=true}={}){
 }
 async function stage(){
  run([process.execPath,'scripts/project-program-service-policy.mjs','--check']);
+ run(['node','cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs','--check']);
  run(['make','-C','cmd/BonfyreCMS','bonfyre-cms']);run(['make','-C','cmd/BonfyreMeter','bonfyre-meter']);run(['make','-C','cmd/BonfyreQueue','bonfyre-queue']);run(['make','-C','cmd/BonfyreExternalEstate','bonfyre-external-estate']);run(['make','-C','cmd/BonfyreProcurement','bonfyre-procurement']);run(['make','-C','cmd/BonfyreWebAddress','bonfyre-web-address','campaign-workspace-witness','native-publications-query-witness','people-projection-witness','people-static-manifest-witness']);
  const previousBytes=readFileSync(plist),previousHash=digest(previousBytes);
  mkdirSync(releases,{recursive:true});const dir=mkdtempSync(join(releases,'activity-public-20261021-'));chmodSync(dir,0o700);
@@ -178,6 +180,7 @@ async function stage(){
  const before=parsePlist(join(dir,'previous-service.plist')),args=before.ProgramArguments,env=before.EnvironmentVariables||{};
  assert.equal(before.Label,label);assert(args.includes('--site-root')&&args.includes('--port'));assert(env.BONFYRE_WORKSPACE_CLIENT&&env.BONFYRE_BIN_DIR);
  cpSync(join(root,'site/matrix'),join(dir,'site'),{recursive:true,dereference:true,mode:fsConstants.COPYFILE_FICLONE,filter:p=>!p.split('/').includes('node_modules')}); // from the repo: the running release's site carried edits nowhere
+ assert.equal(hash(join(dir,'site/front-brand.css')),hash(join(root,'site/matrix/front-brand.css')),'Staged native brand CSS differs from source bytes.');
  cpSync(env.BONFYRE_WORKSPACE_CLIENT,join(dir,'browser'),{recursive:true,dereference:true,mode:fsConstants.COPYFILE_FICLONE});mkdirSync(join(dir,'bin')); // APFS clones: releases share unchanged site/browser blocks
  const inputs=freezeBrowser(root,dir);
  for(const name of readdirSync(env.BONFYRE_BIN_DIR)){if(name==='bonfyre-site'||name==='bonfyre-meter'||name==='bonfyre-queue'||name==='bonfyre-web-address'||name==='bonfyre-procurement'||name==='bonfyre-credentials'||name==='bonfyre-provider-estate')continue;symlinkSync(carriedBin(join(env.BONFYRE_BIN_DIR,name),name),join(dir,'bin',name));}
@@ -329,6 +332,16 @@ export async function programReadback(base,host,dir,requestFn=request,assets=pro
  const location=new URL(page.location,base);assert.equal(location.origin,new URL(base).origin);assert.equal(location.pathname,'/login');assert.equal(location.searchParams.get('next'),'/programs?context=self');
  results.push({route:'/programs?context=self',status:303,location:location.pathname+location.search});return results;
 }
+export function nativeBrandReleaseWitness(host,home,css,expected){
+ assert(/^aurekai\.(work|life|live|shop)$/.test(host),'Only the four exact owned apices may be branded.');
+ assert.equal(home.status,200,'Native front must answer before admission');
+ const inspected=inspectApex(host.slice('aurekai.'.length),home.text);
+ assert.equal(css.status,200,'Frozen brand CSS must return HTTP 200');
+ assert.equal(String(css.type||'').split(';')[0].trim().toLowerCase(),'text/css','Frozen CSS must have text/css content type');
+ const digest=inspectStylesheet(Buffer.from(css.text||''),expected);
+ assert.equal(css.sha256,digest,'Public CSS response bytes differ from frozen source');
+ return {route:'/assets/front-brand.css',status:200,sha256:digest,version:inspected.version};
+}
 async function smoke(dir,{publicRead=false,stage=null}={}){
  const conf=parsePlist(join(dir,'candidate-service.plist')),port=conf.ProgramArguments[conf.ProgramArguments.indexOf('--port')+1],results=[];
  const read=publicRead?(base,path,host)=>retryReadbackTransport(request,base,path,host,{attempts:3,delayMs:250}):request;
@@ -336,8 +349,12 @@ async function smoke(dir,{publicRead=false,stage=null}={}){
  const frozenPrograms=stage?programAssets.filter(name=>frozenBrowser.includes(name)):programAssets;
  for(const host of ['aurekai.work','aurekai.live','aurekai.life','aurekai.shop']){
   const base=publicRead?'https://'+host:'http://127.0.0.1:'+port,header=publicRead?undefined:host;
-  const home=await read(base,'/',header);assert.equal(home.status,200,host+' home');assert(home.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(home.text,host);results.push({host,route:'/',status:200,sha256:home.sha256});
+  const home=await read(base,'/',header);assert.equal(home.status,200,host+' home');assert(home.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(home.text,host);
   await Promise.all(requiredEstateStyles.map(async name=>assertStyleAsset(await read(base,'/assets/'+name,header),dir,name)));
+  const edition=inspectApex(host.slice('aurekai.'.length),home.text);
+  const asset=await read(base,'/assets/front-brand.css?v='+edition.version,header);
+  const witness=nativeBrandReleaseWitness(host,home,asset,readFileSync(join(dir,'site/front-brand.css')));
+  results.push({host,route:'/',status:200,sha256:home.sha256},{host,...witness});
   results.push(...(await browserReadback(base,header,dir,read,frozenBrowser)).map(result=>({host,...result})));
   const privateReply=await read(base,'/apps/_activity?context=self&operation=list',header);assert.equal(privateReply.status,403,'Anonymous activity must be refused');results.push({host,route:'/apps/_activity',status:403});
   results.push(...(await programReadback(base,header,dir,read,frozenPrograms)).map(result=>({host,...result})));
@@ -347,7 +364,8 @@ async function smoke(dir,{publicRead=false,stage=null}={}){
 function frozenSurface(stage){const browser=uniqueInputs(stage.inputs).filter(row=>row.path.startsWith('integrations/browser/')).map(row=>row.path.slice('integrations/browser/'.length)).filter(name=>stage.material.some(row=>row.path==='browser/'+name));return{browser,programs:programAssets.filter(name=>browser.includes(name))};}
 function expectedPromotionRows(stage){
  const {browser,programs}=frozenSurface(stage),material=new Map(stage.material.map(row=>[row.path,row.sha256]));
- return[{route:'/',status:200,sha256:material.get('site/index.html')||null},...browser.filter(name=>!companionSources.includes(name)).map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),{route:'/apps/_activity',status:403},...programs.map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),{route:'/apps/_programs',status:403},{route:'/programs?context=self',status:303,location:'/login?next=%2Fprograms%3Fcontext%3Dself'}];
+ assert(material.get('site/front-brand.css'),'A frozen release without the branded stylesheet cannot be promoted.');
+ return[{route:'/',status:200,sha256:material.get('site/index.html')||null},{route:'/assets/front-brand.css',status:200,sha256:material.get('site/front-brand.css')},...browser.filter(name=>!companionSources.includes(name)).map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),{route:'/apps/_activity',status:403},...programs.map(name=>({route:'/apps/'+name,status:200,sha256:material.get('browser/'+name)})),{route:'/apps/_programs',status:403},{route:'/programs?context=self',status:303,location:'/login?next=%2Fprograms%3Fcontext%3Dself'}];
 }
 const promotionRowKey=row=>JSON.stringify([row.route,row.status,row.route==='/'?null:row.sha256||null,row.location||null]);
 export function verifyPromotionReceipt(dir,stage,stageHash){
@@ -358,8 +376,12 @@ export function verifyPromotionReceipt(dir,stage,stageHash){
 async function currentPublicSample(dir,stage){
  assert.equal(hash(plist),hash(join(dir,'candidate-service.plist')),'This frozen release is no longer the active public service configuration.');const {browser}=frozenSurface(stage),sample=['aurekai-activity.mjs','source-desk.mjs','program-workspace.mjs'].filter(name=>browser.includes(name)),material=new Map(stage.material.map(row=>[row.path,row.sha256])),rows=[];
  await Promise.all(['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'].map(async host=>{
-  const base='https://'+host,read=path=>retryReadbackTransport(request,base,path,undefined,{attempts:3,delayMs:250}),[homeReply,...assetReplies]=await Promise.all([read('/'),...sample.map(name=>read('/apps/'+name))]);assert.equal(homeReply.status,200,host+' home');assert(homeReply.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(homeReply.text,host);rows.push({host,route:'/',status:200});
+  const base='https://'+host,read=path=>retryReadbackTransport(request,base,path,undefined,{attempts:3,delayMs:250}),[homeReply,...assetReplies]=await Promise.all([read('/'),...sample.map(name=>read('/apps/'+name))]);assert.equal(homeReply.status,200,host+' home');assert(homeReply.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(homeReply.text,host);
   await Promise.all(requiredEstateStyles.map(async name=>assertStyleAsset(await read('/assets/'+name),dir,name)));
+  const edition=inspectApex(host.slice('aurekai.'.length),homeReply.text);
+  const cssReply=await read('/assets/front-brand.css?v='+edition.version);
+  const brand=nativeBrandReleaseWitness(host,homeReply,cssReply,readFileSync(join(dir,'site/front-brand.css')));
+  rows.push({host,route:'/'},{host,...brand});
   for(let i=0;i<sample.length;i++){const name=sample[i],asset=browserAsset(name,assetReplies[i],dir);assert.equal(asset.sha256,material.get('browser/'+name));rows.push({host,...asset});}
   const [activity,programs,page]=await Promise.all([read('/apps/_activity?context=self&operation=list'),read('/apps/_programs?context=self&operation=catalog'),read('/programs?context=self')]),location=new URL(page.location,base);assert.equal(activity.status,403);assert.equal(programs.status,403);assert.equal(page.status,303);assert.equal(location.pathname,'/login');assert.equal(location.searchParams.get('next'),'/programs?context=self');rows.push({host,route:'/apps/_activity',status:403},{host,route:'/apps/_programs',status:403},{host,route:'/programs?context=self',status:303});
  }));return rows;

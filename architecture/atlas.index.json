@@ -18862,6 +18862,12 @@
       "experience_chains": [],
       "family": "institutional",
       "forbidden_inferences": [
+        "Bonfyre building or serving a page -> Bonfyre owning the institution, customer, host, source content or publishing approval",
+        "Bonfyre source references an Aurekai domain -> that domain or its provider credentials becoming engine defaults or engine assets",
+        "Aurekai commissions or installs Bonfyre -> Aurekai owning all engine code, tests, users or releases",
+        "an engine grant or session -> an Aurekai tenant grant or the reverse",
+        "an Aurekai publication or sales claim -> a verified Bonfyre feature, and an engine test -> a commercial delivery",
+        "historical package or command alias -> shared institutional ownership",
         "a product namespace existing -> the product has state",
         "Bonfyre operating a provider relationship -> Bonfyre owning that relationship",
         "a Partner Commons profile existing -> a live relationship with that project",
@@ -18869,7 +18875,15 @@
       ],
       "internal_calculi": [],
       "invariants": [
-        "Aurekai is the company umbrella and Bonfyre is the engine and product substrate; neither name is a synonym for the other",
+        "Aurekai is an independently owned operating institution, not a Bonfyre engine namespace, product alias, source tree, release channel or implicit child grant",
+        "Bonfyre is a separate reusable native engine, library and developer platform; its technical releases are not Aurekai business releases",
+        "Bonfyre core cannot acquire an Aurekai tenant, domain, business record, provider credential, or commercial authority through an engine install, namespace prefix, source import, binary name, session, or generated site",
+        "Aurekai business state belongs to Aurekai or an exact downstream customer or creator institution; no license to run software changes this ownership",
+        "Aurekai using a Bonfyre binary requires an explicit installation or versioned interface with exact tenant grants, and cannot publish or financially act without that tenant's own approval",
+        "Bonfyre providing a runtime to Aurekai does not entitle the engine project to any Aurekai client data, account installation, brand, revenue, rights or effect permission",
+        "an engine release, Aurekai site publication, customer deployment, creator publication and verified financial effect have distinct revisions, acceptance owners and receipts",
+        "an Aurekai marketing identity, WORK LIFE LIVE SHOP host set, site copy, offers or price is never a generic default of Bonfyre core or its public developer identity",
+        "legacy akai/aurekai runtime packages and bonfyre CLI aliases are compatibility artifacts, not proof that the business and engine are synonymous; migration requires exact release and parity testing",
         "a root product is real only when a pack or existing state populates it; a namespace without state is declared unpopulated rather than described as existing",
         "delegation is recursive: Bonfyre delegates to an operating business, which delegates to its managed clients, which serve downstream organizations and users",
         "a delegated estate owns its own external relationships; Bonfyre models and operates them but does not own them",
@@ -42227,9 +42241,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "ae9162749db860075f97a40668f2ec14845085ff775a1159d263b1f85282c2ff",
+    "declaration_digest": "e8390f55bcbe1a413143459e4ab879b2c79f659cf4583de7615d86a694815932",
     "declaration_files": 153,
-    "generated_at": "2026-11-14T03:46:48Z"
+    "generated_at": "2026-11-14T04:03:12Z"
   },
   "views": {
     "CapabilityView": {

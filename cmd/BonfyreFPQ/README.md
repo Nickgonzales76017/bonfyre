@@ -1,6 +1,41 @@
 # BonfyreFPQ — Functional Polar Quantization
 
-Pure C model compression engine. ~4 bits per weight, 0.9999 cosine fidelity.
+BonfyreFPQ is the native C implementation of model-weight encoding, reconstruction, diagnostic round trips and algebraic transformation. Weight compression is a **different physical process** from embedding a document, searching the local vector database or running a vGPU numerical kernel over an editorial table. It can reduce model-weight storage/residency **only when a specific model and representation pass actual execution and task parity**.
+
+[How FPQ relates to vGPU, Embed/Vec, BitNet and frontend/editorial](../../docs/native-data-compute-and-presentation.md) · [Native source](src/fpq_native.c) · [Qwen tensor measurement](results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json)
+
+The previous “~4 bits per weight, 0.9999 cosine” shorthand compressed several distinct experiments into one performance claim. Actual encoded bits/weight, tensor cosine, PPL, task quality, runtime behavior and peak memory **depend on the measured artifact and path**. Preserve the test case and model revision whenever citing a number.
+
+## Where it fits in the downstream work
+
+```mermaid
+flowchart LR
+  DATA["Documents / publications / source tables"] --> VEC["BonfyreEmbed + Vec for current retrieval"]
+  DATA --> GPU["vGPU for numeric comparisons; CPU fallback"]
+  VEC --> UI["Source-grounded editorial / analysis / accounts"]
+  GPU --> UI
+  FPQ["BonfyreFPQ encodes model weights"] -. "Only accepted model and task-quality parity" .-> MODEL["Admitted model inference"]
+  MODEL -. "Optional source-verified continuation" .-> UI
+  BIT["BitNet can rank eligible source handles"] -. "Separate diagnostic/admission" .-> UI
+```
+
+When a publisher works with a large Parquet corpus or document collection, **FPQ does not accelerate SQL by itself**. SQL/SQLite/DuckDB-Wasm reads and filters source rows; Embed and Vec build/query a model-specific vector index; the vGPU kin kernel computes large pairwise comparisons on its own numeric chart. The frontend renders a bounded, source-linked table and can move reviewed findings into an article, workbook, research report or narration.
+
+A model may later summarize or arrange that material. FPQ would then matter if a particular compressed model has proven layer/logit/generation and task quality at a useful memory/performance envelope. It should not change retrieved source identities, publication rights or the reviewer’s decision. [Representation passport registry](../BonfyreModel/src/main.c) and [ContextCut](../BonfyreContextCut/) are independent admission and context-preparation owners.
+
+## What the proof packs establish
+
+| Source cut | Measured result | Boundary |
+|---|---|---|
+| [April 2026 proof pack](results/2026-04-10-proof-pack/) | recorded Qwen2.5-0.5B 169 tensors average cosine 0.999783 and a WikiText-2 perplexity change 14.20 → 14.48 (+1.97%) under the stated FPQ v8 test | that pack’s model, representation, task and test configuration; cannot be generalized to v9 or other models |
+| [September 2026 Qwen real tensor](results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json) | one 114,688-weight tensor, 5.75 bits/weight and 0.999935 cosine after v9 roundtrip; 1.23 seconds on the recorded machine | tensor reconstruction only, explicitly **not** layer/logit/generation/task parity |
+| [Later FPQ model representation contract](../../architecture/model/fpq.yaff) | native Qwen passthrough baseline and measured factor/quantization variants | all-non-passthrough model execution, quality and residency envelope remain separately required |
+
+The earlier README’s published Hugging Face model table identifies available artifact repositories. It does not certify any of them as admitted Bonfÿre native inference backends at the current release. A BF16 safetensors *format* may load in an external framework while the changed model still needs behavioral testing.
+
+## Full-model acceptance before calling FPQ an optimization
+
+Compare the same source model revision, tokenizer, inputs, layer outputs, logits, task results, generation behavior, memory peaks and throughput across reference and compressed realizations. Model admission is downstream of those results; a successful `roundtrip-v9` does not skip them. Compression cost must also account for decode overhead, placement and repeated-use workloads. The source-side editorial, vGPU and Vec processing remains functional with FPQ held.
 
 ## Build
 

@@ -9,6 +9,18 @@ every architecture, and let collapse be a **zoom**, not a deletion.
 This directory is machine-readable and self-enforcing. `atlas.mjs` is the engine;
 the `.yaff` files are the data; the constitution below is checked in CI.
 
+**Full-system visual companion:** [Bonfÿre native software architecture](../docs/architecture-visuals/system-architecture.md) is the broad entry point (13 GitHub-rendered Mermaid views and a source-linked coverage index). The original [six-diagram gallery](../docs/architecture-visuals/README.md) is a collection of specific examples, not a substitute for the mapping, temporal, Git/Josh, representation, group/connection, model, provider, media, finance, work and protocol systems. **No visual supersedes this registry or its witnesses.**
+
+**Frontend and authoring are system infrastructure, not a commercial demo.** [Unified authoring and native frontend](../docs/authoring-frontend-architecture.md) maps Puck, GrapesJS, Editor.js, MD4C, Mustach, typed components, native C output, responsive design, interaction grammars, scene compilation and source/permission continuity across communities, research, education, publishing, profiles and installed applications. Local development source and public GitHub source are on separate release cuts; follow the guide's verified-link distinctions.
+
+**Real-workflow companion:** [Operational workflows and exchange boundaries](../docs/real-workflows-and-interoperability.md) documents real WordPress bridge operations, WXR/Frappe/HTML export, cPanel/InterWorx/Plesk inventories, database comparison, XLSX financial reviews, scanned-PDF OCR, Pandoc deliveries, Project/Workspace/Workbook/Site MCP, React/Puck versus unverified Svelte conversion, and YouTube/Patreon/Spotify/Toast maturity. It also preserves group/community, creator-audio, training, spatial, Git, procurement, publication and model work as **different owners**, not as a list of Matrix capabilities.
+
+**Three distinct external inventories:** [200 browser enrollment targets](../integrations/browser/onboarding/targets.tsv) (provider/account acquisition), [104 provider-estate prospects](../cmd/BonfyreProviderEstate/providers.tsv) (downstream tenancy/partner routes), and [20 native interaction-grammar references](../cmd/BonfyreInteractionGrammar/src/main.c) (studied UI operations). Their counts describe different things. Do not add them together or call every entry a verified integration.
+
+**Required user-facing explanation:** for any bridge or operation, name **source bytes/coordinates → exact native owner → transformation → exported/readable output → intended consumer → known test → unverified external acceptance**. An Atlas ID is a lookup handle, not an explanation of innovation. A diagram that sends everything through Matrix, WorkGraph, MCP or a generic capability service is *wrong* when the source contains independent adapters/owners.
+
+**Do not collapse a specific offer into an engine family.** A room-planning offer is not the SpatialObservation/BonfyreSpatial architecture; a narrated feed is not the media engine; a GitHub Pages site is not the entire authoring/publication system. The registry's domain → architecture → internal calculi and interaction/witness layers are the authoritative levels. A compiled or implemented declaration is not proof that its whole end-user journey has been deployed.
+
 ## Operating rule — for every call, mine and codex
 
 1. **Consult the atlas before architecture work.** `bun atlas.mjs get <id>` /
@@ -27,6 +39,14 @@ the `.yaff` files are the data; the constitution below is checked in CI.
 6. **State what each architecture cannot infer** (`forbidden_inference`). The
    FPQ lesson — *low reconstruction error is not good generation* — is a field,
    not a footnote.
+
+## Native contracts, data computation and the user-facing result
+
+The [native computation and presentation guide](../docs/native-data-compute-and-presentation.md) follows **distinct** systems through to actual readers: YAFF architecture/interactions, CUE page and lowerer validation, Zig/C native frontend descriptors, local PostCSS/Tailwind styling, Puck/GrapesJS/Editor.js, ONNX Embed, SQLite Vec, vGPU numerical neighbor/kin kernels, DuckDB-Wasm/Parquet source tables, and BitNet/FPQ representation gates.
+
+The Atlas should describe the **relation** between these operations, preserving exact input fields, reader/backends and their refusal rules. A source vector's model/dimensions and a vGPU similarity cutoff remain separate facts; a source table's candidate state is not permission to publish it; a measured FPQ tensor is not a completed model; an authored CUE layout is not a signed-in CRM write.
+
+**Concrete witnesses:** [ItemArchive](surface/item-archive.yaff) records 6,810 items and 46,376,100 kin pair comparisons in one vGPU run; [the estate field](surface/client-organs.yaff) records 109,761 Parquet rows read by DuckDB-Wasm and visualized by WebGPU. [BitNet](../cmd/BonfyreBitNet/src/main.c) remains bounded to AddressPlane survivors; [FPQ's tensor receipt](../cmd/BonfyreFPQ/results/2026-09-11-qwen2.5-coder-0.5b-real-tensor-v9.json) is explicitly one reconstruction trial. New local PCSS and authoring-tree sources remain ahead of GitHub `main`.
 
 ## Commands
 

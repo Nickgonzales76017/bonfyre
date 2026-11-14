@@ -12,7 +12,35 @@ concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
+  current:
+    # Retained release commits must not start another expensive release.
+    if: ${{ github.event_name != 'push' || github.actor != 'github-actions[bot]' || !startsWith(github.event.head_commit.message, 'release(spaces):') }}
+    runs-on: ubuntu-latest
+    outputs:
+      latest: ${{ steps.source.outputs.latest }}
+      editorial_only: ${{ steps.scope.outputs.editorial_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Confirm latest main source before expensive compilation
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin '+refs/heads/main:refs/remotes/origin/main'
+          upstream="$(git rev-parse refs/remotes/origin/main)"
+          node scripts/pages-source-freshness.mjs "$GITHUB_SHA" "$upstream" >> "$GITHUB_OUTPUT"
+      - name: Prove editorial-only scope against retained artifact receipts
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test scripts/tests/pages-editorial-scope.test.mjs
+          node scripts/pages-editorial-scope.mjs >> "$GITHUB_OUTPUT"
   deploy:
+    needs: current
+    if: ${{ needs.current.outputs.latest == 'true' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -26,30 +54,39 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check public navigation and calls to action
+        run: python3 scripts/tests/public-wayfinding.py
+      - name: Verify bot release commits do not supersede authored source
+        run: node --test scripts/tests/pages-source-freshness.test.mjs
+      - name: Verify local media byte-range serving for article audio
+        run: node --test scripts/tests/range-static-site.test.mjs
+      - name: Test public Pages readback witnesses and stale-site rejection
+        run: node --test scripts/tests/public-pages-live-readback.test.mjs
       - name: Check application directory and retained release
         run: |
           node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs scripts/tests/instruments-core.test.mjs
           test -f site/spaces/RELEASE.tsv
       - name: Detect retained helper dependencies
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         id: helpers
         run: |
           if test -f vendor/spaces-helpers-20261015/SOURCE.txt; then echo 'needed=false' >> "$GITHUB_OUTPUT"; else echo 'needed=true' >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v4
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && steps.helpers.outputs.needed == 'true' }}
         with:
           name: spaces-helper-inputs
           run-id: 38803211793
           github-token: ${{ github.token }}
           path: studio-inputs/archives
       - uses: actions/download-artifact@v4
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && steps.helpers.outputs.needed == 'true' }}
         with:
           name: product-scene-public-inputs
           run-id: 38791615713
           github-token: ${{ github.token }}
           path: studio-inputs/retained
       - name: Verify archives and extract without installation scripts
-        if: steps.helpers.outputs.needed == 'true'
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.helpers.outputs.needed == 'true') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -69,6 +106,7 @@ jobs:
           tar -xzf studio-inputs/archives/pmndrs-vanilla-1.25.0.tgz -C studio-inputs/drei
           tar -xzf studio-inputs/retained/upstream/three-0.180.0.tgz -C studio-inputs/three
       - name: Build immutable studio UI packages
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         run: |
           node --check components/BonfyreServiceSite/product-scene-tools.mjs
           node --check scripts/upgrade-spaces.mjs
@@ -77,6 +115,7 @@ jobs:
       - name: Install pinned browser driver and SQLite without lifecycle scripts
         run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1 sql.js@1.13.0
       - name: Build and verify the four working instruments
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         env:
           INSTRUMENT_REQUIRE_SQLITE: '1'
         run: |
@@ -85,6 +124,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/instruments-browser.mjs
       - name: Verify rendered product and room interactions before publication
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         env:
           SPACES_STUDIO_REQUIRED: '1'
         run: |
@@ -92,11 +132,14 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Connect showcase entries to the tested releases
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
         run: |
           node scripts/prepare-spaces-discovery.mjs
           node scripts/prepare-instruments-discovery.mjs
           node --test scripts/tests/showcase-directory.test.mjs
       - name: Retain tested release and helper licences
+        if: ${{ needs.current.outputs.editorial_only != 'true' }}
+        id: retention
         shell: bash
         env:
           SPACES_STUDIO_REQUIRED: '1'
@@ -108,6 +151,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/retain-tested-pages.mjs
       - name: Verify final composed workspaces and retained editors
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           WORKSPACE_EVIDENCE: workspace-evidence
         run: |
@@ -115,23 +159,179 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
-      - name: Check static Aurekai Journal publication files
+      - name: Build and verify Aurekai Journal articles
+        if: steps.retention.outputs.superseded != 'true'
         run: |
-          test -f site/blog/index.html
-          test -f site/blog/feed.xml
-          test -f site/blog/post-index.tsv
-          test "$(find site/blog -mindepth 2 -maxdepth 2 -name index.html | wc -l)" -ge 16
-          grep -q 'Aurekai Journal' site/blog/index.html
+          sh scripts/render-editorial.sh
+          sh scripts/render-editorial.sh --check
+          test "$(grep -c '^post:' site/blog/post-index.tsv)" -eq "$(grep -l 'status: edited-public' editorial/posts/*.md | wc -l)"
+          test "$(grep -c '<item>' site/blog/feed.xml)" -eq "$(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)"
+          grep -q "All articles / $(grep -l '^status: edited-public$' editorial/posts/*.md | wc -l)" site/blog/index.html
+      - name: Verify all articles and author profiles have safe native drafts
+        run: python3 scripts/tests/editorial-publication-bridge.py
+      - name: Browser-check Fieldwork stories and cross-site search
+        if: steps.retention.outputs.superseded != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/range-static-site.mjs site 8765 >/tmp/aurekai-pages-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          export CHROME_PATH="$(command -v google-chrome)"
+          node --input-type=module <<'NODE'
+          import { chromium } from './.spaces-tools/node_modules/playwright/index.mjs';
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
+          const page=await browser.newPage({viewport:{width:1366,height:900}});
+          const errors=[];
+          const expectedArticles=readFileSync('site/discover/article-index.tsv','utf8').trimEnd().split('\n').length-1;
+          page.on('pageerror',e=>errors.push(e.message));
+          try {
+            // Test the generated Journal, not the stale checked-in snapshot.
+            for(const [width,height,columns] of [[1440,900,3],[980,850,2],[390,844,1]]){
+              await page.setViewportSize({width,height});
+              await page.goto('http://127.0.0.1:8765/blog/',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(n=>document.querySelectorAll('[data-article]').length===n,expectedArticles);
+              const geometry=await page.evaluate(()=>{
+                const grid=document.querySelector('[data-journal-grid]');
+                const items=[...grid.querySelectorAll('[data-article]')];
+                const bounds=items.map(x=>x.getBoundingClientRect());
+                return {
+                  tracks:getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+                  overflow:document.documentElement.scrollWidth-window.innerWidth,
+                  outside:bounds.filter(b=>b.width<160||b.left<-1||b.right>window.innerWidth+1).length,
+                  empty:items.filter(x=>!x.querySelector('.ed-card-content h3')||!x.querySelector('.ed-card-cover')).length
+                };
+              });
+              assert.equal(geometry.tracks,columns,'Journal grid columns '+width);
+              assert.equal(geometry.outside,0,'Cards outside viewport '+width);
+              assert.equal(geometry.empty,0,'Incomplete cards '+width);
+              assert.ok(geometry.overflow<=2,'Horizontal overflow at '+width+': '+geometry.overflow);
+              await page.getByRole('button',{name:'List view'}).click();
+              assert.equal(await page.locator('[data-journal-grid].is-list').count(),1);
+              assert.equal(await page.locator('[data-journal-view="list"]').getAttribute('aria-pressed'),'true');
+              await page.getByRole('button',{name:'Grid view'}).click();
+              assert.equal(await page.locator('[data-journal-grid].is-list').count(),0);
+            }
+            await page.getByRole('button',{name:'List view'}).click();
+            await page.locator('#journal-search').fill('council');
+            const matched=await page.locator('[data-article]:visible').count();
+            assert.ok(matched>0 && matched<expectedArticles,'Search narrows the catalogue');
+            assert.match(await page.locator('#journal-result-count').innerText(),new RegExp('Showing '+matched+' of '+expectedArticles));
+            await page.locator('#journal-search').fill('');
+            await page.locator('[data-filter="Business"]').click();
+            const visible=await page.locator('[data-article]:visible').count();
+            assert.ok(visible>0 && visible<expectedArticles);
+            assert.equal(await page.locator('[data-article]:visible:not([data-category="Business"])').count(),0);
+            assert.equal(await page.locator('[data-journal-grid].is-list').count(),1,'Layout persists through filter');
+            await page.goto('http://127.0.0.1:8765/fieldwork/',{waitUntil:'networkidle'});
+            assert.equal(await page.locator('h1').count(),1);
+            assert.equal(await page.locator('.fw-chapter').count(),5);
+            assert.equal(await page.locator('.fw-story-index a').count(),5);
+            assert.equal(await page.locator('a[href="../spaces/catalogue/"]').count(),1);
+            assert.equal(await page.locator('a[href="../blog/"]').count()>=1,true);
+            for(const image of await page.locator('.fw-cover-art img, .fw-product-image img').all()){
+              await image.scrollIntoViewIfNeeded();
+              await image.evaluate(el=>el.decode());
+              assert.equal(await image.evaluate(el=>el.complete && el.naturalWidth>0),true);
+            }
+            await page.locator('a[href="#inventory"]').first().click();
+            assert.equal(new URL(page.url()).hash,'#inventory');
+            await page.goto('http://127.0.0.1:8765/labs/',{waitUntil:'load'});
+            await page.waitForURL('**/fieldwork/');
+            assert.equal(await page.locator('input[type="number"]').count(),0);
+            await page.goto('http://127.0.0.1:8765/discover/',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(n=>document.querySelectorAll('[data-kind="article"]').length===n,expectedArticles,{timeout:12000});
+            assert.equal(await page.locator('[data-kind="studio"]').count(),20);
+            assert.equal(await page.locator('[data-kind="tool"]').count(),4);
+            assert.equal(await page.locator('[data-kind="article"]').count(),expectedArticles);
+            await page.getByRole('button',{name:'Articles',exact:true}).click();
+            assert.equal(await page.locator('[data-kind="article"]:visible').count(),expectedArticles);
+            await page.locator('#discover-search').fill('podcast');
+            await page.getByRole('button',{name:'Application examples',exact:true}).click();
+            assert.ok((await page.locator('[data-kind="studio"]:visible').count())>=1);
+            await page.goto('http://127.0.0.1:8765/blog/why-base-rates-change-camera-matching-claims/',{waitUntil:'domcontentloaded'});
+            // Article headers use the same seven clear routes as the rest of the site.
+            // Fieldwork remains available through the directory and Journal; it is no
+            // longer a primary navigation link on every individual article.
+            for (const [href, label] of [
+              ['../../explore.html','Businesses'],['../../discover/','Applications'],
+              ['../../blog/','Journal'],['../../series/','Four series'],
+              ['../../docs.html','Technology']
+            ]) {
+              assert.equal(await page.locator('header nav a[href="'+href+'"]', {hasText:label}).count(),1,
+                'Missing article navigation: '+label);
+            }
+            assert.equal(await page.locator('a[href*="/labs/#"]').count(),0);
+            // Editorial audio is a real published recording, never the device
+            // speech synthesizer or a fake, randomly generated waveform.
+            await page.goto('http://127.0.0.1:8765/blog/the-machine-told-me-so/',{waitUntil:'domcontentloaded'});
+            assert.equal(await page.locator('[data-narration-voice]').count(),0);
+            assert.equal(await page.locator('.journal-audio-voice-choice').count(),0);
+            const edition=page.locator('[data-narration]');
+            if (await edition.count()) {
+              assert.equal(await page.locator('[data-audio-source][src="./edition.mp3"]').count(),1);
+              await page.waitForFunction(()=>{
+                const audio=document.querySelector('[data-audio-source]');
+                return audio && Number.isFinite(audio.duration) && audio.duration > 0;
+              },{timeout:20000});
+              assert.equal(await page.locator('[data-audio-play]').isVisible(),true);
+              await page.locator('[data-audio-play]').click();
+              await page.waitForFunction(()=>{
+                const audio=document.querySelector('[data-audio-source]');
+                return !audio.paused && audio.currentTime > 0;
+              },{timeout:12000});
+              await page.locator('[data-audio-play]').click();
+              assert.equal(await page.locator('[data-audio-source]').evaluate(el=>el.paused),true);
+              await page.locator('[data-audio-seek]').evaluate(el=>{
+                el.value='400';
+                el.dispatchEvent(new Event('input',{bubbles:true}));
+                el.dispatchEvent(new Event('change',{bubbles:true}));
+              });
+              // Seek to a nonbuffered passage over real HTTP range requests.
+              // HTMLMediaElement seeking is asynchronous; verify actual decoded
+              // playback position rather than immediately reading after change.
+              await page.waitForFunction(()=>{
+                const el=document.querySelector('[data-audio-source]');
+                return el && Number.isFinite(el.duration) && el.duration>0 &&
+                  Math.abs(el.currentTime/el.duration-.4)<.06 && !el.seeking;
+              },null,{timeout:15000});
+              await page.locator('[data-audio-speed]').click();
+              assert.equal(await page.locator('[data-audio-source]').evaluate(el=>el.playbackRate),1.25);
+              await page.setViewportSize({width:390,height:844});
+              assert.equal(await page.locator('[data-audio-play]').isVisible(),true);
+              await page.setViewportSize({width:1366,height:900});
+            } else {
+              assert.equal(await page.locator('#audio-edition').count(),0);
+              assert.equal(await page.locator('a.journal-audio-jump').count(),0);
+            }
+            assert.equal(await page.locator('[data-narration-voice]').count(),0);
+            assert.equal(errors.length,0,errors.join('; '));
+            console.log('PASS: five editorial chapters, source imagery, article routes and directory search');
+          } finally { await browser.close(); }
+          NODE
       - name: Setup Pages
+        if: steps.retention.outputs.superseded != 'true'
         uses: actions/configure-pages@v5
       - name: Upload artifact
+        if: steps.retention.outputs.superseded != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - name: Deploy to GitHub Pages
+        if: steps.retention.outputs.superseded != 'true'
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify exact public homepage, applications and Journal HTML
+        if: steps.retention.outputs.superseded != 'true'
+        env:
+          PAGES_ORIGIN: https://nickgonzales76017.github.io/bonfyre/
+          PUBLIC_PAGES_EVIDENCE: spaces-live-evidence
+        run: node scripts/public-pages-live-readback.mjs
       - name: Verify the actual public studio
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           SPACES_ORIGIN: https://nickgonzales76017.github.io
           SPACES_EVIDENCE: spaces-live-evidence
@@ -141,6 +341,7 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Verify the public composed workflows
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
           WORKSPACE_EVIDENCE: workspace-live-evidence
@@ -150,6 +351,7 @@ jobs:
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
       - name: Verify actual public instruments and downloaded results
+        if: ${{ needs.current.outputs.editorial_only != 'true' && (steps.retention.outputs.superseded != 'true') }}
         env:
           INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
           INSTRUMENT_EVIDENCE: instrument-live-evidence

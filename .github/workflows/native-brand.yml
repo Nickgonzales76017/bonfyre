@@ -1,0 +1,120 @@
+name: Native Aurekai Brand Experience
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'branding/voice.mjs'
+      - 'cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs'
+      - 'cmd/BonfyreWebAddress/generated/native_brand_cuts.h'
+      - 'cmd/BonfyreWebAddress/src/front_brand.h'
+      - 'site/matrix/front-brand.css'
+      - 'cmd/BonfyreWebAddress/src/page_core_rendering.h'
+      - 'cmd/BonfyreWebAddress/src/front_editorial.h'
+      - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
+      - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/release/public_surface_rollout.mjs'
+      - 'scripts/release/tests/public_surface_rollout.test.mjs'
+      - 'scripts/tests/native-apex-live-readback.test.mjs'
+      - 'cmd/BonfyreWebAddress/tests/front_brand_page_test.sh'
+      - '.github/workflows/native-brand.yml'
+  pull_request:
+    paths:
+      - 'branding/voice.mjs'
+      - 'cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs'
+      - 'cmd/BonfyreWebAddress/generated/native_brand_cuts.h'
+      - 'cmd/BonfyreWebAddress/src/front_brand.h'
+      - 'site/matrix/front-brand.css'
+      - 'cmd/BonfyreWebAddress/src/page_core_rendering.h'
+      - 'cmd/BonfyreWebAddress/src/front_editorial.h'
+      - 'cmd/BonfyreWebAddress/tests/front_brand.test.mjs'
+      - 'scripts/native_apex_live_readback.mjs'
+      - 'scripts/release/public_surface_rollout.mjs'
+      - 'scripts/release/tests/public_surface_rollout.test.mjs'
+      - 'scripts/tests/native-apex-live-readback.test.mjs'
+      - 'cmd/BonfyreWebAddress/tests/front_brand_page_test.sh'
+      - '.github/workflows/native-brand.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse drift between authored Aurekai voice and native C
+        run: node cmd/BonfyreWebAddress/tools/compile_brand_cuts.mjs --check
+      - name: Compile C brand edition and verify four-apex art, routes and independent-host refusal
+        run: node --test cmd/BonfyreWebAddress/tests/front_brand.test.mjs
+      - name: Verify public four-apex release witness rejects stale HTML and altered CSS
+        run: node --test scripts/tests/native-apex-live-readback.test.mjs
+      - uses: cue-lang/setup-cue@v1.0.0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.13'
+      - name: Verify managed activation rejects stale four-apex HTML and changed CSS
+        run: bun test scripts/release/tests/public_surface_rollout.test.mjs
+
+  native-http-witness:
+    name: Real WebAddress/CMS four-apex HTTP fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - uses: cue-lang/setup-cue@v1.0.0
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev libcurl4-openssl-dev
+      - name: Prepare verified pinned QR sources
+        run: make -C cmd/BonfyreWebAddress prepare-public-code
+      - name: Compile actual CMS and WebAddress service
+        run: |
+          make -C lib/libbonfyre
+          make -C cmd/BonfyreCMS bonfyre-cms
+          make -C cmd/BonfyreWebAddress bonfyre-web-address
+      - name: Serve all four host roots and verify HTML, CSS and host boundaries
+        run: sh cmd/BonfyreWebAddress/tests/front_brand_page_test.sh ./cmd/BonfyreWebAddress/bonfyre-web-address
+      - name: Freeze verified Linux source-build candidate without private stores
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cut="$RUNNER_TEMP/native-apex-candidate"
+          mkdir -p "$cut"
+          cp cmd/BonfyreWebAddress/bonfyre-web-address "$cut/"
+          cp cmd/BonfyreCMS/bonfyre-cms "$cut/"
+          cp site/matrix/front-brand.css "$cut/"
+          printf '%s\n' "source_sha=$GITHUB_SHA" "scope=linux-native four-apex, not activated" >"$cut/RECEIPT.txt"
+          (cd "$cut" && sha256sum bonfyre-web-address bonfyre-cms front-brand.css >SHA256SUMS)
+      - name: Retain tested candidate for managed stage/verify/activate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-apex-candidate-${{ github.sha }}
+          path: ${{ runner.temp }}/native-apex-candidate/
+          if-no-files-found: error
+          retention-days: 7
+
+
+  live-readback:
+    name: Public four-apex release readback (never source-only approval)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse a public release unless four exact hosts serve current HTML and CSS bytes
+        run: node scripts/native_apex_live_readback.mjs

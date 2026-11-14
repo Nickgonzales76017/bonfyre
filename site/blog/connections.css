@@ -1,0 +1,65 @@
+/* Connections atlas / a source-derived reading map, not an algorithmic recommendation feed. */
+.atlas-page{background:#eeeae0;color:#203d32}
+.atlas-page .top{background:#f5f2e9}
+.atlas-page .shell{max-width:1270px}
+.atlas-hero{background:#1b4033;color:#f8f0e4;overflow:hidden}
+.atlas-hero-inner{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);align-items:center;gap:52px;min-height:510px;padding-block:clamp(64px,9vw,116px)}
+.atlas-kicker,.atlas-chapter{display:block;font:.73rem/1.5 system-ui,sans-serif;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#ac694a}
+.atlas-hero .atlas-kicker{color:#e7b994}
+.atlas-hero h1{font:500 clamp(3.2rem,6.8vw,7.2rem)/1.04 Georgia,serif;letter-spacing:-.045em;margin:18px 0 25px}
+.atlas-hero h1 em{color:#e5b99b;font-weight:400}
+.atlas-hero p{max-width:720px;font:1.14rem/1.75 Georgia,serif;color:#dae4d9}
+.atlas-stats{display:flex;gap:26px;flex-wrap:wrap;margin-top:36px;padding-top:22px;border-top:1px solid #688270}
+.atlas-stats span{display:flex;gap:8px;align-items:baseline;font:.77rem/1.5 system-ui,sans-serif;color:#d8e0d5}
+.atlas-stats strong{font:500 2.15rem/1.2 Georgia,serif;color:#f2c9a9}
+.atlas-compass{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px;transform:rotate(-8deg)}
+.atlas-compass>span{display:flex;align-items:flex-end;flex-direction:column;justify-content:space-between;min-height:130px;border:1px solid #809b87;padding:15px;color:#cbd8cc;font:700 .8rem/1.2 system-ui,sans-serif}
+.atlas-compass>span:nth-child(2),.atlas-compass>span:nth-child(3){background:#294f41}
+.atlas-compass b{font:500 clamp(1.1rem,1.7vw,1.6rem)/1.2 Georgia,serif;color:#f7e5ce;text-align:right}
+.atlas-compass-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(8deg);width:95px;height:95px;border:7px solid #1b4033;background:#deb18e;color:#1b4033;border-radius:50%;display:flex;align-items:center;justify-content:center;gap:1px;font:700 2.4rem/1 Georgia,serif}
+.atlas-compass-core span{font-size:1.3rem;align-self:center;margin-top:16px}
+.atlas-guide{background:#faf7ef;padding:clamp(35px,5vw,66px) 0;border-bottom:1px solid #bcc5b8}
+.atlas-guide-title h2{font:500 clamp(2rem,3.7vw,4rem)/1.13 Georgia,serif;letter-spacing:-.025em;margin:12px 0}
+.atlas-guide-title p{max-width:720px;line-height:1.7;color:#536658}
+.atlas-filter-wrap{padding-top:28px;display:grid;grid-template-columns:1fr minmax(240px,.36fr);gap:10px 25px;align-items:center}
+.atlas-filters{display:flex;flex-wrap:wrap;gap:7px;grid-column:1}
+.atlas-filters button{border:1px solid #96ac9b;background:#fffefa;color:#254937;padding:11px 13px;cursor:pointer;font:.75rem system-ui,sans-serif;font-weight:750}
+.atlas-filters button[aria-pressed="true"]{background:#254b3b;color:#fff}
+.atlas-filters button:focus-visible,.atlas-links summary:focus-visible{outline:3px solid #a45e44;outline-offset:3px}
+.atlas-search-label{font:.7rem/1.4 system-ui,sans-serif;text-transform:uppercase;letter-spacing:.07em;font-weight:800;color:#5c685b;grid-column:2;grid-row:1}
+.atlas-filter-wrap input{width:100%;padding:12px 13px;background:#fff;border:1px solid #9caea0;color:#193c2a;grid-column:2;grid-row:2}
+.atlas-result-count{font:.74rem system-ui,sans-serif;color:#4b6254;grid-column:1;grid-row:2;margin:0}
+.atlas-directory{padding-block:30px 100px}
+.atlas-section{padding-top:45px;scroll-margin-top:30px}
+.atlas-section[hidden],.atlas-essay[hidden],.atlas-empty[hidden]{display:none}
+.atlas-section-header{display:flex;justify-content:space-between;gap:20px;align-items:end;padding-bottom:25px;border-bottom:2px solid #829789}
+.atlas-section-header h2{font:500 clamp(2rem,4vw,4.3rem)/1.08 Georgia,serif;margin:11px 0 12px;color:#214639}
+.atlas-section-header p{font:.96rem/1.65 Georgia,serif;max-width:620px;color:#526b5c;margin:0}
+.atlas-section-header>a{color:#8a523b;font-weight:700;font-size:.78rem;text-decoration:underline}
+.atlas-essays{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:19px;align-items:stretch}
+.atlas-essay{padding:23px 24px;background:#f9f7f0;border:1px solid #c7cfc1;display:flex;flex-direction:column;min-width:0}
+.atlas-essay-meta{display:flex;justify-content:space-between;gap:12px;color:#996049;font:.65rem/1.5 system-ui,sans-serif;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.atlas-essay h3{font:500 clamp(1.3rem,1.8vw,1.9rem)/1.24 Georgia,serif;margin:16px 0 10px;letter-spacing:-.015em}
+.atlas-essay h3 a{color:#204736;text-decoration:none}.atlas-essay h3 a:hover{text-decoration:underline}
+.atlas-essay>p{font:.84rem/1.65 system-ui,sans-serif;color:#53695c;margin:0 0 14px;flex:1}
+.atlas-links{border-top:1px solid #d3d9ca;margin-top:8px;padding-top:12px}
+.atlas-links summary{cursor:pointer;color:#8e563e;font:.74rem/1.6 system-ui,sans-serif;font-weight:800}
+.atlas-links ul{padding:11px 0 0 16px;margin:0}
+.atlas-links li{margin:12px 0;font:.75rem/1.5 system-ui,sans-serif;color:#3c5c47}
+.atlas-links li span{display:block;color:#87563e;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
+.atlas-links li a{font-weight:750;color:#244d38}
+.atlas-links li p{margin:4px 0 0;color:#5a6e5d}
+.atlas-empty{font:500 1.5rem Georgia,serif;color:#294c3e;padding:30px 0}
+.journal-atlas-more{border-top:1px solid #a6baaa;margin:24px 0 0;padding:22px 0 0;font:.77rem system-ui,sans-serif;font-weight:800}
+.article-body .journal-atlas-more a{color:#80523d}
+@media(max-width:1000px){.atlas-essays{grid-template-columns:repeat(2,minmax(0,1fr))}.atlas-filter-wrap{display:block}.atlas-filter-wrap input{max-width:550px}.atlas-filter-wrap .atlas-search-label{display:block;margin:21px 0 8px}.atlas-result-count{margin:10px 0}}
+@media(max-width:700px){.atlas-hero-inner{grid-template-columns:1fr}.atlas-compass{max-width:420px;transform:none}.atlas-compass-core{transform:translate(-50%,-50%)}.atlas-essays{grid-template-columns:1fr}.atlas-section-header{align-items:start;flex-direction:column}}
+@media print{.atlas-page .top,.atlas-filter-wrap,.atlas-compass,.atlas-links summary{display:none}.atlas-hero{background:#fff;color:#222}.atlas-hero p,.atlas-hero h1{color:#111}.atlas-essay{break-inside:avoid}.atlas-links{display:none}}
+
+/* Editorial contents list replaces the rotated diagram on the Reading Guide. */
+.journal-guide-contents{align-self:center;display:flex;flex-direction:column;border-top:2px solid #dfb28f;min-width:0}
+.journal-guide-contents>span{padding:18px 2px;color:#e3ba9a;font:750 .73rem/1.4 system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase}
+.journal-guide-contents a{display:flex;gap:20px;align-items:center;border-top:1px solid #637d6c;padding:15px 3px;color:#f8f0e4;text-decoration:none;font:500 clamp(1.09rem,1.65vw,1.4rem)/1.3 Georgia,serif}
+.journal-guide-contents a b{font:750 .76rem/1 system-ui,sans-serif;color:#e2af88;min-width:23px}
+.journal-guide-contents a:hover,.journal-guide-contents a:focus-visible{color:#f5c79f;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:700px){.journal-guide-contents{margin-top:6px}}

@@ -1,7 +1,7 @@
 {
   "name": "route_presentation",
   "displayName": "Route Presentation",
-  "description": "Which composition pattern, and optionally which published presentation_template, one public route wears on one Aurekai territory. A design system (Stitch today, anything later) arrives as rows here plus presentation_template rows; the renderer is unchanged. Presentation only: it reads no subject, grants no action and owns no route, which stays with its canonical page owner. territory is one of work, life, live, shop; status is draft, published or retired.",
+  "description": "Which composition pattern, and optionally which published presentation_template, an institution-owned public route wears for one explicitly installed tenant territory. Design inputs arrive as owner-bound route and presentation_template rows; the native renderer stays generic. Presentation reads no subject, grants no action and owns no route, which stays with its canonical page owner. Territory values are validated against the installed tenant host contract rather than an Aurekai-only list; status is draft, published or retired.",
   "attributes": {
     "territory": {
       "type": "string",

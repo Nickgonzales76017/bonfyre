@@ -1,0 +1,111 @@
+# Source article	Relationship	Existing destination	Editorial reason
+sites-are-dead-long-live-the-web	The technical problem	digital-identity-is-not-a-single-login-box	Recognizing an institution across services is a different problem from signing in.
+sites-are-dead-long-live-the-web	The human stakes	who-keeps-the-internet-alive	A connected presence matters only if the people and associations around it endure.
+the-profile-is-bigger-than-the-person	The underlying mathematics	stable-identifiers-are-equivalence-classes	Different representations need an honest account of when they name the same subject.
+the-profile-is-bigger-than-the-person	An institutional example	a-publisher-deserves-a-home	Publishing illustrates how one identity can support many kinds of participation.
+when-reading-becomes-participating	A working example	a-job-posting-has-more-than-one-job	One retained source can support different account-owned continuations without becoming several invented facts.
+when-reading-becomes-participating	The responsibility	the-archive-is-not-the-owner	Participation does not erase the original publisher's rights or provenance.
+why-does-every-app-want-to-be-everything	The protocol boundary	mcp-a2a-activitypub-and-atproto-are-different-tools	Different kinds of connection need different identity and authority contracts.
+why-does-every-app-want-to-be-everything	The application substrate	frappe-as-an-application-language	A shared application grammar can provide reuse without forcing a universal interface.
+the-machine-told-me-so	The evidence problem	three-headlines-can-still-be-one-source	Several apparently agreeing reports may trace to a single original assertion.
+the-machine-told-me-so	The business test	shopifys-ai-memo-needs-an-outcome-metric	A convincing process needs an outcome metric that can challenge the plan.
+when-everyone-agrees-who-is-thinking	An empirical check	metr-study-and-the-missing-counterfactual	A measured counterfactual can complicate a story repeated by an entire team.
+when-everyone-agrees-who-is-thinking	Testing the real system	screenshots-cannot-test-a-distributed-system	Passing visual checks is not equivalent to proving behavior and effects.
+the-internet-of-bad-ideas	Choosing the business	productized-service-first-is-not-every-founders-rule	A compelling operating model still needs evidence that it fits a real customer.
+the-internet-of-bad-ideas	The operating answer	why-ai-needs-an-operating-company	Delivery requires an organization that can maintain and learn from the result.
+nobody-called-the-pizza-shops-slop	The economic constraint	ai-lowered-entry-cost-not-customer-service-cost	Cheaper production does not make the relationships and obligations of a business free.
+nobody-called-the-pizza-shops-slop	The possible environment	sites-are-dead-long-live-the-web	Expressive tools become richer when they can make lasting, connected places.
+we-didnt-run-out-of-ideas	Untapped resources	useful-things-are-already-out-there	The missing ingredient may be access to existing knowledge and capacity.
+we-didnt-run-out-of-ideas	Creators in practice	creators-need-operating-infrastructure-not-only-better-media-models	A creator needs distribution, administration and control, not just a better generative model.
+minecraft-built-a-world-what-about-everything-else	A familiar precedent	the-spreadsheet-that-became-a-business	Simple composable primitives can support uses their designers never specified.
+minecraft-built-a-world-what-about-everything-else	The design tension	why-does-every-app-want-to-be-everything	Composable environments differ from one application trying to own every activity.
+the-spreadsheet-that-became-a-business	From model to space	the-catalogue-and-the-room	Shared product records can support a room plan as well as a conventional table.
+the-spreadsheet-that-became-a-business	The application layer	frappe-as-an-application-language	Business structures need reusable schemas and ownership beyond a single spreadsheet.
+who-gets-to-have-sophisticated-software	The migration question	what-a-legacy-migration-really-moves	Making tools accessible includes preserving the business operations that already exist.
+who-gets-to-have-sophisticated-software	The operating model	why-ai-needs-an-operating-company	Shared operating capacity helps smaller institutions afford durable software.
+what-happens-when-anyone-can-make-an-app	The production constraint	vibe-coding-is-not-a-production-method	Generating an application does not prove it can be operated safely.
+what-happens-when-anyone-can-make-an-app	The actual finish line	when-the-agent-finishes-coding	An agent completing code is only one stage of delivery and support.
+who-keeps-the-internet-alive	The older network	rss-is-still-a-great-source-of-time	Open publication protocols can preserve distribution beyond any one feed.
+who-keeps-the-internet-alive	A publisher's home	a-publisher-deserves-a-home	Independent editorial institutions need an address, history and tools of their own.
+the-local-archive-that-never-got-uploaded	An audio example	from-audio-to-something-people-can-use	An audio collection gains value through intelligible preservation and continuation.
+the-local-archive-that-never-got-uploaded	Civic records	a-council-agenda-can-be-useful	Public records become useful when context and original sources remain accessible.
+a-library-of-alexandria-selected-by-demand	The source problem	three-headlines-can-still-be-one-source	Repetition and popularity should not masquerade as independent historical evidence.
+a-library-of-alexandria-selected-by-demand	The continuity problem	the-internet-has-an-inheritance-problem	Preservation also requires institutions that can survive their original caretakers.
+the-archive-is-not-the-owner	Rights in another market	property-listings-need-rights-not-just-fields	A structured record does not automatically carry permission to redistribute its contents.
+the-archive-is-not-the-owner	A licensing distinction	source-available-is-not-the-same-as-open-source	Access to source material and permission to reuse it are different things.
+the-clip-is-not-the-whole-work	Audio and authorship	from-audio-to-something-people-can-use	Editing improves discovery without replacing a source's context or consent.
+the-clip-is-not-the-whole-work	Independent evidence	three-headlines-can-still-be-one-source	A widely distributed fragment can hide how little original reporting lies behind it.
+the-internet-has-an-inheritance-problem	Older systems	what-a-legacy-migration-really-moves	Succession requires moving business records and knowledge, not just changing hosting.
+the-internet-has-an-inheritance-problem	Continuing identity	the-profile-is-bigger-than-the-person	An enduring public presence must not imply a deceased creator can grant new consent.
+a-union-for-the-internet	The creator's position	creators-need-operating-infrastructure-not-only-better-media-models	Collective support includes distribution, records, administration and leverage.
+a-union-for-the-internet	Economic authority	machine-payments-are-not-machine-purchasing-authority	Shared finance infrastructure still needs explicit limits on who can commit value.
+a-wholesale-lot-is-an-equation-not-a-discount	From listing to decision	the-catalogue-and-the-room	A product record becomes useful when quantities, options and costs survive beyond the original listing.
+ai-operating-laboratory-equipment-needs-a-real-safety-boundary	The authorization distinction	connecting-an-account-is-not-acting-on-it	Finding an instrument's API cannot establish permission to issue physical commands.
+ai-written-code-is-not-the-whole-delivery	After code generation	when-the-agent-finishes-coding	The authorship of code is a different question from verification and operations.
+an-electric-vehicle-can-be-a-mobile-battery-but-availability-is-the-product	Available capacity	useful-things-are-already-out-there	The value of a distributed resource depends on when and how it can actually be used.
+auth-md-and-the-agent-registration-problem	Identity and access	digital-identity-is-not-a-single-login-box	Machine registration does not erase the destination's own account identity and grants.
+coding-a-quickbooks-replacement-does-not-replace-accounting	Operational ownership	why-ai-needs-an-operating-company	Running a financial system carries obligations that code generation alone cannot absorb.
+connecting-an-account-is-not-acting-on-it	Different protocol responsibilities	mcp-a2a-activitypub-and-atproto-are-different-tools	Transporting an action request and authorizing an action are not interchangeable.
+differential-privacy-is-not-a-substitute-for-data-governance	Rights remain separate	the-archive-is-not-the-owner	Privacy techniques do not answer who may control or reuse the underlying records.
+duckdb-in-the-browser-changes-who-needs-a-server	More accessible infrastructure	who-gets-to-have-sophisticated-software	Local-first analysis can lower the practical cost of useful analytical tools.
+graded-collectibles-are-an-identity-market	Provenance as infrastructure	stable-identifiers-are-equivalence-classes	An authenticated collectible needs an identity that connects records without inventing equivalence.
+rate-distortion-for-executable-agent-skills	The test of usefulness	the-machine-told-me-so	An elegant representation is not enough unless it preserves what the task requires.
+satellite-models-can-see-change-not-insurance-liability	Beware the false conclusion	the-internet-of-bad-ideas	A model can make an accurate observation without proving the decision built on top of it.
+the-deployment-was-green-but-the-site-was-old	Beyond screenshot checks	screenshots-cannot-test-a-distributed-system	Release quality requires a readback from the destination that people actually use.
+the-math-behind-sharing-software-across-businesses	The operating thesis	why-ai-needs-an-operating-company	Shared software and service capacity can change the economics of small products.
+the-memory-wall-in-local-models	Real cost rather than token price	why-the-cheapest-token-isnt-the-cheapest-answer	Prepared state, latency and memory constraints affect the cost of a useful completed task.
+the-world-is-not-one-embedding	Similarity versus identity	stable-identifiers-are-equivalence-classes	Close representations and identical subjects are different mathematical claims.
+three-brands-one-foundation	Composition without sameness	why-does-every-app-want-to-be-everything	Shared platform services need not erase the identity of independent customer experiences.
+two-coding-agents-one-worktree	Independent roles	when-everyone-agrees-who-is-thinking	Parallel contributors are valuable when they can disagree on evidence and preserve source revisions.
+websites-should-open-real-applications	From reading into a workflow	when-reading-becomes-participating	A thoughtful front end matters when it opens the real authorized work behind the story.
+why-base-rates-change-camera-matching-claims	Evidence before confidence	three-headlines-can-still-be-one-source	Claims that feel independently persuasive need their underlying evidence examined.
+why-the-cheapest-token-isnt-the-cheapest-answer	The operating cost	why-ai-needs-an-operating-company	A business evaluates the cost of getting a result, not simply a model's unit price.
+# Original connections across the new domain investigations, researched and edited by Aurekai.
+the-hour-that-does-not-exist	The policy underneath the timestamp	the-deployment-was-green-but-the-site-was-old	An observed instant does not establish which future civil time was promised.
+a-person-is-not-their-name-field	Identity beneath presentation	digital-identity-is-not-a-single-login-box	A person's names and the subject's permissions change under different rules.
+an-address-is-not-a-place-to-live	A place with several meanings	property-listings-need-rights-not-just-fields	A property record and a delivery address answer different institutional questions.
+a-coordinate-is-not-a-map-of-reality	Evidence on a map	a-council-agenda-can-be-useful	Official spatial claims require source boundaries, accuracy and provenance.
+email-accepted-does-not-mean-email-delivered	Validation versus action	connecting-an-account-is-not-acting-on-it	Accepting a contact address does not prove delivery or grant permission to send.
+a-price-needs-a-unit-a-time-and-a-party	The landed-cost problem	a-wholesale-lot-is-an-equation-not-a-discount	A displayed unit price hides tiering, quantity, availability and fulfillment.
+a-phone-number-is-not-a-person	A route is not identity	digital-identity-is-not-a-single-login-box	Contact endpoints rotate independently of people and their enduring accounts.
+the-character-counter-that-cannot-see-letters	Text and equivalence	stable-identifiers-are-equivalence-classes	Visually identical representations are not necessarily identical stored strings.
+a-song-is-not-a-file	The underlying work	the-clip-is-not-the-whole-work	A copied clip does not substitute for recording provenance or rights.
+captions-transcripts-and-translation-are-different-works	Listening beyond playback	from-audio-to-something-people-can-use	Caption and transcript layers need timing, review and source integrity.
+the-research-link-that-did-not-preserve-the-research	From links to evidence	three-headlines-can-still-be-one-source	A citation target is not a complete historical provenance record.
+a-url-is-not-a-permanent-home	An institution's continuity	the-internet-has-an-inheritance-problem	Publishing addresses require custody and succession beyond redirects.
+the-product-code-is-not-the-inventory	A shared object, different states	the-catalogue-and-the-room	Product identity and fulfillment inventory belong to separate owners.
+the-train-arrived-after-midnight-yesterday	Operational time	the-hour-that-does-not-exist	Civil dates and service schedules are separate temporal systems.
+temperature-is-not-a-single-number	Quantity and frame	a-coordinate-is-not-a-map-of-reality	Measurements need an explicit kind, reference and uncertainty.
+a-job-posting-is-not-a-job-opening	Source versus opportunity	a-job-posting-has-more-than-one-job	One listing may create many continuations without creating more vacancies.
+the-legal-company-name-is-not-the-business	Shared brand, separate entity	three-brands-one-foundation	Technical reuse must preserve independent legal and business identity.
+an-exchange-rate-is-not-a-settled-payment	Quotation versus settlement	machine-payments-are-not-machine-purchasing-authority	An informational conversion does not grant authority or prove a transaction.
+the-spreadsheet-import-that-was-not-just-data	A file is a boundary	the-spreadsheet-that-became-a-business	Convenient flat exports still need schema, execution safety and provenance.
+the-search-result-is-not-the-same-question	Semantic neighbors versus evidence	the-world-is-not-one-embedding	Textual and semantic retrieval make different promises about source identity.
+the-page-number-that-moved-while-you-were-reading	State across requests	screenshots-cannot-test-a-distributed-system	Correct individual queries do not prove a consistent multi-page review.
+a-release-number-is-not-the-binary-you-ran	Exact running bytes	the-deployment-was-green-but-the-site-was-old	A source tag, built artifact, deployed version and live page can diverge.
+a-cache-hit-is-not-current-information	Freshness versus existence	the-deployment-was-green-but-the-site-was-old	A cached response can be valid under its rules but stale for the reader.
+a-vulnerability-number-is-not-your-risk	Severity versus deployment	vibe-coding-is-not-a-production-method	An issue identifier and score cannot substitute for local reachability or verification.
+the-hour-that-does-not-exist	Another lens: Housing	an-address-is-not-a-place-to-live	Time and place connects civil time to housing without making their records interchangeable.
+an-address-is-not-a-place-to-live	Another lens: Geography	a-coordinate-is-not-a-map-of-reality	Time and place connects housing to geography without making their records interchangeable.
+a-coordinate-is-not-a-map-of-reality	Another lens: Transport	the-train-arrived-after-midnight-yesterday	Time and place connects geography to transport without making their records interchangeable.
+the-train-arrived-after-midnight-yesterday	Another lens: Measurement	temperature-is-not-a-single-number	Time and place connects transport to measurement without making their records interchangeable.
+temperature-is-not-a-single-number	Another lens: Civil time	the-hour-that-does-not-exist	Time and place connects measurement to civil time without making their records interchangeable.
+a-person-is-not-their-name-field	Another lens: Communication	email-accepted-does-not-mean-email-delivered	People and belonging connects identity to communication without making their records interchangeable.
+email-accepted-does-not-mean-email-delivered	Another lens: Telecommunications	a-phone-number-is-not-a-person	People and belonging connects communication to telecommunications without making their records interchangeable.
+a-phone-number-is-not-a-person	Another lens: Organizations	the-legal-company-name-is-not-the-business	People and belonging connects telecommunications to organizations without making their records interchangeable.
+the-legal-company-name-is-not-the-business	Another lens: Identity	a-person-is-not-their-name-field	People and belonging connects organizations to identity without making their records interchangeable.
+a-price-needs-a-unit-a-time-and-a-party	Another lens: Supply chains	the-product-code-is-not-the-inventory	Money and markets connects prices to supply chains without making their records interchangeable.
+the-product-code-is-not-the-inventory	Another lens: Employment	a-job-posting-is-not-a-job-opening	Money and markets connects supply chains to employment without making their records interchangeable.
+a-job-posting-is-not-a-job-opening	Another lens: Finance	an-exchange-rate-is-not-a-settled-payment	Money and markets connects employment to finance without making their records interchangeable.
+an-exchange-rate-is-not-a-settled-payment	Another lens: Prices	a-price-needs-a-unit-a-time-and-a-party	Money and markets connects finance to prices without making their records interchangeable.
+the-character-counter-that-cannot-see-letters	Another lens: Music rights	a-song-is-not-a-file	Language and media connects unicode to music rights without making their records interchangeable.
+a-song-is-not-a-file	Another lens: Accessible media	captions-transcripts-and-translation-are-different-works	Language and media connects music rights to accessible media without making their records interchangeable.
+captions-transcripts-and-translation-are-different-works	Another lens: Unicode	the-character-counter-that-cannot-see-letters	Language and media connects accessible media to unicode without making their records interchangeable.
+the-research-link-that-did-not-preserve-the-research	Another lens: Digital inheritance	a-url-is-not-a-permanent-home	Evidence and public institutions connects research preservation to digital inheritance without making their records interchangeable.
+a-url-is-not-a-permanent-home	Another lens: Research preservation	the-research-link-that-did-not-preserve-the-research	Evidence and public institutions connects digital inheritance to research preservation without making their records interchangeable.
+the-spreadsheet-import-that-was-not-just-data	Another lens: Search	the-search-result-is-not-the-same-question	Software and operations connects interoperability to search without making their records interchangeable.
+the-search-result-is-not-the-same-question	Another lens: Data consistency	the-page-number-that-moved-while-you-were-reading	Software and operations connects search to data consistency without making their records interchangeable.
+the-page-number-that-moved-while-you-were-reading	Another lens: Release identity	a-release-number-is-not-the-binary-you-ran	Software and operations connects data consistency to release identity without making their records interchangeable.
+a-release-number-is-not-the-binary-you-ran	Another lens: Caching	a-cache-hit-is-not-current-information	Software and operations connects release identity to caching without making their records interchangeable.
+a-cache-hit-is-not-current-information	Another lens: Security	a-vulnerability-number-is-not-your-risk	Software and operations connects caching to security without making their records interchangeable.
+a-vulnerability-number-is-not-your-risk	Another lens: Interoperability	the-spreadsheet-import-that-was-not-just-data	Software and operations connects security to interoperability without making their records interchangeable.

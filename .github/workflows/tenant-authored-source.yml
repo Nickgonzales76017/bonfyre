@@ -1,0 +1,24 @@
+name: Bonfyre institution-owned editorial sources
+on:
+  push:
+    paths:
+      - "site/matrix/surfaces/build/install_authored_rows.mjs"
+      - "site/matrix/surfaces/build/tenant_authored_source.test.mjs"
+      - ".github/workflows/tenant-authored-source.yml"
+  pull_request:
+    paths:
+      - "site/matrix/surfaces/build/install_authored_rows.mjs"
+      - "site/matrix/surfaces/build/tenant_authored_source.test.mjs"
+      - ".github/workflows/tenant-authored-source.yml"
+  workflow_dispatch:
+
+jobs:
+  external-source:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Enforce explicit tenant editorial source, schema, unique IDs and no-write preview
+        run: bun test site/matrix/surfaces/build/tenant_authored_source.test.mjs

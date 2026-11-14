@@ -16,6 +16,11 @@
 #ifndef BONFYRE_FRONT_EDITORIAL_H
 #define BONFYRE_FRONT_EDITORIAL_H
 #include "front_community.h"
+#include "front_brand.h"
+
+/* Set by the page when an owned apex root has already opened on its brand
+ * masthead H1; the front's own head then titles itself as an H2. */
+static int page_front_brand_opened = 0;
 
 #define FRONT_BEATS 10
 #define FRONT_PER_KIND 14
@@ -262,7 +267,9 @@ static void front_strip(const FrontPool *pool, int shown) {
 
 static void front_head(const PageDocument *doc, const FrontPool *pool, const char *kinds_present[][2], int kinds_n) {
     int i;
-    fputs("<header class=\"fd-head\"><div class=\"fd-head-words\"><h1>", stdout); html(doc->title); fputs("</h1>", stdout);
+    fputs(page_front_brand_opened ? "<header class=\"fd-head\"><div class=\"fd-head-words\"><h2>"
+                                  : "<header class=\"fd-head\"><div class=\"fd-head-words\"><h1>", stdout);
+    html(doc->title); fputs(page_front_brand_opened ? "</h2>" : "</h1>", stdout);
     if (doc->lede && *doc->lede) { fputs("<p class=\"fd-lede\">", stdout); html(doc->lede); fputs("</p>", stdout); }
     fputs("</div><form class=\"fd-find\" action=\"/search\" method=\"get\" role=\"search\"><label>", stdout);
     page_glyph("search");

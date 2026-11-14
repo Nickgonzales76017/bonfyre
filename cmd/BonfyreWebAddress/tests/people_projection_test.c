@@ -291,6 +291,34 @@ int main(void) {
     people_member_paging(path,cms_path);
     people_lookup_scaling(path, cms_path);
 
+    /* A tenant without a selected profile territory must not mint public
+     * credited subdomains on Bonfÿre or a historical Aurekai host. */
+    char tenant_map[]="/tmp/bf-people-tenant-XXXXXX";
+    int map_fd=mkstemp(tenant_map);
+    if(map_fd<0)fail("tenant-map file");
+    FILE *map=fdopen(map_fd,"w");
+    if(!map)fail("tenant-map stream");
+    if(fputs("research stories.example.net auth.stories.example.net\n",map)<0||
+       fclose(map))fail("tenant-map write");
+    if(bf_tenant_hosts_load(tenant_map)!=1)fail("tenant-map load");
+    unsetenv("BONFYRE_CREDIT_PROFILE_TERRITORY");
+    if(bf_credit_profile_host("Alex Rivera","source-one",host_again))
+        fail("unselected tenant cannot mint a credit profile");
+    if(setenv("BONFYRE_CREDIT_PROFILE_TERRITORY","research",1)!=0)
+        fail("set tenant credit territory");
+    if(!bf_credit_profile_host("Alex Rivera","source-one",host_again)||
+       !strstr(host_again,".stories.example.net")||
+       strstr(host_again,"aurekai.work"))
+        fail("profile host must derive from exact installed tenant");
+    if(setenv("BONFYRE_CREDIT_PROFILE_TERRITORY","work",1)!=0)
+        fail("switch invalid credit territory");
+    if(bf_credit_profile_host("Alex Rivera","source-one",host_again))
+        fail("a missing configured territory may not resolve to Aurekai");
+    if(bf_tenant_hosts_load("/missing/current-tenant-host-map")!=-1 ||
+       bf_credit_profile_host("Alex Rivera","source-one",host_again))
+        fail("invalid tenant map may not mint a profile");
+    unsetenv("BONFYRE_CREDIT_PROFILE_TERRITORY");
+    unlink(tenant_map);
     unsetenv("BONFYRE_CMS_DB");
     unlink(path);
     unlink(cms_path);
