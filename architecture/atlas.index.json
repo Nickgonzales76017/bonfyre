@@ -21410,7 +21410,7 @@
       "semantic_question": "What models does this estate hold, which exact local native candidate can this account review, and what output and metered usage did that one admitted run produce?",
       "source_paths": [
         "cmd/BonfyreWebAddress/src/subject_and_lens.h",
-        "integrations/browser/aurekai-model.pcss",
+        "deploy/tailwind/styles/model-commons.pcss",
         "cmd/BonfyreWebAddress/src/main.c",
         "cmd/BonfyreWebAddress/src/model_catalogue_index.c",
         "cmd/BonfyreWebAddress/src/glyph_set.h",
@@ -27977,7 +27977,8 @@
         "a saved item -> a copy of the source's material, an endorsement, or a claim that the thing is true",
         "a saved property -> a title search, an appraisal, an ownership interest or an opportunity opened in the work graph",
         "a saved item -> membership, authority or any grant beyond the person's own reference",
-        "an item shown from a snapshot -> the source still publishing it"
+        "an item shown from a snapshot -> the source still publishing it",
+        "a one-tap Save to library on /music or /listen -> the recording copied into the Audio Studio, a rights clearance, or anything published"
       ],
       "internal_calculi": [],
       "invariants": [
@@ -27993,7 +27994,8 @@
       "known_gaps": [
         "Save is a native owner handler, not yet an ObjectGrammar contract offered through /_aperture; it should become one so the same aperture law governs it",
         "there is one collection (Saved); named boards and sharing a collection are not built",
-        "a snapshot is private; a lawful path to promote a kept retained item into a canonical subject through an ObjectGrammar ATTACH birth is not built"
+        "a snapshot is private; a lawful path to promote a kept retained item into a canonical subject through an ObjectGrammar ATTACH birth is not built",
+        "the Audio Studio's music library is its own pinned catalogue in the workspace store; it does not yet list music the person saved from /music or /listen, so \"Make with it\" opens the studio without carrying the saved recording in"
       ],
       "layer": "surface/public",
       "maturity": "implemented",
@@ -28011,7 +28013,9 @@
         "cmd/BonfyreWebAddress/src/main.c",
         "site/matrix/surfaces/login.html",
         "cmd/BonfyreWebAddress/tests/page_saved_test.sh",
-        "cmd/BonfyreWebAddress/tests/page_parcel_test.sh"
+        "cmd/BonfyreWebAddress/tests/page_parcel_test.sh",
+        "cmd/BonfyreWebAddress/src/page_media_spaces.h",
+        "cmd/BonfyreWebAddress/src/application_workspace.h"
       ],
       "subscribes": [],
       "views": [],
@@ -29107,6 +29111,8 @@
       ],
       "internal_calculi": [],
       "invariants": [
+        "independent-site article metadata and listening controls use the compiled site stylesheet",
+        "first-party static site styles are generated from PostCSS sources at their existing public paths",
         "shared profile cover, gallery, story, spaces, interests and private-site styles compile into the native profile stylesheet rather than being emitted inline by each component",
         "private profile participation components use the compiled shared stylesheet without emitting a page-level style block",
         "every member and credited profile page renders inside the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT, body.ak-app) with its layout in aurekai-native.css under [data-profile-page]; the overview leads with a feed of released, renderable /blog pages from all of the person's published member sites, newest first, linking across hosts, so a site with no pages of its own still shows the person's published work",
@@ -29157,6 +29163,20 @@
       ],
       "semantic_question": "How does one addressed Aurekai site select a studied visual profile and lower real applications into typed visual slots?",
       "source_paths": [
+        "cmd/BonfyreWebAddress/src/site_editorial.h",
+        "cmd/BonfyreWebAddress/src/article_listen.h",
+        "deploy/tailwind/styles/own-site.pcss",
+        "site/series/series.pcss",
+        "site/discover/discover.pcss",
+        "site/blog/blog.pcss",
+        "site/blog/connections.pcss",
+        "site/blog/reader.pcss",
+        "site/blog/complexity.pcss",
+        "site/blog/article-editions.pcss",
+        "site/blog/authors.pcss",
+        "site/instruments/instruments.pcss",
+        "site/fieldwork/fieldwork.pcss",
+        "site/assets/showcase.pcss",
         "schemas/control/site-presentation.yaff",
         "schemas/control/site-presentation.cue",
         "schemas/control/site-application-lowerers.cue",
@@ -29193,6 +29213,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/site_product_test.sh checks article presentation and published source boundaries",
         "cmd/BonfyreWebAddress/tests/participant_journey_browser.test.mjs checks the compiled participation controls, owner boundaries and phone-width browser flow",
         "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the compiled profile styles at desktop and phone widths, including cover and gallery content with source-rights changes",
         "2026-11-12 preview served nick.aurekai.life / with the 90 articles kept on nick.aurekai.work (previously \"Nothing published here yet\"), hero counts 90 articles / 11 subjects / 4 sites read from site_page, and work rendered as a dated log; profile_site_scope.test.mjs asserts data-profile-feed and the article route on the posts tab",
@@ -42596,9 +42617,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "d55468ca099f5d2037f280c276da0e62c490824d881e50f96b0332d01a12a2f7",
+    "declaration_digest": "3ffac38da444c78c8f917af727c2e22b0b1de2dc175023799c163c888ef7ceb2",
     "declaration_files": 155,
-    "generated_at": "2026-11-14T14:35:04Z"
+    "generated_at": "2026-11-14T15:44:31Z"
   },
   "views": {
     "CapabilityView": {

@@ -64,6 +64,9 @@ printf '%s' "$out" | grep -q '"check":"styles-load","ok":false' || fail "a page 
 "$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-source-public","page":"/essay","slot":"references","audience":"public","kind":"citation","position":90,"heading":"Published source","body":"The published source backing this example.","href":"https://example.test/observed-record","source_ref":"source:fixture-001","source_digest":"sha256:fixture","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "article citation not admitted"
 "$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-source-draft","page":"/essay","slot":"references","audience":"public","kind":"citation","position":91,"heading":"Unpublished source","body":"Never public","href":"https://example.test/draft","status":"draft"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "draft citation fixture not admitted"
 essay=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/essay") || fail "article page did not respond"
+printf '%s' "$essay" | grep -q '/assets/own-site.css' || fail 'article stylesheet is not linked'
+if printf '%s' "$essay" | grep -q '<style>\.site-article\|<style>\.bf-article-listen'; then fail 'article styles are inline'; fi
+curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/own-site.css" | grep -q '\.site-article-sources' || fail 'generated article stylesheet is unavailable'
 printf '%s' "$essay" | grep -q 'data-article-recording' || fail "published audio was not linked to article"
 printf '%s' "$essay" | grep -q 'data-play="/assets/acme-report.wav"' || fail "the exact published media address was not rendered"
 printf '%s' "$essay" | grep -q 'href="/assets/acme-report.vtt"' || fail "published transcript link is absent"

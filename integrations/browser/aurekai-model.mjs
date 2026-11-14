@@ -108,187 +108,187 @@ export async function verifyModelTransfer(context,input,options={}){
   transfer:{state:row.state,id:row.id,sha256:row.sha256,bytes:row.bytes,senderConfirmed:row.senderConfirmed,receiverConfirmed:row.receiverConfirmed,receiptId:row.receiptId}};
 }
 
-const element=(tag,content)=>{const node=document.createElement(tag);if(content!==undefined)node.textContent=String(content);return node;};
-const button=(content,action)=>{const node=element('button',content);node.type='button';node.addEventListener('click',action);return node;};
+const element=(tag,content,className)=>{const node=document.createElement(tag);if(content!==undefined)node.textContent=String(content);if(className)node.className=className;return node;};
+const button=(content,action,className)=>{const node=element('button',content,className);node.type='button';node.addEventListener('click',action);return node;};
 const field=(caption,control)=>{const label=element('label'),title=element('span',caption);label.append(title,control);return label;};
-const rateCopy=rate=>rate.state==='unknown'?'Pricing unavailable. Usage will still be recorded.':rate.amount.toLocaleString(undefined,{maximumSignificantDigits:10})+' '+rate.currency+' per '+rate.unit+'.';
-const stateCopy={pending:'Queued',active:'Running',completed:'Completed',failed:'Failed',cancelled:'Cancelled',blocked:'Stopped before execution',review:'Needs review',uncertain:'Outcome needs reconciliation'};
-function workChanged(context,task){window.dispatchEvent(new CustomEvent('bonfyre:work-changed',{detail:{context,taskId:task}}));}
-function workHref(context,id){return '/apps?'+new URLSearchParams({context})+'#fabric-task-'+id;}
+const rateCopy=rate=>rate.state==='unknown'?'No price published. Usage is still recorded.':rate.amount.toLocaleString(undefined,{maximumSignificantDigits:10})+' '+rate.currency+' per '+rate.unit+'.';
+const stateCopy={pending:'Waiting to start',active:'Running',completed:'Done',failed:'Failed',cancelled:'Stopped',blocked:'Stopped before it ran',review:'Needs a look',uncertain:'Needs checking'};;const gone='You no longer have access to this run.';
+function workChanged(context,task){window.dispatchEvent(new CustomEvent('bonfyre:work-changed',{detail:{context,taskId:task}}));}function workHref(context,id){return '/apps?'+new URLSearchParams({context})+'#fabric-task-'+id;}
 
 export function mountModelRun(target,{context,binding,taskId:id,read=readModelRun,cancel=cancelModelRun,reconcile=reconcileModelRun,verifyTransfer=verifyModelTransfer,onChange=()=>{},onAccessRefused=()=>{},intervalMs=3000}={}){
  activityBinding(binding,context);check(taskId(id));let disposed=false,epoch=0,request=null,timer=null,snapshot=null,cancelling=false,transferAttempt=null,transferReceipt=null;
- const status=element('p','Reading this model run…');status.setAttribute('role','status');
- const content=element('div'),usage=element('div'),transferStatus=element('p'),actions=element('div');actions.className='ak-model-actions';transferStatus.setAttribute('role','status');transferStatus.hidden=true;
- const refreshButton=button('Refresh run',()=>void refresh()),cancelButton=button('Cancel run',()=>void stop()),reconcileButton=button('Finish usage receipt',()=>void finishUsage()),transferButton=button('Verify local transfer',()=>void transferOutput());
- cancelButton.hidden=reconcileButton.hidden=transferButton.hidden=true;actions.append(refreshButton,cancelButton,reconcileButton,transferButton);target.replaceChildren(status,content,usage,actions,transferStatus);
+ const status=element('p','Checking this run…','ak-model-status');status.setAttribute('role','status');
+ const content=element('div'),usage=element('div','','ak-model-usage'),transferStatus=element('p'),actions=element('div','','ak-model-actions');transferStatus.setAttribute('role','status');transferStatus.hidden=true;
+ const refreshButton=button('Check again',()=>void refresh(),'ak-model-quiet'),cancelButton=button('Stop',()=>void stop()),reconcileButton=button('Finish recording usage',()=>void finishUsage()),transferButton=button('Check copy on this device',()=>void transferOutput());
+ cancelButton.hidden=reconcileButton.hidden=transferButton.hidden=true;actions.append(cancelButton,reconcileButton,transferButton,refreshButton);target.replaceChildren(status,content,usage,actions,transferStatus);
  const clear=()=>{content.replaceChildren();usage.replaceChildren();snapshot=null;transferStatus.hidden=true;cancelButton.hidden=reconcileButton.hidden=transferButton.hidden=true;cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;};
  function transferControls(){
   const matches=!transferAttempt||snapshot?.output?.id===transferAttempt.payload.outputId&&snapshot.output.digest===transferAttempt.digest&&snapshot.output.bytes===transferAttempt.bytes;
   const verified=matches&&transferReceipt?.transfer.state==='verified';
   transferButton.hidden=!snapshot?.localTransferAvailable||!snapshot?.output;
   transferButton.disabled=cancelling||verified||!matches;
-  transferButton.textContent=verified?'Local transfer verified':transferAttempt?'Recover transfer receipt':'Verify local transfer';
+  transferButton.textContent=verified?'Copy checked':transferAttempt?'Check that copy again':'Check copy on this device';
   transferStatus.hidden=transferButton.hidden;
-  transferStatus.textContent=!matches?'The retained output changed. Reopen this run before verifying it.':verified?'Both local peers confirmed the exact output. The temporary verification copy was removed.':
-   transferReceipt?.transfer.state==='uncertain'?'The local transfer outcome needs reconciliation. This request will not be transmitted again.':
-   transferAttempt?'Read the retained result of this same transfer request.':'Checks this output between two peers on this device. Remote delivery requires a paired recipient.';
+  transferStatus.textContent=!matches?'The answer changed. Open this run again before checking it.':verified?'Both places on this device have the exact answer. The test copy was removed.':
+   transferReceipt?.transfer.state==='uncertain'?'We couldn’t tell whether the copy arrived. It won’t be sent again.':
+   transferAttempt?'Check the result of this same copy.':'Checks that this answer copies exactly between two places on this device. Sending it to someone else needs a paired recipient.';
  }
  function render(row){
   snapshot=row;status.textContent=row.model.label+' · '+stateCopy[row.phase];clearTimeout(timer);content.replaceChildren();usage.replaceChildren();
-  if(row.output){const heading=element('h4','Output'),body=element('pre',row.output.text);body.tabIndex=0;body.setAttribute('aria-label','Retained model output');content.append(heading,body);}
-  else content.append(element('p',row.phase==='active'?'The local model is working. You can continue elsewhere in Aurekai.':row.phase==='pending'?'This run is waiting for its native execution slot.':'No retained output was confirmed.'));
+  if(row.output){const body=element('pre',row.output.text);body.tabIndex=0;body.setAttribute('aria-label','Model answer');content.append(body);}
+  else content.append(element('p',row.phase==='active'?'The model is working. You can carry on elsewhere in Aurekai.':row.phase==='pending'?'Waiting for its turn on this machine.':'No answer came back.'));
   if(row.error)content.append(element('p',row.error));
   if(row.usage){
-   usage.append(element('h4','Usage'));
-   if(row.usage.durationMs!==null&&row.usage.outputBytes!==null)usage.append(element('p',(row.usage.durationMs/1000).toLocaleString(undefined,{maximumFractionDigits:2})+' seconds · '+row.usage.outputBytes.toLocaleString()+' output bytes'));
-   usage.append(element('p',row.usage.state==='recorded'?'Usage recorded.':'Usage receipt is pending. Inference will not be repeated to repair it.'));
-   usage.append(element('p',Object.hasOwn(row.usage,'cost')?'Recorded cost: '+row.usage.cost.toLocaleString(undefined,{maximumSignificantDigits:10})+' '+row.usage.pricing.currency+'.':rateCopy(row.usage.pricing)));
+   if(row.usage.durationMs!==null&&row.usage.outputBytes!==null)usage.append(element('p',(row.usage.durationMs/1000).toLocaleString(undefined,{maximumFractionDigits:2})+' seconds · '+row.usage.outputBytes.toLocaleString()+' bytes'));
+   usage.append(element('p',row.usage.state==='recorded'?'Usage recorded.':'Usage is still being recorded. The model won’t be run again to finish it.'));
+   usage.append(element('p',Object.hasOwn(row.usage,'cost')?'Cost: '+row.usage.cost.toLocaleString(undefined,{maximumSignificantDigits:10})+' '+row.usage.pricing.currency+'.':rateCopy(row.usage.pricing)));
   }
   cancelButton.hidden=!row.cancellationAllowed||!['pending','active'].includes(row.phase);cancelButton.disabled=cancelling;
-  reconcileButton.hidden=!row.reconciliationAllowed||!row.output;reconcileButton.disabled=cancelling;reconcileButton.textContent=row.usage?.state==='recorded'?'Finish run record':'Finish usage receipt';
+  reconcileButton.hidden=!row.reconciliationAllowed||!row.output;reconcileButton.disabled=cancelling;reconcileButton.textContent=row.usage?.state==='recorded'?'Finish saving this run':'Finish recording usage';
   transferControls();
   if(['pending','active'].includes(row.phase)&&!document.hidden)timer=setTimeout(()=>void refresh(),intervalMs);
  }
  async function refresh(){
   if(disposed||document.hidden||cancelling)return;const ticket=++epoch,controller=new AbortController();request?.abort();request=controller;refreshButton.disabled=true;cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;
   try{const row=await read(context,id,{expectedBinding:binding,signal:controller.signal});if(disposed||controller.signal.aborted||ticket!==epoch)return;check(sameActivityBinding(row.binding,binding));render(row);}
-  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?'Current access to this run was removed.':'This run could not be read. Use Refresh run to reconcile its retained outcome.';if(refused(error))onAccessRefused(error);}}
+  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?gone:'This run couldn’t be read. Press Check again.';if(refused(error))onAccessRefused(error);}}
   finally{if(!disposed&&ticket===epoch){request=null;refreshButton.disabled=false;}}
  }
  async function stop(){
   if(disposed||cancelling||request||!snapshot?.cancellationAllowed||!['pending','active'].includes(snapshot.phase))return;
-  const ticket=++epoch,controller=new AbortController();request?.abort();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=true;cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;status.textContent='Confirming cancellation…';
+  const ticket=++epoch,controller=new AbortController();request?.abort();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=true;cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;status.textContent='Stopping…';
   try{const row=await cancel(context,{expectedBinding:binding,taskId:id,requestId:crypto.randomUUID()},{signal:controller.signal});if(disposed||controller.signal.aborted||ticket!==epoch)return;check(sameActivityBinding(row.binding,binding));render(row);workChanged(context,id);onChange(row);}
-  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?'Current access to this run was removed.':'Cancellation could not be confirmed. Refresh this run before taking another action.';if(refused(error))onAccessRefused(error);}}
+  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?gone:'We couldn’t confirm it stopped. Check again before doing anything else.';if(refused(error))onAccessRefused(error);}}
   finally{if(!disposed&&ticket===epoch){request=null;cancelling=false;refreshButton.disabled=false;cancelButton.disabled=!snapshot?.cancellationAllowed;}}
  }
  async function finishUsage(){
   if(disposed||cancelling||request||!snapshot?.reconciliationAllowed||!snapshot.output)return;
-  const ticket=++epoch,controller=new AbortController();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;status.textContent=snapshot.usage?.state==='recorded'?'Completing the retained run record…':'Completing the retained usage receipt…';
+  const ticket=++epoch,controller=new AbortController();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;status.textContent='Finishing the record of this run…';
   try{const row=await reconcile(context,{expectedBinding:binding,taskId:id,requestId:crypto.randomUUID()},{signal:controller.signal});if(disposed||controller.signal.aborted||ticket!==epoch)return;check(sameActivityBinding(row.binding,binding));render(row);workChanged(context,id);onChange(row);}
-  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?'Current access to this run was removed.':'Usage recording could not be confirmed. Refresh this run to read its retained receipt.';if(refused(error))onAccessRefused(error);}}
+  catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){clear();status.textContent=refused(error)?gone:'We couldn’t confirm usage was recorded. Press Check again.';if(refused(error))onAccessRefused(error);}}
   finally{if(!disposed&&ticket===epoch){request=null;cancelling=false;refreshButton.disabled=false;reconcileButton.disabled=!snapshot?.reconciliationAllowed;transferControls();}}
  }
  async function transferOutput(){
   if(disposed||cancelling||request||!snapshot?.localTransferAvailable||!snapshot.output||transferReceipt?.transfer.state==='verified')return;
   const output=snapshot.output;
-  if(transferAttempt&&(transferAttempt.payload.outputId!==output.id||transferAttempt.digest!==output.digest||transferAttempt.bytes!==output.bytes)){transferStatus.hidden=false;transferStatus.textContent='The retained output changed. Reopen this run before verifying it.';return;}
+  if(transferAttempt&&(transferAttempt.payload.outputId!==output.id||transferAttempt.digest!==output.digest||transferAttempt.bytes!==output.bytes)){transferStatus.hidden=false;transferStatus.textContent='The answer changed. Open this run again before checking it.';return;}
   transferAttempt||={payload:{expectedBinding:binding,taskId:id,outputId:output.id,requestId:crypto.randomUUID()},digest:output.digest,bytes:output.bytes};
-  const retained=transferAttempt,ticket=++epoch,controller=new AbortController();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;transferStatus.hidden=false;transferStatus.textContent='Checking the local transfer receipt…';
+  const retained=transferAttempt,ticket=++epoch,controller=new AbortController();request=controller;clearTimeout(timer);cancelling=true;refreshButton.disabled=cancelButton.disabled=reconcileButton.disabled=transferButton.disabled=true;transferStatus.hidden=false;transferStatus.textContent='Checking the copy…';
   try{
    const row=await verifyTransfer(context,retained.payload,{signal:controller.signal});if(disposed||controller.signal.aborted||ticket!==epoch)return;
-   check(sameActivityBinding(row.binding,binding));check(row.transfer.state!=='verified'||row.transfer.sha256===retained.digest&&row.transfer.bytes===retained.bytes,'The local transfer receipt does not match this output.');
+   check(sameActivityBinding(row.binding,binding));check(row.transfer.state!=='verified'||row.transfer.sha256===retained.digest&&row.transfer.bytes===retained.bytes,'The copy does not match this answer.');
    transferReceipt=row;workChanged(context,id);
   }catch(error){if(!disposed&&!controller.signal.aborted&&ticket===epoch){
-   if(refused(error)){clear();status.textContent='Current access to this run was removed.';onAccessRefused(error);}
-   else transferStatus.textContent='The transfer receipt could not be read. Recover this same request to check its retained outcome.';
+   if(refused(error)){clear();status.textContent=gone;onAccessRefused(error);}
+   else transferStatus.textContent='We couldn’t read the result. Check that copy again.';
   }}finally{if(!disposed&&ticket===epoch){request=null;cancelling=false;refreshButton.disabled=false;reconcileButton.disabled=!snapshot?.reconciliationAllowed;transferControls();}}
  }
- const suspend=()=>{epoch++;request?.abort();request=null;cancelling=false;refreshButton.disabled=false;clearTimeout(timer);clear();status.textContent='Checking current run access…';};
+ const suspend=()=>{epoch++;request?.abort();request=null;cancelling=false;refreshButton.disabled=false;clearTimeout(timer);clear();status.textContent='Checking access…';};
  const visibility=()=>{if(document.hidden)suspend();else void refresh();};
  document.addEventListener('visibilitychange',visibility);
  const dispose=()=>{if(disposed)return;disposed=true;suspend();document.removeEventListener('visibilitychange',visibility);target.replaceChildren();};
  void refresh();return {dispose,refresh};
 }
 
+/* The sandbox runner: input on the left, the answer on the right. One primary
+ * action per stage -- Try it, then Run -- and nothing runs before Run. */
 export function mountModelCommons(target,{modelId=target.dataset.aurekaiModel||null,destinations=readDestinations,capabilities=readModelCapabilities,review=reviewModel,submit=submitModel,runView=mountModelRun}={}){
  if(target.dataset.modelMounted)return null;target.dataset.modelMounted='true';
  let disposed=false,epoch=0,request=null,expiryTimer=null,currentBinding=null,choices=[],snapshot=null,proposal=null,attempt=null,run=null,busy=false,context=new URL(location.href).searchParams.get('context')||'self';
  if(!contextValid(context))context='self';
- const heading=element('div');heading.className='ak-model-heading';const headingCopy=element('div');headingCopy.append(element('p','MODEL COMMONS'),element('h2',modelId?'Run '+(target.dataset.modelName||'this model'):'Run a model'));
- const reload=button('Refresh models',()=>void load(context));heading.append(headingCopy,reload);
- const status=element('p','Checking current account access…');status.className='ak-model-status';status.setAttribute('role','status');
- const account=element('select');account.setAttribute('aria-label','Model run account or organization');account.disabled=true;
- const modelSelect=element('select');modelSelect.setAttribute('aria-label','Execution model');const modelField=field('Available local model',modelSelect);modelField.hidden=Boolean(modelId);
- const prompt=element('textarea');prompt.rows=5;prompt.maxLength=32768;prompt.placeholder='Describe what you want this model to do…';prompt.setAttribute('aria-label','Model instructions');
- const tokens=element('input');tokens.type='number';tokens.min='1';tokens.step='1';tokens.value='512';tokens.setAttribute('aria-label','Maximum output tokens');
- const seconds=element('input');seconds.type='number';seconds.min='1';seconds.step='1';seconds.value='60';seconds.setAttribute('aria-label','Maximum run seconds');
- const limits=element('div');limits.className='ak-model-limits';limits.append(field('Maximum output tokens',tokens),field('Maximum run seconds',seconds));
- const help=element('p','A run uses the selected account and continues in Activity.');help.className='ak-model-caption';
- const form=element('form'),reviewButton=element('button','Review run');reviewButton.type='submit';reviewButton.className='ak-model-primary';
- form.append(field('Run for',account),modelField,field('Instructions',prompt),limits,help,reviewButton);
- const reviewed=element('section');reviewed.className='ak-model-review';reviewed.hidden=true;
- const result=element('section');result.className='ak-model-result';result.hidden=true;
- target.replaceChildren(heading,status,form,reviewed,result);
+ const status=element('p','Checking whether you can run this model…','ak-model-status');status.setAttribute('role','status');
+ const account=element('select');account.setAttribute('aria-label','Account to run for');account.disabled=true;const accountField=field('For',account);accountField.hidden=true;
+ const modelSelect=element('select');modelSelect.setAttribute('aria-label','Model to try');const modelField=field('Model',modelSelect);modelField.hidden=Boolean(modelId);
+ const prompt=element('textarea');prompt.rows=8;prompt.maxLength=32768;prompt.placeholder='Paste some text or ask a question…';prompt.setAttribute('aria-label','Your input');
+ const tokens=element('input');tokens.type='number';tokens.min='1';tokens.step='1';tokens.value='512';tokens.setAttribute('aria-label','Longest answer in tokens');
+ const seconds=element('input');seconds.type='number';seconds.min='1';seconds.step='1';seconds.value='60';seconds.setAttribute('aria-label','Time limit in seconds');
+ const limits=element('div','','ak-model-limits');limits.append(field('Longest answer (tokens)',tokens),field('Time limit (seconds)',seconds));
+ const help=element('p','Runs on this machine for the account above. Nothing runs until you press Run.','ak-model-caption');
+ const form=element('form'),reviewButton=element('button','Try it','ak-model-primary');reviewButton.type='submit';
+ form.append(accountField,modelField,prompt,limits,help,reviewButton);
+ const empty=element('p','The answer appears here.','ak-model-empty');
+ const reviewed=element('section','','ak-model-review');reviewed.hidden=true;
+ const result=element('section','','ak-model-result');result.hidden=true;
+ const left=element('div','','ak-model-try'),right=element('div','','ak-model-out');
+ left.append(element('h2','Your input'),status,form);right.append(element('h2','Answer'),empty,reviewed,result);target.replaceChildren(left,right);
  const cleanup=[];const on=(node,type,handler)=>{node.addEventListener(type,handler);cleanup.push(()=>node.removeEventListener(type,handler));};
  const chosenModel=()=>snapshot?.models.find(row=>modelId?row.catalogId===modelId:row.id===modelSelect.value);
  function controls(){
   const model=chosenModel(),allowed=Boolean(currentBinding&&choices.find(row=>row.context===context)?.canWrite&&model?.available&&!busy&&!attempt);
   for(const node of [modelSelect,prompt,tokens,seconds,reviewButton])node.disabled=!allowed;
-  account.disabled=!choices.length;reload.disabled=busy;
+  account.disabled=!choices.length;accountField.hidden=choices.length<2;empty.hidden=!reviewed.hidden||!result.hidden;
  }
  function clearReview(){clearTimeout(expiryTimer);expiryTimer=null;proposal=attempt=null;reviewed.replaceChildren();reviewed.hidden=true;controls();}
  function clearPrivate(message){
   epoch++;request?.abort();request=null;clearReview();currentBinding=snapshot=null;choices=[];account.replaceChildren();busy=false;prompt.value='';modelSelect.replaceChildren();run?.dispose();run=null;result.replaceChildren();result.hidden=true;status.textContent=message;controls();
  }
  async function load(next){
-  if(disposed)return;context=next;clearPrivate('Checking execution for this account…');const ticket=epoch,controller=new AbortController();request=controller;busy=true;controls();
+  if(disposed)return;context=next;clearPrivate('Checking whether you can run this model…');const ticket=epoch,controller=new AbortController();request=controller;busy=true;controls();
   const current=()=>!disposed&&!controller.signal.aborted&&ticket===epoch&&sameContext(context,next);
   try{
    const all=await destinations({signal:controller.signal});if(!current())return;choices=all;account.replaceChildren();
    for(const row of all){const option=element('option',row.label);option.value=row.context;account.append(option);}account.value=context;
-   if(!all.some(row=>row.context===context)){status.textContent='Choose an account or organization currently available to you.';return;}
+   if(!all.some(row=>row.context===context)){status.textContent='Pick one of your accounts.';return;}
    const value=await capabilities(context,{signal:controller.signal});if(!current())return;currentBinding=value.binding;snapshot=value;modelSelect.replaceChildren();
-   for(const row of value.models){const option=element('option',row.label+(row.available?'':' · Unavailable'));option.value=row.id;option.disabled=!row.available;modelSelect.append(option);}
+   for(const row of value.models){const option=element('option',row.label+(row.available?'':' · not available'));option.value=row.id;option.disabled=!row.available;modelSelect.append(option);}
    const first=value.models.find(row=>row.available);if(first)modelSelect.value=first.id;
    const model=chosenModel();
-   if(!all.find(row=>row.context===context)?.canWrite)status.textContent='You can view this destination. Running a model requires current write access.';
-   else if(!model||!model.available)status.textContent=modelId?'This catalogue entry has no currently admitted local execution.':'No local model is currently available for this account.';
-   else{status.textContent='Local execution · '+model.label;setLimits(model);}
-   if(!model)help.textContent='Catalogue registration does not establish a runnable model. Refresh when its execution owner is available.';
-  }catch(error){if(current()){currentBinding=snapshot=null;status.textContent=refused(error)?'Sign in with current access to run a model.':'Model execution could not be checked. Use Refresh models to try again.';}}
+   if(!all.find(row=>row.context===context)?.canWrite)status.textContent='You can look, but running a model needs edit access to this account.';
+   else if(!model||!model.available)status.textContent=modelId?'This model can’t run here yet.':'No model can run for this account yet.';
+   else{status.textContent='Ready to run on this machine.';setLimits(model);}
+   if(!model)help.textContent='Being listed doesn’t make a model runnable. Come back once it is set up for your account.';
+  }catch(error){if(current()){currentBinding=snapshot=null;status.textContent=refused(error)?'Sign in to try this model.':'We couldn’t check this model. Reload the page to try again.';}}
   finally{if(current()){request=null;busy=false;controls();}}
  }
  function setLimits(model){
   tokens.max=String(model.maxTokens);seconds.max=String(Math.max(1,Math.floor(model.maxTimeoutMs/1000)));
   tokens.value=String(Math.min(Number(tokens.value)||512,model.maxTokens));seconds.value=String(Math.min(Number(seconds.value)||60,Number(seconds.max)));
-  help.textContent='One local run · Maximum instruction size: '+Math.floor(snapshot.limits.maxPromptBytes/1024)+' KB.';
+  help.textContent='One run on this machine · input up to '+Math.floor(snapshot.limits.maxPromptBytes/1024)+' KB. Nothing runs until you press Run.';
  }
  async function makeReview(event){
   event.preventDefault();const model=chosenModel();if(disposed||busy||!currentBinding||!model?.available||reviewButton.disabled)return;
   const input={expectedBinding:currentBinding,requestId:crypto.randomUUID(),modelId:model.id,prompt:prompt.value,maxTokens:Number(tokens.value),timeoutMs:Number(seconds.value)*1000};
-  if(!input.prompt.trim()||utf8.encode(input.prompt).length>snapshot.limits.maxPromptBytes){status.textContent='Enter instructions within the displayed byte limit.';prompt.focus();return;}
-  const ticket=epoch,controller=new AbortController(),expected=currentBinding;request?.abort();request=controller;clearReview();busy=true;controls();status.textContent='Preparing an exact execution review…';
+  if(!input.prompt.trim()||utf8.encode(input.prompt).length>snapshot.limits.maxPromptBytes){status.textContent='Enter your input, within the size shown below.';prompt.focus();return;}
+  const ticket=epoch,controller=new AbortController(),expected=currentBinding;request?.abort();request=controller;clearReview();busy=true;controls();status.textContent='Getting it ready…';
   const current=()=>!disposed&&!controller.signal.aborted&&ticket===epoch&&sameActivityBinding(expected,currentBinding);
-  try{const value=await review(context,input,{signal:controller.signal});if(!current())return;check(sameActivityBinding(value.binding,expected));proposal=value.review;renderReview();status.textContent='Review the account, model and run limits before starting.';}
-  catch(error){if(current()){status.textContent=error.message||'This request could not be reviewed.';if(refused(error))clearPrivate('Current account access is unavailable.');}}
+  try{const value=await review(context,input,{signal:controller.signal});if(!current())return;check(sameActivityBinding(value.binding,expected));proposal=value.review;renderReview();status.textContent='Check the details, then press Run.';}
+  catch(error){if(current()){status.textContent=error.message||'This input couldn’t be checked.';if(refused(error))clearPrivate('You don’t have access with this account right now.');}}
   finally{if(current()){request=null;busy=false;controls();}}
  }
  function renderReview(){
   const row=proposal;reviewed.replaceChildren();reviewed.hidden=false;
   reviewed.append(element('h3','Ready to run'),element('p',(choices.find(item=>item.context===context)?.label||context)+' · '+row.label),
-   element('p','One local call · Up to '+row.maxTokens.toLocaleString()+' output tokens · '+(row.timeoutMs/1000).toLocaleString()+' seconds'),
+   element('p','One run on this machine · up to '+row.maxTokens.toLocaleString()+' tokens · '+(row.timeoutMs/1000).toLocaleString()+' seconds'),
    element('p',rateCopy(row.pricing)));
-  const expires=element('p','Review expires at '+new Date(row.expiresAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}));expires.className='ak-model-caption';
-  const actions=element('div');actions.className='ak-model-actions';const start=button('Start run',()=>void startRun(start)),edit=button('Edit instructions',()=>{clearReview();prompt.focus();});start.className='ak-model-primary';actions.append(start,edit);reviewed.append(expires,actions);
-  const delay=row.expiresAt-Date.now();start.disabled=delay<=0;if(delay>0)expiryTimer=setTimeout(()=>{if(proposal===row&&!attempt){start.disabled=true;expires.textContent='This review expired. Review the current request again.';}},Math.min(delay,2147483647));
+  const expires=element('p','This check holds until '+new Date(row.expiresAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),'ak-model-caption');
+  const actions=element('div','','ak-model-actions'),start=button('Run',()=>void startRun(start),'ak-model-primary'),edit=button('Change input',()=>{clearReview();prompt.focus();},'ak-model-quiet');actions.append(start,edit);reviewed.append(expires,actions);
+  const delay=row.expiresAt-Date.now();start.disabled=delay<=0;if(delay>0)expiryTimer=setTimeout(()=>{if(proposal===row&&!attempt){start.disabled=true;expires.textContent='This check expired. Press Try it again.';}},Math.min(delay,2147483647));
  }
  async function startRun(control){
   if(disposed||busy||!proposal||!currentBinding||control.disabled)return;
-  if(!attempt&&proposal.expiresAt<=Date.now()){control.disabled=true;status.textContent='This review expired. Review the request again.';return;}
+  if(!attempt&&proposal.expiresAt<=Date.now()){control.disabled=true;status.textContent='This check expired. Press Try it again.';return;}
   attempt??={expectedBinding:currentBinding,requestId:crypto.randomUUID(),reviewId:proposal.id};
-  const retained=attempt,ticket=epoch,expected=currentBinding,controller=new AbortController();request?.abort();request=controller;busy=true;controls();for(const node of reviewed.querySelectorAll('button'))node.disabled=true;status.textContent='Submitting this reviewed run…';
+  const retained=attempt,ticket=epoch,expected=currentBinding,controller=new AbortController();request?.abort();request=controller;busy=true;controls();for(const node of reviewed.querySelectorAll('button'))node.disabled=true;status.textContent='Starting…';
   const current=()=>!disposed&&!controller.signal.aborted&&ticket===epoch&&sameActivityBinding(expected,currentBinding);
   try{
-   const value=await submit(context,retained,{signal:controller.signal});if(!current())return;check(sameActivityBinding(value.binding,expected));clearReview();status.textContent='Run admitted. Activity keeps it available while you move through Aurekai.';
-   result.hidden=false;result.replaceChildren();const link=element('a','Reopen this run from Activity');link.href=workHref(context,value.taskId);result.append(link);const panel=element('div');result.append(panel);run?.dispose();run=runView(panel,{context,binding:expected,taskId:value.taskId,onChange:()=>workChanged(context,value.taskId),onAccessRefused:()=>clearPrivate('Current access to this run was removed.')});workChanged(context,value.taskId);
+   const value=await submit(context,retained,{signal:controller.signal});if(!current())return;check(sameActivityBinding(value.binding,expected));clearReview();status.textContent='Running. You can leave this page; it carries on in your work.';
+   result.hidden=false;result.replaceChildren();const panel=element('div'),link=element('a','Open in your work','ak-model-go');link.href=workHref(context,value.taskId);result.append(panel,link);run?.dispose();run=runView(panel,{context,binding:expected,taskId:value.taskId,onChange:()=>workChanged(context,value.taskId),onAccessRefused:()=>clearPrivate(gone)});workChanged(context,value.taskId);
   }catch(error){
    if(current()){
-    if(refused(error)){clearPrivate('Current account access is unavailable.');return;}
-    if(['invalid','conflict','expired','admission','paused'].includes(error.code)){clearReview();status.textContent=error.message||'Review this request again before running.';}
-    else{status.textContent='The submission could not be confirmed. Recover this exact request or check Activity before starting another run.';control.textContent='Recover this run';control.disabled=false;}
+    if(refused(error)){clearPrivate('You don’t have access with this account right now.');return;}
+    if(['invalid','conflict','expired','admission','paused'].includes(error.code)){clearReview();status.textContent=error.message||'Press Try it again before running.';}
+    else{status.textContent='The start couldn’t be confirmed. Check what happened before starting another run.';control.textContent='Check what happened';control.disabled=false;}
    }
   }finally{if(current()){request=null;busy=false;controls();}}
  }
  on(form,'submit',event=>void makeReview(event));
  for(const node of [prompt,tokens,seconds])on(node,'input',()=>{if(proposal)clearReview();});
- on(modelSelect,'change',()=>{clearReview();const model=chosenModel();if(model){setLimits(model);status.textContent='Local execution · '+model.label;}controls();});
+ on(modelSelect,'change',()=>{clearReview();const model=chosenModel();if(model){setLimits(model);status.textContent='Ready to run on this machine.';}controls();});
  on(account,'change',()=>{const next=account.value;if(!choices.some(row=>row.context===next))return;void load(next);window.dispatchEvent(new CustomEvent('bonfyre:activity-context-request',{detail:{context:next}}));carryModelContext(next);});
- on(window,'bonfyre:activity-context-invalidated',event=>{if(contextValid(event.detail?.context))context=event.detail.context;clearPrivate('Checking the current account…');});
+ on(window,'bonfyre:activity-context-invalidated',event=>{if(contextValid(event.detail?.context))context=event.detail.context;clearPrivate('Checking your account…');});
  on(window,'bonfyre:activity-context-changed',event=>{const next=event.detail?.context,owner=event.detail?.binding;if(contextValid(next)&&(!sameContext(next,context)||!sameActivityBinding(owner,currentBinding)))void load(next);});
- on(window,'bonfyre:account-changed',()=>{clearPrivate('Checking the current account…');void load(context);});
- on(window,'pagehide',()=>clearPrivate('Checking the current account…'));
+ on(window,'bonfyre:account-changed',()=>{clearPrivate('Checking your account…');void load(context);});
+ on(window,'pagehide',()=>clearPrivate('Checking your account…'));
  on(window,'pageshow',()=>void load(context));
  const dispose=()=>{if(disposed)return;disposed=true;clearPrivate('');for(const off of cleanup)off();delete target.dataset.modelMounted;target.replaceChildren();};
  void load(context);return {dispose,refresh:()=>load(context)};

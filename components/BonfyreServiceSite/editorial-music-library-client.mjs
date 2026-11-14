@@ -6,12 +6,7 @@ import {editorialMusicCatalogue} from "./editorial-music-catalogue.mjs";
 import {musicStemRecord} from "./editorial-sound-design-ui.mjs";
 import {openDestinationStore} from "../../bridge/workspace-store.mjs";
 const prefix="music:stem:",MAX=24*1024*1024;
-const node=(tag,css,text)=>{
- const el=document.createElement(tag);
- if(css)el.className=css;
- if(text!==undefined)el.textContent=text;
- return el;
-};
+const node=(tag,css,text)=>{const el=document.createElement(tag);if(css)el.className=css;if(text!==undefined)el.textContent=text;return el;};
 const h=bytes=>[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,"0")).join("");
 export async function verifiedEditorialMusicBytes(track,{fetcher=fetch,contextFactory}={}){
  if(!editorialMusicCatalogue.some(t=>t.id===track?.id&&t.sha256===track.sha256))
@@ -36,7 +31,7 @@ export async function verifiedEditorialMusicBytes(track,{fetcher=fetch,contextFa
  const bytes=new Uint8Array(length);let at=0;
  for(const chunk of chunks){bytes.set(chunk,at);at+=chunk.byteLength;}
  const actual=h(await crypto.subtle.digest("SHA-256",bytes));
- if(actual!==track.sha256)throw Error("The source recording changed; it was NOT retained.");
+ if(actual!==track.sha256)throw Error("The source recording changed, so it was not saved.");
  const Audio=contextFactory||globalThis.AudioContext||globalThis.webkitAudioContext;
  if(!Audio)throw Error("This browser cannot measure the source audio.");
  const ctx=new Audio();let duration;
@@ -71,8 +66,8 @@ export function mountEditorialMusicLibrary(host,{store,fetcher=fetch}={}){
  if(!host||!store)throw Error("Editorial music requires an installed Audio Studio.");
  host.replaceChildren();
  const headline=node("div","audio-library-heading");
- headline.append(node("p","eyebrow","Aurekai / Recorded music"),node("h2","","A soundtrack, not a sound effect."),
-  node("p","audio-library-intro","Listen to real instrumental recordings. Select a distinct musical character for each narrated article, then retain the exact file in your own Audio Studio for review, ducking, mixing, and credits."));
+ headline.append(node("p","eyebrow","Your library"),node("h2","","A soundtrack, not a sound effect."),
+  node("p","audio-library-intro","Listen to real instrumental recordings. Save to library keeps the exact file, with its credits, ready to use under your narration or in a mix."));
  const toolbar=node("div","audio-library-tools");
  const filter=node("select");filter.setAttribute("aria-label","Filter editorial music by treatment");
  for(const [key,label] of [["all","All recordings"],["newsroom","Reporting"],["feature","Feature"],["essay","Reflective essay"],["conversation","Conversation"],["documentary","Documentary"]]){
@@ -100,18 +95,18 @@ export function mountEditorialMusicLibrary(host,{store,fetcher=fetch}={}){
   const link=node("a","","Original CC0 catalogue entry");
   link.href=track.sourceUrl;link.target="_blank";link.rel="noopener noreferrer";
   credits.append(node("span","",track.licence+" · rights review required · "),link);
-  const control=node("button","music-retain","Retain recording");
-  control.type="button";
+  const control=node("button","music-retain","Save to library");control.dataset.musicSave=track.sha256;
+  control.type="button";store.readVersion(prefix+track.sha256).then(v=>{if(v&&!v.deleted){control.textContent="In your library";control.disabled=true;}},()=>{});
   const result=node("p","music-retain-status","");
   result.setAttribute("role","status");
   control.addEventListener("click",async()=>{
-   control.disabled=true;result.textContent="Checking the exact source recording and destination…";
+   control.disabled=true;result.textContent="Saving…";
    try{
     const receipt=await retainEditorialMusic(track,{store,fetcher});document.dispatchEvent(new CustomEvent('bonfyre:music-retained'));
-    result.textContent=receipt.retained?"Recorded music retained in your private library. Review rights before publication.":"Already retained in this workspace.";
+    result.textContent=receipt.retained?"Saved to your library. Check its terms before you publish.":"Already in your library.";
     control.textContent="In your library";
    }catch(error){
-    result.textContent=error.message+" You can download the original from its source page and use Add a reusable music stem.";
+    result.textContent=error.message+" You can download the original from its source page and add it under Add your own music.";
     control.disabled=false;
    }
   });
@@ -124,9 +119,10 @@ export function mountEditorialMusicLibrary(host,{store,fetcher=fetch}={}){
   count.textContent=shown+" recorded "+(shown===1?"track":"tracks");
  });
  host.append(headline,toolbar,grid,globalStatus,
-  node("p","audio-library-disclaimer","Source metadata is a candidate CC0 declaration, not independent rights clearance. The retained bytes are SHA-256 verified. No track is auto-imported, mixed, or published."));
+  node("p","audio-library-disclaimer","Each recording's terms are as its source states them; that is not a rights check. Saved files are checked byte for byte against the source. Nothing is mixed or published until you do it."));
  return {dispose(){active?.pause();host.replaceChildren();}};
 }
+document.addEventListener("bonfyre:music-save",e=>document.querySelector('[data-music-save="'+e.detail+'"]')?.click());
 const root=document.querySelector("[data-editorial-library]");
 const route=document.querySelector('meta[name="bonfyre-workspace-store"]')?.content;
 if(root&&route){

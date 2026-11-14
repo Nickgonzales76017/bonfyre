@@ -1165,6 +1165,23 @@ interaction fingerprint-measures-template
   forbidden_inference a fingerprint match -> a right to import a donor theme or assert semantic equivalence
 
 architecture site-presentation-composition
+  source_path cmd/BonfyreWebAddress/src/site_editorial.h
+  source_path cmd/BonfyreWebAddress/src/article_listen.h
+  source_path deploy/tailwind/styles/own-site.pcss
+  invariant independent-site article metadata and listening controls use the compiled site stylesheet
+  witness cmd/BonfyreWebAddress/tests/site_product_test.sh checks article presentation and published source boundaries
+  source_path site/series/series.pcss
+  source_path site/discover/discover.pcss
+  source_path site/blog/blog.pcss
+  source_path site/blog/connections.pcss
+  source_path site/blog/reader.pcss
+  source_path site/blog/complexity.pcss
+  source_path site/blog/article-editions.pcss
+  source_path site/blog/authors.pcss
+  source_path site/instruments/instruments.pcss
+  source_path site/fieldwork/fieldwork.pcss
+  source_path site/assets/showcase.pcss
+  invariant first-party static site styles are generated from PostCSS sources at their existing public paths
   canonical_name SitePresentationComposition
   family surface
   domain Surface / Site compiler

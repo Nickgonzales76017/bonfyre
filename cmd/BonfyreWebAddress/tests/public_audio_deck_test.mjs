@@ -51,7 +51,10 @@ async function open(width=1440,prepare=null){
  // neither HTMLMediaElement nor playback success is substituted.
  page.on('request',request=>{const url=new URL(request.url());if(url.origin===mediaBase||url.protocol==='data:')void request.continue();else void request.abort();});
  await page.goto(mediaBase+'/listen',{waitUntil:'networkidle0'});
- await page.waitForSelector('[data-deck][data-ready="true"]');
+ try{await page.waitForSelector('[data-deck][data-ready="true"]');}catch(error){
+  const state=await page.evaluate(()=>({deck:!!document.querySelector('[data-deck]'),rows:document.querySelectorAll('li[data-play]').length,scripts:[...document.scripts].filter(s=>s.textContent.includes('deck=script.previousElementSibling')).map(s=>({previous:s.previousElementSibling?.outerHTML.slice(0,160)}))}));
+  throw Error(error.message+'; player state '+JSON.stringify(state)+'; browser errors '+JSON.stringify(errors));
+ }
  return {page,close:()=>context.close()};
 }
 async function play(page,index=0){

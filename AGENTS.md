@@ -66,6 +66,25 @@ own work. It is not a set of micro-sites.
 - **Done means side by side.** Screenshot the page next to its
   `screen.png` at desktop and 390px before you call it done.
 
+## Interface: compose mature components, never hand-build widgets
+
+- Controls come from the one component vocabulary (`.ak-pattern` with
+  `ak-action`, `ak-field`, `ak-choice`, `ak-card`, `ak-table`, `ak-tabs`,
+  `ak-dialog`, `ak-badge`, `ak-alert`, `ak-progress`, `ak-list-group` ...),
+  built with the `form_tree.h` builders and the shared renderer. Its look is
+  `deploy/tailwind/styles/aurekai-ui.pcss`: Stitch tokens plus daisyUI
+  (MIT, prefix `dui-`). Change a component there once; never restyle it per page.
+- For a layout or widget the vocabulary lacks, add it to that vocabulary from
+  a mature MIT source (daisyUI, HyperUI, Preline, Flowbite, shadcn patterns)
+  rather than inventing markup on one page.
+- One flow per task: one primary action per step, defaults filled from
+  records, plain words. No walls of open inputs, no rows of equal buttons,
+  no stacked collapses, no machine words (retain, admit, materialize,
+  projection, carrier, receipt) shown to people.
+- `scripts/ui-ratchet.sh check` runs in pre-commit: collapses, inline
+  `<style>` blocks, machine words and page builders outside the shell may
+  only go down. After removing some, `scripts/ui-ratchet.sh tighten`.
+
 ## CI-enforced invariants (`bun architecture/atlas.mjs validate`)
 
 - No maturity laundering — `measured`/`proven` needs a witness.

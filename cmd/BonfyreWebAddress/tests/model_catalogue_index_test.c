@@ -25,22 +25,25 @@ int main(void){
   sqlite3_close(db);db=NULL;
   ok&=(bf_model_catalogue_index(path,html,sizeof(html),&used)==1);
   ok&=used==strlen(html);
-  ok&=contains(html,"Registered models");
   ok&=contains(html,"Test &amp; &lt;Safe&gt;");
   ok&=contains(html,"/s/model/test-model");
-  ok&=contains(html,"<dt>Relations</dt><dd>1</dd>");
-  ok&=contains(html,"<dt>Unresolved</dt><dd>1</dd>");
-  ok&=contains(html,"powers 1 &middot; used by 0");
-  ok&=contains(html,"data-model-coverage");
-  ok&=contains(html,"class=\"desk-row model-card\"");
-  ok&=contains(html,"class=\"model-mark\"><svg class=\"glyph ak-icon\"");
+  ok&=contains(html,"<dt>Connections</dt><dd>1</dd>");
+  ok&=contains(html,"<dt>Broken links</dt><dd>1</dd>");
+  ok&=contains(html,"does 1 &middot; used by 0");
+  ok&=contains(html,"No description recorded yet.");
+  ok&=contains(html,"Not used anywhere yet");
+  ok&=contains(html,"class=\"ak-mc-model\"");
+  ok&=contains(html,"class=\"ak-mc-mark\"><svg class=\"glyph ak-icon\"");
   ok&=contains(html,"aria-hidden=\"true\"");
   ok&=(bf_model_catalogue_detail(path,"test-model",label,sizeof(label),detail,sizeof(detail),&used)==1);
   ok&=contains(label,"Test & <Safe>");
   ok&=contains(detail,"<dt>Format</dt><dd>GGUF");
   ok&=contains(detail,"<dt>Size</dt><dd>150 MB");
-  ok&=contains(detail,"References the catalogue cannot follow");
-  ok&=contains(detail,"Measured quality");
+  ok&=contains(detail,"Links we can&rsquo;t follow");
+  ok&=contains(detail,"data-unmeasured");
+  ok&=contains(detail,BF_MODEL_TRY_MARK)&&contains(detail,BF_MODEL_PRICE_MARK);
+  ok&=(bf_model_catalogue_find(path,"no such thing",html,sizeof(html),&used)==1)&&contains(html,"No model matches &ldquo;no such thing&rdquo;");
+  ok&=(bf_model_catalogue_find(path,"safe",html,sizeof(html),&used)==1)&&contains(html,"/s/model/test-model");
   if(sqlite3_open(path,&db)!=SQLITE_OK)return 1;
   if(sqlite3_exec(db,
       "INSERT INTO catalog_nodes(node_id,kind,external_id,name,json_data) VALUES('s1','model_source','private','file:///Users/private/model.gguf','{}'),('s2','model_source','public','hf://example/model.gguf','{}'),('s3','model_source','mixed','FILE:///Users/private/upper.gguf','{}');"

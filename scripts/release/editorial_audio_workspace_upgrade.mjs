@@ -66,7 +66,7 @@ export const editorialAudioUpgradeSpec=Object.freeze({
   assert(catalogue.includes(Buffer.from('Mellow Cafe Vibe'))&&
    catalogue.includes(Buffer.from('Above The Clouds'))&&
    importer.includes(Buffer.from('export function decodeWav'))&&
-   listener.includes(Buffer.from('Retain recording'))&&
+   listener.includes(Buffer.from('Save to library'))&&
    direct.includes(Buffer.from("get('production')")),
    'A recorded soundtrack, native source reader or exact narration entry is missing.');
   const official=readFileSync(new URL('../materialize_creator_workspace.mjs',import.meta.url));

@@ -41,5 +41,8 @@ module.exports = {
   ],
   darkMode: ["variant", "&:where([data-theme='dusk'], [data-theme='dusk'] *)"],
   theme: { extend: {} },
-  plugins: [require("@tailwindcss/typography"), require("@tailwindcss/forms")],
+  plugins: [require("@tailwindcss/typography"), require("@tailwindcss/forms"), require("daisyui")],
+  // Mature components from daisyUI, prefixed so estate class names never collide;
+  // themes come from styles/aurekai-ui.pcss (Stitch tokens), so none ship here.
+  daisyui: { prefix: "dui-", themes: false, base: false, styled: true, utils: true, logs: false },
 };

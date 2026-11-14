@@ -155,7 +155,9 @@ test('audio waveform is measured-data-only and has a bounded parser with a stand
  expect(parse(valid)).toEqual(Array.from({length:64},(_,i)=>i%101));
  for(const bad of [undefined,'',Array(63).fill('20').join(','),Array(65).fill('20').join(','),valid.replace('0,1,','200,1,'),Array(64).fill('-1').join(','),Array(64).fill('01').join(',')])expect(parse(bad)).toBeNull();
  expect(emitted).toContain('data-deck-waveform hidden aria-hidden=');
- expect(emitted).toContain('.bf-audio-waveform[hidden]{display:none!important}');
+ expect(emitted).not.toContain('<style>');
+ expect(emitted).toContain('</div><script>');
+ for(const name of ['aurekai-bar','own-site'])expect(readFileSync(join(import.meta.dir,'../../../deploy/tailwind/styles',name+'.pcss'),'utf8')).toContain('.bf-audio-waveform[hidden]{display:none!important}');
  expect(script).toContain("const bins=waveformBins(row?.dataset?.peaks)");
  expect(script).toContain("waveBars[i].dataset.played");
  const native=readFileSync(join(import.meta.dir,'../src/site_mcp.c'),'utf8');

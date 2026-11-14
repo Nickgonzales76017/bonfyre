@@ -178,7 +178,6 @@ static void site_page_metadata(FILE *out,const McpSite *site,const char *route,
         site_script_text(out,ed->updated_at);}
     fputs(",\"isPartOf\":{\"@type\":\"WebSite\",\"name\":",out);
     site_script_text(out,site->title);fputs("}}</script>",out);
-    site_editorial_css(out,ed);
 }
 
 static void reply(int code, const char *type, const char *body, size_t len) {
@@ -1754,7 +1753,7 @@ static void site_article_listening(FILE *out, sqlite3 *db, const McpSite *site,
     if(recorded) fputs("<details class=\"bf-article-voice-choice\" data-article-voice-choice>"
                        "<summary>Listen with your device voice instead</summary>",out);
     fputs("<div data-article-listen-scope=\"site\">",out);
-    bf_article_listen_style(out);bf_article_listen_emit(out);
+    bf_article_listen_emit(out);
     fputs("</div>",out);
     if(recorded) fputs("</details>",out);
 }

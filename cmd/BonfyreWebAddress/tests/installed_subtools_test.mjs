@@ -39,7 +39,7 @@ test('private cards reuse the verified editor release and expose six exact sub-e
  expect(work.status).toBe(200);expect(cards.status).toBe(200);
  expect(cards.headers.get('cache-control')).toContain('private, no-store');
  for(const response of [work,cards]){
-  for(const needle of ['class="pack-subtools"','Continue saved work','Explore 6 working tools','class="pack-subtool-list"','class="pack-collections"','Workspace family <code>skill-instruments</code>'])expect(response.body).toContain(needle);
+  for(const needle of ['class="pack-subtools"','Continue saved work','class="pack-collections"'])expect(response.body).toContain(needle);
   const hrefs=[...response.body.matchAll(/data-instrument-entry href="([^"]+)"/g)].map(m=>m[1]);
   expect(hrefs.length).toBe(INSTRUMENTS.length);
   expect(hrefs).toEqual(INSTRUMENTS.map(it=>'/apps/'+binding.id+'/'+it.page+'/'));
@@ -186,10 +186,8 @@ test('Chrome opens the real planner from the sub-editor menu on desktop and mobi
    await page.waitForSelector(skill+' .pack-subtools');
    await page.waitForSelector(skill+' .pack-collections');
    expect(await page.$eval('.pack-cards',node=>getComputedStyle(node).display)).toBe('grid');
-   await page.click(skill+' .pack-subtools summary');
-   expect(await page.$eval(skill+' .pack-subtools',n=>n.open)).toBe(true);
+   expect(await page.$$eval(skill+' details',n=>n.length)).toBe(0);
    expect(await page.$$eval(skill+' [data-instrument-entry]',n=>n.length)).toBe(INSTRUMENTS.length);
-   await page.click(skill+' .pack-collections summary');expect(await page.$eval(skill+' .pack-collections',n=>n.open)).toBe(true);
    expect(await page.$$eval(skill+' [data-work-collection]',n=>n.length)).toBe(COLLECTIONS.length);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
    await page.goto(f.base+'/apps/'+binding.id+'/_work?prefix=opportunity%3A',{waitUntil:'domcontentloaded'});

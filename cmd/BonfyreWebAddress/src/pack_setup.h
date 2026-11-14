@@ -195,7 +195,7 @@ static void psetup_form(const char *op,const char *label,const PackSetupInput *i
     fputs("<form method=\"post\" action=\"/packs/setup\">",stdout);psetup_hidden("pack",in->pack);psetup_hidden("context",in->context);psetup_hidden("version",in->version);
     psetup_hidden("operation",op);psetup_hidden("revision",rev);psetup_hidden("digest",digest);
     if(*in->design)psetup_hidden("design",in->design);
-    fputs(!strcmp(op,"install")||!strcmp(op,"activate")?"<button class=\"ak-btn is-primary\" type=\"submit\" data-pack-action=\"":"<button class=\"ak-btn\" type=\"submit\" data-pack-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
+    fputs(!strcmp(op,"install")||!strcmp(op,"activate")?"<button class=\"ak-btn is-primary\" type=\"submit\" data-pack-action=\"":"<button class=\"ak-link-btn\" type=\"submit\" data-pack-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
 }
 /* HTML and machine discovery share one bounded read of current destination
  * owners. These choices do not reserve access; each operation checks again. */
@@ -429,11 +429,12 @@ static int serve_pack_setup(const char *method,const char *target,const char *qu
         else{
             fputs("<div class=\"ak-actions ak-pack-ops\">",stdout);
             if(result==0&&(!installed||!strcmp(state,"removed")||strcmp(plan.digest,plan.pinned)))psetup_form("install",installed?"Install reviewed configuration":"Install for this workspace",&in,&plan,plan.digest);
-            if(current_ok&&!strcmp(current.state,"installed"))psetup_form("activate","Switch on installed behaviour",&in,&current,current.pinned);
-            if(installed&&strcmp(state,"removed")){psetup_form("deactivate","Switch off",&in,&plan,plan.pinned);psetup_form("remove","Remove installation",&in,&plan,plan.pinned);}
+            if(current_ok&&!strcmp(current.state,"installed"))psetup_form("activate","Switch it on",&in,&current,current.pinned);
             fputs("</div>",stdout);
+            /* One primary per stage; turning off and removing stay quiet, beside it. */
+            if(installed&&strcmp(state,"removed")){fputs("<div class=\"ak-pack-more\">",stdout);if(!strcmp(state,"active"))psetup_form("deactivate","Switch off",&in,&plan,plan.pinned);psetup_form("remove","Remove from this workspace",&in,&plan,plan.pinned);fputs("</div>",stdout);}
         }
-        if(current_ok&&!strcmp(current.state,"active")){workspace_editor_links(current.installation);fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">Inspect the active behaviour</a></p>",stdout);}
+        if(current_ok&&!strcmp(current.state,"active")){workspace_editor_links(current.installation);fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on</a></p>",stdout);}
     }
     fputs("</aside></header>",stdout);
     /* Instrument row: counts read from the plan the owner just resolved. */

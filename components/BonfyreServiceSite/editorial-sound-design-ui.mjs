@@ -36,7 +36,7 @@ export function musicStemRecord({sha256,title,bytes,licence,credit,sourceUrl,dur
     !licences.has(licence)||!urlOK(sourceUrl)||typeof credit!=='string'||
     !credit.trim()||credit.length>240||typeof title!=='string'||title.length>140||
     !Number.isInteger(durationMs)||durationMs<5000||durationMs>7200000)
-   throw Error('Choose a measured, locally retained music stem with complete attribution and explicit terms.');
+   throw Error('Choose a music file with full credits and stated terms.');
  return {schema:stemSchema,title,sha256,bytes,licence,credit,sourceUrl,durationMs,
    rightsReview:'pending',cannotInfer:'An uploader credit or license label is not independent clearance of musical rights.'};
 }
@@ -68,9 +68,9 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
  if(musicListener)document.removeEventListener?.('bonfyre:music-retained',musicListener);
  await stop();
  const root=node('section');root.dataset.soundDesign='';root.className='editorial-sound-design';
- const title=node('h4','Editorial sound design'),description=node('p',
-  'Choose a distinct production sound profile and reuse a licensed stem across articles. This preview is not the approved final master.');
- const status=node('p','Music use requires editorial and rights review before publication.');
+ const title=node('h4','Music under the voice'),description=node('p',
+  'Choose how the music sits under the voice, and pick music from your library. This preview is not the final master.');
+ const status=node('p','Check the music terms before you publish.');
  status.dataset.soundStatus='';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const profile=node('select');profile.setAttribute('aria-label','Narration sound profile');
  const response=await fetch(new URL('./editorial-profiles.tsv',import.meta.url),{cache:'no-store',credentials:'same-origin'});
@@ -87,8 +87,8 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
     's · automatic speech ducking · final master: −16 LUFS target'):'';
  };
  profile.addEventListener('change',setDetail);setDetail();
- const stem=node('select');stem.setAttribute('aria-label','Reusable licensed music stem');
- const placeholder=node('option','Choose retained music');placeholder.value='';stem.append(placeholder);
+ const stem=node('select');stem.setAttribute('aria-label','Music from your library');
+ const placeholder=node('option','Choose music from your library');placeholder.value='';stem.append(placeholder);
  const refreshStems=async()=>{
   const selected=stem.value||production.soundDesign?.musicStem||'';stem.replaceChildren(placeholder);
   for(const row of await rowMeta(store,stemPrefix)){
@@ -106,8 +106,8 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
   if(!candidate){suggestion.textContent='No recorded track suggestion for this treatment.';return;}
   const key=stemPrefix+candidate.sha256;
   const available=[...stem.options].some(option=>option.value===key);
-  suggestion.textContent='Suggested for this article: '+candidate.title+' — '+candidate.artist+
-   (available?' · retained in your library.':' · audition and retain from the Recorded music library above.');
+  suggestion.textContent='Suggested for this article: '+candidate.title+' — '+candidate.artist+(available?' · in your library.':' ');
+  if(!available){const use=node('button','Save and use it');use.type='button';use.addEventListener('click',()=>{autoSelected='';document.dispatchEvent(new CustomEvent('bonfyre:music-save',{detail:candidate.sha256}));});suggestion.append(use);}
   if(!current&&(stem.value===''||stem.value===autoSelected)){
    stem.value=available?key:'';autoSelected=available?key:'';
   }
@@ -122,7 +122,7 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
  const selection=()=>({schema:soundSchema,profile:profile.value,musicStem:stem.value,rightsReview:'pending'});
  buttonRow.append(action('Save sound arrangement',async()=>{
   if(!catalog.has(profile.value)||!/^music:stem:[a-f0-9]{64}$/.test(stem.value))
-   throw Error('Choose a native profile and a retained music stem.');
+   throw Error('Choose a sound treatment and music from your library.');
   const next=structuredClone(production);
   next.soundDesign=selection();next.version++;
   validateProduction(next);
@@ -133,12 +133,12 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
  const previewButton=action('Play complete arrangement',async()=>{
   if(activePreview){await stop();status.textContent='Preview stopped.';return;}const ticket=++previewGeneration;
   const p=catalog.get(profile.value);
-  if(!p||!/^music:stem:[a-f0-9]{64}$/.test(stem.value))throw Error('Choose a sound profile and a retained music stem first.');
+  if(!p||!/^music:stem:[a-f0-9]{64}$/.test(stem.value))throw Error('Choose a sound treatment and music from your library first.');
   const arrangement=await mixerSession(production,language.value);
   const record=await store.readVersion(stem.value);
   if(!record||record.deleted||record.value?.schema!==stemSchema||record.value.sha256!==stem.value.slice(stemPrefix.length))throw Error('The music stem changed or is unavailable.');
   const value=record.value,musicBytes=await value.bytes.arrayBuffer();
-  if(await productionDigest(musicBytes)!==value.sha256)throw Error('The music stem no longer matches its retained digest.');
+  if(await productionDigest(musicBytes)!==value.sha256)throw Error('The saved music file has changed. Save it to your library again.');
   const Audio=window.AudioContext||window.webkitAudioContext;
   if(!Audio)throw Error('This browser cannot preview an audio arrangement.');
   const context=new Audio(),sources=[];if(ticket!==previewGeneration){await context.close();return;}activePreview={context,sources};
@@ -150,7 +150,7 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
    const music=await context.decodeAudioData(musicBytes.slice(0)),spoken=[];
    for(const file of arrangement.files)spoken.push(await context.decodeAudioData(file.bytes.slice(0)));if(ticket!==previewGeneration)return;
    if(music.duration<5||spoken.some((buffer,i)=>Math.abs(buffer.duration-arrangement.clips[i].frames/arrangement.measured.sampleRate)>0.1))
-    throw Error('The decoded recording does not match the retained take.');
+    throw Error('The decoded recording does not match the saved take.');
    const begin=context.currentTime+0.15,intro=p.introMs/1000,tail=p.tailMs/1000,
     end=begin+intro+arrangement.measured.seconds+tail,master=context.createGain(),bedGain=context.createGain();
    master.gain.value=0.86;master.connect(context.destination);bedGain.connect(master);
@@ -170,17 +170,17 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
   }catch(error){if(activePreview?.context===context)activePreview=null;await context.close().catch(()=>{});throw error;}
  });
  buttonRow.append(previewButton,action('Stop preview',()=>stop()));
- const importer=node('details'),summary=node('summary','Add a reusable music stem');
+ const importer=node('div'),summary=node('h5','Add your own music');importer.className='editorial-music-import';
  importer.append(summary);
  const file=node('input');file.type='file';file.accept='audio/wav,audio/mpeg,audio/mp4,audio/x-m4a,audio/aac';file.setAttribute('aria-label','Music audio file');
  const credit=node('input');credit.maxLength=240;credit.placeholder='Composer, artist or owner';
  const url=node('input');url.type='url';url.placeholder='https://... original music or licence page';url.maxLength=600;
  const licence=node('select');
  for(const id of licences){const opt=node('option',id);opt.value=id;licence.append(opt);}
- importer.append(textField('Retained music file',file),textField('Artist / rights credit',credit),
+ importer.append(textField('Music file',file),textField('Artist / rights credit',credit),
    textField('Source or rights reference',url),textField('Declared usage terms',licence));
- importer.append(node('p','Import retains one content-addressed stem in this account. This does not confirm license clearance or publish the music.'));
- importer.append(action('Retain music in this workspace',async()=>{
+ importer.append(node('p','Adds one music file to your library. It does not check the licence or publish the music.'));
+ importer.append(action('Save to library',async()=>{
   const selected=file.files?.[0];
   if(!selected||selected.size<1024||selected.size>24*1024*1024)throw Error('Choose one supported music recording within 24 MiB.');
   const bytes=await selected.arrayBuffer(),sha256=await productionDigest(bytes),key=stemPrefix+sha256;
@@ -196,7 +196,7 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
    if(existing.deleted||existing.value?.sha256!==sha256||
       existing.value.credit!==value.credit||existing.value.licence!==value.licence||
       existing.value.sourceUrl!==value.sourceUrl)
-    throw Error('This music is already retained with different attribution. Review the existing rights record.');
+    throw Error('This music is already in your library with different credits. Check the saved credits first.');
   }else await store.saveLocal(key,value,0);
   const retained=await store.readVersion(key);
   if(!retained||retained.deleted||retained.value?.schema!==stemSchema||
@@ -205,9 +205,9 @@ export async function mountEditorialSoundDesign({host,production,store,save}) {
    throw Error('The music library did not confirm this recording. Reopen the library before retrying.');
   await refreshStems();
   if(![...stem.options].some(option=>option.value===key))
-   throw Error('The retained recording is not yet available in the music library.');
+   throw Error('The saved recording is not in your library yet. Reopen the studio and try again.');
   stem.value=key;
-  status.textContent='Music retained and selected. Rights review is still pending.';
+  status.textContent='Saved to your library and chosen. Check its terms before you publish.';
  }));
  root.append(title,description,controls,buttonRow,importer,status);
  host.append(root);

@@ -158,7 +158,7 @@ static int ac_verified(const char *id,const char *subject,const char *scope,cons
 }
 static unsigned char *ac_navigation(const char *id,const char *context,const char *pack,size_t *bytes) {
     char ctx[320],pk[320];if(!ac_encoded(context,ctx,sizeof(ctx)) || !ac_encoded(pack,pk,sizeof(pk)))return NULL;
-    const char *kind=!strcmp(context,"self")?"Personal work":!strncmp(context,"household:",10)?"Household":"Organization";
+    const char *kind=!strcmp(context,"self")?"My personal workspace":!strncmp(context,"household:",10)?"Household":"Organization";
     char label[640];size_t used=(size_t)snprintf(label,sizeof(label),"%s",kind);
     const char *name=strchr(context,':');if(name){name++;label[used++]=':';label[used++]=' ';for(;*name;name++){
         const char *escaped=*name=='&'?"&amp;":*name=='<'?"&lt;":*name=='>'?"&gt;":*name=='\"'?"&quot;":NULL;
@@ -172,7 +172,7 @@ static unsigned char *ac_navigation(const char *id,const char *context,const cha
     }
     const char *activity=BF_AUREKAI_ACTIVITY_ASSETS;size_t activity_bytes=strlen(activity);
     char *out=malloc(4096+activity_bytes);if(!out)return NULL;
-    int size=snprintf(out,4096,"<link rel=\"stylesheet\" href=\"/assets/work-continuation.css\"><nav data-native-workspace data-activity-context=\"%s\" aria-label=\"Workspace\"><strong>%s</strong><a href=\"/apps?context=%s\">Your work</a><a href=\"/programs?context=%s\">Programs</a><a href=\"/apps/%s/_work\">Saved work</a><a href=\"/packs/setup?pack=%s&amp;context=%s\">Configuration</a>%s</nav>",ctx,label,ctx,ctx,id,pk,ctx,campaign);
+    int size=snprintf(out,4096,"<link rel=\"stylesheet\" href=\"/assets/work-continuation.css\"><nav data-native-workspace data-activity-context=\"%s\" aria-label=\"Workspace\"><strong>%s</strong><a href=\"/apps?context=%s\">All your tools</a><a href=\"/programs?context=%s\">Programs</a><a href=\"/apps/%s/_work\">Saved work</a><a href=\"/packs/setup?pack=%s&amp;context=%s\">Tool settings</a>%s</nav>",ctx,label,ctx,ctx,id,pk,ctx,campaign);
     if(size<0 || size>=4096){free(out);return NULL;}memcpy(out+size,activity,activity_bytes+1);*bytes=(size_t)size+activity_bytes;return (unsigned char *)out;
 }
 static void ac_work_link(const char *id,const AcView *v,const AcRow *row) {
@@ -226,16 +226,17 @@ static void ac_installed_collections(const char *binding,const char *pack,const 
     sqlite3_bind_text(s,1,pack,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,family,-1,SQLITE_STATIC);
     while(sqlite3_step(s)==SQLITE_ROW){const char *prefix=(const char *)sqlite3_column_text(s,0);if(!prefix||!*prefix||strlen(prefix)>=sizeof(prefixes[0])||count>=32)continue;int seen=0;for(size_t i=0;i<count;i++)if(!strcmp(prefixes[i],prefix)){seen=1;break;}if(!seen)snprintf(prefixes[count++],sizeof(prefixes[0]),"%s",prefix);}
     if(!count)goto done;
-    fputs("<p class=\"pack-family\">Workspace family <code>",stdout);html(family);fputs("</code></p>",stdout);
-    fputs("<details class=\"pack-collections\"><summary>Browse ",stdout);printf("%zu",count);fputs(" collection",stdout);if(count!=1)fputc('s',stdout);fputs(" <span aria-hidden=\"true\">↘</span></summary><nav class=\"pack-collection-list\" aria-label=\"Collections in this workspace\">",stdout);
-    for(size_t i=0;i<count;i++){
+    /* Saved work shows on the tool itself: each collection by its plain name,
+     * linked to its saved items or, for supporting rows, to the editor. */
+    fputs("<nav class=\"pack-collections\" aria-label=\"Saved work in this tool\"><span class=\"pack-row-label\">Saved work</span>",stdout);
+    for(size_t i=0;i<count&&i<6;i++){
         char label[160];int mapped=ac_collection_has_view(views,view_count,prefixes[i]);ac_collection_label(prefixes[i],label,sizeof(label));
         fputs("<a data-work-collection href=\"/apps/",stdout);html(binding);
         if(mapped){fputs("/_work?prefix=",stdout);url_query_value(prefixes[i]);}else{fputs("/",stdout);html(entry);}
-        fputs("\" data-collection-kind=\"",stdout);fputs(mapped?"saved-work":"supporting",stdout);fputs("\">",stdout);page_glyph(mapped?"list":"apps");fputs("<span>",stdout);html(label);fputs("</span><code>",stdout);html(prefixes[i]);
-        fputs(mapped?"</code></a>":"</code><small>Open owning editor</small></a>",stdout);
+        fputs("\" data-collection-kind=\"",stdout);fputs(mapped?"saved-work":"supporting",stdout);fputs("\">",stdout);html(label);fputs("</a>",stdout);
     }
-    fputs("</nav></details>",stdout);
+    if(count>6){fputs("<a data-work-more href=\"/apps/",stdout);html(binding);printf("/_work\">%zu more</a>",count-6);}
+    fputs("</nav>",stdout);
  done:sqlite3_finalize(s);if(db)sqlite3_close(db);
 }
 #include "work_board.h"
@@ -601,13 +602,14 @@ static void ac_installed_views(const char *binding,const char *release){
     if(!ac_profiles(release,views,&count))return;
     fputs("<p><a data-work-saved href=\"/apps/",stdout);html(binding);fputs("/_work\">Continue saved work</a></p>",stdout);
     if(count<2)return;
-    fputs("<details class=\"pack-subtools\"><summary>Explore ",stdout);printf("%zu",count);
-    fputs(" working tools <span aria-hidden=\"true\">↘</span></summary><nav class=\"pack-subtool-list\" aria-label=\"Editors in this installation\">",stdout);
+    /* Each editor in the installation is one visible link; no collapse. */
+    fputs("<nav class=\"pack-subtools\" aria-label=\"Editors in this installation\"><span class=\"pack-row-label\">Tools</span>",stdout);
     for(size_t i=0;i<count;i++){
+        int seen=0;for(size_t j=0;j<i;j++)if(!strcmp(views[j].entry,views[i].entry)){seen=1;break;}if(seen)continue;
         fputs("<a data-instrument-entry href=\"/apps/",stdout);html(binding);fputs("/",stdout);html(views[i].entry);
-        fputs("\"><span>",stdout);html(views[i].label);fputs("</span><span aria-hidden=\"true\">↗</span></a>",stdout);
+        fputs("\">",stdout);html(views[i].label);fputs("</a>",stdout);
     }
-    fputs("</nav></details>",stdout);
+    fputs("</nav>",stdout);
 }
 static int ac_index(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db) {
     if(!strcmp(target,"/apps/_destinations")){
@@ -733,11 +735,11 @@ static int ac_index(const char *method,const char *target,const char *query,cons
             const char *head_version=NULL;sqlite3_stmt *h=NULL;char rel[9]="";
             if(presentation&&sqlite3_prepare_v2(presentation,"SELECT version FROM pack_head WHERE namespace='root' AND status='published' AND channel='stable' AND pack=?1 LIMIT 1",-1,&h,NULL)==SQLITE_OK){sqlite3_bind_text(h,1,r->pack,-1,SQLITE_STATIC);if(sqlite3_step(h)==SQLITE_ROW&&(head_version=(const char*)sqlite3_column_text(h,0)))snprintf(rel,sizeof(rel),"%s",head_version);}
             sqlite3_finalize(h);
-            fputs("<article class=\"ak-panel ak-pack pack-tool\" data-installed-workspace data-pack=\"",stdout);html(r->pack);fputs("\"><header><span class=\"ak-tag",stdout);fputs(pass?" is-on\">Ready to open":"\">Review configuration",stdout);
+            fputs("<article class=\"ak-panel ak-pack pack-tool\" data-installed-workspace data-pack=\"",stdout);html(r->pack);fputs("\"><header><span class=\"ak-tag",stdout);fputs(pass?" is-on\">Ready to open":"\">Needs a review",stdout);
             fputs("</span><span class=\"ak-pack-glyph\" aria-hidden=\"true\">",stdout);page_glyph(bf_pack_icon(r->pack,"application"));fputs("</span></header><h3>",stdout);html(r->label);fputs("</h3><div class=\"ak-pack-open\">",stdout);
             if(pass){ac_installed_views(r->id,r->release);ac_installed_collections(r->id,r->pack,r->family,r->release,r->entry);}
-            else fputs("<p>Review the configuration before opening this editor. Saved work has not been changed.</p>",stdout);
-            fputs("</div><footer><small>",stdout);if(*rel){fputs("Release ",stdout);html(rel);}else fputs("Installed",stdout);fputs("</small><span class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"/packs/setup?pack=",stdout);url_query_value(r->pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">Configuration</a>",stdout);
+            else fputs("<p>This tool changed since you set it up. Review it before opening; your saved work is untouched.</p>",stdout);
+            fputs("</div><footer><small>",stdout);if(*rel){fputs("Release ",stdout);html(rel);}else fputs("Installed",stdout);fputs("</small><span class=\"ak-actions\"><a class=\"",stdout);fputs(pass?"ak-link-btn":"ak-btn is-primary",stdout);fputs("\" href=\"/packs/setup?pack=",stdout);url_query_value(r->pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs(pass?"\">Settings</a>":"\">Review setup</a>",stdout);
             if(pass){fputs("<a class=\"ak-btn is-primary\" data-work-editor href=\"/apps/",stdout);html(r->id);fputs("/",stdout);html(r->entry);fputs("\">Open editor</a>",stdout);}
             fputs("</span></footer></article>",stdout);
         }

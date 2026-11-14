@@ -4,37 +4,6 @@
 #ifndef BONFYRE_ARTICLE_LISTEN_H
 #define BONFYRE_ARTICLE_LISTEN_H
 #include "editorial_soundtrack.h"
-/* Estate pages load these rules from /assets/aurekai-bar.css; an independent
- * site product, which has no estate stylesheet, emits them itself. */
-static inline void bf_article_listen_style(FILE *out) {
-    fputs("<style>",out);
-    fputs(
-    ".bf-article-listen{margin:24px 0 26px;padding:20px 24px 18px;background:var(--w-panel,#f0f4ec);border:1px solid var(--w-rule,#b1c2b6);border-left:4px solid var(--w-accent,#315e46);border-radius:14px;color:var(--w-ink,#22382c);font:14px/1.5 system-ui}\n"
-    ".bf-article-listen[hidden]{display:none!important}\n"
-    ".bf-article-listen .bf-listen-heading{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:space-between}\n"
-    ".bf-article-listen .bf-listen-label{font:600 11px/1.4 ui-monospace,monospace;letter-spacing:.11em;text-transform:uppercase;opacity:.75}\n"
-    ".bf-article-listen h2{font:400 clamp(24px,3vw,34px)/1.12 Georgia,serif;margin:5px 0 12px;letter-spacing:-.025em}\n"
-    ".bf-article-listen .bf-listen-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}\n"
-    ".bf-listen-soundtrack{display:flex;align-items:center;gap:12px;margin:8px 0 0;font:12px/1.5 system-ui}.bf-listen-soundtrack label{min-height:44px}.bf-listen-soundtrack small{margin:0!important}\n"
-    ".bf-article-listen button,.bf-article-listen select{min-height:44px;padding:10px 14px;border:1px solid var(--w-rule,#91a998);border-radius:999px;background:transparent;color:inherit;font:600 13px system-ui;cursor:pointer}\n"
-    ".bf-article-listen button[data-listen-play]{background:var(--w-accent,#315e46);color:var(--w-ground,#fff);min-width:94px}\n"
-    ".bf-article-listen button:disabled{opacity:.45;cursor:default}\n"
-    ".bf-article-listen label{display:inline-flex;align-items:center;gap:7px;font:12px system-ui}\n"
-    ".bf-listen-timeline{display:block;width:100%;height:8px;margin:16px 0 7px;accent-color:var(--w-accent,#315e46);border:0;border-radius:999px;overflow:hidden}\n"
-    ".bf-listen-timeline::-webkit-progress-bar{background:var(--w-rule,#ced9d0);border-radius:999px}.bf-listen-timeline::-webkit-progress-value{background:var(--w-accent,#315e46);border-radius:999px}\n"
-    ".bf-listen-timeline::-moz-progress-bar{background:var(--w-accent,#315e46);border-radius:999px}\n"
-    ".bf-listen-status{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;font:12px/1.5 system-ui;opacity:.86}\n"
-    ".bf-article-voice-choice{margin:12px 0 22px;border:1px solid var(--w-rule,#aeb9b2);border-radius:12px;overflow:hidden;background:var(--w-panel,#f6f8f4)}\n"
-    ".bf-article-voice-choice>summary{cursor:pointer;display:flex;align-items:center;min-height:48px;padding:12px 18px;font:600 13px/1.5 system-ui;color:var(--w-ink,#22382c)}\n"
-    ".bf-article-voice-choice[open]>summary{border-bottom:1px solid var(--w-rule,#aeb9b2)}.bf-article-voice-choice .bf-article-listen{margin:0;border:0;border-radius:0}\n"
-    ".bf-article-listen small{display:block;margin-top:10px;font:12px/1.45 system-ui;opacity:.75}\n"
-    ".bf-article-listen :focus-visible{outline:3px solid var(--w-accent,#315e46);outline-offset:3px}\n"
-    ".thing-text p.thing-body[data-listen-active]{box-shadow:inset 3px 0 var(--w-accent,#315e46);padding-left:14px}\n"
-    "@media(max-width:640px){.bf-article-listen{padding:18px 16px}.bf-listen-status{display:block}.bf-listen-controls{gap:7px}}\n"
-    "@media(prefers-reduced-motion:reduce){.bf-article-listen *{transition:none!important}}\n"
-    ,out);
-    fputs("</style>",out);
-}
 static void bf_article_listen_emit(FILE *out) {
     fputs(
     "<section class=\"bf-article-listen\" data-article-listen hidden role=\"region\" aria-label=\"Listen to this page's available text\">\n"

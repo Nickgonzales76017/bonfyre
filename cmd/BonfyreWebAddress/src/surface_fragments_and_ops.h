@@ -177,6 +177,7 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/account-connections.css", "account-connections.css", "text/css; charset=utf-8"},
         {"/assets/cms-workbench.css", "cms-workbench.css", "text/css; charset=utf-8"},
         {"/assets/work-continuation.css", "work-continuation.css", "text/css; charset=utf-8"},
+        {"/assets/model-commons.css", "model-commons.css", "text/css; charset=utf-8"},
         {"/assets/pack-presentation.css", "pack-presentation.css", "text/css; charset=utf-8"},
         {"/assets/reading-surface.css", "reading-surface.css", "text/css; charset=utf-8"},
         {"/assets/world-land.svg", "world-land.svg", "image/svg+xml"},
@@ -194,6 +195,7 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/aurekai-site-program.css", "aurekai-site-program.css", "text/css; charset=utf-8"},
         {"/assets/own-site.css", "own-site.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-bar.css", "aurekai-bar.css", "text/css; charset=utf-8"},
+        {"/assets/aurekai-ui.css", "aurekai-ui.css", "text/css; charset=utf-8"},
         /* Arrival, sign-in and the trust modals: one sheet for the account path. */
         {"/assets/aurekai-trust.css", "aurekai-trust.css", "text/css; charset=utf-8"},
         /* One cacheable public brand sheet across the four exact Aurekai apex roots. */

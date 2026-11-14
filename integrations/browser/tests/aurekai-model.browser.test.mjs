@@ -85,39 +85,39 @@ afterAll(async()=>{reviewGate?.release.resolve();cancelGate?.release.resolve();a
 async function visit(catalog='fixture',{viewport={width:1280,height:1000},rail=false}={}){
   const context=await browser.newContext({viewport}),page=await context.newPage();page.setDefaultTimeout(4000);
   await page.goto(server.url+'fixture?context=institution%3Astudio&catalog='+encodeURIComponent(catalog)+(rail?'&rail=1':''));
-  await page.waitForFunction(()=>window.fixtureModel&&document.querySelector('.ak-model-status').textContent!=='Checking execution for this account…');
+  await page.waitForFunction(()=>window.fixtureModel&&document.querySelector('.ak-model-status').textContent!=='Checking whether you can run this model…');
   if(rail)await page.waitForFunction(()=>document.querySelector('.ak-rail-native-status').textContent.includes('1 task'));
   return {context,page};
 }
 async function review(page,prompt='Private reviewed instructions'){
-  await page.getByLabel('Model instructions').fill(prompt);await page.getByRole('button',{name:'Review run',exact:true}).click();
-  await page.getByRole('button',{name:'Start run',exact:true}).waitFor({state:'visible'});
+  await page.getByLabel('Your input').fill(prompt);await page.getByRole('button',{name:'Try it',exact:true}).click();
+  await page.getByRole('button',{name:'Run',exact:true}).waitFor({state:'visible'});
 }
-async function start(page){await review(page);await page.getByRole('button',{name:'Start run',exact:true}).click();await page.getByRole('button',{name:'Refresh run',exact:true}).waitFor({state:'visible'});}
+async function start(page){await review(page);await page.getByRole('button',{name:'Run',exact:true}).click();await page.getByRole('button',{name:'Check again',exact:true}).waitFor({state:'visible'});}
 
 test('real model review, submit and retained result use the exact catalogue mapping and scoped MessagePack actions',async()=>{
   const {context,page}=await visit();try{
     await review(page,'Private exact model instructions');expect(await page.locator('.ak-model-review').textContent()).toContain('Studio · Exact local model');
-    expect(await page.locator('.ak-model-review').textContent()).toContain('Pricing unavailable');expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(0);
+    expect(await page.locator('.ak-model-review').textContent()).toContain('No price published');expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(0);
     const reviewCall=calls.find(row=>row.operation==='model-review');expect(reviewCall.body.modelId).toBe('local:exact');expect(reviewCall.body.expectedBinding).toEqual(binding('institution:studio','user:1'));
-    await page.getByRole('button',{name:'Start run',exact:true}).click();await page.getByLabel('Retained model output').waitFor();
-    expect(await page.getByLabel('Retained model output').textContent()).toBe(output);expect(await page.locator('.ak-model-result img').count()).toBe(0);expect(await page.evaluate(()=>window.modelInjected)).toBeUndefined();
+    await page.getByRole('button',{name:'Run',exact:true}).click();await page.getByLabel('Model answer').waitFor();
+    expect(await page.getByLabel('Model answer').textContent()).toBe(output);expect(await page.locator('.ak-model-result img').count()).toBe(0);expect(await page.evaluate(()=>window.modelInjected)).toBeUndefined();
     expect(await page.locator('.ak-model-result').textContent()).toContain('Usage recorded.');
-    expect(await page.getByRole('link',{name:'Reopen this run from Activity'}).getAttribute('href')).toBe('/apps?context=institution%3Astudio#fabric-task-'+taskId);
+    expect(await page.getByRole('link',{name:'Open in your work'}).getAttribute('href')).toBe('/apps?context=institution%3Astudio#fabric-task-'+taskId);
     expect(await page.locator('#model-link').getAttribute('href')).toBe('/s/model/fixture?context=institution%3Astudio');
     expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
   }finally{await context.close();}
   const missing=await visit('unmapped');try{
-    expect(await missing.page.getByRole('button',{name:'Review run',exact:true}).isDisabled()).toBe(true);
-    expect(await missing.page.locator('.ak-model-status').textContent()).toContain('no currently admitted local execution');
+    expect(await missing.page.getByRole('button',{name:'Try it',exact:true}).isDisabled()).toBe(true);
+    expect(await missing.page.locator('.ak-model-status').textContent()).toContain('can’t run here yet');
   }finally{await missing.context.close();}
 });
 
 test('a same-organization actor switch clears private instructions and rejects a late old-account review',async()=>{
   const {context,page}=await visit(),waiting=gate();try{
-    reviewGate=waiting;await page.getByLabel('Model instructions').fill('Private account one draft');await page.getByRole('button',{name:'Review run',exact:true}).click();await waiting.entered.promise;
+    reviewGate=waiting;await page.getByLabel('Your input').fill('Private account one draft');await page.getByRole('button',{name:'Try it',exact:true}).click();await waiting.entered.promise;
     actor='user:2';await page.evaluate(()=>window.dispatchEvent(new Event('bonfyre:account-changed')));
-    expect(await page.getByLabel('Model instructions').inputValue()).toBe('');expect(await page.locator('.ak-model-review').isVisible()).toBe(false);
+    expect(await page.getByLabel('Your input').inputValue()).toBe('');expect(await page.locator('.ak-model-review').isVisible()).toBe(false);
     await page.waitForFunction(()=>!document.querySelector('textarea').disabled);waiting.release.resolve();
     await review(page,'Account two current draft');expect(await page.locator('.ak-model-review').textContent()).toContain('Studio');
     const inputs=calls.filter(row=>row.operation==='model-review');expect(inputs.map(row=>row.body.expectedBinding.actor)).toEqual(['user:1','user:2']);
@@ -128,95 +128,95 @@ test('a same-organization actor switch clears private instructions and rejects a
 
 test('a lost submission reply exposes explicit recovery with the exact same admitted request body',async()=>{
   const {context,page}=await visit();try{
-    loseSubmit=true;await review(page);await page.getByRole('button',{name:'Start run',exact:true}).click();await page.getByRole('button',{name:'Recover this run',exact:true}).waitFor({state:'visible'});
-    expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);expect(await page.getByLabel('Model instructions').isDisabled()).toBe(true);
-    expect(await page.getByRole('button',{name:'Review run',exact:true}).isDisabled()).toBe(true);
-    await page.getByRole('button',{name:'Recover this run',exact:true}).click();await page.getByLabel('Retained model output').waitFor();
+    loseSubmit=true;await review(page);await page.getByRole('button',{name:'Run',exact:true}).click();await page.getByRole('button',{name:'Check what happened',exact:true}).waitFor({state:'visible'});
+    expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);expect(await page.getByLabel('Your input').isDisabled()).toBe(true);
+    expect(await page.getByRole('button',{name:'Try it',exact:true}).isDisabled()).toBe(true);
+    await page.getByRole('button',{name:'Check what happened',exact:true}).click();await page.getByLabel('Model answer').waitFor();
     const attempts=calls.filter(row=>row.operation==='model-submit');expect(attempts).toHaveLength(2);expect(attempts[1].body).toEqual(attempts[0].body);
-    expect(calls.filter(row=>row.operation==='model-review')).toHaveLength(1);expect(await page.getByLabel('Retained model output').textContent()).toBe(output);
+    expect(calls.filter(row=>row.operation==='model-review')).toHaveLength(1);expect(await page.getByLabel('Model answer').textContent()).toBe(output);
   }finally{await context.close();}
 });
 
 test('pending cancellation blocks competing refresh and suspension requires a fresh read before another cancel',async()=>{
   runState='running';const {context,page}=await visit(),waiting=gate();try{
-    await start(page);await page.getByRole('button',{name:'Cancel run',exact:true}).waitFor({state:'visible'});cancelGate=waiting;
-    await page.getByRole('button',{name:'Cancel run',exact:true}).click();await waiting.entered.promise;
-    expect(await page.getByRole('button',{name:'Refresh run',exact:true}).isDisabled()).toBe(true);expect(await page.getByRole('button',{name:'Cancel run',exact:true}).isDisabled()).toBe(true);
+    await start(page);await page.getByRole('button',{name:'Stop',exact:true}).waitFor({state:'visible'});cancelGate=waiting;
+    await page.getByRole('button',{name:'Stop',exact:true}).click();await waiting.entered.promise;
+    expect(await page.getByRole('button',{name:'Check again',exact:true}).isDisabled()).toBe(true);expect(await page.getByRole('button',{name:'Stop',exact:true}).isDisabled()).toBe(true);
     const reads=calls.filter(row=>row.operation==='model-read').length;
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
-    expect(await page.getByRole('button',{name:'Cancel run',exact:true}).isVisible()).toBe(false);waiting.release.resolve();
+    expect(await page.getByRole('button',{name:'Stop',exact:true}).isVisible()).toBe(false);waiting.release.resolve();
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
-    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Cancel run'&&!node.hidden&&!node.disabled));
+    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Stop'&&!node.hidden&&!node.disabled));
     expect(calls.filter(row=>row.operation==='model-read').length).toBeGreaterThan(reads);
-    await page.getByRole('button',{name:'Cancel run',exact:true}).click();await page.locator('.ak-model-result').filter({hasText:'Cancelled'}).waitFor();
-    expect(calls.filter(row=>row.operation==='model-cancel')).toHaveLength(2);expect(await page.getByRole('button',{name:'Cancel run',exact:true}).isVisible()).toBe(false);
-    expect(await page.getByRole('button',{name:'Refresh run',exact:true}).isDisabled()).toBe(false);
+    await page.getByRole('button',{name:'Stop',exact:true}).click();await page.locator('.ak-model-result').filter({hasText:'Stopped'}).waitFor();
+    expect(calls.filter(row=>row.operation==='model-cancel')).toHaveLength(2);expect(await page.getByRole('button',{name:'Stop',exact:true}).isVisible()).toBe(false);
+    expect(await page.getByRole('button',{name:'Check again',exact:true}).isDisabled()).toBe(false);
   }finally{waiting.release.resolve();await context.close();}
 });
 
 test('active usage may be unknown and explicit usage reconciliation never submits another inference request',async()=>{
   runState='running';const {context,page}=await visit();try{
-    await start(page);await page.locator('.ak-model-result').filter({hasText:'Usage receipt is pending.'}).waitFor();
+    await start(page);await page.locator('.ak-model-result').filter({hasText:'Usage is still being recorded.'}).waitFor();
     const active=await page.locator('.ak-model-result').textContent();expect(active).not.toContain('NaN');expect(active).not.toContain('0 seconds');
-    expect(await page.getByRole('button',{name:'Finish usage receipt',exact:true}).isVisible()).toBe(false);
-    runState='uncertain';await page.getByRole('button',{name:'Refresh run',exact:true}).click();await page.getByRole('button',{name:'Finish usage receipt',exact:true}).waitFor({state:'visible'});
-    expect(await page.getByLabel('Retained model output').textContent()).toBe(output);expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);
-    await page.getByRole('button',{name:'Finish usage receipt',exact:true}).click();await page.locator('.ak-model-result').filter({hasText:'Usage recorded.'}).waitFor();
+    expect(await page.getByRole('button',{name:'Finish recording usage',exact:true}).isVisible()).toBe(false);
+    runState='uncertain';await page.getByRole('button',{name:'Check again',exact:true}).click();await page.getByRole('button',{name:'Finish recording usage',exact:true}).waitFor({state:'visible'});
+    expect(await page.getByLabel('Model answer').textContent()).toBe(output);expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);
+    await page.getByRole('button',{name:'Finish recording usage',exact:true}).click();await page.locator('.ak-model-result').filter({hasText:'Usage recorded.'}).waitFor();
     const recovery=calls.filter(row=>row.operation==='model-reconcile');expect(recovery).toHaveLength(1);
     expect(recovery[0].body).toMatchObject({expectedBinding:binding('institution:studio','user:1'),taskId});
     expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);expect(calls.filter(row=>row.operation==='model-review')).toHaveLength(1);
-    expect(await page.getByRole('button',{name:'Finish usage receipt',exact:true}).isVisible()).toBe(false);
+    expect(await page.getByRole('button',{name:'Finish recording usage',exact:true}).isVisible()).toBe(false);
   }finally{await context.close();}
 });
 
 test('retained usage still permits native-admitted completion of an interrupted run record without another inference request',async()=>{
   runState='uncertain';usageAlreadyRecorded=true;const {context,page}=await visit();try{
-    await start(page);await page.getByRole('button',{name:'Finish run record',exact:true}).waitFor({state:'visible'});
-    expect(await page.getByLabel('Retained model output').textContent()).toBe(output);
+    await start(page);await page.getByRole('button',{name:'Finish saving this run',exact:true}).waitFor({state:'visible'});
+    expect(await page.getByLabel('Model answer').textContent()).toBe(output);
     expect(await page.locator('.ak-model-result').textContent()).toContain('Usage recorded.');
-    await page.getByRole('button',{name:'Finish run record',exact:true}).click();
-    await page.locator('.ak-model-result').filter({hasText:'Completed'}).waitFor();
+    await page.getByRole('button',{name:'Finish saving this run',exact:true}).click();
+    await page.locator('.ak-model-result').filter({hasText:'Done'}).waitFor();
     const recovery=calls.filter(row=>row.operation==='model-reconcile');expect(recovery).toHaveLength(1);
     expect(recovery[0].body).toMatchObject({expectedBinding:binding('institution:studio','user:1'),taskId});
     expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);expect(calls.filter(row=>row.operation==='model-review')).toHaveLength(1);
-    expect(await page.getByRole('button',{name:'Finish run record',exact:true}).isVisible()).toBe(false);
+    expect(await page.getByRole('button',{name:'Finish saving this run',exact:true}).isVisible()).toBe(false);
   }finally{await context.close();}
 });
 
 test('local transfer is explicit, recovers the same request after lost acknowledgement and remains bound to its output',async()=>{
   const {context,page}=await visit();try{
-    await start(page);await page.getByLabel('Retained model output').waitFor();
-    expect(await page.getByRole('button',{name:'Verify local transfer',exact:true}).isVisible()).toBe(false);
+    await start(page);await page.getByLabel('Model answer').waitFor();
+    expect(await page.getByRole('button',{name:'Check copy on this device',exact:true}).isVisible()).toBe(false);
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(0);
-    localTransferAvailable=true;await page.getByRole('button',{name:'Refresh run',exact:true}).click();
-    await page.getByRole('button',{name:'Verify local transfer',exact:true}).waitFor({state:'visible'});
-    expect(await page.locator('.ak-model-result').textContent()).toContain('two peers on this device');
+    localTransferAvailable=true;await page.getByRole('button',{name:'Check again',exact:true}).click();
+    await page.getByRole('button',{name:'Check copy on this device',exact:true}).waitFor({state:'visible'});
+    expect(await page.locator('.ak-model-result').textContent()).toContain('two places on this device');
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(0);
 
-    loseTransfer=true;await page.getByRole('button',{name:'Verify local transfer',exact:true}).click();
-    await page.getByRole('button',{name:'Recover transfer receipt',exact:true}).waitFor({state:'visible'});
+    loseTransfer=true;await page.getByRole('button',{name:'Check copy on this device',exact:true}).click();
+    await page.getByRole('button',{name:'Check that copy again',exact:true}).waitFor({state:'visible'});
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(1);
-    await page.getByRole('button',{name:'Refresh run',exact:true}).click();
-    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Recover transfer receipt'&&!node.disabled));
+    await page.getByRole('button',{name:'Check again',exact:true}).click();
+    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Check that copy again'&&!node.disabled));
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(1);
 
-    badTransferDigest=true;await page.getByRole('button',{name:'Recover transfer receipt',exact:true}).click();
-    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Recover transfer receipt'&&!node.disabled));
+    badTransferDigest=true;await page.getByRole('button',{name:'Check that copy again',exact:true}).click();
+    await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(node=>node.textContent==='Check that copy again'&&!node.disabled));
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(2);
-    expect(await page.getByRole('button',{name:'Local transfer verified',exact:true}).isVisible()).toBe(false);
-    badTransferDigest=false;await page.getByRole('button',{name:'Recover transfer receipt',exact:true}).click();
-    await page.getByRole('button',{name:'Local transfer verified',exact:true}).waitFor({state:'visible'});
-    expect(await page.getByRole('button',{name:'Local transfer verified',exact:true}).isDisabled()).toBe(true);
-    expect(await page.locator('.ak-model-result').textContent()).toContain('Both local peers confirmed the exact output');
+    expect(await page.getByRole('button',{name:'Copy checked',exact:true}).isVisible()).toBe(false);
+    badTransferDigest=false;await page.getByRole('button',{name:'Check that copy again',exact:true}).click();
+    await page.getByRole('button',{name:'Copy checked',exact:true}).waitFor({state:'visible'});
+    expect(await page.getByRole('button',{name:'Copy checked',exact:true}).isDisabled()).toBe(true);
+    expect(await page.locator('.ak-model-result').textContent()).toContain('Both places on this device have the exact answer');
     const attempts=calls.filter(row=>row.operation==='model-verify-transfer');expect(attempts).toHaveLength(3);
     expect(attempts[1].body).toEqual(attempts[0].body);expect(attempts[2].body).toEqual(attempts[0].body);
     expect(attempts[0].body).toMatchObject({expectedBinding:binding('institution:studio','user:1'),taskId,outputId:'c'.repeat(24)});
     expect(Object.keys(attempts[0].body).sort()).toEqual(['expectedBinding','outputId','requestId','taskId']);
 
     runOutput='A changed retained output needs its own verification.';
-    await page.getByRole('button',{name:'Refresh run',exact:true}).click();
-    await page.waitForFunction(()=>document.querySelector('[aria-label="Retained model output"]')?.textContent==='A changed retained output needs its own verification.');
-    expect(await page.getByRole('button',{name:'Local transfer verified',exact:true}).isVisible()).toBe(false);
+    await page.getByRole('button',{name:'Check again',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('[aria-label="Model answer"]')?.textContent==='A changed retained output needs its own verification.');
+    expect(await page.getByRole('button',{name:'Copy checked',exact:true}).isVisible()).toBe(false);
     expect(calls.filter(row=>row.operation==='model-verify-transfer')).toHaveLength(3);
     expect(calls.filter(row=>row.operation==='model-submit')).toHaveLength(1);
     expect(await page.evaluate(()=>localStorage.length+sessionStorage.length)).toBe(0);
@@ -232,7 +232,7 @@ test('shared rail and Model Commons fit desktop and mobile and expose keyboard-o
       expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.width);expect(metrics.main.left).toBeGreaterThanOrEqual(0);expect(metrics.main.right).toBeLessThanOrEqual(metrics.width);
       expect(metrics.rail.right).toBeLessThanOrEqual(metrics.width);expect(metrics.rail.left).toBeGreaterThanOrEqual(0);
       if(directory)await page.screenshot({path:resolve(directory,'aurekai-model-rail-'+name+'.png'),fullPage:true});
-      await page.getByLabel('Model instructions').focus();await page.keyboard.press('Tab');expect(await page.evaluate(()=>document.activeElement.getAttribute('aria-label'))).toBe('Maximum output tokens');
+      await page.getByLabel('Your input').focus();await page.keyboard.press('Tab');expect(await page.evaluate(()=>document.activeElement.getAttribute('aria-label'))).toBe('Longest answer in tokens');
       await page.locator('.ak-rail-launch').focus();if(await page.locator('.ak-rail-launch').getAttribute('aria-expanded')==='false')await page.keyboard.press('Enter');
       expect(await page.locator('.ak-rail-launch').getAttribute('aria-expanded')).toBe('true');
       await page.keyboard.press('Escape');expect(await page.locator('.ak-rail-launch').getAttribute('aria-expanded')).toBe('false');expect(await page.locator('.ak-rail-launch').evaluate(node=>node===document.activeElement)).toBe(true);

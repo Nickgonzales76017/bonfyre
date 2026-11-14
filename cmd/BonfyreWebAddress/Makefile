@@ -193,7 +193,7 @@ static-asset-closure-witness: tests/static_asset_closure_test.c src/static_asset
 	$(CC) $(CFLAGS) -Wno-unused-function tests/static_asset_closure_test.c -o "$$witness"; "$$witness"
 build/web_main.o: src/application_workspace.h src/procurement_approval_status.h src/procurement_enactment.h src/procurement_enactment_effect.h
 build/web_main.o: src/native_command_work.h
-build/web_main.o: src/campaign_workspace.h src/native_publications_query.h src/relationship_observation.h
+build/web_main.o: src/campaign_workspace.h src/native_publications_query.h src/relationship_observation.h src/procurement_flow.h
 build/campaign_link.o: ../BonfyreCampaign/src/campaign.c ../BonfyreCampaign/src/campaign.h | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/lib_bf_utf8.o: $(ROOT)/lib/libbonfyre/bf_utf8.c | build

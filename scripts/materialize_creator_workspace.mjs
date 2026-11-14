@@ -49,18 +49,17 @@ export async function materializeCreatorWorkspace({root,directory=join(repo,'pac
  .music-retain-status,.audio-library-disclaimer{font:12px/1.6 system-ui;color:#b3c8b6}
  .audio-library-disclaimer{margin-top:20px;max-width:85ch}
  .audio-demo-lab{margin:36px 0;border:1px solid #647262;border-radius:12px;padding:16px;background:#18251e}
- .audio-demo-lab summary{cursor:pointer;font:600 15px system-ui;padding:8px 4px;color:#cdd3b7}
  .audio-demo-lab .creator-workspace{margin:16px 0 0}
  @media(max-width:700px){.audio-studio-main{padding:12px}.audio-studio-hero{border-radius:14px}.audio-library-grid{grid-template-columns:1fr}}
  </style></head><body>${workspaceNavigation}
  <main class="audio-studio-main">
- <header class="audio-studio-hero"><small>Creator Studio / Editorial Audio</small><h1>Give every story a sound.</h1>
- <p>Record and review narration. Audition real instrumental music, retain credited recordings, build a distinct soundtrack for each article, and mix with native speech ducking. Publication always requires separate review.</p></header>
+ <header class="audio-studio-hero"><small>Audio Studio</small><h1>Give every story a sound.</h1>
+ <p>Listen, save what you like to your library with one tap, then use it under your narration or in a mix. Nothing is published until you review it and press Publish.</p></header>
  <section data-editorial-library aria-label="Recorded editorial soundtrack library"></section>
  <script type="module" src="/data/creator/editorial-music-library-client.mjs"></script>
  <section data-narration-workspace aria-label="Narration productions"></section>
  <script type="module" src="/data/creator/narration-workspace-client.mjs"></script>
- <details class="audio-demo-lab"><summary>Technical mixer lab · original chime, pulse and harmony fixtures (not editorial music)</summary>${body}</details>
+ <section class="audio-demo-lab" aria-label="Mix your recordings">${body.replace(/<header class="creator-top">[\s\S]*?<\/header>/,'')}</section>
  </main></body></html>`;
  html=ownership(html).replaceAll('href="/#','href="https://aurekai-work-samples.pages.dev/#').replaceAll('/data/creator/',base+'data/creator/').replaceAll(base+base,base);
  files.set('audio/index.html',Buffer.from(html));

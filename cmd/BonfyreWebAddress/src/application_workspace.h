@@ -26,7 +26,8 @@ static void workspace_editor_links(long long installation){
     if(db&&sqlite3_prepare_v2(db,"SELECT w.binding_id,w.entry,w.release FROM _application_workspace w JOIN application_binding a ON a.id=w.cms_id WHERE w.installation_id=?1 AND a.status='active' ORDER BY w.entry",-1,&q,NULL)==SQLITE_OK){
         sqlite3_bind_int64(q,1,installation);while(sqlite3_step(q)==SQLITE_ROW){const char *id=(const char *)sqlite3_column_text(q,0),*entry=(const char *)sqlite3_column_text(q,1),*release=(const char *)sqlite3_column_text(q,2);
             if(!id||strlen(id)!=43||strncmp(id,"ws-",3)||strspn(id+3,"abcdef0123456789")!=40||!workspace_package_available(release,entry))continue;
-            fputs("<p><a data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(!strcmp(entry,"catalogue/")?"catalogue":!strcmp(entry,"product-room/")?"room editor":entry);fputs("</a></p>",stdout);
+            char word[64];size_t n=0;for(const char *c=!strcmp(entry,"product-room/")?"room editor":entry;*c&&*c!='/'&&n+1<sizeof(word);c++)word[n++]=*c=='-'?' ':*c;word[n]=0;
+            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);fputs("</a></p>",stdout);
         }
     }
     sqlite3_finalize(q);if(db)sqlite3_close(db);
@@ -87,6 +88,30 @@ static unsigned char *aw_replace(unsigned char *body,size_t *bytes,const char *n
     unsigned char *next=malloc(total+1);if(!next){free(body);return NULL;}char *p=(char *)body,*q=(char *)next,*found;
     while((found=strstr(p,needle))){size_t n=(size_t)(found-p);memcpy(q,p,n);q+=n;memcpy(q,value,b);q+=b;p=found+a;}strcpy(q,p);free(body);*bytes=total;return next;
 }
+static unsigned char *aw_insert(unsigned char *body,size_t *bytes,size_t at,const char *value,size_t n){
+    if(*bytes+n>AW_FILE){free(body);return NULL;}unsigned char *next=malloc(*bytes+n+1);if(!next){free(body);return NULL;}
+    memcpy(next,body,at);memcpy(next+at,value,n);memcpy(next+at+n,body+at,*bytes-at);*bytes+=n;next[*bytes]=0;free(body);return next;
+}
+/* An installed editor opens inside the one shell: the estate bar with the
+ * session filled in, the editor's own workspace strip, its document, then the
+ * one footer and player. The editor keeps its scripts, store and authority. */
+static unsigned char *aw_shell(unsigned char *file,size_t *bytes,const char *nav,size_t nav_bytes){
+    char *bar=NULL;size_t bar_n=0;FILE *mem=open_memstream(&bar,&bar_n),*saved=stdout;
+    if(!mem){free(file);return NULL;}
+    stdout=mem;psetup_bar();fwrite(nav,1,nav_bytes,mem);fflush(mem);stdout=saved;fclose(mem);
+    if(!bar){free(file);return NULL;}
+    file=aw_replace(file,bytes,"__WORKSPACE_NAV__",bar);free(bar);if(!file)return NULL;
+    char *body=strstr((char *)file,"<body");
+    if(body){
+        char *close=strchr(body,'>'),*cls=strstr(body," class=\"");size_t at;
+        if(cls&&close&&cls<close){at=(size_t)(cls+8-(char *)file);file=aw_insert(file,bytes,at,"ak-app ",7);}
+        else{at=(size_t)(body+5-(char *)file);file=aw_insert(file,bytes,at," class=\"ak-app\"",15);}
+        if(!file)return NULL;
+    }
+    char *end=NULL;for(char *p=(char *)file;(p=strstr(p,"</body>"));p++)end=p;
+    size_t at=end?(size_t)(end-(char *)file):*bytes;
+    return aw_insert(file,bytes,at,BF_ESTATE_FOOT,strlen(BF_ESTATE_FOOT));
+}
 #include "application_continuation.h"
 #include "account_inbox_web.h"
 #include "narration_workspace.h"
@@ -94,6 +119,7 @@ static unsigned char *aw_replace(unsigned char *body,size_t *bytes,const char *n
 #include "publication_retained.h"
 #include "activity_workspace.h"
 #include "connections_workspace.h"
+#include "source_library_workspace.h"
 #include "program_workspace.h"
 #include "native_command_work.h"
 #include "procurement_approval_status.h"
@@ -101,8 +127,35 @@ static unsigned char *aw_replace(unsigned char *body,size_t *bytes,const char *n
 #include "procurement_enactment.h"
 #include "campaign_workspace.h"
 #include "relationship_observation.h"
+#include "procurement_flow.h"
 #include "connect_github_app.h"
+/* "Make with it": the person's own Audio Studio, found from their current
+ * installation. Signed out, sign in and come back; nothing installed, the
+ * studio's setup review (installing is still the person's button). */
+static int aw_open_audio_studio(const char *method,const char *target,const char *bearer,const char *auth_db){
+    if(strcmp(target,"/apps/audio")&&strcmp(target,"/apps/audio/"))return 0;
+    if(strcmp(method,"GET")&&strcmp(method,"HEAD")){aw_error(405,"Use GET to open the studio.\n");return 1;}
+    char actor[160],subject[160],binding[64]="",entry[128]="",location[256];const char *scope=NULL;
+    if(psetup_context(bearer,auth_db,"self",0,actor,sizeof(actor),subject,sizeof(subject),&scope)!=1)
+        snprintf(location,sizeof(location),"/login?next=%%2Fapps%%2Faudio");
+    else{
+        sqlite3 *db=cms_open_ro();sqlite3_stmt *s=NULL;
+        if(db&&sqlite3_prepare_v2(db,"SELECT w.binding_id,w.entry,w.release FROM _application_workspace w JOIN pack_installation i ON i.id=w.installation_id JOIN application_binding b ON b.id=w.cms_id AND b.binding_id=w.binding_id AND b.namespace=i.namespace JOIN pack_activation a ON a.activated_for=i.installed_for AND a.pack=i.pack AND a.namespace=i.namespace WHERE i.installed_for=?1 AND i.status='published' AND b.status='active' AND w.family='creator-audio' ORDER BY w.binding_id LIMIT 4",-1,&s,NULL)==SQLITE_OK){
+            sqlite3_bind_text(s,1,subject,-1,SQLITE_STATIC);
+            while(!binding[0]&&sqlite3_step(s)==SQLITE_ROW){
+                const char *id=(const char *)sqlite3_column_text(s,0),*e=(const char *)sqlite3_column_text(s,1),*release=(const char *)sqlite3_column_text(s,2);
+                if(id&&strlen(id)==43&&!strncmp(id,"ws-",3)&&aw_hex(id+3,40)&&e&&strlen(e)<sizeof(entry)&&strspn(e,"abcdefghijklmnopqrstuvwxyz0123456789-/")==strlen(e)&&workspace_package_available(release,e)){snprintf(binding,sizeof(binding),"%s",id);snprintf(entry,sizeof(entry),"%s",e);}
+            }
+        }
+        sqlite3_finalize(s);if(db)sqlite3_close(db);
+        if(binding[0])snprintf(location,sizeof(location),"/apps/%s/%s",binding,entry);
+        else snprintf(location,sizeof(location),"/packs/setup?pack=experience.native-creator-studio.workspace&context=self");
+    }
+    printf("HTTP/1.1 303 See Other\r\nLocation: %s\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",location);
+    return 1;
+}
 static int serve_application_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
+    if(aw_open_audio_studio(method,target,bearer,auth_db))return 1;
     if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_native_command_work(method,target,query,body,raw,host,bearer,auth_db))return 1;
@@ -204,6 +257,10 @@ static int serve_application_workspace(const char *method,const char *target,con
         if(!ac_verified(id,subject,scope,pack,release,entry,actor)){aw_error(409,"Review this workspace before enacting supplier acceptance.\n");return 1;}
         return pde_enact(method,query,body,raw,host,id,subject,scope,actor,auth_db);
     }
+    if(!strcmp(slash+1,"_procurement_flow")){
+        if(!workspace_package_available(release,"procurement/")||!ac_verified(id,subject,scope,pack,release,entry,actor)){aw_error(409,"Open a current buying workspace before making this change.\n");return 1;}
+        return pf_act(method,query,body,raw,host,id,subject,scope,actor);
+    }
     if(!strcmp(slash+1,"_procurement_enactment_readiness")){
         if(!ac_verified(id,subject,scope,pack,release,entry,actor)){aw_error(409,"Review this workspace before checking procurement enactment readiness.\n");return 1;}
         return pde_readiness(method,query,id,subject,scope,actor,auth_db);
@@ -223,10 +280,21 @@ static int serve_application_workspace(const char *method,const char *target,con
         if(query && *query){aw_error(400,"Narration settings belong in the reviewed request.\n");return 1;}
         return nw_render(method,body,raw,host);
     }
+    /* Source library: Follow is a native form; the library opens on the shell. */
+    if(!strcmp(slash+1,"_follow")){
+        if(strcmp(pack,"experience.source-library.workspace") || strcmp(entry,"sources/") || !ac_verified(id,subject,scope,pack,release,entry,actor)){aw_error(409,"Open your current source library to follow a source.\n");return 1;}
+        return slw_follow(method,body,raw,host,id,subject,scope,actor);
+    }
     if(strcmp(method,"GET")){aw_error(405,"Use GET to open the editor.\n");return 1;}
+    /* Buying opens as one native flow on the shell, not the packaged editor page. */
+    if(!strcmp(method,"GET")&&!strcmp(slash+1,"procurement/")&&workspace_package_available(release,"procurement/")&&ac_verified(id,subject,scope,pack,release,entry,actor)){
+        char list_key[512],note[24];if(!pf_query(query,list_key,sizeof(list_key),note,sizeof(note))){aw_error(400,"Choose one saved purchase list.\n");return 1;}
+        pf_render(id,subject,scope,actor,release,list_key,note);return 1;
+    }
     if(!ac_verified(id,subject,scope,pack,release,entry,actor)){aw_error(409,"The installed source or editor binding changed. Review this configuration before opening its editor.\n");return 1;}
     if(ac_views(slash+1,query,id,subject,scope,pack,release,actor,context))return 1;
     if(ac_work(slash+1,query,id,subject,scope,pack,family,release,entry,actor,context))return 1;
+    if(!strcmp(pack,"experience.source-library.workspace") && !strcmp(entry,"sources/") && (!strcmp(slash+1,"") || !strcmp(slash+1,"sources/")))return slw_page(query,id,subject,scope,actor,context,pack);
     char path[1024];const char *relative=slash+1;if(!*relative)relative=entry;
     if(snprintf(path,sizeof(path),"%s%s",relative,relative[strlen(relative)-1]=='/'?"index.html":"")>=(int)sizeof(path)){aw_error(404,"Editor path not found.\n");return 1;}
     size_t bytes=0;unsigned char *file=aw_package(release,path,&bytes);if(!file){aw_error(503,"The reviewed editor release is unavailable. Drafts remain in the native store.\n");return 1;}
@@ -238,7 +306,7 @@ static int serve_application_workspace(const char *method,const char *target,con
     }
     if(file && !strncmp(mime,"text/html",9) && strstr((char *)file,"__WORKSPACE_NAV__")){
         size_t nav_bytes=0;unsigned char *nav=ac_navigation(id,context,pack,&nav_bytes);
-        if(nav){file=aw_replace(file,&bytes,"__WORKSPACE_NAV__",(char *)nav);free(nav);}else{free(file);file=NULL;}
+        if(nav){file=aw_shell(file,&bytes,(char *)nav,nav_bytes);free(nav);}else{free(file);file=NULL;}
     }
     if(file){aw_response(200,mime,file,bytes,0);free(file);}else aw_error(503,"The editor projection failed. Drafts were not changed.\n");return 1;
 }

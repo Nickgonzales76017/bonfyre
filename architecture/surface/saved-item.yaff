@@ -28,11 +28,15 @@ architecture saved-item
   known_gap Save is a native owner handler, not yet an ObjectGrammar contract offered through /_aperture; it should become one so the same aperture law governs it
   known_gap there is one collection (Saved); named boards and sharing a collection are not built
   known_gap a snapshot is private; a lawful path to promote a kept retained item into a canonical subject through an ObjectGrammar ATTACH birth is not built
+  known_gap the Audio Studio's music library is its own pinned catalogue in the workspace store; it does not yet list music the person saved from /music or /listen, so "Make with it" opens the studio without carrying the saved recording in
+  forbidden_inference a one-tap Save to library on /music or /listen -> the recording copied into the Audio Studio, a rights clearance, or anything published
   source_path cmd/BonfyreCMS/content-types/saved_item.json
   source_path cmd/BonfyreWebAddress/src/main.c
   source_path site/matrix/surfaces/login.html
   source_path cmd/BonfyreWebAddress/tests/page_saved_test.sh
   source_path cmd/BonfyreWebAddress/tests/page_parcel_test.sh
+  source_path cmd/BonfyreWebAddress/src/page_media_spaces.h
+  source_path cmd/BonfyreWebAddress/src/application_workspace.h
   witness cmd/BonfyreWebAddress/tests/page_saved_test.sh signs two people up through /signup and /login, proves an anonymous save redirects to sign in and back, a signed-in item page offers a real Save form and is privately cached, a cross-site save is refused and keeps nothing, saving twice keeps one row, the saved page lists and opens the item, another person cannot see it, the kept item survives its removal from the source feed for its keeper only, a browser sign-in form returns to next (and never to another site), and unsave removes it
   witness cmd/BonfyreWebAddress/tests/page_parcel_test.sh saves a Tarrant property, lists it on /saved with its title-cased address and opens /s/parcel/<account>
   witness 2026-09-17 estate canary against copied CMS and auth stores signed a canary person up, saved a retained item and a property, listed both, refused a cross-site save, unsaved, returned a form sign-in to /saved with a session cookie, and walked 300 internal links with 0 dead anchors; production then registered saved_item through the CMS binary after a store backup (0 rows) and answered a failed form sign-in back to /login?next=/saved&failed=1

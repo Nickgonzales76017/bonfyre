@@ -98,12 +98,12 @@ static const char *page_nav_glyph(const char *route);
 #include "cms_workbench.h"
 #define BF_ESTATE_BAR_HEAD \
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
-"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">"
+"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\"><link rel=\"stylesheet\" href=\"/assets/aurekai-ui.css?v=1\">"
 #define BF_ESTATE_BAR_OUT \
 "<span class=\"ak-out\"><a href=\"https://docs.aurekai.work/\">" BF_ICON_BOOK "<span>Guides</span></a></span>"
 #define BF_ESTATE_BAR_CORE \
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
-"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">" \
+"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\"><link rel=\"stylesheet\" href=\"/assets/aurekai-ui.css?v=1\">" \
 "<header class=\"ak-bar\"><div class=\"ak-bar-top\"><a class=\"ak-brand\" href=\"/\">Aurekai</a><nav class=\"ak-places\" aria-label=\"Territories\">" \
 "<a href=\"https://aurekai.live/\">" BF_ICON_WORLD "<span>Live</span></a><a href=\"https://aurekai.life/\">" BF_ICON_HEART "<span>Life</span></a>" \
 "<a href=\"https://aurekai.shop/\">" BF_ICON_SHOP "<span>Shop</span></a><a href=\"https://aurekai.work/\">" BF_ICON_BRIEFCASE "<span>Work</span></a></nav>" \

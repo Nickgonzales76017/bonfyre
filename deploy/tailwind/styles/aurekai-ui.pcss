@@ -1,0 +1,127 @@
+/* aurekai-ui.css -- mature components for every shell page.
+ *
+ * daisyUI (MIT, pinned in package.json) supplies the component vocabulary,
+ * prefixed dui- so it never collides with the estate's own class names:
+ * dui-steps, dui-tabs, dui-table, dui-modal, dui-drawer, dui-stats,
+ * dui-timeline, dui-menu, dui-join, dui-btn, dui-input, dui-select,
+ * dui-toggle, dui-badge, dui-progress, dui-avatar, dui-alert, dui-tooltip.
+ * Only classes used in served markup are generated. Its colours are the
+ * Stitch tokens (aurekai-bar.css --ak-*), expressed as daisyUI's OKLCH
+ * variables, so a component looks like the rest of the app. */
+@tailwind components;
+
+body.ak-app {
+  --p: 92.94% 0.1982 122.75;  --pc: 18.78% 0.0122 155.86;
+  --s: 82.57% 0.0356 114.28;  --sc: 18.78% 0.0122 155.86;
+  --a: 80.39% 0.0926 47.53;   --ac: 18.78% 0.0122 155.86;
+  --n: 28.17% 0.0111 156.43;  --nc: 91.23% 0.0114 141.26;
+  --b1: 18.78% 0.0122 155.86; --b2: 22.31% 0.0118 156.14; --b3: 24.02% 0.0116 156.25;
+  --bc: 91.23% 0.0114 141.26;
+  --in: 80.71% 0.1007 250.45; --inc: 18.78% 0.0122 155.86;
+  --su: 85.77% 0.1092 142.72; --suc: 18.78% 0.0122 155.86;
+  --wa: 85.08% 0.1214 85.40;  --wac: 18.78% 0.0122 155.86;
+  --er: 75.94% 0.1435 26.08;  --erc: 18.78% 0.0122 155.86;
+  --rounded-box: 1rem; --rounded-btn: 999px; --rounded-badge: 999px;
+  --btn-focus-scale: .98; --border-btn: 1px; --tab-border: 1px; --tab-radius: .75rem;
+  --animation-btn: .2s; --animation-input: .2s;
+}
+
+/* One vocabulary, matured once. Every surface composes .ak-pattern components
+ * through the shared renderer; inside the app shell they take the Stitch
+ * ground and daisyUI's component behaviour instead of the paper default. */
+body.ak-app .ak-pattern {
+  margin: 1rem 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+  color: var(--ak-on-surface); font: 400 .95rem/1.6 var(--ak-sans);
+}
+body.ak-app .ak-pattern :is(h2, h3) { font: 600 1.15rem/1.3 var(--ak-sans); letter-spacing: -.01em; margin: 0 0 .6rem; color: var(--ak-on-surface); }
+body.ak-app .ak-pattern p { color: var(--ak-on-variant); }
+
+/* Surfaces */
+body.ak-app .ak-pattern:is(.ak-card, .ak-section, .ak-dialog, .ak-hero) {
+  padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--ak-outline-variant);
+  border-radius: 1rem; background: var(--ak-surface-low);
+}
+body.ak-app .ak-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+body.ak-app .ak-columns { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+body.ak-app .ak-stack { display: grid; gap: .75rem; }
+
+/* One primary action; the rest step back. Colours are stated outright so a
+ * button never depends on a theme variable that a page did not load. */
+body.ak-app .ak-pattern :is(button, .ak-button, a.ak-button, input[type=submit]) {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.5rem; padding: .5rem 1.1rem;
+  border: 1px solid var(--ak-outline-variant); border-radius: 999px; background: transparent; color: var(--ak-on-surface);
+  font: 600 .875rem/1 var(--ak-sans); text-decoration: none; cursor: pointer; transition: background .2s, border-color .2s, transform .1s;
+}
+body.ak-app .ak-pattern :is(button, .ak-button, input[type=submit]):hover { background: var(--ak-surface-high); border-color: var(--ak-outline); }
+body.ak-app .ak-pattern :is(button, .ak-button, input[type=submit]):active { transform: scale(.98); }
+body.ak-app .ak-pattern :is(button, .ak-button, input[type=submit]):focus-visible { outline: 2px solid var(--ak-primary); outline-offset: 2px; }
+body.ak-app .ak-pattern :is(button, input[type=submit]):disabled { opacity: .45; cursor: not-allowed; }
+body.ak-app .ak-pattern :is(.ak-actions, .ak-buttons, form) > :is(button, .ak-button, input[type=submit]):first-of-type,
+body.ak-app .ak-pattern.ak-action > button:first-of-type,
+body.ak-app .ak-pattern :is(button, .ak-button).is-primary { background: var(--ak-primary); border-color: var(--ak-primary); color: var(--ak-on-primary); }
+body.ak-app .ak-pattern :is(.ak-actions, .ak-buttons, form) > :is(button, .ak-button, input[type=submit]):first-of-type:hover,
+body.ak-app .ak-pattern.ak-action > button:first-of-type:hover { background: color-mix(in srgb, var(--ak-primary) 88%, #fff); }
+body.ak-app .ak-pattern :is(button, .ak-button).ak-tone-danger,
+body.ak-app .ak-pattern .ak-tone-danger :is(button, .ak-button) { background: transparent; border-color: #ff8a80; color: #ff8a80; }
+body.ak-app .ak-pattern .ak-button-group { display: inline-flex; }
+body.ak-app .ak-pattern .ak-button-group > * { border-radius: 0; margin-left: -1px; }
+body.ak-app .ak-pattern .ak-button-group > :first-child { border-radius: 999px 0 0 999px; margin-left: 0; }
+body.ak-app .ak-pattern .ak-button-group > :last-child { border-radius: 0 999px 999px 0; }
+body.ak-app .ak-pattern :is(.ak-actions, .ak-buttons) { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+body.ak-app .ak-pattern .ak-button-group { @apply dui-join; }
+body.ak-app .ak-pattern .ak-button-group > * { @apply dui-join-item; }
+
+/* Fields: labelled, sized, focusable; a form reads as a column, not a wall. */
+body.ak-app .ak-pattern.ak-action, body.ak-app .ak-pattern form { display: grid; gap: .9rem; max-width: 38rem; }
+body.ak-app .ak-pattern.ak-field, body.ak-app .ak-pattern .ak-field { display: grid; gap: .35rem; margin: 0; }
+body.ak-app .ak-pattern .ak-field > span, body.ak-app .ak-pattern.ak-field > span { font: 600 .72rem/1.2 var(--ak-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ak-on-variant); }
+body.ak-app .ak-pattern :is(input:not([type=checkbox], [type=radio], [type=submit], [type=hidden], [type=range], [type=file]), select, textarea) {
+  width: 100%; min-height: 2.75rem; padding: .6rem .9rem; border: 1px solid var(--ak-outline-variant); border-radius: .75rem;
+  background: var(--ak-surface-mid); color: var(--ak-on-surface); font: inherit;
+}
+body.ak-app .ak-pattern :is(input, select, textarea):focus-visible { outline: 2px solid var(--ak-primary); outline-offset: 2px; border-color: transparent; }
+body.ak-app .ak-pattern textarea { min-height: 6.5rem; resize: vertical; }
+body.ak-app .ak-pattern input[type=checkbox] { @apply dui-checkbox dui-checkbox-primary dui-checkbox-sm; }
+body.ak-app .ak-pattern input[type=radio] { @apply dui-radio dui-radio-primary dui-radio-sm; }
+body.ak-app .ak-pattern input[type=range] { @apply dui-range dui-range-primary dui-range-sm; }
+
+/* Choices are pills in one row, never a list of bare radios. */
+body.ak-app .ak-pattern.ak-choice, body.ak-app .ak-pattern .ak-choice { display: flex; flex-wrap: wrap; gap: .5rem; border: 0; padding: 0; }
+body.ak-app .ak-pattern .ak-choice label, body.ak-app .ak-pattern.ak-choice label { position: relative; display: inline-flex; align-items: center; min-height: 2.25rem; padding: .35rem .9rem; border: 1px solid var(--ak-outline-variant); border-radius: 999px; cursor: pointer; font-weight: 500; }
+body.ak-app .ak-pattern :is(.ak-choice) label input { position: absolute; opacity: 0; inset: 0; }
+body.ak-app .ak-pattern :is(.ak-choice) label:has(input:checked) { background: var(--ak-primary); color: var(--ak-on-primary); border-color: transparent; }
+body.ak-app .ak-pattern :is(.ak-choice) label:has(input:focus-visible) { outline: 2px solid var(--ak-primary); outline-offset: 2px; }
+
+/* Data */
+body.ak-app .ak-pattern .ak-table-wrap { overflow-x: auto; border: 1px solid var(--ak-outline-variant); border-radius: 1rem; }
+body.ak-app .ak-pattern :is(table, .ak-table, .ak-editorial-table) { @apply dui-table dui-table-sm; color: var(--ak-on-surface); }
+body.ak-app .ak-pattern :is(table, .ak-table) th { font: 600 .68rem/1.2 var(--ak-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ak-on-variant); }
+body.ak-app .ak-pattern :is(.ak-badge, .ak-pill) { @apply dui-badge dui-badge-outline; border-color: var(--ak-outline-variant); color: var(--ak-on-variant); }
+body.ak-app .ak-pattern .ak-eyebrow { font: 600 .7rem/1.2 var(--ak-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ak-primary); }
+body.ak-app .ak-pattern .ak-alert { @apply dui-alert; border: 1px solid var(--ak-outline-variant); background: var(--ak-surface-mid); color: var(--ak-on-surface); }
+body.ak-app .ak-pattern progress, body.ak-app .ak-pattern .ak-progress { @apply dui-progress dui-progress-primary; }
+body.ak-app .ak-pattern .ak-spinner { @apply dui-loading dui-loading-spinner; }
+body.ak-app .ak-pattern .ak-list-group { @apply dui-menu; padding: 0; border: 1px solid var(--ak-outline-variant); border-radius: 1rem; background: var(--ak-surface-low); }
+body.ak-app .ak-pattern .ak-breadcrumbs { @apply dui-breadcrumbs; font-size: .8rem; color: var(--ak-on-variant); }
+
+/* Navigation inside a surface */
+body.ak-app .ak-pattern :is(.ak-tabs, .ak-nav-tabs) { @apply dui-tabs dui-tabs-bordered; }
+body.ak-app .ak-pattern :is(.ak-tabs, .ak-nav-tabs) > :is(a, button) { @apply dui-tab; }
+body.ak-app .ak-pattern :is(.ak-tabs, .ak-nav-tabs) > :is([aria-current], [aria-selected=true], .is-on) { @apply dui-tab-active; color: var(--ak-primary); }
+body.ak-app .ak-pattern :is(.ak-links, .ak-nav-links) { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+body.ak-app .ak-pattern :is(.ak-links, .ak-nav-links) a { color: var(--ak-on-surface); text-underline-offset: 4px; }
+body.ak-app .ak-pattern :is(.ak-links, .ak-nav-links) a:hover { color: var(--ak-primary); }
+
+/* A disclosure that must exist reads as a quiet row, open by its summary; no boxed accordion stacks. */
+body.ak-app .ak-pattern :is(details, .ak-disclosure, .ak-accordion) { border: 0; border-top: 1px solid var(--ak-outline-variant); border-radius: 0; background: transparent; padding: .75rem 0; }
+body.ak-app .ak-pattern :is(details, .ak-disclosure) > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+body.ak-app .ak-pattern :is(details, .ak-disclosure) > summary::after { content: "+"; color: var(--ak-primary); }
+body.ak-app .ak-pattern :is(details, .ak-disclosure)[open] > summary::after { content: "–"; }
+body.ak-app dialog.ak-dialog, body.ak-app .ak-pattern dialog { border: 1px solid var(--ak-outline-variant); border-radius: 1.25rem; background: var(--ak-surface-high); color: var(--ak-on-surface); padding: 1.5rem; max-width: min(36rem, calc(100vw - 2rem)); }
+body.ak-app dialog::backdrop { background: rgb(5 8 6 / .7); backdrop-filter: blur(4px); }
+
+/* Taking something back is never the loud action on a page. */
+body.ak-app .ak-pattern form:is([action*="withdraw"], [action*="revoke"], [action*="remove"], [action*="delete"], [action*="leave"], [action*="unsave"], [action*="decline"], [action*="cancel"]) > :is(button, input[type=submit]):first-of-type,
+body.ak-app .ak-pattern.ak-action:is([action*="withdraw"], [action*="revoke"], [action*="remove"], [action*="delete"], [action*="leave"], [action*="unsave"], [action*="decline"], [action*="cancel"]) > button:first-of-type {
+  background: transparent; border-color: var(--ak-outline-variant); color: var(--ak-on-variant); min-height: 2.1rem; font-weight: 500;
+}

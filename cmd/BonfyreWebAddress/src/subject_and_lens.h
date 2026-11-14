@@ -2532,33 +2532,39 @@ static int serve_subject(const char *method, const char *target, const char *que
         return 1;
     }
 
-    /* The model estate, as something a person can look at.
+    /* Model Commons, as one flow: browse the catalogue, open a model, try it on
+     * your own input, then use it in your work. The layout is the MCP client
+     * inspector and sandbox runner screens: a filterable list of models, and a
+     * model page whose workbench sits beside its answer.
      *
-     * The catalogue has held this all along: 22 models, 201 layer artifacts, 134
-     * capabilities and 724 edges between them, including which model was derived
-     * from which, which capability a model powers, and which workflow steps use
-     * it. What it has never had is a page. `bonfyre-model list` prints a table of
-     * names and sizes, and everything that makes a model page worth reading --
-     * its variants, what it came from, what depends on it, what it would cost to
-     * run -- was reachable only by querying the graph by hand.
-     *
-     * Nothing here runs a model. The cost band is the one honest part of a run
-     * button: it reads the admitted rates, and where no rate exists it says so
-     * rather than estimating.
-     */
+     * Nothing here runs a model. The workbench asks the execution owner what
+     * this account may run; registration in the catalogue is never availability,
+     * and a missing price is never free. */
     if (!strcmp(kind, "models")) {
-        char uri[PATH_MAX];
-        char facts[262144]; size_t fw = 0;
-        int state = bf_model_catalogue_index(getenv("BONFYRE_MODEL_CATALOG"),
-                                            facts, sizeof(facts), &fw);
+        static char list[262144]; char uri[PATH_MAX], want[128] = "", ewant[400];
+        size_t lw = 0, w = 0;
+        if (query && *query) query_value(query, "q", want, sizeof(want));
+        int state = bf_model_catalogue_find(getenv("BONFYRE_MODEL_CATALOG"), want,
+                                           list, sizeof(list), &lw);
         if (state <= 0) {
             subject_miss(state == 0 ? "The model catalogue holds no model."
                                     : "No model catalogue is readable here.");
             return 1;
         }
-
-        n = aperture_push(acts, n, 8, "See what things cost",
-                          "everyday prices, compared across shops and makers", 2, 0, "/s/prices/observed");
+        html_escape(want, ewant, sizeof(ewant));
+        surfaceir_trace("models", may_write ? "write" : (signed_in ? "read" : "anonymous"), acts, 0, bearer);
+        w += (size_t)snprintf(body + w, sizeof(body) - w, SUBJ_HEAD, "Model Commons");
+        w += (size_t)snprintf(body + w, sizeof(body) - w,
+          "<link rel=\"stylesheet\" href=\"/assets/model-commons.css\"><div class=\"ak-mc\">"
+          "<nav class=\"ak-mc-strip\" aria-label=\"Where you are\"><span>Model Commons</span>"
+          "<span aria-hidden=\"true\">/</span><span>%s</span>"
+          "<span class=\"ak-mc-strip-r\">Nothing runs until you press Run</span></nav>"
+          "<header class=\"ak-mc-hero\"><p class=\"ak-mc-kicker\">Model Commons</p>"
+          "<h1>Models you can try</h1>"
+          "<p class=\"ak-mc-lede\">Pick a model to see what it does, try it on your own text, "
+          "then use it in your work.</p></header>",
+          want[0] ? ewant : "All models");
+        if (w + lw < sizeof(body)) { memcpy(body + w, list, lw); w += lw; body[w] = 0; }
         /* What hosted models charge, as each router lists itself: the price
          * side of the commons, read from the same observatory as every other
          * stated price. */
@@ -2572,11 +2578,13 @@ static int serve_subject(const char *method, const char *target, const char *que
                   " HAVING MAX(CASE WHEN unit='token in' THEN amount END)>0 AND COUNT(DISTINCT CASE WHEN unit='token in' THEN amount END)=1 AND COUNT(DISTINCT CASE WHEN unit='token out' THEN amount END)<=1"
                   " ORDER BY MAX(CASE WHEN unit='token in' THEN amount END)+COALESCE(MAX(CASE WHEN unit='token out' THEN amount END),0), item LIMIT 40",
                   -1, &ps, NULL) == SQLITE_OK) {
-                while (sqlite3_step(ps) == SQLITE_ROW && fw < sizeof(facts) - 4096) {
+                while (sqlite3_step(ps) == SQLITE_ROW && w < sizeof(body) - 8192) {
                     char ei[320], ep[200], day[16], eday[96], in[48], outp[48];
-                    if (!rows++) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                        "<h3 class=\"room-h\" id=\"model-prices-title\">Hosted model price observations</h3><p class=\"subj-note\" id=\"model-prices-note\">US dollars per million tokens from the same publisher observation. Listed prices can change and do not rank quality.</p><div class=\"model-price-scroll\" role=\"region\" tabindex=\"0\" aria-labelledby=\"model-prices-title\" aria-describedby=\"model-prices-note\"><table class=\"price-table\"><thead><tr><th scope=\"col\">Model</th>"
-                        "<th scope=\"col\">Reading in</th><th scope=\"col\">Writing out</th><th scope=\"col\">Publisher</th><th scope=\"col\">Read</th></tr></thead><tbody>");
+                    if (!rows++) w += (size_t)snprintf(body + w, sizeof(body) - w,
+                        "<section class=\"ak-mc-band\"><h2 class=\"ak-mc-h\" id=\"model-prices-title\">What hosted models charge</h2>"
+                        "<p class=\"ak-mc-note\" id=\"model-prices-note\">US dollars per million tokens, as each provider lists it. Prices change, and a lower price says nothing about quality.</p>"
+                        "<div class=\"model-price-scroll\" role=\"region\" tabindex=\"0\" aria-labelledby=\"model-prices-title\" aria-describedby=\"model-prices-note\"><table class=\"price-table\"><thead><tr><th scope=\"col\">Model</th>"
+                        "<th scope=\"col\">Reading in</th><th scope=\"col\">Writing out</th><th scope=\"col\">Provider</th><th scope=\"col\">Seen</th></tr></thead><tbody>");
                     html_escape((const char *)sqlite3_column_text(ps, 0), ei, sizeof(ei));
                     html_escape((const char *)sqlite3_column_text(ps, 3), ep, sizeof(ep));
                     snprintf(day, sizeof(day), "%.10s", sqlite3_column_text(ps, 4) ? (const char *)sqlite3_column_text(ps, 4) : "");
@@ -2584,50 +2592,61 @@ static int serve_subject(const char *method, const char *target, const char *que
                     price_amount(sqlite3_column_double(ps, 1) * 1e6, in, sizeof(in));
                     if (sqlite3_column_type(ps, 2) == SQLITE_NULL) snprintf(outp, sizeof(outp), "&mdash;");
                     else { char v[40]; price_amount(sqlite3_column_double(ps, 2) * 1e6, v, sizeof(v)); snprintf(outp, sizeof(outp), "$%s", v); }
-                    fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "<tr><th scope=\"row\">%s</th><td>$%s</td><td>%s</td><td>%s</td><td><time>%s</time></td></tr>", ei, in, outp, ep, eday);
+                    w += (size_t)snprintf(body + w, sizeof(body) - w, "<tr><th scope=\"row\">%s</th><td>$%s</td><td>%s</td><td>%s</td><td><time>%s</time></td></tr>", ei, in, outp, ep, eday);
                 }
-                if (rows) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "</tbody></table></div>");
+                if (rows) w += (size_t)snprintf(body + w, sizeof(body) - w, "</tbody></table></div></section>");
             }
             sqlite3_finalize(ps); if (pdb) sqlite3_close(pdb);
         }
-        fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-          "<link rel=\"stylesheet\" href=\"/apps/aurekai-model.css\">"
-          "<section class=\"ak-model-workbench\" data-aurekai-model=\"\" aria-label=\"Model execution\">"
-          "<h2>Run a model</h2><p>Checking models available for your account&hellip;</p>"
-          "<noscript>Enable JavaScript to review current execution capabilities.</noscript></section>"
-          "<script type=\"module\" src=\"/apps/aurekai-model.mjs\"></script>");
-        aperture_render(body, sizeof(body), "Models &middot; what this estate holds and what depends on it",
-                        ident, "Registered models, their variants and their dependents", facts,
-                        acts, n, signed_in, may_write, bearer);
-        ambient_render(body, sizeof(body), strlen(body), "models", ident);
+        if (w < sizeof(body)) w += (size_t)snprintf(body + w, sizeof(body) - w,
+          "</div><script type=\"module\" src=\"/apps/aurekai-model.mjs\"></script>");
         aperture_close(body, sizeof(body));
         flow_reply(body);
         return 1;
     }
 
-    /* One model: its variants, what it came from, what depends on it, and what
-     * running it would cost where a rate has been admitted.
-     *
-     * The cost band is deliberately the least impressive part. A run button that
-     * quoted a number the estate had invented would be worse than no button, so
-     * this reads only rates a provider stated about itself and says plainly when
-     * there is none -- which, for a model this estate holds locally, is the usual
-     * answer and the honest one.
-     */
+    /* One model, as the sandbox runner: what it is, a workbench to try it on
+     * your own input beside its answer, what is known about it (the price
+     * only from rates a provider stated about itself), and where it is used.
+     * A run button that quoted a number the estate had invented would be worse
+     * than no button, so no price is ever estimated. */
     if (!strcmp(kind, "model")) {
-        char name[320] = {0}, facts[262144], uri[PATH_MAX];
-        size_t fw = 0;
+        static char facts[262144];
+        char name[320] = {0}, uri[PATH_MAX];
+        size_t fw = 0, w = 0;
         int state = bf_model_catalogue_detail(getenv("BONFYRE_MODEL_CATALOG"),
                 ident, name, sizeof(name), facts, sizeof(facts), &fw);
-        if (state <= 0) {
+        char *try_at = state > 0 ? strstr(facts, BF_MODEL_TRY_MARK) : NULL;
+        char *price_at = try_at ? strstr(try_at, BF_MODEL_PRICE_MARK) : NULL;
+        if (state <= 0 || !price_at) {
             subject_miss(state == 0 ? "No model with that identifier is registered."
                                     : "No model catalogue is readable here.");
             return 1;
         }
-
-        /* What running it would cost, from admitted rates only. */
-        fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-          "<h3 class=\"room-h\">Provider price observations</h3>");
+        *try_at = 0; *price_at = 0;
+        surfaceir_trace("model", may_write ? "write" : (signed_in ? "read" : "anonymous"), acts, 0, bearer);
+        {
+            char title[400]; html_escape(name, title, sizeof(title));
+            w += (size_t)snprintf(body + w, sizeof(body) - w, SUBJ_HEAD, title);
+        }
+        w += (size_t)snprintf(body + w, sizeof(body) - w,
+          "<link rel=\"stylesheet\" href=\"/assets/model-commons.css\"><div class=\"ak-mc ak-mc-one\">%s", facts);
+        {
+            char model_id[2048], model_name[2048];
+            html_escape(ident, model_id, sizeof(model_id));
+            html_escape(name, model_name, sizeof(model_name));
+            w += (size_t)snprintf(body + w, sizeof(body) - w,
+              "<link rel=\"stylesheet\" href=\"/apps/aurekai-model.css\">"
+              "<section class=\"ak-model-workbench\" data-aurekai-model=\"%s\" data-model-name=\"%s\" aria-label=\"Try this model\">"
+              "<div class=\"ak-model-try\"><h2>Your input</h2><p class=\"ak-model-status\">Checking whether you can run this model&hellip;</p></div>"
+              "<div class=\"ak-model-out\"><h2>Answer</h2><p class=\"ak-model-caption\">The answer appears here. Nothing runs until you press Run.</p></div>"
+              "<noscript>Trying a model needs JavaScript. Everything else on this page works without it.</noscript></section>",
+              model_id, model_name);
+        }
+        if (w < sizeof(body)) w += (size_t)snprintf(body + w, sizeof(body) - w, "%s", try_at + strlen(BF_MODEL_TRY_MARK));
+        /* The price tile, from admitted rates only. Matched on the model's own
+         * name, because a price this estate holds is a price some provider
+         * published about a named model. No match is the common case. */
         {
             const char *ppath = getenv("BONFYRE_PRICES_DB");
             sqlite3 *pdb = NULL; sqlite3_stmt *pst = NULL;
@@ -2636,59 +2655,39 @@ static int serve_subject(const char *method, const char *target, const char *que
                 bf_sqlite_readonly_uri(uri, sizeof(uri), ppath) < (int)sizeof(uri) &&
                 sqlite3_open_v2(uri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
                 sqlite3_prepare_v2(pdb,
-                  "SELECT publisher, item, amount, currency, unit, observed_at FROM observed_price"
+                  "SELECT publisher, amount, currency, unit, observed_at FROM observed_price"
                   " WHERE kind='inference' AND (lower(item)=lower(?1) OR lower(item)=lower(?2)) ORDER BY observed_at DESC LIMIT 6",
                   -1, &pst, NULL) == SQLITE_OK) {
-                /* Matched on the model's own name, because a price this estate
-                 * holds is a price some provider published about a named model.
-                 * No match is the common case and is stated as such. */
                 sqlite3_bind_text(pst, 1, ident, -1, SQLITE_STATIC);
                 sqlite3_bind_text(pst, 2, name, -1, SQLITE_STATIC);
-                while (sqlite3_step(pst) == SQLITE_ROW && fw < sizeof(facts) - 2048) {
-                    char epub[200], eitem[300], ecur[32], eunit[64], eat[64];
+                while (sqlite3_step(pst) == SQLITE_ROW && w < sizeof(body) - 4096) {
+                    char epub[200], ecur[32], eunit[64], eat[64];
                     html_escape((const char *)sqlite3_column_text(pst, 0), epub, sizeof(epub));
-                    html_escape((const char *)sqlite3_column_text(pst, 1), eitem, sizeof(eitem));
-                    html_escape((const char *)sqlite3_column_text(pst, 3), ecur, sizeof(ecur));
-                    html_escape((const char *)sqlite3_column_text(pst, 4), eunit, sizeof(eunit));
-                    html_escape((const char *)sqlite3_column_text(pst, 5), eat, sizeof(eat));
-                    fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                      "<div class=\"desk-row\"><span class=\"desk-l\">%s</span>"
-                      "<span class=\"desk-a\">%.6f %s per %s</span>"
-                      "<span class=\"desk-s\">%s, as %s stated it on %s</span></div>",
-                      eitem, sqlite3_column_double(pst, 2), ecur, eunit[0] ? eunit : "call",
-                      epub, epub, eat);
-                    priced = 1;
+                    html_escape((const char *)sqlite3_column_text(pst, 2), ecur, sizeof(ecur));
+                    html_escape((const char *)sqlite3_column_text(pst, 3), eunit, sizeof(eunit));
+                    html_escape((const char *)sqlite3_column_text(pst, 4), eat, sizeof(eat));
+                    if (!priced++) w += (size_t)snprintf(body + w, sizeof(body) - w, "<div class=\"is-wide\" data-price><dt>Price</dt>");
+                    w += (size_t)snprintf(body + w, sizeof(body) - w,
+                      "<dd>%.6f %s per %s</dd><p>as %s listed it on %s</p>",
+                      sqlite3_column_double(pst, 1), ecur, eunit[0] ? eunit : "call", epub, eat);
                 }
+                if (priced) w += (size_t)snprintf(body + w, sizeof(body) - w, "</div>");
             }
             if (pst) sqlite3_finalize(pst);
             if (pdb) sqlite3_close(pdb);
             if (!priced)
-                fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                  "<p class=\"subj-note\">No retained provider price observation matches this catalogue "
-                  "entry. A missing price does not establish free execution.</p>");
+                w += (size_t)snprintf(body + w, sizeof(body) - w,
+                  "<div class=\"is-wide\" data-price><dt>Price</dt><dd>No price published</dd>"
+                  "<p>No provider lists a price for this model here. That doesn&rsquo;t make it free to run.</p></div>");
         }
-
-        {
-            char model_id[2048], model_name[2048];
-            html_escape(ident, model_id, sizeof(model_id));
-            html_escape(name, model_name, sizeof(model_name));
-            fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-              "<link rel=\"stylesheet\" href=\"/apps/aurekai-model.css\">"
-              "<section class=\"ak-model-workbench\" data-aurekai-model=\"%s\" data-model-name=\"%s\" aria-label=\"Model execution\">"
-              "<h2>Run this model</h2><p>Checking execution for your account&hellip;</p>"
-              "<noscript>Enable JavaScript to review current execution capabilities.</noscript></section>"
-              "<script type=\"module\" src=\"/apps/aurekai-model.mjs\"></script>", model_id, model_name);
-        }
-        fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-          "<p class=\"subj-note\">Catalogue records describe observed relationships. Execution "
-          "requires a currently available model, account access and a reviewed usage limit. "
-          "Registration alone does not establish availability or permission to run.</p>");
-
-        n = aperture_push(acts, n, 8, "See every model", "and what depends on each", 2, 0, "/s/models/all");
-        n = aperture_push(acts, n, 8, "See what the estate pays", "prices it holds evidence for", 1, 0, "/s/prices/observed");
-        aperture_render(body, sizeof(body), "Model &middot; what it is and what depends on it",
-                        ident, name, facts, acts, n, signed_in, may_write, bearer);
-        ambient_render(body, sizeof(body), strlen(body), "model", ident);
+        if (w < sizeof(body)) w += (size_t)snprintf(body + w, sizeof(body) - w, "%s", price_at + strlen(BF_MODEL_PRICE_MARK));
+        if (w < sizeof(body)) w += (size_t)snprintf(body + w, sizeof(body) - w,
+          "<section class=\"ak-mc-band\"><h2 class=\"ak-mc-h\">Use it in your work</h2>"
+          "<p class=\"ak-mc-note\">Being listed here doesn&rsquo;t mean you can run it. Running needs the model installed, "
+          "access for your account and a limit you check before it starts.</p>"
+          "<ul class=\"ak-mc-links is-go\"><li><a href=\"/work-board\">See your runs on the work board</a></li>"
+          "<li><a href=\"/agents\">Give it to an agent</a></li><li><a href=\"/s/models/all\">Pick another model</a></li></ul></section>"
+          "</div><script type=\"module\" src=\"/apps/aurekai-model.mjs\"></script>");
         aperture_close(body, sizeof(body));
         flow_reply(body);
         return 1;

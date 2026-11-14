@@ -238,6 +238,36 @@ static void ms_play_button(const PageItem *it,const char *label,int dflt){
     fputs(" aria-label=\"",stdout);html(label);fputs(": ",stdout);html(it->title);fputs("\">",stdout);
     page_glyph("play");fputs("</button>",stdout);
 }
+/* Saving is one tap where the thing is heard: the form posts to the one
+ * saved-item owner (/o/save, or /o/unsave when it is already in the library)
+ * and comes back here. Signed out, that owner sends the person to sign in
+ * and back. Nothing is published by saving. */
+static int page_session_actor(const char *bearer,const char *auth_db,char *actor,size_t cap);
+static sqlite3 *ms_saved_db;static char ms_actor[64];
+static void ms_saved_open(void){
+    ms_actor[0]=0;ms_saved_db=NULL;
+    if(page_session_actor(page_request_bearer,page_request_auth_db,ms_actor,sizeof(ms_actor)))ms_saved_db=cms_open_ro();
+}
+static void ms_saved_close(void){if(ms_saved_db)sqlite3_close(ms_saved_db);ms_saved_db=NULL;ms_actor[0]=0;}
+static int ms_is_saved(const char *ref){
+    sqlite3_stmt *s=NULL;int found=0;
+    if(!ms_saved_db||!ms_actor[0]||sqlite3_prepare_v2(ms_saved_db,"SELECT 1 FROM saved_item WHERE actor=?1 AND item_ref=?2 AND status='published' LIMIT 1",-1,&s,NULL)!=SQLITE_OK)return 0;
+    sqlite3_bind_text(s,1,ms_actor,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,ref,-1,SQLITE_STATIC);
+    found=sqlite3_step(s)==SQLITE_ROW;sqlite3_finalize(s);return found;
+}
+static void ms_keep(const PageItem *it,const char *back,int compact){
+    char ref[200];
+    if(!page_item_has_page(it)||snprintf(ref,sizeof(ref),"%s/%s",it->source,it->key)>=(int)sizeof(ref))return;
+    int saved=ms_is_saved(ref);
+    printf("<form class=\"ms-keep\" method=\"post\" action=\"/o/%s\"><input type=\"hidden\" name=\"item\" value=\"",saved?"unsave":"save");
+    html(ref);fputs("\"><input type=\"hidden\" name=\"return\" value=\"",stdout);html(back&&*back=='/'?back:"/");
+    printf("\"><button type=\"submit\" class=\"%s\" aria-pressed=\"%s\"",compact?"ms-icon":"ms-ghost",saved?"true":"false");
+    if(compact){fputs(" aria-label=\"",stdout);fputs(saved?"In your library: ":"Save to library: ",stdout);html(it->title);fputs("\">",stdout);page_glyph(saved?"check":"save");}
+    else{fputs(">",stdout);page_glyph(saved?"check":"save");fputs(saved?"In your library":"Save to library",stdout);}
+    fputs("</button></form>",stdout);
+}
+/* Making starts from what was heard: the person's own Audio Studio. */
+static void ms_make(void){fputs("<a class=\"ms-ghost\" href=\"/apps/audio\">",stdout);page_glyph("edit");fputs("Make with it</a>",stdout);}
 static void ms_narration_text(const PageItem *it){
     if(it->kind!=BF_PAGE_MATERIAL_PUBLICATION||!it->key[0]||!it->body[0]||ms_playable(it))return;
     fputs("<div class=\"ms-narration\" hidden id=\"ms-n-",stdout);html(it->key);fputs("\"><h3>",stdout);
@@ -353,10 +383,7 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
     if(lead->transcript_href[0]&&public_http_url(lead->transcript_href)){
         fputs("<a class=\"ms-ghost\" rel=\"noopener\" href=\"",stdout);html(lead->transcript_href);fputs("\">",stdout);page_glyph("text");fputs("Transcript</a>",stdout);
     }
-    if(page_item_has_page(lead)){
-        fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);fputs("/",stdout);page_url_escape(lead->key);
-        fputs("#item-keep\">",stdout);page_glyph("save");fputs("Keep for later</a>",stdout);
-    }
+    ms_keep(lead,route,0);
     if(lead->by[0]&&lead->source[0]){
         fputs("<a class=\"ms-ghost\" href=\"/people?who=",stdout);page_url_escape(lead->by);fputs("&amp;source=",stdout);page_url_escape(lead->source);
         fputs("\">",stdout);page_glyph("group");fputs("More from ",stdout);html(lead->by);fputs("</a>",stdout);
@@ -381,10 +408,7 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
             if(!ms_playable(it))fputs(" &middot; <em>read aloud</em>",stdout);
             fputs("</p><h3>",stdout);ms_title_link(it);fputs("</h3>",stdout);ms_excerpt(it,"ms-row-text");
             fputs("</div><p class=\"ms-row-meta\">",stdout);ms_dur(it);ms_when(it,now);fputs("</p>",stdout);
-            if(page_item_has_page(it)){
-                fputs("<a class=\"ms-icon\" href=\"/o/",stdout);page_url_escape(it->source);fputs("/",stdout);page_url_escape(it->key);
-                fputs("#item-keep\" aria-label=\"Keep for later\">",stdout);page_glyph("save");fputs("</a>",stdout);
-            }
+            ms_keep(it,route,1);
             if(public_http_url(it->href)){
                 fputs("<a class=\"ms-icon\" rel=\"noopener\" target=\"_blank\" href=\"",stdout);html(it->href);
                 fputs("\" aria-label=\"Open at the publisher\">",stdout);page_glyph("out");fputs("</a>",stdout);
@@ -455,16 +479,15 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
     if(lead->rights[0]){fputs("<p class=\"ms-rights\">",stdout);html(lead->rights);fputs("</p>",stdout);}
     fputs("<div class=\"ms-controls\">",stdout);
     if(ms_playable(lead)){fputs("<button type=\"button\" class=\"ms-primary\"",stdout);ms_track(lead,1);fputs(">",stdout);page_glyph("play");fputs("Play</button>",stdout);}
+    ms_keep(lead,route,0);ms_make();
     if(page_item_has_page(lead)){
-        fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);fputs("/",stdout);page_url_escape(lead->key);
-        fputs("#item-keep\">",stdout);page_glyph("save");fputs("Keep</a>",stdout);
         fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);fputs("/",stdout);page_url_escape(lead->key);
         fputs("\">",stdout);page_glyph("text");fputs("Notes</a>",stdout);
     }
     fputs("</div></div></section>",stdout);
     fputs("<section class=\"ms-tracks\" aria-label=\"Tracks\">",stdout);
     ms_section_head("Tracks","Recordings",NULL);
-    fputs("<table><thead><tr><th scope=\"col\">#</th><th scope=\"col\">Title</th><th scope=\"col\" class=\"ms-col-src\">From</th><th scope=\"col\" class=\"ms-col-when\">Released</th><th scope=\"col\">Time</th></tr></thead><tbody>",stdout);
+    fputs("<table><thead><tr><th scope=\"col\">#</th><th scope=\"col\">Title</th><th scope=\"col\" class=\"ms-col-src\">From</th><th scope=\"col\" class=\"ms-col-when\">Released</th><th scope=\"col\">Time</th><th scope=\"col\" class=\"ms-col-keep\" aria-label=\"Your library\"></th></tr></thead><tbody>",stdout);
     int no=0;
     for(int i=0;i<l->count&&no<30;i++){
         const PageItem *it=l->item[i];if(!ms_playable(it))continue;no++;
@@ -472,7 +495,7 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
         fputs("<button type=\"button\" class=\"ms-no\"",stdout);ms_track(it,0);fputs(" aria-label=\"Play ",stdout);html(it->title);
         printf("\"><span>%02d</span>",no);page_glyph("play");fputs("</button></td><td><b>",stdout);ms_title_link(it);
         fputs("</b><small>",stdout);html(it->by);fputs("</small></td><td class=\"ms-col-src\">",stdout);html(ms_from(it));
-        fputs("</td><td class=\"ms-col-when\">",stdout);ms_when(it,now);fputs("</td><td>",stdout);ms_dur(it);fputs("</td></tr>",stdout);
+        fputs("</td><td class=\"ms-col-when\">",stdout);ms_when(it,now);fputs("</td><td>",stdout);ms_dur(it);fputs("</td><td class=\"ms-col-keep\">",stdout);ms_keep(it,route,1);fputs("</td></tr>",stdout);
     }
     fputs("</tbody></table>",stdout);
     if(!no)ms_empty("None of these releases carry a file this page can play; each opens at its publisher.");
@@ -698,6 +721,7 @@ static int page_media_screen(sqlite3 *db,const char *host,const char *route,cons
         ms_take(l,m,BF_PAGE_MATERIAL_PUBLICATION,0);ms_take(l,m,BF_PAGE_MATERIAL_POST,0);break;
     }
     static const char *names[]={"","listen","music","cinema","art"};
+    ms_saved_open();
     fputs("<div class=\"ms ms-",stdout);fputs(names[mode],stdout);fputs("\" data-media-screen=\"",stdout);fputs(names[mode],stdout);fputs("\">",stdout);
     if(mode==MS_LISTEN)ms_listen(l,route,title,lede,from,q,host,now);
     else if(mode==MS_MUSIC)ms_music(l,route,title,lede,from,q,now);
@@ -705,7 +729,7 @@ static int page_media_screen(sqlite3 *db,const char *host,const char *route,cons
     else ms_art(l,route,title,lede,from,q,now);
     if((!from||!*from)&&(!q||!*q))page_emit_media_spaces(db,route,query,host);
     fputs("</div>",stdout);
-    free(l);free(sound);
+    ms_saved_close();free(l);free(sound);
     return 1;
 }
 

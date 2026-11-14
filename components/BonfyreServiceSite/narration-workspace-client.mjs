@@ -16,7 +16,7 @@ if(root&&path){
  list.className='narration-worklist';
  index.className='narration-production-index';more.type='button';more.hidden=true;
  root.append(ui('h2','Narration productions'),
-   ui('p','Review scripts and voice settings, retain recorded takes, and prepare audio editions. Saving a take never publishes it.'),
+   ui('p','Write the script, record or render a take, and set its music. Saving a take never publishes it.'),
    status,index,more,list);
  const style=ui('style');
  style.textContent='[data-narration-workspace]{margin:20px auto;max-width:1100px;padding:20px;border:1px solid #496451;border-radius:12px;background:#18291f;color:#edf5ee}'+
