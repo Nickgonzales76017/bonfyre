@@ -29,7 +29,6 @@ architecture incumbent-coordination-phenotypes
   source_path cmd/BonfyreExternalEstate/tools/materialize_incumbent_records.mjs
   source_path cmd/BonfyreExternalEstate/tools/collect_public_carrier.mjs
   source_path cmd/BonfyreExternalEstate/tools/promote_external_resource.mjs
-  source_path cmd/BonfyreExternalEstate/tools/normalize_incumbent_provider_records.mjs
   source_path cmd/BonfyreExternalEstate/tools/ingest_incumbent_record.mjs
   source_path cmd/BonfyreCMS/content-types/external_participation_carrier.json
   source_path cmd/BonfyreCMS/content-types/external_provider_connection.json

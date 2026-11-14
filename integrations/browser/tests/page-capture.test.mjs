@@ -1,4 +1,5 @@
 import { test, expect } from "bun:test";
+import {loopbackServer} from './browser-fixture.mjs';
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,7 +15,7 @@ const html = `<!doctype html><html><head><title>Offer</title></head><body>
 </body></html>`;
 
 test.skipIf(!findChrome())("one reading keeps the response, the document, the layout, the accessibility tree and the picture under one identity", async () => {
-  const server = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: () => new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } }) });
+  const server = loopbackServer({ port: 0, hostname: "127.0.0.1", fetch: () => new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } }) });
   const out = mkdtempSync(join(tmpdir(), "bonfyre-page-capture-"));
   try {
     const url = `http://127.0.0.1:${server.port}/offer`;

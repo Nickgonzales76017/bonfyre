@@ -1,0 +1,188 @@
+{
+  "schema": "aurekai.dating.composition.v1",
+  "reference": "User-provided Stitch dating reference archive",
+  "template": {
+    "template": "aurekai-dating-editorial",
+    "reference_source": "user-uploaded-stitch-aurekai-item-detail-page-1",
+    "reference_name": "Aurekai Editorial · Five contextual dating UI references",
+    "reference_url": "https://stitch.withgoogle.com/",
+    "reference_categories": "member-to-member, private dating, responsive cards, editorial conversation, profile authoring",
+    "family": "member-experience",
+    "renderer_mix": "native-surfaceir, cms-composed-copy, native-participation, shared-authoring",
+    "density": "airy",
+    "hero_mode": "masthead",
+    "navigation_mode": "inline",
+    "media_mode": "profile-cms-gallery",
+    "typography_mode": "modern-sans-serif-pair",
+    "card_mode": "ruled-row",
+    "chrome_mode": "integrated-profile",
+    "territory_affinity": "life",
+    "semantic_roles": {
+      "scope": "private account profile",
+      "screens": [
+        "discover",
+        "matches",
+        "chat",
+        "studio"
+      ],
+      "source_owners": [
+        "BonfyreAuth",
+        "BonfyreParticipation",
+        "BonfyreCMS",
+        "BonfyreWebAddress"
+      ],
+      "mobile": "scroll-snap deck with pointer and keyboard-operable forms",
+      "source_boundary": "published Life profile and gallery read from CMS",
+      "action_boundary": "all decisions from native Participation, with independent eligibility",
+      "authoring": "shared GrapesJS, Puck, Editor.js, MD4C document composition"
+    },
+    "layout_tokens": {
+      "ground": "#0f1511",
+      "ink": "#dee4dd",
+      "display": "#f1f5e9",
+      "accent": "#d0fc4f",
+      "muted": "#acb8aa",
+      "rule": "#455241",
+      "panel": "#171d19",
+      "radius": "4px",
+      "measure": "76ch",
+      "gap": "24px",
+      "face_display": "'DM Sans',system-ui,sans-serif",
+      "face_body": "'Literata',Georgia,serif",
+      "face_mono": "ui-monospace,monospace",
+      "display_weight": "600",
+      "display_tracking": "-0.045em",
+      "display_leading": "1.08",
+      "font_href": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Literata:ital,wght@0,400;1,400&display=swap"
+    },
+    "acceptance_contract": "discover/matches/chat/studio reuse one authenticated member profile, authored published CMS content, and native consent; no sample users; all 4 screen fragments are private and typed",
+    "cannot_infer": "A presentation template and Stitch study supply visual choices only. They are not a dating enrollment, age verification, message, community or governance authority, and do not publish member information.",
+    "status": "published"
+  },
+  "fragments": [
+    {
+      "coordinate": "aurekai-dating-discover-v1",
+      "page": "/profile/dating",
+      "slot": "discover",
+      "audience": "self",
+      "kind": "dating-view",
+      "position": 1,
+      "eyebrow": "AUREKAI LIFE / DISCOVER",
+      "heading": "Meet beyond the profile",
+      "body": "Good connections start with curiosity. Discover members through the words, places, music and art they choose to share. Introductions are private, and consent always comes first.",
+      "label": "discover",
+      "source_ref": "stitch:aurekai-dating:discover",
+      "notes": "Private editorial copy only; cannot act on a person or publish their data.",
+      "semantic_tags": {
+        "contexts": [
+          "life",
+          "dating"
+        ],
+        "composition": "Aurekai Editorial",
+        "version": 1,
+        "screen": "discover",
+        "privacy": "private"
+      },
+      "projection_contract": {
+        "read": "cms:site_fragment",
+        "effect": "none",
+        "actor": "authenticated-self",
+        "owner": "BonfyreCMS"
+      },
+      "status": "published"
+    },
+    {
+      "coordinate": "aurekai-dating-matches-v1",
+      "page": "/profile/dating",
+      "slot": "matches",
+      "audience": "self",
+      "kind": "dating-view",
+      "position": 2,
+      "eyebrow": "AUREKAI LIFE / MATCHES",
+      "heading": "Worth getting to know",
+      "body": "Your connections, replies, and introductions live in one calm place. You decide who becomes a conversation.",
+      "label": "matches",
+      "source_ref": "stitch:aurekai-dating:matches",
+      "notes": "Private editorial copy only; cannot act on a person or publish their data.",
+      "semantic_tags": {
+        "contexts": [
+          "life",
+          "dating"
+        ],
+        "composition": "Aurekai Editorial",
+        "version": 1,
+        "screen": "matches",
+        "privacy": "private"
+      },
+      "projection_contract": {
+        "read": "cms:site_fragment",
+        "effect": "none",
+        "actor": "authenticated-self",
+        "owner": "BonfyreCMS"
+      },
+      "status": "published"
+    },
+    {
+      "coordinate": "aurekai-dating-chat-v1",
+      "page": "/profile/dating",
+      "slot": "chat",
+      "audience": "self",
+      "kind": "dating-view",
+      "position": 3,
+      "eyebrow": "AUREKAI LIFE / CONVERSATION",
+      "heading": "Make room for a real conversation",
+      "body": "Every conversation begins with an explicit mutual yes. Share thoughts, take your time, and make plans only after both people agree.",
+      "label": "chat",
+      "source_ref": "stitch:aurekai-dating:chat",
+      "notes": "Private editorial copy only; cannot act on a person or publish their data.",
+      "semantic_tags": {
+        "contexts": [
+          "life",
+          "dating"
+        ],
+        "composition": "Aurekai Editorial",
+        "version": 1,
+        "screen": "chat",
+        "privacy": "private"
+      },
+      "projection_contract": {
+        "read": "cms:site_fragment",
+        "effect": "none",
+        "actor": "authenticated-self",
+        "owner": "BonfyreCMS"
+      },
+      "status": "published"
+    },
+    {
+      "coordinate": "aurekai-dating-studio-v1",
+      "page": "/profile/dating",
+      "slot": "studio",
+      "audience": "self",
+      "kind": "dating-view",
+      "position": 4,
+      "eyebrow": "AUREKAI LIFE / PROFILE STUDIO",
+      "heading": "Your story is yours to tell",
+      "body": "Compose your public Life profile with Aurekai's page builder and editor. Privately choose which questions matter to you without publishing your answers.",
+      "label": "studio",
+      "source_ref": "stitch:aurekai-dating:studio",
+      "notes": "Private editorial copy only; cannot act on a person or publish their data.",
+      "semantic_tags": {
+        "contexts": [
+          "life",
+          "dating"
+        ],
+        "composition": "Aurekai Editorial",
+        "version": 1,
+        "screen": "studio",
+        "privacy": "private"
+      },
+      "projection_contract": {
+        "read": "cms:site_fragment",
+        "effect": "none",
+        "actor": "authenticated-self",
+        "owner": "BonfyreCMS"
+      },
+      "status": "published"
+    }
+  ]
+}

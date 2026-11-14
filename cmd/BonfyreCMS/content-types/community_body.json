@@ -7,6 +7,7 @@
     "subject_address": {"type": "string", "required": true},
     "title": {"type": "string", "required": true},
     "description": {"type": "text", "required": false},
+    "interest_label": {"type": "string", "required": false},
     "visibility": {"type": "string", "required": true},
     "governance_scope": {"type": "string", "required": false},
     "moderation_policy": {"type": "string", "required": false},

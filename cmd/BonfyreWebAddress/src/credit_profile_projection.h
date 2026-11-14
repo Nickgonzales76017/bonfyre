@@ -26,6 +26,8 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
     if(media_only && (!page_image_url_safe(image) || page_picture_withheld(image)))continue;
     fputs("<article class=\"ph-post\" data-credit-publication>",stdout);
     if(image&&page_image_url_safe(image)&&!page_picture_withheld(image))page_emit_picture(image,"ph-credit-media");
+    /* Absolute: the profile also answers at its own credited host, where the
+     * item does not; the publication opens on the territory that admitted it. */
     fputs("<h3><a href=\"https://aurekai.work/o/",stdout);
    url_query_value(source);fputc('/',stdout);url_query_value(key);fputs("\">",stdout);html(title);
    fputs("</a></h3><p>",stdout);
@@ -100,6 +102,9 @@ static int serve_credit_profile(const char *method,const char *target,const char
             " AND (lower(COALESCE(label,''))=lower(?2) OR lower(COALESCE(publisher_name,''))=lower(?2)) LIMIT 1",
             -1,&source_decl,NULL)!=SQLITE_OK){
             sqlite3_finalize(source_decl);if(cms)sqlite3_close(cms);sqlite3_close(db);
+            /* No declarations to check means no admitted credit: the ordinary
+             * people page answers, and only an explicit profile asks for more. */
+            if(!explicit_profile)return 0;
             ph_error(503,"Publisher evidence declarations are unavailable.\n");return 1;
         }
         sqlite3_bind_text(source_decl,1,source,-1,SQLITE_TRANSIENT);
@@ -118,9 +123,8 @@ static int serve_credit_profile(const char *method,const char *target,const char
     snprintf(profile.territory,sizeof(profile.territory),"work");
     snprintf(profile.name,sizeof(profile.name),"%s",by);
     /* No claim, account, follow authority or editor is inferred. */
-    ph_begin(&profile,by,0,tab);
+    ph_begin(NULL,&profile,by,0,tab,NULL);
     ph_nav(&profile,1,&profile,tab,0);
-    fputs("<style>.ph-credit-section{padding:22px 0 30px;border-bottom:1px solid var(--ph-line);scroll-margin-top:20px}.ph-credit-section h2{font:400 32px Georgia,serif}.ph-credit-section a{overflow-wrap:anywhere} .ph-post>.ph-credit-media{display:block;width:100%;max-height:290px;object-fit:cover;border-radius:13px;margin:10px 0 16px}</style>",stdout);
     fputs("<nav class=\"ph-parent\" data-subprofile-parent-subject=\"",stdout);html(parent.subject);
     fputs("\" data-subprofile-parent-account=\"",stdout);html(parent.account_id);
     fputs("\" data-subprofile-account=\"",stdout);html(parent.subaccount_id);
@@ -147,11 +151,11 @@ static int serve_credit_profile(const char *method,const char *target,const char
     fputs(". This is not a claimed biography or identity verification.</p></section>",stdout);
     fputs("<section id='communities'><h2>Communities</h2>"
           "<p>No public community ownership is established by a publisher byline.</p>"
-          "<a href='https://aurekai.work/community'>Explore published communities</a></section>",stdout);
+          "<a href='/community'>Explore published communities</a></section>",stdout);
     fputs("<section id='organizations'><h2>Organizations</h2>"
           "<p>A publishing source is not evidence of organizational membership.</p>"
-          "<a href='https://aurekai.work/organisations'>Explore source-backed organizations</a></section>",stdout);
-    ph_end();
+          "<a href='/organisations'>Explore source-backed organizations</a></section>",stdout);
+    fputs("</section></div></main>" BF_ESTATE_FOOT "</body></html>",stdout); /* credited pages carry no member posts, so no post filter script */
     return 1;
 }
 #endif

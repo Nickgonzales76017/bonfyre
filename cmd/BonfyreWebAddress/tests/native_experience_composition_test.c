@@ -63,6 +63,8 @@ int main(int argc,char **argv) {
     long n=ftell(out);assert(n>3500&&n<30000);rewind(out);
     char *text=calloc((size_t)n+1,1);assert(text);
     assert(fread(text,1,(size_t)n,out)==(size_t)n);
+    assert(strstr(text,"href=\"/assets/native-experience.css\""));
+    assert(!strstr(text,"<style"));
     assert(strstr(text,"data-ak-experience=\"media\""));
     assert(strstr(text,"data-exp-shell=\"player\""));
     assert(strstr(text,"data-exp-lane=\"hero\""));

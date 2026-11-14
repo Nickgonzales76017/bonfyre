@@ -1,0 +1,18 @@
+{
+  "name": "work_order_party",
+  "displayName": "Work Order Party",
+  "description": "One account named on a work order by its opener, with the part they are asked to play and the compensation stated for it. Being named is not agreeing: a party has agreed only when that party records acceptance of the terms themselves. Stated compensation is a written term, never a payment, a balance or a promise this estate can keep.",
+  "attributes": {
+    "party_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "work_order_id": { "type": "string", "required": true },
+    "party_subject": { "type": "string", "required": true },
+    "part": { "type": "string", "required": true },
+    "role_program": { "type": "string" },
+    "compensation_stated": { "type": "string" },
+    "compensation_basis": { "type": "text" },
+    "named_by": { "type": "string", "required": true },
+    "named_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -16,7 +16,9 @@ import { PRODUCTS_PROJECT_TOOLS } from './project_products.mjs';
 import { knightIcons, withMcpIcons } from './brand.mjs';
 import { authorizationRequestValid } from './oauth_request_policy.mjs';
 import { WORKSPACE_MCP_TOOLS, createWorkspaceMcp } from './workspace_mcp.mjs';
+import { readAccountMeasurements,readInstitutionMeasurements } from './connected_measurement.mjs';
 import { WORKBOOK_APP_URI, WORKBOOK_APP_RESOURCE, readWorkbookApp } from './workbook_app_resource.mjs';
+import { CONNECTED_APP_URI, CONNECTED_APP_RESOURCE, readConnectedApp } from './connected_measurement_app_resource.mjs';
 
 const workspaceCall = createWorkspaceMcp({ownerUrl:process.env.BONFYRE_WORKSPACE_OWNER_URL || 'http://127.0.0.1:28901',publicOrigin:process.env.BONFYRE_WORKSPACE_PUBLIC_ORIGIN || 'https://aurekai.work'});
 const workspaceTool = name => WORKSPACE_MCP_TOOLS.some(tool=>tool.name===name);
@@ -155,6 +157,41 @@ async function continuityFetch(path, body) {
   if (!reply.ok) throw new Error('oauth_transaction_store_unavailable');
   return reply.status === 204 ? null : reply.json();
 }
+
+async function providerHistorySummary(args) {
+  const days=args.days===undefined?365:args.days,limit=args.limit===undefined?25:args.limit;
+  if(!Number.isInteger(days)||days<1||days>730||!Number.isInteger(limit)||limit<1||limit>50)
+    throw new Error('provider_history_bounds_invalid');
+  if(!placementSupabaseUrl||!placementSupabaseKey)
+    throw new Error('provider_history_source_not_configured');
+  const since=new Date(Date.now()-days*86400000).toISOString();
+  let response;
+  try {
+    response=await fetch(placementSupabaseUrl+'/rest/v1/rpc/provider_receipt_summary',{
+      method:'POST',headers:{apikey:placementSupabaseKey,Authorization:'Bearer '+placementSupabaseKey,
+        'Content-Type':'application/json'},
+      body:JSON.stringify({p_since:since,p_limit:limit}),signal:AbortSignal.timeout(15000)});
+  }catch{throw new Error('provider_history_source_unavailable');}
+  if(!response.ok)throw new Error('provider_history_source_unavailable');
+  let rows;try{rows=await response.json();}catch{throw new Error('provider_history_invalid_response');}
+  if(!Array.isArray(rows)||rows.length>limit)throw new Error('provider_history_invalid_response');
+  const data=rows.map(row=>{
+    const attempts=Number(row.attempts),successes=Number(row.successes);
+    if(typeof row.provider_ref!=='string'||!/^[a-z0-9_-]{1,64}$/.test(row.provider_ref)||
+       typeof row.call_class!=='string'||!/^[a-z0-9_-]{1,32}$/.test(row.call_class)||
+       !Number.isSafeInteger(attempts)||attempts<0||
+       !Number.isSafeInteger(successes)||successes<0||successes>attempts||
+       !Number.isFinite(Date.parse(row.first_observed))||
+       !Number.isFinite(Date.parse(row.last_observed))||
+       Date.parse(row.first_observed)>Date.parse(row.last_observed))
+       throw new Error('provider_history_invalid_response');
+    return {provider:row.provider_ref,call_class:row.call_class,attempts,successes,
+      first_observed:row.first_observed,last_observed:row.last_observed};
+  });
+  return {owner:'Supabase historical provider receipt projection',period_start:since,
+    current_availability:'not_measured',authority:'diagnostic_only',raw_receipts_exposed:false,
+    data,source:'bonfyre-control-mirror'};
+}
 async function storeAuthorizationCode(code, record) {
   if (!durableOAuthTransactions) {
     if (placementSupabaseUrl || placementSupabaseKey || oauthSealSecret) throw new Error('oauth_transaction_store_incomplete');
@@ -252,12 +289,13 @@ function discoverResult(name, instructions) {
 }
 function actorClosureUri(actor) { return `bonfyre://closure/actor/${encodeURIComponent(actor)}`; }
 function institutionClosureUri(estate, scope) { return `bonfyre://closure/institution/${encodeURIComponent(estate)}/${encodeURIComponent(scope)}`; }
-function selfResources(slice) { return [{uri:actorClosureUri(slice.actor),name:'Current actor closure',description:'Current authenticated actor-local Bonfyre closure; projection only, never an authority grant.',mimeType:'application/json'},WORKBOOK_APP_RESOURCE]; }
-function privateResources(slice) { return [{uri:actorClosureUri(slice.actor),name:'Current actor closure',description:'Current authenticated actor coordinate for this institutional aperture.',mimeType:'application/json'},...slice.estates.map(({estate,scope})=>({uri:institutionClosureUri(estate,scope),name:`${estate} institutional closure`,description:'Current revocable institution/scope projection; native owners retain authority.',mimeType:'application/json'}))].sort((a,b)=>a.uri.localeCompare(b.uri)); }
+function selfResources(slice) { return [{uri:actorClosureUri(slice.actor),name:'Current actor closure',description:'Current authenticated actor-local Bonfyre closure; projection only, never an authority grant.',mimeType:'application/json'},WORKBOOK_APP_RESOURCE,CONNECTED_APP_RESOURCE]; }
+function privateResources(slice) { return [{uri:actorClosureUri(slice.actor),name:'Current actor closure',description:'Current authenticated actor coordinate for this institutional aperture.',mimeType:'application/json'},...slice.estates.map(({estate,scope})=>({uri:institutionClosureUri(estate,scope),name:`${estate} institutional closure`,description:'Current revocable institution/scope projection; native owners retain authority.',mimeType:'application/json'})),CONNECTED_APP_RESOURCE].sort((a,b)=>a.uri.localeCompare(b.uri)); }
 function closureResourceRead(slice, uri, institutional) { let value; if (uri===actorClosureUri(slice.actor)) value={schema_version:'bonfyre.mcp.actor-closure.v1',actor:slice.actor,kind:institutional?'institution-participant':'self',limit:'Current closure coordinate only; not identity proof, disclosure permission, payment approval, provider admission, or effect authority.'}; else if (institutional) { const found=slice.estates.find(({estate,scope})=>institutionClosureUri(estate,scope)===uri); if (!found) return null; value={schema_version:'bonfyre.mcp.institution-closure.v1',actor:slice.actor,estate:found.estate,scope:found.scope,inherited:found.inherited===true,namespace:found.namespace,limit:'Current institutional admission only; every owner/effect boundary remains independently enforced.'}; } else return null; return {contents:[{uri,mimeType:'application/json',text:JSON.stringify(value,null,2)}]}; }
 function modernRead(name, result, slice, tools, resources) { return modernEnvelope(name,{...result,ttlMs:MCP_LIST_TTL_MS,cacheScope:'private',_meta:{'aurekai/addressApertureDigest':apertureDigest(slice,tools,resources)}}); }
 function privateTools() { return [
   {name:'institution_closures',description:'List only the caller\'s current private institutional closures. This returns estate and scope coordinates, never client records.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
+  {name:'institution_connected_measurements',description:'Read source-dated measurements for one institution in the caller current verified closure. No arbitrary subject selection, publishing, or external effects.',inputSchema:{type:'object',properties:{estate:{type:'string'},provider:{type:'string',pattern:'^[a-z][a-z0-9_]{0,47}$'},limit:{type:'integer',minimum:1,maximum:100}},required:['estate'],additionalProperties:false},annotations:{readOnlyHint:true},_meta:{ui:{resourceUri:CONNECTED_APP_URI}}},
   {name:'institution_cms_list',description:'Read entries from a content type in one currently admitted private institutional CMS namespace.',inputSchema:{type:'object',properties:{estate:{type:'string'},type:{type:'string'},limit:{type:'integer',minimum:1,maximum:100}},required:['estate','type'],additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'institution_cms_create',description:'Create a declared native CMS record inside one currently admitted private institutional namespace. This is not public publication.',inputSchema:{type:'object',properties:{estate:{type:'string'},type:{type:'string'},document:{type:'object'}},required:['estate','type','document'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'institution_foreign_observe',description:'Observe one public URL through the native ForeignTwin observer and retain its body and receipt inside the caller\'s private institutional closure. Observation is not truth, publication, or effect authority.',inputSchema:{type:'object',properties:{estate:{type:'string'},twin_id:{type:'string'},url:{type:'string',format:'uri'}},required:['estate','twin_id','url'],additionalProperties:false},annotations:{readOnlyHint:false}},
@@ -265,6 +303,7 @@ function privateTools() { return [
 ]; }
 function selfTools() { return [
   ...WORKSPACE_MCP_TOOLS,
+  {name:'self_connected_measurements',description:'Read source-dated connected measurements for this verified account. No provider effect or publication.',inputSchema:{type:'object',properties:{provider:{type:'string',pattern:'^[a-z][a-z0-9_]{0,47}$'},limit:{type:'integer',minimum:1,maximum:100}},additionalProperties:false},annotations:{readOnlyHint:true},_meta:{ui:{resourceUri:CONNECTED_APP_URI}}},
   {name:'self_closure',description:'Return only this actor\'s personal closure coordinates and bounded self surfaces. It is not an institution, public profile, or authority grant.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'self_cms_list',description:'List this actor\'s private PhysicalCarrier recipes in the actor-local CMS namespace. A recipe is not a QR/payload/effect.',inputSchema:{type:'object',properties:{limit:{type:'integer',minimum:1,maximum:100}},additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'self_foreign_observe',description:'Observe one public URL through ForeignTwin into this actor\'s private root. It retains a receipt/body only; observation is neither publication nor truth/effect authority.',inputSchema:{type:'object',properties:{twin_id:{type:'string'},url:{type:'string',format:'uri'}},required:['twin_id','url'],additionalProperties:false},annotations:{readOnlyHint:false}}
@@ -282,13 +321,15 @@ function adminTools() { return [
   {name:'bonfyre_admin_user_update',description:'Change one user\'s tier or active state through BonfyreAuth. This does not create institution grants, rewrite CMS, or grant effects.',inputSchema:{type:'object',properties:{user_id:{type:'integer',minimum:1},tier:{type:'string',enum:['free','pro','enterprise']},active:{type:'boolean'}},required:['user_id'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_sessions_revoke',description:'Immediately revoke every active session for one user through BonfyreAuth. The user may sign in again for a fresh closure.',inputSchema:{type:'object',properties:{user_id:{type:'integer',minimum:1}},required:['user_id'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_external_descriptors',description:'Read retained public protocol descriptor candidates from MachineMembrane. A descriptor remains only a declared carrier candidate, never an admitted provider, authorized tool, payment route, identity assertion, or effect right.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true}},
+  {name:'bonfyre_admin_connected_measurements',description:'Read source-dated connected measurements scoped to the native administrator identity. No external effect or provider health claim.',inputSchema:{type:'object',properties:{provider:{type:'string',pattern:'^[a-z][a-z0-9_]{0,47}$'},limit:{type:'integer',minimum:1,maximum:100}},additionalProperties:false},annotations:{readOnlyHint:true},_meta:{ui:{resourceUri:CONNECTED_APP_URI}}},
+  {name:'bonfyre_admin_provider_history',description:'Read bounded historical provider attempt/success aggregates from the existing Supabase continuity projection. Observation dates are retained; this never reports current provider health, cost, spend, approval or execution authority. Requires the administrator closure and configured service-role provider.',inputSchema:{type:'object',properties:{days:{type:'integer',minimum:1,maximum:730},limit:{type:'integer',minimum:1,maximum:50}},additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'bonfyre_admin_provider_materializations',description:'List active, unexpired provider-file, vector-store, collection, container, batch, or remote-URI materialization receipts. These are replaceable scoped body residency only: never artifact identity, canonical knowledge, provider authority, credentials, spend approval, or an admitted result.',inputSchema:{type:'object',properties:{provider:{type:'string'},artifact_sid:{type:'string'}},additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'bonfyre_admin_provider_materialization_release',description:'Retire one provider materialization receipt from reuse. This records released residency and does not delete the canonical artifact, its evidence, a provider account, or an external body.',inputSchema:{type:'object',properties:{receipt_id:{type:'integer',minimum:1},reason:{type:'string',minLength:1,maxLength:160}},required:['receipt_id','reason'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_institution_grant',description:'Grant one user one revocable read/write/admin admission for one named institution through BonfyreAuth. Object-level authority remains independently owned.',inputSchema:{type:'object',properties:{user_id:{type:'integer',minimum:1},institution:{type:'string'},role:{type:'string',enum:['read','write','admin']},expires_at:{type:'string'}},required:['user_id','institution','role'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_institution_revoke',description:'Revoke one user\'s named institutional admission immediately through BonfyreAuth.',inputSchema:{type:'object',properties:{user_id:{type:'integer',minimum:1},institution:{type:'string'}},required:['user_id','institution'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_cms_list',description:'List canonical BonfyreCMS copy in one explicit namespace. The native schema remains authoritative.',inputSchema:{type:'object',properties:{type:{type:'string'},namespace:{type:'string'},limit:{type:'integer',minimum:1,maximum:100}},required:['type'],additionalProperties:false},annotations:{readOnlyHint:true}},
   {name:'bonfyre_admin_cms_create',description:'Create schema-validated canonical CMS copy in one explicit namespace. Creation is not publication or an external effect.',inputSchema:{type:'object',properties:{type:{type:'string'},namespace:{type:'string'},document:{type:'object'}},required:['type','document'],additionalProperties:false},annotations:{readOnlyHint:false}},
-  {name:'bonfyre_admin_cms_update',description:'Update schema-validated canonical CMS copy by type and id in one explicit namespace (default root). This does not bypass publication, evidence, financial, or effect owners.',inputSchema:{type:'object',properties:{type:{type:'string'},namespace:{type:'string'},id:{type:'integer',minimum:1},document:{type:'object'}},required:['type','id','document'],additionalProperties:false},annotations:{readOnlyHint:false}},
+  {name:'bonfyre_admin_cms_update',description:'Update schema-validated canonical CMS copy by type and id in one explicit namespace (default root). Older cached tool schemas may pass document.__namespace as a scoped routing coordinate; it is never persisted. Conflicting scopes are refused. This does not bypass publication, evidence, financial, or effect owners.',inputSchema:{type:'object',properties:{type:{type:'string'},namespace:{type:'string'},id:{type:'integer',minimum:1},document:{type:'object'}},required:['type','id','document'],additionalProperties:false},annotations:{readOnlyHint:false}},
   {name:'bonfyre_admin_cms_delete',description:'Delete one canonical CMS row by type and id in one explicit namespace (default root) through the native CMS owner. The action is auditable but does not erase downstream canonical history.',inputSchema:{type:'object',properties:{type:{type:'string'},namespace:{type:'string'},id:{type:'integer',minimum:1}},required:['type','id'],additionalProperties:false},annotations:{readOnlyHint:false}}
 ]; }
 function positiveId(v) { return Number.isInteger(v) && v > 0 && v <= 2147483647; }
@@ -298,6 +339,7 @@ async function privateToolCall(slice, name, args) {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('arguments_must_be_object');
   if (name === 'institution_closures') return {actor:slice.actor,closures:slice.estates.map(({estate,scope,inherited})=>({estate,scope,inherited})),limit:'closure coordinates only; query an owner through a listed tool'};
   const selected=selectEstate(slice,args.estate);
+  if (name === 'institution_connected_measurements') return readInstitutionMeasurements({estates:slice.estates,estate:selected.estate,provider:args.provider,limit:args.limit??100,baseUrl:placementSupabaseUrl,key:placementSupabaseKey});
   if (name === 'institution_cms_list') {
     if (!atom(args.type,96)) throw new Error('invalid_content_type');
     const limit=Number.isInteger(args.limit) ? args.limit : 25;
@@ -328,6 +370,7 @@ async function privateToolCall(slice, name, args) {
 }
 async function selfToolCall(slice, name, args) {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('arguments_must_be_object');
+  if (name === 'self_connected_measurements') return readAccountMeasurements({actor:slice.actor,provider:args.provider,limit:args.limit??100,baseUrl:placementSupabaseUrl,key:placementSupabaseKey});
   if (name === 'self_closure') return {actor:slice.actor,namespace:slice.namespace,territory:'life',scope:'self',surfaces:['/studio/v1/profile','/cms/','/studio/v1/self/foreign/observe'],limit:'This is an actor-local closure only; it names no public profile, institution, provider, payment, or effect authority'};
   if (name === 'self_cms_list') {
     const limit=Number.isInteger(args.limit) ? args.limit : 25;
@@ -345,7 +388,7 @@ async function selfToolCall(slice, name, args) {
   }
   throw new Error('unknown_self_tool');
 }
-async function adminToolCall(name, args) {
+async function adminToolCall(name, args, slice) {
   if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('arguments_must_be_object');
   if (name.startsWith('bonfyre_admin_credential')) {
     const base=['--db',credentialsDb,'--providers',credentialProviders];
@@ -387,6 +430,8 @@ async function adminToolCall(name, args) {
     }
     throw new Error('unknown_credential_tool');
   }
+  if (name === 'bonfyre_admin_connected_measurements') return readAccountMeasurements({actor:slice?.actor,provider:args.provider,limit:args.limit??100,baseUrl:placementSupabaseUrl,key:placementSupabaseKey});
+  if (name === 'bonfyre_admin_provider_history') return await providerHistorySummary(args);
   if (name === 'bonfyre_admin_status') return {owner:'BonfyreAuth',status:(await run([authBinary,'--db',authDb,'status'])).trim(),limit:'Aggregate status is administrative observability, not an institution/object/effect closure'};
   if (name === 'bonfyre_admin_users') {
     const output=await run([authBinary,'--db',authDb,'users']);
@@ -441,8 +486,9 @@ async function adminToolCall(name, args) {
     const limit=Number.isInteger(args.limit) ? args.limit : 25;
     const argv=[cmsBinary,'entry','list',args.type,'--ns',args.namespace || 'root','--limit',String(Math.max(1,Math.min(limit,100))),'--db',cmsDb,'--schemas',cmsSchemas];
     const output=await run(argv);
-    try { return {owner:'BonfyreCMS',namespace:args.namespace || 'root',entries:JSON.parse(output),limit:'Copy remains subject to its declared CMS schema and downstream publication/owner boundaries'}; }
-    catch { return {owner:'BonfyreCMS',namespace:args.namespace || 'root',receipt:output.trim()}; }
+    let entries; try { entries=JSON.parse(output); } catch { throw new Error('cms_list_invalid_native_response'); }
+    if (!entries || !Array.isArray(entries.data) || !entries.meta || !Number.isInteger(entries.meta.total)) throw new Error('cms_list_invalid_native_response');
+    return {owner:'BonfyreCMS',namespace:args.namespace || 'root',entries,limit:'Copy remains subject to its declared CMS schema and downstream publication/owner boundaries'};
   }
   if (name === 'bonfyre_admin_cms_create') {
     if (!atom(args.type,96) || (args.namespace !== undefined && !atom(args.namespace,128)) || !args.document || typeof args.document !== 'object' || Array.isArray(args.document)) throw new Error('invalid_cms_create');
@@ -451,8 +497,18 @@ async function adminToolCall(name, args) {
   }
   if (name === 'bonfyre_admin_cms_update') {
     if (!atom(args.type,96) || (args.namespace !== undefined && !atom(args.namespace,128)) || !positiveId(args.id) || !args.document || typeof args.document !== 'object' || Array.isArray(args.document)) throw new Error('invalid_cms_update');
-    const output=await run([cmsBinary,'entry','update',args.type,String(args.id),JSON.stringify(args.document),'--ns',args.namespace || 'root','--db',cmsDb,'--schemas',cmsSchemas]);
-    return {owner:'BonfyreCMS',namespace:args.namespace || 'root',updated:JSON.parse(output),limit:'A CMS update preserves the schema boundary and cannot itself authorize a downstream effect'};
+    // Cached MCP clients can lack the top-level namespace field even though
+    // this native owner supports it. A reserved nested scope preserves the
+    // exact namespace while staying inside their already-admitted schema.
+    const embedded=Object.hasOwn(args.document,'__namespace')?args.document.__namespace:undefined;
+    if ((embedded !== undefined && !atom(embedded,128)) ||
+        (embedded !== undefined && args.namespace !== undefined && embedded !== args.namespace))
+      throw new Error('conflicting_or_invalid_cms_namespace');
+    const namespace=args.namespace ?? embedded ?? 'root',document={...args.document};
+    delete document.__namespace;
+    if (!Object.keys(document).length) throw new Error('empty_cms_update');
+    const output=await run([cmsBinary,'entry','update',args.type,String(args.id),JSON.stringify(document),'--ns',namespace,'--db',cmsDb,'--schemas',cmsSchemas]);
+    return {owner:'BonfyreCMS',namespace,updated:JSON.parse(output),limit:'A CMS update preserves the schema boundary and cannot itself authorize a downstream effect'};
   }
   if (name === 'bonfyre_admin_cms_delete') {
     if (!atom(args.type,96) || (args.namespace !== undefined && !atom(args.namespace,128)) || !positiveId(args.id)) throw new Error('invalid_cms_delete');
@@ -499,7 +555,7 @@ async function forwardPrivate(req, res, raw, slice) {
       catch (error) { return mcpReply(res,id,textResult({error:String(error.message || error),tool:name},true)); }
     }
     if (method === 'resources/list') { const resources=withMcpIcons(privateResources(slice),MCP_ICONS), result={resources}, digest=apertureDigest(slice,privateTools(),resources); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
-    if (method === 'resources/read') { const resources=privateResources(slice), result=closureResourceRead(slice,String(params.uri||''),true); if (!result) return mcpReply(res,id,{contents:[],isError:true}); return mcpReply(res,id,modern ? modernRead(serverName,result,slice,privateTools(),resources) : result); }
+    if (method === 'resources/read') { const resources=privateResources(slice), result=await readConnectedApp(String(params.uri||'')) || closureResourceRead(slice,String(params.uri||''),true); if (!result) return mcpReply(res,id,{contents:[],isError:true}); return mcpReply(res,id,modern ? modernRead(serverName,result,slice,privateTools(),resources) : result); }
     if (method === 'resources/templates/list') { const result={resourceTemplates:[]}, digest=apertureDigest(slice,privateTools()); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
     if (method === 'prompts/list') { const result={prompts:[]}, digest=apertureDigest(slice,privateTools()); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
     return json(res,200,{jsonrpc:'2.0',id,error:{code:-32601,message:'method_not_in_current_institution_slice'}});
@@ -524,13 +580,13 @@ async function forwardSelf(req, res, raw, slice) {
       catch (error) { return mcpReply(res,id,textResult({error:String(error.message || error),tool:name,...(workspaceTool(name)?{status:error.status||400,request_id:error.request_id,reconcile:error.reconcile}:{})},true)); }
     }
     if (method === 'resources/list') { const resources=withMcpIcons(selfResources(slice),MCP_ICONS), result={resources}, digest=apertureDigest(slice,selfTools(),resources); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
-    if (method === 'resources/read') { const resources=selfResources(slice), result=await readWorkbookApp(String(params.uri||'')) || closureResourceRead(slice,String(params.uri||''),false); if (!result) return mcpReply(res,id,{contents:[],isError:true}); return mcpReply(res,id,modern ? modernRead(serverName,result,slice,selfTools(),resources) : result); }
+    if (method === 'resources/read') { const resources=selfResources(slice), result=await readWorkbookApp(String(params.uri||'')) || await readConnectedApp(String(params.uri||'')) || closureResourceRead(slice,String(params.uri||''),false); if (!result) return mcpReply(res,id,{contents:[],isError:true}); return mcpReply(res,id,modern ? modernRead(serverName,result,slice,selfTools(),resources) : result); }
     if (method === 'resources/templates/list') { const result={resourceTemplates:[]}, digest=apertureDigest(slice,selfTools()); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
     if (method === 'prompts/list') { const result={prompts:[]}, digest=apertureDigest(slice,selfTools()); return mcpReply(res,id,modern ? modernList(serverName,result,digest) : result); }
     return json(res,200,{jsonrpc:'2.0',id,error:{code:-32601,message:'method_not_in_current_self_slice'}});
   } catch (error) { return json(res,200,{jsonrpc:'2.0',id,error:{code:-32000,message:String(error.message || error)}}); }
 }
-async function forwardSuperuser(res, req, raw) {
+async function forwardSuperuser(res, req, raw, slice) {
   let parsed;
   try { parsed=JSON.parse(raw || '{}'); } catch { return json(res,400,{error:'invalid_request'}); }
   const id=parsed.id ?? null, method=parsed.method, params=parsed.params || {};
@@ -541,8 +597,12 @@ async function forwardSuperuser(res, req, raw) {
     try { const result=await readWorkbookApp(params.uri); return mcpReply(res,id,modern ? modernEnvelope(serverName,result) : result); }
     catch { return json(res,200,{jsonrpc:'2.0',id,error:{code:-32000,message:'Financial review UI is unavailable. Build and deploy workbook-mcp-build.mjs; the workbook tools remain available.'}}); }
   }
+  if (method === 'resources/read' && params.uri === CONNECTED_APP_URI) {
+    try { const result=await readConnectedApp(params.uri); return mcpReply(res,id,modern ? modernEnvelope(serverName,result) : result); }
+    catch { return json(res,200,{jsonrpc:'2.0',id,error:{code:-32000,message:'Connected performance view is unavailable. Build and deploy connected-measurement-mcp-build.mjs; measurement tools remain available.'}}); }
+  }
   if (method === 'tools/call' && adminTools().some(tool=>tool.name===String(params.name || ''))) {
-    try { const name=String(params.name),result=textResult(await (workspaceTool(name)?workspaceCall(name,params.arguments || {},token(req)):adminToolCall(name,params.arguments || {}))); return mcpReply(res,id,modern ? modernEnvelope(serverName,result) : result); }
+    try { const name=String(params.name),result=textResult(await (workspaceTool(name)?workspaceCall(name,params.arguments || {},token(req)):adminToolCall(name,params.arguments || {},slice))); return mcpReply(res,id,modern ? modernEnvelope(serverName,result) : result); }
     catch (error) { return mcpReply(res,id,textResult({error:String(error.message || error),tool:String(params.name || ''),...(workspaceTool(String(params.name))?{status:error.status||400,request_id:error.request_id,reconcile:error.reconcile}:{})},true)); }
   }
   const forwardedHeaders={ 'content-type':req.headers['content-type'] || 'application/json', accept:req.headers.accept || 'application/json, text/event-stream', authorization:`Bearer ${upstreamToken}`, 'content-length':Buffer.byteLength(raw) };
@@ -557,7 +617,7 @@ async function forwardSuperuser(res, req, raw) {
         if (method === 'initialize') answer.result.capabilities={...answer.result.capabilities,resources:{subscribe:false,listChanged:false,...answer.result.capabilities?.resources}};
         else if (method === 'resources/list') {
           if (!Array.isArray(answer.result.resources)) throw Error('Invalid upstream resources');
-          answer.result.resources=[...answer.result.resources.filter(resource=>resource.uri!==WORKBOOK_APP_URI),WORKBOOK_APP_RESOURCE];
+          answer.result.resources=[...answer.result.resources.filter(resource=>resource.uri!==WORKBOOK_APP_URI&&resource.uri!==CONNECTED_APP_URI),WORKBOOK_APP_RESOURCE,CONNECTED_APP_RESOURCE];
           if (modern) answer.result=modernList(serverName,answer.result,`sha256:${createHash('sha256').update(JSON.stringify(answer.result.resources.map(v=>v.uri))).digest('hex')}`);
         } else {
           if (!Array.isArray(answer.result.tools)) throw Error('Invalid upstream tools');
@@ -583,7 +643,7 @@ async function forward(req, res, raw) {
     try { const self=await selfSlice(access); if (self) return forwardSelf(req,res,raw,self); } catch { /* refuse below */ }
     return forwardPrivate(req,res,raw,slice);
   }
-  return forwardSuperuser(res,req,raw);
+  return forwardSuperuser(res,req,raw,slice);
 }
 function authorizePage(q, error='') { const hidden=['client_id','redirect_uri','state','scope','code_challenge','code_challenge_method'].map(k=>`<input type="hidden" name="${k}" value="${esc(q.get(k))}">`).join(''); return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize Aurekai</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#101611;color:#edf1e9;font:16px/1.5 system-ui}main{width:min(28rem,calc(100% - 3rem));padding:2rem;border:1px solid #405244;border-radius:20px;background:#19231b}h1{margin:0 0:.4rem}.muted{color:#a9b9a8}.error{color:#ffb4a4}label{display:block;margin:1rem 0 .3rem}input{box-sizing:border-box;width:100%;padding:.75rem;border:1px solid #607560;border-radius:9px;background:#0f160f;color:inherit}button{width:100%;margin-top:1.25rem;padding:.8rem;border:0;border-radius:9px;background:#c5e47b;color:#15200e;font-weight:700}</style><main><p class="muted">Bonfÿre authority</p><h1>Connect Aurekai</h1><p class="muted">This grants ChatGPT the requested <b>${esc(q.get('scope') || 'write')}</b> scope through your Bonfÿre account. Tool effects still enforce their own authority boundaries.</p>${error?`<p class="error">${esc(error)}</p>`:''}<form method="post" action="/oauth/authorize">${hidden}<label>Email</label><input required type="email" name="email" autocomplete="username"><label>Password</label><input required type="password" name="password" autocomplete="current-password"><button>Authorize Aurekai</button></form></main>`; }
 async function authorizePost(req, res) { const p=form(await body(req)); const redirect=p.get('redirect_uri') || ''; const verifier=p.get('code_challenge') || ''; const method=p.get('code_challenge_method') || ''; const scope=(p.get('scope') || 'write').trim(); if (!/^https:\/\//.test(redirect) || method !== 'S256' || !verifier || !['read','write','read write','write read'].includes(scope)) return html(res,400,authorizePage(p,'Invalid OAuth request.')); try { const out=await runAuth('http-login', JSON.stringify({email:p.get('email') || '',password:p.get('password') || ''})); const login=JSON.parse(out)?.session, session=login?.token, sessionExpires=typeof login?.expires_at === 'string' ? login.expires_at : null; const requestedScope=scope.split(/\s+/).includes('write') ? 'write' : 'read'; if (!session || !(await authorized(session,requestedScope))) return html(res,403,authorizePage(p,`This account does not have ${requestedScope} authority.`)); const code=randomBytes(32).toString('base64url'); await storeAuthorizationCode(code,{ session, sessionExpires, client:p.get('client_id') || '', redirect, verifier, scope, expires:Date.now()+fiveMinutes }); const u=new URL(redirect); u.searchParams.set('code',code); if (p.get('state')) u.searchParams.set('state',p.get('state')); res.writeHead(302,{Location:u.toString(),'Cache-Control':'no-store'}); res.end(); } catch (error) { const unavailable=error?.message?.startsWith('oauth_transaction_store_'); html(res,unavailable ? 503 : 401,authorizePage(p,unavailable ? 'Authorization continuity is temporarily unavailable.' : 'Sign-in failed.')); } }

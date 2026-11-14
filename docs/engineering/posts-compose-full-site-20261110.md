@@ -73,3 +73,68 @@ the source.
    status --if-value draft` (verified: promotes once, refuses re-promote;
    no new verb). Related selection for keep-reading stays an explicit
    caller input until a recommender exists.
+
+## Implementation (2026-11-10, uncommitted worktree)
+
+Native path, no second renderer. `profile-story` bodies render through
+the reviewed md4c stage inside `authoring_native_components.c`, between
+the escaped prefix and suffix — the same slot the editorial stage uses;
+triple-mustache stays forbidden. The serving binary links the shared
+units (`site_authored_document`, native components, editorial,
+template, markdown, md4c, mustach). `/blog/:slug[/]` is served by the
+profile family (`profile_home.h`) under the apex site scope; the
+projector needs no new track.
+
+Intake retargeted from `/journal/` to `/blog/` (importer, launcher,
+fixtures). Frontmatter `category`/`icon` now parse; category rides to
+the page `eyebrow`. `site_page` gained the six editorial fields the
+intake already wrote — they were silently dropped before, so no
+published date ever persisted. Deploy note: run `bonfyre-cms schema
+migrate` against the live CMS store; the served route tolerates
+unmigrated stores (dateless hero, route-ordered siblings).
+
+Shell contracts, served form: estate-absolute asset refs
+(`/assets/*`, `/blog/blog.css`), four sheets (field-guide, research,
+blog, authored-reader — the last dresses component sections), estate
+canonical, hero (breadcrumb, eyebrow category · read time, h1, lead,
+long date), rail (section titles as text — md4c emits no anchors, so no
+TOC links rather than dead ones), keep-reading (newest published
+siblings, deterministic fallback), footer. No per-article glyph: icons
+parse but have no CMS field. Title-fold matches the JS composer: an
+opening section headed exactly like the page renders body-only.
+
+Verified: reference post 200 from preview with both section headings
+in order, `2 min read`, `November 7, 2026`, no origin leak;
+unpublished slug 404; all five style assets 200. Native suites
+(components, document, markdown, fragment, contract) and intake suites
+(journal 16-post, narration, static-candidate, cms) green; control
+plane 1131 pass; ratchet ok and tightened (1611 files / 178526 lines,
+paid by retiring the dead component-verification script cluster).
+Pre-existing, untouched: sandboxed browser/socket tests fail at launch;
+SurfaceScene Makefile names two absent files
+(`cms_advanced_composer.test.mjs`, `audit-native-library-candidates.mjs`).
+
+## Intake registry (2026-11-10, same worktree)
+
+One registry, every kind: `intake-registry.mjs` normalizes WordPress
+(receipted `normalized.txt`), RSS/Atom, GeoJSON feeds, Frappe AppPack
+surfaces and Ghost Content API posts to `aurekai.journal-intake.v1`
+journals, which ride the unchanged merge → page-write → promote →
+`/blog` path. Detection is by shape with explicit-kind override; raw
+WordPress block HTML is detected but refused with direction to the
+normalized form. Feeds digest to a declared top-N (USGS 560 → 24 by
+magnitude, AppPack 37 → 24 doctypes) rather than refusing large
+ordinary inputs; Frappe field codes render through the compiler's own
+`BfFieldType` order. Slugs namespace per kind (`wp-`, `rss-`, `usgs-`,
+`frappe-`, native Ghost slugs).
+
+Verified: all 8 ingested WP posts, 12-item Dallas RSS, 560-feature
+USGS feed and 37-doctype insights pack parse; one article per kind
+served 200 from preview with kind-correct eyebrows, populated
+keep-reading, estate canonicals and no origin leaks. Committed tests
+use trimmed receipted fixtures (`tests/fixtures/intake/` + SHASUMS);
+no Ghost dump is ingested, so its parser is proven against a
+hand-built API-shape fixture. Ratchet paid by retiring five verified
+dead ops scripts (808 lines) and tightened to 1608 files / 177982
+lines. Remaining: live dashboard data feeds, raw block-HTML parsing,
+per-article product-icon CMS field.

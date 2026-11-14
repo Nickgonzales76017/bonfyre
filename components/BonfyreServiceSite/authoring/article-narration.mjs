@@ -2,32 +2,25 @@
  * This is an explicit user action, never a publish, render or rights grant.
  */
 import {openNativeAuthoring} from "./native-cms.mjs";
-import {createProduction,productionDigest,validateProduction}
- from "../../../integrations/browser/narration-production.mjs";
-import {openDestinationStore}
- from "../../../integrations/browser/workspace-store.mjs";
+import {createProduction,productionDigest,validateProduction} from "../../../integrations/browser/narration-production.mjs";
+import {openDestinationStore} from "../../../integrations/browser/workspace-store.mjs";
 const hash=/^[a-f0-9]{64}$/;
 const subject=/^article:[a-z0-9][a-z0-9._-]{0,95}$/;
 const app=/^\/apps\/(ws-[a-f0-9]{40})\/audio\/$/;
 const plain=text=>String(text||"")
- .replace(/\x60{3}[\s\S]*?\x60{3}/g," ")
- .replace(/<[^>]+>/g," ")
+ .replace(/\x60{3}[\s\S]*?\x60{3}/g," ").replace(/<[^>]+>/g," ")
  .replace(/!?\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,"$1")
- .replace(/(^|\n)\s{0,3}#{1,6}\s+/g,"$1")
- .replace(/(^|\n)\s{0,3}[-*+]\s+/g,"$1")
- .replace(/[\x60*_~]/g,"")
- .replace(/\r/g,"")
- .replace(/[ \t]{2,}/g," ")
- .trim();
+ .replace(/(^|\n)\s{0,3}#{1,6}\s+/g,"$1").replace(/(^|\n)\s{0,3}[-*+]\s+/g,"$1")
+ .replace(/[\x60*_~]/g,"").replace(/\r/g,"").replace(/[ \t]{2,}/g," ").trim();
 const narrationKinds=new Set(["profile-story","service:prose","ui:editorial-story"]);
 const editedNarration=row=>{
  let tags=row.semantic_tags;
  if(typeof tags==='string'){try{tags=JSON.parse(tags);}catch{throw Error('Invalid retained article editorial data.');}}
- const blocks=tags?.authoring_v1?.editorial;
+ const blocks=tags?.authoring_v1?.editorial; if(row.kind==='service:prose'&&(blocks==null||Array.isArray(blocks)&&!blocks.length)){
+  const p=tags?.authoring_v1?.payload; if(!p||typeof p.title!=='string'||!Array.isArray(p.items)||p.items.length>512||p.items.some(x=>!x||typeof x.title!=='string'||typeof x.text!=='string'))throw Error('The saved prose is not in a supported form.'); return [p.title,...p.items.flatMap(x=>[x.title,x.text])].filter(Boolean).join('\n\n'); }
  if(blocks==null||Array.isArray(blocks)&&!blocks.length)return row.body||'';
  if(!Array.isArray(blocks)||blocks.length>256)throw Error('The edited article is not in a supported form.');
- let inspected=0;
- const nested=(values,depth=0)=>{
+ let inspected=0; const nested=(values,depth=0)=>{
   if(depth>8||++inspected>1024)throw Error('Editorial article text exceeds narration limits.');
   if(typeof values==='string')return values;
   if(!Array.isArray(values))return '';
@@ -65,16 +58,23 @@ export async function planArticleNarration({base,origin,site="",nativeRevision=n
   throw Error("The selected article revision is not available for narration.");
  if(!Array.isArray(snap.fragments)||snap.fragments.length>512)
   throw Error("The article needs a complete bounded native CMS snapshot.");
- const blocks=snap.fragments.filter(row=>row.page===snap.route&&
-   row.slot==="showcase"&&row.audience==="public"&&narrationKinds.has(row.kind)&&
-   row.status===page.status&&
-   (typeof row.body==='string'||row.semantic_tags!=null))
-  .sort((a,b)=>a.position-b.position||String(a.coordinate).localeCompare(String(b.coordinate)));
+ const rows=snap.fragments.filter(row=>row.page===snap.route&&row.slot==="showcase"&&
+  row.audience==="public"&&row.status===page.status&&/^(?:profile-|service:|ui:)/.test(row.kind||""));
+ const children=new Map(),ids=new Set(),blocks=[]; for(const row of rows){
+  if(typeof row.coordinate!=="string"||!row.coordinate||ids.has(row.coordinate)||!Number.isInteger(row.position)||row.position<0)
+   throw Error("The saved article has invalid composition coordinates."); ids.add(row.coordinate);let tags=row.semantic_tags||{}; if(typeof tags==="string"){try{tags=JSON.parse(tags);}catch{throw Error("Invalid retained article editorial data.");}}
+  const parent=tags?.authoring_v1?.parent??null; if(parent!==null&&typeof parent!=="string")throw Error("The saved article has invalid composition parents.");
+  const siblings=children.get(parent)||[];siblings.push(row);children.set(parent,siblings); }
+ let visited=0;const walk=(parent,depth)=>{ if(depth>16)throw Error("The saved article composition is too deeply nested.");
+  const siblings=children.get(parent)||[];siblings.sort((a,b)=>a.position-b.position||(Number.isSafeInteger(a.id)&&Number.isSafeInteger(b.id)?a.id-b.id:0)||a.coordinate.localeCompare(b.coordinate));
+  for(const row of siblings){if(++visited>rows.length)throw Error("The saved article composition is cyclic.");if(narrationKinds.has(row.kind))blocks.push(row);walk(row.coordinate,depth+1);}
+ };
+ walk(null,0);if(visited!==rows.length)throw Error("The saved article has an orphaned or cyclic composition.");
  const segments=[];
  const intro=plain([page.heading||page.title,page.lede||""].filter(Boolean).join("\n\n"));
  if(intro.length>=12)segments.push({id:"opening",text:intro});
  for(let i=0;i<blocks.length;i++){
-  const text=plain([blocks[i].heading,editedNarration(blocks[i])].filter(Boolean).join("\n\n"));
+  const heading=i===0&&blocks[i].heading===(page.heading||page.title)?"":blocks[i].heading; const text=plain([heading,editedNarration(blocks[i])].filter(Boolean).join("\n\n"));
   if(text.length<12)continue;
   if(text.length>12000)throw Error("An article passage exceeds 12,000 characters. Edit it into shorter sections.");
   segments.push({id:"passage-"+String(i+1).padStart(3,"0"),text});

@@ -57,10 +57,25 @@ test("composed article carries rail, related links, and shell", () => {
 });
 
 test("composed article carries the mature style refs and estate canonical", () => {
-  for (const css of ["aurekai-field-guide.css", "aurekai-research.css", "blog.css"])
+  for (const css of ["aurekai-field-guide.css", "aurekai-research.css", "blog.css", "authoring-reader.css"])
     expect(page.html).toContain(css);
+  expect(page.html).toContain('href="/assets/aurekai-field-guide.css"');
+  expect(page.html).toContain('href="/blog/blog.css"');
+  expect(page.html).toContain('href="/assets/authoring-reader.css"');
   expect(page.html).toContain("theme-color");
   expect(page.canonical).toBe(`https://nick.aurekai.work/blog/${SLUG}/`);
   expect(page.html).toContain(page.canonical);
   expect(page.html).toContain("og:title");
+});
+
+test("composed article can emit Pages-relative asset refs", () => {
+  const binary = resolve(repo, "cmd/BonfyreSurfaceScene/bonfyre-surface-scene");
+  const pages = composeJournalArticle(journal, {
+    baseUrl: "https://nickgonzales76017.github.io",
+    renderMd: nativeRenderMd(binary), navigation: nav,
+    meta: { category: frontmatter.category, icon: frontmatter.icon },
+    assets: { base: "../../assets", blog: "../blog.css" },
+  });
+  expect(pages.html).toContain('href="../../assets/aurekai-field-guide.css"');
+  expect(pages.html).toContain('href="../blog.css"');
 });

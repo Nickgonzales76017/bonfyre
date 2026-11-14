@@ -7,12 +7,14 @@ import {startingSectionPayload} from "./structured-fields.mjs";
 import {makeStructuredPayloadField} from "./structured-field-view.mjs";
 import {AUTHORING_PATTERNS,PATTERN_BY_KIND,defaultPatternPayload} from "./presentation-patterns.mjs";
 import {createAuthoringPalette,createAuthoringOutline,newAuthoredComponent} from "./component-palette.mjs";
+import {PAGE_COMPOSITIONS,composeNativePage} from "./editorial-compositions.mjs";
 import {renderAuthoredPattern} from "../authored-pattern-renderer.mjs";
 import {mergeJournalIntoTree} from "./journal-import.mjs";
+import {composeAuthoredExperience} from "../../../cmd/BonfyreSurfaceScene/runtime/experience-programs.mjs";
 import {authoredPatternStyles} from "../authored-pattern-styles.mjs";
 import {SERVICE_COMPONENTS,createAuthoringSession,validateAuthoringTree,
  toPuckData,fromPuckData,toGrapesProject,fromGrapesProject,
- toEditorBlocks,applyEditorBlocks,applyAuthoringEdit} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs";
+ toEditorBlocks,applyEditorBlocks,applyAuthoringEdit,applyAuthoringProposal} from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs";
 
 const kinds=[...AUTHORING_BLOCKS.map(x=>x.kind),...SERVICE_COMPONENTS.map(x=>"service:"+x),...AUTHORING_PATTERNS.map(x=>x.kind)];
 const groups=new Set(["profile-section","service:cases","service:prose","service:hero"]);
@@ -175,7 +177,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
  let device="desktop",deviceEditor=null,metadataDirty=false,metadataRevision=0;
  let reviewedAt="",hasSaved=initialSaved;
  const controls=new Map();
- const palette=createAuthoringPalette({onInsert:insertComponent});
+ const palette=createAuthoringPalette({onInsert:insertComponent,onCompose:composePage,compositions:PAGE_COMPOSITIONS});
  const outline=createAuthoringOutline({onEdit:editComposition,onMode:next=>switchMode(next)});
  const authoringStyle=element("style");authoringStyle.setAttribute("data-aurekai-patterns","");
  authoringStyle.textContent=authoredPatternStyles;document.head.append(authoringStyle);
@@ -237,7 +239,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   }
   const write=makeButton("Write an article",emptyActions,()=>void insertComponent("profile-story",null,{startArticle:true}));
   write.className="authoring-empty-primary";
-  makeButton("Build a page",emptyActions,()=>void insertComponent("ui:section",null));
+  for(const recipe of PAGE_COMPOSITIONS)makeButton(recipe.label,emptyActions,()=>void composePage(recipe.id));
  }
  const revision=()=>changes+":"+metadataRevision;
  function updateWorkflow(){
@@ -283,12 +285,60 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   }catch(e){status(ui,e.message,true);}
   finally{busy=false;dirtyControls();}
  }
+ async function composePage(compositionId){
+  if(busy||!mode)return;
+  busy=true;dirtyControls();
+  try{
+   await flush();
+   const next=composeNativePage(session.snapshot(),compositionId,{idFactory:newEditorCoordinate});
+   await apply(next);
+   const current=mode;await destroy();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[current])();
+   palette.refresh(session.snapshot());outline.refresh(session.snapshot());
+   status(ui,"Composed native page sections. Review each section and save this private draft.");
+  }catch(error){status(ui,error.message,true);}
+  finally{busy=false;dirtyControls();}
+ }
  async function apply(next){
   try{
    session.replace(next);changes++;
    palette.refresh(session.snapshot());outline.refresh(session.snapshot());
    status(ui,"Draft updated ("+changes+" edits).");dirtyControls();
   }catch(e){status(ui,e.message,true);throw e;}
+ }
+ // Compiled Frappe and native Scene material enters the existing editor
+ // session with the same undo, native CMS save and publication review.
+ async function composeExperience(projection){
+  if(busy||!mode)throw Error("Finish the current editing action first.");
+  busy=true;dirtyControls();
+  try{
+   await flush();
+   const next=composeAuthoredExperience(session.snapshot(),projection);
+   await apply(next);
+   const current=mode;await destroy();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[current])();
+   palette.refresh(session.snapshot());outline.refresh(session.snapshot());
+   status(ui,"Compiled source composed into the same draft. Review and save before publication.");
+   return {blocksAdded:projection.blocks.length};
+  }catch(error){status(ui,error.message,true);throw error;}
+  finally{busy=false;dirtyControls();}
+ }
+ // Computed candidates (local models, native reducers, or human suggestions)
+ // are ordinary revisions, not a privileged execution or publication pipeline.
+ async function acceptProposal(candidate){
+  if(busy||!mode)throw Error("Finish the current editing action first.");
+  busy=true;dirtyControls();
+  try{
+   await flush();
+   const next=applyAuthoringProposal(session.snapshot(),candidate);
+   await apply(next);
+   const current=mode;await destroy();
+   mounted=await ({grapesjs:openGrapes,puck:openPuck,editorjs:openArticle}[current])();
+   palette.refresh(session.snapshot());outline.refresh(session.snapshot());
+   status(ui,"Proposed changes retained as an unsaved revision. Review before saving.");
+   return {accepted:true};
+  }catch(error){status(ui,error.message,true);throw error;}
+  finally{busy=false;dirtyControls();}
  }
  async function editComposition(operations){
   if(busy||!mode)throw Error("Finish the current editing action first.");
@@ -421,7 +471,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   try{await flush();const result=await onSaveDraft(session.snapshot());
    if(!result?.committed)throw Error("Native CMS did not acknowledge a committed draft");
    savedTree=JSON.stringify(session.snapshot());hasSaved=true;metadataDirty=false;
-   status(ui,"Draft saved at revision "+String(result.revision||"confirmed")+". Not published.");
+   status(ui,result.published?"Reviewed public edition updated at revision "+String(result.revision||"confirmed")+".":"Draft saved at revision "+String(result.revision||"confirmed")+". Not published.");
   }catch(e){status(ui,e.message,true);}finally{busy=false;dirtyControls();}
  }
  async function importJournal(article){
@@ -440,7 +490,7 @@ export async function mountAurekaiAuthoring(root,{initial,loaders=deps,onReview,
   finally{busy=false;dirtyControls();}
  }
  bindModes();outline.refresh(session.snapshot());dirtyControls();const ready=switchMode("grapesjs");
- return {session,mode:()=>mode,switchMode,review,save,importJournal,ready,
+ return {session,mode:()=>mode,switchMode,review,save,importJournal,composeExperience,acceptProposal,ready,
   createArticle:async()=>{await ready;return insertComponent("profile-story",null,{startArticle:true});},
   setPageDirty(value){metadataDirty=!!value;metadataRevision++;dirtyControls();},
   isDirty:()=>metadataDirty||savedTree!==JSON.stringify(session.snapshot())||!!mounted?.dirty?.(),

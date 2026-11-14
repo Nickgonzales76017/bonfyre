@@ -2,11 +2,11 @@
 // Recipient mutations use a loopback receipt fixture; this is not a live account,
 // provider, installed Queue database or operating-system notification witness.
 import {test,expect,beforeAll,beforeEach,afterAll} from 'bun:test';
+import {deferred,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {encode,decode} from '../workspace-msgpack.mjs';
-const root=process.env.BONFYRE_TEST_PUBLIC_BROWSER||resolve(import.meta.dir,'..'),clone=value=>structuredClone(value),deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const packet=value=>new Response(encode(value),{headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
+const root=process.env.BONFYRE_TEST_PUBLIC_BROWSER||resolve(import.meta.dir,'..'),clone=value=>structuredClone(value);
 const baseTime=Date.UTC(2026,9,21,19),version='a'.repeat(64),otherVersion='b'.repeat(64);
 let browser,server,events=[],state={},recipient='first',receipts=new Map(),writes=0,loseNext=false,holdWrite=null,holdInbox=null,holdResearch=null,allow=true,taskUnavailable=false,readsUnavailable=false,queueRefused=false,inboxActor=null;
 const binding=context=>({actor:recipient==='first'?'user:7':'user:8',subject:context==='self'?(recipient==='first'?'user:7':'user:8'):context,scope:context==='self'?'self':context.split(':')[0]});
@@ -20,8 +20,8 @@ const agentRuns=context=>context==='self'?{agents:[{id:'run-codex',taskId:'accou
 function current(context){const key=recipient+':'+context;if(!state[key])state[key]=fixtures(context);return state[key];}
 beforeEach(()=>{events=[];state={};recipient='first';receipts=new Map();writes=0;loseNext=false;holdWrite=null;holdInbox=null;holdResearch=null;allow=true;taskUnavailable=false;readsUnavailable=false;queueRefused=false;inboxActor=null;});
 beforeAll(async()=>{
- const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test');browser=await chromium.launch({headless:true,...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){const url=new URL(request.url);events.push({method:request.method,path:url.pathname,search:url.search});
+ browser=await launchFixtureChromium({module:'@playwright/test'});
+ server=loopbackServer({async fetch(request){const url=new URL(request.url);events.push({method:request.method,path:url.pathname,search:url.search});
   if(url.pathname==='/fixture')return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/aurekai-activity.css"></head><body><header><span data-fixture-account-slot><span class="ak-session" data-session-state="signed-in">Account</span></span></header><main><h1>Workspace</h1><button id="outside">Page action</button></main><script type="module">
 import {mountAurekaiActivity} from '/apps/aurekai-activity.mjs';import {decode} from '/apps/workspace-msgpack.mjs';import {readInbox,setInboxState} from '/apps/aurekai-inbox-source.mjs';import {readTasks} from '/apps/aurekai-activity-source.mjs';
 const slot=document.querySelector('[data-fixture-account-slot]');slot.dataset.accountSlot='';

@@ -1,0 +1,15 @@
+{
+  "name": "person_affinity",
+  "displayName": "Person Affinity",
+  "description": "One person's directed affinity toward another person: like, pass or superlike. Private until mutual; a mutual opens conversation and never publishes. A pass only excludes future discovery; withdrawal returns the edge to never-existed for readers while the row stays for audit.",
+  "attributes": {
+    "affinity": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "target_subject": {"type": "string", "required": true},
+    "kind": {"type": "string", "required": true},
+    "state": {"type": "string", "required": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

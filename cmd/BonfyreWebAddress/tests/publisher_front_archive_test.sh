@@ -61,4 +61,19 @@ grep -q 'RAIN CHANGES THE HARVEST WINDOW' "$page" || { echo 'publisher front arc
 grep -q '<title>Fieldwire Journal' "$page" || { echo 'publisher front archive: the page is not named for the publisher' >&2; exit 1; }
 grep -q 'href="/o/feed-fieldwire-test-abc123/' "$page" || { echo 'publisher front archive: the item does not open' >&2; exit 1; }
 grep -q 'fieldwire.test</span>' "$page" || { echo 'publisher front archive: the item does not name where it came from' >&2; exit 1; }
+# Machine discovery must be materialized for the exact publisher host,
+# not copied from the Life apex or inferred by the edge on each request.
+host=fieldwire-test.aurekai.life
+for file in robots.txt sitemap.xml sitemap-surfaces.xml; do
+    test -s "$tmp/out/h/$host/$file" || { echo "publisher discovery: missing $file" >&2; exit 1; }
+done
+grep -Fq "Sitemap: https://$host/sitemap.xml" "$tmp/out/h/$host/robots.txt" ||
+    { echo "publisher discovery: foreign robots origin" >&2; exit 1; }
+grep -Fq "https://$host/sitemap-surfaces.xml" "$tmp/out/h/$host/sitemap.xml" ||
+    { echo "publisher discovery: foreign sitemap origin" >&2; exit 1; }
+grep -Fq "https://$host/" "$tmp/out/h/$host/sitemap-surfaces.xml" ||
+    { echo "publisher discovery: no host-specific URL" >&2; exit 1; }
+if grep -Fq "https://aurekai.life/sitemap-surfaces.xml" "$tmp/out/h/$host/sitemap.xml"; then
+    echo "publisher discovery: leaked apex origin" >&2; exit 1
+fi
 echo 'publisher front archive: PASS'

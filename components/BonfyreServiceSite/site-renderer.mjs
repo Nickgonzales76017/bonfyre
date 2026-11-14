@@ -25,7 +25,7 @@ const h = {
       </div>`,
 };
 
-export function renderSite(content) {
+export function renderSite(content, { linkPaths = null, sourceRoutes = [] } = {}) {
   const digits = validate(content);
   const contact = content.contact ?? {}, names = (contact.name ?? content.business.name).split(/\s+/), theme = resolveTheme(content.theme), all = pagesOf(content);
   const prepared = all.map(page => ({ ...page, shown: page.sections.map((s, i) => ({ id: `${s.kind}-${i + 1}`, ...s })).filter(s => kinds[s.kind].present?.(s) ?? true) }))
@@ -44,7 +44,14 @@ export function renderSite(content) {
     const parts = workspace ? [shell.head({ ...site, ask: "#" + page.shown[0].id }, h, page).replace("Skip to the request form", "Skip to workspace"), "<main>", body, "</main></body></html>"] : [shell.head(site, h, page), shell.menu(site, h, links), body, shell.footer(site, h), shell.tail(site, h)];
     return { path: page.path, kinds: page.shown.map(s => s.kind), site, html: parts.join("\n") };
   });
-  checkLinks(pages);
+  // A destination-owned package verifies the routes it actually packages.
+  // The original site's homepage is not published by that package, and its
+  // links to other public-site pages must not drag unrelated material in.
+  if (linkPaths === null) checkLinks(pages);
+  else {
+    const allowed = new Set(linkPaths);
+    checkLinks(pages.filter(page => allowed.has(page.path)), { sourceRoutes });
+  }
   // What each form may be sent, for the server side: its labels, and the stated options of a choice.
   const forms = Object.fromEntries(prepared.filter(formOf).map(p => { const form = formOf(p), fields = formFields(form);
     return [form.id, { page: "/"+(p.path?p.path+"/":""), fields: Object.fromEntries(fields.map(f => [f.label, ["choice","select"].includes(f.type) ? f.options.map(o => typeof o === "string" ? o : o.label) : true])), required: fields.filter(f => !f.optional).map(f => f.label) }]; }));

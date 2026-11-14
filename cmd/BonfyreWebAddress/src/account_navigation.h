@@ -68,8 +68,6 @@ static void account_navigation_emit(const char *bearer,const char *auth_db) {
         if(profile[0]){fputs("<a data-public-profile data-public-profile-menu href=\"",stdout);html(profile);fputs("\">" BF_ICON_WORLD "View public profile</a>",stdout);}
         fputs("<a data-account-profile href=\"/profile?tab=sites\">" BF_ICON_WORLD_WWW "Your profile sites</a><a href=\"/account\">" BF_ICON_LINK "Account &amp; connections</a><a href=\"/apps?context=self\">" BF_ICON_APPS "Your tools &amp; saved work</a><a href=\"/saved\">" BF_ICON_BOOKMARK "Saved material</a><a href=\"/organizations\">" BF_ICON_GROUP "Organizations &amp; people</a><a href=\"/packs/setup?context=self\">" BF_ICON_SPARKLES "Explore tools</a><a href=\"/account#logout\">" BF_ICON_LOGOUT "Sign out</a></nav></details>",stdout);
     }
-    fputs("<style>.ak-user:not([open])>.ak-user-links{display:none!important}.ak-user-links{box-sizing:border-box;max-height:calc(100vh - 100px);overflow-y:auto;overscroll-behavior:contain}</style>",stdout);
-    fputs("<style>@media(max-width:760px){.ak-session>a[data-your-work],.ak-session>a[data-profile-home]{display:none}}</style>",stdout);
     fputs("</div>",stdout);
 }
 /* Cached public shells request only this private, bounded native fragment.
@@ -81,40 +79,5 @@ static int serve_account_navigation(const char *method,const char *target,const 
     }
     fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",stdout);
     account_navigation_emit(bearer,auth_db);return 1;
-}
-/* Account pages use the same native presentation contract as the public
- * pages. Decorate only the owned head/body boundaries; never rewrite the
- * session slot, owner content or any saved-work action. */
-static void account_navigation_chrome_presented(const char *format,const char *links,
-    const char *bearer,const char *auth_db,const char *extra_head,const char *body_attributes) {
-    int size=snprintf(NULL,0,format,links);
-    if(size<0||size>256*1024)return;
-    char *body=malloc((size_t)size+1);if(!body)return;
-    snprintf(body,(size_t)size+1,format,links);
-    if(extra_head && *extra_head && body_attributes && *body_attributes){
-        char *head=strstr(body,"</head>");
-        char *open=head?strstr(head,"<body"):NULL;
-        char *end=open?strchr(open,'>'):NULL;
-        size_t hlen=strlen(extra_head),alen=strlen(body_attributes);
-        if(head&&open&&end&&hlen<65536&&alen<1024&&
-           (size_t)size+hlen+alen<512*1024){
-            char *decorated=malloc((size_t)size+hlen+alen+1);
-            if(decorated){
-                size_t off=0,n=(size_t)(head-body);
-                memcpy(decorated+off,body,n);off+=n;
-                memcpy(decorated+off,extra_head,hlen);off+=hlen;
-                n=(size_t)(end-head);
-                memcpy(decorated+off,head,n);off+=n;
-                memcpy(decorated+off,body_attributes,alen);off+=alen;
-                n=(size_t)size-(size_t)(end-body);
-                memcpy(decorated+off,end,n);off+=n;decorated[off]=0;
-                free(body);body=decorated;
-            }
-        }
-    }
-    const char *start="<!--BF_SESSION_BEGIN-->",*end="<!--BF_SESSION_END-->";
-    char *a=strstr(body,start),*b=a?strstr(a,end):NULL;
-    if(a&&b){fwrite(body,1,(size_t)(a-body),stdout);fputs(start,stdout);account_navigation_emit(bearer,auth_db);fputs(b,stdout);}else fputs(body,stdout);
-    free(body);
 }
 #endif

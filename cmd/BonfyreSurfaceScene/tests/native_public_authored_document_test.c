@@ -63,6 +63,24 @@ int main(void){
  ck(strstr(out,"PRIVATE OWNER")==NULL&&strstr(out,"SECRET DRAFT")==NULL&&
     strstr(out,"FOREIGN PAGE")==NULL&&strstr(out,"DENIED REPRESENTATION")==NULL,
     "exact namespace, carrier and audience isolation");
+ /* Child positions are local to the parent; raw flat position sorting breaks nesting. */
+ execute(db,
+  "INSERT INTO site_fragment(namespace,page,slot,audience,status,position,coordinate,kind,heading,body,semantic_tags,projection_contract) VALUES"
+  "('person-alpha-work','/','showcase','public','published',8,'late-parent','ui:columns','Deep layout','',json_object('authoring_v1',json_object('version',1,'parent','docs','payload',json_object('columns',2,'gap',20))),'{\"html\":true}'),"
+  "('person-alpha-work','/','showcase','public','published',0,'early-child','ui:columns','Nested grouping','',json_object('authoring_v1',json_object('version',1,'parent','late-parent','payload',json_object('columns',2,'gap',16))),'{\"html\":true}'),"
+  "('person-alpha-work','/','showcase','public','published',0,'first-leaf','ui:card','Deep evidence','',json_object('authoring_v1',json_object('version',1,'parent','early-child','payload',json_object('title','Deep nested CMS card','body','Original content composed by native C','image',json_object('src','','alt',''),'actions',json('[]')))),'{\"html\":true}');");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
+    "three-level CMS composition orders parents before their lower-position children");
+ ck(rows==5&&strstr(out,"Deep nested CMS card")!=NULL,"all native nested sections present");
+ execute(db,"DELETE FROM site_fragment WHERE coordinate IN ('late-parent','early-child','first-leaf');");
+ execute(db,
+  "INSERT INTO site_fragment(namespace,page,slot,audience,status,position,coordinate,kind,heading,semantic_tags,projection_contract) VALUES"
+  "('person-alpha-work','/','showcase','public','published',6,'cycle-a','ui:columns','Cycle A',json_object('authoring_v1',json_object('version',1,'parent','cycle-b','payload',json_object())),'{\"html\":true}'),"
+  "('person-alpha-work','/','showcase','public','published',7,'cycle-b','ui:columns','Cycle B',json_object('authoring_v1',json_object('version',1,'parent','cycle-a','payload',json_object())),'{\"html\":true}');");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==-1,
+    "cyclic CMS section parents never become a partial public page");
+ ck(*out=='\0'&&rows==0,"cyclic document projection stays atomic");
+ execute(db,"DELETE FROM site_fragment WHERE coordinate IN ('cycle-a','cycle-b');");
  execute(db,"INSERT INTO site_fragment VALUES (12,'person-alpha-work','/','showcase','public','published',2,'native-story','profile-story','Published editorial section','Legacy summary','{\"authoring_v1\":{\"version\":1,\"parent\":\"docs\",\"payload\":{},\"editorial\":[{\"type\":\"paragraph\",\"data\":{\"text\":\"Written through the real Editor.js interface & retained\"}},{\"type\":\"header\",\"data\":{\"level\":3,\"text\":\"A human-authored chapter\"}},{\"type\":\"quote\",\"data\":{\"text\":\"A documented claim\",\"caption\":\"On the record\"}},{\"type\":\"code\",\"data\":{\"code\":\"value < 10\"}},{\"type\":\"delimiter\",\"data\":{}},{\"type\":\"list\",\"data\":{\"style\":\"ordered\",\"items\":[\"First\",\"Second\"]}},{\"type\":\"checklist\",\"data\":{\"items\":[{\"text\":\"Approved\",\"checked\":true}]}},{\"type\":\"table\",\"data\":{\"content\":[[\"Column\",\"Data\"],[\"Source\",\"Local CMS\"]]}}]}}','{\"html\":true}',NULL,NULL);");
  ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
    "a published editorial block is compiled from its retained typed CMS record");
@@ -81,6 +99,33 @@ int main(void){
     "unknown Editor.js tools never silently disappear from a public release");
  ck(*out=='\0'&&rows==0,"invalid editorial composition is atomic");
  execute(db,"DELETE FROM site_fragment WHERE id IN (12,13);");
+ execute(db,"INSERT INTO site_fragment VALUES (14,'person-alpha-work','/','showcase','public','published',2,'journal-section','profile-story','A journal chapter','Second **draft** paragraph with [source](https://example.org/retained).','{\"authoring_v1\":{\"version\":1,\"parent\":\"docs\",\"payload\":{}}}','{\"html\":true}',NULL,NULL);");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
+   "a journal Markdown section compiles from its retained CMS record");
+ ck(strstr(out,"<h2>A journal chapter</h2>")!=NULL,
+   "journal section heading retained");
+ ck(strstr(out,"<strong>draft</strong>")!=NULL,
+   "journal Markdown body rendered through the reviewed parser stage");
+ ck(strstr(out,"<a href=\"https://example.org/retained\">source</a>")!=NULL,
+   "journal Markdown link admitted");
+ ck(strstr(out,"**draft**")==NULL,
+   "journal Markdown fully rendered, never leaked raw");
+ execute(db,"DELETE FROM site_fragment WHERE id=14;");
+ execute(db,"ALTER TABLE site_page ADD COLUMN heading TEXT;");
+ execute(db,"INSERT INTO site_page VALUES (4,'person-alpha-work','/fold/','published','Folded title');");
+ execute(db,"INSERT INTO site_fragment VALUES (15,'person-alpha-work','/fold/','showcase','public','published',0,'fold-one','profile-story','Folded title','Opening **body**.','{\"authoring_v1\":{\"version\":1,\"payload\":{}}}','{\"html\":true}',NULL,NULL);");
+ execute(db,"INSERT INTO site_fragment VALUES (16,'person-alpha-work','/fold/','showcase','public','published',1,'fold-two','profile-story','Second chapter','Later body.','{\"authoring_v1\":{\"version\":1,\"payload\":{}}}','{\"html\":true}',NULL,NULL);");
+ ck(project(db,"person-alpha-work","/fold/",out,sizeof(out),&rows)==1,
+   "title-fold page compiles");
+ ck(strstr(out,"<h2>Folded title</h2>")==NULL,
+   "opening title-section renders body-only");
+ ck(strstr(out,"<h2>Second chapter</h2>")!=NULL,
+   "later sections keep their heads");
+ ck(strstr(out,"<h2></h2>")==NULL,"no empty heading element");
+ ck(strstr(out,"<strong>body</strong>")!=NULL,
+   "folded section body still rendered");
+ execute(db,"DELETE FROM site_fragment WHERE id IN (15,16);");
+ execute(db,"DELETE FROM site_page WHERE id=4;");
  execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"layout\":\"grid\",\"columns\":3},\"phone\":{\"layout\":\"stack\"}}')) WHERE id=1;");
  ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
     "native C honors the editor's retained responsive data");
@@ -88,7 +133,23 @@ int main(void){
     "generated desktop responsive attributes");
  ck(strstr(out,"data-phone-layout=\"stack\"")!=NULL,
     "generated mobile responsive attributes");
- execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"layout\":\"grid\",\"columns\":3,\"gap\":17}}')) WHERE id=1;");
+ execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"layout\":\"grid\",\"columns\":3,\"gap\":17},\"phone\":{\"layout\":\"stack\",\"gap\":8}}')) WHERE id=1;");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
+    "bounded native gap tokens survive CMS projection");
+ ck(strstr(out,"data-desktop-gap=\"17\"")&&strstr(out,"--ak-gap-desktop:17px;")&&
+    strstr(out,"data-phone-gap=\"8\"")&&strstr(out,"--ak-gap-phone:8px;"),
+    "typed responsive gaps are emitted as native pixel tokens");
+ execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"gap\":17},\"phone\":{\"gap\":0}}')) WHERE id=1;");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==1,
+    "gap without a layout survives public projection");
+ ck(strstr(out,"data-desktop-gap=\"17\"")&&strstr(out,"--ak-gap-desktop:17px;")&&
+    strstr(out,"data-phone-gap=\"0\"")&&strstr(out,"--ak-gap-phone:0px;"),
+    "independent gap tokens retain values including zero");
+ ck(!strstr(out,"data-desktop-layout="),"independent gap does not invent a layout");
+ execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"layout\":\"grid\",\"columns\":3,\"gap\":65}}')) WHERE id=1;");
+ ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==-1,
+    "out-of-range gap cannot authorize public layout");
+ execute(db,"UPDATE site_fragment SET semantic_tags=json_set(semantic_tags,'$.authoring_v1.responsive',json('{\"desktop\":{\"layout\":\"grid\",\"columns\":3,\"padding\":17}}')) WHERE id=1;");
  ck(project(db,"person-alpha-work","/",out,sizeof(out),&rows)==-1,
     "unsupported style token cannot silently vanish in a public release");
  ck(*out=='\0'&&rows==0,"unsupported responsive data is atomic");

@@ -1,0 +1,151 @@
+atlas surface
+
+architecture account-device-keys
+  canonical_name AccountDeviceKeys
+  family surface
+  domain Surface / Account Devices
+  layer surface/account
+  semantic_question Which devices has this person named on their account, with which public key fingerprints, and which have they revoked?
+  purpose Owns /account/devices: a signed-in person records a device by name and the public key fingerprint they type, and revokes it later. Rows are device_key CMS records keyed by the account subject (user:N), written only through the CMS binary. auth.db is not touched.
+  maturity implemented
+  consumes BonfyreAuth
+  publishes DeviceKey
+  node_types DeviceKey
+  edge_types names_device
+  invariant the account subject comes from a verified BonfyreAuth session, never from a form field
+  invariant every enroll or revoke is the person's own same-origin form submit; a cross-site submit is refused and writes nothing
+  invariant attestation is always recorded as "not verified"; no hardware check runs
+  invariant a revoke is a compare-and-set on the person's own published row; another account's id is refused
+  forbidden_inference an enrolled device key -> hardware attestation, a secure-element key, or proof the device exists
+  forbidden_inference an enrolled device key -> a credential accepted at sign-in
+  known_gap no attestation verifier exists; the Stitch screen's checklist (enclave, biometric) is shown as not verified
+  source_path cmd/BonfyreCMS/content-types/device_key.json
+  source_path cmd/BonfyreWebAddress/src/account_continuity_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh enrolls a device through the form, reads the row back as "not verified", proves a cross-site enroll writes nothing, a stranger cannot see or revoke it, and the owner's revoke archives it
+
+architecture account-device-move
+  canonical_name AccountDeviceMove
+  family surface
+  domain Surface / Account Devices
+  layer surface/account
+  semantic_question Has this account offered a one-use code to take its own site export onto another device, and has a device signed in to the same account used it?
+  purpose Owns /account/move (sender) and /account/move/receive (receiver). The sender's submit creates a device_pairing record holding only a digest of a six-digit code bound to the account subject and the offering session's digest, open for ten minutes; a new offer withdraws older open ones. The receiver, signed in to the same account, submits the code; a compare-and-set marks it received once and the page offers download links to that account's existing /cms/compose/export. Nothing is pushed.
+  maturity implemented
+  consumes BonfyreAuth
+  consumes PageComposition
+  publishes DevicePairing
+  node_types DevicePairing
+  edge_types offers_copy
+  invariant nothing transfers without two explicit submits: the sender offers the code, the receiver enters it, and the download is the receiver's own click on the existing export route
+  invariant the code is shown once and never stored; only a digest of account subject and code is kept
+  invariant a code is redeemable only by the same account subject, only while offered and unexpired, and only once
+  invariant the export downloaded is the account's own /cms/compose/export, authorised by that route's own ownership check
+  forbidden_inference a received pairing -> a completed transfer, a trusted device, a second session or a copied credential
+  forbidden_inference a pairing code -> peer-to-peer, LAN or enclave transport; the copy is an ordinary HTTPS download
+  known_gap the Stitch screens show a LAN/P2P stream with progress; there is no such transport, so the page shows the export manifest and download links only
+  known_gap session_handoff_web.h's one-use nonce is bound to a territory handoff in BonfyreAuth, not to an export; it was not reused because doing so needs an auth.db schema change
+  source_path cmd/BonfyreCMS/content-types/device_pairing.json
+  source_path cmd/BonfyreWebAddress/src/account_continuity_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh offers a code, proves it is not stored in clear, a stranger cannot redeem it, a second session of the same account redeems it once, and a reuse is refused
+
+architecture bluesky-sync-request
+  canonical_name BlueskySyncRequest
+  family surface
+  domain Surface / Connected Identities
+  layer surface/account
+  semantic_question Has this person asked for the public repository behind a Bluesky handle they declared to be read, and has anything run?
+  purpose Owns /connections/bluesky/sync: for each Bluesky link the person declared through BonfyreAuth external-link-claim, a submit records a carrier_sync_request with run_state requested. No AT Protocol reader exists, so the page states requested and not run.
+  maturity implemented
+  consumes BonfyreAuth
+  publishes CarrierSyncRequest
+  node_types CarrierSyncRequest
+  edge_types requests_sync
+  invariant only a link returned by external-link-list for the signed-in session can be named; another account's link is refused
+  invariant a request is never shown as fetched, verified or synced; run_state stays requested until an executor exists and writes otherwise
+  forbidden_inference a sync request -> a fetched repository, a CAR file, MST verification, or that the handle belongs to the person
+  forbidden_inference a sync request -> permission to post on the person's behalf
+  known_gap there is no AT Protocol / CAR sync executor anywhere in the estate; requests accumulate unrun
+  source_path cmd/BonfyreCMS/content-types/carrier_sync_request.json
+  source_path cmd/BonfyreWebAddress/src/account_continuity_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh shows the empty state, declares a handle through BonfyreAuth, refuses a stranger's request for it, records the owner's request and shows "requested · not run"
+
+architecture feed-agent-policy
+  canonical_name FeedAgentPolicy
+  family surface
+  domain Surface / Connected Identities
+  layer surface/account
+  semantic_question For each feed this person keeps, which named agent or MCP client may read it, and how much?
+  purpose Owns /account/agents: per saved_item collection the person keeps and per agent name they type, a feed_agent_policy row with access read, summary or none, updated in place. No MCP tool or /connect path serves saved feeds today, so the rule is recorded and the page says it is not enforced.
+  maturity implemented
+  consumes SavedItem
+  consumes BonfyreAuth
+  publishes FeedAgentPolicy
+  node_types FeedAgentPolicy
+  edge_types governs_agent_read
+  invariant a rule can be set only on a feed (saved_item collection) the signed-in account keeps
+  invariant one rule per account, feed and agent name: the policy id is a digest of the three, and a change updates that row
+  invariant a missing rule means no access for any future read path
+  forbidden_inference a feed rule -> that an agent has read or can read the feed today
+  forbidden_inference an agent name -> the identity or operator of a client
+  known_gap no MCP or /connect read path serves saved feeds, so there is nothing to wire the check into; site_mcp.c serves public site posts, which stay public and are not governed by this rule
+  source_path cmd/BonfyreCMS/content-types/feed_agent_policy.json
+  source_path cmd/BonfyreWebAddress/src/account_continuity_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh refuses a rule from an account that does not keep the feed, records the owner's rule and updates it in place, and shows "Not yet" for enforcement
+
+architecture field-dispatch
+  canonical_name FieldDispatch
+  family surface
+  domain Surface / Field Work
+  layer surface/account
+  semantic_question Who asked for a visit to which place at what time for what need, who was it offered to, and did they accept?
+  purpose Owns /dispatch: a signed-in person records a field request (place, time, need); offers it to one published member address, resolved through site_presentation and the matrix to that member's person subject; the named member accepts or declines with their own submit; the requester may withdraw. Rows are field_dispatch CMS records.
+  maturity implemented
+  consumes BonfyreAuth
+  consumes PageComposition
+  publishes FieldDispatch
+  node_types FieldDispatch
+  edge_types offers_visit
+  invariant only the requester may offer or withdraw; only the account behind the named member address may accept or decline
+  invariant every state change is a compare-and-set on the state the actor saw: requested or declined -> offered -> accepted | declined; open -> withdrawn
+  invariant nobody is notified and nothing is booked, contracted or paid; the page says so
+  forbidden_inference an accepted field request -> a booking, an employment or service contract, a payment, or a safety check of either person
+  forbidden_inference an offered request -> that the member was told about it
+  known_gap a member without a published member address cannot be offered a request; NFC, LoRa, scale and handshake tools on the Stitch screen have no device owner and are not shown
+  source_path cmd/BonfyreCMS/content-types/field_dispatch.json
+  source_path cmd/BonfyreWebAddress/src/field_dispatch_web.h
+  source_path cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh records a request, refuses a stranger's offer, offers it to robin.aurekai.work, refuses the requester's own accept, lets the named member see and accept it, and refuses the member's withdraw
+
+interaction account-continuity-writes-through-cms
+  source account-device-keys
+  destination cmd-c-m-s
+  relation writes_records
+  preserves account subject from a verified session, the person's typed values, compare-and-set preconditions
+  drops session tokens, pairing codes in clear, any value not submitted by the person
+  forbidden_inference a CMS row written here -> verification, transfer, sync or enforcement beyond what its state field says
+  invalidates_on device_key, device_pairing, carrier_sync_request, feed_agent_policy, field_dispatch rows; BonfyreAuth session validity
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+
+interaction device-move-reads-site-export
+  source account-device-move
+  destination page-composition
+  relation links_export
+  preserves the account's own member sites and the existing /cms/compose/export ownership check
+  drops other accounts' sites, credentials
+  forbidden_inference a download link -> a completed or verified copy on the receiving device
+  invalidates_on site_presentation and site_page rows for the account
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh
+
+interaction field-dispatch-writes-through-cms
+  source field-dispatch
+  destination cmd-c-m-s
+  relation writes_records
+  preserves requester and assignee subjects, the stated place, time and need, explicit answers
+  drops notifications, prices, schedules beyond the stated time
+  forbidden_inference a field_dispatch row -> a booking or payment
+  invalidates_on field_dispatch rows; site_presentation for the named address
+  witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh

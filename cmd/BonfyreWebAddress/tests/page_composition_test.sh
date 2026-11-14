@@ -122,6 +122,8 @@ get /w/quiet-proof >"$tmp/quiet.html"
 get /watch >"$tmp/grid.html"
 get /w/maker-profile >"$tmp/maker.html"
 get /w/collective-profile >"$tmp/collective.html"
+curl -fsS -H 'Host: aurekai.live' "$base/assets/native-experience.css" >"$tmp/native-experience.css"
+cmp "$root/site/matrix/native-experience.css" "$tmp/native-experience.css" || fail 'experience stylesheet differs from generated asset'
 
 python3 - "$tmp/page.html" "$tmp/stories.html" "$tmp/quiet.html" "$tmp/grid.html" "$tmp/maker.html" "$tmp/collective.html" <<'PY' || exit 1
 import html, json, re, sys

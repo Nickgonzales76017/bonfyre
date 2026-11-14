@@ -1,6 +1,7 @@
 // Real WebWork retention and shared MessagePack adapter, served only on loopback.
 // Provider execution is injected; no credential store or external service is used.
 import {test,expect,beforeAll,beforeEach,afterAll} from 'bun:test';
+import {deferred,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {mkdtempSync,mkdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -9,8 +10,7 @@ import {WebWork} from '../../../cmd/BonfyreSourceFrontier/tools/web_work.mjs';
 import {webResults,webSpec,WebRefusal} from '../../../cmd/BonfyreSourceFrontier/tools/web_protocol.mjs';
 import {createFabricStore} from '../../mcp/fabric_store.mjs';
 import {encode,decode} from '../workspace-msgpack.mjs';
-const root=process.env.BONFYRE_TEST_PUBLIC_BROWSER||resolve(import.meta.dir,'..'),deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const packet=value=>new Response(encode(value),{headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
+const root=process.env.BONFYRE_TEST_PUBLIC_BROWSER||resolve(import.meta.dir,'..');
 let browser,server,owners={},jobs={},calls=[],readGate=null,access=true,finishActive=null,activeTask=null,clock=Date.UTC(2026,9,21,18);
 let fabric,fabricRoot,nativeUnavailable=false,researchUnavailable=false,nativeRefused=false,loseActionReply=false,nativeActor='user:1';
 const binding=(context='self',actor='user:1')=>({actor,subject:context==='self'?actor:context,scope:context==='self'?'self':context.split(':')[0]});
@@ -40,8 +40,8 @@ beforeEach(async()=>{
  jobs.org=await start(owners['institution:studio'],plan(owners['institution:studio'],'Studio retained sources','Studio'));
 });
 beforeAll(async()=>{
- const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test');browser=await chromium.launch({headless:true,...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){const url=new URL(request.url);calls.push({path:url.pathname,search:url.search,method:request.method});
+ browser=await launchFixtureChromium({module:'@playwright/test'});
+ server=loopbackServer({async fetch(request){const url=new URL(request.url);calls.push({path:url.pathname,search:url.search,method:request.method});
   if(url.pathname==='/fixture'){const nav=url.searchParams.has('native')?'<nav data-fixture-native-workspace data-activity-context="institution%3Astudio">Studio workspace</nav>':'<header class="ak-bar"><span data-fixture-account-slot><span class="ak-session" data-session-state="'+(url.searchParams.has('anonymous')?'anonymous':'signed-in')+'">Account</span></span></header>';return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/aurekai-activity.css"></head><body>'+nav+'<main><h1>Source work</h1><button id="outside">Page action</button><dialog id="other"><form method="dialog"><button id="dialog-action">Dialog action</button></form></dialog></main><script type="module">import {mountAurekaiActivity} from "/apps/aurekai-activity.mjs";import {readActivity} from "/apps/aurekai-activity-source.mjs";const slot=document.querySelector("[data-fixture-account-slot]");if(slot)slot.dataset.accountSlot="";else document.querySelector("[data-fixture-native-workspace]").dataset.nativeWorkspace="";window.fixtureNavigation=state=>{const node=document.createElement("span");node.className="ak-session";node.dataset.sessionState=state;node.textContent="Account";slot.replaceChildren(node);};window.fixtureRail=mountAurekaiActivity({intervalMs:3600000,tasks:null,inbox:null,needs:null,setNotice:null,providerView:async()=>({mountForeignSignIn:(node,review)=>{window.fixtureProviderMounts=(window.fixtureProviderMounts||0)+1;window.fixtureProviderReview=review;const control=document.createElement("button");control.textContent="Provider-owned disabled control";control.disabled=true;node.append(control);return {dispose(){window.fixtureProviderDisposals=(window.fixtureProviderDisposals||0)+1;}};}}),activity:(context,options)=>readActivity(context,{...options,signal:window.fixtureIgnoreAbort?undefined:options.signal})});</script></body></html>',{headers:{'Content-Type':'text/html'}});}
   if(url.pathname==='/apps/_destinations')return access?packet([1,[['self','Your account',true],['institution:studio','Studio',false]]]):new Response('Current access refused',{status:403});
   if(url.pathname==='/sources/_web'){

@@ -43,7 +43,7 @@ const rowsOf=doc=>{
 function managed(f,route){
  return f&&f.page===route&&f.slot==="showcase"&&authoringKind(f.kind);
 }
-export function treeFromNativeSnapshot(base){
+export function treeFromNativeSnapshot(base,{editablePublished=false}={}){
  const snap=snapshot(base),doc=newAuthoringTree(snap.namespace,snap.route);
  const rows=snap.fragments.filter(f=>managed(f,snap.route));
  const dict=new Map();
@@ -53,9 +53,12 @@ export function treeFromNativeSnapshot(base){
   const props={heading:row.heading||"",body:row.body||"",eyebrow:row.eyebrow||"",
    label:row.label||"",href:row.href||"",variant:row.variant_key||"paper",
    source_ref:row.source_ref||"",source_digest:row.source_digest||"",
-   ...(row.status==="published"?{readOnly:true}:{}),
+   ...(row.status==="published"?{readOnly:!editablePublished}:
+    own(t,"readOnly")?{readOnly:t.readOnly}:{}),
    ...(own(t,"editorial")?{editorial:t.editorial}:{}),
-   ...(own(t,"payload")?{payload:t.payload}:{})};
+   ...(own(t,"payload")?{payload:t.payload}:{}),
+   ...(own(t,"bindings")?{bindings:t.bindings}:{}),
+   ...(own(t,"metadata")?{metadata:t.metadata}:{})};
   const node={id:row.coordinate,kind:row.kind,props,responsive:t.responsive||{},children:[]};
   dict.set(row.coordinate,{node,parent:t.parent??null,position:row.position});
  }
@@ -80,7 +83,10 @@ function authoredRow(value,stored,route){
  const meta={...baseTags,authoring_v1:{version:1,parent,
   responsive:clone(node.responsive),
   ...(own(node.props,"editorial")?{editorial:clone(node.props.editorial)}:{}),
-  ...(own(node.props,"payload")?{payload:clone(node.props.payload)}:{})}};
+  ...(own(node.props,"payload")?{payload:clone(node.props.payload)}:{}),
+  ...(own(node.props,"bindings")?{bindings:clone(node.props.bindings)}:{}),
+  ...(own(node.props,"metadata")?{metadata:clone(node.props.metadata)}:{}),
+  ...(own(node.props,"readOnly")?{readOnly:node.props.readOnly}:{})}};
  return {...old,coordinate:node.id,page:route,slot:"showcase",
   audience:stored?.audience||"public",kind:node.kind,position,
   eyebrow:node.props.eyebrow||"",heading:node.props.heading||"",
@@ -89,18 +95,20 @@ function authoredRow(value,stored,route){
   source_ref:node.props.source_ref||"",source_digest:node.props.source_digest||"",
   semantic_tags:meta,projection_contract:{html:true},status:"draft"};
 }
-export function toNativePageWrite(base,doc,{pageDraft}={}){
+export function toNativePageWrite(base,doc,{pageDraft,reviewedRevision=false}={}){
  const snap=snapshot(base);validateAuthoringTree(doc);
  if(doc.site_id!==snap.namespace||doc.page!==snap.route)
   fail("different site or route cannot be edited through this workspace");
- if(snap.page?.status==="published")
+ if(snap.page?.status==="published"&&!reviewedRevision)
   fail("published page is immutable; create a reviewed draft revision");
+ if(reviewedRevision&&(snap.page?.status!=="published"||!base.id))
+  fail("only a current published page may be revised");
  const oldRows=snap.fragments.filter(f=>managed(f,snap.route));
  const byId=new Map(oldRows.map(row=>[row.coordinate,row]));
  const elements=rowsOf(doc),incoming=new Map(elements.map(x=>[x.node.id,x]));
  // Preserve previously published fragments exactly; no in-place replacement,
  // reordering, deletion or rights change through an authoring draft save.
- for(const original of oldRows.filter(f=>f.status==="published")){
+ if(!reviewedRevision)for(const original of oldRows.filter(f=>f.status==="published")){
   const target=incoming.get(original.coordinate);
   if(!target)fail("published block cannot be removed");
   const next=authoredRow(target,original,snap.route);
@@ -112,12 +120,16 @@ export function toNativePageWrite(base,doc,{pageDraft}={}){
   if(before&&JSON.stringify(before.responsive??{})!==JSON.stringify(target.node.responsive)||
      before&&JSON.stringify(before.editorial??null)!==JSON.stringify(target.node.props.editorial??null)||
      before&&JSON.stringify(before.payload??null)!==JSON.stringify(target.node.props.payload??null)||
+     before&&JSON.stringify(before.bindings??null)!==JSON.stringify(target.node.props.bindings??null)||
+     before&&JSON.stringify(before.metadata??null)!==JSON.stringify(target.node.props.metadata??null)||
+     !target.node.props.readOnly||
      before&&(before.parent??null)!==(target.parent??null))
     fail("published composition must be forked");
  }
  const authored=elements.map(item=>{
   const original=byId.get(item.node.id);
-  return original?.status==="published"?clean(original):authoredRow(item,original,snap.route);
+  return reviewedRevision?{...authoredRow(item,original,snap.route),status:"published"}:
+   original?.status==="published"?clean(original):authoredRow(item,original,snap.route);
  });
  // Unmanaged records are never touched, even during a whole-page replacement.
  const unrelated=snap.fragments.filter(f=>!managed(f,snap.route)).map(clean);
@@ -127,7 +139,7 @@ export function toNativePageWrite(base,doc,{pageDraft}={}){
   heading:pageDraft?.heading||"Untitled page",
   lede:pageDraft?.lede||"",machine_view:"authored",status:"draft"
  };
- if(pageDraft)for(const [field,max]of [["title",220],["heading",220],["lede",5000],["editorial_kind",20],["media_subject_ref",104],["author_credit",159],["author_subject_ref",159],["editorial_published_on",10],["editorial_updated_on",10]]){
+ if(pageDraft)for(const [field,max]of [["title",220],["heading",220],["lede",5000],["eyebrow",120],["editorial_kind",20],["media_subject_ref",104],["author_credit",159],["author_subject_ref",159],["editorial_published_on",10],["editorial_updated_on",10]]){
   if(!own(pageDraft,field))continue;
   const text=pageDraft[field];
   if(typeof text!=="string"||text.length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)||
@@ -143,7 +155,17 @@ export function toNativePageWrite(base,doc,{pageDraft}={}){
     fail("invalid editorial publication dates");
  if(!page.editorial_kind&&(page.author_credit||page.author_subject_ref||page.editorial_published_on||page.editorial_updated_on))
     fail("editorial credits require an article kind");
- if(page.status!=="draft")fail("only page drafts can be updated");
+ if(reviewedRevision){
+  for(const key of ["editorial_kind","media_subject_ref","author_credit","author_subject_ref","editorial_published_on"])
+   if((page[key]??"")!==(snap.page?.[key]??""))fail("revision cannot change the published source or byline");
+  for(const original of oldRows.filter(row=>row.status==="published")){
+   const updated=authored.find(row=>row.coordinate===original.coordinate);
+   if(!updated||updated.source_ref!==original.source_ref||updated.source_digest!==original.source_digest)
+    fail("reviewed revision cannot remove or reattribute the published source");
+  }
+  if(unrelated.some(row=>row.status!=="published"))fail("published revision contains unreleased material");
+  page.status="published";
+ }else if(page.status!=="draft")fail("only page drafts can be updated");
  const request={operation:base.id?"replace":"create",route:snap.route,
   expected_id:base.id,expected_digest:base.digest,page,
   fragments:[...unrelated,...authored]};
@@ -157,9 +179,9 @@ async function request(fetcher,url,options){
  if(!value||typeof value!=="object")fail("native CMS returned an invalid response");
  return value;
 }
-export async function openNativeAuthoring({fetcher=fetch,route="/",site=""}={}){
+export async function openNativeAuthoring({fetcher=fetch,route="/",site="",editablePublished=false}={}){
  const base=await request(fetcher,"/cms/compose/page?route="+encodeURIComponent(route)+(site?"&site="+encodeURIComponent(site):""));
- return {base,tree:treeFromNativeSnapshot(base)};
+ return {base,tree:treeFromNativeSnapshot(base,{editablePublished})};
 }
 export async function saveNativeAuthoring({fetcher=fetch,base,tree,pageDraft,site=""}){
  const payload=toNativePageWrite(base,tree,{pageDraft});
@@ -167,7 +189,7 @@ export async function saveNativeAuthoring({fetcher=fetch,base,tree,pageDraft,sit
   headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
  if(result.committed!==true)fail("no native commit receipt");
  const reopened=await openNativeAuthoring({fetcher,route:tree.page,site});
- if(pageDraft&&["title","heading","lede","editorial_kind","media_subject_ref","author_credit","author_subject_ref","editorial_published_on","editorial_updated_on"].some(field=>own(pageDraft,field)&&
+ if(pageDraft&&["title","heading","lede","eyebrow","editorial_kind","media_subject_ref","author_credit","author_subject_ref","editorial_published_on","editorial_updated_on"].some(field=>own(pageDraft,field)&&
      (reopened.base.snapshot.page?.[field]??"")!==pageDraft[field]))
   fail("native CMS page metadata did not match committed readback");
  const input=rowsOf(tree),output=rowsOf(reopened.tree);
@@ -180,4 +202,18 @@ export async function saveNativeAuthoring({fetcher=fetch,base,tree,pageDraft,sit
   JSON.stringify(a.node.props.editorial||null)!==JSON.stringify(output[i].node.props.editorial||null)))
   fail("committed readback is not the edited tree");
  return {committed:true,revision:reopened.base.digest,base:reopened.base,tree:reopened.tree};
+}
+
+export async function revisePublishedAuthoring({fetcher=fetch,base,tree,pageDraft,site="",rightsConfirmed=false}={}){
+ if(!rightsConfirmed||!site)fail("reviewed site ownership and publication rights are required");
+ const payload=toNativePageWrite(base,tree,{pageDraft,reviewedRevision:true});
+ if(payload.fragments.some(row=>row.status!=="published"))fail("revision must be fully published");
+ const url="/cms/compose/revise?site="+encodeURIComponent(site)+"&route="+encodeURIComponent(tree.page);
+ const result=await request(fetcher,url,{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({...payload,rights_confirmed:true,revision_confirmed:true})});
+ if(result.committed!==true||result.id!==base.id)fail("revision was not confirmed");
+ const reopened=await openNativeAuthoring({fetcher,route:tree.page,site,editablePublished:true});
+ if(reopened.base.id!==base.id||reopened.base.snapshot.page?.status!=="published"||
+  reopened.base.digest!==result.digest)fail("revision readback differs from native commit");
+ return {committed:true,published:true,revision:reopened.base.digest,base:reopened.base,tree:reopened.tree};
 }

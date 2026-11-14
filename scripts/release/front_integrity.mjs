@@ -33,8 +33,13 @@ function probe({styled,budgets}){
  const bar=document.querySelector('.ak-bar,header');if(bar){const r=bar.getBoundingClientRect();if(r.top<-1||r.left<-1||r.right>innerWidth+1)add('bar-offscreen',Math.round(r.left)+','+Math.round(r.top)+' '+Math.round(r.right)+'/'+innerWidth);
   const head=main.querySelector('h1,h2');if(head&&scrollY===0&&getComputedStyle(bar).position!=='static'){const h=head.getBoundingClientRect();if(h.top<r.bottom-1&&h.bottom>r.top)add('under-bar',head.textContent.trim());}}
  if(document.documentElement.scrollWidth>innerWidth+1)add('overflow',document.documentElement.scrollWidth+'>'+innerWidth);
- const arrival=document.querySelector('[data-front-arrival]');if(!arrival)add('arrival-missing','shared estate arrival layer');else{const doors=arrival.querySelectorAll('[data-arrival-door]').length,icons=arrival.querySelectorAll('[data-arrival-icon] svg').length;if(doors!==7||icons!==7)add('arrival-contract',doors+' doors / '+icons+' icons');
-  const account=[...arrival.querySelectorAll('header nav a')].map(a=>a.getAttribute('href'));if(JSON.stringify(account)!==JSON.stringify(['/profile','/apps?context=self','/programs?context=self']))add('arrival-account',account.join(' '));}
+ // The way on from a front is the one estate shell: the four territories and
+ // the sections in the bar, and the person's own page and tools in the footer.
+ const places=document.querySelectorAll('.ak-bar .ak-places a').length,sections=document.querySelectorAll('.ak-bar .ak-sections a').length;
+ if(places!==4||sections<5)add('arrival-missing','shared estate shell: '+places+' territories / '+sections+' sections');
+ const foot=document.querySelector('.ak-foot');
+ if(!foot)add('arrival-missing','shared estate footer');
+ else{const own=['/profile','/apps'].filter(h=>!foot.querySelector('a[href="'+h+'"]'));if(own.length)add('arrival-account','footer lacks '+own.join(' '));}
  const outreach=[...document.querySelectorAll('a[href]')].map(a=>a.href).filter(h=>/\.pages\.dev\/|aurekai-work-samples/.test(h));if(outreach.length)add('outreach-link',[...new Set(outreach)].join(' '),false);
  const nav=performance.getEntriesByType('navigation')[0];
  if(nav){if(nav.responseStart>budgets.ttfb)add('slow-ttfb',Math.round(nav.responseStart)+'ms',false);if(nav.loadEventEnd>budgets.load)add('slow-load',Math.round(nav.loadEventEnd)+'ms',false);}

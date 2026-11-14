@@ -2,16 +2,52 @@
 #define BONFYRE_SESSION_HANDOFF_WEB_H
 /* One-use native Auth transfer. The receiving territory owns a host-only
  * nonce; no bearer or password travels through browser redirects. */
-static const char *sso_host_for(const char *t){if(!t)return NULL;if(!strcmp(t,"work"))return "aurekai.work";if(!strcmp(t,"life"))return "aurekai.life";if(!strcmp(t,"live"))return "aurekai.live";if(!strcmp(t,"shop"))return "aurekai.shop";return NULL;}
-static const char *sso_territory(const char *h){if(!h)return NULL;if(!strcmp(h,"aurekai.work"))return "work";if(!strcmp(h,"aurekai.life"))return "life";if(!strcmp(h,"aurekai.live"))return "live";if(!strcmp(h,"aurekai.shop"))return "shop";return NULL;}
+/* A tenant-supplied host map is authoritative when configured.
+ * The old Aurekai apex values below are a temporary release adapter;
+ * do not use them when a configured map is invalid. */
+#include "tenant_host_binding.h"
+static const char *sso_host_for(const char *t){
+ int state=bf_tenant_hosts_status();
+ if(state==1)return bf_tenant_public_host(t);
+ if(state<0||!t)return NULL;
+ if(!strcmp(t,"work"))return "aurekai.work";
+ if(!strcmp(t,"life"))return "aurekai.life";
+ if(!strcmp(t,"live"))return "aurekai.live";
+ if(!strcmp(t,"shop"))return "aurekai.shop";
+ return NULL;
+}
+static const char *sso_territory(const char *h){
+ int state=bf_tenant_hosts_status();
+ if(state==1)return bf_tenant_territory_for_host(h);
+ if(state<0||!h)return NULL;
+ if(!strcmp(h,"aurekai.work"))return "work";
+ if(!strcmp(h,"aurekai.life"))return "life";
+ if(!strcmp(h,"aurekai.live"))return "live";
+ if(!strcmp(h,"aurekai.shop"))return "shop";
+ return NULL;
+}
 static int sso_return_address(const char *candidate,const char *host,char *out,size_t cap){
- if(bf_auth_return_address(candidate,host,out,cap))return 1;
+ int tenant_state=bf_tenant_hosts_status();
+ if(tenant_state<0)return 0;
+ if(tenant_state==0) {
+  if(bf_auth_return_address(candidate,host,out,cap))return 1;
+ } else if(candidate&&candidate[0]=='/'&&bf_auth_local_path(candidate)&&strlen(candidate)<cap) {
+  snprintf(out,cap,"%s",candidate);
+  return 1;
+ }
+ /* A configured tenant's absolute return cannot reuse the historical
+  * Aurekai-specific exception list. It must name a verified subdomain
+  * of this exact tenant's selected territory and exist in Matrix. */
  const char *territory=sso_territory(host),*matrix=getenv("BONFYRE_MATRIX_DB");
  if(!candidate||strncmp(candidate,"https://",8)||!territory||!matrix||strlen(candidate)>=cap)return 0;
- const char *path=strchr(candidate+8,'/');char domain[256],normalized[256],suffix[48];
+ const char *path=strchr(candidate+8,'/');char domain[256],normalized[256],suffix[256];
  size_t n=path?(size_t)(path-candidate-8):strlen(candidate+8);
  if(!n||n>=sizeof(domain))return 0;memcpy(domain,candidate+8,n);domain[n]=0;
- snprintf(suffix,sizeof(suffix),".aurekai.%s",territory);size_t tail=strlen(suffix);
+ if(bf_tenant_hosts_status()==1) {
+  const char *base=bf_tenant_public_host(territory);
+  if(!base||snprintf(suffix,sizeof(suffix),".%s",base)>=(int)sizeof(suffix))return 0;
+ } else if(snprintf(suffix,sizeof(suffix),".aurekai.%s",territory)>=(int)sizeof(suffix))return 0;
+ size_t tail=strlen(suffix);
  if(n<=tail||strcmp(domain+n-tail,suffix)||!lower_host(domain,normalized)||strcmp(domain,normalized)||
     strspn(domain,"abcdefghijklmnopqrstuvwxyz0123456789-.")!=n||!bf_auth_local_path(path?path:"/"))return 0;
  sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int ok=0;
@@ -29,13 +65,13 @@ static void sso_redirect(const char *location){printf("HTTP/1.1 303 See Other\r\
 static int serve_session_handoff(const char *method,const char *target,const char *bearer,const char *db,const char *host,const char *query){
  if(strcmp(target,"/session/switch")&&strcmp(target,"/session/continue")&&strcmp(target,"/session/authorize")&&strcmp(target,"/session/complete"))return 0;
  const char *territory=sso_territory(host);char state[65]={0},next[BF_AUTH_NEXT_MAX]={0},source[16]={0};
- if(strcmp(method,"GET")||!territory){html_error(400,"Unsupported sign-in route","Use a controlled Aurekai territory and its browser sign-in flow.");return 1;}
+ if(strcmp(method,"GET")||!territory){html_error(400,"Unsupported sign-in route","Use a controlled institution territory and its browser sign-in flow.");return 1;}
  if(!strcmp(target,"/session/switch")){
   char dest[16]={0},requested[BF_AUTH_NEXT_MAX]={0};
   if(bf_lex_form_query(query,"to",dest,sizeof(dest))!=1||!sso_host_for(dest)||
      bf_lex_form_query(query,"next",requested,sizeof(requested))!=1||
      !sso_return_address(requested,sso_host_for(dest),next,sizeof(next))){
-   html_error(400,"Invalid territory destination","Choose one Aurekai territory and a valid return address.");return 1;
+   html_error(400,"Invalid territory destination","Choose one institution territory and a valid return address.");return 1;
   }
   if(!strcmp(dest,territory)||!session_valid(bearer,db)){
    if(!strncmp(next,"https://",8))sso_redirect(next);
@@ -48,11 +84,11 @@ static int serve_session_handoff(const char *method,const char *target,const cha
  if(!strcmp(target,"/session/continue")){
   int has_source=bf_lex_form_query(query,"source",source,sizeof(source));
   if(has_source<0||(has_source&&(!sso_host_for(source)||!strcmp(source,territory)))){
-   html_error(400,"Invalid sign-in source","Start from a different Aurekai territory.");return 1;
+   html_error(400,"Invalid sign-in source","Start from a different institution territory.");return 1;
   }
   if(!has_source)snprintf(source,sizeof(source),"work");
   char requested[BF_AUTH_NEXT_MAX]={0};int supplied=bf_lex_form_query(query,"next",requested,sizeof(requested));
-  if(supplied<0||(supplied&&!sso_return_address(requested,host,next,sizeof(next)))){html_error(400,"Invalid return address","Choose a current Aurekai address.");return 1;}
+  if(supplied<0||(supplied&&!sso_return_address(requested,host,next,sizeof(next)))){html_error(400,"Invalid return address","Choose a current institution address.");return 1;}
   if(!supplied)snprintf(next,sizeof(next),"/account");
   if(!has_source&&!strcmp(territory,"work")){
    if(session_valid(bearer,db)){sso_redirect(next);return 1;}

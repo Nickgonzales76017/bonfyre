@@ -6,6 +6,7 @@ import {homedir} from 'node:os';
 import {join,resolve,relative,dirname,isAbsolute} from 'node:path';
 import {createHash} from 'node:crypto';
 import {encode,decode} from '../../integrations/browser/workspace-msgpack.mjs';import {frontIntegrity} from './front_integrity.mjs';
+import {selectMemberJournalCanaries,verifyMemberJournalReadback} from './member_journal_canary.mjs';
 const root=resolve(import.meta.dir,'../..'),home=homedir(),releases=join(home,'.bonfyre/releases');
 const label='com.bonfyre.public-web-address',domain='gui/'+process.getuid(),plist=join(home,'Library/LaunchAgents',label+'.plist');
 // A carried program whose link target was removed (a self-updating CLI such as
@@ -233,6 +234,7 @@ export function acceptanceGroups(){
  groups.push(['scripts/tests/source-desk-browser.test.mjs']);groups.push(['scripts/tests/campaign-workspace.test.mjs']);groups.push(['cmd/BonfyreWebAddress/tests/web_workbench.browser.test.mjs']);groups.push(['scripts/tests/interaction-components-browser.test.mjs','cmd/BonfyreWebAddress/tests/account_choice_boundaries.test.mjs','cmd/BonfyreWebAddress/tests/account_choices.test.mjs']);
  groups.push(['integrations/browser/tests/account-connections.test.mjs','integrations/browser/tests/enrollment-continuation.test.mjs','integrations/browser/tests/enrollment-integrity.test.mjs','integrations/browser/tests/provider-continuation.test.mjs']);
  groups.push(['cmd/BonfyreWebAddress/tests/program_workspace.test.mjs','scripts/tests/program-workspace-owner.test.mjs','scripts/tests/program-source-work.test.mjs','integrations/browser/tests/program-service-continuations.test.mjs','integrations/browser/tests/program-workspace.browser.test.mjs','cmd/BonfyreWebAddress/tests/installed_subtools_test.mjs','scripts/release/tests/public_surface_rollout.test.mjs']);
+ groups.push(['scripts/release/tests/member_journal_all_sites.test.mjs']);
  groups.push(['cmd/BonfyreCMS/tests/program_continuation_test.c','cmd/BonfyreCMS/tests/program_continuation_test.mk','cmd/BonfyreCMS/bonfyre-cms','cmd/BonfyreExternalEstate/bonfyre-external-estate','cmd/BonfyreExternalEstate/src/main.c',...['bf_json.c','bf_jsonw.c','bf_msgpack.c','bf_utf8.c','src/bf_sha256.c','include/bf_json.h','include/bf_jsonw.h','include/bf_msgpack.h','include/bf_utf8.h','include/bonfyre.h','include/bonfyre/bf_discipl.h'].map(path=>'lib/libbonfyre/'+path),...['pack_artifact','pack_version','pack_head','pack_dependency','pack_overlay','pack_demand','pack_installation','pack_activation','application_binding'].map(name=>'cmd/BonfyreCMS/content-types/'+name+'.json')]);
  // Each browser fixture owns its Playwright transport in a separate test process.
  for(const file of ['integrations/browser/tests/foreign-sign-in.test.mjs','integrations/browser/tests/foreign-sign-in.browser.test.mjs','integrations/browser/tests/foreign-sign-in-work.browser.test.mjs','integrations/browser/tests/connection-studio-signin.browser.test.mjs','integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs','integrations/browser/tests/aurekai-activity.browser.test.mjs','integrations/browser/tests/provider-continuation.browser.test.mjs','integrations/browser/tests/enrollment-live.test.mjs'])groups.push([file]);
@@ -293,6 +295,22 @@ export async function retryReadbackTransport(requestFn,base,path,host,{attempts=
  for(let attempt=1;attempt<=attempts;attempt++){try{return await requestFn(base,path,host);}catch(error){last=error;if(attempt<attempts&&delayMs)await Bun.sleep(delayMs*attempt);}}
  throw last;
 }
+// Release acceptance is about the composed experience, not merely a 200 or JS mount.
+export function assertEstateShell(html,host){
+ assert(/<body\b[^>]*\bclass=["'][^"']*\bak-app\b/i.test(html),host+' lost the shared app shell');
+ assert(/<header\b[^>]*\bclass=["'][^"']*\bak-bar\b/i.test(html),host+' lost the territory navigation');
+ assert(/<main\b/i.test(html),host+' lost the composed main content');
+ assert(/<footer\b[^>]*\bclass=["'][^"']*\bak-foot\b/i.test(html),host+' lost the shared footer');
+ assert(/\bdata-ak-player\b/i.test(html),host+' lost the persistent narration player');
+ for(const old of ['Explore the rest of Aurekai','Conversations to take part in','Your work, in one place'])assert(!html.includes(old),host+' still renders the obsolete demo body: '+old);
+}
+const requiredEstateStyles=Object.freeze(['aurekai-bar.css','composition.css','aurekai-native.css','profile-journal.css','authoring-reader.css']);
+export function assertStyleAsset(asset,dir,name){
+ const route='/assets/'+name;
+ assert.equal(asset.status,200,route+' is unavailable');
+ assert.equal(String(asset.type||'').split(';')[0].trim().toLowerCase(),'text/css',route+' must return CSS');
+ assert.equal(asset.sha256,hash(join(dir,'site',name)),route+' differs from the frozen mature stylesheet');
+}
 function browserAsset(name,asset,dir){
  const route='/apps/'+name,type=String(asset.type||'').split(';')[0].trim().toLowerCase();assert.equal(asset.status,200,route);
  assert((name.endsWith('.css')?['text/css']:['text/javascript','application/javascript']).includes(type),route+' content type');
@@ -318,7 +336,8 @@ async function smoke(dir,{publicRead=false,stage=null}={}){
  const frozenPrograms=stage?programAssets.filter(name=>frozenBrowser.includes(name)):programAssets;
  for(const host of ['aurekai.work','aurekai.live','aurekai.life','aurekai.shop']){
   const base=publicRead?'https://'+host:'http://127.0.0.1:'+port,header=publicRead?undefined:host;
-  const home=await read(base,'/',header);assert.equal(home.status,200,host+' home');assert(home.text.includes('aurekai-activity.mjs'),host+' activity mounting');results.push({host,route:'/',status:200,sha256:home.sha256});
+  const home=await read(base,'/',header);assert.equal(home.status,200,host+' home');assert(home.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(home.text,host);results.push({host,route:'/',status:200,sha256:home.sha256});
+  await Promise.all(requiredEstateStyles.map(async name=>assertStyleAsset(await read(base,'/assets/'+name,header),dir,name)));
   results.push(...(await browserReadback(base,header,dir,read,frozenBrowser)).map(result=>({host,...result})));
   const privateReply=await read(base,'/apps/_activity?context=self&operation=list',header);assert.equal(privateReply.status,403,'Anonymous activity must be refused');results.push({host,route:'/apps/_activity',status:403});
   results.push(...(await programReadback(base,header,dir,read,frozenPrograms)).map(result=>({host,...result})));
@@ -339,7 +358,8 @@ export function verifyPromotionReceipt(dir,stage,stageHash){
 async function currentPublicSample(dir,stage){
  assert.equal(hash(plist),hash(join(dir,'candidate-service.plist')),'This frozen release is no longer the active public service configuration.');const {browser}=frozenSurface(stage),sample=['aurekai-activity.mjs','source-desk.mjs','program-workspace.mjs'].filter(name=>browser.includes(name)),material=new Map(stage.material.map(row=>[row.path,row.sha256])),rows=[];
  await Promise.all(['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'].map(async host=>{
-  const base='https://'+host,read=path=>retryReadbackTransport(request,base,path,undefined,{attempts:3,delayMs:250}),[homeReply,...assetReplies]=await Promise.all([read('/'),...sample.map(name=>read('/apps/'+name))]);assert.equal(homeReply.status,200,host+' home');assert(homeReply.text.includes('aurekai-activity.mjs'),host+' activity mounting');rows.push({host,route:'/',status:200});
+  const base='https://'+host,read=path=>retryReadbackTransport(request,base,path,undefined,{attempts:3,delayMs:250}),[homeReply,...assetReplies]=await Promise.all([read('/'),...sample.map(name=>read('/apps/'+name))]);assert.equal(homeReply.status,200,host+' home');assert(homeReply.text.includes('aurekai-activity.mjs'),host+' activity mounting');assertEstateShell(homeReply.text,host);rows.push({host,route:'/',status:200});
+  await Promise.all(requiredEstateStyles.map(async name=>assertStyleAsset(await read('/assets/'+name),dir,name)));
   for(let i=0;i<sample.length;i++){const name=sample[i],asset=browserAsset(name,assetReplies[i],dir);assert.equal(asset.sha256,material.get('browser/'+name));rows.push({host,...asset});}
   const [activity,programs,page]=await Promise.all([read('/apps/_activity?context=self&operation=list'),read('/apps/_programs?context=self&operation=catalog'),read('/programs?context=self')]),location=new URL(page.location,base);assert.equal(activity.status,403);assert.equal(programs.status,403);assert.equal(page.status,303);assert.equal(location.pathname,'/login');assert.equal(location.searchParams.get('next'),'/programs?context=self');rows.push({host,route:'/apps/_activity',status:403},{host,route:'/apps/_programs',status:403},{host,route:'/programs?context=self',status:303});
  }));return rows;
@@ -347,6 +367,29 @@ async function currentPublicSample(dir,stage){
 async function verifyFrozen(dir){
  const stage=inspectRelease(dir,{requireCurrentInventory:false}),stageHash=hash(join(dir,'stage.mpk')),accepted=requireFrozenAcceptance(dir,stageHash),promoted=verifyPromotionReceipt(dir,stage,stageHash),{browser:frozenBrowser}=frozenSurface(stage);await verifyBrowser(dir,frozenBrowser);
  const candidate=parsePlist(join(dir,'candidate-service.plist')),runtimeEnv={...candidate.EnvironmentVariables,HOME:home},previousEnvironment=parsePlist(join(dir,'previous-service.plist')).EnvironmentVariables;for(const name of ['BONFYRE_CMS_DB','BONFYRE_SOURCE_FRONTIER_DB'])assert.equal(runtimeEnv[name],previousEnvironment[name],'A canonical database changed: '+name);for(const owner of [runtimeEnv.BONFYRE_PROGRAM_OWNER,runtimeEnv.BONFYRE_PROGRAM_SOURCE_OWNER,join(dir,'native/scripts/program-work-reference.mjs')])run([runtimeEnv.BONFYRE_BUN_BINARY,'--no-env-file','--no-install','-e',"await import(process.argv[1]);",owner],{env:runtimeEnv,timeout:30000});
+ const memberCanaries=selectMemberJournalCanaries(runtimeEnv.BONFYRE_CMS_DB);
+ // Older single-site receipts remain verifiable only if that was the entire
+ // published member journal census at activation. No new host can disappear.
+ const retained=promoted.memberJournals??(promoted.memberJournal
+  ?{local:[promoted.memberJournal.local],public:[promoted.memberJournal.public]}:null);
+ if(memberCanaries.length){
+  assert(retained,'The activated member-journal receipts are missing.');
+  for(const scope of ['local','public']){
+   const receipts=retained[scope];
+   assert(Array.isArray(receipts)&&receipts.length===memberCanaries.length,
+    scope+' member journal coverage changed.');
+   for(let i=0;i<memberCanaries.length;i++){
+    const receipt=receipts[i],canary=memberCanaries[i];
+    assert.equal(receipt?.site_id,canary.site_id,scope+' member journal site identity drifted.');
+    assert.equal(receipt?.host,canary.host,scope+' member journal host drifted.');
+    assert.equal(receipt?.total,canary.total,scope+' member journal census drifted.');
+    assert.equal(receipt?.route_sha256,canary.route_sha256,scope+' member journal routes drifted.');
+    assert.equal(receipt?.routes_verified,canary.total,scope+' member journal has unchecked articles.');
+   }
+  }
+  for(const canary of memberCanaries)
+   await verifyMemberJournalReadback(canary,(base,route,host)=>retryReadbackTransport(request,base,route,host,{attempts:3,delayMs:250}),{publicRead:true});
+ }else assert(!retained,'The previously activated member journal disappeared from CMS.');
  const sample=await currentPublicSample(dir,stage);console.log('FROZEN_VERIFIED '+dir+'\n'+JSON.stringify({stage_sha256:stageHash,acceptance_key:accepted.acceptanceKey,acceptance_logs:accepted.logs.length,promoted_at:promoted.activated,current_sample_routes:sample.length}));
 }
 
@@ -360,10 +403,38 @@ async function activate(dir){
  try{
   copyFileSync(join(dir,'candidate-service.plist'),temporary);run(['/usr/bin/plutil','-lint',temporary]);assert.equal(hash(temporary),candidateHash);assert.equal(hash(plist),stage.previousHash);
   run(['/bin/launchctl','bootout',domain,plist]);stopped=true;renameSync(temporary,plist);run(['/bin/launchctl','bootstrap',domain,plist]);
-  {const port=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];console.log('WARM_BEGIN');for(const host of ['aurekai.work','aurekai.live','aurekai.life','aurekai.shop']){let warmed=false,lastError='';for(let i=0;i<8;i++){try{const r=await fetch('http://127.0.0.1:'+port+'/',{headers:{Host:host,Accept:'text/html'},signal:AbortSignal.timeout(90000)});await r.arrayBuffer();if(r.status===200){console.log('WARM '+host+' '+r.status);warmed=true;break;}lastError='status '+r.status;}catch(e){lastError=e.message||String(e);}await Bun.sleep(1000);}assert(warmed,'Warm-up failed for '+host+(lastError?': '+lastError:''));}} // A new build starts with a cold projection cache; readback then checks pages people will be served.
+   {const port=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];console.log('WARM_BEGIN');for(const host of ['aurekai.work','aurekai.live','aurekai.life','aurekai.shop']){let warmed=false,lastError='';for(let i=0;i<8;i++){try{const r=await fetch('http://127.0.0.1:'+port+'/',{headers:{Host:host,Accept:'text/html'},signal:AbortSignal.timeout(90000)});await r.arrayBuffer();if(r.status===200){console.log('WARM '+host+' '+r.status);warmed=true;break;}lastError='status '+r.status;}catch(e){lastError=e.message||String(e);}await Bun.sleep(1000);}assert(warmed,'Warm-up failed for '+host+(lastError?': '+lastError:''));}}
+   // Every publisher-approved member journal must warm and pass a complete
+   // local article census before any public acceptance can be claimed.
+   const memberCanaries=selectMemberJournalCanaries(candidate.EnvironmentVariables.BONFYRE_CMS_DB);
+   const memberLocal=[];
+   for(const memberCanary of memberCanaries){
+    const port=candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1];
+    let warmed=false;
+    for(let attempt=0;attempt<8;attempt++){
+     try{const response=await fetch('http://127.0.0.1:'+port+'/blog/',{headers:{Host:memberCanary.host,Accept:'text/html'},signal:AbortSignal.timeout(90000)});await response.arrayBuffer();if(response.status===200){warmed=true;break;}}catch{}
+     await Bun.sleep(1000);
+    }
+    assert(warmed,'The member publication did not warm on '+memberCanary.host);
+    const verified=await verifyMemberJournalReadback(memberCanary,(base,route,host)=>request('http://127.0.0.1:'+port,route,host));
+    memberLocal.push(verified);
+    console.log('LOCAL_MEMBER_JOURNAL_OK '+memberCanary.host+' '+verified.routes_verified+'/'+memberCanary.total);
+   }
   console.log('LOCAL_READBACK_BEGIN '+dir);let local,error;for(let i=0;i<8;i++){try{local=await smoke(dir);break;}catch(e){error=e;console.log('LOCAL_READBACK_RETRY '+(i+1)+' '+e.message);await Bun.sleep(500);}}assert(local,error?.message||'Local readback unavailable.');console.log('LOCAL_READBACK_OK '+local.length);
   console.log('RENDERED_FRONTS_BEGIN');const front=await frontIntegrity({chrome,port:candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--port')+1]}),broken=front.filter(f=>f.hard);assert(!broken.length,'Rendered fronts failed: '+broken.slice(0,6).map(f=>f.host+' '+f.width+' '+f.kind+' '+f.detail).join('; '));
-  console.log('RENDERED_FRONTS_OK '+front.length+' notes');console.log('PUBLIC_READBACK_BEGIN');const publicRoutes=await smoke(dir,{publicRead:true});inspectRelease(dir);assert.equal(hash(plist),candidateHash,'The active service configuration changed during readback.');save(join(dir,'promoted.mpk'),{activated:new Date().toISOString(),stageHash:hash(join(dir,'stage.mpk')),local,publicRoutes,front,rollback:join(dir,'previous-service.plist'),databaseWrites:false});
+  console.log('RENDERED_FRONTS_OK '+front.length+' notes');console.log('PUBLIC_READBACK_BEGIN');
+   const publicRoutes=await smoke(dir,{publicRead:true});
+   const memberPublic=[];
+   for(const memberCanary of memberCanaries){
+    const verified=await verifyMemberJournalReadback(memberCanary,(base,route,host)=>retryReadbackTransport(request,base,route,host,{attempts:3,delayMs:250}),{publicRead:true});
+    memberPublic.push(verified);
+    console.log('PUBLIC_MEMBER_JOURNAL_OK '+verified.host+' '+verified.routes_verified+'/'+memberCanary.total);
+   }
+   inspectRelease(dir);assert.equal(hash(plist),candidateHash,'The active service configuration changed during readback.');
+   const memberJournals=memberCanaries.length?{local:memberLocal,public:memberPublic}:null;
+   save(join(dir,'promoted.mpk'),{activated:new Date().toISOString(),stageHash:hash(join(dir,'stage.mpk')),local,publicRoutes,front,memberJournals,
+    memberJournal:memberCanaries.length===1?{local:memberLocal[0],public:memberPublic[0]}:null,
+    rollback:join(dir,'previous-service.plist'),databaseWrites:false});
   console.log('LIVE '+dir+'\n'+publicRoutes.map(r=>r.host+r.route+' '+r.status).join('\n'));
  }catch(error){
   rmSync(temporary,{force:true});if(stopped){

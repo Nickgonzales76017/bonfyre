@@ -6,6 +6,7 @@
 // that grants the extension the tab; the capture function is therefore run in
 // the page through the debugger, which is the same function the extension runs.
 import { test, expect } from "bun:test";
+import {loopbackServer} from './browser-fixture.mjs';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
@@ -39,7 +40,7 @@ const shop = `<!doctype html><html><head><title>Tin Club monthly box</title>
 
 test.skipIf(!browser || !existsSync(project) || !existsSync(queue))("the workbench, installed, carries a page into an observation, a draft and held work", async () => {
   const root = mkdtempSync(join(tmpdir(), "bonfyre-workbench-live-"));
-  const server = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch: () => new Response(shop, { headers: { "content-type": "text/html; charset=utf-8" } }) });
+  const server = loopbackServer({ port: 0, hostname: "127.0.0.1", fetch: () => new Response(shop, { headers: { "content-type": "text/html; charset=utf-8" } }) });
   const before = process.env.BONFYRE_CHROME;
   process.env.BONFYRE_CHROME = browser;
   try {

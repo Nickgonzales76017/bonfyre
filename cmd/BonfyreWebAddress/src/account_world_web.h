@@ -164,21 +164,7 @@ static void world_web_hidden_base(const char *site,sqlite3_int64 world,const cha
 }
 #include "account_world_picker.h"
 static void world_web_space_href(const PhSite *site,const char *space){fputs("https://",stdout);html(site->host);fputs("/worlds/",stdout);html(space);}
-static void world_web_studio_style(void){
-    fputs("<style>.aw-studio{display:grid;gap:28px}.aw-studio h2{font:400 clamp(26px,3vw,36px)/1.1 Georgia,serif;margin:0}"
-          ".aw-studio h3{font:600 15px system-ui;margin:0 0 10px}.aw-studio p{margin:0;max-width:68ch}"
-          ".aw-spaces{display:flex;flex-wrap:wrap;gap:8px}.aw-spaces a{display:inline-flex;gap:8px;align-items:baseline;padding:9px 14px;border:1px solid var(--ph-line);border-radius:11px;background:#fffef9}"
-          ".aw-spaces a[aria-current=page]{background:#e7efdc;border-color:#86a47b}.aw-spaces small{color:var(--ph-muted);font-size:12px}"
-          ".aw-studio form{display:grid;gap:12px;max-width:720px}.aw-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}"
-          ".aw-studio label{display:grid;gap:5px;font:600 13px system-ui;color:var(--ph-ink)}.aw-studio label small{font-weight:400;color:var(--ph-muted)}"
-          ".aw-studio input,.aw-studio select,.aw-studio textarea{font:15px/1.4 'DM Sans',system-ui;padding:10px 12px;border:1px solid #b5c8a1;border-radius:10px;background:#fffef9;color:var(--ph-ink);min-height:44px}"
-          ".aw-items{list-style:none;margin:0;padding:0;border-top:1px solid var(--ph-line)}.aw-items li{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--ph-line)}"
-          ".aw-items code{font:12px ui-monospace,monospace;color:var(--ph-muted);overflow-wrap:anywhere}.aw-items form{display:block}"
-          ".aw-state{font:600 11px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ph-muted)}"
-          ".aw-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.aw-actions form{display:inline-flex}"
-          ".aw-studio section{display:grid;gap:12px;padding-top:22px;border-top:1px solid var(--ph-line)}"
-          ".aw-studio button.aw-quiet{background:#fffef9;color:#2b4c36;border-color:#b5c8a1}</style>",stdout);
-}
+
 static int serve_world_studio(const char *method,const char *query,const char *bearer,const char *auth_db){
     if(strcmp(method,"GET")){aw_error(405,"Open your spaces with GET.\n");return 1;}
     char site_id[128]="",world[24]="",space[65]="",source[96]="",q[96]="";PhField params[]={{"site",site_id,sizeof(site_id),0},{"world",world,sizeof(world),0},{"space",space,sizeof(space),0},{"source",source,sizeof(source),0},{"q",q,sizeof(q),0}};
@@ -189,7 +175,7 @@ static int serve_world_studio(const char *method,const char *query,const char *b
     PhSite site,sites[16];int count=ph_sites(db,actor,sites);ph_site(db,NULL,site_id,&site);
     /* Without a World named, use the one already bound to this site. */
     if(!world_id){sqlite3_stmt *st=NULL;if(sqlite3_prepare_v2(db,"SELECT b.world_id FROM account_world_binding b JOIN world w ON w.id=b.world_id AND w.namespace=b.namespace AND w.subject=b.subject AND w.status='draft' WHERE b.namespace=?1 AND b.subject=?2 ORDER BY b.world_id LIMIT 1",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_text(st,1,site_id,-1,SQLITE_STATIC);sqlite3_bind_text(st,2,subject,-1,SQLITE_STATIC);if(sqlite3_step(st)==SQLITE_ROW)world_id=sqlite3_column_int64(st,0);}sqlite3_finalize(st);}
-    ph_begin(&site,site.name,1,"worlds");ph_nav(sites,count,&site,"worlds",1);world_web_studio_style();
+    ph_begin(db,&site,site.name,1,"worlds",actor);ph_nav(sites,count,&site,"worlds",1);
     fputs("<div class=\"aw-studio\" data-world-studio>",stdout);
     fputs("<div><h2>Your spaces</h2><p>Each space is its own page on <strong>",stdout);html(site.host);
     fputs("</strong>: a station, a label, a reading room, a screening room, or whatever you make of it. Pieces stay where they are published. A space only points to them.</p></div>",stdout);

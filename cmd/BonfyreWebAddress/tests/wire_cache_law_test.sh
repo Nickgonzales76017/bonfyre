@@ -51,6 +51,16 @@ db.executemany("INSERT INTO subject_route_item VALUES(?,?,?,?,?,?,'publication')
 db.commit()
 EOF
 
+# Production fronts have a canonical CMS even when the test fabric is empty.
+# Exercise the same owner boundary instead of relying on a missing database.
+cms="$root/cmd/BonfyreCMS/bonfyre-cms"
+[ -x "$cms" ] || fail "CMS owner binary is missing"
+mkdir -p "$tmp/schemas"
+for type in site_presentation site_page site_fragment community_body community_post community_membership; do
+    cp "$root/cmd/BonfyreCMS/content-types/$type.json" "$tmp/schemas/"
+done
+"$cms" schema migrate --db "$tmp/cms.db" --schemas "$tmp/schemas" >/dev/null
+export BONFYRE_CMS_DB="$tmp/cms.db"
 "$web" bootstrap-owned --db "$tmp/matrix.db" >/dev/null
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 BONFYRE_SUBJECT_FABRIC_DB="$tmp/subject_fabric.db" BONFYRE_WORKSPACE_CLIENT="$root/integrations/browser" \

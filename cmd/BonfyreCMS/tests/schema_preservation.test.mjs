@@ -1,6 +1,6 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { Database } from 'bun:sqlite';
@@ -57,4 +57,33 @@ test('retained quotation schema migrates atomically, preserves rows and refuses 
     assert.equal(read(db => db.query('SELECT note FROM quoted_default').get().note), "Supplier's source");
     console.log(JSON.stringify({ owner: 'native CMS', retained_schema: full.name, fields_restored: keys.length - 64, rollback_verified: true, replay_verified: true, production_writes: 0 }));
   } finally { rmSync(folder, { recursive: true, force: true }); }
+});
+
+
+test('canonical CMS registry does not silently drop schema families past 128', () => {
+  const folder=mkdtempSync(join(tmpdir(),'cms-registry-capacity-'));
+  const db=join(folder,'cms.db'),schemas=join(folder,'schemas');
+  mkdirSync(schemas);
+  const source=join(root,'cmd/BonfyreCMS/content-types');
+  const names=readdirSync(source).filter(name=>name.endsWith('.json')).sort();
+  const required=['application_binding','community_body','site_page','site_fragment','site_presentation'];
+  try{
+    assert(names.length>128,'The canonical estate no longer exercises the historical schema cap');
+    for(const name of names)copyFileSync(join(source,name),join(schemas,name));
+    const run=(...args)=>Bun.spawnSync([binary,...args,'--db',db,'--schemas',schemas],{stdout:'pipe',stderr:'pipe'});
+    const migrated=run('schema','migrate');
+    assert.equal(migrated.exitCode,0,migrated.stderr.toString());
+    const database=new Database(db);
+    try{
+      const rows=database.query('SELECT name FROM _content_types').all().map(row=>row.name);
+      for(const type of required)assert(rows.includes(type),'Missing canonical CMS owner schema: '+type);
+      assert.equal(rows.length,names.length,'Every canonical type must register; partial migrations must fail closed');
+    }finally{database.close();}
+    const schema=run('entry','create','application_binding',JSON.stringify({
+      binding_id:'regression:one',site_id:'regression',slot_id:'regression:slot',
+      application_kind:'PublicationFeed',material_query:{kind:'PublicationOccurrence'},
+      status:'draft'
+    }),'--ns','registry-regression');
+    assert.equal(schema.exitCode,0,schema.stderr.toString());
+  }finally{rmSync(folder,{recursive:true,force:true});}
 });

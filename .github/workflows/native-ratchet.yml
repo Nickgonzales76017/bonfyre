@@ -19,6 +19,10 @@ jobs:
           version: v0.17.1
       - name: Check the native ratchet
         run: sh scripts/native-ratchet.sh check
+      - name: Ratchet self-tests (generated stamp, installed files)
+        run: |
+          sh scripts/tests/native-ratchet-generated-stamp.sh
+          sh scripts/tests/native-ratchet-installed-files.sh
       - name: Native toolchain
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev zlib1g-dev sqlite3 >/dev/null

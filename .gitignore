@@ -216,3 +216,11 @@ node_modules
 # regenerates them from components/BonfyreServiceSite/authoring/).
 site/matrix/authoring-editor.js
 site/matrix/authoring-editor.css
+
+# Personal notes and exported conversations at the repo root; never source.
+/nick.txt
+/conversation-*.txt
+# Compiled native test drivers (built by their Makefile targets).
+cmd/BonfyreWebAddress/tests/affinity-projection-test
+cmd/BonfyreWebAddress/tests/club-projection-test
+cmd/BonfyreWebAddress/tests/dateplan-projection-test

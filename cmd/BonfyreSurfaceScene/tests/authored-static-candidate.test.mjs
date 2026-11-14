@@ -37,13 +37,13 @@ test("two unrelated profiles get complete non-public HTML and CSS without source
  try{
   const first=writeAuthoredCandidate(snapshot("person-account-one-work"),
    {output:join(temp,"first"),name:"Account One"});
-  const second=writeAuthoredCandidate(snapshot("person-account-two-life","/journal/"),
+  const second=writeAuthoredCandidate(snapshot("person-account-two-life","/blog/"),
    {output:join(temp,"second"),name:"Account Two"});
   assert.equal(first.preview_only,true);
   assert.equal(first.site_id,"person-account-one-work");
-  assert.equal(second.page,"/journal/");
+  assert.equal(second.page,"/blog/");
   const html1=readFileSync(join(temp,"first","index.html"),"utf8");
-  const html2=readFileSync(join(temp,"second","journal","index.html"),"utf8");
+  const html2=readFileSync(join(temp,"second","blog","index.html"),"utf8");
   const css1=readFileSync(join(temp,"first","assets","site.css"),"utf8");
   const css2=readFileSync(join(temp,"second","assets","site.css"),"utf8");
   const manifest=readFileSync(join(temp,"first","CANDIDATE.tsv"),"utf8");

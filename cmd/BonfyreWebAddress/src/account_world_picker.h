@@ -40,22 +40,7 @@ static void aw_picker_card(const char *site,sqlite3_int64 world,const char *spac
 static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,const char *space,
                            long long revision,int position,long uid,const char *selected,const char *query){
     if(!db||!site||!space||uid<1||position<1||position>AW_ITEM_LIMIT)return;
-    fputs("<style>"
-          ".aw-picker{display:grid;gap:14px;padding:20px 0}.aw-picker h3{font:400 24px/1.2 Georgia,serif;margin:0}"
-          ".aw-picker p{max-width:75ch;font:14px/1.55 system-ui}"
-          ".aw-picker ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}"
-          ".aw-picker-card{padding:17px;border:1px solid var(--ph-line);border-radius:13px;background:#fffef8;display:flex;flex-direction:column;gap:12px;justify-content:space-between}"
-          ".aw-picker-copy{display:grid;gap:7px;min-width:0}.aw-picker-copy strong{font:400 20px/1.3 Georgia,serif}"
-          ".aw-picker-copy small{font:12px/1.5 system-ui;color:var(--ph-muted)}"
-          ".aw-picker-copy a{font:600 12px system-ui;text-decoration:underline;text-underline-offset:3px}"
-          ".aw-picker-card form{margin:0}.aw-picker-card button{width:100%}"
-          ".aw-picker-source{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:9px}"
-          ".aw-picker-source a{display:grid;gap:6px;padding:14px;background:#fffef8;border:1px solid var(--ph-line);border-radius:11px;text-decoration:none}"
-          ".aw-picker-source small{color:var(--ph-muted);font-size:12px}"
-          ".aw-picker-search{display:flex!important;flex-wrap:wrap;gap:9px!important;align-items:end}"
-          ".aw-picker-search label{flex:1;min-width:180px}"
-          ".aw-picker a:focus-visible,.aw-picker button:focus-visible,.aw-picker input:focus-visible{outline:2px solid #49774a;outline-offset:2px}"
-          "</style>",stdout);
+
     fputs("<section class=\"aw-picker\" data-world-source-picker><h3>Choose from your library</h3>"
           "<p>Use something you saved, or browse a retained source. The selection stays in this draft until you explicitly publish the room. Its original rights, authorship and availability remain with the source.</p>",stdout);
     char actor[56];snprintf(actor,sizeof(actor),"user:%ld",uid);

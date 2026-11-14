@@ -6,18 +6,18 @@ const href="/apps/ws-"+"e".repeat(40)+"/audio/";
 const article=()=>({
  id:101,digest:digest(),schema:"bonfyre.page-snapshot.v1",
  snapshot:{
-  namespace:"person-test-work",route:"/journal/council-agenda/",
-  page:{route:"/journal/council-agenda/",status:"draft",title:"A council agenda can be useful",
+  namespace:"person-test-work",route:"/blog/council-agenda/",
+  page:{route:"/blog/council-agenda/",status:"draft",title:"A council agenda can be useful",
    heading:"A council agenda can be useful",lede:"A local council meeting can make public records easier to follow.",
    editorial_kind:"article",media_subject_ref:"article:council-agenda"},
   fragments:[
-   {page:"/journal/council-agenda/",slot:"showcase",audience:"public",kind:"profile-story",coordinate:"narration-one",
+   {page:"/blog/council-agenda/",slot:"showcase",audience:"public",kind:"profile-story",coordinate:"narration-one",
     heading:"The agenda",body:"The agenda lists public decisions and the materials residents can review.",
     position:2,status:"draft",semantic_tags:{}},
-   {page:"/journal/council-agenda/",slot:"showcase",audience:"public",kind:"profile-story",coordinate:"narration-two",
+   {page:"/blog/council-agenda/",slot:"showcase",audience:"public",kind:"profile-story",coordinate:"narration-two",
     heading:"What changed",body:"A transcript and a recording can explain how the meeting actually unfolded.",
     position:3,status:"draft",semantic_tags:{}},
-   {page:"/journal/council-agenda/",slot:"showcase",audience:"public",kind:"profile-metric",coordinate:"not-article",
+   {page:"/blog/council-agenda/",slot:"showcase",audience:"public",kind:"profile-metric",coordinate:"not-article",
     body:"$28,000",position:1,status:"draft",semantic_tags:{}}
   ]
  }
@@ -35,7 +35,7 @@ test("source-bound audio uses all saved article passages, stable identity, and a
  expect(a.production.schema).toBe("aurekai.narration-production.v1");
  expect(a.production.items[0].segments.map(p=>p.id)).toEqual(["opening","passage-001","passage-002"]);
  expect(a.production.items[0].source.sha256).toBe(base.digest);
- expect(a.production.items[0].source.href).toBe("https://aurekai.work/cms/compose/advanced?route=%2Fjournal%2Fcouncil-agenda%2F");
+ expect(a.production.items[0].source.href).toBe("https://aurekai.work/cms/compose/advanced?route=%2Fblog%2Fcouncil-agenda%2F");
  expect(a.production.sourcePermission).toBe("unreviewed");
  expect(a.production.provenance.subjectRef).toBe("article:council-agenda");
  expect(a.production.cells.length).toBe(3);
@@ -141,4 +141,44 @@ test("edited CMS, missing app, and conflicted destination all fail closed",async
    schema:"aurekai.narration-production.v1",provenance:{schema:"bonfyre.authored-article-handoff.v1",
     sourceDigest:"b".repeat(64),subjectRef:one.production.provenance.subjectRef}}})})
  })).rejects.toThrow(/changed or withdrawn/);
+});
+
+
+test("narration follows nested reading order and refuses broken composition",async()=>{
+ const base=article(),[first,second]=base.snapshot.fragments;
+ base.snapshot.fragments=[
+  {...second,coordinate:"second",position:1,semantic_tags:{authoring_v1:{parent:null}}},
+  {...first,coordinate:"nested",position:1,semantic_tags:{authoring_v1:{parent:"group"}}},
+  {...first,coordinate:"group",kind:"ui:section",heading:"",body:"",position:0,semantic_tags:{authoring_v1:{parent:null}}},
+  {...first,coordinate:"opening-story",heading:base.snapshot.page.heading,position:0,semantic_tags:{authoring_v1:{parent:"group"}}}
+ ];
+ const plan=await planArticleNarration({base,origin}),segments=plan.production.items[0].segments;
+ expect(segments.map(s=>s.id)).toEqual(["opening","passage-001","passage-002","passage-003"]);
+ expect(segments[1].text).not.toContain(base.snapshot.page.heading);
+ expect(segments[2].text).toContain("The agenda");expect(segments[3].text).toContain("What changed");
+ const orphan=structuredClone(base);orphan.snapshot.fragments[0].semantic_tags.authoring_v1.parent="missing";
+ await expect(planArticleNarration({base:orphan,origin})).rejects.toThrow(/orphaned or cyclic/);
+ const cyclic=structuredClone(base);cyclic.snapshot.fragments[2].semantic_tags.authoring_v1.parent="nested";
+ await expect(planArticleNarration({base:cyclic,origin})).rejects.toThrow(/orphaned or cyclic/);
+ const privateParent=structuredClone(base);privateParent.snapshot.fragments[2].audience="self";
+ await expect(planArticleNarration({base:privateParent,origin})).rejects.toThrow(/orphaned or cyclic/);
+});
+
+
+test("equal-position passages follow native retained row order",async()=>{
+ const base=article();base.snapshot.fragments=base.snapshot.fragments.slice(0,2);
+ base.snapshot.fragments[0]={...base.snapshot.fragments[0],id:7,coordinate:"z-first",position:0};
+ base.snapshot.fragments[1]={...base.snapshot.fragments[1],id:9,coordinate:"a-second",position:0};
+ const text=(await planArticleNarration({base,origin})).production.items[0].segments;
+ expect(text[1].text).toContain("The agenda");expect(text[2].text).toContain("What changed");
+});
+
+
+test("narration uses the rendered structured prose payload",async()=>{
+ const base=article();base.snapshot.fragments[0]={...base.snapshot.fragments[0],kind:"service:prose",body:"Obsolete legacy summary.",semantic_tags:{authoring_v1:{payload:{title:"Research notes",items:[{title:"Architecture",text:"A source-managed site renderer."},{title:"Publication",text:"Revision checked and traceable."}]}}}};
+ const text=(await planArticleNarration({base,origin})).production.items[0].segments[1].text;
+ for(const phrase of ["Research notes","Architecture","A source-managed site renderer.","Publication","Revision checked and traceable."])expect(text).toContain(phrase);
+ expect(text).not.toContain("Obsolete legacy summary");
+ base.snapshot.fragments[0].semantic_tags.authoring_v1.payload.items=[{title:"Incomplete"}];
+ await expect(planArticleNarration({base,origin})).rejects.toThrow(/saved prose/);
 });

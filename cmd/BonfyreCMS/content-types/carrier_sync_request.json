@@ -1,0 +1,16 @@
+{
+  "name": "carrier_sync_request",
+  "displayName": "Carrier Sync Request",
+  "description": "A person's request that Aurekai read the public repository behind one account link they declared (for example a Bluesky handle over AT Protocol). It records the request and whether anything ran. A request is not a fetch, not a copy of the repository, not verification that the account belongs to the person, and not permission to post on their behalf.",
+  "attributes": {
+    "request_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "account_subject": { "type": "string", "required": true },
+    "carrier": { "type": "string", "required": true },
+    "link_id": { "type": "string", "required": true },
+    "remote_account": { "type": "string", "required": true },
+    "requested_at": { "type": "string", "required": true },
+    "run_state": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -1,36 +1,36 @@
 bun test v1.3.13 (bf2e2cec)
 
 tests/enrollment.test.mjs:
-(pass) 400 native missions are seeded once without resetting existing work [2020.67ms]
-(pass) legacy visits are retained only as notes, never native milestones [1.17ms]
-(pass) native claim survives panel loss without taking another item [50.60ms]
-(pass) completion and machine-owned assertions refuse before any milestone exists [63.61ms]
-(pass) carrier checks the reviewed native item and revision, not a freshly assumed revision [89.33ms]
-(pass) seal requires the exact native provider binding and keeps value out of checkpoint material [189.50ms]
-(pass) waiting and decision release a lease without pretending enrollment is complete [173.86ms]
-(pass) browser carrier requires confirmation and the reviewed native coordinates for mutations [124.36ms]
+(pass) 400 native missions are seeded once without resetting existing work [2250.79ms]
+(pass) legacy visits are retained only as notes, never native milestones [0.72ms]
+(pass) native claim survives panel loss without taking another item [52.55ms]
+(pass) completion and machine-owned assertions refuse before any milestone exists [70.65ms]
+(pass) carrier checks the reviewed native item and revision, not a freshly assumed revision [172.02ms]
+(pass) seal requires the exact native provider binding and keeps value out of checkpoint material [106.95ms]
+(pass) waiting and decision release a lease without pretending enrollment is complete [200.08ms]
+(pass) browser carrier requires confirmation and the reviewed native coordinates for mutations [127.36ms]
 
 tests/enrollment-continuation.test.mjs:
-(pass) read-only selection pages the real queue with exact identity and escaped search [396.86ms]
-(pass) an unseeded read does not create a queue or lease directory [0.31ms]
-(pass) continue claims the selected reviewed work and refuses another held setup [100.67ms]
-(pass) checkpoint changes during exact claim or renew retain the hold but require a fresh review [208.52ms]
-(pass) a lapsed hold restores the same checkpoint for review and reclaims only that selected mission [110.26ms]
-(pass) wait and decision inspection cannot clear a native hold or advance another task [395.26ms]
-(pass) a missing or mismatched checkpoint prevents continuation before a new native hold [253.60ms]
-(pass) the native queue identity and provider address must agree before any setup is opened [123.17ms]
-(pass) real Credentials seals only the selected account and reopening exposes metadata only [256.04ms]
-(pass) BrowserHost inspects without effect and requires exact reviewed confirmation to continue [130.42ms]
+(pass) read-only selection pages the real queue with exact identity and escaped search [461.63ms]
+(pass) an unseeded read does not create a queue or lease directory [0.23ms]
+(pass) continue claims the selected reviewed work and refuses another held setup [109.31ms]
+(pass) checkpoint changes during exact claim or renew retain the hold but require a fresh review [197.49ms]
+(pass) a lapsed hold restores the same checkpoint for review and reclaims only that selected mission [112.42ms]
+(pass) wait and decision inspection cannot clear a native hold or advance another task [315.23ms]
+(pass) a missing or mismatched checkpoint prevents continuation before a new native hold [87.95ms]
+(pass) the native queue identity and provider address must agree before any setup is opened [58.59ms]
+(pass) real Credentials seals only the selected account and reopening exposes metadata only [200.71ms]
+(pass) BrowserHost inspects without effect and requires exact reviewed confirmation to continue [116.22ms]
 
 tests/browser-host.test.mjs:
-(pass) the host frames replies as the browser expects and says what it carries [78.37ms]
-(pass) only a public https address is carried, and keeping a page needs the person's ask [0.69ms]
-(pass) a session is bounded and an owner's refusal is carried, not hidden [1.21ms]
-(pass) a reply the browser would refuse is cut to its receipt, and an oversized envelope ends the session [94.49ms]
-(pass) what was kept from a page is answered by the estate's own owner through the host [135.03ms]
+(pass) the host frames replies as the browser expects and says what it carries [61.05ms]
+(pass) only a public https address is carried, and keeping a page needs the person's ask [1.00ms]
+(pass) a session is bounded and an owner's refusal is carried, not hidden [3.83ms]
+(pass) a reply the browser would refuse is cut to its receipt, and an oversized envelope ends the session [59.48ms]
+(pass) what was kept from a page is answered by the estate's own owner through the host [62.85ms]
 (skip) a confirmed ask keeps a copy and the page's history then shows it
-(pass) a selection is held once in the real work queue, and only when the person asked [73.21ms]
-(pass) a capture is kept under the foreign root and the reply carries references, not bodies [1.15ms]
+(pass) a selection is held once in the real work queue, and only when the person asked [45.03ms]
+(pass) a capture is kept under the foreign root and the reply carries references, not bodies [1.40ms]
 
 1 tests skipped:
 (skip) a confirmed ask keeps a copy and the page's history then shows it
@@ -39,4 +39,4 @@ tests/browser-host.test.mjs:
  1 skip
  0 fail
  274 expect() calls
-Ran 26 tests across 3 files. [5.14s]
+Ran 26 tests across 3 files. [4.95s]

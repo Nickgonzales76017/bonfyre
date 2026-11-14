@@ -11,26 +11,40 @@ TARGET = bonfyre-finance
 SRC = src/main.c
 DEPS = src/books.inc src/opportunity_inspect.inc src/relationships.inc
 
-all: $(TARGET) smoke
+all: $(TARGET)
 
 $(TARGET): $(SRC) $(DEPS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
 # Isolated contract tests only; not external customer evidence.
 smoke: $(TARGET)
-	$(MAKE) -C ../../tests/vectors bonfyre-vectors
-	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreFinance/tests/vectors/*.json
-	$(HOME)/.bun/bin/bun test tests/opportunity_inspect.test.mjs
-	$(HOME)/.bun/bin/bun test tests/crm_finance_auth.test.mjs
+	@bash ../../scripts/verification/test-gate.sh run --suite finance_vectors --suite finance_unit --fast
 
 test: $(TARGET)
-	$(MAKE) -C ../../tests/vectors bonfyre-vectors
-	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreFinance/tests/vectors/*.json
-	$(HOME)/.bun/bin/bun test tests/zero_close_scale.test.mjs tests/opportunity_inspect.test.mjs
-	$(HOME)/.bun/bin/bun test tests/crm_finance_auth.test.mjs
-	$(HOME)/.bun/bin/bun test --timeout 90000 tests/crm_finance_browser.test.mjs
-	# The observed Feed -> installed apps -> CRM and Source Library side is a product dependency.
-	$(HOME)/.bun/bin/bun test --timeout 90000 ../BonfyreWebAddress/tests/installed_subtools_test.mjs
+	@bash ../../scripts/verification/test-gate.sh run --suite finance_vectors --suite finance_unit --suite finance_browser
+	@$(MAKE) -s opportunity-inspect-mutation-witness
+
+# The native contract must separate the real owner binary from a broken one.
+.PHONY: opportunity-inspect-mutation-witness
+opportunity-inspect-mutation-witness:
+	@log=$(mktemp); trap 'rm -f "$log"' EXIT; \
+	if BONFYRE_FINANCE_BIN=/usr/bin/false ../../tests/vectors/bonfyre-vectors --root ../.. tests/vectors/opportunity_inspect.json >"$log" 2>&1; then \
+	  echo 'REFUSE: Finance command mutation escaped vector checks' >&2; exit 1; \
+	fi; \
+	if ! grep -q '^  FAIL' "$log"; then cat "$log" >&2; exit 1; fi; \
+	echo 'PASS Finance mutation refusal'
+
+# Broader Feed -> installed apps -> Source Library ownership belongs to
+# account-work integration. Never run the whole unrelated surface when
+# verifying Finance changes; release acceptance still executes that suite.
+.PHONY: test-integration
+test-integration: test
+	$(HOME)/.bun/bin/bun test --reporter=dots --timeout 90000 ../BonfyreWebAddress/tests/installed_subtools_test.mjs
+
+# A 100,000-opportunity scale witness is explicit, not on routine test paths.
+.PHONY: test-scale
+test-scale: $(TARGET)
+	$(HOME)/.bun/bin/bun test tests/zero_close_scale.test.mjs
 
 install-bin: $(TARGET)
 	mkdir -p $(HOME)/.bonfyre/bin
@@ -40,4 +54,4 @@ install-bin: $(TARGET)
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all smoke test install-bin clean
+.PHONY: all smoke test test-integration test-scale install-bin clean

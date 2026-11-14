@@ -142,7 +142,7 @@ const puppeteer=createRequire(path.join(root,'tools/creator-ingest/package.json'
   await advance(()=>page.click('.spo-filters button[type=submit]'));
   assert.equal(await page.$$eval('[data-source-push-row]',n=>n.length),1);
   assert.equal(await page.$$eval('[data-material-demand]',n=>n.length),2,'independent demand panel incorrectly filtered by subscription state');
-  await page.$eval('input[name=q]',n=>{n.value='unbound';});
+  await page.$eval('.spo-filters input[name=q]',n=>{n.value='unbound';});
   await page.select('select[name=state]','all');
   await advance(()=>page.click('.spo-filters button[type=submit]'));
   assert.equal(await page.$$eval('[data-source-push-row]',n=>n.length),0);

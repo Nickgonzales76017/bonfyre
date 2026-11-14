@@ -2,6 +2,7 @@ import { test, expect } from 'bun:test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { CATALOG, createProjectNode } from '../project_node.mjs';
 import {
   PROJECT_MCP_SERVICE_PROFILES,
   PROJECT_MCP_SERVICE_PROFILE_NAMES,
@@ -9,6 +10,30 @@ import {
   compileProjectMcpLaunchAgent,
   inspectProjectMcpDeployment,
 } from '../project_service_profiles.mjs';
+
+test('operate aperture exposes historical maturation ledger while preserving owner separation', async () => {
+  const ledger = CATALOG.tools.find(item => item.name === 'operator_maturation_ledger');
+  expect(ledger?.['x-bonfyre-owner']).toBe('operator');
+  expect(ledger?.annotations?.readOnlyHint).toBe(false);
+  const owners = Object.fromEntries(['reads', 'operator', 'native', 'spines', 'v6', 'fabric', 'products']
+    .map(owner => [owner, async (name, args) => ({ owner, name, args })]));
+  const node = await createProjectNode({
+    root: '/fixture/project', token: 'fixture-credential',
+    env: { BONFYRE_PROJECT_MCP_PACK: 'operate' }, owners,
+  });
+  const rpc = async (method, params = {}) => {
+    const response = await node.handle(new Request('http://127.0.0.1/mcp', {
+      method: 'POST', headers: { Authorization: 'Bearer fixture-credential', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+    }));
+    return (await response.json()).result;
+  };
+  const first = await rpc('tools/list');
+  expect(first.tools.map(tool => tool.name)).toContain('operator_maturation_ledger');
+  const read = await rpc('tools/call', { name: 'operator_maturation_ledger', arguments: { action: 'read', limit: 1 } });
+  expect(read.isError).toBe(false);
+  expect(read.structuredContent).toMatchObject({ owner: 'operator', name: 'operator_maturation_ledger' });
+});
 
 test('Project MCP product profiles have unique fixed local identities and deterministic candidates', () => {
   expect(PROJECT_MCP_SERVICE_PROFILE_NAMES).toEqual(['build', 'operate', 'work', 'model', 'commerce', 'account', 'connect', 'evidence', 'institution']);

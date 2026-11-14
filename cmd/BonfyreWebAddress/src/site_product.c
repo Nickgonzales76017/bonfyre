@@ -1433,14 +1433,23 @@ static int site_meter_usage(Site *s, int argc, char **argv) {
     int first = 1;
     if (!key || !slug_ok(key)) { fputs("site usage NAME [--json]\n", stderr); return 2; }
     snprintf(prefix, sizeof(prefix), "%s:%%", key);
-    if (sqlite3_open_v2(s->meter_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK ||
-        sqlite3_prepare_v2(db, "SELECT substr(key_id, instr(key_id,':')+1), substr(receipt_ref,5), count(*), max(timestamp) FROM events "
-                               /* what a customer is billed for sits in the same meter under its own key; it is not an assistant's call */
-                               "WHERE key_id LIKE ?1 AND key_id NOT LIKE '%:customer:%' GROUP BY 1, 2 ORDER BY 1, 3 DESC", -1, &st, NULL) != SQLITE_OK) {
+    /* The meter can checkpoint away its WAL files between calls. A readonly
+     * handle may open the main DB yet fail its first SELECT when SQLite needs
+     * to recreate the shared-memory index. Allow WAL coordination, never
+     * database creation or a write statement from this usage query. */
+    int rc = sqlite3_open_v2(s->meter_db, &db, SQLITE_OPEN_READWRITE, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "site usage: meter database unavailable: %s\n", db ? sqlite3_errmsg(db) : "no handle");
         if (db) sqlite3_close(db);
-        if (s->json) puts("{\"schema\":\"bonfyre.site.usage.v1\",\"calls\":0,\"by_caller\":[]}");
-        else printf("No assistant has asked %s anything yet.\n", key);
-        return 0;
+        return 3;
+    }
+    sqlite3_busy_timeout(db, 3000);
+    rc = sqlite3_prepare_v2(db, "SELECT substr(key_id, instr(key_id,':')+1), substr(receipt_ref,5), count(*), max(timestamp) FROM events "
+                            "WHERE key_id LIKE ?1 AND key_id NOT LIKE '%:customer:%' GROUP BY 1, 2 ORDER BY 1, 3 DESC", -1, &st, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "site usage: meter event query failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 3;
     }
     sqlite3_bind_text(st, 1, prefix, -1, SQLITE_STATIC);
     if (s->json) fputs("{\"schema\":\"bonfyre.site.usage.v1\",\"by_caller\":[", stdout);
@@ -2865,7 +2874,20 @@ static int site_stop(Site *s) {
     f = fopen(pid_path, "r");
     if (!f || fscanf(f, "%d", &pid) != 1 || pid < 2) { if (f) fclose(f); puts("{\"stopped\":false,\"reason\":\"no server was started from this home\"}"); return 0; }
     fclose(f);
-    kill(pid, SIGTERM);
+    if (server_up(s)) {
+        if (kill(pid, SIGTERM) && errno != ESRCH) {
+            fputs("site: failed to signal the owned server\n", stderr);
+            return 1;
+        }
+        for (int i = 0; i < 40 && server_up(s); i++) {
+            const struct timespec nap = {0, 100000000L};
+            nanosleep(&nap, NULL);
+        }
+        if (server_up(s)) {
+            fputs("site: server still accepts requests after stop; refusing a misleading restart\n", stderr);
+            return 1;
+        }
+    }
     unlink(pid_path);
     puts("{\"stopped\":true}");
     return 0;

@@ -23,7 +23,7 @@ const image=p=>p?.src?'<img loading="lazy" src="'+url(p.src)+'" alt="'+q(p.alt)+
 const inputFields=(items,id)=>ar(items).map((p,i)=>{
  const type=p.type||"text",key=id+"-field-"+i,name=String(p.name||"field"+i).replace(/[^a-z0-9_-]/gi,"");
  if(!["text","email","tel","number","url","date","password","textarea","select","checkbox"].includes(type))fail("unsafe input type");
- const attr=' id="'+key+'" name="'+q(name)+'" '+(p.required?"required":"");
+ const attr=' id="'+key+'" name="'+q(name)+'" '+(p.required?"required ":"")+(p.disabled?"disabled":"");
  const control=type==="textarea"?el("textarea",attr,''):
  type==="select"?el("select",attr,ar(p.options).map(x=>el("option",'value="'+q(x.value)+'"',q(x.label))).join("")):
  '<input type="'+type+'"'+attr+'>';
@@ -108,6 +108,15 @@ export function renderAuthoredPattern(node,children=""){
    title(p)+paragraph(p.body)+(p.dismissible?'<button type="button" data-ak-dismiss aria-label="Dismiss alert">×</button>':"")));
   case "badge":return el("span",attrs+' role="status"',q(p.label));
   case "buttons":case "button-group":return shell(actions(p.items));
+  // The compiled pattern registry includes these three interactive controls.
+  // A source-free authored preview may show them but never acquire an effect.
+  case "action":return shell(el("form",'data-ak-effect="review-required" aria-label="'+q(p.label||"Action")+'"',
+   children+'<button type="submit" disabled>'+q(p.label||"Review action")+"</button>"));
+  case "choice":return shell(el("fieldset",'role="radiogroup" aria-label="'+q(p.label||"Choice")+'"',
+   el("legend","",q(p.label))+ar(p.options).map((x,i)=>el("label","",
+    '<input type="radio" name="'+key+'-choice" value="'+q(x.value??"")+'"'+(x.checked?" checked":"")+'> '+q(x.label??"Option "+(i+1)))).join("")+children));
+  case "field":return shell(inputFields([{label:p.label,name:p.name,
+    type:p.multiline?"textarea":p.type||"text",required:!!p.required,disabled:!!p.disabled}],key));
   case "breadcrumb":return el("nav",attrs+' aria-label="Breadcrumb"',list(p.items,"ak-breadcrumbs"));
   case "navbar":return el("nav",attrs+' aria-label="Main navigation"',
    el("strong","",q(p.brand))+'<button type="button" data-ak-menu aria-expanded="false" aria-controls="'+key+'-links">Menu</button>'+

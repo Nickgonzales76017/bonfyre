@@ -1,0 +1,16 @@
+{
+  "name": "guild_module",
+  "displayName": "Guild Module",
+  "description": "One stage of a guild's curriculum, written by the guild's steward: what is practised and how many shop hours the guild asks for. A module is the guild's own statement of its syllabus; it is not an accreditation, a licence or a credential recognised outside the guild.",
+  "attributes": {
+    "module": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "level": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "description": { "type": "text", "required": true },
+    "required_hours": { "type": "string", "required": false },
+    "steward_subject": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

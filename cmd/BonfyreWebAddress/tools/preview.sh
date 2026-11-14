@@ -48,7 +48,7 @@ stop() {
 preview_snapshot_action=prepare
 case "${1:-serve}" in
   stop) stop; echo "preview stopped"; exit 0 ;;
-  refresh) preview_snapshot_action=refresh; rm -f "$home"/matrix.db "$home"/auth.db "$home"/cms.db "$home"/projection.db ;;
+  refresh) preview_snapshot_action=refresh; rm -f "$home"/matrix.db "$home"/auth.db "$home"/cms.db "$home"/items.db "$home"/projection.db ;;
   serve) ;;
   *) echo "usage: preview.sh [serve|refresh|stop]" >&2; exit 2 ;;
 esac
@@ -60,9 +60,16 @@ if [ -n "${BONFYRE_PREVIEW_HOME:-}" ]; then
   # use APFS copy-on-write clones. No full copy fallback under disk pressure.
   BONFYRE_PREVIEW_HOME="$home" sh "$here/tools/preview-snapshot.sh" "$preview_snapshot_action"
 else
-  for db in matrix auth cms; do
+  # items.db is the reading archive /people, makers and item pages read.
+  for db in matrix auth cms items; do
     # SQLite .backup produces a consistent copy while the live server writes.
-    [ -f "$home/$db.db" ] || sqlite3 "$live/$db.db" ".backup '$home/$db.db'"
+    # A WAL-mode backup carries no wal file, and read-only opens of it fail
+    # until something first touches it read-write; normalize the copy so the
+    # preview serves from the first request.
+    if [ ! -f "$home/$db.db" ]; then
+      sqlite3 "$live/$db.db" ".backup '$home/$db.db'"
+      sqlite3 "$home/$db.db" "PRAGMA journal_mode=DELETE;"
+    fi
   done
 fi
 [ -f "$home/projection.db" ] || : > "$home/projection.db"

@@ -1,12 +1,12 @@
 // Test the existing MessagePack carrier's save boundary, not a replacement store.
 // The fake HTTP owner below records exact requests; native-owner tests run separately.
 import {test, expect} from 'bun:test';
+import {deferred} from './browser-fixture.mjs';
 import {openDestinationStore} from '../workspace-store.mjs';
 import {encode, decode} from '../workspace-msgpack.mjs';
 import {prepareRecord, restoreRecord} from '../workspace-value.mjs';
 
 const endpoint='/apps/ws-'+ 'a'.repeat(40)+'/_records';
-const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 function fixture({firstGate=null,loseFirstReply=false}={}){
   const calls=[],records=new Map(),receipts=new Map(); let writes=0,epoch=0;
   const request=async(address,options)=>{

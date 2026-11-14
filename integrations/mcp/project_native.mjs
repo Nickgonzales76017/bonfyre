@@ -112,6 +112,11 @@ function nativeReadIntent(family, argv, home) {
   if (family === 'BonfyreCMS') return argv.length === 2 && argv[0] === 'schema' && argv[1] === 'list';
   if (family === 'BonfyreWitness') return argv.length === 1 && argv[0] === 'status';
   if (family === 'BonfyreExperienceMap') return argv.length === 1 && argv[0] === 'stats';
+  // Project readbacks and the release approval queue are inspectable without
+  // admitting their separate stage, activate or approve effects.
+  if (family === 'BonfyreProjectMcp') return argv.length === 1 &&
+    ['status', 'public-candidates', 'public-status', 'ratchet', 'ratchet-top'].includes(argv[0]);
+  if (family === 'BonfyreReleaseApproval') return argv.length === 1 && argv[0] === 'list';
   // Audited read-only inspector. The separate seeder is not admitted here.
   if (family === 'BonfyreWarehouse') {
     const estate = path.join(home, '.bonfyre', 'estate-local');
@@ -637,7 +642,7 @@ export function createProjectNative({ root, home, env = process.env, run, reques
   async function cms(args) {
     const action = String(args.action || '').trim();
     if (!['list_types', 'list', 'get', 'create', 'update'].includes(action)) throw new Error('invalid CMS action');
-    const common = ['--db', cmsDb, '--schemas', cmsSchemas];
+    const common = ['--db', nativeCmsDb, '--schemas', nativeCmsSchemas];
     if (action === 'list_types') {
       const native = await controlCommand('bonfyre-cms', ['schema', 'list', ...common]);
       assertSuccess(native, 'CMS schema list');

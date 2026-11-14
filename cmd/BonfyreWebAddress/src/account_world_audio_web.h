@@ -109,16 +109,9 @@ static const char *wa_mark_label(const char *kind){
     return !strcmp(kind,"track")?"Track":!strcmp(kind,"chapter")?"Chapter":!strcmp(kind,"cue")?"Transcript line":!strcmp(kind,"clip")?"Clip":
            !strcmp(kind,"person")?"Person":!strcmp(kind,"source")?"Source":kind;
 }
-static void wa_studio_style(void){
-    fputs("<style>.aw-sound-studio details{border-top:1px solid var(--ph-line);padding:12px 0}.aw-sound-studio summary{cursor:pointer;font:600 14px system-ui;min-height:32px}"
-          ".aw-sound-studio details[open] summary{margin-bottom:12px}.aw-flag{font:600 11px ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:#8a4b12}"
-          ".aw-flag[data-ok]{color:#2b4c36}.aw-sound-studio table{border-collapse:collapse;width:100%;font-size:14px}.aw-sound-studio td,.aw-sound-studio th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--ph-line);vertical-align:top}"
-          ".aw-sound-studio td form{display:inline-flex;margin:0 4px 4px 0}.aw-sound-studio .aw-check{display:flex;gap:8px;align-items:center;font-weight:400}.aw-sound-studio .aw-check input{min-height:auto;width:auto;flex:none;margin:0}"
-          "@media(max-width:640px){.aw-sound-studio table,.aw-sound-studio tbody,.aw-sound-studio tr,.aw-sound-studio td{display:block}.aw-sound-studio th{display:none}.aw-sound-studio tr{border-bottom:1px solid var(--ph-line);padding:8px 0}.aw-sound-studio td{border:0;padding:3px 0}}</style>",stdout);
-}
+
 static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_id,sqlite3_int64 world,const char *space,long long revision,const char *state){
     WaSound snd;int have=wa_sound(db,subject,site_id,world,space,&snd);PhSite site;ph_site(db,NULL,site_id,&site);
-    wa_studio_style();
     fputs("<section id=\"sound\" class=\"aw-sound-studio\" data-world-sound-studio><h3>Station or show</h3>"
           "<p>Set this up if the space is a radio station or a podcast. Listeners only hear a recording when its own source states open terms, such as CC BY or public domain. Anything else is linked to where it is published.</p>",stdout);
     wa_form(site_id,world,space,"sound",revision,"sound");

@@ -55,11 +55,15 @@ function compileNative(output){
   "../BonfyreWebAddress/src/site_authored_document.c",
   "src/authoring_native_components.c",
   "src/authoring_editorial.c",
+  "src/authoring_markdown.c",
+  "vendor/md4c/md4c.c",
+  "vendor/md4c/md4c-html.c",
+  "vendor/md4c/entity.c",
   "src/authoring_template.c",
   "vendor/mustach/mini-mustach.c",
   "../../lib/libbonfyre/libbonfyre.a"];
  const args=["cc","-std=c11","-O2","-Wall","-Wextra","-Werror",
-  "-I../../lib/libbonfyre/include",...src,"-lsqlite3","-lm","-o",output];
+  "-I../../lib/libbonfyre/include","-Ivendor/md4c",...src,"-lsqlite3","-lm","-o",output];
  const result=Bun.spawnSync({cmd:args,cwd,stdout:"pipe",stderr:"pipe"});
  if(result.exitCode!==0)
   throw Error("native authored page C build failed: "+result.stderr.toString());
@@ -98,7 +102,7 @@ function nativePage(exe,path,site){
   throw Error("native public CMS projection failed: "+process.stderr.toString());
  return process.stdout.toString();
 }
-test("37 blank-created components pass Puck/GrapesJS, native CMS, C renderer and real Chromium in two profiles",async()=>{
+test("every registered component passes Puck/GrapesJS, native CMS, C renderer and Chromium in two profiles",async()=>{
  const tmp=mkdtempSync(join(tmpdir(),"bonfyre-native-browser-parity-"));
  let browser=null,server=null,db=null;
  try{
@@ -113,8 +117,8 @@ test("37 blank-created components pass Puck/GrapesJS, native CMS, C renderer and
   }
   const first=nativePage(binary,dbpath,"person-original-work");
   const other=nativePage(binary,dbpath,"person-unrelated-life");
-  expect((first.match(/data-ak-id="/g)||[]).length).toBe(37);
-  expect((other.match(/data-ak-id="/g)||[]).length).toBe(37);
+  expect((first.match(/data-ak-id="/g)||[]).length).toBe(AUTHORING_PATTERNS.length+1);
+  expect((other.match(/data-ak-id="/g)||[]).length).toBe(AUTHORING_PATTERNS.length+1);
   expect(first).toContain('data-authored-native="c"');
   expect(first).toContain("Native C authoring is shared across accounts");
   expect(first).toContain('data-desktop-layout="grid" data-desktop-columns="3"');

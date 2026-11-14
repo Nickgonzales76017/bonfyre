@@ -36,5 +36,7 @@ for(const match of sections){
   assert(match[0].includes('data-exp-region-index="'),"Native region index must be retained");
 }
 assert(html.includes('data-ak-experience="'+pattern+'"'),"The named native experience must render");
+assert(/href="\/assets\/native-experience\.css(?:\?[^\"]*)?"/.test(html),"The experience stylesheet must be linked");
+assert(!html.includes('id="aurekai-native-experience"'),"Experience styles must not be emitted inline");
 assert(!html.includes("Google Stitch placeholder"),"No design donor data was injected");
 console.log("Native page experience: PASS "+pattern+" / "+fragments.length+" owner regions, exact C/Scene placement, zero fake installed panes or actions");

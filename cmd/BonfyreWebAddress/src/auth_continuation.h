@@ -114,7 +114,7 @@ static void bf_auth_query(FILE *out, const char *s) {
 /* Lower the existing authored form through the native redirect owner. Its
  * appearance and input contract stay intact; no second browser login parser. */
 static int bf_auth_form_document(FILE *out, const char *source, const char *next,
-                                 const char *notice, const char *bar) {
+                                 const char *notice, const char *bar, const char *foot) {
     const char *p = source; int forms = 0;
     if (!out || !source || !next) return 0;
     while (*p) {
@@ -123,7 +123,14 @@ static int bf_auth_form_document(FILE *out, const char *source, const char *next
             if (!end) return 0;
             p = end + 9; continue;
         }
-        if (!strncmp(p, "<body>", 6)) { fputs("<body>", out); if (bar) fputs(bar, out); p += 6; continue; }
+        /* The shared bar after the body tag (bare or classed), the shared
+         * footer and player before it closes. */
+        if (!strncmp(p, "<body", 5) && (p[5] == '>' || p[5] == ' ')) {
+            const char *end = strchr(p, '>');
+            if (!end) return 0;
+            fwrite(p, 1, (size_t)(end - p + 1), out); if (bar) fputs(bar, out); p = end + 1; continue;
+        }
+        if (!strncmp(p, "</body>", 7)) { if (foot) fputs(foot, out); fputs("</body>", out); p += 7; continue; }
         if (!strncmp(p, "<form ", 6)) {
             const char *end = strchr(p, '>'), *q;
             if (!end || forms++) return 0;

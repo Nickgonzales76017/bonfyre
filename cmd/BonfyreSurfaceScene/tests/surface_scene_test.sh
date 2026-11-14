@@ -3,19 +3,26 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
 scene="$root/cmd/BonfyreSurfaceScene/bonfyre-surface-scene"
 cms="$root/cmd/BonfyreCMS/bonfyre-cms"
-schemas="$root/cmd/BonfyreCMS/content-types"
+source_schemas="$root/cmd/BonfyreCMS/content-types"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT INT TERM
 db="$tmp/cms.db"
+# Limit this isolated fixture to the schema families it actually composes.
+# The production schema count is verified separately; this is not a release snapshot.
+schemas="$tmp/schemas"
+mkdir -p "$schemas"
+for type in world site_presentation site_program capability_program semantic_slot application_binding experience_stage surface_renderer surface_pattern world_fragment presentation_template surface_interaction_profile object_contract proposal_contract surface_scene; do
+  cp "$source_schemas/$type.json" "$schemas/$type.json"
+done
 export BONFYRE_CMS_BINARY="$cms"
 export BONFYRE_CMS_SCHEMAS="$schemas"
 export BONFYRE_SURFACE_SCENE_SCHEMA="$schemas/surface_scene.json"
 export BONFYRE_FACT_DELTAS="$tmp/deltas"
 mkdir -p "$BONFYRE_FACT_DELTAS"
 
-"$cms" schema migrate --db "$db" --schemas "$schemas" >/dev/null 2>/dev/null
+"$cms" schema migrate --db "$db" --schemas "$schemas" >/dev/null
 
-create() { type=$1; body=$2; "$cms" entry create "$type" "$body" --ns root --db "$db" --schemas "$schemas" >/dev/null 2>/dev/null; }
+create() { type=$1; body=$2; "$cms" entry create "$type" "$body" --ns root --db "$db" --schemas "$schemas" >/dev/null || { printf 'Native CMS fixture create failed: %s\\n' "$type" >&2; return 1; }; }
 
 create world '{"world":"night-proof","title":"Night Proof","character":"live-pulse","template":"ghost:night","lede":"One subject, many lenses.","subject":"world:night-proof","sources":"night-sources","grammars":"now,community,spatial","cannot_infer":"world publication is not subject truth","status":"published"}'
 create site_presentation '{"site_id":"night-proof","host":"night-proof.aurekai.live","subject_address":"world:night-proof","profile":"ghost:night","territory":"live","navigation":["NOW","MAP"],"status":"published"}'

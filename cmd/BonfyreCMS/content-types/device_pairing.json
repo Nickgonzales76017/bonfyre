@@ -1,0 +1,16 @@
+{
+  "name": "device_pairing",
+  "displayName": "Device Pairing",
+  "description": "A one-use, short-lived code a signed-in person offered from one session so the same account, signed in on another device, can take a copy of its own site export. Only a digest of the code is kept. A received pairing is not a completed transfer, a device trust grant, a second session, or a copy of any credential.",
+  "attributes": {
+    "pairing_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "account_subject": { "type": "string", "required": true },
+    "sender_session": { "type": "string", "required": true },
+    "offered_at": { "type": "string", "required": true },
+    "expires_at": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "received_at": { "type": "string", "required": false },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "work_order_milestone",
+  "displayName": "Work Order Milestone",
+  "description": "One staged step of a work order: what is to be done and the amount stated against it. A milestone is a written stage. Its amount is a stated term, not money held, and nothing about it is evidence the work was done.",
+  "attributes": {
+    "milestone_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "work_order_id": { "type": "string", "required": true },
+    "sequence": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "scope": { "type": "text", "required": true },
+    "amount_stated": { "type": "string" },
+    "due_on": { "type": "string" },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -340,11 +340,125 @@ static void auth_account_redirect(const char *notice) {
 }
 
 #include "session_handoff_web.h"
+/* Arrival: the founding page at /about and /start on each territory apex.
+ * Its roll and counts are read from the CMS owner; its join form posts to the
+ * same /signup owner as the sign-up modal. Nothing here signs anyone up. */
+static long arrival_count(sqlite3 *db, const char *sql) {
+    sqlite3_stmt *st = NULL; long n = -1;
+    if (db && sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        n = (long)sqlite3_column_int64(st, 0);
+    sqlite3_finalize(st);
+    return n;
+}
+static void arrival_number(long n) { if (n >= 0) printf("%ld", n); else fputs("&mdash;", stdout); }
+static int serve_arrival(const char *method, const char *target, const char *accept, const char *host) {
+    if (strcmp(target, "/about") && strcmp(target, "/start")) return 0;
+    if (strcmp(method, "GET") || !wants_html(accept) || !sso_territory(host)) return 0;
+    sqlite3 *db = cms_open_ro();
+    long members = arrival_count(db, "SELECT COUNT(DISTINCT subject_address) FROM site_presentation WHERE namespace='root' AND status='published' AND profile='member-profile-v1'");
+    long communities = arrival_count(db, "SELECT COUNT(*) FROM community_body WHERE status='published'");
+    long open_props = arrival_count(db, "SELECT COUNT(*) FROM governance_proposal WHERE status='published' AND state='open'");
+    long settled = arrival_count(db, "SELECT COUNT(*) FROM governance_proposal WHERE status='published' AND state='settled'");
+    long votes = arrival_count(db, "SELECT COUNT(*) FROM governance_vote WHERE status='published'");
+    fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n"
+          "Vary: Host, Accept\r\nReferrer-Policy: no-referrer\r\nConnection: close\r\n\r\n"
+          "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+          "<title>What Aurekai is for · Aurekai</title>"
+          "<meta name=\"description\" content=\"Why Aurekai exists, what it will never do on your behalf, who is here, and how to join.\">"
+          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&amp;display=swap\">"
+          "<link rel=\"stylesheet\" href=\"/assets/aurekai-trust.css?v=1\"></head>"
+          "<body class=\"ak-app ak-arrival\">" BF_ESTATE_BAR
+          "<main class=\"mf\" data-arrival>"
+          "<header class=\"mf-hero\"><p class=\"mf-kicker\">About Aurekai · The founding page</p>"
+          "<h1>One place to read, listen, make and trade, <em>on records you can check.</em></h1>"
+          "<p class=\"mf-lede\">Aurekai gathers what people and sources publish, keeps a link back to whoever published it, and gives you a page and tools of your own. It does not act for you. Everything that spends, publishes or sends waits for your own submit.</p>"
+          "<div class=\"mf-hero-actions\"><a class=\"mf-chip\" href=\"/blog/\">Read the journal</a><a class=\"mf-chip\" href=\"https://docs.aurekai.work/\">Guides</a>"
+          "<a class=\"mf-cta\" href=\"#join\">Create an account</a></div></header>"
+          "<div class=\"mf-body\"><aside class=\"mf-side\"><nav aria-label=\"On this page\"><h2>On this page</h2><ol>"
+          "<li><a href=\"#trouble\">00. The trouble with feeds</a></li><li><a href=\"#principles\">01. Four principles</a></li>"
+          "<li><a href=\"#together\">02. Deciding together</a></li><li><a href=\"#near\">03. Close to home</a></li><li><a href=\"#join\">04. Who is here, and joining</a></li></ol></nav>"
+          "<div class=\"mf-stat\"><h2>People with a public page</h2><b>", stdout);
+    arrival_number(members);
+    fputs("</b>Counted from published member pages, not accounts.</div>"
+          "<p>&ldquo;Reading is open. Acting is yours.&rdquo;</p></aside><div>"
+          "<section class=\"mf-art\" id=\"trouble\" aria-labelledby=\"mf-trouble\"><header><p class=\"mf-kicker\">00 · Why</p><h2 id=\"mf-trouble\">The trouble with feeds</h2></header>"
+          "<p class=\"mf-drop\">Most of what people read now arrives through a feed that decides the order, hides where things came from and keeps what you do there. The writing, the music and the listings were made by someone; the feed stands between you and them.</p>"
+          "<p>Aurekai starts from the other end. Every item keeps the address of the source that published it. Your saved work stays private. The tools you install are yours to open and close, and none of them can pay, post or message on your behalf without you pressing the button.</p>"
+          "<div class=\"mf-contrast\"><div><p class=\"mf-kicker\">A feed, and Aurekai</p><dl>"
+          "<dt>Where an item came from</dt><dd>Often hidden</dd><dd class=\"mf-ours\">Linked to its source</dd>"
+          "<dt>Who acts for you</dt><dd>The platform</dd><dd class=\"mf-ours\">Only you, by your submit</dd>"
+          "<dt>Your password</dt><dd>Stored</dd><dd class=\"mf-ours\">A one-way derivation</dd>"
+          "<dt>Your interests</dt><dd>Gate what you see</dd><dd class=\"mf-ours\">Rank, never gatekeep</dd>"
+          "</dl></div><div class=\"mf-diamond\" aria-hidden=\"true\"><span><i>Your<br>submit</i></span></div></div></section>"
+          "<section class=\"mf-art\" id=\"principles\" aria-labelledby=\"mf-principles\"><header><p class=\"mf-kicker\">01 · Principles</p><h2 id=\"mf-principles\">Four principles the product keeps</h2>"
+          "<p>These are checked in the code that serves every page, not promised in a policy.</p></header><div class=\"mf-pillars\">"
+          "<article class=\"mf-pillar\"><small>Principle 01</small><h3>Every item names its source</h3><p>Stories, recordings, listings and events carry a link back to whoever published them. If a source withdraws an item, it leaves the public pages.</p><a href=\"/sources\">See the sources</a></article>"
+          "<article class=\"mf-pillar\"><small>Principle 02</small><h3>Nothing acts without your submit</h3><p>Aurekai can work out what is possible for you. It stops at the button only you can press: a payment, a publication, a vote or a message.</p><a href=\"/account\">Your account</a></article>"
+          "<article class=\"mf-pillar\"><small>Principle 03</small><h3>Your page is your address</h3><p>A member page is a real address on each territory, built from the same pages everyone uses and bound to you. It is published only when you publish it.</p><a href=\"/profile\">Your page</a></article>"
+          "<article class=\"mf-pillar\"><small>Principle 04</small><h3>Interests rank, never gatekeep</h3><p>The interests you choose order what you discover. They never decide who can see you, and you can remove them at any time.</p><a href=\"/people\">Find people</a></article>"
+          "</div><blockquote class=\"mf-quote\">A sign-in gives your browser a session for a day. It gives no one any right to pay, post or speak for you.<cite>From the sign-in page</cite></blockquote></section>"
+          "<section class=\"mf-art\" id=\"together\" aria-labelledby=\"mf-together\"><header><p class=\"mf-kicker\">02 · Together</p><h2 id=\"mf-together\">Deciding together</h2>"
+          "<p>Communities and guilds run their own spaces. Proposals are open in public, and each vote carries the name of whoever cast it.</p></header>"
+          "<div class=\"mf-chamber\"><div><p class=\"mf-kicker\">Proposals and votes</p><h3>Where things stand now</h3><table><tbody>"
+          "<tr><td>Open proposals</td><td>", stdout);
+    arrival_number(open_props);
+    fputs("</td></tr><tr><td>Settled proposals</td><td>", stdout);
+    arrival_number(settled);
+    fputs("</td></tr><tr><td>Votes cast, each signed by name</td><td>", stdout);
+    arrival_number(votes);
+    fputs("</td></tr><tr><td>Communities</td><td>", stdout);
+    arrival_number(communities);
+    fputs("</td></tr></tbody></table></div><div><p class=\"mf-kicker\">Take part</p><h3>Find your people</h3>"
+          "<p>Join a community around something you care about, or start a guild for the work you do. Votes and settlements are form submissions you make yourself.</p>"
+          "<p><a class=\"mf-chip\" href=\"/communities\">Communities</a> <a class=\"mf-chip\" href=\"/guilds\">Guilds</a></p></div></div></section>"
+          "<section class=\"mf-art\" id=\"near\" aria-labelledby=\"mf-near\"><header><p class=\"mf-kicker\">03 · Near you</p><h2 id=\"mf-near\">Close to home</h2>"
+          "<p>A lot of what matters is local: what is on this week, where to eat, who lives and works nearby.</p></header><div class=\"mf-pillars\">"
+          "<article class=\"mf-pillar\"><small>This week</small><h3>What&#039;s on</h3><p>Events and listings from the venues and organisers who post them.</p><a href=\"/whats-on\">See what&#039;s on</a></article>"
+          "<article class=\"mf-pillar\"><small>Nearby</small><h3>Local</h3><p>Places, services and people close to you, each with its source.</p><a href=\"/local\">Explore local</a></article>"
+          "</div></section>"
+          "<section class=\"mf-art\" id=\"join\" aria-labelledby=\"mf-join\"><header><p class=\"mf-kicker\">04 · Members</p><h2 id=\"mf-join\">Who is here, and joining</h2>"
+          "<p>People listed here have published a member page. An account alone does not put anyone on this list.</p></header>", stdout);
+    {
+        sqlite3_stmt *st = NULL; int rows = 0;
+        if (db && sqlite3_prepare_v2(db,
+              "SELECT subject_address,group_concat(territory,' · '),min(host),min(coalesce(published_at,created_at))"
+              " FROM site_presentation WHERE namespace='root' AND status='published' AND profile='member-profile-v1'"
+              " AND subject_address LIKE 'person:%' GROUP BY subject_address ORDER BY 4 DESC LIMIT 24", -1, &st, NULL) == SQLITE_OK) {
+            while (sqlite3_step(st) == SQLITE_ROW) {
+                const char *who = (const char *)sqlite3_column_text(st, 0), *where = (const char *)sqlite3_column_text(st, 1);
+                const char *site = (const char *)sqlite3_column_text(st, 2), *since = (const char *)sqlite3_column_text(st, 3);
+                char name[96] = {0};
+                if (!who || strlen(who) < 8 || !site) continue;
+                snprintf(name, sizeof(name), "%s", who + 7);
+                if (name[0] >= 'a' && name[0] <= 'z') name[0] = (char)(name[0] - 'a' + 'A');
+                if (!rows++) fputs("<table class=\"mf-roll\"><thead><tr><th>Member</th><th>Publishes on</th><th>Page</th></tr></thead><tbody>", stdout);
+                fputs("<tr><td>", stdout); html(name);
+                if (since && strlen(since) >= 10) { fputs("<small>Since ", stdout); printf("%.10s", since); fputs("</small>", stdout); }
+                fputs("</td><td>", stdout); html(where ? where : "");
+                fputs("</td><td><a href=\"https://", stdout); html(site); fputs("/\">", stdout); html(site); fputs("</a></td></tr>", stdout);
+            }
+        }
+        sqlite3_finalize(st);
+        if (rows) fputs("</tbody></table>", stdout);
+        else fputs("<p class=\"mf-empty\">No member pages are published yet. Yours could be the first.</p>", stdout);
+    }
+    if (db) sqlite3_close(db);
+    fputs("<form class=\"mf-ratify\" action=\"/signup\" method=\"post\"><input type=\"hidden\" name=\"next\" value=\"/account\">"
+          "<div class=\"mf-ratify-head\"><div><h3>Add your name</h3><p>Creating an account publishes nothing. You choose your interests next, then open your page and tools.</p></div>"
+          "<span class=\"mf-chip\">Step 1 of 3</span></div><div class=\"mf-ratify-fields\">"
+          "<label>Name<input type=\"text\" name=\"name\" autocomplete=\"name\" required maxlength=\"255\"></label>"
+          "<label>Email<input type=\"email\" name=\"email\" autocomplete=\"email\" required></label>"
+          "<label>Password, 12 or more characters<input type=\"password\" name=\"password\" autocomplete=\"new-password\" minlength=\"12\" required></label></div>"
+          "<div class=\"mf-ratify-foot\"><p>Already a member? <a href=\"/login\">Sign in</a></p><button type=\"submit\">Create account</button></div></form>"
+          "</section></div></div></main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    return 1;
+}
 static int serve_auth(const char *method, const char *target, const char *body,
                       const char *bearer, const char *db, const char *accept,
                       const char *root, const char *host, const char *query) {
     char out[8192];
     if(serve_session_handoff(method,target,bearer,db,host,query))return 1;
+    if (serve_arrival(method, target, accept, host)) return 1;
     const char *bin = auth_binary();
 
     if (!strcmp(target, "/signup") || !strcmp(target, "/login")) {
@@ -378,7 +492,7 @@ static int serve_auth(const char *method, const char *target, const char *body,
                             else if (!strcmp(page, "login") && query_value(query, "created", flag, sizeof(flag)) && !strcmp(flag, "1"))
                                 notice = "Account created. Sign in to continue.";
                             if (view) {
-                                ready = bf_auth_form_document(view, page_text, next, notice, BF_ESTATE_BAR);
+                                ready = bf_auth_form_document(view, page_text, next, notice, BF_ESTATE_BAR, BF_ESTATE_FOOT);
                                 if (fclose(view)) ready = 0;
                             }
                             free(page_text);
@@ -557,15 +671,18 @@ static int serve_auth(const char *method, const char *target, const char *body,
                             bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(host), target, query, pattern);
                             fwrite(head, 1, (size_t)(body_end - head), stdout);
                             bf_route_presentation_emit_body_attribute_for(stdout, bf_route_presentation_territory(host), target, query, pattern);
-                            fputc('>', stdout);
-                        } else fwrite(page,1,(size_t)(body_end+1-page),stdout);
-                        fputs("<style id=\"ak-account-depth\">.top{display:none!important}.shell{max-width:1450px!important;padding:clamp(18px,3.5vw,54px)!important}.lead{position:relative;max-width:none;padding:clamp(40px,8vw,100px) clamp(22px,5vw,72px)!important;margin:16px 0 34px;isolation:isolate;overflow:hidden;border-radius:30px;background:radial-gradient(ellipse at 96% 8%,#9db9885e,transparent 48%),linear-gradient(123deg,#172d24 4%,#2e5339 62%,#12251f 100%);color:#f7f7eb}.lead:after{content:'';pointer-events:none;position:absolute;right:-90px;top:-130px;width:clamp(250px,35vw,600px);aspect-ratio:1;border:1px solid #cfe8b866;border-radius:50%;box-shadow:0 0 0 47px #def1d414,0 0 0 110px #def1d409;transform:rotate(-18deg)}.lead .eyebrow{color:#c6e7ad!important;position:relative;z-index:1}.lead h1{font-family:'Instrument Serif',Georgia,serif;font-weight:400;letter-spacing:-.06em;font-size:clamp(56px,7.8vw,114px);line-height:.94;max-width:850px;position:relative;z-index:1}.lead em{color:#cbebad}.lead p:not(.eyebrow){color:#d5e7d1!important;max-width:850px;line-height:1.65;position:relative;z-index:1}.layout,.stack{gap:clamp(16px,2.3vw,30px)!important}.card{border-radius:22px!important;border:1px solid var(--rule)!important;box-shadow:0 10px 42px #07190c12;transition:box-shadow .3s ease,border-color .3s ease;min-width:0}.card:focus-within{border-color:var(--live)!important;box-shadow:0 16px 48px #07190c20}.card h2{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(29px,3vw,43px)!important;font-weight:400;line-height:1.08}.link{position:relative;border-radius:12px!important;overflow:hidden;transition:transform .25s ease,background .25s ease,border-color .25s ease}.link:hover,.link:focus-visible{transform:translateX(4px);background:var(--soft);border-color:var(--live)!important}.link small{display:block;line-height:1.5;margin-top:4px}.external{position:relative;gap:14px!important}.external-item{position:relative;overflow:hidden;isolation:isolate;min-width:0;gap:12px!important;border:1px solid var(--rule)!important;border-radius:18px;padding:24px 20px 20px 24px!important;background:linear-gradient(133deg,var(--paper),color-mix(in srgb,var(--soft) 40%,var(--paper)));box-shadow:0 4px 16px #101f1510;transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s,border-color .3s}.external-item:before{content:'↗';position:absolute;top:-20px;right:18px;color:var(--live);opacity:.16;font:90px/.9 'Instrument Serif',Georgia,serif;pointer-events:none;transition:transform .45s,opacity .45s}.external-item:hover,.external-item:focus-within{transform:translateY(-4px);box-shadow:0 19px 44px #101f1522;border-color:var(--live)!important}.external-item:hover:before{transform:translate(6px,-5px) rotate(10deg);opacity:.3}.external-item>span{min-width:0;position:relative;z-index:1}.external-item a{font-size:clamp(16px,1.7vw,20px);text-decoration-thickness:1px;text-underline-offset:4px}.external-item small{display:inline-block;margin-top:6px;line-height:1.5;overflow-wrap:anywhere}.external-item .status{display:inline-flex;border:1px solid var(--rule);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:700}.external-item p{max-width:44ch;font-size:12px;line-height:1.6}.external-item .remove{min-height:38px;border-radius:999px;transition:transform .2s}.external-item .remove:hover{transform:translateY(-2px)}.identity{border-radius:12px;overflow:hidden}.account-tools-host{margin:clamp(40px,5vw,80px) 0 0}.account-tools-host>h2{font:400 clamp(39px,5vw,70px)/1 'Instrument Serif',Georgia,serif;letter-spacing:-.05em;margin:0 0 26px}.account-tools-host [data-account-tools]{min-width:0}@media(max-width:760px){.lead{margin-top:8px;border-radius:20px}.lead:after{opacity:.45}.shell{padding:14px!important}.card{padding:20px!important}.external-item{padding:18px!important}.account-tools-host{margin-top:48px}}@media(prefers-reduced-motion:reduce){.link,.card,.external-item,.external-item:before,.external-item .remove{transition:none!important;transform:none!important}}</style>",stdout);
+                            fputs(" class=\"ak-app ak-trust ak-account\">", stdout);
+                        } else { fwrite(page,1,(size_t)(body_end-page),stdout); fputs(" class=\"ak-app ak-trust ak-account\">", stdout); }
+                        /* Step two of the arrival path, on the shared shell; its layout lives in aurekai-trust.css. */
+                        fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-trust.css?v=1\">",stdout);
                         fputs(BF_ESTATE_BAR,stdout);
                         fputs(BF_ACCOUNT_CONNECTION_STYLE,stdout);
                         fwrite(body_end+1,1,(size_t)(main_end-(body_end+1)),stdout);
                         fputs("<section class=\"account-tools-host\" aria-labelledby=\"account-tools-title\"><h2 id=\"account-tools-title\">Your tools and saved work</h2><div hx-get=\"/apps/_cards?context=self\" hx-trigger=\"load\" hx-swap=\"innerHTML\"><p class=\"empty\">Opening the tools already installed for you…</p></div></section>",stdout);
                         fputs(BF_ACCOUNT_CONNECTION_SCRIPT,stdout);
-                        fwrite(main_end,1,(size_t)len-(size_t)(main_end-page),stdout);
+                        { const char *close_body = strstr(main_end, "</body>");
+                          if (close_body) { fwrite(main_end,1,(size_t)(close_body-main_end),stdout); fputs(BF_ESTATE_FOOT,stdout); fputs(close_body,stdout); }
+                          else fwrite(main_end,1,(size_t)len-(size_t)(main_end-page),stdout); }
                     }else if(page)fwrite(page,1,(size_t)len,stdout);
                     else{rewind(f);char buf[8192];size_t r;while((r=fread(buf,1,sizeof(buf),f))>0)fwrite(buf,1,r,stdout);}
                     free(page);

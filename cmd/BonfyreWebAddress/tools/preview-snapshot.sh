@@ -94,6 +94,9 @@ if [ ! -f "$shared/.ready" ] || [ "$action" = refresh ]; then
   esac
   sqlite3 "$live/$db.db" ".backup '$tmp'"
   [ -s "$tmp" ] || { echo "preview snapshot: failed backing up $db" >&2; exit 1; }
+  # A WAL-mode backup carries no wal file, and read-only opens of it fail
+  # until something first touches it read-write; normalize before cloning.
+  sqlite3 "$tmp" "PRAGMA journal_mode=DELETE;"
  done
  mv -f "$temp_matrix" "$shared/matrix.db"
  mv -f "$temp_auth" "$shared/auth.db"

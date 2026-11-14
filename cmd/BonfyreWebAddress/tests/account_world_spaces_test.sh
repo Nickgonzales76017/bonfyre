@@ -70,6 +70,8 @@ W='site=profile-avery-work'
 # --- the studio starts spaces; nobody else can open or change them ---------
 [ "$(get "$owner" "/workspace/worlds?$W")" = 200 ] || fail 'studio opens'
 grep -q 'Start spaces on this site' "$tmp/response" || fail 'studio offers a start'
+grep -q 'href="/assets/aurekai-native.css' "$tmp/response" || fail 'studio links its generated stylesheet'
+! grep -q '<style>\.aw-studio' "$tmp/response" || fail 'studio styles are emitted inline'
 grep -qi '^Cache-Control: private, no-store' "$tmp/headers" || fail 'studio is private'
 [ "$(get "$other" "/workspace/worlds?$W")" = 404 ] || fail 'another account cannot open the studio'
 [ "$(get '' "/workspace/worlds?$W")" = 404 ] || fail 'anonymous cannot open the studio'
@@ -105,6 +107,7 @@ item lounge 3 space:screen doorway 4
 # Native World picker: one account, retained identity, optimistic draft revision, no writes on browse.
 [ "$(get "$owner" "/workspace/worlds?$W&world=1&space=screen")" = 200 ] || fail "picker owner studio opens"
 grep -q 'data-world-source-picker' "$tmp/response" || fail "source picker exists in native studio"
+! grep -q '<style>\.aw-picker' "$tmp/response" || fail 'picker styles are emitted inline'
 grep -q 'Avery saved artwork' "$tmp/response" || fail "picker reads saved references from self account"
 if grep -q 'Other private selection' "$tmp/response"; then fail "picker leaks another account saved items"; fi
 grep -Fq "name=\"ref\" value=\"$art\"" "$tmp/response" || fail "saved item has exact source ref for revision-controlled draft"

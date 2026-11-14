@@ -48,10 +48,14 @@ int main(int argc, char **argv) {
     evidence = opt(argc, argv, "--evidence",
                    "../BonfyreExperienceMap/generated/participation_evidence.jsonl");
     manifest = opt(argc, argv, "--manifest", "generated/participation_manifest.json");
-    if (sqlite3_open(":memory:", &db) != SQLITE_OK) goto done;
-    if (!bf_part_evidence_init(db)) goto done;
-    if (!bf_part_evidence_load(db, evidence, &raw_rows)) goto done;
+    if (sqlite3_open(":memory:", &db) != SQLITE_OK) { fputs("participation: SQLite memory setup failed\n", stderr); goto done; }
+    if (!bf_part_evidence_init(db)) { fputs("participation: evidence schema setup failed\n", stderr); goto done; }
+    if (!bf_part_evidence_load(db, evidence, &raw_rows)) {
+        fprintf(stderr, "participation: evidence load failed: %s\n", evidence);
+        goto done;
+    }
     rc = bf_part_project_manifest(db, external, raw_rows, manifest);
+    if (rc) fprintf(stderr, "participation: candidate projection failed: %s\n", external);
 done:
     if (db) sqlite3_close(db);
     return rc;

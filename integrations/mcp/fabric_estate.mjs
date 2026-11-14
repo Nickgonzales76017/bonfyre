@@ -63,10 +63,14 @@ export function createFabricEstate({ home = homedir(), worldDbPath = join(home, 
         ) VALUES(?,?,?,?,?,?,'compiled',?,?,?,?,?)
         ON CONFLICT(dedupe_key) DO UPDATE SET
           title=excluded.title,details=excluded.details,
-          priority=MAX(missions.priority,excluded.priority),state='compiled',updated_at=excluded.updated_at`)
+          priority=MAX(missions.priority,excluded.priority),updated_at=excluded.updated_at
+          WHERE missions.state='compiled'`)
           .run(id, key, family, title, details, priority, locksJson(locks), '[]', '[]', at, at);
-        const saved = world.query('SELECT id,dedupe_key FROM missions WHERE dedupe_key=?').get(key);
+        const saved = world.query('SELECT * FROM missions WHERE dedupe_key=?').get(key);
         if (!saved) throw new Error('mission persistence unverified');
+        if (saved.state !== 'compiled' && (saved.title !== title || saved.details !== details ||
+          saved.family !== family || saved.lock_set_json !== locksJson(locks)))
+          throw new Error('mission already progressed; duplicate intake cannot rewrite it');
         return { mission_id: saved.id, dedupe_key: saved.dedupe_key };
       });
       return transact.immediate();

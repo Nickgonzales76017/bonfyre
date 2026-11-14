@@ -81,7 +81,7 @@ export async function readAccountNeeds(context,{request,signal}={}){
  const value=await packet('/inbox/_summary?'+new URLSearchParams({context}),{request,signal});
  check(value.context===context&&Array.isArray(value.items)&&value.items.length<=58,'Account Inbox actions are incomplete.');
  const binding=activityBinding(value.binding,context),ids=new Set();
- const kinds=new Set(['release','provider','provider-checklist','execution-credit','invitation']);
+ const kinds=new Set(['release','provider','provider-checklist','execution-credit','invitation','dating-introduction']);
  const items=value.items.map(row=>{
   check(record(row)&&Object.keys(row).length===4&&atom(row.id,160)&&!ids.has(row.id)&&
    kinds.has(row.kind)&&text(row.title,256)&&row.title.trim()&&integer(row.updated)&&row.updated<=8640000000000000,

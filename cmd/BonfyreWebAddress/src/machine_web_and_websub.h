@@ -35,10 +35,26 @@ static int aperture_cmp(const void *a, const void *b) {
  * ten thousand machine reads cost approximately what one costs.
  * ------------------------------------------------------------------------- */
 
-static const char *site_origin(void) {
+static const char *site_origin_for_host(const char *explicit_host) {
+    const char *host = explicit_host ? explicit_host : (psetup_presentation_host ? psetup_presentation_host : page_render_host);
+    static char public_origin[280];
+    char normalized[256], subject[384];
+    sqlite3 *cms = NULL;
+    int published = 0;
+    /* Only released public subjects may produce host-specific machine URLs.
+     * Arbitrary Host headers must not poison canonicals or sitemap entries. */
+    if (host && lower_host(host, normalized)) {
+        cms = cms_open_ro();
+        published = page_subject_for_host(cms, normalized, subject, sizeof(subject));
+        if (cms) sqlite3_close(cms);
+        if (published && snprintf(public_origin, sizeof(public_origin),
+                                  "https://%s", normalized) < (int)sizeof(public_origin))
+            return public_origin;
+    }
     const char *o = getenv("BONFYRE_PUBLIC_ORIGIN");
     return (o && *o) ? o : "https://aurekai.life";
 }
+static const char *site_origin(void) { return site_origin_for_host(NULL); }
 
 /* Metadata for one subject, emitted into the document head.
  *
@@ -159,38 +175,203 @@ static int serve_machine_web(const char *method, const char *target,
     int head_only = !strcmp(method, "HEAD");
     if (strcmp(method, "GET") && !head_only) return 0;
 
+    if (!strcmp(target, "/robots.txt")) {
+        char subject[384], normalized[256];
+        sqlite3 *cms;
+        int published;
+        if (!lower_host(host, normalized)) return 0;
+        cms = cms_open_ro();
+        published = page_subject_for_host(cms, normalized, subject, sizeof(subject));
+        if (cms) sqlite3_close(cms);
+        if (!published) return 0;
+        snprintf(body, sizeof(body),
+            "User-agent: *\nAllow: /\nSitemap: https://%s/sitemap.xml\n", normalized);
+        return cached_reply_m(body, "text/plain; charset=utf-8", inm, head_only);
+    }
+
     if (!strcmp(target, "/sitemap.xml")) {
-        const char *o = site_origin();
+        char subject[384], normalized[256];
+        sqlite3 *cms = NULL;
+        int published = 0;
+        if (!lower_host(host, normalized)) return 0;
+        cms = cms_open_ro();
+        published = page_subject_for_host(cms, normalized, subject, sizeof(subject));
+        if (cms) sqlite3_close(cms);
+        if (!published) return 0;
+        const char *o = site_origin_for_host(host);
+        const int apex = host_is_territory_apex(host);
+        const char *territory = territory_of(host);
         w = (size_t)snprintf(body, sizeof(body),
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
-          "<sitemap><loc>%s/sitemap-surfaces.xml</loc></sitemap>\n"
-          "<sitemap><loc>%s/sitemap-notes.xml</loc></sitemap>\n"
-          "<sitemap><loc>%s/sitemap-capabilities.xml</loc></sitemap>\n"
-          "<sitemap><loc>%s/sitemap-subjects.xml</loc></sitemap>\n"
-          "</sitemapindex>\n", o, o, o, o);
+          "<sitemap><loc>%s/sitemap-surfaces.xml</loc></sitemap>\n", o);
+        if (apex && !strcmp(territory, "life"))
+            w += (size_t)snprintf(body + w, sizeof(body) - w,
+                "<sitemap><loc>%s/sitemap-notes.xml</loc></sitemap>\n"
+                "<sitemap><loc>%s/sitemap-subjects.xml</loc></sitemap>\n"
+                "<sitemap><loc>%s/sitemap-community.xml</loc></sitemap>\n", o, o, o);
+        if (apex && !strcmp(territory, "work"))
+            w += (size_t)snprintf(body + w, sizeof(body) - w,
+                "<sitemap><loc>%s/sitemap-capabilities.xml</loc></sitemap>\n", o);
+        snprintf(body + w, sizeof(body) - w, "</sitemapindex>\n");
         return cached_reply_m(body, "application/xml; charset=utf-8", inm, head_only);
     }
 
     if (!strcmp(target, "/sitemap-surfaces.xml")) {
-        static const char *pub[] = {
-            "/", "/protocols", "/property", "/market", "/sources", "/agents",
-            "/notes/", "/capability", "/surfaces",
-        };
-        const char *o = site_origin();
+        sqlite3 *cms = cms_open_ro(), *fabric = NULL;
+        sqlite3_stmt *st = NULL;
+        char subject[384] = {0};
+        const char *o = site_origin_for_host(host);
+        int published = page_subject_for_host(cms, host, subject, sizeof(subject));
+        if (cms) sqlite3_close(cms);
+        if (!published) return 0;
         w = (size_t)snprintf(body, sizeof(body),
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
-        for (size_t i = 0; i < sizeof(pub) / sizeof(pub[0]); i++)
+        if (host_is_territory_apex(host)) {
+            const char *territory = territory_of(host);
+            for (size_t i = 0; i < BF_PAGE_PROGRAM_COUNT && w < sizeof(body) - 1024; i++) {
+                const BfPageProgram *program = &bf_page_programs[i];
+                if (strcmp(program->territory, "any") && strcmp(program->territory, territory)) continue;
+                w += (size_t)snprintf(body + w, sizeof(body) - w,
+                    "<url><loc>%s%s</loc></url>\n", o, program->route);
+            }
+        } else {
             w += (size_t)snprintf(body + w, sizeof(body) - w,
-              "<url><loc>%s%s</loc><changefreq>daily</changefreq></url>\n", o, pub[i]);
+                "<url><loc>%s/</loc></url>\n", o);
+            fabric = page_subject_fabric_open();
+            if (fabric && sqlite3_prepare_v2(fabric,
+                "SELECT DISTINCT route FROM subject_route "
+                "WHERE subject=?1 AND scope='public' ORDER BY route LIMIT 1500",
+                -1, &st, NULL) == SQLITE_OK) {
+                sqlite3_bind_text(st, 1, subject, -1, SQLITE_TRANSIENT);
+                while (w < sizeof(body) - 1024 && sqlite3_step(st) == SQLITE_ROW) {
+                    const char *route = (const char *)sqlite3_column_text(st, 0);
+                    if (!route || route[0] != '/' || !strcmp(route, "/") || strlen(route) > 600 ||
+                        strspn(route, "/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~%") != strlen(route)) continue;
+                    w += (size_t)snprintf(body + w, sizeof(body) - w,
+                        "<url><loc>%s%s</loc></url>\n", o, route);
+                }
+            }
+            if (st) sqlite3_finalize(st);
+            if (fabric) sqlite3_close(fabric);
+            /* A member's released editorial is not necessarily a SubjectFabric
+             * route yet. Carry the exact same public-fragment acceptance used
+             * by the journal reader; held drafts never reach discovery. */
+            {
+                sqlite3 *journal = cms_open_ro();
+                sqlite3_stmt *site = NULL, *pages = NULL;
+                char site_id[128] = {0}, normalized[256];
+                int first_article = 1;
+                if (journal && lower_host(host, normalized) && sqlite3_prepare_v2(journal,
+                    "SELECT site_id FROM site_presentation WHERE namespace='root' "
+                    "AND status='published' AND profile='member-profile-v1' AND host=?1 "
+                    "ORDER BY id DESC LIMIT 1", -1, &site, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(site, 1, normalized, -1, SQLITE_TRANSIENT);
+                    if (sqlite3_step(site) == SQLITE_ROW && sqlite3_column_text(site, 0))
+                        snprintf(site_id, sizeof(site_id), "%s",
+                            (const char *)sqlite3_column_text(site, 0));
+                }
+                if (site) sqlite3_finalize(site);
+                if (site_id[0] && sqlite3_prepare_v2(journal,
+                    "SELECT p.route FROM site_page p WHERE " PH_JOURNAL_RELEASED
+                    " ORDER BY p.route LIMIT 5000", -1, &pages, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(pages, 1, site_id, -1, SQLITE_TRANSIENT);
+                    while (w < sizeof(body) - 1024 && sqlite3_step(pages) == SQLITE_ROW) {
+                        const char *route = (const char *)sqlite3_column_text(pages, 0);
+                        size_t len = 0;
+                        if (!ph_blog_slug_safe(route, &len)) continue;
+                        if (first_article) {
+                            w += (size_t)snprintf(body + w, sizeof(body) - w,
+                                "<url><loc>%s/blog/</loc></url>\n", o);
+                            first_article = 0;
+                        }
+                        w += (size_t)snprintf(body + w, sizeof(body) - w,
+                            "<url><loc>%s%.*s/</loc></url>\n", o, (int)(6 + len), route);
+                    }
+                }
+                if (pages) sqlite3_finalize(pages);
+                if (journal) sqlite3_close(journal);
+            }
+        }
         snprintf(body + w, sizeof(body) - w, "</urlset>\n");
         return cached_reply_m(body, "application/xml; charset=utf-8", inm, head_only);
     }
 
+    if (!strcmp(target, "/sitemap-community.xml")) {
+        if (!host || strcmp(host,"aurekai.life")) return 0;
+        sqlite3 *db=cms_open_ro();
+        int pages=cjw_search_sitemap_pages(db);
+        if(db)sqlite3_close(db);
+        if(pages<0)return 0;
+        if(pages==0){
+            snprintf(body,sizeof(body),
+              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+              "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+              "<url><loc>https://aurekai.life/communities</loc></url>\n"
+              "<url><loc>https://aurekai.life/community</loc></url>\n"
+              "</urlset>\n");
+            return cached_reply_m(body,"application/xml; charset=utf-8",inm,head_only);
+        }
+        w=(size_t)snprintf(body,sizeof(body),
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        for(int page=0;page<pages;page++) {
+            int n=snprintf(body+w,sizeof(body)-w,
+                "<sitemap><loc>https://aurekai.life/sitemap-community-%d.xml</loc></sitemap>\n",page);
+            if(n<0||(size_t)n>=sizeof(body)-w)return 0;
+            w+=(size_t)n;
+        }
+        snprintf(body+w,sizeof(body)-w,"</sitemapindex>\n");
+        return cached_reply_m(body,"application/xml; charset=utf-8",inm,head_only);
+    }
+
+    if (!strncmp(target,"/sitemap-community-",19)) {
+        unsigned page=0;
+        char expected[64];
+        if(!host||strcmp(host,"aurekai.life")||
+           sscanf(target,"/sitemap-community-%u.xml",&page)!=1||
+           snprintf(expected,sizeof(expected),"/sitemap-community-%u.xml",page)<0||
+           strcmp(expected,target)) return 0;
+        sqlite3 *db=cms_open_ro(), *verify=db;
+        sqlite3_stmt *st=NULL;
+        int pages=cjw_search_sitemap_pages(db);
+        if(pages<0||page>=(unsigned)pages){if(db)sqlite3_close(db);return 0;}
+        if(sqlite3_prepare_v2(db,
+          "SELECT p.community,p.post,p.author_subject,strftime('%Y-%m-%dT%H:%M:%SZ',p.published_at) " CJW_SEARCH_PUBLIC_FROM
+          " ORDER BY p.id ASC LIMIT ?1 OFFSET ?2",-1,&st,NULL)!=SQLITE_OK) {
+            if(db)sqlite3_close(db);
+            return 0;
+        }
+        sqlite3_bind_int(st,1,CJW_SEARCH_PER_SITEMAP);
+        sqlite3_bind_int64(st,2,(sqlite3_int64)page*CJW_SEARCH_PER_SITEMAP);
+        w=(size_t)snprintf(body,sizeof(body),
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        while(w<sizeof(body)-512&&sqlite3_step(st)==SQLITE_ROW) {
+            const char *community=(const char*)sqlite3_column_text(st,0);
+            const char *post=(const char*)sqlite3_column_text(st,1);
+            const char *author=(const char*)sqlite3_column_text(st,2);
+            const char *lastmod=(const char*)sqlite3_column_text(st,3);
+            CjrCommunity c;
+            if(!cjr_key(community)||!cjr_key(post)||!cjr_actor(author)||!lastmod||!*lastmod||
+               cjr_community(verify,community,&c)!=1||!cjr_public(&c))continue;
+            int n=snprintf(body+w,sizeof(body)-w,
+                "<url><loc>https://aurekai.life/community/%s/thread/%s/</loc><lastmod>%s</lastmod></url>\n",
+                community,post,lastmod);
+            if(n<0||(size_t)n>=sizeof(body)-w)break;
+            w+=(size_t)n;
+        }
+        sqlite3_finalize(st);
+        sqlite3_close(db);
+        snprintf(body+w,sizeof(body)-w,"</urlset>\n");
+        return cached_reply_m(body,"application/xml; charset=utf-8",inm,head_only);
+    }
+
+
     if (!strcmp(target, "/sitemap-notes.xml")) {
         sqlite3 *db = cms_open_ro(); sqlite3_stmt *st = NULL;
-        const char *o = site_origin();
+        const char *o = site_origin_for_host(host);
         w = (size_t)snprintf(body, sizeof(body),
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
@@ -221,7 +402,7 @@ static int serve_machine_web(const char *method, const char *target,
          * better reached through its bulk representations than one URL per row. */
         const char *bindir = getenv("BONFYRE_BIN_DIR");
         static char rows[131072];
-        const char *o = site_origin();
+        const char *o = site_origin_for_host(host);
         if (!bindir || !*bindir) bindir = "/usr/local/bin";
         w = (size_t)snprintf(body, sizeof(body),
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -247,7 +428,7 @@ static int serve_machine_web(const char *method, const char *target,
     }
 
     if (!strcmp(target, "/sitemap-capabilities.xml")) {
-        const char *o = site_origin();
+        const char *o = site_origin_for_host(host);
         w = (size_t)snprintf(body, sizeof(body),
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
@@ -267,7 +448,7 @@ static int serve_machine_web(const char *method, const char *target,
             lower_host(host, normalized_host))
             fabric = page_subject_fabric_open();
         served = bf_atom_feed_serve(stdout, cms, fabric, subject, normalized_host,
-                                    site_origin(), inm, head_only,
+                                    site_origin_for_host(host), inm, head_only,
                                     getenv("BONFYRE_WEBSUB_HUB"));
         if (fabric) sqlite3_close(fabric);
         if (cms) sqlite3_close(cms);
@@ -751,8 +932,8 @@ static const char *SUBJ_HEAD =
   ".aperture{margin:30px 0 0}"
   ".ap-label{margin:0 0 12px;font:500 10px 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#657068}"
   ".ap-act{display:flex;flex-direction:column;gap:3px;padding:14px 16px;margin-bottom:8px;"
-  "border:1px solid var(--line);background:#fff;text-decoration:none;color:inherit;transition:.16s ease}"
-  ".ap-act:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:4px 4px 0 #dce1d2}"
+  "border:1px solid var(--line);background:var(--ak-surface-low,#171d19);text-decoration:none;color:inherit;transition:.16s ease}"
+  ".ap-act:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:4px 4px 0 var(--ak-outline-variant,#444935)}"
   ".ap-do{font-size:17px;letter-spacing:-.03em}"
   ".ap-why{font:500 11px 'DM Mono',monospace;color:#657068}"
   ".ap-act.is-strong{border-color:var(--ink)}.ap-act.is-strong .ap-do{font-size:21px}"
@@ -785,7 +966,7 @@ static const char *SUBJ_HEAD =
   ".ap-act.is-dark{opacity:.45}.ap-act.is-dark .ap-do{text-decoration:line-through}"
   ".sir-acts{font:500 11px 'DM Mono',monospace;color:#657068}"
   ".flow-shell{max-width:640px}"
-  ".fl-card{border:1px solid var(--ink);background:#fff;padding:30px 26px;margin:24px 0 0;min-height:340px;"
+  ".fl-card{border:1px solid var(--line);border-radius:18px;background:var(--ak-surface-low,#171d19);padding:30px 26px;margin:24px 0 0;min-height:340px;"
   "display:flex;flex-direction:column;gap:6px}"
   ".fl-kind{margin:0;font:500 10px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#657068}"
   ".fl-title{margin:6px 0 2px;font-size:34px;font-weight:500;letter-spacing:-.055em;line-height:1.02}"
@@ -795,8 +976,7 @@ static const char *SUBJ_HEAD =
   ".fl-big{margin:16px 0 0;font-size:46px;font-weight:500;letter-spacing:-.06em;font-variant-numeric:tabular-nums}"
   ".fl-cap{margin:0 0 14px;font:500 10px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#657068}"
   ".fl-card .button{align-self:flex-start;margin-top:6px}"
-  ".fl-card.is-parcel{background:#eef3e6}.fl-card.is-cap{background:#fff}"
-  ".fl-card.is-note{background:#f6f2e7}.fl-card.is-source{background:#eceff4}"
+  ".fl-card.is-parcel,.fl-card.is-cap,.fl-card.is-note,.fl-card.is-source{background:var(--ak-surface-mid,#1b211d)}"
   ".fl-move{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px}"
   ".fl-next{all:unset;cursor:pointer;flex:1;text-align:center;padding:16px;border:1px solid var(--ink);"
   "background:var(--night);color:#eaf0e5;font:500 13px 'DM Mono',monospace;letter-spacing:.06em}"
@@ -822,14 +1002,12 @@ static const char *SUBJ_HEAD =
   ".mk-parts{margin:0 0 14px;padding:0 0 0 20px;font:600 14px/1.7 var(--mono);letter-spacing:.02em;color:var(--ink)}"
   "button.ap-act{width:100%%;text-align:left;cursor:pointer;font:inherit}"
   ".flow-search{display:flex;gap:10px;margin:24px 0 6px;flex-wrap:wrap}"
-  ".flow-search input{flex:1 1 340px;padding:14px 16px;border:1px solid var(--ink);background:#fff;"
+  ".flow-search input{flex:1 1 340px;padding:14px 16px;border:1px solid var(--ink);background:var(--ak-surface-lowest,#0a100c);"
   "color:var(--ink);font:500 17px 'DM Sans',Arial,sans-serif;letter-spacing:-.02em}"
   ".flow-hint{margin:0;color:#657068;font:500 11px 'DM Mono',monospace}"
   ".flow-empty{padding:26px 0;color:#657068;font:500 13px 'DM Mono',monospace}"
   ".mono{font-family:'DM Mono',monospace}"
-  "</style></head><body>"
-  "<canvas class=\"matrix-gpu\" id=\"matrix-gpu\" aria-hidden=\"true\"></canvas>"
-  "<div class=\"grain\" aria-hidden=\"true\"></div>"
+  "</style><link rel=\"stylesheet\" href=\"/assets/composition.css\"></head><body class=\"ak-app subj-page\" data-aurekai-pattern=\"workbench\">"
   BF_ESTATE_BAR
   /* The nav above carries hx-get, which is inert without the runtime. A page
    * that declares a swap and never loads htmx renders its fallback forever and
@@ -838,9 +1016,7 @@ static const char *SUBJ_HEAD =
   "<main class=\"wrap\">";
 
 static const char *SUBJ_FOOT =
-  "</main><footer class=\"footer wrap\">"
-  "<a class=\"wordmark\" href=\"/\">BONF<span>\xc5\xb8</span>RE</a>"
-  "<a href=\"/protocols\">All carriers &#8599;</a></footer>"
+  "</main>" BF_ESTATE_FOOT
   /* The organ layer. A composed room was server-rendered prose with no way to
    * animate what changed, anchor a boundary note, draw a distribution or
    * virtualise a list of thousands -- the libraries existed and nothing on

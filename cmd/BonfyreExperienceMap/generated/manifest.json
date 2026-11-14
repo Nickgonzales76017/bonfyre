@@ -1,7 +1,7 @@
 {
-  "app_reference_records": 575,
-  "atlas_declaration_digest": "78992589280639e20846e6a86aa0e86927a20e375dc860ae1d99d3914b2c5591",
-  "build_digest": "05b87666058245e5bc805231da1f987d0617d278249b60f58d073022ff245c0d",
+  "app_reference_records": 628,
+  "atlas_declaration_digest": "218da9ff38dd888574e2156ff91e82d695c4e777d576a1440f213b3ca5116829",
+  "build_digest": "2be08decad5ba8fa3edea7acd00b5ec603701338039a540b03aa61225afba70b",
   "cannot_infer": [
     "experience binding -> provider admission",
     "home blueprint -> current publication",
@@ -42,10 +42,10 @@
   },
   "market_leader_count": 20,
   "owner_graph": {
-    "interactions": 467,
-    "owners": 517
+    "interactions": 570,
+    "owners": 566
   },
-  "owner_graph_digest": "b46e3f657af71608df20cce38db87d07f5a40982f6a81a9934e08b035f95a5c2",
+  "owner_graph_digest": "6bd810867c3cf4f4c06f93fbf3def609ef3b5d4425bc8f7a5749faa2d978a55f",
   "partner_inventory": {
     "declared_shipped_repos": 41,
     "names_provable_in_checkout": 19,
@@ -54,8 +54,8 @@
   "protocol_chain_count": 108,
   "record_kind_counts": {
     "architecture": 6,
-    "cms_type": 104,
-    "command": 178,
+    "cms_type": 138,
+    "command": 197,
     "component": 92,
     "donor_reference": 19,
     "external": 4891,

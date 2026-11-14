@@ -125,8 +125,9 @@ if grep -q 'eval:' "$tmp/event.html"; then echo 'FAIL: an expression reached the
 
 phase='anonymous desk view'
 get /studio/ >"$tmp/desk.html"
-grep -q '<h3>Messages written and held</h3><span class="desk-n">1</span>' "$tmp/desk.html" \
+grep -q '<h2>Messages written and held</h2><span class="ak-tag is-on">1</span>' "$tmp/desk.html" \
   || { echo 'FAIL: the desk does not count the held message' >&2; exit 1; }
+# The studio workbench (Stitch policy workbench) states the count in each panel's tag.
 # A stranger is told there is one, and neither its subject nor whom it is about.
 if grep -q 'Retention Bonus alert\|RB-1\|E-7' "$tmp/desk.html"; then
   echo 'FAIL: a held message was named to somebody not signed in' >&2; exit 1
@@ -166,7 +167,7 @@ cmp -s "$tmp/cms.db" "$tmp/cms-before.db" \
 
 phase='read-scoped desk view'
 curl -fsS -H 'Host: aurekai.life' -H 'Accept: text/html' -H "Authorization: Bearer $reader" "$base" >"$tmp/reader.html"
-grep -q '<h3>Messages written and held</h3><span class="desk-n">1</span>' "$tmp/reader.html" \
+grep -q '<h2>Messages written and held</h2><span class="ak-tag is-on">1</span>' "$tmp/reader.html" \
   || { echo 'FAIL: read-scoped account lost the held count' >&2; exit 1; }
 if grep -q 'Retention Bonus alert\|RB-1\|E-7' "$tmp/reader.html"; then
   echo 'FAIL: a held message was named to a read-scoped account' >&2; exit 1

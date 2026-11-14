@@ -1,0 +1,18 @@
+{
+  "name": "work_order",
+  "displayName": "Work Order",
+  "description": "A piece of work one account opened between named people: its scope, the terms its opener stated and the currency those terms are written in. A work order is a record of what was proposed. It is not a contract until each named party records acceptance, and even then it holds no money, moves no money and grants no one authority over anyone else.",
+  "attributes": {
+    "work_order_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "title": { "type": "string", "required": true },
+    "scope": { "type": "text", "required": true },
+    "on_behalf_of": { "type": "string", "required": true },
+    "opened_by": { "type": "string", "required": true },
+    "stated_terms": { "type": "text", "required": true },
+    "currency": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "opened_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

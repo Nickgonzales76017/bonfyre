@@ -167,28 +167,29 @@ static int cwl_visible_destination(const char *url) {
 static int cwl_page(int status, const char *back, const char *action, const CwlForm *form, const char *error, const char *result) {
     char *page = NULL; size_t size = 0; FILE *out = open_memstream(&page, &size);
     if (!out) { aw_error(503, "The campaign form could not be prepared.\n"); return 1; }
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Campaign link · Aurekai</title><style>"
-        "*{box-sizing:border-box}body{margin:0;background:#f5f3ee;color:#202b29;font:16px/1.6 system-ui,sans-serif}main{max-width:68rem;margin:auto;padding:clamp(1rem,4vw,3rem)}a{color:#176451;text-underline-offset:.2em}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.15;margin:.8rem 0}h2{font-size:1.35rem}p{max-width:65ch}.intro{margin-bottom:2rem}form,.result{padding:clamp(1rem,3vw,2rem);background:#fff;border:1px solid #ccd5ce;border-radius:1rem}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.4rem}.wide{grid-column:1/-1}label{display:block;font-weight:650}label span{font-weight:400;color:#495c55;font-size:.9rem}input,textarea{display:block;width:100%;min-width:0;margin-top:.4rem;padding:.8rem;border:1px solid #71857a;border-radius:.4rem;background:#fff;color:inherit;font:inherit}textarea{resize:vertical;overflow-wrap:anywhere}input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #b05416;outline-offset:3px}.hint{margin:.35rem 0 0;color:#495c55;font-size:.9rem}button{font:inherit;font-weight:650;border:0;border-radius:.45rem;background:#176451;color:#fff;padding:.8rem 1.3rem;cursor:pointer;margin-top:1.8rem}.notice{padding:1rem;border:2px solid #a04719;border-radius:.5rem;background:#fff3e9;margin:1.5rem 0}.result{margin:1.5rem 0;border-color:#176451}.result h2{margin-top:0}footer{margin-top:1.5rem}@media(max-width:38rem){.fields{grid-template-columns:1fr}button{width:100%}}"
-        "</style></head><body><main><nav aria-label=\"Workspace\"><a href=\"", out);
+    /* The one shell: estate bar, one <main>, the one footer and player. */
+    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><title>Campaign link \xc2\xb7 Aurekai</title>"
+        "<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\"><link rel=\"stylesheet\" href=\"/assets/composition.css\"></head>"
+        "<body class=\"ak-app route-campaign\" data-aurekai-pattern=\"workbench\">" BF_ESTATE_BAR "<main class=\"ak-wb\"><p class=\"ak-kicker\"><a href=\"", out);
     bf_lex_html_emit(out, back);
-    fputs("\">Back to campaign workspace</a></nav><header class=\"intro\"><h1>Build a campaign link</h1><p>Add source, medium and campaign tags to a destination. Copy the completed link into the message or creative you plan to share.</p></header>", out);
-    if (error && *error) { fputs("<div class=\"notice\" role=\"alert\"><strong>Check this link</strong><p>", out); bf_lex_html_emit(out, error); fputs("</p></div>", out); }
+    fputs("\">Back to campaign workspace</a></p><header class=\"ak-wb-hero is-solo\"><div><h1>Build a campaign link</h1><p class=\"ak-lede\">Add source, medium and campaign tags to a destination. Copy the completed link into the message or creative you plan to share.</p></div></header>", out);
+    if (error && *error) { fputs("<div class=\"cwl-notice\" role=\"alert\"><strong>Check this link</strong><p>", out); bf_lex_html_emit(out, error); fputs("</p></div>", out); }
     if (result && *result) {
-        fputs("<section class=\"result\" aria-labelledby=\"result-heading\"><h2 id=\"result-heading\">Link ready to copy</h2><label for=\"campaign-result\">Completed campaign URL</label><textarea id=\"campaign-result\" rows=\"5\" readonly spellcheck=\"false\" aria-describedby=\"copy-help\">", out);
+        fputs("<section class=\"ak-panel cwl-result\" aria-labelledby=\"result-heading\"><h2 id=\"result-heading\">Link ready to copy</h2><label for=\"campaign-result\">Completed campaign URL</label><textarea id=\"campaign-result\" rows=\"5\" readonly spellcheck=\"false\" aria-describedby=\"copy-help\">", out);
         bf_lex_html_emit(out, result);
-        fputs("</textarea><p id=\"copy-help\" class=\"hint\">Select the URL and copy it. This page has not opened or shared the destination.</p></section>", out);
+        fputs("</textarea><p id=\"copy-help\" class=\"cwl-hint\">Select the URL and copy it. This page has not opened or shared the destination.</p></section>", out);
     }
-    fputs("<form method=\"post\" accept-charset=\"UTF-8\" action=\"", out); bf_lex_html_emit(out, action);
-    fputs("\"><p>Source, medium and campaign are required. Keep their spelling and capitalization consistent across your campaign.</p><div class=\"fields\">", out);
+    fputs("<form class=\"ak-ask cwl-form\" method=\"post\" accept-charset=\"UTF-8\" action=\"", out); bf_lex_html_emit(out, action);
+    fputs("\"><p>Source, medium and campaign are required. Keep their spelling and capitalization consistent across your campaign.</p><div class=\"cwl-fields\">", out);
     for (int i = 0; i < 7; i++) {
-        fprintf(out, "<div%s><label for=\"campaign-%s\">%s%s</label><input id=\"campaign-%s\" name=\"%s\" type=\"%s\" maxlength=\"%u\" autocomplete=\"off\" spellcheck=\"false\" aria-describedby=\"hint-%s\"%s value=\"",
-            i ? "" : " class=\"wide\"", cwl_names[i], cwl_labels[i], i > 3 ? " <span>(optional)</span>" : "",
+        fprintf(out, "<div class=\"ak-field%s\"><label for=\"campaign-%s\">%s%s</label><input id=\"campaign-%s\" name=\"%s\" type=\"%s\" maxlength=\"%u\" autocomplete=\"off\" spellcheck=\"false\" aria-describedby=\"hint-%s\"%s value=\"",
+            i ? "" : " is-wide", cwl_names[i], cwl_labels[i], i > 3 ? " <span>(optional)</span>" : "",
             cwl_names[i], cwl_names[i], i ? "text" : "url", i ? BF_CAMPAIGN_VALUE_MAX : BF_CAMPAIGN_URL_MAX,
             cwl_names[i], i < 4 ? " required" : "");
         bf_lex_html_emit(out, i ? form->values[i - 1] : form->url);
-        fprintf(out, "\"><p class=\"hint\" id=\"hint-%s\">%s</p></div>", cwl_names[i], cwl_hints[i]);
+        fprintf(out, "\"><p class=\"cwl-hint\" id=\"hint-%s\">%s</p></div>", cwl_names[i], cwl_hints[i]);
     }
-    fputs("</div><button type=\"submit\">Build campaign link</button></form><footer><p class=\"hint\">This form creates a link for copying. Campaign tags do not identify a person or prove that a visit or conversion occurred. Save campaign drafts separately in the workspace.</p></footer></main></body></html>", out);
+    fputs("</div><button class=\"ak-btn is-primary\" type=\"submit\">Build campaign link</button></form><p class=\"cwl-hint cwl-scope\">This form creates a link for copying. Campaign tags do not identify a person or prove that a visit or conversion occurred. Save campaign drafts separately in the workspace.</p></main>" BF_ESTATE_FOOT "</body></html>", out);
     int failed = ferror(out); if (fclose(out)) failed = 1;
     if (failed || !page || size > CWL_HTML_MAX) aw_error(503, "The campaign form could not be prepared.\n");
     /* Keep the same-origin form Origin; external destinations receive no referrer. */

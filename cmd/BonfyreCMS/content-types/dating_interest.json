@@ -1,0 +1,56 @@
+{
+  "name": "dating_interest",
+  "displayName": "Dating Interest",
+  "description": "Private directed dating intent between two independently eligible people. A unilateral interest is not a match, messaging permission, account relation or notification; blocked or withdrawn consent always overrides it. The native Dating owner must enforce exact actor authority, rate limits and revision checks.",
+  "attributes": {
+    "interest": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "from_subject": {
+      "type": "string",
+      "required": true
+    },
+    "to_subject": {
+      "type": "string",
+      "required": true
+    },
+    "from_participation_revision": {
+      "type": "integer",
+      "required": true
+    },
+    "to_participation_revision": {
+      "type": "integer",
+      "required": true
+    },
+    "choice": {
+      "type": "string",
+      "required": true
+    },
+    "channel": {
+      "type": "string",
+      "required": true
+    },
+    "recorded_at": {
+      "type": "string",
+      "required": true
+    },
+    "supersedes": {
+      "type": "string",
+      "required": false
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

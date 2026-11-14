@@ -135,6 +135,8 @@ done
 # --- studio --------------------------------------------------------------------
 [ "$(get "$owner" "/workspace/worlds?$W&world=1&space=levee")" = 200 ] || fail 'studio'
 grep -q 'data-world-sound-studio' "$tmp/response" || fail 'studio has the station or show section'
+grep -q 'href="/assets/aurekai-native.css' "$tmp/response" || fail 'audio editor links its generated stylesheet'
+! grep -q '<style>\.aw-sound-studio' "$tmp/response" || fail 'audio editor styles are emitted inline'
 grep -q 'Needs review' "$tmp/response" && grep -q '>Reviewed<' "$tmp/response" || fail 'studio flags review state'
 [ "$(get "$owner" "/workspace/worlds?$W&world=1&space=station")" = 200 ] || fail 'station studio'
 grep -q '>Unconfirmed<' "$tmp/response" && grep -q 'data-sound-schedule' "$tmp/response" || fail 'studio shows the schedule and unconfirmed tracks'

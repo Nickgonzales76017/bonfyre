@@ -1,0 +1,152 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-transcribe",
+  "binary_env": "BONFYRE_TRANSCRIBE_BIN",
+  "replaces": [
+    "tests/installed_caption.test.mjs"
+  ],
+  "cases": [
+    {
+      "name": "caption max-len malformed values refuse without publishing output",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "cmd=\"${BONFYRE_TRANSCRIBE_BIN:-$1}\"; \"$cmd\" missing.wav \"$2\" --max-len \"$3\" >/dev/null 2>\"$4\"; rc=$?; cat \"$4\"; exit \"$rc\"",
+            "sh",
+            "${organ}/bonfyre-transcribe",
+            "${tmp}/out-0",
+            "0",
+            "${tmp}/stderr"
+          ],
+          "exit_nonzero": true,
+          "contains": [
+            "--max-len must be"
+          ],
+          "absent": [
+            "${tmp}/out-0"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "cmd=\"${BONFYRE_TRANSCRIBE_BIN:-$1}\"; \"$cmd\" missing.wav \"$2\" --max-len \"$3\" >/dev/null 2>\"$4\"; rc=$?; cat \"$4\"; exit \"$rc\"",
+            "sh",
+            "${organ}/bonfyre-transcribe",
+            "${tmp}/out-501",
+            "501",
+            "${tmp}/stderr"
+          ],
+          "exit_nonzero": true,
+          "contains": [
+            "--max-len must be"
+          ],
+          "absent": [
+            "${tmp}/out-501"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "cmd=\"${BONFYRE_TRANSCRIBE_BIN:-$1}\"; \"$cmd\" missing.wav \"$2\" --max-len \"$3\" >/dev/null 2>\"$4\"; rc=$?; cat \"$4\"; exit \"$rc\"",
+            "sh",
+            "${organ}/bonfyre-transcribe",
+            "${tmp}/out-nan",
+            "nan",
+            "${tmp}/stderr"
+          ],
+          "exit_nonzero": true,
+          "contains": [
+            "--max-len must be"
+          ],
+          "absent": [
+            "${tmp}/out-nan"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "cmd=\"${BONFYRE_TRANSCRIBE_BIN:-$1}\"; \"$cmd\" missing.wav \"$2\" --max-len \"$3\" >/dev/null 2>\"$4\"; rc=$?; cat \"$4\"; exit \"$rc\"",
+            "sh",
+            "${organ}/bonfyre-transcribe",
+            "${tmp}/out-18junk",
+            "18junk",
+            "${tmp}/stderr"
+          ],
+          "exit_nonzero": true,
+          "contains": [
+            "--max-len must be"
+          ],
+          "absent": [
+            "${tmp}/out-18junk"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "cmd=\"${BONFYRE_TRANSCRIBE_BIN:-$1}\"; \"$cmd\" missing.wav \"$2\" --max-len \"$3\" >/dev/null 2>\"$4\"; rc=$?; cat \"$4\"; exit \"$rc\"",
+            "sh",
+            "${organ}/bonfyre-transcribe",
+            "${tmp}/out--1",
+            "-1",
+            "${tmp}/stderr"
+          ],
+          "exit_nonzero": true,
+          "contains": [
+            "--max-len must be"
+          ],
+          "absent": [
+            "${tmp}/out--1"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "installed binary resolves both adjacent media-prep helper operations from a foreign working directory",
+      "steps": [
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "mkdir -p \"$1\" && cp \"${BONFYRE_TRANSCRIBE_BIN:-$2}\" \"$1/bonfyre-transcribe\" && printf '#!/bin/sh\\necho \"adjacent-helper:$1\" >&2\\nexit 9\\n' > \"$1/bonfyre-media-prep\" && chmod 755 \"$1/bonfyre-transcribe\" \"$1/bonfyre-media-prep\"",
+            "sh",
+            "${tmp}/transcribe-installed",
+            "${organ}/bonfyre-transcribe"
+          ],
+          "exit": 0,
+          "present": [
+            "${tmp}/transcribe-installed/bonfyre-transcribe",
+            "${tmp}/transcribe-installed/bonfyre-media-prep"
+          ]
+        },
+        {
+          "program": "sh",
+          "argv": [
+            "-c",
+            "\"$1\" missing.wav \"$2\" --no-vocab --max-len 18 >/dev/null 2>\"$3\"; rc=$?; cat \"$3\"; exit \"$rc\"",
+            "sh",
+            "${tmp}/transcribe-installed/bonfyre-transcribe",
+            "${tmp}/out",
+            "${tmp}/stderr"
+          ],
+          "env": {
+            "BONFYRE_MEDIA_PREP_BINARY": ""
+          },
+          "exit_nonzero": true,
+          "contains": [
+            "adjacent-helper:denoise",
+            "adjacent-helper:normalize"
+          ],
+          "excludes": [
+            "execvp: No such file"
+          ]
+        }
+      ]
+    }
+  ]
+}

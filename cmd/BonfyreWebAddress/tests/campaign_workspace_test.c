@@ -36,6 +36,9 @@ static int aw_header(const char *raw,const char *name,char *out,size_t cap) {
     }
     return found==1;
 }
+/* The shell's bar and footer are main.c's; this witness covers the form inside <main>. */
+#define BF_ESTATE_BAR "<header class=\"ak-bar\"></header>"
+#define BF_ESTATE_FOOT "<footer class=\"ak-foot\"></footer>"
 #include "../src/campaign_workspace.h"
 
 static const char *back="/apps/ws-0123456789abcdef0123456789abcdef01234567/campaigns/";

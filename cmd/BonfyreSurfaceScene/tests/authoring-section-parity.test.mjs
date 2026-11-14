@@ -106,3 +106,32 @@ test("changing a published rich component is not an unreviewed CMS draft write",
  mutation.blocks[0].children[0].props.payload.source.label="Changed without review";
  assert.throws(()=>toNativePageWrite(snap,mutation),/reviewed fork|published composition/);
 });
+
+test("compiled capability bindings and metadata survive the visual editors and native CMS",()=>{
+ const site="person-compiled-application",original=document(site),before=base(site);
+ const component=original.blocks[0].children[0];
+ component.props.source_ref="frappe:crm:Lead";
+ component.props.source_digest=sha;
+ component.props.bindings={owner:"BonfyreFrappeCompiler",program_id:"frappe:crm:Lead",field:"lead_name"};
+ component.props.metadata={doctype:"Lead",representation:"compiled-surface"};
+ component.props.readOnly=true;
+ const puck=fromPuckData(toPuckData(original),site);
+ const grapes=fromGrapesProject(toGrapesProject(original),site);
+ assert.deepEqual(puck,original);assert.deepEqual(grapes,original);
+ const request=toNativePageWrite(before,original);
+ const row=request.fragments.find(x=>x.coordinate===component.id);
+ assert.equal(row.semantic_tags.authoring_v1.bindings.program_id,"frappe:crm:Lead");
+ assert.deepEqual(row.semantic_tags.authoring_v1.metadata,component.props.metadata);
+ const snap={schema:before.schema,id:44,digest:"b".repeat(64),snapshot:{
+  namespace:site,route:"/",page:{...request.page,id:44},fragments:request.fragments}};
+ const recovered=treeFromNativeSnapshot(snap);
+ assert.deepEqual(recovered.blocks[0].children[0].props.bindings,component.props.bindings);
+ assert.deepEqual(recovered.blocks[0].children[0].props.metadata,component.props.metadata);
+ assert.equal(recovered.blocks[0].children[0].props.readOnly,true);
+ const published={...snap,snapshot:{...snap.snapshot,fragments:snap.snapshot.fragments.map(x=>({
+  ...x,status:x.coordinate===component.id?"published":x.status}))}};
+ const reopened=treeFromNativeSnapshot(published);
+ const forged=structuredClone(reopened);
+ forged.blocks[0].children[0].props.bindings.program_id="frappe:crm:Other";
+ assert.throws(()=>toNativePageWrite(published,forged),/published composition/);
+});

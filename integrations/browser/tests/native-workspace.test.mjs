@@ -1,4 +1,5 @@
 import { test, expect } from 'bun:test';
+import {loopbackServer} from './browser-fixture.mjs';
 import { Database } from 'bun:sqlite';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -46,7 +47,7 @@ test.skipIf(!available)('browser-held material continues through the real Desk a
     const q=new Database(queuedb,{readonly:true});
     const before=q.query('SELECT * FROM workgraph_nodes ORDER BY mission_id,node_id').all();
     expect(before).toHaveLength(1);
-    const reservation=Bun.serve({hostname:'127.0.0.1',port:0,fetch:()=>new Response('reserved')});
+    const reservation=loopbackServer({hostname:'127.0.0.1',port:0,fetch:()=>new Response('reserved')});
     const port=reservation.port; reservation.stop(true);
     const origin='http://127.0.0.1:'+port;
     server=Bun.spawn([web,'serve','--db',matrix,'--auth-db',authdb,'--port',String(port),'--site-root',join(repo,'site/matrix')],
@@ -61,7 +62,9 @@ test.skipIf(!available)('browser-held material continues through the real Desk a
     const desk=await (await get('/studio/',admin.token)).text();
     expect(desk).toContain('/make?held_selection='+id);
     expect(desk).toContain(request.note);
-    expect(desk).toContain('button.ap-act{width:100%;text-align:left');
+    // The studio shell styles its controls from the shared sheet; the held
+    // selection must still be an ordinary link a person can follow.
+    expect(desk).toMatch(/href="\/make\?held_selection=[^"]+"/);
     const page=await (await get('/make?held_selection='+id,admin.token)).text();
     expect(page).toContain('END OF SELECTED MATERIAL');
     expect(page).toContain('&lt;script&gt;globalThis.sourceExecuted=true&lt;/script&gt;');

@@ -341,7 +341,104 @@ if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -f "$EDGE/wrangler.toml" ]; then
     done
     composed=1
     for pid in $pids; do wait "$pid" || composed=0; done
+    # Machine discovery is part of the release, not an optional side export.
+    for discovery_host in aurekai.life aurekai.live aurekai.shop aurekai.work; do
+        for discovery_file in robots.txt sitemap.xml sitemap-surfaces.xml; do
+            if [ ! -s "$stage/h/$discovery_host/$discovery_file" ]; then
+                note "edge discovery missing: $discovery_host/$discovery_file"; composed=0
+            fi
+        done
+        if [ -s "$stage/h/$discovery_host/robots.txt" ] &&
+           ! grep -Fq "Sitemap: https://$discovery_host/sitemap.xml" "$stage/h/$discovery_host/robots.txt"; then
+            note "edge discovery foreign robots origin: $discovery_host"; composed=0
+        fi
+        if [ -s "$stage/h/$discovery_host/sitemap.xml" ] &&
+           ! grep -Fq "https://$discovery_host/sitemap-surfaces.xml" "$stage/h/$discovery_host/sitemap.xml"; then
+            note "edge discovery foreign sitemap origin: $discovery_host"; composed=0
+        fi
+    done
+    # A dynamic discussion URL is not indexed unless its own published file
+    # exists in this exact candidate. Partial sitemap cohorts block promotion.
+    community_index="$stage/h/aurekai.life/sitemap-community.xml"
+    if [ ! -s "$community_index" ]; then
+        note "edge dynamic index missing: aurekai.life/sitemap-community.xml"
+        composed=0
+    else
+        for shard_file in $(grep -oE 'sitemap-community-[0-9]+\.xml' "$community_index" || true); do
+            if [ ! -s "$stage/h/aurekai.life/$shard_file" ]; then
+                note "edge dynamic index shard missing: $shard_file"
+                composed=0
+            fi
+        done
+        sitemap_threads=$(grep -h '<url><loc>https://aurekai.life/community/' "$stage/h/aurekai.life"/sitemap-community-[0-9]*.xml 2>/dev/null | wc -l | tr -d ' ' || true)
+        published_threads=$(find "$stage/h/aurekai.life/community" -type f -path '*/thread/*/index.html' 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$sitemap_threads" -ne "$published_threads" ]; then
+            note "edge dynamic discussion mismatch: sitemap $sitemap_threads, published $published_threads"
+            composed=0
+        fi
+    fi
     written=$(find "$stage/h" -name index.html 2>/dev/null | wc -l | tr -d ' ')
+    # Stage host-specific discovery and public HTML aliases for the existing
+    # Worker R2 fallback. No external writes before edge activation.
+    r2_discovery=''
+    if [ "$composed" = 1 ]; then
+        if [ -n "${CLOUDFLARE_ACCESS_KEY_ID:-}" ] &&
+           [ -n "${CLOUDFLARE_SECRET_ACCESS_KEY:-}" ] &&
+           [ -n "${CLOUDFLARE_R2_ENDPOINT:-}" ]; then
+            r2_discovery="$WORK/r2-host-discovery"
+            rm -rf "$r2_discovery"
+            mkdir -p "$r2_discovery/hosts"
+            for hostdir in "$stage"/h/*; do
+                [ -d "$hostdir" ] || continue
+                host=${hostdir##*/}
+                target="$r2_discovery/hosts/$host"
+                mkdir -p "$target"
+                for machine in "$hostdir"/robots.txt "$hostdir"/sitemap*.xml; do
+                    [ -s "$machine" ] || continue
+                    cp "$machine" "$target/${machine##*/}"
+                done
+                # Native export uses route/index.html; the Worker R2 fallback
+                # resolves that exact semantic address to route.html.
+                for family in blog community; do
+                    [ -d "$hostdir/$family" ] || continue
+                    find "$hostdir/$family" -type f -name index.html -exec sh -ec '
+                        root=$1; dest=$2; shift 2
+                        for file do
+                            rel=${file#"$root"/}
+                            key=${rel%/index.html}.html
+                            mkdir -p "$(dirname "$dest/$key")"
+                            cp "$file" "$dest/$key"
+                        done
+                    ' sh "$hostdir" "$target" {} +
+                done
+            done
+            note "edge host discovery: R2 fallback candidate prepared"
+        else
+            note "edge discovery refused: R2 fallback credentials missing"
+            composed=0
+        fi
+    fi
+    # Refuse BEFORE Worker activation if any required host would still
+    # expose a foreign sitemap, missing robots discovery, or no community index.
+    if [ "$composed" = 1 ]; then
+        for discovery_host in aurekai.life aurekai.live aurekai.shop aurekai.work nick.aurekai.work; do
+            candidate="$r2_discovery/hosts/$discovery_host"
+            if [ ! -s "$candidate/sitemap.xml" ] ||
+               [ ! -s "$candidate/robots.txt" ] ||
+               ! grep -Fq "https://$discovery_host/sitemap-surfaces.xml" "$candidate/sitemap.xml" ||
+               ! grep -Fq "Sitemap: https://$discovery_host/sitemap.xml" "$candidate/robots.txt"; then
+                note "edge discovery candidate incomplete: $discovery_host"
+                composed=0
+            fi
+        done
+        if [ ! -s "$r2_discovery/hosts/aurekai.life/sitemap-community.xml" ]; then
+            note "edge dynamic community index not staged"
+            composed=0
+        fi
+        nick_journals=$(find "$stage/h/nick.aurekai.work/blog" -type f -name index.html 2>/dev/null |
+            grep -E '/blog/[^/]+/index.html$' | wc -l | tr -d ' ')
+        note "edge nick released journals: $nick_journals (review-held excluded)"
+    fi
     # The R2 snapshot contains every admitted source-qualified credit.
     # The separately published Worker asset tree must carry that same cohort.
     # Hardlink read-only export bytes inside this release staging volume so
@@ -386,7 +483,81 @@ if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -f "$EDGE/wrangler.toml" ]; then
             exit 3
         fi
         if (cd "$EDGE" && bunx wrangler@4 deploy) >> "$LOG" 2>&1; then
-            note "edge: deployed $written pages"; rm -rf "$WORK/edge-previous"
+            if [ -n "$r2_discovery" ]; then
+                # The active Worker now has the same validated static snapshot.
+                # Only then refresh its host-keyed object-store fallback.
+                AWS_ACCESS_KEY_ID="$CLOUDFLARE_ACCESS_KEY_ID" \
+                AWS_SECRET_ACCESS_KEY="$CLOUDFLARE_SECRET_ACCESS_KEY" \
+                AWS_DEFAULT_REGION=auto \
+                aws s3 sync "$r2_discovery/" \
+                    "s3://${BONFYRE_R2_BUCKET:-aurekai-estate}/" \
+                    --endpoint-url "$CLOUDFLARE_R2_ENDPOINT" \
+                    --only-show-errors --no-progress >> "$LOG" 2>&1 || {
+                    note "edge discovery fallback sync failed; public readback is unverified"
+                    exit 4
+                }
+                note "edge host discovery: current origin-specific fallback synced"
+                # A removed or moderated thread must not survive as a stale
+                # fallback object after its new static tree stops publishing it.
+                # Delete only the community subtree owned by this publisher;
+                # never --delete against the shared estate bucket.
+                mkdir -p "$r2_discovery/hosts/aurekai.life/community"
+                AWS_ACCESS_KEY_ID="$CLOUDFLARE_ACCESS_KEY_ID" \
+                AWS_SECRET_ACCESS_KEY="$CLOUDFLARE_SECRET_ACCESS_KEY" \
+                AWS_DEFAULT_REGION=auto \
+                aws s3 sync "$r2_discovery/hosts/aurekai.life/community/" \
+                    "s3://${BONFYRE_R2_BUCKET:-aurekai-estate}/hosts/aurekai.life/community/" \
+                    --delete --endpoint-url "$CLOUDFLARE_R2_ENDPOINT" \
+                    --only-show-errors --no-progress >> "$LOG" 2>&1 || {
+                    note "edge discussion withdrawal reconciliation refused"
+                    exit 4
+                }
+                note "edge community fallback: withdrawn thread aliases reconciled"
+            fi
+            # A Cloudflare deploy receipt is not public acceptance. Query-unique
+            # readbacks bypass stale URL cache entries without purging a zone.
+            discovery_readback=1
+            cache_key=$(date +%s)
+            for discovery_host in aurekai.life aurekai.live aurekai.shop aurekai.work nick.aurekai.work; do
+                if [ ! -s "$r2_discovery/hosts/$discovery_host/sitemap.xml" ]; then
+                    note "edge discovery host absent from candidate: $discovery_host"
+                    discovery_readback=0
+                    continue
+                fi
+                attempt=0; visible=0
+                while [ "$attempt" -lt 3 ]; do
+                    attempt=$((attempt + 1))
+                    if curl -fsS --max-time 12 \
+                        "https://$discovery_host/sitemap.xml?bonfyre_readback=$cache_key-$attempt" \
+                        2>> "$LOG" | grep -Fq "https://$discovery_host/sitemap-surfaces.xml"; then
+                        visible=1
+                        break
+                    fi
+                    [ "$attempt" -ge 3 ] || sleep 2
+                done
+                if [ "$visible" -ne 1 ]; then
+                    note "edge discovery live origin mismatch: $discovery_host"
+                    discovery_readback=0
+                fi
+                if ! curl -fsS --max-time 12 \
+                    "https://$discovery_host/robots.txt?bonfyre_readback=$cache_key" \
+                    2>> "$LOG" | grep -Fq "Sitemap: https://$discovery_host/sitemap.xml"; then
+                    note "edge discovery robots missing host sitemap: $discovery_host"
+                    discovery_readback=0
+                fi
+            done
+            if ! curl -fsS --max-time 15 \
+                "https://aurekai.life/sitemap-community.xml?bonfyre_readback=$cache_key" \
+                2>> "$LOG" | grep -Eq '<(sitemapindex|urlset)([[:space:]]|>)'; then
+                note "edge discovery live community index missing"
+                discovery_readback=0
+            fi
+            if [ "$discovery_readback" -ne 1 ]; then
+                note "edge public discovery readback refused; deployment not accepted"
+                exit 4
+            fi
+            note "edge public discovery: 5 host-specific sitemaps + community index verified"
+            note "edge: deployed and public discovery verified for $written pages"; rm -rf "$WORK/edge-previous"
         else
             note "edge: deploy refused; the edge keeps its last pages"
             # Restore the previous public host tree after a rejected upload.

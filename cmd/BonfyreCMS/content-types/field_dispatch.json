@@ -1,0 +1,19 @@
+{
+  "name": "field_dispatch",
+  "displayName": "Field Dispatch",
+  "description": "A person's request for someone to come to a place at a time for a stated need, and the named account it was offered to, who accepts or declines in their own words. It records requests and explicit answers. It is not a booking, an employment or service contract, a payment, a safety check of either person, or a message sent to anyone.",
+  "attributes": {
+    "dispatch_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "requester_subject": { "type": "string", "required": true },
+    "place": { "type": "string", "required": true },
+    "needed_at": { "type": "string", "required": true },
+    "need": { "type": "text", "required": true },
+    "assignee_subject": { "type": "string", "required": false },
+    "assignee_address": { "type": "string", "required": false },
+    "state": { "type": "string", "required": true },
+    "requested_at": { "type": "string", "required": true },
+    "answered_at": { "type": "string", "required": false },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

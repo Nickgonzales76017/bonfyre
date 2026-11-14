@@ -165,8 +165,8 @@ static void wl_recitation(sqlite3 *db,const WlWork *w){
     if(!w->recitation[0])return;
     PageMaterial *m=calloc(1,sizeof(*m));PageItem *it=calloc(1,sizeof(*it));char loaded[96]="";
     int found=m&&it&&world_web_resolve(db,w->recitation,m,loaded,it);
-    if(found&&wa_open_audio(it)){fputs("<div class=\"aw-recite\" data-recitation=\"playing\"><p class=\"aw-role\">Hear it read</p><audio controls preload=\"none\" src=\"",stdout);html(it->asset);
-        fputs("\"></audio><p class=\"aw-terms\">",stdout);html(it->title);if(it->by[0]){fputs(", ",stdout);html(it->by);}fputs(" &middot; ",stdout);html(it->rights);fputs("</p></div>",stdout);}
+    if(found&&wa_open_audio(it)){fputs("<div class=\"aw-recite\" data-recitation=\"playing\"><button type=\"button\" class=\"ak-btn is-primary\" data-ak-track data-ak-default data-src=\"",stdout);html(it->asset);
+        fputs("\" data-title=\"",stdout);html(w->title);fputs("\" data-by=\"",stdout);html(it->by[0]?it->by:it->title);fputs("\">Hear it read</button><p class=\"aw-terms\">",stdout);html(it->title);if(it->by[0]){fputs(", ",stdout);html(it->by);}fputs(" &middot; ",stdout);html(it->rights);fputs("</p></div>",stdout);}
     else if(found&&public_http_url(it->href)){fputs("<p class=\"aw-terms\" data-recitation=\"linked\"><a rel=\"noopener\" href=\"",stdout);html(it->href);
         fputs("\">Hear it read where the recording is published</a>; its source states no open terms, so it does not play here.</p>",stdout);}
     free(m);free(it);
@@ -221,7 +221,7 @@ static void world_lit_piece(sqlite3 *db,const PhSite *site,sqlite3_int64 world,i
 
 /* ------------------------------------------------------------- reader */
 static void wl_reader_bar(const PhSite *site,const char *space,const char *space_title,const char *work,const char *work_title){
-    fputs("<nav class=\"bar\" aria-label=\"Where you are\"><a class=\"home\" href=\"/\">",stdout);html(site->name);fputs("</a><span class=\"gr\"><a href=\"/worlds/",stdout);html(space);fputs("\">",stdout);
+    fputs("<nav class=\"aw-crumb\" aria-label=\"Where you are\"><a class=\"home\" href=\"/\">",stdout);html(site->name);fputs("</a><span class=\"gr\"><a href=\"/worlds/",stdout);html(space);fputs("\">",stdout);
     html(space_title);fputs("</a>",stdout);if(work){fputs(" &rsaquo; <a href=\"",stdout);wl_read_href(space,work,NULL);fputs("\">",stdout);html(work_title);fputs("</a>",stdout);}fputs("</span></nav>",stdout);
 }
 static void wl_controls(int poem){
@@ -296,14 +296,24 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
     else{if(*passage){pi=wl_find(&t,passage);if(pi>=0&&!wl_open(&t.p[pi],today))pi=-1;}else if(open_count==1&&t.np==1)pi=only;*path=0;}
     if(*passage&&pi<0){free(reach);free(parent);wl_free(&t);sqlite3_close(db);return wl_bad(404,"That passage is not open to readers.\n");}
     if(interactive&&pi<0){free(reach);free(parent);wl_free(&t);sqlite3_close(db);return wl_bad(404,"This story has no passages yet.\n");}
-    world_web_public_head(200,pi>=0&&t.p[pi].title[0]&&t.np>1?t.p[pi].title:t.w.title,site.name,"");
-    fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-reader\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap aw-read\" data-world-reader=\"",stdout);
+    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: public, no-cache\r\nVary: Host\r\n"
+           "X-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nConnection: close\r\n\r\n");
+    world_room_open(pi>=0&&t.p[pi].title[0]&&t.np>1?t.p[pi].title:t.w.title,site.name,character,"aw-reader",0);
+    fputs("<main class=\"wrap aw-read\" data-world-reader=\"",stdout);
     wl_read_href(space,work,NULL);fputs("\" data-reader-page=\"",stdout);fputs(pi<0?"contents":"passage",stdout);fputs("\" data-work-kind=\"",stdout);html(t.w.kind);fputs("\" lang=\"",stdout);html(t.w.language);fputs("\">",stdout);
     wl_reader_bar(&site,space,stitle,pi>=0&&t.np>1?work:NULL,t.w.title);
-    fputs("<header class=\"hero aw-readhead\"><p class=\"aw-role\">",stdout);html(wl_kind_word(t.w.kind));if(t.w.collection[0]){fputs(" &middot; ",stdout);html(t.w.collection);}
+    /* The monograph head: kicker, title, credit; what to hear on the right;
+     * the work's facts in one strip beneath. */
+    fputs("<header class=\"hero aw-readhead\"><div class=\"aw-readhead-main\"><p class=\"aw-role\">",stdout);html(wl_kind_word(t.w.kind));if(t.w.collection[0]){fputs(" &middot; ",stdout);html(t.w.collection);}
     fputs("</p><h1>",stdout);html(t.w.title);fputs("</h1>",stdout);wl_credit(&t.w);
     if(pi>=0&&t.np>1&&t.p[pi].title[0]){fputs("<h2 class=\"aw-chapter\">",stdout);if(!interactive)printf("<span>%d</span> ",t.p[pi].number);html(t.p[pi].title);fputs("</h2>",stdout);}
-    fputs("</header>",stdout);wl_controls(poem);
+    fputs("</div><div class=\"aw-readhead-acts\">",stdout);
+    if(pi>=0){wl_recitation(db,&t.w);fputs("<button type=\"button\" class=\"ak-btn\" data-ak-track data-narrate=\"#aw-text\" data-title=\"",stdout);html(t.w.title);fputs("\" data-by=\"",stdout);html(t.w.author);fputs("\">Read it aloud</button>",stdout);}
+    wl_controls(poem);
+    fputs("</div><dl class=\"aw-facts\"><div><dt>Form</dt><dd>",stdout);html(wl_kind_word(t.w.kind));fputs("</dd></div><div><dt>Language</dt><dd>",stdout);html(wl_language_word(t.w.language));
+    printf("</dd></div><div><dt>%s</dt><dd>%d</dd></div><div><dt>Terms</dt><dd>",poem?"Parts":"Passages",t.np);
+    if(!strcmp(t.w.rights,"own")){fputs("&copy; ",stdout);html(t.w.author);}else html(t.w.licence[0]?t.w.licence:t.w.rights);
+    fputs("</dd></div></dl></header>",stdout);
     if(pi<0){ /* contents */
         fputs("<nav class=\"aw-contents\" aria-label=\"Contents\"><p><a class=\"aw-door\" data-continue hidden href=\"#\">Continue where you left off</a></p><ol>",stdout);
         int first_open=-1,next_wait=-1;
@@ -318,8 +328,7 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
         else fputs("<p class=\"aw-note\">Nothing is out yet.</p>",stdout);
         fputs("</nav>",stdout);
     }else{
-        wl_recitation(db,&t.w);
-        fputs("<article class=\"aw-text\" data-passage=\"",stdout);html(t.p[pi].passage);fputs("\">",stdout);wl_text(&t,pi,1);fputs("</article>",stdout);
+        fputs("<article class=\"aw-text\" id=\"aw-text\" data-passage=\"",stdout);html(t.p[pi].passage);fputs("\">",stdout);wl_text(&t,pi,1);fputs("</article>",stdout);
         if(interactive){
             int choices=0;for(int c=0;c<t.nc;c++)if(!strcmp(t.c[c].passage,t.p[pi].passage)){int to=wl_find(&t,t.c[c].target);if(to<0)continue;
                 if(!choices++)fputs("<nav class=\"aw-choices\" aria-label=\"What happens next\" data-world-choices><ol>",stdout);
@@ -353,7 +362,7 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
         fputs("<li><a href=\"",stdout);wl_read_href(space,o->work,NULL);fputs("\" hreflang=\"",stdout);html(o->language);fputs("\">",stdout);html(o->title);fputs("</a> <span>",stdout);html(wl_language_word(o->language));
         if(!strcmp(t.w.original,o->work))fputs(", the original",stdout);else if(o->translator[0]){fputs(", translated by ",stdout);html(o->translator);}fputs("</span></li>",stdout);}
     if(shown)fputs("</ul></nav>",stdout);free(all);
-    fputs("<footer class=\"src\">",stdout);wl_terms(&t.w);fputs("</footer>",stdout);wl_script();fputs("</main></body></html>",stdout);
+    fputs("<div class=\"src\">",stdout);wl_terms(&t.w);fputs("</div>",stdout);wl_script();world_room_close();
     free(reach);free(parent);wl_free(&t);sqlite3_close(db);return 1;
 }
 
@@ -458,14 +467,10 @@ static int serve_world_reading(const char *method,const char *query,const char *
     char title[257],character[33];sqlite3_int64 world=sqlite3_column_int64(row,6);snprintf(title,sizeof(title),"%s",wl_col(row,0));snprintf(character,sizeof(character),"%s",wl_col(row,3));
     sqlite3_finalize(row);if(!world_web_look(character))snprintf(character,sizeof(character),"journal");
     fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\n"
-          "X-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nConnection: close\r\n\r\n"
-          "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<meta name=\"robots\" content=\"noindex,nofollow\"><title>",stdout);html(title);fputs(" · your reading</title>"
-          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,600&amp;"
-          "family=Instrument+Serif:ital@0;1&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;family=Spline+Sans+Mono:wght@400;600&amp;display=swap\">"
-          "<link rel=\"stylesheet\" href=\"/assets/world.css\"></head><body class=\"",stdout);
-    html(character);fputs(" aw-space aw-clubroom aw-readingroom\" data-world-reading=\"",stdout);html(space);fputs("\"><main class=\"wrap\">",stdout);
-    fputs("<nav class=\"bar\" aria-label=\"Where you are\"><a class=\"home\" href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(space);fputs("\">",stdout);html(title);
+          "X-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nConnection: close\r\n\r\n",stdout);
+    world_room_open(title,"your reading",character,"aw-clubroom aw-readingroom",1);
+    fputs("<main class=\"wrap aw-room\" data-world-reading=\"",stdout);html(space);fputs("\">",stdout);
+    fputs("<nav class=\"aw-crumb\" aria-label=\"Where you are\"><a class=\"home\" href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(space);fputs("\">",stdout);html(title);
     fputs("</a><span class=\"ch\">your reading</span></nav><header class=\"hero\"><h1>Your place in ",stdout);html(title);
     fputs("</h1><p class=\"lede\">Where you stopped in each piece, kept with your account so you can pick up on any device. Only you can see this page.</p></header>",stdout);
     WlWork *works=NULL;int nw=wl_works(db,NULL,site_id,world,space,&works);
@@ -491,7 +496,7 @@ static int serve_world_reading(const char *method,const char *query,const char *
         fputs("<button type=\"submit\" class=\"aw-quiet\">Forget</button></form></div></li>",stdout);
     }
     sqlite3_finalize(s);if(!have)fputs("<li><p class=\"aw-body\">You have not kept a place here yet.</p></li>",stdout);
-    fputs("</ol></section></main></body></html>",stdout);free(works);sqlite3_close(db);return 1;
+    fputs("</ol></section>",stdout);world_room_close();free(works);sqlite3_close(db);return 1;
 }
 
 /* ------------------------------------------------------------- studio */
@@ -518,14 +523,6 @@ static void wl_diff(const char *old,const char *now){
     #undef LL
     fputs("</ol>",stdout);free(L);
 }
-static void wl_studio_style(void){
-    fputs("<style>.aw-lit-studio details{border-top:1px solid var(--ph-line);padding:12px 0}.aw-lit-studio summary{cursor:pointer;font:600 14px system-ui;min-height:32px}"
-          ".aw-lit-studio details details{margin-left:clamp(0px,2vw,18px)}.aw-lit-studio textarea.aw-text{font:15px/1.55 'DM Mono',ui-monospace,monospace;white-space:pre;tab-size:4;min-height:220px}"
-          ".aw-lit-studio .aw-check{display:flex;gap:8px;align-items:center;font-weight:400}.aw-lit-studio .aw-check input{min-height:auto}"
-          ".aw-diff{list-style:none;margin:6px 0;padding:0;font:13px/1.5 'DM Mono',ui-monospace,monospace;white-space:pre-wrap}.aw-diff li{padding:0 8px;min-height:1.5em}"
-          ".aw-diff .ins{background:#e3f1d4}.aw-diff .del{background:#f6dfd8}.aw-diff ins,.aw-diff del{text-decoration:none}.aw-diff .del del{text-decoration:line-through;text-decoration-color:#a2482d}"
-          ".aw-lit-studio .aw-warn{color:#8a4b12}.aw-lit-studio ul.aw-plain{margin:0;padding-left:18px}</style>",stdout);
-}
 static void wl_work_fields(const WlWork *w,const WlWork *all,int n,const PhSite *site){
     const char *kinds[]={"poem","story","essay","memoir","serial","interactive"};
     fputs("<div class=\"aw-row\"><label>Title<input name=\"title\" required maxlength=\"256\" value=\"",stdout);html(w?w->title:"");
@@ -549,7 +546,7 @@ static void wl_work_fields(const WlWork *w,const WlWork *all,int n,const PhSite 
 }
 static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id,sqlite3_int64 world,const char *space,long long revision){
     PhSite site;ph_site(db,NULL,site_id,&site);WlWork *works=NULL;int n=wl_works(db,subject,site_id,world,space,&works);
-    wl_studio_style();
+
     fputs("<section id=\"writing\" class=\"aw-lit-studio\" data-world-lit-studio><h3>Writing</h3><p>Poems, stories, essays, memoir, serials told in chapters, and stories readers steer by choosing. "
           "Text is kept exactly as you type it: line breaks, indents and blank lines between stanzas. Put _underscores_ around words to set them in italics. "
           "Readers see a work once it is on a published space; a chapter with a date stays hidden until that day.</p>",stdout);

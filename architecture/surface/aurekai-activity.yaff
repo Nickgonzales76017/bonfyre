@@ -1,6 +1,10 @@
 atlas surface-aurekai-activity
 
 architecture aurekai-activity
+  source_path integrations/browser/aurekai-activity.pcss
+  source_path cmd/BonfyreWebAddress/src/account_navigation.h
+  invariant account navigation menu visibility and mobile action layout are compiled into the shared activity stylesheet rather than embedded in the private response fragment
+  witness cmd/BonfyreWebAddress/tests/account_navigation_refresh.test.mjs checks account menu refresh, keyboard use and short phone viewports against the compiled stylesheet
   canonical_name AurekaiActivity
   family surface
   domain Surface / Account-scoped work and recipient attention
@@ -92,7 +96,16 @@ architecture aurekai-activity
   source_path integrations/mcp/fabric_output_transfer.mjs
   source_path cmd/BonfyreQueue/src/account_work.h
   source_path cmd/BonfyreWebAddress/src/account_inbox_web.h
+  source_path deploy/tailwind/styles/account-inbox.pcss
+  invariant the private Inbox links its compiled PostCSS presentation after the shared pack workspace styles
+  witness cmd/BonfyreWebAddress/tests/account_inbox_web.test.mjs checks the Inbox stylesheet and owner-scoped flow
   source_path cmd/BonfyreWebAddress/src/application_continuation.h
+  source_path cmd/BonfyreWebAddress/src/pack_setup.h
+  source_path cmd/BonfyreWebAddress/src/pack_presentation.h
+  source_path deploy/tailwind/styles/pack-setup.pcss
+  source_path deploy/tailwind/styles/pack-presentation.pcss
+  invariant pack setup and installed-tool cards use generated stylesheets while keeping their existing presentation order
+  witness cmd/BonfyreWebAddress/tests/pack_setup_test.mjs checks setup stylesheet links and asset delivery
   source_path cmd/BonfyreWebAddress/src/work_board.h
   invariant changing workspace from a focused task opens the chosen workspace without carrying the prior task identity
   invariant long task diagnostics and attempt summaries remain escaped and available on explicit expansion; a recorded progress update on finished work is not labelled a failure

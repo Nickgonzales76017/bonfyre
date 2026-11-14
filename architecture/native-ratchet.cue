@@ -29,8 +29,16 @@ budget: {
 	// Authoring completion 2026-11-10: editor sources, renderers and reader
 	// assets land +27 files / +4,081 lines net. Same rule: down only.
 	// Journal composition 2026-11-10: composer plus parity test +2/+162.
-	authored_mjs_files: 1614
-	authored_mjs_lines: 178641
+	// One-app convergence 2026-11-13 (reviewed raise, Nick's call): concurrent
+	// sessions landed live work untracked -- lineage MCP + guard/reconcile,
+	// intake registry and editorial compositions, dating/person CMS tests,
+	// nightly checkout and member-journal canary, connected measurement --
+	// +20 files / +3,843 lines after retiring the superseded draft lineage test.
+	// The one-app rebuild itself is C; its JS edits were existing tests.
+	// Down only from here. At the commit that shipped it: source-desk
+	// negotiation and all-sites journal tests from the same sessions (+1/+91).
+	authored_mjs_files: 1627
+	authored_mjs_lines: 181253
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
@@ -38,7 +46,9 @@ budget: {
 	// protocol surface settles.
 	// Authoring completion 2026-11-10: reader asset and pattern runtime (+2);
 	// down only.
-	other_script_files: 76
+	// 2026-11-13 reviewed raise: deploy/tailwind/postcss.config.cjs, the
+	// PostCSS pipeline that now generates every served sheet (+1).
+	other_script_files: 77
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
@@ -59,7 +69,7 @@ installed: {
 	largest_bin_bytes: 3197392
 	// +124,808 bytes 2026-11-06: the native C organs bonfyre-warehouse and
 	// bonfyre-repository-fabric installed for the JOSH/Warehouse integration.
-	installed_bonfyre_bytes: 11891892
+	installed_bonfyre_bytes: 11827082
 }
 
 #Measure: {

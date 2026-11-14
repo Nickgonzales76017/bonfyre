@@ -6,6 +6,7 @@
 #include "authoring_native_components.h"
 #include "authoring_template.h"
 #include "authoring_editorial.h"
+#include "authoring_markdown.h"
 #include "../../BonfyreWebAddress/generated/native_authoring_templates.h"
 #include "bf_json.h"
 #include "bf_jsonw.h"
@@ -62,10 +63,30 @@ static int safe_link(const char *s){
  }
  return dot;
 }
+/* Form actions stay same-origin and relative: absolute path, no scheme,
+ * no network-path reference, no traversal, no query-breaking bytes.
+ * Query strings are allowed so one reviewed action serves filtered views. */
+static int safe_action(const char *s) {
+ size_t n = s ? strlen(s) : 0;
+ if (!s || !n || n > 256 || s[0] != '/') return 0;
+ if (s[1] == '/') return 0;
+ if (strstr(s, "..")) return 0;
+ for (size_t i = 0; i < n; i++) {
+  unsigned char c = (unsigned char)s[i];
+  if (c < 33 || c == 127 || c == '<' || c == '>' || c == '"' || c == 39 ||
+      c == '\\' || c == ' ')
+   return 0;
+ }
+ return 1;
+}
 static int safe_type(const char *value){
+ /* Every safe HTML input type. file stays out (upload surface) and image
+  * stays out (it fetches a source); textarea/select name node kinds. */
  static const char *const allowed[]={
-  "text","email","tel","number","url","date","password",
-  "textarea","select","checkbox","radio"
+  "text","search","email","tel","url","number","date","month","week","time",
+  "datetime-local","password","range","color","checkbox","radio","hidden",
+  "submit","button","reset",
+  "textarea","select"
  };
  for(size_t i=0;i<sizeof(allowed)/sizeof(*allowed);i++)
   if(!strcmp(value,allowed[i]))return 1;
@@ -86,6 +107,7 @@ static int safe_material(const bf_json_doc_t *doc,const bf_json_node_t *node,int
   int allowed=1;
   if(key_is(node,"href")||key_is(node,"src")||key_is(node,"url")||
      key_is(node,"image_url")||key_is(node,"origin"))allowed=safe_link(value);
+  if(key_is(node,"action"))allowed=safe_action(value);
   if(key_is(node,"type"))allowed=allowed&&safe_type(value);
   if(key_is(node,"name")){
    if(bytes>64)allowed=0;
@@ -195,7 +217,8 @@ static int expand_viewport(BfNativePage *page,const char *trusted_template,
  static const char *const layouts[]={"stack","grid","columns","carousel",
   "masonry","split","full-bleed","feature"};
  if(!node->viewport_columns[0]&&!node->viewport_columns[1]&&
-    !node->viewport_columns[2])return expand(page,trusted_template,json);
+    !node->viewport_columns[2]&&!node->viewport_gap[0]&&!node->viewport_gap[1]&&
+    !node->viewport_gap[2])return expand(page,trusted_template,json);
  char *output=NULL;size_t bytes=0;
  FILE *memory=open_memstream(&output,&bytes);
  if(!memory)return 0;
@@ -206,14 +229,30 @@ static int expand_viewport(BfNativePage *page,const char *trusted_template,
  if(!end||output[0]!='<')ok=0;
  if(ok)ok=put(page,output,(size_t)(end-output));
  for(int i=0;ok&&i<3;i++){
-  if(!node->viewport_columns[i])continue;
   const unsigned layout=node->viewport_layout[i],columns=node->viewport_columns[i];
+  const unsigned gap=node->viewport_gap[i];
+  if(!columns){
+   if(gap){char extra[65];int m=snprintf(extra,sizeof(extra)," data-%s-gap=\"%u\"",devices[i],gap-1);if(m<0||(size_t)m>=sizeof(extra))ok=0;else ok=put(page,extra,(size_t)m);}
+   continue;
+  }
   if(layout>=8||columns<1||columns>12){ok=0;break;}
   char attr[145];
   int n=snprintf(attr,sizeof(attr)," data-%s-layout=\"%s\" data-%s-columns=\"%u\"",
    devices[i],layouts[layout],devices[i],columns);
   if(n<0||(size_t)n>=sizeof(attr)){ok=0;break;}
   ok=put(page,attr,(size_t)n);
+  if(gap){char extra[65];int m=snprintf(extra,sizeof(extra)," data-%s-gap=\"%u\"",devices[i],gap-1);if(m<0||(size_t)m>=sizeof(extra))ok=0;else ok=put(page,extra,(size_t)m);}
+ }
+ if(ok&&(node->viewport_gap[0]||node->viewport_gap[1]||node->viewport_gap[2])){
+  char style[180];int len=0;
+  len=snprintf(style,sizeof(style)," style=\"");
+  for(int i=0;i<3&&len>=0&&(size_t)len<sizeof(style);i++){
+   if(!node->viewport_gap[i])continue;
+   const int n=snprintf(style+len,sizeof(style)-(size_t)len,"--ak-gap-%s:%upx;",devices[i],(unsigned)node->viewport_gap[i]-1);
+   if(n<0||(size_t)n>=sizeof(style)-(size_t)len){len=-1;break;}len+=n;
+  }
+  if(len<0||(size_t)len+2>sizeof(style))ok=0;
+  else{style[len++]='"';ok=put(page,style,(size_t)len);}
  }
  if(ok)ok=put(page,end,bytes-(size_t)(end-output));
  free(output);return ok;
@@ -236,6 +275,23 @@ static int render_children(BfNativePage *page,const char *parent,int depth){
   char *json=template_data(node);
   if(!json)return 0;
   int ok=expand_viewport(page,template->prefix,json,node);
+  if(ok&&node->body&&*node->body&&!node->editorial&&
+     !strcmp(node->kind,"profile-story")){
+   /* Journal prose stays Markdown in the CMS; the separately reviewed md4c
+    * stage renders it here, between the escaped prefix and suffix.
+    * Templates never carry raw HTML, so this stage runs in C beside the
+    * editorial one, under the same page budget. */
+   char *content=NULL;size_t bytes=0;
+   FILE *memory=open_memstream(&content,&bytes);
+   if(!memory)ok=0;
+   else{
+    const size_t remaining=page->limit-page->written;
+    ok=remaining&&bf_authoring_markdown_render(memory,node->body,remaining);
+    if(fclose(memory))ok=0;
+    if(ok)ok=put(page,content,bytes);
+   }
+   free(content);
+  }
   if(ok&&node->editorial){
    /* Editor.js tool material is rendered only inside a valid editorial
     * container. All markup is bounded, first-party and escaped. */

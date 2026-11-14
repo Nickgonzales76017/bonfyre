@@ -19,9 +19,9 @@ int main(void) {
     const char *invalid[]={"next=/one&next=/two","next","next=%00","next=%GG","next=%","next=12345678901234567890"};
     for(i=0;i<sizeof(invalid)/sizeof(invalid[0]);i++)assert(bf_auth_next_field(invalid[i],small,sizeof(small))==-1);
     view=open_memstream(&rendered,&length);assert(view);
-    assert(bf_auth_form_document(view,"<body><style>form{display:grid}</style><form id=\"f\" action=\"/signup\" method=\"post\" novalidate><input name=\"name\" required><p id=\"msg\" class=\"msg\" hidden></p></form><a href=\"/login\">Sign in</a><script>oldRedirect()</script></body>","/saved?a=1&b=2#review","Account created.","<nav>Territories</nav>"));
+    assert(bf_auth_form_document(view,"<body><style>form{display:grid}</style><form id=\"f\" action=\"/signup\" method=\"post\" novalidate><input name=\"name\" required><p id=\"msg\" class=\"msg\" hidden></p></form><a href=\"/login\">Sign in</a><script>oldRedirect()</script></body>","/saved?a=1&b=2#review","Account created.","<nav>Territories</nav>","<footer>Shared</footer>"));
     assert(!fclose(view));assert(rendered&&length==strlen(rendered));
-    assert(strstr(rendered,"<style>form{display:grid}</style>"));assert(strstr(rendered,"<nav>Territories</nav>"));
+    assert(strstr(rendered,"<style>form{display:grid}</style>"));assert(strstr(rendered,"<nav>Territories</nav>"));assert(strstr(rendered,"<footer>Shared</footer></body>"));
     assert(strstr(rendered,"name=\"next\" value=\"/saved?a=1&amp;b=2#review\""));
     assert(strstr(rendered,"href=\"/login?next=%2Fsaved%3Fa%3D1%26b%3D2%23review\""));
     assert(strstr(rendered,"role=\"status\">Account created.</p>"));assert(!strstr(rendered,"novalidate"));assert(!strstr(rendered,"oldRedirect"));free(rendered);

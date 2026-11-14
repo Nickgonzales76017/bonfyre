@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ACCOUNT_INBOX_WEB_H
 #define BONFYRE_ACCOUNT_INBOX_WEB_H
+#include "account_inbox_dating.h"
 /* GET /inbox for a signed-in person: what waits on them, apart from what the
  * agents are doing. A signed-out reader, or a query this page does not own,
  * falls through to the public /inbox surface unchanged.
@@ -182,50 +183,7 @@ static void ai_orgs(const char *auth_db,long user,AiOrg *invites,int *ni,AiOrg *
     }
     sqlite3_close(db);
 }
-static void ai_style(void){
-    fputs("<style id=\"account-inbox\">"
-    ".ak-inbox{--ib-night:#111913;--ib-forest:#173d33;--ib-lime:#b5df32;--ib-signal:#ef6547;--ib-ink:#203023;--ib-muted:#5d6b58;--ib-rule:#2030231f;--ib-paper:#e6edcb;color:var(--ib-ink);font-family:'DM Sans',system-ui,sans-serif}"
-    ".pack-workspace:has(>.ak-inbox){padding-top:24px}"
-    ".ak-inbox-mast{margin:0;border-radius:32px;padding:clamp(32px,5vw,64px) clamp(22px,4vw,56px) 30px;background:radial-gradient(ellipse at 88% 0%,#4b7250,transparent 62%),radial-gradient(ellipse at 0% 100%,#173d33,transparent 70%),var(--ib-night);color:var(--ib-paper);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px 40px;align-items:end}"
-    ".ak-inbox-kicker{font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ib-lime);margin:0 0 14px;display:flex;align-items:center;gap:10px}.ak-inbox-kicker .ak-icon{width:18px;height:18px}"
-    ".pack-workspace .ak-inbox-mast h1{font:400 clamp(44px,6.4vw,92px)/.95 'Instrument Serif',Georgia,serif;letter-spacing:-.045em;max-width:none;margin:0 0 16px;color:#f5f7ee}.ak-inbox-mast h1 em{font-style:normal;color:var(--ib-lime)}"
-    ".ak-inbox-mast>div>p:last-child{max-width:60ch;margin:0;font-size:17px;line-height:1.55;color:#c9d4bd}"
-    ".ak-inbox-nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.ak-inbox-nav a{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid #e6edcb55;color:var(--ib-paper);text-decoration:none;font-size:14px;transition:background .2s,color .2s}.ak-inbox-nav a:hover,.ak-inbox-nav a:focus-visible{background:var(--ib-lime);color:var(--ib-night);border-color:var(--ib-lime)}.ak-inbox-nav .ak-icon{width:16px;height:16px}"
-    ".ak-inbox-tally{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:0;margin:14px 0 0;border-top:1px solid #e6edcb2b;padding-top:18px}.ak-inbox-tally a{display:grid;gap:2px;padding:0 28px 0 0;margin-right:28px;border-right:1px solid #e6edcb2b;color:inherit;text-decoration:none}.ak-inbox-tally a:last-child{border:0}.ak-inbox-tally strong{font:400 34px/1 'Instrument Serif',Georgia,serif;color:#f5f7ee}.ak-inbox-tally a[data-tally=you] strong{color:var(--ib-signal)}.ak-inbox-tally a[data-tally=agents] strong{color:var(--ib-lime)}.ak-inbox-tally span{font:500 10px/1.4 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#a9b89d}"
-    ".ak-inbox-receipt{margin:22px 0 0;padding:14px 18px;border-left:4px solid var(--ib-lime);background:#e9f1e4;color:#2b4a31;font-size:15px}"
-    ".ak-inbox-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:clamp(28px,4vw,64px);margin-top:38px;align-items:start}"
-    ".ak-inbox-group{margin:0 0 46px}.ak-inbox-group>h2{display:flex;align-items:baseline;gap:12px;font:400 clamp(30px,3.2vw,42px)/1 'Instrument Serif',Georgia,serif!important;letter-spacing:-.03em;margin:0 0 6px;color:#14251b}.ak-inbox-group>h2 small{font:500 11px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ib-muted)}"
-    ".ak-inbox-group>p{margin:0 0 14px;color:var(--ib-muted);max-width:62ch;line-height:1.55}"
-    ".ak-inbox-list{list-style:none;margin:0;padding:0;border-top:2px solid var(--ib-ink)}"
-    ".ak-inbox-item{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:22px 0;border-bottom:1px solid var(--ib-rule);scroll-margin-top:90px}.ak-inbox-item:target{background:linear-gradient(90deg,#ef654712,transparent 70%)}"
-    ".ak-inbox-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ib-signal);color:#fff}.ak-inbox-mark .ak-icon{width:20px;height:20px}"
-    ".ak-inbox-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 6px;font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ib-muted)}"
-    ".ak-inbox-who{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-weight:600;letter-spacing:.08em}.ak-inbox-who[data-who=you]{background:var(--ib-signal);color:#fff}.ak-inbox-who[data-who=agent]{background:var(--ib-lime);color:var(--ib-night)}.ak-inbox-who[data-who=stopped]{background:#e6edcb26;color:#e6edcb;border:1px solid #e6edcb44}"
-    ".ak-inbox-item h3{font:600 clamp(19px,1.8vw,23px)/1.2 'DM Sans',system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 6px;overflow-wrap:anywhere;color:#14251b}"
-    ".ak-inbox-text{margin:0 0 8px;line-height:1.55;color:#3c4b39;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}"
-    ".ak-inbox-warn{margin:0 0 8px;padding-left:12px;border-left:3px solid var(--ib-signal);color:#7a2d1c;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.ak-inbox-note{margin:0 0 8px;font-size:14px;color:var(--ib-muted)}"
-    ".ak-inbox-acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:12px}.ak-inbox-acts form{margin:0}"
-    ".pack-workspace .ak-inbox-acts button,.ak-inbox-acts>a{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid #20302355;background:transparent;color:var(--ib-ink);font:500 14px 'DM Sans',system-ui,sans-serif;text-decoration:none;cursor:pointer;transition:background .2s,color .2s,border-color .2s}"
-    ".pack-workspace .ak-inbox-acts button:hover,.ak-inbox-acts>a:hover{border-color:var(--ib-ink);background:#20302310}"
-    ".pack-workspace .ak-inbox-acts .ak-inbox-primary,.ak-inbox-acts .ak-inbox-signin{background:var(--ib-night);color:var(--ib-lime);border-color:var(--ib-night);font-weight:600}.pack-workspace .ak-inbox-acts .ak-inbox-primary:hover,.ak-inbox-acts .ak-inbox-signin:hover{background:var(--ib-forest);color:#d8f27a}"
-    ".ak-inbox-status{margin:0;padding:10px 16px;border-radius:999px;background:#e9f1e4;color:#2b4a31;font-weight:600;font-size:14px}"
-    ".ak-inbox-signins{list-style:none;margin:10px 0 0;padding:0;columns:2 280px;column-gap:28px}.ak-inbox-signins li{break-inside:avoid;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--ib-rule)}.ak-inbox-signins span{display:grid;gap:2px;min-width:0}.ak-inbox-signins small{font-size:12px;color:var(--ib-muted);overflow-wrap:anywhere}"
-    ".ak-inbox-signins a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;background:var(--ib-night);color:var(--ib-lime);text-decoration:none;font-size:13px;font-weight:600}.ak-inbox-signins a:hover{background:var(--ib-forest)}"
-    ".ak-inbox-more{margin-top:6px}.ak-inbox-more summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:#2b4a31}"
-    ".ak-inbox-subhead{font:500 11px 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ib-muted);margin:30px 0 8px}"
-    ".ak-inbox-empty{padding:20px 0;border-bottom:1px solid var(--ib-rule);color:var(--ib-muted);font-size:16px}"
-    ".ak-inbox-orgs{list-style:none;margin:0;padding:0;border-top:2px solid var(--ib-ink)}.ak-inbox-orgs>li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 18px;padding:16px 0;border-bottom:1px solid var(--ib-rule)}.ak-inbox-orgs strong{font-size:18px}.ak-inbox-orgs small{display:block;color:var(--ib-muted);font-size:13px;margin-top:2px}.ak-inbox-orgs .ak-inbox-acts{margin:0}"
-    ".ak-inbox-side{position:sticky;top:24px;margin:0;padding:28px 26px 30px;background:radial-gradient(ellipse at 100% 0%,#4b725099,transparent 60%),var(--ib-forest);color:var(--ib-paper);border-radius:28px}"
-    ".ak-inbox-side h2{font:400 30px/1 'Instrument Serif',Georgia,serif!important;letter-spacing:-.02em;margin:0 0 6px;color:#f5f7ee}.ak-inbox-side>p{margin:0 0 14px;font-size:14px;line-height:1.5;color:#bccab0}.ak-inbox-side h3{font:500 11px 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#a9b89d;margin:26px 0 6px}"
-    ".ak-inbox-side ol{list-style:none;margin:0;padding:0}.ak-inbox-agent{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;padding:12px 0;border-top:1px solid #e6edcb24}.ak-inbox-agent .ak-inbox-meta{color:#a9b89d;margin-bottom:4px;font-size:10px}.ak-inbox-agent a{color:#f5f7ee;text-decoration:none;font-size:15px;line-height:1.35;overflow-wrap:anywhere}.ak-inbox-agent a:hover{text-decoration:underline;text-underline-offset:3px}"
-    ".ak-inbox-pulse{width:10px;height:10px;border-radius:50%;background:var(--ib-lime);margin-top:5px;box-shadow:0 0 0 0 #b5df3266;animation:ak-inbox-pulse 1.8s ease-out infinite}.ak-inbox-agent[data-state=blocked] .ak-inbox-pulse,.ak-inbox-agent[data-state=dead_letter] .ak-inbox-pulse{background:#e6edcb55;animation:none}"
-    ".ak-inbox-side .ak-inbox-empty{color:#bccab0;border-color:#e6edcb24;font-size:14px}.ak-inbox-side-link{display:inline-flex;align-items:center;min-height:44px;margin-top:16px;padding:0 16px;border-radius:999px;border:1px solid #e6edcb55;color:var(--ib-paper);text-decoration:none;font-size:14px}.ak-inbox-side-link:hover{background:var(--ib-lime);color:var(--ib-night)}"
-    "@keyframes ak-inbox-pulse{70%{box-shadow:0 0 0 8px #b5df3200}100%{box-shadow:0 0 0 0 #b5df3200}}"
-    "@media(max-width:1000px){.ak-inbox-mast{grid-template-columns:1fr}.ak-inbox-nav{justify-content:flex-start}.ak-inbox-grid{grid-template-columns:1fr}.ak-inbox-side{position:static}}"
-    "@media(max-width:620px){.pack-workspace:has(>.ak-inbox){padding-inline:16px}.ak-inbox-mast{margin-inline:-16px;border-radius:0 0 28px 28px;padding-inline:16px}.ak-inbox-tally a{padding-right:16px;margin-right:16px}.ak-inbox-tally strong{font-size:28px}.ak-inbox-item{grid-template-columns:1fr;gap:10px}.ak-inbox-mark{width:36px;height:36px}.ak-inbox-side{margin-inline:-16px;border-radius:0;padding-inline:16px}.ak-inbox-acts>*,.ak-inbox-acts form button{flex:1 1 auto;justify-content:center}.ak-inbox-acts form{flex:1 1 auto;display:flex}}"
-    "@media(prefers-reduced-motion:reduce){.ak-inbox-pulse{animation:none}}"
-    "</style>",stdout);
-}
+
 /* Read-only rail projection of the same person-work and invitation owners as
  * /inbox. It never converts an actionable goal into a recipient notification. */
 static int ai_pack_need(bf_mp_writer_t *w,const char *id,const char *kind,const char *title,long long updated){
@@ -251,6 +209,7 @@ static int serve_account_needs_summary(const char *method,const char *query,cons
     int agent_count=ai_agent_work(subject,scope?scope:"",agents,AI_AGENT_MAX,&running,&stopped,&waiting,
         people,person_count>0?person_count:0,halted,4,&halted_n,credit,AI_AGENT_MAX,&credit_n);
     ai_orgs(auth_db,strtol(actor+5,NULL,10),invites,&ni,admin,&na,&members);
+    int dating_pending=scope&&!strcmp(scope,"self")?ai_dating_pending(auth_db,strtol(actor+5,NULL,10)):0;
     if(person_count<0||agent_count<0){aw_error(503,"The account Inbox actions could not be confirmed from native owners.\n");goto done;}
     bf_mp_writer_t w;bf_mp_writer_init(&w,65536);
     int ok=!bf_mp_pack_array(&w,3)&&!bf_mp_pack_uint(&w,1)&&!bf_mp_pack_bool(&w,1)&&
@@ -258,7 +217,7 @@ static int serve_account_needs_summary(const char *method,const char *query,cons
         !bf_mp_pack_str_cstr(&w,"binding")&&!bf_mp_pack_map(&w,3)&&
         !bf_mp_pack_kv_str(&w,"actor",actor)&&!bf_mp_pack_kv_str(&w,"subject",subject)&&
         !bf_mp_pack_kv_str(&w,"scope",scope?scope:"")&&
-        !bf_mp_pack_str_cstr(&w,"items")&&!bf_mp_pack_array(&w,(uint32_t)(person_count+credit_n+ni));
+        !bf_mp_pack_str_cstr(&w,"items")&&!bf_mp_pack_array(&w,(uint32_t)(person_count+credit_n+ni+(dating_pending>0?1:0)));
     for(int i=0;i<person_count&&ok;i++){
         const char *kind=!strcmp(people[i].source,"release-approval")?"release":
             !strcmp(people[i].source,"provider-estate-checklist")?"provider-checklist":"provider";
@@ -270,12 +229,36 @@ static int serve_account_needs_summary(const char *method,const char *query,cons
         snprintf(title,sizeof(title),"Join %s",invites[i].label);
         ok=ai_pack_need(&w,id,"invitation",title,0);
     }
+    if(dating_pending>0&&ok)ok=ai_pack_need(&w,"dating:introductions","dating-introduction","Review current dating introductions",0);
     if(ok&&w.len<=65536)aw_response(200,"application/msgpack",w.buf,w.len,0);
     else aw_error(503,"The account Inbox actions could not be encoded.\n");
     bf_mp_writer_free(&w);
 done:
     ac_person_free(people,person_count>0?(size_t)person_count:0);
     free(people);free(agents);free(halted);free(credit);free(invites);free(admin);return 1;
+}
+/* Without a session the inbox still has a place in the one app: it says what
+ * arrives here and opens sign-in to the same address. Nothing is read. */
+static void ai_native_head(void *unused){(void)unused;fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=4\">",stdout);}
+static void ai_signed_out(const char *context){
+ fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: same-origin\r\nX-Bonfyre-Surface-Program: native-source-workspace\r\nConnection: close\r\n\r\n",stdout);
+ ak_app_open_with_head("Inbox","feed","sx-page route-inbox",ai_native_head,NULL);
+ fputs("<div class=\"sx\"><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span><span>Inbox</span><em>signed out</em></nav>"
+       "<header class=\"sx-hero\"><div><p class=\"sx-kicker\">What needs you</p><h1>Inbox</h1><p>Approvals, invitations, introductions and the work your tools are waiting on, for your own account and the organisations you belong to.</p></div>"
+       "<nav class=\"sx-actions\"><a class=\"sx-btn sx-primary\" href=\"/login?next=",stdout);
+ {char next[200];snprintf(next,sizeof next,"/inbox?context=%s",context&&*context?context:"self");url_query_value(next);}
+ fputs("\">Sign in to open it</a><a class=\"sx-btn\" href=\"/signup\">Make an account</a></nav></header>"
+       "<div class=\"sx-split sx-three ai-out\"><section class=\"sx-register\" aria-labelledby=\"ai-q\"><h2 id=\"ai-q\">Arrives here <span>once you are signed in</span></h2><ol>"
+       "<li><span class=\"sx-dispatch\"><small>Needs you</small><b>Approvals and sign-in steps</b><span>Things only you can confirm, from your tools and connected accounts.</span></span></li>"
+       "<li><span class=\"sx-dispatch\"><small>Organisations</small><b>Invitations</b><span>Workspaces and institutions that asked you to join.</span></span></li>"
+       "<li><span class=\"sx-dispatch\"><small>Running</small><b>Work in progress</b><span>Agents and jobs working for you, and the ones that stopped.</span></span></li></ol></section>"
+       "<article class=\"sx-reading\"><p class=\"sx-kicker\">Private</p><h2>Your inbox is yours alone</h2><div class=\"sx-body\"><p>Nothing in it is shown to anyone else, and nothing in it is acted on until you choose. Sign in and it opens on what is waiting.</p></div>"
+       "<footer class=\"sx-reading-actions\"><a class=\"sx-btn sx-primary\" href=\"/login?next=%2Finbox\">Sign in</a><a class=\"sx-btn\" href=\"/channels\">Read the living feeds meanwhile</a></footer></article>"
+       "<aside class=\"sx-rail\"><section class=\"sx-panel\"><p class=\"sx-kicker\">Public meanwhile</p><ul class=\"sx-also\"><li><a href=\"/community\">What neighbours are offering</a></li><li><a href=\"/sources\">Sources Aurekai keeps</a></li><li><a href=\"/connections\">Connections</a></li></ul></section></aside></div>",stdout);
+ fputs("<section class=\"sx-catalogue ai-programs\" aria-labelledby=\"ai-ask\"><header class=\"sx-section-head\"><div><p class=\"sx-kicker\">Open to everyone</p><h2 id=\"ai-ask\">What you can ask for here</h2><p>Each request names the authority it needs; it is checked again when you send it.</p></div></header>",stdout);
+ surface_emit_capability_programs(NULL);
+ fputs("</section></div>",stdout);
+ ak_app_close();
 }
 static int serve_account_inbox(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
     if(!strcmp(target,"/inbox/_summary"))return serve_account_needs_summary(method,query,bearer,auth_db);
@@ -284,16 +267,16 @@ static int serve_account_inbox(const char *method,const char *target,const char 
     /* A query this page does not own, or no session, is the public surface's. */
     if(strcmp(method,"GET")||!ai_query(query,context,done))return 0;
     int access=psetup_context(bearer,auth_db,context,0,actor,sizeof(actor),subject,sizeof(subject),&scope);
-    if(access==0)return 0;if(access!=1){aw_error(403,"This account cannot open that inbox.\n");return 1;}
+    if(access==0){ai_signed_out(context);return 1;}if(access!=1){aw_error(403,"This account cannot open that inbox.\n");return 1;}
     long user=strtol(actor+5,NULL,10);
     AcPersonGoal *people=calloc(AC_PERSON_MAX,sizeof(*people));AiWork *agents=calloc(AI_AGENT_MAX,sizeof(*agents)),*halted=calloc(4,sizeof(*halted)),*credit=calloc(AI_AGENT_MAX,sizeof(*credit));AiOrg *invites=calloc(10,sizeof(*invites)),*admin=calloc(12,sizeof(*admin));
     if(!people||!agents||!halted||!credit||!invites||!admin){free(people);free(agents);free(halted);free(credit);free(invites);free(admin);aw_error(503,"The inbox could not be prepared.\n");return 1;}
     int person_count=ac_person_goals(subject,scope?scope:"",people,AC_PERSON_MAX),running=0,stopped=0,waiting=0,halted_n=0,credit_n=0,ni=0,na=0,members=0;
     int agent_count=ai_agent_work(subject,scope?scope:"",agents,AI_AGENT_MAX,&running,&stopped,&waiting,people,person_count>0?person_count:0,halted,4,&halted_n,credit,AI_AGENT_MAX,&credit_n);
     ai_orgs(auth_db,user,invites,&ni,admin,&na,&members);
-    int needs=(person_count>0?person_count:0)+credit_n+ni,direct=credit_n,checklists=0;for(int i=0;i<person_count;i++){if(!strcmp(people[i].source,"provider-estate-checklist"))checklists++;else direct++;}
+    int dating_pending=scope&&!strcmp(scope,"self")?ai_dating_pending(auth_db,user):0;int needs=(person_count>0?person_count:0)+credit_n+ni+(dating_pending>0?1:0),direct=credit_n+(dating_pending>0?1:0),checklists=0;for(int i=0;i<person_count;i++){if(!strcmp(people[i].source,"provider-estate-checklist"))checklists++;else direct++;}
     char label[160]="My personal workspace";{PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;if(psetup_destinations(bearer,auth_db,rows,&count)>0)for(size_t i=0;i<count;i++)if(!strcmp(rows[i].context,context)){snprintf(label,sizeof(label),"%s",rows[i].label);break;}}
-    psetup_start(200,"Inbox");ai_style();
+    psetup_open_with_style(200,"Inbox","pack-workspace","/assets/account-inbox.css");
     fputs("<section class=\"ak-inbox\" data-account-inbox data-context=\"",stdout);html(context);printf("\" data-needs-count=\"%d\" data-agent-count=\"%d\"><header class=\"ak-inbox-mast\"><div><p class=\"ak-inbox-kicker\">",needs,running);page_glyph("bell");fputs("Inbox · ",stdout);html(label);fputs("</p><h1>",stdout);
     if(needs)printf("<em>%d</em> %s you",needs,needs==1?"thing needs":"things need");else if(person_count<0||agent_count<0)fputs("Inbox needs a source connection",stdout);else fputs("Nothing needs you right now",stdout);
     fputs("</h1><p>Approvals, sign-ins and account steps only you can take are here, each with its one next step. Everything the agents are doing stays on the right, so you can tell the two apart at a glance.</p></div><nav class=\"ak-inbox-nav\" aria-label=\"Related pages\"><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("board");fputs("Work board</a><a href=\"/organizations\">",stdout);page_glyph("group");fputs("Organizations</a><a href=\"/apps/connections?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("link");fputs("Connections</a></nav>",stdout);
@@ -304,6 +287,12 @@ static int serve_account_inbox(const char *method,const char *target,const char 
     fputs("<div class=\"ak-inbox-grid\"><div class=\"ak-inbox-main\"><section class=\"ak-inbox-group\" id=\"needs-you\" data-inbox-group=\"needs-you\"><h2>Needs you",stdout);if(direct)printf(" <small>%d</small>",direct);fputs("</h2><ol class=\"ak-inbox-list\">",stdout);
     for(int i=0;i<credit_n;i++)ai_execution_credit(context,&credit[i]);
     for(int i=0;i<person_count;i++){if(!strcmp(people[i].source,"release-approval"))ai_release(context,&people[i]);else if(!strcmp(people[i].source,"provider-estate"))ai_provider(context,&people[i]);}
+    if(dating_pending>0){
+      fputs("<li class=\"ak-inbox-item\" id=\"dating:introductions\" data-needs=\"you\" data-inbox-kind=\"dating-introduction\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("user");
+      fputs("</span><div class=\"ak-inbox-body\">",stdout);ai_meta("Needs you","Private introduction",0);
+      fputs("<h3>",stdout);printf("%d %s to review",dating_pending,dating_pending==1?"introduction":"introductions");
+      fputs("</h3><p class=\"ak-inbox-text\">Someone has requested an introduction. Nothing becomes a conversation without your current, explicit agreement. Names and messages stay inside your private Life account.</p><div class=\"ak-inbox-acts\"><a class=\"ak-inbox-signin\" href=\"/profile?tab=dating&amp;view=matches\">Review introductions</a></div></div></li>",stdout);
+    }
     if(!direct){fputs("<li class=\"ak-inbox-empty\">",stdout);fputs(person_count<0?"Approvals are not connected on this site.":(ni||checklists)?"No approvals are waiting. Your sub-account steps are just below.":"No approvals or sign-ins are waiting on you.",stdout);fputs("</li>",stdout);}
     fputs("</ol></section><section class=\"ak-inbox-group\" id=\"sub-accounts\" data-inbox-group=\"sub-accounts\"><h2>Sub-accounts",stdout);if(ni+checklists)printf(" <small>%d need you</small>",ni+checklists);
     fputs("</h2><p>Organizations you belong to or run, invitations waiting for you, and the provider accounts your organizations can open.</p><ol class=\"ak-inbox-list\">",stdout);

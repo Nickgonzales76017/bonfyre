@@ -297,6 +297,196 @@ static int serve_world_federation(const char *method, const char *target, const 
     return 1;
 }
 
+/* The carrier hub: every grammar this address speaks, grouped by what it
+ * carries, with the identities other software follows and a way to test a
+ * remote address. The table is the same list the JSON index answers with, so
+ * a person and a machine read one set of carriers. */
+typedef struct { const char *name, *spec, *plane, *role, *at; } ProtocolCarrier;
+static const ProtocolCarrier PROTOCOL_CARRIERS[] = {
+    {"x402", "HTTP 402", "pay", "Every capability answers with payment requirements until a payment verifies.", "/capability"},
+    {"MPP", "Machine payments", "pay", "A machine payment quote from the same service book.", "/mpp/quote"},
+    {"UCP", "Universal commerce", "pay", "The shopping catalogue in UCP's shape.", "/ucp/catalog"},
+    {"ACP", "Agentic commerce", "pay", "Products an agent can check out.", "/acp/products"},
+    {"Beckn", "Open network", "pay", "Local commerce search.", "/beckn/search"},
+    {"OpenRTB", "2.6", "pay", "Ad demand as a bid request.", "/openrtb/bidrequest"},
+    {"MCP", "Model Context Protocol", "agent", "Studio tools an agent can call, seven of them writes.", "/mcp/resources/"},
+    {"A2A", "Agent card 1.0", "agent", "The skills this service advertises to other agents.", "/.well-known/agent.json"},
+    {"CloudEvents", "1.0", "agent", "Every change as an event envelope.", "/events"},
+    {"ActivityPub", "W3C", "social", "An actor other servers can follow.", "/ap/actor"},
+    {"WebFinger", "RFC 7033", "social", "How software finds the actor from an address.", "/.well-known/webfinger"},
+    {"CAP", "1.2", "social", "Public alerts, empty until something is admitted.", "/cap/alerts"},
+    {"OGC API", "Features", "place", "Places and parcels as geospatial features.", "/ogc"},
+    {"RESO", "Web API", "place", "Parcel observations in real-estate vocabulary.", "/reso/Property"},
+    {"MISMO", "Subject property", "place", "A subject property for mortgage software.", "/mismo/subject-property"},
+    {"W3C WoT", "Thing description", "place", "This service described as a thing.", "/wot/thing"},
+    {"GS1 EPCIS", "2.0", "place", "Product provenance events.", "/epcis/events"},
+};
+#define PROTOCOL_CARRIERS_N (int)(sizeof(PROTOCOL_CARRIERS) / sizeof(PROTOCOL_CARRIERS[0]))
+
+static void protocol_hub_page(const char *h) {
+    static const struct { const char *plane, *letter, *title, *lede; } planes[] = {
+        {"pay", "A", "Payment and commerce", "Prices come from one service book, so a quote and the ledger never disagree."},
+        {"agent", "B", "Agents and events", "Agents call tools, hand each other tasks and follow every change."},
+        {"social", "C", "Following and identity", "So this address can be followed from software that already knows how."},
+        {"place", "D", "Place, property and provenance", "Receipted observations in whichever vocabulary your system speaks."},
+    };
+    ak_app_http(200, 0);
+    ak_app_open("Carriers and identity", "connections", "route-protocols");
+    fputs("<div class=\"ak-wb-strip\"><span>Carriers</span><span>Address <b>", stdout); html(h);
+    printf("</b></span><span>Grammars <b>%d</b></span><span class=\"ak-live\">One record, many carriers</span></div>", PROTOCOL_CARRIERS_N);
+    fputs("<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Build on this &middot; carriers and bridges</p>"
+          "<h1>Carrier protocols and identity bridges</h1>"
+          "<p class=\"ak-lede\">The same subjects, priced tools and receipted observations, spoken in whichever grammar you already use. "
+          "Every address below also answers JSON when a machine asks.</p>"
+          "<div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"#assay\">Test a remote address</a>"
+          "<a class=\"ak-btn\" href=\"/protocols\" type=\"application/json\">Machine view</a></div></div></section>", stdout);
+    {
+        int counts[4] = {0};
+        for (int i = 0; i < PROTOCOL_CARRIERS_N; i++)
+            for (int p = 0; p < 4; p++) if (!strcmp(PROTOCOL_CARRIERS[i].plane, planes[p].plane)) counts[p]++;
+        printf("<dl class=\"ak-stats is-row\"><div><dt>Carriers</dt><dd class=\"is-on\">%d</dd><small>grammars over one record</small></div>"
+               "<div><dt>Payment</dt><dd>%d</dd><small>commerce carriers</small></div>"
+               "<div><dt>Agents</dt><dd>%d</dd><small>tools, tasks and events</small></div>"
+               "<div><dt>Place</dt><dd>%d</dd><small>geospatial and property</small></div></dl>",
+               PROTOCOL_CARRIERS_N, counts[0], counts[1], counts[3]);
+    }
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Carrier groups</span><h2>What each carrier is for</h2></div>"
+          "<p>A carrier is a grammar over the one record, never a second owner of the data.</p></header><div class=\"ak-grid is-2\">", stdout);
+    for (int p = 0; p < 4; p++) {
+        int n = 0;
+        for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) n += !strcmp(PROTOCOL_CARRIERS[i].plane, planes[p].plane);
+        printf("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">Group %s</span><span class=\"ak-tag\">%d carriers</span></header><h3>", planes[p].letter, n);
+        html(planes[p].title); fputs("</h3><p>", stdout); html(planes[p].lede); fputs("</p><div class=\"ak-rows\" style=\"margin-top:10px\">", stdout);
+        for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) {
+            const ProtocolCarrier *c = &PROTOCOL_CARRIERS[i];
+            if (strcmp(c->plane, planes[p].plane)) continue;
+            fputs("<a href=\"", stdout); html(c->at); fputs("\"><strong>", stdout); html(c->name);
+            fputs(" <span class=\"ak-tag\">", stdout); html(c->spec); fputs("</span></strong><small>", stdout); html(c->role);
+            fputs("</small><span class=\"ak-go\">Open &rarr;</span></a>", stdout);
+        }
+        fputs("</div></article>", stdout);
+    }
+    fputs("</div></section>", stdout);
+
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Carrier topology</span><h2>Every address, in one table</h2></div></header>"
+          "<div class=\"ak-panel ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Carrier</th><th>Grammar</th><th>Group</th><th>Address</th><th></th></tr></thead><tbody>", stdout);
+    for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) {
+        const ProtocolCarrier *c = &PROTOCOL_CARRIERS[i];
+        const char *group = "";
+        for (int p = 0; p < 4; p++) if (!strcmp(c->plane, planes[p].plane)) group = planes[p].title;
+        fputs("<tr><td><span class=\"ak-dot\">", stdout); html(c->name); fputs("</span></td><td>", stdout); html(c->spec);
+        fputs("</td><td>", stdout); html(group); fputs("</td><td><code>https://", stdout); html(h); html(c->at);
+        fputs("</code></td><td><a href=\"", stdout); html(c->at); fputs("\">Read</a></td></tr>", stdout);
+    }
+    fputs("</tbody></table></div></section>", stdout);
+
+    fputs("<section class=\"ak-sec\" id=\"assay\"><div class=\"ak-grid is-2\"><article class=\"ak-ask\"><p class=\"ak-kicker\">Test a remote address</p>"
+          "<h2 style=\"margin:8px 0 10px;font:600 1.6rem/1.2 var(--ak-sans)\">Which carriers does it speak?</h2>"
+          "<p style=\"color:var(--ak-on-variant);margin-bottom:16px\">Paste a public address: a feed, a profile, an API. "
+          "It is reviewed before anything is read, and robots.txt is respected.</p>", stdout);
+    {
+        BfAuthoringTree *tree = calloc(1, sizeof(*tree));
+        int ok = tree && ft_action(tree, "carrier-assay", NULL, 0, "Review this address", "get", "/studio/", NULL, 0) &&
+                 ft_field(tree, "carrier-assay-url", "carrier-assay", 0, "Public address", "url", "foreign_url", "",
+                          "https://example.org/feed.xml", 0, NULL, "1200", 1, "url");
+        if (tree) { if (ok) ft_render(tree, stdout); else { bf_authoring_tree_clear(tree); free(tree); } }
+    }
+    fputs("</article><div class=\"ak-console\"><b>carrier review</b><br>"
+          "&gt; robots.txt is read before any fetch<br>&gt; the exact bytes are kept with a receipt<br>"
+          "&gt; what is read is an observation, never the source's truth<br>&gt; nothing is admitted until a person chooses it</div></div></section>", stdout);
+
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Identity</span><h2>How other software finds this address</h2></div></header><div class=\"ak-grid is-3\">", stdout);
+    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">WebFinger</span><h3 style=\"margin-top:12px\">acct:bonfyre@", stdout); html(h);
+    fputs("</h3><p>The account address a Fediverse server looks up first.</p><div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/.well-known/webfinger?resource=acct:bonfyre@", stdout);
+    html(h); fputs("\">Look it up</a></div></article>", stdout);
+    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">ActivityPub</span><h3 style=\"margin-top:12px\">https://", stdout); html(h);
+    fputs("/ap/actor</h3><p>The actor that can be followed, with its inbox and outbox.</p><div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/ap/actor\">Read the actor</a></div></article>", stdout);
+    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">A2A</span><h3 style=\"margin-top:12px\">Agent card</h3>"
+          "<p>The skills offered to other agents. An advertised skill is not an agreement to perform it.</p>"
+          "<div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/.well-known/agent.json\">Read the card</a></div></article></div></section>", stdout);
+
+    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">What a carrier is not</p><h2>A projection is not a licence, a listing, an appraisal or an offer.</h2>"
+          "<p>Where a collection is empty it says why. An invented alert or product would be worse than an honest empty list.</p></div>"
+          "<div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/capability\">See the priced tools</a></div></section>", stdout);
+    ak_app_close();
+}
+
+/* /territory: the topology of the one app. Four territories, each with the
+ * routes route_presentation publishes for it and the layout each wears, read
+ * from the CMS on every request. A route here is an address that answers; the
+ * pattern is the screen family it is laid out as. */
+static int serve_territory_map(const char *method, const char *target, const char *accept) {
+    static const struct { const char *t, *name, *host, *what; } T[] = {
+        {"live", "Live", "aurekai.live", "What's on, watching and listening."},
+        {"life", "Life", "aurekai.life", "Stories, food, places and people."},
+        {"shop", "Shop", "aurekai.shop", "Things worth buying and who makes them."},
+        {"work", "Work", "aurekai.work", "Jobs, tools, studios and business."},
+    };
+    sqlite3 *db; sqlite3_stmt *st = NULL; int total = 0, per[4] = {0}, patterns = 0, worlds = 0;
+    if (strcmp(method, "GET") || !wants_html(accept) || (strcmp(target, "/territory") && strcmp(target, "/territory/"))) return 0;
+    if (!(db = cms_open_ro())) return 0;
+    for (int i = 0; i < 4; i++) {
+        if (sqlite3_prepare_v2(db, "SELECT count(*) FROM route_presentation WHERE status='published' AND territory=?1", -1, &st, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(st, 1, T[i].t, -1, SQLITE_STATIC);
+            if (sqlite3_step(st) == SQLITE_ROW) per[i] = sqlite3_column_int(st, 0);
+        }
+        sqlite3_finalize(st); st = NULL; total += per[i];
+    }
+    if (sqlite3_prepare_v2(db, "SELECT count(DISTINCT pattern) FROM route_presentation WHERE status='published'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        patterns = sqlite3_column_int(st, 0);
+    sqlite3_finalize(st); st = NULL;
+    if (cms_type_registered(db, "world") && sqlite3_prepare_v2(db, "SELECT count(*) FROM world WHERE status='published'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        worlds = sqlite3_column_int(st, 0);
+    sqlite3_finalize(st); st = NULL;
+
+    ak_app_http(200, 0);
+    ak_app_open("Territories", "spatial", "route-territory");
+    printf("<div class=\"ak-wb-strip\"><span>Topology</span><span>Territories <b>4</b></span><span>Routes <b>%d</b></span><span>Layouts <b>%d</b></span>"
+           "<span class=\"ak-live\">Read from the CMS on this request</span></div>", total, patterns);
+    fputs("<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">One app &middot; four territories</p>"
+          "<h1>How Aurekai is laid out</h1><p class=\"ak-lede\">Every address the app answers, grouped by territory, with the screen each one is laid out as. "
+          "Follow any route to the page itself.</p></div></section>", stdout);
+    printf("<dl class=\"ak-stats is-row\"><div><dt>Territories</dt><dd class=\"is-on\">4</dd><small>live, life, shop, work</small></div>"
+           "<div><dt>Routes</dt><dd>%d</dd><small>published addresses</small></div><div><dt>Layouts</dt><dd>%d</dd><small>screen families in use</small></div>"
+           "<div><dt>Worlds</dt><dd>%d</dd><small>published spaces</small></div></dl>", total, patterns, worlds);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Topology</span><h2>Territories and their routes</h2></div>"
+          "<p>A route is an address that answers; the tag is the layout family it wears.</p></header><div class=\"ak-grid is-2 ak-topo\">", stdout);
+    for (int i = 0; i < 4; i++) {
+        printf("<article class=\"ak-panel\"><header><h2>%s</h2><span class=\"ak-tag is-on\">%d routes</span></header><p>", T[i].name, per[i]);
+        html(T[i].what); fputs("</p><div class=\"ak-rows\" style=\"margin-top:10px\">", stdout);
+        if (sqlite3_prepare_v2(db, "SELECT route,pattern FROM route_presentation WHERE status='published' AND territory=?1 ORDER BY route LIMIT 60", -1, &st, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(st, 1, T[i].t, -1, SQLITE_STATIC);
+            while (sqlite3_step(st) == SQLITE_ROW) {
+                const char *r = (const char *)sqlite3_column_text(st, 0), *p = (const char *)sqlite3_column_text(st, 1);
+                if (!r || r[0] != '/') continue;
+                fputs("<a href=\"https://", stdout); html(T[i].host); html(r); fputs("\"><strong>", stdout); html(r);
+                fputs("</strong><small>", stdout); html(T[i].host); fputs("</small><span class=\"ak-go\"><span class=\"ak-tag\">", stdout);
+                html(p ? p : ""); fputs("</span></span></a>", stdout);
+            }
+        }
+        sqlite3_finalize(st); st = NULL;
+        if (!per[i]) fputs("<p class=\"ak-empty\">No route is published for this territory yet.</p>", stdout);
+        fputs("</div></article>", stdout);
+    }
+    fputs("</div></section>", stdout);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Layouts</span><h2>Screen families</h2></div></header><div class=\"ak-panel ak-scroll\">"
+          "<table class=\"ak-table\"><thead><tr><th>Layout</th><th>Routes</th><th>Live</th><th>Life</th><th>Shop</th><th>Work</th></tr></thead><tbody>", stdout);
+    if (sqlite3_prepare_v2(db, "SELECT pattern,count(*),sum(territory='live'),sum(territory='life'),sum(territory='shop'),sum(territory='work') "
+                               "FROM route_presentation WHERE status='published' GROUP BY pattern ORDER BY 2 DESC,1", -1, &st, NULL) == SQLITE_OK)
+        while (sqlite3_step(st) == SQLITE_ROW) {
+            fputs("<tr><td><span class=\"ak-dot\">", stdout); html((const char *)sqlite3_column_text(st, 0));
+            printf("</span></td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>", sqlite3_column_int(st, 1), sqlite3_column_int(st, 2),
+                   sqlite3_column_int(st, 3), sqlite3_column_int(st, 4), sqlite3_column_int(st, 5));
+        }
+    sqlite3_finalize(st);
+    fputs("</tbody></table></div></section>", stdout);
+    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">Your own address</p><h2>Your pages join this map when you publish them.</h2>"
+          "<p>A person's address carries the same surfaces, bound to them.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/studio\">Open the studio</a></div></section>", stdout);
+    ak_app_close();
+    sqlite3_close(db);
+    return 1;
+}
+
 static int serve_protocols(const char *method, const char *target, const char *host,
                            const char *accept_hdr, const char *query) {
     const char *bindir = getenv("BONFYRE_BIN_DIR");
@@ -315,86 +505,7 @@ static int serve_protocols(const char *method, const char *target, const char *h
 
     /* ---- index of every projection ------------------------------------- */
     if (!strcmp(target, "/protocols") || !strcmp(target, "/protocols/")) {
-        if (wants_html(accept_hdr)) {
-            snprintf(body, sizeof(body),
-BF_PAGE_OPEN "Build on Bonf\xc3\xbfre" BF_PAGE_AFTER_TITLE
-"<main><section class=\"hero wrap\" style=\"padding:56px 0 10px\">"
-"<div class=\"eyebrow\"><i></i><span>Aurekai / build on this</span></div>"
-"<h1>Bring your own <em>protocol.</em></h1>"
-"<p class=\"lede\">The same subjects, priced capabilities and receipted observations, spoken in whichever "
-"grammar you already use. Pick the door you came for.</p></section>"
-/* The doors below are the fallback, not the content.
- *
- * HTMX replaces them on load with whatever is authored in the CMS for this
- * page. A reader with no JavaScript, or an unreachable store, still gets a
- * complete page rather than an empty frame -- which is why the compiled set
- * stays inside the swap target instead of being deleted once the fragment
- * existed. Editing a door is a CMS write; the compiled copy is what the site
- * degrades to, not what it serves. */
-"<div class=\"wrap\"><div class=\"doors\" hx-get=\"/_surface/doors?page=protocols\" "
-"hx-trigger=\"load\" hx-swap=\"innerHTML\">"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Bring in a source</p>"
-"<h3>Observe the outside world</h3>"
-"<p>Point us at a public URL. We check robots.txt before fetching, keep the exact bytes and a receipt, and "
-"never promote the result to canonical truth. Images, fonts and themes come in the same way.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/studio/#foreign\">ForeignTwin observe</a>"
-"<a class=\"way\" href=\"/studio/\">Assets &amp; themes</a></div></article>"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Buy or sell capability</p>"
-"<h3>Machine payment</h3>"
-"<p>Every capability answers HTTP 402 with x402 payment requirements until a payment verifies. Prices come "
-"from the same service book the financial membrane reports, so a quote and a ledger never disagree.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/capability\">x402 catalogue</a>"
-"<a class=\"way\" href=\"/mpp/quote\">MPP quote</a>"
-"<a class=\"way\" href=\"/ucp/catalog\">UCP</a>"
-"<a class=\"way\" href=\"/acp/products\">ACP</a>"
-"<a class=\"way\" href=\"/beckn/search\">Beckn</a></div></article>"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Publish something</p>"
-"<h3>Write once, reach every surface</h3>"
-"<p>Content types describe their own fields. Publishing and readability are separate decisions, so a page can "
-"be published and still answer 401 to a stranger.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/cms/\">Content Studio</a>"
-"<a class=\"way\" href=\"/notes/\">Public notes</a></div></article>"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Wire an agent</p>"
-"<h3>Agents act, not just read</h3>"
-"<p>Ten studio tools over MCP, seven of them writes: register a client, open work, claim and complete a leased "
-"mission, set a budget cap. An A2A agent card advertises the same skills.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/.well-known/agent.json\">A2A card</a>"
-"<a class=\"way\" href=\"/mcp/resources/\">MCP</a>"
-"<a class=\"way\" href=\"/events\">CloudEvents</a></div></article>"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Read it in your standard</p>"
-"<h3>Property, place and provenance</h3>"
-"<p>6.5 million receipted parcel observations, projected into whichever vocabulary your system already speaks. "
-"A projection is not a listing, an appraisal, or a loan file.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/reso/Property\">RESO</a>"
-"<a class=\"way\" href=\"/ogc\">OGC Features</a>"
-"<a class=\"way\" href=\"/mismo/subject-property\">MISMO</a>"
-"<a class=\"way\" href=\"/wot/thing\">W3C WoT</a>"
-"<a class=\"way\" href=\"/epcis/events\">GS1 EPCIS</a></div></article>"
-
-"<article class=\"door\"><p class=\"eyebrow\"><i></i>Somewhere social</p>"
-"<h3>Follow and federate</h3>"
-"<p>An ActivityPub actor and WebFinger record, so this world can be followed from software that already knows "
-"how to follow things.</p>"
-"<div class=\"ways\"><a class=\"way\" href=\"/ap/actor\">ActivityPub</a>"
-"<a class=\"way\" href=\"/.well-known/webfinger?resource=acct:bonfyre@%s\">WebFinger</a>"
-"<a class=\"way\" href=\"/cap/alerts\">CAP alerts</a></div></article>"
-
-"</div>"
-"<p class=\"lede\" style=\"margin-bottom:60px\">Every link here also answers JSON when a machine asks for it. "
-"Where a collection is empty it says why, because nothing has been admitted to observe yet &mdash; an invented "
-"alert or product movement would be worse than an honest empty list.</p></div></main>"
-"<footer class=\"footer wrap\"><a class=\"wordmark\" href=\"/\">BONF<span>\xc5\xb8</span>RE</a>"
-"<p>One semantic Matrix. Many carrier grammars.</p><a href=\"/protocols\">Machine view &#8599;</a></footer>"
-"<script defer src=\"/assets/matrix-htmx.js\"></script>"
-"<script src=\"/assets/matrix.js\"></script></body></html>", site_nav_html(), h);
-            protocol_reply(200, "text/html; charset=utf-8", body);
-            return 1;
-        }
+        if (wants_html(accept_hdr)) { protocol_hub_page(h); return 1; }
         snprintf(body, sizeof(body),
           "{\"seller\":\"%s\","
           "\"principle\":\"a protocol is a carrier grammar over one semantic Matrix, never a second owner of the data\","

@@ -1,6 +1,7 @@
 // Real Connection Studio and shared card in Chromium with bounded native-protocol
 // fixtures. This suite does not use a real account, provider, extension or key.
 import {test,expect,beforeAll,afterAll,beforeEach} from 'bun:test';
+import {deferred,gate,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {encode,decode} from '../workspace-msgpack.mjs';
@@ -10,10 +11,7 @@ const binding={actor:'user:1',subject:'user:1',scope:'self'};
 const accounts={gmail:'fixture@gmail.example',proton:'fixture@proton.example'};
 const allStages=['existing_access_checked','account_bound','scope_confirmed','credential_sealed','credential_verified','consumer_bound'];
 const entry={id:'201',name:'Fixture Provider',url:'https://provider.example/setup',category:'Research',gate:'portal',note:'Continue this saved provider setup.',handoff:'Open provider setup',recovery:false,recoveryScopes:[]};
-const deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const gate=()=>({entered:deferred(),release:deferred()});
 let browser,server,requests,lanes,progress,readGate,changeGate,refuseReads;
-const packet=value=>new Response(encode(value),{headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
 function setup(identity){
  const state=progress[identity],workId='201-'+identity;
  return {binding,identity,entry,item:{work_id:workId,identity,account:accounts[identity],signup_url:entry.url,platform:entry.name},revision:state.revision,
@@ -27,10 +25,9 @@ function setup(identity){
 function plan(identity){return {binding,identity,identities:lanes.map(id=>({id,label:id==='gmail'?'Gmail · regular window':'Proton · private window',account:accounts[id]})),catalog:[entry],items:[{id:entry.id,workId:entry.id+'-'+identity,revision:progress[identity].revision,status:progress[identity].status}],sourceLinks:[],prepared:1,totalTargets:1,missing:[]};}
 beforeEach(()=>{requests=[];lanes=['gmail','proton'];progress={gmail:{revision:0,status:'ready',sealed:false},proton:{revision:0,status:'ready',sealed:false}};readGate=null;changeGate=null;refuseReads=false;});
 beforeAll(async()=>{
- const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test');
- browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{})});
+ browser=await launchFixtureChromium({module:'@playwright/test',noSandbox:true});
  const assets=new Set(['source-desk.mjs','source-publication.mjs','workspace-destinations.mjs','authentication-capability-surface.mjs','provider-auth-capability.mjs','connection-studio.mjs','connection-studio.css','connection-source.mjs','connection-lab.mjs','interaction-collection.mjs','workspace-store.mjs','workspace-value.mjs','workspace-continuation.mjs','workspace-msgpack.mjs','publication-picker.mjs','publication-research.mjs','provider-contract.mjs','extension/foreign-sign-in.mjs','extension/foreign-sign-in.css','extension/panel-enrollment.mjs','extension/enrollment-integrity.mjs']);
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+ server=loopbackServer({async fetch(request){
   const url=new URL(request.url);
   if(url.pathname==='/studio')return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/connection-studio.css"></head><body><main id="fixture-studio" class="cs-workspace"></main><script type="module">import {mountConnectionStudio} from "/apps/connection-studio.mjs";const root=document.getElementById("fixture-studio");root.dataset.connectionStudio="";window.fixtureStudio=mountConnectionStudio(root);</script></body></html>',{headers:{'Content-Type':'text/html'}});
   if(url.pathname==='/panel')return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="enroll"></main><p id="enroll-said" role="status"></p><script type="module" src="/apps/extension/panel-enrollment.mjs"></script></body></html>',{headers:{'Content-Type':'text/html'}});

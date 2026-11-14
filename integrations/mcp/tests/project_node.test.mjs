@@ -48,8 +48,8 @@ test('Project, Spines, V6, Fabric and Products catalogs have exactly one owner w
     listed.push(...page.tools);
     cursor = page.nextCursor;
   }
-  const expected = 48 + SPINES_PROJECT_TOOLS.length + V6_PROJECT_TOOLS.length + FABRIC_PROJECT_TOOLS.length + PRODUCTS_PROJECT_TOOLS.length;
-  expect(expected).toBe(105);
+  const expected = CATALOG.tools.length;
+  expect(expected).toBe(107);
   expect(firstPage.tools).toHaveLength(100);
   expect(firstPage.nextCursor).toBe('100');
   expect(listed).toHaveLength(expected);
@@ -81,6 +81,8 @@ test('Project, Spines, V6, Fabric and Products catalogs have exactly one owner w
   expect(calls).toHaveLength(CATALOG.tools.filter((tool) => tool['x-bonfyre-owner'] !== 'node').length);
   expect(listed.find(t => t.name === 'project_test_profile').inputSchema.properties.profile.enum).not.toContain('python-compile');
   expect(listed.find(t => t.name === 'project_test_profile').inputSchema.properties.profile.enum).toContain('cloudflare-bridge');
+  expect(listed.find(t => t.name === 'project_test_profile').inputSchema.properties.profile.enum).toContain('bun-tests');
+  expect(listed.find(t => t.name === 'project_test_profile').inputSchema.properties.profile.enum).toContain('service-site-planner');
   expect(listed.find(t => t.name === 'project_test_profile').annotations.readOnlyHint).toBe(false);
   expect(listed.find(t => t.name === 'mcp_capability_lens')._meta.ui.resourceUri).toBe('ui://aurekai/project-control-plane/v1.html');
   expect(listed.find(t => t.name === 'mcp_product_plan')._meta.ui.resourceUri).toBe('ui://aurekai/project-control-plane/v1.html');
@@ -361,7 +363,7 @@ test('read bundle concurrently dispatches only validated read tools inside the a
     routing_selection: { state: 'selected', selected_packs: ['model', 'commerce', 'institution'] },
     performance: {
       external_round_trips: 1, composed_pack_plans: 3, round_trips_avoided: 2,
-      context_economics: { full_catalog_tools: 105 },
+      context_economics: { full_catalog_tools: CATALOG.tools.length },
     },
     readiness: { effect_authority: 'not_inferred', runtime: 'source_unavailable', runtime_current: false },
   });

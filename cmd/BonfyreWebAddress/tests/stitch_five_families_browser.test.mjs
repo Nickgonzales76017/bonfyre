@@ -13,14 +13,14 @@ function exact(path,has,starts){
  assert.equal(matches.length,1,`Native ${has}: expected one exact literal, found ${matches.length}`);return matches[0];
 }
 const feedPath=web+'page_core_rendering.h',cinemaPath=web+'account_world_cinema_web.h';
-const fc=exact(feedPath,'data-feed-tools','<style>'),fs=exact(feedPath,'data-feed-search','<script>');
-const cc=exact(cinemaPath,'data-cinema-tools','<style>'),cs=exact(cinemaPath,'data-cinema-search','<script>');
-const mc=exact(feedPath,'data-map-tools','<style>'),ms=exact(feedPath,'data-map-search','<script>');
+const fc=exact(feedPath,'data-feed-tools','<section'),fs=exact(feedPath,'data-feed-search','<script>');
+const cc=exact(cinemaPath,'data-cinema-tools','<div'),cs=exact(cinemaPath,'data-cinema-search','<script>');
+const mc=exact(feedPath,'data-map-tools','<div'),ms=exact(feedPath,'data-map-search','<script>');
 assert(read(feedPath).includes('data-map-point=')&&read(feedPath).includes('data-locate-point='));
 const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-networking']});
 const errors=[];
-const pageFor=async html=>{const p=await browser.newPage();p.on('pageerror',e=>errors.push(e.message));await p.setViewport({width:1200,height:850});await p.setContent(html,{waitUntil:'domcontentloaded'});return p;};
+const pageFor=async html=>{const p=await browser.newPage();p.on('pageerror',e=>errors.push(e.message));await p.setViewport({width:1200,height:850});await p.setContent(html,{waitUntil:'domcontentloaded'});await p.addStyleTag({content:read('site/matrix/page-components.css')});await p.addStyleTag({content:read('site/matrix/world.css')});return p;};
 try{
  // Living Feeds: source cards and separate feed widgets, no synthetic material.
  const feed=items=>`<section>${fc}<div class="feed">${items.map(([kind,title])=>`<article class="tile ${kind}"><b>${title}</b><span class="by">Retained publisher</span></article>`).join('')}</div>${fs}</section>`;

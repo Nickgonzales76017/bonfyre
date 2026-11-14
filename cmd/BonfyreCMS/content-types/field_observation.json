@@ -1,0 +1,18 @@
+{
+  "name": "field_observation",
+  "displayName": "Field Observation",
+  "description": "An observation a community member records in the community's field registry, with the link to where it can be checked. The link is the member's citation; a matching internet source is named when the estate already knows it. Recording it does not verify it.",
+  "attributes": {
+    "observation_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "observation": { "type": "text", "required": true },
+    "source_url": { "type": "string", "required": true },
+    "internet_source": { "type": "string", "required": false },
+    "observed_at": { "type": "string", "required": true },
+    "place": { "type": "string", "required": false },
+    "observer_subject": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

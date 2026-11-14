@@ -2,6 +2,26 @@
 #define BONFYRE_COMMUNITY_READ_H
 /* Shared projections of the existing CMS community records. No shadow store. */
 #define CJR_POLICY "aurekai-member-conversation-v1"
+/* Canonical public-root predicate for discovery, readers, export and XML.
+ * A visible post must be a real member conversation and have a routable URL. */
+#define CJR_PUBLIC_DISCUSSION_FROM \
+ "FROM community_post p JOIN community_body c ON c.namespace='root' " \
+ "AND c.community=p.community WHERE p.namespace='root' " \
+ "AND p.status='published' AND p.visibility='public' " \
+ "AND julianday(p.published_at) IS NOT NULL AND julianday(p.published_at)<=julianday('now') " \
+ "AND p.moderation_state IN ('accepted','visible','published') " \
+ "AND COALESCE(p.reply_to,'')='' " \
+ "AND p.post NOT IN ('.','..') AND p.community NOT IN ('.','..') " \
+ "AND length(p.post) BETWEEN 1 AND 96 AND instr(p.post,'.')=0 " \
+ "AND p.post NOT GLOB '*[^A-Za-z0-9._:-]*' " \
+ "AND length(p.community) BETWEEN 1 AND 96 AND instr(p.community,'..')=0 " \
+ "AND p.community NOT GLOB '*[^A-Za-z0-9._:-]*' " \
+ "AND length(p.author_subject) BETWEEN 6 AND 23 " \
+ "AND p.author_subject GLOB 'user:[1-9]*' AND substr(p.author_subject,6) NOT GLOB '*[^0-9]*' " \
+ "AND c.status='published' AND c.visibility='public' " \
+ "AND length(c.created_by_subject) BETWEEN 6 AND 23 " \
+ "AND c.created_by_subject GLOB 'user:[1-9]*' AND substr(c.created_by_subject,6) NOT GLOB '*[^0-9]*' " \
+ "AND c.moderation_policy='" CJR_POLICY "'"
 typedef struct {long long id;char key[97],title[161],description[6001],owner[64],status[24],visibility[24],policy[64],digest[65];} CjrCommunity;
 typedef struct {long long id;char key[97],actor[64],role[32],state[32],status[24],expires[64],digest[65];int active;} CjrMember;
 typedef struct {long long id;char key[97],author[64],parent[97],title[161],body[6001],status[24],moderation[24],visibility[24],at[64],digest[65];} CjrPost;

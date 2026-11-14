@@ -40,7 +40,7 @@ static int ph_cover_emit(const PhSite *site) {
     BfProfileCoverSource review = {source,key,item->title,item->by,item->href,item->image,item->rights,
                                    position/101,position%101};
     if (!bf_profile_cover_source_digest(&review, digest) || strcmp(digest, evidence)) goto done;
-    fputs("<style>.ph-cover-art{margin:0;height:clamp(180px,25vw,310px);position:relative;overflow:hidden;border-radius:24px 24px 0 0;background:#193d30}.ph-cover-art img{width:100%;height:100%;object-fit:cover;display:block}.ph-cover-credit{position:absolute;right:12px;bottom:12px;max-width:75%;padding:6px 10px;border-radius:8px;background:#122c22e8;color:#fff;font:12px/1.4 system-ui}.ph-cover-credit a{color:inherit;text-decoration:underline}.ph-cover-credit a:focus-visible{outline:3px solid #f5ce67;outline-offset:3px}</style><figure class=\"ph-cover-art\" data-profile-cover><img src=\"",stdout);
+    fputs("<figure class=\"ph-cover-art\" data-profile-cover><img src=\"",stdout);
     html(item->image); fputs("\" alt=\"",stdout); html(item->title);
     printf("\" style=\"object-position:%d%% %d%%\" referrerpolicy=\"no-referrer\">",review.focal_x,review.focal_y);
     fputs("<figcaption class=\"ph-cover-credit\"><a href=\"/o/",stdout); html(source); fputc('/',stdout); html(key);

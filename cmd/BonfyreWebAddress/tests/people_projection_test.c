@@ -177,7 +177,7 @@ int main(void) {
        bf_credit_profile_host("Alex Rivera","",host_again))
         fail("source-credit host lost deterministic exact-source boundary");
     const char *sql =
-        "CREATE TABLE item(source TEXT,key TEXT,title TEXT,kind TEXT,publisher TEXT,at INTEGER,by TEXT,family TEXT DEFAULT 'news');"
+        "CREATE TABLE item(source TEXT,key TEXT,title TEXT,kind TEXT,publisher TEXT,at INTEGER,by TEXT,family TEXT DEFAULT 'news',href TEXT DEFAULT '');"
         "INSERT INTO item(source,key,title,kind,publisher,at,by) VALUES"
         "('source-one','a','Story One','article','One News',1760000030,'Alex Rivera'),"
         "('source-one','b','Story Two','article','One News',1760000020,'Alex Rivera'),"
@@ -188,9 +188,9 @@ int main(void) {
         "('source-three','g','Outlet credit','article','Three News',1760000002,'Three News'),"
         "('source-three','h','Show credit','article','Three News',1760000001,'Pod Save America Podcast'),"
         "('source-three','i','Handle credit','article','Three News',1760000000,'Rokket');"
-        "INSERT INTO item VALUES('source-show','k','Episode title','episode','Crooked Media',1760000000,'What A Day','podcasts');"
-        "INSERT INTO item VALUES('source-brand','l','Jacket title','product','Retailer',1760000000,'Taylor Stitch','style');"
-        "INSERT INTO item VALUES('source-four','j','Recall notice','recall','Four Agency',1760000040,'Best Friends Bakery','recalls');";
+        "INSERT INTO item VALUES('source-show','k','Episode title','episode','Crooked Media',1760000000,'What A Day','podcasts','');"
+        "INSERT INTO item VALUES('source-brand','l','Jacket title','product','Retailer',1760000000,'Taylor Stitch','style','');"
+        "INSERT INTO item VALUES('source-four','j','Recall notice','recall','Four Agency',1760000040,'Best Friends Bakery','recalls','');";
     const char *cms_sql =
         "CREATE TABLE site_presentation(host TEXT,subject_address TEXT,status TEXT,namespace TEXT,profile TEXT);"
         "INSERT INTO site_presentation VALUES"
@@ -230,9 +230,9 @@ int main(void) {
         sqlite3_close(db);db=NULL;
     }
     index = render_index(path);
-    if (!strstr(index, "3 publisher contributor subaccounts</strong> from what this estate reads, across 3 sources"))
+    if (!strstr(index, "<dt>Credited makers</dt><dd>3</dd>") || !strstr(index, "<dt>Sources</dt><dd>3</dd>"))
         fail("index did not count credited names and their sources");
-    if (!strstr(index, "2 people</strong> on Aurekai with 4 pages"))
+    if (!strstr(index, "<dt>Estate residents</dt><dd class='is-on'>2</dd><small>4 pages of their own"))
         fail("overview did not distinguish addressed people from their pages");
     if (occurrences(index, "data-person-subject='person:nick'") != 1 ||
         !strstr(index, "nick.aurekai.life") || !strstr(index, "nick.aurekai.live") || !strstr(index, "data-profile-primary href='https://nick.aurekai.work/'"))
@@ -245,7 +245,7 @@ int main(void) {
         !strstr(index, "/relationships?context=self&amp;who=Alex%20Rivera&amp;source=source-one") ||
         !strstr(index, "/relationships?context=self&amp;who=Alex%20Rivera&amp;source=source-two"))
         fail("relationship continuations collapsed source-bound observations");
-    if (!strstr(index, "One News</a>") || !strstr(index, "Latest: <a href='/o/source-one/a'>Story One</a>"))
+    if (!strstr(index, "<small>One News</small>") || !strstr(index, "Latest: <a href='/o/source-one/a'>&ldquo;Story One&rdquo;</a>"))
         fail("index named sources by their feed id or lost the latest piece");
     if (!strstr(index, "not taken to be one person") || !strstr(index, "data-identity-boundary"))
         fail("source credits lost their public evidence boundary");
@@ -256,22 +256,18 @@ int main(void) {
     if (strstr(index, "What A Day") || strstr(index, "Taylor Stitch"))
         fail("exact source self-credits were listed as people");
     {
+        /* Each exact source credit opens its own source reader and carries its
+         * own credited profile host; equal spellings never share one. */
         char sole_host[128],direct[256];
         if(!bf_credit_profile_host("Robin Shah","source-three",sole_host))fail("unique source profile host");
-        snprintf(direct,sizeof(direct),"data-credit-name='Robin Shah' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Robin%%20Shah&amp;source=source-three' data-profile-host='%s'",sole_host);
-        if(!strstr(index,direct))fail("single-source People name did not open its public profile");
+        snprintf(direct,sizeof(direct),"href='/people?who=Robin%%20Shah&amp;source=source-three' data-profile-host='%s'",sole_host);
+        if(!strstr(index,direct))fail("single-source People name did not open its source reader");
         char alex_a[128],alex_b[128],link_a[256],link_b[256];
         if(!bf_credit_profile_host("Alex Rivera","source-one",alex_a)||!bf_credit_profile_host("Alex Rivera","source-two",alex_b))fail("source profile hosts");
-        snprintf(link_a,sizeof(link_a),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Alex%%20Rivera&amp;source=source-one' data-profile-host='%s'",alex_a);
-        snprintf(link_b,sizeof(link_b),"data-credit-name='Alex Rivera' data-publisher-account='' data-publisher-subaccount=''><h3><a href='/people?who=Alex%%20Rivera&amp;source=source-two' data-profile-host='%s'",alex_b);
+        snprintf(link_a,sizeof(link_a),"href='/people?who=Alex%%20Rivera&amp;source=source-one' data-profile-host='%s'",alex_a);
+        snprintf(link_b,sizeof(link_b),"href='/people?who=Alex%%20Rivera&amp;source=source-two' data-profile-host='%s'",alex_b);
         if(!strstr(index,link_a)||!strstr(index,link_b)||!strcmp(alex_a,alex_b))
             fail("each source credit must open its own exported origin reader");
-        snprintf(link_a,sizeof(link_a),"data-credit-profile href='https://%s/'",alex_a);
-        snprintf(link_b,sizeof(link_b),"data-credit-profile href='https://%s/'",alex_b);
-        if(!strstr(index,link_a)||!strstr(index,link_b))fail("source-profile continuations remained on legacy dossier URLs");
-        if(!strstr(index,"data-credit-source-read href='/people?who=Alex%20Rivera&amp;source=source-one'") ||
-           !strstr(index,"data-credit-source-read href='/people?who=Alex%20Rivera&amp;source=source-two'"))
-            fail("source-qualified publication reader lost its same-origin path");
     }
     free(index);
 

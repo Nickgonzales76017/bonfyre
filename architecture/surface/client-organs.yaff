@@ -118,6 +118,14 @@ interaction estate-field-asks-the-aperture
   binding deploy/worker/estate-worker.mjs
 
 architecture service-site
+  source_path components/BonfyreServiceSite/authoring/authoring.pcss
+  source_path components/BonfyreServiceSite/account-navigation.pcss
+  source_path components/BonfyreServiceSite/application-previews.pcss
+  source_path components/BonfyreServiceSite/workbook-presentation.pcss
+  source_path deploy/tailwind/package.json
+  invariant service-site stylesheet sources compile through the pinned PostCSS pipeline to their existing build and release paths; the visual editor compiles its source before copying the shell asset
+  witness components/BonfyreServiceSite/tests/service-site.test.mjs exercises generated service-site looks at desktop and phone sizes; workbook-native.test.mjs verifies the installed workbook and its assets against the native owner
+  forbidden_inference a compiled stylesheet -> a verified Stitch match or a published customer site
   invariant native instrument leave-page protection compares current record snapshots with the saved baseline; transient selection and handoff controls do not become false unsaved edits, and an older asynchronous comparison cannot clear newer changes
   invariant confirmed instrument saves release their editing lock independently of optional metadata refresh; failed or obsolete list results do not replace a newer record outcome
   source_path components/BonfyreServiceSite/opportunity-selection.mjs
@@ -407,6 +415,21 @@ architecture service-site
   known_gap the fixture planner has accepted live API intake, native-handoff and published-browser evidence; a merchant-approved engagement remains unverified
   known_gap new fixture-planner Google Stitch generation is pending because the current session exposes no usable Stitch or browser tool binding; its exact brief and implementation mapping are retained without claiming generated design output
   interacts fixture-planner-retains-native-reviews
+  source_path components/BonfyreServiceSite/authored-journal-article.mjs
+  source_path components/BonfyreServiceSite/tests/journal-article-composition.test.mjs
+  invariant a composed journal article carries its schema, bounded navigation, related list and explicit asset-base refs; section bodies render only through the native bounded Markdown renderer, never a JS dialect
+  witness components/BonfyreServiceSite/tests/journal-article-composition.test.mjs proves five assertions over the reference post: block and TOC parity against native render-md, mature stylesheet and icon refs in estate-absolute and Pages-relative forms, and an estate canonical replacing the GitHub Pages origin
+  source_path components/BonfyreServiceSite/authoring/journal-import.mjs
+  source_path components/BonfyreServiceSite/authoring/native-cms.mjs
+  source_path cmd/BonfyreCMS/content-types/site_page.json
+  witness cmd/BonfyreSurfaceScene/tests/journal-import.test.mjs proves all sixteen posts parse category and icon, carry the category to the page eyebrow, and draft at /blog/<slug>/ through the native page-write with committed readback
+  forbidden_inference a composed article matching its reference -> the reference source was valid, receipted, or authorized for publication; parity is structural, not a byte mirror
+  source_path components/BonfyreServiceSite/authoring/intake-registry.mjs
+  source_path cmd/BonfyreSurfaceScene/tests/intake-registry.test.mjs
+  witness cmd/BonfyreSurfaceScene/tests/intake-registry.test.mjs proves WordPress, RSS, GeoJSON, Frappe AppPack and Ghost sources normalize to journal drafts; all five served 200 from preview with kind-correct eyebrows and keep-reading
+  known_gap intake covers WordPress normalized text, RSS, GeoJSON digests, Frappe AppPack surfaces and Ghost posts; live dashboard data feeds and raw WordPress block HTML remain unbuilt
+  known_gap per-article product icons parse from frontmatter but have no CMS field; the served hero carries category, date and read time without the glyph
+  interacts service-site-composes-journal-from-native-markdown
 
 interaction fixture-planner-retains-native-reviews
   source service-site

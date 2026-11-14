@@ -5,7 +5,7 @@ import {openNativeAuthoring,saveNativeAuthoring,toNativePageWrite} from "./nativ
 
 import {sha256Text} from "./sha256-portable.mjs";
 const fail=message=>{throw Error("Journal intake: "+message);};
-const safeSlug=text=>typeof text==="string"&&/^[a-z0-9][a-z0-9-]{0,70}$/.test(text);
+const safeSlug=text=>typeof text==="string"&&/^[a-z0-9][a-z0-9-]{0,95}$/.test(text);
 const dateOK=text=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return false;
  const [y,m,d]=text.split("-").map(Number),leap=y%4===0&&(y%100!==0||y%400===0);
  return m>=1&&m<=12&&d>=1&&d<=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31][m-1];};
@@ -24,7 +24,7 @@ function frontmatter(text){
   const field=/^([a-z][a-z0-9_-]*):\s*(.*)$/.exec(line);
   if(!field)fail("unsupported frontmatter syntax");
   const [,name,raw]=field;
-  if(["slug","title","description","category","published","status","origin"].includes(name)){
+  if(["slug","title","description","category","icon","published","status","origin"].includes(name)){
    if(Object.hasOwn(values,name))fail("duplicate frontmatter "+name);
    values[name]=raw.replace(/^["']|["']$/g,"").trim();
   }
@@ -60,8 +60,12 @@ export async function parseJournalMarkdown(text,{filename="journal.md"}={}){
  if(values.published&&!dateOK(values.published))fail("invalid publication date");
  if((values.description||"").length>5000)fail("description too long");
  const sections=sectionsOf(body,title);
+ const category=values.category||"",icon=values.icon||"";
+ if(category&&!/^[A-Za-z0-9][A-Za-z0-9 .&'-]{0,59}$/.test(category))
+  fail("invalid article category");
+ if(icon&&!/^[a-z0-9-]{1,32}$/.test(icon))fail("invalid article icon");
  return {schema:"aurekai.journal-intake.v1",title,slug,description:values.description||"",
-  published:values.published||"",status:values.status||"",
+  published:values.published||"",status:values.status||"",category,icon,
   filename,source_digest:await sha256Text(clean),sections,
   // The digest proves which locally selected bytes were used, not who authored them.
   source_kind:"local-markdown"};
@@ -88,6 +92,7 @@ export function journalPageMetadata(journal){
  if(journal?.schema!=="aurekai.journal-intake.v1"||!safeSlug(journal.slug))
   fail("journal metadata required");
  return {title:journal.title,heading:journal.title,lede:journal.description,
+  ...(journal.category?{eyebrow:journal.category}:{}),
   editorial_kind:"article",media_subject_ref:"article:"+journal.slug,
   editorial_published_on:journal.published};
 }
@@ -95,8 +100,8 @@ export function journalPageMetadata(journal){
  * first write. Each native save is independently revision-checked and read back.
  * A partial commit is reported; it is never retried or called a publication. */
 export async function saveJournalBatch(articles,{site="",fetcher=fetch,onProgress}={}){
- if(!Array.isArray(articles)||!articles.length||articles.length>32)
-  fail("choose between one and 32 journal articles");
+ if(!Array.isArray(articles)||!articles.length||articles.length>128)
+  fail("choose between one and 128 journal articles");
  if(typeof site!=="string"||site.length>127||
     (site&&!/^[a-z0-9][a-z0-9-]{0,126}$/.test(site)))
   fail("invalid destination namespace");
@@ -109,7 +114,7 @@ export async function saveJournalBatch(articles,{site="",fetcher=fetch,onProgres
   if(slugs.has(article.slug)||digests.has(article.source_digest))
    fail("duplicate article slug or source; choose each article once");
   slugs.add(article.slug);digests.add(article.source_digest);
-  plans.push({article,metadata,route:"/journal/"+article.slug+"/"});
+  plans.push({article,metadata,route:"/blog/"+article.slug+"/"});
  }
  let namespace="";
  for(const plan of plans){

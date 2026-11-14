@@ -47,8 +47,18 @@ $(FRAGMENT_LIB)/libfragment.a:
 	$(MAKE) -C $(FRAGMENT_LIB)
 
 test: $(TARGET)
-	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreTranscribe/tests/vectors/command_behavior.json
-	$(HOME)/.bun/bin/bun test tests/installed_caption.test.mjs
+	$(MAKE) -C ../../tests/vectors bonfyre-vectors
+	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreTranscribe/tests/vectors/command_behavior.json cmd/BonfyreTranscribe/tests/vectors/caption_contract.json
+	@$(MAKE) -s caption-mutation-witness
+
+.PHONY: caption-mutation-witness
+caption-mutation-witness:
+	@log=$(mktemp); trap 'rm -f "$log"' EXIT; \
+	if BONFYRE_TRANSCRIBE_BIN=/usr/bin/false ../../tests/vectors/bonfyre-vectors --root ../.. tests/vectors/caption_contract.json >"$log" 2>&1; then \
+	  echo 'REFUSE: mutated transcription behavior passed caption contract' >&2; exit 1; \
+	fi; \
+	if ! grep -q '^  FAIL' "$log"; then cat "$log" >&2; exit 1; fi; \
+	echo 'PASS caption mutation refusal'
 
 clean:
 	rm -f $(TARGET)

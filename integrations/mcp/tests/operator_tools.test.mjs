@@ -46,6 +46,19 @@ test('catalog intersects trusted Project and rich schemas, never trusts advertis
   expect(low.tools.map((tool) => tool.name)).not.toContain('operator_goal_supersede');expect((await owner.execute('read-only', 'operator_goal_supersede', { goal_ids: ['0123456789abcdef0123456789abcdef'], reason: 'fixture' }, { mode: 'read' })).error).toMatch(/not delegated/);
 });
 
+test('maturation ledger separates inspection from gated atomic seed and verdict effects', async()=>{
+  const seen=[];
+  const {owner}=harness([{name:'operator_maturation_ledger'}],
+    async(name,args)=>{seen.push(args.action);return {action:args.action};});
+  await owner.catalog(policy);
+  expect((await owner.execute('run','operator_maturation_ledger',{action:'coverage'},policy)).error).toBeUndefined();
+  expect((await owner.execute('run','operator_maturation_ledger',{action:'read',limit:30},policy)).error).toBeUndefined();
+  expect((await owner.execute('run','operator_maturation_ledger',{action:'seed',expected_sha256:'1'.repeat(64)},policy)).error).toBeUndefined();
+  const denied=await owner.execute('run','operator_maturation_ledger',{action:'record',expected_sha256:'1'.repeat(64),updates:[]},{mode:'read',auto_apply_low_risk_patches:true});
+  expect(denied.error).toMatch(/require power-mode/);
+  expect(seen).toEqual(['coverage','read','seed']);
+});
+
 test('unexpected composite exception after native apply remains outcome uncertain', async () => {
   const calls = [], actions = [];
   const owner = createOperatorTools({ listTools: async () => [{ name: 'project_apply_low_risk_patch' }],

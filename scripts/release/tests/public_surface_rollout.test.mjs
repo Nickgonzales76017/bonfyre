@@ -6,6 +6,10 @@ import {createHash} from 'node:crypto';
 import {encode} from '../../../integrations/browser/workspace-msgpack.mjs';
 import {readProgramServicePolicy,renderProgramServicePolicy} from '../../project-program-service-policy.mjs';
 import {freezeBrowser,freezePrograms,uniqueInputs,configurePrograms,inspectRelease,freezeSiteAlias,terminalBin,verifyInputs,verifyBrowser,browserReadback,programReadback,retryReadbackTransport,acceptanceEnvironment,acceptanceIdentity,requireAcceptance,requireFrozenAcceptance,verifyPromotionReceipt,findExtensionChromium} from '../public_surface_rollout.mjs';
+import {Database} from 'bun:sqlite';
+import {selectMemberJournalCanary,verifyMemberJournalReadback} from '../member_journal_canary.mjs';
+import {assertEstateShell} from '../public_surface_rollout.mjs';
+import {assertStyleAsset} from '../public_surface_rollout.mjs';
 
 const projectRoot=resolve(import.meta.dir,'../../..');
 const homes=[];
@@ -42,6 +46,21 @@ function stageFixture(f){
 }
 afterAll(()=>{for(const path of homes)rmSync(path,{recursive:true,force:true});});
 
+test('public release rejects old demo shell even when the activity script is present',()=>{
+ const good='<body class="ak-app work"><header class="ak-bar"></header><main><script src="/apps/aurekai-activity.mjs"></script></main><footer class="ak-foot"></footer><div data-ak-player></div></body>';
+ expect(()=>assertEstateShell(good,'aurekai.work')).not.toThrow();
+ expect(()=>assertEstateShell(good+'<section>Explore the rest of Aurekai</section>','aurekai.work')).toThrow('obsolete demo body');
+ for(const [old,replacement] of [['ak-app','old-demo'],['ak-bar','old-nav'],['<main>','<div>'],['ak-foot','old-footer'],['data-ak-player','data-old-player']])
+  expect(()=>assertEstateShell(good.replace(old,replacement),'aurekai.work')).toThrow('lost');
+});
+test('release refuses missing or stale authored site stylesheets',()=>{
+ const f=fixture(),name='composition.css',file=join(f.release,'site',name);put(file,'.ak-app{color:#fff}');
+ const good={status:200,type:'text/css; charset=utf-8',sha256:sha(readFileSync(file))};
+ expect(()=>assertStyleAsset(good,f.release,name)).not.toThrow();
+ expect(()=>assertStyleAsset({...good,status:404},f.release,name)).toThrow('unavailable');
+ expect(()=>assertStyleAsset({...good,type:'text/html'},f.release,name)).toThrow('CSS');
+ expect(()=>assertStyleAsset({...good,sha256:'0'.repeat(64)},f.release,name)).toThrow('differs');
+});
 test('frozen site uses the exact release resolver, never the stale managed site',()=>{
  const f=fixture();stageFixture(f);
  const web=join(f.release,'bin/bonfyre-web-address'),site=join(f.release,'bin/bonfyre-site');
@@ -383,4 +402,67 @@ test('activation requires all current acceptance groups and rejects obsolete or 
  expect(()=>requireAcceptance(f.release,stageHash,'new-verifier',groups)).toThrow();expect(()=>requireAcceptance(f.release,stageHash,acceptanceKey,[...groups,['new.test.mjs']])).toThrow();
  put(join(f.release,'accepted.mpk'),encode({...accepted,logs:logs.slice(0,1)}));expect(()=>requireAcceptance(f.release,stageHash,acceptanceKey,groups)).toThrow();put(join(f.release,'accepted.mpk'),encode(accepted));
  put(join(f.release,'acceptance-1.log'),'altered output');expect(()=>requireAcceptance(f.release,stageHash,acceptanceKey,groups)).toThrow();
+});
+
+test('published member journals are selected from CMS, with all local and public article routes verified',async()=>{
+ const f=fixture(),path=join(f.home,'member-publications.db'),db=new Database(path,{create:true});
+ db.exec('CREATE TABLE site_presentation(namespace TEXT,status TEXT,profile TEXT,site_id TEXT,host TEXT);CREATE TABLE site_page(namespace TEXT,status TEXT,route TEXT);CREATE TABLE site_fragment(namespace TEXT,page TEXT,slot TEXT,audience TEXT,status TEXT,kind TEXT,projection_contract TEXT,semantic_tags TEXT,body TEXT);');
+ const site='person-writer-work',host='writer.aurekai.work';
+ db.query('INSERT INTO site_presentation VALUES (?,?,?,?,?)').run('root','published','member-profile-v1',site,host);
+ const putPage=db.query('INSERT INTO site_page VALUES (?,?,?)');
+ const putBody=db.query('INSERT INTO site_fragment VALUES (?,?,?,?,?,?,?,?,?)');
+ for(let i=0;i<90;i++){
+  const route='/blog/article-'+String(i).padStart(3,'0')+'/';
+  putPage.run(site,'published',route);
+  putBody.run(site,route,'showcase','public','published','profile-story','{"html":1}','{"authoring_v1":{"version":1}}','Published editorial body '+i);
+ }
+ putPage.run(site,'draft','/blog/private-draft/');
+ db.close();
+ const canary=selectMemberJournalCanary(path);
+ expect(canary).toMatchObject({site_id:site,host,total:90});
+ expect(canary.route_sha256).toMatch(/^[a-f0-9]{64}$/);
+ expect(canary.routes).not.toContain('/blog/private-draft/');
+ const held=new Database(path);
+ held.query('UPDATE site_fragment SET audience=? WHERE namespace=? AND page=?').run('self',site,'/blog/article-004/');
+ held.close();
+ expect(()=>selectMemberJournalCanary(path)).toThrow('published pages without released authored bodies');
+ const restored=new Database(path);
+ restored.query('UPDATE site_fragment SET audience=? WHERE namespace=? AND page=?').run('public',site,'/blog/article-004/');
+ restored.close();
+ const called=[];
+ const read=async(base,route,requestHost)=>{
+  called.push({base,route,requestHost});
+  return {status:200,sha256:'a'.repeat(64),text:route==='/blog/'||route==='/?tab=posts'
+    ?route==='/blog/'?'<div class="fd ak-journal-list"></div>':'<main data-profile-journal></main>'
+    :'<link rel="canonical" href="https://'+host+route+'"><div class="ak-zen-body ak-zen-text"><p>Genuine article prose is now rendered through the native authored document projector.</p></div>'};
+ };
+ const local=await verifyMemberJournalReadback(canary,read);
+ expect(local).toMatchObject({host,total:90,routes_verified:90,publicRead:false});
+ expect(called.length).toBe(92);
+ expect(called.every(x=>x.base===null&&x.requestHost===host)).toBe(true);
+ called.length=0;
+ const publicResult=await verifyMemberJournalReadback(canary,read,{publicRead:true});
+ expect(publicResult.routes_verified).toBe(90);
+ expect(called).toHaveLength(92);
+ expect(publicResult.route_sha256).toBe(canary.route_sha256);
+ expect(called.every(x=>x.base==='https://'+host&&x.requestHost===undefined)).toBe(true);
+ const silentRoute=canary.routes[4];
+ await expect(verifyMemberJournalReadback(canary,async(base,route,requestHost)=>route===silentRoute
+  ?{status:200,sha256:'0'.repeat(64),text:'<link rel="canonical" href="https://'+host+route+'"><div class="ak-zen-body ak-zen-text"></div>'}
+  :read(base,route,requestHost),{publicRead:true})).rejects.toThrow('must render editorial prose');
+ const lostRoute=canary.routes[30];
+ await expect(verifyMemberJournalReadback(canary,async(base,route,requestHost)=>route===lostRoute
+  ?{status:404,text:'',sha256:'0'.repeat(64)}:read(base,route,requestHost),{publicRead:true})).rejects.toThrow('published article');
+ const mutated=new Database(path);
+ mutated.query('UPDATE site_page SET route=? WHERE namespace=? AND route=?').run('/blog/renamed-source-article/',site,'/blog/article-033/');
+ mutated.query('UPDATE site_fragment SET page=? WHERE namespace=? AND page=?').run('/blog/renamed-source-article/',site,'/blog/article-033/');
+ mutated.close();
+ const changedCanary=selectMemberJournalCanary(path);
+ expect(changedCanary.total).toBe(90);
+ expect(changedCanary.route_sha256).not.toBe(canary.route_sha256);
+ const invalid=new Database(path);
+ invalid.query('INSERT INTO site_presentation VALUES (?,?,?,?,?)').run('root','published','member-profile-v1','person-bad','untrusted.example.com');
+ for(let i=0;i<91;i++)invalid.query('INSERT INTO site_page VALUES (?,?,?)').run('person-bad','published','/blog/untrusted-'+i+'/');
+ invalid.close();
+ expect(()=>selectMemberJournalCanary(path)).toThrow('Published member journal host is invalid.');
 });

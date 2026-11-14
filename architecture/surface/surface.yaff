@@ -488,6 +488,14 @@ architecture foreign-link-desk
   purpose The public Links, Sources and ForeignTwin routes use the native Source Desk. The shared bounded collection supplies search, inspection, accessible tabs, commands and resizable panes. Retained passages can be reviewed into an installed research workspace through its current destination and record owners. Publication and lost-response recovery remain with the atomic SourceCollection/World owner. link.html is a retained compatibility carrier, not the current public route renderer.
   maturity implemented
   source_path cmd/BonfyreWebAddress/src/source_desk.h
+  source_path site/matrix/composition.css
+  invariant the source catalogue, reader and connection surfaces load the shared composition stylesheet; sort links retain the selected search and family without requiring client script
+  witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh checks that the source hub serves its shared stylesheet and preserves search and family in its sort links
+  invariant /sources and /link read the item archive and frontier to list kept sources; ?source= is the reading room; /channels with no ledger coordinate is the living-feeds reader; /connections and /connect show declared account links and the carriers; every add or link form posts to /studio/ or /account/connections and nothing else
+  cannot_infer a source listed as kept -> a licence to reuse its material, or a verified publisher identity
+  cannot_infer a declared Bluesky or ActivityPub link -> control of that account or any sync from it
+  known_gap no owner yet records per-feed agent access policy (full read, summary only, block) or Bluesky CAR repository sync, so those screens are shown only as the carriers and declared links that exist
+  known_gap Gmail sync rules and exclusions are set inside the Connection Studio workspace; /connections?provider=gmail describes them and links there rather than reading the saved rules
   source_path cmd/BonfyreWebAddress/src/publication_retained.h
   source_path schemas/control/publication-occurrence.cue
   source_path integrations/browser/publication-picker.mjs
@@ -700,6 +708,16 @@ architecture territory-landing
   witness cmd/BonfyreWebAddress/tests/url_review.test.mjs verifies anonymous, read-only and write-authorized review, candidate refusal, escaped input, complete sign-in continuation after failure and success, and an explicit authorized read retained by the native observer
   witness packs/no-simulation/home-contract-20261013/browser.json checks four native territory fallback pages at desktop and phone widths and follows intake through URL review without fetching the supplied external address
   known_gap the live apex front pages currently use PageComposition, while this fallback template shares one visual layout across territory classes; the fallback browser witness does not establish distinct visual characters or a public rollout of URL review
+  source_path cmd/BonfyreWebAddress/src/auth_routes_and_studio_core.h
+  source_path cmd/BonfyreWebAddress/src/auth_continuation.h
+  source_path site/matrix/surfaces/login.html
+  source_path site/matrix/surfaces/signup.html
+  source_path site/matrix/surfaces/account-native.html
+  source_path site/matrix/aurekai-trust.css
+  invariant /about and /start on the four apex hosts render the founding page on the shared bar and footer; its member roll counts only published member-profile-v1 site_presentation rows, its proposal and vote counts read governance_proposal and governance_vote, and its join form posts to the same native /signup owner as the sign-up page
+  invariant sign-in and sign-up are authored surfaces lowered by bf_auth_form_document onto the shared bar and footer; the account path reads arrive, sign up, sign in, /account (site and interests), then the page and tools, and never grants a role, payment, publication or message
+  cannot_infer the founding page member roll -> the number of accounts, consent to be contacted, or any relationship between listed people
+  known_gap choosing interests needs a published member site (profile_home.h /profile/interests/add); a new account without one is sent to /account to choose a site first, so interests are not yet a standalone step
 
 interaction landing-prepares-native-public-route
   source territory-landing
@@ -928,6 +946,52 @@ architecture human-community-body
   forbidden_inference a homepage conversation preview -> community membership, participant identity disclosure, current external-platform activity or permission to publish
   witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs exercises native creation, membership, moderation and four-root discovery, cache-enabled withdrawal, exact thread continuation and script-disabled phone and desktop navigation
   witness cmd/BonfyreWebAddress/tests/surface_pattern_contract_test.sh proves canonical community body, expiry-aware active member and public-presence counts, accepted posts/replies, and excludes a withdrawn reaction; live /community renders that body rather than a federation carrier
+  source_path cmd/BonfyreCMS/content-types/person_affinity.json
+  source_path cmd/BonfyreWebAddress/src/affinity_projection.h
+  source_path cmd/BonfyreWebAddress/src/affinity_projection.c
+  source_path cmd/BonfyreWebAddress/tests/affinity_projection_test.c
+  source_path cmd/BonfyreCMS/tests/person_affinity.test.mjs
+  source_path cmd/BonfyreWebAddress/src/companions_home.h
+  source_path cmd/BonfyreCMS/content-types/person_interest.json
+  source_path cmd/BonfyreCMS/tests/person_interest.test.mjs
+  source_path cmd/BonfyreCMS/content-types/date_plan.json
+  source_path cmd/BonfyreWebAddress/src/dateplan_projection.h
+  source_path cmd/BonfyreWebAddress/src/dateplan_projection.c
+  source_path cmd/BonfyreWebAddress/tests/dateplan_projection_test.c
+  source_path cmd/BonfyreCMS/tests/date_plan.test.mjs
+  source_path cmd/BonfyreCMS/content-types/person_report.json
+  source_path cmd/BonfyreCMS/tests/person_report.test.mjs
+  source_path cmd/BonfyreWebAddress/src/club_projection.h
+  source_path cmd/BonfyreWebAddress/src/club_projection.c
+  source_path cmd/BonfyreWebAddress/tests/club_projection_test.c
+  invariant clubs are community bodies carrying an interest label and events are community posts carrying a time and venue; RSVPs are latest-wins reactions, and gold is community membership with a future paid-through date that lifts quotas
+  witness 2026-11-10 preview listed clubs and events, joined, RSVP-toggled with counts, filtered discovery by club, enforced superlike and plan quotas with 429s, and bypassed quotas plus badged gold after an operator grant
+  invariant a block is an affinity kind enforced both directions: either side breaks mutuality, zeroes the score and excludes both from discovery, while a report hides only from its reporter and never auto-verdicts; reports are capped at five per actor per day
+  witness 2026-11-10 preview recorded reports (303, 429 past quota) with reporter-side hiding, blocks breaking mutuals both ways, attention and matches views, and a report link on visited member profiles
+  invariant a person affinity edge is directed, latest-wins and private until mutual; withdrawn, draft and unknown-kind edges read as never-existed, self-edges read as none, and mutuality is computed at read time, never stored
+  invariant match score is 2 per shared published interest label capped at 10 plus 1 for a recent public post; ranking sorts a bounded pool by score with subject-order ties, and interest labels are searchable needle text without gating visibility
+  invariant the companions directory lists only published member people, never the viewer or the viewer's active passes; anonymous readers see no states, forms or mutuals, and the wire repr=API marker is accepted and ignored
+  witness cmd/BonfyreWebAddress/tests/affinity_projection_test.c proves like/pass/superlike reads, withdrawal and draft exclusion, latest-wins revocation, superlike-counted mutuals and unknown-kind refusal; cmd/BonfyreCMS/tests/person_affinity.test.mjs proves typed create, conditional withdraw and affinity uniqueness
+  witness 2026-11-10 preview served /companions 200 in HTML and JSON, recorded a like via POST (303), refused duplicate (409), self-like (400) and anonymous write (401), rendered status and computed-mutual badges, and excluded a passed subject from both carriers
+  witness 2026-11-10 preview ranked ?sort=match by shared interests with reasons, added/removed interests through /profile/interests (303, 400 on bad label, idempotent re-add), highlighted shared chips on member pages, and searched people by interest label
+  invariant date-plan generation resolves its model through Model Commons (pin or capability edge) and executes only on the owned local runner; output admits schema, required safety notes and budget feasibility, never the raw reply; companions are mutuals or no one; absent models refuse honestly
+  witness 2026-11-10 dateplan golden tests prove prompt shape, budget admission, safety-note refusal and catalogue resolution; preview generated end to end through a stub runner (303, costs 0-45, mutual companion kept), refused self-companion (403), accepted conditionally, and answered 503 with reason when unconfigured
+  source_path components/BonfyreServiceSite/authoring/native-component-templates.mjs
+  source_path components/BonfyreServiceSite/authoring/presentation-patterns.mjs
+  invariant companions rows render through the shared native components (ui:card, ui:badge, ui:action) built as an authoring tree and lowered by the same native renderer as authored articles; no directory-specific row markup or classes remain
+  witness 2026-11-11 affinity_projection_test.c asserts rows speak the component language (ak-pattern ak-card, badge labels, hidden-field action forms); preview served /companions 200 with five component rows live, and a fresh-store WAL/read-only trap found during verification was fixed in the preview backup flow
+  source_path cmd/BonfyreCMS/content-types/person_quiz_answer.json
+  source_path cmd/BonfyreCMS/tests/person_quiz_answer.test.mjs
+  source_path cmd/BonfyreWebAddress/src/profile_home.h
+  invariant quiz agreement adds the lower of two stated importances (1..3) per co-answered bank question capped at +6 with a quiz+N reason token; answers are latest-wins rows and anything off-bank or mis-weighted reads as never-existed, so interests stay the primary signal
+  witness 2026-11-11 affinity_projection_test.c proves capping, latest-wins, invalid-answer refusal and the token in HTML and JSON carriers; person_quiz_answer.test.mjs proves typed create and conditional archive; the profile edit tab answers and clears all eight bank questions
+  witness 2026-11-11 companions filters, report reason and quiz answers purged every <select> for radio-pill groups with identical POST/GET contracts; live pages render pills with zero selects and quiz answers record 303 end to end
+  source_path cmd/BonfyreWebAddress/src/form_tree.h
+  invariant companions, clubs, events, notices, attention, plans, report, quiz and theme surfaces compose ui:card, ui:badge, ui:action, ui:choice and ui:field data through shared form-tree builders and the one native renderer; control markup never appears in C, and the reader stylesheet dresses components on light and dark surfaces alike
+  witness 2026-11-11 every dating/profile form and row renders from trees (Chrome-verified pixels on companions, edit and report); dead cp-*/bf-program-* CSS removed; witnesses assert ak-pattern output across all five projection suites
+  witness 2026-11-11 form_tree.h builders compose every companions/profile form (filters, report, plans, quiz, both theme pickers) from ui:action/ui:choice/ui:field; JSON carriers moved to bf_jsonw and the duplicate esc/jes escapers are deleted
+  invariant every companions route renders in the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT) with a hero counting distinct published member addresses and a switchboard of the seven companion views; the unfiltered listing composes events, people and clubs from their existing owners and links plans; layout in aurekai-native.css under [data-companions]
+  forbidden_inference a like -> mutual interest, a conversation, or permission to contact; only a computed mutual opens anything, and a pass -> rejection of the person rather than exclusion from one discovery surface
 
 interaction census-reader-serves-every-surface
   source census-reader
@@ -993,6 +1057,40 @@ architecture presentation-template
   witness 2026-11-06 a route_presentation row that names a published template (aurekai-stitch-night, taken from the Stitch design code.html Tailwind tokens) dresses that route through bf_site_presentation_emit_scoped and body[data-bf-template]; territory_presentation.template now applies the same way on territory homes (territory_home_test.c covers both schemas).
   forbidden_inference a route_presentation row -> the route's page matches its Stitch design; a row chooses rhythm and tokens, design parity is reviewed per design in COVERAGE.tsv
   forbidden_inference a design system arriving as rows -> new rendering code for that design system; the renderer is unchanged and unsupported layout is an owner gap, not a per-design file
+  source_path deploy/tailwind/input.pcss
+  source_path deploy/tailwind/postcss.config.cjs
+  source_path deploy/tailwind/styles/aurekai-bar.pcss
+  source_path deploy/tailwind/styles/composition.pcss
+  source_path deploy/tailwind/styles/blog.pcss
+  source_path deploy/tailwind/styles/profile-journal.pcss
+  source_path integrations/browser/account-choices.pcss
+  source_path integrations/browser/program-workspace.pcss
+  source_path integrations/browser/source-desk.pcss
+  source_path deploy/tailwind/styles/aurekai-native.pcss
+  source_path deploy/tailwind/styles/matrix.pcss
+  source_path deploy/tailwind/styles/world.pcss
+  source_path deploy/tailwind/styles/aurekai-site-program.pcss
+  source_path deploy/tailwind/styles/aurekai-composed.pcss
+  source_path deploy/tailwind/styles/matrix-aperture.pcss
+  source_path deploy/tailwind/styles/own-site.pcss
+  source_path deploy/tailwind/styles/aurekai-field-guide.pcss
+  source_path deploy/tailwind/styles/aurekai-research.pcss
+  source_path deploy/tailwind/styles/aurekai-trust.pcss
+  source_path deploy/tailwind/tailwind.config.js
+  source_path deploy/tailwind/package.json
+  source_path site/matrix/tailwind.css
+  invariant the estate stylesheet is compiled from input.pcss by the pinned PostCSS and Tailwind toolchain over the served markup itself (class attributes behind C escapes included); the semantic @layer components ship whole via safelist and utilities follow real usage
+  invariant estate shell, composition, site, profile and journal styles are authored as PostCSS and compiled to their served CSS assets; the freshness check verifies those outputs and both copies of the shared field guide and research assets
+  invariant the profile journal loads its compiled stylesheet from the shared asset route instead of emitting its static rules inline
+  invariant browser workspace styles are authored as PostCSS next to their owning modules and compiled to the existing release asset paths; freshness checks cover the generated outputs
+  witness integrations/browser/tests/program-workspace.browser.test.mjs exercises the compiled workspace styles and keyboard interactions on desktop and phone
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the profile journal asset and the shared navigation icon sizing and mobile labels in a browser
+  witness 2026-11-11 the rebuilt bundle kept every shipped selector except provably dead `static`, serves live at full size with the design system intact, and `bun run check` plus the estate-css workflow hold the served bytes identical to a fresh build
+  source_path cmd/BonfyreCMS/content-types/scope_presentation.json
+  source_path cmd/BonfyreWebAddress/tests/route_presentation_test.c
+  invariant account, profile and organization template scopes resolve route row, then visited site, then visited org, then the viewing account's actor default; latest published row per scope wins, unknown scopes and unsafe names read as absent, and a store without the type changes nothing
+  witness 2026-11-11 route_presentation_test.c proves precedence, latest-wins, draft/unsafe refusal and unknown-scope refusal; live profile pages wore the site template over the account one, signed-in companions wore the account template, and anonymous views wore none
+  witness 2026-11-11 profile Site design and companions Your design pickers list the published catalogue by family and record profile/account scope rows (303, 400 on unknown template); live round-trips flipped both surfaces to the new pick, and the estate-flagship pack adds 48 validated palette options
 
 architecture design-fingerprint
   canonical_name DesignFingerprint
@@ -1060,6 +1158,17 @@ architecture site-presentation-composition
   source_path cmd/BonfyreCMS/content-types/work_example.json
   source_path cmd/BonfyreWebAddress/src/main.c
   source_path cmd/BonfyreWebAddress/src/profile_home.h
+  source_path site/matrix/aurekai-native.css
+  source_path deploy/tailwind/styles/aurekai-native.pcss
+  invariant shared profile cover, gallery, story, spaces, interests and private-site styles compile into the native profile stylesheet rather than being emitted inline by each component
+  source_path cmd/BonfyreWebAddress/src/participant_journey.h
+  source_path deploy/tailwind/styles/aurekai-bar.pcss
+  invariant private profile participation components use the compiled shared stylesheet without emitting a page-level style block
+  witness cmd/BonfyreWebAddress/tests/participant_journey_browser.test.mjs checks the compiled participation controls, owner boundaries and phone-width browser flow
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the compiled profile styles at desktop and phone widths, including cover and gallery content with source-rights changes
+  invariant every member and credited profile page renders inside the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT, body.ak-app) with its layout in aurekai-native.css under [data-profile-page]; the overview leads with a feed of released, renderable /blog pages from all of the person's published member sites, newest first, linking across hosts, so a site with no pages of its own still shows the person's published work
+  witness 2026-11-12 preview served nick.aurekai.life / with the 90 articles kept on nick.aurekai.work (previously "Nothing published here yet"), hero counts 90 articles / 11 subjects / 4 sites read from site_page, and work rendered as a dated log; profile_site_scope.test.mjs asserts data-profile-feed and the article route on the posts tab
+  forbidden_inference an article listed on another site's profile -> that site published or endorses it; each row names and links the host that released it
   source_path cmd/BonfyreWebAddress/src/profile_cover_projection.h
   source_path cmd/BonfyreWebAddress/src/profile_gallery.h
   source_path cmd/BonfyreWebAddress/src/public_projection_cache.c
@@ -1115,6 +1224,25 @@ architecture site-presentation-composition
   known_gap the existing Ghost marketplace compiler still derives 238 visual vectors from category/hash variation rather than 238 separately observed complete SiteProfiles; its generated fingerprints must remain reference candidates until each profile has measured masthead, hero, section sequence, media geometry, mobile collapse, motion and application-slot contracts
   known_gap current public donor shells still contain legacy browser renderers. They must be replaced aperture-by-aperture by native initial HTML and HTMX fragment boundaries from this composition contract; no generic external-estate card lowerer may substitute for that work
   known_gap Agriculture now has native PublicationFeed, Community, Board, Listen and Watch lowerers with an explicit WeatherObservation empty state. It still needs a real WeatherObservation owner/lowerer, Ghost profile slot geometry, HTMX refresh contracts and the remaining application lowerers before it can replace an established public donor surface.
+  source_path cmd/BonfyreWebAddress/src/site_authored_document.h
+  source_path cmd/BonfyreSurfaceScene/src/authoring_markdown.h
+  invariant a member journal article at /blog/<slug>/ reuses the profile apex site scope (published member site, Matrix presence) and composes only a released site_page plus its showcase/public/html fragments through the shared native projector; journal prose renders through the reviewed Markdown stage and the opening title-section folds body-only
+  invariant a member journal article exposes its published article body to the shared estate player for browser narration; the player does not change publication scope or create an audio recording
+  invariant browser narration speaks nested article blocks once and omits hidden descendants while accepting an explicitly selected hidden text source
+  invariant rejected recordings and failed browser narration restore the play control and expose a retry message
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs uses controlled browser speech and audio engines to check nested article text, hidden text, speech errors and rejected recording playback
+  invariant a member journal index uses the estate navigation and footer while its published articles remain scoped to the site's namespace
+  known_gap journal narration through the estate player needs browser and responsive visual verification against its Stitch screen
+  witness 2026-11-10 the reference post served 200 from preview at nick.aurekai.work/blog/a-job-posting-has-more-than-one-job/ with both reference section headings in order, estate canonical, mature four-sheet style refs and no GitHub Pages origin leak; unpublished slug answered 404 and all five style assets 200
+  interacts web-address-serves-journal-through-native-projector
+  source_path cmd/BonfyreWebAddress/src/cms_page_composer.h
+  source_path cmd/BonfyreWebAddress/src/cms_page_composer_markup.h
+  source_path cmd/BonfyreWebAddress/tests/cms_page_composer.test.mjs
+  invariant the page composer opens a profile site namespace only through ?site= with the exact profile ownership proof (write session, bound actor, published member site, Matrix presence); anything else keeps the actor workspace, and the served composer threads the site through read, save, listing and history so a site edit can never land in the wrong namespace
+  witness 2026-11-11 cms_page_composer.test.mjs proves an owner opens, saves and lists in the site namespace while another account and an unknown site get 403 with actor-namespace isolation; live preview returned the real site snapshot for person-nick-work and the profile edit tab links into it
+  source_path cmd/BonfyreWebAddress/src/cms_page_composer_visual.h
+  source_path components/BonfyreServiceSite/authoring/entry.mjs
+  witness 2026-11-11 the visual workspace bundle (Puck, GrapesJS, Editor.js, narration handoff) builds stamped bonfyre:generated, serves with its shells at /cms/compose/advanced, and mounted in headless Chrome with zero console errors listing the site's pages
 
 interaction site-program-lowers-human-community
   source site-presentation-composition
@@ -1173,6 +1301,16 @@ architecture listen-program
   purpose Native /_surface/listen-program composes a published audio MediaProgram with its canonical MusicRecording reference. It renders HTML directly for people and JSON for machine carriers, while Work, Release ordering, credits, rights and playback state remain their own relations and owners.
   maturity implemented
   source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/public_audio_deck.h
+  source_path deploy/tailwind/styles/aurekai-bar.pcss
+  source_path cmd/BonfyreWebAddress/tests/public_audio_deck_test.mjs
+  invariant the shared player and a legacy recording deck stop one another through the public audio play event, preventing simultaneous playback
+  invariant recording deck presentation is compiled into the shared PostCSS bar stylesheet rather than emitted as inline CSS by each deck
+  witness cmd/BonfyreWebAddress/tests/public_audio_deck_test.mjs exercises the compiled deck at 390px and desktop with real media, keyboard seeking and reduced motion
+  invariant the listening screen's named queue advances through recordings and narrated source text in display order, with explicit previous and next controls
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks narration and recording transitions, queue boundaries and previous navigation with controlled browser media engines
+  witness cmd/BonfyreWebAddress/tests/public_audio_deck_test.mjs plays generated local recordings in Chrome and verifies that each controller pauses when the other starts
+  known_gap legacy recording decks and the shared player remain separate controls; a single player must retain the deck's queue, seek, speed, accessibility and recording-page features
   source_path cmd/BonfyreCMS/content-types/music_recording.json
   source_path cmd/BonfyreCMS/content-types/media_program.json
   source_path scripts/promote_commons_recorded_audio.mjs
@@ -1615,3 +1753,100 @@ interaction profile-cover-removal-through-cms
   forbidden_inference a cover removal -> deletion of the source artwork or publication of another selection
   witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs rejects foreign and stale removal and confirms the matching cover is archived
   binding cmd/BonfyreWebAddress/src/profile_home.h
+
+architecture guild-records
+  canonical_name GuildRecords
+  family surface
+  domain Surface / Human community
+  layer surface
+  semantic_question What has a guild written down about its curriculum, its apprentices' shop hours and bench proofs, the skills it attests, and the offers it makes?
+  purpose /guild/<id>/ (curriculum, sign-off queue), /bench (an apprentice's own hours and proofs), /proof/<key> (steward review), /attest (revocable skill attestation), /offers and /guild/openings (grants, patronage and apprenticeship openings with stated terms, applications and steward decisions) and /registry (cited field observations) read and write guild records bound to the guild's community_body and community_membership rows. The steward is the body's creator or an active member with role steward.
+  maturity implemented
+  source_path cmd/BonfyreWebAddress/src/guild_records_web.h
+  source_path cmd/BonfyreCMS/content-types/guild_module.json
+  source_path cmd/BonfyreCMS/content-types/guild_hours.json
+  source_path cmd/BonfyreCMS/content-types/guild_bench_proof.json
+  source_path cmd/BonfyreCMS/content-types/guild_attestation.json
+  source_path cmd/BonfyreCMS/content-types/guild_offer.json
+  source_path cmd/BonfyreCMS/content-types/guild_offer_application.json
+  source_path cmd/BonfyreCMS/content-types/field_observation.json
+  consumes ContentRecord
+  publishes SurfaceIR
+  invariant every create, confirmation, sign-off, attestation, revocation, offer, application and decision is one signed-in person's explicit form submit, checked for same-origin and written through bonfyre-cms entry create or a state-guarded entry update
+  invariant shop hours and bench proofs are confirmed or signed only by a guild steward who is not the apprentice, and only from the submitted state
+  invariant only active members log hours, link proofs or record observations; only a steward writes modules, attests, revokes, posts offers or decides applications
+  invariant offers and applications hold no funds and move no money; the pages say so in plain words
+  cannot_infer confirmed shop hours or a signed bench proof -> a credential, licence or payment outside the guild
+  forbidden_inference a recorded offer term or stated value -> funds held, escrowed or promised
+  forbidden_inference an accepted application -> a contract, employment or payment
+  forbidden_inference a skill attestation -> a licence or reference valid outside this guild
+  forbidden_inference a field observation with a cited link -> a verified fact
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh creates a guild through /community/action, writes a module, hours, a proof, a sign-off, an attestation and its revocation, an offer, an application and decision, and an observation through the forms; refuses a stranger, self-confirmation, double confirmation and a foreign origin
+
+architecture household-circles
+  canonical_name HouseholdCircles
+  family surface
+  domain Surface / Household
+  layer surface
+  semantic_question What do a private care circle and a household pantry hold, and who may read or write them?
+  purpose /care and /care/<id> are private care circles: a community_body with governance_scope care-circle and its community_membership rows, both in the CMS namespace "care" so no root-namespace public read can list them, with shared tasks and notes as care_entry rows. Members join only by an invitation link the steward hands over. /pantry is a household's dated pantry and preservation calendar (pantry_entry) bound to the CMS household and its authority.
+  maturity implemented
+  source_path cmd/BonfyreWebAddress/src/household_circles_web.h
+  source_path cmd/BonfyreCMS/content-types/care_entry.json
+  source_path cmd/BonfyreCMS/content-types/pantry_entry.json
+  source_path cmd/BonfyreCMS/src/household_access.h
+  consumes ContentRecord
+  publishes SurfaceIR
+  invariant a care circle and its entries are read and written only by its active members; anyone else gets 404
+  invariant an invitation grants nothing until a signed-in person accepts it, is single use, and the steward can withdraw it or remove a member
+  invariant a pantry is read with any current household role and written with write or admin, per household_access.h
+  invariant nothing is transmitted: an invitation link is handed over by the steward, not sent
+  cannot_infer a care note or task -> a medical record or clinical instruction
+  forbidden_inference care circle membership -> health, legal or financial authority over the person cared for
+  forbidden_inference a pantry entry -> a food-safety certification
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh creates a circle, refuses an outsider's read and write, accepts an invitation once and refuses its reuse, and keeps a household pantry from a non-member
+
+architecture community-charters
+  canonical_name CommunityCharters
+  family surface
+  domain Surface / Human community
+  layer surface
+  semantic_question What has a community written down about how it works, and how did that text change?
+  purpose /charters indexes and searches community charters and procedures; /charters/<community>/<slug> renders one with its revisions. A charter is a wiki_page in the root namespace at route charters/<community>/<slug>; revisions are the CMS _ops log for that row, carrying edited_by and revision_note.
+  maturity implemented
+  source_path cmd/BonfyreWebAddress/src/charters_web.h
+  source_path cmd/BonfyreCMS/content-types/wiki_page.json
+  consumes ContentRecord
+  publishes SurfaceIR
+  invariant only active members of a public local community write or revise its charters, by explicit same-origin form submit through bonfyre-cms entry create or update
+  invariant the revision history is read from the store's own operation log, never kept by the page
+  cannot_infer a charter's text -> a rule the estate enforces
+  forbidden_inference a revision count -> consensus or ratification by the community
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh writes and revises a charter, refuses a stranger's revision, and reads back two revisions with the change note
+
+interaction guild-records-write-through-cms
+  source guild-records
+  destination cmd-c-m-s
+  relation entry_create_and_guarded_update
+  preserves the actor's own subject, the guild key, and a state guard on every transition
+  drops any financial, credential or messaging effect
+  forbidden_inference a written guild record -> settlement, certification or a sent message
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh
+
+interaction household-circles-write-through-cms
+  source household-circles
+  destination cmd-c-m-s
+  relation entry_create_and_guarded_update
+  preserves the care namespace isolation, the household authority check and the actor's own subject
+  drops public listing, transmission and clinical meaning
+  forbidden_inference a care or pantry record -> visibility to anyone outside its members
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh
+
+interaction community-charters-write-through-cms
+  source community-charters
+  destination cmd-c-m-s
+  relation wiki_page_create_and_update
+  preserves community scope, member authorship and the CMS operation log as revision history
+  drops enforcement meaning
+  forbidden_inference a published charter -> an enforced rule
+  witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh

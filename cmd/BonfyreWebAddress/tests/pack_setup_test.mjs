@@ -11,14 +11,19 @@ try{
  f.sql.run("UPDATE pack_artifact SET kind='workflow-plan' WHERE pack='a-plan'");
  for(const host of ['aurekai.life','aurekai.live','aurekai.shop','aurekai.work']){
   const directory=await f.request('/packs/setup',{host});
-  const applications=directory.body.match(/<section data-setup-kind="application">([\s\S]*?)<\/section>/)?.[1]??'',configurations=directory.body.match(/<section data-setup-kind="configuration">([\s\S]*?)<\/section>/)?.[1]??'';
+  const applications=directory.body.match(/<section[^>]*data-setup-kind="application"[^>]*>([\s\S]*?)<\/section>/)?.[1]??'',configurations=directory.body.match(/<section[^>]*data-setup-kind="configuration"[^>]*>([\s\S]*?)<\/section>/)?.[1]??'';
   check(host+' distinguishes editor releases from workflow configurations',directory.status===200&&applications.includes('Z shared editor')&&!applications.includes('A application-looking workflow')&&configurations.includes('A application-looking workflow')&&directory.body.indexOf('data-setup-kind="application"')<directory.body.indexOf('data-setup-kind="configuration"'));
   check(host+' opens existing tools through the current workspace owner',directory.body.includes('data-setup-existing href="/apps?context=self"')&&applications.includes('Review application setup')&&configurations.includes('Review workflow configuration')&&!directory.body.includes('data-pack-action='));
  }
  check('reading the setup directory never installs or activates a configuration',f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===0&&f.sql.query('SELECT count(*) AS n FROM pack_activation').get().n===0);
  let r=await get('');check('published configurations are reviewable without an account',r.status===200&&r.body.includes('Shared source selection')&&r.body.includes('data-pack-signin')&&!r.body.includes('data-pack-action='));
+ for(const name of ['pack-setup','pack-presentation']){const asset=await f.request('/assets/'+name+'.css',{host:'aurekai.work'});check(name+' stylesheet is served',asset.status===200&&asset.body.includes('.pack-workspace'));}
  const link=decode(r.body.match(/data-pack-signin href="([^"]*)"/)[1]);check('account entry retains the selected configuration',new URL(link,'https://aurekai.life').searchParams.get('next').startsWith(route));
  const first=await f.login('pack-first@example.test'),second=await f.login('pack-second@example.test');
+ const production=await get(first.cookie,'/cms/productions?context=self');
+ check('production setup loads generated pack styles in its head',production.status===200&&/href="\/assets\/pack-setup\.css(?:\?[^\"]*)?"/.test(production.body)&&/href="\/assets\/pack-presentation\.css(?:\?[^\"]*)?"/.test(production.body)&&!production.body.includes('id="pack-presentation-v1"')&&!production.body.includes('id="ak-account-composition"'));
+ const cards=await get(first.cookie,'/apps/_cards?context=self');
+ check('installed-tool fragment loads the shared pack presentation',cards.status===200&&cards.body.includes('/assets/pack-presentation.css')&&!cards.body.includes('id="pack-presentation-v1"'));
  r=await get(first.cookie);check('a fresh account can review personal installation without manually granted roles',r.body.includes('data-pack-action="install"')&&f.authsql.query('SELECT count(*) AS n FROM institution_grants').get().n===0);
  const reviewed=f.form(r.body,'install');
  let saved=await perform(first.cookie,'install',r);check('reviewed browser installation reaches the native content owner',saved.status===303&&f.sql.query('SELECT count(*) AS n FROM pack_installation').get().n===1);

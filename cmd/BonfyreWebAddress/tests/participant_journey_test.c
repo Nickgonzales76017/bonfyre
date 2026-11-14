@@ -7,7 +7,6 @@
 #include <string.h>
 #include <sqlite3.h>
 #include <openssl/sha.h>
-#define BF_ESTATE_BAR_CORE "<nav aria-label=\"Fixture navigation\"><a href=\"/profile\">Profile</a></nav>"
 static void bf_sha256_hex(const unsigned char *p,size_t n,char out[65]){
     unsigned char d[32];SHA256(p,n,d);for(size_t i=0;i<32;i++)snprintf(out+2*i,3,"%02x",d[i]);
 }
@@ -15,6 +14,13 @@ static void html(const char *s){for(const unsigned char *p=(const unsigned char*
     if(*p=='&')fputs("&amp;",stdout);else if(*p=='<')fputs("&lt;",stdout);else if(*p=='>')fputs("&gt;",stdout);
     else if(*p=='\"')fputs("&quot;",stdout);else if(*p=='\'')fputs("&#39;",stdout);else putchar(*p);
 }}
+/* The one shell (app_shell.h), as a fixture adapter: a page writes only its <main>. */
+static void ak_app_open(const char *title,const char *pattern,const char *route_class){
+    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>",stdout);html(title);
+    fputs(" \xc2\xb7 Aurekai</title></head><body class=\"ak-app ",stdout);html(route_class);fputs("\" data-aurekai-pattern=\"",stdout);html(pattern);
+    fputs("\"><nav aria-label=\"Fixture navigation\"><a href=\"/profile\">Profile</a></nav><main class=\"ak-wb\">",stdout);
+}
+static void ak_app_close(void){fputs("</main></body></html>",stdout);}
 static void url_query_value(const char *s){for(const unsigned char *p=(const unsigned char*)(s?s:"");*p;p++){
     if((*p>='a'&&*p<='z')||(*p>='A'&&*p<='Z')||(*p>='0'&&*p<='9')||strchr("-._~",*p))putchar(*p);else printf("%%%02X",*p);
 }}

@@ -1,11 +1,11 @@
 import {afterAll,beforeAll,expect,test} from 'bun:test';
+import {launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 const root=resolve(import.meta.dir,'..');let browser,server;
 beforeAll(async()=>{
-  const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'playwright');
-  browser=await chromium.launch({headless:true,...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
-  server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+  browser=await launchFixtureChromium({module:'playwright'});
+  server=loopbackServer({async fetch(request){
     const url=new URL(request.url);
     if(url.pathname==='/apps/fixture')return new Response(`<!doctype html><html><head><link rel="stylesheet" href="/apps/aurekai-activity.css"></head><body>
       <header class="ak-bar"><span id="fixture-account"><span class="ak-session" data-session-state="signed-in">Account</span></span></header>

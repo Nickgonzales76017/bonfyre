@@ -13,10 +13,24 @@ export { pagesOf, validate } from "./site-contract.mjs";
 export { kinds } from "./section-registry.mjs";
 export { renderSite, renderPage } from "./site-renderer.mjs";
 
-export async function build(siteDir, out = join(siteDir, "dist")) {
-  const content = await withMaterial(JSON.parse(readFileSync(join(siteDir, "content.json"), "utf8")), siteDir);
+export async function build(siteDir, out = join(siteDir, "dist"), { pagePaths = null } = {}) {
+  const source = JSON.parse(readFileSync(join(siteDir, "content.json"), "utf8"));
+  const sourceRoutes = pagePaths === null ? [] : [{ path: "", sections: source.sections }, ...(source.pages ?? [])];
+  if (pagePaths !== null) {
+    // A package owns exact route composition. Build neither unrelated material
+    // (which can need external retained data) nor undeclared pages by accident.
+    if (!Array.isArray(pagePaths) || !pagePaths.length ||
+        pagePaths.some(path => typeof path !== "string" || !/^[a-z][a-z0-9-]*$/.test(path)) ||
+        new Set(pagePaths).size !== pagePaths.length)
+      throw new Error("page-scoped build requires unique declared page paths");
+    const wanted = new Set(pagePaths);
+    const selected = (source.pages ?? []).filter(page => wanted.has(page.path));
+    if (selected.length !== wanted.size) throw new Error("page-scoped build names a page absent from the site record");
+    source.pages = selected;
+  }
+  const content = await withMaterial(source, siteDir);
   const files = content._files ?? {}; delete content._files;
-  const { pages, theme, forms } = renderSite(content);
+  const { pages, theme, forms } = renderSite(content, { linkPaths: pagePaths, sourceRoutes });
   // Every picture the record names has to be in the site's own folder.
   for (const page of pages) for (const src of page.html.matchAll(/<img src="\/([^"/][^"]*)"/g)) if (!existsSync(join(siteDir, src[1]))) throw new Error(`site record names ${src[1]}, which is not in ${siteDir}`);
   const sourcePath = resolve(siteDir), outPath = resolve(out);
@@ -30,7 +44,7 @@ export async function build(siteDir, out = join(siteDir, "dist")) {
     for (const page of pages) { mkdirSync(join(stage, page.path), { recursive: true }); writeFileSync(join(stage, page.path, "index.html"), page.html); }
     // An address the site does not have answers "not here" in the site's own look, instead of the home page under a wrong name.
     const lost = renderSite({ ...content, pages: [...(content.pages ?? []), { path: "not-here", title: "Not here", menu: "Not here", sections: [
-    { kind: "hero", headline: "That page is not here", lede: "The address may have changed. Everything this site has is one tap from the front page.", button: content.action }, { kind: "cases", id: "go", title: "Where to go", items: [{ icon: "home", title: content.business.name, text: "Start from the front page." }] }] }] }).pages.find(p => p.path === "not-here");
+    { kind: "hero", headline: "That page is not here", lede: "The address may have changed. Everything this site has is one tap from the front page.", button: content.action }, { kind: "cases", id: "go", title: "Where to go", items: [{ icon: "home", title: content.business.name, text: "Start from the front page." }] }] }] }, { linkPaths: pagePaths, sourceRoutes }).pages.find(p => p.path === "not-here");
     writeFileSync(join(stage, "404.html"), lost.html.replace('<meta name="robots" content="index, follow" />', '<meta name="robots" content="noindex" />'));
     compileCss([...pages, lost], theme, join(stage, "assets/site.css"));
     for (const [path, bytes] of Object.entries(files)) { mkdirSync(join(stage, path, ".."), { recursive: true }); writeFileSync(join(stage, path), bytes); }

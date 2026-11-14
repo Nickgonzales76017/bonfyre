@@ -11,7 +11,7 @@ async function read(route=page.route,cookie=writer.cookie){return f.request('/cm
 async function save(value,cookie=writer.cookie,headers={}){return f.request('/cms/compose/page',{cookie,form:JSON.stringify(value),headers:{'Content-Type':'application/json',...headers}});}
 function payload(snapshot,patch={}){const clean=x=>Object.fromEntries(Object.entries(x).filter(([k])=>!['id','namespace','created_at','updated_at','published_at'].includes(k)));return {operation:snapshot.id?'replace':'create',route:snapshot.snapshot.route,expected_id:snapshot.id,expected_digest:snapshot.digest,page:snapshot.id?clean(snapshot.snapshot.page):page,fragments:snapshot.snapshot.fragments.map(clean),...patch};}
 beforeAll(async()=>{
- f=await packSetupFixture();const schemas=join(f.home,'schemas');copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_fragment.json'),join(schemas,'site_fragment.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);
+ f=await packSetupFixture();const schemas=join(f.home,'schemas');copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_fragment.json'),join(schemas,'site_fragment.json'));copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_presentation.json'),join(schemas,'site_presentation.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);
  for(const name of ['composer','other-composer'])f.run(f.auth,['--db',f.authdb,'signup','--email',name+'@example.test','--name',name,'--password',password,'--tier','pro']);
  writer=await f.login('composer@example.test',{signup:false});other=await f.login('other-composer@example.test',{signup:false});free=await f.login('free-composer@example.test');
  const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
@@ -28,7 +28,26 @@ test('composition rechecks grants, same origin and actor namespace',async()=>{
  const retained=json(await read());expect(retained.snapshot.namespace).toBe('actor-'+writer.id);expect(retained.snapshot.fragments[0].source_ref).toBe('source:fixture');
  expect(json(await read(page.route,other.cookie)).id).toBe(0);
  expect(json(await f.request('/cms/compose/pages',{cookie:other.cookie})).pages).toEqual([]);
- expect(json(await f.request('/cms/compose/pages',{cookie:writer.cookie})).pages[0].route).toBe(page.route);
+ expect(json(await f.request('/cms/compose/pages',{cookie:writer.cookie})).pages[0]).toMatchObject({route:page.route,status:'draft'});
+});
+test('a profile opens its own site namespace, never another account site',async()=>{
+ const db=join(f.home,'matrix.db');
+ f.run(f.auth,['--db',f.authdb,'actor-bind','--user-id',String(writer.id),'--actor','person:composer']);
+ f.run(f.web,['subject','--db',db,'--id','person:composer','--kind','Person','--digest','a'.repeat(64),'--evidence','fixture:composer']);
+ f.run(f.web,['institution','--db',db,'--id','inst:person-composer','--kind','Person','--world','live','--evidence','fixture:composer']);
+ f.run(f.web,['domain','--db',db,'--host','own.example.test','--institution','inst:person-composer','--territory','work','--scope','public','--world','live','--repr','HTML','--evidence','fixture:composer']);
+ f.run(f.web,['presence','--db',db,'--id','presence:composer:work','--subject','person:composer','--territory','work','--scope','public','--world','live','--repr','HTML','--evidence','fixture:composer']);
+ f.add('site_presentation',{site_id:'composer-own',host:'own.example.test',subject_address:'person:composer',territory:'work',profile:'member-profile-v1',navigation:[],status:'published'});
+ const site='/cms/compose/page?route=%2Fsite-proof&site=composer-own';
+ const opened=json(await f.request(site,{cookie:writer.cookie}));
+ expect(opened.id).toBe(0);expect(opened.snapshot.namespace).toBe('composer-own');
+ const input=payload(opened,{page:{...page,route:'/site-proof'},fragments:[{...section('own:first','Owned section'),page:'/site-proof'}]});
+ expect((await f.request(site,{cookie:writer.cookie,form:JSON.stringify(input),headers:{'Content-Type':'application/json'}})).status).toBe(200);
+ expect(json(await f.request(site,{cookie:writer.cookie})).snapshot.page.heading).toBe('Our shared material');
+ expect((await f.request(site,{cookie:other.cookie})).status).toBe(403);
+ expect((await f.request('/cms/compose/page?route=%2Fsite-proof&site=no-such-site',{cookie:writer.cookie})).status).toBe(403);
+ expect(json(await f.request('/cms/compose/pages?site=composer-own',{cookie:writer.cookie})).pages[0].route).toBe('/site-proof');
+ expect(json(await f.request('/cms/compose/pages',{cookie:writer.cookie})).pages.some(p=>p.route==='/site-proof')).toBe(false);
 });
 test('whole-page writes reject stale snapshots and retain the saved aggregate',async()=>{
  const opened=json(await read());const first=payload(opened);first.page.heading='Updated elsewhere';

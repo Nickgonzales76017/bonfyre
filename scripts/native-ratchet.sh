@@ -34,6 +34,17 @@ browser_projection_parity() {
   done
 }
 
+# Generated artifacts exclude themselves: a script whose first line carries
+# `bonfyre:generated` (stamped by its builder, naming the owning rule) is a
+# build output, never authored code. Builders stamp; the ratchet obeys without
+# per-artifact edits. A false stamp is a review finding, tracked in the
+# retirement ledger like any drifted projection.
+is_generated() {
+  [ -f "$root/$1" ] || return 1
+  IFS= read -r first < "$root/$1" 2>/dev/null || return 1
+  case "$first" in *bonfyre:generated*) return 0 ;; *) return 1 ;; esac
+}
+
 authored() {
   browser_projection_parity || return 1
   # WebAddress projects these two browser assets byte-for-byte from the
@@ -51,7 +62,7 @@ authored() {
     tr '\0' '\n' |
     grep -v -E '(^|/)(node_modules|vendor)/|^site/matrix/(bonfyre-surface-runtime|bonfyre-workspace-composition)\.mjs|^site/(spaces|instruments)/|^site/assets/account-(navigation|session)\.mjs$|^integrations/browser/program-service-policy\.mjs$|^integrations/browser/extension/(recurring-commerce|contents|workspace-msgpack|provider-contract)\.mjs$' |
     while IFS= read -r path; do
-      if [ -f "$root/$path" ]; then printf '%s\n' "$path"; fi
+      if [ -f "$root/$path" ] && ! is_generated "$path"; then printf '%s\n' "$path"; fi
     done
 }
 
@@ -65,7 +76,7 @@ measure() {
   other=$(git -C "$root" ls-files -co --exclude-standard -- '*.js' '*.cjs' '*.ts' '*.tsx' '*.py' |
     grep -v -E '(^|/)(node_modules|vendor)/|^site/(spaces|instruments)/' |
     while IFS= read -r path; do
-      if [ -f "$root/$path" ]; then printf '%s\n' "$path"; fi
+      if [ -f "$root/$path" ] && ! is_generated "$path"; then printf '%s\n' "$path"; fi
     done | grep -c . || true)
   printf '{"authored_mjs_files":%s,"authored_mjs_lines":%s,"other_script_files":%s,"bun_compile_sites":%s' "$files" "$lines" "$other" "$sites"
   if [ -d "$bin" ]; then

@@ -166,6 +166,12 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
          * so the clone surfaces load the donor's real CSS, not a paraphrase. */
         {"/assets/donor-zulip.css", "donor-zulip.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-native.css", "aurekai-native.css", "text/css; charset=utf-8"},
+        {"/assets/native-experience.css", "native-experience.css", "text/css; charset=utf-8"},
+        {"/assets/page-components.css", "page-components.css", "text/css; charset=utf-8"},
+        {"/assets/pack-setup.css", "pack-setup.css", "text/css; charset=utf-8"},
+        {"/assets/account-inbox.css", "account-inbox.css", "text/css; charset=utf-8"},
+        {"/assets/pack-presentation.css", "pack-presentation.css", "text/css; charset=utf-8"},
+        {"/assets/reading-surface.css", "reading-surface.css", "text/css; charset=utf-8"},
         {"/assets/world-land.svg", "world-land.svg", "image/svg+xml"},
         {"/assets/donor-pinry.css", "donor-pinry.css", "text/css; charset=utf-8"},
         {"/assets/donor-pixelfed.css", "donor-pixelfed.css", "text/css; charset=utf-8"},
@@ -181,13 +187,8 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         {"/assets/aurekai-site-program.css", "aurekai-site-program.css", "text/css; charset=utf-8"},
         {"/assets/own-site.css", "own-site.css", "text/css; charset=utf-8"},
         {"/assets/aurekai-bar.css", "aurekai-bar.css", "text/css; charset=utf-8"},
-        /* Each territory front's own sheet. The fronts linked these from the
-         * start, but they were never declared here, so all four answered 404
-         * and every apex front was drawn by world.css alone. */
-        {"/assets/front-life.css", "front-life.css", "text/css; charset=utf-8"},
-        {"/assets/front-live.css", "front-live.css", "text/css; charset=utf-8"},
-        {"/assets/front-shop.css", "front-shop.css", "text/css; charset=utf-8"},
-        {"/assets/front-work.css", "front-work.css", "text/css; charset=utf-8"},
+        /* Arrival, sign-in and the trust modals: one sheet for the account path. */
+        {"/assets/aurekai-trust.css", "aurekai-trust.css", "text/css; charset=utf-8"},
         {"/assets/own-site-agent.js", "own-site-agent.js", "text/javascript; charset=utf-8"},
         {"/assets/own-site-reading.js", "own-site-reading.js", "text/javascript; charset=utf-8"},
         {"/assets/static-embed.mjs", "static-embed.mjs", "text/javascript; charset=utf-8"},
@@ -221,7 +222,37 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         /* Resolve the canonical runtime's relative module import through this
          * exact route. The filesystem asset stays flat; traversal is unchanged. */
         {"/assets/renderers/workspace-composition.mjs", "bonfyre-workspace-composition.mjs",
-         "text/javascript; charset=utf-8"}
+         "text/javascript; charset=utf-8"},
+        /* The mature journal style, served flat. The composed articles link
+         * these stylesheets and the product icon set; the files live once
+         * under site/assets and a test holds these serving copies identical. */
+        {"/assets/aurekai-field-guide.css", "aurekai-field-guide.css",
+         "text/css; charset=utf-8"},
+        {"/assets/aurekai-research.css", "aurekai-research.css",
+         "text/css; charset=utf-8"},
+        {"/assets/product-icons.svg", "product-icons.svg",
+         "image/svg+xml"},
+        /* The journal article sheet at its composed address. The file stays
+         * flat; traversal is unchanged. */
+        {"/blog/blog.css", "blog.css",
+         "text/css; charset=utf-8"},
+        {"/assets/profile-journal.css", "profile-journal.css",
+         "text/css; charset=utf-8"},
+        /* The authored-reader sheet for natively composed sections. Built
+         * by compile_authoring_reader.mjs; freshness is gated by its
+         * --check in the SurfaceScene suite. */
+        {"/assets/authoring-reader.css", "authoring-reader.css",
+         "text/css; charset=utf-8"},
+        /* The visual composition workspace bundle and its shells. Built by
+         * @bonfyre/authoring:build (Puck, GrapesJS, Editor.js, narration
+         * handoff) and stamped bonfyre:generated; the bundle is gitignored
+         * build output, never authored source. */
+        {"/assets/authoring-editor.js", "authoring-editor.js",
+         "application/javascript; charset=utf-8"},
+        {"/assets/authoring-grapes.css", "authoring-grapes.css",
+         "text/css; charset=utf-8"},
+        {"/assets/authoring-shell.css", "authoring-shell.css",
+         "text/css; charset=utf-8"}
     };
     char host[256]; BfMatrixDomainResolution domain;
     for (size_t i = 0; i < sizeof(assets) / sizeof(assets[0]); i++) {
@@ -315,7 +346,17 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
     if (http && !strcasecmp(out.representation,"HTML")) {
         char crate[1024], zarr[1024];
         if (!closure_urls_for_path(host, path_in, crate, zarr)) goto failed;
-        printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>");html(out.subject_id);printf(" · Bonfÿre</title><link rel=\"describedby\" type=\"application/ld+json\" href=\"");html(crate);printf("\"><link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"");html(zarr);printf("\"></head><body><main data-bonfyre-subject=\"");html(out.subject_id);printf("\" data-bonfyre-presence=\"");html(out.presence_id);printf("\"><h1>");html(out.subject_id);printf("</h1><dl><dt>Territory</dt><dd>");html(out.territory);printf("</dd><dt>Presence</dt><dd>");html(out.presence_id);printf("</dd><dt>Canonical address</dt><dd><a href=\"");html(out.canonical_address);printf("\">");html(out.canonical_address);printf("</a></dd></dl>");if(standing_rc==1)printf("<p data-bonfyre-standing-members=\"%d\">%d live members</p>",standing_members,standing_members);printf("</main></body></html>\n"); return 0;
+        /* The one shell: estate bar, one <main>, the one footer and player. */
+        printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><title>");html(out.subject_id);
+        printf(" \xc2\xb7 Aurekai</title><link rel=\"describedby\" type=\"application/ld+json\" href=\"");html(crate);printf("\"><link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"");html(zarr);
+        fputs("\"><link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\"><link rel=\"stylesheet\" href=\"/assets/composition.css\"></head><body class=\"ak-app route-address\" data-aurekai-pattern=\"workbench\">" BF_ESTATE_BAR "<main class=\"ak-wb\" data-bonfyre-subject=\"",stdout);
+        html(out.subject_id);printf("\" data-bonfyre-presence=\"");html(out.presence_id);
+        printf("\"><header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Address <span>/</span> ");html(out.territory);printf("</p><h1>");html(out.subject_id);printf("</h1></div></header>");
+        printf("<dl class=\"ak-spec ak-panel address-facts\"><dt>Territory</dt><dd>");html(out.territory);printf("</dd><dt>Presence</dt><dd>");html(out.presence_id);
+        printf("</dd><dt>Canonical address</dt><dd class=\"is-on\"><a href=\"");html(out.canonical_address);printf("\">");html(out.canonical_address);printf("</a></dd>");
+        if(standing_rc==1)printf("<dt>Live members</dt><dd data-bonfyre-standing-members=\"%d\">%d</dd>",standing_members,standing_members);
+        fputs("</dl><p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"",stdout);html(crate);fputs("\">Machine description</a><a class=\"ak-btn is-quiet\" href=\"",stdout);html(zarr);
+        fputs("\">Data array</a></p></main>" BF_ESTATE_FOOT "</body></html>\n",stdout); return 0;
     }
     if (http) printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n",content_type(out.representation));
     printf("{\"verdict\":\"resolved\",\"subject_id\":");json(out.subject_id);printf(",\"presence_id\":");json(out.presence_id);printf(",\"host\":");json(host);printf(",\"matched_host\":");json(domain_rc==1 ? domain.matched_hostname : host);printf(",\"canonical_host\":");json(domain_rc==1 ? domain.canonical_hostname : host);printf(",\"institution_id\":");json(domain_rc==1 ? domain.institution_id : "");printf(",\"path\":");json(path_in);printf(",\"address_kind\":");json(out.address_kind);printf(",\"canonical_address\":");json(out.canonical_address);printf(",\"is_alias\":%s",out.is_alias ? "true" : "false");if(standing_rc==1)printf(",\"standing_members\":%d",standing_members);printf(",\"territory\":");json(out.territory);printf(",\"world\":");json(bf_matrix_world_name(out.world));printf(",\"audience\":");json(bf_matrix_scope_name(out.scope));printf(",\"representation\":");json(out.representation);printf("}\n");return 0;

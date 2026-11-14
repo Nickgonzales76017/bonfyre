@@ -426,14 +426,22 @@ nativePagePrograms: [...#PageProgram] & [
     },
     {route: "/deals", title: "Deals", character: "ticker", lede: "Prices worth acting on, as the deal hunters post them."
         families: ["deals"], source_limit: 8, regions: ["table", "more"], cannot_infer: "a deal is the store's price when posted"},
+    // The shop's market and new listings read as a trade index: numbered
+    // lots, the price in each listing's own words, one way to open each.
+    {route: "/market", territory: "shop", title: "Market", character: "ticker", lede: "Everything listed for sale across the shop, with the price each listing states."
+        families: ["deals", "drops"], source_limit: 12, regions: ["table", "more"], cannot_infer: "a listed price is the seller's when posted, not a quote, a stock check or a recommendation"},
+    {route: "/listings", territory: "shop", title: "New listings", character: "ticker", lede: "Releases, launches and drops as the stores list them."
+        families: ["drops"], source_limit: 12, regions: ["table", "more"], cannot_infer: "a listing is the store's; it is not stock, a reservation or a price promise"},
+    {route: "/listings", territory: "work", title: "Listings", character: "dossier", lede: "Open roles and contracts, as the people hiring list them."
+        families: ["jobs"], source_limit: 12, regions: ["table", "more"], cannot_infer: "a listing is the employer's; it is not an offer of work"},
     {route: "/picks", title: "Worth buying", character: "scrapbook", lede: "What reviewers and editors think is worth the money."
         families: ["shopping", "drops"], source_limit: 12, regions: ["lead", "wall", "latest", "more"], cannot_infer: "a pick is the publisher's opinion; a drop is the store's listing"},
     {route: "/style", title: "Style", character: "scrapbook", lede: "What people are wearing and buying."
         families: ["style"], source_limit: 8, regions: ["lead", "wall", "latest", "more"], cannot_infer: "style coverage is the publisher's"},
     {route: "/recalls", title: "Recalls", character: "dossier", lede: "Products and food pulled from shelves."
-        families: ["recalls"], source_limit: 8, regions: ["latest", "more"], cannot_infer: "a recall is as the agency announced it"},
+        families: ["recalls"], source_limit: 8, regions: ["table", "more"], cannot_infer: "a recall is as the agency announced it"},
     {route: "/retail", title: "Retail", character: "journal", lede: "How stores and brands are changing."
-        families: ["retail"], source_limit: 8, regions: ["latest", "more"], cannot_infer: "retail news is the publisher's"},
+        families: ["retail"], source_limit: 8, regions: ["table", "more"], cannot_infer: "retail news is the publisher's"},
     {route: "/film", title: "Film & TV", character: "journal", lede: "What is opening, streaming and worth watching."
         families: ["film", "entertainment"], source_limit: 12, regions: ["lead", "wall", "latest", "more"], cannot_infer: "coverage is the publisher's"},
     {route: "/music", title: "Music", character: "journal", lede: "New records, tours and the people making them."
@@ -575,7 +583,7 @@ nativePagePrograms: [...#PageProgram] & [
         route: "/whats-on", title: "What's on", character: "almanac"
         lede: "Events the organizers themselves publish: what starts soon, what is on today, and what is coming, with where each one is."
         families: ["events"], source_limit: 96, regions: ["soon", "happening", "photos", "latest", "more"]
-        sections: ["/nearby", "/listen", "/watch", "/discover"]
+        // No preview sections: the Stitch What's on screen is the agenda itself.
         cannot_infer: "an event is listed as its organizer published it: a time, a place or a ticket may have changed since, and nothing here is a reservation"
     },
     {

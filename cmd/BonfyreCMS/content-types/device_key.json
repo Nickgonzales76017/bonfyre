@@ -1,0 +1,17 @@
+{
+  "name": "device_key",
+  "displayName": "Device Key",
+  "description": "A device a person named on their own account, with the public key fingerprint they typed in. It records what the person submitted and when they revoked it. It is not hardware attestation, not proof the key lives in a secure element, not proof the device exists, and not a credential Aurekai checks at sign-in.",
+  "attributes": {
+    "device_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "account_subject": { "type": "string", "required": true },
+    "device_label": { "type": "string", "required": true },
+    "key_fingerprint": { "type": "string", "required": true },
+    "key_algorithm": { "type": "string", "required": true },
+    "attestation": { "type": "string", "required": true },
+    "enrolled_at": { "type": "string", "required": true },
+    "revoked_at": { "type": "string", "required": false },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

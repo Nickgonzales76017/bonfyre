@@ -19,7 +19,7 @@ test("all sixteen real journal posts enter native, isolated, editable profile dr
  for(const filename of files){
   const raw=readFileSync(join(posts,filename),"utf8");
   const article=await parseJournalMarkdown(raw,{filename});
-  const route="/journal/"+article.slug+"/",site="person-nick-life";
+  const route="/blog/"+article.slug+"/",site="person-nick-life";
   expect(article.sections.length).toBeGreaterThan(0);
   expect(article.source_digest).toMatch(/^[a-f0-9]{64}$/);
   expect(digests.has(article.source_digest)).toBe(false);
@@ -28,6 +28,8 @@ test("all sixteen real journal posts enter native, isolated, editable profile dr
   const pageDraft=journalPageMetadata(article);
   expect(pageDraft.media_subject_ref).toBe("article:"+article.slug);
   expect(pageDraft.title).toBe(article.title);
+  expect(pageDraft.eyebrow).toBe(article.category);
+  expect(article.icon).toMatch(/^[a-z0-9-]+$/);
   const request=toNativePageWrite(base(site,route),draft,{pageDraft});
   expect(request.operation).toBe("create");
   expect(request.page.status).toBe("draft");
@@ -45,7 +47,7 @@ test("all sixteen real journal posts enter native, isolated, editable profile dr
 
 test("an import cannot publish or erase another page's authored blocks",async()=>{
  const article=await parseJournalMarkdown("---\nslug: first-story\ntitle: First story\n---\n\nHello world.\n");
- const original=newAuthoringTree("person-nick-life","/journal/");
+ const original=newAuthoringTree("person-nick-life","/blog/");
  original.blocks.push({id:"existing",kind:"profile-card",props:{heading:"Retained"},children:[]});
  const next=mergeJournalIntoTree(original,article);
  expect(original.blocks).toHaveLength(1);
@@ -53,7 +55,7 @@ test("an import cannot publish or erase another page's authored blocks",async()=
  expect(next.blocks[0]).toEqual(original.blocks[0]);
  expect(toNativePageWrite(base(original.site_id,original.page),next,
   {pageDraft:journalPageMetadata(article)}).page.status).toBe("draft");
- expect(()=>mergeJournalIntoTree(newAuthoringTree("another-person","/journal/"),
+ expect(()=>mergeJournalIntoTree(newAuthoringTree("another-person","/blog/"),
   {...article,source_digest:"bad"})).toThrow();
 });
 
@@ -64,6 +66,8 @@ test("unsafe filenames, false dates, duplicate metadata and oversized sections a
   "---\nslug: story\ntitle: Story\npublished: 2026-02-29\n---\nContent",
   "---\nslug: ../bad\ntitle: Story\n---\nContent",
   "---\nslug: story\ntitle: Story\ntitle: Duplicate\n---\nContent",
+  "---\nslug: story\ntitle: Story\ncategory: <script>\n---\nContent",
+  "---\nslug: story\ntitle: Story\nicon: ../briefcase\n---\nContent",
   "---\nslug: story\ntitle: Story\n---\n"+("x".repeat(50000))
  ])await expect(parseJournalMarkdown(content)).rejects.toThrow();
 });
@@ -101,7 +105,7 @@ test("batch intake opens all sixteen routes before committing account-owned jour
  expect(calls.slice(0,16).every(x=>x.kind==="read")).toBe(true);
  expect(calls.filter(x=>x.kind==="save")).toHaveLength(16);
  for(const article of articles){
-  const page=stored.get("/journal/"+article.slug+"/").snapshot;
+  const page=stored.get("/blog/"+article.slug+"/").snapshot;
   expect(page.page.media_subject_ref).toBe("article:"+article.slug);
   expect(page.page.status).toBe("draft");
   expect(page.fragments.every(x=>x.source_digest===article.source_digest)).toBe(true);
@@ -157,7 +161,7 @@ test("batch refuses duplicates, existing routes, wrong account and partial uncer
   throw Error("Expected bounded partial failure");
  }catch(error){
   expect(error.completed).toHaveLength(1);
-  expect(error.route).toBe("/journal/second/");
+  expect(error.route).toBe("/blog/second/");
  }
  expect(writes).toBe(2);
  expect(commits.size).toBe(1);
@@ -171,4 +175,30 @@ test("portable SHA-256 equals native digest across Unicode, padding and long jou
   expect(portableSha256(bytes)).toBe(expected);
   expect(await sha256Text(text)).toBe(expected);
  }
+});
+
+
+test("a ninety-article cohort retains long slugs and preflights before writes",async()=>{
+ const namespace="person-journal-life",stored=new Map(),calls=[];
+ const articles=await Promise.all(Array.from({length:90},(_,i)=>{
+  const slug=i===0?"a".repeat(90):"journal-"+i;
+  return parseJournalMarkdown("---\nslug: "+slug+"\ntitle: Article "+i+"\n---\n\nPassage "+i+".\n");
+ }));
+ const fetcher=async(url,options={})=>{
+  if(options.method==="POST"){
+   const row=JSON.parse(options.body);calls.push("save");
+   stored.set(row.route,{schema:"bonfyre.page-snapshot.v1",id:stored.size+1,digest:"c".repeat(64),
+    snapshot:{namespace,route:row.route,page:{...row.page,id:stored.size+1},fragments:row.fragments}});
+   return {ok:true,json:async()=>({committed:true})};
+  }
+  calls.push("read");
+  const route=new URL(url,"https://aurekai.work").searchParams.get("route");
+  return {ok:true,json:async()=>structuredClone(stored.get(route)||base(namespace,route))};
+ };
+ const done=await saveJournalBatch(articles,{site:namespace,fetcher});
+ expect(done.imported).toBe(90);expect(done.published).toBe(0);
+ expect(stored.size).toBe(90);expect(calls.slice(0,90).every(x=>x==="read")).toBe(true);
+ expect(stored.has("/blog/"+"a".repeat(90)+"/")).toBe(true);
+ await expect(parseJournalMarkdown("---\nslug: "+"a".repeat(97)+"\ntitle: Too long\n---\n\nPassage.\n")).rejects.toThrow();
+ await expect(saveJournalBatch(Array(129).fill(articles[0]),{site:namespace,fetcher})).rejects.toThrow(/128/);
 });

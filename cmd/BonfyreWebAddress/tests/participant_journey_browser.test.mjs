@@ -114,6 +114,9 @@ test('native browser forms return to the same private activity and work at phone
   await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form[action="/participation/change"] button')]);
   expect(await page.$eval('.pj-state h2',n=>n.textContent)).toBe('Following locally');
   await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.pj-state a[href*="tab=activity"]')]);
+  const bar=await f.request('/assets/aurekai-bar.css',{host:'aurekai.work'});expect(bar.status).toBe(200);
+  await page.addStyleTag({content:bar.body});
+  expect(await page.$eval('.pj-filter',n=>getComputedStyle(n).display)).toBe('flex');
   await page.type('input[aria-label="Search my activity"]','Browser participant');
   await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.pj-activity form button')]);
   expect(await page.$$eval('.pj-row',rows=>rows.length)).toBe(1);

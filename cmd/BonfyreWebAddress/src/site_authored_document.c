@@ -27,6 +27,19 @@ static int published_page(sqlite3 *db,const char *ns,const char *route){
  if(sqlite3_step(q)==SQLITE_ROW)result=sqlite3_column_int(q,0);
  sqlite3_finalize(q);return result;
 }
+/* The page title, for the title-fold rule below. Older stores without the
+ * heading column read as untitled rather than failing the projection. */
+static void page_heading(sqlite3 *db,const char *ns,const char *route,char *out,size_t cap){
+ sqlite3_stmt *q=NULL;out[0]='\0';
+ if(sqlite3_prepare_v2(db,"SELECT heading FROM site_page WHERE namespace=?1 AND route=?2 AND status='published' LIMIT 1",-1,&q,NULL)!=SQLITE_OK)return;
+ sqlite3_bind_text(q,1,ns,-1,SQLITE_TRANSIENT);
+ sqlite3_bind_text(q,2,route,-1,SQLITE_TRANSIENT);
+ if(sqlite3_step(q)==SQLITE_ROW){
+  const char *h=(const char *)sqlite3_column_text(q,0);
+  if(h&&strlen(h)<cap)snprintf(out,cap,"%s",h);
+ }
+ sqlite3_finalize(q);
+}
 static int has_unreviewed_media(const char *payload,const char *source_digest,const char *evidence){
  bf_json_doc_t *doc=bf_json_parse_str(payload?payload:"{}",NULL,0);
  if(!doc)return 1;
@@ -64,17 +77,22 @@ static int apply_authoring_responsive(BfAuthoringTree *tree,const char *id,const
      device->key_len==(int)strlen(devices[i])&&
      !memcmp(device->key,devices[i],(size_t)device->key_len))
     viewport=i;
-  if(viewport<0||device->type!=BF_JSON_OBJECT||device->child_count>2){valid=0;break;}
+  if(viewport<0||device->type!=BF_JSON_OBJECT||device->child_count>3){valid=0;break;}
   for(const bf_json_node_t *prop=bf_json_child_first(doc,device);prop;
       prop=bf_json_child_next(doc,prop)){
-   if(!prop->key||
-      !((prop->key_len==6&&!memcmp(prop->key,"layout",6))||
-        (prop->key_len==7&&!memcmp(prop->key,"columns",7))))valid=0;
+   const int is_layout=prop->key&&prop->key_len==6&&!memcmp(prop->key,"layout",6);
+   const int is_columns=prop->key&&prop->key_len==7&&!memcmp(prop->key,"columns",7);
+   const int is_gap=prop->key&&prop->key_len==3&&!memcmp(prop->key,"gap",3);
+   if(!(is_layout||is_columns||is_gap))valid=0;
   }
   if(!valid)break;
   const bf_json_node_t *layout=bf_json_obj_get(doc,device,"layout");
-  const bf_json_node_t *columns=bf_json_obj_get(doc,device,"columns");
-  if(!layout){if(columns)valid=0;continue;}
+  const bf_json_node_t *columns=bf_json_obj_get(doc,device,"columns");const bf_json_node_t *gap=bf_json_obj_get(doc,device,"gap");
+  if(!layout){
+    if(columns)valid=0;
+    if(gap){if(gap->type!=BF_JSON_INT)valid=0;else{const int64_t n=bf_json_get_int(gap);if(n<0||n>64||!bf_authoring_tree_gap(tree,id,viewport,(int)n))valid=0;}}
+    continue;
+   }
   char name[24]={0};
   if(layout->type!=BF_JSON_STRING||
      bf_json_get_str_copy(layout,name,sizeof(name))<1){valid=0;break;}
@@ -88,7 +106,7 @@ static int apply_authoring_responsive(BfAuthoringTree *tree,const char *id,const
    if(n<1||n>12){valid=0;break;}
    cols=(int)n;
   }
-  if(!bf_authoring_tree_style(tree,id,viewport,selected,cols))valid=0;
+  if(!bf_authoring_tree_style(tree,id,viewport,selected,cols))valid=0;else if(gap){if(gap->type!=BF_JSON_INT)valid=0;else{const int64_t n=bf_json_get_int(gap);if(n<0||n>64||!bf_authoring_tree_gap(tree,id,viewport,(int)n))valid=0;}}
  }
  bf_json_free(doc);return valid;
 }
@@ -102,6 +120,16 @@ int bf_site_authored_document_project(sqlite3 *db,const char *site_id,
  if(status<0||status>1)return -1;
  if(!status)return 0;
  const char *sql=
+  "WITH RECURSIVE ancestor_depth(node_id,parent_coordinate,hops) AS ("
+  "SELECT id,COALESCE(json_extract(semantic_tags,'$.authoring_v1.parent'),''),0 FROM site_fragment "
+  "WHERE namespace=?1 AND page=?2 AND slot='showcase' AND audience='public' AND status='published' "
+  "AND COALESCE(json_extract(projection_contract,'$.html'),0)=1 "
+  "UNION ALL "
+  "SELECT a.node_id,COALESCE(json_extract(p.semantic_tags,'$.authoring_v1.parent'),''),a.hops+1 "
+  "FROM ancestor_depth a JOIN site_fragment p ON p.namespace=?1 AND p.page=?2 "
+  "AND p.coordinate=a.parent_coordinate AND p.slot='showcase' AND p.audience='public' AND p.status='published' "
+  "AND COALESCE(json_extract(p.projection_contract,'$.html'),0)=1 "
+  "WHERE a.hops<16) "
   "SELECT coordinate,kind,COALESCE(heading,''),COALESCE(body,''),"
   "COALESCE(json_extract(semantic_tags,'$.authoring_v1.parent'),''),"
   "COALESCE(json_extract(semantic_tags,'$.authoring_v1.payload'),'{}'),"
@@ -112,14 +140,15 @@ int bf_site_authored_document_project(sqlite3 *db,const char *site_id,
   "FROM site_fragment WHERE namespace=?1 AND page=?2 "
   "AND slot='showcase' AND audience='public' AND status='published' "
   "AND COALESCE(json_extract(projection_contract,'$.html'),0)=1 "
-  "ORDER BY position,id";
+  "ORDER BY (SELECT max(hops) FROM ancestor_depth a WHERE a.node_id=site_fragment.id),position,id";
  sqlite3_stmt *q=NULL;
  if(sqlite3_prepare_v2(db,sql,-1,&q,NULL)!=SQLITE_OK)return -1;
  sqlite3_bind_text(q,1,site_id,-1,SQLITE_TRANSIENT);
  sqlite3_bind_text(q,2,route,-1,SQLITE_TRANSIENT);
  BfAuthoringTree *tree=(BfAuthoringTree *)calloc(1,sizeof(*tree));
  if(!tree){sqlite3_finalize(q);return -1;}
- int ok=1,step=SQLITE_DONE;
+ char title[221];page_heading(db,site_id,route,title,sizeof(title));
+ int ok=1,step=SQLITE_DONE,first=1;
  while((step=sqlite3_step(q))==SQLITE_ROW){
   const char *id=(const char *)sqlite3_column_text(q,0);
   const char *kind=(const char *)sqlite3_column_text(q,1);
@@ -127,6 +156,13 @@ int bf_site_authored_document_project(sqlite3 *db,const char *site_id,
   const int authored=!strncmp(kind,"ui:",3)||!strncmp(kind,"service:",8)||
      !strncmp(kind,"profile-",8);
   if(!authored)continue;
+  /* Title-fold: the opening section headed exactly like the page carries
+   * the page title, so it renders body-only instead of repeating the h1.
+   * Same rule as the journal composer; later sections keep their heads. */
+  const char *row_heading=(const char *)sqlite3_column_text(q,2);
+  int fold=first&&!strcmp(kind,"profile-story")&&title[0]&&row_heading&&
+     !strcmp(row_heading,title);
+  first=0;
   /* A page cannot change renderer by merely setting site_page=published.
    * Every authored fragment must carry the current typed contract. Older
    * profile blocks preserve the original public fallback until migrated. */
@@ -142,7 +178,7 @@ int bf_site_authored_document_project(sqlite3 *db,const char *site_id,
   const char *editorial=(const char *)sqlite3_column_text(q,8);
   const char *responsive=(const char *)sqlite3_column_text(q,9);
   if(!bf_authoring_tree_add(tree,id,kind,parent&&*parent?parent:NULL,-1)||
-     !bf_authoring_tree_text(tree,id,"heading",heading?heading:"")||
+     !bf_authoring_tree_text(tree,id,"heading",fold?"":heading?heading:"")||
      !bf_authoring_tree_text(tree,id,"body",body?body:"")||
      !bf_authoring_tree_data(tree,id,"payload",payload?payload:"{}")||
      (editorial&&strcmp(editorial,"[]")&&

@@ -38,9 +38,11 @@ test("native CMS aggregate keeps nested coordinates, reading order and editorial
  assert.deepEqual(restored.blocks[0].children[0].props.editorial,doc.blocks[0].children[0].props.editorial);
 });
 test("article metadata stays bound to the native draft",()=>{
- const b=base(),doc=story(),pageDraft={title:"Journal",heading:"Journal",editorial_kind:"article",media_subject_ref:"article:journal-one",
+ const b=base(),doc=story(),pageDraft={title:"Journal",heading:"Journal",lede:"",eyebrow:"Engineering",editorial_kind:"article",media_subject_ref:"article:journal-one",
   author_credit:"Aurekai Editorial",author_subject_ref:"person:nick",editorial_published_on:"2026-11-07",editorial_updated_on:"2026-11-09"};
  const page=toNativePageWrite(b,doc,{pageDraft}).page;assert.equal(page.editorial_kind,"article");assert.equal(page.media_subject_ref,"article:journal-one");
+ assert.equal(page.eyebrow,"Engineering");
+ assert.throws(()=>toNativePageWrite(b,doc,{pageDraft:{...pageDraft,eyebrow:"x".repeat(121)}}),/invalid page eyebrow/);
  assert.equal(page.author_credit,"Aurekai Editorial");
  assert.equal(page.author_subject_ref,"person:nick");
  assert.equal(page.editorial_published_on,"2026-11-07");

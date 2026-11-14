@@ -232,50 +232,6 @@ static int desk_held_pages(DeskRow *out, int cap, int *total) {
     sqlite3_close(db); return n;
 }
 
-static size_t desk_queue(char *body, size_t cap, size_t w,
-                         const char *heading, const char *why,
-                         DeskRow *rows, int n, int total,
-                         const char *act, const char *empty_means,
-                         int may_name)
-{
-    char el[256], es[256];
-    /* A queue of things nobody has published yet is a queue of things nobody
-     * has decided to disclose. The count is a fact about the institution and
-     * costs nothing to state; the titles and routes are the unpublished content
-     * itself. A viewer who cannot act on the row has no reason to be handed its
-     * identity, and a crawler that followed this page would otherwise harvest
-     * every draft title and every route on the site. */
-    if (!may_name && n) {
-        return (size_t)snprintf(body + w, cap - w,
-          "<section class=\"desk-q\"><div class=\"desk-qh\"><h3>%s</h3>"
-          "<span class=\"desk-n\">%d</span></div><p class=\"desk-why\">%s</p>"
-          "<p class=\"desk-empty\">Signed-in accounts with write scope see which "
-          "ones. The count is a fact about the institution; the rows are content "
-          "nobody has published yet.</p></section>", heading, total, why) + w;
-    }
-    w += (size_t)snprintf(body + w, cap - w,
-      "<section class=\"desk-q%s\"><div class=\"desk-qh\"><h3>%s</h3>"
-      "<span class=\"desk-n\">%d</span></div><p class=\"desk-why\">%s</p>",
-      n ? "" : " is-clear", heading, total, why);
-    if (!n) {
-        w += (size_t)snprintf(body + w, cap - w,
-          "<p class=\"desk-empty\">Nothing open. %s</p></section>", empty_means);
-        return w;
-    }
-    for (int i = 0; i < n && w < cap - 1024; i++) {
-        html_escape(rows[i].label, el, sizeof(el));
-        html_escape(rows[i].sub, es, sizeof(es));
-        w += (size_t)snprintf(body + w, cap - w,
-          "<a class=\"desk-row\" href=\"%s\"><span class=\"desk-l\">%s</span>"
-          "<span class=\"desk-s\">%s</span><span class=\"desk-a\">%s &rarr;</span></a>",
-          rows[i].href, el, es, act);
-    }
-    if (total > n)
-        w += (size_t)snprintf(body + w, cap - w,
-          "<p class=\"desk-more\">%d more not shown.</p>", total - n);
-    return (size_t)snprintf(body + w, cap - w, "</section>") + w;
-}
-
 /* ── Aurekai Internet Observatory ────────────────────────────────────────
  *
  * This is a Matrix institution, not a crawler dashboard.  A source/index hit
@@ -857,13 +813,53 @@ static int serve_desk_external_candidate(const char *method, const char *target,
     return 1;
 }
 
+/* The studio: where a person makes something and publishes it at their own
+ * address. One page in the workbench layout -- status strip, hero with the
+ * address panel, the ask, the person's addresses and pages, the queues held
+ * open for a decision, the rules publishing keeps, and the closing step that
+ * puts the page live. Every row is a record in its owner store; an empty
+ * region says so in place. */
+static void studio_desk_panel(const char *heading, const char *why, DeskRow *rows, int n, int total,
+                              const char *act, const char *empty_means, int may_name) {
+    fputs("<article class=\"ak-panel\"><header><h2>", stdout); html(heading);
+    printf("</h2><span class=\"ak-tag%s\">%d</span></header><p>", total ? " is-on" : "", total);
+    html(why); fputs("</p>", stdout);
+    if (!n) { fputs("<p class=\"ak-empty\">Nothing open. ", stdout); html(empty_means); fputs("</p></article>", stdout); return; }
+    if (!may_name) {
+        fputs("<p class=\"ak-empty\">Signed-in accounts with write access see which ones. "
+              "The rows are content nobody has published yet.</p></article>", stdout);
+        return;
+    }
+    fputs("<div class=\"ak-rows\">", stdout);
+    for (int i = 0; i < n; i++) {
+        fputs("<a href=\"", stdout); html(rows[i].href); fputs("\"><strong>", stdout); html(rows[i].label);
+        fputs("</strong><small>", stdout); html(rows[i].sub); fputs("</small><span class=\"ak-go\">", stdout);
+        html(act); fputs(" &rarr;</span></a>", stdout);
+    }
+    fputs("</div>", stdout);
+    if (total > n) printf("<p class=\"ak-empty\">%d more not shown.</p>", total - n);
+    fputs("</article>", stdout);
+}
+
+static int studio_count(sqlite3 *db, const char *sql, const char *ns) {
+    sqlite3_stmt *st = NULL; int n = 0;
+    if (db && sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, ns, -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(st) == SQLITE_ROW) n = sqlite3_column_int(st, 0);
+    }
+    if (st) sqlite3_finalize(st);
+    return n;
+}
+
 static int serve_desk(const char *method, const char *target,
                       const char *bearer, const char *auth_db, const char *accept)
 {
-    static char body[262144];
     DeskRow rows[8];
-    int n, total, listed, signed_in, may_write;
-    size_t w;
+    PhSite *sites = NULL;
+    StudioViewer who = {0};
+    char actor[192] = {0};
+    int n, total, listed, signed_in, may_write, site_n = 0, pages = 0, published = 0;
+    sqlite3 *db = NULL;
 
     if (strcmp(target, "/studio/") && strcmp(target, "/studio")) return 0;
     if (strcmp(method, "GET")) return 0;
@@ -871,78 +867,186 @@ static int serve_desk(const char *method, const char *target,
 
     signed_in = session_valid(bearer, auth_db);
     may_write = signed_in && session_authorized(bearer, auth_db, "write");
-
-    w = (size_t)snprintf(body, sizeof(body), SUBJ_HEAD, "The desk");
-    w += (size_t)snprintf(body + w, sizeof(body) - w,
-      "<article class=\"subj desk\">"
-      "<p class=\"eyebrow\"><i></i>Desk &middot; what is open right now</p>"
-      "<h2 class=\"subj-name\">What is waiting on a decision</h2>"
-      "<p class=\"subj-desc\">Every line below is a real thing in a real store, held open because "
-      "someone has to choose. This is not a menu of features: an empty queue means the institution "
-      "has nothing of that kind open, which is a fact about the institution and not a gap in the "
-      "page.%s</p>",
-      may_write ? ""
-        : signed_in ? " You are signed in without write scope, so you can see what is open and not close it."
-                    : " You are not signed in, so you are seeing what is open publicly and cannot close any of it.");
-
-    n = desk_unpriced_caps(rows, 8, &listed);
-    w = desk_queue(body, sizeof(body), w, "Capabilities with no asking price",
-      "Advertised and unpriced is not free &mdash; it answers not_for_sale to every grammar at once.",
-      rows, n, n, may_write ? "Price it" : "See it",
-      "Every advertised capability carries a price the service book agrees on.",
-      /* An advertised capability is already public in the x402 catalogue, so
-       * naming it here discloses nothing the catalogue does not. */
-      1);
-
-    n = desk_drafts(rows, 8, &total, bearer, auth_db);
-    w = desk_queue(body, sizeof(body), w, "Written but not published",
-      "Writing and publishing are separate acts, so a draft is a decision someone stopped short of.",
-      rows, n, total, may_write ? "Open it" : "See it",
-      "Nothing is written and waiting.", may_write);
-
-    n = desk_unpriced_offers(rows, 8, &total);
-    w = desk_queue(body, sizeof(body), w, "Offers in the book at zero",
-      "A composed offer is created unpriced on purpose: the sentence proposed an exchange, it did not name a number.",
-      rows, n, total, may_write ? "Price it" : "See the book",
-      "Every offer in the book carries a number.", may_write);
-
-    n = desk_open_work(rows, 8, &total);
-    w = desk_queue(body, sizeof(body), w, "Work started and not finished",
-      "A mission holds until it completes or fails; neither happens because a page was refreshed.",
-      rows, n, total, "Follow it",
-      "No mission is outstanding.", may_write);
-
-    if (held_page_allowed(bearer, auth_db)) {
-        n = desk_held_pages(rows, 8, &total);
-        w = desk_queue(body, sizeof(body), w, "Selections brought from the browser",
-            "Continue in the native workspace using the exact material held by Queue.",
-            rows, n, total, "Review", "No browser selections await this institution.", 1);
+    db = cms_open_ro();
+    if (signed_in && session_identity(bearer, auth_db, &who) && who.id > 0 && ph_actor(who.id, auth_db, actor) &&
+        db && (sites = calloc(16, sizeof(*sites))) != NULL)
+        site_n = ph_sites(db, actor, sites);
+    for (int i = 0; i < site_n; i++) {
+        pages += studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1", sites[i].id);
+        published += studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1 AND status='published'", sites[i].id);
     }
 
-    n = desk_held_messages(rows, 8, &total);
-    w = desk_queue(body, sizeof(body), w, "Messages written and held",
-      "A message is written and kept. Nothing here sends one, so each waits for a person to hand it over themselves or drop it.",
-      rows, n, total, "Held",
-      "No message is written and waiting.",
-      /* What a message says and whom it names is not a stranger's to read. */
-      may_write);
+    ak_app_http(200, 1);
+    ak_app_open("Studio", "workbench", "route-studio");
+    fputs("<div class=\"ak-wb-strip\"><span>Studio</span>", stdout);
+    if (signed_in) { fputs("<span>Signed in as <b>", stdout); html(who.name[0] ? who.name : who.email); fputs("</b></span>", stdout); }
+    else fputs("<span>Signed out</span>", stdout);
+    printf("<span>Addresses <b>%d</b></span><span>Pages <b>%d</b></span>", site_n, pages);
+    printf("<span class=\"ak-live%s\">%s</span></div>", "", site_n ? "Your pages answer at your address" : "Nothing published from here yet");
 
-    w += (size_t)snprintf(body + w, sizeof(body) - w,
-      "<div class=\"aperture\"><p class=\"ap-label\">From here</p>"
-      "<a class=\"ap-act is-strongest\" href=\"/make\"><span class=\"ap-do\">Make something</span>"
-      "<span class=\"ap-why\">say it plainly and it is read for what it proposes to bring into being</span></a>"
-      "<a class=\"ap-act is-strong\" href=\"/flow\"><span class=\"ap-do\">Move through what exists</span>"
-      "<span class=\"ap-why\">one gesture across places, capabilities, notes and observed sources</span></a>"
-      "<a class=\"ap-act\" href=\"/market\"><span class=\"ap-do\">Open the service book</span>"
-      "<span class=\"ap-why\">the one book every commerce grammar quotes from</span></a>"
-      "<a class=\"ap-act\" href=\"/surfaces\"><span class=\"ap-do\">See which shapes are earning a page</span>"
-      "<span class=\"ap-why\">traces become candidates only by repeating across distinct viewers</span></a>"
-      "<a class=\"ap-act\" href=\"/studio/controls\"><span class=\"ap-do\">Every control, unsorted</span>"
-      "<span class=\"ap-why\">the full operator panel: observing, publishing, compiling, capping, pricing, "
-      "the ledger and the estate. Nothing here is chosen for you, which is why it is not the front door</span></a></div>");
+    fputs("<section class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Studio &middot; make and publish</p>"
+          "<h1>Make it here. It goes live at your address.</h1>"
+          "<p class=\"ak-lede\">Write a page, arrange its sections and choose how it looks. Saving keeps a draft; "
+          "publishing is a separate step you review, and then the page answers at your own address.</p>"
+          "<div class=\"ak-actions\">", stdout);
+    if (signed_in) {
+        fputs("<a class=\"ak-btn is-primary\" href=\"/cms/compose", stdout);
+        if (site_n) { fputs("?site=", stdout); url_query_value(sites[0].id); }
+        fputs("\">Open the composer</a><a class=\"ak-btn\" href=\"/cms/compose/advanced", stdout);
+        if (site_n) { fputs("?site=", stdout); url_query_value(sites[0].id); }
+        fputs("\">Visual editor</a><a class=\"ak-btn is-quiet\" href=\"/profile\">Your page</a>", stdout);
+    } else fputs("<a class=\"ak-btn is-primary\" href=\"/login?next=/studio\">Sign in to your studio</a>"
+                 "<a class=\"ak-btn\" href=\"/signup\">Create an account</a>", stdout);
+    fputs("</div></div><dl class=\"ak-stats\">", stdout);
+    printf("<div><dt>Addresses</dt><dd%s>%d</dd><small>sites bound to you</small></div>", site_n ? " class=\"is-on\"" : "", site_n);
+    printf("<div><dt>Published</dt><dd>%d</dd><small>pages that answer</small></div>", published);
+    printf("<div><dt>Drafts</dt><dd>%d</dd><small>saved, not public</small></div>", pages - published);
+    printf("<div><dt>Write access</dt><dd%s>%s</dd><small>%s</small></div></dl></section>",
+           may_write ? " class=\"is-on\"" : "", may_write ? "Yes" : signed_in ? "Own site" : "No",
+           may_write ? "workspace and sites" : signed_in ? "your own sites only" : "sign in first");
 
-    snprintf(body + w, sizeof(body) - w, "</article>%s", SUBJ_FOOT);
-    flow_reply(body);
+    /* The ask: a sentence is read for what it proposes, by the existing reader. */
+    fputs("<section class=\"ak-ask\"><p class=\"ak-kicker\">Start from a sentence</p>", stdout);
+    {
+        BfAuthoringTree *tree = calloc(1, sizeof(*tree));
+        int ok = tree && ft_action(tree, "studio-ask", NULL, 0, "Read it", "get", "/make/read", NULL, 0) &&
+                 ft_field(tree, "studio-ask-text", "studio-ask", 0, "What would you like to make?", "text", "text", "",
+                          "A page for my bakery with this week's bread and how to order", 0, NULL, "900", 1, NULL);
+        if (tree) { if (ok) ft_render(tree, stdout); else { bf_authoring_tree_clear(tree); free(tree); } }
+    }
+    fputs("<p class=\"ak-empty\">Reading a sentence changes nothing. You see what it proposes before anything is created.</p></section>", stdout);
+
+    fputs("<nav class=\"ak-chips\" aria-label=\"Studio regions\" style=\"padding-top:26px\">"
+          "<a class=\"ak-chip\" href=\"#addresses\">Your addresses</a><a class=\"ak-chip\" href=\"#pages\">Pages</a>"
+          "<a class=\"ak-chip\" href=\"#design\">Design</a><a class=\"ak-chip\" href=\"#copy\">Keep a copy</a><a class=\"ak-chip\" href=\"#open\">Waiting on you</a><a class=\"ak-chip\" href=\"#rules\">What publishing does</a>"
+          "<a class=\"ak-chip\" href=\"/studio/controls\">Every control</a></nav>", stdout);
+
+    /* Addresses. */
+    fputs("<section class=\"ak-sec\" id=\"addresses\"><header><div><span class=\"ak-kicker\">Where it goes live</span>"
+          "<h2>Your addresses</h2></div><p>Each address is a site that carries your pages. Open it, compose for it, or change how it looks.</p></header>", stdout);
+    if (!site_n) {
+        fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">", stdout);
+        fputs(signed_in ? "No address is bound to this account yet. Your profile is where one is claimed."
+                        : "Sign in to see the addresses that carry your pages.", stdout);
+        fputs("</p><div class=\"ak-actions\">", stdout);
+        fputs(signed_in ? "<a class=\"ak-btn\" href=\"/profile\">Open your profile</a>" : "<a class=\"ak-btn\" href=\"/login?next=/studio\">Sign in</a>", stdout);
+        fputs("</div></div>", stdout);
+    } else {
+        fputs("<div class=\"ak-grid\">", stdout);
+        for (int i = 0; i < site_n; i++) {
+            int sp = studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1", sites[i].id);
+            int pp = studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1 AND status='published'", sites[i].id);
+            fputs("<article class=\"ak-panel\"><header><span class=\"ak-tag is-on\">", stdout); html(ph_label(sites[i].territory));
+            fputs("</span><span class=\"ak-dot\">live</span></header><h3>", stdout); html(sites[i].host);
+            printf("</h3><p>%d pages &middot; %d published</p><div class=\"ak-actions\" style=\"margin-top:16px\">", sp, pp);
+            fputs("<a class=\"ak-btn is-primary\" href=\"https://", stdout); html(sites[i].host); fputs("/\">Open</a>", stdout);
+            fputs("<a class=\"ak-btn\" href=\"/cms/compose?site=", stdout); url_query_value(sites[i].id); fputs("\">Compose</a>", stdout);
+            fputs("<a class=\"ak-btn is-quiet\" href=\"/profile?site=", stdout); url_query_value(sites[i].id); fputs("\">Settings</a></div></article>", stdout);
+        }
+        fputs("</div>", stdout);
+    }
+    fputs("</section>", stdout);
+
+    /* Pages of the first address, newest first, each opened in the composer. */
+    fputs("<section class=\"ak-sec\" id=\"pages\"><header><div><span class=\"ak-kicker\">Pages</span><h2>What you have written</h2></div>"
+          "<p>Open any page in the composer. Published pages answer at the address; drafts stay with you.</p></header><div class=\"ak-panel\">", stdout);
+    if (site_n && db) {
+        sqlite3_stmt *st = NULL; int shown = 0;
+        if (sqlite3_prepare_v2(db, "SELECT namespace,route,COALESCE(NULLIF(title,''),NULLIF(heading,''),route),status,COALESCE(updated_at,'') FROM site_page "
+                                   "WHERE namespace IN (SELECT value FROM json_each(?1)) ORDER BY updated_at DESC, id DESC LIMIT 14", -1, &st, NULL) == SQLITE_OK) {
+            bf_jsonw ids; bf_jsonw_init(&ids, 0); bf_jsonw_arr(&ids);
+            for (int i = 0; i < site_n; i++) bf_jsonw_str(&ids, sites[i].id);
+            bf_jsonw_arr_end(&ids);
+            sqlite3_bind_text(st, 1, ids.buf ? ids.buf : "[]", -1, SQLITE_TRANSIENT);
+            bf_jsonw_free(&ids);
+            fputs("<div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Page</th><th>Address</th><th>State</th><th></th></tr></thead><tbody>", stdout);
+            while (sqlite3_step(st) == SQLITE_ROW) {
+                const char *ns = (const char *)sqlite3_column_text(st, 0), *route = (const char *)sqlite3_column_text(st, 1);
+                const char *title = (const char *)sqlite3_column_text(st, 2), *state = (const char *)sqlite3_column_text(st, 3);
+                if (!ns || !route) continue;
+                fputs("<tr><td>", stdout); html(title ? title : route); fputs("</td><td><code>", stdout); html(route);
+                fputs("</code></td><td><span class=\"ak-tag", stdout); if (state && !strcmp(state, "published")) fputs(" is-on", stdout);
+                fputs("\">", stdout); html(state && *state ? state : "draft");
+                fputs("</span></td><td><a href=\"/cms/compose?site=", stdout); url_query_value(ns); fputs("&amp;route=", stdout);
+                url_query_value(route); fputs("\">Open &rarr;</a></td></tr>", stdout);
+                shown++;
+            }
+            fputs("</tbody></table></div>", stdout);
+            sqlite3_finalize(st);
+        }
+        if (!shown) fputs("<p class=\"ak-empty\">No pages yet. Open the composer and give the first one an address.</p>", stdout);
+    } else fputs("<p class=\"ak-empty\">Pages appear here once an address carries them.</p>", stdout);
+    fputs("</div></section>", stdout);
+
+    /* How the address looks: the one design choice that dresses every page
+     * of the site, saved through the profile's existing /profile/theme. */
+    fputs("<section class=\"ak-sec\" id=\"design\"><header><div><span class=\"ak-kicker\">Type and design</span><h2>How your pages look</h2></div>"
+          "<p>One design sets the typefaces, colours and spacing for every page at the address. The newest choice wins.</p></header><div class=\"ak-panel studio-design\">", stdout);
+    if (site_n) ph_theme_edit(db, &sites[0]);
+    else fputs("<p class=\"ak-empty\">Choose a design once an address is bound to you.</p>", stdout);
+    fputs("</div></section>", stdout);
+
+    /* A copy to keep: every page snapshot of an address in one file. */
+    fputs("<section class=\"ak-sec\" id=\"copy\"><header><div><span class=\"ak-kicker\">Keep a copy</span><h2>Take your site with you</h2></div>"
+          "<p>Download every page and section of an address as one file. Each page carries its own digest, so you can check a copy against what is live.</p></header>", stdout);
+    if (site_n) {
+        fputs("<div class=\"ak-grid is-2\">", stdout);
+        for (int i = 0; i < site_n; i++) {
+            fputs("<article class=\"ak-panel\"><header><h3>", stdout); html(sites[i].host);
+            fputs("</h3><span class=\"ak-tag\">JSON</span></header><p>Pages, sections, sources and projection settings, exactly as the composer reads them.</p>"
+                  "<div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn is-primary\" download href=\"/cms/compose/export?site=", stdout);
+            url_query_value(sites[i].id); fputs("\">Download a copy</a></div></article>", stdout);
+        }
+        fputs("</div><p class=\"ak-empty\">Bringing a copy back is done page by page in the composer; there is no one-step restore.</p>", stdout);
+    } else fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">There is nothing to copy until an address carries your pages.</p></div>", stdout);
+    fputs("</section>", stdout);
+
+    /* What is held open for a decision. */
+    fputs("<section class=\"ak-sec\" id=\"open\"><header><div><span class=\"ak-kicker\">Waiting on a decision</span><h2>Held open</h2></div>"
+          "<p>Each line is a real record someone stopped short of finishing. An empty list means there is nothing of that kind open.</p></header>"
+          "<div class=\"ak-grid is-2\">", stdout);
+    n = desk_drafts(rows, 6, &total, bearer, auth_db);
+    studio_desk_panel("Written but not published", "Writing and publishing are separate acts.", rows, n, total,
+                      may_write ? "Open it" : "See it", "Nothing is written and waiting.", may_write);
+    n = desk_unpriced_caps(rows, 6, &listed);
+    studio_desk_panel("Tools with no asking price", "An offered tool with no price answers not for sale everywhere.", rows, n, n,
+                      may_write ? "Price it" : "See it", "Every offered tool has a price.", 1);
+    n = desk_unpriced_offers(rows, 6, &total);
+    studio_desk_panel("Offers at zero", "A composed offer starts unpriced on purpose.", rows, n, total,
+                      may_write ? "Price it" : "See the book", "Every offer carries a number.", may_write);
+    n = desk_open_work(rows, 6, &total);
+    studio_desk_panel("Work started and not finished", "Work holds until it completes or fails.", rows, n, total,
+                      "Follow it", "No work is outstanding.", may_write);
+    if (held_page_allowed(bearer, auth_db)) {
+        n = desk_held_pages(rows, 6, &total);
+        studio_desk_panel("Selections brought from the browser", "Continue with the exact material you kept.", rows, n, total,
+                          "Review", "No browser selections are waiting.", 1);
+    }
+    n = desk_held_messages(rows, 6, &total);
+    studio_desk_panel("Messages written and held", "Nothing here sends a message; each waits for a person.", rows, n, total,
+                      "Held", "No message is waiting.", may_write);
+    fputs("</div></section>", stdout);
+
+    /* The rules publishing keeps -- each is enforced by the composer route. */
+    fputs("<section class=\"ak-sec\" id=\"rules\"><header><div><span class=\"ak-kicker\">What publishing does</span><h2>The rules your pages keep</h2></div></header>"
+          "<div class=\"ak-grid is-3\">"
+          "<article class=\"ak-panel is-raised\"><h3>Saving is not publishing</h3><p>The composer keeps your draft in your own workspace. Nobody else sees it until you publish.</p></article>"
+          "<article class=\"ak-panel is-raised\"><h3>You review the exact version</h3><p>Publishing names the saved revision you looked at. If it changed since, nothing goes out and you reopen it.</p></article>"
+          "<article class=\"ak-panel is-raised\"><h3>Only your own address</h3><p>A page publishes to a site bound to your account and to no other, whatever the request says.</p></article>"
+          "</div></section>", stdout);
+
+    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">The last step</p><h2>", stdout);
+    if (site_n) { fputs("Publish, and it answers at ", stdout); html(sites[0].host); fputs(".", stdout); }
+    else fputs("Publish, and it answers at your address.", stdout);
+    fputs("</h2><p>Open a page, save it, review the revision, then publish it from the composer.</p></div><div class=\"ak-actions\">", stdout);
+    if (site_n) {
+        fputs("<a class=\"ak-btn\" href=\"/cms/compose?site=", stdout); url_query_value(sites[0].id); fputs("\">Compose and publish</a>", stdout);
+        fputs("<a class=\"ak-btn is-quiet\" href=\"https://", stdout); html(sites[0].host); fputs("/\">See it live</a>", stdout);
+    } else fputs(signed_in ? "<a class=\"ak-btn\" href=\"/profile\">Claim an address</a>" : "<a class=\"ak-btn\" href=\"/login?next=/studio\">Sign in</a>", stdout);
+    fputs("</div></section>", stdout);
+    ak_app_close();
+    free(sites);
+    if (db) sqlite3_close(db);
     return 1;
 }
 

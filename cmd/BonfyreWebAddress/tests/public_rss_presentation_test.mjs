@@ -33,13 +33,14 @@ beforeAll(async () => {
   page = await f.request('/', {host:'aurekai.live'});
 }, 30000);
 afterAll(async () => { await f?.close(); });
-const shows = () => page.body.match(/<section class="live-shows\b[\s\S]*?<\/section>/)?.[0] || '';
+// The front's lead and its Listen list together are the current lineup.
+const shows = () => page.body.match(/<div class="fd fd-discover"[\s\S]*?<section class="fd-standard"/)?.[0] || '';
 
 test('anonymous front retains two distinct feeds whose episode and show titles agree', () => {
   expect(page.status).toBe(200);
-  expect(shows()).toContain('data-live-source="qa-show-a"');
-  expect(shows()).toContain('data-live-source="qa-show-b"');
-  expect(shows().match(/class="live-show-name">Signal Notes</g)?.length).toBe(2);
+  expect(shows()).toContain('/o/qa-show-a/');
+  expect(shows()).toContain('/o/qa-show-b/');
+  expect(shows().match(/data-by="Signal Notes"/g)?.length).toBe(2);
 });
 test('one source without artwork does not remove other sources supplied covers', () => {
   expect(shows()).toContain('qa-show-a.example.test/cover.png');
@@ -62,7 +63,7 @@ test('same-heading episodes retain separately openable native item addresses', a
   }
 });
 test('the corrected front uses ordinary links and the existing stylesheet', () => {
-  expect(shows()).toContain('href="/listen"');
-  expect(page.body).toContain('/assets/front-live.css');
+  expect(shows()).toContain('data-ak-track');
+  expect(page.body).toContain('/assets/composition.css');
   expect(shows()).not.toContain('autoplay');
 });

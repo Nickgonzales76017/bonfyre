@@ -1,0 +1,21 @@
+{
+  "name": "guild_hours",
+  "displayName": "Guild Shop Hours",
+  "description": "Shop hours an apprentice logged against a guild module, submitted by the apprentice and confirmed or declined by a named steward who is not the apprentice. Confirmed hours are the steward's written word that the work happened; they move no money and grant nothing outside the guild.",
+  "attributes": {
+    "entry": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "module": { "type": "string", "required": true },
+    "apprentice_subject": { "type": "string", "required": true },
+    "worked_on": { "type": "string", "required": true },
+    "hours": { "type": "string", "required": true },
+    "activity": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "confirmed_by": { "type": "string", "required": false },
+    "confirmed_at": { "type": "string", "required": false },
+    "steward_note": { "type": "text", "required": false },
+    "submitted_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

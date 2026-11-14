@@ -722,11 +722,6 @@ static void bf_surface_render_program_slot(const BfSurfaceProgramSlot *slot, con
 static void bf_surface_render_native_document(const BfNativeSurfaceProgram *program,
                                               const NativeSurfaceContext *ctx) {
     unsigned short slot;
-    if(!strcmp(program->program,"link")){
-        fputs("<body", stdout);
-        bf_route_presentation_emit_body_attribute_for(stdout, ctx->territory, program->route, NULL, bf_route_presentation_native_pattern(ctx->territory, program->route));
-        fputs(">" BF_ESTATE_BAR,stdout);source_desk_content();fputs("</body></html>",stdout);return;
-    }
     fputs("<body class=\"bf-native-surface renderer-", stdout); html(program->presentation->renderer);
     fputs(" territory-", stdout); html(ctx->territory);
     fputs("\"", stdout);
@@ -770,8 +765,7 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
           if (!head_end) { free(body); return 0; }
           /* A native document states its structure; this one stylesheet is
            * what makes that structure readable in every territory. */
-          if(!strcmp(kind,"link"))source_desk_head();
-          else {
+          {
               fwrite(body,1,(size_t)(head_end-body),stdout);
               fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=2\">",stdout);
               bf_route_presentation_emit_head_for(stdout, territory, program->route, NULL, bf_route_presentation_native_pattern(territory, program->route));

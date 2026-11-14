@@ -1,0 +1,19 @@
+{
+  "name": "guild_attestation",
+  "displayName": "Guild Skill Attestation",
+  "description": "A steward's explicit statement that a current guild member holds a named skill. It stays revocable by the guild's steward, and a revoked attestation keeps its history. It is not a licence, an employment reference or a claim the guild can enforce elsewhere.",
+  "attributes": {
+    "attestation": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "member_subject": { "type": "string", "required": true },
+    "skill": { "type": "string", "required": true },
+    "statement": { "type": "text", "required": true },
+    "steward_subject": { "type": "string", "required": true },
+    "state": { "type": "string", "required": true },
+    "attested_at": { "type": "string", "required": true },
+    "revoked_at": { "type": "string", "required": false },
+    "revoke_reason": { "type": "text", "required": false },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

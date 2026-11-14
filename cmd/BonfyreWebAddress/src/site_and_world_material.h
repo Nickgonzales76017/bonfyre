@@ -668,7 +668,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         site_program_emit_profile_tokens(db, profile);
         {
             const char *masthead = published_host && *published_host ? published_host : site;
-            fputs("</head><body class=\"site-program-body\"><main class=\"site-composition\" data-site=\"",stdout); html(site); fputs("\" data-subject=\"",stdout); html(subject); fputs("\" data-presentation=\"",stdout); html(klass); fputs("\" data-bf-profile=\"",stdout); html(profile); fputs("\"",stdout); bf_site_presentation_attributes(stdout,db,profile); if (own) { fputs(">",stdout); bf_site_bar(own_name); fputs("<header class=\"site-program-masthead\"><p>",stdout); html(masthead); fputs("</p><h1>",stdout); html(own_name); fputs("</h1></header>",stdout); }
+            fputs("</head><body class=\"site-program-body\">",stdout); if (!own) fputs(BF_ESTATE_BAR,stdout); fputs("<main class=\"site-composition\" data-site=\"",stdout); html(site); fputs("\" data-subject=\"",stdout); html(subject); fputs("\" data-presentation=\"",stdout); html(klass); fputs("\" data-bf-profile=\"",stdout); html(profile); fputs("\"",stdout); bf_site_presentation_attributes(stdout,db,profile); if (own) { fputs(">",stdout); bf_site_bar(own_name); fputs("<header class=\"site-program-masthead\"><p>",stdout); html(masthead); fputs("</p><h1>",stdout); html(own_name); fputs("</h1></header>",stdout); }
             else { fputs("><header class=\"site-program-masthead\"><p>AUREKAI / ",stdout); html(territory); fputs("</p><h1>",stdout); html(masthead); fputs("</h1><span class=\"site-program-profile\">",stdout); html(profile); fputs("</span></header>",stdout); }
         }
         site_program_emit_navigation(db, site);
@@ -711,7 +711,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
               stdout);
         if (own) bf_site_home_extras(db, site, own_name);
         site_program_own_render = 0;
-        fputs("</main></body></html>",stdout); sqlite3_finalize(st); sqlite3_close(db); return 1;
+        fputs(site_program_own_render?"</main></body></html>":"</main>" BF_ESTATE_FOOT "</body></html>",stdout); sqlite3_finalize(st); sqlite3_close(db); return 1;
     }
     printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{\"schema_version\":\"bonfyre.site_program.v1\",\"site_id\":"); json(site);
     fputs(",\"program_id\":",stdout); json((const char*)sqlite3_column_text(st,0));

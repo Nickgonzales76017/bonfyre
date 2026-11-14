@@ -5,6 +5,7 @@ import {AUTHORING_BLOCKS} from "./authoring-prototype.mjs";
 export const TREE_SCHEMA="bonfyre.authoring-tree.v1";
 import {SITE_SECTION_CATALOGUE} from "../../../components/BonfyreServiceSite/authoring/site-section-catalogue.generated.mjs";
 import {AUTHORING_PATTERNS} from "../../../components/BonfyreServiceSite/authoring/presentation-patterns.mjs";
+import {portableSha256} from "../../../components/BonfyreServiceSite/authoring/sha256-portable.mjs";
 export const SERVICE_COMPONENTS=Object.freeze(SITE_SECTION_CATALOGUE.map(s=>s.kind));
 const validTypes=new Set([...AUTHORING_BLOCKS.map(x=>x.kind),...SERVICE_COMPONENTS.map(x=>"service:"+x),...AUTHORING_PATTERNS.map(x=>x.kind)]);
 const themes=new Set(["paper","forest","night","rust","wide","slate","editorial"]);
@@ -157,6 +158,32 @@ export function validateAuthoringTree(source){
  visit(source.blocks,0);
  return source;
 }
+// Every editor and computed proposal keeps the same source and capability owner.
+// Presentation edits cannot silently retarget an existing native subject.
+export function assertAuthoringContinuity(before,after){
+ validateAuthoringTree(before);validateAuthoringTree(after);
+ if(before.site_id!==after.site_id||before.page!==after.page)fail("composition destination changed");
+ const prior=new Map();
+ const walk=(blocks,visit)=>{for(const block of blocks){visit(block);walk(block.children,visit);}};
+ walk(before.blocks,block=>prior.set(block.id,block));
+ const protectedProps=["source_ref","source_digest","bindings","metadata"];
+ walk(after.blocks,block=>{
+  const old=prior.get(block.id);if(!old)return;
+  if(old.kind!==block.kind)fail("existing component identity changed kind");
+  const aa=old.props||{},bb=block.props||{};
+  for(const key of protectedProps){
+   if(Object.hasOwn(aa,key)!==Object.hasOwn(bb,key)||
+      (Object.hasOwn(aa,key)&&JSON.stringify(aa[key])!==JSON.stringify(bb[key])))
+    fail("source or capability binding cannot be edited: "+key);
+  }
+  if((aa.readOnly===true&&bb.readOnly!==true)||
+     ((aa.source_ref||aa.source_digest||aa.bindings)&&aa.readOnly!==bb.readOnly))
+   fail("source or capability binding cannot be edited: readOnly");
+  if(aa.readOnly===true&&JSON.stringify(aa)!==JSON.stringify(bb))
+   fail("read-only source material changed");
+ });
+ return after;
+}
 export function newAuthoringTree(site_id,page="/"){
  const doc={schema:TREE_SCHEMA,site_id,page,blocks:[]};
  return validateAuthoringTree(doc);
@@ -223,15 +250,55 @@ export function applyAuthoringEdit(source,operation){
   replace(copied,"");
   found.nodes.splice(found.index+1,0,copied);
  }else fail("unknown edit "+op);
- return validateAuthoringTree(doc);
+ return assertAuthoringContinuity(source,validateAuthoringTree(doc));
+}
+// Every human or computed candidate goes through the ordinary typed edit
+// grammar. A model/reducer output is never an authority to mint source bindings
+// or replace another revision's work.
+export function authoringBasisDigest(source){
+ validateAuthoringTree(source);
+ return portableSha256(new TextEncoder().encode(JSON.stringify(source)));
+}
+export function applyAuthoringProposal(source,proposal){
+ validateAuthoringTree(source);
+ if(!proposal||typeof proposal!=="object"||Array.isArray(proposal)||
+    proposal.site_id!==source.site_id||proposal.page!==source.page)
+  fail("proposal does not address this experience");
+ if(proposal.expected_digest!==authoringBasisDigest(source))
+  fail("stale proposal must be recomputed from the current revision");
+ if(!Array.isArray(proposal.operations)||proposal.operations.length<1||
+    proposal.operations.length>64)fail("proposal operations out of bounds");
+ const existing=new Map();
+ const collect=(nodes,fn)=>{for(const node of nodes){fn(node);collect(node.children,fn);}};
+ collect(source.blocks,node=>existing.set(node.id,node));
+ let next=clone(source);
+ for(const operation of proposal.operations){
+  if(!operation||typeof operation!=="object"||Array.isArray(operation))
+   fail("proposal action is not a typed edit");
+  next=applyAuthoringEdit(next,operation);
+ }
+ const retained=new Set();
+ collect(next.blocks,node=>{
+  retained.add(node.id);
+  if(existing.has(node.id))return;
+  if(node.props.source_ref||node.props.source_digest||
+     node.props.bindings||node.props.metadata||node.props.readOnly)
+   fail("proposal cannot fabricate source identity or capability bindings");
+ });
+ for(const [id,node] of existing){
+  if((node.props.source_ref||node.props.source_digest||
+      node.props.bindings||node.props.readOnly)&&!retained.has(id))
+   fail("proposal cannot delete source-bound components");
+ }
+ return assertAuthoringContinuity(source,next);
 }
 export function createAuthoringSession(initial,{historyLimit=100}={}){
  let value=clone(validateAuthoringTree(initial)),past=[],future=[],listeners=new Set();
  const notify=()=>{for(const cb of listeners)cb(clone(value));};
  return Object.freeze({
   snapshot:()=>clone(value),
-  edit(op){const next=applyAuthoringEdit(value,op);past.push(value);if(past.length>historyLimit)past.shift();value=next;future=[];notify();return clone(value);},
-  replace(next){validateAuthoringTree(next);past.push(value);if(past.length>historyLimit)past.shift();value=clone(next);future=[];notify();return clone(value);},
+  edit(op){const next=assertAuthoringContinuity(value,applyAuthoringEdit(value,op));past.push(value);if(past.length>historyLimit)past.shift();value=next;future=[];notify();return clone(value);},
+  replace(next){assertAuthoringContinuity(value,next);past.push(value);if(past.length>historyLimit)past.shift();value=clone(next);future=[];notify();return clone(value);},
   undo(){if(!past.length)return false;future.push(value);value=past.pop();notify();return true;},
   redo(){if(!future.length)return false;past.push(value);value=future.pop();notify();return true;},
   subscribe(fn){listeners.add(fn);return ()=>listeners.delete(fn);},

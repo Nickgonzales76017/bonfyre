@@ -41,13 +41,17 @@ static int pj_encode(const char *s,char *out,size_t cap){
 /* Preserve the exact selected profile section through the existing SSO
  * handoff. This validates a destination, not an effect to replay after login. */
 static int pj_profile_login_redirect(const char *query){
-    char tab[24]="overview",site[128]="",q[160]="",cursor[24]="",item[24]="",kind[16]="";
+    char tab[24]="overview",site[128]="",q[160]="",cursor[24]="",item[24]="",kind[16]="",view[20]="discover",peer[192]="";
     PjField fields[]={{"tab",tab,sizeof(tab)},{"site",site,sizeof(site)},
-      {"q",q,sizeof(q)},{"cursor",cursor,sizeof(cursor)},{"item",item,sizeof(item)},{"kind",kind,sizeof(kind)}};
-    if(!pj_fields(query,fields,6,2048))return 0;
-    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities"};
+      {"q",q,sizeof(q)},{"cursor",cursor,sizeof(cursor)},{"item",item,sizeof(item)},{"kind",kind,sizeof(kind)},{"view",view,sizeof(view)},{"peer",peer,sizeof(peer)}};
+    if(!pj_fields(query,fields,8,2048))return 0;
+    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities","dating"};
     int found=0;for(size_t i=0;i<sizeof(allowed)/sizeof(allowed[0]);i++)if(!strcmp(tab,allowed[i]))found=1;
-    if(!found||(*site&&!pj_key(site,sizeof(site)))||(*kind&&(!pj_kind(kind)||strcmp(tab,"activity"))))return 0;
+    if(!found||(*site&&!pj_key(site,sizeof(site)))||(*kind&&(!pj_kind(kind)||strcmp(tab,"activity")))||
+ (!ak_app_tab(tab)&&(*peer||strcmp(view,"discover")))||
+ (ak_app_tab(tab)&&!ak_app_tab_view(ak_app_tab(tab),view))||
+ (*peer&&(!ak_app_tab(tab)||strcmp(view,ak_app_tab(tab)->peer_view)||strncmp(peer,"person:",7)||
+ strlen(peer)>191||strspn(peer,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:._-")!=strlen(peer))))return 0;
     const char *numbers[]={cursor,item};
     for(size_t i=0;i<2;i++)if(*numbers[i]){
         if(strlen(numbers[i])>19||strspn(numbers[i],"0123456789")!=strlen(numbers[i]))return 0;
@@ -111,17 +115,11 @@ static int pj_external_link(const char *s){
     const char *host=strstr(s,"://");if(!host)return 0;host+=3;
     size_t n=strcspn(host,"/?#");return n&&!memchr(host,'@',n);
 }
-static void pj_styles(void){
-    fputs("<style>"
-      ".pj-page{max-width:1260px;margin:0 auto;padding:30px clamp(16px,4vw,64px) 70px;color:#203b2a;font:15px/1.6 system-ui}.pj-page *,.pj-activity *{box-sizing:border-box}.pj-breadcrumb{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;margin-bottom:26px}.pj-page a,.pj-activity a{color:#285838}.pj-page h1{font:400 clamp(36px,4vw,62px)/1.08 Georgia,serif;max-width:24ch;letter-spacing:-.025em;overflow-wrap:anywhere}.pj-page h2{font:400 27px/1.2 Georgia,serif}.pj-kicker{font:600 11px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#627550}.pj-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:32px}.pj-source{white-space:pre-wrap;overflow-wrap:anywhere;font:18px/1.8 Georgia,serif}.pj-source-link{display:inline-flex;margin:18px 0;min-height:44px;align-items:center}.pj-state{align-self:start;border:1px solid #bdcead;border-radius:18px;padding:24px;background:#f1f6e7;position:sticky;top:20px}.pj-state h2{font-size:26px;margin-top:0}.pj-state p{font-size:14px}.pj-state button,.pj-button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:11px 17px;border:1px solid #244c33;border-radius:10px;background:#2b5038;color:#fffef5!important;font:600 13px/1.5 system-ui;text-decoration:none}.pj-state button{cursor:pointer;width:100%}.pj-state time{display:block;font:12px/1.7 ui-monospace,monospace;overflow-wrap:anywhere}.pj-notice{padding:15px 18px;background:#edf3e3;border:1px solid #c9d7b9;border-radius:12px;font-size:13px}.pj-activity .pj-filter{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.pj-filter a{padding:9px 16px;border:1px solid #c3d1b4;border-radius:999px;text-decoration:none;min-height:44px}.pj-filter a[aria-current=page]{background:#e4eed7;font-weight:650}.pj-activity .pj-row{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:22px;padding:22px 8px;border-bottom:1px solid #d4dec9}.pj-row h3{font:400 24px/1.25 Georgia,serif;margin:0 0 10px}.pj-row p{margin:5px 0;white-space:normal;font-size:14px}.pj-status{font:600 12px/1.4 system-ui;display:inline-block;border:1px solid #c3d1b4;border-radius:8px;padding:8px 12px;background:#f1f5e8}.pj-row aside{align-self:center}.pj-row aside a{display:block;font-size:13px;margin-top:12px;min-height:36px}.pj-activity form{display:flex;gap:10px;margin:20px 0}.pj-activity input{min-width:0;flex:1}.pj-activity .pj-empty{padding:28px;background:#f0f5e7;border:1px dashed #bacaa8;border-radius:15px}.pj-more{display:inline-flex;align-items:center;min-height:44px;margin-top:20px;padding:10px 17px;border:1px solid #bccfa9;border-radius:999px}.pj-page :focus-visible,.pj-activity :focus-visible{outline:3px solid #ac842e;outline-offset:3px}"
-      "@media(max-width:850px){.pj-layout{grid-template-columns:minmax(0,1fr)}.pj-state{position:static}.pj-row aside{align-self:start}}@media(max-width:600px){.pj-activity .pj-row{grid-template-columns:minmax(0,1fr);gap:12px}.pj-page h1{font-size:38px}.pj-activity form{flex-wrap:wrap}.pj-activity input{flex-basis:100%}.pj-state{padding:20px}}@media(prefers-reduced-motion:reduce){.pj-page *,.pj-activity *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}"
-      "</style>",stdout);
-}
 static void pj_document(const PjRecord *r){
     char path[768],login[2600];pj_route(r->kind,r->target,path);
-    fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: same-origin\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex,nofollow\"><title>",stdout);
-    html(r->title);fputs(" · Aurekai</title><link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=2\">",stdout);pj_styles();
-    fputs("</head><body>" BF_ESTATE_BAR_CORE "<main class=\"pj-page\" data-participant-journey><nav class=\"pj-breadcrumb\" aria-label=\"Breadcrumb\"><a href=\"/discover\">Discover</a><span aria-hidden=\"true\">/</span><a href=\"/profile?tab=activity\">My activity</a></nav><p class=\"pj-kicker\">",stdout);
+    fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: same-origin\r\nX-Content-Type-Options: nosniff\r\nX-Robots-Tag: noindex, nofollow\r\nConnection: close\r\n\r\n",stdout);
+    ak_app_open(r->title,"directory","route-participation");
+    fputs("<div class=\"pj-page\" data-participant-journey><nav class=\"pj-breadcrumb\" aria-label=\"Breadcrumb\"><a href=\"/discover\">Discover</a><span aria-hidden=\"true\">/</span><a href=\"/profile?tab=activity\">My activity</a></nav><p class=\"pj-kicker\">",stdout);
     html(r->kind==PJ_COMMUNITY?"Community participation":"Your interests");fputs("</p><h1>",stdout);html(r->title);fputs("</h1><div class=\"pj-layout\"><section aria-label=\"About this activity\">",stdout);
     if(r->visible){
         fputs("<p class=\"pj-source\">",stdout);html(r->description);fputs("</p><a class=\"pj-source-link\" href=\"/s/",stdout);
@@ -151,7 +149,7 @@ static void pj_document(const PjRecord *r){
         }
         fputs("<p><a href=\"/profile?tab=activity&amp;kind=",stdout);html(pj_kind_name(r->kind));fputs("\">Return to my activity</a></p>",stdout);
     }
-    fputs("</aside></div></main></body></html>",stdout);
+    fputs("</aside></div></div>",stdout);ak_app_close();
 }
 static void pj_error(int code){
     protocol_reply(code,"text/plain; charset=utf-8",code==409?
@@ -211,7 +209,7 @@ static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,co
     if(!db||uid<1){fputs("<p>Your private activity could not be read.</p>",stdout);return;}
     if(!pj_kind_name(kind)[0])kind=PJ_OCCURRENCE;
     char actor[64];snprintf(actor,sizeof(actor),"user:%ld",uid);
-    pj_styles();fputs("<section class=\"pj-activity\" data-private-participation><h2>My activity</h2><p class=\"pj-notice\">Only you can see this activity. Switching profile sites does not publish it.</p><nav class=\"pj-filter\" aria-label=\"Activity type\">",stdout);
+    fputs("<section class=\"pj-activity\" data-private-participation><h2>My activity</h2><p class=\"pj-notice\">Only you can see this activity. Switching profile sites does not publish it.</p><nav class=\"pj-filter\" aria-label=\"Activity type\">",stdout);
     for(int i=1;i<=2;i++){fputs("<a href=\"",stdout);pj_profile_url(site,(PjKind)i,"",0);fputs("\"",stdout);if(i==(int)kind)fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(i==1?"Following":"Community requests");fputs("</a>",stdout);}
     fputs("</nav><form method=\"get\" action=\"/profile\">",stdout);pj_hidden("tab","activity");pj_hidden("kind",pj_kind_name(kind));if(site&&*site)pj_hidden("site",site);
     fputs("<input type=\"search\" name=\"q\" aria-label=\"Search my activity\" placeholder=\"Search current public titles\" maxlength=\"159\" value=\"",stdout);html(q?q:"");fputs("\"><button type=\"submit\">Search activity</button></form>",stdout);

@@ -23,7 +23,7 @@ const walk = dir => readdirSync(dir).flatMap(n => { const p = join(dir, n); retu
 export async function instrumentsPackage({ site = join(import.meta.dir, '../../packs/aurekai-work-samples/site'), packageRoot } = {}) {
   const out = mkdtempSync(join(tmpdir(), 'instruments-package-'));
   try {
-    await build(site, out);
+    await build(site, out, { pagePaths: INSTRUMENTS.map(item => item.page) });
     const files = new Map();
     for (const it of INSTRUMENTS) {
       let html = readFileSync(join(out, it.page, 'index.html'), 'utf8');

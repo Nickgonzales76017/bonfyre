@@ -1,7 +1,7 @@
 BUN ?= bun
 ROOT := ../..
 WEB_OUT ?= build/web-workbench
-.PHONY: all prepare check test native-workspace package web-package test-workbench test-activity test-account-work test-provider-browser
+.PHONY: all prepare check test native-workspace package web-package test-workbench test-activity test-account-work test-provider-browser test-changed test-verification-contract
 all: prepare
 prepare:
 	$(BUN) $(ROOT)/scripts/project-recurring-commerce-browser.mjs --write
@@ -11,18 +11,24 @@ check:
 	$(BUN) $(ROOT)/scripts/project-recurring-commerce-browser.mjs --check
 	$(BUN) $(ROOT)/scripts/project-provider-work-browser.mjs --check
 	$(BUN) $(ROOT)/scripts/project-program-service-policy.mjs --check
-test: check native-workspace test-workbench test-activity test-account-work test-programs
+test: check test-verification-contract native-workspace test-workbench test-activity test-account-work test-programs
 	$(BUN) test tests/commerce/observation.test.mjs tests/commerce/recurring-commerce.test.mjs tests/commerce/projection.test.mjs
+test-verification-contract:
+	@bash $(ROOT)/scripts/tests/test-gate.test.sh
+test-changed: test-verification-contract
+	@BONFYRE_BUN_BINARY="$(BUN)" bash $(ROOT)/scripts/verification/test-gate.sh run --git --fast
+.PHONY: test-changed-full
+test-changed-full: test-verification-contract
+	@BONFYRE_BUN_BINARY="$(BUN)" bash $(ROOT)/scripts/verification/test-gate.sh run --git
 test-workbench: check
 	$(BUN) test tests/program-editor.test.mjs tests/workbench-actions.test.mjs tests/cycle-reschedule.test.mjs tests/contents.test.mjs tests/native-workbench-package.test.mjs tests/web-package.test.mjs tests/workbench-publish.test.mjs
 test-activity:
-	$(BUN) test tests/aurekai-activity-source.test.mjs tests/aurekai-activity.browser.test.mjs tests/foreign-sign-in.test.mjs tests/foreign-sign-in.browser.test.mjs tests/provider-continuation.test.mjs $(ROOT)/cmd/BonfyreSourceFrontier/tests/web_work.test.mjs $(ROOT)/cmd/BonfyreWebAddress/tests/activity_workspace.test.mjs $(ROOT)/cmd/BonfyreWebAddress/tests/source_web_work.test.mjs $(ROOT)/integrations/mcp/tests/fabric_activity.test.mjs $(ROOT)/integrations/mcp/tests/fabric_transport.test.mjs $(ROOT)/integrations/mcp/tests/fabric_store.test.mjs
+	@BONFYRE_BUN_BINARY="$(BUN)" bash $(ROOT)/scripts/verification/test-gate.sh run --suite activity_unit --suite activity_browser --suite foreign_signin_browser
 test-account-work:
-	$(BUN) test tests/aurekai-model.test.mjs tests/aurekai-model.browser.test.mjs tests/aurekai-push.test.mjs tests/aurekai-push.browser.test.mjs tests/aurekai-push-rail.browser.test.mjs $(ROOT)/integrations/mcp/tests/fabric_model.test.mjs $(ROOT)/integrations/mcp/tests/native_model.test.mjs $(ROOT)/integrations/mcp/tests/fabric_model_pipeline.test.mjs $(ROOT)/integrations/mcp/tests/native_meter.test.mjs $(ROOT)/integrations/mcp/tests/fabric_output_transfer.test.mjs $(ROOT)/integrations/mcp/tests/fabric_push.test.mjs
-	$(BUN) test tests/activity-source.test.mjs tests/aurekai-inbox-source.test.mjs tests/aurekai-activity-interaction.browser.test.mjs $(ROOT)/cmd/BonfyreWebAddress/tests/account_activity_binding.test.mjs $(ROOT)/cmd/BonfyreWebAddress/tests/account_activity_web.test.mjs
+	@BONFYRE_BUN_BINARY="$(BUN)" bash $(ROOT)/scripts/verification/test-gate.sh run --suite account_unit --suite model_browser --suite push_browser --suite push_rail_browser --suite inbox_unit --suite inbox_browser
 test-provider-browser:
 	$(BUN) $(ROOT)/scripts/project-provider-work-browser.mjs --check
-	$(BUN) test tests/provider-continuation.browser.test.mjs
+	@BONFYRE_BUN_BINARY="$(BUN)" bash $(ROOT)/scripts/verification/test-gate.sh run --suite provider_browser
 web-package: check
 	$(BUN) web-package.mjs "$(WEB_OUT)"
 .PHONY: publish-workbench verify-workbench

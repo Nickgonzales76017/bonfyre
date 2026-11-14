@@ -45,7 +45,7 @@ static int cw_entry(const char *s) {
 static int cw_load_type(sqlite3 *db) {
     if(find_type("application_binding"))return 1;
     sqlite3_stmt *s=NULL;ContentType type={0};int ok=0;
-    if(sqlite3_prepare_v2(db,"SELECT schema_json FROM _content_types WHERE name='application_binding'",-1,&s,NULL)==SQLITE_OK && sqlite3_step(s)==SQLITE_ROW && g_type_count<128){
+    if(sqlite3_prepare_v2(db,"SELECT schema_json FROM _content_types WHERE name='application_binding'",-1,&s,NULL)==SQLITE_OK && sqlite3_step(s)==SQLITE_ROW && g_type_count<CMS_MAX_TYPES){
         const char *raw=(const char *)sqlite3_column_text(s,0);
         if(raw && parse_schema(raw,&type)==0 && !strcmp(type.name,"application_binding")){g_types[g_type_count++]=type;ok=1;}else free(type.fields);
     }

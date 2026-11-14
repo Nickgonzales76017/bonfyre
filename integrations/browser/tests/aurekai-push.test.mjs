@@ -1,4 +1,5 @@
 import {expect,test} from 'bun:test';
+import {deferred,packet} from './browser-fixture.mjs';
 import {createECDH} from 'node:crypto';
 import {encode,decode} from '../workspace-msgpack.mjs';
 import {readPushStatus,enablePush,disablePush,pushEnvelope,resumePushFromLocation} from '../aurekai-push.mjs';
@@ -7,8 +8,6 @@ import {createPushWorker} from '../aurekai-push-sw.mjs';
 const binding={actor:'user:1',subject:'institution:studio',scope:'institution'},context=binding.subject;
 const key=createECDH('prime256v1');key.generateKeys();const publicKey=key.getPublicKey().toString('base64url');
 const status={source:'fabric',binding,context,configured:true,paused:false,publicKey,keyId:'a'.repeat(64),reason:'',subscriptions:[],counts:{queued:0,accepted:0,shown:0,opened:0,uncertain:0}};
-const packet=(value,status=200)=>new Response(encode(value),{status,headers:{'Content-Type':'application/msgpack'}});
-const deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
 function environment(){
   const calls={unsubscribe:0,subscribe:0,permission:0,register:0};
   let sub={endpoint:'https://fcm.googleapis.com/fcm/send/fixture',expirationTime:null,options:{applicationServerKey:key.getPublicKey()},

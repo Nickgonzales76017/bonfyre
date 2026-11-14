@@ -322,51 +322,11 @@ static void protocol_reply(int code, const char *type, const char *body);
  *
  * Cannot infer: a page that renders a price -> an offer to the reader looking
  * at it. The price is what the service book says today, not an agreement. */
+/* The doors grammar these pages share lives in matrix-aperture.pcss under
+ * body.ak-page. The page opens the one shell: body.ak-app and the estate bar;
+ * protocol_reply closes it with the one footer and player. */
 #define BF_PAGE_CSS \
-"<style>" \
-".doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0;" \
-"border-top:1px solid var(--ink);border-left:1px solid var(--ink);margin:34px 0 70px}" \
-/* A labelled panel is swapped into a grid, so its heading would otherwise
- * become a cell and sit in a column beside the first record. It spans the
- * row instead: the label belongs to the panel, not to one item in it. */ \
-".surface-title,.surface-caption{grid-column:1/-1;border-right:1px solid var(--ink);" \
-".surface-caption>span,.surface-caption{max-inline-size:none}" \
-"border-bottom:1px solid var(--ink);margin:0;padding:22px 22px 0}" \
-".surface-title{font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;" \
-"letter-spacing:.18em;text-transform:uppercase;color:#4a5a4a;padding-bottom:8px}" \
-/* max-width on the element cut the row border short, because the border is
- * drawn at the element's width. Cap the measure on the text, not the cell. */ \
-".surface-caption{color:#526159;font-size:14px;line-height:1.5;padding:0 22px 20px}" \
-".surface-caption::after{content:\"\";display:block}" \
-/* Records are the general shape: whatever a pattern reads, rendered as
- * label/value pairs. They were unstyled, so an organ-backed panel read as a
- * wall of loose words -- true, and unreadable. */ \
-/* XVIII: a page may carry dozens of panels. The browser can skip layout and
- * paint for what is offscreen, which keeps an expressive page cheap without a
- * JS virtualization layer. contain-intrinsic-size holds a plausible height so
- * the scrollbar does not jump as panels are reached. */ \
-".lens-panel{content-visibility:auto;contain-intrinsic-size:auto 600px}" \
-".surface-record{border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);" \
-"padding:18px 22px;margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 14px;" \
-"align-content:start;font-size:14px}" \
-".surface-record dt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;" \
-"letter-spacing:.12em;text-transform:uppercase;color:#7a857a;align-self:center}" \
-".surface-record dd{margin:0;color:var(--ink);font-variant-numeric:tabular-nums;" \
-"overflow-wrap:anywhere}" \
-".surface-record dd:empty::after{content:\"\\2014\";color:#9aa39a}" \
-".door{border-right:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:24px 22px;min-height:250px;" \
-"display:flex;flex-direction:column;transition:.2s ease}" \
-".door:hover{background:#eef3e2;transform:translateY(-3px)}" \
-".door h3{margin:12px 0 8px;font-size:26px;font-weight:500;letter-spacing:-.05em}" \
-".door p{margin:0 0 16px;color:#526159;font-size:14px;line-height:1.5}" \
-".door .ways{margin-top:auto;display:flex;flex-wrap:wrap;gap:6px}" \
-".way{border:1px solid var(--line);padding:4px 8px;font:500 10px 'DM Mono',monospace;" \
-"letter-spacing:.04em;color:#41514a}" \
-".way:hover{border-color:var(--ink);background:#fff}" \
-".price{font:500 22px 'DM Mono',monospace;letter-spacing:-.03em;margin:0 0 4px}" \
-".price small{font-size:11px;color:#526159;letter-spacing:.04em}" \
-".unpriced{color:#8a6d3b}" \
-"</style></head><body>"
+"</head><body class=\"ak-app ak-page\" data-ak-page>"
 
 /* The navigation is authored, not compiled.
  *
@@ -381,8 +341,6 @@ static void protocol_reply(int code, const char *type, const char *body);
 "<a href=\"/protocols\">Build</a><a href=\"/studio/\">Studio</a>"
 
 #define BF_PAGE_CHROME \
-"<canvas class=\"matrix-gpu\" id=\"matrix-gpu\" aria-hidden=\"true\"></canvas>" \
-"<div class=\"grain\" aria-hidden=\"true\"></div>" \
 BF_ESTATE_BAR \
 "<nav class=\"ak-local\" hidden>%s</nav>"
 
@@ -424,6 +382,7 @@ static const char *site_speculation_html(void);
  * at the end of body, so it is fetched beside the stylesheets instead of after
  * the parser reaches the bottom of the document. */ \
 "<link rel=\"preload\" as=\"script\" fetchpriority=\"high\" href=\"/assets/matrix-htmx.js\">" \
+"<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap\">" \
 "<link rel=\"stylesheet\" href=\"/assets/matrix.css\">" \
 "<link rel=\"stylesheet\" href=\"/assets/matrix-aperture.css\">" \
 BF_PAGE_MACHINE_MANIFEST \
@@ -436,6 +395,61 @@ static const char *capability_inquiry_url(void) {
     if (!url || strncmp(url, "https://", 8) || !public_http_url(url) ||
         strpbrk(url, " @\\\"<>\\\\")) return "";
     return url;
+}
+
+/* The catalogue a person reads: the Stitch tool-definition studio layout on
+ * the one shell. Left, each capability as its definition with the live price;
+ * right, the same catalogue exactly as a machine is handed it. Both read
+ * x402_price_usd, so the two can never disagree about a number. */
+static void capability_catalogue_page(const char *inquiry) {
+    int priced_n = 0;
+    for (int i = 0; i < X402_CATALOG_N; i++) { double usd = 0.0; if (x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0) priced_n++; }
+    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n"
+           "X-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nConnection: close\r\n\r\n");
+    ak_app_open("Capabilities", "workbench", "route-capability");
+    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Aurekai <span>/</span> Capabilities <span>/</span> x402 resources</p>"
+          "<h1>Capabilities you can call</h1><p class=\"ak-lede\">Each price is read live from the finance service book, and the "
+          "agent-to-agent carrier quotes the same number. Looking is free: nobody can decide to buy what they cannot see first.</p></div>"
+          "<div class=\"ak-actions\">", stdout);
+    if (inquiry && *inquiry) {
+        fputs("<a class=\"ak-btn is-primary\" href=\"", stdout); html(inquiry);
+        fputs("\">Discuss your workflow</a><p class=\"cap-note\">Describe the result you need. Scope and pricing are agreed after review.</p>", stdout);
+    }
+    fputs("<a class=\"ak-btn\" href=\"/a2a\">Agent-to-agent carrier</a></div></header>", stdout);
+    printf("<dl class=\"ak-stats is-row\"><div><dt>Capabilities</dt><dd>%d</dd></div><div><dt>Priced to call</dt><dd class=\"is-on\">%d</dd>"
+           "<small>%s</small></div>"
+           "<div><dt>Payment carrier</dt><dd>x402 v1</dd></div><div><dt>Settlement</dt><dd%s>%s</dd><small>%s</small></div></dl>",
+           (int)X402_CATALOG_N, priced_n, priced_n < X402_CATALOG_N ? "The rest are not for sale, which is not the same as free" : "Every capability here has a price",
+           x402_facilitator()[0] ? " class=\"is-on\"" : "",
+           x402_facilitator()[0] ? "Facilitator set" : "Refused",
+           x402_facilitator()[0] ? "Payments are verified before a result is returned" : "No facilitator is configured, so an unverified payment is never treated as settled");
+    fputs("<div class=\"ak-grid is-2 cap-studio\"><section class=\"ak-panel\" aria-labelledby=\"cap-defs-h\"><header><h2 id=\"cap-defs-h\">Capability definitions</h2>"
+          "<span class=\"ak-tag\">01 / catalogue</span></header><ol class=\"cap-defs\">", stdout);
+    for (int i = 0; i < X402_CATALOG_N; i++) {
+        double usd = 0.0; int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
+        fputs("<li data-capability=\"", stdout); html(X402_CATALOG[i].name); fputs("\"><div class=\"cap-id\"><h3><code>", stdout); html(X402_CATALOG[i].name);
+        fputs("</code></h3><span class=\"ak-tag\">", stdout); html(X402_CATALOG[i].binary); fputs("</span></div><p>", stdout); html(X402_CATALOG[i].summary);
+        if (priced) printf("</p><p class=\"cap-price\">$%.*f <small>USD / call</small></p>", usd < 0.01 ? 4 : 2, usd);
+        else fputs("</p><p class=\"cap-price is-unpriced\">Unpriced <small>not for sale</small></p>", stdout);
+        fputs("<nav class=\"cap-ways\"><a class=\"ak-chip\" href=\"/capability/", stdout); html(X402_CATALOG[i].name);
+        fputs("\">x402 resource</a><a class=\"ak-chip\" href=\"/a2a\">Over A2A</a></nav></li>", stdout);
+    }
+    fputs("</ol></section><div class=\"cap-side\"><section class=\"ak-panel\" aria-labelledby=\"cap-json-h\"><header><h2 id=\"cap-json-h\">As a machine reads it</h2>"
+          "<span class=\"ak-tag is-on\">x402Version 1</span></header><pre class=\"ak-console cap-json\">{\n  \"x402Version\": 1,\n  \"capabilities\": [", stdout);
+    for (int i = 0; i < X402_CATALOG_N; i++) {
+        double usd = 0.0; int priced = x402_price_usd(X402_CATALOG[i].name, &usd);
+        fputs(i ? ",\n    { \"name\": \"" : "\n    { \"name\": \"", stdout); html(X402_CATALOG[i].name);
+        fputs("\", \"resource\": \"/capability/", stdout); html(X402_CATALOG[i].name);
+        printf("\", \"priced\": %s, \"priceUsd\": %.2f }", priced ? "true" : "false", usd);
+    }
+    fputs("\n  ]\n}</pre><p class=\"cap-note\">Ask <code>/capability</code> for <code>application/json</code> to receive this catalogue with each description.</p></section>"
+          "<section class=\"ak-panel\" aria-labelledby=\"cap-carriers-h\"><header><h2 id=\"cap-carriers-h\">Where it is offered</h2><span class=\"ak-tag\">02 / carriers</span></header>"
+          "<ul class=\"ak-rows\"><li><strong>x402 resources</strong><small>/capability/&lt;name&gt; answers 402 with its requirements</small><a class=\"ak-go\" href=\"/capability/", stdout); html(X402_CATALOG[0].name);
+    fputs("\">Open one</a></li>"
+          "<li><strong>Agent-to-agent</strong><small>The same skills and the same prices over A2A</small><a class=\"ak-go\" href=\"/a2a\">Open</a></li>"
+          "<li><strong>Agent card</strong><small>/.well-known/agent.json</small><a class=\"ak-go\" href=\"/.well-known/agent.json\">Read</a></li></ul></section></div></div>", stdout);
+    ak_app_close();
+    fflush(stdout);
 }
 
 static int serve_capability(const char *method, const char *target,
@@ -459,51 +473,7 @@ static int serve_capability(const char *method, const char *target,
         const char *inquiry = capability_inquiry_url();
         /* A catalogue a person cannot read is not a catalogue. The price is the
          * same number in both carriers because both call x402_price_usd. */
-        if (wants_html(accept)) {
-            char doors[24576]; size_t dn = 0; int trunc = 0;
-            char inquiry_html[8192] = "", inquiry_escaped[6144];
-            if (*inquiry) {
-                html_escape(inquiry, inquiry_escaped, sizeof(inquiry_escaped));
-                snprintf(inquiry_html, sizeof(inquiry_html),
-                    "<p><a class=\"way\" href=\"%s\">Discuss your workflow</a> "
-                    "Describe the result you need. Scope and pricing are agreed after review.</p>", inquiry_escaped);
-            }
-            for (int i = 0; i < X402_CATALOG_N && !trunc; i++) {
-                double usd = 0.0;
-                int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
-                char price[384];
-                if (priced)
-                    snprintf(price, sizeof(price),
-                        "<p class=\"price\">$%.2f <small>USD / call</small></p>", usd);
-                else
-                    snprintf(price, sizeof(price),
-                        "<p class=\"price unpriced\">Unpriced <small>not for sale &mdash; "
-                        "which is not the same as free</small></p>");
-                int w2 = snprintf(doors + dn, sizeof(doors) - dn,
-                    "<article class=\"door\"><p class=\"eyebrow\"><i></i>%s</p>"
-                    "<h3>%s</h3>%s<p>%s</p><div class=\"ways\">"
-                    "<a class=\"way\" href=\"/capability/%s\">x402 resource</a>"
-                    "<a class=\"way\" href=\"/a2a\">over A2A</a></div></article>",
-                    X402_CATALOG[i].binary, X402_CATALOG[i].name, price,
-                    X402_CATALOG[i].summary, X402_CATALOG[i].name);
-                if (w2 < 0 || (size_t)w2 >= sizeof(doors) - dn) trunc = 1; else dn += (size_t)w2;
-            }
-            if (trunc) { protocol_reply(503, "text/html", "<p>page overflow</p>"); return 1; }
-            snprintf(body, sizeof(body),
-                BF_PAGE_OPEN "Capabilities \xc2\xb7 Aurekai" BF_PAGE_AFTER_TITLE
-                "<main><section class=\"hero wrap\" style=\"padding:56px 0 10px\">"
-                "<div class=\"eyebrow\"><i></i><span>Aurekai / priced capability</span></div>"
-                "<h1>What this institution <em>sells.</em></h1>"
-                "<p class=\"lede\">Every price is read live from the finance service book, and "
-                "the <a href=\"/a2a\">agent-to-agent carrier</a> quotes the same number. "
-                "Looking is free on purpose: nobody can decide to buy what they cannot first "
-                "see. Paying uses x402 &mdash; and with no facilitator configured these "
-                "endpoints refuse rather than treat an unverified payment as settled.</p>"
-                "%s</section><div class=\"wrap\"><div class=\"doors\">%s</div></div></main>"
-                "</body></html>\n", site_nav_html(), inquiry_html, doors);
-            protocol_reply(200, "text/html; charset=utf-8", body);
-            return 1;
-        }
+        if (wants_html(accept)) { capability_catalogue_page(inquiry); return 1; }
         int w = snprintf(body, sizeof(body),
             "{\"x402Version\":1,\"seller\":\"%s\",\"capabilities\":[",
             host ? host : "aurekai.life");
@@ -608,9 +578,19 @@ static int serve_capability(const char *method, const char *target,
  * null geometry: a fabricated point would be worse than an honest absence. */
 
 static void protocol_reply(int code, const char *type, const char *body) {
+    /* A page opened with BF_PAGE_OPEN closes on the one footer and player. */
+    const char *close = NULL;
+    if (!strncmp(type, "text/html", 9) && strstr(body, " data-ak-page>") && !strstr(body, "class=\"ak-foot\"")) {
+        const char *at = strstr(body, "</body>");
+        for (const char *n = at; n; n = strstr(n + 1, "</body>")) at = n;
+        close = at;
+    }
+    size_t foot = close ? strlen(BF_ESTATE_FOOT) : 0;
     printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %zu\r\n"
-           "Cache-Control: no-store\r\nConnection: close\r\n\r\n%s",
-           code, code == 200 ? "OK" : "Service Unavailable", type, strlen(body), body);
+           "Cache-Control: no-store\r\nConnection: close\r\n\r\n",
+           code, code == 200 ? "OK" : "Service Unavailable", type, strlen(body) + foot);
+    if (close) { fwrite(body, 1, (size_t)(close - body), stdout); fputs(BF_ESTATE_FOOT, stdout); fputs(close, stdout); }
+    else fputs(body, stdout);
     fflush(stdout);
 }
 

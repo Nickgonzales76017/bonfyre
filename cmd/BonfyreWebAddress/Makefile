@@ -44,15 +44,31 @@ SOURCE_HIERARCHY_SOURCE := src/source_hierarchy_projection.c
 WEB_SOURCES := src/main.c src/public_code.c src/http_readiness.c src/atom_feed.c src/subject_address.c src/bounded_output.c $(SPATIAL_FRONTIER_SOURCE) $(PROJECTION_SOURCE) \
                src/source_depth_projection.c src/people_projection.c src/detail_depth.c src/model_catalogue_index.c \
                $(PUBLIC_PROJECTION_CACHE_SOURCE) $(COMMUNITY_PROJECTION_SOURCE) \
-               $(TERRITORY_HOME_SOURCE) \
+               $(TERRITORY_HOME_SOURCE) src/site_authored_document.c src/affinity_projection.c \
+               src/dateplan_projection.c src/club_projection.c \
                src/domain_profile_projection.c $(SOURCE_HIERARCHY_SOURCE) src/site_product.c src/site_mcp.c src/site_presentation.c
+# Native authoring composition, shared with SurfaceScene: the served journal
+# route projects released CMS pages through these exact units.
+AUTHORING_SOURCES := ../BonfyreSurfaceScene/src/authoring_native_components.c \
+               ../BonfyreSurfaceScene/src/authoring_editorial.c \
+               ../BonfyreSurfaceScene/src/authoring_template.c \
+               ../BonfyreSurfaceScene/src/authoring_markdown.c \
+               ../BonfyreSurfaceScene/vendor/md4c/md4c.c \
+               ../BonfyreSurfaceScene/vendor/md4c/md4c-html.c \
+               ../BonfyreSurfaceScene/vendor/md4c/entity.c \
+               ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c
+AUTHORING_OBJECTS := build/authoring_native_components.o build/authoring_editorial.o \
+               build/authoring_template.o build/authoring_markdown.o \
+               build/md4c.o build/md4c_html.o build/md4c_entity.o build/mini_mustach.o
 CORE_NATIVE_SOURCES := $(filter $(ROOT)/engine/core/src/%.c,$(CORE_SOURCES))
 WEB_OBJECTS := $(patsubst src/%.c,build/web_%.o,$(WEB_SOURCES))
 CORE_OBJECTS := $(patsubst $(ROOT)/engine/core/src/%.c,build/core_%.o,$(CORE_NATIVE_SOURCES))
 OBJECTS := $(WEB_OBJECTS) $(CORE_OBJECTS) build/lib_bf_sha256.o build/lib_bf_static_embed.o build/lib_bf_json.o build/lib_bf_jsonw.o build/lib_bf_msgpack.o build/recipe_material.o build/record_factor.o build/recipe_week.o build/address_resolve.o build/recipe_nutrition.o
 OBJECTS += build/public_qr.o build/campaign_link.o build/lib_bf_utf8.o build/account_world.o
+OBJECTS += $(AUTHORING_OBJECTS)
 OBJECTS += build/account_world_audio.o
 OBJECTS += build/account_world_literature.o
+OBJECTS += build/dating_owner.o
 # These inputs are prepared explicitly once from verified retained bodies or
 # the pinned upstream release. Normal builds never contact an external source.
 .PHONY: public-code-inputs prepare-public-code
@@ -107,15 +123,16 @@ build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER)
 native-experience-composition-witness: $(EXPERIENCE_PROGRAM_HEADER)
 	@bun tools/compile_experience_programs.mjs generated/native_page_composition.h $(EXPERIENCE_PROGRAM_HEADER) --check
 TEMPLATE_SLOT_HEADER := generated/native_template_slots.h
-PACK_BROWSER_HEADER := generated/native_pack_browser.h
-$(PACK_BROWSER_HEADER): src/pack_browser.js src/pack_browser.css tools/compile_pack_browser.mjs
-	bun tools/compile_pack_browser.mjs
-build/web_main.o: $(PACK_BROWSER_HEADER)
 build/web_main.o: src/item_credit_indexes.h
 $(PEOPLE_PROJECTION_TEST): src/item_credit_indexes.h
 build/web_main.o: src/front_recipe_query.h
 build/web_main.o: src/static_asset_closure.h src/public_asset_export.h
 build/web_main.o: src/account_activity_web.h src/account_world_web.h ../BonfyreCMS/src/account_world.h
+build/web_main.o build/compact/web_main.o: src/profile_dating_web.h ../BonfyreParticipation/src/dating.h
+build/dating_owner.o: ../BonfyreParticipation/src/dating.c ../BonfyreParticipation/src/dating.h src/dating_policy.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/dating_owner.o: ../BonfyreParticipation/src/dating.c ../BonfyreParticipation/src/dating.h src/dating_policy.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/account_world.o: ../BonfyreCMS/src/account_world.c ../BonfyreCMS/src/account_world.h | build
 	$(CC) $(CFLAGS) -c ../BonfyreCMS/src/account_world.c -o $@
 build/compact/account_world.o: ../BonfyreCMS/src/account_world.c ../BonfyreCMS/src/account_world.h | build/compact
@@ -144,7 +161,7 @@ front-recipe-query-witness: tests/front_recipe_query_test.c src/front_recipe_que
 	@set -eu; witness=$$(mktemp "$${TMPDIR:-/tmp}/front-recipe-test.XXXXXX"); \
 	trap 'rm -f "$$witness"' 0 1 2 15; \
 	$(CC) $(CFLAGS) tests/front_recipe_query_test.c -lsqlite3 -o "$$witness"; "$$witness"
-build/web_main.o: src/community_journey.h ../BonfyreCMS/src/community_read.h
+build/web_main.o: src/community_journey.h ../BonfyreCMS/src/community_read.h src/guild_records_web.h src/household_circles_web.h src/charters_web.h
 
 .PHONY: static-asset-closure-witness
 all test: static-asset-closure-witness
@@ -173,6 +190,7 @@ native-publications-query-witness:
 .PHONY: publisher-front-witness
 test: publisher-front-witness
 publisher-front-witness: $(TARGET)
+	$(MAKE) -C ../BonfyreCMS bonfyre-cms
 	sh tests/publisher_front_archive_test.sh $(abspath $(TARGET))
 	sh tests/front_sheets_served_test.sh $(abspath $(TARGET))
 	sh tests/wire_cache_law_test.sh $(abspath $(TARGET))
@@ -243,17 +261,13 @@ community-journey-witness: $(TARGET)
 	BONFYRE_TEST_WEB_BINARY="$${BONFYRE_TEST_WEB_BINARY:-$$(pwd)/$(TARGET)}" \
 	BONFYRE_TEST_CMS_BINARY="$${BONFYRE_TEST_CMS_BINARY:-$$(cd ../BonfyreCMS && pwd)/bonfyre-cms}" \
 	bun test tests/community_journey.test.mjs tests/profile_site_scope.test.mjs
-.PHONY: front-arrival-witness
-all: front-arrival-witness
-test: front-arrival-witness
-front-arrival-witness: $(TARGET)
+.PHONY: organization-subaccounts-witness
+test: organization-subaccounts-witness
+organization-subaccounts-witness: $(TARGET)
 	$(MAKE) -C ../BonfyreCMS bonfyre-cms
-	sh tests/front_arrival_test.sh ./$(TARGET)
-.PHONY: pack-browser-witness
-test: pack-browser-witness
-pack-browser-witness: $(TARGET) $(PACK_BROWSER_HEADER)
-	bun tools/compile_pack_browser.mjs --check
-	bun test tests/pack_browser_test.mjs
+	BONFYRE_TEST_WEB_BINARY="$(or $(BONFYRE_TEST_WEB_BINARY),$(CURDIR)/$(TARGET))" \
+	BONFYRE_TEST_CMS_BINARY="$(or $(BONFYRE_TEST_CMS_BINARY),$(abspath ../BonfyreCMS/bonfyre-cms))" \
+	bun test tests/organization_subaccounts.test.mjs tests/profile_publication_placement.test.mjs
 DOMAIN_PROFILE_HEADER := generated/native_domain_profiles.h
 include tools/domain_profiles.mk
 SITE_APPLICATION_LOWERER_HEADER := generated/native_site_application_lowerers.h
@@ -275,6 +289,9 @@ PEOPLE_PROJECTION_TEST := tests/people-projection-test
 ATOM_FEED_TEST := tests/atom-feed-test
 SUBJECT_ADDRESS_TEST := tests/subject-address-test
 BOUNDED_OUTPUT_TEST := tests/bounded-output-test
+AFFINITY_PROJECTION_TEST := tests/affinity-projection-test
+DATEPLAN_PROJECTION_TEST := tests/dateplan-projection-test
+CLUB_PROJECTION_TEST := tests/club-projection-test
 PEOPLE_STATIC_MANIFEST := tools/people-static-manifest
 HOME_SURFACE := $(ROOT)/site/matrix/surfaces/home.html
 SURFACE_RUNTIME_SOURCE := ../BonfyreSurfaceScene/runtime/surface-runtime.mjs
@@ -474,9 +491,59 @@ build/lib_bf_jsonw.o: $(ROOT)/lib/libbonfyre/bf_jsonw.c | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/lib_bf_msgpack.o: $(ROOT)/lib/libbonfyre/bf_msgpack.c | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_native_components.o: ../BonfyreSurfaceScene/src/authoring_native_components.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_editorial.o: ../BonfyreSurfaceScene/src/authoring_editorial.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_template.o: ../BonfyreSurfaceScene/src/authoring_template.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_markdown.o: ../BonfyreSurfaceScene/src/authoring_markdown.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/md4c.o: ../BonfyreSurfaceScene/vendor/md4c/md4c.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/md4c_html.o: ../BonfyreSurfaceScene/vendor/md4c/md4c-html.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/md4c_entity.o: ../BonfyreSurfaceScene/vendor/md4c/entity.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/mini_mustach.o: ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_native_components.o: ../BonfyreSurfaceScene/src/authoring_native_components.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_editorial.o: ../BonfyreSurfaceScene/src/authoring_editorial.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_template.o: ../BonfyreSurfaceScene/src/authoring_template.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_markdown.o: ../BonfyreSurfaceScene/src/authoring_markdown.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/md4c.o: ../BonfyreSurfaceScene/vendor/md4c/md4c.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/md4c_html.o: ../BonfyreSurfaceScene/vendor/md4c/md4c-html.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/md4c_entity.o: ../BonfyreSurfaceScene/vendor/md4c/entity.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/mini_mustach.o: ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 -include $(OBJECTS:.o=.d)
-$(PROJECTION_TEST): tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) src/site_fragment_projection.h
-	$(CC) $(CFLAGS) -Isrc -o $@ tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) -lsqlite3
+$(PROJECTION_TEST): tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) src/site_fragment_projection.h $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_jsonw.c
+	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
+$(AFFINITY_PROJECTION_TEST): tests/affinity_projection_test.c src/affinity_projection.c src/affinity_projection.h $(AUTHORING_SOURCES)
+	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/affinity_projection_test.c src/affinity_projection.c $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
+.PHONY: affinity-projection-witness
+affinity-projection-witness: $(AFFINITY_PROJECTION_TEST)
+	./$(AFFINITY_PROJECTION_TEST)
+all: affinity-projection-witness
+$(DATEPLAN_PROJECTION_TEST): tests/dateplan_projection_test.c src/dateplan_projection.c src/dateplan_projection.h $(AUTHORING_SOURCES)
+	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/dateplan_projection_test.c src/dateplan_projection.c $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
+.PHONY: dateplan-projection-witness
+dateplan-projection-witness: $(DATEPLAN_PROJECTION_TEST)
+	./$(DATEPLAN_PROJECTION_TEST)
+all: dateplan-projection-witness
+$(CLUB_PROJECTION_TEST): tests/club_projection_test.c src/club_projection.c src/club_projection.h $(AUTHORING_SOURCES)
+	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/club_projection_test.c src/club_projection.c $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
+.PHONY: club-projection-witness
+club-projection-witness: $(CLUB_PROJECTION_TEST)
+	./$(CLUB_PROJECTION_TEST)
+all: club-projection-witness
 $(ATOM_FEED_TEST): tests/atom_feed_test.c src/atom_feed.c src/atom_feed.h $(ROOT)/lib/libbonfyre/src/bf_sha256.c
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -o $@ tests/atom_feed_test.c src/atom_feed.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
 .PHONY: atom-feed-witness

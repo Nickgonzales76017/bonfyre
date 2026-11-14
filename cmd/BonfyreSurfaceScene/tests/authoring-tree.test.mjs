@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {newAuthoringTree,validateAuthoringTree,applyAuthoringEdit,createAuthoringSession,
  toPuckData,fromPuckData,toGrapesProject,fromGrapesProject,toEditorBlocks,
- applyEditorBlocks,TREE_SCHEMA} from "../runtime/authoring-tree.mjs";
+ applyEditorBlocks,TREE_SCHEMA,assertAuthoringContinuity,authoringBasisDigest,applyAuthoringProposal} from "../runtime/authoring-tree.mjs";
 const card=(id,heading)=>({id,kind:"profile-card",props:{heading,variant:"forest"},
  responsive:{desktop:{layout:"grid",columns:2},phone:{layout:"stack"}},children:[]});
 const nested=()=>{
@@ -77,4 +77,68 @@ test("cross-account imports, arbitrary CSS or HTML bypasses are rejected",()=>{
  assert.throws(()=>validateAuthoringTree({...doc,site_id:"other/../../../"}),/site ID/);
  assert.throws(()=>validateAuthoringTree({...doc,blocks:[{id:"script",kind:"javascript",props:{body:"alert(1)"},children:[]}]}),/unregistered block/);
  assert.throws(()=>validateAuthoringTree({...doc,blocks:[{id:"bad",kind:"profile-card",props:{style:"<style>"},children:[]}]}),/unregistered prop/);
+});
+
+test("semantic bindings survive all editor modes and cannot be silently retargeted",()=>{
+ const doc=nested();
+ const block=doc.blocks[0].children[0];
+ block.props.source_ref="frappe:crm:Lead";
+ block.props.source_digest="a".repeat(64);
+ block.props.bindings={owner:"frappe",program_id:"frappe:crm:Lead",field:"lead_name"};
+ const session=createAuthoringSession(doc);
+ assert.deepEqual(fromPuckData(toPuckData(doc),doc.site_id),doc);
+ assert.deepEqual(fromGrapesProject(toGrapesProject(doc),doc.site_id),doc);
+ const styled=applyAuthoringEdit(doc,{type:"style",id:block.id,viewport:"phone",value:{layout:"stack"}});
+ session.replace(styled);
+ for(const change of [
+  {source_ref:"frappe:crm:Other"},{source_digest:"b".repeat(64)},
+  {bindings:{owner:"frappe",program_id:"frappe:crm:Other",field:"lead_name"}},
+  {readOnly:false}]){
+  const forged=structuredClone(styled);
+  Object.assign(forged.blocks[0].children[0].props,change);
+  assert.throws(()=>session.replace(forged),/binding cannot be edited/);
+ }
+ const forged=structuredClone(styled);
+ forged.blocks[0].children[0].kind="ui:card";
+ assert.throws(()=>assertAuthoringContinuity(styled,forged),/changed kind/);
+ assert.throws(()=>applyAuthoringEdit(styled,{type:"update",id:block.id,field:"source_ref",value:"other"}),/binding cannot be edited/);
+});
+
+test("computed or human proposals enter one revision-checked typed edit path, never a new authority",()=>{
+ const base=nested();
+ base.blocks[0].children[0].props.source_ref="frappe:crm:CRM Lead";
+ base.blocks[0].children[0].props.source_digest="a".repeat(64);
+ base.blocks[0].children[0].props.bindings={owner:"BonfyreFrappeCompiler",field:"lead_name"};
+ base.blocks[0].children[0].props.readOnly=true;
+ validateAuthoringTree(base);
+ const original=structuredClone(base);
+ const candidate={site_id:base.site_id,page:base.page,
+  expected_digest:authoringBasisDigest(base),operations:[
+  {type:"style",id:"first-project",viewport:"phone",value:{layout:"stack",width:"wide"}},
+  {type:"insert",block:card("generated-summary","Candidate presentation")}
+ ]};
+ const next=applyAuthoringProposal(base,candidate);
+ assert.deepEqual(base,original,"candidate cannot mutate its basis");
+ assert.equal(next.blocks[0].children[0].responsive.phone.width,"wide");
+ assert.equal(next.blocks.at(-1).props.heading,"Candidate presentation");
+ const session=createAuthoringSession(base);
+ session.replace(next);
+ assert.equal(session.undo(),true);
+ assert.deepEqual(session.snapshot(),base,"one proposal is one undoable revision");
+ assert.equal(session.redo(),true);
+ assert.deepEqual(session.snapshot(),next);
+ assert.throws(()=>applyAuthoringProposal(next,candidate),/stale proposal/);
+ for(const operation of [
+  {type:"remove",id:"first-project"},
+  {type:"update",id:"first-project",field:"source_ref",value:"foreign:changed"},
+  {type:"insert",block:{...card("forged","Forged"),props:{
+   heading:"Forged",bindings:{owner:"unadmitted"}}}},
+  {type:"duplicate",id:"first-project",newId:"fabricated-binding"}
+ ]){
+  assert.throws(()=>applyAuthoringProposal(base,{...candidate,operations:[operation]}),
+   /source-bound|binding cannot be edited|fabricate source identity/);
+ }
+ assert.throws(()=>applyAuthoringProposal(base,{...candidate,site_id:"other"}),/proposal does not address/);
+ assert.throws(()=>applyAuthoringProposal(base,{...candidate,operations:[]}),/out of bounds/);
+ assert.throws(()=>applyAuthoringProposal(base,{...candidate,operations:[{type:"execute",cmd:"publish"}]}),/unknown edit/);
 });

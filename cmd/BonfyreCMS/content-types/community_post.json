@@ -9,6 +9,8 @@
     "subject_address": {"type": "string", "required": false},
     "title": {"type": "string", "required": false},
     "body": {"type": "text", "required": true},
+    "event_at": {"type": "string", "required": false},
+    "venue": {"type": "string", "required": false},
     "media_program": {"type": "string", "required": false},
     "reply_to": {"type": "string", "required": false},
     "published_at": {"type": "string", "required": true},

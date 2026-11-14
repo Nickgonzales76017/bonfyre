@@ -1377,11 +1377,11 @@
     "publishes": ""
   },
   "BonfyreSurfaceScene": {
-    "architecture": "session-workflow-recovery",
-    "description": "Can a reviewed historical workflow become editable work in the current account while retaining exact source anchors, complete native records and an honest execution boundary?",
-    "domain": "Surface / Source-backed workflow recovery",
+    "architecture": "service-site",
+    "description": "What pages and sections does a service business's site have, in whose words, where do a visitor's requests go, and how does a second business get one without a second builder?",
+    "domain": "Surface / A service business's public site, built from one record",
     "family": "surface",
-    "layer": "native-workspace",
+    "layer": "presentation",
     "maturity": "implemented",
     "publishes": ""
   },

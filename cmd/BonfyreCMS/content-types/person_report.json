@@ -1,0 +1,15 @@
+{
+  "name": "person_report",
+  "displayName": "Person Report",
+  "description": "One person's safety report about another person. A report hides the target from the reporter immediately and retains the observation for human review. A report is not a verdict, never auto-hides anyone from anyone else, and never implies guilt.",
+  "attributes": {
+    "report": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "target_subject": {"type": "string", "required": true},
+    "reason": {"type": "string", "required": true},
+    "details": {"type": "string", "required": false},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

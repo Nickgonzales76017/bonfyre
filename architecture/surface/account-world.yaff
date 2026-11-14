@@ -1,4 +1,9 @@
 architecture account-world-binding
+  source_path cmd/BonfyreWebAddress/src/account_world_picker.h
+  source_path cmd/BonfyreWebAddress/src/account_world_audio_web.h
+  source_path deploy/tailwind/styles/aurekai-native.pcss
+  invariant the private World studio, source picker and sound editor use the generated profile stylesheet instead of emitting inline style blocks
+  witness cmd/BonfyreWebAddress/tests/account_world_spaces_test.sh and cmd/BonfyreWebAddress/tests/account_world_audio_test.sh check the private studio routes and stylesheet links
   canonical_name AccountWorldBinding
   family surface
   domain Surface / Account World composition

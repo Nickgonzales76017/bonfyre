@@ -136,7 +136,8 @@ static int apply_body_class(char **bodyp, const char *territory) {
 /* A territory record may name a published presentation_template. Its tokens are
  * scoped to body[data-bf-template]; world.css maps them onto the territory dress.
  * No template, or an unpublished one, leaves the page exactly as it was. */
-static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name) {
+static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name,
+                                    const char *cms_namespace) {
     char *style = NULL, attr[200];
     size_t len = 0;
     FILE *mem;
@@ -146,7 +147,10 @@ static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name)
         if (!(isalnum((unsigned char)*c) || *c == '-' || *c == '_' || *c == ':')) return 1;
     mem = open_memstream(&style, &len);
     if (!mem) return 1;
-    if (!bf_site_presentation_emit_scoped(mem, db, name, "body[data-bf-template]")) { fclose(mem); free(style); return 1; }
+    int emitted = cms_namespace
+        ? bf_site_presentation_emit_scoped_owned(mem, db, name, "body[data-bf-template]", cms_namespace)
+        : bf_site_presentation_emit_scoped(mem, db, name, "body[data-bf-template]");
+    if (!emitted) { fclose(mem); free(style); return 1; }
     fclose(mem);
     if (style && len && snprintf(attr, sizeof(attr), "<body data-bf-template=\"%s\" ", name) < (int)sizeof(attr)) {
         size_t cap = len + 8;
@@ -167,24 +171,35 @@ static int apply_territory_template(sqlite3 *db, char **bodyp, const char *name)
     return ok;
 }
 
-int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
+static int bf_apply_territory_home_presentation_impl(sqlite3 *db, char **bodyp,
+                                                        const char *territory,
+                                                        const char *cms_namespace) {
     sqlite3_stmt *st = NULL;
     char label[32], eyebrow[512], head[1024], lede[2048], question[1024];
     char character[256], cannot_infer[2048], template_name[128];
     static const char *ids[] = {"territory", "eyebrow", "title", "sub", "orbit-label", "look-title", "look-copy"};
     const char *values[7];
-
-    if (!db || !bodyp || !*bodyp || !territory || !*territory ||
-        (sqlite3_prepare_v2(db,
-          "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,template "
-          "FROM territory_presentation WHERE territory=?1 AND status='published' "
-          "ORDER BY id DESC LIMIT 1", -1, &st, NULL) != SQLITE_OK &&
-         sqlite3_prepare_v2(db, /* stores created before the template column */
-          "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,'' "
-          "FROM territory_presentation WHERE territory=?1 AND status='published' "
-          "ORDER BY id DESC LIMIT 1", -1, &st, NULL) != SQLITE_OK))
-        return apply_body_class(bodyp, territory); /* CMS copy is absent; Matrix territory is still resolved. */
+    const char *with_template, *without_template;
+    if (!db || !bodyp || !*bodyp || !territory || !*territory) return 0;
+    with_template = cms_namespace
+       ? "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,template "
+         "FROM territory_presentation WHERE namespace=?2 AND territory=?1 AND status='published' "
+         "ORDER BY id DESC LIMIT 1"
+       : "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,template "
+         "FROM territory_presentation WHERE territory=?1 AND status='published' "
+         "ORDER BY id DESC LIMIT 1";
+    without_template = cms_namespace
+       ? "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,'' "
+         "FROM territory_presentation WHERE namespace=?2 AND territory=?1 AND status='published' "
+         "ORDER BY id DESC LIMIT 1"
+       : "SELECT territory,eyebrow,head,lede,question,character,cannot_infer,'' "
+         "FROM territory_presentation WHERE territory=?1 AND status='published' "
+         "ORDER BY id DESC LIMIT 1";
+    if (sqlite3_prepare_v2(db, with_template, -1, &st, NULL) != SQLITE_OK &&
+        sqlite3_prepare_v2(db, without_template, -1, &st, NULL) != SQLITE_OK)
+        return apply_body_class(bodyp, territory);
     sqlite3_bind_text(st, 1, territory, -1, SQLITE_TRANSIENT);
+    if (cms_namespace) sqlite3_bind_text(st, 2, cms_namespace, -1, SQLITE_STATIC);
     if (sqlite3_step(st) != SQLITE_ROW) { sqlite3_finalize(st); return apply_body_class(bodyp, territory); }
     copy_column(label, sizeof(label), st, 0);
     copy_column(eyebrow, sizeof(eyebrow), st, 1);
@@ -205,5 +220,29 @@ int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *
     values[5] = character;
     values[6] = cannot_infer;
     if (!apply_presentation(bodyp, label, ids, values)) return 0;
-    return apply_territory_template(db, bodyp, template_name);
+    return apply_territory_template(db, bodyp, template_name, cms_namespace);
+}
+/* Compatibility entrypoint for stores predating explicit tenant installs.
+ * Do not invoke on a destination that has an installed CMS namespace. */
+int bf_apply_territory_home_presentation(sqlite3 *db, char **bodyp, const char *territory) {
+    /* Older stores without namespace keep legacy behavior; modern stores
+     * must not select another tenant's more recently inserted copy. */
+    sqlite3_stmt *st=NULL;
+    int has_namespace=0;
+    if (db && sqlite3_prepare_v2(db,"PRAGMA table_info(territory_presentation)",-1,&st,NULL)==SQLITE_OK) {
+        while(sqlite3_step(st)==SQLITE_ROW) {
+            const char *name=(const char *)sqlite3_column_text(st,1);
+            if(name && !strcmp(name,"namespace")) has_namespace=1;
+        }
+    }
+    if(st) sqlite3_finalize(st);
+    return bf_apply_territory_home_presentation_impl(db,bodyp,territory,
+                                                      has_namespace?"root":NULL);
+}
+/* Authority is resolved by the request owner, then passed into this separate C
+ * translation unit. No duplicated header-static host-map state or guessing. */
+int bf_apply_territory_home_presentation_owned(sqlite3 *db, char **bodyp,
+                                                const char *territory, const char *cms_namespace) {
+    if (!cms_namespace || !*cms_namespace) return 0;
+    return bf_apply_territory_home_presentation_impl(db, bodyp, territory, cms_namespace);
 }

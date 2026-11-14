@@ -1,13 +1,13 @@
 // Browser platform witness on loopback. No vendor subscription is created and
 // showNotification is injected, so this test never sends an OS alert to a user.
 import {afterAll,beforeAll,expect,test} from 'bun:test';
+import {launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 const root=resolve(import.meta.dir,'..');let browser,server;
 beforeAll(async()=>{
-  const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'playwright');
-  browser=await chromium.launch({headless:true,...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
-  server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+  browser=await launchFixtureChromium({module:'playwright'});
+  server=loopbackServer({async fetch(request){
     const url=new URL(request.url);
     if(url.pathname==='/apps/fixture')return new Response('<!doctype html><html><head><title>Push platform fixture</title></head><body><button id="enable">Enable fixture notifications</button></body></html>',{headers:{'Content-Type':'text/html'}});
     if(/^\/apps\/(?:aurekai-push(?:-sw)?|aurekai-activity-source|workspace-msgpack)\.mjs$/.test(url.pathname))

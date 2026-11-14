@@ -1,0 +1,16 @@
+{
+  "name": "work_order_signoff",
+  "displayName": "Work Order Sign-off",
+  "description": "One named party's own decision on one stage of a work order: acceptance of its terms, or approval or withholding of a milestone's release. Each party holds one decision per stage; changing it replaces the old one. A release recorded as approved by N of M parties is a count of these decisions. It moves no funds, settles nothing and is never a payment instruction.",
+  "attributes": {
+    "signoff_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "work_order_id": { "type": "string", "required": true },
+    "milestone_id": { "type": "string", "required": true },
+    "signer": { "type": "string", "required": true },
+    "decision": { "type": "string", "required": true },
+    "note": { "type": "text" },
+    "signed_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

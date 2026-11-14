@@ -26,16 +26,16 @@ cleanup() { [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; [ -n "${BONFYRE_TE
 trap cleanup EXIT
 # Copies leave WAL mode: a read-only reader cannot open a WAL file whose
 # -shm has not been created yet.
-for f in items.db frontier.db cms.db frappe-surfaces.db matrix.db; do sqlite3 -readonly "$estate/$f" ".backup $tmp/$f"; sqlite3 "$tmp/$f" 'PRAGMA journal_mode=DELETE' >/dev/null; done
+for f in items.db frontier.db cms.db frappe-surfaces.db matrix.db; do sqlite3 -readonly "$estate/$f" ".backup $tmp/$f" 2>/dev/null || sqlite3 "file:$estate/$f?immutable=1" ".backup $tmp/$f"; sqlite3 "$tmp/$f" 'PRAGMA journal_mode=DELETE' >/dev/null; done
 # Add only to the copied CMS. A draft, a different namespace, an unsafe URL,
 # and an unrelated topic must never appear on a public news detail page.
 sqlite3 "$tmp/cms.db" <<'SQL'
-INSERT INTO internet_source(namespace,family,source,label,says,url,state,note,status,kind,carries) VALUES
- ('aurekai-journalism-review','journalism-toolkit','fixture:news-review','Journalism reviewed fixture','How to check the underlying source','https://example.org/research-guide','reviewed','Check rights before reuse','published','guide','general'),
- ('aurekai-journalism-review','journalism-toolkit','fixture:news-draft','Journalism draft fixture','Not admitted','https://example.org/draft','review-pending','','draft','guide','general'),
- ('outside-review','journalism-toolkit','fixture:news-other','Journalism wrong namespace fixture','Not admitted','https://example.org/other','reviewed','','published','guide','general'),
- ('aurekai-journalism-review','journalism-toolkit','fixture:news-unsafe','Journalism unsafe URL fixture','Not admitted','http://example.org/untrusted','reviewed','','published','guide','general'),
- ('aurekai-journalism-review','journalism-toolkit','fixture:news-unrelated','Journalism unrelated topic fixture','Not admitted','https://example.org/unrelated','reviewed','','published','guide','nonexistentkeyword');
+INSERT INTO internet_source(namespace,family,source,label,says,url,state,note,status,kind,carries,created_at,updated_at) VALUES
+ ('aurekai-journalism-review','journalism-toolkit','fixture:news-review','Journalism reviewed fixture','How to check the underlying source','https://example.org/research-guide','reviewed','Check rights before reuse','published','guide','general','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('aurekai-journalism-review','journalism-toolkit','fixture:news-draft','Journalism draft fixture','Not admitted','https://example.org/draft','review-pending','','draft','guide','general','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('outside-review','journalism-toolkit','fixture:news-other','Journalism wrong namespace fixture','Not admitted','https://example.org/other','reviewed','','published','guide','general','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('aurekai-journalism-review','journalism-toolkit','fixture:news-unsafe','Journalism unsafe URL fixture','Not admitted','http://example.org/untrusted','reviewed','','published','guide','general','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('aurekai-journalism-review','journalism-toolkit','fixture:news-unrelated','Journalism unrelated topic fixture','Not admitted','https://example.org/unrelated','reviewed','','published','guide','nonexistentkeyword','2026-01-01T00:00:00Z','2026-01-01T00:00:00Z');
 SQL
 mkdir -p "$tmp/foreign"; ln -s "$estate/foreign/bodies" "$tmp/foreign/bodies"
 

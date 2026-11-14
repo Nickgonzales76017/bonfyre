@@ -865,7 +865,9 @@ static int register_schema(sqlite3 *db, const ContentType *ct, const char *raw_j
  * Schema loading from directory
  * ================================================================ */
 
-static ContentType g_types[128];
+/* Bounded native schema residency; field buffers remain separately allocated. */
+#define CMS_MAX_TYPES 512
+static ContentType g_types[CMS_MAX_TYPES];
 static int g_type_count = 0;
 
 static ContentType *find_type(const char *name) {
@@ -951,7 +953,7 @@ static int load_schema_file(sqlite3 *db, const char *path) {
     }
 
     ContentType *existing = find_type(ct.name);
-    if ((!existing && g_type_count >= 128) || db_exec(db, "SAVEPOINT cms_schema_apply") != 0) {
+    if ((!existing && g_type_count >= CMS_MAX_TYPES) || db_exec(db, "SAVEPOINT cms_schema_apply") != 0) {
         free(ct.fields);
         free(json);
         return -1;
@@ -1042,7 +1044,7 @@ static int load_registered_schemas(sqlite3 *db) {
             return -1;
         }
         if (find_type(ct.name)) { free(ct.fields); continue; }
-        if (g_type_count >= 128) { free(ct.fields); sqlite3_finalize(stmt); return -1; }
+        if (g_type_count >= CMS_MAX_TYPES) { free(ct.fields); sqlite3_finalize(stmt); return -1; }
         g_types[g_type_count++] = ct;
         count++;
     }
@@ -2200,8 +2202,8 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
     }
 
     fprintf(out, "{\"data\":[");
-    int row = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    int row = 0, step_rc;
+    while ((step_rc = sqlite3_step(stmt)) == SQLITE_ROW) {
         if (row > 0) fprintf(out, ",");
         fprintf(out, "\n  {\"id\":%d", sqlite3_column_int(stmt, 0));
         fprintf(out, ",\"attributes\":{");
@@ -2259,6 +2261,11 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
         }
         fprintf(out, "}}");
         row++;
+    }
+    if (step_rc != SQLITE_DONE) {
+        fprintf(stderr, "[crud] list read failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return -1;
     }
     fprintf(out, "\n],\"meta\":{\"total\":%d}}\n", row);
     if (bench_on) {
@@ -2794,6 +2801,7 @@ static int entry_delete(sqlite3 *db, const char *type_name, int entry_id, const 
 }
 
 #include "page_snapshot.h"
+#include "page_release.h"
 
 /* Commit the existing page aggregate through typed CRUD in one transaction.
  * Hooks and file-based publication notifications occur only after commit.
@@ -3715,6 +3723,7 @@ static void print_usage(void) {
         "  bonfyre-cms schema apply <schema.json> [--db FILE]\n"
         "  bonfyre-cms schema migrate [--db FILE] [--schemas DIR]\n"
         "  bonfyre-cms entry page-read ROUTE --ns NS  exact page and fragment snapshot\n"
+        "  bonfyre-cms entry page-release ROUTE DIGEST --ns NS --expected-id ID --actor SUBJECT\n"
         "  bonfyre-cms entry page-write @file.json --ns NS  atomic page and fragment write\n"
         "  bonfyre-cms entry create <type> [--ns NS] '<json>'\n"
         "  bonfyre-cms entry list <type> [--ns NS] [--status STATUS] [--limit N]\n"
@@ -3843,6 +3852,7 @@ static const BfCommandEntry cms_commands[] = {
     X("manifest", CS_MANIFEST) \
     X("migrate", CS_MIGRATE) \
     X("page-read", CS_PAGE_READ) \
+    X("page-release", CS_PAGE_RELEASE) \
     X("page-write", CS_PAGE_WRITE) \
     X("profile", CS_PROFILE) \
     X("project", CS_PROJECT) \
@@ -4799,6 +4809,16 @@ int main(int argc, char **argv) {
             sqlite3_close(g_db); return rc;
         }
 
+        if (CMS_SUB_IS(CS_PAGE_RELEASE)) {
+            const char *raw=arg_opt(argc,argv,"--expected-id",NULL);
+            char *end=NULL;long long expected=0;
+            if (raw && *raw) { errno=0;expected=strtoll(raw,&end,10);if(errno||!end||*end)expected=0; }
+            int rc=entry_page_release(g_db,arg_opt(argc,argv,"--ns",NULL),
+                argc>3?argv[3]:NULL,expected,argc>4?argv[4]:NULL,
+                arg_opt(argc,argv,"--actor",NULL));
+            sqlite3_close(g_db);return rc;
+        }
+
         if (CMS_SUB_IS(CS_PAGE_WRITE)) {
             const char *ns = arg_opt(argc, argv, "--ns", NULL);
             long size = 0;
@@ -4882,9 +4902,9 @@ int main(int argc, char **argv) {
             const char *ns = arg_opt(argc, argv, "--ns", "root");
             const char *status = arg_opt(argc, argv, "--status", NULL);
             int limit = arg_int(argc, argv, "--limit", 25);
-            entry_list(g_db, type, ns, status, limit, stdout);
+            const int list_rc = entry_list(g_db, type, ns, status, limit, stdout);
             sqlite3_close(g_db);
-            return 0;
+            return list_rc == 0 ? 0 : 1;
         }
 
         if (CMS_SUB_IS(CS_GET)) {

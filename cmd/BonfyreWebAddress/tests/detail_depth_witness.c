@@ -121,6 +121,13 @@ static void fetch(int id) {
         char q = p[5], link[4096]; size_t w = 0; const char *s = p + 6;
         if (q != '"' && q != '\'') continue;
         if (!strncmp(s, origin, strlen(origin))) s += strlen(origin) - 1;
+        else {
+            /* A link to another territory apex is the same estate: item and
+             * feed pages answer on all four, so the walk may follow it here. */
+            static const char *const apexes[] = {"https://aurekai.work/", "https://aurekai.life/", "https://aurekai.live/", "https://aurekai.shop/"};
+            for (size_t a = 0; a < sizeof(apexes) / sizeof(apexes[0]); a++)
+                if (!strncmp(s, apexes[a], strlen(apexes[a]))) { s += strlen(apexes[a]) - 1; break; }
+        }
         if (*s != '/' || s[1] == '/') continue;
         for (; *s && *s != q && w + 1 < sizeof(link); s++) {
             if (!strncmp(s, "&amp;", 5)) { link[w++] = '&'; s += 4; }

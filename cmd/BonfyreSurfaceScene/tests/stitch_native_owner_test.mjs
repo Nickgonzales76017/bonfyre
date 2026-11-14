@@ -1,7 +1,7 @@
 // End-to-end: isolated canonical CMS → real C SurfaceScene → Stitch presentation.
 // This is native material, not a screenshot-derived identity or mocked scene.
 import assert from "node:assert/strict";
-import {mkdtempSync,rmSync,mkdirSync} from "node:fs";
+import {mkdtempSync,rmSync,mkdirSync,copyFileSync} from "node:fs";
 import {join,resolve} from "node:path";
 import {tmpdir} from "node:os";
 import {fileURLToPath} from "node:url";
@@ -10,7 +10,9 @@ import {composeStitchScene,composeStitchRuntime} from "../runtime/stitch-composi
 
 const root=resolve(fileURLToPath(new URL("../../..",import.meta.url)));
 const scratch=mkdtempSync(join(tmpdir(),"bonfyre-stitch-native-")),db=join(scratch,"cms.db");
-const schemas=join(root,"cmd/BonfyreCMS/content-types");
+const schemas=join(scratch,"schemas"),sourceSchemas=join(root,"cmd/BonfyreCMS/content-types");
+mkdirSync(schemas);
+for(const type of ["world","site_presentation","site_program","semantic_slot","application_binding","surface_scene"])copyFileSync(join(sourceSchemas,type+".json"),join(schemas,type+".json"));
 const cms=join(root,"cmd/BonfyreCMS/bonfyre-cms");
 const sceneOwner=join(root,"cmd/BonfyreSurfaceScene/bonfyre-surface-scene");
 const env={...process.env,BONFYRE_CMS_BINARY:cms,BONFYRE_CMS_SCHEMAS:schemas,

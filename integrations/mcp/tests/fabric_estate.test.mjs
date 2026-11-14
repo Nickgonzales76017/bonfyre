@@ -70,6 +70,26 @@ test('explicit dedupe updates intended fields but retains actual mission identit
   } finally { f.close(); }
 });
 
+test('dedupe preserves a progressed mission and refuses changed input instead of reopening it', () => {
+  const f = fixture();
+  try {
+    let ids = 0;
+    const owner = createFabricEstate({ home: f.home, now: () => 300,
+      randomId: () => (++ids).toString(16).padStart(32, '0') });
+    const input = { title: 'Reviewed work', family: 'review', locks: 'source', dedupe: 'review:one' };
+    const first = owner.add(input);
+    const db = new Database(f.worldDbPath);
+    try {
+      db.query("UPDATE missions SET state='completed',updated_at=350 WHERE id=?").run(first.mission_id);
+      const before = db.query('SELECT * FROM missions WHERE id=?').get(first.mission_id);
+      expect(owner.add(input)).toEqual(first);
+      expect(() => owner.add({ ...input, title: 'Replay with changed payload' })).toThrow('already progressed');
+      expect(() => owner.add({ ...input, locks: 'another' })).toThrow('already progressed');
+      expect(db.query('SELECT * FROM missions WHERE id=?').get(first.mission_id)).toEqual(before);
+    } finally { db.close(); }
+  } finally { f.close(); }
+});
+
 test('invalid inputs and missing DB refuse without creating a replacement database', () => {
   const f = fixture();
   try {

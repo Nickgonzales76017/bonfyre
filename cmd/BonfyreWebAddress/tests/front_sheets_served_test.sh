@@ -12,7 +12,7 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-front-sheets.XXXXXX")
 pid=''
 trap '[ -n "$pid" ] && kill "$pid" 2>/dev/null; rm -rf "$tmp"' EXIT INT TERM
 
-sheets=$(grep -ohE 'href=\\"/assets/[A-Za-z0-9._-]+\.css' "$here"/src/front_*.h | sed 's#.*"/assets/##' | sort -u)
+sheets=$(grep -ohE 'href=\\"/assets/[A-Za-z0-9._-]+\.css' "$here"/src/app_shell.h "$here"/src/front_*.h | sed 's#.*"/assets/##' | sort -u)
 [ -n "$sheets" ] || { echo 'front sheets served: no front links a sheet' >&2; exit 1; }
 
 "$web" bootstrap-owned --db "$tmp/matrix.db" >/dev/null

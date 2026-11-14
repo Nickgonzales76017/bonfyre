@@ -44,10 +44,17 @@ export function compilePalettes(perFamily = 144) {
   return rows;
 }
 if (import.meta.main) {
-  const args = { out: '', 'per-family': '144' };
-  for (let i = 2; i < process.argv.length; i++) { const key = process.argv[i].slice(2); if (!Object.hasOwn(args, key)) throw Error(`unknown option ${process.argv[i]}`); args[key] = process.argv[++i]; }
-  if (!args.out || !/^\d+$/.test(args['per-family'])) throw Error('usage: compile_palette_profiles.mjs --out ROWS.jsonl [--per-family 28]');
-  const rows = compilePalettes(Number(args['per-family']));
+  const args = { out: '', 'per-family': '144', flagships: null };
+  for (let i = 2; i < process.argv.length; i++) { const key = process.argv[i].slice(2); if (!Object.hasOwn(args, key)) throw Error(`unknown option ${process.argv[i]}`); args[key] = key === 'flagships' ? true : process.argv[++i]; }
+  if (!args.out || !/^\d+$/.test(args['per-family'])) throw Error('usage: compile_palette_profiles.mjs --out ROWS.jsonl [--per-family 28] [--flagships]');
+  let rows = compilePalettes(Number(args['per-family']));
+  /* Selectable catalogue: plain temper, day and dusk, three wheel-spread hues
+   * per family, published as the account/profile/org theme options.
+   * Mechanical variety; a designer pass may swap hues without changing the
+   * rule. The full 1152 stay reference candidates. */
+  if (args.flagships) rows = rows
+    .filter(r => /-plain-(day|dusk)$/.test(r.template) && /(rose|olive|indigo)/.test(r.template))
+    .map(r => ({ ...r, status: 'published' }));
   writeFileSync(args.out, rows.map(x => JSON.stringify(x)).join('\n') + (rows.length ? '\n' : ''));
   console.log(JSON.stringify({ profiles: rows.length, families: Object.keys(postures).length,
     cannot_infer: "a catalogued palette is a set of colours and measurements this estate generated, never an observed design, a studied profile, or anyone else's work" }));

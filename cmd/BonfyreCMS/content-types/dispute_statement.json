@@ -1,0 +1,14 @@
+{
+  "name": "dispute_statement",
+  "displayName": "Dispute Statement",
+  "description": "One response written into a dispute by a party to its work order or by its named arbiter. A statement is what its author said, in their own words. It is not evidence verified by this estate and not a finding.",
+  "attributes": {
+    "statement_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "dispute_id": { "type": "string", "required": true },
+    "author": { "type": "string", "required": true },
+    "body": { "type": "text", "required": true },
+    "stated_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

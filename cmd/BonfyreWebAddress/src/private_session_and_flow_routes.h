@@ -1041,6 +1041,140 @@ static int serve_market_flow(const char *method, const char *target, const char 
     return 0;
 }
 
+/* ── market fronts on the one shell ─────────────────────────────────────
+ *
+ * /market (work), /offers and /property are the Stitch trade-index and
+ * living-neighbourhoods screens filled with real records: the capability
+ * catalogue and its stated prices, the offers the estate's sample shops
+ * publish, the Tarrant roll's own search, and the shops kept here.  They
+ * share the market pattern's sheet (site/matrix/composition.css), so every
+ * market route reads as one system.  Nothing here prices, stocks or reserves
+ * anything; the owners behind each link still decide. */
+static int mf_open(const char *root, const char *target, const char *title, const char *lede, const char *route_class) {
+    char path[PATH_MAX], *template = NULL, *head_end = NULL;
+    if (!root || snprintf(path, sizeof(path), "%s/surfaces/world.html", root) >= (int)sizeof(path) ||
+        !page_open_template(path, &template, &head_end)) return 0;
+    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: public, max-age=60\r\nVary: Host, Accept, Cookie\r\nConnection: close\r\n\r\n");
+    page_emit_head(template, head_end, title, lede);
+    free(template);
+    fputs("<link rel=\"stylesheet\" href=\"/assets/composition.css\"></head><body class=\"ak-app ticker ", stdout); html(route_class);
+    fputs("\" data-character=\"ticker\" data-aurekai-pattern=\"market\"><main class=\"wrap\">", stdout);
+    { PageDocument nav = {0}; nav.route = target; nav.self_path = target; page_emit_nav(&nav); }
+    fputs("<header class=\"hero\"><h1>", stdout); html(title); fputs("</h1><p class=\"lede\">", stdout); html(lede); fputs("</p>", stdout);
+    return 1;
+}
+static void mf_close(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout); }
+
+/* The offers the estate's sample shops publish, as numbered lots. */
+static int mf_offer_rows(sqlite3 *db, int with_head) {
+    sqlite3_stmt *st = NULL; int n = 0;
+    if (!db || sqlite3_prepare_v2(db,
+          "SELECT p.host, t.reference_name, f.heading, COALESCE(f.body,''), COALESCE(f.label,''), COALESCE(f.href,'')"
+          " FROM site_fragment f JOIN site_presentation p ON p.site_id=f.namespace AND p.status='published'"
+          " JOIN presentation_template t ON t.template=replace(p.profile,'ghost:','') AND t.status='published'"
+          " WHERE f.page='/offers' AND f.status='published' AND f.heading<>'' ORDER BY p.host, f.position", -1, &st, NULL) != SQLITE_OK) return 0;
+    while (sqlite3_step(st) == SQLITE_ROW) {
+        const char *h = (const char *)sqlite3_column_text(st, 0), *shop = (const char *)sqlite3_column_text(st, 1);
+        const char *what = (const char *)sqlite3_column_text(st, 2), *says = (const char *)sqlite3_column_text(st, 3);
+        const char *price = (const char *)sqlite3_column_text(st, 4), *href = (const char *)sqlite3_column_text(st, 5);
+        if (!h || strspn(h, "abcdefghijklmnopqrstuvwxyz0123456789.-") != strlen(h)) continue;
+        if (!n++ && with_head)
+            fputs("<section class=\"region region-table\"><div class=\"ledger-wrap\"><table class=\"ledger trade-index\"><thead><tr><th scope=\"col\">Lot</th>"
+                  "<th scope=\"col\">Offer &amp; shop</th><th scope=\"col\">Price as posted</th><th scope=\"col\">Terms</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
+        printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"https://", n); html(h); fputs("/offers\">", stdout); html(what);
+        fputs("</a><span class=\"dek\">", stdout); html(shop); fputs(" &middot; sample shop on ", stdout); html(h); fputs("</span></td><td class=\"price\">", stdout);
+        if (price && *price) html(price); else fputs("<span class=\"none\">Not stated</span>", stdout);
+        fputs("</td><td class=\"when\">", stdout); html(says && *says ? says : ""); fputs("</td><td class=\"go\"><a class=\"lot-open\" href=\"https://", stdout); html(h);
+        if (href && href[0] == '/') html(href); else fputs("/offers", stdout);
+        fputs("\"><span class=\"sr\">Ask ", stdout); html(shop); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
+    }
+    sqlite3_finalize(st);
+    if (n && with_head) fputs("</tbody></table></div></section>", stdout);
+    return n;
+}
+
+static int emit_market_fronts(const char *method, const char *target, const char *query, const char *host, const char *root) {
+    const char *territory = territory_of(host);
+    int is_work = territory && !strcmp(territory, "work"), is_shop = territory && !strcmp(territory, "shop");
+    if (strcmp(method, "GET") || (!is_work && !is_shop)) return 0;
+    if (is_work && (!strcmp(target, "/market") || !strcmp(target, "/market/"))) {
+        int listed = 0, i; double usd;
+        for (i = 0; i < X402_CATALOG_N; i++) listed += x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
+        if (!mf_open(root, "/market", "Market", "What Aurekai sells to people and agents. Each capability has one price, quoted the same through every payment rail.", "route-market")) return 0;
+        printf("<dl class=\"market-ledger\"><div><dt>Capabilities</dt><dd>%d</dd></div><div><dt>Priced</dt><dd>%d</dd></div>"
+               "<div><dt>Not for sale</dt><dd>%d</dd></div><div><dt>Can settle</dt><dd>%s</dd></div></dl></header>",
+               (int)X402_CATALOG_N, listed, (int)X402_CATALOG_N - listed, x402_facilitator()[0] ? "Yes" : "No");
+        fputs("<section class=\"region region-table\"><div class=\"ledger-wrap\"><table class=\"ledger trade-index\"><thead><tr><th scope=\"col\">Lot</th>"
+              "<th scope=\"col\">Capability</th><th scope=\"col\">Price a call</th><th scope=\"col\">Status</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
+        for (i = 0; i < X402_CATALOG_N; i++) {
+            int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
+            printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"/room/capability/", i + 1); html(X402_CATALOG[i].name); fputs("\">", stdout);
+            html(X402_CATALOG[i].name); fputs("</a><span class=\"dek\">", stdout); html(X402_CATALOG[i].summary); fputs("</span></td><td class=\"price\">", stdout);
+            if (priced) printf("$%.4g", usd); else fputs("<span class=\"none\">Not for sale</span>", stdout);
+            fputs(priced ? "</td><td class=\"when\">Listed</td>" : "</td><td class=\"when\">Unpriced</td>", stdout);
+            fputs("<td class=\"go\"><a class=\"lot-open\" href=\"/room/capability/", stdout); html(X402_CATALOG[i].name);
+            fputs("\"><span class=\"sr\">Open ", stdout); html(X402_CATALOG[i].name); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
+        }
+        fputs("</tbody></table></div></section><p class=\"market-note\">A quote is not a reservation. Nothing settles without a verified payment.</p>", stdout);
+        mf_close();
+        return 1;
+    }
+    if (!strcmp(target, "/offers") || !strcmp(target, "/offers/")) {
+        sqlite3 *db = cms_open_ro(); int n;
+        if (!mf_open(root, "/offers", "Offers", "Classes, services and made-to-order work that the shops kept here offer, at the price each one states.", "route-offers")) { if (db) sqlite3_close(db); return 0; }
+        fputs("</header>", stdout);
+        n = mf_offer_rows(db, 1);
+        if (!n) fputs("<p class=\"market-note\">No shop here has published an offer yet.</p>", stdout);
+        else fputs("<p class=\"market-note\">These are sample shops built on Aurekai. Asking opens the shop's own contact page; nothing is booked or paid here.</p>", stdout);
+        if (db) sqlite3_close(db);
+        mf_close();
+        return 1;
+    }
+    if (!strcmp(target, "/property") || !strcmp(target, "/property/")) {
+        char raw[128] = "", term[128] = "";
+        sqlite3 *db = cms_open_ro(); sqlite3_stmt *st = NULL; int shops = 0;
+        if (query && *query && query_value(query, "q", raw, sizeof(raw))) flow_safe_term(raw, term, sizeof(term));
+        if (!mf_open(root, "/property", "Living neighborhoods", "The land under the street, as the county roll records it, and the shops and people who keep places here.", "route-property")) { if (db) sqlite3_close(db); return 0; }
+        fputs("<form class=\"place-find\" role=\"search\" method=\"get\" action=\"/property\"><label for=\"place-q\">Find a property on the Tarrant County roll</label>"
+              "<div><input id=\"place-q\" type=\"search\" name=\"q\" placeholder=\"A street address, such as 200 Texas St\" value=\"", stdout); html(term);
+        fputs("\"><button type=\"submit\">Search</button></div></form></header>", stdout);
+        if (term[0]) {
+            fflush(stdout);
+            page_emit_property_results(term);
+            fputs("<p class=\"market-note\">Results need a house number. Facts are what the Tarrant Appraisal District roll recorded; they are not a survey, a title search or an appraisal.</p>", stdout);
+        }
+        /* The merchants: the shops kept on this estate, one row each, with
+         * their latest offer in their own words. */
+        if (db && sqlite3_prepare_v2(db,
+              "SELECT p.host, t.reference_name,"
+              " (SELECT f.heading FROM site_fragment f WHERE f.namespace=p.site_id AND f.page='/offers' ORDER BY f.position LIMIT 1),"
+              " (SELECT f.body FROM site_fragment f WHERE f.namespace=p.site_id AND f.page='/offers' ORDER BY f.position LIMIT 1),"
+              " (SELECT f.label FROM site_fragment f WHERE f.namespace=p.site_id AND f.page='/offers' ORDER BY f.position LIMIT 1)"
+              " FROM site_presentation p JOIN presentation_template t ON t.template=replace(p.profile,'ghost:','') AND t.status='published'"
+              " WHERE p.status='published' AND p.host LIKE '%.aurekai.shop' ORDER BY p.host", -1, &st, NULL) == SQLITE_OK) {
+            while (sqlite3_step(st) == SQLITE_ROW) {
+                const char *h = (const char *)sqlite3_column_text(st, 0), *name = (const char *)sqlite3_column_text(st, 1);
+                const char *offer = (const char *)sqlite3_column_text(st, 2), *says = (const char *)sqlite3_column_text(st, 3), *price = (const char *)sqlite3_column_text(st, 4);
+                if (!h || !name || !offer || strspn(h, "abcdefghijklmnopqrstuvwxyz0123456789.-") != strlen(h)) continue;
+                if (!shops++) fputs("<section class=\"region place-merchants\"><p class=\"place-kicker\">Shops kept here</p><h2>Independent merchants</h2>"
+                                    "<p class=\"place-dek\">Sample shops built on Aurekai. Each runs its own pages, offers and enquiries.</p><ol>", stdout);
+                fputs("<li><div class=\"place-who\"><span>", stdout); html(h); fputs("</span><h3>", stdout); html(name); fputs("</h3></div><blockquote><p>", stdout);
+                html(offer); if (says && *says) { fputs(". ", stdout); html(says); } fputs("</p>", stdout);
+                if (price && *price) { fputs("<small>", stdout); html(price); fputs("</small>", stdout); }
+                fputs("</blockquote><a class=\"place-go\" href=\"https://", stdout); html(h); fputs("/\">Visit the shop</a></li>", stdout);
+            }
+            sqlite3_finalize(st);
+            if (shops) fputs("</ol></section>", stdout);
+        }
+        if (db) sqlite3_close(db);
+        fputs("<aside class=\"place-band\"><div><h2>Ground your page in a real street.</h2><p>Every parcel on the roll has its own page: owner of record, assessed value, when it was built, its neighbours.</p></div>"
+              "<nav><a class=\"is-primary\" href=\"/parcels\">Open the parcel map</a><a href=\"/studio\">Start a shop</a></nav></aside>", stdout);
+        mf_close();
+        return 1;
+    }
+    return 0;
+}
+
 /* ── the sources flow ────────────────────────────────────────────────────
  *
  * CAP, EPCIS, WoT, OpenRTB and the social plane are empty for one reason:

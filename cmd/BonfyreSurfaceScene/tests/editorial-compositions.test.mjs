@@ -1,0 +1,70 @@
+import {test,expect} from "bun:test";
+import {PAGE_COMPOSITIONS,composeNativePage} from "../../../components/BonfyreServiceSite/authoring/editorial-compositions.mjs";
+import {newAuthoringTree,validateAuthoringTree,createAuthoringSession,toPuckData,fromPuckData,toGrapesProject,fromGrapesProject} from "../runtime/authoring-tree.mjs";
+import {toNativePageWrite,treeFromNativeSnapshot} from "../../../components/BonfyreServiceSite/authoring/native-cms.mjs";
+import {renderAuthoredProfilePreview} from "../../../components/BonfyreServiceSite/authored-page-renderer.mjs";
+const dig="a".repeat(64);
+const identities=()=>{let id=0;return ()=>"editorial-"+String(++id).padStart(4,"0");};
+const empty=(site="person-editor-work")=>({schema:"bonfyre.page-snapshot.v1",id:0,digest:dig,snapshot:{namespace:site,route:"/feature/",page:null,fragments:[]}});
+const all=doc=>{const rows=[];function visit(blocks){for(const b of blocks){rows.push(b);visit(b.children);}}visit(doc.blocks);return rows;};
+test("all editable editorial compositions are native content, not imported page HTML",()=>{
+ expect(PAGE_COMPOSITIONS.map(x=>x.id)).toEqual(["editorial-feature","publication-front","research-report","life-introduction"]);
+ for(const recipe of PAGE_COMPOSITIONS){
+  const site="person-editor-work",base=newAuthoringTree(site,"/feature/");
+  const doc=composeNativePage(base,recipe.id,{idFactory:identities()});
+  expect(validateAuthoringTree(doc)).toBe(doc);
+  const nodes=all(doc);expect(nodes.length).toBeGreaterThanOrEqual(7);
+  expect(nodes.some(n=>n.children.length>0)).toBe(true);
+  expect(nodes.some(n=>n.kind==="ui:hero")).toBe(true);
+  expect(nodes.every(n=>n.props.readOnly!==true&&!n.props.source_ref&&!n.props.source_digest)).toBe(true);
+  expect(fromPuckData(toPuckData(doc),site,doc.page)).toEqual(doc);
+  expect(fromGrapesProject(toGrapesProject(doc),site,doc.page)).toEqual(doc);
+  const req=toNativePageWrite(empty(site),doc,{pageDraft:{title:recipe.label,heading:recipe.label}});
+  expect(req.fragments.length).toBe(nodes.length);
+  expect(req.fragments.every(row=>row.status==="draft"&&row.projection_contract.html===true)).toBe(true);
+  const snap={schema:"bonfyre.page-snapshot.v1",id:17,digest:"b".repeat(64),snapshot:{namespace:site,route:doc.page,page:{...req.page,id:17},fragments:req.fragments}};
+  const reopened=treeFromNativeSnapshot(snap);
+  expect(all(reopened).map(n=>n.kind)).toEqual(nodes.map(n=>n.kind));
+  const preview=renderAuthoredProfilePreview(doc,{name:recipe.label});
+  expect(preview.html).toContain("data-ak-id=");
+  expect(preview.html).toContain("noindex");
+ }
+});
+test("one composed page is one undoable action that preserves prior account-owned material",()=>{
+ const site="person-editor-work";
+ const before=newAuthoringTree(site,"/feature/");
+ before.blocks=[{id:"original-story",kind:"profile-story",props:{heading:"Retained original",body:"Do not rewrite this source.",source_ref:"local:original",source_digest:dig,readOnly:true},responsive:{},children:[]}];
+ validateAuthoringTree(before);
+ const session=createAuthoringSession(before);
+ const composed=composeNativePage(session.snapshot(),"editorial-feature",{idFactory:identities()});
+ session.replace(composed);
+ expect(session.snapshot().blocks[0]).toEqual(before.blocks[0]);
+ expect(session.snapshot().blocks.length).toBeGreaterThan(1);
+ expect(session.undo()).toBe(true);expect(session.snapshot()).toEqual(before);
+ expect(session.redo()).toBe(true);expect(session.snapshot()).toEqual(composed);
+});
+test("missing, reused and invalid component identities refuse before any CMS write",()=>{
+ const original=newAuthoringTree("person-editor-work","/feature/");
+ expect(()=>composeNativePage(original,"missing",{idFactory:identities()})).toThrow(/Unknown page composition/);
+ expect(()=>composeNativePage(original,"editorial-feature")).toThrow(/identity owner/);
+ expect(()=>composeNativePage(original,"editorial-feature",{idFactory:()=>"duplicate"})).toThrow(/duplicate/);
+ expect(()=>composeNativePage(original,"editorial-feature",{idFactory:()=>"x/<script>"})).toThrow(/coordinate/);
+ expect(original.blocks).toEqual([]);
+});
+test("Life introduction stays an editable CMS story with explicit public excerpt consent",()=>{
+ const site="person-editor-life",route="/";
+ const doc=composeNativePage(newAuthoringTree(site,route),"life-introduction",{idFactory:identities()});
+ const prompts=all(doc).filter(n=>n.props.metadata?.excerpt_context==="life-introduction");
+ expect(prompts).toHaveLength(1);
+ expect(prompts[0].kind).toBe("profile-story");
+ const base={schema:"bonfyre.page-snapshot.v1",id:0,digest:dig,snapshot:{namespace:site,route,page:null,fragments:[]}};
+ const request=toNativePageWrite(base,doc,{pageDraft:{title:"Life",heading:"Life"}});
+ const prompt=request.fragments.find(f=>f.coordinate===prompts[0].id);
+ expect(prompt).toMatchObject({kind:"profile-story",slot:"showcase",audience:"public",status:"draft"});
+ expect(prompt.semantic_tags.authoring_v1.metadata.excerpt_context).toBe("life-introduction");
+ expect(request.fragments.filter(f=>f.semantic_tags.authoring_v1.metadata?.excerpt_context==="life-introduction")).toHaveLength(1);
+ expect(request.fragments.every(f=>f.status==="draft")).toBe(true);
+ expect(request.fragments.every(f=>f.kind!=="dating-person"&&f.kind!=="dating-choice")).toBe(true);
+ expect(fromPuckData(toPuckData(doc),site,route)).toEqual(doc);
+ expect(fromGrapesProject(toGrapesProject(doc),site,route)).toEqual(doc);
+});

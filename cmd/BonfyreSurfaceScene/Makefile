@@ -19,7 +19,7 @@ AUTHORING_JS = ../../site/matrix/authoring-editor.js
 AUTHORING_CSS = ../../site/matrix/authoring-editor.css
 .PHONY: authoring-bundle
 authoring-bundle: $(AUTHORING_JS) $(AUTHORING_CSS) authoring-reader
-$(AUTHORING_JS): $(AUTHORING_SRC)/entry.mjs $(AUTHORING_SRC)/launch.mjs $(AUTHORING_SRC)/unified-editor.mjs $(AUTHORING_SRC)/native-cms.mjs $(AUTHORING_SRC)/journal-import.mjs $(AUTHORING_SRC)/sha256-portable.mjs $(AUTHORING_SRC)/review-preview.mjs $(AUTHORING_SRC)/audio-entry.mjs $(AUTHORING_SRC)/article-narration.mjs $(AUTHORING_SRC)/page-directory.mjs $(AUTHORING_SRC)/package.json runtime/authoring-tree.mjs runtime/authoring-prototype.mjs $(AUTHORING_SRC)/site-section-catalogue.generated.mjs
+$(AUTHORING_JS): $(AUTHORING_SRC)/entry.mjs $(AUTHORING_SRC)/launch.mjs $(AUTHORING_SRC)/unified-editor.mjs $(AUTHORING_SRC)/native-cms.mjs $(AUTHORING_SRC)/journal-import.mjs $(AUTHORING_SRC)/sha256-portable.mjs $(AUTHORING_SRC)/review-preview.mjs $(AUTHORING_SRC)/audio-entry.mjs $(AUTHORING_SRC)/article-narration.mjs $(AUTHORING_SRC)/page-directory.mjs $(AUTHORING_SRC)/article-publication.mjs $(AUTHORING_SRC)/package.json runtime/authoring-tree.mjs runtime/authoring-prototype.mjs $(AUTHORING_SRC)/site-section-catalogue.generated.mjs
 $(AUTHORING_JS): $(AUTHORING_SRC)/component-palette.mjs
 	cd $(AUTHORING_SRC) && bun install --frozen-lockfile --ignore-scripts
 	cd $(AUTHORING_SRC) && bun build ./entry.mjs --target browser --minify --outfile ../../../site/matrix/authoring-editor.js
@@ -41,26 +41,30 @@ markdown-test:
 	@tmp=$$(mktemp /tmp/bonfyre-native-md4c-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -Ivendor/md4c tests/native_authoring_markdown_test.c src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c -o "$$tmp" && "$$tmp"
 test: $(TARGET)
 	@tmp=$$(mktemp /tmp/bonfyre-native-authoring-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include tests/native_authoring_tree_test.c $(LIB) -lm -o "$$tmp" && "$$tmp"
-	@tmp=$$(mktemp /tmp/bonfyre-native-components-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include tests/native_authoring_components_test.c src/authoring_native_components.c src/authoring_editorial.c src/authoring_template.c vendor/mustach/mini-mustach.c $(LIB) -lm -o "$$tmp" && "$$tmp"
-	@tmp=$$(mktemp /tmp/bonfyre-public-document-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include tests/native_public_authored_document_test.c ../BonfyreWebAddress/src/site_authored_document.c src/authoring_native_components.c src/authoring_editorial.c src/authoring_template.c vendor/mustach/mini-mustach.c $(LIB) -lsqlite3 -lm -o "$$tmp" && "$$tmp"
+	@tmp=$$(mktemp /tmp/bonfyre-native-components-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include -Ivendor/md4c tests/native_authoring_components_test.c src/authoring_native_components.c src/authoring_editorial.c src/authoring_template.c src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c vendor/mustach/mini-mustach.c $(LIB) -lm -o "$$tmp" && "$$tmp"
+	@tmp=$$(mktemp /tmp/bonfyre-public-document-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include -Ivendor/md4c tests/native_public_authored_document_test.c ../BonfyreWebAddress/src/site_authored_document.c src/authoring_native_components.c src/authoring_editorial.c src/authoring_template.c src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c vendor/mustach/mini-mustach.c $(LIB) -lsqlite3 -lm -o "$$tmp" && "$$tmp"
 	@tmp=$$(mktemp /tmp/bonfyre-template-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -I../../lib/libbonfyre/include tests/native_authoring_template_test.c src/authoring_template.c vendor/mustach/mini-mustach.c $(LIB) -lm -o "$$tmp" && "$$tmp"
 	@tmp=$$(mktemp /tmp/bonfyre-native-md4c-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -Ivendor/md4c tests/native_authoring_markdown_test.c src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c -o "$$tmp" && "$$tmp"
 	@node --test tests/authoring_prototype.test.mjs
 	@node --test tests/authoring-tree.test.mjs
 	@node --test tests/authoring-cms.test.mjs
 	@bun test tests/journal-import.test.mjs
+	@bun test tests/intake-registry.test.mjs
 	@bun test tests/audio-entry.test.mjs
 	@bun test tests/article-narration.test.mjs
 	@node --test tests/authoring-section-parity.test.mjs
 	@node --test tests/structured-fields.test.mjs
 	@node --test tests/authoring-ids.test.mjs
 	@bun test tests/blank-canvas-authoring.test.mjs
+	@bun test tests/editorial-compositions.test.mjs
 	@bun test tests/authored-page-renderer.test.mjs
 	@bun test tests/authored-static-candidate.test.mjs
 	@bun test tests/authored-site-candidate.test.mjs
 	@bun test tests/authored-site-release.test.mjs
 	@bun test tests/native_browser_authoring_parity.test.mjs
-	@bun test ../BonfyreWebAddress/tests/cms_advanced_composer.test.mjs
+	@cd ../BonfyreWebAddress && bun test tests/cms_advanced_composer.test.mjs
+	@$(MAKE) -C ../BonfyreWebAddress bonfyre-web-address
+	@cd ../BonfyreWebAddress && bun test tests/profile_site_scope.test.mjs
 	@node tools/compile_authoring_sections.mjs --check
 	@node tools/compile_authoring.mjs --check
 	@node tools/compile_authoring_native_tree.mjs --check
@@ -80,6 +84,8 @@ test: $(TARGET)
 	@node tests/stage_compute_test.mjs
 	@node tests/stitch_composition_test.mjs
 	@node tests/experience_composition_test.mjs
+	@node --test tests/experience_authoring_test.mjs
+	@node --test tests/experience_authoring_native_test.mjs
 	@bun ../BonfyreWebAddress/tools/compile_experience_programs.mjs ../BonfyreWebAddress/generated/native_page_composition.h ../BonfyreWebAddress/generated/native_experience_composition.h --check
 	@tmp=$$(mktemp /tmp/bonfyre-exp-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/native_experience_composition_test.c -o "$$tmp" && "$$tmp"
 	@tmp=$$(mktemp /tmp/bonfyre-apex-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror ../BonfyreWebAddress/tests/route_presentation_test.c ../BonfyreWebAddress/src/site_presentation.c -lsqlite3 -o "$$tmp" && "$$tmp"

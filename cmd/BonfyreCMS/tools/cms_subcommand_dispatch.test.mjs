@@ -15,11 +15,11 @@ const runBare = (...args) => Bun.spawnSync([binary, ...args], { stdout: 'pipe', 
 test('one sorted command vocabulary covers all second-level predicates', () => {
   const table = source.slice(source.indexOf('#define CMS_SUBCOMMANDS(X)'), source.indexOf('enum {', source.indexOf('#define CMS_SUBCOMMANDS(X)')));
   const names = [...table.matchAll(/X\("([^"]+)", CS_[A-Z_]+\)/g)].map(match => match[1]);
-  expect(names.length).toBe(51);
+  expect(names.length).toBe(52);
   expect(names.filter(name=>name==='source-publication')).toEqual(['source-publication']);
   expect(names.filter(name=>name==='community-work')).toEqual(['community-work']);
   expect(names).toEqual([...new Set(names)].sort());
-  expect(source.match(/CMS_SUB_IS\(CS_[A-Z_]+\)/g)?.length).toBe(68);
+  expect(source.match(/CMS_SUB_IS\(CS_[A-Z_]+\)/g)?.length).toBe(69);
   expect(source).not.toMatch(/strcmp\(argv\[2\],/);
 });
 
@@ -31,6 +31,10 @@ test('schema and entry subcommands retain syntax, output and unknown-verb codes'
     const entry = run('entry', 'list', 'frappe_app');
     expect(entry.exitCode).toBe(0);
     expect(JSON.parse(entry.stdout.toString())).toEqual({ data: [], meta: { total: 0 } });
+    const missingType = run('entry', 'list', '__unregistered_native_type__');
+    expect(missingType.exitCode).toBe(1);
+    expect(missingType.stdout.toString()).toBe('');
+    expect(missingType.stderr.toString()).toContain('[crud] unknown type');
     for (const family of ['schema', 'entry', 'ops', 'tensor']) {
       const unknown = run(family, 'unknown-second-verb');
       expect(unknown.exitCode).toBe(1);

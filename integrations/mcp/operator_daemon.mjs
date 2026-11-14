@@ -245,7 +245,9 @@ export function createOperatorDaemon({ config, store, tools, transport, now = ()
         if (toolCalls >= maxCalls && call.name !== 'operator_finish') {
           outcomes[index] = { error: 'cycle tool-call budget exhausted' }; continue;
         }
-        if (toolCalls < maxCalls) toolCalls++;
+        // Terminal disposition is a control transition, not a tool dispatch.
+        // It must not consume a per-cycle effect slot or inflate its receipt.
+        if (call.name !== 'operator_finish' && toolCalls < maxCalls) toolCalls++;
         try {
           if (!definitions.has(call.name)) throw new Error('tool is not admitted by current policy');
           const args = JSON.parse(call.arguments || '{}');

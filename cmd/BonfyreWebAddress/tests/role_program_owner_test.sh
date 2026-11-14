@@ -62,9 +62,9 @@ curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles" >"$tmp/
 grep -q 'data-role-directory' "$tmp/roles.html"
 [ "$(grep -o 'data-role-program' "$tmp/roles.html" | wc -l | tr -d ' ')" = 3 ]
 grep -q 'name="role" value="internet-operator"' "$tmp/roles.html"
-grep -q 'Authority required, not granted' "$tmp/roles.html"
-grep -q 'Operations not yet connected' "$tmp/roles.html"
-grep -q 'No operating postures are recorded' "$tmp/roles.html"
+grep -q 'Authority it needs' "$tmp/roles.html"
+grep -q 'Not yet connected' "$tmp/roles.html"
+grep -q 'You have not taken on a posture yet' "$tmp/roles.html"
 curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?q=internet" >"$tmp/roles.html"
 [ "$(grep -o 'data-role-program' "$tmp/roles.html" | wc -l | tr -d ' ')" = 1 ]
 grep -q 'Internet Operator' "$tmp/roles.html"

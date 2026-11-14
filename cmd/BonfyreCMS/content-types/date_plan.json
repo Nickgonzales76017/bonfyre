@@ -1,0 +1,25 @@
+{
+  "name": "date_plan",
+  "displayName": "Date Plan",
+  "description": "A machine-generated outing plan an account reviewed. Generation output is admitted only after schema, safety-note and budget verification; costs are admitted numbers, not promises, and a plan never books, pays or messages anyone.",
+  "attributes": {
+    "plan": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "companion_subject": {"type": "string", "required": false},
+    "location": {"type": "string", "required": true},
+    "intent": {"type": "string", "required": true},
+    "budget_min": {"type": "string", "required": true},
+    "budget_max": {"type": "string", "required": true},
+    "interests": {"type": "string", "required": false},
+    "plan_json": {"type": "text", "required": true},
+    "costs_admitted": {"type": "string", "required": true},
+    "accepted": {"type": "string", "required": true},
+    "generation_model": {"type": "string", "required": true},
+    "prompt_sha256": {"type": "string", "required": true},
+    "output_sha256": {"type": "string", "required": true},
+    "external_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

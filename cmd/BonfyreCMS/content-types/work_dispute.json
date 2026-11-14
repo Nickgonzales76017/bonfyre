@@ -1,0 +1,19 @@
+{
+  "name": "work_dispute",
+  "displayName": "Work Dispute",
+  "description": "A disagreement one party raised on a work order or one of its milestones, the arbiter that party named, and the arbiter's written decision once given. A decision is one named person's written view. It changes no sign-off, moves no money, binds no one outside what the parties themselves later record, and is not a court finding.",
+  "attributes": {
+    "dispute_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "work_order_id": { "type": "string", "required": true },
+    "milestone_id": { "type": "string", "required": true },
+    "raised_by": { "type": "string", "required": true },
+    "arbiter": { "type": "string", "required": true },
+    "claim": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "decision": { "type": "text" },
+    "decided_at": { "type": "string" },
+    "opened_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

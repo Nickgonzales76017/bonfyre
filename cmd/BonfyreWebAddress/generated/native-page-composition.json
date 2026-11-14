@@ -677,6 +677,58 @@
             "cannot_infer": "a deal is the store's price when posted"
         },
         {
+            "route": "/market",
+            "territory": "shop",
+            "title": "Market",
+            "lede": "Everything listed for sale across the shop, with the price each listing states.",
+            "character": "ticker",
+            "families": [
+                "deals",
+                "drops"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a listed price is the seller's when posted, not a quote, a stock check or a recommendation"
+        },
+        {
+            "route": "/listings",
+            "territory": "shop",
+            "title": "New listings",
+            "lede": "Releases, launches and drops as the stores list them.",
+            "character": "ticker",
+            "families": [
+                "drops"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a listing is the store's; it is not stock, a reservation or a price promise"
+        },
+        {
+            "route": "/listings",
+            "territory": "work",
+            "title": "Listings",
+            "lede": "Open roles and contracts, as the people hiring list them.",
+            "character": "dossier",
+            "families": [
+                "jobs"
+            ],
+            "source_limit": 12,
+            "regions": [
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "a listing is the employer's; it is not an offer of work"
+        },
+        {
             "route": "/picks",
             "territory": "any",
             "title": "Worth buying",
@@ -726,7 +778,7 @@
             ],
             "source_limit": 8,
             "regions": [
-                "latest",
+                "table",
                 "more"
             ],
             "sections": [],
@@ -743,7 +795,7 @@
             ],
             "source_limit": 8,
             "regions": [
-                "latest",
+                "table",
                 "more"
             ],
             "sections": [],
@@ -1350,12 +1402,7 @@
                 "latest",
                 "more"
             ],
-            "sections": [
-                "/nearby",
-                "/listen",
-                "/watch",
-                "/discover"
-            ],
+            "sections": [],
             "cannot_infer": "an event is listed as its organizer published it: a time, a place or a ticket may have changed since, and nothing here is a reservation"
         },
         {

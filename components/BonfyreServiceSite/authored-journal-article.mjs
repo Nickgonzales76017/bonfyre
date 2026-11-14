@@ -30,6 +30,7 @@ function renderSections(title, sections, renderMd) {
 }
 export function composeJournalArticle(journal, {
   baseUrl, siteName = "Aurekai", renderMd, navigation = [], meta = {}, related = [],
+  assets = { base: "/assets", blog: "/blog/blog.css" },
 } = {}) {
   if (journal?.schema !== "aurekai.journal-intake.v1" ||
     !journal.title || !journal.slug || !Array.isArray(journal.sections) || !journal.sections.length)
@@ -45,6 +46,8 @@ export function composeJournalArticle(journal, {
     `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join("");
   if (!Array.isArray(related) || related.length > 8 ||
     related.some(r => typeof r?.slug !== "string" || typeof r?.title !== "string")) fail("invalid related list");
+  if (typeof assets?.base !== "string" || typeof assets?.blog !== "string" ||
+    !assets.base || !assets.blog) fail("asset base paths required");
   const { html: body, toc } = renderSections(journal.title, journal.sections, renderMd);
   const mins = readMins(journal.sections);
   const rail = `<aside class="journal-article-side"><div class="journal-side-sticky">` +
@@ -68,12 +71,12 @@ export function composeJournalArticle(journal, {
 <title>${esc(journal.title)} — ${esc(siteName)} Journal</title><meta name="description" content="${esc(journal.description)}">
 <meta property="og:title" content="${esc(journal.title)}"><meta property="og:description" content="${esc(journal.description)}"><meta property="og:type" content="article">
 <link rel="canonical" href="${esc(canonical)}"><link rel="alternate" type="application/rss+xml" title="${esc(siteName)} Journal" href="${esc(baseUrl)}/blog/feed.xml">
-<link rel="stylesheet" href="../../assets/aurekai-field-guide.css"><link rel="stylesheet" href="../../assets/aurekai-research.css"><link rel="stylesheet" href="../blog.css"></head>
+<link rel="stylesheet" href="${esc(assets.base)}/aurekai-field-guide.css"><link rel="stylesheet" href="${esc(assets.base)}/aurekai-research.css"><link rel="stylesheet" href="${esc(assets.blog)}"><link rel="stylesheet" href="${esc(assets.base)}/authoring-reader.css"></head>
 <body><a class="skip" href="#main">Skip to article</a><header class="top"><div class="shell"><a class="brand" href="../../"><span class="mark">A</span> ${esc(siteName.toUpperCase())} <small>/ JOURNAL</small></a>
 <nav aria-label="Site navigation">${nav}</nav></div></header>
 <main id="main"><section class="journal-article-hero"><div class="shell journal-article-head">
 <div class="journal-breadcrumb"><a href="../">Journal</a><span>/</span><span>${esc(category || "Journal")}</span></div>
-${icon ? `<span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="../../assets/product-icons.svg#${icon}"></use></svg></span>` : ""}<div class="eyebrow">${esc(category)} · ${mins} min read</div>
+${icon ? `<span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="${esc(assets.base)}/product-icons.svg#${icon}"></use></svg></span>` : ""}<div class="eyebrow">${esc(category)} · ${mins} min read</div>
 <h1>${esc(journal.title)}</h1><p class="lead">${esc(journal.description)}</p>
 <div class="journal-meta"><span>${esc(journal.published || "")}</span></div>
 </div></section>

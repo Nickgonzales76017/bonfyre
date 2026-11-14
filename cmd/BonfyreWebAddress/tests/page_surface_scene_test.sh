@@ -10,6 +10,30 @@ source="$root/cmd/BonfyreWebAddress/src"
 [ -x "$web" ]
 cmp -s "$runtime" "$asset"
 cmp -s "$root/cmd/BonfyreSurfaceScene/runtime/renderers/workspace-composition.mjs" "$root/site/matrix/bonfyre-workspace-composition.mjs"
+cmp -s "$root/site/assets/aurekai-field-guide.css" "$root/site/matrix/aurekai-field-guide.css"
+cmp -s "$root/site/assets/aurekai-research.css" "$root/site/matrix/aurekai-research.css"
+cmp -s "$root/site/assets/product-icons.svg" "$root/site/matrix/product-icons.svg"
+# The publication CSS now has two owners: the authored static GitHub Pages file
+# and the Tailwind-compiled native Matrix asset. Their formats must not be
+# assumed byte-identical; prove the latter against its exact source compiler.
+generated_blog_css="$(mktemp "${TMPDIR:-/tmp}/bonfyre-journal-css.XXXXXX")"
+trap 'rm -f "$generated_blog_css"' EXIT HUP INT TERM
+(
+  cd "$root/deploy/tailwind"
+  [ -x "./node_modules/.bin/tailwindcss" ]
+  BONFYRE_STYLE_LAYER=1 ./node_modules/.bin/tailwindcss --postcss postcss.config.cjs \
+    -i ./styles/blog.pcss -o "$generated_blog_css" --minify
+)
+cmp -s "$generated_blog_css" "$root/site/matrix/blog.css"
+grep -Fq ".journal-hero{" "$root/site/blog/blog.css"
+grep -Fq ".journal-article-layout{" "$root/site/blog/blog.css"
+grep -Fq ".journal-listen{" "$root/site/matrix/blog.css"
+grep -Fq ".journal-listen-icon{" "$root/site/matrix/blog.css"
+grep -RFq '"/assets/aurekai-field-guide.css", "aurekai-field-guide.css"' "$source"
+grep -RFq '"/assets/aurekai-research.css", "aurekai-research.css"' "$source"
+grep -RFq '"/assets/product-icons.svg", "product-icons.svg"' "$source"
+grep -RFq '"/blog/blog.css", "blog.css"' "$source"
+grep -RFq '"/assets/authoring-reader.css", "authoring-reader.css"' "$source"
 grep -Fq "'./renderers/workspace-composition.mjs'" "$asset"
 grep -RFq '"/assets/renderers/workspace-composition.mjs", "bonfyre-workspace-composition.mjs"' "$source"
 grep -RFq 'id=\"bonfyre-surface-scene\"' "$source"

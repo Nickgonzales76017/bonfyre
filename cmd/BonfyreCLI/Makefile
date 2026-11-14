@@ -11,8 +11,14 @@ BINDIR ?= $(PREFIX)/bin
 all: $(TARGET) contract-test
 
 contract-test: $(TARGET)
-	bun tests/public_command_contract.mjs
-	bun test tests/front_door.test.mjs tests/help_contract.test.mjs
+	@set -e; log=$(mktemp); trap 'rm -f "$log"' EXIT; \
+	if bun tests/public_command_contract.mjs >"$log" 2>&1; then grep '^public command contract: PASS' "$log"; else cat "$log" >&2; exit 1; fi
+	@bun test --reporter=dots tests/front_door.test.mjs tests/help_contract.test.mjs
+
+.PHONY: test verification-contract
+test: verification-contract
+verification-contract:
+	@bash ../../scripts/tests/test-gate.test.sh
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)

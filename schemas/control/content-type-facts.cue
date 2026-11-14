@@ -166,6 +166,15 @@ contentTypeFacts: {
 	role_program:            {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "institution"}
 	service_lead:            {phenotypes: ["EVENT", "DOCUMENT"], domain: "contract", audience: "institution"}
 	team_need:               {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "community"}
+	// Work orders between named accounts: stated terms and each person's own
+	// decision on them. None of these is money held, moved or owed.
+	work_order:              {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "institution"}
+	work_order_party:        {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "institution"}
+	work_order_milestone:    {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "institution"}
+	work_order_signoff:      {phenotypes: ["EVENT", "DOCUMENT"], domain: "contract", audience: "institution"}
+	work_dispute:            {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "contract", audience: "institution"}
+	dispute_statement:       {phenotypes: ["EVENT", "DOCUMENT"], domain: "contract", audience: "institution"}
+	role_vouch:              {phenotypes: ["EVENT", "DOCUMENT"], domain: "governance", audience: "community"}
 
 	// ---- external: what was observed of somebody else
 	availability_observation: {phenotypes: ["MEASUREMENT_STREAM", "VERSIONED_RECORD"], domain: "external", audience: "market"}

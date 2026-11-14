@@ -1,9 +1,10 @@
 // The authoring page uses the existing authenticated BonfyreCMS endpoint.
 import {mountAurekaiAuthoring} from "./unified-editor.mjs";
-import {openNativeAuthoring,saveNativeAuthoring} from "./native-cms.mjs";
+import {openNativeAuthoring,saveNativeAuthoring,revisePublishedAuthoring} from "./native-cms.mjs";
 import {parseJournalMarkdown,journalPageMetadata,saveJournalBatch} from "./journal-import.mjs";
 import {mountAuthoringPageDirectory} from "./page-directory.mjs";
 import {mountAccountAudioEntry} from "./audio-entry.mjs";
+import {mountArticlePublication} from "./article-publication.mjs";
 import {renderBrowserReview} from "./review-preview.mjs";
 function el(tag,style,label){
  const n=document.createElement(tag);
@@ -91,7 +92,7 @@ function journalIntakePanel(onImport){
 function journalCollectionPanel(onImport){
  const section=el("details","authoring-journal-intake authoring-journal-collection");
  const title=el("summary","","Import a collection of journal articles");
- const info=el("p","","Select up to 32 Markdown articles. Each becomes an account-owned draft page at /journal/article-name/. Existing pages cannot be overwritten. Nothing is published.");
+ const info=el("p","","Select up to 128 Markdown articles. Each becomes an account-owned draft page at /blog/article-name/. Existing pages cannot be overwritten. Nothing is published.");
  const files=el("input");files.type="file";files.multiple=true;
  files.accept=".md,text/markdown";
  files.setAttribute("aria-label","Choose journal Markdown files");
@@ -105,7 +106,7 @@ function journalCollectionPanel(onImport){
   const selection=[...(files.files||[])];
   if(!selection.length){preview.textContent="No articles selected.";return;}
   try{
-   if(selection.length>32)throw Error("Choose 32 or fewer articles.");
+   if(selection.length>128)throw Error("Choose 128 or fewer articles.");
    if(selection.some(file=>file.size>200000))throw Error("An article exceeds 200 KB.");
    const articles=await Promise.all(selection.map(async file=>
     parseJournalMarkdown(await file.text(),{filename:file.name})));
@@ -138,7 +139,7 @@ function journalCollectionPanel(onImport){
 }
 export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticle=false,fetcher=fetch,loaders}={}){
  if(!root)throw Error("An authoring root is required");
- const {base,tree}=await openNativeAuthoring({route,site,fetcher});
+ const {base,tree}=await openNativeAuthoring({route,site,fetcher,editablePublished:!!site});
  let authoritative=base;
  const layout=el("div","authoring-site-workspace");
  const navigationHost=el("div","authoring-page-navigation");
@@ -163,6 +164,8 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
    location.assign("/cms/compose/advanced?route="+encodeURIComponent(next)+(site?"&site="+encodeURIComponent(site):""));
   }
  });
+ // Normal authoring composes native pages. Migration is explicitly opt-in.
+ if(new URLSearchParams(location.search).get("mode")==="migration"){
  navigationHost.append(journalIntakePanel(async article=>{
   const metadata=journalPageMetadata(article);
   directory.setJournalMetadata(metadata,{previewOnly:true});
@@ -178,6 +181,11 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
   await directory.refreshPages();
   return result;
  }));
+ }
+  const publication=mountArticlePublication(navigationHost,{site,route,fetcher,
+   getSaved:()=>authoritative,isDirty:()=>!!desk?.isDirty()||directory.isDirty(),
+   onReleased:()=>{navigationAccepted=true;location.assign("/profile?site="+encodeURIComponent(site)+"&tab=posts");}
+  });
  const audioEntry=mountAccountAudioEntry(navigationHost,{fetcher,site,origin:location.origin,
   getArticle:async()=>{
    if(!desk||desk.isDirty()||directory.isDirty())
@@ -199,10 +207,17 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
    initial:tree,loaders,initialSaved:base.id>0,
    onReview:dialog.review,
    onSaveDraft:async draft=>{
-    const receipt=await saveNativeAuthoring({fetcher,base:authoritative,tree:draft,
+    let receipt;
+    if(authoritative.snapshot.page?.status==="published"){
+     if(!site)throw Error("An owned site is required to revise published pages.");
+     if(!window.confirm("Review the changed layout, credits, sources and publication rights before replacing the current public edition. Continue?"))
+      throw Error("Revision cancelled; the public page is unchanged.");
+     receipt=await revisePublishedAuthoring({fetcher,base:authoritative,tree:draft,
+      pageDraft:directory.getDraft(),site,rightsConfirmed:true});
+    }else receipt=await saveNativeAuthoring({fetcher,base:authoritative,tree:draft,
      pageDraft:directory.getDraft(),site});
     authoritative=receipt.base;
-    directory.committed(receipt.base);
+    directory.committed(receipt.base);publication.refresh();
     return receipt;
    },
   });
@@ -216,11 +231,11 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
   }
  }catch(error){
   window.removeEventListener("beforeunload",warnOnLeave);
-  directory.dispose();audioEntry.dispose();dialog.dispose();throw error;
+  directory.dispose();audioEntry.dispose();publication.dispose();dialog.dispose();throw error;
  }
  return {...desk,dispose:async()=>{
   window.removeEventListener("beforeunload",warnOnLeave);
-  await desk.destroy();directory.dispose();audioEntry.dispose();dialog.dispose();
+  await desk.destroy();directory.dispose();audioEntry.dispose();publication.dispose();dialog.dispose();
  }};
 }
 export async function bootNativeAurekaiEditor(){
@@ -232,7 +247,7 @@ export async function bootNativeAurekaiEditor(){
  if(newArticle){
   if(!globalThis.crypto?.getRandomValues)throw Error("Secure browser identity required for new pages.");
   const bytes=new Uint8Array(10);globalThis.crypto.getRandomValues(bytes);
-  route="/journal/draft-"+Array.from(bytes,x=>x.toString(16).padStart(2,"0")).join("")+"/";
+  route="/blog/draft-"+Array.from(bytes,x=>x.toString(16).padStart(2,"0")).join("")+"/";
   const next=new URL(location.href);
   next.searchParams.delete("new");next.searchParams.set("route",route);
   history.replaceState(history.state,"",next.pathname+next.search+next.hash);
@@ -243,7 +258,7 @@ export async function bootNativeAurekaiEditor(){
   const input=document.createElement("input");input.type="hidden";
   input.name="site";input.value=site;field?.form?.append(input);
   const back=document.querySelector(".authoring-top a[href='/cms/compose']");
-  if(back)back.href="/cms/compose?site="+encodeURIComponent(site);
+  if(back){back.href="/profile?site="+encodeURIComponent(site)+"&tab=posts";back.textContent="← Your profile";}
  }
  try{await mountNativeAurekaiEditor(root,{route,site,newArticle});}
  catch(error){

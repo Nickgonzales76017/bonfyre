@@ -1,0 +1,19 @@
+{
+  "name": "guild_offer_application",
+  "displayName": "Guild Offer Application",
+  "description": "A person's application to a guild offer and the steward's recorded decision. Acceptance is a written decision by the steward; it pays nothing, signs nothing and transmits nothing to anyone.",
+  "attributes": {
+    "application": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "offer": { "type": "string", "required": true },
+    "applicant_subject": { "type": "string", "required": true },
+    "statement": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "decided_by": { "type": "string", "required": false },
+    "decision_note": { "type": "text", "required": false },
+    "decided_at": { "type": "string", "required": false },
+    "submitted_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

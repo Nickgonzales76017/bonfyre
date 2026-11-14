@@ -173,7 +173,20 @@ static int serve_listen_program(const char *method, const char *target, const ch
     as_html = accept && strstr(accept, "text/html");
     printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", as_html ? "text/html; charset=utf-8" : "application/json");
     if (!as_html) { fputs("{\"schema_version\":\"bonfyre.listen.v1\",\"recording\":",stdout); json(recording); fputs(",\"recording_title\":",stdout);json(title);fputs(",\"work_ref\":",stdout);json(work_ref);fputs(",\"primary_artist_ref\":",stdout);json(artist);fputs(",\"audio_asset_ref\":",stdout);json(listen_safe_asset(asset)?asset:"");fputs(",\"transcript_ref\":",stdout);json(listen_safe_asset(transcript)?transcript:"");fputs(",\"cannot_infer\":\"a playable representation -> a Work, Recording, Release, credit, right, listener identity, playback state, authority or a licence to redistribute\"}\n",stdout); }
-    else { fputs("<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><main class=\"listen-program\"><p>listen · canonical recording</p><h1>",stdout);html(title);fputs("</h1><p>",stdout);html(artist);fputs("</p>",stdout);if(listen_safe_asset(asset)){fputs("<audio controls preload=\"metadata\" src=\"",stdout);html(asset);fputs("\"></audio>",stdout);}else fputs("<p>This recording is represented here, but no safe public audio program has been published.</p>",stdout);if(listen_safe_asset(transcript)){fputs("<p><a href=\"",stdout);html(transcript);fputs("\">Transcript</a></p>",stdout);}fputs("<aside>Work, release order, credits and rights remain separate canonical relations.</aside></main>",stdout); }
+    else {
+        /* One shell; the recording plays in the one player, never its own <audio>. */
+        ak_app_open(title, "workbench", "route-listen-program");
+        fputs("<header class=\"ak-wb-hero is-solo listen-program\"><div><p class=\"ak-kicker\">Listen <span>/</span> Recording</p><h1>",stdout);html(title);
+        /* an artist reference that is still an identifier is not a name to show */
+        const char *by = strchr(artist, ':') ? "" : artist;
+        fputs("</h1>",stdout);if(*by){fputs("<p class=\"ak-lede\">",stdout);html(by);fputs("</p>",stdout);}fputs("<div class=\"ak-actions\">",stdout);
+        if(listen_safe_asset(asset)){fputs("<button type=\"button\" class=\"ak-btn is-primary\" data-ak-track data-ak-default data-src=\"",stdout);html(asset);fputs("\" data-title=\"",stdout);html(title);fputs("\" data-by=\"",stdout);html(*by?by:"Listen");fputs("\">Play</button>",stdout);}
+        if(listen_safe_asset(transcript)){fputs("<a class=\"ak-btn\" href=\"",stdout);html(transcript);fputs("\">Transcript</a>",stdout);}
+        fputs("</div>",stdout);
+        if(!listen_safe_asset(asset))fputs("<p class=\"ak-empty\">This recording is listed here, but no public audio for it has been published.</p>",stdout);
+        fputs("<p class=\"ak-empty\">The work, its release, credits and rights are kept as separate records.</p></div></header>",stdout);
+        ak_app_close();
+    }
     sqlite3_close(db); return 1;
 unavailable:
     if (st) sqlite3_finalize(st);
@@ -209,13 +222,22 @@ static int serve_human_community_page(const char *method, const char *target,
     governance=(const char *)sqlite3_column_text(body,2); policy=(const char *)sqlite3_column_text(body,3); limit=(const char *)sqlite3_column_text(body,4);
     members = community_active_member_count(db, community);
     present = community_public_presence_count(db, community);
-    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>"); html(title); fputs(" · Aurekai</title><link rel=\"stylesheet\" href=\"/assets/donor-lemmy.css\"><style>body{max-width:920px;margin:0 auto;padding:2rem;font:16px system-ui;color:#202124}header{border-bottom:1px solid #ddd;padding-bottom:1rem}.meta{color:#666;font-size:.85rem}.post{padding:1rem 0;border-bottom:1px solid #e5e5e5}.post h2{font-size:1rem;margin:0 0 .35rem}.reaction{display:block;color:#666;font-size:.85rem;margin-top:.45rem}.limit{margin:2rem 0;padding:1rem;border-left:3px solid #777;background:#f6f6f6}</style><header><p class=\"meta\">human community · ", stdout); html(governance); fputs("</p><h1>",stdout); html(title); fputs("</h1><p>",stdout); html(description); fputs("</p><p class=\"meta\">",stdout); html(policy); printf("</p><p class=\"meta\">%d active members · %d publicly here now</p></header><main>", members, present);
+    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
+    ak_app_open(title, "workbench", "route-community-body");
+    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Community <span>/</span> ", stdout); html(governance); fputs("</p><h1>",stdout); html(title); fputs("</h1><p class=\"ak-lede\">",stdout); html(description);
+    fputs("</p></div>",stdout);
+    printf("<dl class=\"ak-stats\"><div><dt>Members</dt><dd>%d</dd></div><div><dt>Here now</dt><dd class=\"is-on\">%d</dd></div></dl></header>", members, present);
+    if (policy && *policy) { fputs("<p class=\"ak-empty\">",stdout); html(policy); fputs("</p>",stdout); }
+    char limit_text[1024]; snprintf(limit_text, sizeof(limit_text), "%s", limit ? limit : "");
     sqlite3_finalize(body); body = NULL;
     surface_emit_participation_nav();
     if (sqlite3_prepare_v2(db, "SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100", -1, &posts, NULL) != SQLITE_OK) goto unavailable;
     sqlite3_bind_text(posts, 1, community, -1, SQLITE_TRANSIENT);
-    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); fputs("<article class=\"post\"><p class=\"meta\">",stdout); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} fputs("</p>",stdout); if(ptitle&&*ptitle){fputs("<h2>",stdout);html(ptitle);fputs("</h2>",stdout);} fputs("<p>",stdout);html(text);fputs("</p>",stdout); if(reactions) printf("<small class=\"reaction\">%d accepted reactions</small>", reactions); fputs("</article>",stdout); }
-    sqlite3_finalize(posts); sqlite3_close(db); fputs("</main><aside class=\"limit\"><strong>What this is not.</strong> ",stdout); html(limit); fputs(" Federation is projected elsewhere.</aside></html>",stdout); return 1;
+    fputs("<section class=\"ak-sec\" aria-labelledby=\"cb-posts-h\"><header><h2 id=\"cb-posts-h\">Conversation</h2></header><ol class=\"ak-rows cb-posts\">",stdout); int any_post=0;
+    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); any_post=1; fputs("<li class=\"post\"><small>",stdout); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} fputs("</small>",stdout); if(ptitle&&*ptitle){fputs("<strong>",stdout);html(ptitle);fputs("</strong>",stdout);} fputs("<p>",stdout);html(text);fputs("</p>",stdout); if(reactions) printf("<small>%d accepted reactions</small>", reactions); fputs("</li>",stdout); }
+    if (!any_post) fputs("<li class=\"ak-empty\">Nobody has posted here yet.</li>",stdout);
+    fputs("</ol></section>",stdout);
+    sqlite3_finalize(posts); sqlite3_close(db); fputs("<p class=\"ak-empty cb-limit\">",stdout); html(limit_text); fputs(" Federation is projected elsewhere.</p>",stdout); ak_app_close(); return 1;
 unavailable:
     if (body) sqlite3_finalize(body);
     if (posts) sqlite3_finalize(posts);
@@ -431,32 +453,14 @@ static int serve_cms_route(const char *method, const char *target,
      * the index can never advertise something a reader cannot open. */
     if (!strcmp(target, "/notes") || !strcmp(target, "/notes/")) {
         sqlite3 *idb = NULL; sqlite3_stmt *ist = NULL;
-        static char idx[131072];
-        int w;
         if (!cms_db || !*cms_db) cms_db = "/var/lib/bonfyre/cms/bonfyre_cms.db";
         if (sqlite3_open_v2(cms_db, &idb, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (idb) sqlite3_close(idb); return 0; }
-        w = snprintf(idx, sizeof(idx),
-            "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
-            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-            "<title>Notes &middot; Aurekai</title><style>"
-            ":root{--paper:#f5f3ea;--ink:#10201a;--muted:#647269;--line:#c8cdc2;--green:#789d24}"
-            "*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);"
-            "font:400 18px/1.6 Georgia,'Iowan Old Style',serif}"
-            ".wrap{width:min(46rem,calc(100%% - 40px));margin:auto}"
-            "header{padding:34px 0 20px;border-bottom:1px solid var(--ink);margin-bottom:26px}"
-            ".eyebrow{margin:0 0 10px;color:var(--green);font:600 11px ui-monospace,monospace;"
-            "letter-spacing:.12em;text-transform:uppercase}"
-            "h1{margin:0;font-size:clamp(32px,5vw,50px);letter-spacing:-.02em;font-weight:600}"
-            "ul{list-style:none;padding:0;margin:0}"
-            "li{padding:16px 0;border-bottom:1px solid var(--line)}"
-            "a{color:inherit;text-decoration:none}a:hover{text-decoration:underline}"
-            ".t{font-size:22px;font-weight:600;letter-spacing:-.01em}"
-            ".d{color:var(--muted);font-size:15px;margin-top:4px}"
-            ".empty{color:var(--muted);font:14px ui-monospace,monospace;padding:22px 0}"
-            "@media(prefers-color-scheme:dark){:root{--paper:#14231d;--ink:#e9ece4;--muted:#9aa79d;--line:#2f3f37}}"
-            "</style></head><body><div class=\"wrap\">"
-            "<header><p class=\"eyebrow\">Aurekai</p><h1>Notes</h1></header><ul>");
-        if (sqlite3_prepare_v2(idb,
+        printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
+        ak_app_open("Notes", "workbench", "route-notes");
+        fputs("<header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Aurekai <span>/</span> Notes</p><h1>Notes</h1></div></header><ul class=\"ak-rows notes-list\">", stdout);
+        {
+            int any = 0;
+            if (sqlite3_prepare_v2(idb,
                 /* status and published_at are what the CMS maintains; the separate
                  * `published` boolean is caller-supplied and can be absent, which
                  * silently 404d a legitimately published page. allow_guest is
@@ -464,26 +468,20 @@ static int serve_cms_route(const char *method, const char *target,
                 "SELECT route, title, meta_description FROM wiki_page "
                 "WHERE status='published' AND allow_guest=1 "
                 "ORDER BY published_at DESC LIMIT 200", -1, &ist, NULL) == SQLITE_OK) {
-            int any = 0;
-            while (sqlite3_step(ist) == SQLITE_ROW && (size_t)w < sizeof(idx) - 2048) {
-                char er[1024], et[1024], ed[2048];
-                html_escape((const char *)sqlite3_column_text(ist, 0), er, sizeof(er));
-                html_escape((const char *)sqlite3_column_text(ist, 1), et, sizeof(et));
-                html_escape(sqlite3_column_text(ist, 2) ? (const char *)sqlite3_column_text(ist, 2) : "",
-                            ed, sizeof(ed));
-                w += snprintf(idx + w, sizeof(idx) - (size_t)w,
-                    "<li><a href=\"/%s\"><div class=\"t\">%s</div>%s%s%s</a></li>",
-                    er, et, ed[0] ? "<div class=\"d\">" : "", ed, ed[0] ? "</div>" : "");
-                any = 1;
+                while (sqlite3_step(ist) == SQLITE_ROW) {
+                    const char *r = (const char *)sqlite3_column_text(ist, 0), *t = (const char *)sqlite3_column_text(ist, 1),
+                               *d = (const char *)sqlite3_column_text(ist, 2);
+                    fputs("<li><a href=\"/", stdout); html(r ? r : ""); fputs("\"><strong>", stdout); html(t ? t : "");
+                    fputs("</strong>", stdout); if (d && *d) { fputs("<small>", stdout); html(d); fputs("</small>", stdout); }
+                    fputs("</a></li>", stdout); any = 1;
+                }
             }
-            if (!any) w += snprintf(idx + w, sizeof(idx) - (size_t)w,
-                "<li class=\"empty\">No published notes yet.</li>");
+            if (!any) fputs("<li class=\"ak-empty\">No published notes yet.</li>", stdout);
         }
         if (ist) sqlite3_finalize(ist);
         sqlite3_close(idb);
-        snprintf(idx + w, sizeof(idx) - (size_t)w, "</ul></div></body></html>\n");
-        printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
-               "Content-Length: %zu\r\nConnection: close\r\n\r\n%s", strlen(idx), idx);
+        fputs("</ul>", stdout);
+        ak_app_close();
         fflush(stdout);
         return 1;
     }
@@ -507,45 +505,25 @@ static int serve_cms_route(const char *method, const char *target,
             int guest = sqlite3_column_int(st, 3);
             (void)sqlite3_column_int(st, 2);
             if (published && (guest || session_valid(bearer, auth_db))) {
-                static char page[262144];
-                char etitle[4096], econtent[131072];
-                html_escape(title ? title : "", etitle, sizeof(etitle));
-                html_escape(content ? content : "", econtent, sizeof(econtent));
-                /* Reader typography carries the same identity as the studio
-                 * that produced it: one product, two surfaces. */
-                int n = snprintf(page, sizeof(page),
-                    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
-                    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-                    "<title>%s</title><meta name=\"description\" content=\"%s\">"
-                    "<style>"
-                    ":root{--paper:#f5f3ea;--ink:#10201a;--muted:#647269;--line:#c8cdc2;--green:#789d24}"
-                    "*{box-sizing:border-box}"
-                    "body{margin:0;background:var(--paper);color:var(--ink);"
-                    "font:400 18px/1.65 Georgia,'Iowan Old Style',serif}"
-                    ".wrap{width:min(46rem,calc(100%% - 40px));margin:auto}"
-                    "header{padding:34px 0 20px;border-bottom:1px solid var(--ink);margin-bottom:38px}"
-                    ".eyebrow{margin:0 0 10px;color:var(--green);"
-                    "font:600 11px ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase}"
-                    "h1{margin:0;font-size:clamp(32px,5vw,50px);line-height:1.08;letter-spacing:-.02em;"
-                    "text-wrap:balance;font-weight:600}"
-                    "article p{margin:0 0 1.15em}"
-                    "footer{margin:56px 0 40px;padding-top:18px;border-top:1px solid var(--line);"
-                    "font:600 11px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;"
-                    "color:var(--muted)}"
-                    "footer a{color:inherit}"
-                    "@media(prefers-color-scheme:dark){:root{--paper:#14231d;--ink:#e9ece4;"
-                    "--muted:#9aa79d;--line:#2f3f37}}"
-                    "</style></head><body><div class=\"wrap\">"
-                    "<header><p class=\"eyebrow\">Aurekai</p><h1>%s</h1></header>"
-                    "<article><p>%s</p></article>"
-                    "<footer><a href=\"/notes/\">All notes</a> &middot; <a href=\"/\">Aurekai</a></footer>"
-                    "</div></body></html>\n", etitle, etitle, etitle, econtent);
-                if (n > 0 && (size_t)n < sizeof(page)) {
-                    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
-                           "Content-Length: %d\r\nConnection: close\r\n\r\n%s", n, page);
-                    fflush(stdout);
-                    served = 1;
+                /* The one shell; the note reads in the Stitch reading measure
+                 * and can be heard in the one player. */
+                printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
+                ak_app_open(title ? title : "Note", "workbench", "route-notes");
+                fputs("<article class=\"notes-read\"><header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/notes/\">Notes</a></p><h1>", stdout);
+                html(title ? title : ""); fputs("</h1><div class=\"ak-actions\"><button type=\"button\" class=\"ak-btn\" data-ak-track data-narrate=\"#note-text\" data-title=\"", stdout);
+                html(title ? title : "Note"); fputs("\" data-by=\"Aurekai notes\">Listen</button></div></div></header><div class=\"notes-text\" id=\"note-text\">", stdout);
+                {   /* blank lines separate paragraphs */
+                    const char *p = content ? content : "";
+                    while (*p) {
+                        const char *e = strstr(p, "\n\n"); size_t n = e ? (size_t)(e - p) : strlen(p);
+                        if (n) { char *para = strndup(p, n); if (para) { fputs("<p>", stdout); html(para); fputs("</p>", stdout); free(para); } }
+                        if (!e) break; p = e + 2; while (*p == '\n') p++;
+                    }
                 }
+                fputs("</div><p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"/notes/\">All notes</a></p></article>", stdout);
+                ak_app_close();
+                fflush(stdout);
+                served = 1;
             } else if (published && !guest) {
                 const char *b = "{\"error\":\"session_required\",\"reason\":\"this page is published but not guest-readable\"}\n";
                 printf("HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\n"

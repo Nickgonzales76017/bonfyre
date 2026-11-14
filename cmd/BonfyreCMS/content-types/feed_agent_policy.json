@@ -1,0 +1,16 @@
+{
+  "name": "feed_agent_policy",
+  "displayName": "Feed Agent Policy",
+  "description": "A person's stated rule for one of their saved feeds and one named agent or MCP client: read, summaries only, or no access. It is the person's decision on record. It is enforced only where a read path consults it, and the record says so; it is not a grant of anything beyond what the person already shares, and naming an agent does not identify who runs it.",
+  "attributes": {
+    "policy_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "account_subject": { "type": "string", "required": true },
+    "feed": { "type": "string", "required": true },
+    "agent": { "type": "string", "required": true },
+    "access": { "type": "string", "required": true },
+    "decided_at": { "type": "string", "required": true },
+    "enforcement": { "type": "text", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

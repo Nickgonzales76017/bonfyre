@@ -45,6 +45,36 @@ pre-commit hook, in CI, and on every script write by Claude.
   zstd archive, then removal). After a win, `scripts/native-ratchet.sh tighten`.
 - An installed program is never a packed JS runtime; `bun build --compile` is refused.
 
+## Frontend styles
+
+Author styles through PostCSS, Tailwind, Sass, Less or YAFF/CUE-backed tokens.
+Do not write standalone CSS or inline style blocks for new work. CSS served by
+the browser is generated output; change its source and rebuild it. Extend the
+shared frontend system and migrate existing authored CSS as its surfaces change.
+
+## One app — the Stitch screens are the layout
+
+Aurekai is one app that takes a visitor from first arrival to running their
+own work. It is not a set of micro-sites.
+
+- **One shell.** Every HTML route renders inside the single estate shell
+  (territory nav, Discover / What's on / Watch / Listen bar, footer,
+  persistent player). A route emits its `<main>` content only. Do not add
+  another `<!doctype>`, `<header>`, footer or page-level `<style>` emitter.
+- **The page's Stitch screen is its layout.** References:
+  `~/.bonfyre/design-references/stitch-20261104/**/{code.html,screen.png}`
+  (91 screens; index `docs/engineering/stitch-aurekai-20261104/INDEX.md`).
+  Fill the screen's layout and controls with real records. Replace the old
+  body. Never keep an old demo body and add a "workflow" section under it,
+  and never append "explore the rest" blocks to make up for missing links.
+- **Extend what exists.** Find the route's current owner and its screen
+  before writing anything. Do not start a parallel renderer, page family
+  or format. Designs land as records through the shared renderer
+  (`presentation_template`, `surface_pattern`, `route_presentation`,
+  `schemas/control/page-composition.cue`), never as per-design source.
+- **Done means side by side.** Screenshot the page next to its
+  `screen.png` at desktop and 390px before you call it done.
+
 ## Non-negotiable rules (CI-enforced by `bun architecture/atlas.mjs validate`)
 
 - **No maturity laundering.** `measured`/`proven` requires a real witness. Never

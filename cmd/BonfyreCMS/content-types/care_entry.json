@@ -1,0 +1,19 @@
+{
+  "name": "care_entry",
+  "displayName": "Care Circle Entry",
+  "description": "A shared task or note inside a private care circle, readable and writable only by the circle's current members. It is not a medical record, a clinical instruction or a message sent to anyone outside the circle.",
+  "attributes": {
+    "entry": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "circle": { "type": "string", "required": true },
+    "kind": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "body": { "type": "text", "required": false },
+    "due_on": { "type": "string", "required": false },
+    "state": { "type": "string", "required": true },
+    "author_subject": { "type": "string", "required": true },
+    "created_at": { "type": "string", "required": true },
+    "done_by": { "type": "string", "required": false },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

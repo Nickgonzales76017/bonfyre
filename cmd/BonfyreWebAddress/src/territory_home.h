@@ -10,5 +10,9 @@
  * Returns 1 for success, including an independent territory or a CMS fallback.
  */
 int bf_apply_territory_home_presentation(sqlite3 *db, char **body, const char *territory);
+/* Explicitly installed owner selected by the resolved request host.
+ * The caller must supply this across the separate C translation unit. */
+int bf_apply_territory_home_presentation_owned(sqlite3 *db, char **body,
+                                                const char *territory, const char *cms_namespace);
 
 #endif

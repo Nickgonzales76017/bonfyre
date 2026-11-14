@@ -21,9 +21,13 @@ function form(html,operation){const matched=[...html.matchAll(/<form\b[^>]*>([\s
 async function create(name='Fixture community',user=owner){const page=await get('/community/new',user);expect(page.status).toBe(200);const values={...form(page.body,'create'),title:name+' '+(++serial),text:'A shared workshop for useful public discussion. Everyone keeps their own contributions.'};const preview=await send(values,user,'/community/preview');expect(preview.status).toBe(200);const reviewed=form(preview.body,'create'),r=await send(reviewed,user);if(r.status!==303)throw Error('Create refused '+r.status+': '+r.body.slice(-2000));return {key:new URL(r.headers.get('location'),'https://aurekai.life').searchParams.get('community'),reviewed};}
 async function join(key,user=member){const p=await get(path(key,'join'),user),r=await send(form(p.body,'request'),user);expect(r.status).toBe(303);return r;}
 async function accept(key,user=member,steward=owner){const p=await get(path(key,'members'),steward),forms=[...p.body.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)];const selected=forms.find(m=>m[0].includes('value="accept"')&&m[0].includes('value="user:'+user.id+'"'));if(!selected)throw Error('Exact membership request missing');const r=await send(form(selected[0],'accept'),steward);expect(r.status).toBe(303);}
-async function publish(key,user=owner,{text='Useful original contribution.',title='A workshop question',parent=''}={}){const p=await get(path(key,parent?'reply':'write',parent),user);if(p.status!==200)throw Error('Editor refused '+p.status);const op=parent?'reply':'post',input={...form(p.body,op),title:parent?'':title,text},review=await send(input,user,'/community/preview');expect(review.status).toBe(200);const approved=form(review.body,op),r=await send(approved,user);if(r.status!==303)throw Error('Publish refused '+r.status+': '+r.body.slice(-2000));return {key:new URL(r.headers.get('location'),'https://aurekai.life').searchParams.get('post'),reviewed:approved};}
+async function publish(key,user=owner,{text='Useful original contribution.',title='A workshop question',parent=''}={}){const p=await get(path(key,parent?'reply':'write',parent),user);if(p.status!==200)throw Error('Editor refused '+p.status);const op=parent?'reply':'post',input={...form(p.body,op),title:parent?'':title,text},review=await send(input,user,'/community/preview');expect(review.status).toBe(200);const approved=form(review.body,op),r=await send(approved,user);if(r.status!==303)throw Error('Publish refused '+r.status+': '+r.body.slice(-2000));const moved=new URL(r.headers.get('location'),'https://aurekai.life');return {key:moved.searchParams.get('post')||moved.pathname.match(/\/thread\/([^/]+)\/?$/)?.[1],reviewed:approved};}
 const row=(table,key,value)=>f.sql.query('SELECT * FROM '+table+' WHERE '+key+'=?1 AND namespace=\'root\'').get(value);
 test('an explicitly created local guild is a real stewarded community, not inferred apprenticeship or financial authority',async()=>{
+ const emptyIndex=await f.request('/sitemap-community.xml',{host:'aurekai.life'});
+ expect(emptyIndex.status).toBe(200);expect(emptyIndex.body).toContain('<urlset');
+ expect(emptyIndex.body).toContain('https://aurekai.life/communities');
+ expect(emptyIndex.body).not.toContain('sitemap-community-0.xml');
  const starting=await get('/guild/new');expect(starting.status).toBe(200);
  const draft={...form(starting.body,'create-guild'),title:'Independent Repair Guild',text:'A public circle for craft learning, repair stories and stewardship.'};
  const preview=await send(draft,owner,'/community/preview');expect(preview.status).toBe(200);expect(preview.body).toContain('Create this guild');
@@ -105,7 +109,7 @@ test('guild programmes bind exact ProgrammeFabric records to a reviewed guild an
  const evidencePage=await get(route,member);expect(evidencePage.status).toBe(200);
  expect(evidencePage.body).toContain('data-requirement-source-note');
  expect((evidencePage.body.match(/data-requirement-source-note/g)||[])).toHaveLength(1);
- expect(evidencePage.body).toContain('post='+note.key);
+ expect(evidencePage.body).toContain('/thread/'+note.key+'/');
  expect(evidencePage.body).not.toContain(foreign.key);
  expect(evidencePage.body).not.toContain('A separate community retains its own observation');
  expect(evidencePage.body).not.toContain('PRIVATE-UNVERIFIED-REFERENCE');
@@ -132,8 +136,21 @@ test('requests, profile continuation and acceptance concern the exact community 
 test('conversation replies, revision conflicts and removal preserve other authors and the exact discussion',async()=>{
  const {key}=await create('Conversation flow');await join(key);await accept(key);const rootPost=await publish(key,owner,{text:'Original public question.',title:'What should we repair first?'}),reply=await publish(key,member,{parent:rootPost.key,text:'I can bring a broken lamp.'});
  const page=await get(path(key,'thread',rootPost.key),null);expect(page.body).toContain('Original public question.');expect(page.body).toContain('I can bring a broken lamp.');expect(page.body).not.toContain('community-member@example.test');
+ const permalink='/community/'+key+'/thread/'+rootPost.key+'/';
+ const indexed=await get(permalink,null);expect(indexed.status).toBe(200);
+ expect(indexed.body).toContain('<link rel="canonical" href="https://aurekai.life'+permalink+'">');
+ expect(indexed.headers.get('cache-control')).toContain('public');
+ const structured=indexed.body.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];expect(structured).toBeTruthy();
+ const discussion=JSON.parse(structured);expect(discussion['@type']).toBe('DiscussionForumPosting');
+ expect(discussion.text).toBe('Original public question.');expect(discussion.comment?.[0]?.text).toBe('I can bring a broken lamp.');
+ const shard=await f.request('/sitemap-community-0.xml',{host:'aurekai.life'});expect(shard.status).toBe(200);
+ expect(shard.body).toContain('https://aurekai.life'+permalink);
+ expect((await f.request('/sitemap-community.xml',{host:'aurekai.life'})).body).toContain('sitemap-community-0.xml');
+ expect((await f.request('/sitemap-community.xml',{host:'aurekai.work'})).status).not.toBe(200);
  const editPage=await get(path(key,'edit',reply.key),member),edit={...form(editPage.body,'edit'),text:'I can bring a lamp and a safe inspection checklist.'};expect((await send(edit,member)).status).toBe(303);expect((await send(edit,member)).status).toBe(303);expect((await send({...edit,text:'Stale replacement'},member)).status).toBe(409);expect(row('community_post','post',reply.key).body).toBe(edit.text);
  const rootPage=await get(path(key,'thread',rootPost.key)),remove=form(rootPage.body,'remove');expect((await send(remove)).status).toBe(303);const withdrawn=await get(path(key,'thread',rootPost.key),null);expect(withdrawn.body).not.toContain('Original public question.');expect(withdrawn.body).toContain('no longer public');expect(withdrawn.body).toContain(edit.text);expect((await get(path(key,'reply',reply.key),member)).status).toBe(409);expect((await send(rootPost.reviewed)).status).toBe(409);
+ expect((await get(permalink,null)).status).toBe(404);
+ expect((await f.request('/sitemap-community-0.xml',{host:'aurekai.life'})).body).not.toContain('https://aurekai.life'+permalink);
 });
 test('membership revocation cannot be escaped through leave/rejoin or unrelated administrator privileges',async()=>{
  const {key}=await create('Scoped authority');await join(key);await accept(key);const plannedPage=await get(path(key,'write'),member),planned={...form(plannedPage.body,'post'),title:'Before access changed',text:'This must not be published.'};const members=await get(path(key,'members'));expect((await send(form(members.body,'revoke'))).status).toBe(303);
@@ -168,11 +185,11 @@ const navigate=async(page,fn)=>{try{await Promise.all([page.waitForNavigation({w
 test('two real browsers create, discover, join, approve, converse, revise and return to private profiles',async()=>{
  const a=await browserPage(owner),b=await browserPage(member);try{
   await a.page.goto(f.base+'/community/new',{waitUntil:'domcontentloaded'});await a.page.type('input[name=title]','The neighborhood repair circle');await a.page.type('textarea[name=text]','Bring your questions, share what worked, and plan a careful repair together.');await navigate(a.page,()=>a.page.click('form.cj-form button[type=submit]'));expect(await a.page.$eval('main h1',n=>n.textContent)).toBe('Review your public contribution');await navigate(a.page,()=>a.page.locator('[data-community-publish]').click());const community=new URL(a.page.url()).searchParams.get('community');expect(community).toMatch(/^community-[a-f0-9]{64}$/);
-  await b.page.goto(f.base+'/communities?q=neighborhood',{waitUntil:'domcontentloaded'});await navigate(b.page,()=>b.page.click('[data-community-listing] h2 a'));await navigate(b.page,()=>clickText(b.page,'Request to join'));await navigate(b.page,()=>b.page.click('[data-community-action=request]'));
+  await b.page.goto(f.base+'/communities?q=neighborhood',{waitUntil:'domcontentloaded'});await navigate(b.page,()=>b.page.click('[data-community-listing] h3 a'));await navigate(b.page,()=>clickText(b.page,'Request to join'));await navigate(b.page,()=>b.page.click('[data-community-action=request]'));
   await b.page.goto(f.base+'/profile?tab=communities',{waitUntil:'domcontentloaded'});expect(await b.page.$eval('main',n=>n.textContent)).toContain('Your request is awaiting review.');
   await a.page.goto(f.base+path(community,'members'),{waitUntil:'domcontentloaded'});await navigate(a.page,()=>a.page.locator('[data-community-action=accept]').click());
-  await b.page.goto(f.base+path(community),{waitUntil:'domcontentloaded'});await navigate(b.page,()=>clickText(b.page,'Start a conversation'));await b.page.type('input[name=title]','Can we diagnose this lamp together?');await b.page.type('textarea[name=text]','I have not powered it on. What should I inspect first?');await navigate(b.page,()=>b.page.click('.cj-form button[type=submit]'));await navigate(b.page,()=>b.page.locator('[data-community-publish]').click());const post=new URL(b.page.url()).searchParams.get('post');
-  await a.page.goto(f.base+path(community,'thread',post),{waitUntil:'domcontentloaded'});await navigate(a.page,()=>clickText(a.page,'Reply'));await a.page.type('textarea[name=text]','Start with a description and photos before anyone proposes electrical work.');await navigate(a.page,()=>a.page.click('.cj-form button[type=submit]'));await navigate(a.page,()=>a.page.locator('[data-community-publish]').click());const reply=new URL(a.page.url()).searchParams.get('post');
+  await b.page.goto(f.base+path(community),{waitUntil:'domcontentloaded'});await navigate(b.page,()=>clickText(b.page,'Start a conversation'));await b.page.type('input[name=title]','Can we diagnose this lamp together?');await b.page.type('textarea[name=text]','I have not powered it on. What should I inspect first?');await navigate(b.page,()=>b.page.click('.cj-form button[type=submit]'));await navigate(b.page,()=>b.page.locator('[data-community-publish]').click());const post=new URL(b.page.url()).pathname.match(/\/thread\/([^/]+)\/?$/)?.[1];
+  await a.page.goto(f.base+path(community,'thread',post),{waitUntil:'domcontentloaded'});await navigate(a.page,()=>clickText(a.page,'Reply'));await a.page.type('textarea[name=text]','Start with a description and photos before anyone proposes electrical work.');await navigate(a.page,()=>a.page.click('.cj-form button[type=submit]'));await navigate(a.page,()=>a.page.locator('[data-community-publish]').click());const reply=new URL(a.page.url()).pathname.match(/\/thread\/([^/]+)\/?$/)?.[1];
   await b.page.reload({waitUntil:'domcontentloaded'});expect(await b.page.$eval('main',n=>n.textContent)).toContain('Start with a description and photos');await navigate(b.page,()=>clickText(b.page,'Edit my contribution'));await b.page.$eval('textarea[name=text]',n=>n.value='I have not powered it on. I will add a clear description first.');await navigate(b.page,()=>b.page.click('.cj-form button[type=submit]'));await navigate(b.page,()=>b.page.locator('[data-community-publish]').click());
   expect(row('community_post','post',post).body).toBe('I have not powered it on. I will add a clear description first.');
   expect(row('community_post','post',reply).body).toBe('Start with a description and photos before anyone proposes electrical work.');
@@ -210,7 +227,7 @@ test('lost publication acknowledgement is reconciled by the same reviewed reques
   cdp.on('Fetch.requestPaused',async e=>{try{if(e.request.method==='POST'&&e.responseStatusCode===303){writes++;await cdp.send('Fetch.failRequest',{requestId:e.requestId,errorReason:'ConnectionClosed'});}else await cdp.send('Fetch.continueResponse',{requestId:e.requestId});}catch{}});
   await Promise.allSettled([page.waitForNavigation({waitUntil:'domcontentloaded',timeout:6000}),page.locator('[data-community-publish]').click()]);await cdp.detach();cdp=null;
   const retained=f.sql.query('SELECT * FROM community_post WHERE community=?1 AND author_subject=?2').all(key,'user:'+member.id);expect(writes).toBe(1);expect(retained).toHaveLength(1);postKey=retained[0].post;
-  const repeated=await send(reviewed,member);expect(repeated.status).toBe(303);expect(new URL(repeated.headers.get('location'),'https://aurekai.life').searchParams.get('post')).toBe(postKey);expect(f.sql.query('SELECT count(*) AS n FROM community_post WHERE community=?1').get(key).n).toBe(1);
+  const repeated=await send(reviewed,member);expect(repeated.status).toBe(303);expect(new URL(repeated.headers.get('location'),'https://aurekai.life').pathname.match(/\/thread\/([^/]+)\/?$/)?.[1]).toBe(postKey);expect(f.sql.query('SELECT count(*) AS n FROM community_post WHERE community=?1').get(key).n).toBe(1);
   await page.goto(f.base+path(key,'thread',postKey),{waitUntil:'domcontentloaded'});expect(await page.$eval('main',n=>n.textContent)).toContain('This text must be retained exactly once.');
  }finally{await cdp?.detach();await context.close();}
 });
@@ -241,16 +258,37 @@ test('four territory homes discover exact public conversations without private m
  const {key}=await create('Homepage workshop'),post=await publish(key,owner,{title:'A shared repair question',text:'A public starting point. <script>not executable</script> '+ 'é'.repeat(160)});
  const before=f.sql.query('SELECT * FROM community_post WHERE community=?').all(key);
  const starter={community:key,author_subject:'user:'+owner.id,published_at:new Date(Date.now()-1000).toISOString(),visibility:'public',moderation_state:'accepted',cannot_infer:'Isolated home discovery fixture.',status:'published'};
- for(const [id,patch,ns]of [['hidden',{moderation_state:'hidden'}],['private',{visibility:'private'}],['draft',{status:'draft'}],['future',{published_at:'2099-01-01T00:00:00Z'}],['foreign',{},'other-test'],['reply',{reply_to:post.key}]])f.add('community_post',{...starter,post:'home-'+id,title:'HOME-EXCLUDED-'+id,body:'HOME-EXCLUDED-'+id,...patch},ns||'root');
+ for(const [id,patch,ns]of [['hidden',{moderation_state:'hidden'}],['private',{visibility:'private'}],['draft',{status:'draft'}],['future',{published_at:'2099-01-01T00:00:00Z'}],['foreign',{},'other-test'],['reply',{reply_to:post.key}],['dotted',{post:'home.dotted'}],['nonmember',{author_subject:'foreign:unverified'}],['future-reply',{reply_to:post.key,published_at:'2099-01-01T00:00:00Z'}]])f.add('community_post',{...starter,post:'home-'+id,title:'HOME-EXCLUDED-'+id,body:'HOME-EXCLUDED-'+id,...patch},ns||'root');
+ const discovery=await f.request('/sitemap-community-0.xml',{host:'aurekai.life'});expect(discovery.body).not.toContain('/thread/home-future/');expect(discovery.body).not.toContain('/thread/home-private/');expect(discovery.body).not.toContain('/thread/home-hidden/');expect(discovery.body).not.toContain('/thread/home-draft/');
+ expect((await get('/community/'+key+'/thread/home-future/',null)).status).toBe(404);
+ expect((await get(path(key,'thread','home-future'),null)).status).toBe(404);
+ expect((await get(path(key,'thread','home-future-reply'),null)).status).toBe(404);
+ const indexed=await f.request('/sitemap-community-0.xml',{host:'aurekai.life'});
+ expect(indexed.body).toContain('<lastmod>');
+ expect(indexed.body).toContain('/community/'+key+'/thread/'+post.key+'/');
+ for(const denied of ['home-hidden','home-private','home-draft','home-future','home-reply','home.dotted','home-nonmember'])
+  expect(indexed.body).not.toContain('/thread/'+denied+'/');
+ const publicRegister=await get('/community',null);expect(publicRegister.status).toBe(200);
+ expect(publicRegister.body).toContain('href="/community/'+key+'/thread/'+post.key+'/"');
+ expect(publicRegister.headers.get('cache-control')).toContain('max-age=60');
+ const signedRegister=await get('/community',owner);expect(signedRegister.headers.get('cache-control')).toContain('no-store');
+ const rootThread=await get(path(key,'thread',post.key),null);
+ expect(rootThread.body).toContain('DiscussionForumPosting');
+ expect(rootThread.body).not.toContain('HOME-EXCLUDED-future-reply');
+ for(const excluded of ['HOME-EXCLUDED-hidden','HOME-EXCLUDED-private','HOME-EXCLUDED-draft','HOME-EXCLUDED-future','HOME-EXCLUDED-reply','HOME-EXCLUDED-dotted','HOME-EXCLUDED-nonmember'])
+  expect(publicRegister.body).not.toContain(excluded);
  for(const host of ['aurekai.life','aurekai.work','aurekai.live','aurekai.shop']){
   const page=await f.request('/',{host});expect(page.status).toBe(200);expect(page.body).toContain('data-community-front');expect(page.headers.get('cache-control')).toContain('must-revalidate');
+  const sitemap=await f.request('/sitemap.xml',{host});expect(sitemap.status).toBe(200);
+  expect(sitemap.body).toContain('https://'+host+'/sitemap-surfaces.xml');
+  if(host!=='aurekai.life')expect(sitemap.body).not.toContain('https://aurekai.life/sitemap-surfaces.xml');
   const section=page.body.match(/<section class="community-front"[\s\S]*?<\/section>/)?.[0]||'';
   expect(section).toContain('A shared repair question');expect(section).toContain('&lt;script&gt;');expect(section).not.toContain('\ufffd');expect(section).not.toContain('HOME-EXCLUDED-');
   expect(section).not.toContain('community-owner@example.test');expect(section).not.toContain('user:'+owner.id);
   expect((section.match(/data-community-discovery=/g)||[]).length).toBeLessThanOrEqual(3);
   const links=[...section.matchAll(/data-community-thread href="([^"]+)"/g)].map(m=>decode(m[1]));
-  const target=links.find(href=>new URL(href,'https://'+host).searchParams.get('community')===key);expect(target).toBeTruthy();
-  const thread=await f.request(target,{host});expect(thread.status).toBe(200);expect(thread.body).toContain('A shared repair question');
+  const target=links.find(href=>new URL(href,'https://'+host).pathname.includes('/community/'+key+'/thread/'));expect(target).toBeTruthy();
+  const thread=await f.request(new URL(target).pathname,{host:'aurekai.life'});expect(thread.status).toBe(200);expect(thread.body).toContain('A shared repair question');
  }
  expect(f.sql.query('SELECT * FROM community_post WHERE post=? AND community=?').all(post.key,key)).toEqual(before);
  const cached=await f.request('/',{host:'aurekai.life'}),etag=cached.headers.get('etag');expect(etag).toBeTruthy();
@@ -274,7 +312,7 @@ test('homepage conversation discovery works without script and continues through
    const output=process.env.BONFYRE_COMMUNITY_SCREENSHOTS;if(output){mkdirSync(output,{recursive:true});await page.$eval('[data-community-front]',n=>n.scrollIntoView());await page.screenshot({path:pathJoin(output,'community-home-'+width+'.png')});}
   }
   await navigate(page,()=>page.click('[data-community-discovery="'+key+'"] [data-community-thread]'));
-  expect(new URL(page.url()).searchParams.get('post')).toBe(post.key);expect(await page.$eval('main',n=>n.textContent)).toContain('Plan a shared workshop');
+  expect(new URL(page.url()).pathname.match(/\/thread\/([^/]+)\/?$/)?.[1]).toBe(post.key);expect(await page.$eval('main',n=>n.textContent)).toContain('Plan a shared workshop');
   await navigate(page,()=>clickText(page,'Sign in to take part'));
   expect(new URL(page.url()).pathname).toBe('/login');
   await page.type('form[action="/login"] input[name=email]','community-outsider@example.test');await page.type('form[action="/login"] input[name=password]',password);await navigate(page,()=>page.click('form[action="/login"] button[type=submit]'));

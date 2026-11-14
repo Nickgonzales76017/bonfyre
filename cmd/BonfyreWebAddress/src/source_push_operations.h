@@ -173,6 +173,16 @@ static void spo_fact_handoffs(sqlite3 *db,const char *q,const char *state,unsign
     fputs("</section>",stdout);
     sqlite3_finalize(st);
 }
+/* A refused or unavailable console still opens on the one shell, in the
+ * console's own layout, saying which owner decided. */
+static void spo_refusal(int code,const char *title,const char *why){
+    ak_app_http(code,1);ak_app_open("WebSub delivery","connections","route-push");
+    fputs("<div class=\"ak-wb-strip\"><span>Sources</span><span>Push delivery</span><span class=\"ak-live is-off\">",stdout);html(title);
+    fputs("</span></div><section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/sources\">Sources</a> &middot; WebSub</p>"
+          "<h1>Push delivery, leases and signatures</h1><p class=\"ak-lede\">",stdout);html(why);
+    fputs("</p><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/sources\">Back to sources</a></div></div></section>",stdout);
+    ak_app_close();
+}
 static int serve_source_push_operations(const char *method,const char *target,
                                         const char *query,const char *host,
                                         const char *bearer,const char *auth_db) {
@@ -183,7 +193,7 @@ static int serve_source_push_operations(const char *method,const char *target,
     if(psetup_context(bearer,auth_db,"institution:bonfyre",1,
                      actor,sizeof(actor),subject,sizeof(subject),&scope)!=1||
        strcmp(scope,"institution")||strcmp(subject,"institution:bonfyre")){
-        aw_error(403,"An active Bonfyre institution administrator is required.\n");return 1;
+        spo_refusal(403,"Administrators only","This console is for an active Bonfyre institution administrator. Sign in with that account to inspect leases, challenges and signatures.");return 1;
     }
     char q[81]="",state[24]="all",pageno[12]="",dno[12]="",fno[12]="";
     if(query){
@@ -201,7 +211,7 @@ static int serve_source_push_operations(const char *method,const char *target,
         aw_error(400,"Choose supported bounded page coordinates.\n");return 1;
     }
     sqlite3 *db=websub_open(0);
-    if(!db){aw_error(503,"The WebSub carrier store is not connected.\n");return 1;}
+    if(!db){spo_refusal(503,"Store not connected","The WebSub carrier store is not connected on this server, so there are no leases or deliveries to show.");return 1;}
     sqlite3_stmt *st=NULL;
     const char *sql=
         "SELECT s.topic,s.hub,s.state,COALESCE(s.lease_expires,0),"
@@ -218,46 +228,35 @@ static int serve_source_push_operations(const char *method,const char *target,
         "ORDER BY CASE WHEN s.state='active' THEN 0 ELSE 1 END,"
         "s.lease_expires ASC,s.topic ASC LIMIT 26 OFFSET ?3";
     if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK){
-        sqlite3_close(db);aw_error(503,"WebSub carrier schema is not ready.\n");return 1;
+        sqlite3_close(db);spo_refusal(503,"Store not ready","The WebSub carrier store has no subscription table yet.");return 1;
     }
     sqlite3_bind_text(st,1,q,-1,SQLITE_TRANSIENT);
     sqlite3_bind_text(st,2,state,-1,SQLITE_TRANSIENT);
     sqlite3_bind_int(st,3,(int)page*25);
-    fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
-          "Cache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\n"
-          "Referrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff\r\n"
-          "Connection: close\r\n\r\n<!doctype html><html lang=\"en\"><head>"
-          "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<title>WebSub delivery operations · Aurekai Work</title>"
-          "<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=2\">"
-          "<style>"
-          ".spo{max-width:1250px;margin:20px auto 70px;padding:0 clamp(14px,4vw,50px)}"
-          ".spo h1{font:400 clamp(30px,5vw,58px)/1.08 Georgia,serif;margin:13px 0}"
-          ".spo p{line-height:1.5;max-width:75ch}.spo small{font:12px/1.5 system-ui}"
-          ".spo-filters{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:24px 0}"
-          ".spo-filters label{display:grid;gap:5px;flex:1;min-width:min(100%,190px)}"
-          ".spo-filters input,.spo-filters select,.spo-filters button{font:14px system-ui;min-height:44px;padding:9px;border-radius:8px}"
-          ".spo-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}"
-          ".spo-list details{border:1px solid var(--w-rule,#46564d);border-radius:13px;overflow:hidden;background:var(--w-panel,#17221a)}"
-          ".spo-list summary{cursor:pointer;padding:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center}"
-          ".spo-list summary strong{overflow-wrap:anywhere}.spo-list dl{padding:0 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}"
-          ".spo-list dt{font:600 12px system-ui}.spo-list dd{margin:4px 0 0;overflow-wrap:anywhere}"
-          ".spo-rail{display:flex;gap:16px;flex-wrap:wrap;margin:22px 0}"
-          ".spo-ledger{list-style:none;display:grid;gap:12px;padding:0;margin:14px 0 22px}"
-          ".spo-ledger li{padding:16px 18px;border:1px solid var(--w-rule,#46564d);border-radius:13px;background:var(--w-panel,#17221a)}"
-          ".spo-ledger dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin:14px 0 0}"
-          ".spo-ledger dt{font:600 12px/1.5 system-ui}.spo-ledger dd{margin:4px 0 0;font:14px/1.4 system-ui}"
-          ".spo #material-demands,.spo #fact-handoffs{margin:46px 0 0;padding-top:18px;border-top:1px solid var(--w-rule,#46564d)}"
-          ".spo-steps{border-block:1px solid var(--w-rule,#46564d);padding:15px 0;margin:24px 0}"
-          ".spo-paging{display:flex;gap:20px;margin-top:20px}"
-          ".spo :is(button,input,select,a,summary):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}"
-          "@media(max-width:390px){.spo-list dl{grid-template-columns:1fr}.spo-filters{display:grid}.spo-filters label{min-width:0}}"
-          "</style></head><body><main class=\"spo\" data-source-push-operations>"
-          "<nav aria-label=\"Breadcrumb\"><a href=\"/\">Work</a> / <a href=\"/sources\">Sources</a> / Push delivery</nav>"
-          "<header><h1>WebSub delivery operations</h1>"
-          "<p>Inspect the native transport. A challenge confirms that the hub knows the topic; "
-          "an HMAC check admits a callback; a dirty source requests separate ForeignTwin observation. "
-          "None of these alone establishes a new fact or publishes material.</p></header>",stdout);
+    long long n_total=0,n_active=0,n_expired=0,n_rejected=0,n_dirty=0,n_deliv=0;
+    {   sqlite3_stmt *c=NULL;
+        if(sqlite3_prepare_v2(db,"SELECT count(*),sum(s.state='active' AND s.lease_expires>strftime('%s','now')),"
+            "sum(s.state='active' AND COALESCE(s.lease_expires,0)<=strftime('%s','now')),sum(COALESCE(s.rejected,0)>0),"
+            "sum(COALESCE(d.state,'') IN('pending','running')),sum(COALESCE(s.deliveries,0)) "
+            "FROM subscriptions s LEFT JOIN source_dirty d ON d.token=s.token",-1,&c,NULL)==SQLITE_OK&&sqlite3_step(c)==SQLITE_ROW){
+            n_total=sqlite3_column_int64(c,0);n_active=sqlite3_column_int64(c,1);n_expired=sqlite3_column_int64(c,2);
+            n_rejected=sqlite3_column_int64(c,3);n_dirty=sqlite3_column_int64(c,4);n_deliv=sqlite3_column_int64(c,5);}
+        sqlite3_finalize(c);
+    }
+    ak_app_http(200,1);ak_app_open("WebSub delivery","connections","route-push");
+    printf("<div class=\"ak-wb-strip\"><span>WebSub</span><span>HMAC-SHA256 callbacks</span><span>Subscriptions <b>%lld</b></span>"
+           "<span class=\"ak-live%s\">%s</span></div>",n_total,n_expired?" is-off":"",n_expired?"Leases past expiry":"Leases current");
+    fputs("<section class=\"ak-wb-hero is-solo\" data-source-push-operations><div><p class=\"ak-kicker\"><a href=\"/sources\">Sources</a> &middot; Push delivery</p>"
+          "<h1>Lease renewal and signature console</h1>"
+          "<p class=\"ak-lede\">Every feed that pushes to us: its hub, how long its lease has left, whether the hub answered the challenge, "
+          "and how many signed callbacks were accepted or refused. A challenge proves the hub knows the topic; a valid signature admits a callback. "
+          "Neither publishes anything.</p></div></section>",stdout);
+    printf("<dl class=\"ak-stats is-row\"><div><dt>Active leases</dt><dd class=\"is-on\">%lld<small style=\"display:inline\"> / %lld</small></dd><small>%lld past expiry</small></div>"
+           "<div><dt>Accepted deliveries</dt><dd>%lld</dd><small>signed callbacks admitted</small></div>"
+           "<div><dt>Refused callbacks</dt><dd>%lld</dd><small>subscriptions with a signature mismatch</small></div>"
+           "<div><dt>Sources changed</dt><dd>%lld</dd><small>waiting for a separate read</small></div></dl>",
+           n_active,n_total,n_expired,n_deliv,n_rejected,n_dirty);
+    fputs("<div class=\"spo-layout\"><div class=\"spo-main\">",stdout);
     fputs("<nav class=\"spo-rail\" aria-label=\"Native source pipeline\"><a href=\"#subscriptions\">Subscriptions</a><a href=\"#material-demands\">Material observation demands</a><a href=\"#fact-handoffs\">FactDelta handoffs</a></nav>",stdout);
     spo_filters(q,state);
     fputs("<section id=\"subscriptions\"><h2>Hub subscriptions and delivery</h2>",stdout);
@@ -308,13 +307,23 @@ static int serve_source_push_operations(const char *method,const char *target,
     spo_material_demands(db,q,state,page,dpage,fpage);
     spo_fact_handoffs(db,q,state,page,dpage,fpage);
     sqlite3_close(db);
-    fputs("<section class=\"spo-steps\"><h2>From a feed to retained knowledge</h2>"
-          "<p>Discovery → subscribed with a separate authority receipt → hub challenge → "
-          "HMAC-authenticated change notice → SourceDirty queue → receipted ForeignTwin read. "
-          "If an upstream host is silent, that is not evidence that no articles were published.</p>"
-          "<p>Subscription and renewal are explicit operations in the native WebSub owner; "
-          "this inspector has no write controls.</p>"
-          "<a href=\"/sources\">Return to Source Library</a></section></main></body></html>",stdout);
+    fputs("</div><aside class=\"spo-side\"><section class=\"ak-panel\" id=\"setup\"><header><h2>Add a push feed</h2><span class=\"ak-tag is-on\">WebSub 0.4</span></header>"
+          "<p>Paste a feed address. It is reviewed first: the feed's own <code>rel=\"hub\"</code> link names its hub, and robots.txt is respected. "
+          "Subscribing, renewing and unsubscribing are explicit operations of the WebSub owner; this page never sends them.</p>",stdout);
+    {   BfAuthoringTree *tree=calloc(1,sizeof(*tree));
+        int ok=tree&&ft_action(tree,"push-topic",NULL,0,"Review this feed","get","/studio/",NULL,0)&&
+               ft_field(tree,"push-topic-url","push-topic",0,"Topic address","url","foreign_url","","https://example.org/feed.xml",0,NULL,"1200",1,"url");
+        if(tree){if(ok)ft_render(tree,stdout);else{bf_authoring_tree_clear(tree);free(tree);}}
+    }
+    fputs("</section><section class=\"ak-console\" aria-label=\"Handshake path\"><b>handshake path</b><br>"
+          "&gt; discover the hub from the feed<br>&gt; subscribe with a separate authority receipt<br>"
+          "&gt; hub GET hub.mode=subscribe &amp; hub.challenge<br>&gt; echo the challenge, 200 OK<br>"
+          "&gt; POST callback with X-Hub-Signature sha256=&hellip;<br>&gt; constant-time HMAC compare<br>"
+          "&gt; source marked changed, read separately<br><br>A silent hub is not evidence that nothing was published.</section></aside></div>"
+          "<section class=\"ak-band\"><div><p class=\"ak-kicker\">Where it goes next</p><h2>Changed sources are read, receipted, then known.</h2>"
+          "<p>A delivery only marks a source as changed. The read that follows is its own receipted observation.</p></div>"
+          "<div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/sources\">Source library</a></div></section>",stdout);
+    ak_app_close();
     return 1;
 }
 #endif

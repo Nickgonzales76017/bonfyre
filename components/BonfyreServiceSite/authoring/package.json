@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Aurekai visual authoring: GrapesJS, Puck and Editor.js on one Bonfyre-native document",
   "scripts": {
-    "build": "bun build ./entry.mjs --target browser --minify --outfile ../../../site/matrix/authoring-editor.js",
+    "build": "bun run --cwd ../../../deploy/tailwind authoring-style && bun install --silent && bun build ./entry.mjs --target browser --minify --outfile ../../../site/matrix/authoring-editor.js && { printf '/*!bonfyre:generated owner=@bonfyre/authoring:build entry=entry.mjs*/\\n'; cat ../../../site/matrix/authoring-editor.js; } > ../../../site/matrix/.authoring-editor.js.tmp && mv ../../../site/matrix/.authoring-editor.js.tmp ../../../site/matrix/authoring-editor.js && cp ./node_modules/grapesjs/dist/css/grapes.min.css ../../../site/matrix/authoring-grapes.css && cp ./authoring.css ../../../site/matrix/authoring-shell.css",
     "test": "node --test ../../../cmd/BonfyreSurfaceScene/tests/authoring-tree.test.mjs"
   },
   "dependencies": {

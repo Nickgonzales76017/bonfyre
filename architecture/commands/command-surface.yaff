@@ -2026,10 +2026,8 @@ architecture cmd-tone
 
 architecture cmd-transcribe
   canonical_name BonfyreTranscribe
-  source_path cmd/BonfyreTranscribe/tests/installed_caption.test.mjs
   invariant Managed installs resolve an adjacent media-prep helper before the checkout layout; explicit helper configuration retains precedence
   invariant The optional max-len caption control accepts 1..500 characters and splits on words without removing model quality flags
-  witness cmd/BonfyreTranscribe/tests/installed_caption.test.mjs checks invalid caption lengths before output creation and same-directory helper resolution from another working directory
   witness 2026-10-08 native_tool_invoke transcribed the retained Rice excerpt without a helper override and with max-len 1; .bonfyre/revenue/podcast-proof-20261008/source-token-transcript retains the model output
   known_gap Short caption segments can trigger existing duration-based quality flags; shorter segmentation does not establish accurate words or boundaries
   family command
@@ -3275,6 +3273,7 @@ architecture cmd-surface-scene
   source_path cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs
   witness md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)
   witness SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)
+  witness 2026-11-11 vocabulary at 46 with ui:choice and ui:field plus ui:action methods and containment; safe_type admits every safe HTML input type while file/image stay refused; suite proves search renders and uploads deny atomically
   source_lineage current command directory and command_smoke.json census
   known_gap built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 

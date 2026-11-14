@@ -1,0 +1,14 @@
+{
+  "name": "person_interest",
+  "displayName": "Person Interest",
+  "description": "One person's stated interest label with a weight. Interests drive matching overlap, event affinity and friend suggestions; they never gatekeep visibility and never disclose anything the owner did not state.",
+  "attributes": {
+    "interest": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "label": {"type": "string", "required": true},
+    "weight": {"type": "string", "required": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

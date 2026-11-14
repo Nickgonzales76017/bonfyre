@@ -8,7 +8,7 @@ static int workspace_package_available(const char *, const char *);
 static int workspace_plan_available(const BfPackResolution *);
 static void workspace_editor_links(long long);
 typedef struct {
-    char pack[96], context[96], version[64], digest[65], revision[24], operation[24], shared[65], repr[16], design[208];
+    char pack[96], context[96], version[64], digest[65], revision[24], operation[24], shared[65], repr[16], design[208], q[97], kind[16], order[16], view[8];
 } PackSetupInput;
 typedef struct {
     char state[24], digest[65], pinned[65], version[64], reason[96], subject[96];
@@ -48,8 +48,13 @@ static int psetup_input(const char *text, PackSetupInput *out) {
         PSET_FIELD("pack",pack,1) else PSET_FIELD("context",context,2) else PSET_FIELD("version",version,4)
         else PSET_FIELD("digest",digest,8) else PSET_FIELD("revision",revision,16)
         else PSET_FIELD("operation",operation,32) else PSET_FIELD("shared",shared,64) else PSET_FIELD("repr",repr,128) else PSET_FIELD("design",design,256)
+        else PSET_FIELD("q",q,512) else PSET_FIELD("kind",kind,1024) else PSET_FIELD("order",order,2048) else PSET_FIELD("view",view,4096)
 #undef PSET_FIELD
-        if (!dest || (seen & bit) || !psetup_decode(eq+1, (size_t)(end-eq-1), dest, cap)) return 0;
+        if (!dest || (seen & bit)) return 0;
+        if (bit == 512) { /* a search phrase may carry spaces; nothing else may */
+            if (!query_value(p, "q", dest, cap)) dest[0] = 0;
+            for (char *c = dest; *c; c++) if ((unsigned char)*c < 32) return 0;
+        } else if (!psetup_decode(eq+1, (size_t)(end-eq-1), dest, cap)) return 0;
         seen |= bit; p = *end ? end+1 : end;
     }
     if (!out->context[0]) snprintf(out->context, sizeof(out->context), "self");
@@ -60,6 +65,9 @@ static int psetup_input(const char *text, PackSetupInput *out) {
     if ((out->digest[0] && (strlen(out->digest)!=64 || strspn(out->digest,"abcdef0123456789")!=64)) ||
         (out->shared[0] && (strlen(out->shared)!=64 || strspn(out->shared,"abcdef0123456789")!=64))) return 0;
     if (out->revision[0] && (strspn(out->revision,"0123456789")!=strlen(out->revision) || strlen(out->revision)>10 || strtoll(out->revision,NULL,10)>=INT_MAX)) return 0;
+    if ((out->kind[0] && strcmp(out->kind,"application") && strcmp(out->kind,"configuration")) ||
+        (out->order[0] && strcmp(out->order,"published") && strcmp(out->order,"name") && strcmp(out->order,"recent")) ||
+        (out->view[0] && strcmp(out->view,"gallery") && strcmp(out->view,"list"))) return 0;
     if(out->design[0]){char ns[128],slug[72];if(strcmp(out->pack,"experience.connected-instruments.workspace")||!production_reference(out->design,ns,slug))return 0;}
     return 1;
 }
@@ -133,12 +141,17 @@ static int psetup_call(const char *operation, const PackSetupInput *in, const ch
 static const char *psetup_presentation_host;
 static const char *psetup_presentation_route;
 static const char *psetup_presentation_query;
-static void psetup_start(int code, const char *title) {
+/* Every account page here opens on the one shell: the estate bar with the
+ * session filled in, a single <main>, the one footer and player. The route's
+ * presentation record decorates head and body; nothing else frames the page. */
+static void psetup_bar(void){
+    const char *bar=BF_ESTATE_BAR,*a=strstr(bar,"<!--BF_SESSION_BEGIN-->"),*b=a?strstr(a,"<!--BF_SESSION_END-->"):NULL;
+    if(!a||!b){fputs(bar,stdout);return;}
+    fwrite(bar,1,(size_t)(a-bar),stdout);fputs("<!--BF_SESSION_BEGIN-->",stdout);
+    account_navigation_emit(page_request_bearer,page_request_auth_db);fputs(b,stdout);
+}
+static void psetup_open_with_style(int code,const char *title,const char *main_class,const char *extra_style){
     printf("HTTP/1.1 %d %s\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nReferrer-Policy: same-origin\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",code,code==200?"OK":code==403?"Forbidden":code==409?"Conflict":"Unavailable");
-    /* Fill the shared navigation slot once. Appending the value separately
-     * exposes a second menu and leaves the template's format slot unfilled. */
-    /* Reuse authored navigation without mounting the public World drawer.
-     * These operations use their exact saved-work continuation instead. */
     const char *pattern=bf_route_presentation_pattern(psetup_presentation_host,psetup_presentation_route,psetup_presentation_query);
     char *head_extra=NULL,*body_extra=NULL;size_t head_n=0,body_n=0;
     if(pattern){
@@ -150,13 +163,25 @@ static void psetup_start(int code, const char *title) {
         }
         if(head)fclose(head);if(attrs)fclose(attrs);
     }
-    fputs(BF_PAGE_OPEN,stdout);html(title);
-    account_navigation_chrome_presented(BF_PAGE_AFTER_TITLE,site_nav_links(),page_request_bearer,page_request_auth_db,head_extra,body_extra);
-    free(head_extra);free(body_extra);
-    fputs("<style>.pack-workspace{max-width:1120px;margin:auto;padding:42px 24px 80px}.pack-workspace h1{font-size:clamp(2rem,5vw,3.7rem);line-height:1.08}.pack-workspace h2{font-size:1.25rem}.pack-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:32px;margin-top:30px}.pack-panel{padding:24px;border:1px solid currentColor;border-radius:12px;min-width:0}.pack-panel p{line-height:1.6}.pack-workspace select,.pack-workspace button{min-height:44px;font:inherit;padding:10px 14px;border-radius:8px}.pack-workspace select{max-width:100%}.pack-workspace button{cursor:pointer}.pack-workspace form{margin:14px 0}.pack-workspace code{overflow-wrap:anywhere;font-size:.8rem}.pack-workspace table{width:100%;border-collapse:collapse;font-size:.94rem}.pack-workspace th,.pack-workspace td{padding:14px 6px;text-align:left;border-bottom:1px solid currentColor;overflow-wrap:anywhere}.pack-workspace td:first-child{max-width:250px}.pack-actions{display:flex;gap:12px;flex-wrap:wrap}.pack-link{display:block;overflow-wrap:anywhere;line-height:1.6}.pack-status{font-weight:700}.pack-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}.pack-warning{padding:18px;border:2px solid currentColor;border-radius:10px}@media(max-width:760px){.pack-grid{grid-template-columns:1fr}.pack-workspace{padding:28px 16px}.pack-panel{padding:18px}.pack-workspace table{font-size:.85rem}}</style><main class=\"pack-workspace\">",stdout);
-    pack_presentation_style();
+    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><meta name=\"robots\" content=\"noindex\"><title>",stdout);
+    html(title);fputs(" \xc2\xb7 Aurekai</title><link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">",stdout);
+    if(head_extra&&*head_extra)fputs(head_extra,stdout);else fputs("<link rel=\"stylesheet\" href=\"/assets/composition.css\">",stdout);
+    if(!strcmp(main_class,"pack-workspace")) fputs("<link rel=\"stylesheet\" href=\"/assets/pack-setup.css\"><link rel=\"stylesheet\" href=\"/assets/pack-presentation.css\">",stdout);
+    if(extra_style) { fputs("<link rel=\"stylesheet\" href=\"",stdout); html(extra_style); fputs("\">",stdout); }
+    fputs("</head><body class=\"ak-app\"",stdout);
+    if(body_extra&&*body_extra)fputs(body_extra,stdout);else fputs(" data-aurekai-pattern=\"workbench\"",stdout);
+    fputs(">",stdout);free(head_extra);free(body_extra);
+    psetup_bar();fputs("<main class=\"",stdout);fputs(main_class,stdout);fputs("\">",stdout);
 }
-static void psetup_end(void) { fputs("</main></body></html>\n",stdout); }
+static void psetup_open(int code,const char *title,const char *main_class){
+    psetup_open_with_style(code,title,main_class,NULL);
+}
+static void psetup_start(int code, const char *title) {
+    psetup_open(code,title,"pack-workspace");
+}
+/* The Stitch workbench layout (composition.css .ak-wb) on the same shell. */
+static void psetup_start_wb(int code,const char *title){psetup_open(code,title,"ak-wb");}
+static void psetup_end(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>\n",stdout); }
 static void psetup_hidden(const char *name,const char *value) { fputs("<input type=\"hidden\" name=\"",stdout);html(name);fputs("\" value=\"",stdout);html(value);fputs("\">",stdout); }
 static void psetup_link(const PackSetupInput *in,int share,const char *digest) {
     fputs("/packs/setup?pack=",stdout); url_query_value(in->pack);
@@ -170,7 +195,7 @@ static void psetup_form(const char *op,const char *label,const PackSetupInput *i
     fputs("<form method=\"post\" action=\"/packs/setup\">",stdout);psetup_hidden("pack",in->pack);psetup_hidden("context",in->context);psetup_hidden("version",in->version);
     psetup_hidden("operation",op);psetup_hidden("revision",rev);psetup_hidden("digest",digest);
     if(*in->design)psetup_hidden("design",in->design);
-    fputs("<button type=\"submit\" data-pack-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
+    fputs(!strcmp(op,"install")||!strcmp(op,"activate")?"<button class=\"ak-btn is-primary\" type=\"submit\" data-pack-action=\"":"<button class=\"ak-btn\" type=\"submit\" data-pack-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
 }
 /* HTML and machine discovery share one bounded read of current destination
  * owners. These choices do not reserve access; each operation checks again. */
@@ -259,7 +284,7 @@ static void psetup_preview(const char *pack) {
             const char *url=(const char *)sqlite3_column_text(s,0),*label=(const char *)sqlite3_column_text(s,1),*kind=(const char *)sqlite3_column_text(s,2);
             if(!url||strncmp(url,"https://",8)||!public_http_url(url)||strchr(url,'@')||strchr(url,'?')||strchr(url,'#')||strchr(url,'\\'))continue;
             if(!kind||(strcmp(kind,"demo")&&strcmp(kind,"guide")))continue;
-            fputs("<section class=\"pack-panel\" data-pack-preview><h2>",stdout);
+            fputs("<section class=\"ak-panel ak-sec-panel\" data-pack-preview><h2>",stdout);
             fputs(!strcmp(kind,"guide")?"Application guide":"Published demo",stdout);
             fputs("</h2><p>",stdout);html(label);
             fputs("</p><a class=\"pack-link\" data-pack-preview-link target=\"_blank\" rel=\"noopener noreferrer\" href=\"",stdout);html(url);
@@ -269,6 +294,90 @@ static void psetup_preview(const char *pack) {
         }
     }
     sqlite3_finalize(s);if(db)sqlite3_close(db);
+}
+/* The tool directory (Stitch: tool packs workspace setup). One bounded read of
+ * published PackGraph artifacts, filtered and ordered on the server; each card
+ * links to the reviewed setup, which is the only path that installs anything. */
+static void psetup_listing_link(const PackSetupInput *in,const char *kind,const char *order,const char *view){
+    fputs("/packs/setup?context=",stdout);url_query_value(in->context);
+    if(*in->q){fputs("&amp;q=",stdout);url_query_value(in->q);}
+    if(kind&&*kind){fputs("&amp;kind=",stdout);url_query_value(kind);}
+    if(order&&*order&&strcmp(order,"published")){fputs("&amp;order=",stdout);url_query_value(order);}
+    if(view&&*view&&strcmp(view,"gallery")){fputs("&amp;view=",stdout);url_query_value(view);}
+}
+static void psetup_option(const char *value,const char *current,const char *label){
+    fputs("<option value=\"",stdout);html(value);fputs(!strcmp(value,current)?"\" selected>":"\">",stdout);html(label);fputs("</option>",stdout);
+}
+static void psetup_chain(sqlite3 *db,const char *pack){
+    sqlite3_stmt *s=NULL;int n=0;
+    if(sqlite3_prepare_v2(db,"SELECT COALESCE(a.canonical_name,d.depends_on) FROM pack_dependency d LEFT JOIN pack_artifact a ON a.namespace='root' AND a.status='published' AND a.pack=d.depends_on WHERE d.namespace='root' AND d.status='published' AND d.pack=?1 ORDER BY d.id LIMIT 7",-1,&s,NULL)==SQLITE_OK){
+        sqlite3_bind_text(s,1,pack,-1,SQLITE_TRANSIENT);
+        while(sqlite3_step(s)==SQLITE_ROW){const char *t=(const char*)sqlite3_column_text(s,0);if(!t)continue;
+            fputs(n++?" <i>\xe2\x86\x92</i> ":"<p class=\"ak-pack-chain\"><span>Builds on</span> ",stdout);html(t);}
+    }
+    sqlite3_finalize(s);if(n)fputs("</p>",stdout);
+}
+static void psetup_directory(const PackSetupInput *in,const char *bearer,const char *auth_db,int identity,const char *actor,const char *subject,const char *scope){
+    const char *kind=in->kind,*order=*in->order?in->order:"published",*view=*in->view?in->view:"gallery";
+    sqlite3 *db=cms_open_ro();sqlite3_stmt *s=NULL;
+    const char *sql=
+        "SELECT a.pack,a.canonical_name,COALESCE(a.purpose,''),a.kind='application',COALESCE(h.version,''),a.kind "
+        "FROM pack_artifact a LEFT JOIN pack_head h ON h.namespace='root' AND h.status='published' AND h.pack=a.pack AND h.channel='stable' "
+        "WHERE a.namespace='root' AND a.status='published' "
+        "AND (?1='' OR instr(lower(a.canonical_name||' '||COALESCE(a.purpose,'')||' '||a.pack),lower(?1))>0) "
+        "AND (?2='' OR (?2='application')=(a.kind='application')) "
+        "ORDER BY 4 DESC,CASE ?3 WHEN 'recent' THEN a.updated_at END DESC,CASE ?3 WHEN 'name' THEN a.canonical_name END,a.id,a.pack LIMIT 101";
+    if(!db||sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){
+        sqlite3_finalize(s);if(db)sqlite3_close(db);
+        psetup_start_wb(503,"Tools unavailable");fputs("<header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Workspace setup / Tools</p><h1>The configuration owner could not be read</h1><p class=\"ak-lede\">Try again before choosing a tool. Nothing you already set up has changed.</p></div></header>",stdout);psetup_end();return;
+    }
+    sqlite3_bind_text(s,1,in->q,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,kind,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,order,-1,SQLITE_TRANSIENT);
+    long long total=0;{sqlite3_stmt *c=NULL;if(sqlite3_prepare_v2(db,"SELECT count(*) FROM pack_artifact WHERE namespace='root' AND status='published'",-1,&c,NULL)==SQLITE_OK&&sqlite3_step(c)==SQLITE_ROW)total=sqlite3_column_int64(c,0);sqlite3_finalize(c);}
+    psetup_start_wb(200,"Choose tools for your work");
+    fputs("<div class=\"ak-packs\" data-pack-view=\"",stdout);html(view);fputs("\"><header class=\"ak-wb-hero ak-packs-hero\"><div><p class=\"ak-kicker\">Workspace setup <span>/</span> Tools</p>"
+          "<h1>Choose tools for your work</h1><p class=\"ak-lede\">Applications open an editor once you have reviewed and switched them on. Workflow configurations keep a plan and what it needs.</p></div>"
+          "<p class=\"ak-packs-count\"><span class=\"ak-live\">",stdout);printf("%lld",total);fputs(" published</span> <small>Each one is checked again before it changes anything</small></p></header>",stdout);
+    /* Where the tools land: the destination picker is the same owner read the setup review uses. */
+    fputs("<section class=\"ak-packs-rail\" aria-label=\"Workspace\"><div class=\"ak-packs-where\">",stdout);
+    psetup_destination_picker_with(in,bearer,auth_db,"/packs/setup","Use these tools in",NULL,NULL);
+    fputs("</div><nav class=\"ak-packs-links\"><a data-setup-existing href=\"/apps?context=",stdout);url_query_value(in->context);fputs("\">Open your installed tools and saved work</a></nav></section>",stdout);
+    /* Filters are a plain GET form; the server does the filtering. */
+    fputs("<form class=\"ak-packs-filter\" method=\"get\" action=\"/packs/setup\" role=\"search\"><input type=\"hidden\" name=\"context\" value=\"",stdout);html(in->context);
+    fputs("\"><label class=\"ak-packs-find\"><span class=\"ak-visually-hidden\">Find a tool</span><input type=\"search\" name=\"q\" maxlength=\"96\" placeholder=\"Find a tool\xe2\x80\xa6\" value=\"",stdout);html(in->q);
+    fputs("\"></label><label><span>Type</span><select name=\"kind\">",stdout);psetup_option("",kind,"All types");psetup_option("application",kind,"Applications");psetup_option("configuration",kind,"Workflow configurations");
+    fputs("</select></label><label><span>Order</span><select name=\"order\">",stdout);psetup_option("published",order,"Published order");psetup_option("name",order,"Alphabetical");psetup_option("recent",order,"Recently updated");
+    fputs("</select></label><input type=\"hidden\" name=\"view\" value=\"",stdout);html(view);fputs("\"><button class=\"ak-btn\" type=\"submit\">Apply</button><span class=\"ak-packs-views\" role=\"group\" aria-label=\"View\"><a href=\"",stdout);
+    psetup_listing_link(in,kind,order,"gallery");fputs(strcmp(view,"list")?"\" aria-current=\"true\">Gallery</a><a href=\"":"\">Gallery</a><a href=\"",stdout);
+    psetup_listing_link(in,kind,order,"list");fputs(!strcmp(view,"list")?"\" aria-current=\"true\">List</a></span></form>":"\">List</a></span></form>",stdout);
+    int group=-1,step=SQLITE_DONE,section=0;size_t shown=0;
+    while((step=sqlite3_step(s))==SQLITE_ROW&&shown<100){
+        const char *pack=(const char *)sqlite3_column_text(s,0);if(!bfpg_token(pack,96))continue;
+        int application=sqlite3_column_int(s,3);PackSetupInput choice=*in;choice.q[0]=choice.kind[0]=choice.order[0]=choice.view[0]=0;
+        snprintf(choice.pack,sizeof(choice.pack),"%s",pack);
+        if(group!=application){
+            if(group!=-1)fputs("</div></section>",stdout);
+            printf("<section class=\"ak-sec ak-packs-sec\" data-setup-kind=\"%s\"><header><div><span class=\"ak-kicker\">%02d</span><h2>%s</h2></div><p>%s</p></header><div class=\"ak-grid ak-packs-grid\">",
+                application?"application":"configuration",++section,application?"Applications":"Workflow configurations",
+                application?"Review the editor release and choose where its records belong.":"Reusable behaviour. Installing a plan does not provision an application or connect an outside account.");
+            group=application;
+        }
+        const char *label=(const char*)sqlite3_column_text(s,1),*purpose=(const char*)sqlite3_column_text(s,2),*version=(const char*)sqlite3_column_text(s,4),*raw_kind=(const char*)sqlite3_column_text(s,5);
+        fputs("<article class=\"ak-panel ak-pack\" data-pack=\"",stdout);html(pack);fputs("\"><header><span class=\"ak-tag",stdout);fputs(application?" is-on\">Application":"\">Workflow configuration",stdout);
+        fputs("</span><span class=\"ak-pack-glyph\" aria-hidden=\"true\">",stdout);page_glyph(bf_pack_icon(pack,raw_kind?raw_kind:""));fputs("</span></header><h3>",stdout);html(label?label:pack);fputs("</h3>",stdout);
+        if(!application)psetup_chain(db,pack);
+        if(purpose&&*purpose){fputs("<p>",stdout);html(purpose);fputs("</p>",stdout);}
+        if(application&&identity==1){PackSetupResult existing={0};if(!psetup_call("current",&choice,actor,subject,scope,&existing)&&!strcmp(existing.state,"active")){fputs("<div class=\"ak-pack-open\">",stdout);workspace_editor_links(existing.installation);fputs("</div>",stdout);}}
+        fputs("<footer><small>",stdout);if(version&&*version){fputs("Release ",stdout);char v[9];snprintf(v,sizeof(v),"%s",version);html(v);}else fputs("No stable release",stdout);
+        fputs("</small><a class=\"ak-btn",stdout);fputs(application?" is-primary":"",stdout);fputs("\" data-setup-review href=\"",stdout);psetup_link(&choice,0,NULL);
+        fputs(application?"\">Review application setup</a></footer></article>":"\">Review workflow configuration</a></footer></article>",stdout);
+        shown++;
+    }
+    if(group!=-1)fputs("</div></section>",stdout);
+    if(step!=SQLITE_DONE&&step!=SQLITE_ROW)fputs("<p class=\"ak-empty\" role=\"alert\">The tool list was interrupted. Reload before choosing.</p>",stdout);
+    else if(!shown)fputs(*in->q||*kind?"<p class=\"ak-empty\">No published tool matches this search.</p>":"<p class=\"ak-empty\">No tools are published here yet.</p>",stdout);
+    sqlite3_finalize(s);sqlite3_close(db);
+    fputs("<p class=\"ak-packs-foot\"><span class=\"ak-live\">Showing up to 100 published tools. Setup checks the chosen release and your current access before anything changes.</span></p></div>",stdout);
+    psetup_end();
 }
 static int serve_pack_setup(const char *method,const char *target,const char *query,const char *body,
                             const char *raw,const char *host,const char *bearer,const char *auth_db) {
@@ -295,76 +404,63 @@ static int serve_pack_setup(const char *method,const char *target,const char *qu
             if(*in.design&&!strcmp(in.operation,"activate")){fputs("HTTP/1.1 303 See Other\r\nLocation: /cms/productions?context=",stdout);url_query_value(in.context);fputs("&design=",stdout);url_query_value(in.design);}
             else{fputs("HTTP/1.1 303 See Other\r\nLocation: /packs/setup?pack=",stdout);url_query_value(in.pack);fputs("&context=",stdout);url_query_value(in.context);if(*in.version){fputs("&version=",stdout);url_query_value(in.version);}if(*in.design){fputs("&design=",stdout);url_query_value(in.design);}}
             fputs("\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;}
-        psetup_start(rc==2&&plan.committed?200:409,"Review setup again");fputs("<h1>",stdout);fputs(plan.committed?"Saved; downstream refresh needs attention":"This setup was not changed",stdout);fputs("</h1><p>",stdout);html(plan.reason[0]?plan.reason:"The content owner could not confirm the operation.");fputs("</p><a href=\"",stdout);psetup_link(&in,0,NULL);fputs("\">Review the current configuration</a>",stdout);psetup_end();return 1;
+        psetup_start_wb(rc==2&&plan.committed?200:409,"Review setup again");fputs("<header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Workspace setup</p><h1>",stdout);fputs(plan.committed?"Saved; a downstream refresh needs attention":"This setup was not changed",stdout);fputs("</h1><p class=\"ak-lede\">",stdout);html(plan.reason[0]?plan.reason:"The content owner could not confirm the operation.");fputs("</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"",stdout);psetup_link(&in,0,NULL);fputs("\">Review the current configuration</a></p></div></header>",stdout);psetup_end();return 1;
     }
-    if(!in.pack[0]){
-        sqlite3 *db=cms_open_ro();sqlite3_stmt *s=NULL;
-        const char *sql="SELECT pack,canonical_name,purpose,kind='application' FROM pack_artifact WHERE namespace='root' AND status='published' ORDER BY 4 DESC,canonical_name,pack LIMIT 100";
-        if(!db || sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){
-            sqlite3_finalize(s);if(db)sqlite3_close(db);
-            psetup_start(503,"Applications unavailable");fputs("<h1>The configuration owner could not be read</h1><p>Try again before choosing an application. Existing work has not changed.</p>",stdout);psetup_end();return 1;
-        }
-        psetup_start(200,"Applications and workflows");
-        fputs("<h1>Choose tools for your work</h1><p>Applications open an editor after reviewed installation and activation. Workflow configurations retain a plan and its prerequisites.</p>",stdout);
-        psetup_context_picker(&in,bearer,auth_db);
-        fputs("<p><a data-setup-existing href=\"/apps?context=",stdout);url_query_value(in.context);fputs("\">Open your installed tools and saved work</a></p>",stdout);
-        pack_presentation_search();
-        int group=-1,step=SQLITE_DONE;size_t shown=0;
-        while((step=sqlite3_step(s))==SQLITE_ROW){
-            const char *pack=(const char *)sqlite3_column_text(s,0);if(!bfpg_token(pack,96))continue;
-            int application=sqlite3_column_int(s,3);PackSetupInput choice=in;
-            snprintf(choice.pack,sizeof(choice.pack),"%s",pack);
-            if(group!=application){
-                if(group!=-1)fputs("</div></section>",stdout);
-                fputs(application?"<section data-setup-kind=\"application\"><h2>Applications</h2><p>Review the editor release and choose where its records belong.</p>":"<section data-setup-kind=\"configuration\"><h2>Workflow configurations</h2><p>These describe reusable behavior. Installing a plan does not provision an application or connect an external account.</p>",stdout);
-                fputs("<div class=\"pack-cards\">",stdout);group=application;
-            }
-            pack_presentation_open(db,pack,(const char *)sqlite3_column_text(s,1),(const char *)sqlite3_column_text(s,2),application?"Application":"Workflow configuration",0);
-            if(application&&identity==1){PackSetupResult existing={0};if(!psetup_call("current",&choice,actor,subject,scope,&existing)&&!strcmp(existing.state,"active"))workspace_editor_links(existing.installation);}
-            fputs("<a data-setup-review href=\"",stdout);psetup_link(&choice,0,NULL);
-            fputs(application?"\">Review application setup</a>":"\">Review workflow configuration</a>",stdout);
-            pack_presentation_close();shown++;
-        }
-        if(group!=-1)fputs("</div></section>",stdout);
-        if(step!=SQLITE_DONE)fputs("<p role=\"alert\">The configuration listing was interrupted. Reload before choosing.</p>",stdout);
-        else if(!shown)fputs("<p>No configurations are published here yet.</p>",stdout);
-        sqlite3_finalize(s);sqlite3_close(db);
-        fputs("<p>Showing up to 100 published configurations. Setup checks the selected release and your current access before anything changes.</p>",stdout);psetup_end();return 1;
-    }
+    if(!in.pack[0]){psetup_directory(&in,bearer,auth_db,identity,actor,subject,scope);return 1;}
     int result=psetup_call("plan",&in,actor,subject,scope,&plan);
     int installed=plan.installation>0,current_ok=0;
     if(identity==1&&installed)current_ok=psetup_call("current",&in,actor,subject,scope,&current)==0;
     const char *state=installed?plan.state:"absent";
     int index=bfpg_find(&plan.resolution,in.pack);const char *label=index>=0?plan.resolution.nodes[index].label:in.pack;
-    psetup_start(result<0?503:200,label);fputs("<p><a href=\"/apps?context=",stdout);url_query_value(in.context);fputs("\">Your work</a> · <a href=\"/packs/setup?context=",stdout);url_query_value(in.context);fputs("\">All configurations</a></p><h1>Set up ",stdout);html(label);fputs("</h1>",stdout);
-    if (*in.version) {
-        PackSetupInput latest = in; latest.version[0] = '\0';
-        fputs("<p><a data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">Review the latest release</a></p>",stdout);
-    }
-    psetup_context_picker(&in,bearer,auth_db);fputs("<div class=\"pack-grid\"><section class=\"pack-panel\"><h2>Review what is included</h2>",stdout);
-    if(result){fputs("<p class=\"pack-warning\">This configuration is incomplete: ",stdout);html(plan.reason[0]?plan.reason:"The content owner is unavailable.");if(*plan.subject){fputs(" (",stdout);html(plan.subject);fputs(")",stdout);}fputs(". Nothing can be installed from this review.</p>",stdout);}
+    const char *state_words=!strcmp(state,"absent")?"Not installed":!strcmp(state,"active")?"Switched on":!strcmp(state,"stale")?"Source changed; review again":!strcmp(state,"removed")?"Removed":"Installed; not yet switched on";
+    /* Stitch: the setup workbench. Strip, hero with the reviewed actions,
+     * instrument row, the included-behaviour ledger beside the configuration,
+     * and the fingerprint band. Every action is the existing reviewed POST. */
+    psetup_start_wb(result<0?503:200,label);
+    fputs("<div class=\"ak-wb-strip\"><a href=\"/packs/setup?context=",stdout);url_query_value(in.context);fputs("\">Workspace setup</a><span>/</span><a href=\"/apps?context=",stdout);url_query_value(in.context);
+    fputs("\">Your work</a><span class=\"ak-live\">",stdout);html(state_words);fputs("</span></div>",stdout);
+    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Set up a tool</p><h1>",stdout);html(label);fputs("</h1><p class=\"ak-lede\">Review exactly what this release includes, choose where its records belong, then install and switch it on. Nothing changes until you press a button below.</p>",stdout);
+    if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">Review the latest release</a></p>",stdout);}
+    fputs("</div><aside class=\"ak-panel is-raised\" data-pack-config><h2>Your configuration</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\"><span class=\"ak-dot",stdout);fputs(strcmp(state,"active")?" is-off":"",stdout);fputs("\">",stdout);html(state_words);fputs("</span></p>",stdout);
+    if(!identity){fputs("<p>Sign in to keep this configuration in your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
     else{
-        int shared_changed=*in.shared&&strcmp(in.shared,plan.digest);
-        if(shared_changed)fputs("<p class=\"pack-warning\">The shared configuration has changed. Review the current version below before installing it.</p>",stdout);
-        fputs("<table><thead><tr><th>Included behavior</th><th>Installed</th><th>Reviewed</th></tr></thead><tbody>",stdout);
-        for(size_t i=0;i<plan.resolution.count;i++){BfPackResolved *n=&plan.resolution.nodes[i];int old=bfpg_find(&plan.pins,n->pack);fputs("<tr><td>",stdout);html(n->label);fputs("<br><code>",stdout);html(n->pack);fputs("</code></td><td>",stdout);html(old>=0?plan.pins.nodes[old].version:"Not installed");fputs("</td><td>",stdout);html(n->version);fputs("</td></tr>",stdout);}
-        for(size_t i=0;i<plan.pins.count;i++)if(bfpg_find(&plan.resolution,plan.pins.nodes[i].pack)<0){fputs("<tr><td>",stdout);html(plan.pins.nodes[i].pack);fputs("</td><td>",stdout);html(plan.pins.nodes[i].version);fputs("</td><td>Removed in this review</td></tr>",stdout);}
-        fputs("</tbody></table><p>Review fingerprint<br><code>",stdout);html(plan.digest);fputs("</code></p>",stdout);
-    }
-    fputs("<p>Installation retains version references and creates any native editor bindings declared by this release. Published source material stays shared; destination drafts stay separate. Public-demo drafts require explicit adoption. Installation does not grant external account access, book services, or publish merchant changes.</p></section><aside class=\"pack-panel\"><h2>Your configuration</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\">",stdout);html(!strcmp(state,"absent")?"Not installed":!strcmp(state,"active")?"Behavior activated":!strcmp(state,"stale")?"Source changed; review required":!strcmp(state,"removed")?"Removed":"Installed; activation required");fputs("</p>",stdout);
-    if(!identity){fputs("<p>Sign in to keep this configuration in your workspace.</p><a data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a>",stdout);}
-    else{
-        char a[160],s[160];const char *sc;int canwrite=psetup_context(bearer,auth_db,in.context,1,a,sizeof(a),s,sizeof(s),&sc)==1;
+        char a[160],sb[160];const char *sc;int canwrite=psetup_context(bearer,auth_db,in.context,1,a,sizeof(a),sb,sizeof(sb),&sc)==1;
         if(!canwrite)fputs("<p>You can review this workspace. An administrator must change its configuration.</p>",stdout);
         else{
+            fputs("<div class=\"ak-actions ak-pack-ops\">",stdout);
             if(result==0&&(!installed||!strcmp(state,"removed")||strcmp(plan.digest,plan.pinned)))psetup_form("install",installed?"Install reviewed configuration":"Install for this workspace",&in,&plan,plan.digest);
-            if(current_ok&&!strcmp(current.state,"installed"))psetup_form("activate","Activate installed behavior",&in,&current,current.pinned);
-            if(installed&&strcmp(state,"removed")){psetup_form("deactivate","Deactivate behavior",&in,&plan,plan.pinned);psetup_form("remove","Remove installation",&in,&plan,plan.pinned);}
+            if(current_ok&&!strcmp(current.state,"installed"))psetup_form("activate","Switch on installed behaviour",&in,&current,current.pinned);
+            if(installed&&strcmp(state,"removed")){psetup_form("deactivate","Switch off",&in,&plan,plan.pinned);psetup_form("remove","Remove installation",&in,&plan,plan.pinned);}
+            fputs("</div>",stdout);
         }
-        if(current_ok&&!strcmp(current.state,"active")){workspace_editor_links(current.installation);fputs("<a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">Review active behavior</a>",stdout);}
+        if(current_ok&&!strcmp(current.state,"active")){workspace_editor_links(current.installation);fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">Inspect the active behaviour</a></p>",stdout);}
     }
-    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);fputs("<h2>Let someone reuse it</h2><p>This link carries the published version and review fingerprint. Recipients choose their own workspace.</p><a class=\"pack-link\" data-pack-share href=\"",stdout);psetup_link(&shared,1,plan.digest);fputs("\">Open reusable configuration</a>",stdout);}
-    fputs("</aside></div>",stdout);psetup_preview(in.pack);psetup_end();return 1;
+    fputs("</aside></header>",stdout);
+    /* Instrument row: counts read from the plan the owner just resolved. */
+    size_t changed=0,added=0;
+    if(!result){for(size_t i=0;i<plan.resolution.count;i++){int old=bfpg_find(&plan.pins,plan.resolution.nodes[i].pack);if(old<0)added++;else if(strcmp(plan.pins.nodes[old].version,plan.resolution.nodes[i].version))changed++;}}
+    fputs("<dl class=\"ak-stats is-row\"><div><dt>Included behaviour</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",plan.resolution.count);
+    fputs("</dd><small>packages in this release</small></div><div><dt>New here</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",added);
+    fputs("</dd><small>not yet in this workspace</small></div><div><dt>Changed</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",changed);
+    fputs("</dd><small>installed at another version</small></div><div><dt>Status</dt><dd class=\"",stdout);fputs(!strcmp(state,"active")?"is-on":"",stdout);fputs("\">",stdout);html(!strcmp(state,"active")?"On":installed&&strcmp(state,"removed")?"Installed":"Off");fputs("</dd><small>",stdout);html(state_words);fputs("</small></div></dl>",stdout);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Where it lands</span><h2>Workspace</h2></div></header><div class=\"ak-panel ak-packs-where\">",stdout);psetup_context_picker(&in,bearer,auth_db);fputs("</div></section>",stdout);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Review</span><h2>What is included</h2></div><p>Installing keeps these version references and creates any editor this release declares. Published source material stays shared; your drafts stay in your workspace. It never connects an outside account, books a service or publishes a merchant change.</p></header><div class=\"ak-panel ak-scroll\">",stdout);
+    if(result){fputs("<p class=\"pack-warning\" role=\"alert\">This configuration is incomplete: ",stdout);html(plan.reason[0]?plan.reason:"The content owner is unavailable.");if(*plan.subject){fputs(" (",stdout);html(plan.subject);fputs(")",stdout);}fputs(". Nothing can be installed from this review.</p>",stdout);}
+    else{
+        if(*in.shared&&strcmp(in.shared,plan.digest))fputs("<p class=\"pack-warning\" role=\"alert\">The shared configuration has changed since the link was made. Review the current version below before installing it.</p>",stdout);
+        fputs("<table class=\"ak-table\"><thead><tr><th>Included behaviour</th><th>Installed</th><th>Reviewed</th></tr></thead><tbody>",stdout);
+        for(size_t i=0;i<plan.resolution.count;i++){BfPackResolved *n=&plan.resolution.nodes[i];int old=bfpg_find(&plan.pins,n->pack);fputs("<tr><td>",stdout);html(n->label);fputs("<br><code>",stdout);html(n->pack);fputs("</code></td><td>",stdout);html(old>=0?plan.pins.nodes[old].version:"Not installed");fputs("</td><td>",stdout);html(n->version);fputs("</td></tr>",stdout);}
+        for(size_t i=0;i<plan.pins.count;i++)if(bfpg_find(&plan.resolution,plan.pins.nodes[i].pack)<0){fputs("<tr><td>",stdout);html(plan.pins.nodes[i].pack);fputs("</td><td>",stdout);html(plan.pins.nodes[i].version);fputs("</td><td>Removed in this review</td></tr>",stdout);}
+        fputs("</tbody></table>",stdout);
+    }
+    fputs("</div></section>",stdout);
+    psetup_preview(in.pack);
+    fputs("<section class=\"ak-band ak-pack-proof\"><div><p class=\"ak-kicker\">Review fingerprint</p><h2>",stdout);
+    if(result)fputs("No fingerprint: this review is incomplete",stdout);else{fputs("<code>",stdout);html(plan.digest);fputs("</code>",stdout);}
+    fputs("</h2><p>A shared link carries the published version and this fingerprint. Whoever opens it chooses their own workspace.</p></div>",stdout);
+    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);fputs("<a class=\"ak-btn pack-link\" data-pack-share href=\"",stdout);psetup_link(&shared,1,plan.digest);fputs("\">Open reusable link</a>",stdout);}
+    fputs("</section>",stdout);
+    psetup_end();return 1;
 }
 /* Supply the existing PackGraph renderer with exactly the installed closure.
  * The outer CMS read transaction also pins overlay reads to this verification. */

@@ -1,0 +1,112 @@
+{
+  "schema": "bonfyre.command-vectors.v1",
+  "binary": "bonfyre-finance",
+  "binary_env": "BONFYRE_FINANCE_BIN",
+  "replaces": [
+    "tests/opportunity_inspect.test.mjs:deterministic-fixture-case"
+  ],
+  "cases": [
+    {
+      "name": "opportunity inspect reads Finance CRM Outreach without invented revenue or transport proof",
+      "files": {
+        "record.tsv": "id\tsource_kind\tsource_ref\tsource_digest\tobserved_at\ttitle\tdesired_state\tcompensation_cents\tcurrency\tdeadline\tcontact_boundary\texpected_compute_cents\texpected_external_cents\thuman_minutes\treuse_points\trisk_points\nindia:partner:real-source-reference\tgmail_sent\tgmail:verify-the-transport-separately\tdd794c1afcf5baa19fce93784f322036ffe0125657187fc3007dad8294acc3e7\t2026-10-10T10:00:00Z\tExport workflow\tAwait an accepted scope\t45000\tUSD\t-\temail_partner\t0\t0\t0\t0\t0\n"
+      },
+      "steps": [
+        {
+          "argv": [
+            "--db",
+            "${tmp}/finance.db",
+            "opportunity",
+            "import",
+            "--file",
+            "${tmp}/record.tsv"
+          ],
+          "exit": 0
+        },
+        {
+          "program": "sqlite3",
+          "argv": [
+            "${tmp}/cms.db",
+            "CREATE TABLE frappe_crm_crm_deal(id INTEGER,namespace TEXT,source TEXT,organization_name TEXT,email TEXT,communication_status TEXT,next_step TEXT); INSERT INTO frappe_crm_crm_deal VALUES(4,'aurekai-commercial','india:partner:real-source-reference','Partner','partner@example.test','Gmail sent','Read actual response');"
+          ],
+          "exit": 0
+        },
+        {
+          "program": "sqlite3",
+          "argv": [
+            "${tmp}/outreach.db",
+            "CREATE TABLE sends(id INTEGER,target TEXT,offer_name TEXT,reply_type TEXT); INSERT INTO sends VALUES(11,'partner@example.test','india:partner:real-source-reference|gmail:verify-the-transport-separately',NULL);"
+          ],
+          "exit": 0
+        },
+        {
+          "argv": [
+            "--db",
+            "${tmp}/finance.db",
+            "opportunity",
+            "inspect",
+            "--id",
+            "india:partner:real-source-reference",
+            "--cms-db",
+            "${tmp}/cms.db",
+            "--outreach-db",
+            "${tmp}/outreach.db"
+          ],
+          "exit": 0,
+          "at": {
+            "kind": "bonfyre.finance.opportunity_projection.v1",
+            "id": "india:partner:real-source-reference",
+            "finance_stage": "specified",
+            "listed_compensation_cents": 45000,
+            "cost_basis_confirmed": false,
+            "estimated_margin_cents": null,
+            "actual_revenue_cents": null,
+            "crm.0.organization": "Partner",
+            "outreach.0.local_entry_id": 11,
+            "outreach.0.reply_type": null
+          },
+          "len": {
+            "crm": 1,
+            "outreach": 1
+          },
+          "contains": [
+            "not transport proof"
+          ]
+        },
+        {
+          "argv": [
+            "--db",
+            "${tmp}/finance.db",
+            "opportunity",
+            "inspect",
+            "--id",
+            "other:unknown",
+            "--cms-db",
+            "${tmp}/cms.db",
+            "--outreach-db",
+            "${tmp}/outreach.db"
+          ],
+          "exit_nonzero": true
+        },
+        {
+          "argv": [
+            "--db",
+            "${tmp}/finance.db",
+            "opportunity",
+            "inspect",
+            "--id",
+            "india:partner:real-source-reference",
+            "--cms-db",
+            "${tmp}/must-remain-absent.db",
+            "--outreach-db",
+            "${tmp}/outreach.db"
+          ],
+          "exit_nonzero": true,
+          "absent": [
+            "${tmp}/must-remain-absent.db"
+          ]
+        }
+      ]
+    }
+  ]
+}

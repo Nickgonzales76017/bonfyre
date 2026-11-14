@@ -1079,6 +1079,9 @@ static void cjw_signin(const char *path);
 #include "organization_workspace_web.h"
 #include "account_choices.h"
 #include "household_members_web.h"
+#include "guild_records_web.h"
+#include "household_circles_web.h"
+#include "charters_web.h"
 
 static int pack_find(PackNode *n, int count, const char *pack) {
     int i;

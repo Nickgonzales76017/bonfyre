@@ -1,6 +1,15 @@
 atlas surface
 
 architecture page-composition
+  source_path deploy/tailwind/styles/page-components.pcss
+  source_path deploy/tailwind/styles/reading-surface.pcss
+  invariant public agenda, feed, map, media and reading surface styles are compiled assets linked by the shared page renderer
+  witness cmd/BonfyreWebAddress/tests/page_events_test.sh checks the native agenda and served component stylesheet
+  source_path cmd/BonfyreWebAddress/src/native_experience_composition.h
+  source_path deploy/tailwind/styles/native-experience.pcss
+  source_path site/matrix/native-experience.css
+  invariant native experience layout rules are compiled from PostCSS and linked at the compositor head position
+  witness cmd/BonfyreWebAddress/tests/native_experience_composition_test.c checks the stylesheet link and the absence of inline style emission
   canonical_name PageComposition
   family surface
   domain Surface / Public Page
@@ -13,8 +22,10 @@ architecture page-composition
   consumes WorldFragment
   consumes HumanCommunityBody
   source_path cmd/BonfyreWebAddress/src/front_community.h
-  source_path cmd/BonfyreWebAddress/src/front_arrival.h
-  source_path cmd/BonfyreWebAddress/src/front_work.h
+  source_path cmd/BonfyreWebAddress/src/front_editorial.h
+  invariant an apex front (/, /discover, /today on aurekai.work/.life/.live/.shop) is one composer: edition strip, headline with beat chips, lead, then the dispatch grid (work) or watch/listen/reading/what's-on/pictured regions (others), the standard band, and the page ends; no generic regions, sections or continuation blocks are laid under it
+  invariant a source whose twin was read again after its publication_occurrence ledger was last written is read from the retained body, so a stale ledger cannot pin a front to weeks-old items
+  forbidden_inference an item on a front -> endorsement, ranking by importance, or that the front holds everything its sources published that day
   invariant public fronts lead to account-scoped applications without displaying an application sample catalogue or a presentation-system showcase
   witness cmd/BonfyreWebAddress/tests/work_entrance_test.mjs checks the account application entrance and absence of public demo cards and presentation showcases
   witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs verifies a public homepage opens the exact native conversation while personal hosts exclude the shared social entrance

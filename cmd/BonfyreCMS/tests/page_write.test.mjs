@@ -129,3 +129,32 @@ test('oversized retained aggregates refuse a snapshot instead of returning a par
   const before=f.snapshot(),result=f.raw(['entry','page-read','/guide','--ns','sample']);
   expect(result.code).toBe(1);expect(JSON.parse(result.stdout)).toEqual({error:'page snapshot unavailable'});expect(f.snapshot()).toEqual(before);
 }));
+test('reviewed journal release is one atomic, source-preserving page transition',()=>fixture(async f=>{
+ const route='/blog/atomically-released/',tags={authoring_v1:{version:1,parent:null,payload:{},responsive:{}}};
+ const page={route,title:'Original article',heading:'Original article',editorial_kind:'article',machine_view:'authored',
+  author_credit:'Avery',author_subject_ref:'person:avery',status:'draft'};
+ const fragments=[
+  {coordinate:'release-story',page:route,slot:'showcase',audience:'public',kind:'profile-story',position:0,
+   heading:'Opening',body:'Original source',source_ref:'editorial/posts/release.md',source_digest:'a'.repeat(64),
+   semantic_tags:tags,projection_contract:{html:true},status:'draft'},
+  {coordinate:'release-card',page:route,slot:'showcase',audience:'public',kind:'ui:card',position:1,
+   heading:'Visual detail',semantic_tags:tags,projection_contract:{html:true},status:'draft'}];
+ expect(f.write({operation:'create',route,expected_id:0,page,fragments}).code).toBe(0);
+ const before=f.read(route),state=f.snapshot(),effects=f.effects();
+ const publish=(hash=before.digest,actor='person:avery',ns='sample')=>f.raw([
+  'entry','page-release',route,hash,'--ns',ns,'--expected-id',String(before.id),'--actor',actor]);
+ for(const denied of [publish('0'.repeat(64)),publish(before.digest,'person:other'),publish(before.digest,'person:avery','different')]){
+  expect(denied.code).not.toBe(0);expect(JSON.parse(denied.stdout).committed).toBe(false);
+  expect(f.snapshot()).toEqual(state);expect(f.effects()).toEqual(effects);
+ }
+ const accepted=publish();expect(accepted.code).toBe(0);
+ const receipt=JSON.parse(accepted.stdout),after=f.read(route);
+ expect(receipt).toMatchObject({committed:true,id:before.id,released:2});
+ expect(after.digest).toBe(receipt.digest);
+ expect(after.snapshot.page.status).toBe('published');
+ expect(after.snapshot.fragments.map(x=>x.id)).toEqual(before.snapshot.fragments.map(x=>x.id));
+ expect(after.snapshot.fragments.map(x=>x.status)).toEqual(['published','published']);
+ expect(after.snapshot.fragments[0].source_ref).toBe(fragments[0].source_ref);
+ const current=f.snapshot();expect(publish().code).toBe(1);
+ expect(publish(after.digest).code).toBe(1);expect(f.snapshot()).toEqual(current);
+}));

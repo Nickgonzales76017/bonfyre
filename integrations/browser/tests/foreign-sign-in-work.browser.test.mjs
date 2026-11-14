@@ -1,6 +1,7 @@
 // Real Chromium rendering against local WebWork and companion protocol fixtures.
 // These checks do not open a provider or read an installed account or credential.
 import {test,expect,beforeAll,afterAll} from 'bun:test';
+import {deferred,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {encode,decode} from '../workspace-msgpack.mjs';
@@ -10,8 +11,6 @@ const job='b'.repeat(64),revision=7;
 const binding={actor:'user:19',subject:'institution:studio',scope:'institution'};
 const review={context:'institution:studio',jobId:job,revision,binding};
 let browser,server,fixture;
-const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
-const packet=value=>new Response(encode(value),{headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
 const capability=(f=fixture)=>({canContinue:f.mode!=='refused',canAdminister:f.mode!=='read-only',modes:['provider_tab_sidepanel'],reason:'Restore this run before continuing provider work.',provider:{id:'exa',name:'Exa'},credentialInput:f.mode==='read-only'?null:'native_api_key'});
 function responseBinding(f=fixture){return f.mode==='changed-binding'?{...binding,actor:'user:20'}:binding;}
 function state(f=fixture){return {binding:responseBinding(f),configured:f.mode!=='unconfigured',canAdminister:f.mode!=='read-only',providers:[{id:'exa',name:'Exa',declared:f.mode!=='undeclared',stored:f.stored,fields:[{name:f.mode==='wrong-field'?'other_key':'api_key',required:true,set:f.stored}]}]};}
@@ -29,9 +28,8 @@ window.mountFixture();
 </script></body></html>`;
 
 beforeAll(async()=>{
- const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test');
- browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{})});
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+ browser=await launchFixtureChromium({module:'@playwright/test',noSandbox:true});
+ server=loopbackServer({async fetch(request){
   const url=new URL(request.url);
   if(url.pathname==='/card')return new Response(document,{headers:{'Content-Type':'text/html'}});
   if(url.pathname==='/sources/_web'){

@@ -1,0 +1,66 @@
+atlas institutional
+
+architecture work-order-ledger
+  canonical_name WorkOrderLedger
+  family institutional
+  domain Institutional / Work between people
+  layer surface
+  semantic_question How do named people record a piece of work between them, each party's own decision on its terms and milestones, a dispute with a named arbiter, and vouches for one another in a role, without the estate holding, moving or promising money?
+  purpose Native C pages on the one shell at /work-orders, /work-orders/<id>, /disputes/<id> and /vouches on aurekai.work and aurekai.life, linked from /work-board and /roles. An opener states a work order, names parties by existing account email and stages milestones; each party records acceptance of the terms and approval or withholding of each milestone; a release reads "approved by N of M" as a count of those decisions. A party may raise a dispute naming a non-party arbiter, who alone writes the decision. Any member may vouch for another in a published role program and revoke it. Records are CMS rows written through the CMS owner.
+  maturity implemented
+  source_path cmd/BonfyreWebAddress/src/work_orders.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreCMS/content-types/work_order.json
+  source_path cmd/BonfyreCMS/content-types/work_order_party.json
+  source_path cmd/BonfyreCMS/content-types/work_order_milestone.json
+  source_path cmd/BonfyreCMS/content-types/work_order_signoff.json
+  source_path cmd/BonfyreCMS/content-types/work_dispute.json
+  source_path cmd/BonfyreCMS/content-types/dispute_statement.json
+  source_path cmd/BonfyreCMS/content-types/role_vouch.json
+  source_path schemas/control/content-type-facts.cue
+  source_path deploy/tailwind/styles/composition.pcss
+  source_path cmd/BonfyreWebAddress/tests/work_orders_test.sh
+  consumes ContentRecord
+  publishes SurfaceIR
+  invariant every write is one signed-in person's POST from this site's Origin about their own decision; an anonymous submit answers 401, a foreign origin 403, another host 404, and nothing is written before those checks pass
+  invariant a work order is opened for the opener's own account or for an organisation or household where psetup_context grants them write access now; a context they hold no current grant in is refused
+  invariant only the opener names parties and stages milestones, and only until any other party accepts the terms; after that the terms are fixed as accepted
+  invariant a party is named by an existing account only; no account is created, no invitation or message is sent
+  invariant each party holds one decision per stage (terms or a milestone); changing it replaces the row, so "approved by N of M" counts distinct current parties, never repeated clicks
+  invariant only named parties can read or write a work order; the dispute arbiter can read it; a stranger gets 404 on read and 403 on write
+  invariant the arbiter is named by the raising party, must be an existing account and must not be a party; only the arbiter writes the decision, once, with explicit confirmation, and the decision changes no sign-off
+  invariant a vouch names a published role_program and scope, cannot be self-directed, and only its voucher can revoke it; re-vouching restores the same record
+  invariant no step here holds, moves, pays or settles money, calls a payment rail or sends a message; the pages say so in plain words
+  cannot_infer a recorded escrow or milestone amount -> funds held, deposited or released
+  cannot_infer approved by N of M -> a payment instruction, settlement or delivery
+  cannot_infer stated compensation or a dividend term -> money owed, paid or collectable by this estate
+  cannot_infer an arbiter's decision -> enforcement, a court finding or a changed sign-off
+  cannot_infer a count of vouches -> an appointment, election, certification or grant
+  forbidden_inference a recorded escrow term -> funds held
+  forbidden_inference a milestone approved by all parties -> money moved
+  forbidden_inference being named on a work order -> agreeing to it
+  forbidden_inference a vouch -> authority to act in the role
+  witness cmd/BonfyreWebAddress/tests/work_orders_test.sh starts the tree binary on a temporary CMS and auth store, opens a work order, names a party, stages a milestone, records acceptance and approvals (replacing, not adding), raises and decides a dispute, vouches, revokes and re-vouches; it proves a stranger cannot read or write any of them, a party cannot be arbiter, a party cannot decide, and an unconfirmed decision or vouch is refused
+  known_gap the live store holds no published role_program rows, so the vouch form shows its empty state there until the role programs are loaded
+  known_gap the parties of a work order are named by email; there is no member search, and a named party is not told they were named
+  known_gap a work order cannot yet be closed or withdrawn from the page; state stays open
+
+interaction work-order-ledger-writes-through-cms
+  source work-order-ledger
+  destination content-write-surface
+  relation records
+  preserves the exact signed-in actor, the record's deterministic id, published status and the cannot_infer sentence on every row
+  drops any claim that a row is money, a payment, a contract beyond what each party accepted, or authority over another account
+  forbidden_inference a CMS row written here -> a payment or settlement
+  witness cmd/BonfyreWebAddress/tests/work_orders_test.sh
+  binding cmd/BonfyreWebAddress/src/work_orders.h
+
+interaction work-order-ledger-reads-role-programs
+  source work-order-ledger
+  destination role-program-compiler
+  relation references
+  preserves the published role_id a vouch or party names, checked against role_program at write time
+  drops role assignment state; a vouch never assumes, grants or ends anyone's posture
+  forbidden_inference a vouch for a role -> a role_assignment for the person vouched for
+  witness cmd/BonfyreWebAddress/tests/work_orders_test.sh
+  binding cmd/BonfyreWebAddress/src/work_orders.h

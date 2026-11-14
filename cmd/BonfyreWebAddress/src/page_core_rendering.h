@@ -299,6 +299,9 @@ static int page_image_url_safe(const char *url) {
     const char *p;
     if (!url || strncmp(url, "https://", 8) || strlen(url) >= 1024) return 0;
     for (p = url; *p; p++) if (*p == '"' || *p == '\'' || *p == '<' || *p == '>' || *p == '\\' || isspace((unsigned char)*p)) return 0;
+    /* A feed's tracking pixel is carried as an <img> too; it is never the
+     * story's picture, and drawn as one it leaves an empty frame. */
+    if (strstr(url, "/tracking/") || strstr(url, "-pixel") || strstr(url, "/pixel") || strstr(url, "1x1.")) return 0;
     return 1;
 }
 
@@ -941,6 +944,31 @@ static void page_collect_occurrences(sqlite3 *db, const char *source, PageMateri
     sqlite3_finalize(st);
 }
 
+/* Occurrence rows are a ledger written from a reading of the source.  When the
+ * twin has been read again since the ledger was last written, the retained
+ * body is the newer account of what the source published, and a front that
+ * keeps reading the ledger shows weeks-old news.  The receipt's own write time
+ * is the reading time; a day of slack keeps an ordinary ledger lag from
+ * flipping a source between the two readers. */
+static int page_occurrences_behind_twin(sqlite3 *db, const char *source) {
+    sqlite3_stmt *st = NULL; char twin[256] = ""; sqlite3_int64 newest = 0;
+    const char *root = getenv("BONFYRE_FOREIGN_ROOT"); char path[PATH_MAX]; struct stat sb;
+    if (!db || !source || !*source) return 0;
+    if (sqlite3_prepare_v2(db, "SELECT COALESCE((SELECT twin FROM internet_source WHERE source=?1 AND status='published' ORDER BY id DESC LIMIT 1),''),"
+          "COALESCE((SELECT CAST(strftime('%s',max(observed_at)) AS INTEGER) FROM publication_occurrence WHERE source_ref=?1 AND status='published'),0)",
+          -1, &st, NULL) != SQLITE_OK) return 0;
+    sqlite3_bind_text(st, 1, source, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(st) == SQLITE_ROW) {
+        if (sqlite3_column_text(st, 0)) snprintf(twin, sizeof(twin), "%s", (const char *)sqlite3_column_text(st, 0));
+        newest = sqlite3_column_int64(st, 1);
+    }
+    sqlite3_finalize(st);
+    if (!twin[0] || !foreign_safe_file(twin)) return 0;
+    if (!root || !*root) root = "/var/lib/bonfyre/foreign";
+    if (snprintf(path, sizeof(path), "%s/receipts/%s.json", root, twin) >= (int)sizeof(path) || stat(path, &sb)) return 0;
+    return (sqlite3_int64)sb.st_mtime > newest + 86400;
+}
+
 /* ---- iCalendar ------------------------------------------------------------
  *
  * A calendar line may be folded across several physical lines (a continuation
@@ -1465,7 +1493,7 @@ static void page_collect_stories(sqlite3 *db, const char *sources, PageMaterial 
         while (end > start && isspace((unsigned char)end[-1])) *--end = '\0';
         if (!*start) continue;
         memset(one, 0, sizeof(*one));
-        if (source_has_publication_occurrences(db, start)) page_collect_occurrences(db, start, one);
+        if (source_has_publication_occurrences(db, start) && !page_occurrences_behind_twin(db, start)) page_collect_occurrences(db, start, one);
         else page_collect_retained(db, start, one);
         if (page_material_count(one)) {
             page_merge_material(material, one);
@@ -1631,17 +1659,45 @@ static void page_emit_item_continuations(const PageItem *item) {
     page_url_escape(item->source); fputs("%2F",stdout); page_url_escape(item->key);
     fputs("\">Use in my apps</a></nav>",stdout);
 }
-static void page_emit_continuation_style(void) {
-    fputs("<style>.page-item-continuations{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 4px;font:600 12px/1.45 system-ui}"
-          ".page-item-continuations a{min-height:36px;display:inline-flex;align-items:center;color:var(--w-accent,#d0fc4f);text-underline-offset:3px}"
-          ".page-item-continuations a:focus-visible{outline:2px solid currentColor;outline-offset:3px}"
-          "@media(max-width:390px){.page-item-continuations{gap:4px 12px}.page-item-continuations a{min-height:44px}}</style>",stdout);
-}
+
 
 static void page_emit_picture(const char *url, const char *class_name) {
     if (!page_image_url_safe(url)) return;
     fputs("<img class=\"", stdout); html(class_name); fputs("\" src=\"", stdout); html(url);
     fputs("\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\">", stdout);
+}
+
+static int item_says(const char *hay, const char *needle) {
+    size_t n = strlen(needle);
+    for (; hay && *hay; hay++) if (!strncasecmp(hay, needle, n)) return 1;
+    return 0;
+}
+/* The price a listing states, copied from its own words ("$11.40",
+ * "from $4", "1.15 EUR"); nothing is computed, converted or guessed. */
+static int item_price_as_posted(const char *text, char *out, size_t cap) {
+    const unsigned char *p; size_t n = 0;
+    out[0] = '\0';
+    if (!text) return 0;
+    for (p = (const unsigned char *)text; *p; p++) {
+        int sym = *p == '$' ? 1 : (*p == 0xC2 && p[1] == 0xA3) ? 2 : (*p == 0xE2 && p[1] == 0x82 && p[2] == 0xAC) ? 3 : 0;
+        const unsigned char *d = p + sym, *e;
+        if (!sym || !isdigit(*d)) continue;
+        /* A threshold ("$10+ orders") or a reward ("$5 Walgreens Cash", "$20
+         * off") is not what the thing costs; the next figure is read instead. */
+        for (e = d; isdigit(*e) || *e == '.' || *e == ','; e++) {}
+        if (*e == '+') continue;
+        while (*e == ' ') e++;
+        if (!strncasecmp((const char *)e, "off", 3) || !strncasecmp((const char *)e, "cash", 4) ||
+            !strncasecmp((const char *)e, "walgreens", 9) || !strncasecmp((const char *)e, "gift", 4) ||
+            !strncasecmp((const char *)e, "credit", 6) || !strncasecmp((const char *)e, "reward", 6) ||
+            !strncasecmp((const char *)e, "back", 4) || !strncasecmp((const char *)e, "or more", 7)) continue;
+        while (n + 1 < cap && n < (size_t)sym) { out[n] = (char)p[n]; n++; }
+        while (n + 1 < cap && (isdigit(*d) || ((*d == '.' || *d == ',') && isdigit(d[1])))) out[n++] = (char)*d++;
+        if (n + 1 < cap && (*d == 'k' || *d == 'K' || *d == 'M') && !isalpha(d[1])) out[n++] = (char)*d;
+        out[n] = '\0';
+        return 1;
+    }
+    return 0;
 }
 
 static void page_emit_duration(long ms) {
@@ -1903,7 +1959,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
     case BF_PAGE_TOPOLOGY_AGENDA:
         /* An agenda is read forwards and grouped by the day something happens,
          * with the place under it: the rhythm of a printed listings page. */
-        fputs("<style>.agenda-tools{display:grid;grid-template-columns:auto minmax(190px,1fr) auto;align-items:end;gap:12px 18px;padding:21px 24px;margin:18px 0 18px;border:1px solid var(--w-rule,#444935);border-radius:17px;background:var(--w-panel,#171d19);color:var(--w-ink,#dee4dd);font:14px/1.45 system-ui}.agenda-tools .agenda-choices{display:flex;flex-wrap:wrap;gap:7px}.agenda-tools button{min-height:44px;padding:9px 16px;border:1px solid var(--w-rule,#444935);border-radius:999px;color:inherit;background:transparent;font:600 13px/1.2 system-ui;cursor:pointer}.agenda-tools button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511);border-color:var(--w-accent,#d0fc4f)}.agenda-tools label{display:grid;gap:6px;font:600 12px/1.2 system-ui;min-width:0}.agenda-tools input{width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--w-rule,#444935);background:var(--w-ground,#0f1511);color:var(--w-ink,#dee4dd);border-radius:8px}.agenda-tools output{font:12px/1.4 system-ui}.agenda-tools small{grid-column:1/-1;color:var(--w-muted,#c5c9af)}ol.agenda li[hidden]{display:none!important}.agenda-tools :is(button,input):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}@media(max-width:760px){.agenda-tools{grid-template-columns:1fr 1fr;padding:17px}.agenda-tools .agenda-choices{grid-column:1/-1}.agenda-tools label{grid-column:1/-1}}@media(max-width:530px){.agenda-tools{grid-template-columns:1fr}.agenda-tools output{grid-column:1/-1}}@media(prefers-reduced-motion:reduce){.agenda-tools *{transition:none!important}}</style><div class=\"agenda-tools\" data-agenda-controls role=\"group\" aria-label=\"Filter published upcoming events\"><div class=\"agenda-choices\"><button type=\"button\" data-agenda-filter=\"all\" aria-pressed=\"true\">All dates</button><button type=\"button\" data-agenda-filter=\"today\" aria-pressed=\"false\">Starts today</button><button type=\"button\" data-agenda-filter=\"seven\" aria-pressed=\"false\">Next 7 days</button><button type=\"button\" data-agenda-filter=\"weekend\" aria-pressed=\"false\">This weekend</button></div><label>Find event or venue<input type=\"search\" data-agenda-search maxlength=\"120\" placeholder=\"Find in this agenda\"></label><output data-agenda-count role=\"status\" aria-live=\"polite\"></output><small>Filters only the published events loaded in this agenda. Open an event for its source details.</small></div>",stdout);
+        fputs("<div class=\"agenda-tools\" data-agenda-controls role=\"group\" aria-label=\"Filter published upcoming events\"><div class=\"agenda-choices\"><button type=\"button\" data-agenda-filter=\"all\" aria-pressed=\"true\">All dates</button><button type=\"button\" data-agenda-filter=\"today\" aria-pressed=\"false\">Starts today</button><button type=\"button\" data-agenda-filter=\"seven\" aria-pressed=\"false\">Next 7 days</button><button type=\"button\" data-agenda-filter=\"weekend\" aria-pressed=\"false\">This weekend</button></div><label>Find event or venue<input type=\"search\" data-agenda-search maxlength=\"120\" placeholder=\"Find in this agenda\"></label><output data-agenda-count role=\"status\" aria-live=\"polite\"></output><small>Filters only the published events loaded in this agenda. Open an event for its source details.</small></div>",stdout);
         fputs("<ol class=\"agenda\">", stdout);
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
@@ -2005,7 +2061,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         fputs("</div>", stdout);
         break;
     case BF_PAGE_TOPOLOGY_GRID:
-        if (!ctx->preview) fputs("<style>.media-catalogue-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,300px);gap:12px 20px;align-items:center;margin:0 0 24px;padding:17px 0;border-bottom:1px solid var(--w-rule,#444935)}.media-catalogue-controls .media-modes{display:flex;flex-wrap:wrap;gap:8px}.media-catalogue-controls button{min-height:44px;padding:8px 13px;border:1px solid var(--w-rule,#444935);color:inherit;background:transparent;border-radius:999px;cursor:pointer}.media-catalogue-controls button[aria-pressed=true]{border-color:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511);background:var(--w-accent,#d0fc4f)}.media-catalogue-controls label{display:grid;gap:5px;font:600 12px/1.4 system-ui}.media-catalogue-controls input{min-height:44px;width:100%;min-width:0;padding:10px;border:1px solid var(--w-rule,#444935);color:inherit;background:transparent;border-radius:8px}.media-catalogue-controls output{grid-column:1/-1;font:12px/1.4 system-ui}.media-catalogue .page-media-card[hidden]{display:none!important}.media-catalogue[data-media-view=list] .video-grid{display:grid;grid-template-columns:minmax(0,1fr)!important}.media-catalogue[data-media-view=list] .page-media-card{display:grid;grid-template-columns:minmax(96px,170px) minmax(0,1fr);column-gap:22px;padding:16px 0;border-bottom:1px solid var(--w-rule,#444935);align-items:start}.media-catalogue[data-media-view=list] .page-media-card>a.video{grid-column:1}.media-catalogue[data-media-view=list] .page-media-card>.page-item-continuations{grid-column:2}.media-catalogue .media-catalogue-proof{display:flex;flex-wrap:wrap;gap:5px 12px;font:11px/1.5 system-ui;color:var(--w-muted,#c5c9af);overflow-wrap:anywhere}.media-catalogue .media-catalogue-proof .terms{max-width:100%}@media(max-width:740px){.media-catalogue-controls{grid-template-columns:1fr}.media-catalogue[data-media-view=list] .page-media-card{grid-template-columns:1fr}.media-catalogue[data-media-view=list] .page-media-card>*{grid-column:1!important}}</style><section class=\"media-catalogue\" data-media-catalogue data-media-view=\"grid\"><div class=\"media-catalogue-controls\"><div class=\"media-modes\" role=\"group\" aria-label=\"Source material type\"><button type=\"button\" data-media-kind=\"all\" aria-pressed=\"true\">All</button><button type=\"button\" data-media-kind=\"video\" aria-pressed=\"false\">Films &amp; video</button><button type=\"button\" data-media-kind=\"audio\" aria-pressed=\"false\">Audio</button><button type=\"button\" data-media-kind=\"photo\" aria-pressed=\"false\">Images</button><button type=\"button\" data-media-kind=\"other\" aria-pressed=\"false\">Writing &amp; other</button></div><label>Search these retained items<input type=\"search\" data-media-search maxlength=\"120\" placeholder=\"Title, publisher, source\"></label><div class=\"media-modes\" role=\"group\" aria-label=\"Catalogue presentation\"><button type=\"button\" data-media-layout=\"grid\" aria-pressed=\"true\">Gallery</button><button type=\"button\" data-media-layout=\"list\" aria-pressed=\"false\">List</button></div><output role=\"status\" aria-live=\"polite\" data-media-count></output></div>",stdout);
+        if (!ctx->preview) fputs("<section class=\"media-catalogue\" data-media-catalogue data-media-view=\"grid\"><div class=\"media-catalogue-controls\"><div class=\"media-modes\" role=\"group\" aria-label=\"Source material type\"><button type=\"button\" data-media-kind=\"all\" aria-pressed=\"true\">All</button><button type=\"button\" data-media-kind=\"video\" aria-pressed=\"false\">Films &amp; video</button><button type=\"button\" data-media-kind=\"audio\" aria-pressed=\"false\">Audio</button><button type=\"button\" data-media-kind=\"photo\" aria-pressed=\"false\">Images</button><button type=\"button\" data-media-kind=\"other\" aria-pressed=\"false\">Writing &amp; other</button></div><label>Search these retained items<input type=\"search\" data-media-search maxlength=\"120\" placeholder=\"Title, publisher, source\"></label><div class=\"media-modes\" role=\"group\" aria-label=\"Catalogue presentation\"><button type=\"button\" data-media-layout=\"grid\" aria-pressed=\"true\">Gallery</button><button type=\"button\" data-media-layout=\"list\" aria-pressed=\"false\">List</button></div><output role=\"status\" aria-live=\"polite\" data-media-count></output></div>",stdout);
         fputs("<div class=\"video-grid\">", stdout);
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
@@ -2042,7 +2098,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         /* One stream that changes shape with what arrives: a picture takes
          * its own height, a video shows it will play, a story is set as type.
          * Nothing is boxed; the column rhythm does the separating. */
-        fputs("<style>.feed-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,260px);gap:12px;padding:18px 0;margin:0 0 20px;border-bottom:1px solid var(--w-rule,#444935);align-items:center}.feed-modes{display:flex;gap:8px;flex-wrap:wrap}.feed-modes button{min-height:44px;border:1px solid var(--w-rule,#444935);border-radius:999px;padding:10px 13px;background:transparent;color:inherit;cursor:pointer}.feed-modes button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511)}.feed-tools label{display:grid;gap:5px;font:600 12px/1.4 system-ui}.feed-tools input{min-width:0;width:100%;min-height:44px;padding:9px;border:1px solid var(--w-rule,#444935);border-radius:8px;background:var(--w-ground,#0f1511);color:inherit}.feed-tools output{grid-column:1/-1;font:12px/1.5 system-ui;color:var(--w-muted,#c5c9af)}.feed article[hidden]{display:none!important}@media(max-width:720px){.feed-tools{grid-template-columns:1fr}}</style><section class=\"feed-tools\" data-feed-tools aria-label=\"Filter retained feed\"><div class=\"feed-modes\" role=\"group\" aria-label=\"Post format\"><button type=\"button\" data-feed-mode=\"all\" aria-pressed=\"true\">All material</button><button type=\"button\" data-feed-mode=\"is-story\" aria-pressed=\"false\">Stories</button><button type=\"button\" data-feed-mode=\"is-picture\" aria-pressed=\"false\">Images</button><button type=\"button\" data-feed-mode=\"is-video\" aria-pressed=\"false\">Video</button></div><label>Find in loaded feed<input type=\"search\" data-feed-search maxlength=\"120\" placeholder=\"Title, source or text\"></label><output data-feed-count role=\"status\" aria-live=\"polite\"></output></section>", stdout);
+        fputs("<section class=\"feed-tools\" data-feed-tools aria-label=\"Filter retained feed\"><div class=\"feed-modes\" role=\"group\" aria-label=\"Post format\"><button type=\"button\" data-feed-mode=\"all\" aria-pressed=\"true\">All material</button><button type=\"button\" data-feed-mode=\"is-story\" aria-pressed=\"false\">Stories</button><button type=\"button\" data-feed-mode=\"is-picture\" aria-pressed=\"false\">Images</button><button type=\"button\" data-feed-mode=\"is-video\" aria-pressed=\"false\">Video</button></div><label>Find in loaded feed<input type=\"search\" data-feed-search maxlength=\"120\" placeholder=\"Title, source or text\"></label><output data-feed-count role=\"status\" aria-live=\"polite\"></output></section>",stdout);
         fputs("<div class=\"feed\">", stdout);
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
@@ -2078,6 +2134,43 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         fputs("</ol>", stdout);
         break;
     case BF_PAGE_TOPOLOGY_TABLE:
+        if (ctx && ctx->experience_pattern && !strcmp(ctx->experience_pattern, "market")) {
+            /* A market reads as a trade index: numbered lots, the listing and
+             * where it is from, the price in the listing's own words, when it
+             * was listed, and one way to open it. */
+            int priced_any = 0; char probe[48];
+            for (k = 0; k < take && !priced_any; k++) priced_any = item_price_as_posted(stream->item[stream->cursor + k].title, probe, sizeof(probe));
+            /* A ledger of news or recalls states no prices: the column is left
+             * out rather than filled with "not stated". */
+            fputs(priced_any ? "<div class=\"ledger-wrap\"><table class=\"ledger trade-index\">" : "<div class=\"ledger-wrap\"><table class=\"ledger trade-index no-price\">", stdout);
+            fputs("<thead><tr><th scope=\"col\">Lot</th><th scope=\"col\">Listing &amp; source</th>", stdout);
+            if (priced_any) fputs("<th scope=\"col\">Price as posted</th>", stdout);
+            fputs("<th scope=\"col\">Listed</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
+            for (k = 0; k < take; k++) {
+                const PageItem *item = &stream->item[stream->cursor + k];
+                char when[48], price[48], title[768]; char *cut;
+                snprintf(title, sizeof(title), "%s", item->title);
+                if ((cut = strstr(title, "\\\\\\")) != NULL) snprintf(cut, sizeof(title) - (size_t)(cut - title), "%s", "\xE2\x80\xA6");
+                page_when(item->at, now, when, sizeof(when));
+                printf("<tr><td class=\"lot\">%02d</td><td class=\"name\">", k + 1);
+                close = page_emit_item_open(item, NULL); html(title); fputs(close, stdout);
+                fputs("<span class=\"dek\">", stdout);
+                if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); fputs("</a>", stdout); }
+                if (item->by[0] && strcmp(item->by, item->note)) { fputs(" &middot; ", stdout); html(item->by); }
+                fputs("</span></td>", stdout);
+                if (priced_any) {
+                    fputs("<td class=\"price\">", stdout);
+                    if (item_price_as_posted(item->title, price, sizeof(price))) html(price); else fputs("<span class=\"none\">Not stated</span>", stdout);
+                    fputs("</td>", stdout);
+                }
+                fputs("<td class=\"when\">", stdout); html(when);
+                fputs("</td><td class=\"go\">", stdout); close = page_emit_item_open(item, "lot-open");
+                fputs("<span class=\"sr\">Open ", stdout); html(title); fputs("</span>", stdout); page_glyph("next"); fputs(close, stdout);
+                fputs("</td></tr>", stdout);
+            }
+            fputs("</tbody></table></div>", stdout);
+            break;
+        }
         /* A ledger: one line per thing, columns that line up, the way issue
          * trackers and registries let a person scan hundreds at once. */
         fputs("<div class=\"ledger-wrap\"><table class=\"ledger\"><thead><tr><th>Name</th><th>By</th><th>Where</th><th>When</th></tr></thead><tbody>", stdout);
@@ -2137,7 +2230,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         /* An equirectangular plate beside a numbered list: every point where
          * its source placed it, and every point one tap from its own page. */
         fputs("<figure class=\"map with-list\">", stdout);
-        if (!ctx->preview) fputs("<style>.map-inspector{margin:20px 0 0;padding:22px;border:1px solid #60765e;border-radius:16px;background:var(--w-panel,#171d19);color:inherit}.map-inspector[hidden]{display:none!important}.map-inspector h3{font:600 24px/1.2 system-ui;margin:0 0 12px}.map-inspector [data-map-inspector-body]{display:grid;gap:8px;overflow-wrap:anywhere}.map-inspector [data-map-inspector-body] a{display:inline-flex;align-items:center;min-height:44px;color:var(--w-accent,#d0fc4f);text-decoration:underline;text-underline-offset:3px}.map-inspector p{font:12px/1.5 system-ui}.map-inspector button{min-height:44px;border:1px solid #60765e;border-radius:9px;padding:10px 14px;background:transparent;color:inherit;cursor:pointer}@media(max-width:620px){.map-inspector{padding:16px}}.map-tools{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0 18px}.map-tools label{display:grid;gap:5px;flex:1 1 190px;max-width:460px;font:600 12px/1.5 system-ui}.map-tools input{width:100%;min-height:44px;padding:10px;border:1px solid #6e806c;border-radius:8px;background:transparent;color:inherit}.map-tools output{font:12px/1.5 system-ui}.places-list [data-locate-point]{min-height:42px;margin-right:10px;border:1px solid #6e806c;border-radius:8px;background:transparent;color:inherit;cursor:pointer}.places-list [data-locate-point][aria-pressed=true]{background:#d0fc4f;color:#0f1511}.places-list li[hidden]{display:none!important}.map .point[data-selected=true] :is(circle){stroke:#d0fc4f;stroke-width:3;fill:#f0af46}.map circle.point[data-selected=true]{stroke:#d0fc4f;stroke-width:2;fill:#f0af46}@media(max-width:620px){.map-tools{display:grid}}</style><div class=\"map-tools\" data-map-tools><label>Find a mapped place<input type=\"search\" data-map-search maxlength=\"120\" placeholder=\"Title or source\"></label><output role=\"status\" aria-live=\"polite\" data-map-count></output></div>",stdout);
+        if (!ctx->preview) fputs("<div class=\"map-tools\" data-map-tools><label>Find a mapped place<input type=\"search\" data-map-search maxlength=\"120\" placeholder=\"Title or source\"></label><output role=\"status\" aria-live=\"polite\" data-map-count></output></div>",stdout);
         page_emit_map_plate(stream, take, 1);
         if (!ctx->preview) {
             fputs("<ol class=\"places-list\">", stdout);
@@ -2699,6 +2792,17 @@ static int page_emit_regions(PageMaterial *material, const unsigned char *sequen
     int shown = 0, experience_open = 0;
     const BfNativeExperienceProgram *experience =
         ctx && !ctx->preview ? bf_native_experience_find(ctx->experience_pattern) : NULL;
+    unsigned char ordered[BF_PAGE_REGION_COUNT > 64 ? BF_PAGE_REGION_COUNT : 64];
+    if (sequence && experience && !strcmp(experience->shell, "market") && sequence_count <= sizeof(ordered)) {
+        /* A market's shell leads with its index of lots; every other region
+         * keeps its compiled order after it. */
+        size_t o = 0, j;
+        for (j = 0; j < sequence_count; j++)
+            if (sequence[j] < BF_PAGE_REGION_COUNT && bf_page_regions[sequence[j]].topology == BF_PAGE_TOPOLOGY_TABLE) ordered[o++] = sequence[j];
+        for (j = 0; j < sequence_count; j++)
+            if (!(sequence[j] < BF_PAGE_REGION_COUNT && bf_page_regions[sequence[j]].topology == BF_PAGE_TOPOLOGY_TABLE)) ordered[o++] = sequence[j];
+        sequence = ordered;
+    }
     for (i = 0; i < count; i++) {
         size_t index = sequence ? sequence[i] : i;
         const BfPageRegion *region;
@@ -3882,7 +3986,7 @@ static void page_emit_nav(const PageDocument *doc) {
     }
     /* The two places a visitor arriving from an offer is looking for. */
     fputs(BF_ESTATE_BAR_OUT "</nav>", stdout);
-    fputs(BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH "</header>" BF_HOME_CONTINUATION, stdout);
+    fputs(BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH "</header>", stdout);
 }
 
 static int page_open_template(const char *path, char **template, char **head_end) {
@@ -4170,6 +4274,50 @@ static int page_front_route_taken(const char *route) {
 }
 #include "front_editorial.h"
 
+/* Public search identity is a projection of the same composed page. */
+static const char *page_search_apex_title(const char *host, const char *route) {
+    if (!host || !route || strcmp(route, "/")) return NULL;
+    if (!strcmp(host, "aurekai.work")) return "Aurekai Work | Business Software, Applications and Services";
+    if (!strcmp(host, "aurekai.live")) return "Aurekai Live | Creators, Video, Audio and Events";
+    if (!strcmp(host, "aurekai.shop")) return "Aurekai Shop | Products, Offers and Commerce";
+    if (!strcmp(host, "aurekai.life")) return "Aurekai Life | Stories, People and Communities";
+    return NULL;
+}
+static void page_emit_search_identity(const PageDocument *doc) {
+    char host[256];
+    const char *title, *route;
+    if (doc->actor && *doc->actor) {
+        fputs("<meta name=\"robots\" content=\"noindex,nofollow\">", stdout);
+        return;
+    }
+    if (!page_render_host || !lower_host(page_render_host, host) ||
+        !strcmp(territory_of(host), "independent")) return;
+    route = doc->route;
+    if (!route || route[0] != '/' || strlen(route) > 1024 ||
+        strspn(route, "/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~%") != strlen(route))
+        return;
+    title = page_search_apex_title(host, route);
+    fputs("<link rel=\"canonical\" href=\"https://", stdout);
+    html(host); html(route);
+    fputs("\"><meta property=\"og:type\" content=\"website\"><meta property=\"og:site_name\" content=\"Aurekai\">", stdout);
+    fputs("<meta property=\"og:url\" content=\"https://", stdout);
+    html(host); html(route);
+    fputs("\"><meta property=\"og:title\" content=\"", stdout);
+    html(title ? title : doc->title);
+    fputs("\"><meta property=\"og:description\" content=\"", stdout);
+    html(doc->lede ? doc->lede : "");
+    fputs("\"><meta name=\"twitter:card\" content=\"summary\">", stdout);
+    if (title) {
+        const char *name = !strcmp(host, "aurekai.work") ? "Aurekai Work" :
+                           !strcmp(host, "aurekai.live") ? "Aurekai Live" :
+                           !strcmp(host, "aurekai.shop") ? "Aurekai Shop" : "Aurekai Life";
+        printf("<script type=\"application/ld+json\">"
+               "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\","
+               "\"name\":\"%s\",\"url\":\"https://%s/\","
+               "\"publisher\":{\"@type\":\"Organization\",\"name\":\"Aurekai\","
+               "\"url\":\"https://aurekai.work/\"}}</script>", name, host);
+    }
+}
 static int page_emit_document(sqlite3 *db, const char *path, const PageDocument *doc,
                               PageProjectionRead *projection) {
     char *template = NULL, *head_end; PageMaterial *material = NULL; int shown;
@@ -4213,7 +4361,11 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            "Vary: Host, Accept, Cookie\r\nX-Bonfyre-World-Projection: native\r\nConnection: close\r\n\r\n",
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
+    /* The document title is the composed page's own (an apex front is named
+     * for its hour); the territory's search identity travels in og:title and
+     * the WebSite JSON-LD emitted just below. */
     page_emit_head(template, head_end, doc->title, doc->lede);
+    page_emit_search_identity(doc);
     bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
@@ -4226,30 +4378,13 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         fputs("<link rel=\"describedby\" type=\"application/json\" href=\"/w/",stdout); html(doc->world); fputs("/manifest.json\">",stdout);
     }
     if (doc->cannot && *doc->cannot) { fputs("<meta name=\"bonfyre:cannot-infer\" content=\"",stdout); html(doc->cannot); fputs("\">",stdout); }
-    if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/watch") || !strcmp(doc->route, "/board")))
-        fputs("<style id=\"reading-surface-components\">"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero{margin:clamp(18px,3vw,34px) 0 0;padding:clamp(26px,4vw,52px);border:1px solid var(--w-rule);border-radius:24px;background:color-mix(in srgb,var(--w-accent) 10%,var(--w-ground))}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero h1{display:flex;align-items:center;gap:clamp(12px,2vw,24px);font-size:clamp(3rem,7vw,6.5rem);animation:none}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .reading-mark{display:grid;place-items:center;flex:none;width:clamp(48px,5vw,70px);height:clamp(48px,5vw,70px);border-radius:18px;background:var(--w-accent);color:var(--w-ground)}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .reading-mark .ak-icon{width:48%;height:48%}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero .lede{margin-top:18px;max-width:54ch;font-size:clamp(1.05rem,1.5vw,1.35rem);line-height:1.45}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.region{padding-block:clamp(32px,5vw,64px)}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video-grid{gap:16px}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video{padding:12px;border:1px solid var(--w-rule);border-radius:18px;background:var(--w-panel);text-decoration:none}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video .frame{background:linear-gradient(135deg,var(--w-panel),color-mix(in srgb,var(--w-accent) 28%,var(--w-ground)))}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video .play{width:44px;height:44px;background:var(--w-accent);color:var(--w-ground)}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video .play .ak-icon{width:20px;height:20px}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .video .by{margin:8px 0 4px}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .tile{border:1px solid var(--w-rule);border-radius:16px;overflow:hidden;background:var(--w-panel)}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .tile>a{padding:14px;text-decoration:none}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .tile .frame{margin:-14px -14px 14px}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .pin{border:1px solid var(--w-rule);background:var(--w-panel)}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) .pin .cap{position:static;opacity:1;background:none;color:var(--w-ink);padding:12px}"
-          "body[data-character]:is(.route-discover,.route-watch,.route-board) :is(.video,.pin,.tile a):focus-visible{outline:3px solid var(--w-accent);outline-offset:3px}"
-          "@media(max-width:700px){body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero{border-radius:18px;padding:24px 20px}body[data-character]:is(.route-discover,.route-watch,.route-board) .wrap>.hero h1{font-size:clamp(2.6rem,11vw,4rem)}body[data-character]:is(.route-discover,.route-watch,.route-board) .reading-mark{width:44px;height:44px;border-radius:13px}}"
-          "</style>",stdout);
+    if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/board") ||
+                       (!strcmp(doc->route, "/watch") && ms_mode(page_render_host, doc->route) == MS_NONE)))
+        fputs("<link rel=\"stylesheet\" href=\"/assets/reading-surface.css\">",stdout);
+    fputs("<link rel=\"stylesheet\" href=\"/assets/page-components.css\">",stdout);
+    if(front_community_route(page_render_host,doc->route))front_community_styles();
     fputs("</head>",stdout);
-    fputs("<body class=\"", stdout); html(doc->character);
+    fputs("<body class=\"ak-app ", stdout); html(doc->character);
     if (doc->route) { fputs(" route-", stdout); html(doc->route[1] ? doc->route + 1 : "front"); }
     if (doc->requested_grammar && *doc->requested_grammar) { fputs(" world-grammar-", stdout); html(doc->requested_grammar); }
     fputs("\" data-character=\"", stdout); html(doc->character);
@@ -4260,6 +4395,22 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     fputs("><main class=\"wrap\" data-bonfyre-region=\"page-main\" data-bonfyre-continuity=\"page-main\">", stdout);
     page_emit_nav(doc);
     if (doc->world) { fputs("<nav class=\"tabs\" aria-label=\"Ways in\">", stdout); page_emit_world_tabs(db, doc); fputs("</nav>", stdout); }
+    /* Listen, Watch, Film, Music, Stage, Sports and Art are one screen each
+     * (page_media_spaces.h), not the generic region sequence below. */
+    if (!doc->world && doc->program &&
+        page_media_screen(db, page_render_host, doc->route, doc->raw_query, doc->title, doc->lede,
+                          doc->from, doc->q, material, ctx.now)) {
+        fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+        free(template); if (material != doc->prefilled) free(material);
+        return 1;
+    }
+    /* An apex front draws its own opening, its regions and its end; nothing
+     * from the generic page is laid under it. */
+    if (!narrowed && front_is_apex(doc, NULL)) {
+        page_front_took_count = 0; page_front_used_count = 0;
+        page_front_shown = page_front_editorial(db, projection, doc, material, &ctx);
+        if (page_front_shown) goto close_page;
+    }
     fputs("<header class=\"hero\"><h1>", stdout);
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/watch") || !strcmp(doc->route, "/board"))) {
         fputs("<span class=\"reading-mark\" aria-hidden=\"true\">", stdout); page_glyph(page_nav_glyph(doc->route)); fputs("</span>", stdout);
@@ -4282,13 +4433,40 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         if (doc->from && *doc->from) { fputs(doc->q && *doc->q ? " from <b>" : "items from <b>", stdout); html(doc->from); fputs("</b>", stdout); }
         fputs(" &middot; <a href=\"", stdout); html(doc->route ? doc->route : "/"); fputs("\">Show all</a></p>", stdout);
     }
+    if (ctx.experience_pattern && !strcmp(ctx.experience_pattern, "market") && material) {
+        /* The index's ledger of itself, counted from what the page holds:
+         * listings, the sources they come from, how many state a price, and
+         * when the newest was listed.  Then one way in per source. */
+        const PageStream *mix = &material->stream[BF_PAGE_MATERIAL_MIX];
+        char hosts[12][128]; int host_count = 0, priced = 0, k, h; time_t newest = 0; char when[48] = "", price[48];
+        for (k = 0; k < mix->count; k++) {
+            const PageItem *it = &mix->item[k];
+            if (it->at > newest) newest = it->at;
+            if (item_price_as_posted(it->title, price, sizeof(price))) priced++;
+            if (!it->note[0]) continue;
+            for (h = 0; h < host_count && strcmp(hosts[h], it->note); h++) {}
+            if (h == host_count && host_count < 12) snprintf(hosts[host_count++], sizeof(hosts[0]), "%s", it->note);
+        }
+        if (newest) page_when(newest, ctx.now ? ctx.now : time(NULL), when, sizeof(when));
+        printf("<dl class=\"market-ledger\"><div><dt>Listed here</dt><dd>%d</dd></div><div><dt>Sources</dt><dd>%d</dd></div>"
+               "<div><dt>State a price</dt><dd>%d</dd></div><div><dt>Newest</dt><dd>", mix->count, host_count, priced);
+        html(when[0] ? when : "Nothing yet"); fputs("</dd></div></dl>", stdout);
+        if (host_count > 1 || (doc->from && *doc->from)) {
+            fputs("<nav class=\"market-from\" aria-label=\"Listings by source\"><a href=\"", stdout); html(doc->route ? doc->route : "/");
+            fputs((doc->from && *doc->from) ? "\">All sources</a>" : "\" aria-current=\"page\">All sources</a>", stdout);
+            for (h = 0; h < host_count; h++) {
+                int on = doc->from && !strcmp(doc->from, hosts[h]);
+                fputs("<a href=\"", stdout); html(doc->route ? doc->route : "/"); fputs("?from=", stdout); page_url_escape(hosts[h]);
+                fputs(on ? "\" aria-current=\"page\">" : "\">", stdout); html(hosts[h]); fputs("</a>", stdout);
+            }
+            fputs("</nav>", stdout);
+        }
+    }
     fputs("</header>", stdout);
-    page_emit_continuation_style();
     if(!narrowed)page_emit_media_spaces(db,doc->route,doc->raw_query,page_render_host);
     /* A territory's front is edited before it is composed: its own program
      * leads, and the declared regions and sections follow. */
     page_front_took_count = 0; page_front_used_count = 0; page_front_shown = 0;
-    if (!narrowed) page_front_shown = page_front_editorial(db, projection, doc, material, &ctx);
     page_front_drop_used(material);
     if (doc->route && !strcmp(doc->route, "/search") && (!doc->q || !*doc->q)) {
         size_t i;
@@ -4336,8 +4514,8 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                         BfDetailFocus focus = {BF_DETAIL_PERSON, who, source, 0};
                         shown += bf_detail_continue(stdout, &focus);
                     }
-                        shown += bf_people_index_ordered(stdout, archive, doc->route, find, offset, 60, !strcmp(sort, "recent"));
-                        shown += bf_people_index(stdout, archive, doc->route, find, offset, 60);
+                    /* A named maker is its own page; the directory is the page only without one. */
+                    if (!who[0]) shown += bf_people_index_ordered(stdout, archive, doc->route, find, offset, 60, !strcmp(sort, "recent"));
                 } else if (frontier && *frontier) {
                     shown += bf_organisations_index(stdout, frontier, doc->route, find, offset, 60);
                 }
@@ -4473,8 +4651,10 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         fputs(" right now.</p>", stdout);
     }
 
+close_page:
+    if (front_community_route(page_render_host,doc->route)) front_community_emit(db);
     page_emit_surface_scene(doc, &surface_scene);
-    fputs("</main></body></html>", stdout);
+    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
     free(template); if (material != doc->prefilled) free(material);
     return 1;
 }

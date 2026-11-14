@@ -1639,10 +1639,12 @@ static int serve_subject(const char *method, const char *target, const char *que
         if (st) { sqlite3_finalize(st); st = NULL; }
 
         fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-          "<section class=\"price-lead\"><p class=\"price-eyebrow\">Published prices &middot; attributed to their sources</p>"
-          "<h2>Find out what things cost</h2>"
-          "<p>Explore what publishers recorded for products, services and medicines. Search for a name or browse a category. These are dated observations, not live checkout quotes.</p></section>"
-          "<h3 class=\"room-h\">Browse prices by category</h3>");
+          "<section class=\"price-lead\"><p>Prices publishers recorded for products, services and medicines, each one dated and attributed. "
+          "These are observations, not live checkout quotes.</p>"
+          "<a class=\"price-add\" href=\"https://prices.openfoodfacts.org/\" rel=\"noopener\">Add a price you paid at Open Prices</a></section>"
+          "<dl class=\"price-strip\"><div><dt>Observed prices</dt><dd>%ld</dd></div><div><dt>Publishers</dt><dd>%ld</dd></div>"
+          "<div><dt>Currencies</dt><dd>%ld</dd></div><div><dt>Price lists</dt><dd>%ld</dd></div></dl>",
+          total, publishers, currencies, sources);
 
         if (sqlite3_prepare_v2(db,
               "SELECT kind, COUNT(*), COUNT(DISTINCT publisher) FROM observed_price"
@@ -1911,27 +1913,11 @@ static int serve_subject(const char *method, const char *target, const char *que
                     fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "</nav>");
                 }
             }
-            fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-              "<style>.price-lead{padding:clamp(20px,3.5vw,44px);margin:8px 0 26px;border:1px solid color-mix(in srgb,currentColor 18%%,transparent);border-radius:22px;background:linear-gradient(135deg,color-mix(in srgb,currentColor 10%%,transparent),color-mix(in srgb,currentColor 2%%,transparent))}"
-              ".price-lead h2{margin:10px 0;font-size:clamp(1.7rem,4vw,3.2rem);letter-spacing:-.045em;line-height:1.08;max-width:20ch}.price-lead p{max-width:65ch;line-height:1.6}.price-eyebrow{margin:0;font-size:.72rem;letter-spacing:.11em;text-transform:uppercase;opacity:.72}"
-              ".price-method{margin:28px 0 10px;padding:15px 20px;border:1px solid color-mix(in srgb,currentColor 18%%,transparent);border-radius:14px}.price-method summary{cursor:pointer;font-weight:600}.price-method .flow-facts{margin-top:18px}.price-method p{opacity:.78;max-width:74ch}"
-              ".price-kinds{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 22px}.price-kinds a{border:1px solid currentColor;border-radius:999px;padding:7px 12px;text-decoration:none}"
-              ".price-kinds a[aria-current]{border-width:2px;font-weight:700;text-decoration:underline;text-underline-offset:4px}.price-kinds small{opacity:.7}"
-              ".price-find{display:flex;gap:8px;margin:6px 0 18px;border-bottom:2px solid currentColor}.price-find input{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;padding:10px 2px}"
-              ".price-find button{font:inherit;background:none;color:inherit;border:0;cursor:pointer;font-weight:600}.price-pages{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.price-pages a{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid currentColor;border-radius:999px;text-decoration:none;font-weight:600}.price-pages a:hover{background:color-mix(in srgb,currentColor 12%%,transparent)}"
-              ".price-table{width:100%%;border-collapse:collapse;font-size:.92rem}.price-table th,.price-table td{text-align:left;padding:9px 10px 9px 0;border-bottom:1px solid color-mix(in srgb,currentColor 18%%,transparent);vertical-align:top}"
-              ".price-table thead th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7}.price-table tbody th{font-weight:500;overflow-wrap:anywhere}.price-table small{opacity:.65}.price-table time{white-space:nowrap;opacity:.7}"
-              ".price-recent{margin-top:30px;padding-top:16px;border-top:1px solid color-mix(in srgb,currentColor 20%%,transparent)}.price-recent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.price-recent-item{padding:16px;border:1px solid color-mix(in srgb,currentColor 24%%,transparent);border-radius:14px;overflow-wrap:anywhere}.price-recent-item h4{font-size:1rem;margin:8px 0}.price-recent-item p{margin:8px 0;font-size:.85rem}.price-recent-kind{font-size:.72rem!important;letter-spacing:.07em;text-transform:uppercase;opacity:.7}.price-recent-item a{overflow-wrap:anywhere}@media(max-width:760px){.price-recent-grid{grid-template-columns:1fr}}"
-              ".price-find{border:1px solid color-mix(in srgb,currentColor 25%%,transparent);border-radius:14px;padding:4px 8px 4px 14px}.price-find button{border-radius:10px;padding:8px 14px;background:color-mix(in srgb,currentColor 12%%,transparent)}.price-kinds a{min-height:44px;display:inline-flex;align-items:center;gap:8px}.price-table tbody tr:hover{background:color-mix(in srgb,currentColor 5%%,transparent)}@media(max-width:640px){.price-table{display:block;overflow-x:auto;overscroll-behavior-inline:contain}.price-table th,.price-table td{min-width:100px}.price-table th:first-child{min-width:210px}.price-find{flex-wrap:wrap}.price-find input{min-width:170px}}</style>");
+            /* The room's layout lives in its served sheet (site/matrix/matrix.css). */
         }
         fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-          "<details class=\"price-method\"><summary>About these observations</summary><dl class=\"flow-facts\">"
-          "<div><dt>Price observations</dt><dd>%ld</dd></div>"
-          "<div><dt>Publishers</dt><dd>%ld</dd></div>"
-          "<div><dt>Currencies</dt><dd>%ld</dd></div>"
-          "<div><dt>Price lists</dt><dd>%ld</dd></div></dl>"
-          "<p>These counts describe retained source observations, not current inventory, quotes or verified savings.</p></details>",
-          total, publishers, currencies, sources);
+          "<details class=\"price-method\"><summary>About these observations</summary>"
+          "<p>The counts at the top describe retained source observations, not current inventory, quotes or verified savings.</p></details>");
         sqlite3_close(db);
 
         /* A distribution, drawn by the chart organ from numbers the room has

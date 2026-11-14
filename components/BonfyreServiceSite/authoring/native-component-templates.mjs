@@ -58,6 +58,21 @@ export const NATIVE_AUTHORING_TEMPLATES=Object.freeze([
     "end": "</section>"
   },
   {
+    "kind": "ui:action",
+    "start": "<form class=\"ak-pattern ak-action\" data-ak-id=\"{{id}}\" method=\"{{payload.method}}\" action=\"{{payload.action}}\">{{#payload.fields}}<input type=\"hidden\" name=\"{{name}}\" value=\"{{value}}\">{{/payload.fields}}",
+    "end": "<button type=\"submit\">{{payload.label}}</button></form>"
+  },
+  {
+    "kind": "ui:choice",
+    "start": "<div class=\"ak-pattern ak-choice\" data-ak-id=\"{{id}}\" role=\"radiogroup\" aria-label=\"{{payload.label}}\">{{#payload.options}}<label class=\"ak-pill\"><input type=\"radio\" name=\"{{name}}\" value=\"{{value}}\"{{#checked}} checked{{/checked}}><span>{{label}}</span></label>{{/payload.options}}",
+    "end": "</div>"
+  },
+  {
+    "kind": "ui:field",
+    "start": "<label class=\"ak-pattern ak-field\" data-ak-id=\"{{id}}\">{{payload.label}}{{#payload.multiline}}<textarea name=\"{{payload.name}}\" rows=\"{{payload.rows}}\" maxlength=\"{{payload.maxlength}}\"{{#payload.disabled}} disabled{{/payload.disabled}}>{{payload.value}}</textarea>{{/payload.multiline}}{{^payload.multiline}}<input type=\"{{payload.type}}\" name=\"{{payload.name}}\" value=\"{{payload.value}}\" placeholder=\"{{payload.placeholder}}\" aria-label=\"{{payload.label}}\"{{#payload.maxlength}} maxlength=\"{{payload.maxlength}}\"{{/payload.maxlength}}{{#payload.inputmode}} inputmode=\"{{payload.inputmode}}\"{{/payload.inputmode}}{{#payload.required}} required{{/payload.required}}{{#payload.disabled}} disabled{{/payload.disabled}}>{{/payload.multiline}}",
+    "end": "</label>"
+  },
+  {
     "kind": "ui:breadcrumb",
     "start": "<nav class=\"ak-pattern ak-breadcrumb\" data-ak-id=\"{{id}}\" aria-label=\"Breadcrumb\"><ul class=\"ak-breadcrumbs\">{{#payload.items}}<li>{{#href}}<a href=\"{{href}}\">{{label}}</a>{{/href}}{{^href}}<span>{{label}}</span>{{/href}}</li>{{/payload.items}}</ul>",
     "end": "</nav>"
@@ -199,7 +214,7 @@ export const NATIVE_AUTHORING_TEMPLATES=Object.freeze([
   },
   {
     "kind": "profile-story",
-    "start": "<section class=\"authored-profile-story\" data-ak-id=\"{{id}}\"><h2>{{heading}}</h2>{{#body}}<p>{{body}}</p>{{/body}}",
+    "start": "<section class=\"authored-profile-story\" id=\"{{id}}\" data-ak-id=\"{{id}}\">{{#heading}}<h2>{{heading}}</h2>{{/heading}}",
     "end": "</section>"
   },
   {

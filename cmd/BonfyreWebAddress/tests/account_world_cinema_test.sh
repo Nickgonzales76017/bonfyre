@@ -74,14 +74,20 @@ catalogue /whats-on
 if grep -q 'data-media-space-catalogue' "$tmp/catalogue.html"; then fail 'draft screenings leaked into What’s on'; fi
 # --- programme: drafts private, announced public, public domain plays ------
 screen(){ film "$owner" "operation=screening&$S&screening=$1&starts=$2&venue=$3&ref=$(enc "$4")&note=${5:-}"; }
-[ "$(screen matinee 2026-11-07T14%3A00 Main+room "$pd" 'Bring+a+friend')" = 200 ] || fail 'screening'
-[ "$(screen shorts 2026-11-14T19%3A30 Roof "$by")" = 200 ] || fail 'cc by screening'
-[ "$(screen held 2026-11-21T19%3A30 Hall "$held")" = 200 ] || fail 'reserved screening'
-[ "$(screen secret 2026-12-05T19%3A30 Hall "$pd")" = 200 ] || fail 'draft screening'
-[ "$(screen rained 2026-12-12T19%3A30 Yard "$pd")" = 200 ] || fail 'to cancel'
+# Screenings are dated from today so the programme never ages into the past:
+# the matinee is the Saturday at least a week ahead, the rest follow weekly.
+day(){ date -u -v+"$1"d "+$2" 2>/dev/null || date -u -d "+$1 day" "+$2"; }
+sat=$(( (6 - $(date -u +%u) + 7) % 7 + 7 ))
+D0=$(day $sat %Y-%m-%d); D1=$(day $((sat+7)) %Y-%m-%d); D2=$(day $((sat+14)) %Y-%m-%d); D4=$(day $((sat+28)) %Y-%m-%d); D5=$(day $((sat+35)) %Y-%m-%d)
+D0H="Sat $((10#$(day $sat %d))) $(day $sat %b) $(day $sat %Y), 14:00"
+[ "$(screen matinee ${D0}T14%3A00 Main+room "$pd" 'Bring+a+friend')" = 200 ] || fail 'screening'
+[ "$(screen shorts ${D1}T19%3A30 Roof "$by")" = 200 ] || fail 'cc by screening'
+[ "$(screen held ${D2}T19%3A30 Hall "$held")" = 200 ] || fail 'reserved screening'
+[ "$(screen secret ${D4}T19%3A30 Hall "$pd")" = 200 ] || fail 'draft screening'
+[ "$(screen rained ${D5}T19%3A30 Yard "$pd")" = 200 ] || fail 'to cancel'
 [ "$(screen bad 2026-02-30T14%3A00 Main+room "$pd")" = 409 ] || fail 'impossible date refused'
-[ "$(film "$owner" "operation=screening&$S&screening=u&starts=2026-11-07T14%3A00&venue=x&ref=https%3A%2F%2Fexample.test%2Fx.webm")" = 409 ] || fail 'a URL is not a film'
-[ "$(film "$other" "operation=screening&$S&screening=x&starts=2026-11-07T14%3A00&venue=x&ref=$(enc "$pd")")" = 404 ] || fail 'another account cannot programme'
+[ "$(film "$owner" "operation=screening&$S&screening=u&starts=${D0}T14%3A00&venue=x&ref=https%3A%2F%2Fexample.test%2Fx.webm")" = 409 ] || fail 'a URL is not a film'
+[ "$(film "$other" "operation=screening&$S&screening=x&starts=${D0}T14%3A00&venue=x&ref=$(enc "$pd")")" = 404 ] || fail 'another account cannot programme'
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Host: aurekai.work' -H 'Origin: https://attacker.test' -H "Authorization: Bearer $owner" -H 'Content-Type: application/x-www-form-urlencoded' --data "operation=announce&$S&screening=matinee" "$base/workspace/world/film")" = 403 ] || fail 'foreign origin'
 public /worlds/cinema >/dev/null; if grep -q 'data-world-programme' "$tmp/page"; then fail 'nothing public before announcing'; fi
 for s in matinee shorts held rained; do [ "$(film "$owner" "operation=announce&$S&screening=$s")" = 200 ] || fail "announce $s"; done
@@ -103,7 +109,7 @@ grep -q 'data-media-space-filter="weekend"' "$tmp/catalogue.html" || fail 'scree
 [ "$(public /worlds/cinema)" = 200 ] || fail 'public space'
 grep -q 'data-world-programme' "$tmp/page" || fail 'programme shows'
 grep -q '<h3 class="aw-month">November 2026</h3>' "$tmp/page" && grep -q '<h3 class="aw-month">December 2026</h3>' "$tmp/page" || fail 'grouped by month'
-grep -q '<time datetime="2026-11-07T14:00">Sat 7 Nov 2026, 14:00</time> &middot; Main room' "$tmp/page" || fail 'weekday, date, time and place'
+grep -q "<time datetime=\"${D0}T14:00\">${D0H}</time> &middot; Main room" "$tmp/page" || fail 'weekday, date, time and place'
 grep -q 'data-screening="matinee" data-state="announced" data-shown="media"' "$tmp/page" || fail 'public-domain screening plays'
 grep -q '<details class="aw-watch"><summary>Watch it here</summary><video controls preload="none" playsinline src="https://commons.wikimedia.org/wiki/Special:FilePath/Night%20of%20the%20Living%20Dead%20%281968%29.webm">' "$tmp/page" || fail 'player waits behind a disclosure'
 grep -q 'data-screening="shorts" data-state="announced" data-shown="link"' "$tmp/page" || fail 'a CC BY film is linked, not screened'

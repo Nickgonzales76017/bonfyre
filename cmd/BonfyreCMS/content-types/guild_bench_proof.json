@@ -1,0 +1,21 @@
+{
+  "name": "guild_bench_proof",
+  "displayName": "Guild Bench Proof",
+  "description": "A piece of finished bench work an apprentice links for review against a module, and the steward's written sign-off or return. A sign-off is one steward's judgement recorded in words; it releases no allowance, escrow or payment and is not a certification recognised outside the guild.",
+  "attributes": {
+    "proof": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "module": { "type": "string", "required": true },
+    "apprentice_subject": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "evidence_url": { "type": "string", "required": true },
+    "note": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "steward_subject": { "type": "string", "required": false },
+    "sign_off": { "type": "text", "required": false },
+    "decided_at": { "type": "string", "required": false },
+    "submitted_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

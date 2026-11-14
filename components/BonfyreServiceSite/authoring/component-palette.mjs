@@ -36,7 +36,7 @@ export function availableAuthoringParents(tree){
  visit(tree.blocks,1);
  return result;
 }
-export function createAuthoringPalette({onInsert}){
+export function createAuthoringPalette({onInsert,onCompose,compositions=[]}){
  if(typeof document==="undefined"||typeof onInsert!=="function")
   throw TypeError("The authoring palette needs a browser and insertion owner");
  const el=(tag,text)=>{
@@ -62,6 +62,18 @@ export function createAuthoringPalette({onInsert}){
  kindInput.value="ui:section";
  kindLabel.append(kindInput);parentLabel.append(parentInput);
  root.append(kindLabel,parentLabel,button);
+ const composition=el("section");composition.className="authoring-composition-presets";
+ let recipeButton=null,recipeInput=null;
+ if(typeof onCompose==="function"&&compositions.length){
+  const heading=el("h3","Compose a complete page");
+  const description=el("p","Add an editable arrangement of native sections. Existing work stays in this draft.");
+  const row=el("div");row.className="authoring-composition-preset-row";
+  recipeInput=el("select");recipeInput.setAttribute("aria-label","Editorial composition");
+  for(const recipe of compositions){const option=el("option",recipe.label);option.value=recipe.id;recipeInput.append(option);}
+  recipeButton=el("button","Compose");recipeButton.type="button";
+  recipeButton.addEventListener("click",()=>{if(!recipeButton.disabled)Promise.resolve(onCompose(recipeInput.value)).catch(()=>{});});
+  row.append(recipeInput,recipeButton);composition.append(heading,description,row);root.prepend(composition);
+ }
  button.addEventListener("click",()=>{
   if(button.disabled)return;
   Promise.resolve(onInsert(kindInput.value,parentInput.value||null)).catch(()=>{});
@@ -76,7 +88,7 @@ export function createAuthoringPalette({onInsert}){
    }
    parentInput.value=parents.some(item=>item.id===prior)?prior:"";
   },setBusy(busy){
-   button.disabled=!!busy;kindInput.disabled=!!busy;parentInput.disabled=!!busy;
+   button.disabled=!!busy;if(recipeButton)recipeButton.disabled=!!busy;if(recipeInput)recipeInput.disabled=!!busy;kindInput.disabled=!!busy;parentInput.disabled=!!busy;
   },setKind(kind){if(options.has(kind))kindInput.value=kind;},
   get selection(){return {kind:kindInput.value,parent:parentInput.value||null};}};
 }

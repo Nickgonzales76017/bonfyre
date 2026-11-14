@@ -1,0 +1,18 @@
+{
+  "name": "role_vouch",
+  "displayName": "Role Vouch",
+  "description": "One account's statement that it vouches for another account in one published operating role and scope. The voucher may revoke it at any time. A vouch is a personal statement: it is not an appointment, a grant, a certification, an employment relationship or permission to act, and a count of vouches is not an election.",
+  "attributes": {
+    "vouch_id": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "voucher": { "type": "string", "required": true },
+    "vouched_subject": { "type": "string", "required": true },
+    "role_program": { "type": "string", "required": true },
+    "context_scope": { "type": "string", "required": true },
+    "statement": { "type": "text", "required": true },
+    "state": { "type": "string", "required": true },
+    "vouched_at": { "type": "string", "required": true },
+    "revoked_at": { "type": "string" },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

@@ -1,4 +1,4 @@
-/* Complete 43-component native render regression: exact first-party template
+/* Complete 46-component native render regression: exact first-party template
  * catalogue, real JSON payloads, nested C tree, bounded atomic output,
  * link/script refusal, independent account state and interactive semantics. */
 #define _GNU_SOURCE
@@ -28,6 +28,7 @@ static const char *example=
  "\"brand\":\"Aurekai\","
  "\"label\":\"Inspect\","
  "\"href\":\"/work/\","
+ "\"action\":\"/companions/affinity\","
  "\"name\":\"email\","
  "\"type\":\"radio\","
  "\"hint\":\"Useful information\","
@@ -55,7 +56,7 @@ int main(void){
  check(bf_authoring_tree_add(tree,"root","ui:documentation",NULL,0),"root");
  check(bf_authoring_tree_data(tree,"root","payload",example),"root payload");
  size_t n=sizeof(bf_native_authoring_templates)/sizeof(bf_native_authoring_templates[0]);
- check(n==43,"36 visual plus seven original profile templates");
+ check(n==46,"36 visual plus seven original profile templates plus action, choice and field");
  for(size_t i=0;i<n;i++){
   char id[36];snprintf(id,sizeof(id),"component-%zu",i);
   const BfNativeAuthoringTemplate *template=&bf_native_authoring_templates[i];
@@ -78,6 +79,9 @@ int main(void){
  check(strstr(result,"<td>Beta</td>")!=NULL,"nested tabular source retained");
  check(strstr(result,"<textarea name=\"message\"")!=NULL,"native textarea typed");
  check(strstr(result,"<img")!=NULL,"native media markup");
+ check(strstr(result,"<form class=\"ak-pattern ak-action\"")!=NULL,"action form renders");
+ check(strstr(result,"action=\"/companions/affinity\"")!=NULL,"relative action kept");
+ check(strstr(result,"<input type=\"hidden\" name=\"email\"")!=NULL,"action carries hidden fields");
  for(size_t i=0;i<n;i++){
   char id[55];snprintf(id,sizeof(id),"data-ak-id=\"component-%zu\"",i);
   check(strstr(result,id)!=NULL,"every component has stable native identity");
@@ -90,6 +94,23 @@ int main(void){
   "{\"label\":\"Unsafe\",\"href\":\"javascript:alert(1)\"}",256);
  result=html(tree,1048576,0);free(result);
  free(tree->nodes[idx].payload);tree->nodes[idx].payload=before;
+ {
+  static const char *evil[] = {"https://evil.example/x", "//evil.example/x", "/../escape",
+                               "/x y", "", "https://aurekai.work/companions"};
+  for (size_t e = 0; e < sizeof(evil) / sizeof(evil[0]); e++) {
+   char payload[256], *next;
+   snprintf(payload, sizeof(payload), "{\"label\":\"Go\",\"action\":\"%s\"}", evil[e]);
+   next = bf_authoring_tree_copytext(payload, 256);
+   check(next != NULL, "evil payload alloc");
+   free(tree->nodes[idx].payload);
+   tree->nodes[idx].payload = next;
+   result = html(tree, 1048576, 0);
+   free(result);
+  }
+  free(tree->nodes[idx].payload);
+  tree->nodes[idx].payload = bf_authoring_tree_copytext(example, 8192);
+  check(tree->nodes[idx].payload != NULL, "restore payload");
+ }
  check(bf_authoring_tree_add(other,"independent","ui:modal",NULL,0),"second account");
  check(bf_authoring_tree_data(other,"independent","payload",example),"second material");
  result=html(other,1048576,1);
@@ -124,7 +145,48 @@ int main(void){
   "unknown editorial syntax is retained but not rendered");
  result=html(article,1048576,0);
  free(result);bf_authoring_tree_clear(article);free(article);
+ BfAuthoringTree *journal=calloc(1,sizeof(*journal));check(journal!=NULL,"journal tree");
+ check(bf_authoring_tree_add(journal,"section-one","profile-story",NULL,0),"journal section");
+ check(bf_authoring_tree_text(journal,"section-one","heading","Markdown <section>"),"journal heading");
+ check(bf_authoring_tree_text(journal,"section-one","body",
+  "A **strong** claim with `code` and a [link](https://example.org/docs).\n\n```js\nconst n < 5;\n```\n\n<script>alert(1)</script>"),
+  "journal markdown body");
+ result=html(journal,1048576,1);
+ check(strstr(result,"<h2>Markdown &lt;section&gt;</h2>")!=NULL,"journal heading escaped");
+ check(strstr(result,"<strong>strong</strong>")!=NULL,"journal emphasis rendered");
+ check(strstr(result,"<code>code</code>")!=NULL,"journal inline code rendered");
+ check(strstr(result,"<a href=\"https://example.org/docs\">link</a>")!=NULL,"journal link admitted");
+ check(strstr(result,"<pre><code class=\"language-js\">")!=NULL,"journal fenced code rendered");
+ check(strstr(result,"&lt;script&gt;")!=NULL||strstr(result,"<script>")==NULL,"journal raw HTML neutralized");
+ check(strstr(result,"**strong**")==NULL,"journal markdown fully rendered");
+ check(strstr(result,"<p><p>")==NULL,"journal body not double-wrapped");
+ free(result);bf_authoring_tree_clear(journal);free(journal);
+ BfAuthoringTree *bare=calloc(1,sizeof(*bare));check(bare!=NULL,"bare tree");
+ check(bf_authoring_tree_add(bare,"bare-one","profile-story",NULL,0),"bare section");
+ check(bf_authoring_tree_text(bare,"bare-one","body","Body without a head."),"bare body");
+ result=html(bare,1048576,1);
+ check(strstr(result,"<h2>")==NULL,"untitled story emits no heading element");
+ check(strstr(result,"Body without a head.")!=NULL,"untitled story body rendered");
+ free(result);bf_authoring_tree_clear(bare);free(bare);
+ BfAuthoringTree *forms=calloc(1,sizeof(*forms));check(forms!=NULL,"forms tree");
+ check(bf_authoring_tree_add(forms,"find","ui:action",NULL,0),"form root");
+ check(bf_authoring_tree_data(forms,"find","payload","{\"label\":\"Search\",\"method\":\"get\",\"action\":\"/companions\",\"fields\":[]}"),"form payload");
+ check(bf_authoring_tree_add(forms,"q","ui:field","find",0),"search field");
+ check(bf_authoring_tree_data(forms,"q","payload","{\"label\":\"Search\",\"type\":\"search\",\"name\":\"q\",\"value\":\"\",\"placeholder\":\"People\",\"multiline\":false,\"rows\":\"3\",\"maxlength\":\"\",\"required\":false,\"inputmode\":\"\"}"),"search type admitted");
+ check(bf_authoring_tree_add(forms,"pick","ui:choice","find",1),"choice group");
+ check(bf_authoring_tree_data(forms,"pick","payload","{\"label\":\"Territory\",\"name\":\"territory\",\"options\":[{\"name\":\"territory\",\"value\":\"\",\"label\":\"All\",\"checked\":true},{\"name\":\"territory\",\"value\":\"work\",\"label\":\"work\",\"checked\":false}]}"),"choice options");
+ result=html(forms,1048576,1);
+ check(strstr(result,"method=\"get\"")!=NULL,"action method rendered");
+ check(strstr(result,"type=\"search\"")!=NULL,"search input type rendered");
+ check(strstr(result,"checked")!=NULL,"checked option rendered");
+ check(strstr(result,"name=\"territory\"")!=NULL,"option group name rendered");
+ free(result);bf_authoring_tree_clear(forms);free(forms);
+ BfAuthoringTree *evil=calloc(1,sizeof(*evil));check(evil!=NULL,"evil tree");
+ check(bf_authoring_tree_add(evil,"up","ui:field",NULL,0),"upload field");
+ check(bf_authoring_tree_data(evil,"up","payload","{\"label\":\"X\",\"type\":\"file\",\"name\":\"f\",\"value\":\"\",\"placeholder\":\"\",\"multiline\":false,\"rows\":\"3\",\"maxlength\":\"\",\"required\":false,\"inputmode\":\"\"}"),"file payload");
+ result=html(evil,1048576,0);
+ free(result);bf_authoring_tree_clear(evil);free(evil);
  bf_authoring_tree_clear(tree);bf_authoring_tree_clear(other);
  free(tree);free(other);
- puts("native 43-component render PASS");return 0;
+ puts("native 46-component render PASS");return 0;
 }

@@ -1845,6 +1845,7 @@ static void page_emit_identity_links(sqlite3 *db, const PageItem *item, const ch
 
 /* Items near this one in the atlas's words chart, within its family,
  * reopened before they are linked. */
+static void item_like_card(const PageItem *other, time_t now);
 static int page_emit_atlas_related(sqlite3 *db, const PageItem *item, const char *family, time_t now) {
     sqlite3 *atlas = page_atlas_open(); sqlite3_stmt *st = NULL; char address[200], group[200]; float mine[256]; int have = 0, count = 0, i, j, shown = 0;
     typedef struct { char address[200]; double d; } Near;
@@ -1876,7 +1877,7 @@ static int page_emit_atlas_related(sqlite3 *db, const PageItem *item, const char
     for (i = 1; i < count; i++) for (j = i; j > 0 && near[j].d < near[j - 1].d; j--) { Near t = near[j]; near[j] = near[j - 1]; near[j - 1] = t; }
     {
         PageMaterial *material = malloc(sizeof(*material)); char last_source[128] = "";
-        for (i = 0; material && i < count && i < 40 && shown < 6; i++) {
+        for (i = 0; material && i < count && i < 40 && shown < 5; i++) {
             char source[128], key[32]; const char *slash = strchr(near[i].address + 2, '/'); const PageItem *found = NULL; const char *close; int k;
             if (near[i].d > 0.85 || strncmp(near[i].address, "o/", 2) || !slash || (size_t)(slash - near[i].address - 2) >= sizeof(source)) continue;
             snprintf(source, sizeof(source), "%.*s", (int)(slash - near[i].address - 2), near[i].address + 2);
@@ -1889,9 +1890,8 @@ static int page_emit_atlas_related(sqlite3 *db, const PageItem *item, const char
             for (k = 0; k < material->stream[BF_PAGE_MATERIAL_MIX].count; k++)
                 if (!strcmp(material->stream[BF_PAGE_MATERIAL_MIX].item[k].key, key)) { found = &material->stream[BF_PAGE_MATERIAL_MIX].item[k]; break; }
             if (!found) continue;
-            if (!shown++) fputs("<section class=\"region\"><h2 class=\"region-label\">Related</h2><ol class=\"more\">", stdout);
-            fputs("<li>", stdout); close = page_emit_item_open(found, NULL); html(found->title); fputs(close, stdout);
-            fputs("<span class=\"by\">", stdout); page_emit_by(found, now); fputs("</span></li>", stdout);
+            if (!shown++) fputs("<section class=\"region item-like\"><h2 class=\"region-label\">More like this</h2><ol class=\"like\">", stdout);
+            item_like_card(found, now); (void)close;
         }
         if (shown) fputs("</ol></section>", stdout);
         free(material);
@@ -2002,6 +2002,17 @@ out:
 
 static int pr_source(sqlite3 *db,const char *source,char *twin,size_t cap);
 static int pr_item_fingerprint(const PageItem *item,const char *source,const char *twin,char digest[65]);
+
+/* One neighbour as a picture-first card: its picture, or an empty frame
+ * naming where it is from, then its title and who published it. */
+static void item_like_card(const PageItem *other, time_t now) {
+    const char *close; char host[128];
+    fputs("<li>", stdout); close = page_emit_item_open(other, NULL);
+    if (page_image_url_safe(other->image)) page_emit_picture(other->image, "like-picture");
+    else { page_publisher(other->href, host, sizeof(host)); fputs("<span class=\"like-picture is-empty\">", stdout); html(host[0] ? host : other->note); fputs("</span>", stdout); }
+    fputs("<b>", stdout); html(other->title); fputs("</b>", stdout); fputs(close, stdout);
+    fputs("<span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span></li>", stdout);
+}
 static int emit_item_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db) {
     ItemDepth *depth = NULL; PageMaterial *relations = NULL;
     EstateReferenceStores stores = {0}; EstateReference publisher = {0};
@@ -2010,7 +2021,7 @@ static int emit_item_page(const char *root, const char *target, const char *host
     const char *slash; size_t n, i; sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
     PageMaterial *material = NULL, *family_material = NULL; char *template = NULL, *head_end;
     const PageItem *item = NULL; const BfPageProgram *program = NULL;
-    time_t now = time(NULL); int s, k, projected_item;
+    time_t now = time(NULL); int k, projected_item;
     if (!root || !target || strncmp(target, "/o/", 3)) return 0;
     char code_target[BF_PUBLIC_CODE_URI_MAX+1];
     int code_only=bf_public_code_item_path(target,code_target,sizeof(code_target));
@@ -2178,6 +2189,13 @@ static int emit_item_page(const char *root, const char *target, const char *host
                 fputs("<figure class=\"map\">", stdout); page_emit_map_plate(one, 1, 0); fputs("</figure>", stdout);
                 free(one);
             }
+        } else {
+            /* The source published no picture: the frame stays, and says so. */
+            char from[128];
+            page_publisher(item->href, from, sizeof(from));
+            fputs("<figure class=\"hero-picture is-empty\"><figcaption>No picture published", stdout);
+            if (from[0] || item->note[0]) { fputs(" by ", stdout); html(from[0] ? from : item->note); }
+            fputs("</figcaption></figure>", stdout);
         }
     }
     if (item->kind == BF_PAGE_MATERIAL_EVENT && item->at > 0) {
@@ -2264,6 +2282,21 @@ static int emit_item_page(const char *root, const char *target, const char *host
         if (item->people[0]) { fputs("<div><dt>With</dt><dd>", stdout); html(item->people); fputs("</dd></div>", stdout); }
         if (item->where[0]) { fputs("<div><dt>Where</dt><dd>", stdout); html(item->where); fputs("</dd></div>", stdout); }
         fputs("</dl>", stdout);
+    }
+    {
+        /* Terms as the listing states them, in its own words: a price it
+         * names, the delivery it names, the terms its source publishes. */
+        char price[48]; int chips = 0; const char *t = item->title;
+        if (item_price_as_posted(t, price, sizeof(price)) || item_price_as_posted(item->body, price, sizeof(price))) {
+            fputs("<ul class=\"thing-chips\" aria-label=\"As listed\"><li class=\"is-price\"><small>", stdout);
+            fputs(item_says(t, "from $") || item_says(t, "starting at") ? "From" : "Listed at", stdout);
+            fputs("</small> ", stdout); html(price); fputs("</li>", stdout); chips++;
+        }
+        if (item_says(t, "free s&h") || item_says(t, "free shipping")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>Free shipping, as posted</li>", stdout); }
+        if (item_says(t, "w/ s&s") || item_says(t, "subscribe")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>With subscription</li>", stdout); }
+        if (item_says(t, "pickup")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>Pickup offered</li>", stdout); }
+        if (item->rights[0]) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>", stdout); html(item->rights); fputs("</li>", stdout); }
+        if (chips) fputs("</ul>", stdout);
     }
     /* The few things a person came to do sit together: open it where it lives,
      * keep it, pass it on.  Everything else waits behind one quiet disclosure,
@@ -2415,12 +2448,6 @@ static int emit_item_page(const char *root, const char *target, const char *host
     page_emit_kin(source, key, item->ident);
     /* What the title names, as the identity graph has it. */
     page_emit_entities(item->title);
-    if (!snapshot) {
-        char heading[320];
-        if (shown_publisher[0]) snprintf(heading, sizeof(heading), "Also from %s", shown_publisher);
-        else snprintf(heading, sizeof(heading), "%s", "Also from here");
-        page_emit_archive_earlier(source, key, heading, 8, now);
-    }
     /* What the piece relates to -- its parts, the organizations it names, the
      * ways its publisher puts things out -- is material like any other: the
      * scene compiler decides which rhythms it argues for, and each region is
@@ -2447,21 +2474,7 @@ static int emit_item_page(const char *root, const char *target, const char *host
     page_emit_pictures_of(db, item, now);
     page_emit_sounds_similar(db, item, now);
     page_emit_same_subject(db, item, now);
-    if (material->stream[BF_PAGE_MATERIAL_MIX].count > 1) {   /* More from the same maker. */
-        int shown = 0;
-        fputs("<section class=\"region\"><h2 class=\"region-label\">", stdout);
-        html(item->note[0] ? "More from " : "More"); html(item->note); fputs("</h2><div class=\"index\">", stdout);
-        for (k = 0; k < material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 6; k++) {
-            const PageItem *other = &material->stream[BF_PAGE_MATERIAL_MIX].item[k];
-            const char *close;
-            if (!strcmp(other->key, item->key)) continue;
-            shown++;
-            close = page_emit_item_open(other, NULL);
-            fputs("<b>", stdout); html(other->title); fputs("</b><span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span>", stdout);
-            page_emit_picture(other->image, "thumb"); fputs(close, stdout);
-        }
-        fputs("</div></section>", stdout);
-    }
+    /* More like this: what reads closest to it, picture first. */
     if (!page_emit_atlas_related(db, item, family, now) && !from_projection &&
         program && (family_material = calloc(1, sizeof(*family_material)))) {
         char sources[4096]; int shown = 0;
@@ -2469,21 +2482,43 @@ static int emit_item_page(const char *root, const char *target, const char *host
         page_collect_stories(db, sources, family_material);
         /* Only what shares words with this piece; filling the space with
          * whatever else the route carries said nothing about this one. */
-        for (s = 0; s < 1 && shown < 6; s++)
-            for (k = 0; k < family_material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 6; k++) {
-                const PageItem *other = &family_material->stream[BF_PAGE_MATERIAL_MIX].item[k];
-                const char *close;
-                if (!strcmp(other->source, item->source)) continue;
-                if (s == 0 && page_words_shared(item->title, other->title) < 1) continue;
-                if (s == 1 && page_words_shared(item->title, other->title) >= 1) continue;
-                if (!shown) { fputs("<section class=\"region\"><h2 class=\"region-label\">", stdout); fputs(s == 0 ? "Related" : "Also in ", stdout); if (s == 1) html(program->title); fputs("</h2><ol class=\"more\">", stdout); }
-                shown++;
-                fputs("<li>", stdout); close = page_emit_item_open(other, NULL); html(other->title); fputs(close, stdout);
-                fputs("<span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span></li>", stdout);
-            }
+        for (k = 0; k < family_material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 5; k++) {
+            const PageItem *other = &family_material->stream[BF_PAGE_MATERIAL_MIX].item[k];
+            if (!strcmp(other->source, item->source) || page_words_shared(item->title, other->title) < 1) continue;
+            if (!shown++) fputs("<section class=\"region item-like\"><h2 class=\"region-label\">More like this</h2><ol class=\"like\">", stdout);
+            item_like_card(other, now);
+        }
         if (shown) fputs("</ol></section>", stdout);
     }
-    fputs("</main></body></html>", stdout);
+    /* Also from the same source: its other listings, in two columns. */
+    if (material->stream[BF_PAGE_MATERIAL_MIX].count > 1) {
+        int shown = 0;
+        fputs("<section class=\"region item-also\"><h2 class=\"region-label\">Also from ", stdout);
+        html(shown_publisher[0] ? shown_publisher : item->note[0] ? item->note : "here"); fputs("</h2><ol class=\"also\">", stdout);
+        for (k = 0; k < material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 6; k++) {
+            const PageItem *other = &material->stream[BF_PAGE_MATERIAL_MIX].item[k];
+            const char *close; char price[48];
+            if (!strcmp(other->key, item->key)) continue;
+            shown++;
+            fputs("<li>", stdout); close = page_emit_item_open(other, NULL); html(other->title); fputs(close, stdout);
+            fputs("<span class=\"by\">", stdout);
+            if (item_price_as_posted(other->title, price, sizeof(price))) { fputs("<span>Listed at ", stdout); html(price); fputs("</span> ", stdout); }
+            page_emit_by(other, now); fputs("</span></li>", stdout);
+        }
+        fputs("</ol></section>", stdout);
+    } else if (!snapshot) {
+        char heading[320];
+        if (shown_publisher[0]) snprintf(heading, sizeof(heading), "Also from %s", shown_publisher);
+        else snprintf(heading, sizeof(heading), "%s", "Also from here");
+        page_emit_archive_earlier(source, key, heading, 6, now);
+    }
+    if (!actor[0]) {
+        /* Saving needs an account; the band says what signing in adds and
+         * comes back to this page. */
+        fputs("<aside class=\"item-join\"><p>Sign in to save items, keep your own shelves and follow the sources you trust.</p><a class=\"verb\" href=\"/login?next=", stdout);
+        html(target); fputs("\">Sign in or join Aurekai</a></aside>", stdout);
+    }
+    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
 done:
     free(template); free(material); free(family_material); free(snapshot); free(depth); free(relations);
     estate_reference_close(&stores);
@@ -2813,7 +2848,7 @@ static int emit_about_page(const char *root, const char *target, const char *hos
             }
         }
     }
-    fputs("</main></body></html>", stdout);
+    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
 done:
     free(template); free(material); free(scratch); free(pictures);
     sqlite3_close(db);
@@ -2864,7 +2899,7 @@ static int emit_native_world_shelf(const char *path) {
         fputs("</div></div></a>", stdout); count++;
     }
     if (!count) fputs("<p class=\"note\">No World is published yet.</p>", stdout);
-    fputs("</section></main></body></html>", stdout);
+    fputs("</section></main>" BF_ESTATE_FOOT "</body></html>", stdout);
     sqlite3_finalize(st); sqlite3_close(db); free(template); return 1;
 out:
     if (f) fclose(f);

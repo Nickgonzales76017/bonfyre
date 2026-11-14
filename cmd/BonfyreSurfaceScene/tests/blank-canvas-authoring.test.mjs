@@ -43,8 +43,8 @@ function blankWitness(site_id="person-creator-work",page="/reference/"){
  return validateAuthoringTree(doc);
 }
 const sourceRoot=new URL("../../../",import.meta.url);
-test("empty-canvas creation exposes the same 36 complete component types in Puck, GrapesJS and generated native C",()=>{
- assert.equal(AUTHORING_PATTERNS.length,36);
+test("empty-canvas creation exposes every registered component in Puck, GrapesJS and native C",()=>{
+ assert.ok(AUTHORING_PATTERNS.length>=36,"the original component vocabulary must remain");
  const React={createElement:(type,props,...children)=>({type,props,children})};
  const config=makePuckConfig(React);
  const components=new Map(),blocks=new Map();
@@ -73,7 +73,7 @@ test("user-created nested documentation survives every editor projection and nat
   const empty={schema:"bonfyre.page-snapshot.v1",id:0,digest:revision,
    snapshot:{namespace:site_id,route:original.page,page:null,fragments:[]}};
   const request=toNativePageWrite(empty,original,{pageDraft:{title:"Manual",heading:"Manual"}});
-  assert.equal(request.fragments.length,37);
+  assert.equal(request.fragments.length,AUTHORING_PATTERNS.length+1);
   assert.ok(request.fragments.every(f=>f.status==="draft"));
   assert.ok(request.fragments.every(f=>f.projection_contract?.html===true));
   const snapshot={schema:empty.schema,id:10,digest:"b".repeat(64),snapshot:{

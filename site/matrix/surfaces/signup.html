@@ -3,104 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Create account · Aurekai</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Instrument+Serif:ital@0;1&display=swap">
-<style>
-:root{--ground:#faf7f2;--ink:#20201c;--dim:#6f6a61;--rule:rgba(0,0,0,.16);--live:#8c1c13;--bad:#8c1c13;--panel:transparent}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ground:#101113;--ink:#dedbd4;--dim:#8f8b83;--rule:rgba(255,255,255,.18);--live:#ff8a5e;--bad:#ff8a5e}}
-:root[data-theme="dark"]{--ground:#101113;--ink:#dedbd4;--dim:#8f8b83;--rule:rgba(255,255,255,.18);--live:#ff8a5e;--bad:#ff8a5e}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--ground);color:var(--ink);
-  font-family:"DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;display:grid;place-items:center;padding:24px}
-main{width:100%;max-width:34rem}
-.kicker{font-family:"DM Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--dim);margin:0 0 18px}
-h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(56px,11vw,112px);line-height:.9;letter-spacing:-.03em;margin:0 0 22px;animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
-.sub{color:var(--dim);margin:0 0 40px;font-size:17px;line-height:1.45;max-width:30rem}
-form{display:grid;gap:28px}
-label{display:grid;gap:4px}
-.lb{font-family:"DM Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--dim)}
-input{font:inherit;font-size:clamp(20px,3vw,26px);letter-spacing:-.02em;padding:8px 0 12px;background:transparent;
-  color:var(--ink);border:0;border-bottom:1.5px solid var(--rule);border-radius:0;transition:border-color .3s}
-input:hover{border-bottom-color:var(--dim)}
-input:focus{outline:0;border-bottom-color:var(--live);box-shadow:0 1.5px 0 var(--live)}
-button{justify-self:start;font:inherit;font-weight:600;font-size:16px;padding:17px 28px;cursor:pointer;
-  background:var(--ink);color:var(--ground);border:none;border-radius:999px;transition:background .3s}
-button:hover{background:var(--live)}
-button:disabled{opacity:.55;cursor:progress}
-button:focus-visible{outline:2px solid var(--live);outline-offset:3px}
-.msg{font-size:15px;line-height:1.5;margin:0;padding:14px 18px;border-radius:14px;
-  background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--ink)}
-.msg.ok{background:color-mix(in srgb,var(--ink) 8%,transparent)}
-.msg[hidden]{display:none}
-.alt{margin:34px 0 0;color:var(--dim);font-size:15px}
-a{color:var(--ink);font-weight:600;text-decoration-color:var(--live);text-underline-offset:.2em}
-.tok{word-break:break-all;font-family:"DM Mono",ui-monospace,monospace;font-size:11px}
-@keyframes rise{from{opacity:0;translate:0 .25em;filter:blur(8px)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+<title>Create an account · Aurekai</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&display=swap">
+<link rel="stylesheet" href="/assets/aurekai-trust.css?v=1">
 </head>
-<body>
-<main>
-  <p class="kicker">aurekai · account</p>
-  <h1>Create account</h1>
-  <p class="sub">Your password is never stored, only a one-way derivation of it.</p>
-
-  <form id="f" action="/signup" method="post" novalidate>
-    <label>
-      <span class="lb">Name</span>
-      <input id="name" name="name" type="text" autocomplete="name" required>
-    </label>
-    <label>
-      <span class="lb">Email</span>
-      <input id="email" name="email" type="email" autocomplete="email" required>
-    </label>
-    <label>
-      <span class="lb">Password</span>
-      <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
-    </label>
-    <button id="go" type="submit">Create account</button>
+<body class="ak-app ak-trust">
+<main class="tm-stage">
+<section class="tm-modal" aria-labelledby="tm-title" data-trust-modal="sign-up">
+  <header class="tm-head">
+    <p class="tm-crumb"><i></i>Join<span>/</span>Step 1 of 3</p>
+    <h1 id="tm-title">Create your Aurekai account</h1>
+    <span class="tm-badge">Nothing published yet</span>
+    <a class="tm-x" href="/about" aria-label="Close and go back">&times;</a>
+  </header>
+  <ol class="tm-steps" aria-label="Getting started">
+    <li aria-current="step">Create the account</li>
+    <li>Choose what you care about</li>
+    <li>Open your page and tools</li>
+  </ol>
+  <form id="f" class="tm-form" action="/signup" method="post" novalidate>
+    <div class="tm-identity">
+      <span class="tm-avatar" aria-hidden="true">+</span>
+      <div class="tm-fields">
+        <label><span class="tm-lb">Name</span><input id="name" name="name" type="text" autocomplete="name" required></label>
+        <label><span class="tm-lb">Email</span><input id="email" name="email" type="email" autocomplete="email" required></label>
+        <label><span class="tm-lb">Password, 12 or more characters</span><input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required></label>
+      </div>
+    </div>
+    <section class="tm-sec" aria-labelledby="tm-holds">
+      <div class="tm-sec-row"><h2 class="tm-sec-h" id="tm-holds">What the account holds</h2><small>Yours to read and remove</small></div>
+      <ul class="tm-checks">
+        <li><b>Your name and email</b><span>Used to sign you in. Never shown on a page unless you put it there.</span></li>
+        <li><b>A one-way password derivation</b><span>The password itself is never stored.</span></li>
+        <li><b>Saved work stays private</b><span>Bookmarks, drafts and tools are visible only to you.</span></li>
+        <li class="tm-open"><b>A public page, when you choose</b><span>Nothing is published until you publish it.</span></li>
+      </ul>
+    </section>
+    <p class="tm-forbid"><b>Never granted by joining</b><span>No payments · No publishing · No messages sent · No roles in any organisation</span></p>
     <p id="msg" class="msg" hidden></p>
+    <div class="tm-actions">
+      <a class="tm-cancel" href="/about">Read what Aurekai is first</a>
+      <button id="go" class="tm-go" type="submit">Create account</button>
+    </div>
   </form>
-
-  <p class="alt">Already have an account? <a href="/login">Sign in</a>.</p>
+  <p class="tm-alt">Already have an account? <a href="/login">Sign in</a>.</p>
+</section>
 </main>
-
-<script>
-const f = document.getElementById("f"), msg = document.getElementById("msg"),
-      go = document.getElementById("go");
-
-function say(text, ok){ msg.textContent = text; msg.className = ok ? "msg ok" : "msg"; msg.hidden = false; }
-
-f.addEventListener("submit", async e => {
-  e.preventDefault();
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  if(!name || !email || !password){ say("Fill in every field."); return; }
-  if(password.length < 12){ say("Use at least 12 characters. Length beats complexity."); return; }
-  go.disabled = true; go.textContent = "Creating…";
-  try{
-    const r = await fetch("/signup", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({name, email, password})
-    });
-    const d = await r.json().catch(() => ({}));
-    if(r.ok && d.created){
-      say("Account created for " + d.user.email + ". Taking you to sign in…", true);
-      setTimeout(() => location.href = "/login", 900);
-    } else {
-      say(d.error ? d.error : "That email is already registered, or the details were rejected.");
-    }
-  } catch(err){
-    say("Could not reach the account service. Try again in a moment.");
-  } finally {
-    go.disabled = false; go.textContent = "Create account";
-  }
-});
-</script>
 </body>
 </html>

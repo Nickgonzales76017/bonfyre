@@ -1,0 +1,33 @@
+/* Native experience compositor. Regions and effects remain in PageComposition owners. */
+.ak-experience{display:grid;grid-template-columns:minmax(0,8fr) minmax(240px,4fr);column-gap:clamp(14px,3vw,42px);row-gap:clamp(20px,3vw,46px);align-items:start;margin:clamp(18px,3vw,40px) 0}
+.ak-experience>[data-ak-region]{min-width:0;margin:0;align-self:stretch}
+.ak-experience>[data-ak-region][data-exp-lane=hero],.ak-experience>[data-ak-region][data-exp-lane=wide]{grid-column:1/-1}
+.ak-experience>[data-ak-region][data-exp-lane=primary]{grid-column:1}
+.ak-experience>[data-ak-region][data-exp-lane=rail]{grid-column:2;background:var(--w-panel,rgba(100,125,105,.12));border:1px solid var(--w-rule,#58705e);border-radius:14px;padding:clamp(15px,2vw,28px)}
+.ak-experience[data-exp-shell=reading]{grid-template-columns:minmax(0,74ch) minmax(180px,1fr)}
+.ak-experience[data-exp-shell=reading]>[data-exp-lane=primary]{font:inherit;line-height:1.75}
+.ak-experience[data-exp-shell=immersive]{grid-template-columns:minmax(0,9fr) minmax(210px,3fr)}
+.ak-experience[data-exp-shell=player]{grid-template-columns:minmax(0,8.5fr) minmax(210px,3.5fr)}
+.ak-experience[data-exp-shell=workspace],.ak-experience[data-exp-shell=decision]{grid-template-columns:minmax(0,8fr) minmax(250px,4fr)}
+.ak-experience [data-exp-focus]{min-height:40px;margin:0 0 12px;padding:8px 14px;border:1px solid var(--w-rule,#58705e);background:var(--w-panel,transparent);color:inherit;border-radius:999px;cursor:pointer;font:600 12px/1.3 system-ui}
+.ak-experience [data-exp-focus][aria-pressed=true]{border-color:var(--w-accent,#d0fc4f);outline:2px solid var(--w-accent,#d0fc4f)}
+.ak-experience>.ak-experience-controls{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;align-items:center;min-width:0;padding:12px 0;border-bottom:1px solid var(--w-rule,#58705e)}
+.ak-experience>.ak-experience-controls[hidden],.ak-experience>[data-ak-region][hidden]{display:none!important}
+.ak-experience .ak-exp-view-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.ak-experience .ak-exp-view-buttons button{min-height:44px;padding:9px 15px;border-radius:999px;border:1px solid var(--w-rule,#58705e);background:transparent;color:inherit;cursor:pointer}
+.ak-experience .ak-exp-view-buttons button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511);border-color:var(--w-accent,#d0fc4f)}
+.ak-experience [data-exp-status]{font:12px/1.45 system-ui;color:var(--w-muted,#c5c9af)}
+.ak-experience[data-exp-view=focus],.ak-experience[data-exp-view=compare]{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ak-experience[data-exp-view=focus]>[data-ak-region]:not([hidden]){grid-column:1/-1}
+.ak-experience[data-exp-view=compare]>[data-ak-region]:not([hidden]){grid-column:auto}
+.ak-experience :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--w-accent,#d0fc4f);outline-offset:3px}
+@media(max-width:920px){.ak-experience{grid-template-columns:minmax(0,1fr)!important}.ak-experience>[data-ak-region]{grid-column:1/-1!important}.ak-experience>.ak-experience-controls{grid-column:1/-1}.ak-experience[data-exp-view=compare]{grid-template-columns:1fr!important}}
+.ak-experience .ak-exp-search{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font:600 12px/1.4 system-ui}
+.ak-experience [data-exp-search]{width:min(100%,32ch);min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--w-rule,#58705e);border-radius:9px;background:var(--w-panel,transparent);color:inherit;font:14px/1.4 system-ui}
+.ak-experience .ak-exp-lanes{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.ak-experience .ak-exp-lanes[hidden]{display:none!important}
+.ak-experience .ak-exp-lanes button{min-height:44px;padding:8px 11px;border:1px solid var(--w-rule,#58705e);border-radius:999px;background:transparent;color:inherit;cursor:pointer}
+.ak-experience .ak-exp-lanes button[aria-pressed=true]{background:var(--w-accent,#d0fc4f);color:var(--w-ground,#0f1511)}
+.ak-experience [data-exp-lane-filter][hidden]{display:none!important}
+@media(max-width:650px){.ak-experience .ak-exp-search,.ak-experience [data-exp-search]{width:100%}}
+@media(prefers-reduced-motion:reduce){.ak-experience *{transition:none!important;scroll-behavior:auto!important}}

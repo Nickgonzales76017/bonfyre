@@ -6,7 +6,7 @@ all: $(TARGET) test
 $(TARGET): src/main.c src/catalog.c src/catalog.h
 	$(CC) $(CFLAGS) -o $@ src/main.c src/catalog.c
 test: $(TARGET)
-	./$(TARGET) classify ../../architecture/atlas.index.json --summary >/tmp/bonfyre-owner-contract-summary.json
+	./$(TARGET) classify ../../architecture/atlas.index.json --summary >/tmp/bonfyre-owner-contract-summary.json || { cat /tmp/bonfyre-owner-contract-summary.json; exit 1; }
 	grep -q '"unresolved":0' /tmp/bonfyre-owner-contract-summary.json
 	./$(TARGET) audit-catalog ../../architecture/atlas.index.json $$HOME/.bonfyre/bin/bonfyre-capability --summary >/tmp/bonfyre-owner-contract-catalog.json
 	grep -q '"realized_unmapped":0' /tmp/bonfyre-owner-contract-catalog.json

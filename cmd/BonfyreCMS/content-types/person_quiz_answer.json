@@ -1,0 +1,15 @@
+{
+  "name": "person_quiz_answer",
+  "displayName": "Person Quiz Answer",
+  "description": "One person's answer to one native quiz question with a stated importance weight. Answers drive matching agreement; they never gatekeep visibility and never disclose anything the owner did not state.",
+  "attributes": {
+    "answer": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "actor_subject": {"type": "string", "required": true},
+    "question": {"type": "string", "required": true},
+    "choice": {"type": "string", "required": true},
+    "weight": {"type": "string", "required": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

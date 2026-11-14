@@ -27,6 +27,9 @@
       "type": "string",
       "required": false
     },
+    "design_fingerprint": {"type": "string", "required": false},
+    "design_namespace": {"type": "string", "required": false},
+    "design_html_sha256": {"type": "string", "required": false},
     "cannot_infer": {
       "type": "string",
       "required": false

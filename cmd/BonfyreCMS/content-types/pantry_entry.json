@@ -1,0 +1,19 @@
+{
+  "name": "pantry_entry",
+  "displayName": "Pantry Entry",
+  "description": "One dated entry on a household's private pantry and preservation calendar: something foraged, a batch put up, or a store counted. It is read and written only by the household's own members and is not a food-safety certification.",
+  "attributes": {
+    "entry": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "household_id": { "type": "string", "required": true },
+    "kind": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "on_date": { "type": "string", "required": true },
+    "quantity": { "type": "string", "required": false },
+    "location": { "type": "string", "required": false },
+    "notes": { "type": "text", "required": false },
+    "author_subject": { "type": "string", "required": true },
+    "created_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

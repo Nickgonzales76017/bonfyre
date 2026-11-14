@@ -122,22 +122,6 @@ static void ph_art_link(const PhArtRef *ref) { fputs("/o/", stdout); page_url_es
 static void ph_art_tab_url(const PhSite *site, const char *art) { ph_url(site, "artwork", 1); fputs("&amp;art=", stdout); url_query_value(art); }
 
 static void ph_gallery_style(void) {
-    fputs("<style>"
-      ".ph-gallery{margin:6px 0 40px}.ph-gallery-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}"
-      ".ph-gallery-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:30px 22px;align-items:start;grid-auto-flow:dense;margin-top:14px}"
-      ".ph-art{margin:0;grid-column:span 2;min-width:0}.ph-art[data-span=wide]{grid-column:span 4}"
-      ".ph-art-frame{display:block;overflow:hidden;background:#193d30;height:clamp(180px,17vw,270px)}"
-      ".ph-art[data-span=wide] .ph-art-frame{height:clamp(260px,31vw,480px)}.ph-art[data-span=tall] .ph-art-frame{height:clamp(300px,34vw,540px)}"
-      ".ph-art-frame img{width:100%;height:100%;object-fit:cover;display:block}"
-      ".ph-art figcaption{padding-top:10px;display:grid;gap:2px}.ph-art figcaption>a{font:400 19px/1.25 Georgia,serif;color:var(--ph-ink);overflow-wrap:anywhere}"
-      ".ph-art[data-span=wide] figcaption>a{font-size:25px}.ph-art figcaption span,.ph-art figcaption small{font-size:12px;color:var(--ph-muted);overflow-wrap:anywhere}"
-      ".ph-art-state{font:600 11px ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:#8a5a12}"
-      ".ph-art-owner{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.ph-art-owner form{margin:0}.ph-art-owner button{min-height:40px;padding:8px 12px;font-size:12px}"
-      ".ph-art-owner button.ph-quiet,.ph-shell .ph-art-owner button.ph-quiet{background:transparent;color:#2b4c36;border-color:#b5c8a1}"
-      ".ph-art[data-gallery-stale] .ph-art-frame{opacity:.45}"
-      "@media(max-width:700px){.ph-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}.ph-art{grid-column:span 1}.ph-art[data-span=wide]{grid-column:span 2}"
-      ".ph-art-frame{height:170px}.ph-art[data-span=wide] .ph-art-frame{height:230px}.ph-art[data-span=tall] .ph-art-frame{height:260px}.ph-art figcaption>a{font-size:16px}.ph-art[data-span=wide] figcaption>a{font-size:20px}}"
-      "</style>", stdout);
 }
 
 static void ph_gallery_form(const PhSite *site, const char *action, const PhArtRow *row, const char *label, int quiet) {
@@ -243,12 +227,6 @@ static void ph_artwork_view(sqlite3 *db, const PhSite *sites, int count, const P
         fputs("<div class=\"ph-empty\"><p>You need a published profile site first. <a href=\"/account#presence\">Set up a site</a>.</p></div>", stdout);
         return;
     }
-    fputs("<style>.ph-art-sites{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}.ph-art-sites a{padding:9px 15px;border-radius:999px;border:1px solid var(--ph-line);font-size:13px}.ph-art-sites a[aria-current=page]{background:#2b5038;color:#fffef7;border-color:#2b5038}"
-          ".ph-art-preview{margin:0 0 26px}.ph-art-crop{height:clamp(180px,25vw,310px);overflow:hidden;background:#193d30}.ph-art-crop img{width:100%;height:100%;object-fit:cover;display:block}"
-          ".ph-art-preview figcaption{display:flex;flex-wrap:wrap;gap:6px 16px;padding-top:10px;font-size:13px;color:var(--ph-muted)}.ph-art-preview figcaption strong{font:400 21px/1.2 Georgia,serif;color:var(--ph-ink);flex-basis:100%}"
-          ".ph-art-choices{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px}.ph-art-choices .ph-form{max-width:none}.ph-art-choices h3{font:400 23px/1.2 Georgia,serif;margin:0 0 8px}.ph-art-choices p{font-size:13px;color:var(--ph-muted)}"
-          ".ph-shell .ph-art-choices input[type=range]{min-height:44px;padding:0;border:0;background:transparent;accent-color:#2b5038}"
-          "@media(max-width:800px){.ph-art-choices{grid-template-columns:minmax(0,1fr)}}</style>", stdout);
     fputs("<nav class=\"ph-art-sites\" aria-label=\"Choose which site\">", stdout);
     for (int i = 0; i < count; i++) {
         fputs("<a href=\"", stdout); ph_art_tab_url(&sites[i], ref.ref); fputs("\"", stdout);

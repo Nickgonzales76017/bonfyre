@@ -1,8 +1,8 @@
 // Project-node patch and operator owner. No imports from the Python service.
 import { Database } from 'bun:sqlite';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { chmodSync, copyFileSync, existsSync, lstatSync, readdirSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 const RECEIPT_ID = /^patch-[0-9]+-[a-f0-9]{12}$/;
@@ -135,9 +135,12 @@ export function createProjectOperator({ root, home = homedir(), env = process.en
     return { ...DEFAULT_POLICY, ...loaded };
   }
   async function execute(argv, options = {}) {
-    const result = await run(argv, { cwd: projectRoot, ...options, env: childEnv });
+    const { retirementArchiveRoot, retirementManifestSha256, ...bounds } = options;
+    const scoped = retirementArchiveRoot === undefined ? childEnv : { ...childEnv, BONFYRE_ARCHIVE: retirementArchiveRoot,
+      BONFYRE_RETIRE_EXPECTED_MANIFEST_SHA256: retirementManifestSha256 };
+    const result = await run(argv, { cwd: projectRoot, ...bounds, env: scoped });
     if (!result || !Number.isInteger(result.exit_code)) throw new Error(`runner gave no exit code for ${argv[0]}`);
-    if (result.timeout || result.overflow) throw new Error(`${argv[0]} read or effect exceeded a bound`);
+    if (result.timeout || result.overflow) throw new Error(`${argv[0]} ${result.timeout ? 'timed out' : 'exceeded the bounded output capture'}`);
     return result;
   }
   async function dirtyPaths(paths = []) {
@@ -543,6 +546,213 @@ export function createProjectOperator({ root, home = homedir(), env = process.en
     } finally { db.close(); }
   }
 
+  // Historical promises have a separate on-disk TSV ledger. Its identity, rows,
+  // evidence and write effects are NOT interchangeable with operator goals.
+  // The inventory is sourced only from retained Atlas and handoff texts.
+  // Candidate rows are NOT implementation verdicts. No model is allowed to turn
+  // an Atlas prohibition or an unchecked donor skill into a DONE claim.
+  function maturationCandidates() {
+    const items=[],seen=new Set(),count={atlas_gaps:0,handoff_rows:0,plan_markers:0,plan_review_rows:0};
+    const add=(kind,ref,promise)=>{
+      if(typeof promise!=='string'||!promise.trim()||/[\t\r\n\0]/.test(promise))return;
+      const normalized=promise.trim();
+      const id='source:'+sha(kind+'\0'+ref+'\0'+normalized).slice(0,32);
+      if(seen.has(id))return;
+      seen.add(id);items.push({id,kind,source_ref:ref,promise:normalized});count[kind]++;
+    };
+    const atlas=JSON.parse(readFileSync(projectPath('architecture/atlas.index.json'),'utf8'));
+    if(!atlas.architectures||typeof atlas.architectures!=='object')throw new Error('invalid canonical Atlas index');
+    for(const [id,item] of Object.entries(atlas.architectures))
+      for(const [i,gap] of (item.known_gaps??[]).entries())
+        add('atlas_gaps','architecture/atlas.index.json#architectures.'+id+'.known_gaps['+i+']',gap);
+    const dirs=['docs/engineering','docs/engineering/handoff-backfill-20261019',
+      'docs/engineering/stitch-aurekai-20261104'];
+    const sourceDocs=[];
+    for(const dir of dirs)for(const entry of readdirSync(projectPath(dir)).sort()){
+      const rel=dir+'/'+entry;
+      if(!/^[a-zA-Z0-9._-]+[.](?:tsv|md)$/.test(entry))continue;
+      if(dir==='docs/engineering'&&entry.endsWith('.tsv')===false&&
+         !(/2026|convergence|portfolio|white-label/.test(entry)))continue;
+      sourceDocs.push(rel);
+    }
+    for(const rel of sourceDocs){
+      const path=projectPath(rel);
+      if(!regular(path)||lstatSync(path).size>1_000_000)continue;
+      const rows=readFileSync(path,'utf8').split('\n');
+      if(rel.endsWith('.tsv')){
+        const headers=rows[0]?.split('\t')??[];
+        if(headers.length<2)continue;
+        const keyCol=headers.findIndex(x=>/^(?:source_path|screen_id|provider|platform|name|id|source_domain)$/.test(x));
+        for(let line=1;line<rows.length;line++){
+          if(!rows[line]||rows[line].includes('\0'))continue;
+          const fields=rows[line].split('\t');if(fields.length!==headers.length)continue;
+          const key=fields[keyCol>=0?keyCol:0];
+          // Preserve the operation, receiving owner, test and stage fields
+          // together. A display title alone is not the source promise.
+          const relevant=fields.map((value,i)=>({field:headers[i],value:value.trim()}))
+            .filter(x=>x.value&&x.field&&!/^(?:git_blob_sha|bytes|index_line|same_skill_body_group)$/.test(x.field));
+          const purpose=relevant.map(x=>x.field+': '+x.value).join(' | ');
+          if(!key||!purpose)continue;
+          add('handoff_rows',rel+'#'+(line+1)+':'+sha(key).slice(0,12),purpose.slice(0,1800));
+        }
+      }else{
+        for(let line=0;line<rows.length;line++){
+          const text=rows[line].trim();
+          const explicit=/^[-*]\s+\[\s\]|^(?:TODO|OPEN|PENDING):/i.test(text);
+          // The dated plans also recorded requirements in tables and ordinary bullets.
+          // Keep them as review candidates, never assume these are open defects.
+          const substantial=/^(?:[-*]\s+|\|\s+)(?!-\s*\|)/.test(text) &&
+            /\b(?:must|needs?|remaining|unfinished|pending|missing|blocked|not yet|not complete|cannot yet|requires?|unbuilt|unimplemented|still|next|before release)\b/i.test(text);
+          if(!explicit&&!substantial)continue;
+          const kind=explicit?'plan_markers':'plan_review_rows';
+          add(kind,rel+'#'+(line+1),text.slice(0,1800));
+        }
+      }
+    }
+    const stageCohort=(path,stages)=>{
+      const bytes=readFileSync(projectPath(path));
+      const lines=bytes.toString('utf8').trimEnd().split('\n'),fields=lines.shift().split('\t');
+      const positions=Object.fromEntries(stages.map(n=>[n,fields.indexOf(n)]));
+      const rows=lines.filter(Boolean).map(line=>line.split('\t'));
+      return {source:path,sha256:sha(bytes),items:rows.length,
+        stages:Object.fromEntries(stages.map(n=>{const i=positions[n];
+          const values=i<0?[]:rows.map(row=>(row[i]??'').trim());
+          return [n,{blank:values.filter(v=>!v).length,pending:values.filter(v=>v==='pending').length,
+            partial:values.filter(v=>/^partial/i.test(v)).length,pass:values.filter(v=>/^pass/i.test(v)).length}];
+        }))};
+    };
+    const programmes=readFileSync(projectPath('cmd/BonfyreExperienceStage/experience-maturities.yaff'));
+    const denominators={skills:stageCohort('docs/engineering/handoff-backfill-20261019/skills-native-demo-scope.tsv',
+      ['source_reviewed','operation_implemented','ui_complete','native_continuation','downstream_used']),
+      stitch:stageCohort('docs/engineering/stitch-aurekai-20261104/COVERAGE.tsv',
+      ['control_parity','source_record_parity','authority_acceptance','browser_acceptance','live_release_readback']),
+      experiences:{source:'cmd/BonfyreExperienceStage/experience-maturities.yaff',sha256:sha(programmes),
+        items:programmes.toString('utf8').split('\n').filter(s=>/^maturity\s+[0-9]{2}\s+/.test(s)).length}};
+    return {items,count,source_docs:sourceDocs.length,atlas_generation:atlas.index?.declaration_digest??null,denominators};
+  }
+
+  function maturationLedger(args = {}) {
+    const action = args.action ?? 'read';
+    if (!['read','record','coverage','seed'].includes(action)) throw new Error('unknown maturation action');
+    if (action !== 'record' && args.updates !== undefined) throw new Error('updates require explicit record action');
+    const root = join(home, '.bonfyre', 'backlog'), path = join(root, 'items.tsv');
+    for (const p of [join(home,'.bonfyre'),root,path]) noSymlink(p);
+    if (!regular(path) || lstatSync(path).size > 16 * 1024 * 1024)
+      throw new Error('canonical items.tsv is missing or exceeds its read bound');
+    const original = readFileSync(path), sourceSha = sha(original);
+    const source = new TextDecoder('utf-8',{fatal:true}).decode(original);
+    if (!source.endsWith('\n') || source.includes('\r') || source.includes('\0'))
+      throw new Error('items.tsv must be a terminated LF UTF-8 ledger');
+    const parts = source.slice(0,-1).split('\n'), columns = parts.shift().split('\t');
+    if (columns.some(c=>!c||!/^[a-z][a-z0-9_-]*$/.test(c)) ||
+        new Set(columns).size !== columns.length) throw new Error('invalid backlog columns');
+    const ids = ['id','item_id','key','item'].map(k=>columns.indexOf(k)).find(i=>i>=0);
+    if (ids===undefined) throw new Error('existing backlog ledger has no item id column');
+    const rows = parts.map(line=>{
+      const cells = line.split('\t');
+      if (cells.length !== columns.length) throw new Error('invalid backlog TSV row width');
+      return cells;
+    });
+    const byId = new Map();
+    for (const [i,row] of rows.entries()) {
+      if (!row[ids] || byId.has(row[ids])) throw new Error('missing or repeated backlog item id');
+      byId.set(row[ids],i);
+    }
+    const response = {schema_version:'bonfyre.backlog.maturation.v1',path:'~/.bonfyre/backlog/items.tsv',
+      sha256:sourceSha,columns,total:rows.length,paused:existsSync(stopPath)};
+    const corpus=['coverage','seed'].includes(action) ? maturationCandidates() : null;
+    if (action === 'coverage') return {...response,source_scope:corpus.count,source_docs:corpus.source_docs,
+      atlas_generation:corpus.atlas_generation,source_candidates:corpus.items.length,
+      already_registered:corpus.items.filter(item=>byId.has(item.id)).length,
+      unregistered:corpus.items.filter(item=>!byId.has(item.id)).length,
+      denominators:corpus.denominators,verdicts_are_source_checked:false};
+    if (action === 'read') {
+      const offset = args.offset ?? 0, limit = args.limit ?? 100;
+      if (!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<1||limit>200)
+        throw new Error('invalid backlog page');
+      return {...response,offset,returned:Math.min(limit,Math.max(rows.length-offset,0)),
+        rows:rows.slice(offset,offset+limit).map(row=>Object.fromEntries(columns.map((c,i)=>[c,row[i]]))),
+        has_more:offset+limit<rows.length};
+    }
+    if (!writeEnabled || !existsSync(stopPath)) throw new Error('backlog updates require MCP write permission and operator STOP');
+    if (args.expected_sha256 !== sourceSha) throw new Error('backlog ledger changed; review latest source before writing');
+    if (action === 'record' && (!Array.isArray(args.updates)||!args.updates.length||args.updates.length>100))
+      throw new Error('record 1..100 independently reviewed existing items');
+    const targets = new Set(), verdictName = columns.find(c=>['verdict','status','state'].includes(c)) ?? 'verdict';
+    const evidenceName = columns.find(c=>['evidence','proof','current_evidence'].includes(c)) ?? 'evidence';
+    for (const field of [verdictName,evidenceName,'checked_at'])
+      if (!columns.includes(field)) {columns.push(field);for(const row of rows)row.push('');}
+    if (action === 'seed') {
+      // Register ALL source-backed inventory candidates in one durable pass.
+      // An inventory candidate is never a verified open bug or a completed feature.
+      for(const field of ['source_ref','promise'])
+        if(!columns.includes(field)){columns.push(field);for(const row of rows)row.push('');}
+      // Existing historical rows may use title/description/source rather than
+      // the new optional source_ref and promise columns. Avoid reintroducing them.
+      const matchColumns=['source_ref','source','source_path','reference','origin','promise',
+        'requirement','description','text','title','item','claim']
+        .map(name=>columns.indexOf(name)).filter(i=>i>=0);
+      const existingSources=new Set(rows.flatMap(row=>matchColumns.map(i=>row[i]).filter(Boolean)));
+      for(const candidate of corpus.items){
+        if(byId.has(candidate.id)||existingSources.has(candidate.source_ref)||existingSources.has(candidate.promise))continue;
+        const row=Array(columns.length).fill('');
+        row[ids]=candidate.id;
+        row[columns.indexOf('source_ref')]=candidate.source_ref;
+        row[columns.indexOf('promise')]=candidate.promise;
+        row[columns.indexOf(verdictName)]='unverified';
+        row[columns.indexOf(evidenceName)]='Source inventory only; requires current-source inspection, implementation and independent witness';
+        byId.set(candidate.id,rows.length);rows.push(row);targets.add(candidate.id);
+      }
+    }
+    for (const item of (args.updates??[])) {
+      if (!item || typeof item.id!=='string'||!byId.has(item.id)||targets.has(item.id))
+        throw new Error('update requires one unique existing exact item id');
+      targets.add(item.id);
+      if (!['done','partial','open','blocked','deliberate_boundary','stale'].includes(item.verdict))
+        throw new Error('invalid evidence verdict');
+      if (!Array.isArray(item.evidence)||!item.evidence.length||item.evidence.length>12 ||
+          item.evidence.some(s=>typeof s!=='string'||s.length<8||s.length>500||/[\t\r\n\0]/.test(s)))
+        throw new Error('evidence must contain exact, single-line witness references');
+      if (item.verdict==='done') {
+        if (!Array.isArray(item.source_proofs)||!item.source_proofs.length||
+            !Array.isArray(item.test_witnesses)||!item.test_witnesses.length)
+          throw new Error('done requires current source hashes and independent test witnesses');
+        for(const proof of item.source_proofs){
+          if (typeof proof?.path!=='string'||typeof proof?.sha256!=='string'||
+              fileHash(proof.path)!==proof.sha256)
+            throw new Error('done source witness does not match current checkout bytes');
+        }
+        if(item.test_witnesses.some(s=>typeof s!=='string'||s.length<12||/[\t\r\n\0]/.test(s)))
+          throw new Error('invalid test witness');
+      }
+      const row=rows[byId.get(item.id)];
+      row[columns.indexOf(verdictName)]=item.verdict;
+      row[columns.indexOf(evidenceName)]=item.evidence.join(' | ');
+      row[columns.indexOf('checked_at')]=new Date().toISOString();
+    }
+    if (action === 'seed' && targets.size === 0) return {...response,seeded:0,sha256:sourceSha,operator_resumed:false};
+    // Preserve a content-addressed preimage, then atomically replace the sole TSV.
+    // No row outside the exact submitted set changes; wrong CAS refuses everything.
+    const backups=join(root,'receipts');
+    noSymlink(backups);
+    if (!existsSync(backups)) mkdirSync(backups,{mode:0o700});
+    if(!realpathSync(backups).startsWith(realpathSync(root)+'/'))throw new Error('backlog receipt escapes root');
+    const preimage=join(backups,sourceSha+'.tsv');
+    noSymlink(preimage);
+    if(!existsSync(preimage))writeFileSync(preimage,original,{flag:'wx',mode:0o600});
+    else if(sha(readFileSync(preimage))!==sourceSha)throw new Error('backlog preimage collision');
+    const revised=Buffer.from(columns.join('\t')+'\n'+rows.map(row=>row.join('\t')).join('\n')+'\n');
+    const tmp=path+'.'+randomBytes(8).toString('hex')+'.tmp';
+    try{
+      writeFileSync(tmp,revised,{flag:'wx',mode:0o600});
+      if(sha(readFileSync(path))!==sourceSha)throw new Error('backlog changed during exact-review write');
+      chmodSync(tmp,lstatSync(path).mode&0o777);
+      renameSync(tmp,path);
+    }finally{rmSync(tmp,{force:true});}
+    return {...response,updated:targets.size,previous_sha256:sourceSha,sha256:sha(revised),
+      preimage_sha256:sourceSha,independent_verdicts:action==='record',new_candidates:action==='seed'?targets.size:0,operator_resumed:false,
+      cannot_infer:'Ledger verdicts are not implementation, publication, payment or production readback.'};
+  }
   function addGoal(args) {
     const title = String(args.title).trim(), details = String(args.details ?? '').trim();
     const priority = Math.max(1, Math.min(Number.parseInt(args.priority ?? 50, 10), 100));
@@ -574,14 +784,73 @@ export function createProjectOperator({ root, home = homedir(), env = process.en
     if (profile === 'cmd-make') {
       const family = String(args.target ?? '');
       if (!/^Bonfyre[A-Za-z0-9_-]+$/.test(family)) throw new Error('cmd-make target must be a Bonfyre command family');
+      // Source-pinned narrow builds do not run the full `all` plus `test` graph.
+      const scopedTargets = {
+        BonfyreWebAddress: new Set(['build/web_main.o', 'bonfyre-web-address', 'community-journey-witness', 'route-presentation-witness']),
+      };
+      let selected = null;
+      if (args.paths !== undefined) {
+        if (!Array.isArray(args.paths) || args.paths.length !== 1 ||
+            typeof args.paths[0] !== 'string' || !scopedTargets[family]?.has(args.paths[0]))
+          throw new Error('cmd-make scoped target is not an approved native witness');
+        selected = args.paths[0];
+      }
       const cwd = projectPath(`cmd/${family}`);
-      const build = await invoke(['make', '-j2'], cwd);
-      if (build.exit_code !== 0) return { profile, build, result: build };
+      const build = await invoke(['make', '-j2', ...(selected ? [selected] : [])], cwd);
+      if (build.exit_code !== 0 || selected) return { profile, scope: selected || 'all', build, result: build };
       const makefile = join(cwd, 'Makefile');
       const ownsTests = existsSync(makefile) && /(^|\n)test\s*:/m.test(readFileSync(makefile, 'utf8'));
       if (!ownsTests) return { profile, build, result: build };
       const tests = await invoke(['make', 'test'], cwd);
       return { profile, build, tests, result: tests };
+    }
+    // A bounded test runner: caller chooses only existing source-controlled test files,
+    // never an argv command, arbitrary script or path outside the repository.
+    if (profile === 'bun-tests') {
+      if (args.target !== undefined || !Array.isArray(args.paths) || !args.paths.length || args.paths.length > 12)
+        throw new Error('bun-tests requires 1–12 test paths and no target');
+      const seen = new Set(), tests = args.paths.map(value => {
+        const relative = safeRelative(String(value));
+        if (!/^(?:components|integrations|Aurekai|scripts|cmd|bonfyre-zig)\//.test(relative) ||
+            !relative.includes('/tests/') || !/\.test\.(?:mjs|js|ts|tsx)$/.test(relative))
+          throw new Error('bun-tests accepts only repository tests/*.test.mjs/js/ts/tsx files');
+        if (seen.has(relative)) throw new Error('duplicate bun test path');
+        seen.add(relative);
+        const absolute = projectPath(relative);
+        if (!regular(absolute) || lstatSync(absolute).size > MAX_SYNTAX_BYTES)
+          throw new Error('test file is unavailable or exceeds size bound');
+        return absolute;
+      });
+      return { profile, test_files: [...seen], result: await invoke([join(home, '.bun/bin/bun'), 'test', ...tests]) };
+    }
+    if (profile === 'service-site-planner') {
+      if (args.target !== undefined || args.paths !== undefined) throw new Error('service-site-planner has a fixed test scope');
+      const bun = join(home, '.bun/bin/bun');
+      const tests = await invoke([bun, 'test', ...[
+        'components/BonfyreServiceSite/tests/planner.test.mjs',
+        'components/BonfyreServiceSite/tests/planner-projects.test.mjs',
+        'components/BonfyreServiceSite/tests/planner-spatial.test.mjs',
+        'components/BonfyreServiceSite/tests/opportunity-selection.test.mjs',
+      ].map(projectPath)]);
+      if (tests.exit_code !== 0) return { profile, tests, result: tests };
+      const scratch = mkdtempSync(join(tmpdir(), 'bonfyre-planner-'));
+      try {
+        const buildDir = join(scratch, 'build'), proofDir = join(scratch, 'proof');
+        const build = await invoke([bun, projectPath('components/BonfyreServiceSite/build.mjs'),
+          projectPath('packs/aurekai-work-samples/site'), '--out', buildDir]);
+        if (build.exit_code !== 0) return { profile, tests, build, result: build };
+        // Browser harness uses its own local HTTP worker and synthetic leads; no production writes.
+        const browser = await invoke(['/usr/bin/env', 'PLANNER_BUILD='+buildDir, 'PLANNER_PROOF='+proofDir,
+          bun, projectPath('components/BonfyreServiceSite/tests/planner-browser.test.mjs')]);
+        let proof = null;
+        const proofFile = join(proofDir, 'browser-verification.json');
+        if (browser.exit_code === 0 && regular(proofFile)) {
+          const value = JSON.parse(readFileSync(proofFile, 'utf8'));
+          proof = { checks: value.checks?.length ?? 0, errors: value.errors?.length ?? 0,
+            external_writes: value.external_writes ?? null };
+        }
+        return { profile, tests, build, browser, proof, result: browser };
+      } finally { rmSync(scratch, { recursive: true, force: true }); }
     }
     if (profile === 'training-mcp-smoke') {
       const tests = [
@@ -683,6 +952,136 @@ export function createProjectOperator({ root, home = homedir(), env = process.en
     };
   }
 
+  // File removal is deliberately a different authority from ordinary Git patches.
+  // Every cut needs native replacement bytes, passing owner tests, current hashes,
+  // and a byte-for-byte restorable archive before a source can disappear.
+  async function retireSources(args) {
+    if (args.confirm !== true || !writeEnabled || !lowRiskEnabled ||
+        policy().auto_apply_low_risk_patches !== true)
+      throw new Error('source retirement needs explicit confirmation and an enabled Project owner');
+    if (Object.keys(args).some(key => !['confirm', 'entries', 'native_source', 'native_sha256', 'reason'].includes(key)))
+      throw new Error('unsupported source retirement argument');
+    const reason = String(args.reason ?? '');
+    if (reason.length < 16 || reason.length > 200 || /[\u0000-\u001f\u007f]/.test(reason))
+      throw new Error('source retirement needs a bounded, specific reason');
+    if (!Array.isArray(args.entries) || args.entries.length < 1 || args.entries.length > 32)
+      throw new Error('retire 1–32 reviewed sources at once');
+    const nativeSource = safeRelative(args.native_source);
+    const match = /^cmd\/(Bonfyre[A-Za-z0-9_-]+)\/src\/[A-Za-z0-9_.-]+\.c$/.exec(nativeSource);
+    if (!match || !/^[a-f0-9]{64}$/.test(args.native_sha256) ||
+        fileHash(nativeSource) !== args.native_sha256)
+      throw new Error('native replacement source is absent or changed');
+    const paths = args.entries.map(entry => {
+      if (!entry || Object.keys(entry).sort().join(',') !== 'path,sha256' ||
+          typeof entry.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(entry.sha256))
+        throw new Error('source retirement requires exact path/SHA-256 entries');
+      const path = safeRelative(entry.path);
+      if (!path.endsWith('.mjs') && !/\.(?:js|cjs|ts|tsx|py)$/.test(path))
+        throw new Error('source retirement is for authored scripts only');
+      if (!/^[A-Za-z0-9._/-]+$/.test(path))
+        throw new Error('source retirement needs a portable, whitespace-free path');
+      if (/(?:^|\/)tests?\//.test(path) || /(?:^|[._-])test(?:s)?\./.test(path))
+        throw new Error('retiring tests requires a separate parity owner');
+      return path;
+    });
+    if (new Set(paths).size !== paths.length) throw new Error('duplicate retirement source');
+    const metadata = await pathMetadata(paths);
+    const policyErrors = lowRiskErrors({ files: metadata, file_count: paths.length, changed_lines: 0,
+      dirty_conflicts: metadata.filter(item => item.dirty_before).map(item => item.path) });
+    if (policyErrors.length) throw new Error('source retirement refused by Project policy: ' + policyErrors.join('; '));
+    for (let i = 0; i < paths.length; i++)
+      if (!metadata[i].exists || metadata[i].sha256 !== args.entries[i].sha256)
+        throw new Error('retirement source missing or changed: ' + paths[i]);
+    const manifestSha256 = sha(paths.map((path, i) => `${args.entries[i].sha256}  ${path}\n`)
+      .sort((a, b) => Buffer.compare(Buffer.from(a.slice(66)), Buffer.from(b.slice(66)))).join(''));
+    const totalBytes = metadata.reduce((sum, item) => sum + lstatSync(projectPath(item.path)).size, 0);
+    if (totalBytes > 8 * 1024 * 1024) throw new Error('source retirement exceeds 8 MiB batch limit');
+    const nativeFamily = match[1], nativeMake = projectPath('cmd/' + nativeFamily + '/Makefile');
+    if (!regular(nativeMake)) throw new Error('native replacement has no owner test Makefile');
+    // A native owner may expose a parity-only retirement target when its full
+    // release test also checks the global ratchet; the ratchet still gates release.
+    const nativeMakeText = readFileSync(nativeMake, 'utf8');
+    const testTarget = /^retirement-proof\s*:/m.test(nativeMakeText) ? 'retirement-proof' : 'test';
+    const runNativeTests = () => execute(['make', '-C', 'cmd/' + nativeFamily, testTarget],
+      { timeoutMs: 900000, maxOutputBytes: 300000 });
+    const before = await runNativeTests();
+    if (before.exit_code !== 0) return { retired: false, reason: 'native_tests_failed_before', native_family: nativeFamily,
+      exit_code: before.exit_code, stderr_tail: String(before.stderr ?? '').slice(-1000) };
+    if (fileHash(nativeSource) !== args.native_sha256 ||
+        paths.some((path, i) => fileHash(path) !== args.entries[i].sha256))
+      return { retired: false, reason: 'source_changed_during_native_tests' };
+    const originals = metadata.map(item => ({ path: item.path, mode: item.mode,
+      bytes: readFileSync(projectPath(item.path)) }));
+    const restoreOriginals = () => {
+      const conflicts = originals.filter((item, i) => existsSync(projectPath(item.path)) &&
+        (fileHash(item.path) !== args.entries[i].sha256 || fileMode(item.path) !== item.mode));
+      if (conflicts.length) return { restored: false, conflicted: conflicts.map(item => item.path) };
+      for (const item of originals) if (!existsSync(projectPath(item.path))) {
+        writeFileSync(projectPath(item.path), item.bytes, { flag: 'wx', mode: item.mode });
+        chmodSync(projectPath(item.path), item.mode);
+      }
+      return { restored: originals.every((item, i) => fileHash(item.path) === args.entries[i].sha256 &&
+        fileMode(item.path) === item.mode), conflicted: [] };
+    };
+    const name = 'verified-source-' + Math.floor(Date.now() / 1000) + '-' + randomBytes(6).toString('hex');
+    const archiveRoot = join(home, '.bonfyre', 'archive');
+    const archive = join(archiveRoot, 'retired', name + '.tar.zst');
+    const script = projectPath('scripts/retire.sh');
+    if (!regular(script)) throw new Error('source retirement archive owner unavailable');
+    ensureStore();
+    let cut;
+    try {
+      cut = await execute([script, name, reason, ...paths],
+        { retirementArchiveRoot: archiveRoot, retirementManifestSha256: manifestSha256,
+          timeoutMs: 300000, maxOutputBytes: 300000 });
+    } catch {
+      const recovery = restoreOriginals();
+      return { retired: false, reason: 'archive_execution_uncertain', ...recovery,
+        archive, requires_manual_reconciliation: !recovery.restored };
+    }
+    const removed = paths.every(path => !existsSync(projectPath(path)));
+    const archivedManifest = join(archiveRoot, 'retired', name + '.sha256');
+    const archived = regular(archive) && regular(archivedManifest) && sha(readFileSync(archivedManifest)) === manifestSha256;
+    if (cut.exit_code !== 0 || !archived || !removed) {
+      const recovery = restoreOriginals();
+      return { retired: false, reason: 'archive_or_removal_uncertain', native_family: nativeFamily,
+        archive_present: archived, sources_removed: removed, ...recovery, requires_manual_reconciliation: !recovery.restored };
+    }
+    let after, diff;
+    try {
+      after = await runNativeTests();
+      diff = await execute(['git', 'diff', '--check'], { timeoutMs: 60000, maxOutputBytes: 300000 });
+    } catch {
+      const recovery = restoreOriginals();
+      return { retired: false, reason: 'posttest_execution_uncertain', ...recovery, archive,
+        requires_manual_reconciliation: !recovery.restored };
+    }
+    const good = after.exit_code === 0 && diff.exit_code === 0;
+    if (!good) {
+      const recovery = restoreOriginals();
+      return { retired: false, reason: 'posttest_failed', ...recovery, archive,
+        requires_manual_reconciliation: !recovery.restored,
+        native_exit_code: after.exit_code, diff_exit_code: diff.exit_code };
+    }
+    let measurement = null;
+    try { measurement = await execute([projectPath('scripts/native-ratchet.sh'), 'measure'],
+      { timeoutMs: 120000, maxOutputBytes: 10000 }); } catch { /* Ratchet unverified; preserve receipt. */ }
+    const receipt = { schema: 'bonfyre.project.verified-source-retirement.v1', id: name,
+      native_source: nativeSource, native_sha256: args.native_sha256, manifest_sha256: manifestSha256, reason,
+      files: paths.map((path, i) => ({ path, sha256: args.entries[i].sha256 })),
+      archive, archive_verified: true, native_tests_before: before.exit_code,
+      native_tests_after: after.exit_code, git_diff_check: diff.exit_code,
+      ratchet_measurement: measurement?.exit_code === 0 ? String(measurement.stdout ?? '').trim() : null,
+      full_ratchet_passed: false };
+    try { atomicJson(join(receipts, name + '.retirement.json'), receipt); }
+    catch {
+      const recovery = restoreOriginals();
+      return { retired: false, reason: 'receipt_persistence_failed', ...recovery, archive,
+        requires_manual_reconciliation: !recovery.restored };
+    }
+    return { retired: true, receipt, next_gate: 'Run the full native ratchet, release acceptance and public readbacks before activation.' };
+  }
+
   async function call(name, args = {}) {
     if (!args || typeof args !== 'object' || Array.isArray(args)) throw new Error('project tool arguments must be an object');
     if (name === 'project_patch_preview') {
@@ -693,10 +1092,12 @@ export function createProjectOperator({ root, home = homedir(), env = process.en
     if (name === 'project_test_profile') return testProfile(args);
     if (name === 'operator_status') return summary();
     if (name === 'operator_backlog_audit') return backlogAudit(args);
+    if (name === 'operator_maturation_ledger') return args.action === 'read' ? maturationLedger(args) : serialize(() => maturationLedger(args));
     if (name === 'operator_goal_supersede') return serialize(() => supersedeGoals(args));
     if (name === 'organ_drift_sync') return serialize(() => organDriftSync(args));
     if (name === 'project_apply_patch') return serialize(() => { approve(args.approval_token); return applyPatch(String(args.patch), 'manual-approved'); });
     if (name === 'project_apply_low_risk_patch') return serialize(() => applyPatch(String(args.patch), 'autonomous-low-risk'));
+    if (name === 'project_retire_sources') return serialize(() => retireSources(args));
     if (name === 'project_revert_receipt') return serialize(() => revert(String(args.receipt_id)));
     if (name === 'project_commit_receipt') return serialize(() => commitReceipt(String(args.receipt_id), args.message));
     if (name === 'operator_goal_add') return serialize(() => addGoal(args));

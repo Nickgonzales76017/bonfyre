@@ -41,7 +41,7 @@ beforeAll(async()=>{
  if(!existsSync(queue))throw Error('Build the real BonfyreQueue owner before this test.');
  mkdirSync(state,{recursive:true});seedOperator();
  for(const [k,v] of Object.entries({BONFYRE_ACCOUNT_WORK_DB:index,BONFYRE_ACCOUNT_WORK_SOURCES:'operator='+operator,BONFYRE_WORKSPACE_CLIENT:join(root,'integrations/browser'),BONFYRE_BIN_DIR:join(queue,'..')})){saved[k]=process.env[k];process.env[k]=v;}
- f=await packSetupFixture();
+ f=await packSetupFixture({beforeServe:({env})=>{delete env.BONFYRE_PARTICIPATION_DB;delete env.BONFYRE_DATING_DB;}});
  owner=await f.login('inbox-owner@example.test');colleague=await f.login('inbox-colleague@example.test');stranger=await f.login('inbox-stranger@example.test');
  reindex(owner.id);{const estimates=new Database(index);estimates.query('INSERT INTO account_work_estimate VALUES(?,?,?,?,?,?)').run('account-operator-g-stopped','r-stopped',300,30,1250000,'fixture');estimates.close();}reindex(owner.id);ids={release:'account-operator-g-release',twilio:'account-operator-g-twilio',checklist:'account-operator-provider-estate-checklist'};
  // Real organizations: the owner runs one with an open invitation; a colleague's invites the owner.
@@ -70,6 +70,8 @@ test('tracking links retain the signed-in native Inbox without changing account 
  const url='/inbox?context=self&utm_source=chatgpt.com&utm_medium=chat';
  const own=await f.request(url,{cookie:owner.cookie});
  expect(own.status).toBe(200);expect(own.body).toContain('data-account-inbox');
+ expect(own.body).toContain('/assets/account-inbox.css');expect(own.body).not.toContain('id="account-inbox"');
+ const style=await f.request('/assets/account-inbox.css',{host:'aurekai.life'});expect(style.status).toBe(200);expect(style.body).toContain('.ak-inbox-mast');
  expect(own.body).toContain('data-context="self"');expect(own.body).toContain('Connect Twilio');
  const guest=await f.request(url);expect(guest.body).not.toContain('data-account-inbox');
  const foreign=await f.request(url,{cookie:stranger.cookie});expect(foreign.body).not.toContain('Connect Twilio');
@@ -83,6 +85,7 @@ test('the inbox separates what needs the person from agent work, with each one n
   'data-inbox-kind="provider-checklist"','Postmark','href="https://account.postmarkapp.com/api_tokens"','href="/apps/connections?context=self&amp;identity=gmail&amp;work=051-gmail"','href="/connect/github-app"',
   'data-inbox-kind="invitation"','Join River Guild','href="/organizations/join"','Harbor Cooperative','1 invitation not accepted yet','href="/organizations?organization='+ids.mine+'"',
   'data-inbox-kind="execution-credit"','OpenAI API credits are exhausted. Add credits before retrying this work.','Add OpenAI API credits','href="https://platform.openai.com/settings/organization/billing/"','Agent stopped','Rebuild the search index after a schema change'])expect(b).toContain(needle);
+ expect(b).not.toContain('data-inbox-kind="dating-introduction"'); // No opted-in Participation owner in this fixture.
  expect(b).not.toContain('fixture-release-OLD1');
  const needsYou=b.slice(b.indexOf('id="needs-you"'),b.indexOf('id="sub-accounts"')),agents=b.slice(b.indexOf('id="agents"'));
  expect(needsYou).toContain('Refresh the Dallas permit feed');expect(needsYou).not.toContain('insufficient_quota');expect(needsYou).not.toContain('Retry');expect(needsYou).not.toContain('Rebuild the search index');expect(agents).not.toContain('Approve release');

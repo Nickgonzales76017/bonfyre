@@ -24,7 +24,7 @@ static int cpack_schema(sqlite3 *db) {
         if (!name || !raw) { sqlite3_finalize(s); return 0; }
         if (!find_type(name)) {
             ContentType type = {0};
-            if (g_type_count >= 128 || parse_schema(raw, &type) != 0 || strcmp(type.name, name)) {
+            if (g_type_count >= CMS_MAX_TYPES || parse_schema(raw, &type) != 0 || strcmp(type.name, name)) {
                 free(type.fields); sqlite3_finalize(s); return 0;
             }
             g_types[g_type_count++] = type;

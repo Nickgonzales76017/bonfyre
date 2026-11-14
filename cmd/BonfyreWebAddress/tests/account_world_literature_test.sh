@@ -190,7 +190,7 @@ fail 'the poem reads back line for line'; }
 grep -q '<span class="aw-line aw-gap" id="l-4" data-unit="4"></span>' "$tmp/page" || fail 'stanza break kept'
 grep -q 'no one <em>waits</em>.' "$tmp/page" || fail 'emphasis'
 grep -q '<sup class="aw-fn"><a href="#n-[0-9]*" id="r-[0-9]*" aria-label="Footnote 1">1</a></sup>' "$tmp/page" && grep -q 'Line 2</span> Written on the Natchez ferry.' "$tmp/page" || fail 'footnote'
-grep -q 'data-recitation="playing"><p class="aw-role">Hear it read</p><audio controls preload="none" src="https://example.test/river.mp3">' "$tmp/page" || fail 'CC0 recitation plays'
+grep -q 'data-recitation="playing"><button type="button" class="ak-btn is-primary" data-ak-track data-ak-default data-src="https://example.test/river.mp3"' "$tmp/page" || fail 'CC0 recitation plays in the one player'
 grep -q 'data-world-rights="own">Text &copy; Avery Lane. All rights reserved' "$tmp/page" || fail 'author credit and terms'
 grep -q 'hreflang="es">El río guarda su consejo</a> <span>Spanish, translated by Avery Lane' "$tmp/page" || fail 'other edition'
 grep -q 'href="https://aurekai.work/workspace/worlds/reading?site=profile-avery-work&amp;space=journal&amp;work=river&amp;passage=text&amp;unit=0">Keep my place' "$tmp/page" || fail 'keep my place'
@@ -229,7 +229,7 @@ if grep -q '<script>alert' "$tmp/page"; then fail 'no story script runs'; fi
 # --- the same poem in a second space, without a copy ------------------------------
 [ "$(public /worlds/room)" = 200 ] || fail 'room'
 cp "$tmp/page" "$tmp/room.html"
-grep -q 'data-world-flat' "$tmp/page" && grep -q 'data-world-verse' "$tmp/page" && grep -q 'href="/worlds/journal/read/river">Open it in the reader' "$tmp/page" || fail 'room text from the journal'
+grep -q 'data-world-verse' "$tmp/page" && grep -q 'href="/worlds/journal/read/river">Open it in the reader' "$tmp/page" || fail 'room text from the journal'
 if grep -q 'data-world-works' "$tmp/page"; then fail 'the room holds no writing of its own'; fi
 [ "$(sqlite3 "$BONFYRE_CMS_DB" "select count(*) from account_world_passage where space_id='room'")" = 0 ] || fail 'no copy'
 

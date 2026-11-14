@@ -225,11 +225,17 @@ bad_key_status=$(curl -s -o "$home/bad-key.json" -w '%{http_code}' -X POST "http
 [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$port/mcp/acme" -H 'content-type: application/json' -H "Authorization: Bearer $writer" -d '{"jsonrpc":"2.0","id":1,"method":"ping"}')" = 401 ] || fail "one site's key opened another site"
 site inbox notes --json | grep -q '"count":1' || fail "the inbox does not hold exactly the one delivered message"
 site inbox notes | grep -q 'Ada <ada@example.test>' || fail "the inbox does not show who wrote"
-meter_usage=$(site usage notes --json)
+if ! meter_usage=$(site usage notes --json); then
+  echo "meter diagnostic: home=$home meter=$(command -v bonfyre-meter || true)" >&2
+  ls -lah "$home/meter.db"* "$HOME/.bonfyre/bin/bonfyre-meter" >&2 || true
+  sqlite3 "$home/meter.db" 'PRAGMA journal_mode; SELECT name FROM sqlite_master WHERE type="table" ORDER BY name; SELECT count(*) FROM events;' >&2 || true
+  [ -f "$home/serve.log" ] && tail -n 25 "$home/serve.log" >&2 || true
+  fail "meter usage cannot read the current test site"
+fi
 if ! printf '%s' "$meter_usage" | grep -q '"caller":"desk","tool":"send_inquiry","calls":1'; then
   echo "meter diagnostic: home=$home binary=$HOME/.bonfyre/bin/bonfyre-meter" >&2
   ls -l "$home/meter.db" "$HOME/.bonfyre/bin/bonfyre-meter" >&2 || true
-  sqlite3 "$home/meter.db" 'SELECT name FROM sqlite_master WHERE type="table" ORDER BY name; SELECT "events",count(*) FROM events; SELECT "rates",count(*) FROM rate;' >&2 || true
+  sqlite3 "$home/meter.db" 'SELECT name FROM sqlite_master WHERE type="table" ORDER BY name; SELECT "events",count(*) FROM events; SELECT "rates",count(*) FROM rate; SELECT "sample",quote(key_id),quote(receipt_ref),quote(timestamp) FROM events ORDER BY id DESC LIMIT 8;' >&2 || true
   fail "the meter did not record the keyed call: $meter_usage"
 fi
 site usage notes --json | grep -q '"caller":"public:[0-9a-f]\{8\}"' || fail "the meter did not record public calls under where they came from"

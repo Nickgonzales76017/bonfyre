@@ -1,6 +1,7 @@
 // Real program owner, compiler, SQLite and browser over a loopback HTTP boundary.
 // Account admission is a fixture; the C gateway suite covers native auth and roles.
 import {beforeAll,beforeEach,afterAll,expect,test} from 'bun:test';
+import {deferred,gate,packet,loopbackServer} from './browser-fixture.mjs';
 import {Database} from 'bun:sqlite';
 import {mkdtempSync,readFileSync,writeFileSync,rmSync,mkdirSync} from 'node:fs';
 import {join,resolve} from 'node:path';
@@ -25,9 +26,6 @@ const admission={admissionEnv:{BONFYRE_EXTERNAL_READS_ENABLED:'1',BONFYRE_RESOUR
 const retainedItem=(suffix='one')=>{const body='A retained fixture source about community learning. '+suffix;return {id:hash('program-browser-item-'+suffix),url:'https://example.org/learning/'+suffix,title:'Community learning source '+suffix,kind:'page',author:'Fixture author',publishedAt:'2026-10-01T00:00:00Z',body,bodySHA256:hash(body),truncated:false};};
 const providerReply=spec=>({items:[retainedItem(),retainedItem('two')],refused:0,requestId:'provider-request',reportedCredits:null,rawSHA256:hash('fixture-provider-reply'),raw:'fixture-provider-reply',observedAt:'2026-10-22T01:00:00Z',provider:spec.provider,tool:spec.provider==='exa'?'web_search_advanced_exa':'firecrawl_search',notices:[],noticesTruncated:false});
 const emptyAddress=argv=>({exitCode:0,stderr:'',stdout:JSON.stringify({candidate_kind:argv[argv.indexOf('--kind')+1],truth:'eligible_for_further_consideration',considered:0,eligible:0,returned:0,has_more:false,survivors:[]})});
-const deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const gate=()=>({entered:deferred(),release:deferred(),finished:deferred()});
-const packet=(value,status=200)=>new Response(encode(value),{status,headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
 let server,estate,db,actor,denied,toolsDenied,toolsUnavailable,losePrepare,readUnavailable,replyActor,reviewGate,calls;
 let loseChange,loseSourcePlan,loseSourceStart,loseSourceDecision,stopPlanBeforeNative,recordRevision,recordPageSize,metadataLeadRecord,providerEffects,providerGate,sourceItemGate,sourceDecisionGate,sourceAdmission;
 function binding(context){return {actor,subject:context==='self'?actor:context,scope:context==='self'?'self':context.split(':')[0]};}
@@ -54,7 +52,7 @@ beforeEach(()=>{
  loseChange=loseSourcePlan=loseSourceStart=loseSourceDecision=stopPlanBeforeNative=metadataLeadRecord=false;recordRevision=3;recordPageSize=1000;providerEffects=0;providerGate=sourceItemGate=sourceDecisionGate=null;sourceAdmission=admission;
 });
 beforeAll(async()=>{
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+ server=loopbackServer({async fetch(request){
   const url=new URL(request.url),context=url.searchParams.get('context')||'self';
   if(url.pathname==='/programs')return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/program-workspace.css"><style>body{margin:0;background:#f4f5f0;color:#23342b;font:15px/1.55 system-ui,sans-serif}header{padding:18px 28px;border-bottom:1px solid #d5ddcf;background:#fafbf7}header strong{font:26px Georgia,serif}main{padding:26px}h1{font:36px Georgia,serif}a{color:#315e41}button,input,select{font:inherit}button{cursor:pointer}</style></head><body><header><strong>Aurekai</strong> · Browser verification fixture</header><main><section class="program-workspace" data-program-workspace data-context="${context==='self'?'self':'institution:studio'}" data-instance="${url.searchParams.get('instance')||''}" data-template="${(url.searchParams.get('template')||'').replace(/[^A-Za-z0-9._-]/g,'')}" data-can-write="${url.searchParams.get('readonly')?'false':'true'}"><h1>Programs</h1><p>Prepare work for an account or organization, then continue in its tools.</p><label>Destination <select id="program-context"><option>${context==='self'?'Personal':'Studio organization'}</option></select></label><div data-program-app></div></section></main><script type="module" src="/apps/program-workspace.mjs"></script></body></html>`,{headers:{'Content-Type':'text/html'}});
   if(url.pathname==='/apps/_bindings'){

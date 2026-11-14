@@ -12,7 +12,7 @@ function literal(path,contains,starts){
  assert.equal(strings.length,1,`Expected one exact native literal ${contains}`);return strings[0];
 }
 const core=web+'page_core_rendering.h';
-const controls=literal(core,'data-media-catalogue','<style>'),script=literal(core,'data-media-search','<script>');
+const controls=literal(core,'data-media-catalogue','<section'),script=literal(core,'data-media-search','<script>');
 assert(core&&read(core).includes('const char *media_kind = item->kind == BF_PAGE_MATERIAL_VIDEO'));
 assert(read(core).includes('item->kind == BF_PAGE_MATERIAL_AUDIO')&&read(core).includes('Terms: '));
 const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');
@@ -22,6 +22,8 @@ try{
  const catalog=items=>`${controls}<div class="video-grid">${items.map(([id,kind,name])=>`<article class="page-media-card" data-media-card data-media-kind="${kind}" id="${id}"><a class="video" href="/o/retained/${id}">${name}</a><div class="media-catalogue-proof">Source: retained · Terms: source-stated</div><a data-item-continue href="/feed-use?context=self&amp;item=retained%2F${id}">Use in my apps</a></article>`).join('')}</div></section>${script}`;
  const page=await chrome.newPage();page.on('pageerror',e=>failures.push(e.message));
  await page.setContent(catalog([['film','video','Retained short film'],['audio','audio','Field recording'],['photo','photo','Picture'],['essay','other','Source essay']])+catalog([['other','video','Second owner film']]));
+ await page.addStyleTag({content:read('site/matrix/page-components.css')});
+ assert.equal(await page.$eval('.media-catalogue-controls',n=>getComputedStyle(n).display),'grid');
  assert.equal(await page.$$eval('[data-media-catalogue]:first-of-type [data-media-card]:not([hidden])',a=>a.length),4);
  await page.click('[data-media-catalogue]:first-of-type [data-media-kind="video"]');
  assert.deepEqual(await page.$$eval('[data-media-catalogue]:first-of-type [data-media-card]:not([hidden])',a=>a.map(x=>x.id)),['film']);

@@ -41,6 +41,18 @@ test('native setup header resolves the current session without browser state',as
  expect(nav).not.toMatch(/href="\/(signup|login)(?:\?|"|\/)/);
  expect(nav).not.toContain('workspace-owner@example.test');expect(nav).not.toContain(owner.cookie);
 });
+test('public Connections pages survive neutral Accept without granting a session',async()=>{
+ for(const [route,heading] of [['/connections','Connections'],['/connect','Tools, agents and push feeds']]){
+  for(const accept of ['text/html','*/*']){
+   const r=await f.request(route,{cookie:'',headers:{Accept:accept}});
+   expect(r.status).toBe(200);
+   expect(r.body).toContain('<h1>'+heading+'</h1>');
+   expect(r.body).not.toContain('data-session-state="signed-in"');
+  }
+  const machine=await f.request(route,{cookie:'',headers:{Accept:'application/json'}});
+  expect(machine.body).not.toContain('<h1>'+heading+'</h1>');
+ }
+});
 test('alternating account and anonymous requests never inherit another identity',async()=>{
  for(const [cookie,name]of [[owner.cookie,'Avery Example'],[second.cookie,'Jordan Example'],['',null],[owner.cookie,'Avery Example']]){
   const r=await f.request('/packs/setup',{cookie}),nav=header(r.body);
@@ -137,13 +149,11 @@ test('real Chrome renders, filters and navigates the same product cards at deskt
     expect(await page.$('dialog[open]')).toBeNull();
     expect(await page.$eval('.account-tool-shelf [data-pack-inspect]',n=>n===document.activeElement)).toBe(true);
     await page.screenshot({path:join(directory,'account-'+width+'.png'),fullPage:true});
-    // The public apex keeps editorial content, but adds authorized native work
-    // only after resolving the current browser session from the existing owner.
+    // The public apex is the edited front alone: no installed-tool shelf is
+    // appended under it for a signed-in reader.
     const workHome=await f.request('/',{host:'aurekai.work',cookie:owner.cookie});expect(workHome.status).toBe(200);await page.setExtraHTTPHeaders({});await page.goto(f.base+'/',{waitUntil:'domcontentloaded'});await page.setContent(workHome.body,{waitUntil:'networkidle0'});
-    await page.waitForSelector('.ak-home-continuation .pack-tool',{timeout:5500}).catch(async()=>{throw Error('HOME_DIAG '+JSON.stringify(await page.evaluate(()=>({url:location.href,state:document.querySelector('.ak-session')?.dataset.sessionState,bar:!!document.querySelector('.ak-bar'),home:!!document.querySelector('.ak-home-continuation'),main:!!document.querySelector('main'),script:[...document.scripts].some(s=>s.textContent.includes('ak-home-continuation')),hrefs:[...document.querySelectorAll('.ak-session a')].map(a=>a.getAttribute('href'))})))+' errors='+JSON.stringify(failures));});
-    expect(await page.$eval('.ak-home-continuation [data-work-editor]',n=>n.getAttribute('href'))).toBe(own.path);
-    expect(await page.$eval('.ak-home-continuation .pack-cards',n=>getComputedStyle(n).display)).toBe('grid');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    expect(await page.$('.ak-home-continuation')).toBeNull();
     expect(await page.evaluate(()=>performance.getEntriesByType('resource').every(r=>!/(sql-wasm|three\.module|creator.*wasm)/.test(r.name)))).toBe(true);
   }
   expect(failures).toEqual([]);expect(external.every(u=>u.startsWith('https://fonts.'))).toBe(true);

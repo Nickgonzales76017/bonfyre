@@ -47,3 +47,18 @@ test('delegated memberships cannot outlive either the original or current issuer
 test('new organization operations do not bootstrap permissions for existing provisioned institutions',()=>fixture(({call,owner,user,sql,create})=>{
  expect(call(owner,'invite',['bonfyre',user.email,'admin','24',secret()]).status).toBe(403);const {id}=create();call(owner,'invite',[id,user.email,'read','24',secret()]);expect(call(user,'invitations',[id,'']).status).toBe(403);expect(call(user,'invite',[id,owner.email,'admin','24',secret()]).status).toBe(403);
 }));
+test('organization subaccounts require current parent administration and create no implied grants',()=>fixture(({call,owner,user,stranger,create,sql})=>{
+ const {id}=create('Editorial collective'),nonce=secret();
+ expect(call(user,'subaccount-create',[id,'Journal',nonce]).status).toBe(403);
+ const created=call(owner,'subaccount-create',[id,'Journal',nonce]);expect(created.status).toBe(201);
+ const child=created.rows[0][0];expect(child).toMatch(/^sub-[a-f0-9]{32}$/);
+ expect(created.rows[0][2]).toBe(id);
+ expect(call(owner,'subaccount-create',[id,'Journal',nonce]).status).toBe(200);
+ expect(call(owner,'subaccount-create',[id,'Other journal',nonce]).status).toBe(409);
+ expect(call(owner,'subaccounts',[id,'']).rows.map(row=>row[0])).toEqual([child]);
+ expect(call(stranger,'subaccounts',[id,'']).status).toBe(403);
+ expect(sql.query('SELECT count(*) n FROM institution_grants WHERE institution=?').get(child).n).toBe(0);
+ sql.query('UPDATE institution_grants SET active=0 WHERE institution=?').run(id);
+ expect(call(owner,'subaccount-create',[id,'Journal',nonce]).status).toBe(403);
+ expect(call(owner,'subaccounts',[id,'']).status).toBe(403);
+}));

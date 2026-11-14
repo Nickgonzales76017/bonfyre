@@ -1,20 +1,18 @@
 // Real browser UI with protocol fixtures. No provider request, installed Chrome
 // extension, native credential database, or successful sign-in is implied.
 import {test,expect,beforeAll,afterAll} from 'bun:test';
+import {deferred,gate,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {encode,decode} from '../workspace-msgpack.mjs';
 const root=resolve(import.meta.dir,'../../..');
 let browser,server,requests=[],stored=new Map(),statusMode='ready',connectionGate=null,statusGate=null;
-const deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const gate=()=>({entered:deferred(),release:deferred()});
-const packet=value=>new Response(encode(value),{headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
 const binding=context=>({actor:'user:1',subject:context==='self'?'user:1':context,scope:context==='self'?'self':'institution'});
 function state(context){return {binding:binding(context),canAdminister:statusMode!=='read-only',configured:statusMode!=='unavailable',admission:{enabled:false,maxPages:12,reason:'Fixture external reads are off.'},providers:['exa','firecrawl'].map(id=>({id,name:id==='exa'?'Exa':'Firecrawl',declared:statusMode!=='undeclared',stored:stored.get(context+':'+id)===true,verified:false,fields:[{name:statusMode==='wrong-field'?'other_key':'api_key',required:true,set:stored.get(context+':'+id)===true}]}))};}
 const head='<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/web-workbench.css"><link rel="stylesheet" href="/apps/extension/foreign-sign-in.css">';
 beforeAll(async()=>{
- const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'@playwright/test');browser=await chromium.launch({headless:true,args:['--no-sandbox'],...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
- server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+ browser=await launchFixtureChromium({module:'@playwright/test',noSandbox:true});
+ server=loopbackServer({async fetch(request){
   const url=new URL(request.url);
   if(url.pathname==='/card')return new Response('<!doctype html><html lang="en"><head>'+head+'</head><body style="margin:16px;font:16px/1.5 system-ui"><div id="host" class="web-workbench" style="padding:0"></div><script type="module">import {mountForeignSignIn} from "/apps/extension/foreign-sign-in.mjs";window.mountFixture=(more={})=>{window.fixtureCard?.destroy();const details=document.createElement("div");details.textContent="Continue in the provider site or existing side panel.";window.fixtureCard=mountForeignSignIn(document.querySelector("#host"),{origin:"https://mcp.exa.ai",destination:"Your workspace · self",title:"Connect Exa",reviewKey:"self:exa:1",fields:[{name:"api_key",label:"API key",kind:"secret",maxLength:4095}],details,onSubmit:()=>{},onOpen:()=>{window.providerOpens.push("https://exa.ai/docs/get-started/exa-mcp");},...more});};window.mountFixture();</script></body></html>',{headers:{'Content-Type':'text/html'}});
   if(url.pathname==='/workbench')return new Response('<!doctype html><html lang="en"><head>'+head+'</head><body>'+(url.searchParams.has('navigation')?'<span data-account-slot><span class="ak-session" data-session-state="signed-in">Fixture account</span></span>':'')+'<main data-fixture-workbench class="web-workbench"><p data-web-status role="status"></p><div data-web-content></div></main><script type="module">import {mountWebWorkbench} from "/apps/web-workbench.mjs";const root=document.querySelector("[data-fixture-workbench]");root.dataset.webWorkbench="";window.fixtureWorkbench=await mountWebWorkbench(root);</script></body></html>',{headers:{'Content-Type':'text/html'}});

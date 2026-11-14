@@ -21,7 +21,12 @@ static const char *organization_schema =
  "grant_expires_at TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('pending','accepted','revoked')),"
  "revision INTEGER NOT NULL DEFAULT 1,accepted_by INTEGER,request_hours INTEGER NOT NULL,"
  "FOREIGN KEY(institution) REFERENCES institution_origins(institution));"
- "CREATE INDEX IF NOT EXISTS institution_invitations_scope ON institution_invitations(institution,digest);";
+ "CREATE INDEX IF NOT EXISTS institution_invitations_scope ON institution_invitations(institution,digest);"
+ "CREATE TABLE IF NOT EXISTS institution_subaccounts("
+ "subaccount TEXT PRIMARY KEY,institution TEXT NOT NULL,creator INTEGER NOT NULL,"
+ "request_digest TEXT NOT NULL,label TEXT NOT NULL,created_at TEXT NOT NULL,"
+ "UNIQUE(institution,creator,request_digest),"
+ "FOREIGN KEY(institution) REFERENCES institution_origins(institution));";
 static int org_text(bf_mp_reader_t *r,char *out,size_t cap){
  bf_mp_value_t v;if(bf_mp_read_next(r,&v)!=BF_MP_STR||v.v.raw.len>=cap)return 0;
  for(size_t i=0;i<v.v.raw.len;i++)if(v.v.raw.ptr[i]<32||v.v.raw.ptr[i]==127)return 0;
@@ -112,17 +117,48 @@ static int org_revoke(sqlite3 *db,const char *token,char args[6][321]){
  char label[161];long revision;if(!org_exists(db,args[0],label)||!auth_institution_authorized(db,token,args[0],"admin"))ORG_FAIL(403,"Administrator access is required.");if(!org_nonce(args[1])||!org_number(args[2],1,INT_MAX-1,&revision))ORG_FAIL(400,"Invalid reviewed invitation.");sqlite3_stmt *q=NULL;
  if(sqlite3_prepare_v2(db,"UPDATE institution_invitations SET state='revoked',revision=revision+1 WHERE institution=? AND digest=? AND revision=? AND state='pending'",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not revoke the invitation.");sqlite3_bind_text(q,1,args[0],-1,SQLITE_STATIC);sqlite3_bind_text(q,2,args[1],-1,SQLITE_STATIC);sqlite3_bind_int64(q,3,revision);int step=sqlite3_step(q),changed=sqlite3_changes(db);sqlite3_finalize(q);if(step!=SQLITE_DONE||changed!=1)ORG_FAIL(409,"The invitation changed. Review its current state.");return org_response(db,200,"Invitation revoked. Existing memberships are managed separately.",NULL,0,"");
 }
+/* A child destination is an Auth-owned scope identity, not a user, membership
+ * grant, verified legal organization or publisher's publication approval. */
+static int org_subaccount_create(sqlite3 *db,const char *token,int caller,const char *parent,const char *label,const char *nonce){
+ char parent_label[161];if(!org_exists(db,parent,parent_label)||!auth_institution_authorized(db,token,parent,"admin"))ORG_FAIL(403,"Parent organization administration is required.");
+ if(!*label||strlen(label)>160||label[0]==' '||label[strlen(label)-1]==' '||!org_nonce(nonce))ORG_FAIL(400,"Choose a child workspace name and a fresh request.");
+ char request[65],source[512],digest[65],child[48],now[64];org_digest(nonce,request);
+ int n=snprintf(source,sizeof(source),"subaccount-v1:%s:%d:%s",parent,caller,nonce);if(n<0||(size_t)n>=sizeof(source))ORG_FAIL(400,"Invalid child workspace identity.");
+ org_digest(source,digest);snprintf(child,sizeof(child),"sub-%.32s",digest);iso_now(now,sizeof(now));
+ sqlite3_stmt *q=NULL;int step,replay=0;
+ if(sqlite3_prepare_v2(db,"SELECT subaccount,label FROM institution_subaccounts WHERE institution=? AND creator=? AND request_digest=?",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not review child workspace identity.");
+ sqlite3_bind_text(q,1,parent,-1,SQLITE_STATIC);sqlite3_bind_int(q,2,caller);sqlite3_bind_text(q,3,request,-1,SQLITE_STATIC);step=sqlite3_step(q);
+ if(step==SQLITE_ROW){const char *id=(const char *)sqlite3_column_text(q,0),*name=(const char *)sqlite3_column_text(q,1);replay=id&&name&&!strcmp(id,child)&&!strcmp(name,label);sqlite3_finalize(q);if(!replay)ORG_FAIL(409,"Creation request was reused with different details.");}
+ else{sqlite3_finalize(q);if(step!=SQLITE_DONE)ORG_FAIL(503,"Could not inspect child workspace identity.");
+  if(sqlite3_prepare_v2(db,"SELECT count(*) FROM institution_subaccounts WHERE institution=?",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not inspect child allowance.");
+  sqlite3_bind_text(q,1,parent,-1,SQLITE_STATIC);int allowed=sqlite3_step(q)==SQLITE_ROW&&sqlite3_column_int(q,0)<128;sqlite3_finalize(q);if(!allowed)ORG_FAIL(429,"Organization child workspace limit reached.");
+  if(sqlite3_prepare_v2(db,"INSERT INTO institution_subaccounts VALUES(?,?,?,?,?,?)",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not create child workspace.");
+  sqlite3_bind_text(q,1,child,-1,SQLITE_STATIC);sqlite3_bind_text(q,2,parent,-1,SQLITE_STATIC);sqlite3_bind_int(q,3,caller);sqlite3_bind_text(q,4,request,-1,SQLITE_STATIC);sqlite3_bind_text(q,5,label,-1,SQLITE_STATIC);sqlite3_bind_text(q,6,now,-1,SQLITE_STATIC);step=sqlite3_step(q);sqlite3_finalize(q);if(step!=SQLITE_DONE)ORG_FAIL(409,"Child workspace creation conflicted.");
+ }
+ bf_mp_writer_t rows;bf_mp_writer_init(&rows,256);int bad=org_member_row(&rows,child,label,parent,"");
+ int rc=bad?org_response(db,503,"Could not prepare result.",NULL,0,""):org_response(db,replay?200:201,"Child workspace recorded without inherited permissions or publication authority.",&rows,1,"");bf_mp_writer_free(&rows);return rc;
+}
+static int org_subaccounts_list(sqlite3 *db,const char *token,const char *parent,const char *after){
+ char label[161];if(!org_exists(db,parent,label)||!auth_institution_authorized(db,token,parent,"read"))ORG_FAIL(403,"Current parent membership is required.");
+ if(strlen(after)>96)ORG_FAIL(400,"Invalid cursor.");sqlite3_stmt *q=NULL;
+ if(sqlite3_prepare_v2(db,"SELECT subaccount,label,created_at FROM institution_subaccounts WHERE institution=? AND subaccount>? ORDER BY subaccount LIMIT 51",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not list child workspaces.");
+ sqlite3_bind_text(q,1,parent,-1,SQLITE_STATIC);sqlite3_bind_text(q,2,after,-1,SQLITE_STATIC);bf_mp_writer_t rows;bf_mp_writer_init(&rows,1024);unsigned count=0;int step,bad=0,more=0;char cursor[97]="",last[97]="";
+ while((step=sqlite3_step(q))==SQLITE_ROW){if(count==ORG_PAGE){more=1;break;}const char *id=(const char *)sqlite3_column_text(q,0),*name=(const char *)sqlite3_column_text(q,1),*created=(const char *)sqlite3_column_text(q,2);if(!id||!name||!created||strlen(id)>96){bad=1;break;}snprintf(last,sizeof(last),"%s",id);if(org_member_row(&rows,id,name,parent,created)){bad=1;break;}count++;}
+ sqlite3_finalize(q);if(more)strcpy(cursor,last);int rc=bad||(!more&&step!=SQLITE_DONE)?org_response(db,503,"Child list interrupted.",NULL,0,""):org_response(db,200,"",&rows,count,cursor);bf_mp_writer_free(&rows);return rc;
+}
 static int cmd_organization_workspace(sqlite3 *db){
  unsigned char input[ORG_MAX_INPUT+1];size_t bytes=fread(input,1,sizeof(input),stdin);if(ferror(stdin)||bytes>ORG_MAX_INPUT)ORG_FAIL(413,"Organization request is too large.");
  bf_mp_reader_t r;bf_mp_reader_init(&r,input,bytes);bf_mp_value_t v;char token[MAX_TOKEN],operation[24],args[6][321];memset(args,0,sizeof(args));
  if(!org_array(&r,4)||bf_mp_read_next(&r,&v)!=BF_MP_UINT||v.v.u!=1||!org_text(&r,token,sizeof(token))||!org_text(&r,operation,sizeof(operation))||bf_mp_read_next(&r,&v)!=BF_MP_ARRAY||v.v.count>6)ORG_FAIL(400,"Invalid organization request.");unsigned count=v.v.count;
  for(unsigned i=0;i<count;i++)if(!org_text(&r,args[i],sizeof(args[i])))ORG_FAIL(400,"Invalid organization field.");if(r.pos!=r.len)ORG_FAIL(400,"Unexpected organization request data.");
- int write=!strcmp(operation,"create")||!strcmp(operation,"invite")||!strcmp(operation,"accept")||!strcmp(operation,"revoke"),caller=0;
+ int write=!strcmp(operation,"create")||!strcmp(operation,"subaccount-create")||!strcmp(operation,"invite")||!strcmp(operation,"accept")||!strcmp(operation,"revoke"),caller=0;
  sqlite3_busy_timeout(db,3000);if(sqlite3_exec(db,write?"BEGIN IMMEDIATE":"BEGIN",NULL,NULL,NULL)!=SQLITE_OK)ORG_FAIL(503,"Another operation is updating access. Retry the same reviewed request.");
  if(!session_user_id(db,token,&caller))ORG_FAIL(401,"Sign in to manage organizations.");
  if(write&&!auth_authorized(db,token,"self")&&!auth_authorized(db,token,"write"))ORG_FAIL(403,"This session cannot change organizations.");
  if(!strcmp(operation,"create")&&count==2)return org_create(db,token,caller,args[0],args[1]);
  if(!strcmp(operation,"list")&&count==1)return org_list(db,caller,args[0]);
+ if(!strcmp(operation,"subaccount-create")&&count==3)return org_subaccount_create(db,token,caller,args[0],args[1],args[2]);
+ if(!strcmp(operation,"subaccounts")&&count==2)return org_subaccounts_list(db,token,args[0],args[1]);
  if(!strcmp(operation,"invite")&&count==5)return org_invite(db,token,caller,args);
  if((!strcmp(operation,"review")||!strcmp(operation,"accept"))&&count==1)return org_join(db,caller,args[0],write);
  if(!strcmp(operation,"invitations")&&count==2)return org_invitations(db,token,args[0],args[1]);

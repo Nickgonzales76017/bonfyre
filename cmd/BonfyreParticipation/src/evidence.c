@@ -171,14 +171,19 @@ static int load_file(sqlite3 *db, const char *path, long long *raw_rows) {
     char *line = NULL;
     size_t cap = 0;
     ssize_t n;
-    if (!f) return 0;
+    if (!f) { fprintf(stderr, "participation: cannot open evidence %s\n", path); return 0; }
+    long long row = 0;
     while ((n = getline(&line, &cap, f)) >= 0) {
         char *p = line;
+        ++row;
         (void)n;
         while (*p && isspace((unsigned char)*p)) p++;
         if (!*p) continue;
         (*raw_rows)++;
-        if (!normalize_line(db, p)) { free(line); fclose(f); return 0; }
+        if (!normalize_line(db, p)) {
+            fprintf(stderr, "participation: evidence rejected at %s:%lld\n", path, row);
+            free(line); fclose(f); return 0;
+        }
     }
     free(line);
     fclose(f);
@@ -193,7 +198,7 @@ static int json_extension(const char *name) {
 
 static int load_path(sqlite3 *db, const char *path, long long *raw_rows) {
     struct stat st;
-    if (stat(path, &st) != 0) return 0;
+    if (stat(path, &st) != 0) { fprintf(stderr, "participation: evidence path missing: %s\n", path); return 0; }
     if (S_ISREG(st.st_mode)) return load_file(db, path, raw_rows);
     if (!S_ISDIR(st.st_mode)) return 0;
     DIR *dir = opendir(path);

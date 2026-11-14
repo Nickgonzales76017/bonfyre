@@ -1,0 +1,14 @@
+{
+  "name": "scope_presentation",
+  "displayName": "Scope Presentation",
+  "description": "Which published presentation_template one account, profile site or organization wears. scope is account (ref is the viewer actor subject, a personal default), profile (ref is the visited site_id) or org (ref is the visited organization key). Resolution is route row, then profile, then org, then account: owner specificity wins and the account row applies only where owners are silent. Presentation only: it reads no subject, grants no action and owns no route.",
+  "attributes": {
+    "scope_presentation": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "scope": {"type": "string", "required": true},
+    "ref": {"type": "string", "required": true},
+    "template": {"type": "string", "required": true},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

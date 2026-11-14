@@ -1732,33 +1732,101 @@ static void serve_rpc(sqlite3 *db, const McpSite *site, const char *cms_db, cons
 
 /* ---------- the same facts for a person, and for a plain reader ---------- */
 
+/* Stitch: the MCP client inspector and tool sandbox runner. The page asks
+ * this same endpoint for its tools (tools/list) and runs a chosen call
+ * (tools/call) exactly as an assistant would. Every tool here is read-only;
+ * the boundary panel states each tool's own annotations, nothing more. */
+static const char *INSPECTOR_CSS =
+    "body{font:15px/1.55 ui-sans-serif,'DM Sans',system-ui,sans-serif}main.mcp-ins{max-width:1360px;padding:0 clamp(16px,3vw,32px) 3rem}"
+    ".mcp-strip{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;margin:0 calc(-1*clamp(16px,3vw,32px));padding:10px clamp(16px,3vw,32px);border-bottom:1px solid var(--hairline);"
+    "font:500 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}"
+    ".mcp-strip b{color:var(--ink);font-weight:500;text-transform:none;letter-spacing:0}.mcp-strip .on{margin-left:auto;color:var(--accent)}"
+    ".mcp-strip .on::before,.mcp-ok::before{content:'';display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--accent);vertical-align:1px}"
+    "header.mast{border:0;padding:clamp(24px,4vw,48px) 0 18px;margin:0}header.mast h1{font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.04;letter-spacing:-.03em;max-width:22ch}"
+    ".lede{max-width:62ch;font:400 1.1rem/1.5 ui-serif,Georgia,serif}"
+    ".mcp-grid{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,2fr);gap:18px;align-items:start;margin-top:18px}"
+    ".mcp-pane{border:1px solid var(--hairline);border-radius:22px;background:var(--surface);padding:18px;min-width:0}"
+    ".mcp-pane>h2,.mcp-sub{font:500 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;display:flex;justify-content:space-between;gap:10px}"
+    ".mcp-tools{list-style:none;margin:0 -18px;padding:0}.mcp-tools li{border-top:1px solid var(--hairline)}"
+    ".mcp-tools button{all:unset;box-sizing:border-box;display:grid;gap:4px;width:100%;padding:14px 18px;cursor:pointer;border-left:3px solid transparent}"
+    ".mcp-tools button[aria-pressed=true]{border-left-color:var(--accent);background:var(--surface)}.mcp-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}"
+    ".mcp-tools strong{font:600 15px/1.3 ui-sans-serif,system-ui}.mcp-tools button[aria-pressed=true] strong{color:var(--accent)}"
+    ".mcp-tools code,.mcp-tools small{font:12.5px/1.4 ui-monospace,Menlo,monospace;color:var(--muted)}"
+    ".mcp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}"
+    ".mcp-stats div{padding:12px 14px;border:1px solid var(--hairline);border-radius:16px}.mcp-stats dt{margin:0;font:500 10.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}"
+    ".mcp-stats dd{margin:6px 0 0;font:600 1.5rem/1.1 ui-monospace,Menlo,monospace;color:var(--ink)}.mcp-stats dd.on{color:var(--accent)}"
+    "textarea{width:100%;min-height:15rem;padding:14px 16px;border:1px solid var(--hairline);border-radius:16px;background:var(--ground);color:var(--ink);font:13px/1.6 ui-monospace,Menlo,monospace;resize:vertical}"
+    ".mcp-lint{margin:8px 0 0;font:12px ui-monospace,Menlo,monospace;color:var(--muted)}"
+    ".mcp-acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 6px}.mcp-acts button{margin:0;padding:.75rem 1.2rem}"
+    ".mcp-acts .run{background:var(--accent);color:var(--ground);border-color:var(--accent)}"
+    ".mcp-tabs{display:flex;gap:6px;margin:18px 0 10px}.mcp-tabs button{margin:0}.mcp-tabs button[aria-pressed=true]{background:var(--accent);color:var(--ground);border-color:var(--accent)}"
+    "pre.mcp-out{min-height:10rem;max-height:34rem;overflow:auto;background:var(--ground);border-radius:16px}"
+    ".mcp-audit{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.mcp-audit div{padding:12px 14px;border:1px solid var(--hairline);border-radius:16px}"
+    ".mcp-audit dt{margin:0;font:500 10.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.mcp-audit dd{margin:6px 0 0;color:var(--ink);font-weight:600}"
+    ".mcp-connect{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;margin-top:28px}.mcp-connect h2{font-size:1rem}"
+    "@media(max-width:860px){.mcp-grid{grid-template-columns:minmax(0,1fr)}}";
 static void serve_human(const McpSite *site, const char *endpoint) {
     char *html = NULL;
     size_t len = 0;
     FILE *out = open_memstream(&html, &len);
     fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<meta name=\"color-scheme\" content=\"light dark\"><title>Connect an assistant · ", out);
+          "<meta name=\"color-scheme\" content=\"light dark\"><title>Assistant inspector \xc2\xb7 ", out);
     htext(out, site->title);
     fputs("</title>", out); site_browser_icon(out, site); fputs("<style>", out);
     style_tokens(out, site);
     fputs(SHARED_CSS, out);
-    fputs("</style></head><body><main><header class=\"mast\"><p class=\"eyebrow\">For AI assistants</p><h1>", out);
+    fputs(INSPECTOR_CSS, out);
+    fputs("</style></head><body><main class=\"mcp-ins\" data-mcp-inspector><div class=\"mcp-strip\"><span>MCP</span><span>Site <b>", out);
+    htext(out, site->host);
+    fputs("</b></span><span>Read-only tools</span><span class=\"on\" data-mcp-state>Checking the endpoint</span></div>"
+          "<header class=\"mast\"><p class=\"eyebrow\">For AI assistants</p><h1>", out);
     htext(out, site->title);
-    fputs(" can be read by an assistant</h1><p class=\"lede\">Add this address to an assistant that speaks the Model Context Protocol "
-          "and it can read this site, search it, and show it to you.</p></header>"
-          "<h2>The address</h2><pre id=\"endpoint\">", out);
-    htext(out, endpoint); fputs("</pre>", out);
-    fputs("<h2 style=\"margin-top:1.5rem\">Claude Code</h2><pre>claude mcp add --transport http ", out);
-    htext(out, site->id); fputc(' ', out); htext(out, endpoint); fputs("</pre>", out);
-    fputs("<h2 style=\"margin-top:1.5rem\">Any client that takes a configuration</h2><pre>{\n  \"mcpServers\": {\n    \"", out);
+    fputs(": assistant inspector</h1><p class=\"lede\">The tools an assistant gets when it connects here. Pick one, edit the request, and run it against this site exactly as an assistant would.</p></header>"
+          "<div class=\"mcp-grid\"><section class=\"mcp-pane\" aria-label=\"Tools\"><h2><span data-mcp-count>Tools</span><span>Annotated read-only</span></h2>"
+          "<ul class=\"mcp-tools\" data-mcp-tools><li><p class=\"empty\" style=\"padding:14px 18px\">Reading the tool list\xe2\x80\xa6</p></li></ul></section>"
+          "<section class=\"mcp-pane\" aria-label=\"Run a tool\"><dl class=\"mcp-stats\"><div><dt>Wall time</dt><dd data-mcp-ms>\xe2\x80\x94</dd></div><div><dt>Status</dt><dd data-mcp-status>Not run</dd></div>"
+          "<div><dt>Response size</dt><dd data-mcp-bytes>\xe2\x80\x94</dd></div><div><dt>Calls this visit</dt><dd data-mcp-calls>0</dd></div></dl>"
+          "<label class=\"mcp-sub\" for=\"mcp-payload\"><span>tools/call request</span><span data-mcp-chars></span></label>"
+          "<textarea id=\"mcp-payload\" spellcheck=\"false\" data-mcp-payload>{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/call\",\n  \"params\": { \"name\": \"site_info\", \"arguments\": {} }\n}</textarea>"
+          "<p class=\"mcp-lint\" data-mcp-lint>Valid JSON-RPC 2.0</p><div class=\"mcp-acts\"><button class=\"run\" type=\"button\" data-mcp-run>Run against this site</button>"
+          "<button type=\"button\" data-mcp-reset>Reset to the tool's defaults</button><button type=\"button\" data-mcp-copy>Copy response</button></div>"
+          "<div class=\"mcp-tabs\" role=\"group\" aria-label=\"Response view\"><button type=\"button\" aria-pressed=\"true\" data-mcp-view=\"result\">Result</button><button type=\"button\" aria-pressed=\"false\" data-mcp-view=\"raw\">Raw response</button><button type=\"button\" aria-pressed=\"false\" data-mcp-view=\"schema\">Tool schema</button></div>"
+          "<pre class=\"mcp-out\" data-mcp-out aria-live=\"polite\">Run a tool to see what it returns.</pre>"
+          "<h2 class=\"mcp-sub\" style=\"margin-top:18px\">Boundary, as the tool declares it</h2><dl class=\"mcp-audit\"><div><dt>Changes anything</dt><dd data-mcp-ro>\xe2\x80\x94</dd></div>"
+          "<div><dt>Destructive</dt><dd data-mcp-de>\xe2\x80\x94</dd></div><div><dt>Reaches outside this site</dt><dd data-mcp-ow>\xe2\x80\x94</dd></div></dl></section></div>"
+          "<section class=\"mcp-connect\"><div class=\"mcp-pane\"><h2>The address</h2><pre id=\"endpoint\">", out);
+    htext(out, endpoint);
+    fputs("</pre></div><div class=\"mcp-pane\"><h2>Claude Code</h2><pre>claude mcp add --transport http ", out);
+    htext(out, site->id); fputc(' ', out); htext(out, endpoint); fputs("</pre></div>", out);
+    fputs("<div class=\"mcp-pane\"><h2>Any client that takes a configuration</h2><pre>{\n  \"mcpServers\": {\n    \"", out);
     htext(out, site->id); fputs("\": { \"type\": \"http\", \"url\": \"", out);
-    htext(out, endpoint); fputs("\" }\n  }\n}</pre>", out);
-    fputs("<h2 style=\"margin-top:1.5rem\">What an assistant may ask</h2><dl>"
-          "<dt>site_info</dt><dd>What this site is and how much it has published.</dd>"
-          "<dt>list_posts</dt><dd>Titles, dates and opening lines, newest first.</dd>"
-          "<dt>get_post</dt><dd>The full text of one post.</dd>"
-          "<dt>search_posts</dt><dd>Posts that match a question, and how they were found.</dd>"
-          "<dt>show_posts</dt><dd>A readable view of chosen posts, in this site's own look, where the assistant can show one.</dd></dl>", out);
+    htext(out, endpoint); fputs("\" }\n  }\n}</pre></div></section>", out);
+    fputs("<script>(function(){'use strict';var $=function(s){return document.querySelector(s)},E=location.pathname,tools=[],cur=null,last=null,view='result',calls=0;"
+          "var list=$('[data-mcp-tools]'),pay=$('[data-mcp-payload]'),out=$('[data-mcp-out]'),lint=$('[data-mcp-lint]');"
+          "function rpc(body){return fetch(E,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json, text/event-stream'},body:body,credentials:'omit'})}"
+          "function defaults(t){var a={},p=(t.inputSchema&&t.inputSchema.properties)||{},r=(t.inputSchema&&t.inputSchema.required)||[];for(var k in p){if('default' in p[k])a[k]=p[k].default;else if(r.indexOf(k)>=0)a[k]=p[k].type==='integer'?1:'';}return a}"
+          "function yn(v,on,off){return v===true?on:v===false?off:'Not declared'}"
+          "function pick(t){cur=t;list.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.name===t.name?'true':'false')});"
+          "pay.value=JSON.stringify({jsonrpc:'2.0',id:calls+1,method:'tools/call',params:{name:t.name,arguments:defaults(t)}},null,2);check();var a=t.annotations||{};"
+          "$('[data-mcp-ro]').textContent=yn(a.readOnlyHint,'No, read-only','Yes, it may change data');$('[data-mcp-de]').textContent=yn(a.destructiveHint,'Yes','No');$('[data-mcp-ow]').textContent=yn(a.openWorldHint,'Yes','No, this site only');if(view==='schema')show()}"
+          "function check(){$('[data-mcp-chars]').textContent=pay.value.length+' chars';try{var j=JSON.parse(pay.value);lint.textContent=j.jsonrpc==='2.0'&&j.method?'Valid JSON-RPC 2.0':'Parses, but is not a JSON-RPC 2.0 request';return j}catch(e){lint.textContent='Not valid JSON: '+e.message;return null}}"
+          "function show(){if(view==='schema'){out.textContent=cur?JSON.stringify({inputSchema:cur.inputSchema,outputSchema:cur.outputSchema},null,2):'Pick a tool.';return}"
+          "if(!last){out.textContent='Run a tool to see what it returns.';return}if(view==='raw'){out.textContent=last.text;return}"
+          "try{var j=JSON.parse(last.text),r=j.result||j.error;if(r&&r.structuredContent)r=r.structuredContent;out.textContent=JSON.stringify(r,null,2)}catch(e){out.textContent=last.text}}"
+          "document.querySelectorAll('[data-mcp-view]').forEach(function(b){b.onclick=function(){view=b.dataset.mcpView;document.querySelectorAll('[data-mcp-view]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});show()}});"
+          "pay.oninput=check;$('[data-mcp-reset]').onclick=function(){if(cur)pick(cur)};"
+          "$('[data-mcp-copy]').onclick=function(){if(last&&navigator.clipboard)navigator.clipboard.writeText(last.text)};"
+          "$('[data-mcp-run]').onclick=function(){var j=check();if(!j)return;var t0=performance.now(),st=$('[data-mcp-status]');st.textContent='Running';"
+          "rpc(JSON.stringify(j)).then(function(r){return r.text().then(function(x){return{code:r.status,text:x}})}).then(function(r){var ms=performance.now()-t0;calls++;last=r;"
+          "$('[data-mcp-ms]').textContent=ms.toFixed(1)+' ms';$('[data-mcp-bytes]').textContent=new Blob([r.text]).size+' B';$('[data-mcp-calls]').textContent=calls;"
+          "var err=false;try{var p=JSON.parse(r.text);err=!!p.error||!!(p.result&&p.result.isError)}catch(e){err=true}st.textContent=r.code+(err?' error':' OK');st.className=err?'':'on';show()})"
+          ".catch(function(e){st.textContent='No answer';last={text:String(e)};show()})};"
+          "rpc(JSON.stringify({jsonrpc:'2.0',id:0,method:'tools/list'})).then(function(r){return r.json()}).then(function(j){tools=(j.result&&j.result.tools)||[];list.innerHTML='';"
+          "$('[data-mcp-state]').textContent='Endpoint answering';$('[data-mcp-count]').textContent=tools.length+' tools';"
+          "tools.forEach(function(t){var li=document.createElement('li'),b=document.createElement('button'),n=document.createElement('strong'),d=document.createElement('small'),c=document.createElement('code');"
+          "b.type='button';b.dataset.name=t.name;n.textContent=t.name;var args=Object.keys((t.inputSchema&&t.inputSchema.properties)||{});c.textContent='args: '+(args.length?args.join(', '):'none');d.textContent=t.title||t.description||'';"
+          "b.append(n,c,d);b.onclick=function(){pick(t)};li.append(b);list.append(li)});if(tools[0])pick(tools[0])})"
+          ".catch(function(){$('[data-mcp-state]').textContent='Endpoint not answering';list.innerHTML='<li><p class=\"empty\" style=\"padding:14px 18px\">The tool list could not be read from this site.</p></li>'})})();</script>", out);
     fprintf(out, "<footer>%ld post%s published. Also for plain readers: <a href=\"/llms.txt\">/llms.txt</a>. "
                  "Back to <a href=\"/\">", site->posts, site->posts == 1 ? "" : "s");
     htext(out, site->title);

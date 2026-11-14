@@ -1,4 +1,5 @@
 import {test,expect} from 'bun:test';
+import {loopbackServer} from './browser-fixture.mjs';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -9,7 +10,7 @@ const {withChrome}=await import(pathToFileURL(helper).href);
 test('reused tabs wait for each document, delayed resources and redirects, and support fragment navigation',async()=>{
   const downloads=mkdtempSync(resolve(tmpdir(),'bonfyre-navigation-download-'));
   const served=[];
-  const server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+  const server=loopbackServer({hostname:'127.0.0.1',port:0,async fetch(request){
     const path=new URL(request.url).pathname;
     if(path==='/redirect')return Response.redirect(new URL('/third',request.url));
     if(path==='/download')return new Response('fixture',{headers:{'content-type':'application/octet-stream','content-disposition':'attachment; filename="fixture.txt"'}});

@@ -1,0 +1,5 @@
+f52b1ad55bc5259f4c28cd5451d57d718cd990c15ef2eb14123d6ca75903adc1  2758  wp-post-normalized.txt  # sites/import-wordpress-news/post-0/normalized.txt (whole)
+cffd2b09aa3f20007f34a6370bafd05d656c964a53613ae919afc6ad541c2a41  2752  feed-dallas-trimmed.xml  # foreign/bodies/civic-dallas-2026-09-23-news.body (channel title + first 3 items)
+0e5a65e396572289215ec5c4bc22d6885c69c15002130efc0f42a63070e57c72  3760  quakes-trimmed.geojson  # foreign/bodies/usgs-quakes-month-m45 (metadata + first 5 features)
+05c69e117797cf9d973d466630d280993e4014f3e293a0b75863e8fd750b1d97  16552  apppack-trimmed.json  # frappe-packs/insights/apppack.json (2 doctypes x 8 fields)
+77fb5315a54315bde6264eb8fecc42be0b118e677ded2a9ada07ccb262c6a0ec  376  ghost-post.json  # hand-built Ghost Content API v5 shape (no dump ingested)

@@ -88,7 +88,6 @@
  * route added there is added here.  It holds no percent sign, so it is safe
  * inside the format strings that open a room. */
 #include "account_navigation_markup.h"
-#include "account_home_continuation.h"
 #include "production_home.h"
 #include "account_connections_presentation.h"
 static int studio_safe_ident(const char *name);
@@ -99,27 +98,58 @@ static const char *page_nav_glyph(const char *route);
 #include "cms_workbench.h"
 #define BF_ESTATE_BAR_HEAD \
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
-"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">" BF_ICON_STYLE
+"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">"
 #define BF_ESTATE_BAR_OUT \
 "<span class=\"ak-out\"><a href=\"https://docs.aurekai.work/\">" BF_ICON_BOOK "<span>Guides</span></a></span>"
 #define BF_ESTATE_BAR_CORE \
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
-"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">" BF_ICON_STYLE \
+"amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\">" \
 "<header class=\"ak-bar\"><div class=\"ak-bar-top\"><a class=\"ak-brand\" href=\"/\">Aurekai</a><nav class=\"ak-places\" aria-label=\"Territories\">" \
 "<a href=\"https://aurekai.live/\">" BF_ICON_WORLD "<span>Live</span></a><a href=\"https://aurekai.life/\">" BF_ICON_HEART "<span>Life</span></a>" \
 "<a href=\"https://aurekai.shop/\">" BF_ICON_SHOP "<span>Shop</span></a><a href=\"https://aurekai.work/\">" BF_ICON_BRIEFCASE "<span>Work</span></a></nav>" \
 "<form class=\"ak-find\" action=\"/search\" method=\"get\" role=\"search\"><label>" BF_ICON_SEARCH "<input type=\"search\" name=\"q\" placeholder=\"Search\" aria-label=\"Search\"></label></form>" \
 "<div class=\"ak-session-slot\" data-account-slot><!--BF_SESSION_BEGIN--><a class=\"ak-account\" id=\"session-link\" href=\"/login\">" BF_ICON_LOGIN "<span>Sign in</span></a><!--BF_SESSION_END--></div></div>" \
 "<nav class=\"ak-sections\" aria-label=\"Sections\"><a href=\"/discover\">" BF_ICON_COMPASS "<span>Discover</span></a><a href=\"/whats-on\">" BF_ICON_CALENDAR "<span>What&#039;s on</span></a>" \
-"<a href=\"/watch\">" BF_ICON_PLAY "<span>Watch</span></a><a href=\"/listen\">" BF_ICON_HEADPHONES "<span>Listen</span></a><a href=\"/board\">" BF_ICON_BOARD "<span>Collections</span></a>" \
+"<a href=\"/s/work/all\">" BF_ICON_BRIEFCASE "<span>Work board</span></a><a href=\"/watch\">" BF_ICON_PLAY "<span>Watch</span></a><a href=\"/listen\">" BF_ICON_HEADPHONES "<span>Listen</span></a><a href=\"/board\">" BF_ICON_BOARD "<span>Collections</span></a>" \
 "<span class=\"ak-out\"><a href=\"https://docs.aurekai.work/\">" BF_ICON_BOOK "<span>Guides</span></a></span></nav>" \
 "<script>(function(){var b=document.currentScript.parentNode,h=location.hostname.split('.').slice(-2).join('.'),p=location.pathname;b.querySelectorAll('.ak-places a').forEach(function(a){if(a.hostname===h)a.setAttribute('aria-current','page')});b.querySelectorAll('.ak-sections>a').forEach(function(a){var r=a.getAttribute('href');if(p===r||p.indexOf(r+'/')===0)a.setAttribute('aria-current','page')});})();</script>" \
 BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 "</header>"
-#define BF_ESTATE_BAR BF_ESTATE_BAR_CORE BF_HOME_CONTINUATION
+#define BF_ESTATE_BAR BF_ESTATE_BAR_CORE
+/* The one footer and the one player every page closes with. A page offers
+ * something to hear by marking an element data-ak-track with data-title,
+ * data-by and either data-src (a recording) or data-narrate (a selector whose
+ * text is read aloud). data-ak-default marks what the player holds on arrival. */
+#define BF_ESTATE_FOOT \
+"<footer class=\"ak-foot\"><div class=\"ak-foot-grid\"><div><b>Aurekai</b><p>Reading, listening, making and trading in one place, from the sources and people who made them.</p></div>" \
+"<div><h2>Territories</h2><ul><li><a href=\"https://aurekai.live/\">Live: what&#039;s on, watch, listen</a></li><li><a href=\"https://aurekai.life/\">Life: stories, food, places</a></li>" \
+"<li><a href=\"https://aurekai.shop/\">Shop: things worth buying</a></li><li><a href=\"https://aurekai.work/\">Work: jobs, tools, business</a></li></ul></div>" \
+"<div><h2>Find</h2><ul><li><a href=\"/discover\">Discover</a></li><li><a href=\"/whats-on\">What&#039;s on</a></li><li><a href=\"/listen\">Listen</a></li><li><a href=\"/people\">People</a></li><li><a href=\"/blog/\">Journal</a></li></ul></div>" \
+"<div><h2>Yours</h2><ul><li><a href=\"/profile\">Your page</a></li><li><a href=\"/apps\">Your tools</a></li><li><a href=\"/studio\">Studio</a></li><li><a href=\"/account/devices\">Your devices</a></li><li><a href=\"/account/agents\">Agent access</a></li><li><a href=\"/dispatch\">Field visits</a></li><li><a href=\"https://docs.aurekai.work/\">Guides</a></li></ul></div></div>" \
+"<div class=\"ak-foot-base\"><span>&copy; Aurekai</span><span>Every item links back to the source that published it.</span></div></footer>" \
+"<div class=\"ak-player\" data-ak-player hidden role=\"region\" aria-label=\"Player\"><button class=\"ak-prev\" type=\"button\" aria-label=\"Previous in queue\" hidden>&#9664;&#9664;</button><button class=\"ak-play\" type=\"button\" aria-label=\"Play\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></button><button class=\"ak-next\" type=\"button\" aria-label=\"Next in queue\" hidden>&#9654;&#9654;</button>" \
+"<div class=\"ak-player-meta\"><span data-ak-title></span><span data-ak-by></span><span data-ak-status role=\"status\"></span></div><button class=\"ak-x\" type=\"button\" aria-label=\"Close player\">&times;</button><div class=\"ak-player-bar\"><i></i></div></div>" \
+"<script>(function(){var P=document.querySelector('[data-ak-player]');if(!P)return;var B=P.querySelector('.ak-play'),T=P.querySelector('[data-ak-title]'),Y=P.querySelector('[data-ak-by]'),E=P.querySelector('[data-ak-status]'),G=P.querySelector('.ak-player-bar i')," \
+"A=new Audio(),S=window.speechSynthesis,cur=null,parts=[],at=0,on=false,gen=0,PL='<path d=\"M8 5v14l11-7z\"/>',PA='<path d=\"M6 5h4v14H6zm8 0h4v14h-4z\"/>';" \
+"function icon(){B.querySelector('svg').innerHTML=on?PA:PL;B.setAttribute('aria-label',on?'Pause':'Play')}" \
+"function load(el){gen++;if(S)S.cancel();A.pause();cur=el;at=0;on=false;E.textContent='';T.textContent=el.dataset.title||document.title;Y.textContent=el.dataset.by||'';P.hidden=false;" \
+"if(el.dataset.src){A.src=el.dataset.src;try{var t=+sessionStorage.getItem('ak:'+A.src);if(t)A.currentTime=t}catch(e){}}else{var r=document.querySelector(el.dataset.narrate||'main');" \
+"parts=r?[].slice.call(r.querySelectorAll('h1,h2,h3,p,li,blockquote')).filter(function(n){var a=n.parentElement&&n.parentElement.closest('h1,h2,h3,p,li,blockquote'),h=n.closest('[hidden],[aria-hidden=\"true\"]');return !(a&&a!==r&&r.contains(a))&&!(h&&h!==r&&r.contains(h))}).map(function(n){var c=n.cloneNode(true);c.querySelectorAll('[hidden],[aria-hidden=\"true\"],script,style').forEach(function(x){x.remove()});return c.textContent.trim()}).filter(Boolean):[]}icon();queueControls();G.style.width='0'}" \
+"function failed(g,message){if(g!==gen)return;on=false;E.textContent=message;icon()}" \
+"function queue(){return cur&&cur.dataset.akQueue?[].slice.call(document.querySelectorAll('[data-ak-queue][data-ak-track]')).filter(function(x){return x.dataset.akQueue===cur.dataset.akQueue}):[]}" \
+"function queueControls(){var q=queue(),i=q.indexOf(cur),prev=P.querySelector('.ak-prev'),next=P.querySelector('.ak-next');prev.hidden=next.hidden=q.length<2;prev.disabled=i<=0;next.disabled=i<0||i>=q.length-1}" \
+"function advance(step){var q=queue(),i=q.indexOf(cur),next=q[i+step];if(i<0||!next)return false;load(next);play();return true}" \
+"function speak(){if(at>=parts.length){on=false;at=0;icon();if(!advance(1)&&queue().length)E.textContent='End of queue.';return}var g=gen,u=new SpeechSynthesisUtterance(parts[at]);u.rate=1;u.onend=function(){if(!on||g!==gen)return;at++;G.style.width=(100*at/parts.length)+'%';speak()};u.onerror=function(){failed(g,'Narration could not play. Try again.')};S.speak(u)}" \
+"function play(){if(!cur)return;document.dispatchEvent(new CustomEvent('bonfyre:public-audio-play',{detail:P}));on=true;E.textContent='';icon();if(cur.dataset.src){var g=++gen,p=A.play();if(p&&p.catch)p.catch(function(){failed(g,'Recording could not play. Try again.')})}else if(S&&parts.length){gen++;S.cancel();speak()}else failed(gen,S?'No readable text was found.':'Narration is unavailable in this browser.')}function stop(){gen++;on=false;icon();if(cur&&cur.dataset.src)A.pause();else if(S)S.cancel()}" \
+"A.ontimeupdate=function(){if(A.duration)G.style.width=(100*A.currentTime/A.duration)+'%';try{sessionStorage.setItem('ak:'+A.src,A.currentTime)}catch(e){}};A.onended=function(){on=false;icon();if(!advance(1)&&queue().length)E.textContent='End of queue.'};" \
+"B.onclick=function(){on?stop():play()};P.querySelector('.ak-prev').onclick=function(){advance(-1)};P.querySelector('.ak-next').onclick=function(){advance(1)};P.querySelector('.ak-x').onclick=function(){stop();P.hidden=true};" \
+"document.addEventListener('bonfyre:public-audio-play',function(e){if(e.detail!==P&&on)stop()});" \
+"document.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-ak-track]');if(!el)return;e.preventDefault();if(el===cur){on?stop():play();return}load(el);play()});" \
+"var d=document.querySelector('[data-ak-default]');if(d)load(d)})();</script>"
 
 static const char *opt(int argc, char **argv, const char *name) { for (int i = 2; i + 1 < argc; i++) if (!strcmp(argv[i], name)) return argv[i + 1]; return NULL; }
 #include "matrix_closure_bootstrap.h"
+#include "app_shell.h"
 #include "surface_catalogue_routes.h"
 #include "surface_fragments_and_ops.h"
 #include "auth_routes_and_studio_core.h"
@@ -130,16 +160,19 @@ static const char *opt(int argc, char **argv, const char *name) { for (int i = 2
 #include "world_cache_and_cms_route.h"
 #include "x402_capability_and_aperture_forms.h"
 #include "aperture_foreign_and_packs.h"
+#include "companions_home.h"
 #include "credit_profile_projection.h"
 #include "world_federation_and_protocols.h"
 #include "governance_self_and_discovery.h"
 #include "role_directory.h"
+#include "work_orders.h"
 #include "private_session_and_flow_routes.h"
 #include "machine_web_and_websub.h"
 #include "source_push_operations.h"
 #include "subject_and_lens.h"
 #include "room_compose_and_flow_cards.h"
 #include "desk_and_internet_observatory.h"
+#include "field_dispatch_web.h"
 static int estate_directory(void) {
     const char *mdb = getenv("BONFYRE_MATRIX_DB");
     sqlite3 *db = NULL;
@@ -623,13 +656,21 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         /* Resolve the source-specific workbench before general SiteProgram
          * or /s/work material. Ordinary /link retains its native CUE route.
          * Explicit JSON requests still reach their previous owner. */
+        /* Devices, moving to a new device, Bluesky sync requests, feed agent
+         * rules and field visits: CMS records keyed by the signed-in account. */
+        if(!handled)handled=serve_account_continuity(method,target,query,bodyp,b,host,bearer,auth_db);
+        if(!handled)handled=serve_field_dispatch(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_account_activity(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_source_web_work(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_source_push_operations(method,target,query,host,bearer,auth_db);
-        if(!handled && root)handled=serve_source_desk(method,target,accept_hdr);
+        if(!handled && root)handled=serve_source_desk(method,target,query,host,accept_hdr,bearer,auth_db);
         if(!handled)handled=serve_community_journey(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
+        if(!handled)handled=serve_guild_records(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
+        if(!handled)handled=serve_household_circles(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
+        if(!handled)handled=serve_charters(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
         if(!handled)handled=serve_account_world_workspace(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_profile_home(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
+        if(!handled)handled=serve_companions(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
         if(!handled)handled=serve_participant_journey(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
         if(!handled && !strcmp(target,"/") && !strcmp(method,"GET") && !host_is_territory_apex(host))
             handled=serve_site_program(method,target,query[0]?query:NULL,host,accept_hdr,bearer,auth_db);
@@ -643,6 +684,8 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         if(!handled) handled=serve_role_workspace(method,target,query,bearer,auth_db);
         if(!handled) handled=serve_role_directory(method,target,query,host,bearer,auth_db);
         if(!handled) handled=serve_role_leave(method,target,bodyp,b,host,bearer,auth_db);
+        /* Work orders, release sign-offs, disputes and vouches (work_orders.h). */
+        if(!handled) handled=serve_work_orders(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled && root && !strcmp(target,"/saved") && !strcmp(method,"GET"))
             handled=emit_saved_page(root,host,bearer,auth_db);
         if(!handled && root && !strncmp(target,"/o/",3))
@@ -651,6 +694,12 @@ static int serve(BfMatrix *m, int argc, char **argv) {
             handled=emit_about_page(root,target,host,bearer,auth_db);
         if(!handled && root && !strncmp(target,"/o/",3) && !strcmp(method,"GET"))
             handled=emit_item_page(root,target,host,bearer,auth_db);
+        /* The plain-words address of the price room. */
+        if(!handled && !strcmp(target,"/what-things-cost") && !strcmp(method,"GET")) {
+            char where[160];
+            snprintf(where,sizeof(where),"/s/prices/observed%s%.120s",query[0]?"?":"",query);
+            page_redirect(where); handled=1;
+        }
         if(!handled && (!strcmp(target,"/examples") || !strncmp(target,"/examples/",10)) && !strcmp(method,"GET")) {
             protocol_reply(410,"text/plain; charset=utf-8","Released work now appears on the account profile that published it.\n");
             handled=1;
@@ -659,6 +708,11 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         /* A signed-in person's /inbox is their own; the public donor inbox
          * keeps answering everyone else (account_inbox_web.h). */
         if(!handled) handled=serve_account_inbox(method,target,query,bearer,auth_db);
+        /* The studio is a C workbench on the one shell; it answers before the
+         * compiled donor surface that once held the same address. */
+        if(!handled) handled=serve_desk_external_candidate(method,target,query,bearer,auth_db,accept_hdr);
+        if(!handled) handled=serve_desk(method,target,bearer,auth_db,accept_hdr);
+        if(!handled) handled=serve_territory_map(method,target,accept_hdr);
         if(!handled) handled=serve_native_donor_route(method,target,accept_hdr,root,host,query,bearer,auth_db);
         /* An authored surface answers before the auth handler, which only
          * matters for GET: serve_authored_page declines anything else, so a
@@ -681,6 +735,7 @@ static int serve(BfMatrix *m, int argc, char **argv) {
          if(!handled) handled=serve_compose(method,target,query,bodyp,bearer,auth_db);
          if(!handled) handled=serve_surfaceir(method,target,query,bearer,auth_db);
          if(!handled) handled=serve_flow(method,target,query,bearer,auth_db);
+         if(!handled && root && wants_html(accept_hdr)) handled=emit_market_fronts(method,target,query,host,root);
          if(!handled) handled=serve_property_flow(method,target,query,bearer,auth_db);
          if(!handled) handled=serve_market_flow(method,target,query,bearer,auth_db);
          if(!handled) handled=serve_sources_flow(method,target,query,bearer,auth_db);
@@ -1144,6 +1199,10 @@ static int publish_static_one(const char *root, const char *out, const char *hos
     char dir[PATH_MAX], path[PATH_MAX], tmp[PATH_MAX];
     FILE *capture = tmpfile();
     int fd, saved, ok, status = 0;
+    int machine = !strcmp(route, "/robots.txt") || !strcmp(route, "/sitemap.xml") ||
+                  !strcmp(route, "/sitemap-surfaces.xml") || !strcmp(route, "/sitemap-notes.xml") ||
+                  !strcmp(route, "/sitemap-capabilities.xml") || !strcmp(route, "/sitemap-subjects.xml") ||
+                  !strcmp(route, "/sitemap-community.xml") || !strncmp(route, "/sitemap-community-", 19);
     long size;
     char *page, *body;
     if (!capture) return 0;
@@ -1154,18 +1213,31 @@ static int publish_static_one(const char *root, const char *out, const char *hos
     /* The owner a request reaches first answers first: a site program (a
      * client's site, a member's page) before the estate's own route. */
     snprintf(estate_request_territory, sizeof(estate_request_territory), "%s", territory_of(host));
-    ok = bf_site_mcp_serve("GET", route, "", "", host, "", "", "");
-    if (!ok) ok = serve_site_program("GET", route, NULL, host, "text/html", NULL, NULL);
-    if (!ok) ok = emit_page_program_route(root, route, host, NULL);
+    if (machine) {
+        ok = serve_machine_web("GET", route, host, NULL);
+    } else {
+        /* A released journal route uses its profile reader. */
+        /* Community permalinks are rendered through their real moderation-aware owner. */
+        ok = !strcmp(host,"aurekai.life") && !strncmp(route,"/community/",11) ?
+             serve_community_journey("GET",route,NULL,NULL,NULL,host,NULL,NULL,"text/html") : 0;
+        if (!ok) ok = !strncmp(route, "/blog/", 6) ?
+             serve_profile_home("GET", route, NULL, NULL, NULL, host, NULL, NULL, "text/html") : 0;
+        if (!ok) ok = bf_site_mcp_serve("GET", route, "", "", host, "", "", "");
+        if (!ok) ok = serve_site_program("GET", route, NULL, host, "text/html", NULL, NULL);
+        if (!ok) ok = emit_page_program_route(root, route, host, NULL);
+    }
     fflush(stdout);
     (void)dup2(saved, STDOUT_FILENO); close(saved);
     if (!ok || fseek(capture, 0, SEEK_END) || (size = ftell(capture)) <= 0 || fseek(capture, 0, SEEK_SET) || !(page = malloc((size_t)size + 1))) { fclose(capture); return 0; }
     size = (long)fread(page, 1, (size_t)size, capture); fclose(capture); page[size] = '\0';
     if (sscanf(page, "HTTP/1.1 %d", &status) != 1 || status != 200 || !(body = strstr(page, "\r\n\r\n"))) { free(page); return 0; }
     body += 4;
-    if (snprintf(dir, sizeof(dir), "%s/h/%s%s", out, host, strcmp(route, "/") ? route : "") >= (int)sizeof(dir) ||
-        snprintf(path, sizeof(path), "%s/index.html", dir) >= (int)sizeof(path) ||
-        snprintf(tmp, sizeof(tmp), "%s.%d.tmp", path, (int)getpid()) >= (int)sizeof(tmp)) { free(page); return 0; }
+    if (machine) {
+        if (snprintf(dir, sizeof(dir), "%s/h/%s", out, host) >= (int)sizeof(dir) ||
+            snprintf(path, sizeof(path), "%s%s", dir, route) >= (int)sizeof(path)) { free(page); return 0; }
+    } else if (snprintf(dir, sizeof(dir), "%s/h/%s%s", out, host, strcmp(route, "/") ? route : "") >= (int)sizeof(dir) ||
+               snprintf(path, sizeof(path), "%s/index.html", dir) >= (int)sizeof(path)) { free(page); return 0; }
+    if (snprintf(tmp, sizeof(tmp), "%s.%d.tmp", path, (int)getpid()) >= (int)sizeof(tmp)) { free(page); return 0; }
     {   /* mkdir -p */
         char partial[PATH_MAX]; snprintf(partial, sizeof(partial), "%s", dir);
         for (char *p = partial + 1; *p; p++) if (*p == '/') { *p = '\0'; mkdir(partial, 0755); *p = '/'; }
@@ -1183,9 +1255,10 @@ static int publish_static_one(const char *root, const char *out, const char *hos
 static int publish_static_cli(const char *root, const char *out, const char *routes, const char *shard, const char *only) {
     sqlite3 *cms; sqlite3_stmt *st = NULL;
     unsigned index = 0, count = 1, n = 0;
-    int written = 0, skipped = 0;
+    int written = 0, skipped = 0, index_failures = 0;
     struct timespec started, ended;
     static const char *const territories[] = {"aurekai.life", "aurekai.live", "aurekai.shop", "aurekai.work"};
+    static const char *const machine_core[] = {"/robots.txt", "/sitemap.xml", "/sitemap-surfaces.xml"};
     if (!root || !*root || !out || !*out) { fputs("publish-static: --site-root and --out required\n", stderr); return 2; }
     if (shard && (sscanf(shard, "%u/%u", &index, &count) != 2 || !count || index >= count)) { fputs("publish-static: --shard i/n with i < n\n", stderr); return 2; }
     mkdir(out, 0755);
@@ -1209,6 +1282,52 @@ static int publish_static_cli(const char *root, const char *out, const char *rou
                 if (*list && !strstr(list, program->route)) continue;
                 if (publish_static_one(root, out, territories[t], program->route)) written++; else skipped++;
             }
+            for (size_t i = 0; i < sizeof(machine_core) / sizeof(machine_core[0]); i++)
+                if (publish_static_one(root, out, territories[t], machine_core[i])) written++; else skipped++;
+            if (!strcmp(territories[t], "aurekai.life")) {
+                if (publish_static_one(root, out, territories[t], "/sitemap-notes.xml")) written++; else skipped++;
+                if (publish_static_one(root, out, territories[t], "/sitemap-subjects.xml")) written++; else skipped++;
+            }
+            if (!strcmp(territories[t], "aurekai.life")) {
+                sqlite3 *index = cms_open_ro();
+                sqlite3_stmt *threads=NULL;
+                int pages = cjw_search_sitemap_pages(index);
+                if(pages<0){ index_failures++; }
+                else {
+                    if(publish_static_one(root,out,territories[t],"/sitemap-community.xml"))written++;
+                    else{skipped++;index_failures++;}
+                    for(int page=0;page<pages;page++){
+                        char route[80];
+                        snprintf(route,sizeof(route),"/sitemap-community-%d.xml",page);
+                        if(publish_static_one(root,out,territories[t],route))written++;
+                        else{skipped++;index_failures++;}
+                    }
+                    if(sqlite3_prepare_v2(index,
+                       "SELECT p.community,p.post,p.author_subject " CJW_SEARCH_PUBLIC_FROM
+                       " ORDER BY p.id ASC",-1,&threads,NULL)!=SQLITE_OK)index_failures++;
+                    else {
+                        while(sqlite3_step(threads)==SQLITE_ROW){
+                            const char *community=(const char*)sqlite3_column_text(threads,0);
+                            const char *post=(const char*)sqlite3_column_text(threads,1);
+                            const char *author=(const char*)sqlite3_column_text(threads,2);
+                            CjrCommunity c;
+                            char route[512];
+                            if(!cjr_key(community)||!cjr_key(post)||!cjr_actor(author)||
+                               cjr_community(index,community,&c)!=1||!cjr_public(&c)||
+                               snprintf(route,sizeof(route),"/community/%s/thread/%s/",community,post)>=(int)sizeof(route)){
+                                index_failures++;continue;
+                            }
+                            if(publish_static_one(root,out,territories[t],route))written++;
+                            else{skipped++;index_failures++;}
+                        }
+                    }
+                    sqlite3_finalize(threads);
+                }
+                if(index)sqlite3_close(index);
+            }
+            if (!strcmp(territories[t], "aurekai.work")) {
+                if (publish_static_one(root, out, territories[t], "/sitemap-capabilities.xml")) written++; else skipped++;
+            }
         }
     }
     /* Every published host's own page, this shard's share of them. */
@@ -1220,13 +1339,48 @@ static int publish_static_cli(const char *root, const char *out, const char *rou
             if (only && *only && !strstr(only, host)) continue;
             if (n++ % count != index) continue;
             if (publish_static_one(root, out, host, "/")) written++; else skipped++;
+            for (size_t i = 0; i < sizeof(machine_core) / sizeof(machine_core[0]); i++)
+                if (publish_static_one(root, out, host, machine_core[i])) written++; else skipped++;
+            /* Journal articles are independently addressable released pages.
+             * Export them with the same acceptance predicate as the reader and
+             * sitemap; a review-held page never becomes an edge asset. */
+            {
+                sqlite3_stmt *site_st = NULL, *page_st = NULL;
+                char site_id[128] = {0};
+                int journal_index_written = 0;
+                if (sqlite3_prepare_v2(cms,
+                    "SELECT site_id FROM site_presentation WHERE namespace='root' "
+                    "AND status='published' AND profile='member-profile-v1' AND host=?1 "
+                    "ORDER BY id DESC LIMIT 1", -1, &site_st, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(site_st, 1, host, -1, SQLITE_TRANSIENT);
+                    if (sqlite3_step(site_st) == SQLITE_ROW && sqlite3_column_text(site_st, 0))
+                        snprintf(site_id, sizeof(site_id), "%s",
+                            (const char *)sqlite3_column_text(site_st, 0));
+                }
+                sqlite3_finalize(site_st);
+                if (site_id[0] && sqlite3_prepare_v2(cms,
+                    "SELECT p.route FROM site_page p WHERE " PH_JOURNAL_RELEASED
+                    " ORDER BY p.route LIMIT 5000", -1, &page_st, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(page_st, 1, site_id, -1, SQLITE_TRANSIENT);
+                    while (sqlite3_step(page_st) == SQLITE_ROW) {
+                        const char *route = (const char *)sqlite3_column_text(page_st, 0);
+                        size_t slug_len = 0;
+                        if (!ph_blog_slug_safe(route, &slug_len)) continue;
+                        if (!journal_index_written++) {
+                            if (publish_static_one(root, out, host, "/blog/")) written++; else skipped++;
+                        }
+                        if (publish_static_one(root, out, host, route)) written++; else skipped++;
+                    }
+                }
+                sqlite3_finalize(page_st);
+            }
         }
     }
     sqlite3_finalize(st); sqlite3_close(cms);
     clock_gettime(CLOCK_REALTIME, &ended);
     printf("{\"written\":%d,\"not_composed\":%d,\"shard\":\"%u/%u\",\"seconds\":%.1f}\n", written, skipped, index, count,
            (double)(ended.tv_sec - started.tv_sec) + (double)(ended.tv_nsec - started.tv_nsec) / 1e9);
-    return written ? 0 : 1;
+    return index_failures ? 2 : written ? 0 : 1;
 }
 
 /* Compose every public route once, so the first person through the door is not

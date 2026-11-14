@@ -55,6 +55,11 @@ all: pack-lifecycle-witness
 SYNC_BIN = $(HOME)/.bonfyre/bin/$(TARGET)
 
 all: $(LT_LIB) $(TARGET) subcommand-dispatch-test site-fragment-test import-jsonl-test fact-delta-test conditional-required-test large-update-test hook-held-message-test presentation-template-test world-fragments-test project-listings-owner-test publish-market-owner-test project-event-sources-test
+.PHONY: dating-editorial-composition-witness
+all: dating-editorial-composition-witness
+dating-editorial-composition-witness: $(TARGET)
+	bun test tests/dating_editorial_composition.test.mjs
+
 .PHONY: publication-promotion-witness
 all: publication-promotion-witness
 publication-promotion-witness: $(TARGET)
@@ -74,6 +79,10 @@ install-bin: $(TARGET)
 # Witnesses already run under all; this is the uniform entry point.
 .PHONY: test
 test: all
+test: site-publication-placement-witness
+.PHONY: site-publication-placement-witness
+site-publication-placement-witness: $(TARGET)
+	bun test tests/site_publication_placement.test.mjs
 
 $(COMPACT_PROBE): tests/compact_probe.c src/compact_bindings.c src/compact_bindings.h src/bench_metrics.c src/bench_metrics.h $(LT_LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm
@@ -147,6 +156,26 @@ all: page-write-test
 page-write-test: $(TARGET)
 	bun test tests/page_write.test.mjs
 .PHONY: page-write-test
+all: affinity-test
+affinity-test: $(TARGET)
+	bun test tests/person_affinity.test.mjs
+.PHONY: affinity-test
+all: interest-test
+interest-test: $(TARGET)
+	bun test tests/person_interest.test.mjs
+.PHONY: interest-test
+all: dateplan-test
+dateplan-test: $(TARGET)
+	bun test tests/date_plan.test.mjs
+.PHONY: dateplan-test
+all: report-test
+report-test: $(TARGET)
+	bun test tests/person_report.test.mjs
+.PHONY: report-test
+all: quiz-test
+quiz-test: $(TARGET)
+	bun test tests/person_quiz_answer.test.mjs
+.PHONY: quiz-test
 
 all: source-publication-test
 source-publication-test: $(TARGET)

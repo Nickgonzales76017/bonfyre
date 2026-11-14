@@ -1,6 +1,6 @@
 {
   "bonfyre_root": "/Users/nickgonzales/Developer/Bonfyre",
-  "command_count": 178,
+  "command_count": 196,
   "commands": [
     {"capability_id":"bonfyre_api","command_dir":"BonfyreAPI","binary":"bonfyre-api","binary_path":"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreAPI/bonfyre-api","present":true},
     {"capability_id":"bonfyre_surface","command_dir":"BonfyreSurface","binary":"bonfyre-surface","binary_path":"/Users/nickgonzales/Developer/Bonfyre/cmd/BonfyreSurface/bonfyre-surface","present":true},

@@ -1,0 +1,47 @@
+WordPress 7.1.3 Maintenance and Security Release
+
+This security and maintenance release features 7 security fixes and 4 bug fixes.
+
+Because this is a security release, it is recommended that you update your sites immediately.
+
+You can download WordPress 7.1.3 from WordPress.org, or visit your WordPress Dashboard, click “Updates”, and then click “Update Now”. If you have sites that support automatic background updates, the update process will begin automatically.
+
+# Security updates included in this release
+
+
+The security team would like to thank the following people and organizations for responsibly reporting vulnerabilities, and allowing them to be fixed in this release:
+
+A stored XSS on the Comments administration page, exploitable via pending comments, reported by Trail of Bits in collaboration with OpenAI.
+
+A DoS issue in the WP_Http::make_absolute_url() method, reported by Anthropic
+
+A second-Order SQL injection in WordPress WXR export, reported by Anthropic
+
+A weakness allowing Author role users to sticky posts, reported by Anthropic
+
+Unauthenticated disclosure of comments on private & unpublished posts, reported by Ananda Dhakal from Patchstack
+
+Imgur embeds are vulnerable to XSS, reported by Zhengyu Liu, Jingcheng Yang, and Gavin Zhong
+
+Forgeable parameters passed to the {status}_{type} hook can lead to action name collision, reported by Alex Concha of the WordPress security team
+
+# Thank you to these WordPress contributors
+
+
+This release was led by Jake Spurlock.
+
+WordPress 7.1.3 would not have been possible without the contributions of the following people. Their asynchronous coordination to deliver maintenance and security fixes into a stable release is a testament to the power and capability of the WordPress community.
+
+Aaron Jorbin, Adam Silverstein, Adi Moldovan, Adrian Duffell, Alex Concha, Arkaprabha Chowdhury, Deepak Kumar, donniam, Ehtisham Siddiqui, Jake Spurlock, Jb Audras, Jeremy Felt, Joe Dolson, John Blackbourn, Jon Surrell, Jonathan Desrosiers, Ken Gagne, Khokan Sardar, Lance Willett, lucatume, marcs0h, Peter Wilson, Paul Kevan, RS Software, Rudy Faile, Sergey Biryukov, siliconforks, smerriman, Stephen Bernhardt, Suryakant Upadhyay, vortfu, webVerts, Weston Ruter, Yogesh Bhutkar
+
+# Backports
+
+
+As a courtesy, the security fixes are being backported, where necessary, to all branches eligible to receive security fixes (currently through 4.7). As a reminder, only the most recent version of WordPress is actively supported. The backports are in progress and will ship as they become ready.
+
+# How to contribute
+
+
+To get involved in WordPress core development, head over to Trac, pick a ticket, and join the conversation in the #core channel. Need help? Check out the Core Contributor Handbook.
+
+

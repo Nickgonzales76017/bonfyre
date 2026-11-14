@@ -113,6 +113,9 @@ if noon:
 
 page = get("/whats-on")
 open(tmp + '/stitch-whats-on.html', 'w').write(page)
+check('/assets/page-components.css' in page and '<style>.agenda-tools' not in page,
+      'agenda controls use the generated component stylesheet')
+check('.agenda-tools' in get('/assets/page-components.css'), 'the generated component stylesheet is served')
 check('data-agenda-controls' in page and 'data-agenda-search' in page and 'data-agenda-filter="weekend"' in page,
       'upcoming calendar rows supply the real interactive What’s on filter')
 check('data-agenda-weekend="' in page, 'the calendar owner marks weekend rows using the display timezone')

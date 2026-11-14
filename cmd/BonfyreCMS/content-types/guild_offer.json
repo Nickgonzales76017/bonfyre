@@ -1,0 +1,20 @@
+{
+  "name": "guild_offer",
+  "displayName": "Guild Offer",
+  "description": "A grant, patronage or apprenticeship opening a guild steward posts with stated terms. The terms are what the guild says it intends; recording an offer holds no funds, makes no binding promise and moves no money.",
+  "attributes": {
+    "offer": { "type": "string", "required": true, "uniqueWithinNamespace": true },
+    "community": { "type": "string", "required": true },
+    "kind": { "type": "string", "required": true },
+    "title": { "type": "string", "required": true },
+    "terms": { "type": "text", "required": true },
+    "stated_value": { "type": "string", "required": false },
+    "place": { "type": "string", "required": false },
+    "closes_on": { "type": "string", "required": false },
+    "state": { "type": "string", "required": true },
+    "steward_subject": { "type": "string", "required": true },
+    "posted_at": { "type": "string", "required": true },
+    "cannot_infer": { "type": "text", "required": true },
+    "status": { "type": "string", "required": true }
+  }
+}

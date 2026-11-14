@@ -1,7 +1,7 @@
 // Compile temporary CMS source through the real C owner, then exercise the
 // same workspace composition used by the browser. No operator records are read.
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,mkdirSync} from 'node:fs';
+import {mkdtempSync,rmSync,mkdirSync,copyFileSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
@@ -9,7 +9,8 @@ import {execFileSync} from 'node:child_process';
 import {SurfaceRuntime} from '../runtime/surface-runtime.mjs';
 const root=resolve(fileURLToPath(new URL('../../..',import.meta.url)));
 const home=mkdtempSync(join(tmpdir(),'bf-workspace-')),db=join(home,'cms.db');
-const cms=join(root,'cmd/BonfyreCMS/bonfyre-cms'),schemas=join(root,'cmd/BonfyreCMS/content-types');
+const cms=join(root,'cmd/BonfyreCMS/bonfyre-cms'),sourceSchemas=join(root,'cmd/BonfyreCMS/content-types'),schemas=join(home,'schemas');
+mkdirSync(schemas);for(const type of ['world','site_presentation','site_program','semantic_slot','application_binding','surface_interaction_profile','surface_scene'])copyFileSync(join(sourceSchemas,type+'.json'),join(schemas,type+'.json'));
 const env={...process.env,BONFYRE_CMS_BINARY:cms,BONFYRE_CMS_SCHEMAS:schemas,BONFYRE_SURFACE_SCENE_SCHEMA:join(schemas,'surface_scene.json'),BONFYRE_FACT_DELTAS:join(home,'deltas')};
 mkdirSync(env.BONFYRE_FACT_DELTAS);
 const run=(bin,args)=>{try{return execFileSync(bin,args,{cwd:root,env,encoding:'utf8',timeout:20000,maxBuffer:4*1024*1024,stdio:['pipe','pipe','pipe']});}catch(error){throw Error(bin+' '+args.slice(0,3).join(' ')+': '+String(error.stderr??error.message).slice(-2400));}};

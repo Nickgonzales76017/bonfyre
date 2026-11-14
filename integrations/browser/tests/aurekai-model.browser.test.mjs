@@ -1,6 +1,7 @@
 // Real browser module and MessagePack HTTP boundary; all model replies below
 // are loopback fixtures. These tests never invoke inference or a payment owner.
 import {afterAll,beforeAll,beforeEach,expect,test} from 'bun:test';
+import {deferred,gate,packet,launchFixtureChromium,loopbackServer} from './browser-fixture.mjs';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {mkdirSync} from 'node:fs';
@@ -9,9 +10,6 @@ import {encode,decode} from '../workspace-msgpack.mjs';
 
 const root=resolve(import.meta.dir,'..'),taskId='a'.repeat(24),output='Retained output <img src=x onerror="window.modelInjected=true">\n';
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const deferred=()=>{let resolve;const promise=new Promise(done=>resolve=done);return {promise,resolve};};
-const gate=()=>({entered:deferred(),release:deferred()});
-const packet=(value,status=200)=>new Response(encode(value),{status,headers:{'Content-Type':'application/msgpack','Cache-Control':'no-store'}});
 const binding=(context,actor)=>({actor,subject:context==='self'?actor:context,scope:context==='self'?'self':context.split(':')[0]});
 const model=(id,label,catalogId)=>({id,label,catalogId,provider:'bonfyre-moe',execution:'local',available:true,maxTokens:2048,maxTimeoutMs:120000});
 let browser,server,actor,calls,reviews,reviewGate,cancelGate,loseSubmit,runState,localTransferAvailable,loseTransfer,badTransferDigest,runOutput,usageAlreadyRecorded;
@@ -24,9 +22,8 @@ function run(owner){
       ['running','uncertain'].includes(runState)?{state:'pending',attemptRef:'attempt-one',durationMs:retained?320:null,outputBytes:retained?Buffer.byteLength(output):null,pricing:{state:'unknown'}}:null};
 }
 beforeAll(async()=>{
-  const {chromium}=await import(process.env.BONFYRE_PLAYWRIGHT_MODULE||'playwright');
-  browser=await chromium.launch({headless:true,...process.env.BONFYRE_CHROMIUM_BINARY?{executablePath:process.env.BONFYRE_CHROMIUM_BINARY}:{}});
-  server=Bun.serve({hostname:'127.0.0.1',port:0,async fetch(request){
+  browser=await launchFixtureChromium({module:'playwright'});
+  server=loopbackServer({async fetch(request){
     const url=new URL(request.url);
     if(url.pathname==='/fixture')return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/apps/aurekai-activity.css"><link rel="stylesheet" href="/apps/aurekai-model.css">
       <style>body{margin:0;background:#f2f4ed;color:#25342b;font:14px/1.6 system-ui,sans-serif}body>header{padding:22px 30px;border-bottom:1px solid #dce3d5;background:#fbfcf8}main{padding:24px;max-width:1100px}main>a{margin-right:16px;color:#31593d}#fixture-account{float:right}body>header strong{font:26px Georgia,serif}</style></head><body>

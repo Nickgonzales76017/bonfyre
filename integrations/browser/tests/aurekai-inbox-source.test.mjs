@@ -79,7 +79,8 @@ describe('bounded account Inbox interchange',()=>{
  test('the full Inbox action read is scoped, bounded and separate from recipient notices',async()=>{
   const items=[
    {id:'account-operator-approve',kind:'release',title:'Approve the current release',updated:1000},
-   {id:'invitation:river-guild',kind:'invitation',title:'Join River Guild',updated:0}
+   {id:'invitation:river-guild',kind:'invitation',title:'Join River Guild',updated:0},
+   {id:'dating:introductions',kind:'dating-introduction',title:'Review current dating introductions',updated:0}
   ];
   const snapshot=()=>reply({context:'self',items});
   const read=()=>readAccountNeeds('self',{request:(url,options)=>{
@@ -87,7 +88,7 @@ describe('bounded account Inbox interchange',()=>{
    expect(options.credentials).toBe('same-origin');expect(options.method).toBe('GET');
    return snapshot();
   }});
-  expect((await read()).items.map(x=>x.title)).toEqual(['Approve the current release','Join River Guild']);
+  expect((await read()).items.map(x=>x.title)).toEqual(['Approve the current release','Join River Guild','Review current dating introductions']);
   for(const wrong of [
    {items:[items[0],items[0]]},
    {items:[{...items[0],kind:'unknown'}]},

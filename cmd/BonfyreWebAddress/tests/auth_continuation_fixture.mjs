@@ -19,7 +19,7 @@ export async function fixture({beforeServe}={}){
   for(const dir of [schemas,savedSchemas,join(foreign,'receipts'),join(foreign,'bodies')])mkdirSync(dir,{recursive:true});
   for(const type of ['world','world_fragment','internet_source','publication_occurrence','content_flag','site_page','object_contract'])copyFileSync(join(root,'cmd/BonfyreCMS/content-types',type+'.json'),join(schemas,type+'.json'));
   copyFileSync(join(root,'cmd/BonfyreCMS/content-types/saved_item.json'),join(savedSchemas,'saved_item.json'));
-  const env={...process.env,BONFYRE_AUTH_BINARY:auth,BONFYRE_CMS_BINARY:cms,BONFYRE_CMS_DB:db,BONFYRE_CMS_SCHEMAS:schemas,BONFYRE_SAVED_ITEM_SCHEMAS:savedSchemas,BONFYRE_FOREIGN_ROOT:foreign,BONFYRE_FACT_DELTAS:''};
+  const env={...process.env,BONFYRE_AUTH_BINARY:auth,BONFYRE_CMS_BINARY:cms,BONFYRE_CMS_DB:db,BONFYRE_CMS_SCHEMAS:schemas,BONFYRE_SAVED_ITEM_SCHEMAS:savedSchemas,BONFYRE_FOREIGN_ROOT:foreign,BONFYRE_FACT_DELTAS:'',BONFYRE_WORKSPACE_CLIENT:process.env.BONFYRE_TEST_PUBLIC_BROWSER??join(root,'integrations/browser')};
   const run=(bin,args,options={})=>execFileSync(bin,args,{encoding:'utf8',stdio:['pipe','pipe','pipe'],env,timeout:20000,...options});
   const content=(...args)=>run(cms,[...args,'--db',db,'--schemas',schemas]);
   const entry=(type,value)=>content('entry','create',type,JSON.stringify(value),'--ns','root');

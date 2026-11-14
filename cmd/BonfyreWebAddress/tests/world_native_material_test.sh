@@ -95,7 +95,7 @@ strip_account_refresh() {
   python3 -c '
 import ast, pathlib, re, sys
 text = sys.stdin.read()
-for filename, name in [("account_navigation_markup.h", "BF_ACCOUNT_REFRESH"), ("account_home_continuation.h", "BF_HOME_CONTINUATION"), ("main.c", "BF_ESTATE_BAR")]:
+for filename, name in [("account_navigation_markup.h", "BF_ACCOUNT_REFRESH"), ("main.c", "BF_ESTATE_BAR")]:
     header = (pathlib.Path(sys.argv[1]) / filename).read_text()
     macro = header.split("#define " + name + " ", 1)[1].split("\n\n", 1)[0].split("\n#endif", 1)[0]
     if name == "BF_ACCOUNT_REFRESH":

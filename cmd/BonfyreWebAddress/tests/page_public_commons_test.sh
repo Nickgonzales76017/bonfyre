@@ -250,7 +250,8 @@ if trail:
 library = re.search(r'href="(/o/auto-dallas-q16557/[0-9a-f]{24})"[^>]*>(?:<b>)?Library hours extended for the fall', dallas_about)
 if library:
     _, _, post = get(library.group(1))
-    related = re.search(r'<h2 class="region-label">Related</h2>.*?</section>', post, re.S)
+    # The item-detail screen names this region "More like this"; same words-chart owner.
+    related = re.search(r'<h2 class="region-label">(?:Related|More like this)</h2>.*?</section>', post, re.S)
     check(related and "branch libraries" in related.group(0), "related posts come from the atlas's words chart")
 _, _, near2 = get("/nearby")
 check("Trinity River trail reopens" in near2, "Nearby carries what the area's own organizations are saying")

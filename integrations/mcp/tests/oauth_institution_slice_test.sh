@@ -49,7 +49,9 @@ node -e 'require("http").createServer((q,s)=>{let b="";q.on("data",c=>b+=c);q.on
 upstream_pid=$!
 
 bun "$root/components/BonfyreServiceSite/workbook-mcp-build.mjs" "$tmp/review.html" >/dev/null
+bun "$root/components/BonfyreServiceSite/connected-measurement-mcp-build.mjs" "$tmp/connected.html" >/dev/null
 BONFYRE_WORKBOOK_MCP_APP_FILE="$tmp/review.html" \
+BONFYRE_CONNECTED_MCP_APP_FILE="$tmp/connected.html" \
 BONFYRE_AUTH_BINARY="$auth" BONFYRE_AUTH_DB="$authdb" \
   BONFYRE_UPPER90_BINARY="$upper90" BONFYRE_UPPER90_DB="$u90db" \
   BONFYRE_CMS_BINARY="$cms" BONFYRE_CMS_DB="$cmsdb" BONFYRE_CMS_SCHEMAS="$cms_schemas" BONFYRE_FOREIGN_ROOT="$foreign_root" \
@@ -93,6 +95,7 @@ printf '%s' "$self_init" | grep -q 'bonfyre-self-slice'
 self_tools=$(curl -fsS -X POST -H "Authorization: Bearer $self_token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":91,"method":"tools/list","params":{}}' "$base")
 printf '%s' "$self_tools" | grep -q 'self_closure'
+printf '%s' "$self_tools" | grep -q 'self_connected_measurements'
 printf '%s' "$self_tools" | grep -q 'self_foreign_observe'
 if printf '%s' "$self_tools" | grep -q 'institution_cms_create\|project_status\|native_tool_invoke\|bonfyre_admin_'; then
   echo 'mcp institution slice: self account received institutional/global tools'; exit 1
@@ -124,6 +127,7 @@ modern_resources=$(curl -fsS -X POST -H "Authorization: Bearer $self_token" -H '
   -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: resources/list' \
   --data '{"jsonrpc":"2.0","id":94,"method":"resources/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}}}' "$base")
 printf '%s' "$modern_resources" | grep -q 'bonfyre://closure/actor/'
+printf '%s' "$modern_resources" | grep -q 'ui://aurekai/connected-performance/v1.html'
 printf '%s' "$modern_resources" | grep -q 'aurekai/addressApertureDigest'
 printf '%s' "$modern_resources" | grep -q '"cacheScope":"private"'
 
@@ -137,12 +141,16 @@ tools=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: ap
   --data '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' "$base")
 printf '%s' "$tools" | grep -q 'institution_closures'
 printf '%s' "$tools" | grep -q 'institution_cms_create'
+printf '%s' "$tools" | grep -q 'institution_connected_measurements'
 if printf '%s' "$tools" | grep -q 'project_status\|native_tool_invoke\|bonfyre_admin_'; then
   echo 'mcp institution slice: delegated user received global project tools'; exit 1
 fi
 closure=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"institution_closures","arguments":{}}}' "$base")
 printf '%s' "$closure" | grep -q 'stable:cedar'
+cross_tenant=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":417,"method":"tools/call","params":{"name":"institution_connected_measurements","arguments":{"estate":"not-in-closure"}}}' "$base")
+printf '%s' "$cross_tenant" | grep -q 'estate_not_in_current_closure'
 printf '%s' "$closure" | grep -q 'jrss'
 if printf '%s' "$closure" | grep -q 'ai-loss\|leads'; then
   echo 'mcp institution slice: sibling estate leaked into JRSS closure'; exit 1
@@ -181,6 +189,11 @@ lead_closures=$(curl -fsS -X POST -H "Authorization: Bearer $lead_token" -H 'Con
   --data '{"jsonrpc":"2.0","id":41,"method":"tools/call","params":{"name":"institution_closures","arguments":{}}}' "$base")
 for inherited in jrss ai-loss leads; do printf '%s' "$lead_closures" | grep -q "\"estate\":\"$inherited\""; done
 printf '%s' "$lead_closures" | grep -q '"scope":"institution:jrss"'
+lead_tools=$(curl -fsS -X POST -H "Authorization: Bearer $lead_token" -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":401,"method":"tools/list","params":{}}' "$base")
+if printf '%s' "$lead_tools" | grep -q 'bonfyre_admin_provider_history'; then
+  echo 'institutional account discovered administrator provider history' >&2; exit 1
+fi
 lead_created=$(curl -fsS -X POST -H "Authorization: Bearer $lead_token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":42,"method":"tools/call","params":{"name":"institution_cms_create","arguments":{"estate":"jrss","type":"wiki_page","document":{"title":"Leadership MCP brief","route":"leadership-mcp-brief","content":"Inherited parent content","published":false,"allow_guest":false}}}}' "$base")
 printf '%s' "$lead_created" | grep -q '"created":true'
@@ -203,6 +216,8 @@ printf '%s' "$owner" | grep -q 'bonfyre_admin_users'
 printf '%s' "$owner" | grep -q 'bonfyre_admin_cms_create'
 printf '%s' "$owner" | grep -q 'bonfyre_admin_external_descriptors'
 printf '%s' "$owner" | grep -q 'bonfyre_admin_provider_materializations'
+printf '%s' "$owner" | grep -q 'bonfyre_admin_provider_history'
+printf '%s' "$owner" | grep -q 'bonfyre_admin_connected_measurements'
 
 # Embedded resources share the personal/admin boundary, while upstream
 # resources survive the merge. The HTML contains no account data.
@@ -210,20 +225,29 @@ owner_resources=$(curl -fsS -X POST -H "Authorization: Bearer $owner_token" -H '
   --data '{"jsonrpc":"2.0","id":410,"method":"resources/list","params":{}}' "$base")
 printf '%s' "$owner_resources" | grep -q 'fixture://upstream'
 printf '%s' "$owner_resources" | grep -q 'ui://aurekai/financial-review/v1.html'
+printf '%s' "$owner_resources" | grep -q 'ui://aurekai/connected-performance/v1.html'
 owner_ui=$(curl -fsS -X POST -H "Authorization: Bearer $owner_token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":411,"method":"resources/read","params":{"uri":"ui://aurekai/financial-review/v1.html"}}' "$base")
 printf '%s' "$owner_ui" | grep -q 'text/html;profile=mcp-app'
+owner_connected=$(curl -fsS -X POST -H "Authorization: Bearer $owner_token" -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":415,"method":"resources/read","params":{"uri":"ui://aurekai/connected-performance/v1.html"}}' "$base")
+printf '%s' "$owner_connected" | grep -q 'text/html;profile=mcp-app'
+printf '%s' "$owner_connected" | grep -q 'Connected Performance'
 owner_init=$(curl -fsS -X POST -H "Authorization: Bearer $owner_token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":412,"method":"initialize","params":{}}' "$base")
 printf '%s' "$owner_init" | bun -e 'const r=(await Bun.stdin.json()).result;if(!r.owner_upstream||!r.capabilities.tools||!r.capabilities.resources)throw Error("admin capabilities were not preserved")'
 private_resources=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":413,"method":"resources/list","params":{}}' "$base")
-if printf '%s' "$private_resources" | grep -q 'ui://aurekai'; then
+printf '%s' "$private_resources" | grep -q 'ui://aurekai/connected-performance/v1.html'
+if printf '%s' "$private_resources" | grep -q 'ui://aurekai/financial-review'; then
   echo 'mcp institution slice: delegated account received financial UI'; exit 1
 fi
 private_ui=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":414,"method":"resources/read","params":{"uri":"ui://aurekai/financial-review/v1.html"}}' "$base")
 printf '%s' "$private_ui" | grep -q '"isError":true'
+private_connected=$(curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":416,"method":"resources/read","params":{"uri":"ui://aurekai/connected-performance/v1.html"}}' "$base")
+printf '%s' "$private_connected" | grep -q 'text/html;profile=mcp-app'
 
 
 # The admin closure uses the same existing Project upstream and exact Spines
@@ -333,6 +357,13 @@ sqlite3 "$cmsdb" "select content from wiki_page where id=$draft_id;" | grep -q '
 admin_call 555 bonfyre_admin_cms_delete "{\"type\":\"wiki_page\",\"id\":$draft_id}" | grep -Eq 'deleted[^a-z]{1,4}true' && { echo 'mcp institution slice: root delete removed a draft row'; exit 1; }
 [ "$(sqlite3 "$cmsdb" "select count(*) from wiki_page where id=$draft_id;")" = 1 ] || { echo 'mcp institution slice: refused delete removed the row'; exit 1; }
 admin_call 556 bonfyre_admin_cms_update '{"type":"wiki_page","namespace":"bad ns!","id":1,"document":{}}' | grep -Eq 'updated[^a-z]{1,4}true' && { echo 'mcp institution slice: invalid namespace accepted'; exit 1; }
+# The same owner supports older tool schema bindings with a reserved nested
+# namespace, while still refusing cross-namespace mutation and invalid input.
+admin_call 558 bonfyre_admin_cms_update "{\"type\":\"wiki_page\",\"id\":$draft_id,\"document\":{\"__namespace\":\"draft-fixture\",\"content\":\"v3\"}}" | grep -q 'updated'
+sqlite3 "$cmsdb" "select content from wiki_page where id=$draft_id;" | grep -q '^v3$' || { echo 'mcp institution slice: cached-schema update did not land'; exit 1; }
+admin_call 559 bonfyre_admin_cms_update "{\"type\":\"wiki_page\",\"namespace\":\"root\",\"id\":$draft_id,\"document\":{\"__namespace\":\"draft-fixture\",\"content\":\"leak\"}}" | grep -Eq 'updated[^a-z]{1,4}true' && { echo 'mcp institution slice: conflicting scopes reached native CMS'; exit 1; }
+admin_call 560 bonfyre_admin_cms_update "{\"type\":\"wiki_page\",\"id\":$draft_id,\"document\":{\"__namespace\":\"bad ns!\",\"content\":\"leak\"}}" | grep -Eq 'updated[^a-z]{1,4}true' && { echo 'mcp institution slice: invalid nested scope accepted'; exit 1; }
+sqlite3 "$cmsdb" "select content from wiki_page where id=$draft_id;" | grep -q '^v3$' || { echo 'mcp institution slice: refused nested update changed row'; exit 1; }
 admin_call 557 bonfyre_admin_cms_delete "{\"type\":\"wiki_page\",\"namespace\":\"draft-fixture\",\"id\":$draft_id}" | grep -q 'deleted'
 [ "$(sqlite3 "$cmsdb" "select count(*) from wiki_page where id=$draft_id;")" = 0 ] || { echo 'mcp institution slice: non-root delete did not land'; exit 1; }
 [ "$(sqlite3 "$cmsdb" "select count(*) from wiki_page where id=$root_id;")" = 1 ] || { echo 'mcp institution slice: non-root delete touched root'; exit 1; }

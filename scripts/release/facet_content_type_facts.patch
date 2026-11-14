@@ -1,0 +1,40 @@
+diff --git a/schemas/control/content-type-facts.cue b/schemas/control/content-type-facts.cue
+--- a/schemas/control/content-type-facts.cue
++++ b/schemas/control/content-type-facts.cue
+@@ -207,1 +207,36 @@
++	// Declared CMS record types, not credentials, consent, payments or verification.
++	// Audience describes use context; only destination owners grant visibility.
++	care_entry: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	carrier_sync_request: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "external", audience: "self"}
++	date_plan: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	dating_date_plan: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	dating_interest: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	dating_participation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	device_key: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	device_pairing: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	feed_agent_policy: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	field_dispatch: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	field_observation: {phenotypes: ["EVENT", "DOCUMENT"], domain: "community", audience: "community"}
++	guild_attestation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	guild_bench_proof: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	guild_hours: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	guild_module: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "community"}
++	guild_offer: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "market"}
++	guild_offer_application: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	pantry_entry: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	person_affinity: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	person_interest: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	person_quiz_answer: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
++	person_report: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "governance", audience: "institution"}
++	publisher_account: {phenotypes: ["DATASET", "VERSIONED_RECORD"], domain: "external", audience: "institution"}
++	publisher_subaccount: {phenotypes: ["DATASET", "VERSIONED_RECORD"], domain: "external", audience: "institution"}
++	route_presentation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
++	scope_presentation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "self"}
++	site_publication_placement: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "institution"}
++	training_plan_draft: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	training_plan_release: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "public"}
++	training_program_draft: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
++	training_program_release: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "public"}
++	training_studio_presentation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
++	work_example: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
+ }

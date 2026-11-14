@@ -286,6 +286,16 @@ Earlier recorded ratchet: 1780 -> 1778 `.mjs` files, 182,482 -> 176,351 lines, c
 - Live MCP services still run the Bun servers (9 processes, ~270 MB RSS);
   cutting them over to C is outward-facing and waits on W2 plus your go.
 
+### 2026-11-11, generated artifacts exclude themselves
+
+Build outputs no longer need per-artifact ratchet edits: a script whose
+first line carries `bonfyre:generated` (stamped by its builder, naming the
+owning rule) is excluded from every count automatically. Proven by
+`scripts/tests/native-ratchet-generated-stamp.sh` (CI) and first used by
+the `@bonfyre/authoring` visual-editor bundle. A false stamp is a review
+finding, tracked like any drifted projection. The older path-based
+exclusions stay until their artifacts migrate to stamps.
+
 ### Next
 
 1. WX: multi-call `bonfyre` binary over libbonfyre (largest program now 13.8 MB).

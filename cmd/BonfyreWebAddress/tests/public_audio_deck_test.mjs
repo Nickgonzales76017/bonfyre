@@ -67,6 +67,20 @@ function check(name){passed.push(name);}
 
 test('native source projection does not preload recordings or QR codes',async()=>{const before=calls.length,p=await open();try{expect(await p.page.$eval('[data-deck] audio',a=>a.getAttribute('src'))).toBeNull();expect(calls.slice(before).filter(x=>x.includes('.wav'))).toHaveLength(0);expect(await p.page.$eval('[data-deck-code-image]',n=>n.getAttribute('src'))).toBeNull();expect(await p.page.$eval('[data-deck-position]',n=>n.disabled)).toBe(true);check('No recording or code requested before user action');}finally{await p.close();}},20000);
 
+test('shared player and recording deck never play at the same time',async()=>{
+ const p=await open();try{
+  expect(await p.page.$('[data-ak-player]')).not.toBeNull();
+  await play(p.page);
+  await p.page.evaluate(src=>{const b=document.createElement('button');b.type='button';b.dataset.akTrack='';b.dataset.src=src;b.textContent='Play shared fixture';document.querySelector('main').prepend(b);},mediaBase+'/tone-shared.wav');
+  await p.page.click('[data-src$="tone-shared.wav"]');
+  expect(await p.page.$eval('[data-deck] audio',a=>a.paused)).toBe(true);
+  expect(await p.page.$eval('.ak-play',b=>b.getAttribute('aria-label'))).toBe('Pause');
+  await play(p.page,1);
+  expect(await p.page.$eval('.ak-play',b=>b.getAttribute('aria-label'))).toBe('Play');
+  check('Recording deck and shared player stop one another');
+ }finally{await p.close();}
+},30000);
+
 test('Stitch audio queue filters real retained recordings, selects exact sources and remains usable on mobile',async()=>{
  const before=calls.length,p=await open(390);
  try{

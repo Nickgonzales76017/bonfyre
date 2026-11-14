@@ -2620,3 +2620,38 @@ interaction authoring-template-renders-web-fragments
   witness site fragment projection PASS via authoring_template.c
   binding cmd/BonfyreSurfaceScene/src/authoring_template.c
   binding cmd/BonfyreWebAddress/src/site_fragment_projection.c
+
+interaction service-site-composes-journal-from-native-markdown
+  source service-site
+  destination cmd-surface-scene
+  relation spawns_bounded_section_render_per_composition
+  preserves section text, heading hierarchy, TOC anchors, fenced-code bytes and the explicit asset-base stylesheet refs
+  drops any JS-side Markdown dialect, reference-page chrome, and the GitHub Pages origin
+  forbidden_inference a composed article -> the intake journal was receipted, current, or authorized for publication
+  invalidates_on the journal schema, section bounds, or the native render-md bytes changing
+  witness components/BonfyreServiceSite/tests/journal-article-composition.test.mjs
+  binding components/BonfyreServiceSite/authored-journal-article.mjs
+
+interaction web-address-serves-journal-through-native-projector
+  source cmd-web-address
+  destination cmd-surface-scene
+  relation links_shared_composition_units_into_serving_binary
+  preserves profile apex site scope, released page and fragment status, showcase slot, public audience, html projection contract and the reviewed Markdown stage
+  drops draft and non-public material, non-showcase slots, unpublished siblings and the GitHub Pages origin
+  forbidden_inference a served article -> the intake journal was receipted, current, rights-cleared or authorized for publication
+  invalidates_on the journal intake route, the site_page editorial fields, the profile-story template or the native render units changing
+  witness cmd/BonfyreSurfaceScene/tests/native_public_authored_document_test.c
+  binding cmd/BonfyreWebAddress/src/site_authored_document.c
+  binding cmd/BonfyreWebAddress/src/profile_home.h
+
+interaction companions-rows-render-through-shared-native-components
+  source human-community-body
+  destination cmd-surface-scene
+  relation lowers_directory_rows_as_authoring_tree_blocks
+  preserves candidate subject, home host, display name, bio, score badge, mutual/state badge and the exact affinity form actions (like, pass, block, report link) with hidden-field targets
+  drops directory-specific row markup and classes; rows are ui:card, ui:badge and ui:action blocks lowered by the same native renderer as authored articles
+  forbidden_inference a component row -> an authored article; rows are directory projections composed at request time, never CMS-held content
+  invalidates_on the affinity projection emit, the ui:card/ui:badge/ui:action templates or the native render units changing
+  witness cmd/BonfyreWebAddress/tests/affinity_projection_test.c (rows speak the component language)
+  binding cmd/BonfyreWebAddress/src/affinity_projection.c
+  binding components/BonfyreServiceSite/authoring/native-component-templates.mjs
