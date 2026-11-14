@@ -151,7 +151,7 @@ static int serve_credit_profile(const char *method,const char *target,const char
     fputs("<section id='organizations'><h2>Organizations</h2>"
           "<p>A publishing source is not evidence of organizational membership.</p>"
           "<a href='https://aurekai.work/organisations'>Explore source-backed organizations</a></section>",stdout);
-    ph_end();
+    ph_end_mode(0); /* Publisher credit is not a member-authored post. */
     return 1;
 }
 #endif

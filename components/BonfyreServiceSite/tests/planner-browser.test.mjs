@@ -40,6 +40,14 @@ try {
   await p.screenshot({path:join(out,'desktop.png'),fullPage:true});
   for(const width of [1440,1024,768,390,320]){await p.setViewport({width,height:width<650?844:1100});check('No horizontal overflow at '+width,await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));if(width===390)await p.screenshot({path:join(out,'mobile.png'),fullPage:true});}
   await p.setViewport({width:1440,height:1100});
+  await p.click('[data-ui=source-review]');
+  await p.waitForSelector('dialog[data-source-review][open]');
+  check('Retained source review does not claim the vendor page is retained',await p.$eval('[data-source-reader]',n=>n.value.includes('Listing title:')&&n.value.includes('Source URL:')));
+  await p.$eval('[data-source-reader]',n=>{n.focus();n.setSelectionRange(0,35);});
+  await p.click('[data-source-stage]');
+  check('Selected source is staged with snapshot identity',await p.$eval('[data-source-preview]',n=>n.textContent.includes('Snapshot:')));
+  await p.click('[data-source-adopt]');
+  check('Adoption adds exact reviewed passage to unsaved notes',await p.$eval('[data-ui=notes]',n=>n.value.includes('[Retained catalogue ')));
   await input(p,'width','0');check('Invalid room dimensions block saving',await p.$eval($('error'),n=>!n.hidden&&n.innerText.includes('6 to 60')));await p.click($('save'));check('Invalid room was not saved',await p.$eval($('save-state'),n=>n.textContent)!=='Saved in this browser');await input(p,'width','16');
   await input(p,'budget','500');check('Budget overage is visible',await p.$eval($('issues'),n=>n.innerText.includes('exceeds')));await input(p,'budget','1500');
   await p.click('[data-select="counter-1"]');await input(p,'x','15');check('Out-of-room position is identified',await p.$eval($('issues'),n=>n.innerText.includes('beyond')));await input(p,'x','10');
@@ -47,8 +55,9 @@ try {
   await p.click($('remove'));check('Removing a fixture updates the proposal',await p.$$eval('[data-select]',x=>x.length)===4);
   await input(p,'title','My autumn pop-up');await save(p);await p.reload({waitUntil:'networkidle2'});await p.waitForSelector('[data-ready=true]');check('Saved project survives reload',await p.$eval($('title'),n=>n.value)==='My autumn pop-up');
   console.log('STEP open concurrent tab');const other=await open(browser);console.log('STEP save first tab');await input(p,'notes','First tab update');await save(p);console.log('STEP save stale tab');await other.bringToFront();await input(other,'notes','Stale update');await other.click($('save'));await other.waitForFunction(()=>document.querySelector('[data-ui=error]').textContent.includes('another tab'));check('Stale tab cannot overwrite the project',await other.$eval($('save'),n=>n.disabled));await other.close();await p.bringToFront();
-  await p.click($('share'));const shared=await p.$eval($('share-url'),n=>n.value);check('Share link contains a plan without contact details',shared.includes('#plan=')&&!shared.includes('example.invalid'));
-  const context=await browser.createBrowserContext(),sharedPage=await context.newPage();await sharedPage.goto(shared,{waitUntil:'networkidle2'});await sharedPage.waitForSelector('[data-ready=true]');check('A fresh visitor opens the shared layout and notes',await sharedPage.$eval($('title'),n=>n.value)==='My autumn pop-up'&&await sharedPage.$eval($('notes'),n=>n.value)==='First tab update');check('Shared copy is not falsely marked saved',await sharedPage.$eval($('save-state'),n=>n.textContent)==='Changes not saved');await context.close();
+  await p.click($('share'));const shared=await p.$eval($('share-url'),n=>n.value),expectedNotes=await p.$eval($('notes'),n=>n.value);check('Share link contains a plan without contact details',shared.includes('#plan=')&&!shared.includes('example.invalid'));
+  const context=await browser.createBrowserContext(),sharedPage=await context.newPage();await sharedPage.goto(shared,{waitUntil:'networkidle2'});await sharedPage.waitForSelector('[data-ready=true]');const sharedState=await sharedPage.evaluate(()=>({title:document.querySelector('[data-ui=title]')?.value,notes:document.querySelector('[data-ui=notes]')?.value,error:document.querySelector('[data-ui=error]')?.textContent,url:location.href}));
+  check('A fresh visitor opens the shared layout and notes',sharedState.title==='My autumn pop-up'&&sharedState.notes===expectedNotes);check('Shared copy is not falsely marked saved',await sharedPage.$eval($('save-state'),n=>n.textContent)==='Changes not saved');await context.close();
   await p.click($('review'));check('Brief carries exact source and missing dimensions',await p.$eval($('brief'),n=>n.innerText.includes('option 10749')&&n.innerText.includes('depth is missing')));
   const downloads=join(out,'downloads');mkdirSync(downloads,{recursive:true});
   const cdp=await p.createCDPSession();await cdp.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});

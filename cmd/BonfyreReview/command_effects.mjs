@@ -126,7 +126,6 @@ export function reviewedCommandEffects({
        worker.program_id!==program||worker.pack_digest!==installed.digest||
        worker.workspace_binding!==workspace.binding||!HASH.test(worker.binary_sha256??''))
       throw bad('No attested native worker for this exact effect');
-      throw bad('No attested native worker for this exact effect');
     const r=review.read({token,reviewId:validId(reviewId,'review ID')});
     const latest=r.history?.at(-1),effect=r.downstream?.at(-1);
     if(r.state!=='approved'||r.experience!==binding.experience||

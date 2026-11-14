@@ -108,10 +108,13 @@ architecture relationship-graph
   forbidden_inference relationship -> contract
   forbidden_inference collaboration on one profile -> standing on another
   native_format graf
+  source_path engine/core/src/relationship.c
+  source_path engine/core/include/bf_relationship.h
   source_path components/BonfyreControlPlane/relationship.py.archive
+  witness engine/core/tests/relationship_test.c: undeclared stages refused; advancing records a transition with evidence; backward refused unless a deliberate correction; lower stages implied, higher not; another profile is independent and an unrecorded relationship is unknown, never no; a shadow institution is observed until its public structure is mapped, stays shadow under a richer picture without an engaged relationship, establishes at engaged and activates only at collaborated (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_relationship.py.archive
   source_lineage capitalgym crm relationships
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ records relationships or shadow institutions through it yet, so opportunity chains cannot yet ask it
 architecture shadow-institution
   canonical_name ShadowInstitutionGraph
   family institutional
@@ -134,10 +137,13 @@ architecture shadow-institution
   forbidden_inference observed hierarchy -> established authority
   forbidden_inference public structure mapped -> relationship established
   native_format graf
+  source_path engine/core/src/relationship.c
+  source_path engine/core/include/bf_relationship.h
   source_path components/BonfyreControlPlane/shadow_institution.py.archive
+  witness engine/core/tests/relationship_test.c: undeclared stages refused; advancing records a transition with evidence; backward refused unless a deliberate correction; lower stages implied, higher not; another profile is independent and an unrecorded relationship is unknown, never no; a shadow institution is observed until its public structure is mapped, stays shadow under a richer picture without an engaged relationship, establishes at engaged and activates only at collaborated (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_shadow_institution.py.archive
   source_lineage SEED-A recursive organ document
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ records relationships or shadow institutions through it yet, so opportunity chains cannot yet ask it
 architecture institution-graph
   canonical_name InstitutionGraph
   family institutional

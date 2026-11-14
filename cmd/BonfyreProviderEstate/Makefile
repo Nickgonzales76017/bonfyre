@@ -11,6 +11,7 @@ $(TARGET): src/main.c src/customer.h $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/l
 test: $(TARGET)
 	sh tests/provider_estate_test.sh ./$(TARGET)
 	sh tests/customer_test.sh ./$(TARGET)
+	node tests/customer_supabase_test.mjs ./$(TARGET)
 	./$(TARGET) check
 
 clean:

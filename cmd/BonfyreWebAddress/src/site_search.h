@@ -74,7 +74,7 @@ static void search_collect(sqlite3 *db, const McpSite *site, SearchSet *set) {
     sqlite3_stmt *st = NULL;
     if (sqlite3_prepare_v2(db,
             "SELECT p.route, p.title, COALESCE(p.lede,''), COALESCE(f.heading,''), COALESCE(f.body,''), COALESCE(f.kind,'') "
-            "FROM site_page p LEFT JOIN site_fragment f ON f.namespace=p.namespace AND f.page=p.route AND f.status='published' "
+            "FROM site_page p LEFT JOIN site_fragment f ON f.namespace=p.namespace AND f.page=p.route AND f.status='published' AND f.audience='public' "
             "WHERE p.namespace=?1 AND p.status='published' ORDER BY p.id, f.position, f.id", -1, &st, NULL) != SQLITE_OK) return;
     sqlite3_bind_text(st, 1, site->id, -1, SQLITE_STATIC);
     char last_route[512] = "";
@@ -87,7 +87,10 @@ static void search_collect(sqlite3 *db, const McpSite *site, SearchSet *set) {
             snprintf(last_route, sizeof last_route, "%s", route);
             if (lede && *lede) { char *plain = search_plain(lede); if (plain) { search_add(set, route, "", title, title, plain, strlen(plain)); free(plain); } }
         }
-        if (!body || !*body || (kind && !strcmp(kind, "offer"))) continue;
+        if (!body || !*body || (kind && (!strcmp(kind, "offer") || !strcmp(kind, "article-presentation") ||
+            !strcmp(kind, "article-credit") || !strcmp(kind, "article-media-credit") ||
+            !strcmp(kind, "article-audio-edition") || !strcmp(kind, "primary-reference") ||
+            !strcmp(kind, "editorial-related")))) continue;
         char *anchor = NULL; size_t anchor_len = 0;
         FILE *slug = open_memstream(&anchor, &anchor_len);
         if (!slug) continue;

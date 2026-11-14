@@ -229,6 +229,16 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     check(taskId);
     return persisted;
   }
+  // Quota exhaustion is a provider outage, not a failed implementation. A
+  // single read-only Codex fallback can produce a candidate; it cannot stand
+  // in for the separately required Claude final verification.
+  const quotaExhausted = value => value?.agent === 'claude' && value.state === 'failed' &&
+    value.exit_code !== 0 && /(?:weekly limit|usage limit|quota exceeded|insufficient credits)/i.test(value.final || '');
+  async function readStage(taskId, selected, role, prompt, cwd) {
+    const first = await agent(taskId, selected, role, prompt, cwd);
+    if (!quotaExhausted(first) || !policy.agents?.codex || selected === 'codex') return first;
+    return agent(taskId, 'codex', role + '-quota-fallback', prompt, cwd);
+  }
   async function pair(taskId, roles) {
     const results = await Promise.allSettled(roles.map(([name, role, prompt, cwd]) => agent(taskId, name, role, prompt, cwd)));
     const failed = results.find(result => result.status === 'rejected');
@@ -313,11 +323,11 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     let created; try { created = await store.createWorktree(taskId, { base: policy.default_base || 'HEAD', signal: taskAborts.get(taskId)?.signal }); } finally { store.releaseLock?.(`worktree-create:${projectRoot}`, taskId); }
     const { worktree, branch, base_commit, source_snapshot } = created;
     if (source_snapshot) prompt += `\n\nSOURCE BASELINE: ${base_commit}. ${source_snapshot.files.length} explicit current-source files were captured before execution. All other paths remain at the configured Git base. Source manifest: ${source_snapshot.receipt.path}. Review changes against ${base_commit}; never include the input snapshot itself as an implementation change.`;
-    const plan = ensureRun(await agent(taskId, policy?.stage_agents?.['architect-plan'] || 'claude', 'architect-plan',
+    const plan = ensureRun(await readStage(taskId, policy?.stage_agents?.['architect-plan'] || 'claude', 'architect-plan',
       `Plan this change in the real Bonfyre repository. Map affected planes and exact files. Do not edit. Produce a constrained implementation plan, tests, live verification, and rollback contract.\n\nMISSION:\n${prompt}`,
       worktree), 'architect plan');
     const implementation = ensureRun(await agent(taskId, policy?.stage_agents?.['implementation'] || 'codex', 'implementation',
-      `Implement the mission in this isolated Git worktree. Verify the plan against source, make the smallest coherent change, add tests, and leave a clean reviewable diff. Do not push.\n\nMISSION:\n${prompt}\n\nCLAUDE PLAN:\n${trim(plan.final, 120000)}`,
+      `Implement the mission in this isolated Git worktree. Verify the plan against source, make the smallest coherent change, add tests, and leave a clean reviewable diff. Do not push.\n\nMISSION:\n${prompt}\n\nVERIFIED PLAN FROM ${plan.agent}:\n${trim(plan.final, 120000)}`,
       worktree, { write: true }), 'implementation');
     check(taskId);
     const firstDiff = await completeDiff(taskId, worktree, base_commit);
@@ -347,13 +357,13 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
       apply_result: { applied: false, reason: 'apply_preflight_refused', ...initialApplication },
       next_step: 'Resolve the reported Project constraint before requesting application; the isolated candidate is retained and has not completed review or tests.'
     }, 'review_required');
-    const review = ensureRun(await agent(taskId, policy?.stage_agents?.['adversarial-review'] || 'claude', 'adversarial-review',
+    const review = ensureRun(await readStage(taskId, policy?.stage_agents?.['adversarial-review'] || 'claude', 'adversarial-review',
       `Review the changes against Git baseline ${base_commit} in this worktree. Check correctness, integration, proof, concurrency, security, tests, and underuse of Bonfyre. Do not edit. Return ONLY JSON {"state":"resolved|retry|blocked","evidence":["specific evidence"],"blocking_findings":["severity, exact file and actionable finding"]}. Use resolved only when there are no findings requiring repair.\n\nMISSION:\n${prompt}\n\nIMPLEMENTATION SUMMARY:\n${trim(implementation.final, 80000)}\n\nDIFF STAT:\n${firstDiff.stat}`,
       worktree), 'adversarial review');
     const reviewVerdict = typedVerdict(review.final);
     const cleanReview = reviewVerdict?.state === 'resolved' && reviewVerdict.evidence.length > 0 && reviewVerdict.blocking_findings.length === 0;
     const repair = cleanReview ? { state: 'skipped', reason: 'structured_review_has_no_repair_findings' } : ensureRun(await agent(taskId, policy?.stage_agents?.['review-repair'] || 'codex', 'review-repair',
-      `Address every valid review finding in this worktree. Reject incorrect findings with source evidence. Run targeted tests and leave the final diff ready for independent verification. Do not push.\n\nMISSION:\n${prompt}\n\nCLAUDE REVIEW:\n${trim(review.final, 120000)}`,
+      `Address every valid review finding in this worktree. Reject incorrect findings with source evidence. Run targeted tests and leave the final diff ready for independent verification. Do not push.\n\nMISSION:\n${prompt}\n\nADVISORY REVIEW FROM ${review.agent}:\n${trim(review.final, 120000)}`,
       worktree, { write: true }), 'review repair');
     let tests = await testCommands(taskId, worktree, base_commit);
     check(taskId);
@@ -392,7 +402,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
       ['claude', 'final-verifier', verifyPrompt, worktree],
     ]);
     const codexReview = ensureRun(finalReviews.codex, 'independent final review');
-    const claudeVerify = ensureRun(finalReviews.claude, 'final verifier');
+    const claudeVerify = quotaExhausted(finalReviews.claude) ? finalReviews.claude : ensureRun(finalReviews.claude, 'final verifier');
     // Read-only review tools are separate processes; prove they did not alter
     // the reviewed patch before using its digest as an apply candidate.
     const observedDiff = await completeDiff(taskId, worktree, base_commit);

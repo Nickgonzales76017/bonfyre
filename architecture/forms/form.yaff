@@ -19,10 +19,14 @@ architecture form-graph
   forbidden_inference AtomicForm == FormGraph
   forbidden_inference a field in the graph -> a field required for this submission
   native_format graf
+  source_path lib/libbonfyre/src/bf_form.c
+  source_path lib/libbonfyre/include/bf_form.h
+  source_path schemas/control/form-graph.cue
   source_path components/BonfyreControlPlane/form_graph.py.archive
+  witness lib/libbonfyre/tests/form_test.c: conditional requiredness resolved from values, verified-only autofill (an asserted actor never fills), exact blockers for empty fields, evidence, authority and review gate, ready only when all are satisfied, malformed graphs refused (make -C lib/libbonfyre test-form PASS 2026-11-08); ported from the archived Python on the same actor_nodes table
   witness components/BonfyreControlPlane/tests/test_form_graph.py.archive
   source_lineage SEED-A recursive organ document
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native compile is a library in libbonfyre; no organ, page or MCP tool compiles a real form through it yet
 architecture atomic-form
   canonical_name AtomicForm
   family forms
@@ -42,9 +46,13 @@ architecture atomic-form
   forbidden_inference asserted-via-email actor -> verified_for(profile) autofill
   forbidden_inference evidence slot filled by position -> evidence requirement satisfied
   command BonfyreBrief
+  source_path lib/libbonfyre/src/bf_form.c
+  source_path lib/libbonfyre/include/bf_form.h
+  source_path schemas/control/form-graph.cue
   source_path components/BonfyreControlPlane/atomic_forms.py.archive
   source_path components/BonfyreControlPlane/institution_loop.py.archive
+  witness lib/libbonfyre/tests/form_test.c: conditional requiredness resolved from values, verified-only autofill (an asserted actor never fills), exact blockers for empty fields, evidence, authority and review gate, ready only when all are satisfied, malformed graphs refused (make -C lib/libbonfyre test-form PASS 2026-11-08); ported from the archived Python on the same actor_nodes table
   witness components/BonfyreControlPlane/tests/test_atomic_forms.py.archive
   witness components/BonfyreControlPlane/tests/test_institution_loop.py.archive
   source_lineage AtomicForm human-boundary compiler
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native compile is a library in libbonfyre; no organ, page or MCP tool compiles a real form through it yet

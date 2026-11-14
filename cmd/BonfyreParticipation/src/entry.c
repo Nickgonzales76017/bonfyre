@@ -1,4 +1,6 @@
 #include "activation.h"
+#include "dating.h"
+#include "peer_facets.h"
 #include "evidence.h"
 #include "projection.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
@@ -19,7 +21,9 @@ static void usage(FILE *out) {
     fprintf(out,
         "Usage:\n"
         "  bonfyre-participation compile [options]\n"
-        "  bonfyre-participation activate [options]\n\n"
+        "  bonfyre-participation activate [options]\n"
+         "  bonfyre-participation peer-init --db ABSOLUTE_PRIVATE_DB\n"
+         "  bonfyre-participation dating-init --db ABSOLUTE_PRIVATE_DB (compatibility)\n\n"
         "Options:\n"
         "  --external-bindings FILE  ExternalEstate compiled bindings JSONL\n"
         "  --evidence PATH           evidence JSONL file or recursive directory\n"
@@ -40,12 +44,14 @@ int main(int argc, char **argv) {
     const char *frontier;
 
     enum {
-        PA_HELP, PA_ACTIVATE, PA_COMPILE,
+        PA_HELP, PA_ACTIVATE, PA_COMPILE, PA_DATING_INIT, PA_PEER_INIT,
     };
     static const BfCommandEntry participation_commands[] = {
         {"--help", PA_HELP, 0, NULL},
         {"activate", PA_ACTIVATE, 0, NULL},
         {"compile", PA_COMPILE, 0, NULL},
+        {"dating-init", PA_DATING_INIT, 0, NULL},
+        {"peer-init", PA_PEER_INIT, 0, NULL},
         {"help", PA_HELP, 0, NULL},
     };
     const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(participation_commands,
@@ -54,6 +60,26 @@ int main(int argc, char **argv) {
     if (argc < 2 || (command && command->id == PA_HELP)) {
         usage(stdout);
         return argc < 2 ? 1 : 0;
+    }
+    if(command && (command->id == PA_DATING_INIT||command->id == PA_PEER_INIT)){
+        const char *dbpath=opt(argc,argv,"--db",NULL);
+        /* Installation is explicit, local, and creates no participant,
+         * verification witness, membership, message, or public material. */
+        if(argc!=4||strcmp(argv[2],"--db")||!dbpath||dbpath[0]!='/'||
+           strlen(dbpath)>4096||strstr(dbpath,"/../")||strstr(dbpath,"/./")||
+           !strcmp(dbpath,"/")||strchr(dbpath,'\n')){
+            fprintf(stderr,"dating-init requires one absolute private database path\\n");
+            return 2;
+        }
+        if(sqlite3_open_v2(dbpath,&db,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,NULL)!=SQLITE_OK){
+            fprintf(stderr,"Could not open private participation database\\n");
+            if(db)sqlite3_close(db);return 2;
+        }
+        sqlite3_busy_timeout(db,3000);
+        rc=(bf_dating_store_init(db)&&bf_peer_store_init(db))?0:2;
+        if(rc)fprintf(stderr,"Private participation schema was not admitted\\n");
+        else fputs("participation owners initialized; zero members or eligibility records created\\n",stdout);
+        sqlite3_close(db);return rc;
     }
     if (command && command->id == PA_ACTIVATE) activate = 1;
     else if (!command || command->id != PA_COMPILE) { usage(stderr); return 1; }
@@ -73,10 +99,14 @@ int main(int argc, char **argv) {
 
     if (sqlite3_open(":memory:", &db) != SQLITE_OK) goto done;
     if (!bf_part_evidence_init(db)) goto done;
-    if (!bf_part_evidence_load(db, evidence, &raw_rows)) goto done;
+    if (!bf_part_evidence_load(db, evidence, &raw_rows)) {
+        fprintf(stderr, "participation: evidence load failed: %s\n", evidence);
+        goto done;
+    }
     rc = activate
         ? bf_part_activation_compile(db, external, manifest, frontier, limit)
         : bf_part_project_manifest(db, external, raw_rows, manifest);
+    if (rc) fprintf(stderr, "participation: %s projection failed: %s\n", activate ? "activation" : "manifest", external);
 done:
     if (db) sqlite3_close(db);
     return rc;

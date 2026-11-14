@@ -41,7 +41,7 @@ PUBLIC_HOME_SEARCH_SOURCE := src/public_home_search.c
 TERRITORY_HOME_SOURCE := src/territory_home.c
 SPATIAL_FRONTIER_SOURCE := src/spatial_frontier.c
 SOURCE_HIERARCHY_SOURCE := src/source_hierarchy_projection.c
-WEB_SOURCES := src/main.c src/public_code.c src/http_readiness.c src/atom_feed.c src/subject_address.c src/bounded_output.c $(SPATIAL_FRONTIER_SOURCE) $(PROJECTION_SOURCE) \
+WEB_SOURCES := src/main.c src/public_code.c src/http_readiness.c src/atom_feed.c src/subject_address.c src/bounded_output.c $(SPATIAL_FRONTIER_SOURCE) $(PROJECTION_SOURCE) src/site_authored_document.c \
                src/source_depth_projection.c src/people_projection.c src/detail_depth.c src/model_catalogue_index.c \
                $(PUBLIC_PROJECTION_CACHE_SOURCE) $(COMMUNITY_PROJECTION_SOURCE) \
                $(TERRITORY_HOME_SOURCE) \
@@ -53,8 +53,10 @@ OBJECTS := $(WEB_OBJECTS) $(CORE_OBJECTS) build/lib_bf_sha256.o build/lib_bf_sta
 OBJECTS += build/public_qr.o build/campaign_link.o build/lib_bf_utf8.o build/account_world.o
 OBJECTS += build/account_world_audio.o
 OBJECTS += build/account_world_literature.o
-# These inputs are prepared explicitly once from verified retained bodies or
-# the pinned upstream release. Normal builds never contact an external source.
+OBJECTS += build/dating_owner.o build/peer_facets.o
+OBJECTS += build/authoring_template.o build/authoring_mustach.o build/authoring_native_components.o build/authoring_editorial.o
+# Prepare pinned, byte-verified QR inputs from the retained repository sources.
+# Ordinary builds do not fetch remote code or use an external QR service.
 .PHONY: public-code-inputs prepare-public-code
 prepare-public-code:
 	bun tools/prepare_public_code.mjs --fetch
@@ -63,14 +65,21 @@ public-code-inputs:
 build/public_qr.o: build/public-code/qrcodegen.c build/public-code/qrcodegen.h | public-code-inputs
 	$(CC) $(CFLAGS) -c build/public-code/qrcodegen.c -o $@
 build/web_public_code.o: build/public-code/qrcodegen.h | public-code-inputs
-build/public-code/qrcodegen.c build/public-code/qrcodegen.h:
-	@echo 'Missing pinned QR source. Run make prepare-public-code or supply retained bodies to tools/prepare_public_code.mjs.' >&2; exit 1
+build/public-code/SOURCE.tsv:
+	bun tools/prepare_public_code.mjs --retained
+build/public-code/qrcodegen.c build/public-code/qrcodegen.h: build/public-code/SOURCE.tsv
+	@test -f "$@" || { echo 'Incomplete pinned QR source; refuse this build.' >&2; exit 1; }
 BUILD_INCLUDES := -I$(ROOT)/engine/core/include -I$(ROOT)/lib/libbonfyre/include -Isrc -I../BonfyreRecipe/src -I../BonfyreCompress/src -I../BonfyreExternalEstate/src
 SOURCE_HIERARCHY_TEST := build/source-hierarchy-projection-test
 $(SOURCE_HIERARCHY_TEST): tests/source_hierarchy_projection_test.c $(SOURCE_HIERARCHY_SOURCE) src/source_hierarchy_projection.h $(ROOT)/lib/libbonfyre/include/bf_sqlite_path.h
 	@mkdir -p build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) tests/source_hierarchy_projection_test.c $(SOURCE_HIERARCHY_SOURCE) -lsqlite3 -o $@
 .PHONY: source-hierarchy-witness
+.PHONY: cms-advanced-authoring-witness
+all: cms-advanced-authoring-witness
+cms-advanced-authoring-witness: $(TARGET)
+	@$(MAKE) -C ../BonfyreSurfaceScene authoring-bundle
+	@bun test --timeout 65000 tests/cms_advanced_composer.test.mjs
 all: native-link-footprint-witness source-hierarchy-witness
 ifeq ($(shell uname -s),Darwin)
 all: native-compact-footprint-witness
@@ -116,6 +125,17 @@ $(PEOPLE_PROJECTION_TEST): src/item_credit_indexes.h
 build/web_main.o: src/front_recipe_query.h
 build/web_main.o: src/static_asset_closure.h src/public_asset_export.h
 build/web_main.o: src/account_activity_web.h src/account_world_web.h ../BonfyreCMS/src/account_world.h
+build/web_main.o build/compact/web_main.o: src/account_inbox_web.h ../BonfyreQueue/src/account_legacy_api.h
+build/web_main.o build/compact/web_main.o: src/profile_dating_web.h ../BonfyreParticipation/src/dating.h
+build/web_main.o build/compact/web_main.o: src/profile_connections_web.h ../BonfyreParticipation/src/peer_facets.h
+build/peer_facets.o: ../BonfyreParticipation/src/peer_facets.c ../BonfyreParticipation/src/peer_facets.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/peer_facets.o: ../BonfyreParticipation/src/peer_facets.c ../BonfyreParticipation/src/peer_facets.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/dating_owner.o: ../BonfyreParticipation/src/dating.c ../BonfyreParticipation/src/dating.h src/dating_policy.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/dating_owner.o: ../BonfyreParticipation/src/dating.c ../BonfyreParticipation/src/dating.h src/dating_policy.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/account_world.o: ../BonfyreCMS/src/account_world.c ../BonfyreCMS/src/account_world.h | build
 	$(CC) $(CFLAGS) -c ../BonfyreCMS/src/account_world.c -o $@
 build/compact/account_world.o: ../BonfyreCMS/src/account_world.c ../BonfyreCMS/src/account_world.h | build/compact
@@ -153,6 +173,7 @@ static-asset-closure-witness: tests/static_asset_closure_test.c src/static_asset
 	trap 'rm -f "$$witness"' 0 1 2 15; \
 	$(CC) $(CFLAGS) -Wno-unused-function tests/static_asset_closure_test.c -o "$$witness"; "$$witness"
 build/web_main.o: src/application_workspace.h src/procurement_approval_status.h src/procurement_enactment.h src/procurement_enactment_effect.h
+build/web_main.o: src/native_command_work.h
 build/web_main.o: src/campaign_workspace.h src/native_publications_query.h src/relationship_observation.h
 build/campaign_link.o: ../BonfyreCampaign/src/campaign.c ../BonfyreCampaign/src/campaign.h | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
@@ -407,6 +428,14 @@ build/compact/lib_bf_json.o: $(ROOT)/lib/libbonfyre/bf_json.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/compact/lib_bf_jsonw.o: $(ROOT)/lib/libbonfyre/bf_jsonw.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_template.o: ../BonfyreSurfaceScene/src/authoring_template.c ../BonfyreSurfaceScene/src/authoring_template.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_mustach.o: ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_native_components.o: ../BonfyreSurfaceScene/src/authoring_native_components.c ../BonfyreSurfaceScene/src/authoring_native_components.h generated/native_authoring_templates.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/compact/authoring_editorial.o: ../BonfyreSurfaceScene/src/authoring_editorial.c ../BonfyreSurfaceScene/src/authoring_editorial.h generated/native_authoring_templates.h | build/compact
+	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/compact/lib_bf_msgpack.o: $(ROOT)/lib/libbonfyre/bf_msgpack.c | build/compact
 	$(CC) $(COMPACT_FLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/compact/web_%.o: src/%.c | build/compact
@@ -427,6 +456,11 @@ frozen-site-alias-witness:
 	bun test ../../scripts/release/tests/public_surface_rollout.test.mjs --test-name-pattern "frozen clone inputs"
 	bun test ../../scripts/release/tests/public_surface_rollout.test.mjs --test-name-pattern "frozen CUE runtime"
 
+.PHONY: public-release-warmup-witness
+all test: public-release-warmup-witness
+public-release-warmup-witness:
+	bun test ../../scripts/release/tests/public_surface_rollout.test.mjs --test-name-pattern "four cold public homes|warmup rejects failed homes|staged WebAddress binds"
+
 .PHONY: service-site-release-witness
 all test: service-site-release-witness
 service-site-release-witness:
@@ -436,6 +470,15 @@ all test: browser-extension-parity-witness
 browser-extension-parity-witness:
 	bun ../../scripts/project-recurring-commerce-browser.mjs --check
 	bun ../../scripts/project-provider-work-browser.mjs --check
+
+
+.PHONY: independent-site-product-witness
+independent-site-product-witness: $(SITE_TARGET)
+	sh tests/site_product_test.sh ./$(TARGET)
+.PHONY: article-audio-acceptance-witness
+all: article-audio-acceptance-witness
+article-audio-acceptance-witness: $(SITE_TARGET)
+	BONFYRE_SITE_AUDIO_ONLY=1 sh tests/site_product_test.sh ./$(TARGET)
 
 
 site-product-witness: $(SITE_TARGET)
@@ -460,6 +503,14 @@ build/address_resolve.o: ../BonfyreExternalEstate/src/address_resolve.c ../Bonfy
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/record_factor.o: ../BonfyreCompress/src/record_factor.c ../BonfyreCompress/src/record_factor.h | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_template.o: ../BonfyreSurfaceScene/src/authoring_template.c ../BonfyreSurfaceScene/src/authoring_template.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_mustach.o: ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_native_components.o: ../BonfyreSurfaceScene/src/authoring_native_components.c ../BonfyreSurfaceScene/src/authoring_native_components.h generated/native_authoring_templates.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
+build/authoring_editorial.o: ../BonfyreSurfaceScene/src/authoring_editorial.c ../BonfyreSurfaceScene/src/authoring_editorial.h generated/native_authoring_templates.h | build
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/web_%.o: src/%.c | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 build/core_%.o: $(ROOT)/engine/core/src/%.c | build
@@ -475,8 +526,8 @@ build/lib_bf_jsonw.o: $(ROOT)/lib/libbonfyre/bf_jsonw.c | build
 build/lib_bf_msgpack.o: $(ROOT)/lib/libbonfyre/bf_msgpack.c | build
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -MMD -MP -c -o $@ $<
 -include $(OBJECTS:.o=.d)
-$(PROJECTION_TEST): tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) src/site_fragment_projection.h
-	$(CC) $(CFLAGS) -Isrc -o $@ tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) -lsqlite3
+$(PROJECTION_TEST): tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) src/site_fragment_projection.h generated/native_site_fragment_template.h
+	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -Isrc -o $@ tests/site_fragment_projection_test.c $(PROJECTION_SOURCE) ../BonfyreSurfaceScene/src/authoring_template.c ../BonfyreSurfaceScene/vendor/mustach/mini-mustach.c $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3 -lm
 $(ATOM_FEED_TEST): tests/atom_feed_test.c src/atom_feed.c src/atom_feed.h $(ROOT)/lib/libbonfyre/src/bf_sha256.c
 	$(CC) $(CFLAGS) $(BUILD_INCLUDES) -o $@ tests/atom_feed_test.c src/atom_feed.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
 .PHONY: atom-feed-witness
@@ -869,9 +920,14 @@ account-source-cohesion-witness: $(TARGET)
 .PHONY: public-audio-window-witness public-media-browser
 all: public-audio-window-witness
 test: public-audio-window-witness
-public-audio-window-witness:
+public-audio-window-witness: | build
 	bun test tests/public_audio_window.test.mjs
+	$(CC) -std=c11 -Wall -Wextra -Werror tests/asset_byte_range_test.c -o build/asset-byte-range-test
+	./build/asset-byte-range-test
 
+# Focused article-audio acceptance. The release-wide ratchet remains in all/test.
+.PHONY: audio-site-witness
+audio-site-witness: public-audio-window-witness site-product-witness
 # Opt-in native RSS, real generated audio and independently decoded public QR.
 public-media-browser: $(TARGET)
 	bun test tests/public_code_test.mjs tests/public_audio_deck_test.mjs

@@ -2,8 +2,8 @@
 export const importLimits = {tracks: 8, seconds: 30, bytes: 24 * 1024 * 1024, pcm: 32 * 1024 * 1024};
 export const audioDigest = async bytes => [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(n => n.toString(16).padStart(2, '0')).join('');
 
-export function decodeWav(bytes, remainingPCM = importLimits.pcm) {
-  const fail = () => {throw Error('Use a complete PCM 16-bit or float32 WAV, mono or stereo, up to 30 seconds.');};
+export function decodeWav(bytes, remainingPCM = importLimits.pcm, {metadataOnly = false} = {}) {
+  const fail = () => {throw Error('Use a complete PCM 16-bit or float32 WAV, mono or stereo, within the selected duration limit.');};
   if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 44 || bytes.byteLength > importLimits.bytes) fail();
   const v = new DataView(bytes), text = (at, count) => String.fromCharCode(...new Uint8Array(bytes, at, count));
   if (text(0, 4) !== 'RIFF' || text(8, 4) !== 'WAVE' || v.getUint32(4, true) + 8 !== bytes.byteLength) fail();
@@ -21,14 +21,14 @@ export function decodeWav(bytes, remainingPCM = importLimits.pcm) {
   if (!(kind === 1 && bits === 16 || kind === 3 && bits === 32) || ![1, 2].includes(channels) || rate < 8000 || rate > 96000 ||
       block !== channels * bits / 8 || byteRate !== rate * block || payload.size % block) fail();
   const frames = payload.size / block;
-  if (frames < 1 || frames > rate * importLimits.seconds || frames * 2 * 4 > remainingPCM) fail();
+  if (frames < 1 || frames > rate * (metadataOnly ? 600 : importLimits.seconds) || (!metadataOnly && frames * 2 * 4 > remainingPCM)) fail();
   // Mono is duplicated into stereo; each original sample remains in the retained WAV.
-  const samples = new Float32Array(frames * 2);
+  const samples = metadataOnly ? null : new Float32Array(frames * 2);
   for (let f = 0; f < frames; f++) for (let ch = 0; ch < 2; ch++) {
     const at = payload.start + f * block + Math.min(ch, channels - 1) * bits / 8;
     const value = kind === 1 ? v.getInt16(at, true) / 32768 : v.getFloat32(at, true);
     if (!Number.isFinite(value) || Math.abs(value) > 16) throw Error('The WAV contains invalid or out-of-range samples.');
-    samples[f * 2 + ch] = value;
+    if (samples) samples[f * 2 + ch] = value;
   }
   return {samples, frames, channels: 2, originalChannels: channels, sample_rate: rate};
 }

@@ -1,0 +1,68 @@
+{
+  "name": "dating_participation",
+  "displayName": "Dating Participation",
+  "description": "Private, separately consented dating participation for an existing exact person subject. Public profile presence is not participation. Only a dedicated admitted Dating owner may make this active, verify adult eligibility and moderate media; generic CMS draft creation has no such effect.",
+  "attributes": {
+    "participation": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "member_subject": {
+      "type": "string",
+      "required": true
+    },
+    "consent_revision": {
+      "type": "integer",
+      "required": true
+    },
+    "consented_at": {
+      "type": "string",
+      "required": true
+    },
+    "eligibility_evidence_ref": {
+      "type": "string",
+      "required": false
+    },
+    "mode": {
+      "type": "string",
+      "required": true
+    },
+    "age_floor": {
+      "type": "integer",
+      "required": true
+    },
+    "age_ceiling": {
+      "type": "integer",
+      "required": true
+    },
+    "accepts_introductions": {
+      "type": "boolean",
+      "required": true
+    },
+    "discoverable": {
+      "type": "boolean",
+      "required": true
+    },
+    "profile_media_release_ref": {
+      "type": "string",
+      "required": false
+    },
+    "moderation_ref": {
+      "type": "string",
+      "required": false
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

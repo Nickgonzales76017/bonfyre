@@ -107,10 +107,15 @@ static int load_candidates(sqlite3 *db, const char *path, PartMetrics *m) {
     char *line = NULL;
     size_t cap = 0;
     ssize_t n;
-    if (!f) return 0;
+    if (!f) { fprintf(stderr, "participation: cannot open bindings %s\n", path); return 0; }
+    long long row = 0;
     while ((n = getline(&line, &cap, f)) >= 0) {
         (void)n;
-        if (!candidate_row(db, line, m)) { free(line); fclose(f); return 0; }
+        ++row;
+        if (!candidate_row(db, line, m)) {
+            fprintf(stderr, "participation: bindings rejected at %s:%lld\n", path, row);
+            free(line); fclose(f); return 0;
+        }
     }
     free(line);
     fclose(f);
@@ -207,12 +212,21 @@ static int write_manifest(const char *path, const PartMetrics *m, long long raw_
 int bf_part_project_manifest(sqlite3 *db, const char *external_bindings,
                              long long raw_evidence_rows, const char *output_path) {
     PartMetrics m = {0};
-    if (!db || !external_bindings || !output_path ||
-        !load_candidates(db, external_bindings, &m) ||
-        !measured_counts(db, &m) ||
-        !braid_counts(db, &m) ||
-        !write_manifest(output_path, &m, raw_evidence_rows))
-        return 1;
+    if (!db || !external_bindings || !output_path) {
+        fputs("participation: missing manifest inputs\n", stderr); return 1;
+    }
+    if (!load_candidates(db, external_bindings, &m)) {
+        fputs("participation: candidate projection failed\n", stderr); return 1;
+    }
+    if (!measured_counts(db, &m)) {
+        fputs("participation: measured-axis accounting failed\n", stderr); return 1;
+    }
+    if (!braid_counts(db, &m)) {
+        fputs("participation: evidence-chain accounting failed\n", stderr); return 1;
+    }
+    if (!write_manifest(output_path, &m, raw_evidence_rows)) {
+        fprintf(stderr, "participation: cannot write manifest %s\n", output_path); return 1;
+    }
     printf("{\"total_occurrences\":%lld,\"owner_evidence_rows\":%lld,"
            "\"candidate\":{\"capability\":%lld,\"discovery\":%lld,\"economic\":%lld,"
            "\"observation\":%lld,\"protocol\":%lld,\"round_trip\":%lld,\"semantic\":%lld},"

@@ -1,0 +1,13 @@
+{
+  "id": "outetts-0.3-500m-q4km",
+  "name": "OuteTTS 0.3 500M (GGUF Q4_K_M)",
+  "description": "Neural text-to-speech language model from OuteAI, run natively by llama.cpp's llama-tts with the WavTokenizer vocoder. Licence CC BY-SA 4.0 (model card, 2026-11-08); audio it renders carries that attribution. It powers capability narrate; registration implies no measured voice quality and no right to imitate a real speaker.",
+  "format": "gguf",
+  "sha256": "b53906ffb95c7d7f14c658fd342e036c1f41bf3ff57eb79a9edb412d424d0129",
+  "size_mb": 384.72,
+  "geometry": "text to WavTokenizer audio tokens, 75 per second",
+  "geometry_condition": "audio tokens decode only through wavtokenizer-large-75-f16",
+  "sources": [
+    "hf://OuteAI/OuteTTS-0.3-500M-GGUF/OuteTTS-0.3-500M-Q4_K_M.gguf"
+  ]
+}

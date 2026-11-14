@@ -60,6 +60,7 @@ test('real store and canonical project_status owner carry a two-response read in
     expect(f.requests[1].input).toEqual([{ type: 'function_call_output', call_id: 'read-call',
       output: JSON.stringify({ root: '/fixture/repo', clean: true, branch: 'fixture' }) }]);
     expect(outcome.receipt.usage.response_count).toBe(2);
+    expect(outcome.receipt.tool_calls).toBe(1);
     const db = new Database(f.store.path, { readonly: true });
     try { expect(db.query('SELECT cycles,tool_calls,input_tokens,output_tokens FROM budgets').get())
       .toEqual({ cycles: 1, tool_calls: 1, input_tokens: 14, output_tokens: 9 }); }

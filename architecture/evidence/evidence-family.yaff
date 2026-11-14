@@ -37,14 +37,16 @@ architecture provenance-graph
   semantic_question Through what source, observer, actor, runtime, model, provider, transport did this arrive?
   purpose The full path an artifact took to exist -- the cheap path-vector checks (untrusted provider, missing authority provenance, loops) ride on this.
   maturity implemented
+  source_path engine/core/src/evidence.c
+  source_path engine/core/include/bf_evidence.h
   source_path components/BonfyreControlPlane/evidence_graphs.py.archive
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
+  witness engine/core/tests/evidence_estate_test.c: bf_evidence_record_provenance / bf_evidence_path_admits: an untrusted node on the path refuses, a clean path admits and is not support; plus bf_evidence_lineage, transitive and finite under a cycle (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables
   node_types ProvenanceNode
   edge_types produced_by
   forbidden_inference a provenance path -> authority over the artifact
   source_lineage run6/run7 evidence estate
   known_gap ResultReceiptBundle chain is a partial real shape
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables
 architecture evidence-graph
   owns Evidence
   consumes Occurrence
@@ -80,15 +82,17 @@ architecture temporal-evidence-graph
   semantic_question Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?
   purpose Timestamps must not collapse. Stale-for-decision does not mean delete the historical evidence.
   maturity implemented
+  source_path engine/core/src/evidence.c
+  source_path engine/core/include/bf_evidence.h
   source_path components/BonfyreControlPlane/evidence_graphs.py.archive
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
+  witness engine/core/tests/evidence_estate_test.c: bf_evidence_record_time / bf_evidence_time_of / bf_evidence_is_stale: eight declared planes kept apart, an undeclared plane refused, past expiration is stale and the row stays (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables
   node_types TimedFact
   edge_types supersedes
   forbidden_inference retrieval time -> event time
   forbidden_inference stale for a decision -> delete the historical evidence
   source_lineage run6/run7 evidence estate
   known_gap the occurrence spine keeps one ordering, not the eight time planes
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables
 architecture claim-graph
   canonical_name ClaimGraph
   family evidence
@@ -97,14 +101,16 @@ architecture claim-graph
   semantic_question What does this claim depend on, assume, and what is its current vs historical proof state?
   purpose A claim with its definition/evidence dependencies, counterclaims, caveats, assumptions, and current vs historical proof state.
   maturity implemented
+  source_path engine/core/src/evidence.c
+  source_path engine/core/include/bf_evidence.h
   source_path components/BonfyreControlPlane/evidence_graphs.py.archive
-  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py.archive
+  witness engine/core/tests/evidence_estate_test.c: bf_evidence_add_claim / bf_evidence_claim_dependencies / bf_evidence_proof_state: dependencies and counterclaims kept apart, proof state defaults open and updates, an empty dependency writes nothing (make -C engine/core test; PASS 2026-11-08). The archived Python is the reference it ports, on the same tables
   node_types Claim
   node_types Counterclaim
   edge_types depends_on
   forbidden_inference a claim stated -> a claim proven
   source_lineage run6/run7 evidence estate
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap the native relations are a library in libbonfyre-fabric; no organ, page or MCP tool calls them yet, so nothing in the running estate writes these tables
 architecture receipt-envelope
   canonical_name ReceiptEnvelope
   owns ReceiptEnvelope

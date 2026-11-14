@@ -73,6 +73,33 @@ test('generic native invoke cannot bypass effect ownership or append mutation ar
   expect(f.calls.length).toBe(0);
 });
 
+test('public release inspection is allowlisted without granting Project or approval effects', async () => {
+  const f = await fixture();
+  const extra = { 'bonfyre-project-mcp': 'BonfyreProjectMcp', 'bonfyre-release-approval': 'BonfyreReleaseApproval' };
+  await writeFile(path.join(f.managed, '.families.json'), JSON.stringify({ ...families, ...extra }));
+  for (const name of Object.keys(extra)) await writeFile(path.join(f.managed, name),
+    Buffer.from([0xcf, 0xfa, 0xed, 0xfe, 0]), { mode: 0o755 });
+  for (const command of ['status', 'public-candidates', 'public-status', 'ratchet', 'ratchet-top']) {
+    const result = await f.project.call('native_tool_invoke', { family: 'BonfyreProjectMcp', args: [command] });
+    expect(result.status).toBe('passed');
+  }
+  const approvals = await f.project.call('native_tool_invoke', { family: 'BonfyreReleaseApproval', args: ['list'] });
+  expect(approvals.status).toBe('passed');
+  expect(f.calls).toHaveLength(6);
+  const denied = [
+    { family: 'BonfyreProjectMcp', args: ['ratchet', 'tighten'] },
+    { family: 'BonfyreProjectMcp', args: ['public-candidates', '--apply'] },
+    { family: 'BonfyreProjectMcp', args: ['public-stage', '--apply'] },
+    { family: 'BonfyreProjectMcp', args: ['public-activate', 'activity-public-20261021-x', '--apply'] },
+    { family: 'BonfyreProjectMcp', args: ['public-readback', 'activity-public-20261021-x'] },
+    { family: 'BonfyreReleaseApproval', args: ['approve', '--release', 'x', '--actor', 'fixture'] },
+    { family: 'BonfyreReleaseApproval', args: ['list', '--operator-db', '/tmp/unowned.db'] },
+  ];
+  for (const input of denied) await expect(f.project.call('native_tool_invoke', input))
+    .rejects.toThrow(/reviewed execution owner|read-only/);
+  expect(f.calls).toHaveLength(6);
+});
+
 test('warehouse native read-only contract admits exact estate reads but not seed effects', async () => {
   const f = await fixture();
   const familiesWithWarehouse = {...families,

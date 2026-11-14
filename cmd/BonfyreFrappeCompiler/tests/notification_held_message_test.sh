@@ -27,8 +27,8 @@ jq -e '
   and all(.notifications[] | select(.condition.status == "compiled"); .condition.plan | startswith("(py "))
 ' "$tmp/plans.json" >/dev/null || { echo "FAIL: notification accounting" >&2; exit 1; }
 
-definition() { find "$app" -path "*/notification/$1/*.json" | head -1; }
-prepare() { "$compiler" --prepare-notification "$1" --event "$2" --today 2026-10-01 --doc "$3"; }
+definition() { find -L "$app" -path "*/notification/$1/*.json" -type f | head -1; }
+prepare() { [ -n "$1" ] && [ -f "$1" ] || { echo 'FAIL: donor Notification definition missing' >&2; return 1; }; "$compiler" --prepare-notification "$1" --event "$2" --today 2026-10-01 --doc "$3"; }
 
 # Days Before, with a condition: fires only on the day and only while it holds.
 exit_interview=$(definition exit_interview_scheduled)

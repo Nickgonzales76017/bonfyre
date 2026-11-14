@@ -83,6 +83,14 @@ test('STOP and disabled policy cause zero store, catalog, event, or API calls', 
   }
 });
 
+test('terminal-only resolution consumes no tool-effect slot', async () => {
+  const f = fixture();
+  const result = await f.daemon.once();
+  expect(result.state).toBe('completed');
+  expect(result.receipt.tool_calls).toBe(0);
+  expect(f.calls.effects.filter(item => item[0] === 'execute')).toEqual([]);
+});
+
 test('every model response repeats instructions, links previous id, and aggregates per-response usage', async () => {
   const f = fixture({ responses: [
     answer('r1', [call('read_fixture', { value: 7 }, 'c1')], { input_tokens: 11, output_tokens: 2 }),

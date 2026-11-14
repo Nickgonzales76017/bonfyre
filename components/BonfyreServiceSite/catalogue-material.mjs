@@ -1,5 +1,5 @@
 // Package native-query output for the browser. Source ownership stays with the retained catalogue.
-import{readFileSync}from'node:fs';import{createHash}from'node:crypto';import{join,resolve}from'node:path';
+import{readFileSync,lstatSync}from'node:fs';import{createHash}from'node:crypto';import{join,resolve}from'node:path';
 import { prepareCatalogueRow } from './catalogue-baseline.mjs';
 import { baseline, makeDraft } from './catalogue-model.mjs';
 import { plannerFiles } from './planner-material.mjs';
@@ -30,4 +30,25 @@ export function catalogueFiles(rows,stores,{repo=resolve(import.meta.dir,'../..'
  files['ag-grid-LICENSE.txt']=readFileSync(join(import.meta.dir,'vendor/ag-grid-community-36.2.0/LICENSE.txt'));
  files['store.mjs']=readFileSync(join(repo,'integrations/browser/extension/store.mjs'));
  return{files,entries,stores,fixture_catalogues};
+}
+
+// Unavailable optional copy review never removes the original product catalogue.
+// The review is held, not reconstructed or treated as merchant-approved copy.
+export function catalogueWithoutPreparedCopy(siteDir){
+ const source=name=>{
+  const path=join(resolve(siteDir),name),stat=lstatSync(path);
+  if(!stat.isFile()||stat.isSymbolicLink())throw Error('Retained catalogue input is not a regular file: '+name);
+  return readFileSync(path);
+ };
+ const raw=source('catalogue-input.json.gz'),fixtureBytes=source('fixture-planner.json');
+ if(raw.length>16*1024*1024||fixtureBytes.length>4*1024*1024)throw Error('Retained catalogue input exceeds its bound.');
+ const input=JSON.parse(Buffer.from(Bun.gunzipSync(raw)).toString('utf8'));
+ const fixture=plannerFiles(JSON.parse(fixtureBytes.toString('utf8'))).catalogue;
+ const projected=catalogueFiles(input.rows,input.stores,{fixtureCatalogues:[fixture],samples:{}});
+ const hold={schema:'bonfyre.catalogue.source-review-hold.v1',state:'held',
+  reason:'prepared-copy-review-archive-unavailable',
+  original_catalogue_sha256:createHash('sha256').update(raw).digest('hex'),
+  prepared_copy_loaded:false,merchant_edits_published:false};
+ projected.files['source-review-hold.json']=Buffer.from(JSON.stringify(hold)+'\n');
+ return {...projected,source_review_hold:hold};
 }

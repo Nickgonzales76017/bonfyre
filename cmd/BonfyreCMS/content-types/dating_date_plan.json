@@ -1,0 +1,68 @@
+{
+  "name": "dating_date_plan",
+  "displayName": "Dating Date Plan",
+  "description": "Private draft plan bound to already-consenting participants. Estimated prices, suggestions and venue references are not bookings, merchant offers or payments. Each participant must separately accept the exact reviewed plan; external effects remain with their owning capability.",
+  "attributes": {
+    "plan": {
+      "type": "string",
+      "required": true,
+      "uniqueWithinNamespace": true
+    },
+    "proposer_subject": {
+      "type": "string",
+      "required": true
+    },
+    "participant_subject": {
+      "type": "string",
+      "required": true
+    },
+    "mutual_consent_ref": {
+      "type": "string",
+      "required": true
+    },
+    "plan_revision": {
+      "type": "integer",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "activities": {
+      "type": "json",
+      "required": true
+    },
+    "budget_min_cents": {
+      "type": "integer",
+      "required": true
+    },
+    "budget_max_cents": {
+      "type": "integer",
+      "required": true
+    },
+    "estimated_total_cents": {
+      "type": "integer",
+      "required": true
+    },
+    "proposer_approval_ref": {
+      "type": "string",
+      "required": false
+    },
+    "participant_approval_ref": {
+      "type": "string",
+      "required": false
+    },
+    "state": {
+      "type": "string",
+      "required": true
+    },
+    "cannot_infer": {
+      "type": "text",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

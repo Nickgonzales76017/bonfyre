@@ -1,0 +1,19 @@
+schema NarrationAssembly
+owner cmd/BonfyreBroadcast/src/narration_assembly.h
+generation narration-assembly-1
+
+field sample_rate
+  type integer
+  required true
+
+field clips
+  type ordered-array
+  required true
+
+invariant content-addressed-takes
+  statement each take is verified against its SHA-256 before and after rendering
+
+invariant bounded-sequence
+  statement at most 64 non-overlapping clips span at most 600 seconds at one verified sample rate
+
+forbidden_inference a valid assembly plan -> reviewed narration, music rights or publication authority

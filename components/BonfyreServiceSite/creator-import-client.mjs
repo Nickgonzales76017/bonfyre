@@ -190,6 +190,6 @@ export async function bindImportedAudio({root, sample, call, stopSample}) {
     }
   } catch (error) {available = false; status('The saved session could not be opened. '+error.message);}
   finally {busy = false; controls();}
-  if (!files.length && available && mode === 'imports') await openSample(true);
+  if (!files.length && available && mode === 'imports') status('Choose recordings or open the sample tracks.');
   return {stop};
 }

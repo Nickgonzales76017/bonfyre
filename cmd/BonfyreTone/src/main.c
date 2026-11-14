@@ -36,6 +36,18 @@
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 
+/* Native output is a machine-readable carrier: paths and extracted feature names
+ * may contain quotes or control bytes. Never print them as raw JSON strings. */
+static void tone_json_string(FILE *f, const char *s) {
+    fputc('"', f);
+    for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+        if (*p == '"' || *p == '\\') { fputc('\\', f); fputc(*p, f); }
+        else if (*p < 32) fprintf(f, "\\u%04x", (unsigned)*p);
+        else fputc(*p, f);
+    }
+    fputc('"', f);
+}
+
 static void iso_ts(char *buf, size_t sz) {
     time_t t = time(NULL); struct tm tm; gmtime_r(&t, &tm);
     strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &tm);
@@ -153,7 +165,7 @@ static void write_profile(FILE *out, const Feature *feats, int n,
                           const char *audio_path) {
     char ts[64]; iso_ts(ts, sizeof(ts));
     fprintf(out, "{\n  \"type\": \"tone-profile\",\n");
-    fprintf(out, "  \"source\": \"%s\",\n", audio_path);
+    fprintf(out, "  \"source\": "); tone_json_string(out, audio_path); fputs(",\n", out);
     fprintf(out, "  \"timestamp\": \"%s\",\n", ts);
     fprintf(out, "  \"dimensions\": {\n");
 
@@ -243,14 +255,15 @@ static int cmd_extract(const char *audio, const char *out_dir) {
     FILE *f = fopen(json, "w");
     if (!f) { perror("fopen"); return 1; }
     fprintf(f, "{\n  \"type\": \"tone-features\",\n");
-    fprintf(f, "  \"source\": \"%s\",\n", audio);
+    fprintf(f, "  \"source\": "); tone_json_string(f, audio); fputs(",\n", f);
     fprintf(f, "  \"timestamp\": \"%s\",\n", ts);
     fprintf(f, "  \"feature_set\": \"%s\",\n", feature_set);
     fprintf(f, "  \"engine\": \"%s\",\n", strcmp(feature_set, SET_EGEMAPS) ? "native" : "opensmile");
     fprintf(f, "  \"feature_count\": %d,\n", n);
     fprintf(f, "  \"features\": {\n");
     for (int i = 0; i < n; i++) {
-        fprintf(f, "    \"%s\": %.6f%s\n", feats[i].name, feats[i].value,
+        fputs("    ", f); tone_json_string(f, feats[i].name);
+        fprintf(f, ": %.6f%s\n", feats[i].value,
                 (i < n - 1) ? "," : "");
     }
     fprintf(f, "  }\n}\n");
@@ -308,13 +321,14 @@ static int cmd_compare(const char *audio1, const char *audio2, const char *out_d
     FILE *f = fopen(json, "w");
     if (!f) { perror("fopen"); return 1; }
     fprintf(f, "{\n  \"type\": \"tone-diff\",\n");
-    fprintf(f, "  \"source_a\": \"%s\",\n", audio1);
-    fprintf(f, "  \"source_b\": \"%s\",\n", audio2);
+    fprintf(f, "  \"source_a\": "); tone_json_string(f, audio1); fputs(",\n", f);
+    fprintf(f, "  \"source_b\": "); tone_json_string(f, audio2); fputs(",\n", f);
     fprintf(f, "  \"timestamp\": \"%s\",\n", ts);
     fprintf(f, "  \"deltas\": {\n");
     for (int i = 0; i < n; i++) {
         double delta = fb[i].value - fa[i].value;
-        fprintf(f, "    \"%s\": %.6f%s\n", fa[i].name, delta,
+        fputs("    ", f); tone_json_string(f, fa[i].name);
+        fprintf(f, ": %.6f%s\n", delta,
                 (i < n - 1) ? "," : "");
     }
     fprintf(f, "  },\n");
@@ -335,8 +349,9 @@ static int cmd_compare(const char *audio1, const char *audio2, const char *out_d
         }
         Shift tmp = shifts[pass]; shifts[pass] = shifts[best]; shifts[best] = tmp;
         int idx = shifts[pass].idx;
-        fprintf(f, "    { \"feature\": \"%s\", \"delta\": %.6f }%s\n",
-                fa[idx].name, fb[idx].value - fa[idx].value,
+        fputs("    { \"feature\": ", f); tone_json_string(f, fa[idx].name);
+        fprintf(f, ", \"delta\": %.6f }%s\n",
+                fb[idx].value - fa[idx].value,
                 (pass < 4 && pass < n - 1) ? "," : "");
     }
     fprintf(f, "  ]\n}\n");

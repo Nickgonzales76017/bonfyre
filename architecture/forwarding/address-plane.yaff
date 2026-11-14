@@ -203,11 +203,14 @@ architecture route-ranker
   cannot_infer an empty result -> the subject not existing; a cut that selects nothing is a cut, not a denial and not an absence
   forbidden_inference a high rank -> a correct or authorized route (the exact closure still verifies the top choice)
   forbidden_inference a learned weight -> a large training set (currently ~10 real workload_proven successes)
+  source_path engine/core/src/route_ranker.c
+  source_path engine/core/include/bf_route_ranker.h
   source_path components/BonfyreControlPlane/route_ranker.py.archive
+  witness engine/core/tests/route_ranker_test.c: records read from real work_items outcomes; ternary weights from success/failure mean differences, a weak signal collapses to 0, an untrained ranker is neutral; ranking only reorders (best first, ties by id, no candidate dropped) (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_route_ranker.py.archive
   interacts address-plane
   source_lineage AddressPlane / BitNet learned-forwarding vision
   known_gap richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre
   known_gap the canonical address resolves a shell and nothing more; the lenses that fill a subject out -- its world, its discussion, its map, its offers -- are separate reads and nothing yet hydrates them into the page
   known_gap subject addressing covers parcel, capability and note; the capability register that resolves is the priced catalogue, so 103 runnable capabilities have no address
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; the AddressPlane funnel does not call it yet, and the capability-estate features (estate_catalog, capability_identities) of the archived reference are not ported

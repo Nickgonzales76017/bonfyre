@@ -952,9 +952,30 @@ build/dispatch_2.o: dispatch_2.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -c dispatch_2.c -o $@
 
+build/decide__plane.o: ../BonfyreDecide/src/plane.c ../BonfyreDecide/src/dp.h
+	@mkdir -p build
+	$(CC) $(CFLAGS) -I../../lib/libbonfyre/include -I../BonfyreDecide/build -I../BonfyreDecide/src -D_GNU_SOURCE -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE -std=gnu11 -ffp-contract=off -flto -c $< -o $@
+
+build/surfacescene_markdown.o: ../BonfyreSurfaceScene/src/authoring_markdown.c ../BonfyreSurfaceScene/src/authoring_markdown.h
+	@mkdir -p build
+	$(CC) $(CFLAGS) -I../BonfyreSurfaceScene/vendor/md4c -c $< -o $@
+
+build/surfacescene_md4c.o: ../BonfyreSurfaceScene/vendor/md4c/md4c.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -I../BonfyreSurfaceScene/vendor/md4c -c $< -o $@
+
+build/surfacescene_md4c_html.o: ../BonfyreSurfaceScene/vendor/md4c/md4c-html.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -I../BonfyreSurfaceScene/vendor/md4c -c $< -o $@
+
+build/surfacescene_md4c_entity.o: ../BonfyreSurfaceScene/vendor/md4c/entity.c
+	@mkdir -p build
+	$(CC) $(CFLAGS) -I../BonfyreSurfaceScene/vendor/md4c -c $< -o $@
+
 OBJS_2 = \
 	build/dispatch_2.o \
 	build/decide__main.o \
+	build/decide__plane.o \
 	build/decide__dp_core.o \
 	build/decide__dp_util.o \
 	build/decide__dp_gguf.o \
@@ -976,6 +997,10 @@ OBJS_2 = \
 	build/index_organ.o \
 	build/provider__main.o \
 	build/surfacescene_organ.o \
+	build/surfacescene_markdown.o \
+	build/surfacescene_md4c.o \
+	build/surfacescene_md4c_html.o \
+	build/surfacescene_md4c_entity.o \
 	build/control__main.o \
 	build/operator__main.o \
 	build/economy__main.o \

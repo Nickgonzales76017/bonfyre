@@ -42,6 +42,8 @@
 
 #include "site_mcp.h"
 #include "site_presentation.h"
+#include "article_listen.h"
+#include "public_audio_deck.h"
 
 void bf_sha256_hex(const unsigned char *data, size_t len, char hex[65]);
 
@@ -105,6 +107,78 @@ static void htext(FILE *out, const char *text) {
         else if (*text == '"') fputs("&quot;", out);
         else fputc(*text, out);
     }
+}
+
+/* Metadata is an identity projection of the addressed published page. It
+ * does not invent an author, publication date, audio rights or review state. */
+static void site_script_text(FILE *out,const char *s) {
+    fputc('"',out);
+    for(const unsigned char *p=(const unsigned char *)s;p&&*p;p++){
+        unsigned char c=*p;
+        if(c=='"'||c=='\\'){fputc('\\',out);fputc(c,out);}
+        else if(c=='<')fputs("\\u003c",out);
+        else if(c=='>')fputs("\\u003e",out);
+        else if(c=='&')fputs("\\u0026",out);
+        else if(c=='\n')fputs("\\n",out);
+        else if(c=='\r')fputs("\\r",out);
+        else if(c=='\t')fputs("\\t",out);
+        else if(c<0x20)fprintf(out,"\\u%04x",c);
+        else fputc(c,out);
+    }
+    fputc('"',out);
+}
+static int site_page_canonical(const McpSite *site,const char *route,char *url,size_t cap) {
+    const char *host=site?site->host:NULL;
+    if(!host||!*host||strlen(host)>240||!strchr(host,'.')||strstr(host,"..")||
+       strspn(host,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")!=strlen(host)||
+       host[0]=='.'||host[0]=='-'||!route||route[0]!='/'||route[1]=='/'||
+       strstr(route,"..")||strpbrk(route,"?#\\\"'<> \r\n"))return 0;
+    const char *scheme=strstr(host,".localhost")||!strcmp(host,"localhost")?"http":"https";
+    int n=snprintf(url,cap,"%s://%s%s",scheme,host,route);
+    return n>0&&(size_t)n<cap;
+}
+#include "site_editorial.h"
+#include "site_authored_document.h"
+static void site_page_metadata(FILE *out,const McpSite *site,const char *route,
+                               const char *title,const char *summary,const SiteEditorial *ed) {
+    char url[1024];
+    if(!site_page_canonical(site,route,url,sizeof(url)))return;
+    const char *description=summary&&*summary?summary:site->tagline;
+    int article=ed&&ed->article;
+    fputs("<link rel=\"canonical\" href=\"",out);htext(out,url);fputs("\">",out);
+    fputs(article?"<meta property=\"og:type\" content=\"article\">":
+         "<meta property=\"og:type\" content=\"website\">",out);
+    fputs("<meta property=\"og:url\" content=\"",out);
+    htext(out,url);fputs("\"><meta property=\"og:title\" content=\"",out);
+    htext(out,title);fputs("\"><meta property=\"og:site_name\" content=\"",out);
+    htext(out,site->title);fputs("\"><meta name=\"twitter:card\" content=\"summary\">",out);
+    if(description&&*description){fputs("<meta property=\"og:description\" content=\"",out);
+        htext(out,description);fputs("\">",out);}
+    if(article&&ed->published_at[0]){
+        fputs("<meta property=\"article:published_time\" content=\"",out);
+        htext(out,ed->published_at);fputs("\">",out);
+    }
+    if(article&&ed->updated_at[0]){
+        fputs("<meta property=\"article:modified_time\" content=\"",out);
+        htext(out,ed->updated_at);fputs("\">",out);
+    }
+    fputs("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":",out);
+    site_script_text(out,article?"Article":"WebPage");
+    fputs(",\"url\":",out);site_script_text(out,url);
+    fputs(article?",\"headline\":":",\"name\":",out);site_script_text(out,title);
+    if(description&&*description){fputs(",\"description\":",out);site_script_text(out,description);}
+    if(article&&ed->author_credit[0]&&ed->author_host[0]){
+        fputs(",\"author\":{\"@type\":\"Person\",\"name\":",out);
+        site_script_text(out,ed->author_credit);
+        fputs(",\"url\":\"https://",out);htext(out,ed->author_host);fputs("/\"}",out);
+    }
+    if(article&&ed->published_at[0]){fputs(",\"datePublished\":",out);
+        site_script_text(out,ed->published_at);}
+    if(article&&ed->updated_at[0]){fputs(",\"dateModified\":",out);
+        site_script_text(out,ed->updated_at);}
+    fputs(",\"isPartOf\":{\"@type\":\"WebSite\",\"name\":",out);
+    site_script_text(out,site->title);fputs("}}</script>",out);
+    site_editorial_css(out,ed);
 }
 
 static void reply(int code, const char *type, const char *body, size_t len) {
@@ -506,10 +580,11 @@ static void call_search(FILE *out, sqlite3 *db, const McpSite *site, const char 
      * estate's store from here. */
     if (!site->reading && recall_index(cms_db, store, sizeof(store)) && (recall = recall_query(store, query, top))) {
         /* Recall's candidates, kept only where they are this site's posts. */
+        /* Recall candidates do not grant reads outside this site's publication. */
         if (sqlite3_prepare_v2(db,
                 "SELECT p.id, p.title, COALESCE(p.published_at,''), COALESCE(p.body,'') FROM json_each(?1,'$.fused.results') r "
                 "JOIN site_posts p ON p.id = CAST(substr(json_extract(r.value,'$.id'), 16) AS INTEGER) "
-                "WHERE json_extract(r.value,'$.id') LIKE 'community_post:%' AND ?2 IS NOT NULL "
+                "WHERE json_extract(r.value,'$.id') LIKE 'community_post:%' AND p.community=?2 "
                 "GROUP BY p.id ORDER BY min(r.key) LIMIT ?3", -1, &st, NULL) == SQLITE_OK) {
             sqlite3_bind_text(st, 1, recall, -1, SQLITE_STATIC);
             sqlite3_bind_text(st, 2, site->id, -1, SQLITE_STATIC);
@@ -915,7 +990,8 @@ static char *page_read(sqlite3 *db, const McpSite *site, const char *route, char
     if (!title) return NULL;
     t = open_memstream(&body, &len);
     if (sqlite3_prepare_v2(db, "SELECT COALESCE(heading,''), COALESCE(body,'') FROM site_fragment WHERE namespace=?1 AND page=?2 "
-                               "AND status='published' ORDER BY position, id", -1, &st, NULL) == SQLITE_OK) {
+                               "AND status='published' AND audience='public' AND kind NOT IN "
+                               "('article-presentation','article-credit','article-media-credit','article-audio-edition','editorial-related','primary-reference') ORDER BY position, id", -1, &st, NULL) == SQLITE_OK) {
         int n = 0;
         sqlite3_bind_text(st, 1, site->id, -1, SQLITE_STATIC);
         sqlite3_bind_text(st, 2, route, -1, SQLITE_STATIC);
@@ -1178,7 +1254,7 @@ static void inline_text(FILE *out, const char *text, size_t n) {
 }
 
 static int starts_block(const char *line) {
-    return !strncmp(line, "```", 3) || !strncmp(line, "### ", 4) || !strncmp(line, "- ", 2) || !strncmp(line, "* ", 2) ||
+    return !strncmp(line, "```", 3) || !strncmp(line, "## ", 3) || !strncmp(line, "### ", 4) || !strncmp(line, "- ", 2) || !strncmp(line, "* ", 2) ||
            !strncmp(line, "> ", 2) || line[0] == '|' || (isdigit((unsigned char)line[0]) && line[1] == '.' && line[2] == ' ');
 }
 
@@ -1237,10 +1313,16 @@ static void rich_text(FILE *out, const char *body) {
             continue;
         }
         if (set) { fputs("</div>", out); set = 0; }
-        if (!strncmp(at, "### ", 4)) {
+        if (!strncmp(at, "## ", 3) || !strncmp(at, "### ", 4)) {
+            int level = !strncmp(at, "### ", 4) ? 3 : 2;
+            size_t prefix = level == 3 ? 4 : 3;
             char heading[200];
-            snprintf(heading, sizeof(heading), "%.*s", (int)(n - 4), at + 4);
-            fputs("<h3 id=\"", out); slug_text(out, heading); fputs("\">", out); inline_text(out, at + 4, n - 4); fputs("</h3>", out);
+            snprintf(heading, sizeof(heading), "%.*s", (int)(n - prefix), at + prefix);
+            fprintf(out, "<h%d id=\"", level);
+            slug_text(out, heading);
+            fputs("\">", out);
+            inline_text(out, at + prefix, n - prefix);
+            fprintf(out, "</h%d>", level);
         } else if (!strncmp(at, "- ", 2) || !strncmp(at, "* ", 2) || (isdigit((unsigned char)at[0]) && at[1] == '.' && at[2] == ' ')) {
             int ordered = isdigit((unsigned char)at[0]);
             size_t lead = ordered ? 3 : 2;
@@ -1362,19 +1444,26 @@ name:
  * the order the groups first appeared. */
 #define PAGES_SQL \
     "SELECT p.route, p.title, COALESCE(p.eyebrow,''), COALESCE(p.lede,''), " \
-    "COALESCE((SELECT group_concat(f.heading,' ') FROM site_fragment f WHERE f.namespace=p.namespace AND f.page=p.route AND f.status='published'),'') " \
+    "COALESCE((SELECT group_concat(f.heading,' ') FROM site_fragment f WHERE f.namespace=p.namespace AND f.page=p.route AND f.status='published' AND f.audience='public'),'') " \
     "FROM site_page p WHERE p.namespace=?1 AND p.status='published' " \
     "ORDER BY (SELECT min(q.id) FROM site_page q WHERE q.namespace=p.namespace AND q.status='published' AND COALESCE(q.eyebrow,'')=COALESCE(p.eyebrow,'')), p.id"
+#include "../../BonfyreSurfaceScene/src/authoring_editorial.h"
 
-static void page_sections(FILE *out, sqlite3 *db, const McpSite *site, const char *route, int outline) {
+static void page_sections(FILE *out, sqlite3 *db, const McpSite *site, const char *route, int outline, int article) {
     sqlite3_stmt *st = NULL;
     if (sqlite3_prepare_v2(db, "SELECT COALESCE(heading,''), COALESCE(body,''), kind, COALESCE(label,''), "
+                               "CASE WHEN json_valid(semantic_tags) THEN COALESCE(json_extract(semantic_tags,'$.authoring_v1.editorial'),'[]') ELSE '[]' END, "
                                "COALESCE(json_extract(projection_contract,'$.bookable'),0) FROM site_fragment WHERE namespace=?1 AND page=?2 "
-                               "AND status='published' ORDER BY position, id", -1, &st, NULL) != SQLITE_OK) return;
+                               "AND status='published' AND audience='public' ORDER BY position, id", -1, &st, NULL) != SQLITE_OK) return;
     sqlite3_bind_text(st, 1, site->id, -1, SQLITE_STATIC);
     sqlite3_bind_text(st, 2, route, -1, SQLITE_STATIC);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *heading = (const char *)sqlite3_column_text(st, 0), *kind = (const char *)sqlite3_column_text(st, 2);
+        /* Editorial metadata belongs to its own owner, not the manuscript body. */
+        if(article&&kind&&(!strcmp(kind,"citation")||!strcmp(kind,"primary-reference")||
+           !strcmp(kind,"article-presentation")||!strcmp(kind,"article-credit")||
+           !strcmp(kind,"article-media-credit")||!strcmp(kind,"article-audio-edition")||
+           !strcmp(kind,"editorial-related")))continue;
         if (outline) {
             if (heading && *heading && !(kind && !strcmp(kind, "offer"))) {
                 fputs("<a href=\"#", out); slug_text(out, heading); fputs("\">", out); htext(out, heading); fputs("</a>", out);
@@ -1390,17 +1479,51 @@ static void page_sections(FILE *out, sqlite3 *db, const McpSite *site, const cha
             for (const char *c = heading; c && *c; c++) {
                 if (isalnum((unsigned char)*c)) fputc(*c, out); else fprintf(out, "%%%02X", (unsigned char)*c);
             }
-            fprintf(out, "\">%s</a></article>", sqlite3_column_int(st, 4) ? "Request a time" : "Ask about this");
+            fprintf(out, "\">%s</a></article>", sqlite3_column_int(st, 5) ? "Request a time" : "Ask about this");
             continue;
         }
         if (heading && *heading) {
             fputs("<section id=\"", out); slug_text(out, heading); fputs("\"><h2><a href=\"#", out); slug_text(out, heading);
             fputs("\">", out); htext(out, heading); fputs("</a></h2>", out);
         } else fputs("<section>", out);
-        rich_text(out, (const char *)sqlite3_column_text(st, 1));
+        int blocks=0;
+        const char *editorial=(const char*)sqlite3_column_text(st,4);
+        if(kind&&editorial&&strcmp(editorial,"[]")&&
+           (!strcmp(kind,"profile-story")||!strcmp(kind,"profile-section")||
+            !strcmp(kind,"service:prose")))
+            blocks=bf_authoring_editorial_render(out,editorial,250000);
+        if(blocks!=1)rich_text(out,(const char*)sqlite3_column_text(st,1));
         fputs("</section>", out);
     }
     sqlite3_finalize(st);
+}
+/* Use the existing native authored-document compiler for every published site
+ * route, not only the profile home. Legacy pages keep their current renderer.
+ * The native owner verifies typed fragments and refuses partial HTML. */
+static void site_page_authored_or_legacy(FILE *out, sqlite3 *db,
+                                         const McpSite *site, const char *route, int article){
+    const size_t cap=BF_SITE_AUTHORED_BUFFER_CAP;
+    char *compiled=(char *)malloc(cap);
+    if(!compiled){fputs("<section role=\"status\" class=\"site-publication-held\">This page is temporarily unavailable.</section>",out);return;}
+    if(compiled){
+        int blocks=0;
+        int ready=bf_site_authored_document_project(db,site->id,route,compiled,cap,&blocks);
+        if(ready==1&&blocks>0){
+            fputs("<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">",out);
+            fputs("<script defer src=\"/assets/authoring-reader.js\"></script>",out);
+            fputs("<div class=\"site-authored-native\" data-authored-route=\"",out);
+            htext(out,route);fputs("\">",out);
+            fputs(compiled,out);fputs("</div>",out);
+            free(compiled);return;
+        }
+        if(ready<0||ready==1){
+            free(compiled);
+            fputs("<section role=\"status\" class=\"site-publication-held\">This page is temporarily unavailable.</section>",out);
+            return;
+        }
+        free(compiled);
+    }
+    page_sections(out,db,site,route,0,article);
 }
 
 #include "site_search.h"
@@ -1421,15 +1544,220 @@ void bf_site_home_extras(sqlite3 *db, const char *site_id, const char *title) {
     }
     if (offers) {
         fputs("<section class=\"site-page site-home-offers\"><h2 class=\"site-home-heading\"><a href=\"/offers\">Offers</a></h2>", stdout);
-        page_sections(stdout, db, &site, "/offers", 0);
+        page_sections(stdout, db, &site, "/offers", 0, 0);
         fputs("</section>", stdout);
     }
     site_foot(stdout, db, site.id, title);
 }
 
+/* A media subject is separate from the page action aperture. The site editor
+ * explicitly binds a published article to its canonical MediaProgram subject.
+ * Neither an audio filename nor an effect subject can grant a media edition. */
+static int site_article_media_href(const char *url) {
+    if (!url || (strncmp(url,"/assets/",8) && strncmp(url,"/media/",7)) ||
+        strlen(url)>1023 || strstr(url,"..") || strstr(url,"//") ||
+        strpbrk(url,"\\?#\"'<>") || strcspn(url,"\r\n\t")!=strlen(url)) return 0;
+    return 1;
+}
+
+#include "../../BonfyreBroadcast/src/narration_intake.h"
+/* Only content-addressed final audio can carry measured acoustic peaks.
+ * A CMS value without the exact asset digest must not produce a waveform. */
+static int site_article_waveform_valid(const char *asset,const char *peaks,const char *sha) {
+    const char *prefix="/assets/twin/";
+    if(!asset||!peaks||!sha||strncmp(asset,prefix,13)||strlen(sha)!=64||
+       strlen(peaks)>256)return 0;
+    const char *named=asset+13;
+    for(int i=0;i<64;i++) {
+        char c=named[i];
+        if(!((c>='0'&&c<='9')||(c>='a'&&c<='f'))||sha[i]!=c)return 0;
+    }
+    if(named[64]!='.')return 0;
+    const char *extension=named+65;
+    if(strcmp(extension,"m4a")&&strcmp(extension,"mp3")&&
+       strcmp(extension,"ogg")&&strcmp(extension,"wav"))return 0;
+    for(int i=0;i<64;i++) {
+        if(*peaks<'0'||*peaks>'9')return 0;
+        int n=0,k=0;
+        do {n=n*10+(*peaks++-'0');k++;}
+        while(*peaks>='0'&&*peaks<='9'&&k<4);
+        if(k>3||n>100)return 0;
+        if(i==63)return *peaks==0;
+        if(*peaks++!=',')return 0;
+    }
+    return 0;
+}
+static int site_article_music_columns(sqlite3 *db){
+    sqlite3_stmt *st=NULL;unsigned mask=0;
+    if(sqlite3_prepare_v2(db,"PRAGMA table_info(media_program)",-1,&st,NULL)!=SQLITE_OK)return 0;
+    while(sqlite3_step(st)==SQLITE_ROW){
+        const char *col=(const char*)sqlite3_column_text(st,1);
+        if(!col)continue;
+        if(!strcmp(col,"music_credit"))mask|=1;
+        else if(!strcmp(col,"music_license"))mask|=2;
+        else if(!strcmp(col,"music_source_url"))mask|=4;
+        else if(!strcmp(col,"music_source_sha256"))mask|=8;
+        else if(!strcmp(col,"editorial_profile"))mask|=16;
+        else if(!strcmp(col,"narration_start_ms"))mask|=32;
+    }
+    sqlite3_finalize(st);return mask==63;
+}
+
+static int site_article_recording(FILE *out, sqlite3 *db, const McpSite *site,
+                                  const SiteEditorial *ed, const char *title) {
+    sqlite3_stmt *st=NULL;char asset[1024]="", transcript[1024]="";
+    char peaks[257]="";
+    char music_credit[256]="",music_license[48]="",music_url[640]="",music_sha[65]="",mix_profile[32]="";
+    if (!out || !db || !site || site->reading || !ed || !ed->media_subject[0]) return 0;
+    const char *sql_mix=
+        "SELECT asset_ref,COALESCE(transcript_ref,''),COALESCE(waveform_peaks,''),"
+        "COALESCE(waveform_audio_sha256,''),COALESCE(narration_source_sha256,''),"
+        "COALESCE(music_credit,''),COALESCE(music_license,''),COALESCE(music_source_url,''),"
+        "COALESCE(music_source_sha256,''),COALESCE(editorial_profile,'') "
+        "FROM media_program WHERE subject_ref=?1 AND media_kind='audio' "
+        "AND publication_state='published' AND status='published' "
+        "AND namespace IN ('root',?2) "
+        "ORDER BY CASE WHEN namespace=?2 THEN 0 ELSE 1 END,id DESC LIMIT 1";
+    const char *sql_reviewed=
+        "SELECT asset_ref,COALESCE(transcript_ref,''),COALESCE(waveform_peaks,''),"
+        "COALESCE(waveform_audio_sha256,''),COALESCE(narration_source_sha256,'') "
+        "FROM media_program WHERE subject_ref=?1 AND media_kind='audio' "
+        "AND publication_state='published' AND status='published' "
+        "AND namespace IN ('root',?2) "
+        "ORDER BY CASE WHEN namespace=?2 THEN 0 ELSE 1 END,id DESC LIMIT 1";
+    const char *sql_wave=
+        "SELECT asset_ref,COALESCE(transcript_ref,''),COALESCE(waveform_peaks,''),"
+        "COALESCE(waveform_audio_sha256,'') FROM media_program "
+        "WHERE subject_ref=?1 AND media_kind='audio' AND publication_state='published' "
+        "AND status='published' AND namespace IN ('root',?2) "
+        "ORDER BY CASE WHEN namespace=?2 THEN 0 ELSE 1 END,id DESC LIMIT 1";
+    const char *sql_legacy=
+        "SELECT asset_ref,COALESCE(transcript_ref,'') FROM media_program "
+        "WHERE subject_ref=?1 AND media_kind='audio' AND publication_state='published' "
+        "AND status='published' AND namespace IN ('root',?2) "
+        "ORDER BY CASE WHEN namespace=?2 THEN 0 ELSE 1 END,id DESC LIMIT 1";
+    int with_revision=bf_narration_digest_column(db);
+    int with_music=with_revision&&site_article_music_columns(db);
+    int with_waveform=0;
+    if(with_revision){
+        if(sqlite3_prepare_v2(db,with_music?sql_mix:sql_reviewed,-1,&st,NULL)!=SQLITE_OK)return 0;
+        with_waveform=1;
+    }else{
+        with_waveform=sqlite3_prepare_v2(db,sql_wave,-1,&st,NULL)==SQLITE_OK;
+        if(!with_waveform){sqlite3_finalize(st);st=NULL;
+            if(sqlite3_prepare_v2(db,sql_legacy,-1,&st,NULL)!=SQLITE_OK)return 0;}
+    }
+    sqlite3_bind_text(st,1,ed->media_subject,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(st,2,site->id,-1,SQLITE_STATIC);
+    if(sqlite3_step(st)==SQLITE_ROW){
+        if(with_revision){
+            const char *recorded_source=(const char*)sqlite3_column_text(st,4);
+            if(recorded_source&&*recorded_source){
+                BfNarrationSource current;
+                if(!bf_narration_source(db,site->id,ed->media_subject,&current)||
+                   strcmp(recorded_source,current.sha)){
+                    sqlite3_finalize(st);return 0;
+                }
+            }
+        }
+        if(bf_narration_article_revision_column(db)){
+            sqlite3_stmt *v2=NULL;char stored[65]={0},current[65]={0};int found=0;
+            const char *sql="SELECT COALESCE(narration_article_revision_sha256,'') FROM media_program "
+                "WHERE subject_ref=?1 AND media_kind='audio' AND publication_state='published' "
+                "AND status='published' AND namespace IN ('root',?2) "
+                "ORDER BY CASE WHEN namespace=?2 THEN 0 ELSE 1 END,id DESC LIMIT 1";
+            if(sqlite3_prepare_v2(db,sql,-1,&v2,NULL)==SQLITE_OK){
+                sqlite3_bind_text(v2,1,ed->media_subject,-1,SQLITE_TRANSIENT);
+                sqlite3_bind_text(v2,2,site->id,-1,SQLITE_STATIC);
+                if(sqlite3_step(v2)==SQLITE_ROW){
+                    const char *v=(const char*)sqlite3_column_text(v2,0);
+                    if(v&&strlen(v)<sizeof(stored)){snprintf(stored,sizeof(stored),"%s",v);found=1;}
+                }
+            }
+            sqlite3_finalize(v2);
+            if(!found||(*stored&&(!bf_narration_article_revision(db,site->id,ed->media_subject,"published",current)||strcmp(stored,current)))){
+                sqlite3_finalize(st);return 0;
+            }
+        }
+        const char *a=(const char *)sqlite3_column_text(st,0);
+        const char *t=(const char *)sqlite3_column_text(st,1);
+        if(site_article_media_href(a))snprintf(asset,sizeof(asset),"%s",a);
+        if(site_article_media_href(t))snprintf(transcript,sizeof(transcript),"%s",t);
+        if(with_waveform){
+            const char *w=(const char *)sqlite3_column_text(st,2);
+            const char *digest=(const char *)sqlite3_column_text(st,3);
+            if(site_article_waveform_valid(a,w,digest))
+                snprintf(peaks,sizeof(peaks),"%s",w);
+        }
+        if(with_music){
+            const char *profile=(const char*)sqlite3_column_text(st,9);
+            if(profile&&*profile){
+                const char *credit=(const char*)sqlite3_column_text(st,5),
+                    *lic=(const char*)sqlite3_column_text(st,6),
+                    *href=(const char*)sqlite3_column_text(st,7),
+                    *sha=(const char*)sqlite3_column_text(st,8);
+                if(!credit||!lic||!href||!sha||!*credit||strlen(credit)>=sizeof(music_credit)||
+                   strlen(lic)>=sizeof(music_license)||strlen(href)>=sizeof(music_url)||
+                   strlen(profile)>=sizeof(mix_profile)||strlen(sha)!=64||
+                   strspn(sha,"0123456789abcdef")!=64||strncmp(href,"https://",8)||
+                   (strcmp(lic,"CC0-1.0")&&strcmp(lic,"CC-BY-4.0")&&
+                    strcmp(lic,"original-owned")&&strcmp(lic,"licensed-commercial"))||
+                   (strcmp(profile,"feature")&&strcmp(profile,"essay")&&
+                    strcmp(profile,"newsroom")&&strcmp(profile,"conversation")&&
+                    strcmp(profile,"documentary"))){sqlite3_finalize(st);return 0;}
+                snprintf(music_credit,sizeof(music_credit),"%s",credit);
+                snprintf(music_license,sizeof(music_license),"%s",lic);
+                snprintf(music_url,sizeof(music_url),"%s",href);
+                snprintf(music_sha,sizeof(music_sha),"%s",sha);
+                snprintf(mix_profile,sizeof(mix_profile),"%s",profile);
+            }
+        }
+    }
+    sqlite3_finalize(st);
+    if(!asset[0])return 0;
+    fputs("<section class=\"wrap bf-article-recording\" data-article-recording "
+          "aria-label=\"Listen to the recorded article\"><p class=\"eyebrow\">Audio edition</p>"
+          "<h2>Listen to this article</h2><ol hidden class=\"article-audio-source\">"
+          "<li data-play=\"",out);
+    htext(out,asset);fputs("\" data-title=\"",out);htext(out,title);
+    if(peaks[0]){fputs("\" data-peaks=\"",out);htext(out,peaks);}
+    if(transcript[0]){fputs("\" data-transcript=\"",out);htext(out,transcript);}
+    fputs("\" data-by=\"Published audio edition\"><button class=\"lift\" type=\"button\">Play recording</button></li></ol>",out);
+    fputs(bf_public_audio_deck,out);
+    if(mix_profile[0]){
+        fputs("<p class=\"bf-article-music-credit\" data-music-sha256=\"",out);
+        htext(out,music_sha);fputs("\"><strong>",out);htext(out,mix_profile);
+        fputs(" sound design</strong> · Background music: ",out);
+        htext(out,music_credit);fputs(" · Terms: ",out);htext(out,music_license);
+        fputs(" · <a rel=\"nofollow noopener noreferrer\" href=\"",out);
+        htext(out,music_url);fputs("\">Music source and attribution</a></p>",out);
+    }
+    fputs("<noscript><audio controls preload=\"none\" src=\"",out);
+    htext(out,asset);
+    fputs("\">Your browser needs HTML audio support to play this recording.</audio></noscript>",out);
+    if(transcript[0]){fputs("<p class=\"article-audio-transcript\"><a href=\"",out);htext(out,transcript);
+        fputs("\">Transcript</a></p>",out);}
+    fputs("</section>",out);
+    return 1;
+}
+
+/* Keep the approved recording primary while offering a separate device-voice
+ * alternative for readers who cannot load it. No second audio player is made. */
+static void site_article_listening(FILE *out, sqlite3 *db, const McpSite *site,
+                                   const SiteEditorial *ed, const char *title) {
+    if(!ed||!ed->article)return;
+    int recorded=site_article_recording(out,db,site,ed,title);
+    if(recorded) fputs("<details class=\"bf-article-voice-choice\" data-article-voice-choice>"
+                       "<summary>Listen with your device voice instead</summary>",out);
+    fputs("<div data-article-listen-scope=\"site\">",out);
+    bf_article_listen_emit(out);
+    fputs("</div>",out);
+    if(recorded) fputs("</details>",out);
+}
+
 /* A site with a shelf of pages reads as a manual: every page in a grouped
  * list that can be searched, the page itself, and its own outline. */
-static void manual_page(FILE *out, sqlite3 *db, const McpSite *site, const char *route, const char *title, const char *summary) {
+static void manual_page(FILE *out, sqlite3 *db, const McpSite *site, const char *route, const char *title, const char *summary, const SiteEditorial *ed) {
     sqlite3_stmt *st = NULL;
     char group[160] = "\x01", mine[160] = "", before[2][200] = {"", ""}, after[2][200] = {"", ""}, last[2][200] = {"", ""};
     int found = 0;
@@ -1464,13 +1792,16 @@ static void manual_page(FILE *out, sqlite3 *db, const McpSite *site, const char 
     if (mine[0]) { fputs("<p class=\"manual-group\">", out); htext(out, mine); fputs("</p>", out); }
     fputs("<h1>", out); htext(out, title); fputs("</h1>", out);
     if (summary && *summary) { fputs("<p class=\"lede\">", out); inline_text(out, summary, strlen(summary)); fputs("</p>", out); }
-    page_sections(out, db, site, route, 0);
+    site_editorial_credit(out,ed);
+    site_article_listening(out,db,site,ed,title);
+    site_page_authored_or_legacy(out, db, site, route, ed->article);
+    site_editorial_sources(out,db,site,route,ed);
     fputs("<nav class=\"manual-turn\" aria-label=\"Previous and next\">", out);
     if (before[0][0]) { fputs("<a rel=\"prev\" href=\"", out); htext(out, before[0]); fputs("\"><small>Previous</small>", out); htext(out, before[1]); fputs("</a>", out); }
     else fputs("<span></span>", out);
     if (after[0][0]) { fputs("<a rel=\"next\" href=\"", out); htext(out, after[0]); fputs("\"><small>Next</small>", out); htext(out, after[1]); fputs("</a>", out); }
     fputs("</nav></article><nav class=\"manual-outline\" aria-label=\"On this page\"><p>On this page</p>", out);
-    page_sections(out, db, site, route, 1);
+    page_sections(out, db, site, route, 1, ed->article);
     fputs("</nav></div>", out);
 }
 
@@ -1481,6 +1812,8 @@ static int serve_page(sqlite3 *db, const McpSite *site, const char *route) {
     FILE *out;
     int manual = 0;
     if (!title) return 0;
+    SiteEditorial editorial;
+    site_editorial_read(db,site,route,&editorial);
     if (sqlite3_prepare_v2(db, "SELECT count(*) >= 6 OR COALESCE(max(length(COALESCE(eyebrow,''))),0) > 0 FROM site_page WHERE namespace=?1 AND status='published'",
                            -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, site->id, -1, SQLITE_STATIC);
@@ -1492,12 +1825,13 @@ static int serve_page(sqlite3 *db, const McpSite *site, const char *route) {
     htext(out, title); fputs(" · ", out); htext(out, site->title);
     fputs("</title>", out);
     if (summary && *summary) { fputs("<meta name=\"description\" content=\"", out); htext(out, summary); fputs("\">", out); }
+    site_page_metadata(out,site,route,title,summary,&editorial);
     site_browser_icon(out, site); fputs("<link rel=\"stylesheet\" href=\"/assets/own-site.css?v=6\"><link rel=\"mcp\" href=\"/.well-known/mcp/server-card.json\">"
           "<script src=\"/assets/own-site-agent.js\" defer></script><script src=\"/assets/own-site-reading.js\" defer></script>", out);
     emit_tokens(out, db, site);
     fprintf(out, "</head><body class=\"site-program-body\"><main class=\"site-composition%s\" data-site=\"", manual ? " site-manual" : "");
     htext(out, site->id); fputs("\"", out); bf_site_presentation_attributes(out,db,site->profile); fputs(">", out);
-    if (manual) manual_page(out, db, site, route, title, summary);
+    if (manual) manual_page(out, db, site, route, title, summary, &editorial);
     else {
         site_bar(out, site->title, route);
         fputs("<header class=\"site-program-masthead\"><p><a href=\"/\">", out); htext(out, site->title);
@@ -1505,7 +1839,10 @@ static int serve_page(sqlite3 *db, const McpSite *site, const char *route) {
         pages_nav(out, db, site->id, route);
         fputs("<section class=\"site-page\">", out);
         if (summary && *summary) { fputs("<p class=\"lede\">", out); htext(out, summary); fputs("</p>", out); }
-        page_sections(out, db, site, route, 0);
+        site_editorial_credit(out,&editorial);
+        site_article_listening(out,db,site,&editorial,title);
+        site_page_authored_or_legacy(out, db, site, route, editorial.article);
+        site_editorial_sources(out,db,site,route,&editorial);
         fputs("</section>", out);
     }
     site_foot(out, db, site->id, site->title);

@@ -27,19 +27,24 @@ if (process.argv.at(-1) === '--retries') {
   if(entries.length!==6 || material.some(s=>!s?.ok) ||
       [heldExitA,heldExitB,recoveredExit,replayedExit].some(n=>Number(n)!==0))
     fail('each real owner tick must finish and retain its own receipt');
+  const initialHeld=material[0]?.outcome?.sources_held;
+  if(!Number.isInteger(initialHeld)||initialHeld<1)fail('fixture missing-source hold was not recorded');
   for(const [index,item] of material.slice(0,2).entries()){
     if(item.outcome?.status!=='partial_with_explicit_source_holds' ||
-        item.outcome?.sources_held!==1 || item.outcome?.owner_operations!==1 ||
-        item.outcome?.new_publication_occurrences!==0)
+       item.outcome?.sources_held!==initialHeld || item.outcome?.owner_operations!==1 ||
+       item.outcome?.new_publication_occurrences!==0)
       fail('refused source '+index+' was cached or misreported instead of retried');
   }
-  if(material[2].outcome?.status!=='complete' || material[2].outcome?.owner_operations!==1 ||
-      material[2].outcome?.new_publication_occurrences!==1 || material[2].outcome?.sources_held!==0)
+  const recovered=material[2].outcome, stable=material[3].outcome, remaining=initialHeld-1;
+  if(recovered?.owner_operations!==1 || recovered?.new_publication_occurrences!==1 ||
+      recovered?.sources_held!==remaining ||
+      recovered?.status!==(remaining?'partial_with_explicit_source_holds':'complete'))
     fail('new retained grant-notice source was not admitted exactly once');
-  if(material[3].outcome?.owner_operations!==0 ||
-      material[3].outcome?.skipped!=='source_receipts_and_native_CMS_generation_unchanged' ||
-      material[3].outcome?.new_publication_occurrences!==0)
-    fail('completed generation did not skip the fourth unchanged source cut');
+  if(stable?.new_publication_occurrences!==0 ||
+     (remaining ? stable?.owner_operations!==1 || stable?.sources_held!==remaining ||
+       stable?.status!=='partial_with_explicit_source_holds' :
+       stable?.owner_operations!==0 || stable?.skipped!=='source_receipts_and_native_CMS_generation_unchanged'))
+    fail('stable source duplicated work or did not keep unresolved sources retryable');
   const db = new Database(join(stateRoot,'cms.db'),{readonly:true});
   let bySource;
   try {bySource=db.query('SELECT source_ref,COUNT(*) AS n FROM publication_occurrence GROUP BY source_ref ORDER BY source_ref').all();}
@@ -72,18 +77,20 @@ if (process.argv.at(-1) === '--sink-reconnect') {
       [offlineExit,dormantExit,reconnectExit,replayExit].some(x=>Number(x)!==0))
     fail('all four source materialization ticks must retain successful receipts');
   const [offline,dormant,reconnected,quiet] = recent.map(x=>x.outcome);
-  if(offline?.status!=='material_admitted_delta_delivery_pending' || offline.owner_operations!==1 ||
+  const held=offline?.sources_held>0, partial='partial_with_explicit_source_holds';
+  const stable=x=>x?.owner_operations===(held?1:0) && x?.new_publication_occurrences===0 &&
+    (held ? x.status===partial && x.sources_held===offline.sources_held :
+      x.skipped==='source_receipts_and_native_CMS_generation_unchanged');
+  if(offline?.status!==(held?partial:'material_admitted_delta_delivery_pending') || offline.owner_operations!==1 ||
       offline.new_publication_occurrences!==1 || offline.pending_source_deltas!==1 || offline.delta_delivery_configured!==false)
-    fail('material admitted without a sink did not leave an explicit durable outbox obligation');
-  if(dormant?.owner_operations!==0 || dormant.pending_source_deltas!==1 ||
-      dormant.skipped!=='source_receipts_and_native_CMS_generation_unchanged')
-    fail('disconnected stable source reran instead of reusing its scoped generation');
-  if(reconnected?.status!=='complete' || reconnected.owner_operations!==1 ||
+    fail('material admitted without a sink did not leave an explicit durable outbox obligation: '+JSON.stringify({offline,dormant,reconnected,quiet}));
+  if(!stable(dormant) || dormant.pending_source_deltas!==1)
+    fail('disconnected unchanged source either duplicated work or incorrectly skipped unresolved sources: '+JSON.stringify({offline,dormant}));
+  if((held && reconnected?.status!==partial) || reconnected.owner_operations!==1 ||
       reconnected.new_publication_occurrences!==0 || reconnected.pending_source_deltas!==0 ||
-      reconnected.delta_delivery_configured!==true)
+      reconnected.delta_delivery_configured!==true || (held && reconnected.sources_held!==offline.sources_held))
     fail('enabling FactDelta sink did not flush the durable source revision: '+JSON.stringify({offline,dormant,reconnected,quiet}));
-  if(quiet?.owner_operations!==0 || quiet.pending_source_deltas!==0 ||
-      quiet.skipped!=='source_receipts_and_native_CMS_generation_unchanged')
+  if(!stable(quiet) || quiet.pending_source_deltas!==0)
     fail('delivered source generated duplicate work on the next stable tick');
   const db=new Database(join(base,'cms.db'),{readonly:true});
   let materialCount,pendingCount;
@@ -95,8 +102,8 @@ if (process.argv.at(-1) === '--sink-reconnect') {
       Object.values(deltas).some(n=>n!==1) || deltas['community-notices']!==1)
     fail('source publication or exact downstream fact deltas failed readback');
   console.log(JSON.stringify({schema:'bonfyre.material.sink-transition.v1',
-    disconnected_ingests:1,held_outbox_revisions:1,disconnected_noop_owner_invocations:0,
-    reconnected_delta_replays:1,reconnected_new_material:0,stable_owner_invocations:0,
+    disconnected_ingests:1,held_outbox_revisions:1,disconnected_noop_owner_invocations:dormant.owner_operations,
+    reconnected_delta_replays:1,reconnected_new_material:0,stable_owner_invocations:quiet.owner_operations,
     canonical_community_records:materialCount,outbox_pending_after_delivery:pendingCount,
     source_scoped_deltas:deltas,network_fetches:recent.reduce((n,x)=>n+(x.outcome.network_fetches||0),0)}));
   process.exit(0);
@@ -131,9 +138,13 @@ check(!['sources', 'needs', 'inventories', 'channels', 'catalogues'].some(n => O
 const two = Object.fromEntries((records.at(-1)?.steps || []).map(s => [s.step, s]));
 check(two['publication-material']?.ok === true && two['publication-material']?.outcome?.new_publication_occurrences === 0,
   'second material tick admits no duplicate publication after receipt replay');
-check(two['publication-material']?.outcome?.owner_operations === 0 &&
-  two['publication-material']?.outcome?.skipped === 'source_receipts_and_native_CMS_generation_unchanged',
-  'unchanged news and podcast sources skip the entire native parse/index generation: '+JSON.stringify({first:firstMaterial?.outcome,second:two['publication-material']?.outcome}));
+// A held source must be retried on every tick; only complete unchanged generations skip.
+const held=firstMaterial?.outcome?.sources_held>0;
+check(two['publication-material']?.outcome?.owner_operations === (held?1:0) &&
+  (held ? two['publication-material']?.outcome?.status==='partial_with_explicit_source_holds' &&
+    two['publication-material']?.outcome?.sources_held===firstMaterial.outcome.sources_held :
+    two['publication-material']?.outcome?.skipped==='source_receipts_and_native_CMS_generation_unchanged'),
+  'unchanged admitted sources must not duplicate material, held sources must retry: '+JSON.stringify({first:firstMaterial?.outcome,second:two['publication-material']?.outcome}));
 const initialDeltas = publicationSourceDeltas(tmp);
 check(Object.keys(initialDeltas).length===4 &&
   ['newsroom-twin','podcast-twin','podcasting-2-0','buzzcast'].every(s=>initialDeltas[s]===1),

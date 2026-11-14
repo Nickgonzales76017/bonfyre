@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:connected-performance": "bun connected-measurement-mcp-build.mjs",
+    "test:connected-performance": "bun test tests/connected-measurement-mcp.test.mjs ../../integrations/mcp/tests/connected_measurement.test.mjs ../../integrations/estate/connected_measurement_ingest.test.mjs",
     "test:compiler": "bun test tests/compiler-owners.test.mjs tests/site-cms.test.mjs tests/site-leads.test.mjs tests/site-draft.test.mjs tests/site-publication.test.mjs",
     "test:repo-owners": "bun test ../../scripts/analysis/repository_maturity.test.mjs",
     "test:catalogue": "bun test tests/catalogue-baseline.test.mjs tests/catalogue-model.test.mjs tests/catalogue-review.test.mjs",

@@ -12,6 +12,8 @@ INCDIR  = include
 OBJDIR  = obj
 
 SRCS    = $(SRCDIR)/bf_decision_head.c \
+           $(SRCDIR)/bf_form.c \
+           $(SRCDIR)/bf_latent.c \
           $(SRCDIR)/bf_factor.c \
           $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_common.c \
@@ -105,7 +107,7 @@ dylib: $(DYLIB)
 clean:
 	rm -rf $(OBJDIR) $(TARGET) $(SHARED) $(DYLIB) test_bonfyre
 
-test: $(TARGET) test-lz4 test-sqlite-policy test-sha256 test-catalog-model-sync test-factor
+test: $(TARGET) test-lz4 test-sqlite-policy test-sha256 test-catalog-model-sync test-factor test-form test-latent
 
 # Exact factor-graph counting against brute-force enumeration.
 .PHONY: test-factor
@@ -172,6 +174,16 @@ install: $(TARGET)
 	install -m 644 $(INCDIR)/bf_csv.h $(DESTDIR)$(PREFIX)/include/ 2>/dev/null || true
 
 .PHONY: test-catalog-model-sync
+test-latent: $(TARGET)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Werror -I$(INCDIR) tests/latent_test.c $(TARGET) -lm -o build/latent_test
+	./build/latent_test
+
+test-form: $(TARGET)
+	@mkdir -p build
+	$(CC) $(CFLAGS) -Werror -I$(INCDIR) tests/form_test.c $(TARGET) -lsqlite3 -lm -o build/form_test
+	./build/form_test
+
 test-catalog-model-sync: $(TARGET)
 	@mkdir -p build
 	$(CC) $(CFLAGS) -Werror tests/catalog_model_sync_test.c $(TARGET) -lsqlite3 -lm -o build/catalog_model_sync_test

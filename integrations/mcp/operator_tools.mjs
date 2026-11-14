@@ -49,7 +49,7 @@ const CONTROLLED_EFFECT = new Map([
   ['studio_client_register', 'allow_client_registration'], ['operator_goal_supersede', 'allow_operator_backlog_compaction'],
 ]);
 const TEST_PROFILES = new Set([
-  'git-diff-check', 'bonfyre-zig-build', 'bonfyre-final', 'cmd-make', 'training-mcp-smoke', 'cloudflare-bridge',
+  'git-diff-check', 'bonfyre-zig-build', 'bonfyre-final', 'cmd-make', 'training-mcp-smoke', 'cloudflare-bridge', 'bun-tests', 'service-site-planner',
   'bun-syntax', 'shell-syntax', 'node-syntax', 'php-lint',
 ]);
 
@@ -78,6 +78,11 @@ const powerMode = (policy) => ['power', 'deploy'].includes(policy.mode);
 function admission(name, args, policy) {
   if (!canonical.has(name)) return 'unknown tool';
   if (READ_ONLY.has(name)) return null;
+  if (name === 'operator_maturation_ledger') {
+    if (['read','coverage'].includes(args.action)) return null;
+    return powerMode(policy) && policy.auto_apply_low_risk_patches === true
+      ? null : 'backlog verdict effects require power-mode reviewed patch policy and operator STOP';
+  }
   if (DENIED_DIRECT.has(name)) return 'tool requires a dedicated owner or operator boundary';
   if (name === 'project_apply_low_risk_patch') {
     if (!powerMode(policy) || policy.auto_apply_low_risk_patches !== true) return 'low-risk patch application is disabled by policy';

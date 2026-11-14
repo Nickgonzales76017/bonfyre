@@ -9,6 +9,7 @@ import {materializeCreatorWorkspace} from '../../../scripts/materialize_creator_
 import {digest,prepareRecord,restoreRecord} from '../../../integrations/browser/workspace-value.mjs';
 import {encode,decode} from '../../../integrations/browser/workspace-msgpack.mjs';
 import {decodeWav} from '../../../components/BonfyreServiceSite/creator-import.mjs';
+import {createProduction} from '../../../integrations/browser/narration-production.mjs';
 const free=Number(execFileSync('memory_pressure',['-Q'],{encoding:'utf8'}).match(/free percentage: (\d+)%/)?.[1]);
 if(!(free>=18))throw Error('Browser verification requires available memory. No model is started.');
 const f=await workspaceFixture(),checks=[],errors=[],failures=[];let browser,page;
@@ -16,7 +17,7 @@ const check=(name,value)=>{assert.ok(value,name);checks.push(name);console.log('
 const output=join(root,'cmd/BonfyreExperienceStage/verification/creator-workspace-20261015');mkdirSync(output,{recursive:true});
 const puppeteer=createRequire(join(root,'tools/creator-ingest/package.json'))('puppeteer');
 async function member(user){const context=await browser.createBrowserContext(),p=await context.newPage();p.setDefaultTimeout(30000);await p.setViewport({width:1440,height:1050});const [name,...v]=user.cookie.split('=');await p.setCookie({name,value:v.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});p.on('dialog',d=>d.type()==='beforeunload'?d.accept():d.dismiss());p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)failures.push(r.status()+' '+new URL(r.url()).pathname);});return p;}
-async function ready(p){await p.waitForSelector('[data-audio="workspace"][data-ready="true"][data-busy="false"]');}
+async function ready(p){await p.waitForSelector('[data-audio="workspace"][data-ready="true"][data-busy="false"]');await p.$eval('details.audio-demo-lab',el=>{el.open=true;});}
 const record=async binding=>(await f.store(binding).readLocal('draft:creator:')).find(row=>row.key.endsWith(':imports'));
 async function title(p,text){await p.click('[data-audio-view="export"]');const input=await p.$('[data-audio="title"]');await input.click({clickCount:3});await input.type(text);await p.click('[data-audio="save"]');await p.waitForFunction(()=>document.querySelector('[data-audio="status"]').textContent==='Session saved with its recordings and edits.');}
 try{
@@ -27,7 +28,34 @@ try{
  const binding=await f.install('experience.native-creator-studio.workspace','institution:workspace-team');
  check('installation binds the audio family to the selected organization',f.sql.query('SELECT family FROM _application_workspace WHERE binding_id=?').get(binding.id).family==='creator-audio');
  browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,protocolTimeout:20000,userDataDir:join(f.home,'creator-test-browser'),args:['--no-sandbox','--disable-dev-shm-usage']});process.once('SIGTERM',()=>{browser?.process()?.kill('SIGTERM');process.exit(143);});page=await member(f.owner);
- await page.goto(f.base+'/apps?context=institution:workspace-team');await page.click('a[data-work-editor][href="'+binding.path+'"]');await ready(page);await page.click('[data-audio-view="timeline"]');
+ const editorialPage=await (await f.raw(binding.path,f.owner)).text();
+ check('editorial recorded music leads the packaged Audio Studio, while toy mixer is explicitly an optional lab',
+  editorialPage.indexOf('data-editorial-library')<editorialPage.indexOf('class="audio-demo-lab"')&&
+  editorialPage.includes('original chime, pulse and harmony fixtures (not editorial music)'));
+ await page.goto(f.base+'/apps?context=institution:workspace-team');
+ await page.click('a[data-work-editor][href="'+binding.path+'"]');
+ await page.waitForSelector('.audio-music-card',{timeout:20000});
+ const listening=await page.evaluate(()=>({
+  tracks:[...document.querySelectorAll('.audio-music-card')].map(card=>card.querySelector('h3')?.textContent),
+  musicFirst:Boolean(document.querySelector('[data-editorial-library]')?.compareDocumentPosition(document.querySelector('details.audio-demo-lab'))&Node.DOCUMENT_POSITION_FOLLOWING),
+  technicalClosed:!document.querySelector('details.audio-demo-lab')?.open,
+  musicPlayers:[...document.querySelectorAll('.audio-music-card audio')].every(el=>el.src.startsWith('https://huggingface.co/datasets/SoundSafari/'))
+ }));
+ check('the real browser opens seven recorded tracks with the technical tone lab closed',
+  listening.tracks.length===7&&listening.tracks.includes('Mellow Cafe Vibe')&&
+  listening.musicFirst&&listening.technicalClosed&&listening.musicPlayers);
+ const deepIdentity='f'.repeat(64);
+ const audioProduction=createProduction({id:'article-deep-test',title:'Council agenda narration',
+  items:[{id:'article',title:'Council agenda',source:{href:'https://aurekai.work/journal/council-agenda/',sha256:'d'.repeat(64)},
+   segments:[{id:'opening',text:'A local council meeting can make public records easier to follow.'}]}]});
+ audioProduction.sourcePermission='unreviewed';
+ await f.store(binding).saveLocal('draft:creator:narration:'+deepIdentity,audioProduction,0);
+ await page.goto(f.base+binding.path+'?production='+deepIdentity);
+ await page.waitForFunction(()=>document.querySelector('.narration-worklist article h3')?.textContent==='Council agenda narration',{timeout:20000});
+ check('an exact account-owned article narration link opens its real editable production',
+  await page.$eval('.narration-worklist article h3',node=>node.textContent==='Council agenda narration'));
+ await page.goto(f.base+binding.path);
+ await ready(page);await page.click('[data-audio-view="timeline"]');
  check('audio opens from the ordinary destination entrance with its original editor',new URL(page.url()).pathname===binding.path);
  check('the original arrangement editor opens with its waveform timeline',await page.$('[data-audio="tracks"]')!==null&&await page.$$eval('[data-audio="source-list"] article',items=>items.length===3));
  await page.click('[data-audio="play"]');await page.waitForFunction(()=>document.querySelector('[data-audio="workspace"]').dataset.playing==='true');await page.click('[data-audio="stop"]');

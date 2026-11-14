@@ -3,20 +3,21 @@ import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,copyFileSync,rmSync,chm
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
+import {Database} from 'bun:sqlite';
 import {encode} from '../../../integrations/browser/workspace-msgpack.mjs';
 import {readProgramServicePolicy,renderProgramServicePolicy} from '../../project-program-service-policy.mjs';
-import {freezeBrowser,freezePrograms,uniqueInputs,configurePrograms,inspectRelease,freezeSiteAlias,terminalBin,verifyInputs,verifyBrowser,browserReadback,programReadback,retryReadbackTransport,acceptanceEnvironment,acceptanceIdentity,requireAcceptance,requireFrozenAcceptance,verifyPromotionReceipt,findExtensionChromium} from '../public_surface_rollout.mjs';
+import {freezeBrowser,freezePrograms,uniqueInputs,configurePrograms,inspectRelease,freezeSiteAlias,terminalBin,carriedOptionalBin,verifyInputs,verifyBrowser,browserReadback,programReadback,retryReadbackTransport,acceptanceEnvironment,acceptanceIdentity,requireAcceptance,requireFrozenAcceptance,verifyPromotionReceipt,findExtensionChromium,requirePublishedForeignSources,foreignCatalogueReadback,verifyForeignApexReadbacks,readBoundedPublicBody,warmPublicHomes,bindPublicCandidate} from '../public_surface_rollout.mjs';
 
 const projectRoot=resolve(import.meta.dir,'../../..');
 const homes=[];
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const closure=['scripts/program-workspace-owner.mjs','scripts/program-source-work.mjs','scripts/program-work-reference.mjs','scripts/project-program-service-policy.mjs','cmd/BonfyreInteractionGrammar/src/main.c','scripts/workspace_material.mjs','integrations/browser/workspace-continuation.mjs','scripts/compile-program-fabric.mjs','scripts/program-fabric.cue','integrations/browser/workspace-msgpack.mjs','integrations/browser/provider-contract.mjs','cmd/BonfyreSourceFrontier/tools/web_work.mjs','cmd/BonfyreSourceFrontier/tools/web_protocol.mjs','cmd/BonfyreSourceFrontier/tools/source_material.mjs','cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs','cmd/BonfyreExternalEstate/bonfyre-external-estate','cmd/BonfyreCMS/bonfyre-cms','cmd/BonfyreCredentials/provider-credentials.json'];
+const closure=['scripts/program-workspace-owner.mjs','scripts/program-source-work.mjs','scripts/program-work-reference.mjs','scripts/project-program-service-policy.mjs','cmd/BonfyreInteractionGrammar/src/main.c','scripts/workspace_material.mjs','integrations/browser/workspace-continuation.mjs','scripts/compile-program-fabric.mjs','scripts/program-fabric.cue','integrations/browser/workspace-msgpack.mjs','integrations/browser/provider-contract.mjs','cmd/BonfyreSourceFrontier/tools/web_work.mjs','cmd/BonfyreSourceFrontier/tools/web_protocol.mjs','cmd/BonfyreSourceFrontier/tools/source_material.mjs','cmd/BonfyreExternalEstate/tools/resolve_program_demand.mjs','cmd/BonfyreExternalEstate/bonfyre-external-estate','cmd/BonfyreCMS/bonfyre-cms','cmd/BonfyreCredentials/provider-credentials.json','cmd/BonfyreReview/command_dispatch.mjs','cmd/BonfyreReview/command_owner.mjs','cmd/BonfyreReview/command_effects.mjs','cmd/BonfyreReview/authority.mjs','cmd/BonfyreReview/review.mjs','cmd/BonfyreReview/state.mjs','cmd/BonfyreReview/effects.mjs','components/BonfyreServiceSite/account-auth.mjs','components/BonfyreControlPlane/obligation-work.mjs','components/BonfyreControlPlane/commitment-graph.mjs','components/BonfyreControlPlane/native/commitment_cli.c','engine/core/src/commitment.c','engine/core/include/bf_commitment.h','components/BonfyreControlPlane/protocol-library.mjs','components/BonfyreDecision/frontier-adapters.mjs','components/BonfyreDecision/decision-plane.mjs','components/BonfyreDecision/typed-decision.mjs','components/BonfyreDecision/local-inference.mjs','cmd/BonfyreQueue/bonfyre-queue','schemas/control/protocol-library.cue','schemas/control/protocol-contract.cue','components/BonfyreDecision/decision-plane.cue','cmd/BonfyreCMS/content-types/pack_artifact.json','cmd/BonfyreCMS/content-types/pack_version.json','cmd/BonfyreCMS/content-types/pack_head.json','cmd/BonfyreCMS/content-types/pack_dependency.json','cmd/BonfyreCMS/content-types/pack_overlay.json','cmd/BonfyreCMS/content-types/pack_demand.json','cmd/BonfyreCMS/content-types/pack_installation.json','cmd/BonfyreCMS/content-types/pack_activation.json','cmd/BonfyreCMS/content-types/application_binding.json','cmd/BonfyreCMS/content-types/capability_program.json'];
 const browserAssets=['aurekai-activity.mjs','aurekai-horde.mjs','aurekai-activity-source.mjs','aurekai-inbox-source.mjs','aurekai-activity.css','workspace-msgpack.mjs','extension/foreign-sign-in.mjs','extension/foreign-sign-in.css','aurekai-push.mjs','aurekai-push-sw.mjs','provider-contract.mjs','aurekai-model.mjs','aurekai-model.css','program-workspace.mjs','program-service-continuations.mjs','program-service-policy.mjs','program-source-work.mjs','program-workspace.css','interaction-collection.mjs','record-comparison.mjs','workspace-store.mjs','workspace-value.mjs','workspace-continuation.mjs','workspace-destinations.mjs','reference-picker.mjs','account-choices.mjs','account-choices.css','invitation-choice.mjs','connection-studio.mjs','connection-studio.css','authentication-capability-surface.mjs','provider-auth-capability.mjs','connection-source.mjs','connection-lab.mjs','publication-picker.mjs','publication-research.mjs','source-desk.mjs','source-desk.css','source-publication.mjs','source-publication.css','web-workbench.mjs','web-workbench.css','extension/workbench-shell.mjs','extension/panel-enrollment.mjs','extension/enrollment-integrity.mjs'];
 function put(path,body,mode=0o644){mkdirSync(dirname(path),{recursive:true});writeFileSync(path,body,{mode});chmodSync(path,mode);}
 function fixture(){
  const home=realpathSync(mkdtempSync(join(tmpdir(),'program-rollout-')));homes.push(home);
  const source=join(home,'source'),release=join(home,'release'),bin=join(home,'tools');mkdirSync(release);mkdirSync(bin);
- for(const path of closure)put(join(source,path),'fixture '+path+'\n',/\/bonfyre-(external-estate|cms)$/.test(path)?0o755:0o644);
+ for(const path of closure)put(join(source,path),'fixture '+path+'\n',/\/bonfyre-(external-estate|cms|queue)$/.test(path)?0o755:0o644);
  for(const name of browserAssets)put(join(source,'integrations/browser',name),'fixture integrations/browser/'+name+'\n');
  put(join(bin,'cue'),'#!/bin/sh\nexit 0\n',0o755);
  const bun=join(bin,'bun');put(bun,'#!/bin/sh\nexit 0\n',0o755);
@@ -42,8 +43,27 @@ function stageFixture(f){
 }
 afterAll(()=>{for(const path of homes)rmSync(path,{recursive:true,force:true});});
 
+test('staged WebAddress binds the detail-depth index without changing canonical databases',()=>{
+ const f=fixture(),candidate=structuredClone(f.before);
+ const before={...candidate.EnvironmentVariables};
+ const configured=bindPublicCandidate(candidate,f.release,{accountHome:f.home});
+ expect(configured).toBe(candidate);
+ expect(candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--site-root')+1]).toBe(join(f.release,'site'));
+ expect(candidate.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB).toBe(join(f.home,'.bonfyre/estate-local/detail-depth.db'));
+ for(const key of ['BONFYRE_CMS_DB','BONFYRE_CONTROL_DB','BONFYRE_SOURCE_FRONTIER_DB','BONFYRE_AUTH_BINARY'])
+  expect(candidate.EnvironmentVariables[key]).toBe(before[key]);
+ expect(candidate.EnvironmentVariables.BONFYRE_CMS_BINARY).toBe(join(f.release,'native/cmd/BonfyreCMS/bonfyre-cms'));
+ const custom=structuredClone(f.before);
+ custom.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB='/retained/account-specific-index.db';
+ bindPublicCandidate(custom,f.release,{accountHome:f.home});
+ expect(custom.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB).toBe('/retained/account-specific-index.db');
+});
+
 test('frozen site uses the exact release resolver, never the stale managed site',()=>{
- const f=fixture();stageFixture(f);
+ const f=fixture(),{configured}=stageFixture(f);
+ const mediaRoot=join(dirname(f.before.EnvironmentVariables.BONFYRE_CMS_DB),'media-assets');
+ expect(lstatSync(mediaRoot).isDirectory()).toBe(true);
+ expect(configured.configuration.EnvironmentVariables.BONFYRE_MEDIA_ASSET_ROOT).toBe(realpathSync(mediaRoot));
  const web=join(f.release,'bin/bonfyre-web-address'),site=join(f.release,'bin/bonfyre-site');
  expect(lstatSync(site).isSymbolicLink()).toBe(true);
  expect(readlinkSync(site)).toBe('bonfyre-web-address');expect(readFileSync(site)).toEqual(readFileSync(web));
@@ -57,6 +77,17 @@ test('frozen site uses the exact release resolver, never the stale managed site'
 });
 
 test('release links resolve long chains and reject cycles',()=>{const f=fixture(),base=join(f.home,'target');put(base,'x');let path=base;for(let i=0;i<70;i++){const next=join(f.home,'link'+i);symlinkSync(path,next);path=next;}expect(terminalBin(path)).toBe(base);const a=join(f.home,'cycle-a'),b=join(f.home,'cycle-b');symlinkSync(b,a);symlinkSync(a,b);expect(()=>terminalBin(a)).toThrow('Cyclic');});
+test('stage carries live aliases, excludes only dangling ones and rejects cycles or absent files',()=>{
+ const f=fixture(),base=join(f.home,'carried-binary');put(base,'retained binary',0o755);
+ const valid=join(f.home,'valid-alias');symlinkSync(base,valid);
+ expect(carriedOptionalBin(valid,'retained-local-binary')).toBe(base);
+ const missing=join(f.home,'removed-optional-binary');
+ const dangling=join(f.home,'muse-bin-1.0.1-R2006.1');symlinkSync(missing,dangling);
+ expect(carriedOptionalBin(dangling,'muse-bin-1.0.1-R2006.1')).toBeNull();
+ expect(()=>carriedOptionalBin(missing,'definitely-absent-plain-file')).toThrow();
+ const a=join(f.home,'cycle-optional-a'),b=join(f.home,'cycle-optional-b');
+ symlinkSync(b,a);symlinkSync(a,b);expect(()=>carriedOptionalBin(a,'no-fallback-for-cycle')).toThrow('Cyclic');
+});
 test('review manifest coalesces shared sources but refuses conflicting identities',()=>{
  const rows=uniqueInputs([{path:'integrations/browser/workspace-msgpack.mjs',sha256:'a'.repeat(64)},{path:'integrations/browser/workspace-msgpack.mjs',sha256:'a'.repeat(64)},{path:'scripts/program-fabric.cue',sha256:'b'.repeat(64)}]);
  expect(rows).toEqual([{path:'integrations/browser/workspace-msgpack.mjs',sha256:'a'.repeat(64)},{path:'scripts/program-fabric.cue',sha256:'b'.repeat(64)}]);
@@ -149,6 +180,8 @@ test('binds Programs explicitly while preserving canonical databases, args and u
  expect(configuration.EnvironmentVariables.BONFYRE_PROGRAM_OWNER).toBe(join(f.release,'native/scripts/program-workspace-owner.mjs'));
  expect(configuration.EnvironmentVariables.BONFYRE_PROGRAM_SOURCE_OWNER).toBe(join(f.release,'native/scripts/program-source-work.mjs'));
  expect(configuration.EnvironmentVariables.BONFYRE_PROGRAM_CMS_BINARY).toBe(join(f.release,'native/cmd/BonfyreCMS/bonfyre-cms'));
+  expect(configuration.EnvironmentVariables.BONFYRE_NATIVE_COMMAND_DISPATCH).toBeUndefined();
+  expect(configuration.EnvironmentVariables.BONFYRE_NATIVE_COMMAND_QUEUE_BIN).toBeUndefined();
  expect(configuration.EnvironmentVariables.BONFYRE_BUN_BINARY).toBe(realpathSync(process.execPath));
  const cue=join(f.release,'runtime/bin/cue');
  expect(configuration.EnvironmentVariables.PATH.split(':')[0]).toBe(dirname(cue));
@@ -158,6 +191,41 @@ test('binds Programs explicitly while preserving canonical databases, args and u
  put(join(f.bin,'cue'),'#!/bin/sh\nexit 9\n',0o755);
  expect(readFileSync(cue,'utf8')).toBe('#!/bin/sh\nexit 0\n');
  expect(readFileSync(f.before.EnvironmentVariables.BONFYRE_CMS_DB,'utf8')).toBe('existing canonical database\n');
+});
+
+
+test('native command release admission requires a published program and the exact current Auth owner',()=>{
+ const f=fixture(),cms=f.before.EnvironmentVariables.BONFYRE_CMS_DB;
+ rmSync(cms);
+ const db=new Database(cms);
+ db.exec("CREATE TABLE capability_program(status TEXT,application_kind TEXT);"+
+   "INSERT INTO capability_program VALUES('draft','native-command'),('published','connected-instruments')");
+ db.close();
+ const before=configurePrograms(f.before,f.release,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}).configuration.EnvironmentVariables;
+ expect(before.BONFYRE_NATIVE_COMMAND_DISPATCH).toBeUndefined();
+ const active=new Database(cms);
+ active.exec("UPDATE capability_program SET status='published' WHERE application_kind='native-command'");
+ active.close();
+ const missing=join(f.home,'native-command-missing-auth');mkdirSync(missing);
+ expect(()=>configurePrograms(f.before,missing,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}))
+   .toThrow('service-owned Auth database');
+ const auth=join(f.home,'canonical-auth.db');put(auth,'native auth fixture');
+ f.before.ProgramArguments[f.before.ProgramArguments.indexOf('--auth-db')+1]=auth;
+ const accepted=join(f.home,'native-command-enabled');mkdirSync(accepted);
+ const env=configurePrograms(f.before,accepted,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}).configuration.EnvironmentVariables;
+ expect(env.BONFYRE_NATIVE_COMMAND_AUTH_DB).toBe(auth);
+ expect(env.BONFYRE_COMMAND_REVIEW_HOME).toBe(join(f.home,'.bonfyre/command-review'));
+ expect(env.BONFYRE_NATIVE_COMMAND_CMS_SCHEMAS)
+   .toBe(join(accepted,'native/cmd/BonfyreCMS/content-types'));
+ expect(env.BONFYRE_NATIVE_COMMAND_DISPATCH)
+   .toBe(join(accepted,'native/cmd/BonfyreReview/command_dispatch.mjs'));
+ expect(env.BONFYRE_NATIVE_COMMAND_QUEUE_BIN)
+   .toBe(join(accepted,'native/cmd/BonfyreQueue/bonfyre-queue'));
+ const bad=structuredClone(f.before);
+ bad.ProgramArguments.push('--auth-db',auth);
+ const duplicate=join(f.home,'native-command-duplicate-auth');mkdirSync(duplicate);
+ expect(()=>configurePrograms(bad,duplicate,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}))
+   .toThrow('service-owned Auth database');
 });
 
 test('account Work is wired for signed-in reads even without a dispatcher owner',()=>{
@@ -177,6 +245,21 @@ test('account Work is wired for signed-in reads even without a dispatcher owner'
  const noIndexRelease=join(missing.home,'owner-without-index');mkdirSync(noIndexRelease);expect(()=>configurePrograms(noIndexOwner,noIndexRelease,{bun:process.execPath,cuePath:missing.bin,accountHome:missing.home})).toThrow('requires an existing');
 });
 
+test('program obligations join account Work only when the canonical CMS supports ProgramFabric',()=>{
+ const f=fixture(),cms=f.before.EnvironmentVariables.BONFYRE_CMS_DB;
+ const index=join(f.home,'.bonfyre/state/account-work.db');put(index,'existing account work index');
+ rmSync(cms);
+ const db=new Database(cms);
+ db.exec("CREATE TABLE program_instance(id INTEGER); CREATE TABLE program_requirement(id INTEGER); CREATE TABLE program_template(id INTEGER)");
+ db.close();
+ const configured=configurePrograms(f.before,f.release,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}).configuration.EnvironmentVariables;
+ expect(configured.BONFYRE_ACCOUNT_WORK_SOURCES).toBe('program='+cms);
+ const second=join(f.home,'without-program-requirements');mkdirSync(second);
+ const db2=new Database(cms);db2.exec('DROP TABLE program_requirement');db2.close();
+ const noPrograms=configurePrograms(f.before,second,{bun:process.execPath,cuePath:f.bin,accountHome:f.home}).configuration.EnvironmentVariables;
+ expect(noPrograms.BONFYRE_ACCOUNT_WORK_SOURCES).toBe('');
+});
+
 test('uses the installed CUE path and refuses missing canonical CMS or usable CUE',()=>{
  const f=fixture(),fallback=join(f.home,'fallback');mkdirSync(fallback);put(join(fallback,'cue'),'#!/bin/sh\nexit 1\n',0o755);
  f.before.EnvironmentVariables.PATH=f.bin;
@@ -191,6 +274,33 @@ test('uses the installed CUE path and refuses missing canonical CMS or usable CU
  expect(()=>configurePrograms(noFrontier,f.release,{bun:process.execPath,cuePath:fallback})).toThrow();
  const noCue=structuredClone(f.before);noCue.EnvironmentVariables.PATH=join(f.home,'empty-path');mkdirSync(noCue.EnvironmentVariables.PATH);
  expect(()=>configurePrograms(noCue,f.release,{bun:process.execPath,cuePath:noCue.EnvironmentVariables.PATH})).toThrow();
+});
+
+test('public ForeignTwin admission refuses empty and unreadable CMS without mutation',()=>{
+  const f=fixture(),file=join(f.home,'foreign-release.db');
+  const db=new Database(file);db.exec("CREATE TABLE internet_source(url TEXT,status TEXT)");
+  db.exec("INSERT INTO internet_source VALUES('https://news.example/feed','draft')");
+  db.close();
+  expect(()=>requirePublishedForeignSources(file)).toThrow('zero published source contracts');
+  const updated=new Database(file);
+  updated.exec("INSERT INTO internet_source VALUES('https://news.example/feed','published')");
+  updated.close();
+  const before=sha(readFileSync(file));
+  expect(requirePublishedForeignSources(file)).toEqual({published_source_contracts:1});
+  expect(sha(readFileSync(file))).toBe(before);
+  expect(()=>requirePublishedForeignSources(join(f.home,'no-source.db'))).toThrow('cannot read canonical');
+  const incorrect=join(f.home,'unrelated.db'),other=new Database(incorrect);
+  other.exec('CREATE TABLE unrelated_owner(id TEXT)');other.close();
+  expect(()=>requirePublishedForeignSources(incorrect)).toThrow('internet_source');
+});
+test('public source preflight opens an existing WAL database without a sidecar and leaves canonical rows unchanged',()=>{
+  const f=fixture(),file=join(f.home,'wal-cms.db');
+  const db=new Database(file);
+  db.exec("PRAGMA journal_mode=WAL; CREATE TABLE internet_source(url TEXT,status TEXT); INSERT INTO internet_source VALUES('https://news.example/one','published')");
+  db.close();
+  const before=sha(readFileSync(file));
+  expect(requirePublishedForeignSources(file)).toEqual({published_source_contracts:1});
+  expect(sha(readFileSync(file))).toBe(before);
 });
 
 test('replaces only stale Program executables and preserves source admission and canonical work owners',()=>{
@@ -271,6 +381,33 @@ test('promotion receipt proves the exact frozen route set and refuses altered ac
  expect(()=>verifyPromotionReceipt(f.release,stage,stageHash)).toThrow();
 });
 
+
+test('four-apex ForeignTwin source-release readbacks verify digest, generation and nonempty estate',async()=>{
+ const sha256='a'.repeat(64),generation='foreign-v1-1234abcd',hosts=['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'];
+ const body={schema:'bonfyre.foreign.twins.v2',state:'current',catalogue_generation:generation,
+   estate_total:2600,release_summary:{source_contracts:2600},twins:[]};
+ const reply={status:200,type:'application/json',sha256,text:JSON.stringify(body)};
+ const request=async(base,path)=>{expect(path).toBe('/foreign/twins');return reply;};
+ const rows=await Promise.all(hosts.map(async host=>({host,...await foreignCatalogueReadback('https://'+host,undefined,request)})));
+ expect(verifyForeignApexReadbacks(rows)).toEqual({generation,estate_total:2600,hosts:4});
+ expect(()=>verifyForeignApexReadbacks(rows.slice(1))).toThrow('Four');
+ expect(()=>verifyForeignApexReadbacks(rows.map((r,i)=>i===1?{...r,generation:'foreign-v1-deadbeef'}:r))).toThrow('changed');
+ expect(()=>verifyForeignApexReadbacks(rows.map((r,i)=>i===1?{...r,estate_total:0}:r))).toThrow('no admitted');
+ await expect(foreignCatalogueReadback('https://aurekai.work',undefined,async()=>({...reply,status:503}))).rejects.toThrow('unavailable');
+ await expect(foreignCatalogueReadback('https://aurekai.work',undefined,async()=>({...reply,text:JSON.stringify({...body,estate_total:0})}))).rejects.toThrow('zero or inconsistent');
+});
+
+
+test('bounded public response reads refuse oversized streamed and declared bodies',async()=>{
+ const accepted=new Response('fixture body');
+ expect((await readBoundedPublicBody(accepted,100)).toString()).toBe('fixture body');
+ const oversized=new Response('12345678901234567890',{headers:{'content-length':'10'}});
+ await expect(readBoundedPublicBody(oversized,12)).rejects.toThrow('byte bound');
+ const lied=new Response('x',{headers:{'content-length':'1000'}});
+ await expect(readBoundedPublicBody(lied,12)).rejects.toThrow('byte bound');
+ await expect(readBoundedPublicBody(new Response('ok'),0)).rejects.toThrow('Invalid');
+});
+
 test('browser readback requires every public asset, serializes the edge load and refuses semantic mismatches without retry',async()=>{
  const f=fixture();freezeBrowser(f.source,f.release);
  const calls=[];let active=0,maxActive=0;
@@ -299,6 +436,32 @@ test('public readback transport retries only thrown transport failures within it
  await expect(retryReadbackTransport(async()=>{calls++;throw Error('persistent timeout');},'https://aurekai.live','/apps/connection-studio.mjs',undefined,{attempts:3,delayMs:0})).rejects.toThrow('persistent timeout');
  expect(calls).toBe(3);
 });
+test('four cold public homes warm concurrently under one shared deadline',async()=>{
+ const hosts=['aurekai.work','aurekai.live','aurekai.life','aurekai.shop'];
+ const counts=new Map(),firstWave=[],warmed=[];
+ await warmPublicHomes('28901',{hosts,delayMs:0,sleepFn:async()=>{},
+  fetchFn:async(url,options)=>{
+   expect(url).toBe('http://127.0.0.1:28901/');
+   expect(options.signal).toBeInstanceOf(AbortSignal);
+   const host=options.headers.Host,count=(counts.get(host)||0)+1;
+   counts.set(host,count);if(count===1)firstWave.push(host);
+   return new Response(count===1?'cold':'ready',{status:count===1?503:200});
+  },onWarm:(host,status)=>warmed.push([host,status])});
+ expect(firstWave).toEqual(hosts);
+ expect(warmed.sort()).toEqual(hosts.map(host=>[host,200]).sort());
+ expect([...counts.values()]).toEqual([2,2,2,2]);
+});
+
+test('warmup rejects failed homes within the one release deadline, not eight 90-second windows',async()=>{
+ let now=0,attempts=0;
+ await expect(warmPublicHomes('28901',{hosts:['aurekai.work'],timeoutMs:1000,
+  perAttemptMs:700,delayMs:0,now:()=>now,fetchFn:async()=>{
+   attempts++;now+=600;throw Error('local server not ready');
+  }})).rejects.toThrow('Warm-up failed for aurekai.work: local server not ready');
+ expect(attempts).toBe(2);
+ await expect(warmPublicHomes('0',{hosts:['aurekai.work']})).rejects.toThrow('Invalid local WebAddress port');
+});
+
 
 test('browser verification compiles every frozen module and refuses missing imports or companion entries',async()=>{
  const f=fixture();
@@ -335,11 +498,11 @@ test('Programs readback binds exact assets, refuses anonymous API and preserves 
 
 test('real owners import the frozen compiler, source protocol, shared helpers and native readers',()=>{
  const f=fixture();
- for(const path of closure.filter(path=>!/\/bonfyre-(external-estate|cms)$/.test(path))){const target=join(f.source,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(join(projectRoot,path),target);}
+ for(const path of closure.filter(path=>!/\/bonfyre-(external-estate|cms|queue)$/.test(path))){const target=join(f.source,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(join(projectRoot,path),target);}
  freezePrograms(f.source,f.release);
  const {configuration}=configurePrograms(f.before,f.release,{bun:process.execPath,cuePath:process.env.PATH});
  const env={...configuration.EnvironmentVariables,HOME:f.home};
- const child=Bun.spawnSync([env.BONFYRE_BUN_BINARY,'--no-env-file','--no-install','--eval',"const owner=await import(process.argv[1]),sources=await import(process.argv[2]),reference=await import(process.argv[3]);if(typeof owner.operate!=='function'||typeof owner.admittedBinding!=='function'||typeof sources.operateProgramSourceWork!=='function'||typeof reference.inspectProgramWorkReference!=='function')throw Error('Missing native owner exports');console.log('frozen-owners-imported');",env.BONFYRE_PROGRAM_OWNER,env.BONFYRE_PROGRAM_SOURCE_OWNER,join(f.release,'native/scripts/program-work-reference.mjs')],{cwd:f.release,env,stdout:'pipe',stderr:'pipe',timeout:15000});
+ const child=Bun.spawnSync([env.BONFYRE_BUN_BINARY,'--no-env-file','--no-install','--eval',"const owner=await import(process.argv[1]),sources=await import(process.argv[2]),reference=await import(process.argv[3]),command=await import(process.argv[4]);if(typeof owner.operate!=='function'||typeof owner.admittedBinding!=='function'||typeof sources.operateProgramSourceWork!=='function'||typeof reference.inspectProgramWorkReference!=='function'||typeof command.registerNativeCommandWorker!=='function')throw Error('Missing native owner exports');console.log('frozen-owners-imported');",env.BONFYRE_PROGRAM_OWNER,env.BONFYRE_PROGRAM_SOURCE_OWNER,join(f.release,'native/scripts/program-work-reference.mjs'),join(f.release,'native/cmd/BonfyreReview/command_owner.mjs')],{cwd:f.release,env,stdout:'pipe',stderr:'pipe',timeout:15000});
  expect(child.stderr.toString()).toBe('');expect(child.exitCode).toBe(0);expect(child.stdout.toString().trim()).toBe('frozen-owners-imported');
  expect(readFileSync(env.BONFYRE_CMS_DB,'utf8')).toBe('existing canonical database\n');
 });
@@ -362,6 +525,10 @@ test('installed-extension acceptance prefers explicit or cached Chrome for Testi
  put(explicit,'#!/bin/sh\nexit 0\n',0o755);put(cache,'#!/bin/sh\nexit 0\n',0o755);
  expect(findExtensionChromium({BONFYRE_EXTENSION_CHROMIUM_BINARY:explicit},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(explicit));
  expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(cache));
+  const broken=join(f.home,'.cache/puppeteer/chrome/9999999/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');
+  put(broken,'truncated Mach-O\n',0o755);
+  expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBe(realpathSync(cache));
+  rmSync(broken);
  rmSync(explicit);rmSync(cache);expect(findExtensionChromium({},{homeDir:f.home,arch:'arm64'})).toBeNull();
 });
 test('acceptance identity covers imported fixtures, verifier, groups, environment and runtime bytes',async()=>{

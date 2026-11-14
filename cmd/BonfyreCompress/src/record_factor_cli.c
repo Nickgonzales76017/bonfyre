@@ -9,10 +9,11 @@ static int print_row(void *c,sqlite3_int64 seq,const char *key,const char *title
 int bf_record_factor_command(int argc,char **argv){
     if(argc<2)return -1;
     const char *op=argv[1];
-    if(strcmp(op,"factor-records")&&strcmp(op,"factor-export")&&strcmp(op,"factor-verify")&&strcmp(op,"factor-search")&&strcmp(op,"factor-read"))return -1;
+    if(strcmp(op,"factor-records")&&strcmp(op,"factor-export")&&strcmp(op,"factor-verify")&&strcmp(op,"factor-search")&&strcmp(op,"factor-read")&&strcmp(op,"factor-atoms"))return -1;
     if(!strcmp(op,"factor-records")&&argc==4)return bf_record_factor_build(argv[2],argv[3],stdout);
     if(!strcmp(op,"factor-export")&&argc==3)return bf_record_factor_export(argv[2],stdout);
     if(!strcmp(op,"factor-verify")&&argc==4)return bf_record_factor_verify(argv[2],argv[3],stdout);
+    if(!strcmp(op,"factor-atoms")&&argc==3)return bf_record_factor_atoms_export(argv[2],stdout);
     if(!strcmp(op,"factor-search")&&(argc==3||argc==4)){
         sqlite3 *db=NULL;if(bf_record_factor_open(argv[2],&db))return 1;
         puts("ordinal\tkey\ttitle\tkind");int n=bf_record_factor_visit(db,argc==4?argv[3]:"",100,0,print_row,NULL);

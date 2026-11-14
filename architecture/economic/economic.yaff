@@ -11,7 +11,10 @@ architecture money-graph
   semantic_question What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?
   purpose Causal economic relationships between actors and institutions. Distinct from the ledger, which records; this models the flow.
   maturity implemented
+  source_path engine/core/src/economic_graph.c
+  source_path engine/core/include/bf_economic_graph.h
   source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment
   witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types Party
   edge_types funds
@@ -19,7 +22,7 @@ architecture money-graph
   forbidden_inference projected value -> realized money
   source_lineage run6/run7 economic estate
   known_gap ERPNext accounting is the intended projection target
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost
 architecture commitment-graph
   canonical_name CommitmentGraph
   family economic
@@ -72,14 +75,17 @@ architecture recursive-value-graph
   semantic_question What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?
   purpose Vector-valued causal value: unlocks, prefills, increases-eligibility, strengthens-evidence, decreases-cost/time, creates capacity/distribution/relationship/learning options. No implicit conversion to money.
   maturity implemented
+  source_path engine/core/src/economic_graph.c
+  source_path engine/core/include/bf_economic_graph.h
   source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment
   witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types ValueEdge
   edge_types unlocks_value
   forbidden_inference a value edge -> a cash amount
   source_lineage run6/run7 economic estate
   known_gap UnlockGraph is the causal-reachability cousin already real
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost
 architecture institutional-cost-graph
   canonical_name InstitutionalCostGraph
   family economic
@@ -88,13 +94,16 @@ architecture institutional-cost-graph
   semantic_question What does this mission actually cost across compute, model, storage, provider, human, facility?
   purpose Recursive cost allocation of a mission across every resource it consumes, ultimately projecting legitimate costs into ERPNext.
   maturity implemented
+  source_path engine/core/src/economic_graph.c
+  source_path engine/core/include/bf_economic_graph.h
   source_path components/BonfyreControlPlane/economic_graphs.py.archive
+  witness engine/core/tests/economic_graph_test.c: undeclared money relations and cash-valued value kinds refused; an unpriced relation carries no figure rather than zero; non-cash value reachable transitively and finite under a cycle, never with an amount; mission cost sums projections and a projection is never booked (PASS 2026-11-08); commitments stay with bf_commitment
   witness components/BonfyreControlPlane/tests/test_economic_graphs.py.archive
   node_types CostEnvelope
   edge_types allocates
   forbidden_inference a projected cost -> a booked accounting entry
   source_lineage run6/run7 economic estate
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; no organ records money, value or mission costs through it yet, and nothing here books a cost
 architecture resource-metabolism
   canonical_name ResourceMetabolism
   family economic

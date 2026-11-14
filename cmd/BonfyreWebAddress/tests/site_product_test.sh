@@ -9,13 +9,17 @@ set -eu
 web=${1:?web-address binary required}
 case "$web" in /*) ;; *) web="$(pwd)/$web" ;; esac
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
-for organ in BonfyreCMS/bonfyre-cms BonfyreIngest/bonfyre-ingest BonfyreParagraph/bonfyre-paragraph BonfyreRecall/bonfyre-recall; do
+for organ in BonfyreCMS/bonfyre-cms BonfyreIngest/bonfyre-ingest BonfyreParagraph/bonfyre-paragraph BonfyreRecall/bonfyre-recall BonfyreMeter/bonfyre-meter; do
   [ -x "$root/cmd/$organ" ] || { echo "site product: SKIP ($organ not built)"; exit 0; }
 done
 export BONFYRE_CMS_BINARY="$root/cmd/BonfyreCMS/bonfyre-cms" BONFYRE_INGEST_BINARY="$root/cmd/BonfyreIngest/bonfyre-ingest"
 export BONFYRE_PARAGRAPH_BINARY="$root/cmd/BonfyreParagraph/bonfyre-paragraph" BONFYRE_RECALL_BINARY="$root/cmd/BonfyreRecall/bonfyre-recall"
 export BONFYRE_CMS_SCHEMAS="$root/cmd/BonfyreCMS/content-types" BONFYRE_SITE_ROOT="$root/site/matrix"
+# This isolated product witness must use the source-owned meter, not a stale managed multi-call installation.
+export BONFYRE_METER_BINARY="$root/cmd/BonfyreMeter/bonfyre-meter"
 home=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-site.XXXXXX")
+mkdir -p "$home/recorded-media"
+export BONFYRE_MEDIA_ASSET_ROOT="$home/recorded-media"
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 cleanup() { "$web" site stop --home "$home" >/dev/null 2>&1 || true; rm -rf "$home"; }
 trap cleanup EXIT INT TERM
@@ -47,12 +51,141 @@ BONFYRE_SITE_ROOT="$thin" "$web" site new thin --no-open --home "$home/thin-home
 out=$(BONFYRE_SITE_ROOT="$thin" "$web" site check thin --json --home "$home/thin-home" --port "$thinport" || true)
 "$web" site stop --home "$home/thin-home" >/dev/null 2>&1 || true
 printf '%s' "$out" | grep -q '"check":"styles-load","ok":false' || fail "a page whose stylesheet is missing passed: $out"
+# A published article subject selects only its own published audio edition.
+# This tests an HTML binding, not audio decoding or human narration review.
+"$BONFYRE_CMS_BINARY" entry create site_presentation '{"site_id":"author-editor-work","host":"editor.aurekai.work","subject_address":"person:editor","profile":"member-profile-v1","territory":"work","navigation":[],"status":"published"}' --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "author profile not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/essay","title":"A long-form report","heading":"A long-form report","lede":"Source-backed reporting","aperture_subject":"article:unrelated","media_subject_ref":"article:acme-report","editorial_kind":"article","author_credit":"Morgan Vale","author_subject_ref":"person:editor","editorial_published_on":"2026-11-07","editorial_updated_on":"2026-11-08","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "article page not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-report-text","page":"/essay","slot":"body","audience":"public","kind":"prose","position":0,"heading":"The report","body":"This article follows the source material through each editorial review stage and preserves the identity of the work being discussed. [1](#source-1)","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "article content not admitted"
+"$BONFYRE_CMS_BINARY" entry create media_program '{"program_id":"acme-report-audio","subject_ref":"article:acme-report","media_kind":"audio","asset_ref":"/assets/acme-report.wav","transcript_ref":"/assets/acme-report.vtt","publication_state":"published","cannot_infer":"A program does not prove playback, ownership of external material or cue review","status":"published"}' --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "recorded article program not admitted"
+"$BONFYRE_CMS_BINARY" entry create media_program '{"program_id":"acme-report-draft","subject_ref":"article:acme-report","media_kind":"audio","asset_ref":"/assets/draft.wav","publication_state":"draft","cannot_infer":"draft is not public","status":"published"}' --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "draft fixture not admitted"
+"$BONFYRE_CMS_BINARY" entry create media_program '{"program_id":"acme-other-audio","subject_ref":"article:unrelated","media_kind":"audio","asset_ref":"/assets/unrelated.wav","publication_state":"published","cannot_infer":"unrelated identity cannot supply this article","status":"published"}' --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "other subject fixture not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-source-public","page":"/essay","slot":"references","audience":"public","kind":"citation","position":90,"heading":"Published source","body":"The published source backing this example.","href":"https://example.test/observed-record","source_ref":"source:fixture-001","source_digest":"sha256:fixture","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "article citation not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-source-draft","page":"/essay","slot":"references","audience":"public","kind":"citation","position":91,"heading":"Unpublished source","body":"Never public","href":"https://example.test/draft","status":"draft"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "draft citation fixture not admitted"
+essay=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/essay") || fail "article page did not respond"
+printf '%s' "$essay" | grep -q 'data-article-recording' || fail "published audio was not linked to article"
+printf '%s' "$essay" | grep -q 'data-play="/assets/acme-report.wav"' || fail "the exact published media address was not rendered"
+printf '%s' "$essay" | grep -q 'href="/assets/acme-report.vtt"' || fail "published transcript link is absent"
+printf '%s' "$essay" | grep -q 'data-deck' || fail "published edition did not use native audio controls"
+printf '%s' "$essay" | grep -q 'data-article-voice-choice' || fail "recorded article has no optional device-voice alternative"
+printf '%s' "$essay" | grep -q 'rel="author" href="https://editor.aurekai.work/"' || fail "verified author profile was not linked"
+printf '%s' "$essay" | grep -q '<time datetime="2026-11-07">2026-11-07</time>' || fail "published article date missing"
+printf '%s' "$essay" | grep -q 'Updated <time datetime="2026-11-08">' || fail "article correction date missing"
+printf '%s' "$essay" | grep -q 'property="og:type" content="article"' || fail "editorial page not identified as an article"
+printf '%s' "$essay" | grep -q '"@type":"Article"' || fail "structured editorial metadata missing"
+printf '%s' "$essay" | grep -q '"datePublished":"2026-11-07"' || fail "structured published date missing"
+printf '%s' "$essay" | grep -q 'href="#source-1"' || fail "author citation marker is not linked to its endnote"
+printf '%s' "$essay" | grep -q 'id="source-1"' || fail "published source is not addressable"
+printf '%s' "$essay" | grep -q 'href="https://example.test/observed-record"' || fail "source citation has no original address"
+printf '%s' "$essay" | grep -q 'Identifier: <code>source:fixture-001</code>' || fail "retained citation identity is not exposed"
+if printf '%s' "$essay" | grep -q 'Unpublished source'; then fail "draft citation escaped to the public article"; fi
+printf 'article recorded edition, byline, and dated metadata: PASS\n'
+if printf '%s' "$essay" | grep -q 'data-play="/assets/draft.wav"\|data-play="/assets/unrelated.wav"'; then fail "unrelated or draft audio was selected"; fi
+printf 'article recording association: PASS (published same-subject only; HTML, not audio decoding)\n'
+# A v2-bound edition is served only while all public structured editor data matches.
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/v2-essay","title":"Revision witness","heading":"Revision witness","media_subject_ref":"article:v2-witness","editorial_kind":"article","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "v2 article not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"v2-story","page":"/v2-essay","slot":"showcase","audience":"public","kind":"profile-story","position":0,"heading":"Passage","body":"A complete published passage about this source-bound recording.","semantic_tags":{},"status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "v2 story not admitted"
+cc -O2 -std=c11 -I"$root/lib/libbonfyre/include" -o "$home/article-revision" "$root/cmd/BonfyreBroadcast/tests/article_revision_test.c" -L"$root/lib/libbonfyre" -lbonfyre -lsqlite3
+v2rev=$("$home/article-revision" "$home/cms.db" acme article:v2-witness)
+"$BONFYRE_CMS_BINARY" entry create media_program "$(printf '{"program_id":"v2-audio","subject_ref":"article:v2-witness","media_kind":"audio","asset_ref":"/assets/v2-audio.m4a","narration_article_revision_sha256":"%s","publication_state":"published","cannot_infer":"fixture","status":"published"}' "$v2rev")" --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "v2 media not admitted"
+v2page=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/v2-essay") || fail "v2 article failed"
+printf '%s' "$v2page" | grep -q '/assets/v2-audio.m4a' || fail "current v2 audio absent"
+sqlite3 "$home/cms.db" "UPDATE site_fragment SET semantic_tags=json_set('{}','$.authoring_v1.editorial',json('[]')) WHERE namespace='acme' AND coordinate='v2-story'"
+v2page=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/v2-essay") || fail "updated v2 article failed"
+if printf '%s' "$v2page" | grep -q '/assets/v2-audio.m4a'; then fail "stale v2 audio remained public"; fi
+printf 'article structured revision invalidation: PASS\n'
+# The action-aperture subject must never select audio, even when it matches a
+# published recording: a different explicit media subject has no recording.
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/plain-essay","title":"Text-only essay","heading":"Text-only essay","lede":"This page contains only reviewed text.","aperture_subject":"article:acme-report","media_subject_ref":"article:unrecorded","editorial_kind":"essay","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "text-only article not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-text-only","page":"/plain-essay","slot":"body","audience":"public","kind":"prose","position":0,"heading":"Text alone","body":"A reviewed page should still be readable aloud when no publisher audio edition is available.","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "text-only fragment not admitted"
+plain=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/plain-essay") || fail "text-only article did not respond"
+printf '%s' "$plain" | grep -q 'data-article-listen' || fail "text-only article lost its browser-voice option"
+if printf '%s' "$plain" | grep -q 'data-article-recording\|acme-report.wav'; then fail "aperture subject was misread as audio identity"; fi
+printf '%s' "$plain" | grep -q 'rel="canonical" href="http://acme.localhost/plain-essay"' || fail "canonical URL missing from the published article"
+if printf '%s' "$plain" | grep -q 'rel="author"'; then fail "text-only article invented an author"; fi
+printf '%s' "$plain" | grep -q 'property="og:type" content="article"' || fail "declared text-only essay was not treated as editorial"
+printf '%s' "$plain" | grep -q 'application/ld+json' || fail "structured page metadata missing"
+printf '%s' "$essay" | grep -q 'rel="canonical" href="http://acme.localhost/essay"' || fail "recorded article canonical URL missing"
+printf 'article text-only fallback and metadata: PASS\n'
+# This fixture tests metadata-to-player wiring only. Audio decoding and SHA
+# Real local M4A and WebVTT bytes remain undisclosed until the publication
+# owner marks the exact media_program published. A guessed digest is not a grant.
+ffmpeg -nostdin -v error -f lavfi -i "sine=frequency=440:duration=2" -c:a aac -b:a 96k -y "$home/produced.m4a" || fail "local AAC test carrier could not render"
+mediahash=$(shasum -a 256 "$home/produced.m4a" | awk '{print $1}')
+cp "$home/produced.m4a" "$home/recorded-media/$mediahash.m4a"
+printf 'WEBVTT\n\n00:00:00.000 --> 00:00:02.000\nSpoken audio fixture.\n' > "$home/produced.vtt"
+vtthash=$(shasum -a 256 "$home/produced.vtt" | awk '{print $1}')
+cp "$home/produced.vtt" "$home/recorded-media/$vtthash.vtt"
+"$BONFYRE_CMS_BINARY" entry create media_program "$(printf '{"program_id":"local-unpublished-fixture","subject_ref":"article:local-staged","media_kind":"audio","asset_ref":"/assets/twin/%s.m4a","transcript_ref":"/assets/twin/%s.vtt","publication_state":"draft","cannot_infer":"staging is not publication","status":"draft"}' "$mediahash" "$vtthash")" --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "local draft fixture was not admitted"
+status=$(curl -sS -m 15 -o /dev/null -w '%{http_code}' -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 404 ] || fail "unpublished local asset was exposed ($status)"
+"$BONFYRE_CMS_BINARY" entry create media_program "$(printf '{"program_id":"local-reviewed-fixture","subject_ref":"article:local-reviewed","media_kind":"audio","asset_ref":"/assets/twin/%s.m4a","transcript_ref":"/assets/twin/%s.vtt","publication_state":"published","cannot_infer":"reviewed fixture does not prove external rights","status":"published"}' "$mediahash" "$vtthash")" --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "local public fixture was not admitted"
+code=$(curl -sS -m 15 -D "$home/audio-headers" -o "$home/audio-served.m4a" -w '%{http_code}' -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$code" = 200 ] || fail "published generated recording did not answer ($code)"
+grep -qi '^Content-Type: audio/mp4' "$home/audio-headers" || fail "recording was not served as audio/mp4"
+cmp "$home/produced.m4a" "$home/audio-served.m4a" >/dev/null || fail "HTTP recording bytes differ from staged audio"
+code=$(curl -sS -m 15 -D "$home/vtt-headers" -o "$home/vtt-served" -w '%{http_code}' -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/twin/$vtthash.vtt")
+[ "$code" = 200 ] || fail "published transcript did not answer ($code)"
+grep -qi '^Content-Type: text/vtt' "$home/vtt-headers" || fail "transcript was not served as text/vtt"
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/recorded-article","title":"A narrated article","heading":"A narrated article","media_subject_ref":"article:local-reviewed","editorial_kind":"article","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "recorded article reader fixture not admitted"
+recorded=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/recorded-article") || fail "recorded article reader did not respond"
+printf '%s' "$recorded" | grep -q "data-transcript=\"/assets/twin/$vtthash.vtt\"" || fail "recorded transcript not bound to article audio queue"
+printf '%s' "$recorded" | grep -q 'data-deck-transcript hidden' || fail "recorded article omitted the integrated read-along transcript"
+printf '%s' "$recorded" | grep -q 'data-deck-transcript-cues' || fail "recorded article omitted cue seeking"
+printf 'article timed transcript association and accessible read-along: PASS\n'
+cmp "$home/produced.vtt" "$home/vtt-served" >/dev/null || fail "HTTP transcript bytes differ from staged transcript"
+audiosize=$(wc -c < "$home/produced.m4a" | tr -d ' ')
+status=$(curl -sS -m 15 -D "$home/range-headers" -o "$home/range-body" -w '%{http_code}' -H 'Host: acme.localhost' -H 'Range: bytes=0-31' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 206 ] || fail "M4A first-byte seek did not return HTTP 206 ($status)"
+grep -qi "^Content-Range: bytes 0-31/$audiosize" "$home/range-headers" || fail "audio byte-range bounds incorrect"
+dd if="$home/produced.m4a" of="$home/expected32" bs=32 count=1 2>/dev/null
+cmp "$home/expected32" "$home/range-body" >/dev/null || fail "HTTP audio range does not match recording"
+status=$(curl -sS -m 15 -D "$home/suffix-headers" -o "$home/suffix-body" -w '%{http_code}' -H 'Host: acme.localhost' -H 'Range: bytes=-16' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 206 ] || fail "M4A suffix seeking unavailable ($status)"
+tail -c 16 "$home/produced.m4a" > "$home/expected-suffix"
+cmp "$home/expected-suffix" "$home/suffix-body" >/dev/null || fail "audio suffix range bytes changed"
+status=$(curl -sS -m 15 -D "$home/head-headers" -o /dev/null -I -w '%{http_code}' -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 200 ] || fail "audio HEAD metadata unavailable ($status)"
+grep -qi "^Content-Length: $audiosize" "$home/head-headers" || fail "audio HEAD length disagrees with produced recording"
+grep -qi '^Accept-Ranges: bytes' "$home/head-headers" || fail "audio HTTP seek capability not advertised"
+status=$(curl -sS -m 15 -o /dev/null -w '%{http_code}' -H 'Host: acme.localhost' -H 'Range: bytes=999999999-' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 416 ] || fail "out-of-bounds audio range was not refused ($status)"
+status=$(curl -sS -m 15 -o /dev/null -w '%{http_code}' -H 'Host: acme.localhost' -H 'Range: bytes=0-2,4-6' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 416 ] || fail "unsupported multi-range audio request was not refused ($status)"
+printf 'audio native seeking, suffix ranges, HEAD and bounds: PASS\n'
+printf 'altered' >> "$home/recorded-media/$mediahash.m4a"
+status=$(curl -sS -m 15 -o /dev/null -w '%{http_code}' -H 'Host: acme.localhost' "http://127.0.0.1:$port/assets/twin/$mediahash.m4a")
+[ "$status" = 409 ] || fail "tampered published audio did not fail closed ($status)"
+cp "$home/produced.m4a" "$home/recorded-media/$mediahash.m4a"
+printf 'locally generated audio publication, bytes, MIME and tampering: PASS\n'
+# association are independently exercised in BonfyreBroadcast's test.
+wavehash=$(python3 -c "print('a'*64)")
+wavebins=$(python3 -c "print(','.join(str(10+(i%64)) for i in range(64)))")
+wronghash=$(python3 -c "print('b'*64)")
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/wave-essay","title":"Measured audio article","heading":"Measured audio article","media_subject_ref":"article:measured-audio-fixture","editorial_kind":"article","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "waveform article was not admitted"
+"$BONFYRE_CMS_BINARY" entry create media_program "$(printf '{"program_id":"wave-positive","subject_ref":"article:measured-audio-fixture","media_kind":"audio","asset_ref":"/assets/twin/%s.m4a","waveform_peaks":"%s","waveform_audio_sha256":"%s","publication_state":"published","cannot_infer":"fixture is not delivered audio","status":"published"}' "$wavehash" "$wavebins" "$wavehash")" --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "waveform fixture not admitted"
+wavepage=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/wave-essay") || fail "waveform page did not respond"
+printf '%s' "$wavepage" | grep -q 'data-deck-waveform' || fail "shared audio player has no waveform surface"
+printf '%s' "$wavepage" | grep -q "data-peaks=\"$wavebins\"" || fail "digest-bound waveform was not carried into the audio deck"
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/wave-bad","title":"Rejected mismatched waveform","heading":"Rejected mismatched waveform","media_subject_ref":"article:wrong-wave-fixture","editorial_kind":"article","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "invalid-wave page not admitted"
+"$BONFYRE_CMS_BINARY" entry create media_program "$(printf '{"program_id":"wave-mismatch","subject_ref":"article:wrong-wave-fixture","media_kind":"audio","asset_ref":"/assets/twin/%s.m4a","waveform_peaks":"%s","waveform_audio_sha256":"%s","publication_state":"published","cannot_infer":"fixture must refuse mismatched peaks","status":"published"}' "$wavehash" "$wavebins" "$wronghash")" --ns root --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "mismatched-wave fixture not admitted"
+badwave=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/wave-bad") || fail "mismatched waveform page did not respond"
+printf '%s' "$badwave" | grep -q 'data-article-recording' || fail "invalid waveform removed the otherwise available recording"
+if printf '%s' "$badwave" | grep -q 'data-peaks='; then fail "digest-mismatched waveform was sent to the reader"; fi
+printf 'article waveform binding: PASS (matching asset digest required; no asset delivery claimed)\n'
+
+"$BONFYRE_CMS_BINARY" entry create site_page '{"route":"/services","title":"Services","heading":"Services","lede":"Ordinary site information.","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "generic page not admitted"
+"$BONFYRE_CMS_BINARY" entry create site_fragment '{"coordinate":"acme-service-citation","page":"/services","slot":"body","audience":"public","kind":"citation","position":0,"heading":"Service reference","body":"A generic page citation is ordinary content.","status":"published"}' --ns acme --db "$home/cms.db" --schemas "$BONFYRE_CMS_SCHEMAS" >/dev/null 2>&1 || fail "generic citation not admitted"
+services=$(curl -fsS -m 15 -H 'Host: acme.localhost' "http://127.0.0.1:$port/services") || fail "generic page did not respond"
+printf '%s' "$services" | grep -q 'Service reference' || fail "generic citation was wrongly hidden"
+if printf '%s' "$services" | grep -q 'data-article-listen\|site-article-sources\|property="og:type" content="article"'; then fail "ordinary page inherited editorial UI"; fi
+printf 'generic page isolation: PASS\n'
+if [ "${BONFYRE_SITE_AUDIO_ONLY:-0}" = 1 ]; then exit 0; fi
 
 if site new acme --no-open >/dev/null 2>&1; then fail "a second site took the same name"; fi
 if site new 'Bad Name' --no-open >/dev/null 2>&1; then fail "a name that is not a slug was accepted"; fi
 
 site list | grep -q '^acme  *acme.localhost  *ghost:acme  *independent  *composed' || fail "list does not show the site"
-site list --json | grep -q '"count":2' || fail "list --json count"
+site list --json | grep -q '"count":3' || fail "list --json count (including the explicit author profile)"
 site show acme.localhost --json | grep -q '"programs":1,"slots":1,"bindings":1,"posts":1,"resolved":true' || fail "show does not read the site back"
 if site show nobody >/dev/null 2>&1; then fail "show answered for a site that does not exist"; fi
 

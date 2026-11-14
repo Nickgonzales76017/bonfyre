@@ -5,15 +5,21 @@ LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lm
 TARGET = bonfyre-fpqx
 SRC = src/main.c
 
-all: $(TARGET) test
+all: $(TARGET) offline-test
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
-test: $(TARGET)
+offline-test: $(TARGET)
+	sh ../BonfyreQuant/tests/bqfp_offline_test.sh fpqx ./$(TARGET)
+
+# Requires BONFYRE_TEST_MODEL with a real .safetensors model.
+model-contract-test: $(TARGET)
 	sh tests/bqfp_contract_test.sh ./$(TARGET)
+
+test: offline-test model-contract-test
 
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean test
+.PHONY: all clean test offline-test model-contract-test

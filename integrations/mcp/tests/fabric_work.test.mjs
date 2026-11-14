@@ -119,6 +119,39 @@ test('relay captures new files in patch and applies only after tests plus two ty
   } finally { f.cleanup(); }
 });
 
+test('Claude weekly exhaustion retries read-only stages via Codex but never approves a single-provider release',async()=>{
+ const calls=[];
+ const f=await fixture({withGit:true,agentRunner:async({argv,cwd,stdoutPath,finalPath})=>{
+   const prompt=promptOf(argv);
+   if(argv[0]==='claude'){
+     writeFileSync(stdoutPath,'');
+     writeFileSync(finalPath,"You've hit your weekly limit · resets Nov 12 at 2pm (America/Chicago)");
+     return {exit_code:1,duration_ms:1};
+   }
+   if(prompt.includes('Implement the mission'))writeFileSync(join(cwd,'candidate.txt'),'candidate from available agent\n');
+   const final=prompt.includes('Return ONLY JSON')?verdict:'read-only architecture and source evidence';
+   writeFileSync(stdoutPath,'');
+   writeFileSync(finalPath,final);
+   return {exit_code:0,duration_ms:1};
+ },projectTool:async(name)=>{
+   calls.push(name);
+   return name==='project_patch_preview'?{low_risk_eligible:true}:{applied:true,receipt:{receipt_id:'must-not-apply'}};
+ }});
+ try{
+   const id=f.store.createTask({kind:'relay',title:'quota outage',prompt:'Build read-only candidate',apply_to_project:true});
+   const result=await f.owner.execute(id);
+   expect(result.plan.agent).toBe('codex');
+   expect(result.review.agent).toBe('codex');
+   expect(result.claude_verify.state).toBe('failed');
+   expect(result.apply_result).toEqual({applied:false,reason:'tests_or_independent_evidence_not_resolved'});
+   expect(f.store.task(id).state).toBe('review_required');
+   expect(calls).toEqual(['project_patch_preview']);
+   const runs=f.store.taskStatus(id).runs;
+   expect(runs.some(x=>x.role==='architect-plan-quota-fallback'&&x.agent==='codex')).toBe(true);
+   expect(runs.some(x=>x.role==='adversarial-review-quota-fallback'&&x.agent==='codex')).toBe(true);
+   expect(runs.some(x=>x.role==='final-verifier'&&x.agent==='claude'&&x.state==='failed')).toBe(true);
+ }finally{f.cleanup();}
+});
 test('unstructured reviewer text never authorizes Project MCP apply', async () => {
   const calls = [];
   const f = await fixture({ withGit: true,

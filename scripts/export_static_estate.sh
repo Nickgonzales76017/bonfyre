@@ -41,6 +41,7 @@ INSTITUTION_LIMIT="${INSTITUTION_LIMIT:-600}"
 # next length: that silently strands admitted sources from public circulation.
 MAX_DEPTH="${MAX_DEPTH:-400}"
 SOURCE_LEDGER_ONLY=0
+MEDIA_ONLY=0
 PEOPLE_LEDGER_ONLY=0
 
 while [ $# -gt 0 ]; do
@@ -57,6 +58,7 @@ while [ $# -gt 0 ]; do
         --max-depth) MAX_DEPTH=$2; shift 2 ;;
         --source-ledger-only) SOURCE_LEDGER_ONLY=1; shift ;;
         --people-ledger-only) PEOPLE_LEDGER_ONLY=1; shift ;;
+        --media-only) MEDIA_ONLY=1; shift ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -221,6 +223,9 @@ if [ "$PEOPLE_LEDGER_ONLY" = 1 ]; then
     exit 0
 fi
 
+if [ "$MEDIA_ONLY" = 1 ] && { [ -z "$CMS" ] || [ ! -f "$CMS" ]; }; then
+    echo "--media-only requires an existing --cms database" >&2; exit 2
+fi
 # A page is written as <path>.html, which a static host serves at the address
 # people were actually given.  Writing <path>/index.html instead costs every
 # visitor a redirect to a trailing slash they never typed.
@@ -270,25 +275,53 @@ done
 if [ -n "$CMS" ] && [ -f "$CMS" ]; then
     echo "published media twins"
     manifest="$OUT/.media-twins.list"
-    sqlite3 "$CMS" "SELECT DISTINCT asset_ref FROM media_program WHERE media_kind='audio' AND publication_state='published' AND status='published' AND asset_ref LIKE '/assets/twin/%' ORDER BY asset_ref;" > "$manifest" 2>/dev/null || true
+    # Audio and its timed transcript are one published media presentation.
+    # Read only published native CMS rows, never asset URLs from page markup.
+    if ! sqlite3 "$CMS" "SELECT DISTINCT ref FROM (
+      SELECT asset_ref AS ref FROM media_program WHERE media_kind='audio' AND publication_state='published' AND status='published'
+      UNION SELECT transcript_ref AS ref FROM media_program WHERE media_kind='audio' AND publication_state='published' AND status='published'
+      ) WHERE ref LIKE '/assets/twin/%' ORDER BY ref;" > "$manifest"; then
+        echo "  cannot read published media manifest; refusing static release" >&2
+        rm -f "$manifest"; exit 1
+    fi
+    media_failed=0
     while IFS= read -r path; do
-        case "$path" in
-            /assets/twin/[0123456789abcdef][0123456789abcdef][0123456789abcdef][0123456789abcdef]*.*) ;;
-            *) echo "  refused non-static-twin asset: $path" >&2; failed=$((failed + 1)); continue ;;
-        esac
+        # The complete 64-hex filename identifies the bytes. A suffix is
+        # a MIME hint, never another source of identity or a path traversal.
+        if ! printf '%s\n' "$path" | grep -Eq '^/assets/twin/[0-9a-f]{64}\.(m4a|mp3|ogg|oga|flac|wav|vtt)$'; then
+            echo "  refused malformed media twin: $path" >&2
+            media_failed=$((media_failed + 1)); continue
+        fi
         file="$OUT$path"
         mkdir -p "$(dirname "$file")"
         code=$(curl -s -m 180 -o "$file.part" -w '%{http_code}' -H "Host: $HOST" "$FROM$path" 2>/dev/null || echo 000)
+        actual=""
         if [ "$code" = 200 ] && [ -s "$file.part" ]; then
+            if command -v shasum >/dev/null 2>&1; then
+                actual=$(shasum -a 256 "$file.part" | awk '{print $1}')
+            elif command -v sha256sum >/dev/null 2>&1; then
+                actual=$(sha256sum "$file.part" | awk '{print $1}')
+            fi
+        fi
+        name=${path##*/}; expected=${name%%.*}
+        if [ "$code" = 200 ] && [ -s "$file.part" ] && [ "$actual" = "$expected" ]; then
             mv "$file.part" "$file"
             written=$((written + 1))
         else
             rm -f "$file.part"
-            echo "  $path did not answer ($code)" >&2
-            failed=$((failed + 1))
+            echo "  $path failed public byte/digest verification (HTTP $code)" >&2
+            media_failed=$((media_failed + 1))
         fi
     done < "$manifest"
     rm -f "$manifest"
+    if [ "$media_failed" -gt 0 ]; then
+        echo "  $media_failed published media assets missing or changed; refusing static release" >&2
+        exit 1
+    fi
+if [ "$MEDIA_ONLY" = 1 ]; then
+    echo "verified $written static assets from published media programs"
+    exit 0
+fi
 fi
 
 echo "routes"

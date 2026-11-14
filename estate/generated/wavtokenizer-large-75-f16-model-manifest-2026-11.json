@@ -1,0 +1,11 @@
+{
+  "id": "wavtokenizer-large-75-f16",
+  "name": "WavTokenizer Large 75 (GGUF F16)",
+  "description": "Audio codec decoder that turns OuteTTS audio tokens into 24 kHz waveform under llama-tts. Upstream novateur/WavTokenizer-large-speech-75token, MIT; GGUF conversion by ggml-org. A vocoder alone speaks nothing.",
+  "format": "gguf",
+  "sha256": "2356baa8631cc2995ea3465196a017a2733600d849a91180c0f97fa7fb375bbe",
+  "size_mb": 124.16,
+  "geometry": "audio codec decoder, 75 tokens per second, 24 kHz mono",
+  "geometry_condition": "decodes OuteTTS 0.2/0.3 audio tokens only",
+  "sources": ["hf://ggml-org/WavTokenizer/WavTokenizer-Large-75-F16.gguf"]
+}

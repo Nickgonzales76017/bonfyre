@@ -1,0 +1,7 @@
+role	upstream	revision	license	adoption
+visual-layout	https://github.com/GrapesJS/grapesjs	e023d69b9fa97fbbc693052c9818f0c477b105a5	BSD-3-Clause	core-candidate;not-commercial-Studio-SDK
+typed-components	https://github.com/puckeditor/puck	d05542f4ddc3ade0275860cb91756dadd7ea791a	MIT	optional-react-authoring-adapter
+editorial-blocks	https://github.com/codex-team/editor.js	cfbf1daae2d722b1390c2f9a200868dd2ce8c46f	Apache-2.0	optional-article-editor
+c-templates	https://gitlab.com/jobol/mustach	c7062b880bd9cf066858a74e72abf469cebf2683-RekGRpth-mirror	0BSD-vendored-LICENSE.txt	installed-vendored-mini-blob-pinned
+c-markdown-compact	https://github.com/mity/md4c	f9e5eb232b95b737373ae706648cb75bd259ed1a	MIT	preferred-plain-source-markdown-candidate
+c-markdown-gfm	https://github.com/github/cmark-gfm	27d942c8b0a62d192f616e5bf3578f4b6a89e180	BSD-2-Clause	alternative-only-for-gfm-parity

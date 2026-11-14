@@ -1,0 +1,31 @@
+schema PeerContextMessage
+owner cmd/BonfyreParticipation/src/peer_facets.c
+generation peer-message-1
+
+field facet
+  type context-identity
+  required true
+
+field sender
+  type person-subject
+  required true
+
+field recipient
+  type person-subject
+  required true
+
+field nonce
+  type digest-fragment
+  required true
+
+field body
+  type bounded-text
+  required true
+
+invariant current-mutual-permission
+  statement a message may be sent and read only for the current mutual choice and participation revisions in its context
+
+invariant exact-retry
+  statement a sender nonce can acknowledge only an identical message to the same recipient, context and consent revisions
+
+forbidden_inference a private message -> a public post, dating enrollment or permission in a different context

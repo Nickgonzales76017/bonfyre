@@ -6,6 +6,24 @@
   "cohort_heads": {
     "cross_world_service": [
       {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
         "id": "external:ext-02715",
         "name": "Deepnets",
         "next_owner": "ForeignTwin",
@@ -16,24 +34,6 @@
         "name": "PulseNetwork",
         "next_owner": "ForeignTwin",
         "score": 169
-      },
-      {
-        "id": "external:ext-02683",
-        "name": "AgentBodega",
-        "next_owner": "DomainProfile",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02694",
-        "name": "AIServices",
-        "next_owner": "ForeignTwin",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02718",
-        "name": "DataFood (TOUGH LOVE SECURITY)",
-        "next_owner": "DomainProfile",
-        "score": 163
       },
       {
         "id": "external:ext-02636",
@@ -68,6 +68,24 @@
     ],
     "effect_adapter": [
       {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
         "id": "external:ext-02823",
         "name": "8randonpickart5/alderpost-mcp",
         "next_owner": "ForeignTwin",
@@ -78,24 +96,6 @@
         "name": "thebrierfox/the-stall",
         "next_owner": "ForeignTwin",
         "score": 165
-      },
-      {
-        "id": "external:ext-02683",
-        "name": "AgentBodega",
-        "next_owner": "DomainProfile",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02694",
-        "name": "AIServices",
-        "next_owner": "ForeignTwin",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02718",
-        "name": "DataFood (TOUGH LOVE SECURITY)",
-        "next_owner": "DomainProfile",
-        "score": 163
       },
       {
         "id": "external:ext-02636",
@@ -192,6 +192,24 @@
     ],
     "paid_machine_market": [
       {
+        "id": "external:ext-02683",
+        "name": "AgentBodega",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02694",
+        "name": "AIServices",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
         "id": "external:ext-02715",
         "name": "Deepnets",
         "next_owner": "ForeignTwin",
@@ -216,24 +234,6 @@
         "score": 165
       },
       {
-        "id": "external:ext-02683",
-        "name": "AgentBodega",
-        "next_owner": "DomainProfile",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02694",
-        "name": "AIServices",
-        "next_owner": "ForeignTwin",
-        "score": 163
-      },
-      {
-        "id": "external:ext-02718",
-        "name": "DataFood (TOUGH LOVE SECURITY)",
-        "next_owner": "DomainProfile",
-        "score": 163
-      },
-      {
         "id": "external:ext-02636",
         "name": "ToolSnap MCP",
         "next_owner": "ForeignTwin",
@@ -254,22 +254,34 @@
     ],
     "publication_roundtrip": [
       {
+        "id": "external:ext-02718",
+        "name": "DataFood (TOUGH LOVE SECURITY)",
+        "next_owner": "ForeignTwin",
+        "score": 177
+      },
+      {
         "id": "external:ext-02715",
         "name": "Deepnets",
         "next_owner": "ForeignTwin",
         "score": 171
       },
       {
-        "id": "external:ext-02718",
-        "name": "DataFood (TOUGH LOVE SECURITY)",
-        "next_owner": "DomainProfile",
-        "score": 163
-      },
-      {
         "id": "external:ext-02801",
         "name": "Hermes Plant",
         "next_owner": "ForeignTwin",
         "score": 161
+      },
+      {
+        "id": "external:protocol-0473",
+        "name": "Inline XBRL",
+        "next_owner": "ForeignTwin",
+        "score": 160
+      },
+      {
+        "id": "external:protocol-0478",
+        "name": "OECD SAF-T",
+        "next_owner": "ForeignTwin",
+        "score": 158
       },
       {
         "id": "external:ext-02628",
@@ -300,21 +312,27 @@
         "name": "Dusheh/myclaw-toolkit",
         "next_owner": "ForeignTwin",
         "score": 149
-      },
-      {
-        "id": "external:protocol-0154",
-        "name": "Nostr NIP-19 bech32 Encoded Entities",
-        "next_owner": "ForeignTwin",
-        "score": 148
-      },
-      {
-        "id": "external:protocol-0468",
-        "name": "UN/CEFACT Cross Industry Quotation",
-        "next_owner": "ForeignTwin",
-        "score": 148
       }
     ],
     "semantic_interchange": [
+      {
+        "id": "external:protocol-0473",
+        "name": "Inline XBRL",
+        "next_owner": "ForeignTwin",
+        "score": 160
+      },
+      {
+        "id": "external:protocol-0276",
+        "name": "SIRI",
+        "next_owner": "ForeignTwin",
+        "score": 158
+      },
+      {
+        "id": "external:protocol-0478",
+        "name": "OECD SAF-T",
+        "next_owner": "ForeignTwin",
+        "score": 158
+      },
       {
         "id": "external:protocol-0471",
         "name": "UN/CEFACT Cross Industry Despatch Advice",
@@ -340,38 +358,20 @@
         "score": 146
       },
       {
-        "id": "external:protocol-0473",
-        "name": "Inline XBRL",
-        "next_owner": "DomainProfile",
-        "score": 146
-      },
-      {
         "id": "external:protocol-0707",
         "name": "IPPC ePhyto Hub Exchange",
         "next_owner": "ForeignTwin",
         "score": 146
       },
       {
-        "id": "external:protocol-0276",
-        "name": "SIRI",
-        "next_owner": "DomainProfile",
-        "score": 144
-      },
-      {
-        "id": "external:protocol-0478",
-        "name": "OECD SAF-T",
+        "id": "external:protocol-0304",
+        "name": "OGC API Common",
         "next_owner": "ForeignTwin",
         "score": 144
       },
       {
         "id": "external:protocol-0519",
         "name": "ads.cert Authenticated Connections",
-        "next_owner": "ForeignTwin",
-        "score": 144
-      },
-      {
-        "id": "external:protocol-0648",
-        "name": "CCSDS High Data Rate Wireless Proximity Network Communications",
         "next_owner": "ForeignTwin",
         "score": 144
       }
@@ -388,6 +388,12 @@
         "name": "thebrierfox/the-stall",
         "next_owner": "ForeignTwin",
         "score": 165
+      },
+      {
+        "id": "external:ext-03030",
+        "name": "rdanieli/tentra-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 160
       },
       {
         "id": "external:ext-02824",
@@ -430,12 +436,6 @@
         "name": "whiteknightonhorse/APIbase",
         "next_owner": "ForeignTwin",
         "score": 149
-      },
-      {
-        "id": "external:ext-03114",
-        "name": "hshintelligence/agent-scrape",
-        "next_owner": "ForeignTwin",
-        "score": 149
       }
     ],
     "toolchain": [
@@ -470,6 +470,12 @@
         "score": 161
       },
       {
+        "id": "external:ext-03030",
+        "name": "rdanieli/tentra-mcp",
+        "next_owner": "ForeignTwin",
+        "score": 160
+      },
+      {
         "id": "external:ext-02824",
         "name": "GTCC777/pulsenetwork-mcp",
         "next_owner": "ForeignTwin",
@@ -492,12 +498,6 @@
         "name": "BitBooth",
         "next_owner": "ForeignTwin",
         "score": 155
-      },
-      {
-        "id": "external:ext-02793",
-        "name": "jurat",
-        "next_owner": "ForeignTwin",
-        "score": 155
       }
     ],
     "verification_bridge": [
@@ -506,6 +506,12 @@
         "name": "8randonpickart5/alderpost-mcp",
         "next_owner": "ForeignTwin",
         "score": 165
+      },
+      {
+        "id": "external:protocol-0478",
+        "name": "OECD SAF-T",
+        "next_owner": "ForeignTwin",
+        "score": 158
       },
       {
         "id": "external:ext-02633",
@@ -532,6 +538,12 @@
         "score": 155
       },
       {
+        "id": "external:ext-02800",
+        "name": "Conway Address Intel",
+        "next_owner": "ForeignTwin",
+        "score": 155
+      },
+      {
         "id": "external:ext-02724",
         "name": "anchor-x402",
         "next_owner": "ForeignTwin",
@@ -548,18 +560,6 @@
         "name": "forgemeshlabs/coinopai-mcp",
         "next_owner": "ForeignTwin",
         "score": 149
-      },
-      {
-        "id": "external:ext-02903",
-        "name": "sF1nX/x402station",
-        "next_owner": "ForeignTwin",
-        "score": 149
-      },
-      {
-        "id": "external:protocol-0464",
-        "name": "EN 16931 eInvoice semantic model",
-        "next_owner": "ForeignTwin",
-        "score": 146
       }
     ]
   },
@@ -624,12 +624,12 @@
     },
     "owner_bridge_evidence": {
       "ForeignTwinGraph->DomainProfile": {
-        "blocked_candidates": 6,
+        "blocked_candidates": 0,
         "cannot_infer": [
           "validated occurrence bindings -> all future DomainProfile handoffs are ready"
         ],
-        "receipt_ingress_observed": true,
-        "validated_bindings": 1
+        "receipt_ingress_observed": false,
+        "validated_bindings": 0
       },
       "ProtocolContract->SemanticDerivationGraph": {
         "cannot_infer": [
@@ -640,19 +640,13 @@
     },
     "schema": "bonfyre.disturbance-acceptance.v1",
     "sensor_boundary": {
-      "attempts": 2,
+      "attempts": 0,
       "body_observed": false,
       "cannot_infer": [
         "documented public feed -> lawful observation by this agent"
       ],
-      "policy_decisions": {
-        "robots_disallow": 1,
-        "robots_preflight_unavailable": 1
-      },
-      "states": {
-        "policy_excluded": 1,
-        "policy_indeterminate": 1
-      }
+      "policy_decisions": {},
+      "states": {}
     }
   },
   "frontier_rows": 250,
@@ -668,9 +662,7 @@
     "verification_bridge": 152
   },
   "next_owner_counts": {
-    "DomainProfile": 6,
-    "ForeignTwin": 4884,
-    "ResourceActivationGraph": 1
+    "ForeignTwin": 4891
   },
   "schema": "bonfyre.external-activation-manifest.v1",
   "total_occurrences": 4891,

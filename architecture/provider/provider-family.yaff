@@ -40,7 +40,10 @@ architecture placement-graph
   semantic_question Where does this run or reside, given locality and resource constraints?
   purpose The material placement of a selected realization across Mac fabric, LAN, GPU, device, remote. Distinct from ProviderGraph (who can) and RuntimeMesh (what instances exist).
   maturity implemented
+  source_path engine/core/src/provider_graph.c
+  source_path engine/core/include/bf_provider_graph.h
   source_path components/BonfyreControlPlane/provider_graphs.py.archive
+  witness engine/core/tests/provider_graph_test.c: bids kept as an intact metric vector; tournament ranks cost, latency and semantic loss as spent; a bid without authority is not selectable unless the caller drops that policy; weights reorder without touching the vector; placement read back; parity holds only proven pairs, unordered, and a later disproof replaces the proof (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_provider_graphs.py.archive
   node_types PlacementNode
   edge_types placed_on
@@ -48,7 +51,7 @@ architecture placement-graph
   interacts address-plane
   source_lineage run6/run7 provider topology
   known_gap CID prefix routing gives placement partitions over content digests
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; bonfyre-provider and the R7 placement tools (JS) do not yet record bids, placements or parity through it
 architecture runtime-parity-graph
   canonical_name RuntimeParityGraph
   family provider
@@ -57,7 +60,10 @@ architecture runtime-parity-graph
   semantic_question Do direct, MCP, and HTTP carriers produce the same semantic result?
   purpose Proven semantic equivalence across execution carriers, so route selection can treat them as an equal-cost multipath group.
   maturity implemented
+  source_path engine/core/src/provider_graph.c
+  source_path engine/core/include/bf_provider_graph.h
   source_path components/BonfyreControlPlane/provider_graphs.py.archive
+  witness engine/core/tests/provider_graph_test.c: bids kept as an intact metric vector; tournament ranks cost, latency and semantic loss as spent; a bid without authority is not selectable unless the caller drops that policy; weights reorder without touching the vector; placement read back; parity holds only proven pairs, unordered, and a later disproof replaces the proof (PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_provider_graphs.py.archive
   node_types Carrier
   edge_types parity_with
@@ -65,7 +71,7 @@ architecture runtime-parity-graph
   interacts transport-phenotype
   source_lineage run6/run7 provider topology
   known_gap TransportPhenotype proved identical digest across direct/MCP already
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap native in libbonfyre-fabric; bonfyre-provider and the R7 placement tools (JS) do not yet record bids, placements or parity through it
 architecture realization-measurement
   owns RealizationCost
   consumes AtlasAnswer

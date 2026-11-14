@@ -32,6 +32,16 @@ browser_projection_parity() {
       echo "native ratchet: browser projection drift ($name)" >&2; return 1
     fi
   done
+  # Exact serving projections: preserve drift checks but count the owner once.
+  for pair in \
+    "components/BonfyreServiceSite/application-previews.js:site/assets/showcase.js" \
+    "components/BonfyreServiceSite/authoring/pattern-runtime.js:site/matrix/authoring-reader.js" \
+    "site/matrix/bonfyre-kit.js:site/matrix/surfaces/_kit.js"; do
+    source=${pair%%:*}; target=${pair#*:}
+    if ! cmp -s "$root/$source" "$root/$target"; then
+      echo "native ratchet: serving JS projection drift ($target)" >&2; return 1
+    fi
+  done
 }
 
 authored() {
@@ -63,7 +73,7 @@ measure() {
     tr '\0' '\n' | grep -v -E '(^|/)node_modules/|^scripts/native-ratchet\.sh$' | tr '\n' '\0' |
     xargs -0 grep -l -E '^[^#/]*(bun|BUN\)) +build .*--compile' 2>/dev/null | grep -c . || true)
   other=$(git -C "$root" ls-files -co --exclude-standard -- '*.js' '*.cjs' '*.ts' '*.tsx' '*.py' |
-    grep -v -E '(^|/)(node_modules|vendor)/|^site/(spaces|instruments)/' |
+    grep -v -E '(^|/)(node_modules|vendor)/|^site/(spaces|instruments)/|^site/assets/showcase\.js$|^site/matrix/authoring-reader\.js$|^site/matrix/surfaces/_kit\.js$' |
     while IFS= read -r path; do
       if [ -f "$root/$path" ]; then printf '%s\n' "$path"; fi
     done | grep -c . || true)
@@ -94,6 +104,12 @@ case "${1:-check}" in
       echo "  measured: $m" >&2
       sed 's/^/  /' /tmp/native-ratchet.$$ >&2
       rm -f /tmp/native-ratchet.$$
+      echo "  largest currently counted authored .mjs sources:" >&2
+      authored | while IFS= read -r source; do
+        [ -f "$root/$source" ] || continue
+        printf '    %s  %s\n' "$(wc -l < "$root/$source" | tr -d ' ')" "$source"
+      done | LC_ALL=C sort -k1,1nr | head -n 45 >&2
+      echo "  only remove a source after its native replacement and parity tests pass" >&2
       echo "  budgets: architecture/native-ratchet.cue; plan: docs/engineering/mjs-retirement-20261022/PLAN.md" >&2
       exit 1
     fi

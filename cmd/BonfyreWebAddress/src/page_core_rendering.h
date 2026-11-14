@@ -4170,6 +4170,20 @@ static int page_front_route_taken(const char *route) {
 }
 #include "front_editorial.h"
 
+/* Date the material actually present in this view, not the entire estate. */
+static time_t page_latest_dated_item(const PageMaterial *m, time_t now) {
+    time_t latest = 0;
+    if (!m) return 0;
+    for (size_t k = 0; k < BF_PAGE_MATERIAL_COUNT; k++) {
+        const PageStream *s = &m->stream[k];
+        for (int i = 0; i < s->count; i++) {
+            time_t at = s->item[i].at;
+            if (at > latest && at <= now + 86400) latest = at;
+        }
+    }
+    return latest;
+}
+
 static int page_emit_document(sqlite3 *db, const char *path, const PageDocument *doc,
                               PageProjectionRead *projection) {
     char *template = NULL, *head_end; PageMaterial *material = NULL; int shown;
@@ -4206,6 +4220,12 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     ctx.route = doc->route; ctx.stream = doc->stream; ctx.query = doc->raw_query; ctx.preview = 0; ctx.now = time(NULL); ctx.db = db;
     ctx.surface_scene = &surface_scene;
     ctx.experience_pattern = page_native_experience_pattern(doc,material);
+    time_t page_newest = page_latest_dated_item(material, ctx.now);
+    int old_reading = doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/today"))
+        && page_newest > 0 && ctx.now > page_newest && ctx.now - page_newest > 72 * 3600;
+    const char *reading_lede = old_reading ?
+        (!strcmp(doc->route, "/today") ? "News retained from publishers, with dates shown below."
+         : "Stories, books and other material kept by this reading archive.") : doc->lede;
     /* A page that knows who is reading it is theirs alone and is never shared
      * by a cache. */
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
@@ -4213,7 +4233,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
            "Vary: Host, Accept, Cookie\r\nX-Bonfyre-World-Projection: native\r\nConnection: close\r\n\r\n",
            doc->actor && *doc->actor ? "private, no-store" : front_community_route(page_render_host,doc->route) ?
            "public, no-cache, max-age=0, must-revalidate" : "public, max-age=60, stale-while-revalidate=300");
-    page_emit_head(template, head_end, doc->title, doc->lede);
+    page_emit_head(template, head_end, doc->title, reading_lede);
     bf_route_presentation_emit_head_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
@@ -4268,13 +4288,20 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     if (doc->requested_grammar && *doc->requested_grammar && page_grammar_label(doc->requested_grammar)) { fputs(" <em>&middot; ",stdout); html(page_grammar_label(doc->requested_grammar)); fputs("</em>",stdout); }
     fputs("</h1>", stdout);
     {
-        const char *display_lede = doc->lede;
+        const char *display_lede = reading_lede;
         if (doc->route && !strcmp(doc->route, "/people"))
             display_lede = "The writers, hosts and makers behind what this estate reads, "
                            "and the people who keep an address here.";
         if (display_lede && *display_lede) {
             fputs("<p class=\"lede\">", stdout); html(display_lede); fputs("</p>", stdout);
         }
+    }
+    if (old_reading) {
+        struct tm utc; char day[24] = "";
+        if (gmtime_r(&page_newest, &utc)) strftime(day, sizeof(day), "%Y-%m-%d", &utc);
+        fputs("<p class=\"note archive-freshness\" data-source-freshness=\"stale\" role=\"status\">", stdout);
+        fputs("Latest dated item in this view: <time datetime=\"", stdout); html(day); fputs("\">", stdout); html(day);
+        fputs("</time>. This is older material, not today's updates. <a href=\"/sources\">Browse sources</a>.</p>", stdout);
     }
     if (narrowed) {
         fputs("<p class=\"narrowed\">Showing ", stdout);
@@ -4337,7 +4364,6 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                         shown += bf_detail_continue(stdout, &focus);
                     }
                         shown += bf_people_index_ordered(stdout, archive, doc->route, find, offset, 60, !strcmp(sort, "recent"));
-                        shown += bf_people_index(stdout, archive, doc->route, find, offset, 60);
                 } else if (frontier && *frontier) {
                     shown += bf_organisations_index(stdout, frontier, doc->route, find, offset, 60);
                 }

@@ -1129,6 +1129,117 @@
       "x-bonfyre-owner": "operator"
     },
     {
+      "name": "operator_maturation_ledger",
+      "description": "Read the exact ~/.bonfyre/backlog/items.tsv in bounded pages; inventory Atlas and handoff candidates; seed all unverified source-backed candidates; or atomically record up to 100 evidence-backed verdicts on existing rows. Writes require current file SHA-256, MCP write gate and operator STOP; each DONE verifies exact current source SHA and nonempty independent test witnesses. No new scope, no automatic completion, no operator resume.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "read",
+              "coverage",
+              "seed",
+              "record"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "expected_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "updates": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": [
+                    "done",
+                    "partial",
+                    "open",
+                    "blocked",
+                    "deliberate_boundary",
+                    "stale"
+                  ]
+                },
+                "evidence": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 12,
+                  "items": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 500
+                  }
+                },
+                "source_proofs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "test_witnesses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "verdict",
+                "evidence"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "x-bonfyre-owner": "operator"
+    },
+    {
       "name": "operator_status",
       "description": "Return autonomous operator mode, pause state, queued goals, recent runs, and failures.",
       "inputSchema": {
@@ -1361,6 +1472,28 @@
       "x-bonfyre-owner": "operator"
     },
     {
+      "name": "project_retire_sources",
+      "description": "Retire a reviewed group of authored non-test scripts only after matching the exact SHA-256 of every source and a native C replacement, passing the replacement's Makefile test before and after, and creating a restore-verified compressed archive. A failed post-test restores absent sources. Never relax the ratchet or activate a public release.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirm": {"type": "boolean", "const": true},
+          "reason": {"type": "string", "minLength": 16, "maxLength": 200},
+          "native_source": {"type": "string", "minLength": 1, "maxLength": 2048},
+          "native_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "entries": {"type": "array", "minItems": 1, "maxItems": 32,
+            "items": {"type": "object", "properties": {
+              "path": {"type": "string", "minLength": 1, "maxLength": 2048},
+              "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+            }, "required": ["path", "sha256"], "additionalProperties": false}}
+        },
+        "required": ["confirm", "reason", "native_source", "native_sha256", "entries"],
+        "additionalProperties": false
+      },
+      "annotations": {"readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": false},
+      "x-bonfyre-owner": "operator"
+    },
+    {
       "name": "project_revert_receipt",
       "description": "Revert a patch previously applied by the operator using its receipt ID.",
       "inputSchema": {
@@ -1444,6 +1577,8 @@
               "cmd-make",
               "training-mcp-smoke",
               "cloudflare-bridge",
+              "bun-tests",
+              "service-site-planner",
               "bun-syntax",
               "shell-syntax",
               "node-syntax",

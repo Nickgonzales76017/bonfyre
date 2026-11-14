@@ -4,13 +4,16 @@ import {join} from 'node:path';
 import {createRequire} from 'node:module';
 import {Database} from 'bun:sqlite';
 import {packSetupFixture,root,decode} from './pack_setup_fixture.mjs';
-const test=(name,fn)=>runTest(name,fn,30000);let f,owner,other,browser,matrix,workIndex;
+const test=(name,fn)=>runTest(name,fn,30000);let f,owner,other,browser,matrix,workIndex,datingDb;
 const sites=['work','life','live','shop'].map(t=>({id:'profile-avery-'+t,host:'avery.aurekai.'+t,territory:t}));
 const hidden=body=>Object.fromEntries([...body.matchAll(/<input[^>]*type="hidden"[^>]*name="([^"]+)"[^>]*value="([^"]*)"/g)].map(m=>[decode(m[1]),decode(m[2])]));
 async function request(path,{site='work',user=owner,form,headers={}}={}){return f.request(path,{host:'aurekai.'+site,cookie:user?.cookie||'',form,headers:{...(form!==undefined?{Origin:'https://aurekai.'+site}:{}),...headers}});}
 async function publicPage(site='work',path='/',user=null){return f.request(path,{host:'avery.aurekai.'+site,cookie:user?.cookie||''});}
 function post(site,title,body,extra={}){return f.add('community_post',{post:site+':'+title,community:site,author_subject:'person:avery',title,body,subject_address:'',published_at:'2026-10-21T05:00:00Z',visibility:'public',moderation_state:'accepted',cannot_infer:'Isolated authored fixture.',status:'published',...extra},site);}
-beforeAll(async()=>{f=await packSetupFixture({beforeServe:({home,env})=>{workIndex=join(home,'account-work.db');env.BONFYRE_ACCOUNT_WORK_DB=workIndex;env.BONFYRE_ITEM_ARCHIVE_DB=join(home,"profile-items.db");const w=new Database(workIndex,{create:true});w.exec("CREATE TABLE account_work(id TEXT NOT NULL,subject TEXT NOT NULL,scope TEXT NOT NULL,title TEXT NOT NULL,state TEXT NOT NULL,updated_ms INTEGER NOT NULL)");w.close();}});const schemas=join(f.home,'schemas');for(const type of ['site_presentation','community_post','community_body','saved_item','work_example'])copyFileSync(join(root,'cmd/BonfyreCMS/content-types',type+'.json'),join(schemas,type+'.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);owner=await f.login('profile-owner@example.test');other=await f.login('profile-other@example.test');f.authsql.query('UPDATE users SET name=? WHERE id=?').run('Private Account Name',owner.id);const db=join(f.home,'matrix.db');f.run(f.auth,['--db',f.authdb,'actor-bind','--user-id',String(owner.id),'--actor','person:avery']);f.run(f.web,['subject','--db',db,'--id','person:avery','--kind','Person','--digest','a'.repeat(64),'--evidence','fixture:profile']);f.run(f.web,['institution','--db',db,'--id','inst:person-avery','--kind','Person','--world','live','--evidence','fixture:profile']);
+beforeAll(async()=>{f=await packSetupFixture({beforeServe:({home,env})=>{workIndex=join(home,'account-work.db');datingDb=join(home,'private-dating.db');
+env.BONFYRE_DATING_DB=datingDb;env.BONFYRE_ACCOUNT_WORK_DB=workIndex;env.BONFYRE_ITEM_ARCHIVE_DB=join(home,"profile-items.db");const w=new Database(workIndex,{create:true});w.exec("CREATE TABLE account_work(id TEXT NOT NULL,subject TEXT NOT NULL,scope TEXT NOT NULL,title TEXT NOT NULL,state TEXT NOT NULL,updated_ms INTEGER NOT NULL)");w.close();}});const setup=join(root,'cmd/BonfyreParticipation/bonfyre-participation');
+f.run(setup,['dating-init','--db',datingDb]);
+const schemas=join(f.home,'schemas');for(const type of ['site_presentation','community_post','community_body','saved_item','work_example'])copyFileSync(join(root,'cmd/BonfyreCMS/content-types',type+'.json'),join(schemas,type+'.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);owner=await f.login('profile-owner@example.test');other=await f.login('profile-other@example.test');f.authsql.query('UPDATE users SET name=? WHERE id=?').run('Private Account Name',owner.id);const db=join(f.home,'matrix.db');f.run(f.auth,['--db',f.authdb,'actor-bind','--user-id',String(owner.id),'--actor','person:avery']);f.run(f.web,['subject','--db',db,'--id','person:avery','--kind','Person','--digest','a'.repeat(64),'--evidence','fixture:profile']);f.run(f.web,['institution','--db',db,'--id','inst:person-avery','--kind','Person','--world','live','--evidence','fixture:profile']);
  const w=new Database(workIndex),insert=w.query('INSERT INTO account_work VALUES(?,?,?,?,?,?)');
  insert.run('account-operator-owned-1','user:'+owner.id,'self','Review the source-backed owner decision','blocked',1793175000000);
  insert.run('account-operator-owned-2','user:'+owner.id,'self','Continue an admitted native workflow','ready',1793174000000);
@@ -149,7 +152,7 @@ test('private profile shows real account work without publishing work to a site'
  for(const t of ['work','life','live','shop'])expect(own.body).toContain('data-profile-territory="'+t+'"');
  expect((own.body.match(/class="ph-realm-icon"/g)||[]).length).toBe(4);
  for(const label of ['Edit introduction','View public site','Manage site'])expect(own.body).toContain(label);
- expect((own.body.match(/class="ph-tab-icon"/g)||[]).length).toBe(8);
+ expect((own.body.match(/class="ph-tab-icon"/g)||[]).length).toBe(9);
  const ownSites=await request('/profile?tab=sites');expect(ownSites.status).toBe(200);
  expect(ownSites.body).toContain('data-profile-site-overview');
  for(const t of ['work','life','live','shop'])expect(ownSites.body).toContain('data-profile-territory="'+t+'"');
@@ -215,8 +218,8 @@ test('Profile Discover Keep Create links are native, icon-mapped, private and si
   const own=await request('/profile',{site});
   expect(own.status).toBe(200);
   expect((own.body.match(/data-pathway-stage="/g)||[]).length).toBe(3);
-  expect((own.body.match(/data-pathway-link="/g)||[]).length).toBe(8);
-  for(const title of ['Sources','Recipes','Feeds','Profile','Collections','Posts','Worlds','Programs'])
+  expect((own.body.match(/data-pathway-link="/g)||[]).length).toBe(9);
+  for(const title of ['Sources','Recipes','Feeds','Profile','Collections','Operating roles','Posts','Worlds','Programs'])
    expect(own.body).toContain('data-pathway-link="'+title+'"');
   expect(own.body).toContain('One retained source identity, multiple account-owned continuations, explicit publication review.');
   expect(own.body).toContain('href="/sources"');
@@ -346,6 +349,10 @@ runTest('an exact CC0 artwork becomes one site header and a reviewed gallery pie
  const [name,...value]=owner.cookie.split('=');await p.setCookie({name,value:value.join('='),url:f.base,httpOnly:true,sameSite:'Lax'});
  try{for(const width of [1440,390]){await p.setViewport({width,height:1000});
   await p.setContent((await publicPage('work')).body.replace('<head>','<head><base href="'+f.base+'/">'),{waitUntil:'load',timeout:90000});
+   await p.waitForFunction(()=>[...document.querySelectorAll('[data-profile-cover] img,[data-gallery-item] img')].every(n=>n.complete&&n.naturalWidth>0),{timeout:20000}).catch(async error=>{
+    const images=await p.$$eval('[data-profile-cover] img,[data-gallery-item] img',nodes=>nodes.map(n=>({src:n.currentSrc||n.src,complete:n.complete,width:n.naturalWidth})));
+    throw Error('Profile artwork did not load: '+JSON.stringify(images)+' '+error.message);
+   })
   expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   expect(await p.$eval('[data-profile-cover] img',n=>n.complete&&n.naturalWidth>0)).toBe(true);
   const tiles=await p.$$eval('[data-gallery-item]',n=>n.map(x=>{const b=x.getBoundingClientRect();return {w:Math.round(b.width),img:x.querySelector('img').naturalWidth>0};}));
@@ -360,3 +367,343 @@ runTest('an exact CC0 artwork becomes one site header and a reviewed gallery pie
  await p.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);await p.setJavaScriptEnabled(false);await p.goto(f.base+'/profile?site=profile-avery-work&tab=gallery',{waitUntil:'load',timeout:90000});expect(await p.$$eval('[data-gallery-item] img',n=>n.length)).toBe(pieces.length-1);
  expect(errors.filter(e=>!e.includes('about:blank'))).toEqual([]);}finally{await ctx.close();}
 },180000);
+test('profile page composition stays within the selected owner site',async()=>{
+ const schemas=join(f.home,'schemas');copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_fragment.json'),join(schemas,'site_fragment.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);
+ const site=sites[0].id,route='/journal/fixture',q='?site='+site;expect(f.authsql.query('SELECT scope FROM sessions WHERE user_id=? ORDER BY id DESC LIMIT 1').get(owner.id).scope).toBe('self');
+ const profile=await request('/profile?site='+site);
+  const sitePicker=await request('/profile?tab=sites');
+  expect(sitePicker.status).toBe(200);
+  expect(sitePicker.body).toContain('data-profile-edit-pages href="/cms/compose/advanced?site='+site+'"');
+  expect(profile.body).toContain('/cms/compose/advanced?site='+site+'&amp;new=article');
+  expect(profile.body).toContain('Write an article');
+  expect(profile.body).toContain('Edit pages');
+   expect(profile.body).toContain('data-profile-edit-pages href="/cms/compose/advanced?site='+site+'"');
+  expect(profile.body).toContain('Write a post');
+ expect((await request('/cms/compose/advanced'+q,{user:other})).status).toBe(403);
+ expect((await request('/cms/compose/advanced'+q,{user:null})).status).toBe(403);
+ const opened=await request('/cms/compose/page'+q+'&route='+encodeURIComponent(route));expect(opened.status,opened.body).toBe(200);const snapshot=JSON.parse(opened.body);expect(snapshot.snapshot.namespace).toBe(site);
+ const input={operation:'create',route,expected_id:0,expected_digest:snapshot.digest,page:{route,title:'Journal fixture',heading:'Journal fixture',status:'draft'},fragments:[]};
+ const options={form:JSON.stringify(input),headers:{'Content-Type':'application/json'}};
+ const publishNow={...input,page:{...input.page,status:'published'}};
+ expect((await request('/cms/compose/page'+q,{form:JSON.stringify(publishNow),headers:{'Content-Type':'application/json'}})).status).toBe(409);
+ const rootPage=JSON.parse((await request('/cms/compose/page'+q+'&route=%2F')).body);
+ const overwrite={operation:'replace',route:'/',expected_id:rootPage.id,expected_digest:rootPage.digest,page:{route:'/',title:'Overwrite',heading:'Overwrite',status:'draft'},fragments:[]};
+ expect((await request('/cms/compose/page'+q,{form:JSON.stringify(overwrite),headers:{'Content-Type':'application/json'}})).status).toBe(409);
+ expect((await request('/cms/compose/page'+q,{user:other,...options})).status).toBe(403);
+ expect((await request('/cms/compose/page'+q,{...options,headers:{...options.headers,Origin:'https://foreign.example'}})).status).toBe(403);
+ expect((await request('/cms/compose/page'+q,options)).status).toBe(200);
+ const saved=JSON.parse((await request('/cms/compose/page'+q+'&route='+encodeURIComponent(route))).body);expect(saved.snapshot.page.title).toBe('Journal fixture');
+ const otherSite=JSON.parse((await request('/cms/compose/page?site='+sites[1].id+'&route='+encodeURIComponent(route))).body);expect(otherSite.id).toBe(0);
+ expect((await request('/cms/compose/page?site='+site+'&site='+sites[1].id+'&route='+encodeURIComponent(route))).status).toBe(400);
+});
+test('all journal sources round-trip as profile-owned editable article drafts',async()=>{
+ const {readFileSync}=await import('node:fs');const {createHash}=await import('node:crypto');const {treeFromNativeSnapshot}=await import('../../../components/BonfyreServiceSite/authoring/native-cms.mjs');
+ const schemas=join(f.home,'schemas');copyFileSync(join(root,'cmd/BonfyreCMS/content-types/site_fragment.json'),join(schemas,'site_fragment.json'));f.run(f.cms,['schema','migrate','--db',f.db,'--schemas',schemas]);
+ const rows=readFileSync(join(root,'site/blog/post-index.tsv'),'utf8').trim().split('\n').slice(1);expect(rows.length).toBe(16);
+ for(const entry of rows){
+  const [subject,slug,,,source]=entry.split('\t'),original=readFileSync(join(root,source),'utf8'),parts=original.split('---');
+  const title=parts[1].match(/^title: (.+)$/m)?.[1],body=parts.slice(2).join('---').trim(),route='/blog/'+slug+'/',site=sites[0].id,q='?site='+site;
+  expect(subject).toBe('post:'+slug);expect(title).toBeTruthy();
+  const baseline=JSON.parse((await request('/cms/compose/page'+q+'&route='+encodeURIComponent(route))).body);expect(baseline.id).toBe(0);
+  const article={route,title,heading:title,editorial_kind:'article',media_subject_ref:'article:'+slug,status:'draft'};
+  const fragment={coordinate:'journal-'+slug,page:route,slot:'showcase',audience:'public',kind:'profile-story',position:0,heading:title,body,status:'draft',source_ref:subject,source_digest:createHash('sha256').update(original).digest('hex'),semantic_tags:{authoring_v1:{version:1,parent:null,responsive:{}}}};
+  const input={operation:'create',route,expected_id:0,expected_digest:baseline.digest,page:article,fragments:[fragment]};
+  const saved=await request('/cms/compose/page'+q,{form:JSON.stringify(input),headers:{'Content-Type':'application/json'}});expect(saved.status,saved.body).toBe(200);
+  const reopened=JSON.parse((await request('/cms/compose/page'+q+'&route='+encodeURIComponent(route))).body);
+  expect(reopened.snapshot.namespace).toBe(site);expect(reopened.snapshot.page.media_subject_ref).toBe('article:'+slug);expect(reopened.snapshot.fragments[0].body).toBe(body);
+  const identityPath='/cms/compose/narration-revision'+q+'&route='+encodeURIComponent(route);
+  const identity=await request(identityPath);expect(identity.status,identity.body).toBe(200);
+  const revision=JSON.parse(identity.body);expect(revision.schema).toBe('bonfyre.article-revision.v2');
+  expect(revision.namespace).toBe(site);expect(revision.route).toBe(route);expect(revision.subject).toBe('article:'+slug);
+  expect(revision.status).toBe('draft');expect(revision.sha256).toMatch(/^[a-f0-9]{64}$/);
+  expect((await request(identityPath,{user:other})).status).toBe(403);
+  expect((await request(identityPath,{user:null})).status).toBe(403);
+  if(entry===rows[0]){
+   const clean=x=>Object.fromEntries(Object.entries(x).filter(([k])=>!new Set(['id','namespace','created_at','updated_at','published_at']).has(k)));
+   const edited=clean(reopened.snapshot.fragments[0]);edited.semantic_tags={authoring_v1:{version:1,parent:null,responsive:{},editorial:[{type:'paragraph',data:{text:'A changed editorial passage.'}}]}};
+   const update={operation:'replace',route,expected_id:reopened.id,expected_digest:reopened.digest,page:clean(reopened.snapshot.page),fragments:[edited]};
+   const result=await request('/cms/compose/page'+q,{form:JSON.stringify(update),headers:{'Content-Type':'application/json'}});expect(result.status,result.body).toBe(200);
+   const changed=await request(identityPath);expect(changed.status,changed.body).toBe(200);expect(JSON.parse(changed.body).sha256).not.toBe(revision.sha256);
+  }
+  const tree=treeFromNativeSnapshot(reopened);expect(tree.blocks[0].props.body).toBe(body);
+ }
+});
+
+test('the real profile dating route retains private opt-in, blocks self-certification and does not publish it',async()=>{
+ const noAuth=await request('/profile?tab=dating',{user:null});
+ expect([302,303]).toContain(noAuth.status);
+ const own=await request('/profile?tab=dating',{site:'life'});
+ expect(own.status).toBe(200);
+ expect(own.body).toContain('data-native-dating');
+ expect(own.body).toContain('Your authored Life profile');
+ expect(own.body).toContain('/cms/compose/advanced?site=profile-avery-life');
+ expect(own.body).toContain('Participation is off');
+ expect(own.body).not.toContain('data-dating-candidate');
+ expect(own.body).not.toContain('identity:verified');
+ const publicLife=await publicPage('life');
+ expect(publicLife.body).not.toContain('data-native-dating');
+ expect(publicLife.body).not.toContain('Dating</a>');
+ expect((await publicPage('life','/?tab=dating')).status).toBe(400);
+ const foreign=await request('/profile?tab=dating',{user:other});
+ expect(foreign.body).not.toContain('Your authored Life profile');
+ expect(foreign.body).not.toContain('profile-avery-life');
+ const blocked=await request('/profile/dating/request',{
+   site:'life',form:{rev:'0',enable:'1',ack:'1'},
+   headers:{Origin:'https://another.example.test'}});
+ expect(blocked.status).toBe(403);
+ const withoutAck=await request('/profile/dating/request',{site:'life',form:{rev:'0',enable:'1'}});
+ expect(withoutAck.status).toBe(400);
+ const started=await request('/profile/dating/request',{site:'life',form:{rev:'0',enable:'1',ack:'1'}});
+ expect(started.status).toBe(303);
+ expect(started.headers.get('location')).toContain('/profile?tab=dating');
+ const pending=await request('/profile?tab=dating',{site:'life'});
+ expect(pending.status).toBe(200);
+ expect(pending.body).toContain('Review requested');
+ expect(pending.body).not.toContain('data-dating-candidate');
+ const retry=await request('/profile/dating/request',{site:'life',form:{rev:'0',enable:'1',ack:'1'}});
+ expect(retry.status).toBe(409);
+ const stranger=await request('/profile/dating/request',{site:'life',user:other,
+   form:{rev:'0',enable:'1',ack:'1'}});
+ expect(stranger.status).toBe(403);
+ const active=new Database(datingDb);
+ try{
+  const state=active.query("SELECT subject,revision,state FROM dating_request WHERE subject='person:avery'").get();
+  expect(state).toEqual({subject:'person:avery',revision:1,state:'requested'});
+  expect(active.query("SELECT count(*) AS n FROM dating_person").get().n).toBe(0);
+  expect(active.query("SELECT count(*) AS n FROM dating_verification").get().n).toBe(0);
+ }finally{active.close();}
+ const withdrawn=await request('/profile/dating/request',{site:'life',
+   form:{rev:'1',enable:'0'}});
+ expect(withdrawn.status).toBe(303);
+ const after=await request('/profile?tab=dating',{site:'life'});
+ expect(after.body).toContain('Participation is off');
+});
+
+test('two real account sessions use one Life profile, native private inbox, preferences, reviewed plan and instant block',async()=>{
+ const second='profile-blake-life',host='blake.aurekai.life',path=join(f.home,'matrix.db');
+ f.run(f.auth,['--db',f.authdb,'actor-bind','--user-id',String(other.id),'--actor','person:blake']);
+ f.run(f.web,['subject','--db',path,'--id','person:blake','--kind','Person','--digest','b'.repeat(64),'--evidence','fixture:blake']);
+ f.run(f.web,['institution','--db',path,'--id','inst:person-blake','--kind','Person','--world','live','--evidence','fixture:blake']);
+ f.run(f.web,['domain','--db',path,'--host',host,'--institution','inst:person-blake','--territory','life','--scope','public','--world','live','--repr','HTML','--evidence','fixture:blake']);
+ f.run(f.web,['presence','--db',path,'--id','presence:blake:life','--subject','person:blake','--territory','life','--scope','public','--world','live','--repr','HTML','--evidence','fixture:blake']);
+ f.add('site_presentation',{site_id:second,host,subject_address:'person:blake',
+   territory:'life',profile:'member-profile-v1',navigation:[],status:'published'});
+ f.add('site_page',{route:'/',title:'Blake life',heading:'Blake',lede:'A short public introduction',
+   status:'published'},second);
+ const ownerOn=await request('/profile/dating/request',{site:'life',form:{rev:'2',enable:'1',ack:'1'}});
+ const otherOn=await request('/profile/dating/request',{site:'life',user:other,
+   form:{rev:'0',enable:'1',ack:'1'}});
+ expect(ownerOn.status).toBe(303);expect(otherOn.status).toBe(303);
+ const db=new Database(datingDb);
+ try{
+  // Test-only issuer fixture: production has no actor-facing route to create
+  // verified age or moderation records, and must use its independent owners.
+  db.exec("INSERT INTO dating_verification"
+   +"(subject,age,eligibility_witness,moderation_witness,issued_by,state,valid_until) VALUES"
+   +"('person:avery',30,'identity:avery','media:avery','BonfyreAuth','verified',"
+   +"CAST(strftime('%s','now') AS INTEGER)+3600),"
+   +"('person:blake',31,'identity:blake','media:blake','BonfyreAuth','verified',"
+   +"CAST(strftime('%s','now') AS INTEGER)+3600)");
+  db.exec("INSERT INTO dating_person"
+   +"(subject,revision,age,min_age,max_age,active,intro,eligibility_witness,moderation_witness) VALUES"
+   +"('person:avery',1,30,25,40,1,1,'identity:avery','media:avery'),"
+   +"('person:blake',1,31,25,40,1,1,'identity:blake','media:blake')");
+ }finally{db.close();}
+ const initial=await request('/profile?tab=dating',{site:'life'});
+ expect(initial.status).toBe(200);
+ expect(initial.body).toContain('data-dating-candidate');
+ expect(initial.body).toContain('person:blake');
+ expect(initial.body).toContain('Private preferences');
+ expect(initial.body).not.toContain('identity:blake');
+ const interest=await request('/profile/dating/choice',{site:'life',
+   form:{other:'person:blake',choice:'interest',rev:'0'}});
+ expect(interest.status).toBe(303);
+ const introduction=await request('/profile?tab=dating',{site:'life',user:other});
+ expect(introduction.body).toContain('Accept introduction');
+ expect(introduction.body).not.toContain('Good to meet you through Aurekai');
+ const otherAccept=await request('/profile/dating/choice',{site:'life',user:other,
+   form:{other:'person:avery',choice:'accept',rev:'0'}});
+ expect(otherAccept.status).toBe(303);
+ const ownerAccept=await request('/profile/dating/choice',{site:'life',
+   form:{other:'person:blake',choice:'accept',rev:'1'}});
+ expect(ownerAccept.status).toBe(303);
+ const agreed=await request('/profile?tab=dating',{site:'life'});
+ expect(agreed.body).toContain('Both of you have agreed');
+ const selected={rev:'1',p1:'1',p2:'-1',p3:'1',p4:'1',i1:'5',i2:'3',i3:'4',i4:'1'};
+ const counterpart={...selected,p2:'1'};
+ expect((await request('/profile/dating/preferences',{site:'life',form:selected})).status).toBe(303);
+ expect((await request('/profile/dating/preferences',{site:'life',user:other,form:counterpart})).status).toBe(303);
+ const comparison=await request('/profile?tab=dating',{site:'life'});
+ expect(comparison.body).toContain('shared preference agreement');
+ const nonce='a'.repeat(32),idea='Museum walk and coffee';
+ expect((await request('/profile/dating/message',{site:'life',
+   form:{other:'person:blake',nonce,body:'Good to meet you through Aurekai'}})).status).toBe(303);
+ const reply=await request('/profile?tab=dating',{site:'life',user:other});
+ expect(reply.body).toContain('Good to meet you through Aurekai');
+ const selfInbox=await request('/inbox?context=self',{site:'life'});
+ const otherInbox=await request('/inbox?context=self',{site:'life',user:other});
+ expect(selfInbox.body).toContain('data-private-dating');
+ expect(otherInbox.body).toContain('Open conversations');
+ const planKey='b'.repeat(32);
+ const proposal=await request('/profile/dating/plan',{site:'life',
+   form:{other:'person:blake',nonce:planKey,activity:idea,
+     context:'A mutually chosen public venue',estimate:'35.00',budget:'60.00',confirm:'1'}});
+ expect(proposal.status).toBe(303);
+ const proposed=await request('/profile?tab=dating',{site:'life',user:other});
+ expect(proposed.body).toContain(idea);
+ expect(proposed.body).toContain('Approve this proposal');
+ expect((await request('/profile/dating/plan-approve',{site:'life',user:other,
+   form:{plan:planKey,rev:'1'}})).status).toBe(303);
+ const approved=await request('/profile?tab=dating',{site:'life'});
+ expect(approved.body).toContain('Both approved');
+ const blocked=await request('/profile/dating/choice',{site:'life',user:other,
+   form:{other:'person:avery',choice:'block',rev:'1'}});
+ expect(blocked.status).toBe(303);
+ const inaccessible=await request('/profile?tab=dating',{site:'life'});
+ expect(inaccessible.body).not.toContain('Good to meet you through Aurekai');
+ expect(inaccessible.body).not.toContain(idea);
+ expect((await request('/profile/dating/message',{site:'life',
+   form:{other:'person:blake',nonce:'c'.repeat(32),body:'No consent after block'}})).status).toBe(409);
+ expect((await publicPage('life')).body).not.toContain('data-private-dating');
+ expect((await publicPage('life')).body).not.toContain(idea);
+});
+
+test('contextual participation shares one profile and feed without sharing consent, dating or civic authority',async()=>{
+ const peer=await f.login('profile-morgan-context@example.test');
+ const matrixPath=join(f.home,'matrix.db');
+ f.run(f.auth,['--db',f.authdb,'actor-bind','--user-id',String(peer.id),'--actor','person:morgan']);
+ f.run(f.web,['subject','--db',matrixPath,'--id','person:morgan','--kind','Person','--digest','c'.repeat(64),'--evidence','fixture:morgan']);
+ f.run(f.web,['institution','--db',matrixPath,'--id','inst:person-morgan','--kind','Person','--world','live','--evidence','fixture:morgan']);
+ f.run(f.web,['domain','--db',matrixPath,'--host','morgan.aurekai.life','--institution','inst:person-morgan',
+   '--territory','life','--scope','public','--world','live','--repr','HTML','--evidence','fixture:morgan']);
+ f.run(f.web,['presence','--db',matrixPath,'--id','presence:morgan:life','--subject','person:morgan',
+   '--territory','life','--scope','public','--world','live','--repr','HTML','--evidence','fixture:morgan']);
+ f.add('site_presentation',{site_id:'profile-morgan-life',host:'morgan.aurekai.life',
+   subject_address:'person:morgan',territory:'life',profile:'member-profile-v1',
+   navigation:[],status:'published'});
+ f.add('site_page',{route:'/',title:'Morgan life',heading:'Morgan',lede:'Making and sharing',
+   status:'published'},'profile-morgan-life');
+ const direct=await request('/profile?tab=connections',{site:'life'});
+ expect(direct.status).toBe(200);
+ expect(direct.body).toContain('data-native-peer-context');
+ expect(direct.body).toContain('Meet through what matters');
+ for(const name of ['People & friendships','Art & making','Civic & community','Projects & work','Dating'])
+  expect(direct.body).toContain(name.replaceAll('&','&amp;'));
+ expect(direct.body).toContain('Not participating in this context');
+ const art=await request('/profile?tab=connections&facet=art',{site:'life'});
+ expect(art.status).toBe(200);
+ expect(art.body).toContain('Art &amp; making');
+ expect(art.body).not.toContain('data-peer-candidate');
+ expect((await request('/profile?tab=connections&facet=dating',{site:'life'})).body).toContain('data-native-dating');
+ expect((await publicPage('life','/?tab=connections')).status).toBe(400);
+ expect((await request('/profile?tab=connections&facet=art',{user:null})).status).toBe(303);
+ const db=new Database(datingDb),datingCount=db.query("SELECT count(*) AS n FROM dating_person").get().n;
+ const initialBlocks=db.query("SELECT count(*) AS n FROM peer_block").get().n;
+ db.close();
+ const sourceSite='profile-morgan-life',published='Creative exchange from Morgan';
+ f.add('community_post',{post:'morgan-context-art',community:sourceSite,
+  author_subject:'person:morgan',title:published,body:'A published arts discussion',
+  published_at:'2026-11-10T20:30:00Z',visibility:'public',moderation_state:'accepted',
+  cannot_infer:'Public art writing does not confer licensing or private relationship authority.',
+  status:'published'},sourceSite);
+ const artJoin={facet:'art',rev:'0',enable:'1',ack:'1'};
+ expect((await request('/profile/connections/join',{site:'life',form:artJoin})).status).toBe(303);
+ expect((await request('/profile/connections/join',{site:'life',user:peer,form:artJoin})).status).toBe(303);
+ expect((await request('/profile/connections/join',{site:'life',form:artJoin})).status).toBe(409);
+ const interests={facet:'art',epoch:'1',rev:'0',topics:'Hiking, Pottery'};
+ expect((await request('/profile/connections/interests',{site:'life',form:interests,headers:{Origin:'https://elsewhere.example.test'}})).status).toBe(403);
+ expect((await request('/profile/connections/interests',{site:'life',form:interests})).status).toBe(303);
+ expect((await request('/profile/connections/interests',{site:'life',form:interests})).status).toBe(409);
+ expect((await request('/profile/connections/interests',{site:'life',user:peer,form:{...interests,topics:'hiking, painting'}})).status).toBe(303);
+ expect((await request('/profile/connections/interests',{site:'life',form:{...interests,facet:'civic',rev:'0'}})).status).toBe(409);
+ const context=await browser.createBrowserContext(),tab=await context.newPage(),browserErrors=[];
+ tab.on('pageerror',error=>browserErrors.push(error.message));
+ const [cookieName,...cookieValue]=owner.cookie.split('=');
+ await tab.setCookie({name:cookieName,value:cookieValue.join('='),url:f.base,httpOnly:true});
+ try{
+  await tab.goto(f.base+'/profile?tab=connections&facet=art',{waitUntil:'networkidle0'});
+  await tab.waitForSelector('.ph-connect-interests input[name=topics]');
+  await tab.$eval('.ph-connect-interests input[name=topics]',input=>{input.value='hiking, pottery, cycling';input.dispatchEvent(new Event('input',{bubbles:true}));});
+  await Promise.all([tab.waitForNavigation(),tab.click('.ph-connect-interests button')]);
+  expect(await tab.$eval('.ph-connect-interests input[name=topics]',input=>input.value)).toBe('hiking,pottery,cycling');
+  for(const width of [1440,390]){await tab.setViewport({width,height:900});expect(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
+  expect(browserErrors).toEqual([]);
+ }finally{await context.close();}
+ const feed=await request('/profile?tab=connections&facet=art',{site:'life'});
+ expect(feed.body).toContain('data-peer-feed');
+ expect(feed.body).toContain('data-peer-candidate');
+ expect(feed.body).toContain('Shared interests: hiking');
+ expect(feed.body).not.toContain('Shared interests: painting');
+ expect((await publicPage('life')).body).not.toContain('Shared interests: hiking');
+ expect(feed.body).toContain(published);
+ expect(feed.body).toContain('https://morgan.aurekai.life/?tab=posts');
+ const cross=await request('/profile/connections/choice',{site:'life',
+  form:{facet:'art',other:'person:morgan',choice:'interest',rev:'0'},
+  headers:{Origin:'https://elsewhere.example.test'}});
+ expect(cross.status).toBe(403);
+ expect((await request('/profile/connections/choice',{site:'life',
+  form:{facet:'art',other:'person:morgan',choice:'interest',rev:'0'}})).status).toBe(303);
+ const message={facet:'art',other:'person:morgan',nonce:'a'.repeat(32),body:'A private note about making art.'};
+ expect((await request('/profile/connections/message',{site:'life',form:message})).status).toBe(409);
+ const inbound=await request('/profile?tab=connections&facet=art',{site:'life',user:peer});
+ expect(inbound.body).toContain('Accept introduction');
+ expect(inbound.body).not.toContain('You both agreed to connect in this context');
+ const pending=await request('/inbox?context=self',{site:'life',user:peer});
+ expect(pending.body).toContain('data-private-peer-facets');
+ expect(pending.body).toContain('Art &amp; making');
+ expect((await request('/profile/connections/choice',{site:'life',user:peer,
+  form:{facet:'art',other:'person:avery',choice:'accept',rev:'0'}})).status).toBe(303);
+ expect((await request('/profile/connections/choice',{site:'life',
+  form:{facet:'art',other:'person:morgan',choice:'accept',rev:'1'}})).status).toBe(303);
+ expect((await request('/profile?tab=connections&facet=art',{site:'life'})).body)
+  .toContain('You both agreed to connect in this context');
+ expect((await request('/profile/connections/message',{site:'life',form:message,headers:{Origin:'https://elsewhere.example.test'}})).status).toBe(403);
+ expect((await request('/profile/connections/message',{site:'life',form:message})).status).toBe(303);
+ expect((await request('/profile/connections/message',{site:'life',form:message})).status).toBe(303);
+ expect((await request('/profile/connections/message',{site:'life',form:{...message,body:'Changed text'}})).status).toBe(409);
+ const thread=await request('/profile?tab=connections&facet=art',{site:'life',user:peer});
+ expect(thread.body).toContain('A private note about making art.');
+ expect((await publicPage('life')).body).not.toContain('A private note about making art.');
+ const joinCivic={facet:'civic',rev:'0',enable:'1',ack:'1'};
+ expect((await request('/profile/connections/join',{site:'life',form:joinCivic})).status).toBe(303);
+ expect((await request('/profile/connections/join',{site:'life',user:peer,form:joinCivic})).status).toBe(303);
+ const civic=await request('/profile?tab=connections&facet=civic',{site:'life'});
+ expect(civic.body).toContain('Civic &amp; community');
+ expect(civic.body).not.toContain('You both agreed to connect in this context');
+ expect((await request('/profile/connections/choice',{site:'life',user:peer,
+  form:{facet:'civic',other:'person:avery',choice:'block',rev:'0'}})).status).toBe(303);
+ const after=await request('/profile?tab=connections&facet=art',{site:'life'});
+ expect(after.body).not.toContain('data-peer-candidate');
+ expect(after.body).not.toContain('A private note about making art.');
+ expect((await request('/profile/connections/message',{site:'life',form:{...message,nonce:'b'.repeat(32)}})).status).toBe(409);
+ expect((await publicPage('life')).body).not.toContain('data-native-peer-context');
+ const final=new Database(datingDb);
+ expect(final.query("SELECT count(*) AS n FROM dating_person").get().n).toBe(datingCount);
+ expect(final.query("SELECT count(*) AS n FROM peer_block").get().n).toBe(initialBlocks+1);
+ final.close();
+});
+test('authored CMS articles appear on the same profile as full site pages, with private drafts isolated',async()=>{
+ const site=sites[0].id;
+ f.add('site_page',{route:'/journal/native-profile-story/',title:'Native profile story',heading:'Native profile story',
+  lede:'A complete page whose layout belongs to the native authoring owner.',
+  editorial_kind:'article',media_subject_ref:'article:native-profile-story',editorial_published_on:'2026-11-10',status:'published'},site);
+ f.add('site_page',{route:'/journal/private-profile-story/',title:'Private authored revision',heading:'Private authored revision',
+  lede:'Unreleased source owned only by the editor.',editorial_kind:'article',
+  media_subject_ref:'article:private-profile-story',status:'draft'},site);
+ const published=await publicPage('work','/?tab=posts');
+ expect(published.status).toBe(200);
+ expect(published.body).toContain('data-authored-articles');
+ expect(published.body).toContain('Native profile story');
+ expect(published.body).toContain('href="/journal/native-profile-story/"');
+ expect(published.body).not.toContain('Private authored revision');
+ expect(published.body).not.toContain('Make this space yours');
+ const privateView=await request('/profile?site='+site+'&tab=posts');
+ expect(privateView.status).toBe(200);
+ expect(privateView.body).toContain('Native profile story');
+ expect(privateView.body).toContain('Private authored revision');
+ expect(privateView.body).toContain('Compose article');
+ expect(privateView.body).toContain('Bring in journal');
+ expect(privateView.body).toContain('/cms/compose/advanced?site='+site+'&amp;route=%2Fjournal%2Fprivate-profile-story%2F');
+ expect((await publicPage('life','/?tab=posts')).body).not.toContain('Native profile story');
+ expect((await request('/profile?site='+site+'&tab=posts',{user:other})).status).toBe(404);
+});

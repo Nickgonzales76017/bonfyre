@@ -413,11 +413,17 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
             if(canonical[0])fputs("</a>",out);
             fputs("</strong>", out);
             if(canonical[0]){
-                fputs("<div data-person-profile-buckets aria-label='Existing public profile content'>",out);
+                fputs("<nav data-person-profile-buckets aria-label='Explore public profile content'>",out);
                 static const char *const labels[]={"Posts","Gallery","Communities","Organizations"};
+                static const char *const tabs[]={"posts","gallery","communities","organizations"};
                 static const char *const glyphs[]={BF_ICON_FILE_TEXT,BF_ICON_PHOTO,BF_ICON_GROUP,BF_ICON_BRIEFCASE};
-                for(size_t i=0;i<4;i++){fputs("<span class='person-content-bucket' aria-label='",out);esc(out,labels[i]);fputs("'><span aria-hidden='true'>",out);fputs(glyphs[i],out);fputs("</span>",out);esc(out,labels[i]);fputs("</span>",out);}
-                fputs("</div>",out);
+                for(size_t i=0;i<4;i++){
+                    fputs("<a class='person-content-bucket' data-person-bucket href='https://",out);esc(out,canonical);
+                    fputs("/?tab=",out);esc(out,tabs[i]);fputs("' aria-label='",out);esc(out,labels[i]);
+                    fputs("'><span aria-hidden='true'>",out);fputs(glyphs[i],out);fputs("</span>",out);
+                    esc(out,labels[i]);fputs("</a>",out);
+                }
+                fputs("</nav>",out);
             }
             shown++; open = 1;
         }

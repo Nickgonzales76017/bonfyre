@@ -118,8 +118,20 @@ static int request_grant(BfAdmissionGrants *grants, int argc, char **argv)
 static int release_grant(BfAdmissionGrants *grants, int argc, char **argv)
 {
     const char *id_text = option_value(argc, argv, "--grant");
+    const char *plane = option_value(argc, argv, "--plane");
     const char *at = option_value(argc, argv, "--at");
     int64_t id;
+    /* --plane releases every open grant of one plane: for an owner that holds
+     * a lock and so knows any grant of its plane belongs to a run that is gone. */
+    if (plane && !id_text) {
+        int64_t released;
+        if (!*plane) return -1;
+        released = bf_admission_release_plane(grants, plane, at);
+        if (released < 0) return -1;
+        fputs("{\"plane\":", stdout); json_string(plane);
+        printf(",\"released_grants\":%" PRId64 "}\n", released);
+        return 0;
+    }
     if (!id_text || parse_i64(id_text, &id) != 0 || id <= 0 ||
         bf_admission_release_grant(grants, id, at) != 0) return -1;
     printf("{\"released_grant_id\":%" PRId64 "}\n", id);
@@ -169,7 +181,7 @@ static int print_memory(void)
 static void usage(void)
 {
     fputs("usage: bonfyre-admission request --db FILE --plane ID --kind KIND --bytes N [--volume PATH] [--free-bytes N] [--at ISO]\n"
-          "       bonfyre-admission release --db FILE --grant ID [--at ISO]\n"
+          "       bonfyre-admission release --db FILE (--grant ID | --plane ID) [--at ISO]\n"
           "       bonfyre-admission status --db FILE [--volume PATH] [--plane ID]\n"
           "       bonfyre-admission reap --db FILE --older-than-seconds N [--at ISO]\n"
           "       bonfyre-admission memory\n"

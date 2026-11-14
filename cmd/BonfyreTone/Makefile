@@ -10,5 +10,10 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
+.PHONY: test
+test: $(TARGET)
+	$(MAKE) -C ../../tests/vectors bonfyre-vectors
+	cd ../.. && tests/vectors/bonfyre-vectors --root . cmd/BonfyreTone/tests/vectors/command_behavior.json
+
 clean:
 	rm -f $(TARGET)

@@ -1,0 +1,4 @@
+# Preserve upstream byte-identical QR sources for their pinned SHA-256 checks.
+# Scope this whitespace exception to the two vendored MIT-licensed source files.
+qrcodegen.c -whitespace
+qrcodegen.h -whitespace

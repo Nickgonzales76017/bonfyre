@@ -31,6 +31,14 @@ export function validateProduction(p) {
   fail(typeof p.title === 'string' && p.title.trim() && p.title.length <= 200, 'Name this production.');
   fail(Number.isSafeInteger(p.version) && p.version > 0, 'Invalid production revision.');
   settings(p.defaults);
+  if(p.soundDesign!==undefined){
+    const design=p.soundDesign;
+    fail(design?.schema==='aurekai.editorial-sound-design.v1'&&
+      ['newsroom','feature','essay','conversation','documentary'].includes(design.profile)&&
+      /^music:stem:[a-f0-9]{64}$/.test(design.musicStem)&&
+      design.rightsReview==='pending',
+      'Editorial music must reference a retained stem and remain review-gated.');
+  }
   fail(Array.isArray(p.languages) && p.languages.length > 0 && p.languages.length <= productionLimits.languages, 'Choose one to eight language editions.');
   const languages = new Set();
   for (const language of p.languages) {
@@ -183,7 +191,7 @@ export function selectTake(p,cellId,takeId) {
   fail(cell?.takes.some(t=>t.id===takeId),'Choose an existing take.');
   cell.activeTake=takeId;next.version++;return next;
 }
-export async function mixerSession(p, language, {allowPartial=false,maxSeconds=600,maxTracks=64}={}) {
+export async function mixerSession(p, language, {allowPartial=false,maxSeconds=600,maxTracks=64,copyFiles=true}={}) {
   const states=await productionStatus(p);fail(p.languages.some(l=>l.id===language),'Choose an existing language edition.');
   const cells=p.items.flatMap(item=>item.segments.map(segment=>p.cells.find(c=>c.segment===segment.id&&c.language===language)));
   const missing=cells.filter(c=>states.find(s=>s.id===c.id).state!=='ready').map(c=>c.id);
@@ -194,7 +202,7 @@ export async function mixerSession(p, language, {allowPartial=false,maxSeconds=6
     const take=cell.takes.find(t=>t.id===state.take),item=p.items.find(i=>i.segments.some(s=>s.id===cell.segment));
     fail(await productionDigest(take.bytes)===take.sha256,'A retained take no longer matches its digest.');
     if(rate===null)rate=take.sampleRate;fail(take.sampleRate===rate,'Resample these takes to one rate before arranging them together.');
-    files.push({name:`${cell.segment}-${language}.wav`,bytes:take.bytes.slice(0),sha256:take.sha256});
+    files.push({name:`${cell.segment}-${language}.wav`,bytes:copyFiles?take.bytes.slice(0):take.bytes,sha256:take.sha256});
     clips.push({at,from:0,frames:take.frames,gain:state.settings.gain,muted:false});
     chapters.push({cell:cell.id,take:take.id,source:clone(item.source),title:item.title,at,frames:take.frames});
     at+=take.frames+Math.round(state.settings.gapMs*rate/1000);
@@ -205,4 +213,18 @@ export async function mixerSession(p, language, {allowPartial=false,maxSeconds=6
   return {files,clips,title:`${p.title} · ${language}`,permission:'unreviewed',
     production:{id:p.id,version:p.version,language,chapters,omitted:missing,partial:missing.length>0},
     measured:{sampleRate:rate,frames,seconds:frames/rate}};
+}
+
+// The workspace can materialize these content-addressed files for the native
+// assembler. Source and script review are checked again by mixerSession.
+export async function narrationAssemblyPlan(production,language){
+ const snapshot=structuredClone(validateProduction(production));
+ const session=await mixerSession(snapshot,language,{copyFiles:false});
+ const cells=new Map(snapshot.cells.map(cell=>[cell.id,cell]));
+ const clips=session.clips.map((clip,index)=>({path:session.files[index].sha256+".wav",
+  sha256:session.files[index].sha256,at:clip.at,frames:clip.frames,gain:clip.gain,
+  script:cells.get(session.production.chapters[index].cell).script}));
+ return {plan:{schema:"bonfyre.narration-assembly.v1",sample_rate:session.measured.sampleRate,clips},
+  files:session.files,production:{id:snapshot.id,version:snapshot.version,language,
+   digest:await productionDigest(snapshot),nativeRevision:snapshot.provenance?.nativeRevision??null}};
 }

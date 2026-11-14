@@ -195,4 +195,18 @@ contentTypeFacts: {
 	surface_scene:           {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "surface", audience: "public"}
 	estate_version:          {phenotypes: ["VERSIONED_RECORD", "DATASET"], domain: "pack", audience: "institution"}
 	version_path:            {phenotypes: ["VERSIONED_RECORD", "DATASET"], domain: "pack", audience: "institution"}
+	// Declared CMS record types, not credentials, consent, payments or verification.
+	// Audience describes use context; only destination owners grant visibility.
+	dating_date_plan: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
+	dating_interest: {phenotypes: ["EVENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
+	dating_participation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "self"}
+	publisher_account: {phenotypes: ["DATASET", "VERSIONED_RECORD"], domain: "external", audience: "institution"}
+	publisher_subaccount: {phenotypes: ["DATASET", "VERSIONED_RECORD"], domain: "external", audience: "institution"}
+	route_presentation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
+	training_plan_draft: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
+	training_plan_release: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "public"}
+	training_program_draft: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "household", audience: "self"}
+	training_program_release: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "community", audience: "public"}
+	training_studio_presentation: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
+	work_example: {phenotypes: ["DOCUMENT", "VERSIONED_RECORD"], domain: "site", audience: "public"}
 }

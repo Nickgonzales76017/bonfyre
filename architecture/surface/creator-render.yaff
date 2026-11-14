@@ -110,6 +110,11 @@ architecture service-creator-audio
   source_path components/BonfyreServiceSite/creator-client.mjs
   source_path components/BonfyreServiceSite/creator-import.mjs
   source_path components/BonfyreServiceSite/creator-import-client.mjs
+  source_path components/BonfyreServiceSite/editorial-sound-design-ui.mjs
+  source_path cmd/BonfyreBroadcast/tests/editorial_mix_test.sh
+  witness cmd/BonfyreBroadcast/tests/editorial_mix_test.sh exercises retained music selection, complete multi-passage preview and stopping during asynchronous decoding
+  invariant a music stem retained in the editorial arrangement is read back before the current selector accepts it; attribution remains review-gated
+  forbidden_inference a selected music stem or browser preview -> rights clearance or a published final master
   source_path components/BonfyreServiceSite/creator-import-view.mjs
   source_path components/BonfyreServiceSite/creator-timeline.mjs
   source_path components/BonfyreServiceSite/creator-timeline-model.mjs
@@ -142,6 +147,14 @@ architecture service-creator-audio
   witness packs/no-simulation/product-maturity-20261015/audio/local-desk/verification.json retains 28 successful imported-session browser checks, including independent downloaded PCM values, two sample rates, source tampering, invalid import recovery, stale tabs and 320 to 1440 pixel layouts; the original sample passes all eighteen browser checks in packs/no-simulation/product-maturity-20261015/audio/regression/verification.json
   forbidden_inference generated-tone parity or browser-local saves -> rights over third-party media, live collaborative editing, real-time audio guarantees or a complete DAW
   known_gap decoded PCM and mixed output remain resident in bounded memory; longer recordings, other codecs, effects, live recording, multiple imported-session libraries, account sync and an AudioWorklet engine remain unimplemented
+
+interaction narration-production-to-native-assembly
+  source service-creator-audio
+  destination broadcast
+  relation prepares_content_addressed_assembly
+  preserves reviewed current take identities, passage order, frame positions, per-passage gain and scripts
+  drops publication authority, rights review and any implication of completed workspace-to-native execution
+  forbidden_inference an assembly plan -> an approved or published audio edition
 
 interaction creator-kernel-to-service-sample
   source creator-browser-mix

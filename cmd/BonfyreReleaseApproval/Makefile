@@ -10,6 +10,7 @@ $(TARGET): src/main.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/b
 
 test: $(TARGET)
 	sh tests/release_approval_test.sh ./$(TARGET)
+	sh $(ROOT)/scripts/release/tests/approved_activation_test.sh
 	sh $(ROOT)/scripts/tests/organ_drift_test.sh
 	bun test $(ROOT)/scripts/release/tests/public_surface_rollout.test.mjs
 	bun test $(ROOT)/scripts/tests/cloudflare-reconcile.test.mjs

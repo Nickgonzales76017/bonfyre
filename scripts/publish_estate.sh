@@ -91,6 +91,12 @@ if [ -x "$ADMISSION" ]; then
         "$ADMISSION" release --db "$ADMISSION_DB" --grant "$(cat "$GRANT_FILE")" >/dev/null 2>&1 || true
         note "released the memory grant of a pass that did not finish"
     fi
+    # The file is not enough: grants 135 and 151 (2026-11-01, 2026-11-03) were
+    # open with no file naming them and refused every pass from then on. Under
+    # the lock no other publish pass exists, so every open grant of this plane
+    # is an orphan.
+    orphans=$("$ADMISSION" release --db "$ADMISSION_DB" --plane publish-estate 2>/dev/null | sed -n 's/.*"released_grants":\([0-9]*\).*/\1/p')
+    [ -n "$orphans" ] && [ "$orphans" != 0 ] && note "released $orphans orphaned publish-estate memory grants"
     rm -f "$GRANT_FILE"
     answer=$("$ADMISSION" request --db "$ADMISSION_DB" --plane publish-estate --kind publish-pass \
         --bytes $(( ${BONFYRE_PUBLISH_MIN_FREE_MB:-700} * 1048576 )) --volume memory 2>/dev/null || true)
@@ -128,6 +134,7 @@ for needed in "$WEB" "$ESTATE/cms.db"; do
 done
 
 export BONFYRE_CMS_DB="$ESTATE/cms.db"
+export BONFYRE_MEDIA_ASSET_ROOT="${BONFYRE_MEDIA_ASSET_ROOT:-$ESTATE/media-assets}"
 export BONFYRE_FOREIGN_ROOT="$ESTATE/foreign"
 export BONFYRE_SOURCE_FRONTIER_DB="$ESTATE/frontier.db"
 export BONFYRE_ITEM_ARCHIVE_DB="$ESTATE/items.db"
@@ -166,6 +173,19 @@ esac
 if [ -f "$REPO/scripts/project_event_sources.mjs" ]; then
     bun "$REPO/scripts/project_event_sources.mjs" --estate "$ESTATE" --repo "$REPO" --apply \
         >> "$LOG" 2>&1 || note "event source filing refused"
+fi
+# 1b. Promote what the reheat retained.  A source with publication
+# occurrences is read from them, not from its retained body, so without this
+# step every such source served the 2026-10-19 backfill while its feed was
+# re-read daily.  The owner refuses duplicates by occurrence identity.
+CMS_BIN="$REPO/cmd/BonfyreCMS/bonfyre-cms"
+if [ -x "$CMS_BIN" ]; then
+    perl -e 'alarm shift; exec @ARGV' "${BONFYRE_PUBLISH_PROMOTE_SECONDS:-900}" \
+        "$CMS_BIN" publication promote-rss --all-published --foreign-root "$ESTATE/foreign" \
+        --limit "${BONFYRE_PUBLISH_PROMOTE_LIMIT:-100}" --ns root --db "$ESTATE/cms.db" \
+        --schemas "$REPO/cmd/BonfyreCMS/content-types" > "$WORK/promote.jsonl" 2>>"$LOG" \
+        || note "publication promotion refused or out of time"
+    note "promoted: $(tail -1 "$WORK/promote.jsonl" 2>/dev/null | cut -c1-200)"
 fi
 "$WEB" census-items > "$WORK/items.jsonl" 2>/dev/null || true
 kept=$("$WEB" archive-items --items "$WORK/items.jsonl" 2>/dev/null | tail -1)

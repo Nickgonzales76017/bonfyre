@@ -401,6 +401,25 @@ static int file_contains(const char *path, const char *needle) {
     return found;
 }
 
+
+/* A CMS commit and a new HTTP reader are separate owners. Confirm the
+ * rendered product, allowing a short bounded handoff, never the record alone. */
+static int site_confirm_html(const Site *s,const char *host,const char *route,
+                             const char *path,const char *first,const char *second) {
+    char code[64]="";
+    const struct timespec pause={0,100000000L};
+    for (int attempt=0;attempt<4;attempt++) {
+        code[0]=0;
+        if (!http_get(s,host,route,path,code,sizeof(code)) &&
+            !strncmp(code,"200",3) && file_contains(path,first) &&
+            (!second || file_contains(path,second))) return 0;
+        if (attempt<3) nanosleep(&pause,NULL);
+    }
+    fprintf(stderr,"site: content saved, but the rendered page was not confirmed at %s (HTTP %s)\n",
+            route,*code?code:"unavailable");
+    return 9;
+}
+
 /* ---------- new ---------- */
 
 typedef struct { const char *name, *title, *tagline, *host, *accent, *first_title, *first_body; } NewSite;
@@ -1105,7 +1124,7 @@ static int site_page(Site *s, int argc, char **argv) {
     const char *key = arg_positional(argc, argv), *title = arg_value(argc, argv, "--title"), *text = arg_value(argc, argv, "--text");
     const char *file = arg_value(argc, argv, "--file"), *route_arg = arg_value(argc, argv, "--route"), *summary = arg_value(argc, argv, "--summary");
     const char *group = arg_value(argc, argv, "--group");
-    char name[128], host[256], profile[128], subject[160], route[128], page_file[PATH_MAX], code[64] = "", url[400];
+    char name[128], host[256], profile[128], subject[160], route[128], page_file[PATH_MAX], url[400];
     char *marked = NULL, *opening = NULL;
     sqlite3 *db = open_cms(s);
     char *body = NULL, *json, *request = NULL;
@@ -1291,8 +1310,7 @@ static int site_page(Site *s, int argc, char **argv) {
     if (rc) return rc;
     if ((rc = ensure_server(s))) return rc;
     snprintf(page_file, sizeof(page_file), "%s/.page-readback.html", s->home);
-    http_get(s, host, route, page_file, code, sizeof(code));
-    rc = !strncmp(code, "200", 3) && file_contains(page_file, "site-page") ? 0 : 9;
+    rc = site_confirm_html(s,host,route,page_file,"site-page",NULL);
     unlink(page_file);
     snprintf(url, sizeof(url), "http://%s:%d%s", host, s->port, route);
     fputs("{\"schema\":\"bonfyre.site.page.v1\",\"site\":", stdout); json_text(stdout, name);
@@ -1557,7 +1575,7 @@ static int site_offer(Site *s, int argc, char **argv) {
     const char *text = arg_value(argc, argv, "--text"), *amount = arg_value(argc, argv, "--amount"), *currency = arg_value(argc, argv, "--currency");
     const char *unit = arg_value(argc, argv, "--unit"), *route = arg_value(argc, argv, "--page"), *remove = arg_value(argc, argv, "--withdraw");
     int bookable = arg_flag(argc, argv, "--bookable"), rc;
-    char name[128], host[256], profile[128], subject[160], coordinate[300], ordinal[24], page_file[PATH_MAX], code[64] = "", href[400], url[400];
+    char name[128], host[256], profile[128], subject[160], coordinate[300], ordinal[24], page_file[PATH_MAX], href[400], url[400];
     char *contract = NULL;
     size_t contract_len = 0;
     int asks = 0;
@@ -1680,8 +1698,7 @@ static int site_offer(Site *s, int argc, char **argv) {
     if (rc) return rc;
     if ((rc = ensure_server(s))) return rc;
     snprintf(page_file, sizeof(page_file), "%s/.offer-readback.html", s->home);
-    http_get(s, host, route, page_file, code, sizeof(code));
-    rc = !strncmp(code, "200", 3) && file_contains(page_file, "class=\"offer\"") && file_contains(page_file, title) ? 0 : 9;
+    rc = site_confirm_html(s,host,route,page_file,"class=\"offer\"",title);
     unlink(page_file);
     snprintf(url, sizeof(url), "http://%s:%d%s", host, s->port, route);
     fputs("{\"schema\":\"bonfyre.site.offer.v1\",\"site\":", stdout); json_text(stdout, name);
@@ -1697,7 +1714,7 @@ static int site_offer(Site *s, int argc, char **argv) {
 static int site_post(Site *s, int argc, char **argv) {
     const char *key = arg_positional(argc, argv), *title = arg_value(argc, argv, "--title"), *text = arg_value(argc, argv, "--text");
     const char *file = arg_value(argc, argv, "--file"), *remove = arg_value(argc, argv, "--withdraw");
-    char name[128], host[256], profile[128], subject[160], post[160], author[96], when[32], page_file[PATH_MAX], code[64] = "";
+    char name[128], host[256], profile[128], subject[160], post[160], author[96], when[32], page_file[PATH_MAX];
     sqlite3 *db = open_cms(s);
     char *body = NULL, *json;
     long size = 0;
@@ -1749,8 +1766,7 @@ static int site_post(Site *s, int argc, char **argv) {
     if (rc) return rc;
     if ((rc = ensure_server(s))) return rc;
     snprintf(page_file, sizeof(page_file), "%s/.post-readback.html", s->home);
-    http_get(s, host, "/", page_file, code, sizeof(code));
-    rc = !strncmp(code, "200", 3) && file_contains(page_file, title) ? 0 : 9;
+    rc = site_confirm_html(s,host,"/",page_file,title,NULL);
     unlink(page_file);
     fputs("{\"schema\":\"bonfyre.site.post.v1\",\"site\":", stdout); json_text(stdout, name);
     fputs(",\"title\":", stdout); json_text(stdout, title);

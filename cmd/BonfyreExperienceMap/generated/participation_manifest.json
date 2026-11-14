@@ -1,8 +1,6 @@
 {
   "braid_depth_distribution": {
-    "0": 4881,
-    "1": 9,
-    "3": 1
+    "0": 4891
   },
   "candidate_axis_counts": {
     "capability": 3624,
@@ -29,12 +27,9 @@
     "7": 14
   },
   "measured_axis_counts": {
-    "discovery": 4891,
-    "observation": 10,
-    "protocol": 1,
-    "semantic": 1
+    "discovery": 4891
   },
-  "owner_evidence_rows": 16,
+  "owner_evidence_rows": 0,
   "schema": "bonfyre.external-participation-manifest.v2",
   "total_occurrences": 4891,
   "truth_level": "compiled_diagnostic_projection"

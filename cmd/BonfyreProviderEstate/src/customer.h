@@ -117,7 +117,8 @@ static void customer_report(const char *provider, const char *customer, const ch
     bf_jsonw_obj_end(&w); fwrite(w.buf, 1, w.len, stdout); fputc('\n', stdout); bf_jsonw_free(&w);
 }
 
-/* The first organization the key can see; containers live under it. */
+/* Supabase must use one explicit held organization when the token spans several.
+ * Silently taking the first organization could bill or mutate the wrong tenant. */
 static int customer_org(const CustomerProvider *p, const char *base, const char *token, char *org, size_t cap) {
     static char buf[1 << 20]; char url[512]; int status;
     snprintf(url, sizeof(url), !strcmp(p->slug, "neon") ? "%s/users/me/organizations" : !strcmp(p->slug, "stripe") ? "%s/account" : !strcmp(p->slug, "vercel") ? "%s/v2/teams" : !strcmp(p->slug, "render") ? "%s/owners?limit=1" : !strcmp(p->slug, "supabase") ? "%s/organizations" : "%s/organizations/", base);
@@ -126,6 +127,23 @@ static int customer_org(const CustomerProvider *p, const char *base, const char 
     if (!strcmp(p->slug, "stripe")) { const bf_json_node_t *id = bf_json_obj_get(d, bf_json_root(d), "id"); int ok = id && bf_json_get_str_copy(id, org, cap) > 0; bf_json_free(d); return ok; }
     if (!strcmp(p->slug, "render")) { const bf_json_node_t *id = bf_json_dotpath(d, "0.owner.id"); int ok = id && bf_json_get_str_copy(id, org, cap) > 0; bf_json_free(d); return ok; }
     const bf_json_node_t *list = !strcmp(p->slug, "neon") ? bf_json_obj_get(d, bf_json_root(d), "organizations") : !strcmp(p->slug, "vercel") ? bf_json_obj_get(d, bf_json_root(d), "teams") : bf_json_root(d);
+    if (!strcmp(p->slug, "supabase")) {
+        const char *pin = getenv("BONFYRE_SUPABASE_HOLDING_ORG");
+        char selected[128] = ""; int matched = 0;
+        for (const bf_json_node_t *row = list ? bf_json_child_first(d, list) : NULL; row; row = bf_json_child_next(d, row)) {
+            char id[128] = "", slug[128] = "";
+            const bf_json_node_t *v = bf_json_obj_get(d, row, "id");
+            const bf_json_node_t *s = bf_json_obj_get(d, row, "slug");
+            if (!v || bf_json_get_str_copy(v, id, sizeof(id)) <= 0) continue;
+            if (s) bf_json_get_str_copy(s, slug, sizeof(slug));
+            if (pin && *pin && strcmp(pin, id) && strcmp(pin, slug)) continue;
+            if (++matched > 1) break;
+            snprintf(selected, sizeof(selected), "%s", id);
+        }
+        int ok = matched == 1 && strlen(selected) < cap;
+        if (ok) strcpy(org, selected);
+        bf_json_free(d); return ok;
+    }
     const bf_json_node_t *first = list ? bf_json_arr_get(d, list, 0) : NULL;
     const bf_json_node_t *id = first ? bf_json_obj_get(d, first, !strcmp(p->slug, "sentry") ? "slug" : "id") : NULL;
     int ok = id && bf_json_get_str_copy(id, org, cap) > 0; bf_json_free(d); return ok;
@@ -155,7 +173,11 @@ static int customer_find(const CustomerProvider *p, const char *base, const char
         const bf_json_node_t *c = render ? bf_json_obj_get(d, row, "project") : row; if (!c) continue;
         char nm[128] = ""; const bf_json_node_t *m = stripe ? bf_json_obj_get(d, c, "metadata") : c, *v = m ? bf_json_obj_get(d, m, stripe ? "aurekai_container" : "name") : NULL; if (v) bf_json_get_str_copy(v, nm, sizeof(nm));
         if (supa) { char o[64] = "", st[32] = ""; const bf_json_node_t *ov = bf_json_obj_get(d, c, "organization_id"), *sv = bf_json_obj_get(d, c, "status"); if (ov) bf_json_get_str_copy(ov, o, sizeof(o)); if (sv) bf_json_get_str_copy(sv, st, sizeof(st)); if (strcmp(o, org) || !strncmp(st, "REMOVED", 7) || !strcmp(st, "GOING_DOWN")) continue; }
-        if (!strcmp(nm, name)) { v = bf_json_obj_get(d, c, "id"); if (v) bf_json_get_str_copy(v, id, cap); break; }
+        if (!strcmp(nm, name)) {
+            if (id[0]) { bf_json_free(d); return -1; } /* ambiguous duplicate */
+            v = bf_json_obj_get(d, c, "id"); if (v) bf_json_get_str_copy(v, id, cap);
+            if (!supa) break; /* Supabase must census all matching projects */
+        }
     }
     bf_json_free(d); return id[0] ? 1 : 0;
 }
@@ -164,7 +186,7 @@ static int customer_find(const CustomerProvider *p, const char *base, const char
  * container carries the aurekai-c- prefix, so the count never includes
  * Aurekai's own resources. -1 when the provider did not answer. */
 static int customer_count(const CustomerProvider *p, const char *base, const char *token, const char *org) {
-    static char buf[1 << 20]; char url[512]; int status, n = 0; const char *key, *field; int meta = 0;
+    static char buf[1 << 20]; char url[512]; int status, n = 0; const char *key, *field; int meta = 0, supa = !strcmp(p->slug, "supabase");
     if (!strcmp(p->slug, "neon")) { snprintf(url, sizeof(url), "%s/projects?org_id=%s&search=aurekai-c-&limit=400", base, org); key = "projects"; field = "name"; }
     else if (!strcmp(p->slug, "stripe")) { snprintf(url, sizeof(url), "%s/accounts?limit=100", base); key = "data"; field = "aurekai_container"; meta = 1; }
     else if (!strcmp(p->slug, "vercel")) { snprintf(url, sizeof(url), "%s/v9/projects?teamId=%s&search=aurekai-c-&limit=100", base, org); key = "projects"; field = "name"; }
@@ -177,7 +199,16 @@ static int customer_count(const CustomerProvider *p, const char *base, const cha
     for (const bf_json_node_t *row = list ? bf_json_child_first(d, list) : NULL; row; row = bf_json_child_next(d, row)) {
         const bf_json_node_t *c = !strcmp(p->slug, "render") ? bf_json_obj_get(d, row, "project") : row; if (!c) continue;
         char nm[128] = ""; const bf_json_node_t *m = meta ? bf_json_obj_get(d, c, "metadata") : c, *v = m ? bf_json_obj_get(d, m, field) : NULL;
-        if (v) bf_json_get_str_copy(v, nm, sizeof(nm)); if (!strncmp(nm, "aurekai-c-", 10)) n++;
+        if (v) bf_json_get_str_copy(v, nm, sizeof(nm));
+        if (supa && !strncmp(nm, "aurekai-c-", 10)) {
+            char owner[128] = "", state[48] = "";
+            const bf_json_node_t *ov = bf_json_obj_get(d, c, "organization_id");
+            const bf_json_node_t *sv = bf_json_obj_get(d, c, "status");
+            if (!ov || bf_json_get_str_copy(ov, owner, sizeof(owner)) <= 0) { bf_json_free(d); return -1; }
+            if (sv) bf_json_get_str_copy(sv, state, sizeof(state));
+            if (strcmp(owner, org) || !strncmp(state, "REMOVED", 7) || !strcmp(state, "GOING_DOWN")) continue;
+        }
+        if (!strncmp(nm, "aurekai-c-", 10)) n++;
     }
     bf_json_free(d); return n;
 }

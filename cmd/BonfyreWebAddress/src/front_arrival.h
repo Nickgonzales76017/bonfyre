@@ -12,6 +12,14 @@ typedef struct {
     const char *sample_sql;
 } FrontArrivalDoor;
 
+/* Count only admitted, unambiguous member homes, not publisher sites. */
+#define BF_ARRIVAL_MEMBER_CUT "namespace='root' AND status='published' AND profile='member-profile-v1'" \
+    " AND subject_address LIKE 'person:%' AND length(subject_address)>7" \
+    " AND host IN (substr(subject_address,8)||'.aurekai.work',substr(subject_address,8)||'.aurekai.life'," \
+    "substr(subject_address,8)||'.aurekai.live',substr(subject_address,8)||'.aurekai.shop')" \
+    " AND host NOT IN (SELECT host FROM site_presentation WHERE namespace='root' AND status='published'" \
+    " GROUP BY host HAVING COUNT(DISTINCT subject_address)>1)"
+
 static int front_arrival_count(sqlite3 *db,const FrontArrivalDoor *door) {
     sqlite3_stmt *st=NULL;int value=-1;
     if(!db||!door||!door->type||!door->count_sql||!cms_type_registered(db,door->type))return -1;
@@ -20,27 +28,53 @@ static int front_arrival_count(sqlite3 *db,const FrontArrivalDoor *door) {
     sqlite3_finalize(st);return value;
 }
 
-static int front_arrival_samples(sqlite3 *db,const FrontArrivalDoor *door,char out[3][161]) {
+typedef struct {char label[161], identity[161];} FrontArrivalSample;
+static int front_arrival_samples(sqlite3 *db,const FrontArrivalDoor *door,FrontArrivalSample out[3]) {
     sqlite3_stmt *st=NULL;int n=0;
     if(!db||!door||!door->type||!door->sample_sql||!cms_type_registered(db,door->type))return 0;
     if(sqlite3_prepare_v2(db,door->sample_sql,-1,&st,NULL)!=SQLITE_OK)return 0;
     while(n<3&&sqlite3_step(st)==SQLITE_ROW){
-        const char *value=(const char *)sqlite3_column_text(st,0);size_t len=value?strlen(value):0;
-        if(!len||len>160)continue;
-        snprintf(out[n],161,"%s",value);n++;
+        const char *label=(const char *)sqlite3_column_text(st,0);
+        const char *identity=sqlite3_column_count(st)>1?(const char *)sqlite3_column_text(st,1):NULL;
+        size_t len=label?strlen(label):0, idlen=identity?strlen(identity):0;
+        if(!len||len>160||idlen>160)continue;
+        snprintf(out[n].label,sizeof(out[n].label),"%s",label);
+        if(idlen)snprintf(out[n].identity,sizeof(out[n].identity),"%s",identity);
+        n++;
     }
     sqlite3_finalize(st);return n;
 }
 
 static void front_arrival_door(sqlite3 *db,const FrontArrivalDoor *door) {
-    char samples[3][161]={{0}};int n=front_arrival_samples(db,door,samples),count=front_arrival_count(db,door);
+    FrontArrivalSample samples[3]={0};int n=front_arrival_samples(db,door,samples),count=front_arrival_count(db,door);
     fputs("<article class=\"front-arrival-door\" data-arrival-door><a class=\"front-arrival-main\" href=\"",stdout);
     html(door->href);fputs("\"><span class=\"front-arrival-icon\" data-arrival-icon>",stdout);page_glyph(door->glyph);
     fputs("</span><span class=\"front-arrival-copy\"><span class=\"front-arrival-kicker\">",stdout);html(door->kicker);
     fputs("</span><strong>",stdout);html(door->title);fputs("</strong><span>",stdout);html(door->copy);fputs("</span></span>",stdout);
     if(count>=0){fputs("<span class=\"front-arrival-count\">",stdout);printf("%d",count);fputs(" published</span>",stdout);}
     fputs("</a>",stdout);
-    if(n){fputs("<ul class=\"front-arrival-samples\" aria-label=\"Published examples\">",stdout);for(int i=0;i<n;i++){fputs("<li>",stdout);html(samples[i]);fputs("</li>",stdout);}fputs("</ul>",stdout);}
+    if(n){
+        fputs("<ul class=\"front-arrival-samples\" aria-label=\"Published examples\">",stdout);
+        for(int i=0;i<n;i++){
+            const char *type=door->type;int link=samples[i].identity[0]&&type;
+            fputs("<li>",stdout);
+            if(link){
+                if(!strcmp(type,"site_presentation")){
+                    fputs("<a href=\"https://",stdout);html(samples[i].identity);fputs("/\">",stdout);
+                }else if(!strcmp(type,"community_body")){
+                    fputs("<a href=\"/community?community=",stdout);url_query_value(samples[i].identity);fputs("\">",stdout);
+                }else if(!strcmp(type,"internet_source")){
+                    fputs("<a href=\"/sources?source=",stdout);url_query_value(samples[i].identity);fputs("\">",stdout);
+                }else if(!strcmp(type,"world")){
+                    fputs("<a href=\"/w/",stdout);url_query_value(samples[i].identity);fputs("\">",stdout);
+                }else link=0;
+            }
+            html(samples[i].label);
+            if(link)fputs("</a>",stdout);
+            fputs("</li>",stdout);
+        }
+        fputs("</ul>",stdout);
+    }
     fputs("</article>",stdout);
 }
 
@@ -54,11 +88,14 @@ static const char *front_arrival_lede(const char *territory) {
 static int front_arrival(sqlite3 *db,const char *territory) {
     static const FrontArrivalDoor doors[]={
         {"site_presentation","/people","user","People","People & profiles","Find the people and published profile surfaces already connected to the estate.",
-         "SELECT COUNT(*) FROM site_presentation WHERE namespace='root' AND status='published'",
-         "SELECT host FROM site_presentation WHERE namespace='root' AND status='published' ORDER BY id DESC LIMIT 3"},
+         "SELECT COUNT(DISTINCT subject_address) FROM site_presentation WHERE " BF_ARRIVAL_MEMBER_CUT,
+         "SELECT host,host FROM (SELECT subject_address,host,ROW_NUMBER() OVER (PARTITION BY subject_address"
+         " ORDER BY CASE WHEN host=substr(subject_address,8)||'.aurekai.work' THEN 0 ELSE 1 END,host) AS pick"
+         " FROM site_presentation WHERE " BF_ARRIVAL_MEMBER_CUT
+         ") WHERE pick=1 ORDER BY host LIMIT 3"},
         {"community_body","/communities","group","Community","Communities","Read public conversations, find a community, or start one around a shared subject.",
          "SELECT COUNT(*) FROM community_body WHERE namespace='root' AND status='published' AND visibility='public'",
-         "SELECT title FROM community_body WHERE namespace='root' AND status='published' AND visibility='public' ORDER BY id DESC LIMIT 3"},
+         "SELECT title,community FROM community_body WHERE namespace='root' AND status='published' AND visibility='public' ORDER BY id DESC LIMIT 3"},
         {"pack_artifact","/apps?context=self","apps","Tools","Applications & workflows","Open your applications and continue your work.",
          "SELECT COUNT(*) FROM pack_artifact WHERE namespace='root' AND status='published'",
          NULL},
@@ -67,10 +104,10 @@ static int front_arrival(sqlite3 *db,const char *territory) {
          "SELECT name FROM program_template WHERE namespace='root' AND status='published' ORDER BY COALESCE(ordinal,2147483647),id LIMIT 3"},
         {"internet_source","/sources","link","Source estate","Sources & feeds","Inspect where public material comes from and move from reading into source-backed work.",
          "SELECT COUNT(*) FROM internet_source WHERE namespace='root' AND status='published'",
-         "SELECT label FROM internet_source WHERE namespace='root' AND status='published' ORDER BY id DESC LIMIT 3"},
+         "SELECT label,source FROM internet_source WHERE namespace='root' AND status='published' ORDER BY id DESC LIMIT 3"},
         {"world","/w","world","Worlds","Worlds","Open temporary publications that assemble a subject, its sources and the interaction grammars around it.",
          "SELECT COUNT(*) FROM world WHERE namespace='root' AND status='published'",
-         "SELECT DISTINCT title FROM world WHERE namespace='root' AND status='published' ORDER BY title LIMIT 3"},
+         "SELECT title,MIN(world) FROM world WHERE namespace='root' AND status='published' GROUP BY title ORDER BY title LIMIT 3"},
         {NULL,"/organisations","briefcase","Institutions","Organisations","Browse public organisations and the people, work and services addressed around them.",NULL,NULL}
     };
     if(!territory||!*territory)return 0;
@@ -105,6 +142,7 @@ static int front_arrival(sqlite3 *db,const char *territory) {
         ".front-arrival-main{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:'icon copy' 'count copy';align-items:start;column-gap:14px;color:inherit;text-decoration:none}.front-arrival-icon{grid-area:icon;display:grid;place-items:center;width:44px;height:44px;border:1px solid currentColor;border-radius:999px}.front-arrival-icon .ak-icon{width:22px;height:22px}"
         ".front-arrival-copy{grid-area:copy;display:grid;gap:7px;min-width:0}.front-arrival-copy strong{font:600 clamp(20px,2vw,28px)/1.1 'DM Sans',system-ui;letter-spacing:-.025em}.front-arrival-copy>span:last-child{font:400 14px/1.55 'DM Sans',system-ui;opacity:.78}"
         ".front-arrival-count{grid-area:count;font:500 10px/1.3 'DM Mono',ui-monospace,monospace;margin-top:7px;white-space:nowrap;opacity:.7}.front-arrival-main:hover strong{text-decoration:underline;text-underline-offset:4px}.front-arrival-samples{list-style:none;margin:16px 0 0 58px;padding:0;display:flex;flex-wrap:wrap;gap:6px 12px}.front-arrival-samples li{font:500 11px/1.4 'DM Sans',system-ui;opacity:.72;overflow-wrap:anywhere}"
+        ".front-arrival-samples a{color:inherit;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 50%,transparent);text-underline-offset:3px}.front-arrival-samples a:hover{text-decoration-color:currentColor}"
         ".front-arrival-templates{margin-top:22px;padding-top:24px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);display:grid;grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr);gap:clamp(24px,4vw,56px);align-items:start}.front-arrival-templates h3{font:500 clamp(24px,3vw,36px)/1.08 'DM Sans',system-ui;letter-spacing:-.03em;margin:5px 0 10px}.front-arrival-templates p{font:14px/1.55 'DM Sans',system-ui;opacity:.76;margin:0}.front-arrival-template-list{display:flex;flex-wrap:wrap;gap:8px}.front-arrival-template{display:grid;gap:2px;padding:9px 12px;border:1px solid color-mix(in srgb,currentColor 28%,transparent);border-radius:12px}.front-arrival-template strong{font:600 12px/1.25 'DM Sans',system-ui}.front-arrival-template small{font:500 9px/1.3 'DM Mono',ui-monospace,monospace;opacity:.65}"
         ".front-arrival :focus-visible{outline:3px solid currentColor;outline-offset:4px}@media(max-width:900px){.front-arrival>header{grid-template-columns:1fr}.front-arrival>header nav{justify-content:flex-start}.front-arrival-door,.front-arrival-door:nth-child(1),.front-arrival-door:nth-child(2){grid-column:span 6}.front-arrival-templates{grid-template-columns:1fr}}"
         "@media(max-width:620px){.front-arrival-door,.front-arrival-door:nth-child(1),.front-arrival-door:nth-child(2){grid-column:1/-1}.front-arrival-samples{margin-left:0}.front-arrival h2{max-width:none}}"

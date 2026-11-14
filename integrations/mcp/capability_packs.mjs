@@ -17,7 +17,7 @@ export const CAPABILITY_PACKS = Object.freeze({
     route_terms: ['operate', 'operator', 'status', 'health', 'service', 'task', 'queue', 'live', 'drift', 'pause', 'stop', 'receipt', 'runtime', 'backlog', 'cleanup', 'compact', 'supersede'],
     description: 'Live operator, task, service, backlog hygiene and cumulative estate health without widening authority.',
     prefixes: ['operator_', 'task_'],
-    names: ['mcp_capability_lens', 'mcp_read_bundle', 'mcp_pack_snapshot', 'project_status', 'fabric_status', 'spines_status', 'v6_status', 'recent_receipts', 'estate_capabilities', 'organ_drift_status', 'organ_drift_sync', 'operator_backlog_audit', 'operator_goal_supersede'],
+    names: ['mcp_capability_lens', 'mcp_read_bundle', 'mcp_pack_snapshot', 'project_status', 'fabric_status', 'spines_status', 'v6_status', 'recent_receipts', 'estate_capabilities', 'organ_drift_status', 'organ_drift_sync', 'operator_backlog_audit', 'operator_maturation_ledger', 'operator_goal_supersede'],
     entry_reads: ['project_status', 'fabric_status', 'estate_capabilities', 'organ_drift_status', 'operator_backlog_audit'],
     snapshot_reads: [{ name: 'project_status', arguments: {} }, { name: 'fabric_status', arguments: {} }, { name: 'estate_capabilities', arguments: {} }, { name: 'organ_drift_status', arguments: {} }, { name: 'operator_backlog_audit', arguments: { state: 'queued', limit: 50 } }],
     primary_effects: ['operator_goal_add', 'operator_goal_supersede', 'organ_drift_sync'],

@@ -33,17 +33,52 @@ Approve puts it live. If any check fails during the switch, the previous release
     echo "offered $name on the work board"
     ;;
 run)
-    mkdir -p "$approvals/done" "$approvals/failed" && chmod 700 "$approvals"
-    lock="$approvals/.running"; mkdir "$lock" 2>/dev/null || exit 0
-    trap 'rmdir "$lock"' EXIT INT TERM
+    mkdir -p "$approvals/done" "$approvals/failed" "$approvals/retry" && chmod 700 "$approvals"
+    # Exclusive directory locks survive an abrupt reboot; recover stale owners.
+    lock="$approvals/.running"
+    if ! mkdir "$lock" 2>/dev/null; then
+        [ -d "$lock" ] && [ ! -L "$lock" ] || exit 1
+        recovery="$approvals/.running-recovery"
+        # Only one invocation may reclaim an abandoned lock at a time.
+        mkdir "$recovery" 2>/dev/null || exit 0
+        trap 'rmdir "$recovery" 2>/dev/null || true' EXIT INT TERM
+        owner=$(cat "$lock/pid" 2>/dev/null || true)
+        case "$owner" in ''|*[!0-9]*) owner="" ;; esac
+        if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+            owner_command=$(ps -p "$owner" -o command= 2>/dev/null || true)
+            # Never preempt a live watcher or an uninspectable live process.
+            case "$owner_command" in *approved_activation.sh*|'') exit 0 ;; esac
+        fi
+        if [ -z "$owner" ]; then
+            # A second process can see mkdir before the pid is written.
+            stamp=$(stat -f %m "$lock" 2>/dev/null || stat -c %Y "$lock" 2>/dev/null || true)
+            case "$stamp" in ''|*[!0-9]*) exit 0 ;; esac
+            now=$(date +%s)
+            [ "$((now-stamp))" -ge 60 ] || exit 0
+        fi
+        rm -f "$lock/pid"
+        rmdir "$lock" 2>/dev/null || exit 0
+        rmdir "$recovery" 2>/dev/null || exit 0
+        trap - EXIT INT TERM
+        mkdir "$lock" 2>/dev/null || exit 0
+    fi
+    printf '%s\n' "$$" > "$lock/pid" || exit 1
+    trap 'rm -f "$lock/pid"; rmdir "$lock" 2>/dev/null || true' EXIT INT TERM
     for file in "$approvals"/*.approved; do
         [ -f "$file" ] || continue
         release=$(awk -F'\t' '$1=="release"{print $2}' "$file"); goal=$(awk -F'\t' '$1=="goal"{print $2}' "$file")
         case "$release$goal" in *[!A-Za-z0-9-]*|'') mv "$file" "$approvals/failed/"; continue ;; esac
         open=$(sqlite3 "$op" "SELECT count(*) FROM goals WHERE id='$goal' AND dedupe_key='release-approval:$release' AND source='release-approval' AND state NOT IN('resolved','superseded')")
         dir="$releases/$release"; now=$(date +%s); log="$approvals/$release.log"
+        retry="$approvals/retry/$release.next"
         if [ "$open" != 1 ] || [ ! -f "$dir/accepted.mpk" ]; then
+            rm -f "$retry"
             mv "$file" "$approvals/failed/"; continue
+        fi
+        if [ -f "$retry" ]; then
+            due=$(cat "$retry" 2>/dev/null || printf '0')
+            case "$due" in *[!0-9]*|'') mv "$file" "$approvals/failed/"; rm -f "$retry"; continue ;; esac
+            [ "$now" -lt "$due" ] && continue
         fi
         # Acceptance is attested against the environment that runs it, so the
         # release is verified again here, in the same environment that activates it.
@@ -51,11 +86,23 @@ run)
         sqlite3 "$op" "UPDATE goals SET last_error='$(q "Approved; checking the release again before it goes live (about 25 minutes)")',updated_at=$now WHERE id='$goal'"
         if (cd "$root" && "$bun" scripts/release/public_surface_rollout.mjs verify "$dir" && "$bun" scripts/release/public_surface_rollout.mjs activate "$dir") > "$log" 2>&1; then
             sqlite3 "$op" "UPDATE goals SET state='resolved',last_error='$(q "Live since $(date '+%a %d %b %Y %H:%M')")',updated_at=$now WHERE id='$goal'"
+            rm -f "$retry"
             mv "$file" "$approvals/done/"
         else
             why=$(grep -E 'Error|failed|refus' "$log" | tail -1 | cut -c1-300)
-            sqlite3 "$op" "UPDATE goals SET last_error='$(q "Activation did not go live; the previous release kept serving. ${why:-See $log}")',updated_at=$now WHERE id='$goal'"
-            mv "$file" "$approvals/failed/"
+            # Transport outages must not consume a person's authorization.
+            # Only known transient reachability failures retry, after 30 minutes.
+            # Integrity, acceptance, rollback or other failures still fail closed.
+            if grep -Eiq 'connection (refused|reset|timed out)|network is unreachable|transport (failure|unavailable|error)|could not resolve host|temporary failure in name resolution|ssh: connect to host|timed out waiting for readback' "$log" &&
+                ! grep -Eiq '(acceptance|integrity|digest|signature|rollback|invariant|stale stage|hash mismatch|unauthori[sz]ed).*(fail|mismatch|refus|error)|(fail|mismatch|refus|error).*(acceptance|integrity|digest|signature|rollback|invariant|stale stage|hash mismatch|unauthori[sz]ed)' "$log"; then
+                due=$((now+1800))
+                printf '%s\n' "$due" > "$retry.tmp" && mv "$retry.tmp" "$retry"
+                sqlite3 "$op" "UPDATE goals SET last_error='$(q "Approved; temporary transport/readback failure; automatic retry after $(date -r "$due" '+%a %d %b %H:%M' 2>/dev/null || printf '%s' "$due"). ${why:-See $log}")',updated_at=$now WHERE id='$goal'"
+            else
+                rm -f "$retry"
+                sqlite3 "$op" "UPDATE goals SET last_error='$(q "Activation did not go live; the previous release kept serving. ${why:-See $log}")',updated_at=$now WHERE id='$goal'"
+                mv "$file" "$approvals/failed/"
+            fi
         fi
     done
     ;;

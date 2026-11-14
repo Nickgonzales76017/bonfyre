@@ -11,7 +11,7 @@ dir=${1:?staged release directory}
 [ -f "$dir/stage.mpk" ] || { echo "that is not a staged release" >&2; exit 1; }
 agent="$HOME/Library/LaunchAgents/com.bonfyre.release-approvals.plist"
 mkdir -p "$HOME/.bonfyre/state/approvals" "$HOME/.bonfyre/logs"; chmod 700 "$HOME/.bonfyre/state/approvals"
-sed "s#__HOME__#$HOME#g" "$root/deploy/launchd/com.bonfyre.release-approvals.plist" > "$agent"
+sed "s#__HOME__#$HOME#g;s#$HOME/Developer/Bonfyre/scripts/release/approved_activation.sh#$root/scripts/release/approved_activation.sh#g" "$root/deploy/launchd/com.bonfyre.release-approvals.plist" > "$agent"
 plutil -lint "$agent" >/dev/null
 launchctl bootout "gui/$(id -u)" "$agent" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$agent"

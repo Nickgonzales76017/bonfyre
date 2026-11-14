@@ -10,6 +10,8 @@ int bf_record_factor_open(const char *path, sqlite3 **db);
 int bf_record_factor_read(sqlite3 *db, sqlite3_int64 row, char **body, size_t *length);
 int bf_record_factor_export(const char *path, FILE *out);
 int bf_record_factor_verify(const char *path, const char *source, FILE *report);
+/* Verified atom bytes, bounded binary stream; source rights remain with caller. */
+int bf_record_factor_atoms_export(const char *path, FILE *out);
 typedef int (*BfRecordVisitor)(void *, sqlite3_int64, const char *, const char *, const char *);
 /* A bounded read against this representation, shared by CLI and WebAddress. */
 int bf_record_factor_visit(sqlite3 *db, const char *search, int limit, int offset,

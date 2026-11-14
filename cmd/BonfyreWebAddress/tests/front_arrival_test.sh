@@ -19,6 +19,10 @@ entry work_example '{"example_id":"arrival-example","pack":"arrival-app","territ
 entry community_body '{"community":"arrival-community","subject_address":"topic:arrival","title":"Arrival Community","description":"Fixture community","visibility":"public","cannot_infer":"fixture only","status":"published"}'
 entry presentation_template '{"template":"arrival-template","reference_source":"fixture","reference_name":"Arrival Editorial","reference_url":"https://example.test/template","reference_categories":"editorial","family":"editorial","renderer_mix":"publication","density":"roomy","hero_mode":"editorial","navigation_mode":"shared","media_mode":"mixed","typography_mode":"editorial","card_mode":"ruled","chrome_mode":"native","territory_affinity":"","semantic_roles":{},"layout_tokens":{},"acceptance_contract":"fixture","cannot_infer":"presentation only","status":"published"}'
 entry site_presentation '{"site_id":"arrival-profile","host":"arrival.example.test","subject_address":"person:arrival","profile":"ghost:arrival-template","territory":"live","navigation":[],"status":"published"}'
+entry site_presentation '{"site_id":"member-arrival-work","host":"arrival.aurekai.work","subject_address":"person:arrival","profile":"member-profile-v1","territory":"work","navigation":[],"status":"published"}'
+entry site_presentation '{"site_id":"member-arrival-life","host":"arrival.aurekai.life","subject_address":"person:arrival","profile":"member-profile-v1","territory":"life","navigation":[],"status":"published"}'
+entry site_presentation '{"site_id":"member-mira-work","host":"mira.aurekai.work","subject_address":"person:mira","profile":"member-profile-v1","territory":"work","navigation":[],"status":"published"}'
+entry site_presentation '{"site_id":"member-draft","host":"draft.aurekai.work","subject_address":"person:draft","profile":"member-profile-v1","territory":"work","navigation":[],"status":"draft"}'
 entry internet_source '{"family":"arrival","source":"arrival-feed","label":"Arrival Feed","says":"Fixture public source","state":"observed","front_door":"yes","status":"published"}'
 entry world '{"world":"arrival-world","title":"Arrival World","character":"scrapbook","lede":"Fixture world","sources":"arrival-feed","cannot_infer":"fixture only","status":"published"}'
 entry world '{"world":"arrival-world-twin","title":"Arrival World","character":"scrapbook","lede":"Duplicate-title fixture world","sources":"arrival-feed","cannot_infer":"fixture only","status":"published"}'
@@ -34,7 +38,7 @@ root=pathlib.Path(sys.argv[1]); problems=[]; ledes=set()
 def check(ok,msg):
     if not ok: problems.append(msg)
 doors=['/people','/communities','/apps?context=self','/programs?context=self','/sources','/w','/organisations']
-values=['Arrival Program','Arrival Community','Arrival Feed','Arrival World','arrival.example.test']
+values=['Arrival Program','Arrival Community','Arrival Feed','Arrival World','arrival.aurekai.work']
 for territory in ('live','life','shop','work'):
     page=(root/f'{territory}.html').read_text()
     check(f'data-territory="{territory}"' in page,f'{territory}: arrival territory')
@@ -50,8 +54,19 @@ for territory in ('live','life','shop','work'):
     check(len(re.findall(r'data-arrival-icon[^>]*>\s*<svg\b',page))==7,f'{territory}: seven SVG icons')
     for href in doors: check(f'href="{href}"' in page,f'{territory}: door {href}')
     for value in values: check(value in page,f'{territory}: published {value}')
+    people=re.search(r'<article class="front-arrival-door" data-arrival-door><a class="front-arrival-main" href="/people".*?</article>',page,re.S)
+    check(bool(people),f'{territory}: people door')
+    if people:
+        check('2 published' in people.group(0),f'{territory}: distinct people counted once')
+        check('href="https://arrival.aurekai.work/"' in people.group(0),f'{territory}: member opens own work home')
+        check('href="https://mira.aurekai.work/"' in people.group(0),f'{territory}: another member opens own home')
+        check('arrival.aurekai.life' not in people.group(0),f'{territory}: same person not sampled twice')
+        check('arrival.example.test' not in people.group(0) and 'draft.aurekai.work' not in people.group(0),f'{territory}: unrelated and draft sites excluded')
+    check('href="/community?community=arrival-community"' in page,f'{territory}: community example links to its own page')
+    check('href="/sources?source=arrival-feed"' in page,f'{territory}: source example links to its own record')
+    check('href="/w/arrival-world"' in page,f'{territory}: world example links to its own publication')
     check('/examples' not in page and 'A finished arrival example' not in page,f'{territory}: no global examples')
-    check(page.count('<li>Arrival World</li>')==1,f'{territory}: world samples are distinct')
+    check(page.count('<a href="/w/arrival-world">Arrival World</a>')==1,f'{territory}: world samples distinct and linked')
     for href in ('/profile','/apps?context=self','/programs?context=self'): check(f'href="{href}"' in page,f'{territory}: account {href}')
     m=re.search(r'data-arrival-lede>([^<]+)',page); check(bool(m),f'{territory}: lede')
     if m: ledes.add(m.group(1))

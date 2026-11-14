@@ -31,12 +31,15 @@ architecture latent-coordinate-fabric
   forbidden_inference similarity -> identity, relation, evidence, authority, or financial truth
   forbidden_inference latent drift -> causal change
   interacts latent-coordinate-narrows-derivation
+  source_path lib/libbonfyre/src/bf_latent.c
+  source_path lib/libbonfyre/include/bf_latent.h
   source_path components/BonfyreControlPlane/latent_fabric.py.archive
   source_path components/BonfyreControlPlane/address_plane.py.archive
+  witness lib/libbonfyre/tests/latent_test.c: projections checked against their passport (dimension, subject and source identity); similarity only within one space or under a contract carrying a transform digest, refused without computing otherwise; only cosine spaces compare; a trajectory never crosses subjects; watch only signals (make -C lib/libbonfyre test-latent PASS 2026-11-08)
   witness components/BonfyreControlPlane/tests/test_latent_fabric.py.archive
   witness components/BonfyreControlPlane/tests/test_address_plane.py.archive
   source_lineage Generation-10 governed latent coordinate target over current SID and embedding predecessors
-  known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
+  known_gap bonfyre-embed and the static search index do not yet call bf_latent, so a query can still compare vectors it was never given a passport for
 architecture model-representation-graph
   canonical_name ModelRepresentationGraph
   family model

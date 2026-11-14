@@ -8,6 +8,7 @@
  * Adding to a gallery saves a private draft; only an explicit owner review
  * makes an entry public. Nothing here copies the image or its record. */
 #include "bf_jsonw.h"
+#include "profile_authoring_overview.h"
 
 #define PH_COVER_LABEL "bonfyre.profile-cover-review.v1"
 #define PH_GALLERY_LABEL "bonfyre.profile-gallery-review.v1"
@@ -153,6 +154,9 @@ static void ph_gallery_form(const PhSite *site, const char *action, const PhArtR
 static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limit, int full) {
     sqlite3_stmt *st = NULL; int shown = 0, more = 0, seen = 0;
     if (!db || !site) return;
+    /* Profile composition belongs to this site, not to the artwork gallery.
+     * Keep the gallery tab separate from the public editorial overview. */
+    if (!full) (void)bf_profile_authoring_overview_emit(stdout, db, site->id);
     if (sqlite3_prepare_v2(db, owner
         ? "SELECT id FROM site_fragment WHERE namespace=?1 AND kind='profile-gallery' AND slot='gallery' AND page='/' AND status IN ('draft','published') ORDER BY position,id LIMIT ?2"
         : "SELECT id FROM site_fragment WHERE namespace=?1 AND kind='profile-gallery' AND slot='gallery' AND page='/' AND status='published' AND audience='public' ORDER BY position,id LIMIT ?2",

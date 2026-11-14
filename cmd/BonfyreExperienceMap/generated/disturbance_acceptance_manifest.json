@@ -59,12 +59,12 @@
   },
   "owner_bridge_evidence": {
     "ForeignTwinGraph->DomainProfile": {
-      "blocked_candidates": 6,
+      "blocked_candidates": 0,
       "cannot_infer": [
         "validated occurrence bindings -> all future DomainProfile handoffs are ready"
       ],
-      "receipt_ingress_observed": true,
-      "validated_bindings": 1
+      "receipt_ingress_observed": false,
+      "validated_bindings": 0
     },
     "ProtocolContract->SemanticDerivationGraph": {
       "cannot_infer": [
@@ -75,18 +75,12 @@
   },
   "schema": "bonfyre.disturbance-acceptance.v1",
   "sensor_boundary": {
-    "attempts": 2,
+    "attempts": 0,
     "body_observed": false,
     "cannot_infer": [
       "documented public feed -> lawful observation by this agent"
     ],
-    "policy_decisions": {
-      "robots_disallow": 1,
-      "robots_preflight_unavailable": 1
-    },
-    "states": {
-      "policy_excluded": 1,
-      "policy_indeterminate": 1
-    }
+    "policy_decisions": {},
+    "states": {}
   }
 }
