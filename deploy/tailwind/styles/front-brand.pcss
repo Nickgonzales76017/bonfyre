@@ -1,10 +1,8 @@
 /*! Generated from deploy/tailwind/styles/front-brand.pcss; do not edit this output. */
 /* Public brand masthead on the four owned Aurekai apex roots (front_brand.h). */
-.af-brand{--af-ink:#152d22;--af-paper:#e5ead9;--af-rule:#a8bb9f;--af-accent:#8f431e;isolation:isolate;position:relative;overflow:hidden;margin:0 0 clamp(26px,5vw,64px);padding:clamp(22px,3.5vw,46px);background:var(--af-paper);color:var(--af-ink);border:1px solid var(--af-rule);font-family:'DM Sans',system-ui,sans-serif}
-.af-brand *{box-sizing:border-box}.af-brand[data-brand-territory=work]{--af-paper:#e3ead9;--af-ink:#132d20;--af-rule:#b5c5a7;--af-accent:#a14523}
-.af-brand[data-brand-territory=life]{--af-paper:#f4e9d8;--af-ink:#4c2d26;--af-rule:#dac5aa;--af-accent:#a64e38}
-.af-brand[data-brand-territory=live]{--af-paper:#242033;--af-ink:#f2eaf1;--af-rule:#67576a;--af-accent:#f1ad8b}
-.af-brand[data-brand-territory=shop]{--af-paper:#eae5d4;--af-ink:#27291f;--af-rule:#bfbba5;--af-accent:#8c4c2e}
+.af-brand{--af-ink:var(--ak-on-surface,#dee4dd);--af-paper:var(--ak-surface-low,#171d19);--af-rule:var(--ak-outline-variant,#444935);--af-accent:var(--ak-primary,#d0fc4f);color:var(--af-ink);isolation:isolate;position:relative;overflow:hidden;margin:0 0 clamp(26px,5vw,64px);padding:clamp(22px,3.5vw,46px);background:var(--af-paper);color:var(--af-ink);border:1px solid var(--af-rule);font-family:'DM Sans',system-ui,sans-serif}
+.af-brand *{box-sizing:border-box}
+.af-brand :is(.af-brand-title,.af-brand-mark,.af-brand-side p,.af-brand-nav a){color:var(--af-ink)}
 .af-brand-top{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--af-rule);padding:0 0 20px}
 .af-brand-mark{font-weight:900;letter-spacing:.14em;font-size:clamp(14px,1.5vw,19px)}.af-brand-mark span{display:block;font:550 10px/1.5 ui-monospace,monospace;letter-spacing:.13em;text-transform:uppercase;opacity:.75}
 .af-brand-signature{max-width:26ch;text-align:right;font:650 10px/1.45 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--af-accent)}
@@ -23,3 +21,12 @@
 @media(max-width:900px){.af-brand-body{grid-template-columns:1fr}.af-brand-title{max-width:19ch}.af-brand-side{max-width:65ch}.af-brand-nav a{padding-inline:10px}}
 @media(max-width:600px){.af-brand{padding:22px 18px}.af-brand-top{align-items:flex-start}.af-brand-signature{font-size:9px;max-width:17ch}.af-brand-body{padding:35px 0 28px;gap:28px}.af-brand-title{font-size:clamp(40px,10vw,69px)}.af-brand-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.af-brand-nav a{border-bottom:1px solid var(--af-rule);padding:13px 10px}.af-brand-nav a:nth-child(2){border-right:0}.af-brand-nav a:first-child{padding-left:10px}.af-brand-nav a:last-child{padding-right:10px;border-bottom:0}.af-brand-nav a:nth-child(3){border-bottom:0}.af-brand-links a{flex:1 1 auto}}
 @media(prefers-reduced-motion:reduce){.af-brand *{scroll-behavior:auto}}
+/* Inside the one shell: the masthead keeps its own type and lime action over the shell's heading rules. */
+.af-brand .af-brand-title{font:400 clamp(42px,6.6vw,105px)/.94 'Instrument Serif',Georgia,serif;letter-spacing:-.043em;color:var(--af-ink)}
+.af-brand .af-brand-links a:first-child{background:var(--af-accent);color:var(--ak-on-primary,#0f1511);border-color:var(--af-accent)}
+body:has(.ak-work-rail) .af-brand-top{padding-right:min(12.5rem,34vw)}
+/* Each territory keeps its own character on the shared dark ground: one accent each. */
+.af-brand[data-brand-territory=work]{--af-accent:var(--ak-primary,#d0fc4f)}
+.af-brand[data-brand-territory=life]{--af-accent:#f1ad8b}
+.af-brand[data-brand-territory=live]{--af-accent:#c8a6ff}
+.af-brand[data-brand-territory=shop]{--af-accent:#f2c86b}
