@@ -2656,3 +2656,15 @@ interaction companions-rows-render-through-shared-native-components
   witness cmd/BonfyreWebAddress/tests/affinity_projection_test.c (rows speak the component language)
   binding cmd/BonfyreWebAddress/src/affinity_projection.c
   binding components/BonfyreServiceSite/authoring/native-component-templates.mjs
+
+interaction web-address-edge-asks-declared-route-owners
+  source web-address-edge
+  destination web-route-table
+  relation ordered_declared_owner_dispatch
+  preserves the parsed method, target, query, body, Host, Accept, session bearer, auth store, origin, payment and institution headers in one BfRequest, the declared row order, each row's request facts and the matched row's path name
+  drops nothing the owner needs; it adds no session, grant or authority of its own
+  forbidden_inference a declared route or its path name -> an authorized caller, an allowed method or an owner that will answer
+  invalidates_on any edit to schemas/control/web-routes.cue or to an owner's BfRequest signature
+  witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh
+  binding cmd/BonfyreWebAddress/generated/native_web_routes.h
+  binding cmd/BonfyreWebAddress/src/main.c

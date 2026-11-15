@@ -426,10 +426,10 @@ static int ph_interest_label(const char *in,char *out,size_t cap){
  out[n]=0;
  return n>=2&&n<=40&&out[0]>='a'&&out[0]<='z';
 }
-static int ph_mutate(const char *target,const char *body,const char *raw,const char *host,const StudioViewer *who,const char *actor,sqlite3 *db){char siteid[128]="",title[161]="",text[6001]="",href[1401]="",nonce[33]="",expected[200]="",item[24]="",ref[132]="",id[24]="",label[64]="",question[16]="",choice[8]="",qweight[4]="",template[65]="";PhField fields[]={{"site",siteid,sizeof(siteid),0},{"title",title,sizeof(title),0},{"text",text,sizeof(text),1},{"href",href,sizeof(href),0},{"nonce",nonce,sizeof(nonce),0},{"expected",expected,sizeof(expected),0},{"item",item,sizeof(item),0},{"ref",ref,sizeof(ref),0},{"id",id,sizeof(id),0},{"label",label,sizeof(label),0},{"question",question,sizeof(question),0},{"choice",choice,sizeof(choice),0},{"weight",qweight,sizeof(qweight),0},{"template",template,sizeof(template),0}};
+static int ph_mutate(const char *body,const char *raw,const char *host,const StudioViewer *who,const char *actor,sqlite3 *db,const BfRequest *route){char siteid[128]="",title[161]="",text[6001]="",href[1401]="",nonce[33]="",expected[200]="",item[24]="",ref[132]="",id[24]="",label[64]="",question[16]="",choice[8]="",qweight[4]="",template[65]="";PhField fields[]={{"site",siteid,sizeof(siteid),0},{"title",title,sizeof(title),0},{"text",text,sizeof(text),1},{"href",href,sizeof(href),0},{"nonce",nonce,sizeof(nonce),0},{"expected",expected,sizeof(expected),0},{"item",item,sizeof(item),0},{"ref",ref,sizeof(ref),0},{"id",id,sizeof(id),0},{"label",label,sizeof(label),0},{"question",question,sizeof(question),0},{"choice",choice,sizeof(choice),0},{"weight",qweight,sizeof(qweight),0},{"template",template,sizeof(template),0}};
  if(!ph_origin(raw,host)||!ph_fields(body,fields,14,40000)){ph_error(403,"Review and submit this form from its own profile page.\n");return 1;}PhSite site;if(!ph_site(db,NULL,siteid,&site)||strcmp(site.actor,actor)){ph_error(404,"This profile site is not available to this account.\n");return 1;}
  char payload[56000],output[65],post[200];size_t used=0;
- if(!strcmp(target,"/profile/cover/remove")){
+ if(bf_request_is(route,"profile_cover_remove")){
   if(!ph_digits(id)||strlen(expected)!=64||strspn(expected,"0123456789abcdef")!=64){ph_error(400,"Reload the cover before removing it.\n");return 1;}
   errno=0;char *end=NULL;long rowid=strtol(id,&end,10);if(errno||!end||*end||rowid<1||rowid>INT_MAX){ph_error(400,"Choose a cover on this site.\n");return 1;}
   sqlite3_stmt *st=NULL;char coordinate[160],actual[65];int valid=0;
@@ -447,9 +447,9 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   sqlite3_finalize(st);if(!removed){ph_error(503,"Cover removal was not confirmed. Reload the profile.\n");return 1;}
   ph_redirect(&site,"overview");return 1;
  }
- if(!strcmp(target,"/profile/edit")){if(!studio_safe_title(title)||strlen(text)>6000){ph_error(400,"Use a profile name and introduction within the displayed limits.\n");return 1;}ph_hash(&site,output);if(strcmp(output,expected)){ph_error(409,"This profile changed. Reload its current name and introduction before editing.\n");return 1;}used=1;payload[0]='{';page_json_field(payload,sizeof(payload),&used,"heading",title,0);page_json_field(payload,sizeof(payload),&used,"lede",text,site.about_id?1:0);if(!site.about_id){page_json_field(payload,sizeof(payload),&used,"route","/",0);page_json_field(payload,sizeof(payload),&used,"title",title,0);page_json_field(payload,sizeof(payload),&used,"status","published",1);}payload[used++]='}';payload[used]=0;char record[32];snprintf(record,sizeof(record),"%ld",site.about_id);int ok=ph_cms(site.about_id?"update":"create","site_page",site.about_id?record:NULL,payload,site.id,site.about_id?"heading":NULL,site.name,site.about_id?"lede":NULL,site.bio);PhSite current;if(!ph_site(db,NULL,site.id,&current)||strcmp(current.name,title)||strcmp(current.bio,text)){ph_error(ok?503:409,"The profile change was not confirmed. Reload this site before resubmitting.\n");return 1;}ph_redirect(&site,"about");return 1;}
- if(!strcmp(target,"/profile/withdraw")){if(!ph_digits(id)||!*expected){ph_error(400,"Choose an exact post from this site.\n");return 1;}sqlite3_stmt *st=NULL;int valid=0;if(sqlite3_prepare_v2(db,"SELECT 1 FROM community_post WHERE id=?1 AND namespace=?2 AND community=?2 AND author_subject=?3 AND post=?4 AND status IN ('published','archived')",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_int64(st,1,strtoll(id,NULL,10));sqlite3_bind_text(st,2,site.id,-1,SQLITE_STATIC);sqlite3_bind_text(st,3,actor,-1,SQLITE_STATIC);sqlite3_bind_text(st,4,expected,-1,SQLITE_STATIC);valid=sqlite3_step(st)==SQLITE_ROW;}sqlite3_finalize(st);if(!valid){ph_error(404,"That post is not part of this profile.\n");return 1;}ph_cms("update","community_post",id,"{\"status\":\"archived\"}",site.id,"community",site.id,"post",expected);st=NULL;int gone=0;if(sqlite3_prepare_v2(db,"SELECT status FROM community_post WHERE id=?1 AND namespace=?2",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_int64(st,1,strtoll(id,NULL,10));sqlite3_bind_text(st,2,site.id,-1,SQLITE_STATIC);gone=sqlite3_step(st)==SQLITE_ROW&&!strcmp((const char*)sqlite3_column_text(st,0),"archived");}sqlite3_finalize(st);if(!gone){ph_error(503,"Withdrawal is not confirmed. Read the current post before retrying.\n");return 1;}ph_redirect(&site,"posts");return 1;}
- if(!strcmp(target,"/profile/interests/add")||!strcmp(target,"/profile/interests/remove")){
+ if(bf_request_is(route,"profile_edit")){if(!studio_safe_title(title)||strlen(text)>6000){ph_error(400,"Use a profile name and introduction within the displayed limits.\n");return 1;}ph_hash(&site,output);if(strcmp(output,expected)){ph_error(409,"This profile changed. Reload its current name and introduction before editing.\n");return 1;}used=1;payload[0]='{';page_json_field(payload,sizeof(payload),&used,"heading",title,0);page_json_field(payload,sizeof(payload),&used,"lede",text,site.about_id?1:0);if(!site.about_id){page_json_field(payload,sizeof(payload),&used,"route","/",0);page_json_field(payload,sizeof(payload),&used,"title",title,0);page_json_field(payload,sizeof(payload),&used,"status","published",1);}payload[used++]='}';payload[used]=0;char record[32];snprintf(record,sizeof(record),"%ld",site.about_id);int ok=ph_cms(site.about_id?"update":"create","site_page",site.about_id?record:NULL,payload,site.id,site.about_id?"heading":NULL,site.name,site.about_id?"lede":NULL,site.bio);PhSite current;if(!ph_site(db,NULL,site.id,&current)||strcmp(current.name,title)||strcmp(current.bio,text)){ph_error(ok?503:409,"The profile change was not confirmed. Reload this site before resubmitting.\n");return 1;}ph_redirect(&site,"about");return 1;}
+ if(bf_request_is(route,"profile_withdraw")){if(!ph_digits(id)||!*expected){ph_error(400,"Choose an exact post from this site.\n");return 1;}sqlite3_stmt *st=NULL;int valid=0;if(sqlite3_prepare_v2(db,"SELECT 1 FROM community_post WHERE id=?1 AND namespace=?2 AND community=?2 AND author_subject=?3 AND post=?4 AND status IN ('published','archived')",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_int64(st,1,strtoll(id,NULL,10));sqlite3_bind_text(st,2,site.id,-1,SQLITE_STATIC);sqlite3_bind_text(st,3,actor,-1,SQLITE_STATIC);sqlite3_bind_text(st,4,expected,-1,SQLITE_STATIC);valid=sqlite3_step(st)==SQLITE_ROW;}sqlite3_finalize(st);if(!valid){ph_error(404,"That post is not part of this profile.\n");return 1;}ph_cms("update","community_post",id,"{\"status\":\"archived\"}",site.id,"community",site.id,"post",expected);st=NULL;int gone=0;if(sqlite3_prepare_v2(db,"SELECT status FROM community_post WHERE id=?1 AND namespace=?2",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_int64(st,1,strtoll(id,NULL,10));sqlite3_bind_text(st,2,site.id,-1,SQLITE_STATIC);gone=sqlite3_step(st)==SQLITE_ROW&&!strcmp((const char*)sqlite3_column_text(st,0),"archived");}sqlite3_finalize(st);if(!gone){ph_error(503,"Withdrawal is not confirmed. Read the current post before retrying.\n");return 1;}ph_redirect(&site,"posts");return 1;}
+ if(bf_request_is(route,"profile_interests_add")||bf_request_is(route,"profile_interests_remove")){
   char clean[41]="",iid[32]="",date[40]="";
   if(!ph_interest_label(label,clean,sizeof(clean))){ph_error(400,"Use 2 to 40 letters, digits and spaces starting with a letter.\n");return 1;}
   {
@@ -469,7 +469,7 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   sqlite3_bind_text(st,1,iid,-1,SQLITE_STATIC);
   if(sqlite3_step(st)==SQLITE_ROW){rowid=sqlite3_column_int64(st,0);}
   sqlite3_finalize(st);
-  if(!strcmp(target,"/profile/interests/remove")){
+  if(bf_request_is(route,"profile_interests_remove")){
    if(!rowid){ph_redirect(&site,"edit");return 1;}
    char record[32];snprintf(record,sizeof(record),"%lld",rowid);
    ph_cms("update","person_interest",record,"{\"status\":\"archived\"}","root","interest",iid,"status","published");
@@ -493,7 +493,7 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   ph_cms("create","person_interest",NULL,payload,"root",NULL,NULL,NULL,NULL);
   ph_redirect(&site,"edit");return 1;
  }
- if(!strcmp(target,"/profile/quiz/answer")||!strcmp(target,"/profile/quiz/clear")){
+ if(bf_request_is(route,"profile_quiz_answer")||bf_request_is(route,"profile_quiz_clear")){
   /* Re-answering supersedes: reads take the latest published row, so an
    * answer is a new row, never an edit. Clearing archives every published
    * row for the question so no older answer resurfaces. */
@@ -503,7 +503,7 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   for(qi=0;qi<bf_quiz_bank_n;qi++)
    if(!strcmp(question,bf_quiz_bank[qi].key)){q=&bf_quiz_bank[qi];break;}
   if(!q){ph_error(400,"Answer one of the listed quiz questions.\n");return 1;}
-  if(!strcmp(target,"/profile/quiz/clear")){
+  if(bf_request_is(route,"profile_quiz_clear")){
    sqlite3_stmt *st=NULL;
    if(sqlite3_prepare_v2(db,"SELECT id,answer FROM person_quiz_answer WHERE namespace='root' AND actor_subject=?1 AND question=?2 AND status='published'",-1,&st,NULL)!=SQLITE_OK){ph_error(503,"The quiz owner is unavailable.\n");return 1;}
    sqlite3_bind_text(st,1,actor,-1,SQLITE_STATIC);
@@ -537,7 +537,7 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   }
   ph_redirect(&site,"edit");return 1;
  }
- if(!strcmp(target,"/profile/theme")){
+ if(bf_request_is(route,"profile_theme")){
   /* Site design is a profile-scope row pointing at a published template.
    * Latest published row wins, so choosing is always a create. */
   sqlite3_stmt *st=NULL;int known=0;
@@ -562,9 +562,9 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
   ph_cms("create","scope_presentation",NULL,payload,"root",NULL,NULL,NULL,NULL);
   ph_redirect(&site,"edit");return 1;
  }
- if(strcmp(target,"/profile/preview")&&strcmp(target,"/profile/publish")){ph_error(404,"Unknown profile operation.\n");return 1;}
+ if(!bf_request_is(route,"profile_preview")&&!bf_request_is(route,"profile_publish")){ph_error(404,"Unknown profile operation.\n");return 1;}
  if(!studio_safe_title(title)||!text[0]||strlen(nonce)!=32||strspn(nonce,"0123456789abcdef")!=32||!ph_link(href)){ph_error(400,"Review the post title, text and public link before publishing.\n");return 1;}if(*item){char original_title[768],original_href[1401];if(!ph_saved(db,who->id,item,original_title,original_href)||strcmp(original_href,href)){ph_error(409,"Your saved source changed. Review its current link before publishing.\n");return 1;}}if(*ref){char source_title[768],source_href[1401];if(*item||!ph_retained_link(db,ref,source_title,source_href)||strcmp(source_href,href)){ph_error(409,"The retained source changed or is no longer public. Reopen it before sharing.\n");return 1;}}
- if(!strcmp(target,"/profile/preview")){ph_begin(db,&site,site.name,1,"compose",actor);PhSite sites[16];int n=ph_sites(db,actor,sites);ph_nav(sites,n,&site,"posts",1);fputs("<h2>Review before publishing</h2><p>This post will be public on <strong>",stdout);html(site.host);fputs("</strong> only.</p><article class=\"ph-review\"><h3>",stdout);html(title);fputs("</h3><p>",stdout);html(text);fputs("</p><p>",stdout);html(href);fputs("</p></article><form action=\"/profile/publish\" method=\"post\">",stdout);ph_hidden("site",site.id);ph_hidden("title",title);ph_hidden("text",text);ph_hidden("href",href);ph_hidden("nonce",nonce);if(*item)ph_hidden("item",item);if(*ref)ph_hidden("ref",ref);fputs("<button type=\"submit\">Publish on this site</button></form><p><a href=\"",stdout);ph_url(&site,"compose",1);fputs("\">Start a different post</a></p>",stdout);ph_end();return 1;}
+ if(bf_request_is(route,"profile_preview")){ph_begin(db,&site,site.name,1,"compose",actor);PhSite sites[16];int n=ph_sites(db,actor,sites);ph_nav(sites,n,&site,"posts",1);fputs("<h2>Review before publishing</h2><p>This post will be public on <strong>",stdout);html(site.host);fputs("</strong> only.</p><article class=\"ph-review\"><h3>",stdout);html(title);fputs("</h3><p>",stdout);html(text);fputs("</p><p>",stdout);html(href);fputs("</p></article><form action=\"/profile/publish\" method=\"post\">",stdout);ph_hidden("site",site.id);ph_hidden("title",title);ph_hidden("text",text);ph_hidden("href",href);ph_hidden("nonce",nonce);if(*item)ph_hidden("item",item);if(*ref)ph_hidden("ref",ref);fputs("<button type=\"submit\">Publish on this site</button></form><p><a href=\"",stdout);ph_url(&site,"compose",1);fputs("\">Start a different post</a></p>",stdout);ph_end();return 1;}
  snprintf(post,sizeof(post),"profile:%s:%s",site.id,nonce);sqlite3_stmt *st=NULL;int existing=0,match=0;const char *find="SELECT title,body,COALESCE(subject_address,''),status,author_subject,community FROM community_post WHERE namespace=?1 AND post=?2 LIMIT 2";
  for(int pass=0;pass<2;pass++){if(sqlite3_prepare_v2(db,find,-1,&st,NULL)!=SQLITE_OK){ph_error(503,"The native post owner is unavailable.\n");return 1;}sqlite3_bind_text(st,1,site.id,-1,SQLITE_STATIC);sqlite3_bind_text(st,2,post,-1,SQLITE_STATIC);if(sqlite3_step(st)==SQLITE_ROW){existing=1;match=!strcmp((const char*)sqlite3_column_text(st,0),title)&&!strcmp((const char*)sqlite3_column_text(st,1),text)&&!strcmp((const char*)sqlite3_column_text(st,2),href)&&!strcmp((const char*)sqlite3_column_text(st,3),"published")&&!strcmp((const char*)sqlite3_column_text(st,4),actor)&&!strcmp((const char*)sqlite3_column_text(st,5),site.id);if(sqlite3_step(st)==SQLITE_ROW)match=0;}sqlite3_finalize(st);st=NULL;if(existing)break;if(pass)break;
  used=1;payload[0]='{';char date[40];iso_utc_now(date,sizeof(date));const char *keys[]={"post","community","author_subject","title","body","subject_address","published_at","visibility","moderation_state","cannot_infer","status"};const char *values[]={post,site.id,actor,title,text,href,date,"public","accepted","An explicitly published profile post. Saving a source did not publish it or grant rights to its underlying contents.","published"};for(int i=0;i<11;i++)page_json_field(payload,sizeof(payload),&used,keys[i],values[i],i==10);payload[used++]='}';payload[used]=0;ph_cms("create","community_post",NULL,payload,site.id,NULL,NULL,NULL,NULL);}
@@ -582,7 +582,6 @@ static int ph_mutate(const char *target,const char *body,const char *raw,const c
  * fallback until a recommender exists. Cannot infer: a served article ->
  * the intake journal was receipted, current, or rights-cleared. */
 static int ph_blog_slug(const char *target,char *slug,size_t cap){
- if(strncmp(target,"/blog/",6))return 0;
  const char *s=target+6;size_t len=strlen(s);
  if(len&&s[len-1]=='/')len--;
  if(!len||len>96||len>=cap)return 0;
@@ -716,15 +715,19 @@ static void ph_interests_edit(sqlite3 *db,const PhSite *site){
    const char *label=(const char*)sqlite3_column_text(st,0);
    if(!label||!*label||strlen(label)>40)continue;
    count++;fputs("<li>",stdout);html(label);
-   fputs("<form method=\"post\" action=\"/profile/interests/remove\" style=\"display:inline\">",stdout);
-   ph_hidden("site",site->id);ph_hidden("label",label);
-   fputs("<button type=\"submit\" aria-label=\"Remove ",stdout);html(label);fputs("\">Remove</button></form></li>",stdout);
+   {const FtField hidden[]={{"site",site->id},{"label",label}};
+    const FtSubmit go[]={{.label="Remove",.tone="quiet"}};
+    const FtForm f={.id="ph-interest-remove",.action="/profile/interests/remove",.hook="interest-remove",.hidden=hidden,.nhidden=2,.submits=go,.nsubmits=1};
+    ft_form(stdout,&f);}
+   fputs("</li>",stdout);
   }
  }
  sqlite3_finalize(st);
- fputs("</ul><form class=\"ph-form\" method=\"post\" action=\"/profile/interests/add\">",stdout);
- ph_hidden("site",site->id);
- fputs("<label>Add an interest<input name=\"label\" maxlength=\"40\" required placeholder=\"road cycling\"></label><button type=\"submit\">Add interest</button></form>",stdout);
+ fputs("</ul>",stdout);
+ {const FtField hidden[]={{"site",site->id}};
+  static const FtInput in[]={{.label="Add an interest",.name="label",.maxlength="40",.required=1,.placeholder="road cycling"}};
+  const FtForm f={.id="ph-interest-add",.action="/profile/interests/add",.label="Add interest",.hook="interest-add",.hidden=hidden,.nhidden=1,.inputs=in,.ninputs=1};
+  ft_form(stdout,&f);}
  (void)count;
 }
 static void ph_quiz_edit(sqlite3 *db,const PhSite *site){
@@ -857,15 +860,15 @@ static void ph_interests_public(sqlite3 *db,const PhSite *site,const char *viewe
 #include "profile_connections_web.h"
 static int serve_profile_home(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
-    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;char blogslug[97];int private_view=!strcmp(target,"/profile")||!strcmp(target,"/profile/"),mutation=!strncmp(target,"/profile/",9)&&!private_view,apex=!strcmp(target,"/"),blog=ph_blog_slug(target,blogslug,sizeof(blogslug)),bloghome=!strcmp(target,"/blog")||!strcmp(target,"/blog/");if(!private_view&&!mutation&&!apex&&!blog&&!bloghome)return 0;if(apex&&host_is_territory_apex(host))return 0;if(!wants_html(accept)&&!mutation&&!((apex||blog||bloghome)&&!wants_json(accept)&&(!accept||!*accept||strstr(accept,"*/*"))))return 0;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;char blogslug[97];int connections_change=r->as&&!strncmp(r->as,"connections_",12),dating_change=r->as&&!strncmp(r->as,"dating_",7),private_view=bf_request_is(r,"profile"),mutation=connections_change||dating_change||(r->as&&!strncmp(r->as,"profile_",8)),apex=bf_request_is(r,"apex"),blog=bf_request_is(r,"post")&&ph_blog_slug(target,blogslug,sizeof(blogslug)),bloghome=bf_request_is(r,"journal");if(!private_view&&!mutation&&!apex&&!blog&&!bloghome)return 0;if(apex&&host_is_territory_apex(host))return 0;if(!wants_html(accept)&&!mutation&&!((apex||blog||bloghome)&&!wants_json(accept)&&(!accept||!*accept||strstr(accept,"*/*"))))return 0;
  char normalized[256];if(!lower_host(host,normalized))return 0;sqlite3 *db=cms_open_ro();PhSite site={0},sites[16];int count=0,have_site=0;StudioViewer who={0};char actor[192]="";int signed_in=session_identity(bearer,auth_db,&who)&&who.id>0;if(signed_in)ph_actor(who.id,auth_db,actor);
  if(apex){if(!ph_site(db,normalized,NULL,&site)){sqlite3_stmt *claim=NULL;int declared=0;if(db&&sqlite3_prepare_v2(db,"SELECT 1 FROM site_presentation WHERE namespace='root' AND host=?1 AND profile='member-profile-v1' LIMIT 1",-1,&claim,NULL)==SQLITE_OK){sqlite3_bind_text(claim,1,normalized,-1,SQLITE_STATIC);declared=sqlite3_step(claim)==SQLITE_ROW;}sqlite3_finalize(claim);if(db)sqlite3_close(db);if(declared){ph_error(404,"This profile site is not currently published.\n");return 1;}return 0;}have_site=1;}
  if(bloghome){if(strcmp(method,"GET")){ph_error(405,"Open the journal with GET.\n");if(db)sqlite3_close(db);return 1;}if(!db||!ph_site(db,normalized,NULL,&site)){if(db)sqlite3_close(db);return 0;}int served=ph_blog_index(db,&site,normalized,query);sqlite3_close(db);return served;}
  if(blog){if(strcmp(method,"GET")){ph_error(405,"Open journal articles with GET.\n");if(db)sqlite3_close(db);return 1;}if(!db||!ph_site(db,normalized,NULL,&site)){if(db)sqlite3_close(db);return 0;}int served=ph_blog(db,&site,blogslug,normalized);sqlite3_close(db);return served;}
  if(private_view||mutation){if(!signed_in){if(db)sqlite3_close(db);if(mutation)ph_error(401,"Sign in before changing a profile.\n");else if(!pj_profile_login_redirect(query))ph_error(400,"Choose a valid profile section before signing in.\n");return 1;}if(!db){ph_error(503,"The profile owner is unavailable.\n");return 1;}}
- if(mutation){if(strcmp(method,"POST")){ph_error(405,"Profile changes require a reviewed form submission.\n");sqlite3_close(db);return 1;}int result=!strncmp(target,"/profile/connections/",21)?ph_connections_mutate(target,body,raw,host,actor):
- !strncmp(target,"/profile/dating/",16)?ph_dating_mutate(target,body,raw,host,actor):
- ph_art_target(target)?ph_art_mutate(target,body,raw,host,actor,db):ph_mutate(target,body,raw,host,&who,actor,db);sqlite3_close(db);return result;}
+ if(mutation){if(strcmp(method,"POST")){ph_error(405,"Profile changes require a reviewed form submission.\n");sqlite3_close(db);return 1;}int result=connections_change?ph_connections_mutate(body,raw,host,actor,r):
+ dating_change?ph_dating_mutate(body,raw,host,actor,r):
+ ph_art_target(target)?ph_art_mutate(target,body,raw,host,actor,db):ph_mutate(body,raw,host,&who,actor,db,r);sqlite3_close(db);return result;}
  if(strcmp(method,"GET")){ph_error(405,"Open profiles with GET.\n");if(db)sqlite3_close(db);return 1;}
  char tab[24]="overview",selected[128]="",q[160]="",cursor[24]="",item[24]="",ref[132]="",kind[16]="",art[128]="",fx[8]="",fy[8]="",view[20]="discover",peer[192]="",before[24]="",facet[32]="";PhField params[]={{"tab",tab,sizeof(tab),0},{"site",selected,sizeof(selected),0},{"q",q,sizeof(q),0},{"cursor",cursor,sizeof(cursor),0},{"item",item,sizeof(item),0},{"ref",ref,sizeof(ref),0},{"kind",kind,sizeof(kind),0},{"art",art,sizeof(art),0},{"fx",fx,sizeof(fx),0},{"fy",fy,sizeof(fy),0},{"view",view,sizeof(view),0},{"peer",peer,sizeof(peer),0},{"before",before,sizeof(before),0},{"facet",facet,sizeof(facet),0}};
  if(!ph_fields(query,params,14,2048)||(*facet&&(strcmp(tab,"connections")||strlen(facet)>31||strspn(facet,"abcdefghijklmnopqrstuvwxyz0123456789-")!=strlen(facet)))||((!ak_app_tab(tab))&&(*peer||strcmp(view,"discover")))||(ak_app_tab(tab)&&(!ak_app_tab_view(ak_app_tab(tab),view)||(*peer&&(strcmp(view,ak_app_tab(tab)->peer_view)||!bf_dating_subject(peer)))))||(*before&&(!ak_app_tab(tab)||strcmp(view,ak_app_tab(tab)->peer_view)||!*peer||!ph_digits(before)))||((*art||*fx||*fy)&&strcmp(tab,"artwork"))||(*cursor&&!ph_digits(cursor))||(*item&&!ph_digits(item))||(*ref&&(strcmp(tab,"compose")||*item))||(*kind&&(!pj_kind(kind)||strcmp(tab,"activity")))||(!private_view&&(*selected||*item||*ref||*q||*kind||*art||!strcmp(tab,"artwork")||(!strcmp(tab,"saved")||!strcmp(tab,"sites")||!strcmp(tab,"edit")||!strcmp(tab,"compose")||!strcmp(tab,"activity")||!strcmp(tab,"connections")||ak_app_tab(tab))))){ph_error(400,"Choose a section on this exact profile.\n");if(db)sqlite3_close(db);return 1;}

@@ -245,8 +245,8 @@ static void ac_installed_collections(const char *binding,const char *pack,const 
 /* POST /work-board/act: the person records where their own provider task
  * stands. Done resolves it; the waiting reasons keep it open with a dated note;
  * Not now lowers it. Same-origin form, current session, listed task only. */
-static int ac_work_board_act(const char *method,const char *target,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/work-board/act"))return 0;
+static int ac_work_board_act(const char *method,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"work_board_act"))return 0;
     if(strcmp(method,"POST")){aw_error(405,"Use the work board to record this.\n");return 1;}
     char origin[300],http[300],https[300],ctype[96],context[96]="",task[128]="",action[16]="",back[8]="",actor[160],subject[160],operator_db[PATH_MAX];const char *scope=NULL;unsigned seen=0;
     snprintf(http,sizeof(http),"http://%s",host?host:"");snprintf(https,sizeof(https),"https://%s",host?host:"");
@@ -372,8 +372,8 @@ static void ac_work_focus(const char *context,const char *task,const char *subje
     }
     sqlite3_finalize(s);sqlite3_close(db);
 }
-static int ac_work_board(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/work-board"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to open the account work board.\n");return 1;}
+static int ac_work_board(const char *method,const char *query,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"work_board"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to open the account work board.\n");return 1;}
     char context[96],task[128],actor[160],destination[160],back[800];const char *scope=NULL;if(!ac_work_board_query(query,context,task)){aw_error(400,"Choose one account work-board destination and optional exact task.\n");return 1;}
     int access=psetup_context(bearer,auth_db,context,0,actor,sizeof(actor),destination,sizeof(destination),&scope);if(access==0){snprintf(back,sizeof(back),"/work-board?%s",query);fputs("HTTP/1.1 303 See Other\r\nLocation: /login?next=",stdout);url_query_value(back);fputs("\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;}if(access!=1){aw_error(403,"This account cannot open that work board.\n");return 1;}
     psetup_start_wb(200,"Account work board");
@@ -452,8 +452,8 @@ static void ac_feed_picker(const char *context,const char *item,const char *bear
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);if(result<0){fputs("<p role=\"alert\">The complete destination list is unavailable.</p>",stdout);return;}
     {const FtField hidden[]={{"item",item}};psetup_picker("feed-use-picker","/feed-use","Use this item in",NULL,rows,count,result,context,hidden,1);}
 }
-static int ac_feed_use(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/feed-use"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to review feed handoffs.\n");return 1;}char context[96],ref[160],actor[160],destination[160],back[1300],family[64],source_kind[64],source[128],key[25];const char *scope=NULL;PageItem item;
+static int ac_feed_use(const char *method,const char *query,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"feed_use"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to review feed handoffs.\n");return 1;}char context[96],ref[160],actor[160],destination[160],back[1300],family[64],source_kind[64],source[128],key[25];const char *scope=NULL;PageItem item;
     if(!ac_feed_query(query,context,ref)||!ac_feed_ref(ref,source,key)){aw_error(400,"Choose one destination and exact retained feed item.\n");return 1;}int access=psetup_context(bearer,auth_db,context,0,actor,sizeof(actor),destination,sizeof(destination),&scope);if(access==0){snprintf(back,sizeof(back),"/feed-use?%s",query);fputs("HTTP/1.1 303 See Other\r\nLocation: /login?next=",stdout);url_query_value(back);fputs("\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;}if(access!=1){aw_error(403,"This account cannot receive that feed item.\n");return 1;}if(!ac_feed_item(ref,&item,family,source_kind)){aw_error(404,"That retained feed item is unavailable.\n");return 1;}
     char narration_snapshot[65]="";sqlite3 *source_db=cms_open_ro();if(source_db){char twin[256];if(pr_source(source_db,source,twin,sizeof(twin)))pr_item_fingerprint(&item,source,twin,narration_snapshot);sqlite3_close(source_db);}
     psetup_open_with_style(200,"Use this feed item","pack-workspace","/assets/work-continuation.css");
@@ -504,8 +504,8 @@ static void ac_relationship_sources(const char *binding,const char *pack,const c
     }
     if(shown)fputs("</ul></section>",stdout);sqlite3_finalize(q);if(db)sqlite3_close(db);
 }
-static int ac_relationship(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/relationships"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to inspect relationship work.\n");return 1;}
+static int ac_relationship(const char *method,const char *query,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"relationships"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to inspect relationship work.\n");return 1;}
     char context[96]="",subject_ref[192]="",who[512]="",source[2048]="";unsigned seen=0;if(!query||!*query||strlen(query)>4096)goto invalid;
     for(const char *p=query;*p;){const char *end=strchr(p,'&');if(!end)end=p+strlen(p);const char *eq=memchr(p,'=',(size_t)(end-p));char name[24],*out=NULL;size_t cap=0;unsigned bit=0;if(!eq||!psetup_decode(p,(size_t)(eq-p),name,sizeof(name)))goto invalid;
 #define AC_REL_ARG(k,f,b) if(!strcmp(name,k)){out=f;cap=sizeof(f);bit=b;}
@@ -612,8 +612,8 @@ static void ac_installed_views(const char *binding,const char *release){
     }
     fputs("</nav>",stdout);
 }
-static int ac_index(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db) {
-    if(!strcmp(target,"/apps/_destinations")){
+static int ac_index(const char *method,const char *query,const char *bearer,const char *auth_db,const BfRequest *route) {
+    if(bf_request_is(route,"destinations")){
         if(strcmp(method,"GET")){aw_error(405,"Use GET to read current destinations.\n");return 1;}
         if(query&&*query){aw_error(400,"Destination discovery uses the signed-in account without caller-selected coordinates.\n");return 1;}
         PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int access=psetup_destinations(bearer,auth_db,rows,&count);
@@ -624,10 +624,10 @@ static int ac_index(const char *method,const char *target,const char *query,cons
         if(ok&&out.len<=AW_PACKET)aw_response(200,"application/msgpack",out.buf,out.len,0);else aw_error(503,"The destination projection is incomplete.\n");
         bf_mp_writer_free(&out);return 1;
     }
-    int machine=!strcmp(target,"/apps/_bindings");
-    int cards=!strcmp(target,"/apps/_cards");
-    int production=!strcmp(target,"/cms/productions");
-    if(!machine && !cards && !production && strcmp(target,"/apps") && strcmp(target,"/apps/"))return 0;
+    int machine=bf_request_is(route,"bindings");
+    int cards=bf_request_is(route,"cards");
+    int production=bf_request_is(route,"productions");
+    if(!machine && !cards && !production && !bf_request_is(route,"apps_home"))return 0;
     if(strcmp(method,"GET")){aw_error(405,"Use GET to open Your work.\n");return 1;}
     PackSetupInput in;char actor[160],subject[160];const char *scope=NULL;
     char design[208]="",setup_query[4097];

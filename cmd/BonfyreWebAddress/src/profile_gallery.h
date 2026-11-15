@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_GALLERY_H
 #define BONFYRE_PROFILE_GALLERY_H
+#include "form_tree.h"
 /* Account-chosen artwork on one member profile site. The source owner keeps
  * the artwork; a site_fragment only names its exact ref, the reviewed
  * fingerprint and its publication state. A header (kind profile-cover) and a
@@ -127,9 +128,10 @@ static void ph_gallery_style(void) {
 
 static void ph_gallery_form(const PhSite *site, const char *action, const PhArtRow *row, const char *label, int quiet) {
     char id[24]; snprintf(id, sizeof(id), "%d", row->id);
-    fputs("<form method=\"post\" action=\"", stdout); fputs(action, stdout); fputs("\">", stdout);
-    ph_hidden("site", site->id); ph_hidden("id", id); ph_hidden("expected", row->snapshot);
-    fputs(quiet ? "<button class=\"ph-quiet\" type=\"submit\">" : "<button type=\"submit\">", stdout); html(label); fputs("</button></form>", stdout);
+    const FtField hidden[] = {{"site", site->id}, {"id", id}, {"expected", row->snapshot}};
+    const FtSubmit go[] = {{.label = label, .tone = quiet ? "quiet" : NULL}};
+    const FtForm f = {.id = "ph-gallery", .action = action, .hidden = hidden, .nhidden = 3, .submits = go, .nsubmits = 1};
+    ft_form(stdout, &f);
 }
 
 /* The gallery as an editorial mosaic: a wide piece, then smaller and taller

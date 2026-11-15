@@ -218,9 +218,9 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
  }
  sqlite3_close(owner);fputs("</section>",stdout);
 }
-static int ph_connections_mutate(const char *target,const char *input,
-                                 const char *raw,const char *host,const char *actor){
- if(strcmp(target,"/profile/connections/join")&&strcmp(target,"/profile/connections/choice")&&strcmp(target,"/profile/connections/interests")&&strcmp(target,"/profile/connections/message"))return 0;
+static int ph_connections_mutate(const char *input,
+                                 const char *raw,const char *host,const char *actor,const BfRequest *route){
+ if(!bf_request_is(route,"connections_join")&&!bf_request_is(route,"connections_choice")&&!bf_request_is(route,"connections_interests")&&!bf_request_is(route,"connections_message"))return 0;
  char facet[32]="",other[192]="",choice[16]="",rev[16]="",enable[4]="",ack[4]="",topics[513]="",epoch[16]="",nonce[40]="",message[1001]="";
  PhField fields[]={{"facet",facet,sizeof(facet),0},{"other",other,sizeof(other),0},
    {"choice",choice,sizeof(choice),0},{"rev",rev,sizeof(rev),0},
@@ -233,16 +233,16 @@ static int ph_connections_mutate(const char *target,const char *input,
  sqlite3 *owner=ph_dating_open(1);
  if(!owner){ph_error(503,"Private Participation is unavailable.\n");return 1;}
  unsigned revision=0;int ok=0;
- if(strcmp(target,"/profile/connections/message")&&!ph_dating_unsigned(rev,&revision))goto invalid;
- if(!strcmp(target,"/profile/connections/join")){
+ if(!bf_request_is(route,"connections_message")&&!ph_dating_unsigned(rev,&revision))goto invalid;
+ if(bf_request_is(route,"connections_join")){
   if(*other||*choice||*topics||*epoch||*nonce||*message||(strcmp(enable,"1")&&strcmp(enable,"0"))||
      (!strcmp(enable,"1")&&strcmp(ack,"1"))||
      (!strcmp(enable,"0")&&*ack))goto invalid;
   ok=bf_peer_join(owner,actor,facet,!strcmp(enable,"1"),revision);
- }else if(!strcmp(target,"/profile/connections/interests")){
+ }else if(bf_request_is(route,"connections_interests")){
   unsigned participation=0;if(*other||*choice||*enable||*ack||*nonce||*message||!ph_dating_unsigned(epoch,&participation))goto invalid;
   ok=bf_peer_interests_set(owner,actor,facet,topics,participation,revision);
- }else if(!strcmp(target,"/profile/connections/message")){
+ }else if(bf_request_is(route,"connections_message")){
   if(!bf_dating_subject(other)||*choice||*enable||*ack||*topics||*epoch||*rev||strlen(nonce)!=32||strspn(nonce,"0123456789abcdef")!=32)goto invalid;
   ok=bf_peer_send(owner,actor,facet,other,nonce,message);
  }else{

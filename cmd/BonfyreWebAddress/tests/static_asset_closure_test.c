@@ -15,6 +15,8 @@ static int serve_application_workspace(const BfRequest *request) {
     if(mode==1&&!strcmp(target,"/apps/b.mjs"))text=NULL;
     printf("HTTP/1.1 %d OK\r\nCache-Control: %s\r\nContent-Length: %zu\r\n\r\n%s",text?200:404,mode==2?"private, no-store":"public, no-cache",text?strlen(text):0,text?text:"");return 1;
 }
+/* The route table is not compiled here: the fixture owner is asked directly. */
+static int bf_web_route_ask(BfRouteOwner owner,const BfRequest *request){return owner(request);}
 #include "../src/public_asset_export.h"
 static int checks;
 static void check(int ok,const char *why){checks++;if(!ok){fprintf(stderr,"asset closure FAIL: %s\n",why);exit(1);}}

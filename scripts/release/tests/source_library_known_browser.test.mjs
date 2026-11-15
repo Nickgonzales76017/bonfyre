@@ -24,91 +24,36 @@ beforeAll(async()=>{
 afterAll(async()=>{await browser?.close();await fixture?.close();if(temp)rmSync(temp,{recursive:true,force:true});
  for(const[k,v]of [['BONFYRE_WORKSPACE_RELEASE',prior.release],['BONFYRE_WORKSPACE_PACKAGES',prior.packages]])if(v===undefined)delete process.env[k];else process.env[k]=v;
 },20000);
-test('known source is reviewed, written once in native store and reopened without fetching publisher',async()=>{
+test('a pasted address is followed once into the native store and reopened without fetching the publisher',async()=>{
  const context=await browser.createBrowserContext(),page=await context.newPage(),errors=[],requests=[];
- page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
- await page.setRequestInterception(true);
- page.on('request',req=>{
-  requests.push({method:req.method(),url:req.url()});
-  if(req.url().includes('/foreign/twins?'))void req.respond({status:200,contentType:'application/json',body:JSON.stringify(packet)});
-  else void req.continue();
- });
+ page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push({method:r.method(),url:r.url()}));
  const [name,...rest]=fixture.owner.cookie.split('=');
  await page.setCookie({name,value:rest.join('='),url:fixture.base,httpOnly:true,sameSite:'Lax'});
+ const lookup=fixture.base+installed.path+'?mode=link&url='+encodeURIComponent('https://publisher.example/observed-feed');
  try{
-  await page.goto(fixture.base+installed.path,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('[data-source-library][data-ready=true]');
-  await page.waitForSelector('.known-source-lane');
+  await page.goto(lookup,{waitUntil:'domcontentloaded'});
   expect(await fixture.store(installed).readLocal('source-material:')).toHaveLength(0);
-  await page.evaluate(()=>[...document.querySelectorAll('.known-source-lane button')].find(x=>x.textContent==='Browse known sources').click());
-  await page.waitForSelector('.known-source-results article');
-  expect(await page.$eval('.known-source-lane [role=status]',x=>x.textContent)).toContain('1 known sources');
-  expect(await fixture.store(installed).readLocal('source-material:')).toHaveLength(0);
-  await page.evaluate(()=>[...document.querySelectorAll('.known-source-results button')].find(x=>x.textContent==='Review bookmark').click());
-  await page.waitForSelector('dialog.known-source-review[open]');
-  expect(await page.$eval('dialog.known-source-review',x=>x.textContent)).toContain('feed-publisher-example');
-  await page.evaluate(()=>[...document.querySelectorAll('dialog.known-source-review button')].find(x=>x.textContent==='Save reviewed bookmark').click());
-  await page.waitForSelector('dialog.known-source-review a[href*="record="]');
+  expect(await page.$eval('.ak-src-found h2',x=>x.textContent)).toBe('publisher.example');
+  await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.click('[data-src-follow] button[type=submit]')]);
+  expect(page.url()).toContain('followed=');
   const saved=await fixture.store(installed).readLocal('source-material:');
   expect(saved).toHaveLength(1);expect(saved[0].revision).toBe(1);
-  expect(saved[0].value).toMatchObject({kind:'link',state:'active',title:'Original publisher',
-   url:'https://publisher.example/observed-feed',provenance:{sourceRef:'feed-publisher-example',catalogueGeneration:'foreign-v1-review'}});
-  expect(requests.some(r=>r.url.startsWith('https://publisher.example/'))).toBe(false);
-  expect(requests.filter(r=>r.method==='POST'&&r.url.includes('operation=write'))).toHaveLength(1);
-   // A repeated explicit review resolves the same saved identity rather than
-   // silently dead-ending or issuing a second write.
-   await page.evaluate(()=>document.querySelector('dialog.known-source-review').close());
-   await page.evaluate(()=>[...document.querySelectorAll('.known-source-results button')].find(x=>x.textContent==='Review bookmark').click());
-   await page.waitForSelector('dialog.known-source-review[open]');
-   await page.evaluate(()=>[...document.querySelectorAll('dialog.known-source-review button')].find(x=>x.textContent==='Save reviewed bookmark').click());
-   // The saved link persists across modal reopening. Wait for this second
-   // review's verdict, not the link already present from the first save.
-   await page.waitForFunction(()=>document.querySelector('dialog.known-source-review [role=status]')?.textContent?.includes('already saved'));
-   expect(await page.$eval('dialog.known-source-review [role=status]',x=>x.textContent)).toContain('already saved');
-   expect(requests.filter(r=>r.method==='POST'&&r.url.includes('operation=write'))).toHaveLength(1);
-  await page.evaluate(()=>document.querySelector('dialog.known-source-review a').click());
-  await page.waitForSelector('[data-source-library][data-ready=true]');
+  expect(saved[0].value).toMatchObject({kind:'link',state:'active',title:'publisher.example',url:'https://publisher.example/observed-feed'});
+  expect(await page.$eval('.ak-src-library li[data-fresh] strong',x=>x.textContent)).toBe('publisher.example');
+  // Looking the same address up again says it is already kept and offers no second write.
+  await page.goto(lookup,{waitUntil:'domcontentloaded'});
+  expect(await page.$eval('.ak-src-done',x=>x.textContent)).toContain('Already in your library');
+  expect(await page.$('[data-src-follow]')).toBeNull();
   expect((await fixture.store(installed).readLocal('source-material:'))[0].revision).toBe(1);
+  expect(requests.some(r=>r.url.startsWith('https://publisher.example/'))).toBe(false);
+  expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
   expect(errors).toEqual([]);
  }finally{await context.close();}
 },60000);
 
-test('real retained recipe search saves an exact public reference into Source Library, never a body or order',async()=>{
- const key='ffts-lg33961.31000kz-0700-f61d99d1df3da63f';
- const packet={jsonrpc:'2.0',id:'source-library-recipe',result:{skill:'recipe-search',execution:'free',data:{query:'chicken',count:1,hits:[{key,title:'Retained chicken preparation'}]}}};
- const context=await browser.createBrowserContext(),page=await context.newPage(),requests=[],errors=[];
- page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
- await page.setRequestInterception(true);
- page.on('request',request=>{
-  requests.push({url:request.url(),method:request.method()});
-  if(request.url().endsWith('/a2a')&&request.method()==='POST')void request.respond({status:200,contentType:'application/a2a+json',body:JSON.stringify(packet)});
-  else void request.continue();
- });
- const [name,...token]=fixture.owner.cookie.split('=');
- await page.setCookie({name,value:token.join('='),url:fixture.base,httpOnly:true,sameSite:'Lax'});
- try{
-  await page.goto(fixture.base+installed.path,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('[data-source-library][data-ready=true]');
-  await page.waitForSelector('[data-recipe-corpus] form');
-  const before=await fixture.store(installed).readLocal('source-material:');
-  await page.type('[data-recipe-corpus] input[type=search]','chicken');
-  await page.click('[data-recipe-corpus] button[type=submit]');
-  await page.waitForSelector('[data-recipe-corpus] article');
-  expect(await page.$eval('[data-recipe-corpus] article a',x=>x.getAttribute('href'))).toBe('/recipes?id='+key);
-  expect(await fixture.store(installed).readLocal('source-material:')).toHaveLength(before.length);
-  await page.evaluate(()=>document.querySelector('[data-recipe-corpus] article button').click());
-  await page.waitForSelector('dialog[data-recipe-review][open]');
-  await page.evaluate(()=>[...document.querySelectorAll('dialog[data-recipe-review] button')].find(x=>x.textContent==='Save reviewed recipe reference').click());
-  await page.waitForSelector('dialog[data-recipe-review] a[href*="record="]');
-  const rows=await fixture.store(installed).readLocal('source-material:');
-  expect(rows).toHaveLength(before.length+1);
-  const row=rows.find(x=>x.value.provenance?.schema==='bonfyre.recipe-material-ref.v1');
-  expect(row?.revision).toBe(1);
-  expect(row?.value).toMatchObject({kind:'link',url:'https://aurekai.life/recipes?id='+key,
-    provenance:{recordKey:key,source:'native-recipe-material'}});
-  expect(row.value.original).toBeUndefined();
-  expect(requests.filter(x=>x.url.endsWith('/a2a')&&x.method==='POST')).toHaveLength(1);
-  expect(requests.some(x=>x.url.startsWith('https://aurekai.life/recipes?id='))).toBe(false);
-  expect(errors).toEqual([]);
- }finally{await context.close();}
-},60000);
+test('a follow posted from another origin is refused and writes nothing',async()=>{
+ const res=await fetch(fixture.base+installed.path.replace(/sources\/$/,'_follow'),{method:'POST',redirect:'manual',
+  headers:{cookie:fixture.owner.cookie,origin:'https://elsewhere.example','content-type':'application/x-www-form-urlencoded'},body:'url='+encodeURIComponent('https://other.example/feed')});
+ expect(res.status).toBe(403);
+ expect((await fixture.store(installed).readLocal('source-material:')).some(r=>r.value.url==='https://other.example/feed')).toBe(false);
+});

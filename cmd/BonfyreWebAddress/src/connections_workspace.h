@@ -46,14 +46,14 @@ static int cw_catalog(const char *method,const char *query,const char *bearer,co
  unsigned char *output=NULL;size_t size=0;int rc=aw_native_result(args,NULL,0,&output,&size,0);if(!rc&&output&&cw_catalog_packet(output,size))aw_response(200,"application/json; charset=utf-8",output,size,0);else aw_error(503,"Connection sources could not be read.\n");free(output);return 1;
 bad:aw_error(400,"Choose a valid source page and ecosystem.\n");return 1;
 }
-static int serve_connections_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
- if(!strcmp(target,"/apps/_connection_catalog"))return cw_catalog(method,query,bearer,auth_db);
+static int serve_connections_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const BfRequest *route){
+ if(bf_request_is(route,"connection_catalog"))return cw_catalog(method,query,bearer,auth_db);
  const char *assets[]={"authentication-capability-surface.mjs","provider-auth-capability.mjs","connection-source.mjs","connection-studio.mjs","connection-studio.css","connection-lab.mjs"};
- for(size_t i=0;i<sizeof(assets)/sizeof(assets[0]);i++)if(!strncmp(target,"/apps/",6)&&!strcmp(target+6,assets[i])){
+ for(size_t i=0;i<sizeof(assets)/sizeof(assets[0]);i++)if(bf_request_is(route,"apps")&&!strcmp(target+6,assets[i])){
   if(strcmp(method,"GET")){aw_error(405,"Use GET for workspace code.\n");return 1;}size_t bytes=0;const char *root=getenv("BONFYRE_WORKSPACE_CLIENT");unsigned char *file=root?aw_read_file(root,assets[i],256u*1024u,&bytes):NULL;
   if(file){aw_response(200,aw_mime(assets[i]),file,bytes,0);free(file);}else aw_error(503,"This workspace release is unavailable.\n");return 1;
  }
- int page=!strcmp(target,"/apps/connections");if(!page&&strcmp(target,"/apps/_connections"))return 0;
+ int page=bf_request_is(route,"connections_page");if(!page&&!bf_request_is(route,"connections_api"))return 0;
  CwQuery q;int post=!strcmp(method,"POST");
  if(!cw_query(query&&*query?query:"context=self&identity=gmail",&q)){aw_error(400,"Use one exact connection destination and identity.\n");return 1;}
  if(!(q.seen&1))snprintf(q.context,sizeof(q.context),"self");if(!(q.seen&2))snprintf(q.identity,sizeof(q.identity),"gmail");

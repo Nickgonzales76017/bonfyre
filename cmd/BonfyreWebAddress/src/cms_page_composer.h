@@ -11,8 +11,7 @@ static void cms_composer_reply(int code,const char *type,const char *body) {
 static int serve_cms_composer(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *origin=r->origin; const char *host=r->host;
     (void)method;(void)target;(void)query;(void)body;(void)bearer;(void)auth_db;(void)origin;(void)host;
-    int home=!strcmp(target,"/cms/compose"),page=!strcmp(target,"/cms/compose/page"),listing=!strcmp(target,"/cms/compose/pages"),visual=!strcmp(target,"/cms/compose/advanced"),revision=!strcmp(target,"/cms/compose/narration-revision"),revising=!strcmp(target,"/cms/compose/revise"),publishing=!strcmp(target,"/cms/compose/publish"),exporting=!strcmp(target,"/cms/compose/export");
-    if(!home&&!page&&!listing&&!visual&&!revision&&!revising&&!publishing&&!exporting)return 0;
+    int home=bf_request_is(r,"home"),page=bf_request_is(r,"page"),listing=bf_request_is(r,"listing"),visual=bf_request_is(r,"visual"),revision=bf_request_is(r,"revision"),revising=bf_request_is(r,"revising"),publishing=bf_request_is(r,"publishing"),exporting=bf_request_is(r,"exporting");
     int writing=(page||publishing||revising)&&!strcmp(method,"POST");
     int write_grant=session_authorized(bearer,auth_db,"write");
     int self_site_scope=!write_grant&&session_authorized(bearer,auth_db,"self");

@@ -67,7 +67,9 @@ int main(int argc,char **argv){
     }
     if(pj_legacy(argv[1],argv[2],argv[4],raw,argv[5],argv[6],"fixture-auth"))return 0;
     const char *accept=getenv("PJ_ACCEPT");if(!accept)accept="text/html";
-    BfRequest request={.method=argv[1],.target=argv[2],.query=argv[3],.body=argv[4],.raw=raw,.host=argv[5],.bearer=argv[6],.auth_db="fixture-auth",.accept=accept};
+    BfRequest request={.method=argv[1],.target=argv[2],.query=argv[3],.body=argv[4],.raw=raw,.host=argv[5],.bearer=argv[6],.auth_db="fixture-auth",.accept=accept,
+        .as=!strcmp(argv[2],"/participation/change")?"change":!strcmp(argv[2],"/participation")?"page":NULL};
+    if(!request.as)return 1;
     if(serve_participant_journey(&request))return 0;
     protocol_reply(404,"text/plain","Fixture route not found");return 0;
 }

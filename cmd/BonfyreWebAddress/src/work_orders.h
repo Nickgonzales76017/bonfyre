@@ -777,10 +777,10 @@ static int serve_work_orders(const BfRequest *r) {
     if(serve_work_order_writes(method,target,body,raw,host,bearer,auth_db))return 1;
     if(!wo_host(host)){wo_reply(404,"Work orders are not kept at this address.\n");return 1;}
     if(strcmp(method,"GET")){wo_reply(405,"Read this page with GET.\n");return 1;}
-    if(!strcmp(target,"/work-orders"))return wo_index(host,bearer,auth_db);
-    if(!strcmp(target,"/vouches"))return wo_vouches(query,bearer,auth_db);
-    if(!strncmp(target,"/work-orders/",13)&&wo_ref_ok(target+13,"wo-"))return wo_detail(target+13,bearer,auth_db);
-    if(!strncmp(target,"/disputes/",10)&&wo_ref_ok(target+10,"dp-"))return wo_dispute_page(target+10,bearer,auth_db);
+    if(bf_request_is(r,"index"))return wo_index(host,bearer,auth_db);
+    if(bf_request_is(r,"vouches"))return wo_vouches(query,bearer,auth_db);
+    if(bf_request_is(r,"order")&&wo_ref_ok(target+13,"wo-"))return wo_detail(target+13,bearer,auth_db);
+    if(bf_request_is(r,"dispute")&&wo_ref_ok(target+10,"dp-"))return wo_dispute_page(target+10,bearer,auth_db);
     wo_reply(404,"No such work order, dispute or vouch page.\n");return 1;
 }
 #endif

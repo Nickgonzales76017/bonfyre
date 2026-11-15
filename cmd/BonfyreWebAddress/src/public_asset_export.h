@@ -13,7 +13,7 @@ static unsigned char *sac_web_load(void *owner,const char *route,size_t *size) {
     fflush(stdout);int saved=dup(STDOUT_FILENO);if(saved<0){fclose(capture);return NULL;}
     if(dup2(fileno(capture),STDOUT_FILENO)<0){close(saved);fclose(capture);return NULL;}
     BfRequest request={.method="GET",.target=route,.query="",.body="",.raw="",.host="aurekai.work",.bearer="",.auth_db=""};
-    int handled=serve_application_workspace(&request);
+    int handled=bf_web_route_ask(serve_application_workspace,&request);
     fflush(stdout);int restored=dup2(saved,STDOUT_FILENO);close(saved);
     long length=0;unsigned char *wire=NULL,*body=NULL;
     if(restored<0||!handled||fseek(capture,0,SEEK_END)||(length=ftell(capture))<=0||

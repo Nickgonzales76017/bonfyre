@@ -317,9 +317,8 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  sqlite3_close(date);
  fputs("<p class=\"ph-date-privacy-note\"><strong>Consent:</strong> Public stories and gallery media stay CMS-owned. Private preferences, messages and approvals stay in Participation. No plan is a booking.</p></section>",stdout);
 }
-static int ph_dating_mutate(const char *target,const char *input,const char *raw,
-                            const char *host,const char *actor){
- if(strncmp(target,"/profile/dating/",16))return 0;
+static int ph_dating_mutate(const char *input,const char *raw,
+                            const char *host,const char *actor,const BfRequest *route){
  char other[192]="",choice[20]="",revision[16]="",nonce[40]="",body[1001]="",enable[4]="",ack[4]="";
  char p[4][4]={{0}},importance[4][4]={{0}};
  char activity[161]="",context[121]="",estimate[10]="",budget[10]="",plan[85]="",confirm[4]="";
@@ -342,13 +341,13 @@ static int ph_dating_mutate(const char *target,const char *input,const char *raw
  if(!date){ph_error(503,"Private participation is unavailable. No change was made.\n");return 1;}
  int has_preferences=0;for(int i=0;i<4;i++)has_preferences|=*p[i]||*importance[i];
  int has_plan=*activity||*context||*estimate||*budget||*plan||*confirm;
- if(!strcmp(target,"/profile/dating/request")){
+ if(bf_request_is(route,"dating_request")){
   if(has_preferences||has_plan||*other||*choice||*nonce||*body||
     (!strcmp(enable,"1")&&strcmp(ack,"1"))||
     (strcmp(enable,"0")&&strcmp(enable,"1"))||
     !ph_dating_unsigned(revision,&expected))goto invalid;
   ok=bf_dating_request(date,actor,!strcmp(enable,"1"),expected);
- }else if(!strcmp(target,"/profile/dating/choice")){
+ }else if(bf_request_is(route,"dating_choice")){
   if(has_preferences||has_plan||!bf_dating_subject(other)||*nonce||*body||*enable||*ack||
      !ph_dating_unsigned(revision,&expected))goto invalid;
   BfDatingChoice decision=BF_DATING_NONE;
@@ -358,11 +357,11 @@ static int ph_dating_mutate(const char *target,const char *input,const char *raw
   else if(!strcmp(choice,"block"))decision=BF_DATING_BLOCK;
   else if(strcmp(choice,"none"))goto invalid;
   ok=bf_dating_choice(date,actor,other,decision,expected);
- }else if(!strcmp(target,"/profile/dating/message")){
+ }else if(bf_request_is(route,"dating_message")){
   if(has_preferences||has_plan||!bf_dating_subject(other)||*choice||*revision||*enable||*ack||
     strlen(nonce)!=32||strspn(nonce,"0123456789abcdef")!=32)goto invalid;
   ok=bf_dating_send(date,actor,other,nonce,body);
- }else if(!strcmp(target,"/profile/dating/preferences")){
+ }else if(bf_request_is(route,"dating_preferences")){
   if(has_plan||*other||*choice||*nonce||*body||*enable||*ack||
      !ph_dating_unsigned(revision,&expected)||!expected)goto invalid;
   BfDatingAnswer answers[4];
@@ -373,14 +372,14 @@ static int ph_dating_mutate(const char *target,const char *input,const char *raw
                                 (unsigned)(importance[i][0]-'0')};
   }
   ok=bf_dating_preferences(date,actor,answers,expected);
- }else if(!strcmp(target,"/profile/dating/plan")){
+ }else if(bf_request_is(route,"dating_plan")){
   uint64_t cents=0,max=0;
   if(has_preferences||!bf_dating_subject(other)||*choice||*revision||*body||
     *enable||*ack||*plan||strcmp(confirm,"1")||
     strlen(nonce)!=32||strspn(nonce,"0123456789abcdef")!=32||
     !ph_dating_money(estimate,&cents)||!ph_dating_money(budget,&max))goto invalid;
   ok=bf_dating_propose_detail(date,actor,other,nonce,activity,context,cents,max);
- }else if(!strcmp(target,"/profile/dating/plan-approve")){
+ }else if(bf_request_is(route,"dating_plan_approve")){
   int mutual=0;
   if(has_preferences||*other||*choice||*nonce||*body||*enable||*ack||
     *activity||*context||*estimate||*budget||*confirm||
@@ -389,12 +388,12 @@ static int ph_dating_mutate(const char *target,const char *input,const char *raw
  }else goto invalid;
  sqlite3_close(date);
  if(!ok){ph_error(409,"Private participation changed or is no longer permitted. Reload your current profile before trying again.\n");return 1;}
- if((!strcmp(target,"/profile/dating/message")||!strcmp(target,"/profile/dating/plan"))&&bf_dating_subject(other)){
+ if((bf_request_is(route,"dating_message")||bf_request_is(route,"dating_plan"))&&bf_dating_subject(other)){
   char next[330];snprintf(next,sizeof(next),"/profile?tab=dating&view=chat&peer=%s",other);
   page_redirect(next);return 1;
  }
- if(!strcmp(target,"/profile/dating/preferences"))page_redirect("/profile?tab=dating&view=studio");
- else if(!strcmp(target,"/profile/dating/choice")||!strcmp(target,"/profile/dating/plan-approve"))page_redirect("/profile?tab=dating&view=matches");
+ if(bf_request_is(route,"dating_preferences"))page_redirect("/profile?tab=dating&view=studio");
+ else if(bf_request_is(route,"dating_choice")||bf_request_is(route,"dating_plan_approve"))page_redirect("/profile?tab=dating&view=matches");
  else page_redirect("/profile?tab=dating");return 1;
 invalid:
  sqlite3_close(date);ph_error(400,"Choose one valid current dating action.\n");return 1;

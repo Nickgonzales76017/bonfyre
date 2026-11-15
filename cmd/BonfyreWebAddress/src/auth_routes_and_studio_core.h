@@ -458,7 +458,7 @@ static int serve_auth(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *db=r->auth_db; const char *accept=r->accept; const char *root=r->root; const char *host=r->host; const char *query=r->query;
     (void)method;(void)target;(void)body;(void)bearer;(void)db;(void)accept;(void)root;(void)host;(void)query;
     char out[8192];
-    if(serve_session_handoff(method,target,bearer,db,host,query))return 1;
+    if(serve_session_handoff(method,bearer,db,host,query,r))return 1;
     if (serve_arrival(method, target, accept, host)) return 1;
     const char *bin = auth_binary();
 

@@ -135,8 +135,8 @@ static unsigned char *aw_shell(unsigned char *file,size_t *bytes,const char *nav
 /* "Make with it": the person's own Audio Studio, found from their current
  * installation. Signed out, sign in and come back; nothing installed, the
  * studio's setup review (installing is still the person's button). */
-static int aw_open_audio_studio(const char *method,const char *target,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/apps/audio")&&strcmp(target,"/apps/audio/"))return 0;
+static int aw_open_audio_studio(const char *method,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"audio_studio"))return 0;
     if(strcmp(method,"GET")&&strcmp(method,"HEAD")){aw_error(405,"Use GET to open the studio.\n");return 1;}
     char actor[160],subject[160],binding[64]="",entry[128]="",location[256];const char *scope=NULL;
     if(psetup_context(bearer,auth_db,"self",0,actor,sizeof(actor),subject,sizeof(subject),&scope)!=1)
@@ -160,19 +160,20 @@ static int aw_open_audio_studio(const char *method,const char *target,const char
 static int serve_application_workspace(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
-    if(aw_open_audio_studio(method,target,bearer,auth_db))return 1;
-    if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
+    if(aw_open_audio_studio(method,bearer,auth_db,r))return 1;
+    if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db,r))return 1;
     if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_native_command_work(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_activity_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(connect_github_app(method,target,query,host,bearer,auth_db))return 1;
-    if(ac_work_board_act(method,target,body,raw,host,bearer,auth_db))return 1;
-    if(ac_work_outputs(method,target,query,bearer,auth_db))return 1;
-    if(ac_work_board(method,target,query,bearer,auth_db))return 1;
-    if(ac_relationship(method,target,query,bearer,auth_db))return 1;
-    if(ac_feed_use(method,target,query,bearer,auth_db))return 1;
-    if(ac_index(method,target,query,bearer,auth_db))return 1;
-    if(strncmp(target,"/apps/",6))return 0;
+    if(ac_work_board_act(method,body,raw,host,bearer,auth_db,r))return 1;
+    if(ac_work_outputs(method,query,bearer,auth_db,r))return 1;
+    if(ac_work_board(method,query,bearer,auth_db,r))return 1;
+    if(ac_relationship(method,query,bearer,auth_db,r))return 1;
+    if(ac_feed_use(method,query,bearer,auth_db,r))return 1;
+    if(ac_index(method,query,bearer,auth_db,r))return 1;
+    /* Under /apps/: the prefix row, or /apps/ itself when the index declined. */
+    if(!bf_request_is(r,"apps")&&!(bf_request_is(r,"apps_home")&&target[5]=='/'))return 0;
     const char *assets[]={"program-workspace.mjs","program-service-continuations.mjs","program-service-policy.mjs","program-source-work.mjs","program-workspace.css","workspace-store.mjs","workspace-msgpack.mjs","workspace-value.mjs","workspace-continuation.mjs","workspace-members.mjs","interaction-collection.mjs","record-comparison.mjs","workspace-adoption-review.mjs","source-publication.mjs","source-publication.css","source-desk.mjs","source-desk.css","workspace-destinations.mjs","web-workbench.mjs","web-workbench.css","aurekai-activity.mjs","aurekai-activity-source.mjs","aurekai-horde.mjs","aurekai-inbox-source.mjs","aurekai-activity.css","aurekai-model.mjs","aurekai-model.css","aurekai-push.mjs","aurekai-push-sw.mjs","provider-contract.mjs","extension/foreign-sign-in.mjs","extension/foreign-sign-in.css","publication-research.mjs","publication-picker.mjs","reference-picker.mjs","account-choices.mjs","account-choices.css","invitation-choice.mjs"};
     for(size_t n=0;n<sizeof(assets)/sizeof(assets[0]);n++)if(!strcmp(target+6,assets[n])){
         if(strcmp(method,"GET")){aw_error(405,"Use GET for editor code.\n");return 1;}

@@ -391,7 +391,7 @@ static int serve_community_journey(const BfRequest *r) {
     const char *method=r->method; const char *path=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
     (void)method;(void)path;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
  char path_community[97]={0}, path_post[97]={0}; int permalink=0;
- if(path&&!strncmp(path,"/community/",11)){
+ if(bf_request_is(r,"permalink")){
   const char *first=path+11, *break_at=strstr(first,"/thread/");
   if(break_at&&break_at>first&&break_at[8]){
    size_t c=(size_t)(break_at-first),n=strlen(break_at+8);if(n&&break_at[8+n-1]=='/')n--;
@@ -402,7 +402,7 @@ static int serve_community_journey(const BfRequest *r) {
    }
   }
  }
- int guild_directory=!strcmp(path,"/guilds")||!strcmp(path,"/guilds/"),guild_create=!strcmp(path,"/guild/new"),directory=!strcmp(path,"/communities")||!strcmp(path,"/communities/"),room=!strcmp(path,"/community")||!strcmp(path,"/community/"),creating=!strcmp(path,"/community/new"),preview=!strcmp(path,"/community/preview"),action=!strcmp(path,"/community/action"),legacy=!strcmp(path,"/govern/community-join");if(!guild_directory&&!guild_create&&!directory&&!room&&!creating&&!preview&&!action&&!legacy&&!permalink)return 0;
+ int guild_directory=bf_request_is(r,"guild_directory"),guild_create=bf_request_is(r,"guild_create"),directory=bf_request_is(r,"directory"),room=bf_request_is(r,"room"),creating=bf_request_is(r,"creating"),preview=bf_request_is(r,"preview"),action=bf_request_is(r,"action"),legacy=bf_request_is(r,"legacy");if(!guild_directory&&!guild_create&&!directory&&!room&&!creating&&!preview&&!action&&!legacy&&!permalink)return 0;
  if(!preview&&!action&&!legacy&&!wants_html(accept))return 0;
  sqlite3 *db=cms_open_ro();if(!db){ph_error(503,"The community owner is unavailable.\n");return 1;}
  if(legacy){char key[200]="";CjrCommunity c;if(body&&query_value(body,"id",key,sizeof(key))&&cjr_community(db,key,&c)==1&&cjr_local(&c)){sqlite3_close(db);if(strcmp(method,"POST")){ph_error(405,"Use the community's participation form.\n");return 1;}cjw_back(key,"join",NULL);return 1;}sqlite3_close(db);return 0;}

@@ -260,8 +260,8 @@ static void ac_work_provenance(const char *context,const char *task,const char *
 
 /* ---------- /work-board/outputs ---------- */
 
-static int ac_work_outputs(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/work-board/outputs"))return 0;
+static int ac_work_outputs(const char *method,const char *query,const char *bearer,const char *auth_db,const BfRequest *route){
+    if(!bf_request_is(route,"work_outputs"))return 0;
     if(strcmp(method,"GET")){aw_error(405,"Use GET to read this account's outputs.\n");return 1;}
     char context[96],task[128],actor[160],destination[160],back[800];const char *scope=NULL;
     if(!ac_work_board_query(query,context,task)||*task){aw_error(400,"Choose one account destination.\n");return 1;}

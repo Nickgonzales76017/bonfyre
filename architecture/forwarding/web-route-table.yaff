@@ -1,0 +1,27 @@
+architecture web-route-table
+  canonical_name WebRouteTable
+  family forwarding
+  domain Forwarding / HTTP Route Declaration
+  layer forwarding
+  semantic_question Which native owner is asked about a public path, under which request facts, and in what order, without a hand-written branch per page in the WebAddress request loop?
+  purpose Declares every WebAddress route owner once in CUE as an ordered row (owner, exact, strict, prefix or any match, a path, optional request facts, an optional name for the path) and compiles it into a static table that one dispatcher walks. Owners take one BfRequest and test the declared name of the path they were asked about, so a path is spelled in one place.
+  maturity implemented
+  source_path schemas/control/web-routes.cue
+  source_path cmd/BonfyreWebAddress/tools/compile_web_routes.sh
+  source_path cmd/BonfyreWebAddress/src/web_request.h
+  source_path cmd/BonfyreWebAddress/generated/native_web_routes.h
+  source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/Makefile
+  source_path scripts/ui-ratchet.sh
+  invariant the CUE list order is the dispatch order; the first owner that answers ends the request, and an owner already asked for a request is not asked again
+  invariant a row's when facts (get, site_root, html, not_json, json, not_territory_apex) are computed once per request from the method, Accept, Host and server root; an owner is asked only when every fact its row names holds
+  invariant an owner asked through a row sees that row's declared name in BfRequest.as; a caller that picks an owner directly (the static export, the public asset export) asks it through the owner's own first matching row so it sees the same name
+  invariant the table ends in rows that always answer (the resolver, then a transport-level 405 for any non-GET), so nothing falls past dispatch
+  invariant owners still check their own method, origin, session and authority; the table only decides who is asked
+  invariant main.c holds one dispatch call and no per-owner branch; the ui-ratchet dispatch_branches and route_path_compares counts may only go down
+  forbidden_inference a declared route -> the request is authorized, the caller is signed in, the method is allowed, or the owner will answer
+  forbidden_inference a row's when facts -> content negotiation is complete or the representation the owner returns
+  forbidden_inference a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token
+  witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server
+  known_gap some owners still sit on any rows and decide their own paths inside (studio, superuser control, account continuity, companions, matrix closure, governance acts and several app workspaces); their path checks use a spaced or different-variable form that the route_path_compares count does not see
+  known_gap the static_asset_closure_test fixture answers bf_web_route_ask by calling the owner directly, so it does not exercise the row lookup

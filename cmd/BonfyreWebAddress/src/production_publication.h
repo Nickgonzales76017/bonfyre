@@ -56,13 +56,13 @@ static void production_card(const BfPublicProduction *p,int detail){
 static int serve_production_publication(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query;
     (void)method;(void)target;(void)query;
-    if(!strcmp(target,"/_surface/production-home.js")){
+    if(bf_request_is(r,"script")){
         if(strcmp(method,"GET")||(query&&*query)){production_response(400,"text/plain; charset=utf-8");fputs("Use the public script address without parameters.",stdout);return 1;}
         production_response(200,"application/javascript; charset=utf-8");
         fputs(BF_PUBLIC_PRODUCTION_HOME_SCRIPT,stdout);return 1;
     }
-    int home=!strcmp(target,"/productions")||!strcmp(target,"/productions/"),fragment=!strcmp(target,"/_surface/productions"),detail=!strncmp(target,"/productions/",13)&&!home;
-    if(!home&&!fragment&&!detail)return 0;if(strcmp(method,"GET")||(query&&*query)){production_response(400,"text/plain; charset=utf-8");fputs("Use the published production address without parameters.",stdout);return 1;}
+    int fragment=bf_request_is(r,"fragment"),detail=bf_request_is(r,"detail");
+if(strcmp(method,"GET")||(query&&*query)){production_response(400,"text/plain; charset=utf-8");fputs("Use the published production address without parameters.",stdout);return 1;}
     sqlite3 *db=cms_open_ro();if(!db||sqlite3_exec(db,"BEGIN",NULL,NULL,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);production_response(503,"text/plain; charset=utf-8");fputs("Published productions are unavailable.",stdout);return 1;}
     if(detail){char ref[208],ns[128],slug[72];size_t n=strlen(target+13);int packet=n>7&&!strcmp(target+strlen(target)-7,"/design");if(packet)n-=7;BfPublicProduction p;int ok=n<sizeof(ref);if(ok){memcpy(ref,target+13,n);ref[n]=0;ok=production_reference(ref,ns,slug)&&production_read(db,ns,slug,&p);}sqlite3_exec(db,"COMMIT",NULL,NULL,NULL);sqlite3_close(db);
         if(!ok){production_response(404,"text/plain; charset=utf-8");fputs("This production is not currently published or its design is unsupported.",stdout);return 1;}

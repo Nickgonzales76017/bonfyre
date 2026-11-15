@@ -654,10 +654,4 @@ static int wl_club_title(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     wl_free(&t);return 1;
 }
 
-static int world_lit_route(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
-    if(!strcmp(target,"/workspace/world-literature"))return world_lit_api(method,query,body,raw,host,bearer,auth_db);
-    if(!strcmp(target,"/workspace/worlds/reading"))return serve_world_reading(method,query,bearer,auth_db);
-    if(!strncmp(target,"/worlds/",8)&&strstr(target+8,"/read/"))return serve_world_lit_public(method,target,query,host);
-    return 0;
-}
 #endif

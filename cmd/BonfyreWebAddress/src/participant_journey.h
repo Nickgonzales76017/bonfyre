@@ -181,8 +181,7 @@ static int pj_legacy(const char *method,const char *target,const char *body,cons
 static int serve_participant_journey(const BfRequest *rq) {
     const char *method=rq->method; const char *target=rq->target; const char *query=rq->query; const char *body=rq->body; const char *raw=rq->raw; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db; const char *accept=rq->accept;
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    int mutation=target&&!strcmp(target,"/participation/change");
-    if(!target||(!mutation&&strcmp(target,"/participation")))return 0;
+    int mutation=bf_request_is(rq,"change");
     if(strcmp(method,mutation?"POST":"GET")){pj_error(405);return 1;}
     if(!mutation&&!wants_html(accept)){protocol_reply(406,"text/plain; charset=utf-8","Open the participant page as HTML.\n");return 1;}
     char kind[16]="",id[200]="",action[16]="",expected[65]="",actor[64]="",path[768],login[2600];

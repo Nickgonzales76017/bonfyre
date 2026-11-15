@@ -58,11 +58,11 @@ static int sso_cookie(const char *raw,const char *name,char *out,size_t cap){if(
 static int sso_hex_path(const char *restrict s,char *restrict out,size_t cap){static const char h[]="0123456789abcdef";size_t n=strlen(s);if(n>512||2*n+1>cap)return 0;for(size_t i=0;i<n;i++){unsigned char c=(unsigned char)s[i];out[2*i]=h[c>>4];out[2*i+1]=h[c&15];}out[2*n]=0;return 1;}
 static int sso_decode_path(const char *restrict s,char *restrict out,size_t cap){size_t n=strlen(s);if(!n||(n&1)||n>1024||n/2>=cap)return 0;for(size_t i=0;i<n;i+=2){unsigned a=s[i]>='0'&&s[i]<='9'?(unsigned)(s[i]-'0'):s[i]>='a'&&s[i]<='f'?(unsigned)(s[i]-'a'+10):255;unsigned b=s[i+1]>='0'&&s[i+1]<='9'?(unsigned)(s[i+1]-'0'):s[i+1]>='a'&&s[i+1]<='f'?(unsigned)(s[i+1]-'a'+10):255;if(a>15||b>15||!((a<<4)|b))return 0;out[i/2]=(char)((a<<4)|b);}out[n/2]=0;return 1;}
 static void sso_redirect(const char *location){printf("HTTP/1.1 303 See Other\r\nLocation: %s\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",location);}
-static int serve_session_handoff(const char *method,const char *target,const char *bearer,const char *db,const char *host,const char *query){
- if(strcmp(target,"/session/switch")&&strcmp(target,"/session/continue")&&strcmp(target,"/session/authorize")&&strcmp(target,"/session/complete"))return 0;
+static int serve_session_handoff(const char *method,const char *bearer,const char *db,const char *host,const char *query,const BfRequest *route){
+ if(!route->as||strncmp(route->as,"session_",8))return 0;
  const char *territory=sso_territory(host);char state[65]={0},next[BF_AUTH_NEXT_MAX]={0},source[16]={0};
  if(strcmp(method,"GET")||!territory){html_error(400,"Unsupported sign-in route","Use a controlled institution territory and its browser sign-in flow.");return 1;}
- if(!strcmp(target,"/session/switch")){
+ if(bf_request_is(route,"session_switch")){
   char dest[16]={0},requested[BF_AUTH_NEXT_MAX]={0};
   if(bf_lex_form_query(query,"to",dest,sizeof(dest))!=1||!sso_host_for(dest)||
      bf_lex_form_query(query,"next",requested,sizeof(requested))!=1||
@@ -77,7 +77,7 @@ static int serve_session_handoff(const char *method,const char *target,const cha
   printf("HTTP/1.1 303 See Other\r\nLocation: https://%s/session/continue?source=%s&next=",sso_host_for(dest),territory);
   bf_auth_query(stdout,next);fputs("\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;
  }
- if(!strcmp(target,"/session/continue")){
+ if(bf_request_is(route,"session_continue")){
   int has_source=bf_lex_form_query(query,"source",source,sizeof(source));
   if(has_source<0||(has_source&&(!sso_host_for(source)||!strcmp(source,territory)))){
    html_error(400,"Invalid sign-in source","Start from a different institution territory.");return 1;
@@ -100,7 +100,7 @@ static int serve_session_handoff(const char *method,const char *target,const cha
    "Cache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",sso_host_for(source),territory,state,state,encoded);return 1;
  }
  char dest[16]={0},code[65]={0},result[4096]={0};
- if(!strcmp(target,"/session/authorize")){
+ if(bf_request_is(route,"session_authorize")){
   if(bf_lex_form_query(query,"dest",dest,sizeof(dest))!=1||!sso_host_for(dest)||!strcmp(dest,territory)||
      bf_lex_form_query(query,"state",state,sizeof(state))!=1||!sso_hex(state,64)){html_error(400,"Invalid handoff","The destination and nonce must identify a controlled territory.");return 1;}
   if(!session_valid(bearer,db)){

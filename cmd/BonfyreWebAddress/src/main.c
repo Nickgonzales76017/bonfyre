@@ -1122,9 +1122,9 @@ static int publish_static_one(const char *root, const char *out, const char *hos
         /* A released journal route uses its profile reader. */
         /* Community permalinks are rendered through their real moderation-aware owner. */
         ok = !strcmp(host,"aurekai.life") && !strncmp(route,"/community/",11) ?
-             serve_community_journey(&export_request) : 0;
+             bf_web_route_ask(serve_community_journey, &export_request) : 0;
         if (!ok) ok = !strncmp(route, "/blog/", 6) ?
-             serve_profile_home(&export_request) : 0;
+             bf_web_route_ask(serve_profile_home, &export_request) : 0;
         if (!ok) ok = bf_site_mcp_serve("GET", route, "", "", host, "", "", "");
         if (!ok) ok = serve_site_program(&export_request);
         if (!ok) ok = emit_page_program_route(root, route, host, NULL);

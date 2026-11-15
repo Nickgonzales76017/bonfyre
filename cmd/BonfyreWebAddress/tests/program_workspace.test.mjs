@@ -25,7 +25,7 @@ typedef struct {char context[96],label[320];int can_write;} PackSetupDestination
 static void html(const char *s){(void)s;}
 static void url_query_value(const char *s){(void)s;}
 static void psetup_start(int code,const char *s){(void)code;(void)s;}
-static void psetup_end(void){}
+static void psetup_end(void){}typedef struct{const char *name,*value;} FtField;static void psetup_picker(const char *i,const char *a,const char *l,const char *b,const PackSetupDestination *r,size_t n,int c,const char *x,const FtField *h,size_t nh){(void)i;(void)a;(void)l;(void)b;(void)r;(void)n;(void)c;(void)x;(void)h;(void)nh;}
 static int psetup_destinations(const char *b,const char *a,PackSetupDestination *r,size_t *c){(void)b;(void)a;(void)r;*c=0;return 1;}
 static const char *page_cms_env(const char *key,const char *fallback){const char *s=getenv(key);return s?s:fallback;}
 static int bfpg_token(const char *s,size_t cap){return s&&*s&&strlen(s)<cap&&strspn(s,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:")==strlen(s);}

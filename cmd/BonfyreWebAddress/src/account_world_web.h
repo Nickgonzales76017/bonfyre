@@ -326,10 +326,10 @@ static int world_web_resolve(sqlite3 *db,const char *ref,PageMaterial *material,
     for(int k=0;k<mix->count;k++)if(!strcmp(mix->item[k].key,slash+1)&&!strcmp(mix->item[k].source,source)){found=&mix->item[k];break;}
     if(!found)return 0;*out=*found;return 1;
 }
-static int serve_world_public(const char *method,const char *target,const char *host){
-    int index=!strcmp(target,"/worlds")||!strcmp(target,"/worlds/");
+/* index: the /worlds address itself; otherwise target is under /worlds/. */
+static int serve_world_public(const char *method,const char *target,const char *host,int index){
     const char *space=index?"":target+8;
-    if(!index&&(strncmp(target,"/worlds/",8)||!*space||strlen(space)>64||strspn(space,"abcdefghijklmnopqrstuvwxyz0123456789-")!=strlen(space)))return 0;
+    if(!index&&(!*space||strlen(space)>64||strspn(space,"abcdefghijklmnopqrstuvwxyz0123456789-")!=strlen(space)))return 0;
     char normalized[256];if(!lower_host(host,normalized)||host_is_territory_apex(host))return 0;
     sqlite3 *db=cms_open_ro();PhSite site;
     if(!db||!ph_site(db,normalized,NULL,&site)){if(db)sqlite3_close(db);return 0;}
@@ -406,14 +406,17 @@ static int serve_world_public(const char *method,const char *target,const char *
 static int serve_account_world_workspace(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
-    if(!strcmp(target,"/workspace/world"))return world_web_api(method,query,body,raw,host,bearer,auth_db);
-    if(world_lit_route(method,target,query,body,raw,host,bearer,auth_db))return 1;
-    if(!strcmp(target,"/workspace/world/film"))return world_cine_api(method,query,body,raw,host,bearer,auth_db);
-    if(!strcmp(target,"/workspace/worlds/club"))return serve_world_club(method,query,bearer,auth_db);
-    if(!strcmp(target,"/workspace/worlds"))return serve_world_studio(method,query,bearer,auth_db);
-    if(!strcmp(target,"/workspace/world-audio"))return world_audio_api(method,query,body,raw,host,bearer,auth_db);
-    if(!strncmp(target,"/worlds/",8)&&strchr(target+8,'/')&&serve_world_audio_public(method,target,host))return 1;
-    if(!strncmp(target,"/worlds",7)&&(!target[7]||target[7]=='/'))return serve_world_public(method,target,host);
+    int world_page=bf_request_is(r,"world_page");
+    if(bf_request_is(r,"world"))return world_web_api(method,query,body,raw,host,bearer,auth_db);
+    if(bf_request_is(r,"literature")&&world_lit_api(method,query,body,raw,host,bearer,auth_db))return 1;
+    if(bf_request_is(r,"reading")&&serve_world_reading(method,query,bearer,auth_db))return 1;
+    if(world_page&&strstr(target+8,"/read/")&&serve_world_lit_public(method,target,query,host))return 1;
+    if(bf_request_is(r,"film"))return world_cine_api(method,query,body,raw,host,bearer,auth_db);
+    if(bf_request_is(r,"club"))return serve_world_club(method,query,bearer,auth_db);
+    if(bf_request_is(r,"studio"))return serve_world_studio(method,query,bearer,auth_db);
+    if(bf_request_is(r,"audio"))return world_audio_api(method,query,body,raw,host,bearer,auth_db);
+    if(world_page&&strchr(target+8,'/')&&serve_world_audio_public(method,target,host))return 1;
+    if(world_page||bf_request_is(r,"worlds"))return serve_world_public(method,target,host,!world_page||!target[8]);
     return 0;
 }
 #endif

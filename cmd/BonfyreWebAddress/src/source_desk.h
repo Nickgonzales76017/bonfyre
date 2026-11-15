@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SOURCE_DESK_H
 #define BONFYRE_SOURCE_DESK_H
+#include "form_tree.h"
 #include "../generated/native_estate_hosts.h"
 static int session_institution_authorized(const char *,const char *,const char *,const char *);
 static int page_query_has_key(const char *,const char *);
@@ -354,7 +355,10 @@ static void sd_link_form(const char *provider,const char *placeholder,const char
        "<p class=\"sx-quiet\">A declared link is a public pointer you state. It does not prove you control the account or import anything from it.</p></form>",stdout);
 }
 static void sd_revoke(const SdLink *l){
- fputs("<form method=\"post\" action=\"/account/connections/revoke\" class=\"sx-inline\"><input type=\"hidden\" name=\"link_id\" value=\"",stdout);html(l->id);fputs("\"><button class=\"sx-btn sx-quiet-btn\" type=\"submit\">Remove</button></form>",stdout);
+ const FtField hidden[]={{"link_id",l->id}};
+ const FtSubmit go[]={{.label="Remove",.tone="quiet"}};
+ const FtForm f={.id="sd-revoke",.action="/account/connections/revoke",.hook="connection-revoke",.hidden=hidden,.nhidden=1,.submits=go,.nsubmits=1};
+ ft_form(stdout,&f);
 }
 static void sd_connections(const char *route,const char *host,const char *query,const char *bearer,const char *auth_db){
  char provider[24]="";if(query)query_value(query,"provider",provider,sizeof provider);
@@ -493,12 +497,8 @@ static int sd_route_compiled(const char *host,const char *route){
 static int serve_source_desk(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host=r->host; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
     (void)method;(void)target;(void)query;(void)host;(void)accept;(void)bearer;(void)auth_db;
- if(strcmp(method,"GET")||(wants_json(accept)&&!wants_html(accept)))return 0;
- int sources=!strcmp(target,"/sources")||!strcmp(target,"/sources/")||!strcmp(target,"/link")||!strcmp(target,"/link/");
- int legacy=!strcmp(target,"/foreign/workbench")||!strcmp(target,"/foreign/workbench/")||!strcmp(target,"/s/work/foreign-twins")||!strcmp(target,"/s/work/foreign-twins/");
- int connections=!strcmp(target,"/connections")||!strcmp(target,"/connections/");
- int connect=!strcmp(target,"/connect")||!strcmp(target,"/connect/");
- int channels=!strcmp(target,"/channels")||!strcmp(target,"/channels/");
+ int link=bf_request_is(r,"link"),sources=link||bf_request_is(r,"sources"),legacy=bf_request_is(r,"legacy");
+ int connections=bf_request_is(r,"connections"),connect=bf_request_is(r,"connect"),channels=bf_request_is(r,"channels");
  char source[160]="";
  if(channels){
   /* Only the reader's own coordinates; SourceDepth keeps every ledger cut. */
@@ -511,7 +511,7 @@ static int serve_source_desk(const BfRequest *r) {
  if(connect){sd_connect("/connect",host,query,bearer,auth_db);return 1;}
  if(!sources&&!legacy)return 0;
  if(query&&page_query_has_key(query,"snapshot")){source_desk_research(host,"/sources",query);return 1;}
- if(query&&query_value(query,"source",source,sizeof source)&&*source){sd_room(sources?(target[1]=='l'?"/link":"/sources"):"/sources",host,query,source);return 1;}
- sd_hub(sources&&target[1]=='l'?"/link":"/sources",host,query);return 1;
+ if(query&&query_value(query,"source",source,sizeof source)&&*source){sd_room(link?"/link":"/sources",host,query,source);return 1;}
+ sd_hub(link?"/link":"/sources",host,query);return 1;
 }
 #endif
