@@ -29111,6 +29111,7 @@
       ],
       "internal_calculi": [],
       "invariants": [
+        "authored cards inside the shared dark journal reader use a legible surface and text contrast",
         "independent-site article metadata and listening controls use the compiled site stylesheet",
         "first-party static site styles are generated from PostCSS sources at their existing public paths",
         "shared profile cover, gallery, story, spaces, interests and private-site styles compile into the native profile stylesheet rather than being emitted inline by each component",
@@ -29148,6 +29149,7 @@
         "the page composer opens a profile site namespace only through ?site= with the exact profile ownership proof (write session, bound actor, published member site, Matrix presence); anything else keeps the actor workspace, and the served composer threads the site through read, save, listing and history so a site edit can never land in the wrong namespace"
       ],
       "known_gaps": [
+        "the journal index still renders a lead and a ruled list; the assigned editorial Discover screen uses a split lead and a card grid, so page parity remains unverified and incomplete",
         "the existing Ghost marketplace compiler still derives 238 visual vectors from category/hash variation rather than 238 separately observed complete SiteProfiles; its generated fingerprints must remain reference candidates until each profile has measured masthead, hero, section sequence, media geometry, mobile collapse, motion and application-slot contracts",
         "current public donor shells still contain legacy browser renderers. They must be replaced aperture-by-aperture by native initial HTML and HTMX fragment boundaries from this composition contract; no generic external-estate card lowerer may substitute for that work",
         "Agriculture now has native PublicationFeed, Community, Board, Listen and Watch lowerers with an explicit WeatherObservation empty state. It still needs a real WeatherObservation owner/lowerer, Ghost profile slot geometry, HTMX refresh contracts and the remaining application lowerers before it can replace an established public donor surface.",
@@ -29213,6 +29215,7 @@
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks rendered journal card contrast and captures desktop and phone pages when requested",
         "cmd/BonfyreWebAddress/tests/site_product_test.sh checks article presentation and published source boundaries",
         "cmd/BonfyreWebAddress/tests/participant_journey_browser.test.mjs checks the compiled participation controls, owner boundaries and phone-width browser flow",
         "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks the compiled profile styles at desktop and phone widths, including cover and gallery content with source-rights changes",
@@ -42617,9 +42620,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "3ffac38da444c78c8f917af727c2e22b0b1de2dc175023799c163c888ef7ceb2",
+    "declaration_digest": "b02c64e980b48b70286a665c5bfdaaed4019b6bbda28d0204e487b247d3eb232",
     "declaration_files": 155,
-    "generated_at": "2026-11-14T15:44:31Z"
+    "generated_at": "2026-11-15T02:05:08Z"
   },
   "views": {
     "CapabilityView": {

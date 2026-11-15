@@ -161,9 +161,9 @@ static char *pf_kernel(const char *op,const char *input,const char *as_of){
 /* ---- the page ---- */
 static void pf_href(const char *binding,const char *list_key){fputs("/apps/",stdout);html(binding);fputs("/procurement/",stdout);if(list_key&&*list_key){fputs("?list=",stdout);url_query_value(list_key);}}
 static void pf_stage_head(int number,const char *title,const char *state,const char *note){
-    printf("<header class=\"pf-stage-head\"><span class=\"pf-step\">%d</span><div><h2>",number);html(title);fputs("</h2>",stdout);
+    (void)number;fputs("<header class=\"ak-toolbar\"><div><h2>",stdout);html(title);fputs("</h2>",stdout);
     if(note&&*note){fputs("<p>",stdout);html(note);fputs("</p>",stdout);}
-    fputs("</div><span class=\"ak-tag",stdout);if(!strcmp(state,"Done"))fputs(" is-on",stdout);fputs("\">",stdout);html(state);fputs("</span></header>",stdout);
+    fputs("</div><span class=\"ak-badge\">",stdout);html(state);fputs("</span></header>",stdout);
 }
 static const char *pf_notes[][2]={
     {"requested","Your quote request is ready. Add each quote you receive below."},
@@ -190,19 +190,24 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
     if(f.list){pf_int(f.list->doc,f.list->root,"subtotal_cents",&list_total);char label[512];if(pf_str(f.list,"title",label,sizeof(label))||pf_str(f.list,"name",label,sizeof(label)))snprintf(title,sizeof(title),"%s",label);}
     fputs("<header class=\"ak-wb-hero is-solo pf-hero\"><div><p class=\"ak-kicker\">Purchase request</p><h1>",stdout);html(title);
     fputs("</h1><p class=\"ak-lede\">Start from a room's saved list, compare the quotes you get in one table, pick one, and send it for approval. Suppliers hear nothing from here.</p></div></header>",stdout);
-    if(message){fputs("<p class=\"pf-note\" role=\"status\">",stdout);html(message);fputs("</p>",stdout);}
+    if(message){fputs("<div class=\"ak-pattern\"><p class=\"ak-alert\" role=\"status\">",stdout);html(message);fputs("</p></div>",stdout);}
+    {   /* The flow's stages, from the records: one is current, earlier ones are done. */
+        const char *steps[]={"What you need","Compare quotes","Pick one","Send for approval"};int at=f.approval?4:f.nquotes?2:f.rfq?1:0;
+        fputs("<ol class=\"ak-steps\" aria-label=\"Buying steps\">",stdout);
+        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);fputs("</li>",stdout);}
+        fputs("</ol>",stdout);}
     {   long long best_total=-1;size_t items=0;for(size_t i=0;i<f.nquotes;i++){long long t;if(pf_quote_total(f.quotes[i],&t)&&(best_total<0||t<best_total))best_total=t;}
         const bf_json_node_t *ls=f.list?pf_at(f.list->doc,f.list->root,"lines"):NULL;if(ls&&ls->type==BF_JSON_ARRAY)items=(size_t)ls->child_count;
-        printf("<dl class=\"pf-spark\"><div><dt>Items</dt><dd>%zu</dd></div><div><dt>Listed</dt><dd>",items);if(f.list)pf_money(list_total);else fputs("\xe2\x80\x94",stdout);
-        printf("</dd></div><div><dt>Quotes</dt><dd>%zu</dd></div><div><dt>Lowest quote</dt><dd class=\"is-on\">",f.nquotes);if(best_total>=0)pf_money(best_total);else fputs("\xe2\x80\x94",stdout);
+        printf("<dl class=\"ak-stats is-row\"><div><dt>Items</dt><dd>%zu</dd></div><div><dt>Listed</dt><dd>",items);if(f.list)pf_money(list_total);else fputs("\xe2\x80\x94",stdout);
+        printf("</dd></div><div><dt>Quotes</dt><dd>%zu</dd></div><div><dt>Lowest quote</dt><dd>",f.nquotes);if(best_total>=0)pf_money(best_total);else fputs("\xe2\x80\x94",stdout);
         fputs("</dd></div><div><dt>Status</dt><dd>",stdout);fputs(f.approval?"Waiting for approval":f.nquotes?"Ready to pick":f.rfq?"Collecting quotes":f.list?"Ready for quotes":"No list yet",stdout);fputs("</dd></div></dl>",stdout);}
     fputs("<div class=\"pf-layout\"><div class=\"pf-stages\">",stdout);
 
     /* 1. What you need */
-    fputs("<section class=\"pf-stage\" id=\"need\">",stdout);
+    fputs("<section class=\"ak-pattern ak-card pf-stage\" id=\"need\">",stdout);
     pf_stage_head(1,"What you need",f.rfq?"Done":f.list?"Now":"Start here",f.list?"The items and amounts from your saved room.":NULL);
     if(!f.list){
-        fputs("<div class=\"pf-empty\"><p>Nothing to buy yet. Plan a room and save its purchase list; it shows up here with every item and amount.</p>",stdout);
+        fputs("<div class=\"ak-empty-state\"><h3>Nothing to buy yet</h3><p>Plan a room and save its purchase list. It shows up here with every item and amount.</p>",stdout);
         if(has_room){fputs("<a class=\"ak-btn is-primary\" href=\"/apps/",stdout);html(binding);fputs("/product-room/\">Plan a room</a>",stdout);}
         fputs("</div>",stdout);
     }else{
@@ -212,7 +217,7 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
                 fputs("<a class=\"ak-chip\" href=\"",stdout);pf_href(binding,r->key);fputs("\"",stdout);if(r==f.list)fputs(" aria-current=\"true\"",stdout);fputs(">",stdout);
                 if(pf_str(r,"title",name,sizeof(name))||pf_str(r,"name",name,sizeof(name)))html(name);else{fputs("List saved ",stdout);pf_str(r,"created_at",name,sizeof(name));pf_day(name);}fputs("</a>",stdout);}
             fputs("</nav>",stdout);}
-        fputs("<div class=\"ak-scroll\"><table class=\"ak-table pf-items\"><thead><tr><th>Item</th><th>Option</th><th>Qty</th><th>Listed each</th><th>Listed total</th></tr></thead><tbody>",stdout);
+        fputs("<div class=\"ak-table-wrap\"><table class=\"ak-table pf-items\"><thead><tr><th>Item</th><th>Option</th><th>Qty</th><th>Listed each</th><th>Listed total</th></tr></thead><tbody>",stdout);
         const bf_json_node_t *lines=pf_at(f.list->doc,f.list->root,"lines");
         for(const bf_json_node_t *l=lines&&lines->type==BF_JSON_ARRAY?bf_json_child_first(f.list->doc,lines):NULL;l;l=bf_json_child_next(f.list->doc,l)){
             char label[1024],option[1024];long long q=0,u=0,t=0;pf_nstr(f.list->doc,l,"label",label,sizeof(label));pf_nstr(f.list->doc,l,"option",option,sizeof(option));
@@ -221,9 +226,9 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
         }
         fputs("</tbody><tfoot><tr><td colspan=\"4\">Listed prices when the room was saved</td><td>",stdout);pf_money(list_total);fputs("</td></tr></tfoot></table></div>",stdout);
         if(!f.rfq){
-            fputs("<form class=\"pf-act\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);
+            fputs("<form class=\"ak-actions\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);
             psetup_hidden("action","request");psetup_hidden("list",lkey);
-            fputs("<button class=\"ak-btn is-primary\" type=\"submit\">Get quotes for these items</button><small>Makes a quote request you can share with suppliers yourself. Nothing is sent.</small></form>",stdout);
+            fputs("<button type=\"submit\">Get quotes for these items</button><small>Makes a quote request you can share with suppliers yourself. Nothing is sent.</small></form>",stdout);
         }
     }
     fputs("</section>",stdout);
@@ -231,13 +236,13 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
     /* 2 + 3. Compare quotes in one table, and pick one */
     long long best=-1;const PfRec *cheapest=NULL;
     for(size_t i=0;i<f.nquotes;i++){long long t;if(pf_quote_total(f.quotes[i],&t)&&(best<0||t<best)){best=t;cheapest=f.quotes[i];}}
-    fputs("<section class=\"pf-stage\" id=\"quotes\">",stdout);
+    fputs("<section class=\"ak-pattern ak-card pf-stage\" id=\"quotes\">",stdout);
     pf_stage_head(2,"Compare quotes",f.approval?"Done":f.nquotes?"Now":f.rfq?"Now":"Next",f.rfq?"Type each supplier's prices into the empty column. The lowest complete total is marked.":"Opens once you ask for quotes.");
     if(f.rfq){
         int open=!f.approval;
         if(open){fputs("<form id=\"pf-add\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","quote");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);
             fputs("<form id=\"pf-send\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","send");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);}
-        fputs("<div class=\"ak-scroll\"><table class=\"ak-table pf-compare\"><thead><tr><th>Item</th><th>Qty</th>",stdout);
+        fputs("<div class=\"ak-table-wrap\"><table class=\"ak-table pf-compare\"><thead><tr><th>Item</th><th>Qty</th>",stdout);
         for(size_t i=0;i<f.nquotes;i++){fputs("<th class=\"pf-q",stdout);if(f.quotes[i]==cheapest)fputs(" is-best",stdout);fputs("\"><span>",stdout);pf_supplier(f.quotes[i]);fputs("</span>",stdout);
             if(f.quotes[i]==cheapest)fputs("<em>Lowest</em>",stdout);fputs("</th>",stdout);}
         if(open)fputs("<th class=\"pf-new\"><input form=\"pf-add\" name=\"supplier\" maxlength=\"200\" placeholder=\"Supplier name\" aria-label=\"Supplier name for a new quote\"></th>",stdout);
@@ -265,12 +270,12 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
             for(size_t i=0;i<f.nquotes;i++){fputs("<td class=\"pf-q\"><label><input type=\"radio\" form=\"pf-send\" name=\"pick\" value=\"",stdout);html(f.quotes[i]->key);fputs("\"",stdout);if(f.quotes[i]==cheapest)fputs(" checked",stdout);fputs("> Choose</label></td>",stdout);}
             fputs("<td class=\"pf-new\"></td></tr>",stdout);}
         fputs("</tfoot></table></div>",stdout);
-        if(open)fputs("<p class=\"pf-act\"><button class=\"ak-btn\" type=\"submit\" form=\"pf-add\">Add this quote</button><small>Prices in dollars. Use 0 when there is no delivery, tax or fee.</small></p>",stdout);
+        if(open)fputs("<p class=\"ak-actions\"><button class=\"is-primary\" type=\"submit\" form=\"pf-add\">Add this quote</button><small>Prices in dollars. Use 0 when there is no delivery, tax or fee.</small></p>",stdout);
     }
     fputs("</section>",stdout);
 
     /* 4. Send for approval: the ledger */
-    fputs("</div><aside class=\"pf-ledger ak-panel is-raised\" id=\"send\"><p class=\"ak-kicker\">Send for approval</p>",stdout);
+    fputs("</div><aside class=\"ak-pattern ak-card pf-ledger\" id=\"send\"><p class=\"ak-eyebrow\">Send for approval</p>",stdout);
     if(f.approval){
         long long total=0;char at[32]="",decision[32]="";pf_int(f.approval->doc,f.approval->root,"known_total_cents",&total);pf_str(f.approval,"requested_at",at,sizeof(at));pf_str(f.approval,"authority.decision",decision,sizeof(decision));
         fputs("<p class=\"pf-total\">",stdout);pf_money(total);fputs("</p><dl class=\"ak-spec\">",stdout);
@@ -284,7 +289,7 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
         if(cheapest){fputs("<dt>Lowest quote</dt><dd>",stdout);pf_supplier(cheapest);fputs("</dd>",stdout);}
         printf("<dt>Quotes</dt><dd>%zu</dd><dt>Listed</dt><dd>",f.nquotes);pf_money(list_total);fputs("</dd></dl>",stdout);
         fputs("<label class=\"pf-confirm\"><input type=\"checkbox\" form=\"pf-send\" name=\"confirm\" value=\"yes\" required> I checked the items, amounts and the quote I picked.</label>",stdout);
-        fputs("<button class=\"ak-btn is-primary pf-send\" type=\"submit\" form=\"pf-send\">Send for approval</button>",stdout);
+        fputs("<button class=\"is-primary\" type=\"submit\" form=\"pf-send\">Send for approval</button>",stdout);
         fputs("<p class=\"pf-safe\">Sending asks for approval in this workspace. It does not order, pay, or contact the supplier.</p>",stdout);
     }else{
         fputs("<p class=\"pf-total\">—</p><p class=\"pf-safe\">",stdout);

@@ -6,7 +6,7 @@ static int session_self_authoring(const char *, const char *);
 static int session_institution_authorized(const char *, const char *, const char *, const char *);
 static int workspace_package_available(const char *, const char *);
 static int workspace_plan_available(const BfPackResolution *);
-static void workspace_editor_links(long long);
+static int workspace_editor_links(long long);
 typedef struct {
     char pack[96], context[96], version[64], digest[65], revision[24], operation[24], shared[65], repr[16], design[208], q[97], kind[16], order[16], view[8];
 } PackSetupInput;
@@ -419,47 +419,52 @@ static int serve_pack_setup(const char *method,const char *target,const char *qu
     psetup_start_wb(result<0?503:200,label);
     fputs("<div class=\"ak-wb-strip\"><a href=\"/packs/setup?context=",stdout);url_query_value(in.context);fputs("\">Workspace setup</a><span>/</span><a href=\"/apps?context=",stdout);url_query_value(in.context);
     fputs("\">Your work</a><span class=\"ak-live\">",stdout);html(state_words);fputs("</span></div>",stdout);
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Set up a tool</p><h1>",stdout);html(label);fputs("</h1><p class=\"ak-lede\">Review exactly what this release includes, choose where its records belong, then install and switch it on. Nothing changes until you press a button below.</p>",stdout);
-    if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">Review the latest release</a></p>",stdout);}
-    fputs("</div><aside class=\"ak-panel is-raised\" data-pack-config><h2>Your configuration</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\"><span class=\"ak-dot",stdout);fputs(strcmp(state,"active")?" is-off":"",stdout);fputs("\">",stdout);html(state_words);fputs("</span></p>",stdout);
-    if(!identity){fputs("<p>Sign in to keep this configuration in your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
+    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Set up a tool</p><h1>",stdout);html(label);fputs("</h1><p class=\"ak-lede\">Check what it adds, choose where it goes, then add it and switch it on. Nothing changes until you press a button.</p>",stdout);
+    {   /* One flow, read from the saved state: check, add, switch on, open. */
+        const char *steps[]={"Check what it adds","Add it","Switch it on","Open it"};int at=!strcmp(state,"active")?3:installed&&strcmp(state,"removed")&&strcmp(state,"stale")?2:1;
+        fputs("<ol class=\"ak-steps\" aria-label=\"Setup steps\">",stdout);
+        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);fputs("</li>",stdout);}
+        fputs("</ol>",stdout);}
+    if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">See the newest version</a></p>",stdout);}
+    fputs("</div><aside class=\"ak-panel is-raised\" data-pack-config><h2>In this workspace</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\"><span class=\"ak-dot",stdout);fputs(strcmp(state,"active")?" is-off":"",stdout);fputs("\">",stdout);html(state_words);fputs("</span></p>",stdout);
+    if(!identity){fputs("<p>Sign in to add this to your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
     else{
         char a[160],sb[160];const char *sc;int canwrite=psetup_context(bearer,auth_db,in.context,1,a,sizeof(a),sb,sizeof(sb),&sc)==1;
-        if(!canwrite)fputs("<p>You can review this workspace. An administrator must change its configuration.</p>",stdout);
+        if(!canwrite)fputs("<p>You can look, but only an administrator of this workspace can change it.</p>",stdout);
         else{
             fputs("<div class=\"ak-actions ak-pack-ops\">",stdout);
-            if(result==0&&(!installed||!strcmp(state,"removed")||strcmp(plan.digest,plan.pinned)))psetup_form("install",installed?"Install reviewed configuration":"Install for this workspace",&in,&plan,plan.digest);
+            if(result==0&&(!installed||!strcmp(state,"removed")||strcmp(plan.digest,plan.pinned)))psetup_form("install",installed?"Update to this version":"Add to this workspace",&in,&plan,plan.digest);
             if(current_ok&&!strcmp(current.state,"installed"))psetup_form("activate","Switch it on",&in,&current,current.pinned);
             fputs("</div>",stdout);
             /* One primary per stage; turning off and removing stay quiet, beside it. */
             if(installed&&strcmp(state,"removed")){fputs("<div class=\"ak-pack-more\">",stdout);if(!strcmp(state,"active"))psetup_form("deactivate","Switch off",&in,&plan,plan.pinned);psetup_form("remove","Remove from this workspace",&in,&plan,plan.pinned);fputs("</div>",stdout);}
         }
-        if(current_ok&&!strcmp(current.state,"active")){workspace_editor_links(current.installation);fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on</a></p>",stdout);}
+        if(current_ok&&!strcmp(current.state,"active")){if(!workspace_editor_links(current.installation)){fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-work href=\"/apps?context=",stdout);url_query_value(in.context);fputs("\">Open your work</a></p>",stdout);}fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on</a></p>",stdout);}
     }
     fputs("</aside></header>",stdout);
     /* Instrument row: counts read from the plan the owner just resolved. */
     size_t changed=0,added=0;
     if(!result){for(size_t i=0;i<plan.resolution.count;i++){int old=bfpg_find(&plan.pins,plan.resolution.nodes[i].pack);if(old<0)added++;else if(strcmp(plan.pins.nodes[old].version,plan.resolution.nodes[i].version))changed++;}}
-    fputs("<dl class=\"ak-stats is-row\"><div><dt>Included behaviour</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",plan.resolution.count);
-    fputs("</dd><small>packages in this release</small></div><div><dt>New here</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",added);
+    fputs("<dl class=\"ak-stats is-row\"><div><dt>Parts</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",plan.resolution.count);
+    fputs("</dd><small>included in this tool</small></div><div><dt>New here</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",added);
     fputs("</dd><small>not yet in this workspace</small></div><div><dt>Changed</dt><dd>",stdout);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",changed);
-    fputs("</dd><small>installed at another version</small></div><div><dt>Status</dt><dd class=\"",stdout);fputs(!strcmp(state,"active")?"is-on":"",stdout);fputs("\">",stdout);html(!strcmp(state,"active")?"On":installed&&strcmp(state,"removed")?"Installed":"Off");fputs("</dd><small>",stdout);html(state_words);fputs("</small></div></dl>",stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Where it lands</span><h2>Workspace</h2></div></header><div class=\"ak-panel ak-packs-where\">",stdout);psetup_context_picker(&in,bearer,auth_db);fputs("</div></section>",stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Review</span><h2>What is included</h2></div><p>Installing keeps these version references and creates any editor this release declares. Published source material stays shared; your drafts stay in your workspace. It never connects an outside account, books a service or publishes a merchant change.</p></header><div class=\"ak-panel ak-scroll\">",stdout);
-    if(result){fputs("<p class=\"pack-warning\" role=\"alert\">This configuration is incomplete: ",stdout);html(plan.reason[0]?plan.reason:"The content owner is unavailable.");if(*plan.subject){fputs(" (",stdout);html(plan.subject);fputs(")",stdout);}fputs(". Nothing can be installed from this review.</p>",stdout);}
+    fputs("</dd><small>would be updated</small></div><div><dt>Status</dt><dd class=\"",stdout);fputs(!strcmp(state,"active")?"is-on":"",stdout);fputs("\">",stdout);html(!strcmp(state,"active")?"On":installed&&strcmp(state,"removed")?"Installed":"Off");fputs("</dd><small>",stdout);html(state_words);fputs("</small></div></dl>",stdout);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Where it goes</span><h2>Workspace</h2></div></header><div class=\"ak-panel ak-packs-where\">",stdout);psetup_context_picker(&in,bearer,auth_db);fputs("</div></section>",stdout);
+    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Check</span><h2>What it adds</h2></div><p>Adding it gives this workspace the parts below and any editor they come with. Your drafts stay in your workspace. It never connects an outside account, books a service or publishes anything.</p></header><div class=\"ak-panel ak-scroll\">",stdout);
+    if(result){fputs("<p class=\"pack-warning\" role=\"alert\">This tool cannot be added yet: ",stdout);html(plan.reason[0]?plan.reason:"The content owner is unavailable.");if(*plan.subject){fputs(" (",stdout);html(plan.subject);fputs(")",stdout);}fputs(". Nothing was changed.</p>",stdout);}
     else{
-        if(*in.shared&&strcmp(in.shared,plan.digest))fputs("<p class=\"pack-warning\" role=\"alert\">The shared configuration has changed since the link was made. Review the current version below before installing it.</p>",stdout);
-        fputs("<table class=\"ak-table\"><thead><tr><th>Included behaviour</th><th>Installed</th><th>Reviewed</th></tr></thead><tbody>",stdout);
-        for(size_t i=0;i<plan.resolution.count;i++){BfPackResolved *n=&plan.resolution.nodes[i];int old=bfpg_find(&plan.pins,n->pack);fputs("<tr><td>",stdout);html(n->label);fputs("<br><code>",stdout);html(n->pack);fputs("</code></td><td>",stdout);html(old>=0?plan.pins.nodes[old].version:"Not installed");fputs("</td><td>",stdout);html(n->version);fputs("</td></tr>",stdout);}
-        for(size_t i=0;i<plan.pins.count;i++)if(bfpg_find(&plan.resolution,plan.pins.nodes[i].pack)<0){fputs("<tr><td>",stdout);html(plan.pins.nodes[i].pack);fputs("</td><td>",stdout);html(plan.pins.nodes[i].version);fputs("</td><td>Removed in this review</td></tr>",stdout);}
+        if(*in.shared&&strcmp(in.shared,plan.digest))fputs("<p class=\"pack-warning\" role=\"alert\">This tool has changed since the link was made. Check the current version below before adding it.</p>",stdout);
+        fputs("<table class=\"ak-table\"><thead><tr><th>Part</th><th>In this workspace</th><th>After this step</th></tr></thead><tbody>",stdout);
+        for(size_t i=0;i<plan.resolution.count;i++){BfPackResolved *n=&plan.resolution.nodes[i];int old=bfpg_find(&plan.pins,n->pack);int same=old>=0&&!strcmp(plan.pins.nodes[old].version,n->version);fputs("<tr><td>",stdout);html(n->label);fputs("</td><td>",stdout);fputs(old<0?"Not added yet":same?"Added":"Older version",stdout);fputs("</td><td>",stdout);fputs(old<0?"Added":same?"No change":"Updated",stdout);fputs("</td></tr>",stdout);}
+        for(size_t i=0;i<plan.pins.count;i++)if(bfpg_find(&plan.resolution,plan.pins.nodes[i].pack)<0){fputs("<tr><td>",stdout);html(plan.pins.nodes[i].pack);fputs("</td><td>Added</td><td>Taken out</td></tr>",stdout);}
         fputs("</tbody></table>",stdout);
     }
     fputs("</div></section>",stdout);
     psetup_preview(in.pack);
-    fputs("<section class=\"ak-band ak-pack-proof\"><div><p class=\"ak-kicker\">Review fingerprint</p><h2>",stdout);
-    if(result)fputs("No fingerprint: this review is incomplete",stdout);else{fputs("<code>",stdout);html(plan.digest);fputs("</code>",stdout);}
-    fputs("</h2><p>A shared link carries the published version and this fingerprint. Whoever opens it chooses their own workspace.</p></div>",stdout);
-    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);fputs("<a class=\"ak-btn pack-link\" data-pack-share href=\"",stdout);psetup_link(&shared,1,plan.digest);fputs("\">Open reusable link</a>",stdout);}
+    fputs("<section class=\"ak-band ak-pack-proof\"><div><p class=\"ak-kicker\">Share</p><h2>",stdout);
+    fputs(result?"Nothing to share yet":"Send this exact setup to someone",stdout);
+    fputs("</h2><p>The link opens the same version you checked here. Whoever opens it chooses their own workspace.</p></div>",stdout);
+    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);fputs("<a class=\"ak-btn pack-link\" data-pack-share href=\"",stdout);psetup_link(&shared,1,plan.digest);fputs("\">Open the share link</a>",stdout);}
     fputs("</section>",stdout);
     psetup_end();return 1;
 }

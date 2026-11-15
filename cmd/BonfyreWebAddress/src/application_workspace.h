@@ -21,16 +21,17 @@ static int workspace_plan_available(const BfPackResolution *plan){
     ok=1;
  done:sqlite3_finalize(s);sqlite3_close(db);return ok;
 }
-static void workspace_editor_links(long long installation){
-    sqlite3 *db=cms_open_ro();sqlite3_stmt *q=NULL;
+/* Returns how many editors it linked, so a caller can offer another way in. */
+static int workspace_editor_links(long long installation){
+    sqlite3 *db=cms_open_ro();sqlite3_stmt *q=NULL;int shown=0;
     if(db&&sqlite3_prepare_v2(db,"SELECT w.binding_id,w.entry,w.release FROM _application_workspace w JOIN application_binding a ON a.id=w.cms_id WHERE w.installation_id=?1 AND a.status='active' ORDER BY w.entry",-1,&q,NULL)==SQLITE_OK){
         sqlite3_bind_int64(q,1,installation);while(sqlite3_step(q)==SQLITE_ROW){const char *id=(const char *)sqlite3_column_text(q,0),*entry=(const char *)sqlite3_column_text(q,1),*release=(const char *)sqlite3_column_text(q,2);
             if(!id||strlen(id)!=43||strncmp(id,"ws-",3)||strspn(id+3,"abcdef0123456789")!=40||!workspace_package_available(release,entry))continue;
             char word[64];size_t n=0;for(const char *c=!strcmp(entry,"product-room/")?"room editor":entry;*c&&*c!='/'&&n+1<sizeof(word);c++)word[n++]=*c=='-'?' ':*c;word[n]=0;
-            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);fputs("</a></p>",stdout);
+            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);fputs("</a></p>",stdout);shown++;
         }
     }
-    sqlite3_finalize(q);if(db)sqlite3_close(db);
+    sqlite3_finalize(q);if(db)sqlite3_close(db);return shown;
 }
 static const char *aw_mime(const char *path){
     const char *dot=strrchr(path,'.');if(!dot)return "text/plain; charset=utf-8";
@@ -104,8 +105,10 @@ static unsigned char *aw_shell(unsigned char *file,size_t *bytes,const char *nav
     char *body=strstr((char *)file,"<body");
     if(body){
         char *close=strchr(body,'>'),*cls=strstr(body," class=\"");size_t at;
-        if(cls&&close&&cls<close){at=(size_t)(cls+8-(char *)file);file=aw_insert(file,bytes,at,"ak-app ",7);}
-        else{at=(size_t)(body+5-(char *)file);file=aw_insert(file,bytes,at," class=\"ak-app\"",15);}
+        /* ak-ws: aurekai-ui.css draws a packaged editor's own controls as the
+         * shared components, so no editor ships a second look. */
+        if(cls&&close&&cls<close){at=(size_t)(cls+8-(char *)file);file=aw_insert(file,bytes,at,"ak-app ak-ws ",13);}
+        else{at=(size_t)(body+5-(char *)file);file=aw_insert(file,bytes,at," class=\"ak-app ak-ws\"",21);}
         if(!file)return NULL;
     }
     char *end=NULL;for(char *p=(char *)file;(p=strstr(p,"</body>"));p++)end=p;

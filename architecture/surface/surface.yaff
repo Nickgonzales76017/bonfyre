@@ -1165,6 +1165,9 @@ interaction fingerprint-measures-template
   forbidden_inference a fingerprint match -> a right to import a donor theme or assert semantic equivalence
 
 architecture site-presentation-composition
+  invariant authored cards inside the shared dark journal reader use a legible surface and text contrast
+  witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks rendered journal card contrast and captures desktop and phone pages when requested
+  known_gap the journal index still renders a lead and a ruled list; the assigned editorial Discover screen uses a split lead and a card grid, so page parity remains unverified and incomplete
   source_path cmd/BonfyreWebAddress/src/site_editorial.h
   source_path cmd/BonfyreWebAddress/src/article_listen.h
   source_path deploy/tailwind/styles/own-site.pcss

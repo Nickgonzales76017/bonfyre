@@ -519,6 +519,13 @@ test('native authored articles share the public profile journal and exact site r
  f.add('site_fragment',{coordinate:'profile-journal-acceptance',page:route,slot:'showcase',audience:'public',
   kind:'profile-story',position:0,heading:'A published journal article',body:'Native journal body proof, not a duplicated community post.',
   semantic_tags:{authoring_v1:{version:1,parent:null,payload:{},responsive:{}}},projection_contract:{html:true},status:'published'},sites[0].id);
+ const secondRoute='/blog/profile-journal-second/';
+ f.add('site_page',{route:secondRoute,title:'A second published article',heading:'A second published article',
+  lede:'A second source-backed story for the journal layout.',eyebrow:'Field notes',editorial_kind:'article',
+  editorial_published_on:'2026-11-06',status:'published'},sites[0].id);
+ f.add('site_fragment',{coordinate:'profile-journal-second',page:secondRoute,slot:'showcase',audience:'public',
+  kind:'profile-story',position:0,heading:'A second published article',body:'A separate published journal body.',
+  semantic_tags:{authoring_v1:{version:1,parent:null,payload:{},responsive:{}}},projection_contract:{html:true},status:'published'},sites[0].id);
  const work=await publicPage('work','/?tab=posts'),article=await publicPage('work',route);
  expect(article.status).toBe(200);expect(article.body).toContain('Native journal body proof');
  expect(article.body).toContain('class="ak-bar"');
@@ -543,6 +550,7 @@ test('native authored articles share the public profile journal and exact site r
  expect(index.body).toContain('class="ak-journal-rows"');expect(index.body).toContain('name="q"');
  expect(index.body).toContain('href="/blog/?subject=Research"');
  expect(index.body).toContain('A published journal article');
+ expect(index.body).toContain('A second published article');
  expect(index.body).not.toContain('data-public-post');
  expect(foreignIndex.status).toBe(200);expect(foreignIndex.body).not.toContain('A published journal article');
  const subjectIndex=await publicPage('work','/blog/?subject=Research');
@@ -555,12 +563,22 @@ test('native authored articles share the public profile journal and exact site r
  expect(noResults.body).not.toContain('A published journal article');
  const ctx=await browser.createBrowserContext(),page=await ctx.newPage();
  try{
+  const journalStyles=[];
+  for(const asset of ['authoring-reader.css','composition.css','aurekai-bar.css']){
+   const response=await f.request('/assets/'+asset,{host:'aurekai.work'});expect(response.status).toBe(200);journalStyles.push(response.body);
+  }
+  const loadJournalStyles=async()=>{for(const content of journalStyles)await page.addStyleTag({content});};
+  const screenshotDir=process.env.BONFYRE_JOURNAL_SCREENSHOTS;if(screenshotDir)mkdirSync(screenshotDir,{recursive:true});
   await page.setContent(index.body,{waitUntil:'domcontentloaded'});
+  await loadJournalStyles();
   expect(await page.$eval('.ak-journal-list',root=>!!(root.querySelector('.fd-lead')&&root.querySelector('.fd-find input[name="q"]')))).toBe(true);
   await page.setViewport({width:1440,height:920});
+  expect(await page.$eval('.fd-head',n=>getComputedStyle(n).display)).toBe('grid');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  if(screenshotDir)await page.screenshot({path:join(screenshotDir,'journal-index-1440.png'),fullPage:true});
   await page.setViewport({width:390,height:820});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  if(screenshotDir)await page.screenshot({path:join(screenshotDir,'journal-index-390.png'),fullPage:true});
   await page.evaluate(()=>{
    window.__spoken=[];window.__utterance=null;
    Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{cancel(){},speak(u){window.__spoken.push(u.text);window.__utterance=u;}}});
@@ -568,6 +586,15 @@ test('native authored articles share the public profile journal and exact site r
    window.Audio=function(){window.__audio=this;this.pause=()=>{};this.play=()=>window.__allowAudio?Promise.resolve():Promise.reject(new Error('unavailable'));};
   });
   await page.setContent(enrichedArticle.body.replace(' data-ak-default',''),{waitUntil:'domcontentloaded'});
+  await loadJournalStyles();
+  const contrast=await page.$eval('.ak-zen-body .ak-card',card=>{
+   const channel=x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;};
+   const luminance=value=>{const c=value.match(/[\d.]+/g).slice(0,3).map(Number).map(channel);return .2126*c[0]+.7152*c[1]+.0722*c[2];};
+   const bg=luminance(getComputedStyle(card).backgroundColor),fg=luminance(getComputedStyle(card.querySelector('h2')).color);
+   return (Math.max(bg,fg)+.05)/(Math.min(bg,fg)+.05);
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+  if(screenshotDir){await page.screenshot({path:join(screenshotDir,'journal-article-390.png'),fullPage:true});await page.setViewport({width:1440,height:920});await page.screenshot({path:join(screenshotDir,'journal-article-1440.png'),fullPage:true});}
   await page.evaluate(()=>{window.__playerEvents=0;document.addEventListener('bonfyre:public-audio-play',()=>window.__playerEvents++);});
   await page.$eval('.ak-zen-body',n=>{n.innerHTML='<blockquote><p>Quoted once.</p></blockquote><ul><li>First item. <ul><li>Nested item.</li></ul></li></ul><p hidden>Hidden text.</p><p>Final paragraph.<span aria-hidden="true">Invisible text.</span></p>';});
   await page.click('[data-ak-track]');

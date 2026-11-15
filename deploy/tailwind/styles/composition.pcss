@@ -757,6 +757,7 @@ body.ak-app[data-aurekai-pattern=spatial] .region-photos .field{display:grid;gri
 .ak-zen-body{padding-top:2rem;font-size:calc(1.1rem * var(--zen-scale))}
 .ak-zen-body .authored-site{background:none!important;color:inherit!important;padding:0!important;margin:0!important}
 .ak-zen-body .authored-site :is(.authored-profile-story,.profile-block,.owned-section){max-width:none;padding:0!important;margin:0 0 2.25rem!important;background:none!important;border:0!important}
+.ak-zen-body .ak-card{background:var(--ak-surface-high,#252b27);border-color:var(--ak-outline-variant,#444935);color:var(--ak-on-surface,#dee4dd)}
 .ak-zen-body :is(p,li){font:400 1em/1.8 'Literata',Georgia,serif;color:var(--ak-on-surface,#dee4dd);margin:0 0 1.25em}
 .ak-zen-body .authored-profile-story:first-child>p:first-of-type::first-letter{float:left;margin:.08em .12em 0 0;font:600 3.6em/.8 var(--ak-sans);color:var(--ak-primary,#d0fc4f)}
 .ak-zen-body :is(h2,h3){margin:0 0 .8rem;font:500 clamp(1.4rem,2.6vw,1.75rem)/1.2 var(--ak-sans);letter-spacing:-.02em;color:var(--ak-on-surface,#dee4dd)}
@@ -1077,20 +1078,10 @@ body:has(.ak-work-rail) :is(.ak-zen-bar,.fd-strip){padding-right:min(12.5rem,34v
 /* Buying (procurement_flow.h): the work-order composer screen — staged steps
    on the left, the totals ledger with the one send action on the right. */
 .route-procurement .pf-hero{padding-bottom:12px}
-.pf-spark{display:flex;flex-wrap:wrap;gap:12px 36px;align-items:center;margin:0 0 28px;padding:18px 22px;border-radius:14px;background:var(--ak-surface-low)}
-.pf-spark div{display:grid;gap:2px}.pf-spark dt{font:500 10.5px/1.3 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ak-outline,#8f937b)}
-.pf-spark dd{margin:0;font:600 1.15rem/1.2 var(--ak-sans);color:var(--ak-on-surface);font-variant-numeric:tabular-nums}.pf-spark dd.is-on{color:var(--ak-primary)}
-.pf-note{margin:0 0 22px;padding:12px 18px;border-left:3px solid var(--ak-primary);border-radius:0 12px 12px 0;background:var(--ak-surface-low);color:var(--ak-on-surface)}
 .pf-layout{display:grid;grid-template-columns:minmax(0,7fr) minmax(280px,5fr);gap:24px;align-items:start}
 .pf-stages{display:grid;gap:20px;min-width:0}
-.pf-stage{min-width:0;padding:clamp(18px,2.4vw,28px);border-radius:16px;background:var(--ak-surface-low)}
-.pf-stage-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;margin-bottom:16px}
-.pf-step{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--ak-surface-high);font:600 13px 'DM Mono',monospace;color:var(--ak-primary)}
-.pf-stage-head h2{font:600 1.3rem/1.25 var(--ak-sans);letter-spacing:-.02em;color:var(--ak-on-surface)}
-.pf-stage-head p{margin-top:4px;font-size:14px;color:var(--ak-on-variant)}
-.pf-empty{display:grid;gap:16px;justify-items:start;padding:8px 0 4px;font:400 1.02rem/1.6 var(--ak-serif);color:var(--ak-on-variant)}
-.pf-act{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:18px}
-.pf-act small,.pf-safe{font-size:13px;line-height:1.5;color:var(--ak-on-variant)}
+.pf-stage{min-width:0}
+.pf-stage .ak-actions small,.pf-safe{font-size:13px;line-height:1.5;color:var(--ak-on-variant)}
 .pf-items tfoot td,.pf-compare tfoot td{border-bottom:0;font-weight:600;color:var(--ak-on-surface)}
 .pf-items td:nth-child(n+3),.pf-items th:nth-child(n+3),.pf-compare .pf-q,.pf-compare .pf-new{text-align:right;font-variant-numeric:tabular-nums}
 .pf-compare th.pf-q span{display:block;color:var(--ak-on-surface);text-transform:none;letter-spacing:0;font:600 13px var(--ak-sans)}
@@ -1099,15 +1090,11 @@ body:has(.ak-work-rail) :is(.ak-zen-bar,.fd-strip){padding-right:min(12.5rem,34v
 .pf-compare small{display:block;font-size:11.5px;font-weight:400;color:var(--ak-on-variant)}
 .pf-compare .pf-fee td{padding-top:8px;padding-bottom:8px;font-size:13px;color:var(--ak-on-variant)}
 .pf-compare .pf-new{min-width:140px;background:color-mix(in srgb,var(--ak-primary) 5%,transparent)}
-.pf-compare .pf-new input{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--ak-outline-variant);border-radius:10px;background:var(--ak-surface-lowest);color:var(--ak-on-surface);font:500 14px var(--ak-sans);text-align:right}
+.pf-compare .pf-new input{min-width:0;text-align:right}
 .pf-compare th.pf-new input,.pf-compare tfoot .pf-new input{text-align:left}
-.pf-compare .pf-new input:focus{outline:2px solid var(--ak-primary);outline-offset:1px}
 .pf-compare .pf-pick label{display:inline-flex;gap:6px;align-items:center;font:500 13px var(--ak-sans);color:var(--ak-on-surface);cursor:pointer}
-.pf-compare .pf-pick input{accent-color:var(--ak-primary)}
 .pf-ledger{position:sticky;top:84px;display:grid;gap:16px}
 .pf-total{font:600 clamp(2.2rem,4vw,3.2rem)/1 var(--ak-sans);letter-spacing:-.035em;color:var(--ak-on-surface);font-variant-numeric:tabular-nums}
 .pf-confirm{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--ak-on-surface);cursor:pointer}
-.pf-confirm input{margin-top:3px;accent-color:var(--ak-primary)}
-.pf-send{justify-content:center;min-height:52px;font-size:16px}
+.pf-confirm input{margin-top:3px}
 @media(max-width:980px){.pf-layout{grid-template-columns:minmax(0,1fr)}.pf-ledger{position:static}}
-@media(max-width:640px){.pf-stage-head{grid-template-columns:auto minmax(0,1fr)}.pf-stage-head .ak-tag{grid-column:2;justify-self:start}.pf-spark{gap:10px 22px}}
