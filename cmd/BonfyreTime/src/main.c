@@ -339,6 +339,14 @@ static void cmd_help(void) {
     VERSION);
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define TMS_COMMANDS(X) \
+    X("add", TMS_ADD) \
+    X("list", TMS_LIST) \
+    X("rm", TMS_RM)
+BF_COMMAND_TABLE(tms_commands, TMS_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     enum {
@@ -389,13 +397,13 @@ int main(int argc, char **argv) {
     } else if (command && command->id == TM_HISTORY) {
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time history <artifact>\n"); rc=1; }
         else cmd_history(db,argv[2]);
-    } else if (command && command->id == TM_TRIGGER) {
+    } else if (command && command->id == TM_TRIGGER) { const int sub_verb=bf_command_id(tms_commands,BF_COMMAND_COUNT(tms_commands),argv[2],-1);
         if (argc<3) { fprintf(stderr,"usage: bonfyre-time trigger <list|add|rm>\n"); rc=1; }
-        else if (strcmp(argv[2],"list")==0) cmd_trigger_list(db);
-        else if (strcmp(argv[2],"add")==0) {
+        else if (sub_verb==TMS_LIST) cmd_trigger_list(db);
+        else if (sub_verb==TMS_ADD) {
             if (argc<5) { fprintf(stderr,"usage: bonfyre-time trigger add <event> <recipe>\n"); rc=1; }
             else cmd_trigger_add(db,argv[3],argv[4]);
-        } else if (strcmp(argv[2],"rm")==0) {
+        } else if (sub_verb==TMS_RM) {
             if (argc<4) { fprintf(stderr,"usage: bonfyre-time trigger rm <id>\n"); rc=1; }
             else cmd_trigger_rm(db,argv[3]);
         }

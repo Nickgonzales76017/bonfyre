@@ -109,6 +109,13 @@ static int safe_material(const bf_json_doc_t *doc,const bf_json_node_t *node,int
      key_is(node,"image_url")||key_is(node,"origin"))allowed=safe_link(value);
   if(key_is(node,"action"))allowed=safe_action(value);
   if(key_is(node,"type"))allowed=allowed&&safe_type(value);
+  if(key_is(node,"hook")){
+   /* A hook names one data-* attribute a page's script or test reads:
+    * lowercase words joined by '-', never an event handler. */
+   if(bytes>48||(bytes&&value[0]=='-'))allowed=0;
+   for(size_t i=0;i<bytes;i++)if(!((value[i]>='a'&&value[i]<='z')||
+      (value[i]>='0'&&value[i]<='9')||value[i]=='-'))allowed=0;
+  }
   if(key_is(node,"name")){
    if(bytes>64)allowed=0;
    for(size_t i=0;i<bytes;i++)if(!isalnum((unsigned char)value[i])&&

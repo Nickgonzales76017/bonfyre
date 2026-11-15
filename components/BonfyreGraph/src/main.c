@@ -943,15 +943,29 @@ static const char *arg_get(int argc, char **argv, const char *flag) {
     return NULL;
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define GR_COMMANDS(X) \
+    X("add-atom", GR_ADD_ATOM) \
+    X("add-op", GR_ADD_OP) \
+    X("export", GR_EXPORT) \
+    X("init", GR_INIT) \
+    X("lineage", GR_LINEAGE) \
+    X("merkle", GR_MERKLE) \
+    X("status", GR_STATUS) \
+    X("validate", GR_VALIDATE)
+BF_COMMAND_TABLE(gr_commands, GR_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc<2){ usage(); return 1; }
-    const char *cmd=argv[1];
+    const char *cmd=argv[1]; const int verb=bf_command_id(gr_commands,BF_COMMAND_COUNT(gr_commands),cmd,-1);
 
-    if (strcmp(cmd,"init")==0) {
+    if (verb==GR_INIT) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph init <db>\n"); return 1; }
         return cmd_init(argv[2]);
     }
-    if (strcmp(cmd,"add-atom")==0) {
+    if (verb==GR_ADD_ATOM) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph add-atom <db> --id .. --hash .. --type ..\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         const char *hash=arg_get(argc,argv,"--hash");
@@ -960,7 +974,7 @@ int main(int argc, char **argv) {
         if (!id||!hash||!type){ fprintf(stderr,"Missing required --id, --hash, --type\n"); return 1; }
         return cmd_add_atom(argv[2],id,hash,type,path);
     }
-    if (strcmp(cmd,"add-op")==0) {
+    if (verb==GR_ADD_OP) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph add-op <db> --id .. --op .. --inputs .. --output ..\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         const char *op=arg_get(argc,argv,"--op");
@@ -971,27 +985,27 @@ int main(int argc, char **argv) {
         if (!id||!op||!inputs||!output){ fprintf(stderr,"Missing required --id, --op, --inputs, --output\n"); return 1; }
         return cmd_add_op(argv[2],id,op,inputs,output,params,version);
     }
-    if (strcmp(cmd,"validate")==0) {
+    if (verb==GR_VALIDATE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph validate <manifest.json>\n"); return 1; }
         return cmd_validate(argv[2]);
     }
-    if (strcmp(cmd,"merkle")==0) {
+    if (verb==GR_MERKLE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph merkle <manifest.json>\n"); return 1; }
         return cmd_merkle(argv[2]);
     }
-    if (strcmp(cmd,"lineage")==0) {
+    if (verb==GR_LINEAGE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph lineage <db> --id ID\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         if (!id){ fprintf(stderr,"Missing --id\n"); return 1; }
         return cmd_lineage(argv[2],id);
     }
-    if (strcmp(cmd,"export")==0) {
+    if (verb==GR_EXPORT) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph export <db> [--out file.json]\n"); return 1; }
         const char *out=arg_get(argc,argv,"--out");
         if (!out) out="artifact.json";
         return cmd_export(argv[2],out);
     }
-    if (strcmp(cmd,"status")==0) {
+    if (verb==GR_STATUS) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph status <db>\n"); return 1; }
         return cmd_status(argv[2]);
     }

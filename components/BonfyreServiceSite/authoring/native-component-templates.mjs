@@ -59,8 +59,8 @@ export const NATIVE_AUTHORING_TEMPLATES=Object.freeze([
   },
   {
     "kind": "ui:action",
-    "start": "<form class=\"ak-pattern ak-action\" data-ak-id=\"{{id}}\" method=\"{{payload.method}}\" action=\"{{payload.action}}\">{{#payload.fields}}<input type=\"hidden\" name=\"{{name}}\" value=\"{{value}}\">{{/payload.fields}}",
-    "end": "<button type=\"submit\">{{payload.label}}</button></form>"
+    "start": "<form class=\"ak-pattern ak-action\" data-ak-id=\"{{id}}\"{{#payload.hook}} data-{{payload.hook}}=\"{{payload.hook_value}}\"{{/payload.hook}} method=\"{{payload.method}}\" action=\"{{payload.action}}\">{{#payload.fields}}<input type=\"hidden\" name=\"{{name}}\" value=\"{{value}}\">{{/payload.fields}}",
+    "end": "{{^payload.buttons}}<button type=\"submit\">{{payload.label}}</button>{{/payload.buttons}}{{#payload.buttons}}<button type=\"submit\"{{#name}} name=\"{{name}}\" value=\"{{value}}\"{{/name}}{{#novalidate}} formnovalidate{{/novalidate}}{{#tone}} class=\"ak-tone-{{tone}}\"{{/tone}}{{#hook}} data-{{hook}}=\"{{hook_value}}\"{{/hook}}>{{label}}</button>{{/payload.buttons}}</form>"
   },
   {
     "kind": "ui:choice",
@@ -69,7 +69,7 @@ export const NATIVE_AUTHORING_TEMPLATES=Object.freeze([
   },
   {
     "kind": "ui:field",
-    "start": "<label class=\"ak-pattern ak-field\" data-ak-id=\"{{id}}\">{{payload.label}}{{#payload.multiline}}<textarea name=\"{{payload.name}}\" rows=\"{{payload.rows}}\" maxlength=\"{{payload.maxlength}}\"{{#payload.disabled}} disabled{{/payload.disabled}}>{{payload.value}}</textarea>{{/payload.multiline}}{{^payload.multiline}}<input type=\"{{payload.type}}\" name=\"{{payload.name}}\" value=\"{{payload.value}}\" placeholder=\"{{payload.placeholder}}\" aria-label=\"{{payload.label}}\"{{#payload.maxlength}} maxlength=\"{{payload.maxlength}}\"{{/payload.maxlength}}{{#payload.inputmode}} inputmode=\"{{payload.inputmode}}\"{{/payload.inputmode}}{{#payload.required}} required{{/payload.required}}{{#payload.disabled}} disabled{{/payload.disabled}}>{{/payload.multiline}}",
+    "start": "<label class=\"ak-pattern ak-field\" data-ak-id=\"{{id}}\">{{payload.label}}{{#payload.multiline}}<textarea name=\"{{payload.name}}\" rows=\"{{payload.rows}}\"{{#payload.maxlength}} maxlength=\"{{payload.maxlength}}\"{{/payload.maxlength}}{{#payload.placeholder}} placeholder=\"{{payload.placeholder}}\"{{/payload.placeholder}}{{#payload.required}} required{{/payload.required}}{{#payload.disabled}} disabled{{/payload.disabled}}>{{payload.value}}</textarea>{{/payload.multiline}}{{^payload.multiline}}{{#payload.ak_select}}<select name=\"{{payload.name}}\" aria-label=\"{{payload.label}}\"{{#payload.required}} required{{/payload.required}}{{#payload.disabled}} disabled{{/payload.disabled}}>{{#payload.options}}<option value=\"{{value}}\"{{#checked}} selected{{/checked}}>{{label}}</option>{{/payload.options}}</select>{{/payload.ak_select}}{{^payload.ak_select}}<input type=\"{{payload.type}}\" name=\"{{payload.name}}\" value=\"{{payload.value}}\" placeholder=\"{{payload.placeholder}}\" aria-label=\"{{payload.label}}\"{{#payload.maxlength}} maxlength=\"{{payload.maxlength}}\"{{/payload.maxlength}}{{#payload.inputmode}} inputmode=\"{{payload.inputmode}}\"{{/payload.inputmode}}{{#payload.pattern}} pattern=\"{{payload.pattern}}\"{{/payload.pattern}}{{#payload.min}} min=\"{{payload.min}}\"{{/payload.min}}{{#payload.max}} max=\"{{payload.max}}\"{{/payload.max}}{{#payload.step}} step=\"{{payload.step}}\"{{/payload.step}}{{#payload.autocomplete}} autocomplete=\"{{payload.autocomplete}}\"{{/payload.autocomplete}}{{#payload.checked}} checked{{/payload.checked}}{{#payload.required}} required{{/payload.required}}{{#payload.disabled}} disabled{{/payload.disabled}}>{{/payload.ak_select}}{{/payload.multiline}}",
     "end": "</label>"
   },
   {

@@ -1293,6 +1293,47 @@ static int cmd_status(sqlite3 *db) {
 
 /* ── CLI ──────────────────────────────────────────────────────────── */
 #include "session_handoff.h"
+#include "bf_command_lookup.h"
+
+/* The verb vocabulary, declared once in strcmp order for the shared lookup.
+ * Each handler below keeps its own arguments, authority and exit codes. */
+#define AUTH_COMMANDS(X) \
+    X("account-profile-stdin", AU_ACCOUNT_PROFILE_STDIN) \
+    X("actor-bind", AU_ACTOR_BIND) \
+    X("actor-closure", AU_ACTOR_CLOSURE) \
+    X("actor-closure-stdin", AU_ACTOR_CLOSURE_STDIN) \
+    X("actor-revoke", AU_ACTOR_REVOKE) \
+    X("authorize", AU_AUTHORIZE) \
+    X("background-access", AU_BACKGROUND_ACCESS) \
+    X("expire", AU_EXPIRE) \
+    X("external-link-claim", AU_EXTERNAL_LINK_CLAIM) \
+    X("external-link-list", AU_EXTERNAL_LINK_LIST) \
+    X("external-link-revoke", AU_EXTERNAL_LINK_REVOKE) \
+    X("fixture", AU_FIXTURE) \
+    X("handoff-consume-stdin", AU_HANDOFF_CONSUME_STDIN) \
+    X("handoff-issue-stdin", AU_HANDOFF_ISSUE_STDIN) \
+    X("http-login", AU_HTTP_LOGIN) \
+    X("http-signup", AU_HTTP_SIGNUP) \
+    X("institution-authorize", AU_INSTITUTION_AUTHORIZE) \
+    X("institution-authorize-stdin", AU_INSTITUTION_AUTHORIZE_STDIN) \
+    X("institution-grant", AU_INSTITUTION_GRANT) \
+    X("institution-member-set-stdin", AU_INSTITUTION_MEMBER_SET_STDIN) \
+    X("institution-members-stdin", AU_INSTITUTION_MEMBERS_STDIN) \
+    X("institution-revoke", AU_INSTITUTION_REVOKE) \
+    X("layer-source", AU_LAYER_SOURCE) \
+    X("login", AU_LOGIN) \
+    X("logout", AU_LOGOUT) \
+    X("logout-stdin", AU_LOGOUT_STDIN) \
+    X("organization-stdin", AU_ORGANIZATION_STDIN) \
+    X("sessions", AU_SESSIONS) \
+    X("sessions-revoke", AU_SESSIONS_REVOKE) \
+    X("signup", AU_SIGNUP) \
+    X("status", AU_STATUS) \
+    X("update", AU_UPDATE) \
+    X("user", AU_USER) \
+    X("users", AU_USERS) \
+    X("verify", AU_VERIFY)
+BF_COMMAND_TABLE(auth_commands, AUTH_COMMANDS);
 
 static const char *arg_get(int argc, char **argv, const char *flag) {
     for (int i=0;i<argc-1;i++)
@@ -1354,8 +1395,9 @@ int main(int argc, char **argv) {
     if (ca<2) { usage(); return 1; }
 
     const char *cmd=cv[1];
+    const int verb=bf_command_id(auth_commands,BF_COMMAND_COUNT(auth_commands),cmd,-1);
 
-    if (strcmp(cmd, "layer-source") == 0 && ca >= 3) {
+    if (verb==AU_LAYER_SOURCE && ca >= 3) {
         const char *root = arg_get(ca, cv, "--root");
         char *json = NULL;
         if (bf_layer_load_json(root, cv[2], &json) != 0) {
@@ -1373,31 +1415,31 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!strcmp(cmd, "background-access"))
+    if (verb==AU_BACKGROUND_ACCESS)
         return cmd_background_access(db_path, arg_get(ca, cv, "--cms-db"), arg_get(ca, cv, "--actor"),
             arg_get(ca, cv, "--subject"), arg_get(ca, cv, "--scope"), arg_get(ca, cv, "--permission"));
 
-    if (strcmp(cmd, "fixture") == 0) return cmd_fixture(argv[0], db_path);
+    if (verb==AU_FIXTURE) return cmd_fixture(argv[0], db_path);
 
     sqlite3 *db=open_db(db_path);
     if (!db) return 1;
     int rc=0;
     if(sqlite3_exec(db,organization_schema,NULL,NULL,NULL)!=SQLITE_OK){sqlite3_close(db);return 1;}
 
-    if(!strcmp(cmd,"organization-stdin")){rc=cmd_organization_workspace(db);}
-    else if (strcmp(cmd,"http-signup")==0 || strcmp(cmd,"http-login")==0) {
+    if(verb==AU_ORGANIZATION_STDIN){rc=cmd_organization_workspace(db);}
+    else if (verb==AU_HTTP_SIGNUP || verb==AU_HTTP_LOGIN) {
         char input[8192], email[320], password[1024], name[256];
         if (stdin_json(input,sizeof(input)) || json_field(input,"email",email,sizeof(email)) ||
             json_field(input,"password",password,sizeof(password))) {
             fprintf(stderr,"Invalid authentication payload\n"); rc=1;
-        } else if (strcmp(cmd,"http-login")==0) {
+        } else if (verb==AU_HTTP_LOGIN) {
             rc=cmd_login(db,email,password,"auto");   /* let the tier decide */
         } else if (json_field(input,"name",name,sizeof(name))) {
             size_t n=strcspn(email,"@");
             if (!n || n>=sizeof(name)) { fprintf(stderr,"Missing name\n"); rc=1; }
             else { memcpy(name,email,n); name[n]='\0'; rc=cmd_signup(db,email,name,password,"free"); }
         } else rc=cmd_signup(db,email,name,password,"free");
-    } else if (strcmp(cmd,"signup")==0) {
+    } else if (verb==AU_SIGNUP) {
         const char *email=arg_get(ca,cv,"--email");
         const char *name=arg_get(ca,cv,"--name");
         const char *pw=arg_get(ca,cv,"--password");
@@ -1405,20 +1447,20 @@ int main(int argc, char **argv) {
         if (!tier) tier="free";
         if (!email||!name||!pw) { fprintf(stderr,"Missing --email, --name, --password\n"); rc=1; }
         else rc=cmd_signup(db,email,name,pw,tier);
-    } else if (strcmp(cmd,"login")==0) {
+    } else if (verb==AU_LOGIN) {
         const char *email=arg_get(ca,cv,"--email");
         const char *pw=arg_get(ca,cv,"--password");
         if (!email||!pw) { fprintf(stderr,"Missing --email, --password\n"); rc=1; }
         else rc=cmd_login(db,email,pw,arg_get(ca,cv,"--scope"));
-    } else if (strcmp(cmd,"handoff-issue-stdin")==0 || strcmp(cmd,"handoff-consume-stdin")==0) {
+    } else if (verb==AU_HANDOFF_ISSUE_STDIN || verb==AU_HANDOFF_CONSUME_STDIN) {
         const char *dest=arg_get(ca,cv,"--dest"),*state=arg_get(ca,cv,"--state");
         if(!dest||!state){fprintf(stderr,"Missing handoff destination or nonce.\n");rc=1;}
-        else rc=!strcmp(cmd,"handoff-issue-stdin") ? cmd_handoff_issue(db,dest,state) : cmd_handoff_consume(db,dest,state);
-    } else if (strcmp(cmd,"verify")==0) {
+        else rc=verb==AU_HANDOFF_ISSUE_STDIN ? cmd_handoff_issue(db,dest,state) : cmd_handoff_consume(db,dest,state);
+    } else if (verb==AU_VERIFY) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_verify(db,tok);
-    } else if (strcmp(cmd,"external-link-claim")==0) {
+    } else if (verb==AU_EXTERNAL_LINK_CLAIM) {
         const char *tok=arg_get(ca,cv,"--token");
         const char *provider=arg_get(ca,cv,"--provider");
         const char *remote=arg_get(ca,cv,"--remote-account");
@@ -1426,109 +1468,109 @@ int main(int argc, char **argv) {
         const char *label=arg_get(ca,cv,"--display-name");
         if (!tok||!provider||!remote||!profile) { fprintf(stderr,"Missing --token, --provider, --remote-account, or --profile-url\n"); rc=1; }
         else rc=cmd_external_link_claim(db,tok,provider,remote,profile,label);
-    } else if (strcmp(cmd,"external-link-list")==0) {
+    } else if (verb==AU_EXTERNAL_LINK_LIST) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_external_link_list(db,tok);
-    } else if (strcmp(cmd,"external-link-revoke")==0) {
+    } else if (verb==AU_EXTERNAL_LINK_REVOKE) {
         const char *tok=arg_get(ca,cv,"--token");
         const char *link=arg_get(ca,cv,"--link-id");
         if (!tok||!link) { fprintf(stderr,"Missing --token or --link-id\n"); rc=1; }
         else rc=cmd_external_link_revoke(db,tok,link);
-    } else if (strcmp(cmd,"actor-closure")==0) {
+    } else if (verb==AU_ACTOR_CLOSURE) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_actor_closure(db,tok);
-    } else if (strcmp(cmd,"actor-closure-stdin")==0) {
+    } else if (verb==AU_ACTOR_CLOSURE_STDIN) {
         char tok[MAX_TOKEN];
         if (stdin_token(tok,sizeof(tok))) { fprintf(stderr,"Missing or malformed stdin token\n"); rc=1; }
         else rc=cmd_actor_closure(db,tok);
-    } else if (strcmp(cmd,"actor-bind")==0) {
+    } else if (verb==AU_ACTOR_BIND) {
         const char *id_s=arg_get(ca,cv,"--user-id");
         const char *actor=arg_get(ca,cv,"--actor");
         if (!id_s || !actor) { fprintf(stderr,"Missing --user-id or --actor\n"); rc=1; }
         else rc=cmd_actor_bind(db,atoi(id_s),actor);
-    } else if (strcmp(cmd,"actor-revoke")==0) {
+    } else if (verb==AU_ACTOR_REVOKE) {
         const char *id_s=arg_get(ca,cv,"--user-id");
         if (!id_s) { fprintf(stderr,"Missing --user-id\n"); rc=1; }
         else rc=cmd_actor_revoke(db,atoi(id_s));
-    } else if (strcmp(cmd,"authorize")==0) {
+    } else if (verb==AU_AUTHORIZE) {
         const char *tok=arg_get(ca,cv,"--token");
         const char *scope=arg_get(ca,cv,"--scope");
         if (!tok||!scope) { fprintf(stderr,"Missing --token or --scope\n"); rc=1; }
         else rc=cmd_authorize(db,tok,scope);
-    } else if (strcmp(cmd,"institution-authorize")==0) {
+    } else if (verb==AU_INSTITUTION_AUTHORIZE) {
         const char *tok=arg_get(ca,cv,"--token");
         const char *institution=arg_get(ca,cv,"--institution");
         const char *role=arg_get(ca,cv,"--role");
         if (!tok||!institution||!role) { fprintf(stderr,"Missing --token, --institution, or --role\n"); rc=1; }
         else rc=cmd_institution_authorize(db,tok,institution,role);
-    } else if (strcmp(cmd,"institution-authorize-stdin")==0) {
+    } else if (verb==AU_INSTITUTION_AUTHORIZE_STDIN) {
         char tok[MAX_TOKEN];
         const char *institution=arg_get(ca,cv,"--institution");
         const char *role=arg_get(ca,cv,"--role");
         if (!safe_institution(institution) || institution_role_rank(role)<0 || stdin_token(tok,sizeof(tok))) {
             fprintf(stderr,"Invalid institution, role, or stdin token\n"); rc=1;
         } else rc=cmd_institution_authorize(db,tok,institution,role);
-    } else if (strcmp(cmd,"account-profile-stdin")==0) {
+    } else if (verb==AU_ACCOUNT_PROFILE_STDIN) {
         char tok[MAX_TOKEN];
         if (stdin_token(tok,sizeof(tok))) rc=member_failure(db,401,"Sign in to view your account.");
         else rc=cmd_account_profile(db,tok);
-    } else if (strcmp(cmd,"institution-members-stdin")==0 || strcmp(cmd,"institution-member-set-stdin")==0) {
+    } else if (verb==AU_INSTITUTION_MEMBERS_STDIN || verb==AU_INSTITUTION_MEMBER_SET_STDIN) {
         char tok[MAX_TOKEN];
         const char *institution=arg_get(ca,cv,"--institution");
         if (stdin_token(tok,sizeof(tok))) rc=member_failure(db,401,"Sign in to manage members.");
-        else if (strcmp(cmd,"institution-members-stdin")==0) {
+        else if (verb==AU_INSTITUTION_MEMBERS_STDIN) {
             const char *cursor=arg_get(ca,cv,"--after-id");
             char *end=NULL; long after=cursor?strtol(cursor,&end,10):0;
             if (cursor && (!*cursor || *end || after<0 || after>2147483647)) rc=member_failure(db,400,"Invalid member cursor.");
             else rc=cmd_institution_members(db,tok,institution,(int)after);
         } else rc=cmd_institution_member_set(db,tok,institution,arg_get(ca,cv,"--email"),arg_get(ca,cv,"--role"),arg_get(ca,cv,"--expected-role"),arg_get(ca,cv,"--expected-expiry"));
-    } else if (strcmp(cmd,"logout-stdin")==0) {
+    } else if (verb==AU_LOGOUT_STDIN) {
         char tok[MAX_TOKEN];
         if (stdin_token(tok,sizeof(tok))) { fprintf(stderr,"Missing or malformed stdin token\n"); rc=1; }
         else rc=cmd_logout(db,tok);
-    } else if (strcmp(cmd,"institution-grant")==0) {
+    } else if (verb==AU_INSTITUTION_GRANT) {
         const char *id_s=arg_get(ca,cv,"--user-id");
         const char *institution=arg_get(ca,cv,"--institution");
         const char *role=arg_get(ca,cv,"--role");
         const char *expires_at=arg_get(ca,cv,"--expires-at");
         if (!id_s||!institution||!role) { fprintf(stderr,"Missing --user-id, --institution, or --role\n"); rc=1; }
         else rc=cmd_grant(db,atoi(id_s),institution,role,expires_at);
-    } else if (strcmp(cmd,"institution-revoke")==0) {
+    } else if (verb==AU_INSTITUTION_REVOKE) {
         const char *id_s=arg_get(ca,cv,"--user-id");
         const char *institution=arg_get(ca,cv,"--institution");
         if (!id_s||!institution) { fprintf(stderr,"Missing --user-id or --institution\n"); rc=1; }
         else rc=cmd_revoke_grant(db,atoi(id_s),institution);
-    } else if (strcmp(cmd,"expire")==0) {
+    } else if (verb==AU_EXPIRE) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_expire(db,tok);
-    } else if (strcmp(cmd,"logout")==0) {
+    } else if (verb==AU_LOGOUT) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_logout(db,tok);
-    } else if (strcmp(cmd,"users")==0) {
+    } else if (verb==AU_USERS) {
         rc=cmd_users(db);
-    } else if (strcmp(cmd,"user")==0) {
+    } else if (verb==AU_USER) {
         const char *id_s=arg_get(ca,cv,"--id");
         if (!id_s) { fprintf(stderr,"Missing --id\n"); rc=1; }
         else rc=cmd_user(db,atoi(id_s));
-    } else if (strcmp(cmd,"update")==0) {
+    } else if (verb==AU_UPDATE) {
         const char *id_s=arg_get(ca,cv,"--id");
         const char *tier=arg_get(ca,cv,"--tier");
         const char *active=arg_get(ca,cv,"--active");
         if (!id_s) { fprintf(stderr,"Missing --id\n"); rc=1; }
         else rc=cmd_update(db,atoi(id_s),tier,active);
-    } else if (strcmp(cmd,"sessions")==0) {
+    } else if (verb==AU_SESSIONS) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         if (!uid_s) { fprintf(stderr,"Missing --user-id\n"); rc=1; }
         else rc=cmd_sessions(db,atoi(uid_s));
-    } else if (strcmp(cmd,"sessions-revoke")==0) {
+    } else if (verb==AU_SESSIONS_REVOKE) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         if (!uid_s) { fprintf(stderr,"Missing --user-id\n"); rc=1; }
         else rc=cmd_sessions_revoke(db,atoi(uid_s));
-    } else if (strcmp(cmd,"status")==0) {
+    } else if (verb==AU_STATUS) {
         rc=cmd_status(db);
     } else {
         fprintf(stderr,"Unknown command: %s\n",cmd); usage(); rc=1;

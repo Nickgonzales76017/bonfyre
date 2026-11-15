@@ -673,52 +673,70 @@ static void usage_to(FILE *dest) {
 }
 static void usage(void) { usage_to(stderr); }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define RF_COMMANDS(X) \
+    X("--help", RF_OPT_HELP) \
+    X("-h", RF_OPT_H) \
+    X("change", RF_CHANGE) \
+    X("checkout", RF_CHECKOUT) \
+    X("connect", RF_CONNECT) \
+    X("help", RF_HELP) \
+    X("observe", RF_OBSERVE) \
+    X("provision", RF_PROVISION) \
+    X("resolve", RF_RESOLVE) \
+    X("service", RF_SERVICE) \
+    X("view", RF_VIEW)
+BF_COMMAND_TABLE(rf_commands, RF_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 2; }
-    const char *verb = argv[1];
+    const char *verb = argv[1]; const int verb_id=bf_command_id(rf_commands,BF_COMMAND_COUNT(rf_commands),verb,-1);
     /* Help works before sealed credentials are opened or any network request. */
-    if (!strcmp(verb,"--help") || !strcmp(verb,"-h") || !strcmp(verb,"help") ||
-        (argc==3 && (!strcmp(argv[2],"--help") || !strcmp(argv[2],"-h") || !strcmp(argv[2],"help")))) {
+    const int help_id = argc == 3 ? bf_command_id(rf_commands, BF_COMMAND_COUNT(rf_commands), argv[2], -1) : -1;
+    if (verb_id==RF_OPT_HELP || verb_id==RF_OPT_H || verb_id==RF_HELP ||
+        (argc==3 && (help_id==RF_OPT_HELP || help_id==RF_OPT_H || help_id==RF_HELP))) {
         usage_to(stdout); return 0;
     }
     const char *provider = arg(argc, argv, "--provider"); if (!provider) provider = "forgejo";
     Creds c;
     if (!creds_paths(&c,argv[0])) { fail_json(verb, "bonfyre-credentials is not reachable in this environment"); return 2; }
-    if (!strcmp(verb, "connect")) return do_connect(&c, provider);
-    if (!strcmp(verb, "provision")) {
+    if (verb_id==RF_CONNECT) return do_connect(&c, provider);
+    if (verb_id==RF_PROVISION) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *desc = arg(argc, argv, "--description");
         int priv = flag_true(arg(argc, argv, "--private"), 1);
         if (!org || !repo) { usage(); return 2; }
         return do_provision(&c, provider, org, repo, priv, desc);
     }
-    if (!strcmp(verb, "resolve")) {
+    if (verb_id==RF_RESOLVE) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo");
         if (!org || !repo) { usage(); return 2; }
         return do_resolve(&c, provider, org, repo);
     }
-    if (!strcmp(verb, "view")) {
+    if (verb_id==RF_VIEW) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *path = arg(argc, argv, "--path"), *ref = arg(argc, argv, "--ref");
         if (!org || !repo) { usage(); return 2; }
         return do_view(&c, provider, org, repo, path, ref);
     }
-    if (!strcmp(verb, "checkout")) {
+    if (verb_id==RF_CHECKOUT) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *dest = arg(argc, argv, "--dest"),
                    *ref = arg(argc, argv, "--ref"), *filter = arg(argc, argv, "--filter"), *receipt = arg(argc, argv, "--receipt");
         if (!org || !repo || !dest) { usage(); return 2; }
         return do_checkout(&c, provider, org, repo, dest, ref, filter, receipt);
     }
-    if (!strcmp(verb, "change")) {
+    if (verb_id==RF_CHANGE) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *path = arg(argc, argv, "--path"),
                    *message = arg(argc, argv, "--message"), *content_file = arg(argc, argv, "--content-file"), *branch = arg(argc, argv, "--branch");
         if (!org || !repo || !path || !message || !content_file) { usage(); return 2; }
         return do_change(&c, provider, org, repo, path, message, content_file, branch);
     }
-    if (!strcmp(verb, "observe")) {
+    if (verb_id==RF_OBSERVE) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *limit_s = arg(argc, argv, "--limit");
         if (!org || !repo) { usage(); return 2; }
         return do_observe(&c, provider, org, repo, limit_s ? atoi(limit_s) : 20);
     }
-    if (!strcmp(verb, "service")) {
+    if (verb_id==RF_SERVICE) {
         const char *org = arg(argc, argv, "--org"), *repo = arg(argc, argv, "--repo"), *action = arg(argc, argv, "--action"),
                    *hook_url = arg(argc, argv, "--url"), *events = arg(argc, argv, "--events");
         if (!org || !repo || !action) { usage(); return 2; }

@@ -1199,28 +1199,68 @@ done:
 /* Read-only view over the real Finance, CRM and Outreach stores. */
 #include "opportunity_inspect.inc"
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FIN_COMMANDS(X) \
+    X("--help", FIN_OPT_HELP) \
+    X("-h", FIN_OPT_H) \
+    X("books", FIN_BOOKS) \
+    X("bundle", FIN_BUNDLE) \
+    X("components", FIN_COMPONENTS) \
+    X("job", FIN_JOB) \
+    X("layer", FIN_LAYER) \
+    X("margin", FIN_MARGIN) \
+    X("opportunity", FIN_OPPORTUNITY) \
+    X("payment-options", FIN_PAYMENT_OPTIONS) \
+    X("relationships", FIN_RELATIONSHIPS) \
+    X("service", FIN_SERVICE) \
+    X("status", FIN_STATUS)
+BF_COMMAND_TABLE(fin_commands, FIN_COMMANDS);
+
+#define FS_COMMANDS(X) \
+    X("add", FS_ADD) \
+    X("attest", FS_ATTEST) \
+    X("compare", FS_COMPARE) \
+    X("create", FS_CREATE) \
+    X("export", FS_EXPORT) \
+    X("handoff", FS_HANDOFF) \
+    X("import", FS_IMPORT) \
+    X("inspect", FS_INSPECT) \
+    X("list", FS_LIST) \
+    X("log", FS_LOG) \
+    X("opportunities", FS_OPPORTUNITIES) \
+    X("queue-batch", FS_QUEUE_BATCH) \
+    X("rank", FS_RANK) \
+    X("refresh", FS_REFRESH) \
+    X("requirement-set", FS_REQUIREMENT_SET) \
+    X("requirements-import", FS_REQUIREMENTS_IMPORT) \
+    X("review", FS_REVIEW) \
+    X("stats", FS_STATS)
+BF_COMMAND_TABLE(fs_commands, FS_COMMANDS);
+
 static int cmd_opportunity_dispatch(sqlite3 *db, int argc, char **argv) {
     if (argc<3) { fprintf(stderr,"Usage: bonfyre-finance opportunity <import|requirements-import|requirement-set|refresh|rank|inspect|attest|queue-batch|stats>\n"); return 1; }
-    const char *sub=argv[2];
-    if (!strcmp(sub,"import")) {
+    const char *sub=argv[2]; const int sub_id=bf_command_id(fs_commands,BF_COMMAND_COUNT(fs_commands),sub,-1);
+    if (sub_id==FS_IMPORT) {
         const char *file=arg_get(argc,argv,"--file"); if (!file) return 1; return zc_import_opportunities(db,file);
-    } else if (!strcmp(sub,"requirements-import")) {
+    } else if (sub_id==FS_REQUIREMENTS_IMPORT) {
         const char *file=arg_get(argc,argv,"--file"); if (!file) return 1; return zc_import_requirements(db,file);
-    } else if (!strcmp(sub,"requirement-set")) {
+    } else if (sub_id==FS_REQUIREMENT_SET) {
         const char *id=arg_get(argc,argv,"--id"),*kind=arg_get(argc,argv,"--kind"),*key=arg_get(argc,argv,"--key"),*state=arg_get(argc,argv,"--state"),*evidence=arg_get(argc,argv,"--evidence");
         if (!id||!kind||!key||!state||!evidence) return 1; return zc_requirement_set(db,id,kind,key,state,evidence);
-    } else if (!strcmp(sub,"refresh")) {
+    } else if (sub_id==FS_REFRESH) {
         const char *id=arg_get(argc,argv,"--id"); if (!zc_refresh(db,id)) return 1; printf("refreshed\t%s\n",id?id:"all"); return 0;
-    } else if (!strcmp(sub,"rank")) {
+    } else if (sub_id==FS_RANK) {
         const char *n=arg_get(argc,argv,"--limit"); return zc_rank(db,n?atoi(n):25);
-    } else if (!strcmp(sub,"inspect")) {
+    } else if (sub_id==FS_INSPECT) {
         const char *id=arg_get(argc,argv,"--id"),*cms=arg_get(argc,argv,"--cms-db");
         const char *outreach=arg_get(argc,argv,"--outreach-db");
         return zc_inspect_opportunity(db,id,cms,outreach);
-    } else if (!strcmp(sub,"stats")) return zc_stats(db);
-    else if (!strcmp(sub,"queue-batch")) {
+    } else if (sub_id==FS_STATS) return zc_stats(db);
+    else if (sub_id==FS_QUEUE_BATCH) {
         const char *out=arg_get(argc,argv,"--out"),*n=arg_get(argc,argv,"--limit"); return zc_queue_batch(db,out,n?atoi(n):1000);
-    } else if (!strcmp(sub,"attest")) {
+    } else if (sub_id==FS_ATTEST) {
         const char *id=arg_get(argc,argv,"--id"),*kind=arg_get(argc,argv,"--kind"),*ref=arg_get(argc,argv,"--ref");
         if (!id||!kind||!ref) return 1;
         sqlite3_int64 rev=0,cost=0,human=0; int has=0;
@@ -1343,12 +1383,12 @@ int main(int argc, char **argv) {
     }
 
     if (cmd_argc<2){ usage(); return 1; }
-    const char *cmd=cmd_argv[1];
-    if (!strcmp(cmd,"--help") || !strcmp(cmd,"-h")) { usage(); return 0; }
-    if (!strcmp(cmd,"payment-options")) return cmd_payment_options(cmd_argc,cmd_argv);
-    if (!strcmp(cmd,"books")) return cmd_books(cmd_argc,cmd_argv);
+    const char *cmd=cmd_argv[1]; const int verb=bf_command_id(fin_commands,BF_COMMAND_COUNT(fin_commands),cmd,-1);
+    if (verb==FIN_OPT_HELP || verb==FIN_OPT_H) { usage(); return 0; }
+    if (verb==FIN_PAYMENT_OPTIONS) return cmd_payment_options(cmd_argc,cmd_argv);
+    if (verb==FIN_BOOKS) return cmd_books(cmd_argc,cmd_argv);
 
-    if (strcmp(cmd,"layer")==0 && cmd_argc>=3) {
+    if (verb==FIN_LAYER && cmd_argc>=3) {
         const char *root = arg_get(cmd_argc, cmd_argv, "--root");
         char *out = NULL;
         if (bf_layer_finance_json(root, cmd_argv[2], &out) != 0 || !out) return 1;
@@ -1362,15 +1402,15 @@ int main(int argc, char **argv) {
 
     int rc=0;
 
-    if (strcmp(cmd,"relationships")==0) {
+    if (verb==FIN_RELATIONSHIPS) {
         rc=cmd_relationships(db,cmd_argc,cmd_argv);
     } else
-    if (strcmp(cmd,"opportunity")==0) {
+    if (verb==FIN_OPPORTUNITY) {
         rc=cmd_opportunity_dispatch(db,cmd_argc,cmd_argv);
-    } else if (strcmp(cmd,"service")==0) {
+    } else if (verb==FIN_SERVICE) {
         if (cmd_argc<3){ fprintf(stderr,"Usage: bonfyre-finance service <add|list|opportunities>\n"); rc=1; goto done; }
-        const char *sub=cmd_argv[2];
-        if (strcmp(sub,"add")==0) {
+        const char *sub=cmd_argv[2]; const int sub_id=bf_command_id(fs_commands,BF_COMMAND_COUNT(fs_commands),sub,-1);
+        if (sub_id==FS_ADD) {
             const char *name=arg_get(cmd_argc,cmd_argv,"--name");
             const char *buy_s=arg_get(cmd_argc,cmd_argv,"--buy");
             const char *sell_s=arg_get(cmd_argc,cmd_argv,"--sell");
@@ -1378,17 +1418,17 @@ int main(int argc, char **argv) {
             const char *cat=arg_get(cmd_argc,cmd_argv,"--category");
             if (!name||!buy_s||!sell_s||!source){ fprintf(stderr,"Missing --name, --buy, --sell, --source\n"); rc=1; goto done; }
             rc=cmd_service_add(db,name,atof(buy_s),atof(sell_s),source,cat);
-        } else if (strcmp(sub,"list")==0) {
+        } else if (sub_id==FS_LIST) {
             rc=cmd_service_list(db);
-        } else if (strcmp(sub,"opportunities")==0) {
+        } else if (sub_id==FS_OPPORTUNITIES) {
             rc=cmd_service_opportunities(db);
         } else {
             fprintf(stderr,"Unknown service command: %s\n",sub); rc=1;
         }
-    } else if (strcmp(cmd,"job")==0) {
+    } else if (verb==FIN_JOB) {
         if (cmd_argc<3){ fprintf(stderr,"Usage: bonfyre-finance job <create|list|review|log|handoff>\n"); rc=1; goto done; }
-        const char *sub=cmd_argv[2];
-        if (strcmp(sub,"log")==0) {
+        const char *sub=cmd_argv[2]; const int sub_id=bf_command_id(fs_commands,BF_COMMAND_COUNT(fs_commands),sub,-1);
+        if (sub_id==FS_LOG) {
             const char *svc=arg_get(cmd_argc,cmd_argv,"--service");
             const char *cost_s=arg_get(cmd_argc,cmd_argv,"--cost");
             const char *sold_s=arg_get(cmd_argc,cmd_argv,"--sold");
@@ -1396,17 +1436,17 @@ int main(int argc, char **argv) {
             const char *notes=arg_get(cmd_argc,cmd_argv,"--notes");
             if (!svc||!cost_s||!sold_s){ fprintf(stderr,"Missing --service, --cost, --sold\n"); rc=1; goto done; }
             rc=cmd_job_log(db,svc,atof(cost_s),atof(sold_s),quality,notes);
-        } else if (strcmp(sub,"create")==0) {
+        } else if (sub_id==FS_CREATE) {
             const char *input=arg_get(cmd_argc,cmd_argv,"--input");
             const char *type=arg_get(cmd_argc,cmd_argv,"--type");
             const char *sell_s=arg_get(cmd_argc,cmd_argv,"--sell-price");
             if (!input){ fprintf(stderr,"Missing --input\n"); rc=1; goto done; }
             if (!type) type="transcription";
             rc=cmd_pipeline_create(db,input,type,sell_s?atof(sell_s):0);
-        } else if (strcmp(sub,"list")==0) {
+        } else if (sub_id==FS_LIST) {
             const char *status=arg_get(cmd_argc,cmd_argv,"--status");
             rc=cmd_pipeline_list(db,status);
-        } else if (strcmp(sub,"review")==0) {
+        } else if (sub_id==FS_REVIEW) {
             const char *id_s=arg_get(cmd_argc,cmd_argv,"--id");
             const char *result=arg_get(cmd_argc,cmd_argv,"--result");
             const char *reviewer=arg_get(cmd_argc,cmd_argv,"--reviewer");
@@ -1414,7 +1454,7 @@ int main(int argc, char **argv) {
             const char *cost_s=arg_get(cmd_argc,cmd_argv,"--cost");
             if (!id_s||!result||!reviewer){ fprintf(stderr,"Missing --id, --result, --reviewer\n"); rc=1; goto done; }
             rc=cmd_pipeline_review(db,atoi(id_s),result,reviewer,notes,cost_s?atof(cost_s):0);
-        } else if (strcmp(sub,"handoff")==0) {
+        } else if (sub_id==FS_HANDOFF) {
             const char *id_s=arg_get(cmd_argc,cmd_argv,"--id");
             const char *type=arg_get(cmd_argc,cmd_argv,"--type");
             if (!id_s){ fprintf(stderr,"Missing --id\n"); rc=1; goto done; }
@@ -1422,37 +1462,37 @@ int main(int argc, char **argv) {
         } else {
             fprintf(stderr,"Unknown job command: %s\n",sub); rc=1;
         }
-    } else if (strcmp(cmd,"margin")==0) {
+    } else if (verb==FIN_MARGIN) {
         rc=cmd_margin(db);
-    } else if (strcmp(cmd,"bundle")==0) {
+    } else if (verb==FIN_BUNDLE) {
         if (cmd_argc<3){ fprintf(stderr,"Usage: bonfyre-finance bundle <create|list|compare|export>\n"); rc=1; goto done; }
-        const char *sub=cmd_argv[2];
-        if (strcmp(sub,"create")==0) {
+        const char *sub=cmd_argv[2]; const int sub_id=bf_command_id(fs_commands,BF_COMMAND_COUNT(fs_commands),sub,-1);
+        if (sub_id==FS_CREATE) {
             const char *name=arg_get(cmd_argc,cmd_argv,"--name");
             const char *comps=arg_get(cmd_argc,cmd_argv,"--components");
             const char *price_s=arg_get(cmd_argc,cmd_argv,"--price");
             const char *target=arg_get(cmd_argc,cmd_argv,"--target");
             if (!name||!comps||!price_s){ fprintf(stderr,"Missing --name, --components, --price\n"); rc=1; goto done; }
             rc=cmd_bundle_create(db,name,comps,atof(price_s),target);
-        } else if (strcmp(sub,"list")==0) {
+        } else if (sub_id==FS_LIST) {
             rc=cmd_bundle_list(db);
-        } else if (strcmp(sub,"compare")==0) {
+        } else if (sub_id==FS_COMPARE) {
             const char *name=arg_get(cmd_argc,cmd_argv,"--name");
             if (!name){ fprintf(stderr,"Missing --name\n"); rc=1; goto done; }
             rc=cmd_bundle_compare(db,name);
-        } else if (strcmp(sub,"export")==0) {
+        } else if (sub_id==FS_EXPORT) {
             const char *name=arg_get(cmd_argc,cmd_argv,"--name");
             if (!name){ fprintf(stderr,"Missing --name\n"); rc=1; goto done; }
             rc=cmd_bundle_export(db,name);
         } else {
             fprintf(stderr,"Unknown bundle command: %s\n",sub); rc=1;
         }
-    } else if (strcmp(cmd,"components")==0) {
+    } else if (verb==FIN_COMPONENTS) {
         printf("%-18s %-8s %-8s %s\n","Component","Cost","Price","Description");
         printf("-----------------------------------------------------------------\n");
         for (int i=0;i<NUM_COMPONENTS;i++)
             printf("%-18s $%-7.2f $%-7.2f %s\n",COMPONENTS[i].name,COMPONENTS[i].cost,COMPONENTS[i].price,COMPONENTS[i].desc);
-    } else if (strcmp(cmd,"status")==0) {
+    } else if (verb==FIN_STATUS) {
         rc=cmd_status(db);
     } else {
         fprintf(stderr,"Unknown command: %s\n",cmd);

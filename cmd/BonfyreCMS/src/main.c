@@ -4527,8 +4527,19 @@ int main(int argc, char **argv) {
         db_exec(g_db, "PRAGMA temp_store=MEMORY;");
         db_exec(g_db, "PRAGMA cache_size=-32768;");
     } else {
-        db_exec(g_db, "PRAGMA journal_mode=WAL;");
-        db_exec(g_db, "PRAGMA synchronous=NORMAL;");
+        /* Reclaim recycled WAL high-water marks instead of retaining gigabytes.
+         * Passive checkpoints do not truncate a WAL by default. This is a
+         * per-writer connection policy, not a cap on in-flight transactions. */
+        if (db_exec(g_db, "PRAGMA journal_mode=WAL;") ||
+            db_exec(g_db, "PRAGMA synchronous=NORMAL;") ||
+            db_exec(g_db, "PRAGMA wal_autocheckpoint=1000;") ||
+            db_exec(g_db, "PRAGMA journal_size_limit=67108864;")) {
+            fputs("[fatal] CMS WAL retention policy unavailable\n", stderr);
+            sqlite3_close(g_db);
+            free(schemas_dir_owned);
+            free(db_path_owned);
+            return 1;
+        }
     }
 
     /* Bootstrap meta schema */

@@ -1242,6 +1242,31 @@ static int cmd_show_(const char *state_path) {
     return 0;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define PH_COMMANDS(X) \
+    X("--help", PH_OPT_HELP) \
+    X("-h", PH_OPT_H) \
+    X("H", PH_H) \
+    X("branch", PH_BRANCH) \
+    X("bvh", PH_BVH) \
+    X("cherry-pick", PH_CHERRY_PICK) \
+    X("collide", PH_COLLIDE) \
+    X("compare", PH_COMPARE) \
+    X("diff", PH_DIFF) \
+    X("energy", PH_ENERGY) \
+    X("init", PH_INIT) \
+    X("kick", PH_KICK) \
+    X("mount", PH_MOUNT) \
+    X("nearest", PH_NEAREST) \
+    X("rebase", PH_REBASE) \
+    X("run", PH_RUN) \
+    X("show", PH_SHOW) \
+    X("step", PH_STEP) \
+    X("trace", PH_TRACE)
+BF_COMMAND_TABLE(ph_commands, PH_COMMANDS);
+
 /* ═══════════════════════════════════════════════════════════════ */
 /* main                                                             */
 /* ═══════════════════════════════════════════════════════════════ */
@@ -1266,26 +1291,26 @@ int main(int argc, char **argv) {
     sub[sub_argc]=NULL;
     if(sub_argc==0){usage();return 1;}
 
-    const char *cmd=sub[0];
+    const char *cmd=sub[0]; const int verb=bf_command_id(ph_commands,BF_COMMAND_COUNT(ph_commands),cmd,-1);
 
-    if(!strcmp(cmd,"--help")||!strcmp(cmd,"-h")){usage();return 0;}
-    if(!strcmp(cmd,"bvh"))         return cmd_bvh_      (sub_argc,sub,pack_path,bvh_path);
-    if(!strcmp(cmd,"init"))        return cmd_init_     (sub_argc,sub,state_path,pack_path);
-    if(!strcmp(cmd,"kick"))        return cmd_kick_     (sub_argc,sub,state_path);
-    if(!strcmp(cmd,"step"))        return cmd_step_     (sub_argc,sub,state_path,pack_path,bvh_path);
-    if(!strcmp(cmd,"run"))         return cmd_run_      (sub_argc,sub,state_path,pack_path,bvh_path);
-    if(!strcmp(cmd,"collide"))     return cmd_collide_  (sub_argc,sub,state_path,pack_path,bvh_path);
-    if(!strcmp(cmd,"nearest"))     return cmd_nearest_  (sub_argc,sub,state_path,pack_path);
-    if(!strcmp(cmd,"energy")||
-       !strcmp(cmd,"H"))           return cmd_energy_   (sub_argc,sub,state_path,pack_path,bvh_path);
-    if(!strcmp(cmd,"branch"))      return cmd_branch_   (sub_argc,sub,state_path,pack_path);
-    if(!strcmp(cmd,"rebase"))      return cmd_rebase_   (sub_argc,sub,state_path,pack_path,bvh_path);
-    if(!strcmp(cmd,"compare"))     return cmd_compare_  (sub_argc,sub,pack_path,bvh_path);
-    if(!strcmp(cmd,"trace"))       return cmd_trace_    (sub_argc,sub,state_path);
-    if(!strcmp(cmd,"diff"))        return cmd_diff_     (sub_argc,sub);
-    if(!strcmp(cmd,"cherry-pick")) return cmd_cherry_pick_(sub_argc,sub,state_path);
-    if(!strcmp(cmd,"mount"))       return cmd_mount_    (sub_argc,sub);
-    if(!strcmp(cmd,"show"))        return cmd_show_     (state_path);
+    if(verb==PH_OPT_HELP||verb==PH_OPT_H){usage();return 0;}
+    if(verb==PH_BVH)         return cmd_bvh_      (sub_argc,sub,pack_path,bvh_path);
+    if(verb==PH_INIT)        return cmd_init_     (sub_argc,sub,state_path,pack_path);
+    if(verb==PH_KICK)        return cmd_kick_     (sub_argc,sub,state_path);
+    if(verb==PH_STEP)        return cmd_step_     (sub_argc,sub,state_path,pack_path,bvh_path);
+    if(verb==PH_RUN)         return cmd_run_      (sub_argc,sub,state_path,pack_path,bvh_path);
+    if(verb==PH_COLLIDE)     return cmd_collide_  (sub_argc,sub,state_path,pack_path,bvh_path);
+    if(verb==PH_NEAREST)     return cmd_nearest_  (sub_argc,sub,state_path,pack_path);
+    if(verb==PH_ENERGY||
+       verb==PH_H)           return cmd_energy_   (sub_argc,sub,state_path,pack_path,bvh_path);
+    if(verb==PH_BRANCH)      return cmd_branch_   (sub_argc,sub,state_path,pack_path);
+    if(verb==PH_REBASE)      return cmd_rebase_   (sub_argc,sub,state_path,pack_path,bvh_path);
+    if(verb==PH_COMPARE)     return cmd_compare_  (sub_argc,sub,pack_path,bvh_path);
+    if(verb==PH_TRACE)       return cmd_trace_    (sub_argc,sub,state_path);
+    if(verb==PH_DIFF)        return cmd_diff_     (sub_argc,sub);
+    if(verb==PH_CHERRY_PICK) return cmd_cherry_pick_(sub_argc,sub,state_path);
+    if(verb==PH_MOUNT)       return cmd_mount_    (sub_argc,sub);
+    if(verb==PH_SHOW)        return cmd_show_     (state_path);
 
     fprintf(stderr,"Unknown subcommand: %s\n",cmd);
     usage();

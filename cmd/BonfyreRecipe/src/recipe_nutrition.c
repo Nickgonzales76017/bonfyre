@@ -212,10 +212,14 @@ int bf_recipe_nutrition_report(const char *material,const char *nutrition,const 
     if(rc)return rc;const char *p=html?r.html:r.text;size_t n=strlen(p);if(fwrite(p,1,n,out)!=n||ferror(out))rc=1;
     bf_recipe_nutrition_free(&r);return rc;
 }
+/* `corpus nutrition ...`: one vocabulary for both word positions. */
+#define RN_COMMANDS(X) \
+    X("corpus", RN_CORPUS) \
+    X("nutrition", RN_NUTRITION)
+BF_COMMAND_TABLE(rn_commands, RN_COMMANDS);
 int bf_recipe_nutrition_command(int argc,char **argv){
-    enum{RN_CORPUS};static const BfCommandEntry nutrition_commands[]={{"corpus",RN_CORPUS,0,NULL},};
-    const BfCommandEntry*command=argc<2?NULL:bf_command_lookup(nutrition_commands,sizeof(nutrition_commands)/sizeof(nutrition_commands[0]),argv[1]);
-    if(argc<3||!command||command->id!=RN_CORPUS||strcmp(argv[2],"nutrition"))return -1;
+    if(argc<3||bf_command_id(rn_commands,BF_COMMAND_COUNT(rn_commands),argv[1],-1)!=RN_CORPUS
+       ||bf_command_id(rn_commands,BF_COMMAND_COUNT(rn_commands),argv[2],-1)!=RN_NUTRITION)return -1;
     if(argc!=5&&argc!=6){fputs("recipe corpus nutrition PACK 'KEY*COPIES;...' [EXISTING_RECIPE_DB]\n",stderr);return 2;}
     BfRecipeWeek w;if(bf_recipe_week_parse(argv[4],&w))return 2;
     int rc=bf_recipe_nutrition_report(argv[3],argc==6?argv[5]:NULL,&w,stdout,0);

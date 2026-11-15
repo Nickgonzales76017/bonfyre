@@ -17,6 +17,15 @@
     "maturity": "measured",
     "publishes": ""
   },
+  "BonfyreAccountContinuity": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
+  },
   "BonfyreActors": {
     "architecture": "standing-address-compiler",
     "description": "Which lawful opportunity is most relevant to this actor, in this territory, right now?",
@@ -225,13 +234,13 @@
     "publishes": ""
   },
   "BonfyreCompress": {
-    "architecture": "address-plane",
-    "description": "Of all the state available, what is even eligible to participate in this operation?",
-    "domain": "Forwarding / Eligibility",
-    "family": "forwarding",
-    "layer": "forwarding",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
     "maturity": "implemented",
-    "publishes": "RouteAdvertisement"
+    "publishes": ""
   },
   "BonfyreConnectionCatalog": {
     "architecture": "connection-source-catalog",
@@ -396,9 +405,9 @@
     "publishes": ""
   },
   "BonfyreExperienceStage": {
-    "architecture": "cmd-experience-stage",
-    "description": "What does the BonfyreExperienceStage capability organ realize, and by what contract?",
-    "domain": "Command / ExperienceStage",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -540,13 +549,13 @@
     "publishes": ""
   },
   "BonfyreGraph": {
-    "architecture": "cmd-graph",
-    "description": "What does the BonfyreGraph capability organ realize, and by what contract?",
-    "domain": "Identity / Graph",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
-    "publishes": "Relation"
+    "publishes": ""
   },
   "BonfyreHash": {
     "architecture": "native-file-digest",
@@ -801,9 +810,9 @@
     "publishes": ""
   },
   "BonfyreNet": {
-    "architecture": "cmd-net",
-    "description": "What does the BonfyreNet capability organ realize, and by what contract?",
-    "domain": "Command / Net",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -945,18 +954,18 @@
     "publishes": ""
   },
   "BonfyrePay": {
-    "architecture": "cmd-pay",
-    "description": "What does the BonfyrePay capability organ realize, and by what contract?",
-    "domain": "Command / Pay",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
     "publishes": ""
   },
   "BonfyrePhysics": {
-    "architecture": "cmd-physics",
-    "description": "What does the BonfyrePhysics capability organ realize, and by what contract?",
-    "domain": "Command / Physics",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -1449,9 +1458,9 @@
     "publishes": ""
   },
   "BonfyreTime": {
-    "architecture": "cmd-time",
-    "description": "What does the BonfyreTime capability organ realize, and by what contract?",
-    "domain": "Command / Time",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -1537,6 +1546,15 @@
     "layer": "substrate",
     "maturity": "implemented",
     "publishes": "WarehouseInspection"
+  },
+  "BonfyreWarehouseSeed": {
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
+    "family": "command",
+    "layer": "",
+    "maturity": "implemented",
+    "publishes": ""
   },
   "BonfyreWatch": {
     "architecture": "cmd-watch",

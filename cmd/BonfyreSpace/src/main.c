@@ -299,44 +299,54 @@ static int cmd_fixture(const char *path) {
     return put && isolated && handoff && restart ? 0 : 1;
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define SP_COMMANDS(X) \
+    X("attach", SP_ATTACH) \
+    X("detach", SP_DETACH) \
+    X("fixture", SP_FIXTURE) \
+    X("gc", SP_GC) \
+    X("get", SP_GET) \
+    X("list", SP_LIST) \
+    X("open", SP_OPEN) \
+    X("put", SP_PUT) \
+    X("stats", SP_STATS) \
+    X("status", SP_STATUS)
+BF_COMMAND_TABLE(sp_commands, SP_COMMANDS);
+
 int main(int argc,char **argv){
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     if(argc<2){cmd_help();return 0;}
-    enum { SP_FIXTURE };
-    static const BfCommandEntry space_commands[] = {
-        {"fixture", SP_FIXTURE, 0, NULL},
-    };
-    const BfCommandEntry *command = bf_command_lookup(space_commands,
-        sizeof(space_commands) / sizeof(space_commands[0]), argv[1]);
-    if (command && command->id == SP_FIXTURE) {
+    const int verb=bf_command_id(sp_commands,BF_COMMAND_COUNT(sp_commands),argv[1],-1);
+    if (verb == SP_FIXTURE) {
         if (argc != 3) { fprintf(stderr, "usage: bonfyre-space fixture <db>\n"); return 1; }
         return cmd_fixture(argv[2]);
     }
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"open")==0){
+    if(verb==SP_STATUS) cmd_status(db);
+    else if(verb==SP_OPEN){
         if(argc<3){fprintf(stderr,"usage: bonfyre-space open <name>\n");rc=1;}
         else cmd_open(db,argv[2]);
-    } else if(strcmp(cmd,"put")==0){
+    } else if(verb==SP_PUT){
         if(argc<5){fprintf(stderr,"usage: bonfyre-space put <space> <key> <value>\n");rc=1;}
         else cmd_put(db,argv[2],argv[3],argv[4]);
-    } else if(strcmp(cmd,"get")==0){
+    } else if(verb==SP_GET){
         if(argc<4){fprintf(stderr,"usage: bonfyre-space get <space> <key>\n");rc=1;}
         else rc=cmd_get(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"list")==0){
+    } else if(verb==SP_LIST){
         cmd_list(db,argc>2?argv[2]:NULL);
-    } else if(strcmp(cmd,"stats")==0){
+    } else if(verb==SP_STATS){
         if(argc<3){fprintf(stderr,"usage: bonfyre-space stats <space>\n");rc=1;}
         else cmd_stats(db,argv[2]);
-    } else if(strcmp(cmd,"gc")==0){
+    } else if(verb==SP_GC){
         int older=86400;
         if(argc>3&&strcmp(argv[2],"--older-than")==0) older=atoi(argv[3]);
         cmd_gc(db,older);
-    } else if(strcmp(cmd,"attach")==0){
+    } else if(verb==SP_ATTACH){
         if(argc<4){fprintf(stderr,"usage: bonfyre-space attach <space> <stage>\n");rc=1;}
         else cmd_attach(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"detach")==0){
+    } else if(verb==SP_DETACH){
         if(argc<4){fprintf(stderr,"usage: bonfyre-space detach <space> <stage>\n");rc=1;}
         else cmd_detach(db,argv[2],argv[3]);
     } else {

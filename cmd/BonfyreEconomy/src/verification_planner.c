@@ -447,6 +447,19 @@ fail_tx:
     if(!commit)sqlite3_exec(db,"ROLLBACK",NULL,NULL,NULL);
     return fail("source requirements conflict with existing native case or could not commit atomically");
 }
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define VFS_COMMANDS(X) \
+    X("add", VFS_ADD) \
+    X("case", VFS_CASE) \
+    X("covers", VFS_COVERS) \
+    X("create", VFS_CREATE) \
+    X("intake", VFS_INTAKE) \
+    X("need", VFS_NEED) \
+    X("offer", VFS_OFFER) \
+    X("plan", VFS_PLAN)
+BF_COMMAND_TABLE(vfs_commands, VFS_COMMANDS);
+
 int bf_verification_command(sqlite3 *db,int argc,char **argv){
     enum { VF_VERIFY };
     static const BfCommandEntry verify_commands[] = {
@@ -456,11 +469,14 @@ int bf_verification_command(sqlite3 *db,int argc,char **argv){
         sizeof(verify_commands) / sizeof(verify_commands[0]), argv[1]);
     if(!command||command->id!=VF_VERIFY)return fail("verify case|need|offer|covers|plan");
     if(schema(db))return 2;
-    if(!strcmp(argv[2],"case")&&argc>=4&&!strcmp(argv[3],"create"))return case_create(db,argc,argv);
-    if(!strcmp(argv[2],"need")&&argc>=4&&!strcmp(argv[3],"add"))return need_add(db,argc,argv);
-    if(!strcmp(argv[2],"offer")&&argc>=4&&!strcmp(argv[3],"add"))return offer_add(db,argc,argv);
-    if(!strcmp(argv[2],"covers")&&argc>=4&&!strcmp(argv[3],"add"))return covers_add(db,argc,argv);
-    if(!strcmp(argv[2],"plan"))return verify_plan(db,argc,argv);
-    if(!strcmp(argv[2],"intake"))return verify_intake(db,argc,argv);
+    /* One vocabulary for the noun (argv[2]) and its action (argv[3]). */
+    const int sub=bf_command_id(vfs_commands,BF_COMMAND_COUNT(vfs_commands),argv[2],-1);
+    const int action=argc>=4?bf_command_id(vfs_commands,BF_COMMAND_COUNT(vfs_commands),argv[3],-1):-1;
+    if(sub==VFS_CASE&&argc>=4&&action==VFS_CREATE)return case_create(db,argc,argv);
+    if(sub==VFS_NEED&&argc>=4&&action==VFS_ADD)return need_add(db,argc,argv);
+    if(sub==VFS_OFFER&&argc>=4&&action==VFS_ADD)return offer_add(db,argc,argv);
+    if(sub==VFS_COVERS&&argc>=4&&action==VFS_ADD)return covers_add(db,argc,argv);
+    if(sub==VFS_PLAN)return verify_plan(db,argc,argv);
+    if(sub==VFS_INTAKE)return verify_intake(db,argc,argv);
     return fail("verify case create|need add|offer add|covers add|plan");
 }

@@ -32,10 +32,10 @@ for (const { path, source, macro } of tableOwners) {
     expect(names).toEqual([...names].sort());
     expect(new Set(names).size).toBe(names.length);
     expect(new Set(rows.map((row) => row.id)).size).toBe(rows.length);
-    expect(source).toContain(`bf_command_lookup(`);
+    expect(source.includes(`bf_command_lookup(`) || source.includes(`bf_command_id(`)).toBe(true);
     expect(source).not.toMatch(/strcmp\(argv\[1\]/);
     for (const row of rows) {
-      expect(source.includes(`case ${row.id}:`) || source.includes(`command->id == ${row.id}`) || source.includes(`CMS_IS(${row.id})`)).toBe(true);
+      expect(source.includes(`case ${row.id}:`) || source.includes(`command->id == ${row.id}`) || source.includes(`CMS_IS(${row.id})`) || new RegExp(`\\b\\w+\\s*[=!]=\\s*${row.id}\\b`).test(source)).toBe(true);
     }
   });
 }

@@ -920,12 +920,25 @@ done:
 
 #include "account_compute.h"
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define AWKV_COMMANDS(X) \
+    X("agents", AWKV_AGENTS) \
+    X("audit", AWKV_AUDIT) \
+    X("compute", AWKV_COMPUTE) \
+    X("index", AWKV_INDEX) \
+    X("outputs", AWKV_OUTPUTS) \
+    X("read", AWKV_READ) \
+    X("usage", AWKV_USAGE)
+BF_COMMAND_TABLE(awkv_commands, AWKV_COMMANDS);
+
 static inline int awk_cli(int argc, char **argv) {
     const char *db = NULL, *subject = NULL, *scope = NULL, *mission = NULL, *cursor = NULL, *owner = NULL;
     AwkSource sources[AWK_SOURCE_LIMIT];
     char kinds[AWK_SOURCE_LIMIT][16];
-    size_t count = 0;
-    if (argc < 3 || (strcmp(argv[2], "index") && strcmp(argv[2], "read") && strcmp(argv[2], "outputs") && strcmp(argv[2], "usage") && strcmp(argv[2], "audit") && strcmp(argv[2], "agents") && strcmp(argv[2], "compute"))) return 2;
+    size_t count = 0; const int verb=bf_command_id(awkv_commands,BF_COMMAND_COUNT(awkv_commands),(argc >= 3 ? argv[2] : NULL),-1);
+    if (verb < 0) return 2;
     for (int i = 3; i + 1 < argc; i += 2) {
         const char *key = argv[i], *value = argv[i + 1];
         if (!strcmp(key, "--db")) db = value; else if (!strcmp(key, "--subject")) subject = value;
@@ -939,14 +952,14 @@ static inline int awk_cli(int argc, char **argv) {
         } else return 2;
     }
     if (!db || !subject || !scope || (count && !owner)) return 2;
-    if (!strcmp(argv[2],"audit")) return count||owner||mission||cursor?2:awk_audit_read(db,subject,scope);
-    if (!strcmp(argv[2], "index")) return owner && strcmp(owner, subject) ? 2 : awk_index(db, subject, scope, sources, count);
+    if (verb==AWKV_AUDIT) return count||owner||mission||cursor?2:awk_audit_read(db,subject,scope);
+    if (verb==AWKV_INDEX) return owner && strcmp(owner, subject) ? 2 : awk_index(db, subject, scope, sources, count);
     int64_t value = 0;
     if (cursor) {
         if (!*cursor || strlen(cursor) > 16) return 2;
         for (const char *p = cursor; *p; p++) { if (*p < '0' || *p > '9') return 2; value = value * 10 + (*p - '0'); }
     }
-    if (!strcmp(argv[2],"compute")) {
+    if (verb==AWKV_COMPUTE) {
         const char *meter=NULL;
         if (mission||cursor||!owner||strcmp(owner,subject)) return 2;
         for(size_t i=0;i<count;i++)if(!strcmp(sources[i].kind,"meter")){
@@ -956,10 +969,10 @@ static inline int awk_cli(int argc, char **argv) {
         return meter?awk_compute_read(meter,subject,scope,stdout):2;
     }
     if (count && !strcmp(owner, subject) && !strcmp(scope, "self") && awk_stale(db) && awk_index(db, subject, scope, sources, count)) return 1;
-    if (!strcmp(argv[2],"usage")) return mission ? awk_usage_read(db,subject,scope,mission) : 2;
-    if (!strcmp(argv[2],"agents")) return mission || cursor ? 2 : awk_agents(db, subject, scope, stdout);
-    if (!strcmp(argv[2],"outputs") && mission) return 2;
-    return awk_read(db, subject, scope, mission, value, !strcmp(argv[2],"outputs"), stdout);
+    if (verb==AWKV_USAGE) return mission ? awk_usage_read(db,subject,scope,mission) : 2;
+    if (verb==AWKV_AGENTS) return mission || cursor ? 2 : awk_agents(db, subject, scope, stdout);
+    if (verb==AWKV_OUTPUTS && mission) return 2;
+    return awk_read(db, subject, scope, mission, value, verb==AWKV_OUTPUTS, stdout);
 }
 
 #endif

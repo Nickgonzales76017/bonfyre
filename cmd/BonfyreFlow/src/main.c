@@ -383,38 +383,48 @@ static void cmd_help(void){
     VERSION);
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FL_COMMANDS(X) \
+    X("--help", FL_OPT_HELP) \
+    X("branch", FL_BRANCH) \
+    X("define", FL_DEFINE) \
+    X("export", FL_EXPORT) \
+    X("help", FL_HELP) \
+    X("inspect", FL_INSPECT) \
+    X("list", FL_LIST) \
+    X("rm", FL_RM) \
+    X("run", FL_RUN) \
+    X("show", FL_SHOW) \
+    X("status", FL_STATUS)
+BF_COMMAND_TABLE(fl_commands, FL_COMMANDS);
+
 int main(int argc,char **argv){
-    enum { FL_HELP };
-    static const BfCommandEntry flow_help_command[] = {
-        {"--help", FL_HELP, 0, NULL},
-        {"help", FL_HELP, 0, NULL},
-    };
-    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(flow_help_command,
-        sizeof(flow_help_command) / sizeof(flow_help_command[0]), argv[1]);
-    if(argc<2||(help_command && help_command->id == FL_HELP)){cmd_help();return 0;}
+    const int verb = argc < 2 ? -1 : bf_command_id(fl_commands,BF_COMMAND_COUNT(fl_commands),argv[1],-1);
+    if(argc<2||verb == FL_OPT_HELP||verb == FL_HELP){cmd_help();return 0;}
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"define")==0){
+    if(verb==FL_STATUS) cmd_status(db);
+    else if(verb==FL_DEFINE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow define <file.json>\n");rc=1;}
         else rc=cmd_define(db,argv[2]);
-    } else if(strcmp(cmd,"list")==0) cmd_list(db);
-    else if(strcmp(cmd,"show")==0){
+    } else if(verb==FL_LIST) cmd_list(db);
+    else if(verb==FL_SHOW){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow show <flow-id>\n");rc=1;}
         else rc=cmd_show(db,argv[2]);
-    } else if(strcmp(cmd,"run")==0){
+    } else if(verb==FL_RUN){
         if(argc<4){fprintf(stderr,"usage: bonfyre-flow run <flow-id> <input>\n");rc=1;}
         else rc=cmd_run_flow(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"inspect")==0){
+    } else if(verb==FL_INSPECT){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow inspect <run-id>\n");rc=1;}
         else cmd_inspect(db,argv[2]);
-    } else if(strcmp(cmd,"branch")==0){
+    } else if(verb==FL_BRANCH){
         if(argc<5){fprintf(stderr,"usage: bonfyre-flow branch <flow-id> <cond> <target>\n");rc=1;}
         else cmd_branch(db,argv[2],argv[3],argv[4]);
-    } else if(strcmp(cmd,"export")==0){
+    } else if(verb==FL_EXPORT){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow export <flow-id>\n");rc=1;}
         else cmd_export(db,argv[2]);
-    } else if(strcmp(cmd,"rm")==0){
+    } else if(verb==FL_RM){
         if(argc<3){fprintf(stderr,"usage: bonfyre-flow rm <flow-id>\n");rc=1;}
         else cmd_rm(db,argv[2]);
     } else {fprintf(stderr,"bonfyre-flow: unknown command: %s\n",cmd);rc=1;}

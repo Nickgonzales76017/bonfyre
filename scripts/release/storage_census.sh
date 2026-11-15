@@ -4,6 +4,28 @@ set -eu
 # Inspect is read-only. The explicit --cms-wal-checkpoint --confirm operation
 # asks SQLite itself for a TRUNCATE checkpoint; no manual WAL file mutation.
 db="$HOME/.bonfyre/estate-local/cms.db"
+if [ "$#" -eq 1 ] && [ "$1" = "--cms-wal-diagnose" ]; then
+  echo "CMS_WAL_DIAGNOSIS timestamp_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ) db=$db"
+  [ -f "$db" ] && [ ! -L "$db" ] || { echo "REFUSED: canonical CMS is unavailable or symlinked" >&2; exit 75; }
+  for part in "$db" "$db-wal" "$db-shm"; do
+    if [ -f "$part" ] && [ ! -L "$part" ]; then
+      stat -f "FILE %N bytes=%z modified=%Sm" -t "%Y-%m-%dT%H:%M:%S%z" "$part"
+      du -sk "$part" | awk '{printf "ALLOC_KIB %s %s\n",$1,$2}'
+    else printf "NOT_PRESENT %s\n" "$part"; fi
+  done
+  df -Pk "$db" | awk 'END {printf "PHYSICAL_FREE_KIB %s\n",$4}'
+  if [ -x /usr/bin/sqlite3 ]; then
+    /usr/bin/sqlite3 -readonly "$db" "PRAGMA journal_mode; PRAGMA page_size;" 2>&1 | sed 's/^/SQLITE_READONLY /'
+  fi
+  echo "LAUNCH_OWNER (read-only):"
+  if command -v launchctl >/dev/null 2>&1; then launchctl list | grep -F "com.bonfyre.public-web-address" || :; fi
+  echo "WEB_AND_CMS_PROCESSES (pid ppid elapsed executable; no arguments):"
+  ps -axo pid,ppid,etime,comm | awk 'NR==1 || /bonfyre-web-address|bonfyre-cms/' | head -n 50
+  echo "CMS_FILE_OPEN_HANDLES (open is not proof of an active read transaction):"
+  if command -v lsof >/dev/null 2>&1; then lsof -nP "$db" "$db-wal" "$db-shm" 2>/dev/null | head -n 75 || :; fi
+  echo "READ_ONLY: no checkpoint, schema change, release or process action was attempted."
+  exit 0
+fi
 if [ "$#" -ne 0 ]; then
   [ "$#" -eq 2 ] && [ "$1" = "--cms-wal-checkpoint" ] && [ "$2" = "--confirm" ] || {
     echo "Usage: sh scripts/release/storage_census.sh [--cms-wal-checkpoint --confirm]" >&2

@@ -682,6 +682,22 @@ static void usage(void) {
         "  bonfyre-outreach [--db FILE] status\n");
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define OUT_COMMANDS(X) \
+    X("backfill", OUT_BACKFILL) \
+    X("channels", OUT_CHANNELS) \
+    X("followup", OUT_FOLLOWUP) \
+    X("pending", OUT_PENDING) \
+    X("reply", OUT_REPLY) \
+    X("reply-evidence", OUT_REPLY_EVIDENCE) \
+    X("report", OUT_REPORT) \
+    X("send", OUT_SEND) \
+    X("status", OUT_STATUS) \
+    X("templates", OUT_TEMPLATES)
+BF_COMMAND_TABLE(out_commands, OUT_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc<2){ usage(); return 1; }
@@ -698,11 +714,11 @@ int main(int argc, char **argv) {
     }
 
     if (cmd_argc<2){ usage(); return 1; }
-    const char *cmd=cmd_argv[1];
+    const char *cmd=cmd_argv[1]; const int verb=bf_command_id(out_commands,BF_COMMAND_COUNT(out_commands),cmd,-1);
 
     /* channels and templates don't need DB */
-    if (strcmp(cmd,"channels")==0) return cmd_channels();
-    if (strcmp(cmd,"templates")==0) {
+    if (verb==OUT_CHANNELS) return cmd_channels();
+    if (verb==OUT_TEMPLATES) {
         const char *ch=arg_get(cmd_argc,cmd_argv,"--channel");
         if (!ch){ fprintf(stderr,"Missing --channel\n"); return 1; }
         return cmd_templates(ch);
@@ -712,38 +728,38 @@ int main(int argc, char **argv) {
     if (!db) return 1;
     int rc=0;
 
-    if (strcmp(cmd,"send")==0) {
+    if (verb==OUT_SEND) {
         const char *ch=arg_get(cmd_argc,cmd_argv,"--channel");
         const char *tgt=arg_get(cmd_argc,cmd_argv,"--target");
         const char *offer=arg_get(cmd_argc,cmd_argv,"--offer");
         const char *msg=arg_get(cmd_argc,cmd_argv,"--message");
         if (!ch||!tgt){ fprintf(stderr,"Missing --channel, --target\n"); rc=1; goto done; }
         rc=cmd_send(db,ch,tgt,offer,msg);
-    } else if (strcmp(cmd,"reply")==0) {
+    } else if (verb==OUT_REPLY) {
         const char *id_s=arg_get(cmd_argc,cmd_argv,"--id");
         const char *type=arg_get(cmd_argc,cmd_argv,"--type");
         const char *notes=arg_get(cmd_argc,cmd_argv,"--notes");
         if (!id_s||!type){ fprintf(stderr,"Missing --id, --type\n"); rc=1; goto done; }
         rc=cmd_reply(db,atoi(id_s),type,notes);
-    } else if (strcmp(cmd,"reply-evidence")==0) {
+    } else if (verb==OUT_REPLY_EVIDENCE) {
         const char *id=arg_get(cmd_argc,cmd_argv,"--id");
         rc=cmd_reply_evidence(db,id?atoi(id):0,
             arg_get(cmd_argc,cmd_argv,"--type"),
             arg_get(cmd_argc,cmd_argv,"--source"),
             arg_get(cmd_argc,cmd_argv,"--at"),
             arg_get(cmd_argc,cmd_argv,"--notes"));
-    } else if (strcmp(cmd,"backfill")==0) {
+    } else if (verb==OUT_BACKFILL) {
         rc=cmd_backfill(db,arg_get(cmd_argc,cmd_argv,"--channel"),
             arg_get(cmd_argc,cmd_argv,"--target"),arg_get(cmd_argc,cmd_argv,"--offer"),
             arg_get(cmd_argc,cmd_argv,"--source"),arg_get(cmd_argc,cmd_argv,"--sent-at"));
-    } else if (strcmp(cmd,"pending")==0) {
+    } else if (verb==OUT_PENDING) {
         rc=cmd_pending(db);
-    } else if (strcmp(cmd,"followup")==0) {
+    } else if (verb==OUT_FOLLOWUP) {
         const char *id_s=arg_get(cmd_argc,cmd_argv,"--id");
         rc=cmd_followup(db,id_s?atoi(id_s):0);
-    } else if (strcmp(cmd,"report")==0) {
+    } else if (verb==OUT_REPORT) {
         rc=cmd_report(db);
-    } else if (strcmp(cmd,"status")==0) {
+    } else if (verb==OUT_STATUS) {
         rc=cmd_status(db);
     } else {
         fprintf(stderr,"Unknown command: %s\n",cmd);

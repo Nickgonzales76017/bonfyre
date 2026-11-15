@@ -2736,17 +2736,42 @@ static int cmd_status(sqlite3 *db) {
     return 0;
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define MD_COMMANDS(X) \
+    X("--version", MD_OPT_VERSION) \
+    X("add", MD_ADD) \
+    X("evidence", MD_EVIDENCE) \
+    X("family", MD_FAMILY) \
+    X("fetch", MD_FETCH) \
+    X("help", MD_HELP) \
+    X("list", MD_LIST) \
+    X("local", MD_LOCAL) \
+    X("ls-cache", MD_LS_CACHE) \
+    X("path", MD_PATH) \
+    X("prove", MD_PROVE) \
+    X("pull", MD_PULL) \
+    X("representation-gate", MD_REPRESENTATION_GATE) \
+    X("representation-record", MD_REPRESENTATION_RECORD) \
+    X("representations", MD_REPRESENTATIONS) \
+    X("rm", MD_RM) \
+    X("route", MD_ROUTE) \
+    X("search", MD_SEARCH) \
+    X("setup", MD_SETUP) \
+    X("show", MD_SHOW) \
+    X("source", MD_SOURCE) \
+    X("sources", MD_SOURCES) \
+    X("status", MD_STATUS) \
+    X("verify", MD_VERIFY) \
+    X("version", MD_VERSION)
+BF_COMMAND_TABLE(md_commands, MD_COMMANDS);
+
 /* ====================================================================
  * main
  * ==================================================================== */
 int main(int argc, char **argv) {
-    enum { MD_HELP };
-    static const BfCommandEntry model_help_command[] = {
-        {"help", MD_HELP, 0, NULL},
-    };
-    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(model_help_command,
-        sizeof(model_help_command) / sizeof(model_help_command[0]), argv[1]);
-    if (argc >= 3 && help_command && help_command->id == MD_HELP && strcmp(argv[2],"--all")==0) {
+    const int verb = argc < 2 ? -1 : bf_command_id(md_commands, BF_COMMAND_COUNT(md_commands), argv[1], -1);
+    if (argc >= 3 && verb == MD_HELP && strcmp(argv[2],"--all")==0) {
         cmd_help_all(); return 0;
     }
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
@@ -2764,19 +2789,19 @@ int main(int argc, char **argv) {
     const char *cmd = argv[1];
     int ret = 0;
 
-    if(strcmp(cmd,"list")==0) {
+    if(verb==MD_LIST) {
         ret = cmd_list(db);
 
-    } else if(strcmp(cmd,"show")==0) {
+    } else if(verb==MD_SHOW) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model show <id>\n"); ret=1; }
         else ret = cmd_show(db, argv[2]);
 
-    } else if(strcmp(cmd,"fetch")==0) {
+    } else if(verb==MD_FETCH) {
         if(argc < 3 || strcmp(argv[2],"--recipe")==0) {
             fprintf(stderr,"usage: bonfyre-model fetch <id>\n"); ret=1;
         } else ret = cmd_pull(db, argv[2]);
 
-    } else if(strcmp(cmd,"pull")==0) {
+    } else if(verb==MD_PULL) {
         if(argc < 3) {
             fprintf(stderr,"usage: bonfyre-model pull <id> | --recipe <code>\n"); ret=1;
         } else if(strcmp(argv[2],"--recipe")==0) {
@@ -2786,41 +2811,41 @@ int main(int argc, char **argv) {
             ret = cmd_pull(db, argv[2]);
         }
 
-    } else if(strcmp(cmd,"setup")==0) {
+    } else if(verb==MD_SETUP) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model setup <manifest.json>\n"); ret=1; }
         else ret = cmd_setup(db, argv[2]);
 
-    } else if(strcmp(cmd,"prove")==0 || strcmp(cmd,"evidence")==0) {
+    } else if(verb==MD_PROVE || verb==MD_EVIDENCE) {
         if(argc < 4) { fprintf(stderr,"usage: bonfyre-model prove <model-id> <run-manifest.json>\n"); ret=1; }
         else ret = cmd_evidence_product(db, argv[2], argv[3]);
 
-    } else if(strcmp(cmd,"add")==0) {
+    } else if(verb==MD_ADD) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model add <manifest.json>\n"); ret=1; }
         else ret = cmd_add(db, argv[2]);
 
-    } else if(strcmp(cmd,"representation-record")==0) {
+    } else if(verb==MD_REPRESENTATION_RECORD) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model representation-record <passport.json>\n"); ret=1; }
         else ret = cmd_representation_record(db, argv[2]);
 
-    } else if(strcmp(cmd,"representations")==0) {
+    } else if(verb==MD_REPRESENTATIONS) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model representations <model-id>\n"); ret=1; }
         else ret = cmd_representations(db, argv[2]);
 
-    } else if(strcmp(cmd,"representation-gate")==0) {
+    } else if(verb==MD_REPRESENTATION_GATE) {
         const char *scope = NULL;
         for (int i = 3; i + 1 < argc; i++) if (!strcmp(argv[i], "--scope")) scope = argv[i + 1];
         if(argc < 3 || !scope) { fprintf(stderr,"usage: bonfyre-model representation-gate <id> --scope diagnostic|embedding|rerank|generation\n"); ret=1; }
         else ret = cmd_representation_gate(db, argv[2], scope);
 
-    } else if(strcmp(cmd,"verify")==0) {
+    } else if(verb==MD_VERIFY) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model verify <id>\n"); ret=1; }
         else ret = cmd_verify(db, argv[2]);
 
-    } else if(strcmp(cmd,"path")==0) {
+    } else if(verb==MD_PATH) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model path <id>\n"); ret=1; }
         else ret = cmd_path(db, argv[2]);
 
-    } else if(strcmp(cmd,"rm")==0) {
+    } else if(verb==MD_RM) {
         int purge = 0; const char *id = NULL;
         for(int i=2;i<argc;i++) {
             if(strcmp(argv[i],"--purge")==0) purge=1;
@@ -2829,30 +2854,32 @@ int main(int argc, char **argv) {
         if(!id) { fprintf(stderr,"usage: bonfyre-model rm [--purge] <id>\n"); ret=1; }
         else ret = cmd_rm(db, id, purge);
 
-    } else if(strcmp(cmd,"search")==0) {
+    } else if(verb==MD_SEARCH) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model search <query>\n"); ret=1; }
         else ret = cmd_search(db, argv[2]);
 
-    } else if(strcmp(cmd,"sources")==0) {
+    } else if(verb==MD_SOURCES) {
         if(argc < 3) { fprintf(stderr,"usage: bonfyre-model sources <id>\n"); ret=1; }
         else ret = cmd_sources(db, argv[2]);
 
-    } else if(strcmp(cmd,"source")==0) {
+    } else if(verb==MD_SOURCE) {
+        /* source add|rm reuse the top-level verbs of the same name. */
+        const int source_verb = argc < 4 ? -1 : bf_command_id(md_commands, BF_COMMAND_COUNT(md_commands), argv[2], -1);
         if(argc < 4) { fprintf(stderr,"usage: bonfyre-model source add|rm <id> <url>\n"); ret=1; }
-        else if(strcmp(argv[2],"add")==0) {
+        else if(source_verb==MD_ADD) {
             if(argc < 5) { fprintf(stderr,"usage: bonfyre-model source add <id> <url>\n"); ret=1; }
             else ret = cmd_source_add(db, argv[3], argv[4]);
-        } else if(strcmp(argv[2],"rm")==0) {
+        } else if(source_verb==MD_RM) {
             if(argc < 5) { fprintf(stderr,"usage: bonfyre-model source rm <id> <url>\n"); ret=1; }
             else ret = cmd_source_rm(db, argv[3], argv[4]);
         } else {
             fprintf(stderr,"unknown source subcommand: %s\n", argv[2]); ret=1;
         }
 
-    } else if(strcmp(cmd,"family")==0) {
+    } else if(verb==MD_FAMILY) {
         ret = cmd_family(db, argc >= 3 ? argv[2] : NULL);
 
-    } else if(strcmp(cmd,"route")==0) {
+    } else if(verb==MD_ROUTE) {
         if(argc < 3) {
             fprintf(stderr,"usage: bonfyre-model route <corpus_stats.json> "
                           "[--frontier <path>] [--from <family>] [--weights <path>]\n"); ret=1;
@@ -2866,16 +2893,16 @@ int main(int argc, char **argv) {
             ret = cmd_route(db, argv[2], frontier_path, from_family, weights_path);
         }
 
-    } else if(strcmp(cmd,"ls-cache")==0) {
+    } else if(verb==MD_LS_CACHE) {
         ret = cmd_ls_cache();
 
-    } else if(strcmp(cmd,"status")==0) {
+    } else if(verb==MD_STATUS) {
         ret = cmd_status(db);
 
-    } else if(strcmp(cmd,"local")==0) {
+    } else if(verb==MD_LOCAL) {
         ret = cmd_local(argc > 2 && strcmp(argv[2],"--json")==0);
 
-    } else if(strcmp(cmd,"version")==0 || strcmp(cmd,"--version")==0) {
+    } else if(verb==MD_VERSION || verb==MD_OPT_VERSION) {
         printf("bonfyre-model %s\n", VERSION);
 
     } else {

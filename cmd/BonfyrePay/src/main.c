@@ -513,6 +513,20 @@ static int pos_int(const char *s) {
     return (int)v;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define PAY_COMMANDS(X) \
+    X("balance", PAY_BALANCE) \
+    X("credit", PAY_CREDIT) \
+    X("invoice", PAY_INVOICE) \
+    X("invoices", PAY_INVOICES) \
+    X("layer", PAY_LAYER) \
+    X("pay", PAY_PAY) \
+    X("report", PAY_REPORT) \
+    X("status", PAY_STATUS)
+BF_COMMAND_TABLE(pay_commands, PAY_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc<2) { usage(); return 1; }
@@ -527,9 +541,9 @@ int main(int argc, char **argv) {
     }
     if (ca<2) { usage(); return 1; }
 
-    const char *cmd=cv[1];
+    const char *cmd=cv[1]; const int verb=bf_command_id(pay_commands,BF_COMMAND_COUNT(pay_commands),cmd,-1);
 
-    if (strcmp(cmd,"layer")==0 && ca>=3) {
+    if (verb==PAY_LAYER && ca>=3) {
         const char *op = arg_get(ca, cv, "--op");
         char *out = NULL;
         if (!op) op = "verify";
@@ -543,7 +557,7 @@ int main(int argc, char **argv) {
     if (!db) return 1;
     int rc=0;
 
-    if (strcmp(cmd,"invoice")==0) {
+    if (verb==PAY_INVOICE) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         const char *period=arg_get(ca,cv,"--period");
         const char *api_key=arg_get(ca,cv,"--api-key");
@@ -585,11 +599,11 @@ int main(int argc, char **argv) {
             if (!rc && pos_int(uid_s)<0) { fprintf(stderr,"--user-id must be a positive whole number\n"); rc=1; }
             if (!rc) rc=cmd_generate_invoice(db,pos_int(uid_s),api_key,meter_path,period);
         }
-    } else if (strcmp(cmd,"invoices")==0) {
+    } else if (verb==PAY_INVOICES) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         const char *status=arg_get(ca,cv,"--status");
         rc=cmd_invoices(db,uid_s?atoi(uid_s):0,status);
-    } else if (strcmp(cmd,"pay")==0) {
+    } else if (verb==PAY_PAY) {
         const char *inv_s=arg_get(ca,cv,"--invoice-id");
         const char *amt_s=arg_get(ca,cv,"--amount");
         const char *meth=arg_get(ca,cv,"--method");
@@ -640,22 +654,22 @@ int main(int argc, char **argv) {
                 sqlite3_exec(db,rc==0?"COMMIT":"ROLLBACK",NULL,NULL,NULL);
             }
         }
-    } else if (strcmp(cmd,"credit")==0) {
+    } else if (verb==PAY_CREDIT) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         const char *amt_s=arg_get(ca,cv,"--amount");
         const char *reason=arg_get(ca,cv,"--reason");
         if (!uid_s||!amt_s||!reason) { fprintf(stderr,"Missing --user-id, --amount, --reason\n"); rc=1; }
         else if (pos_int(uid_s)<0||pos_int(amt_s)<0) { fprintf(stderr,"--user-id and --amount must be positive whole numbers\n"); rc=1; }
         else rc=cmd_credit(db,pos_int(uid_s),pos_int(amt_s),reason);
-    } else if (strcmp(cmd,"balance")==0) {
+    } else if (verb==PAY_BALANCE) {
         const char *uid_s=arg_get(ca,cv,"--user-id");
         if (!uid_s) { fprintf(stderr,"Missing --user-id\n"); rc=1; }
         else if (pos_int(uid_s)<0) { fprintf(stderr,"--user-id must be a positive whole number\n"); rc=1; }
         else rc=cmd_balance(db,pos_int(uid_s));
-    } else if (strcmp(cmd,"report")==0) {
+    } else if (verb==PAY_REPORT) {
         const char *period=arg_get(ca,cv,"--period");
         rc=cmd_report(db,period);
-    } else if (strcmp(cmd,"status")==0) {
+    } else if (verb==PAY_STATUS) {
         rc=cmd_status(db);
     } else {
         fprintf(stderr,"Unknown command: %s\n",cmd); usage(); rc=1;

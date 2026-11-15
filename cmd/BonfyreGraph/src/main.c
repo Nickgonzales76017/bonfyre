@@ -879,13 +879,33 @@ static const char *arg_get(int argc, char **argv, const char *flag) {
     return NULL;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define GR_COMMANDS(X) \
+    X("add-atom", GR_ADD_ATOM) \
+    X("add-op", GR_ADD_OP) \
+    X("export", GR_EXPORT) \
+    X("fixture", GR_FIXTURE) \
+    X("init", GR_INIT) \
+    X("layer", GR_LAYER) \
+    X("layer-neighbors", GR_LAYER_NEIGHBORS) \
+    X("lineage", GR_LINEAGE) \
+    X("lineage-layer", GR_LINEAGE_LAYER) \
+    X("merkle", GR_MERKLE) \
+    X("plan", GR_PLAN) \
+    X("status", GR_STATUS) \
+    X("sync-layers", GR_SYNC_LAYERS) \
+    X("validate", GR_VALIDATE)
+BF_COMMAND_TABLE(gr_commands, GR_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc<2){ usage(); return 1; }
-    const char *cmd=argv[1];
+    const char *cmd=argv[1]; const int verb=bf_command_id(gr_commands,BF_COMMAND_COUNT(gr_commands),cmd,-1);
     const char *root = arg_get(argc, argv, "--root");
 
-    if (strcmp(cmd,"sync-layers")==0) {
+    if (verb==GR_SYNC_LAYERS) {
         if (bf_layer_rebuild_graph(root) != 0) {
             fprintf(stderr, "bonfyre-graph: failed to sync layer graph\n");
             return 1;
@@ -893,7 +913,7 @@ int main(int argc, char **argv) {
         printf("{\"graph\":\"synced\",\"root\":\"%s\"}\n", root ? root : "");
         return 0;
     }
-    if (strcmp(cmd,"plan")==0) {
+    if (verb==GR_PLAN) {
         char *json = NULL;
         if (argc < 3) { usage(); return 1; }
         if (bf_layer_graph_plan_json(root, argv[2], &json) != 0) {
@@ -904,7 +924,7 @@ int main(int argc, char **argv) {
         free(json);
         return 0;
     }
-    if (strcmp(cmd,"layer")==0) {
+    if (verb==GR_LAYER) {
         char *json = NULL;
         if (argc < 3) { usage(); return 1; }
         if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
@@ -915,7 +935,7 @@ int main(int argc, char **argv) {
         free(json);
         return 0;
     }
-    if (strcmp(cmd,"lineage-layer")==0) {
+    if (verb==GR_LINEAGE_LAYER) {
         char *json = NULL;
         if (argc < 3) { usage(); return 1; }
         if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
@@ -926,7 +946,7 @@ int main(int argc, char **argv) {
         free(json);
         return 0;
     }
-    if (strcmp(cmd,"layer-neighbors")==0) {
+    if (verb==GR_LAYER_NEIGHBORS) {
         char *json = NULL;
         if (argc < 3) { usage(); return 1; }
         if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
@@ -938,7 +958,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd,"init")==0) {
+    if (verb==GR_INIT) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph init <db>\n"); return 1; }
         return cmd_init(argv[2]);
     }
@@ -946,11 +966,11 @@ int main(int argc, char **argv) {
      * traversal in one native invocation.  It is not a synthetic result: the
      * atom and operation are committed to the supplied SQLite graph before
      * lineage is queried and emitted. */
-    if (strcmp(cmd,"fixture")==0) {
+    if (verb==GR_FIXTURE) {
         if (argc < 3) { fprintf(stderr, "Usage: bonfyre-graph fixture <db>\n"); return 1; }
         return cmd_fixture(argv[2]);
     }
-    if (strcmp(cmd,"add-atom")==0) {
+    if (verb==GR_ADD_ATOM) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph add-atom <db> --id .. --hash .. --type ..\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         const char *hash=arg_get(argc,argv,"--hash");
@@ -959,7 +979,7 @@ int main(int argc, char **argv) {
         if (!id||!hash||!type){ fprintf(stderr,"Missing required --id, --hash, --type\n"); return 1; }
         return cmd_add_atom(argv[2],id,hash,type,path);
     }
-    if (strcmp(cmd,"add-op")==0) {
+    if (verb==GR_ADD_OP) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph add-op <db> --id .. --op .. --inputs .. --output ..\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         const char *op=arg_get(argc,argv,"--op");
@@ -970,27 +990,27 @@ int main(int argc, char **argv) {
         if (!id||!op||!inputs||!output){ fprintf(stderr,"Missing required --id, --op, --inputs, --output\n"); return 1; }
         return cmd_add_op(argv[2],id,op,inputs,output,params,version);
     }
-    if (strcmp(cmd,"validate")==0) {
+    if (verb==GR_VALIDATE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph validate <manifest.json>\n"); return 1; }
         return cmd_validate(argv[2]);
     }
-    if (strcmp(cmd,"merkle")==0) {
+    if (verb==GR_MERKLE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph merkle <manifest.json>\n"); return 1; }
         return cmd_merkle(argv[2]);
     }
-    if (strcmp(cmd,"lineage")==0) {
+    if (verb==GR_LINEAGE) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph lineage <db> --id ID\n"); return 1; }
         const char *id=arg_get(argc,argv,"--id");
         if (!id){ fprintf(stderr,"Missing --id\n"); return 1; }
         return cmd_lineage(argv[2],id);
     }
-    if (strcmp(cmd,"export")==0) {
+    if (verb==GR_EXPORT) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph export <db> [--out file.json]\n"); return 1; }
         const char *out=arg_get(argc,argv,"--out");
         if (!out) out="artifact.json";
         return cmd_export(argv[2],out);
     }
-    if (strcmp(cmd,"status")==0) {
+    if (verb==GR_STATUS) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph status <db>\n"); return 1; }
         return cmd_status(argv[2]);
     }

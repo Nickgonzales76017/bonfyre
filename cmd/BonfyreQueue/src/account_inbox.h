@@ -229,6 +229,15 @@ done:
     sqlite3_finalize(q);if(db){sqlite3_progress_handler(db,0,NULL,NULL);sqlite3_exec(db,"ROLLBACK",NULL,NULL,NULL);sqlite3_close(db);}
     int rc=okay?qbox_emit(&w,stream):qbox_error(stream,code,message);bf_mp_writer_free(&w);return rc;
 }
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define QBOXV_COMMANDS(X) \
+    X("list", QBOXV_LIST) \
+    X("receipt", QBOXV_RECEIPT) \
+    X("set", QBOXV_SET)
+BF_COMMAND_TABLE(qboxv_commands, QBOXV_COMMANDS);
+
 static inline int qbox_cli(int argc,char **argv) {
     const char *path=NULL,*subject=NULL,*scope=NULL,*actor=NULL,*mission=NULL,*cursor=NULL,*request=NULL;
     unsigned seen=0;if(argc<3)goto bad;
@@ -242,16 +251,16 @@ static inline int qbox_cli(int argc,char **argv) {
         if(seen&bit)goto bad;
         seen|=bit;*dest=argv[i+1];
     }
-    if((seen&15)!=15||strlen(path)>4095||!qbox_recipient(subject,scope,actor))goto bad;
-    if(!strcmp(argv[2],"list")){
+    if((seen&15)!=15||strlen(path)>4095||!qbox_recipient(subject,scope,actor))goto bad; const int verb=bf_command_id(qboxv_commands,BF_COMMAND_COUNT(qboxv_commands),argv[2],-1);
+    if(verb==QBOXV_LIST){
         int64_t n=0;if(request||(mission&&cursor)||(mission&&!qact_atom(mission,127))||(cursor&&!qbox_number(cursor,&n)))goto bad;
         return qbox_list(path,subject,scope,actor,mission,n,stdout);
     }
-    if(!strcmp(argv[2],"receipt")){
+    if(verb==QBOXV_RECEIPT){
         if(seen!=79||strlen(request)<8||!qact_atom(request,96))goto bad;
         return qbox_update(path,subject,scope,actor,NULL,request,stdout);
     }
-    if(!strcmp(argv[2],"set")){
+    if(verb==QBOXV_SET){
         if(seen!=15)goto bad;
         unsigned char input[QBOX_INPUT_MAX+1];size_t bytes=fread(input,1,sizeof(input),stdin);QboxChange change;
         if(ferror(stdin)||!qbox_parse_change(input,bytes,&change))goto bad;

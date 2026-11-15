@@ -420,13 +420,28 @@ static void cmd_help(void) {
     VERSION);
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define EN_COMMANDS(X) \
+    X("history", EN_HISTORY) \
+    X("link", EN_LINK) \
+    X("merge", EN_MERGE) \
+    X("observe", EN_OBSERVE) \
+    X("resolve", EN_RESOLVE) \
+    X("search", EN_SEARCH) \
+    X("show", EN_SHOW) \
+    X("status", EN_STATUS) \
+    X("unlink", EN_UNLINK)
+BF_COMMAND_TABLE(en_commands, EN_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     if (argc<2){cmd_help();return 0;}
     sqlite3 *db=open_db();
-    int rc=0; const char *cmd=argv[1];
-    if (strcmp(cmd,"status")==0) cmd_status(db);
-    else if (strcmp(cmd,"resolve")==0){
+    int rc=0; const char *cmd=argv[1]; const int verb=bf_command_id(en_commands,BF_COMMAND_COUNT(en_commands),cmd,-1);
+    if (verb==EN_STATUS) cmd_status(db);
+    else if (verb==EN_RESOLVE){
         if(argc<4){fprintf(stderr,"usage: bonfyre-entity resolve <modal> <value> [--kind person|place|org|object|event] [--source S] [--confidence C]\n");rc=1;}
         else {
             const char *kind = NULL, *source = NULL;
@@ -441,7 +456,7 @@ int main(int argc, char **argv) {
                 fprintf(stderr,"bonfyre-entity: kind must be person|place|org|object|event\n"); rc=1;
             } else cmd_resolve(db,argv[2],argv[3],kind,source,confidence);
         }
-    } else if (strcmp(cmd,"observe")==0){
+    } else if (verb==EN_OBSERVE){
         if(argc<5){fprintf(stderr,"usage: bonfyre-entity observe <entity-id> <modal> <value>"
                                   " [--source S] [--confidence C]\n");rc=1;}
         else {
@@ -452,25 +467,25 @@ int main(int argc, char **argv) {
             }
             cmd_observe(db,argv[2],argv[3],argv[4],source,confidence);
         }
-    } else if (strcmp(cmd,"show")==0){
+    } else if (verb==EN_SHOW){
         if(argc<3){fprintf(stderr,"usage: bonfyre-entity show <id>\n");rc=1;}
         else rc=cmd_show(db,argv[2]);
-    } else if (strcmp(cmd,"link")==0){
+    } else if (verb==EN_LINK){
         if(argc<5){fprintf(stderr,"usage: bonfyre-entity link <e1> <e2> <conf>\n");rc=1;}
         else if(!entity_exists(db,argv[2])||!entity_exists(db,argv[3])){fprintf(stderr,"bonfyre-entity: link needs two known entities\n");rc=1;}
         else if(!(atof(argv[4])>=0.0&&atof(argv[4])<=1.0)){fprintf(stderr,"bonfyre-entity: link confidence must be within [0,1]\n");rc=1;}
         else cmd_link(db,argv[2],argv[3],atof(argv[4]));
-    } else if (strcmp(cmd,"unlink")==0){
+    } else if (verb==EN_UNLINK){
         if(argc<4){fprintf(stderr,"usage: bonfyre-entity unlink <e1> <e2>\n");rc=1;}
         else cmd_unlink(db,argv[2],argv[3]);
-    } else if (strcmp(cmd,"merge")==0){
+    } else if (verb==EN_MERGE){
         if(argc<4){fprintf(stderr,"usage: bonfyre-entity merge <target> <source>\n");rc=1;}
         else if(!entity_exists(db,argv[2])||!entity_exists(db,argv[3])){fprintf(stderr,"bonfyre-entity: merge needs two known entities\n");rc=1;}
         else rc=cmd_merge(db,argv[2],argv[3]);
-    } else if (strcmp(cmd,"search")==0){
+    } else if (verb==EN_SEARCH){
         if(argc<3){fprintf(stderr,"usage: bonfyre-entity search <query>\n");rc=1;}
         else cmd_search(db,argv[2]);
-    } else if (strcmp(cmd,"history")==0){
+    } else if (verb==EN_HISTORY){
         if(argc<3){fprintf(stderr,"usage: bonfyre-entity history <id>\n");rc=1;}
         else cmd_history(db,argv[2]);
     } else {

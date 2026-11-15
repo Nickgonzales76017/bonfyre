@@ -21794,7 +21794,7 @@
         "Stitch compiles a recipe through direct compiler argv with a bounded source filename, rather than interpreting recipe or output bytes as shell syntax"
       ],
       "known_gaps": [
-        "this is now a shared pattern adopted across the great majority of cmd/* owners; the ast-grep audit finds only 8 string comparisons remaining in 5 files, none of which are conversion candidates: cmd/BonfyreRecipe/tests/material_driver.c and cmd/BonfyreWebAddress/tests/participant_journey_test.c are test-fixture harnesses, cmd/BonfyreEconomy/src/main.c and cmd/BonfyreLearn/src/main.c retain a pre-shift `--db` option check rather than a verb, and cmd/BonfyreMcp/src/main.c already resolves its multi-call owners through a generic function-pointer table rather than a duplicated strcmp chain; Facet grammar-density currently reports content types without facts, and no live throughput gain has been measured from lookup alone"
+        "the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op,\"verb\") with no space after the comma) is 0 outside cmd/BonfyreWebAddress after the 2026-11-15 conversion of Auth, Finance, Model, Control, Physics, Net, Graph, Outreach, Space, Flow, Entity, Compete, Tier, Pay, Economy, Upper90, Recipe, ExperienceStage, Time, Atlas contracts, RepositoryFabric, AccountContinuity, WarehouseSeed, SurfaceScene, Compress record-factor, Queue account-work/inbox and the components/ Finance, Outreach and Graph copies; the same shape written with a space after the comma is not counted and remains in about 743 comparisons across 72 files (largest: components/BonfyreProject, BonfyreObsidian, BonfyreCLI, BonfyreMcp clis.c, BonfyreAtlas main); usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone"
       ],
       "layer": "",
       "maturity": "implemented",
@@ -21897,7 +21897,27 @@
         "cmd/BonfyreTag/src/main.c",
         "cmd/BonfyreTone/src/main.c",
         "cmd/BonfyreVec/src/main.c",
-        "cmd/BonfyreWebSubLeaseGate/src/main.c"
+        "cmd/BonfyreWebSubLeaseGate/src/main.c",
+        "cmd/BonfyreAuth/src/main.c",
+        "cmd/BonfyreFinance/src/main.c",
+        "cmd/BonfyrePhysics/src/main.c",
+        "cmd/BonfyreNet/src/main.c",
+        "cmd/BonfyreGraph/src/main.c",
+        "cmd/BonfyreOutreach/src/main.c",
+        "cmd/BonfyrePay/src/main.c",
+        "cmd/BonfyreCompress/src/record_factor_cli.c",
+        "cmd/BonfyreQueue/src/account_work.h",
+        "cmd/BonfyreQueue/src/account_inbox.h",
+        "cmd/BonfyreEconomy/src/main.c",
+        "cmd/BonfyreUpper90/src/main.c",
+        "cmd/BonfyreRepositoryFabric/src/main.c",
+        "cmd/BonfyreAccountContinuity/src/main.c",
+        "cmd/BonfyreTime/src/main.c",
+        "cmd/BonfyreSurfaceScene/src/main.c",
+        "cmd/BonfyreWarehouseSeed/src/main.c",
+        "cmd/BonfyreRecipe/src/recipe_material.c",
+        "cmd/BonfyreExperienceStage/src/portfolio.c",
+        "cmd/BonfyreAtlas/src/contracts.h"
       ],
       "subscribes": [],
       "views": [],
@@ -42620,9 +42640,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "b02c64e980b48b70286a665c5bfdaaed4019b6bbda28d0204e487b247d3eb232",
+    "declaration_digest": "ccddf8e8c3258a72d060d3195abf381720e0dbbed964b79bcfe0597ead68f1bf",
     "declaration_files": 155,
-    "generated_at": "2026-11-15T02:05:08Z"
+    "generated_at": "2026-11-15T06:57:01Z"
   },
   "views": {
     "CapabilityView": {

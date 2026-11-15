@@ -214,12 +214,23 @@ int bf_recipe_material_portion_demands(sqlite3 *db,const char *key,int copies,in
     rc=0;
  done:sqlite3_finalize(s);free(body);return rc;
 }
-int bf_recipe_material_command(int argc,char **argv){if(argc<3)return 2;const char *op=argv[2];
-    if(!strcmp(op,"factor")&&argc==5)return bf_record_factor_build(argv[3],argv[4],stdout);
-    if(!strcmp(op,"verify")&&argc==5)return bf_record_factor_verify(argv[3],argv[4],stdout);
-    if(!strcmp(op,"export")&&argc==4)return bf_record_factor_export(argv[3],stdout);
-    if(!strcmp(op,"brief")&&argc==6){char *end;long n=strtol(argv[5],&end,10);if(*end||n<1||n>100)return 2;return bf_recipe_material_brief(argv[3],argv[4],(int)n,stdout);}
-    if(!strcmp(op,"list")&&argc==6){char *end;long n=strtol(argv[5],&end,10);if(*end||n<1||n>100)return 2;return bf_recipe_material_list(argv[3],argv[4],(int)n,stdout);}
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define RMAT_COMMANDS(X) \
+    X("brief", RMAT_BRIEF) \
+    X("export", RMAT_EXPORT) \
+    X("factor", RMAT_FACTOR) \
+    X("list", RMAT_LIST) \
+    X("verify", RMAT_VERIFY)
+BF_COMMAND_TABLE(rmat_commands, RMAT_COMMANDS);
+
+int bf_recipe_material_command(int argc,char **argv){if(argc<3)return 2;const char *op=argv[2]; const int op_id=bf_command_id(rmat_commands,BF_COMMAND_COUNT(rmat_commands),op,-1);
+    if(op_id==RMAT_FACTOR&&argc==5)return bf_record_factor_build(argv[3],argv[4],stdout);
+    if(op_id==RMAT_VERIFY&&argc==5)return bf_record_factor_verify(argv[3],argv[4],stdout);
+    if(op_id==RMAT_EXPORT&&argc==4)return bf_record_factor_export(argv[3],stdout);
+    if(op_id==RMAT_BRIEF&&argc==6){char *end;long n=strtol(argv[5],&end,10);if(*end||n<1||n>100)return 2;return bf_recipe_material_brief(argv[3],argv[4],(int)n,stdout);}
+    if(op_id==RMAT_LIST&&argc==6){char *end;long n=strtol(argv[5],&end,10);if(*end||n<1||n>100)return 2;return bf_recipe_material_list(argv[3],argv[4],(int)n,stdout);}
     fprintf(stderr,"recipe corpus factor SOURCE OUTPUT | verify PACK SOURCE | export PACK | list PACK KEY SETS | brief PACK KEY SETS\n");return 2;
 }
 

@@ -102,10 +102,20 @@ static int cc_probe(const char *origin,const bf_jv *rows) {
     for(size_t i=0;i<rows->len;i++){const char *path=cc_s(rows->items[i],"path"),*name=cc_s(rows->items[i],"name");char *url=!strncmp(path,"//",2)?fmt("%.*s:%s",(int)(scheme-origin),origin,path):fmt("%.*s%s",(int)base,origin,path);int fds[2];if(pipe(fds)){free(url);return cc_fail("carrier probe pipe failed");}pid_t pid=fork();if(pid==0){close(fds[0]);dup2(fds[1],STDOUT_FILENO);close(fds[1]);FILE *quiet=freopen("/dev/null","w",stderr);(void)quiet;execl("/usr/bin/curl","curl","--silent","--location","--max-time","15","--output","/dev/null","--write-out","%{http_code}","--header","Accept: application/json","--header","Host: aurekai.life","--url",url,(char *)NULL);_exit(127);}close(fds[1]);char status[16]={0};ssize_t got=read(fds[0],status,sizeof status-1);close(fds[0]);int code=0;if(pid<0||waitpid(pid,&code,0)<0||!WIFEXITED(code)||WEXITSTATUS(code)||got<=0){fprintf(stderr,"  %-12s unreachable: native HTTP probe failed\n",name);failed++;}else{int n=atoi(status),ok=n==200||n==402;printf("  %-12s %d %s\n",name,n,ok?"":"<-- declared but not serving");if(!ok)failed++;}free(url);}
     return failed?cc_fail("%d declared carrier(s) not serving",failed):1;
 }
-static int cmd_contracts(int argc,char **argv) {
-    if(!argc|| (strcmp(argv[0],"app-lineages")&&strcmp(argv[0],"carriers")&&strcmp(argv[0],"settlement")&&strcmp(argv[0],"institutions"))){fprintf(stderr,"usage: bonfyre-atlas compile-contracts <app-lineages|carriers|settlement|institutions> [--check|--check-generated] [--origin=URL]\n");return 2;}
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CCV_COMMANDS(X) \
+    X("app-lineages", CCV_APP_LINEAGES) \
+    X("carriers", CCV_CARRIERS) \
+    X("institutions", CCV_INSTITUTIONS) \
+    X("settlement", CCV_SETTLEMENT)
+BF_COMMAND_TABLE(ccv_commands, CCV_COMMANDS);
+
+static int cmd_contracts(int argc,char **argv) { const int contract=bf_command_id(ccv_commands,BF_COMMAND_COUNT(ccv_commands),(argc ? argv[0] : NULL),-1);
+    if(contract<0){fprintf(stderr,"usage: bonfyre-atlas compile-contracts <app-lineages|carriers|settlement|institutions> [--check|--check-generated] [--origin=URL]\n");return 2;}
     int check=0,probe=0;const char *origin="http://127.0.0.1:8787";for(int i=1;i<argc;i++){if(!strcmp(argv[i],"--check")){check=1;probe=1;}else if(!strcmp(argv[i],"--check-generated"))check=1;else if(!strncmp(argv[i],"--origin=",9))origin=argv[i]+9;else{fprintf(stderr,"unknown contract option: %s\n",argv[i]);return 2;}}
-    bf_jv *files=bf_jv_obj(),*rows=NULL;cc_error[0]=0;int ok=!strcmp(argv[0],"app-lineages")?cc_lineages(files):!strcmp(argv[0],"carriers")?cc_carriers(files,&rows):!strcmp(argv[0],"settlement")?cc_settlement(files):cc_institutions(files);
+    bf_jv *files=bf_jv_obj(),*rows=NULL;cc_error[0]=0;int ok=contract==CCV_APP_LINEAGES?cc_lineages(files):contract==CCV_CARRIERS?cc_carriers(files,&rows):contract==CCV_SETTLEMENT?cc_settlement(files):cc_institutions(files);
     for(size_t i=0;ok&&i<files->len;i++){const char *rel=files->keys[i],*want=bf_jv_s(files->items[i]);char *target=fmt("%s/%s",root,rel);if(check){char *have=slurp(target,NULL);if(!have||strcmp(have,want))ok=cc_fail("%s disagrees with %s contract; re-run cmd/BonfyreAtlas/bonfyre-atlas compile-contracts %s",rel,argv[0],argv[0]);free(have);}else{char *parent=strdup(target),*slash=strrchr(parent,'/');if(slash)*slash=0;mkdirs(parent);free(parent);char *tmp=fmt("%s.XXXXXX",target);int fd=mkstemp(tmp);if(fd<0)ok=cc_fail("cannot write generated contract: %s",rel);else{size_t n=strlen(want);FILE *f=fdopen(fd,"w");if(!f){close(fd);ok=0;}else{ok=fwrite(want,1,n,f)==n;if(fclose(f))ok=0;}if(ok)ok=chmod(tmp,0644)==0&&rename(tmp,target)==0;if(!ok)cc_fail("cannot publish generated contract: %s",rel);}if(!ok)unlink(tmp);else printf("wrote %s\n",rel);free(tmp);}free(target);}
-    if(ok&&probe&&!strcmp(argv[0],"carriers"))ok=cc_probe(origin,rows);if(ok&&check)printf("%s contract agrees\n",argv[0]);if(!ok)fprintf(stderr,"%s\n",*cc_error?cc_error:"contract compilation failed");bf_jv_free(files);bf_jv_free(rows);return ok?0:1;
+    if(ok&&probe&&contract==CCV_CARRIERS)ok=cc_probe(origin,rows);if(ok&&check)printf("%s contract agrees\n",argv[0]);if(!ok)fprintf(stderr,"%s\n",*cc_error?cc_error:"contract compilation failed");bf_jv_free(files);bf_jv_free(rows);return ok?0:1;
 }

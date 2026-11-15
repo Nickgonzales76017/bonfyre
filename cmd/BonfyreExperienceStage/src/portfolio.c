@@ -276,8 +276,19 @@ static int queue_plan(const Portfolio *p,const char *root) {
             emitted,p->count-emitted);
     return emitted>0?0:3;
 }
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define XPF_COMMANDS(X) \
+    X("audit", XPF_AUDIT) \
+    X("cards", XPF_CARDS) \
+    X("order", XPF_ORDER) \
+    X("queue-plan", XPF_QUEUE_PLAN) \
+    X("show", XPF_SHOW)
+BF_COMMAND_TABLE(xpf_commands, XPF_COMMANDS);
+
 int bf_portfolio_main(int argc,char **argv){
-    const char *verb=argc>2?argv[2]:"audit",*contract="experience-maturities.yaff",*root="../..";
+    const char *verb=argc>2?argv[2]:"audit",*contract="experience-maturities.yaff",*root="../.."; const int verb_id=bf_command_id(xpf_commands,BF_COMMAND_COUNT(xpf_commands),verb,-1);
     for(int i=3;i+1<argc;i++){
         if(!strcmp(argv[i],"--contracts"))contract=argv[++i];
         else if(!strcmp(argv[i],"--root"))root=argv[++i];
@@ -286,11 +297,11 @@ int bf_portfolio_main(int argc,char **argv){
     Portfolio *p=calloc(1,sizeof(*p));if(!p)return 2;
     int rc=parse(contract,p);
     if(!rc){
-        if(!strcmp(verb,"audit"))rc=audit(p,root);
-        else if(!strcmp(verb,"order"))rc=order(p);
-        else if(!strcmp(verb,"cards"))rc=cards(p,root);
-        else if(!strcmp(verb,"queue-plan"))rc=queue_plan(p,root);
-        else if(!strcmp(verb,"show")) {
+        if(verb_id==XPF_AUDIT)rc=audit(p,root);
+        else if(verb_id==XPF_ORDER)rc=order(p);
+        else if(verb_id==XPF_CARDS)rc=cards(p,root);
+        else if(verb_id==XPF_QUEUE_PLAN)rc=queue_plan(p,root);
+        else if(verb_id==XPF_SHOW) {
             int id=argc>3?atoi(argv[3]):0;
             if(id<1||id>PORTFOLIO_COUNT)rc=error_at(0,"show needs program number 1..30");
             else inspect(&p->p[id-1],root);

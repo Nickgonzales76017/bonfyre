@@ -311,33 +311,48 @@ static void cmd_help(void){
     VERSION);
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CP_COMMANDS(X) \
+    X("add-variant", CP_ADD_VARIANT) \
+    X("demote", CP_DEMOTE) \
+    X("history", CP_HISTORY) \
+    X("list", CP_LIST) \
+    X("pair", CP_PAIR) \
+    X("promote", CP_PROMOTE) \
+    X("run", CP_RUN) \
+    X("score", CP_SCORE) \
+    X("status", CP_STATUS)
+BF_COMMAND_TABLE(cp_commands, CP_COMMANDS);
+
 int main(int argc,char **argv){
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     if(argc<2){cmd_help();return 0;}
     sqlite3 *db=open_db();
     srand((unsigned)time(NULL));
-    int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"pair")==0){
+    int rc=0;const char *cmd=argv[1]; const int verb=bf_command_id(cp_commands,BF_COMMAND_COUNT(cp_commands),cmd,-1);
+    if(verb==CP_STATUS) cmd_status(db);
+    else if(verb==CP_PAIR){
         if(argc<4){fprintf(stderr,"usage: bonfyre-compete pair <recipe> <stage>\n");rc=1;}
         else cmd_pair(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"add-variant")==0){
+    } else if(verb==CP_ADD_VARIANT){
         if(argc<5){fprintf(stderr,"usage: bonfyre-compete add-variant <comp> <label> <cfg>\n");rc=1;}
         else rc=cmd_add_variant(db,argv[2],argv[3],argv[4]);
-    } else if(strcmp(cmd,"run")==0){
+    } else if(verb==CP_RUN){
         if(argc<4){fprintf(stderr,"usage: bonfyre-compete run <comp-id> <input>\n");rc=1;}
         else rc=cmd_run(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"score")==0){
+    } else if(verb==CP_SCORE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete score <comp-id>\n");rc=1;}
         else cmd_score(db,argv[2]);
-    } else if(strcmp(cmd,"promote")==0){
+    } else if(verb==CP_PROMOTE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete promote <variant-id>\n");rc=1;}
         else rc=cmd_promote(db,argv[2]);
-    } else if(strcmp(cmd,"demote")==0){
+    } else if(verb==CP_DEMOTE){
         if(argc<3){fprintf(stderr,"usage: bonfyre-compete demote <variant-id>\n");rc=1;}
         else rc=cmd_demote(db,argv[2]);
-    } else if(strcmp(cmd,"list")==0) cmd_list(db);
-    else if(strcmp(cmd,"history")==0) cmd_history(db,argc>2?argv[2]:NULL);
+    } else if(verb==CP_LIST) cmd_list(db);
+    else if(verb==CP_HISTORY) cmd_history(db,argc>2?argv[2]:NULL);
     else {fprintf(stderr,"bonfyre-compete: unknown command: %s\n",cmd);rc=1;}
     sqlite3_close(db);return rc;
 }

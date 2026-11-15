@@ -235,11 +235,19 @@ int bf_recipe_week_view(const char *path,const BfRecipeWeek *w,const char *searc
     rc=o.failed?1:0;
  done:free(p.amounts);bf_recipe_nutrition_free(&p.nutrition);free(brief);if(db)sqlite3_close(db);if(rc&&cap)snprintf(out,cap,"<p class=\"flow-empty\">The complete plan could not be verified. No partial list or job was created.</p>");return rc;
 }
+/* `corpus week PACK SETS list|brief`: one vocabulary for every word position. */
+#define RW_COMMANDS(X) \
+    X("brief", RW_BRIEF) \
+    X("corpus", RW_CORPUS) \
+    X("list", RW_LIST) \
+    X("week", RW_WEEK)
+BF_COMMAND_TABLE(rw_commands, RW_COMMANDS);
+#define RW_WORD(i) (argc>(i)?bf_command_id(rw_commands,BF_COMMAND_COUNT(rw_commands),argv[i],-1):-1)
 int bf_recipe_week_command(int argc,char **argv){
-    enum{RW_CORPUS};static const BfCommandEntry week_commands[]={{"corpus",RW_CORPUS,0,NULL},};
-    const BfCommandEntry*command=argc<2?NULL:bf_command_lookup(week_commands,sizeof(week_commands)/sizeof(week_commands[0]),argv[1]);
-    if(argc<3||!command||command->id!=RW_CORPUS||strcmp(argv[2],"week"))return -1;
-    if(argc!=6 || (strcmp(argv[5],"list") && strcmp(argv[5],"brief"))){fputs("recipe corpus week PACK 'KEY*COPIES;KEY*COPIES' list|brief\n",stderr);return 2;}
+    if(argc<3||RW_WORD(1)!=RW_CORPUS||RW_WORD(2)!=RW_WEEK)return -1;
+    const int mode=RW_WORD(5);
+    if(argc!=6 || (mode!=RW_LIST && mode!=RW_BRIEF)){fputs("recipe corpus week PACK 'KEY*COPIES;KEY*COPIES' list|brief\n",stderr);return 2;}
     BfRecipeWeek w;if(bf_recipe_week_parse(argv[4],&w))return 2;
-    return bf_recipe_week_export(argv[3],&w,!strcmp(argv[5],"brief"),stdout);
+    return bf_recipe_week_export(argv[3],&w,mode==RW_BRIEF,stdout);
 }
+#undef RW_WORD

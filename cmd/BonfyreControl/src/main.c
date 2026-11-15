@@ -1184,51 +1184,73 @@ static void cmd_help(void) {
 
 /* ── main ─────────────────────────────────────────────────────────────────── */
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CT_COMMANDS(X) \
+    X("--help", CT_OPT_HELP) \
+    X("agp", CT_AGP) \
+    X("compete", CT_COMPETE) \
+    X("entropy-check", CT_ENTROPY_CHECK) \
+    X("evict", CT_EVICT) \
+    X("help", CT_HELP) \
+    X("history", CT_HISTORY) \
+    X("inspect", CT_INSPECT) \
+    X("ops", CT_OPS) \
+    X("policy", CT_POLICY) \
+    X("route", CT_ROUTE) \
+    X("sae-gate", CT_SAE_GATE) \
+    X("score", CT_SCORE) \
+    X("status", CT_STATUS) \
+    X("watch", CT_WATCH)
+BF_COMMAND_TABLE(ct_commands, CT_COMMANDS);
+
+#define CTS_COMMANDS(X) \
+    X("add", CTS_ADD) \
+    X("export", CTS_EXPORT) \
+    X("list", CTS_LIST) \
+    X("rm", CTS_RM) \
+    X("show", CTS_SHOW)
+BF_COMMAND_TABLE(cts_commands, CTS_COMMANDS);
+
 int main(int argc, char **argv) {
     srand((unsigned)time(NULL));
-    enum { CT_HELP };
-    static const BfCommandEntry control_help_command[] = {
-        {"--help", CT_HELP, 0, NULL},
-        {"help", CT_HELP, 0, NULL},
-    };
-    const BfCommandEntry *help_command = argc < 2 ? NULL : bf_command_lookup(control_help_command,
-        sizeof(control_help_command) / sizeof(control_help_command[0]), argv[1]);
-    if (argc < 2 || (help_command && help_command->id == CT_HELP)) {
+    const int verb = argc < 2 ? -1 : bf_command_id(ct_commands, BF_COMMAND_COUNT(ct_commands), argv[1], -1);
+    if (argc < 2 || verb == CT_OPT_HELP || verb == CT_HELP) {
         cmd_help(); return 0;
     }
     sqlite3 *db = open_db();
     int rc = 0;
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int sub_verb=bf_command_id(cts_commands,BF_COMMAND_COUNT(cts_commands),argv[2],-1);
 
-    if (strcmp(cmd,"status")==0) {
+    if (verb==CT_STATUS) {
         cmd_status(db);
-    } else if (strcmp(cmd,"score")==0) {
+    } else if (verb==CT_SCORE) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control score <artifact>\n"); rc=1; }
         else cmd_score(db, argv[2]);
-    } else if (strcmp(cmd,"route")==0) {
+    } else if (verb==CT_ROUTE) {
         if (argc < 4) { fprintf(stderr,"usage: bonfyre-control route <recipe> <input>\n"); rc=1; }
         else cmd_route(db, argv[2], argv[3]);
-    } else if (strcmp(cmd,"compete")==0) {
+    } else if (verb==CT_COMPETE) {
         if (argc < 4) { fprintf(stderr,"usage: bonfyre-control compete <recipe> <input>\n"); rc=1; }
         else cmd_compete(db, argv[2], argv[3]);
-    } else if (strcmp(cmd,"evict")==0) {
+    } else if (verb==CT_EVICT) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control evict <model-id>\n"); rc=1; }
         else cmd_evict(db, argv[2]);
-    } else if (strcmp(cmd,"inspect")==0) {
+    } else if (verb==CT_INSPECT) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control inspect <run-id>\n"); rc=1; }
         else cmd_inspect(db, argv[2]);
-    } else if (strcmp(cmd,"history")==0) {
+    } else if (verb==CT_HISTORY) {
         cmd_history(db);
-    } else if (strcmp(cmd,"watch")==0) {
+    } else if (verb==CT_WATCH) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control watch <recipe>\n"); rc=1; }
         else cmd_watch(db, argv[2]);
-    } else if (strcmp(cmd,"entropy-check")==0) {
+    } else if (verb==CT_ENTROPY_CHECK) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control entropy-check <artifact> [threshold]\n"); rc=1; }
         else {
             double thr = argc >= 4 ? atof(argv[3]) : 0.0;
             cmd_entropy_check(db, argv[2], thr);
         }
-    } else if (strcmp(cmd,"sae-gate")==0) {
+    } else if (verb==CT_SAE_GATE) {
         if (argc < 3) {
             fprintf(stderr,"usage: bonfyre-control sae-gate <artifact> [--dict D] [--alpha A]\n"); rc=1;
         } else {
@@ -1239,29 +1261,29 @@ int main(int argc, char **argv) {
             }
             cmd_sae_gate(db, argv[2], dict, alpha);
         }
-    } else if (strcmp(cmd,"agp")==0) {
-        if (argc < 3 || strcmp(argv[2],"export")!=0) {
+    } else if (verb==CT_AGP) {
+        if (argc < 3 || sub_verb!=CTS_EXPORT) {
             fprintf(stderr,"usage: bonfyre-control agp export <artifact> [out-path]\n"); rc=1;
         } else {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control agp export <artifact> [out]\n"); rc=1; }
             else cmd_agp_export(db, argv[3], argc >= 5 ? argv[4] : NULL);
         }
-    } else if (strcmp(cmd,"policy")==0) {
+    } else if (verb==CT_POLICY) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-control policy <list|show|add|rm>\n"); rc=1; }
-        else if (strcmp(argv[2],"list")==0) cmd_policy_list(db);
-        else if (strcmp(argv[2],"show")==0) {
+        else if (sub_verb==CTS_LIST) cmd_policy_list(db);
+        else if (sub_verb==CTS_SHOW) {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control policy show <id>\n"); rc=1; }
             else cmd_policy_show(db, argv[3]);
-        } else if (strcmp(argv[2],"add")==0) {
+        } else if (sub_verb==CTS_ADD) {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control policy add <file.json>\n"); rc=1; }
             else rc = cmd_policy_add(db, argv[3]);
-        } else if (strcmp(argv[2],"rm")==0) {
+        } else if (sub_verb==CTS_RM) {
             if (argc < 4) { fprintf(stderr,"usage: bonfyre-control policy rm <id>\n"); rc=1; }
             else cmd_policy_rm(db, argv[3]);
         } else {
             fprintf(stderr,"unknown policy subcommand: %s\n", argv[2]); rc=1;
         }
-    } else if (strcmp(cmd,"ops")==0) {
+    } else if (verb==CT_OPS) {
         cmd_ops(db);
     } else {
         fprintf(stderr,"bonfyre-control: unknown command: %s\n", cmd);

@@ -256,8 +256,16 @@ static int crm_record(sqlite3 *items,sqlite3 *cms,bf_mp_writer_t *w,char record_
 done:
     sqlite3_finalize(s);sqlite3_finalize(q);return valid&&w->len<=256*1024;
 }
-int main(int argc,char **argv){
-    if(argc!=2||(strcmp(argv[1],"inspect")&&strcmp(argv[1],"apply"))){
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define AC_COMMANDS(X) \
+    X("apply", AC_APPLY) \
+    X("inspect", AC_INSPECT)
+BF_COMMAND_TABLE(ac_commands, AC_COMMANDS);
+
+int main(int argc,char **argv){ const int mode=bf_command_id(ac_commands,BF_COMMAND_COUNT(ac_commands),(argc==2 ? argv[1] : NULL),-1);
+    if(mode!=AC_INSPECT&&mode!=AC_APPLY){
         fputs("Usage: bonfyre-account-continuity inspect|apply\n",stderr);return 2;
     }
     const char *home=getenv("HOME");if(!home||strlen(home)>2048)return 2;
@@ -281,7 +289,7 @@ int main(int argc,char **argv){
     int finstate=readback(cms,FIN_BIND,FIN_KEY,fdig,&finance_rev);
     int crmstate=readback(cms,CRM_BIND,crmkey,cdig,&crm_rev);
     printf("{\"stage\":\"preflight\",\"source_key\":\"%s\",\"source_state\":%d,\"finance_key\":\"%s\",\"finance_state\":%d,\"crm_key\":\"%s\",\"crm_state\":%d,\"opportunities\":%d,\"crm_deals\":%d}\n",sourcekey,srcstate,FIN_KEY,finstate,crmkey,crmstate,rows,deals);
-    if(!strcmp(argv[1],"inspect")){ok=1;goto out;}
+    if(mode==AC_INSPECT){ok=1;goto out;}
     if(srcstate<0||finstate<0||crmstate<0||srcstate==1||finstate==1||crmstate==1){
         fputs("Changed or removed existing record; refusing overwrite\n",stderr);goto out;
     }

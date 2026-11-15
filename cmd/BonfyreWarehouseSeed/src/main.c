@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 static int table_exists(sqlite3 *db, const char *name) {
   sqlite3_stmt *stmt=NULL;
   if(sqlite3_prepare_v2(db,"SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", -1,&stmt,NULL)!=SQLITE_OK)
@@ -32,7 +33,10 @@ static int usage(void) {
 }
 int main(int argc,char **argv) {
   const char *estate=NULL;
-  if(argc!=5 || strcmp(argv[1],"seed")) return usage();
+  enum{WS_SEED};
+  static const BfCommandEntry seed_commands[]={{"seed",WS_SEED,0,NULL}};
+  const BfCommandEntry *command=argc==5?bf_command_lookup(seed_commands,sizeof(seed_commands)/sizeof(seed_commands[0]),argv[1]):NULL;
+  if(!command || command->id!=WS_SEED) return usage();
   if(!strcmp(argv[2],"--apply") && !strcmp(argv[3],"--estate")) estate=argv[4];
   else if(!strcmp(argv[2],"--estate") && !strcmp(argv[4],"--apply")) estate=argv[3];
   else return usage();

@@ -285,6 +285,16 @@ static void cmd_help(void){
     VERSION);
 }
 
+/* budget/cost second verbs, sorted for the shared bf_command_lookup; the
+ * handlers keep their own arguments and exit codes. */
+enum { ECS_ESTIMATE, ECS_RECORD, ECS_SET, ECS_SHOW };
+static const BfCommandEntry ecs_commands[] = {
+    {"estimate", ECS_ESTIMATE, 0, NULL},
+    {"record", ECS_RECORD, 0, NULL},
+    {"set", ECS_SET, 0, NULL},
+    {"show", ECS_SHOW, 0, NULL},
+};
+
 int main(int argc,char **argv){
     /* --db FILE before the command names the store, like the other organs
      * that keep one; it takes the place of the environment variable. */
@@ -323,15 +333,15 @@ int main(int argc,char **argv){
         return 0;
     }
     sqlite3 *db=open_db();
-    int rc=0;const char *cmd=argv[1];
+    int rc=0;const char *cmd=argv[1]; const int sub_verb=bf_command_id(ecs_commands,BF_COMMAND_COUNT(ecs_commands),argv[2],-1);
     if(command && command->id == EC_VERIFY) rc=bf_verification_command(db,argc,argv);
     else if(command && command->id == EC_STATUS) cmd_status(db);
     else if(command && command->id == EC_BUDGET){
         if(argc<3){fprintf(stderr,"budget: set|show\n");rc=1;}
-        else if(strcmp(argv[2],"set")==0){
+        else if(sub_verb==ECS_SET){
             if(argc<5){fprintf(stderr,"usage: budget set <recipe> <usd>\n");rc=1;}
             else cmd_budget_set(db,argv[3],atof(argv[4]));
-        } else if(strcmp(argv[2],"show")==0)
+        } else if(sub_verb==ECS_SHOW)
             cmd_budget_show(db,argc>3?argv[3]:NULL);
         else {fprintf(stderr,"budget: unknown sub-command %s\n",argv[2]);rc=1;}
     } else if(command && command->id == EC_ROUTE){
@@ -339,10 +349,10 @@ int main(int argc,char **argv){
         else cmd_route(db,argv[2]);
     } else if(command && command->id == EC_COST){
         if(argc<3){fprintf(stderr,"cost: estimate|record\n");rc=1;}
-        else if(strcmp(argv[2],"estimate")==0){
+        else if(sub_verb==ECS_ESTIMATE){
             if(argc<4){fprintf(stderr,"usage: cost estimate <recipe>\n");rc=1;}
             else cmd_cost_estimate(db,argv[3]);
-        } else if(strcmp(argv[2],"record")==0){
+        } else if(sub_verb==ECS_RECORD){
             if(argc<7){fprintf(stderr,"usage: cost record <recipe> <stage> <model> <usd>\n");rc=1;}
             else cmd_cost_record(db,argv[3],argv[4],argv[5],atof(argv[6]));
         } else {fprintf(stderr,"cost: unknown sub-command %s\n",argv[2]);rc=1;}

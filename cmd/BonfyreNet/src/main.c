@@ -862,22 +862,40 @@ static int cmd_exec_(int argc, char **argv) {
     return failed ? 1 : 0;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define NET_COMMANDS(X) \
+    X("--help", NET_OPT_HELP) \
+    X("-h", NET_OPT_H) \
+    X("check", NET_CHECK) \
+    X("compile", NET_COMPILE) \
+    X("components", NET_COMPONENTS) \
+    X("eval-sealed", NET_EVAL_SEALED) \
+    X("exec", NET_EXEC) \
+    X("graph", NET_GRAPH) \
+    X("probe", NET_PROBE) \
+    X("run", NET_RUN) \
+    X("seal", NET_SEAL) \
+    X("unseal", NET_UNSEAL)
+BF_COMMAND_TABLE(net_commands, NET_COMMANDS);
+
 int main(int argc, char **argv) {
     if(argc<2){usage();return 1;}
     bf_component_registry_init();
 
-    const char *cmd=argv[1];
-    if(!strcmp(cmd,"--help")||!strcmp(cmd,"-h")){ usage();return 0; }
-    if(!strcmp(cmd,"check"))        return cmd_check_      (argc-1,argv+1);
-    if(!strcmp(cmd,"compile"))      return cmd_compile_    (argc-1,argv+1);
-    if(!strcmp(cmd,"exec"))         return cmd_exec_       (argc-1,argv+1);
-    if(!strcmp(cmd,"run"))          return cmd_run_        (argc-1,argv+1);
-    if(!strcmp(cmd,"probe"))        return cmd_probe_      (argc-1,argv+1);
-    if(!strcmp(cmd,"graph"))        return cmd_graph_      (argc-1,argv+1);
-    if(!strcmp(cmd,"components"))   return cmd_components_ ();
-    if(!strcmp(cmd,"seal"))         return cmd_seal_       (argc-1,argv+1);
-    if(!strcmp(cmd,"unseal"))       return cmd_unseal_     (argc-1,argv+1);
-    if(!strcmp(cmd,"eval-sealed"))  return cmd_eval_sealed_(argc-1,argv+1);
+    const char *cmd=argv[1]; const int verb=bf_command_id(net_commands,BF_COMMAND_COUNT(net_commands),cmd,-1);
+    if(verb==NET_OPT_HELP||verb==NET_OPT_H){ usage();return 0; }
+    if(verb==NET_CHECK)        return cmd_check_      (argc-1,argv+1);
+    if(verb==NET_COMPILE)      return cmd_compile_    (argc-1,argv+1);
+    if(verb==NET_EXEC)         return cmd_exec_       (argc-1,argv+1);
+    if(verb==NET_RUN)          return cmd_run_        (argc-1,argv+1);
+    if(verb==NET_PROBE)        return cmd_probe_      (argc-1,argv+1);
+    if(verb==NET_GRAPH)        return cmd_graph_      (argc-1,argv+1);
+    if(verb==NET_COMPONENTS)   return cmd_components_ ();
+    if(verb==NET_SEAL)         return cmd_seal_       (argc-1,argv+1);
+    if(verb==NET_UNSEAL)       return cmd_unseal_     (argc-1,argv+1);
+    if(verb==NET_EVAL_SEALED)  return cmd_eval_sealed_(argc-1,argv+1);
     fprintf(stderr,"Unknown subcommand: %s\n",cmd);
     usage();
     return 1;

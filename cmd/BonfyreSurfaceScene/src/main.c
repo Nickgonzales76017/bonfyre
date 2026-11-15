@@ -390,14 +390,14 @@ static int render_md(int argc,char **argv){
 
 int main(int argc,char **argv){
     if(argc<2){usage();return 2;}
-    if(!strcmp(argv[1],"render-md"))return render_md(argc,argv);
+    enum{SS_COMPILE,SS_DRAIN,SS_LOWER,SS_RENDER_MD,SS_SYNC,SS_SYNC_ALL};
+    static const BfCommandEntry scene_commands[]={{"compile",SS_COMPILE,0,NULL},{"drain",SS_DRAIN,0,NULL},{"lower",SS_LOWER,0,NULL},{"render-md",SS_RENDER_MD,0,NULL},{"sync",SS_SYNC,0,NULL},{"sync-all",SS_SYNC_ALL,0,NULL}};
+    const BfCommandEntry *command=bf_command_lookup(scene_commands,sizeof(scene_commands)/sizeof(scene_commands[0]),argv[1]);
+    if(command&&command->id==SS_RENDER_MD)return render_md(argc,argv);
     const char *db=opt(argc,argv,"--db",NULL);if(!db){usage();return 2;}
     schemas_dir_arg=opt(argc,argv,"--schemas",NULL);
     scene_schema_arg=opt(argc,argv,"--scene-schema",NULL);
     const char *ns=opt(argc,argv,"--ns","root"),*site=opt(argc,argv,"--site",""),*world=opt(argc,argv,"--world",""),*subject=opt(argc,argv,"--subject",""),*scope=opt(argc,argv,"--actor-scope","public"),*frontier=opt(argc,argv,"--frontier",""),*intent=opt(argc,argv,"--intent","");
-    enum{SS_COMPILE,SS_DRAIN,SS_LOWER,SS_SYNC,SS_SYNC_ALL};
-    static const BfCommandEntry scene_commands[]={{"compile",SS_COMPILE,0,NULL},{"drain",SS_DRAIN,0,NULL},{"lower",SS_LOWER,0,NULL},{"sync",SS_SYNC,0,NULL},{"sync-all",SS_SYNC_ALL,0,NULL}};
-    const BfCommandEntry *command=bf_command_lookup(scene_commands,sizeof(scene_commands)/sizeof(scene_commands[0]),argv[1]);
     if(command&&command->id==SS_COMPILE)return do_one(db,ns,site,world,subject,scope,frontier,intent,0);
     if(command&&command->id==SS_SYNC)return do_one(db,ns,site,world,subject,scope,frontier,intent,1);
     if(command&&command->id==SS_SYNC_ALL)return sync_all(db,ns,scope);

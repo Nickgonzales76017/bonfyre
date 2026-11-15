@@ -292,16 +292,25 @@ static void cmd_help(void){
     VERSION);
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define TR_COMMANDS(X) \
+    X("history", TR_HISTORY) \
+    X("layer", TR_LAYER) \
+    X("list", TR_LIST) \
+    X("record", TR_RECORD) \
+    X("route", TR_ROUTE) \
+    X("set", TR_SET) \
+    X("show", TR_SHOW) \
+    X("status", TR_STATUS) \
+    X("violations", TR_VIOLATIONS)
+BF_COMMAND_TABLE(tr_commands, TR_COMMANDS);
+
 int main(int argc,char **argv){
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     if(argc<2){cmd_help();return 0;}
-    enum { TR_LAYER };
-    static const BfCommandEntry tier_commands[] = {
-        {"layer", TR_LAYER, 0, NULL},
-    };
-    const BfCommandEntry *command = bf_command_lookup(tier_commands,
-        sizeof(tier_commands) / sizeof(tier_commands[0]), argv[1]);
-    if(command && command->id == TR_LAYER && argc>=3){
+    const int verb=bf_command_id(tr_commands,BF_COMMAND_COUNT(tr_commands),argv[1],-1);
+    if(verb == TR_LAYER && argc>=3){
         const char *root = NULL;
         char *json = NULL, *out = NULL;
         for(int i=1;i<argc-1;i++) if(strcmp(argv[i],"--root")==0){ root=argv[i+1]; break; }
@@ -314,22 +323,22 @@ int main(int argc,char **argv){
     }
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
-    if(strcmp(cmd,"status")==0) cmd_status(db);
-    else if(strcmp(cmd,"list")==0) cmd_list(db);
-    else if(strcmp(cmd,"show")==0){
+    if(verb==TR_STATUS) cmd_status(db);
+    else if(verb==TR_LIST) cmd_list(db);
+    else if(verb==TR_SHOW){
         if(argc<3){fprintf(stderr,"usage: bonfyre-tier show <tier>\n");rc=1;}
         else cmd_show(db,argv[2]);
-    } else if(strcmp(cmd,"set")==0){
+    } else if(verb==TR_SET){
         if(argc<5){fprintf(stderr,"usage: bonfyre-tier set <recipe> <stage> <tier>\n");rc=1;}
         else cmd_set(db,argv[2],argv[3],argv[4]);
-    } else if(strcmp(cmd,"route")==0){
+    } else if(verb==TR_ROUTE){
         if(argc<4){fprintf(stderr,"usage: bonfyre-tier route <recipe> <stage>\n");rc=1;}
         else cmd_route(db,argv[2],argv[3]);
-    } else if(strcmp(cmd,"record")==0){
+    } else if(verb==TR_RECORD){
         if(argc<5){fprintf(stderr,"usage: bonfyre-tier record <recipe> <stage> <ms>\n");rc=1;}
         else cmd_record(db,argv[2],argv[3],atoi(argv[4]));
-    } else if(strcmp(cmd,"violations")==0) cmd_violations(db,argc>2?argv[2]:NULL);
-    else if(strcmp(cmd,"history")==0) cmd_history(db,argc>2?argv[2]:NULL);
+    } else if(verb==TR_VIOLATIONS) cmd_violations(db,argc>2?argv[2]:NULL);
+    else if(verb==TR_HISTORY) cmd_history(db,argc>2?argv[2]:NULL);
     else {fprintf(stderr,"bonfyre-tier: unknown command: %s\n",cmd);rc=1;}
     sqlite3_close(db);return rc;
 }

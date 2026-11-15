@@ -4,6 +4,7 @@
 #define _GNU_SOURCE
 #include "../src/authoring_native_components.h"
 #include "../../BonfyreWebAddress/generated/native_authoring_templates.h"
+#include "../../BonfyreWebAddress/src/form_tree.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -186,6 +187,55 @@ int main(void){
  check(bf_authoring_tree_data(evil,"up","payload","{\"label\":\"X\",\"type\":\"file\",\"name\":\"f\",\"value\":\"\",\"placeholder\":\"\",\"multiline\":false,\"rows\":\"3\",\"maxlength\":\"\",\"required\":false,\"inputmode\":\"\"}"),"file payload");
  result=html(evil,1048576,0);
  free(result);bf_authoring_tree_clear(evil);free(evil);
+ {
+  /* The FtForm builder covers what real pages post: hidden nonce fields,
+   * pattern/min/max, a select with a chosen option, a textarea, a checkbox
+   * and two named submits where the second skips validation. */
+  static const FtField hidden[]={{"subject","alice"},{"nonce","n-1"}};
+  static const FtOption roles[]={{"read","read",0},{"write","write",1}};
+  static const FtInput inputs[]={
+   {.label="Age",.name="age",.inputmode="numeric",.pattern="[0-9]{2,3}",.min="18",.max="115",.placeholder="18 or over",.required=1},
+   {.label="Access",.type="select",.name="role",.options=roles,.noptions=2},
+   {.label="Note",.name="note",.rows=4,.maxlength="400"},
+   {.label="Start",.type="checkbox",.name="start",.value="1",.checked=1}};
+  static const FtSubmit submits[]={{.label="Approve",.name="decision",.value="approve"},{.label="Decline",.name="decision",.value="decline",.tone="danger",.novalidate=1}};
+  const FtForm form={.id="review-alice",.method="post",.action="/moderation/dating",.hidden=hidden,.nhidden=2,
+   .inputs=inputs,.ninputs=4,.submits=submits,.nsubmits=2};
+  char *out=NULL;size_t len=0;FILE *mem=open_memstream(&out,&len);
+  check(mem&&ft_form(mem,&form),"ft_form renders");fclose(mem);
+  check(strstr(out,"<form class=\"ak-pattern ak-action\" data-ak-id=\"review-alice\" method=\"post\" action=\"/moderation/dating\">")!=NULL,"form method/action");
+  check(strstr(out,"<input type=\"hidden\" name=\"subject\" value=\"alice\"><input type=\"hidden\" name=\"nonce\" value=\"n-1\">")!=NULL,"hidden fields");
+  check(strstr(out," inputmode=\"numeric\" pattern=\"[0-9]{2,3}\" min=\"18\" max=\"115\" required>")!=NULL,"pattern/min/max");
+  check(strstr(out,"<select name=\"role\" aria-label=\"Access\"><option value=\"read\">read</option><option value=\"write\" selected>write</option></select>")!=NULL,"select options");
+  check(strstr(out,"<textarea name=\"note\" rows=\"4\" maxlength=\"400\"></textarea>")!=NULL,"textarea");
+  check(strstr(out,"type=\"checkbox\" name=\"start\" value=\"1\"")!=NULL&&strstr(out," checked>")!=NULL,"checkbox checked");
+  check(strstr(out,"<button type=\"submit\" name=\"decision\" value=\"approve\">Approve</button><button type=\"submit\" name=\"decision\" value=\"decline\" formnovalidate class=\"ak-tone-danger\">Decline</button></form>")!=NULL,"named submits");
+  check(strstr(out,"{{")==NULL,"no template residue");
+  free(out);
+  const FtForm plain={.id="plain",.action="/x",.label="Go"};
+  out=NULL;len=0;mem=open_memstream(&out,&len);
+  check(mem&&ft_form(mem,&plain),"plain form");fclose(mem);
+  check(strstr(out,"<button type=\"submit\">Go</button></form>")!=NULL,"single label button without submits");
+  free(out);
+  static const FtSubmit hooked[]={{.label="Install",.hook="pack-action",.hook_value="install"}};
+  const FtForm withhook={.id="hk",.action="/x",.hook="household-access-form",.submits=hooked,.nsubmits=1};
+  out=NULL;len=0;mem=open_memstream(&out,&len);
+  check(mem&&ft_form(mem,&withhook),"hooked form");fclose(mem);
+  check(strstr(out,"data-ak-id=\"hk\" data-household-access-form=\"\" method=")!=NULL,"form hook attribute");
+  check(strstr(out,"<button type=\"submit\" data-pack-action=\"install\">Install</button>")!=NULL,"button hook attribute");
+  free(out);
+  const FtForm badhook={.id="bh",.action="/x",.label="Go",.hook="onclick"};
+  out=NULL;len=0;mem=open_memstream(&out,&len);
+  check(mem&&ft_form(mem,&badhook),"data-onclick is inert data, still admitted");fclose(mem);free(out);
+  const FtForm evilhook={.id="eh",.action="/x",.label="Go",.hook="x\" onload=\"y"};
+  out=NULL;len=0;mem=open_memstream(&out,&len);
+  check(mem&&!ft_form(mem,&evilhook),"hook outside [a-z0-9-] refused");fclose(mem);free(out);
+  const FtField evil_hidden[]={{"a b","x"}};
+  const FtForm refused={.id="bad",.action="/x",.label="Go",.hidden=evil_hidden,.nhidden=1};
+  out=NULL;len=0;mem=open_memstream(&out,&len);
+  check(mem&&!ft_form(mem,&refused),"unsafe field name refused");fclose(mem);
+  check(len==0,"refused form prints nothing");free(out);
+ }
  bf_authoring_tree_clear(tree);bf_authoring_tree_clear(other);
  free(tree);free(other);
  puts("native 46-component render PASS");return 0;
