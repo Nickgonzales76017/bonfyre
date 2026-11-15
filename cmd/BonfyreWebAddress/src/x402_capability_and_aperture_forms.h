@@ -1,5 +1,6 @@
 #ifndef BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
 #define BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
+#include "../generated/native_estate_hosts.h"
 /* Extracted verbatim from main.c lines 14174-15948 (mechanical split, no logic changes). */
 static int x402_price_usd(const char *name, double *out) {
     const char *fin = getenv("BONFYRE_FINANCE_DB");
@@ -452,9 +453,9 @@ static void capability_catalogue_page(const char *inquiry) {
     fflush(stdout);
 }
 
-static int serve_capability(const char *method, const char *target,
-                            const char *xpayment, const char *host,
-                            const char *accept) {
+static int serve_capability(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *xpayment=r->payment; const char *host=r->host; const char *accept=r->accept;
+    (void)method;(void)target;(void)xpayment;(void)host;(void)accept;
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     static char out[262144];
     char name[128];
@@ -899,9 +900,9 @@ static void form_field_list(const char *csv, int as_input) {
  * Cannot infer: a completed birth -> a published, occurred, or authorized-
  * onward thing. The Event exists in its declared initial state and nothing
  * more. */
-static int serve_aperture_submit(const char *method, const char *target,
-                                 const char *body_in, const char *accept,
-                                 const char *bearer, const char *auth_db) {
+static int serve_aperture_submit(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *body_in=rq->body; const char *accept=rq->accept; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
+    (void)method;(void)target;(void)body_in;(void)accept;(void)bearer;(void)auth_db;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     char subject[256], operation[128], kind[64];
@@ -1284,7 +1285,7 @@ static int serve_aperture_submit(const char *method, const char *target,
             if (!named[0] && *title) snprintf(named, sizeof(named), "%s", title);
             compose_slug(named[0] ? named : object_name, slug, sizeof(slug), "");
         }
-        snprintf(address, sizeof(address), "https://nightgrid.aurekai.live/%.24s/%.96s", lens_path, slug);
+        snprintf(address, sizeof(address), BF_ORIGIN_NIGHTGRID "/%.24s/%.96s", lens_path, slug);
         /* A route that collides with an existing one is disambiguated by the
          * identity that cannot collide, rather than by refusing the birth: two
          * events may honestly share a title. */
@@ -1293,7 +1294,7 @@ static int serve_aperture_submit(const char *method, const char *target,
             if (bf_matrix_address_subject(m, address, taken, sizeof(taken)) == 1 &&
                 strcmp(taken, sid) != 0)
                 snprintf(address, sizeof(address),
-                         "https://nightgrid.aurekai.live/%.24s/%.80s-%.8s", lens_path, slug, digest);
+                         BF_ORIGIN_NIGHTGRID "/%.24s/%.80s-%.8s", lens_path, slug, digest);
         }
         if (bf_matrix_address_bind(m, sid, "web_url", address, receipt) != BF_MATRIX_OK)
             address[0] = '\0';   /* reported as unbound rather than claimed */
@@ -1546,9 +1547,9 @@ static int contract_owner_return_value(const char *template, const char *identif
     return 1;
 }
 
-static int serve_aperture_form(const char *method, const char *target, const char *query,
-                               const char *accept, const char *bearer, const char *auth_db,
-                               const char *host) {
+static int serve_aperture_form(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *host=r->host;
+    (void)method;(void)target;(void)query;(void)accept;(void)bearer;(void)auth_db;(void)host;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     char subject[256], operation[128], kind[64];

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SUBJECT_AND_LENS_H
 #define BONFYRE_SUBJECT_AND_LENS_H
+#include "form_tree.h"
 /* Extracted verbatim from main.c lines 23600-27582 (mechanical split, no logic changes). */
 static size_t subject_conditions(const char *ident, const char *kind,
                                  char *out, size_t cap) {
@@ -385,9 +386,9 @@ static void price_amount(double v, char *out, size_t cap) {
     else snprintf(out, cap, "%.3g", v);
 }
 
-static int serve_subject(const char *method, const char *target, const char *query,
-                         const char *bearer, const char *auth_db)
-{
+static int serve_subject(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     (void)query;   /* a subject addresses itself in the path, not a parameter */
     static char body[262144], rows[131072];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
@@ -1219,14 +1220,14 @@ static int serve_subject(const char *method, const char *target, const char *que
                 fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
                   "<div class=\"gv\"><p class=\"gv-asks\">%s</p>"
                   "<p class=\"gv-tally\">%ld for &middot; %ld against &middot; %ld abstaining &middot; "
-                  "would be decided by %s</p>"
-                  "<form class=\"gv-form\" method=\"post\" action=\"/govern/vote\">"
-                  "<input type=\"hidden\" name=\"id\" value=\"%s\">"
-                  "<input type=\"hidden\" name=\"return\" value=\"/s/project/%s\">"
-                  "<button name=\"choice\" value=\"for\">For</button>"
-                  "<button name=\"choice\" value=\"against\">Against</button>"
-                  "<button name=\"choice\" value=\"abstain\">Abstain</button>"
-                  "</form></div>", easks, f, a, ab, eb, epid, eid);
+                  "would be decided by %s</p>", easks, f, a, ab, eb);
+                {char back[320];snprintf(back,sizeof(back),"/s/project/%s",eid);
+                 const FtField hidden[]={{"id",epid},{"return",back}};
+                 static const FtSubmit votes[]={{.label="For",.name="choice",.value="for"},{.label="Against",.name="choice",.value="against",.tone="quiet"},
+                                                {.label="Abstain",.name="choice",.value="abstain",.tone="quiet"}};
+                 const FtForm vote={.id="gv-vote",.action="/govern/vote",.hook="gv-form",.hidden=hidden,.nhidden=2,.submits=votes,.nsubmits=3};
+                 ft_form_append(facts,sizeof(facts),&fw,&vote);}
+                fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "</div>");
             }
             sqlite3_finalize(st); st = NULL;
         }
@@ -1246,12 +1247,13 @@ static int serve_subject(const char *method, const char *target, const char *que
                     "<h3 class=\"room-h\">Help wanted</h3>");
                 fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
                   "<div class=\"gv gv-row\"><span class=\"gv-role\">%s</span>"
-                  "<span class=\"gv-want\">%s wanted</span>"
-                  "<form class=\"gv-form\" method=\"post\" action=\"/govern/join\">"
-                  "<input type=\"hidden\" name=\"id\" value=\"%s\">"
-                  "<input type=\"hidden\" name=\"return\" value=\"/s/project/%s\">"
-                  "<button>Put my name to it</button></form></div>",
-                  er, (const char *)sqlite3_column_text(st, 2), enid, eid);
+                  "<span class=\"gv-want\">%s wanted</span>",
+                  er, (const char *)sqlite3_column_text(st, 2));
+                {char back[320];snprintf(back,sizeof(back),"/s/project/%s",eid);
+                 const FtField hidden[]={{"id",enid},{"return",back}};
+                 const FtForm join={.id="gv-join",.action="/govern/join",.label="Put my name to it",.hook="gv-form",.hidden=hidden,.nhidden=2};
+                 ft_form_append(facts,sizeof(facts),&fw,&join);}
+                fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "</div>");
             }
             sqlite3_finalize(st); st = NULL;
         }
@@ -1368,19 +1370,19 @@ static int serve_subject(const char *method, const char *target, const char *que
         }
 
         /* Support, stated before anything moves. */
-        snprintf(facts + fw, sizeof(facts) - fw,
-          "<h3 class=\"room-h\">Support it</h3>"
-          "<form class=\"gv-form gv-fund\" method=\"post\" action=\"/govern/support\">"
-          "<input type=\"hidden\" name=\"id\" value=\"%s\">"
-          "<input type=\"hidden\" name=\"return\" value=\"/s/project/%s\">"
-          "<input name=\"amount\" inputmode=\"decimal\" placeholder=\"amount you would put in\">"
-          "<button>State my support</button></form>"
+        if (fw < sizeof(facts)) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw, "<h3 class=\"room-h\">Support it</h3>");
+        {char back[320];snprintf(back,sizeof(back),"/s/project/%s",eid);
+         const FtField hidden[]={{"id",eid},{"return",back}};
+         static const FtInput amount[]={{.label="Amount",.name="amount",.inputmode="decimal",.placeholder="amount you would put in"}};
+         const FtForm support={.id="gv-support",.action="/govern/support",.label="State my support",.hook="gv-fund",.hidden=hidden,.nhidden=2,.inputs=amount,.ninputs=1};
+         ft_form_append(facts,sizeof(facts),&fw,&support);}
+        if (fw < sizeof(facts)) snprintf(facts + fw, sizeof(facts) - fw,
           "<p class=\"subj-note\">Stating support records an intention and a relationship. No money "
           "moves here, this estate cannot collect it, and nothing recorded is evidence that value "
           "moved: money movement belongs to a payment rail and returns a receipt reference, which "
           "is a digest of something presented rather than proof of settlement. A name against a "
           "role is willingness, not an engagement or a contract. A tally is what was said by those "
-          "who said it, and one person holds one position at a time.</p>", eid, eid);
+          "who said it, and one person holds one position at a time.</p>");
 
         {
             char href[512];
@@ -1669,13 +1671,11 @@ static int serve_subject(const char *method, const char *target, const char *que
          * counted above and left out here rather than printed as a bare number.
          * Model prices are per token at the source and are read per million. */
         {
-            char ewq[300]; int shown = 0, has_more = 0, models = !strcmp(want_kind, "inference");
-            html_escape(want_q, ewq, sizeof(ewq));
-            fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-              "<form class=\"price-find\" role=\"search\" method=\"get\" action=\"/s/prices/observed\">%s%s%s"
-              "<input type=\"search\" name=\"q\" value=\"%s\" placeholder=\"Find a price: a drug, a model, a machine, a product\" aria-label=\"Find a price\">"
-              "<button type=\"submit\">Find</button></form>",
-              want_kind[0] ? "<input type=\"hidden\" name=\"kind\" value=\"" : "", want_kind[0] ? want_kind : "", want_kind[0] ? "\">" : "", ewq);
+            int shown = 0, has_more = 0, models = !strcmp(want_kind, "inference");
+            {const FtField hidden[]={{want_kind[0]?"kind":NULL,want_kind}};
+             const FtInput find[]={{.label="Find a price",.type="search",.name="q",.value=want_q,.placeholder="Find a price: a drug, a model, a machine, a product"}};
+             const FtForm price={.id="price-find",.method="get",.action="/s/prices/observed",.label="Find",.hook="price-find",.hidden=hidden,.nhidden=1,.inputs=find,.ninputs=1};
+             ft_form_append(facts,sizeof(facts),&fw,&price);}
             /* Compare only exact product/service identity and unit on the same
              * observation day and in the same currency and region. A source's
              * recorded price is never a current offer or a saving claim. */
@@ -2117,7 +2117,7 @@ static int serve_subject(const char *method, const char *target, const char *que
             const BfInstitutionPlane *pl = &bf_institution_planes[i];
             int is_public = !strcmp(pl->reach, "public");
             int mine = 0;
-            char connect_form[420];
+            char connect_form[1536];
             long held = 0;
             char el[192], ecar[768], eci[1024];
             if (!strcmp(pl->plane, "calendar-ics")) held = ics;
@@ -2135,20 +2135,15 @@ static int serve_subject(const char *method, const char *target, const char *que
             }
             connect_form[0] = 0;
             if (!is_public && signed_in) {
-                char epl[64], eid[128];
-                html_escape(pl->plane, epl, sizeof(epl));
-                html_escape(ident, eid, sizeof(eid));
+                char back[320]; size_t used = 0;
+                snprintf(back, sizeof(back), "/s/institution/%s", ident);
                 /* Said and unsaid are the same control. A relationship a
                  * household cannot end is not one it holds. */
-                snprintf(connect_form, sizeof(connect_form),
-                  "<form class=\"gv-form\" method=\"post\" action=\"/govern/connect\">"
-                  "<input type=\"hidden\" name=\"institution\" value=\"%s\">"
-                  "<input type=\"hidden\" name=\"plane\" value=\"%s\">"
-                  "<input type=\"hidden\" name=\"return\" value=\"/s/institution/%s\">"
-                  "%s<button>%s</button></form>",
-                  eid, epl, eid,
-                  mine ? "<input type=\"hidden\" name=\"release\" value=\"1\">" : "",
-                  mine ? "Release it" : "This household holds it");
+                const FtField hidden[] = {{"institution", ident}, {"plane", pl->plane}, {"return", back},
+                                          {mine ? "release" : NULL, "1"}};
+                const FtForm connect = {.id = "gv-connect", .action = "/govern/connect", .label = mine ? "Release it" : "This household holds it",
+                                        .hook = "gv-form", .hidden = hidden, .nhidden = 4};
+                ft_form_append(connect_form, sizeof(connect_form), &used, &connect);
             }
             fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
               "<div class=\"desk-row\"><span class=\"desk-l\">%s</span>"
@@ -3920,9 +3915,9 @@ static const Lens *lens_find(const char *slug) {
     return NULL;
 }
 
-static int serve_lens(const char *method, const char *target, const char *query,
-                      const char *bearer, const char *auth_db)
-{
+static int serve_lens(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char body[262144], rows[131072];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     size_t w = 0;

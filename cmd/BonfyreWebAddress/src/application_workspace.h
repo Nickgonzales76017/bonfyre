@@ -157,7 +157,9 @@ static int aw_open_audio_studio(const char *method,const char *target,const char
     printf("HTTP/1.1 303 See Other\r\nLocation: %s\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",location);
     return 1;
 }
-static int serve_application_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
+static int serve_application_workspace(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     if(aw_open_audio_studio(method,target,bearer,auth_db))return 1;
     if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;

@@ -606,20 +606,59 @@ static int v_read(sqlite3 *db, bf_jsonw *w) {
     return EX_OK;
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define OB_COMMANDS(X) \
+    X("--help", OB_OPT_HELP) \
+    X("-h", OB_OPT_H) \
+    X("append", OB_APPEND) \
+    X("backlinks", OB_BACKLINKS) \
+    X("bind", OB_BIND) \
+    X("create", OB_CREATE) \
+    X("daily-append", OB_DAILY_APPEND) \
+    X("daily-path", OB_DAILY_PATH) \
+    X("diff", OB_DIFF) \
+    X("doctor", OB_DOCTOR) \
+    X("guard", OB_GUARD) \
+    X("help", OB_HELP) \
+    X("links", OB_LINKS) \
+    X("prepend", OB_PREPEND) \
+    X("properties", OB_PROPERTIES) \
+    X("read", OB_READ) \
+    X("receipts", OB_RECEIPTS) \
+    X("replica-plan", OB_REPLICA_PLAN) \
+    X("search", OB_SEARCH) \
+    X("snapshot", OB_SNAPSHOT) \
+    X("status", OB_STATUS) \
+    X("sync-config", OB_SYNC_CONFIG) \
+    X("sync-once", OB_SYNC_ONCE) \
+    X("sync-setup", OB_SYNC_SETUP) \
+    X("sync-start", OB_SYNC_START) \
+    X("sync-status", OB_SYNC_STATUS) \
+    X("sync-stop", OB_SYNC_STOP) \
+    X("tags", OB_TAGS) \
+    X("task", OB_TASK) \
+    X("tasks", OB_TASKS) \
+    X("unbind", OB_UNBIND) \
+    X("unresolved", OB_UNRESOLVED) \
+    X("vaults", OB_VAULTS)
+BF_COMMAND_TABLE(ob_commands, OB_COMMANDS);
+
 /* A read verb answers through the CLI when the binding asks for it and the
  * app is up, else natively. The answer's "shape" says which, and a CLI that
  * fails falls back to the native answer with the reason attached. */
-static int reader(sqlite3 *db, bf_jsonw *w, const char *verb) {
+static int reader(sqlite3 *db, bf_jsonw *w, const char *verb) { const int verb_id=bf_command_id(ob_commands,BF_COMMAND_COUNT(ob_commands),verb,-1);
     Binding b; int rc, forced; char cli[OB_PATH], a1[OB_PATH + 16] = "", fallback[256] = ""; const char *rel = opt("--path");
     if ((rc = binding_load(db, opt("--name"), &b))) return rc;
-    if (!strcmp(verb, "search") && (!opt("--query") || !*opt("--query"))) return fail(EX_USAGE, "usage", "search needs --query");
-    if ((!strcmp(verb, "backlinks") || !strcmp(verb, "links")) && !rel) return fail(EX_USAGE, "usage", "%s needs --path", verb);
+    if (verb_id==OB_SEARCH && (!opt("--query") || !*opt("--query"))) return fail(EX_USAGE, "usage", "search needs --query");
+    if ((verb_id==OB_BACKLINKS || verb_id==OB_LINKS) && !rel) return fail(EX_USAGE, "usage", "%s needs --path", verb);
     if (rel) { char full[OB_PATH], why[512]; if ((rc = ob_resolve_read(b.root, rel, b.config_dir, full, why, sizeof(why)))) return fail(rc, rc == EX_REFUSED ? "path-refused" : "not-found", "%s", why); }
     if (use_cli(&b, cli, &forced)) {
         const char *cmd = verb; RunResult r;
         const char *args[6] = {0}; int n = 0;
-        if (!strcmp(verb, "search")) { snprintf(a1, sizeof(a1), "query=%s", opt("--query")); args[n++] = "search"; args[n++] = a1; }
-        else if (!strcmp(verb, "links") || !strcmp(verb, "backlinks")) { snprintf(a1, sizeof(a1), "path=%s", rel); args[n++] = verb; args[n++] = a1; }
+        if (verb_id==OB_SEARCH) { snprintf(a1, sizeof(a1), "query=%s", opt("--query")); args[n++] = "search"; args[n++] = a1; }
+        else if (verb_id==OB_LINKS || verb_id==OB_BACKLINKS) { snprintf(a1, sizeof(a1), "path=%s", rel); args[n++] = verb; args[n++] = a1; }
         else { args[n++] = verb; if (rel) { snprintf(a1, sizeof(a1), "path=%s", rel); args[n++] = a1; } }
         args[n++] = "format=json"; args[n] = NULL;
         if (cli_call(cli, &b, args, &r)) { bf_jsonw_key(w, "name"); bf_jsonw_str(w, b.name); put_cli_result(w, cmd, &r); ob_run_free(&r); return EX_OK; }
@@ -631,14 +670,14 @@ static int reader(sqlite3 *db, bf_jsonw *w, const char *verb) {
     if (fallback[0]) { bf_jsonw_key(w, "cli_fallback"); bf_jsonw_str(w, fallback); }
     bf_jsonw_key(w, "answer");
     int limit = opt("--limit") ? atoi(opt("--limit")) : 50; if (limit <= 0 || limit > 1000) limit = 50;
-    if (!strcmp(verb, "search")) rc = ob_verb_search(w, b.root, &b, opt("--query"), opt("--prefix"), limit);
-    else if (!strcmp(verb, "tasks")) {
+    if (verb_id==OB_SEARCH) rc = ob_verb_search(w, b.root, &b, opt("--query"), opt("--prefix"), limit);
+    else if (verb_id==OB_TASKS) {
         const char *s = opt("--status") ? opt("--status") : "all";
         if (strcmp(s, "all") && strcmp(s, "todo") && strcmp(s, "done") && strcmp(s, "other")) return fail(EX_USAGE, "usage", "--status is all, todo, done or other");
         rc = ob_verb_tasks(w, b.root, &b, s, rel);
     }
-    else if (!strcmp(verb, "backlinks") || !strcmp(verb, "links") || !strcmp(verb, "unresolved")) rc = ob_verb_links(w, b.root, &b, verb, rel);
-    else if (!strcmp(verb, "tags")) rc = ob_verb_tags(w, b.root, &b, rel);
+    else if (verb_id==OB_BACKLINKS || verb_id==OB_LINKS || verb_id==OB_UNRESOLVED) rc = ob_verb_links(w, b.root, &b, verb, rel);
+    else if (verb_id==OB_TAGS) rc = ob_verb_tags(w, b.root, &b, rel);
     else rc = ob_verb_properties(w, b.root, &b, rel);
     if (rc) return fail(rc, "read-failed", "%s could not read the vault", verb);
     return EX_OK;
@@ -662,14 +701,14 @@ static char *content_arg(size_t *len) {
 static void file_sha(const char *full, char hex[65]) { if (ob_sha256_file(full, hex)) hex[0] = 0; }
 
 /* create | append | prepend | daily-append */
-static int writer(sqlite3 *db, bf_jsonw *w, const char *verb) {
+static int writer(sqlite3 *db, bf_jsonw *w, const char *verb) { const int verb_id=bf_command_id(ob_commands,BF_COMMAND_COUNT(ob_commands),verb,-1);
     Binding b; int rc, forced; char cli[OB_PATH], full[OB_PATH], why[512], rel[OB_PATH], before[65] = "", after[65] = "", rid[32]; size_t clen = 0; struct stat st;
     if ((rc = binding_load(db, opt("--name"), &b))) return rc;
-    int daily = !strcmp(verb, "daily-append");
+    int daily = verb_id==OB_DAILY_APPEND;
     if (daily) { if (!ob_daily_rel(b.root, b.config_dir, opt("--date"), rel, sizeof(rel))) return fail(EX_USAGE, "usage", "--date is YYYY-MM-DD"); }
     else if (!opt("--path")) return fail(EX_USAGE, "usage", "%s needs --path", verb);
     else snprintf(rel, sizeof(rel), "%s", opt("--path"));
-    if (!daily && !strcmp(verb, "create") && strlen(rel) > 3 && strcasecmp(rel + strlen(rel) - 3, ".md") && !strchr(strrchr(rel, '/') ? strrchr(rel, '/') : rel, '.')) strncat(rel, ".md", sizeof(rel) - strlen(rel) - 1);
+    if (!daily && verb_id==OB_CREATE && strlen(rel) > 3 && strcasecmp(rel + strlen(rel) - 3, ".md") && !strchr(strrchr(rel, '/') ? strrchr(rel, '/') : rel, '.')) strncat(rel, ".md", sizeof(rel) - strlen(rel) - 1);
     if ((rc = ob_resolve_write(b.root, rel, b.config_dir, 0, full, why, sizeof(why))) && rc != EX_NOTFOUND) {
         receipt(db, verb, b.name, rel, "refused", "path-refused", why, "native", "", "", rid);
         return fail(rc, "path-refused", "%s", why);
@@ -679,8 +718,8 @@ static int writer(sqlite3 *db, bf_jsonw *w, const char *verb) {
     if (memchr(content, 0, clen)) { free(content); return fail(EX_REFUSED, "not-text", "content holds a NUL byte"); }
     int exists = !lstat(full, &st);
     if (exists) file_sha(full, before);
-    if (!strcmp(verb, "create") && exists && !flag("--overwrite")) { free(content); receipt(db, verb, b.name, rel, "refused", "exists", "", "native", before, "", rid); return fail(EX_REFUSED, "exists", "%s already exists; pass --overwrite to replace it", rel); }
-    if ((!strcmp(verb, "append") || !strcmp(verb, "prepend")) && !exists) { free(content); return fail(EX_NOTFOUND, "not-found", "no note at %s", rel); }
+    if (verb_id==OB_CREATE && exists && !flag("--overwrite")) { free(content); receipt(db, verb, b.name, rel, "refused", "exists", "", "native", before, "", rid); return fail(EX_REFUSED, "exists", "%s already exists; pass --overwrite to replace it", rel); }
+    if ((verb_id==OB_APPEND || verb_id==OB_PREPEND) && !exists) { free(content); return fail(EX_NOTFOUND, "not-found", "no note at %s", rel); }
 
     const char *via = "native";
     if (use_cli(&b, cli, &forced)) {
@@ -688,7 +727,7 @@ static int writer(sqlite3 *db, bf_jsonw *w, const char *verb) {
         if (esc && (ca = malloc(strlen(esc) + 16))) sprintf(ca, "content=%s", esc);
         snprintf(pa, sizeof(pa), "path=%s", rel);
         if (daily) { args[n++] = "daily:append"; }
-        else { args[n++] = verb; args[n++] = pa; if (!strcmp(verb, "create") && flag("--overwrite")) args[n++] = "overwrite"; }
+        else { args[n++] = verb; args[n++] = pa; if (verb_id==OB_CREATE && flag("--overwrite")) args[n++] = "overwrite"; }
         args[n++] = ca ? ca : "content="; args[n] = NULL;
         int ok = ca && cli_call(cli, &b, args, &r);
         if (r.spawned) ob_run_free(&r);
@@ -701,13 +740,13 @@ static int writer(sqlite3 *db, bf_jsonw *w, const char *verb) {
         if ((rc = ob_resolve_write(b.root, rel, b.config_dir, 1, full, why, sizeof(why)))) { free(content); return fail(rc, "path-refused", "%s", why); }
         char *out = NULL; size_t olen = 0;
         if (!exists) { olen = clen + (clen && content[clen - 1] != '\n'); out = malloc(olen + 1); if (out) { memcpy(out, content, clen); if (olen > clen) out[clen] = '\n'; } }
-        else if (!strcmp(verb, "create")) { olen = clen; out = strdup(content); }
+        else if (verb_id==OB_CREATE) { olen = clen; out = strdup(content); }
         else {
             size_t elen; char *old = ob_read_file(full, &elen, 16u << 20);
             if (!old) { free(content); return fail(EX_FAIL, "read-failed", "%s cannot be read", rel); }
             int nl = clen && content[clen - 1] != '\n';
             out = malloc(elen + clen + 3);
-            if (out && !strcmp(verb, "prepend")) {
+            if (out && verb_id==OB_PREPEND) {
                 /* After the frontmatter, as Obsidian's own prepend does. */
                 size_t at = 0;
                 if (elen >= 4 && !memcmp(old, "---\n", 4)) { const char *e = strstr(old + 4, "\n---\n"); if (e) at = (size_t)(e - old) + 5; else if ((e = strstr(old + 4, "\n---")) && !e[4]) at = elen; }
@@ -866,13 +905,13 @@ static int apply_config(sqlite3 *db, bf_jsonw *w, const Binding *b, const char *
     return EX_OK;
 }
 
-static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) {
+static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) { const int verb_id=bf_command_id(ob_commands,BF_COMMAND_COUNT(ob_commands),verb,-1);
     Binding b; int rc, code = 0; char obp[OB_PATH], why[512], home[OB_PATH], rid[32];
-    if (!strcmp(verb, "sync-stop") || !strcmp(verb, "sync-status")) { if ((rc = binding_load(db, opt("--name"), &b))) return rc; }
+    if (verb_id==OB_SYNC_STOP || verb_id==OB_SYNC_STATUS) { if ((rc = binding_load(db, opt("--name"), &b))) return rc; }
     else if ((rc = guarded(db, w, verb, &b))) return rc;
     bf_jsonw_key(w, "name"); bf_jsonw_str(w, b.name);
     ob_account_home(&C, b.account, home);
-    if (!strcmp(verb, "sync-stop")) {
+    if (verb_id==OB_SYNC_STOP) {
         rc = ob_sup_stop(&C, &b, w, why, sizeof(why));
         if (rc) return fail(rc, "stop-failed", "%s", why);
         receipt(db, verb, b.name, b.root, "ok", "stopped", "", "headless", "", "", rid);
@@ -881,7 +920,7 @@ static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) {
         return EX_OK;
     }
     if (!ob_ob_path(&C, obp)) { snprintf(g_hand, sizeof(g_hand), "npm install -g obsidian-headless"); return fail(EX_MISSING, "ob-missing", "Obsidian Headless (ob) is not installed"); }
-    if (!strcmp(verb, "sync-status")) {
+    if (verb_id==OB_SYNC_STATUS) {
         long pid = 0; int alive = ob_sup_alive(&C, &b, &pid);
         char *argv[] = {obp, "sync-status", "--path", b.root, "--json", NULL}; RunResult r;
         bf_jsonw_key(w, "continuous_sync"); bf_jsonw_obj(w);
@@ -904,7 +943,7 @@ static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) {
         put_last_run(db, w, &b);
         return EX_OK;
     }
-    if (!strcmp(verb, "sync-setup")) {
+    if (verb_id==OB_SYNC_SETUP) {
         const char *remote = opt("--remote-vault") ? opt("--remote-vault") : b.remote;
         if (!remote || !*remote) return fail(EX_USAGE, "usage", "sync-setup needs --remote-vault (an id or name from `ob sync-list-remote`)");
         if (strlen(remote) >= sizeof(b.remote)) return fail(EX_USAGE, "usage", "--remote-vault is too long");
@@ -928,7 +967,7 @@ static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) {
         binding_state(db, &b, "sync-configured");
         return EX_OK;
     }
-    if (!strcmp(verb, "sync-config")) {
+    if (verb_id==OB_SYNC_CONFIG) {
         const char *m = opt("--mode"), *cf = opt("--conflict"), *ex = opt("--exclude"), *dv = opt("--device-name");
         if (m && !in_set(m, MODES)) return fail(EX_USAGE, "usage", "--mode is bidirectional, pull-only or mirror-remote");
         if (cf && !in_set(cf, CONFLICTS)) return fail(EX_USAGE, "usage", "--conflict is merge or conflict");
@@ -945,7 +984,7 @@ static int v_sync(sqlite3 *db, bf_jsonw *w, const char *verb) {
         }
         return apply_config(db, w, &b, obp);
     }
-    if (!strcmp(verb, "sync-once")) {
+    if (verb_id==OB_SYNC_ONCE) {
         long pid; if (ob_sup_alive(&C, &b, &pid)) return fail(EX_REFUSED, "syncing", "continuous sync is already running for %s (pid %ld)", b.name, pid);
         char *argv[] = {obp, "sync", "--path", b.root, NULL};
         if ((rc = run_ob(db, w, &b, "sync-once", argv, sync_timeout(), &code))) return rc;
@@ -1357,38 +1396,38 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
-    bf_jsonw w; int rc = EX_OK; sqlite3 *db = NULL; const char *verb = argc > 1 ? argv[1] : "";
+    bf_jsonw w; int rc = EX_OK; sqlite3 *db = NULL; const char *verb = argc > 1 ? argv[1] : ""; const int verb_id=bf_command_id(ob_commands,BF_COMMAND_COUNT(ob_commands),verb,-1);
     g_argc = argc; g_argv = argv;
     umask(077);
     signal(SIGPIPE, SIG_IGN);
-    if (argc < 2 || !strcmp(verb, "-h") || !strcmp(verb, "--help") || !strcmp(verb, "help")) { usage(); return argc < 2 ? EX_USAGE : EX_OK; }
+    if (argc < 2 || verb_id==OB_OPT_H || verb_id==OB_OPT_HELP || verb_id==OB_HELP) { usage(); return argc < 2 ? EX_USAGE : EX_OK; }
     cfg_init();
     bf_jsonw_init(&w, 0);
     bf_jsonw_obj(&w);
     bf_jsonw_key(&w, "verb"); bf_jsonw_str(&w, verb);
     if (strcmp(C.via, "auto") && strcmp(C.via, "cli") && strcmp(C.via, "native")) rc = fail(EX_USAGE, "usage", "--via is auto, cli or native");
-    else if (!strcmp(verb, "doctor")) {
+    else if (verb_id==OB_DOCTOR) {
         if (C.account && !valid_account(C.account)) rc = fail(EX_USAGE, "usage", "--account requires a safe account key or user:<positive decimal id>");
         else rc = v_doctor(&w);
     } else if ((rc = need_account()) == EX_OK) {
         if (!(db = store_open())) rc = fail(EX_FAIL, "store", "cannot open %s", C.db);
-        else if (!strcmp(verb, "vaults")) rc = v_vaults(db, &w);
-        else if (!strcmp(verb, "bind")) rc = v_bind(db, &w);
-        else if (!strcmp(verb, "unbind")) rc = v_unbind(db, &w);
-        else if (!strcmp(verb, "status")) rc = v_status(db, &w);
-        else if (!strcmp(verb, "receipts")) rc = v_receipts(db, &w);
-        else if (!strcmp(verb, "read")) rc = v_read(db, &w);
-        else if (!strcmp(verb, "search") || !strcmp(verb, "tasks") || !strcmp(verb, "backlinks") || !strcmp(verb, "links")
-                 || !strcmp(verb, "unresolved") || !strcmp(verb, "tags") || !strcmp(verb, "properties")) rc = reader(db, &w, verb);
-        else if (!strcmp(verb, "create") || !strcmp(verb, "append") || !strcmp(verb, "prepend") || !strcmp(verb, "daily-append")) rc = writer(db, &w, verb);
-        else if (!strcmp(verb, "daily-path")) rc = v_daily_path(db, &w);
-        else if (!strcmp(verb, "task")) rc = v_task(db, &w);
-        else if (!strcmp(verb, "guard")) rc = v_guard(db, &w);
-        else if (!strncmp(verb, "sync-", 5) && (!strcmp(verb, "sync-setup") || !strcmp(verb, "sync-config") || !strcmp(verb, "sync-once")
-                 || !strcmp(verb, "sync-start") || !strcmp(verb, "sync-stop") || !strcmp(verb, "sync-status"))) rc = v_sync(db, &w, verb);
-        else if (!strcmp(verb, "snapshot")) rc = v_snapshot(db, &w);
-        else if (!strcmp(verb, "replica-plan")) rc = v_replica_plan(db, &w);
-        else if (!strcmp(verb, "diff")) rc = v_diff(db, &w);
+        else if (verb_id==OB_VAULTS) rc = v_vaults(db, &w);
+        else if (verb_id==OB_BIND) rc = v_bind(db, &w);
+        else if (verb_id==OB_UNBIND) rc = v_unbind(db, &w);
+        else if (verb_id==OB_STATUS) rc = v_status(db, &w);
+        else if (verb_id==OB_RECEIPTS) rc = v_receipts(db, &w);
+        else if (verb_id==OB_READ) rc = v_read(db, &w);
+        else if (verb_id==OB_SEARCH || verb_id==OB_TASKS || verb_id==OB_BACKLINKS || verb_id==OB_LINKS
+                 || verb_id==OB_UNRESOLVED || verb_id==OB_TAGS || verb_id==OB_PROPERTIES) rc = reader(db, &w, verb);
+        else if (verb_id==OB_CREATE || verb_id==OB_APPEND || verb_id==OB_PREPEND || verb_id==OB_DAILY_APPEND) rc = writer(db, &w, verb);
+        else if (verb_id==OB_DAILY_PATH) rc = v_daily_path(db, &w);
+        else if (verb_id==OB_TASK) rc = v_task(db, &w);
+        else if (verb_id==OB_GUARD) rc = v_guard(db, &w);
+        else if (!strncmp(verb, "sync-", 5) && (verb_id==OB_SYNC_SETUP || verb_id==OB_SYNC_CONFIG || verb_id==OB_SYNC_ONCE
+                 || verb_id==OB_SYNC_START || verb_id==OB_SYNC_STOP || verb_id==OB_SYNC_STATUS)) rc = v_sync(db, &w, verb);
+        else if (verb_id==OB_SNAPSHOT) rc = v_snapshot(db, &w);
+        else if (verb_id==OB_REPLICA_PLAN) rc = v_replica_plan(db, &w);
+        else if (verb_id==OB_DIFF) rc = v_diff(db, &w);
         else { rc = fail(EX_USAGE, "usage", "unknown verb %s", verb); usage(); }
     }
     if (rc != EX_OK) {

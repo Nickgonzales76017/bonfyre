@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ROLE_DIRECTORY_H
 #define BONFYRE_ROLE_DIRECTORY_H
+#include "form_tree.h"
 /* A human-operated role registry over native RoleProgram / RoleAssignment.
  * These are published postures, not new grants, jobs, employment, invitations
  * or bypasses around effect-specific admission. */
@@ -46,9 +47,9 @@ static void role_dir_foot(void){
 }
 /* Ending a personal posture touches only the signed-in actor's exact
  * assignment. It does not revoke an institutional grant or finish work. */
-static int serve_role_leave(const char *method,const char *target,const char *body,
-                           const char *raw,const char *host,const char *bearer,const char *auth_db){
-    if(!target||strcmp(target,"/roles/leave"))return 0;
+static int serve_role_leave(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     if(!host||(strcmp(host,"aurekai.life")&&strcmp(host,"aurekai.work"))){
         protocol_reply(404,"text/plain; charset=utf-8","Role posture not on this host.\n");return 1;
     }
@@ -135,10 +136,10 @@ static int role_dir_detail(sqlite3 *db,const char *actor,const char *assignment)
     fputs("</section><section class=\"ak-band\"><div><p class=\"ak-kicker\">Your posture</p><h2>Open the work or end the posture</h2><p>Ending it does not revoke a separate grant, remove work history or end any employment.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/roles/workspace?assignment=",stdout);
     url_query_value((const char*)sqlite3_column_text(s,0));
     fputs("\">Open the private work view</a>",stdout);
-    fputs("<form class=\"role-end\" action=\"/roles/leave\" method=\"post\">",stdout);
-    fputs("<input type=\"hidden\" name=\"assignment\" value=\"",stdout);
-    html((const char*)sqlite3_column_text(s,0));
-    fputs("\"><button class=\"ak-btn is-quiet\" type=\"submit\">End this posture</button></form></div></section>",stdout);
+    {const FtField hidden[]={{"assignment",(const char*)sqlite3_column_text(s,0)}};
+     const FtForm leave={.id="role-end",.action="/roles/leave",.label="End this posture",.hook="role-end",.hidden=hidden,.nhidden=1};
+     ft_form(stdout,&leave);}
+    fputs("</div></section>",stdout);
     sqlite3_finalize(s);
     role_dir_foot();return 1;
 }
@@ -173,9 +174,9 @@ static void role_dir_assignments(sqlite3 *db,const char *actor){
     if(found==30||step==SQLITE_ROW)fputs("<p class=\"ak-empty\">More postures exist than this view shows.</p>",stdout);
     fputs("</div></section>",stdout);
 }
-static int serve_role_directory(const char *method,const char *target,const char *query,
-                                const char *host,const char *bearer,const char *auth_db){
-    if(!target||strcmp(target,"/roles"))return 0;
+static int serve_role_directory(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)host;(void)bearer;(void)auth_db;
     if(!host||(strcmp(host,"aurekai.life")&&strcmp(host,"aurekai.work"))){
         protocol_reply(404,"text/plain; charset=utf-8","Operating roles are not published at this address.\n");return 1;
     }
@@ -237,11 +238,12 @@ static int serve_role_directory(const char *method,const char *target,const char
     role_dir_assignments(db,actor);
     fputs("<section class=\"ak-sec\" data-role-catalogue><header><div><span class=\"ak-kicker\">Registry</span><h2>Published roles</h2></div>"
           "<p>Only operations admitted by their actual owner can run. Taking on a posture changes your own assignment and nothing else.</p></header>"
-          "<form class=\"ak-packs-filter role-search\" action=\"/roles\" method=\"get\" role=\"search\">"
-          "<label class=\"ak-packs-find\"><span class=\"ak-visually-hidden\">Find a role</span><input name=\"q\" type=\"search\" maxlength=\"96\" value=\"",stdout);
-    html(q);fputs("\" placeholder=\"Filter by role, craft or subject\xe2\x80\xa6\"></label><label><span>Apply in scope</span><input name=\"scope\" maxlength=\"95\" required pattern=\"[A-Za-z0-9._:-]+\" value=\"",stdout);
-    html(scope);fputs("\" aria-label=\"Role context scope\"></label><button class=\"ak-btn\" type=\"submit\">Search roles</button></form>"
-          "<div class=\"ak-panel ak-scroll\"><table class=\"ak-table role-table\"><thead><tr><th>Code</th><th>Role and what it watches</th><th>Runs today</th><th>Not yet connected</th><th>Authority it needs</th><th>Take it on</th></tr></thead><tbody>",stdout);
+          ,stdout);
+    {const FtInput find[]={{.label="Find a role",.type="search",.name="q",.maxlength="96",.value=q,.placeholder="Filter by role, craft or subject\xe2\x80\xa6"},
+                           {.label="Apply in scope",.name="scope",.maxlength="95",.required=1,.pattern="[A-Za-z0-9._:-]+",.value=scope}};
+     const FtForm search={.id="role-search",.method="get",.action="/roles",.label="Search roles",.hook="role-search",.inputs=find,.ninputs=2};
+     ft_form(stdout,&search);}
+    fputs("<div class=\"ak-panel ak-scroll\"><table class=\"ak-table role-table\"><thead><tr><th>Code</th><th>Role and what it watches</th><th>Runs today</th><th>Not yet connected</th><th>Authority it needs</th><th>Take it on</th></tr></thead><tbody>",stdout);
     int found=0,step=0;
     while((step=sqlite3_step(s))==SQLITE_ROW && found<24){
         const char *id=(const char*)sqlite3_column_text(s,0),
@@ -255,9 +257,12 @@ static int serve_role_directory(const char *method,const char *target,const char
         role_dir_inline(db,queues,3);
         printf("</td><td>%d operations</td><td>%d</td><td>",sqlite3_column_int(s,3),sqlite3_column_int(s,4));
         role_dir_inline(db,authority,3);
-        fputs("</td><td><form method=\"post\" action=\"/roles/assume\"><input type=\"hidden\" name=\"role\" value=\"",stdout);
-        html(id);fputs("\"><input type=\"hidden\" name=\"return\" value=\"/roles\"><input type=\"hidden\" name=\"scope\" value=\"",stdout);
-        html(scope);fputs("\"><button class=\"ak-btn\" type=\"submit\">Take on</button></form></td></tr>",stdout);
+        fputs("</td><td>",stdout);
+        {char fid[140];snprintf(fid,sizeof(fid),"role-take-%s",id);
+         const FtField hidden[]={{"role",id},{"return","/roles"},{"scope",scope}};
+         const FtForm take={.id=fid,.action="/roles/assume",.label="Take on",.hidden=hidden,.nhidden=3};
+         ft_form(stdout,&take);}
+        fputs("</td></tr>",stdout);
     }
     sqlite3_finalize(s);
     fputs("</tbody></table>",stdout);

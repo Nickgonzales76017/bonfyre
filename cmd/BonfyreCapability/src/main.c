@@ -1992,6 +1992,23 @@ static void cmd_help(void) {
     VERSION);
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CAP_COMMANDS(X) \
+    X("index", CAP_INDEX) \
+    X("list", CAP_LIST) \
+    X("match", CAP_MATCH) \
+    X("maturity", CAP_MATURITY) \
+    X("repair-admit", CAP_REPAIR_ADMIT) \
+    X("repair-show", CAP_REPAIR_SHOW) \
+    X("repairs", CAP_REPAIRS) \
+    X("search", CAP_SEARCH) \
+    X("semantic-index", CAP_SEMANTIC_INDEX) \
+    X("show", CAP_SHOW) \
+    X("status", CAP_STATUS)
+BF_COMMAND_TABLE(cap_commands, CAP_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { cmd_help(); return 0; }
     sqlite3 *db = NULL;
@@ -2004,23 +2021,24 @@ int main(int argc, char **argv) {
     }
 
     cmd = argv[1];
-    if (strcmp(cmd, "maturity") == 0) {
+    const int cmd_id = bf_command_id(cap_commands, BF_COMMAND_COUNT(cap_commands), cmd, -1);
+    if (cmd_id==CAP_MATURITY) {
         return cmd_maturity(argc, argv);
     }
     db = open_db();
-    if (strcmp(cmd, "status") == 0) cmd_status(db);
-    else if (strcmp(cmd, "list") == 0) cmd_list(db);
-    else if (strcmp(cmd, "search") == 0) {
+    if (cmd_id==CAP_STATUS) cmd_status(db);
+    else if (cmd_id==CAP_LIST) cmd_list(db);
+    else if (cmd_id==CAP_SEARCH) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-capability search <query>\n");
             rc = 1;
         } else cmd_search(db, argv[2]);
-    } else if (strcmp(cmd, "show") == 0) {
+    } else if (cmd_id==CAP_SHOW) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-capability show <cap-id>\n");
             rc = 1;
         } else rc = cmd_show(db, argv[2]) ? 0 : 1;
-    } else if (strcmp(cmd, "match") == 0) {
+    } else if (cmd_id==CAP_MATCH) {
         if (argc < 3) {
             fprintf(stderr, "usage: bonfyre-capability match <description>\n");
             rc = 1;
@@ -2031,9 +2049,9 @@ int main(int argc, char **argv) {
             }
             cmd_match(db, argv[2]);
         }
-    } else if (strcmp(cmd, "index") == 0) cmd_index(db);
-    else if (strcmp(cmd, "semantic-index") == 0) cmd_semantic_index(db);
-    else if (strcmp(cmd, "repair-admit") == 0) {
+    } else if (cmd_id==CAP_INDEX) cmd_index(db);
+    else if (cmd_id==CAP_SEMANTIC_INDEX) cmd_semantic_index(db);
+    else if (cmd_id==CAP_REPAIR_ADMIT) {
         const char *claim = NULL, *file = NULL;
         for (int i = 2; i < argc; i++) {
             if (!strcmp(argv[i], "--claim") && i + 1 < argc) claim = argv[++i];
@@ -2041,8 +2059,8 @@ int main(int argc, char **argv) {
         }
         if (!file) { fprintf(stderr, "usage: bonfyre-capability repair-admit <replay.json> --claim TEXT\n"); rc = 2; }
         else rc = cmd_repair_admit(db, file, claim);
-    } else if (strcmp(cmd, "repairs") == 0) rc = cmd_repairs(db, NULL);
-    else if (strcmp(cmd, "repair-show") == 0) {
+    } else if (cmd_id==CAP_REPAIRS) rc = cmd_repairs(db, NULL);
+    else if (cmd_id==CAP_REPAIR_SHOW) {
         if (argc < 3) { fprintf(stderr, "usage: bonfyre-capability repair-show <id>\n"); rc = 2; }
         else rc = cmd_repairs(db, argv[2]);
     }

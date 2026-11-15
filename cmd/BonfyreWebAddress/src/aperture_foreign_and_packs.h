@@ -24,8 +24,9 @@ static int twin_classified_kind(const char *subject, char *out, size_t cap) {
     return found;
 }
 
-static int serve_aperture(const char *method, const char *target, const char *query,
-                          const char *accept, const char *bearer, const char *auth_db) {
+static int serve_aperture(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)accept;(void)bearer;(void)auth_db;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     char subject[256], kind[64];
@@ -348,9 +349,9 @@ static const char *extent_name(SurfaceExtent e) {
  * The fix is not a better placeholder. A surface shows its pane to a caller who
  * can fill it and its declared operation to one who cannot, and the organ knows
  * which before a byte is written. */
-static int serve_authored_page(const char *method, const char *target, const char *query,
-                               const char *accept, const char *bearer, const char *auth_db,
-                               const char *root, const char *host) {
+static int serve_authored_page(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *root=r->root; const char *host=r->host;
+    (void)method;(void)target;(void)query;(void)accept;(void)bearer;(void)auth_db;(void)root;(void)host;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     static char body[65536];
@@ -622,8 +623,9 @@ static int foreign_safe_file(const char *text) {
  * digest saying so. They are not true, not current, and not this estate's
  * claim about the source.
  */
-static int serve_foreign_body(const char *method, const char *target,
-                              const char *query) {
+static int serve_foreign_body(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
     static char receipt[65536];
     static char body[1048576];
     const char *root = getenv("BONFYRE_FOREIGN_ROOT");
@@ -748,8 +750,9 @@ static int serve_foreign_body(const char *method, const char *target,
  * Cannot infer: a receipt is a record of one fetch. That two receipts exist for
  * a URL says it was read twice, not that anything about it changed.
  */
-static int serve_foreign_receipts(const char *method, const char *target,
-                                  const char *query) {
+static int serve_foreign_receipts(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
     static char buf[65536];
     const char *root = getenv("BONFYRE_FOREIGN_ROOT");
     char dirpath[PATH_MAX], want_kind[64] = {0};
@@ -850,7 +853,9 @@ static int serve_foreign_receipts(const char *method, const char *target,
  * Cannot infer: a reheated source is a fresh observation and never a fresh
  * fact. The receipt says when it was read, not that what it says is true.
  */
-static int serve_foreign_weather(const char *method, const char *target) {
+static int serve_foreign_weather(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target;
+    (void)method;(void)target;
     static char buf[262144];
     const char *path = getenv("BONFYRE_WEATHER");
     FILE *f;
@@ -883,7 +888,9 @@ static int serve_foreign_weather(const char *method, const char *target) {
 /* Home asks for a tiny, server-owned ResourceWeather projection.  The browser
  * receives an HTMX fragment, never a JSON descriptor that client JavaScript
  * must interpret into a product claim. */
-static int serve_home_weather_fragment(const char *method, const char *target) {
+static int serve_home_weather_fragment(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target;
+    (void)method;(void)target;
     const char *path = getenv("BONFYRE_WEATHER");
     FILE *file;
     char *body, *cursor;
@@ -935,7 +942,9 @@ static int serve_home_weather_fragment(const char *method, const char *target) {
  * what the estate had observed had to be told rather than shown. */
 #include "foreign_catalogue_query.h"
 
-static int serve_foreign_twins(const char *method, const char *target, const char *query) {
+static int serve_foreign_twins(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
     /* The compact source-release catalogue is intentionally bounded by source
      * contracts, not the 135k-row receipt ledger, but a full estate still has
      * ~2.5k rich rows.  The old 256 KiB pipe silently made the real catalogue
@@ -1155,9 +1164,9 @@ static int pack_close(sqlite3 *db, PackNode *n, int count, const char *pack,
 }
 
 
-static int serve_packs(const char *method, const char *target, const char *query,
-                       const char *host_in, const char *accept,
-                       const char *bearer, const char *auth_db) {
+static int serve_packs(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host_in=r->host; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)host_in;(void)accept;(void)bearer;(void)auth_db;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     PackNode nodes[PACK_MAX];
@@ -1592,8 +1601,9 @@ static int serve_packs(const char *method, const char *target, const char *query
  * caller may see or act on it is decided at read and at effect time by owners
  * that are not this index.
  */
-static int serve_subject_index(const char *method, const char *target,
-                               const char *query, const char *accept) {
+static int serve_subject_index(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)accept;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     char want_id[192] = {0}, want_kind[64] = {0};
@@ -1759,8 +1769,9 @@ static int serve_subject_index(const char *method, const char *target,
     return 1;
 }
 
-static int serve_foreign_edges(const char *method, const char *target, const char *accept,
-                               const char *bearer, const char *auth_db) {
+static int serve_foreign_edges(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)accept;(void)bearer;(void)auth_db;
     static char out[262144];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     char bin[PATH_MAX];
@@ -1860,7 +1871,9 @@ static int serve_foreign_edges(const char *method, const char *target, const cha
     return 1;
 }
 
-static int serve_twins_page(const char *method, const char *target, const char *accept) {
+static int serve_twins_page(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *accept=r->accept;
+    (void)method;(void)target;(void)accept;
     static char out[262144];
     static char body[131072];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
@@ -1938,8 +1951,9 @@ static int serve_twins_page(const char *method, const char *target, const char *
     return 1;
 }
 
-static int serve_observations_page(const char *method, const char *target,
-                                   const char *accept) {
+static int serve_observations_page(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *accept=r->accept;
+    (void)method;(void)target;(void)accept;
     static char out[262144];
     static char body[65536];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
@@ -2023,8 +2037,9 @@ static int serve_observations_page(const char *method, const char *target,
     return 1;
 }
 
-static int serve_night_page(const char *method, const char *target, const char *host,
-                            const char *accept) {
+static int serve_night_page(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *host=r->host; const char *accept=r->accept;
+    (void)method;(void)target;(void)host;(void)accept;
     static char body[16384];
     const char *territory;
     const NightProjection *proj = NULL;

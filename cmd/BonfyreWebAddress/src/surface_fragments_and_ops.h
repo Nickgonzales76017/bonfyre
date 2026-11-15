@@ -282,9 +282,9 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
  * are compiled here rather than stored as per-host JSON so a changed address
  * binding cannot leave a stale alternate representation behind. Their body is
  * intentionally a sparse closure: only Matrix-owned facts are resolved. */
-static int serve_matrix_closure(BfMatrix *m, const char *method, const char *host,
-                                const char *target, const char *query,
-                                const char *bearer, const char *auth_db) {
+static int serve_matrix_closure(const BfRequest *r) {
+    BfMatrix *m=r->m; const char *method=r->method; const char *host=r->host; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)m;(void)method;(void)host;(void)target;(void)query;(void)bearer;(void)auth_db;
     BfMatrixAddressResolution resolution;
     char crate[1024], zarr[1024], path[1024];
     int want_crate = !strcmp(target, "/ro-crate/") || !strcmp(target, "/ro-crate/ro-crate-metadata.json");
@@ -785,9 +785,9 @@ static int ops_index_generated(void) {
     return 1;
 }
 
-static int serve_ops(const char *method, const char *target) {
-  if (strcmp(target, "/ops/") && strcmp(target, "/ops") &&
-      strncmp(target, "/ops/", 5)) return 0;
+static int serve_ops(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target;
+    (void)method;(void)target;
   if (strcmp(method, "GET")) {
     printf("HTTP/1.1 405 Method Not Allowed\r\nContent-Type: application/json\r\n"
            "Connection: close\r\n\r\n{\"error\":\"read-only surface\"}\n");

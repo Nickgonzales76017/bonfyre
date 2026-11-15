@@ -73,11 +73,11 @@ int main(int argc,char **argv){
   if(!aaw_fleming_input(body,account,context))return 3;
   if(psetup_context(argv[3],"fixture",context,2,actor,sizeof(actor),subject,sizeof(subject),&scope)!=1)return 4;
   printf("%s\\t%s\\t%s\\t%s",account,context,subject,scope);return 0;}
- return serve_account_activity(argv[1],"/apps/_activity",argv[2],bytes?body:NULL,argv[4],argv[5],argv[3],"fixture")?0:2;
+ return serve_account_activity(&(BfRequest){.method=argv[1],.target="/apps/_activity",.query=argv[2],.body=bytes?body:NULL,.raw=argv[4],.host=argv[5],.bearer=argv[3],.auth_db="fixture"})?0:2;
 }`;
  writeFileSync(join(temporary,'gateway.c'),source);
  const compile=Bun.spawnSync(['cc','-std=c11','-O1','-Wall','-Wextra',...(process.platform==='darwin'?['-D_DARWIN_C_SOURCE']:[]),
-  ...(include?['-I'+include]:[]),'-I'+join(dependencies,'lib/libbonfyre/include'),'-I'+join(root,'cmd/BonfyreWebAddress/src'),
+  ...(include?['-I'+include]:[]),'-I'+join(dependencies,'lib/libbonfyre/include'),'-I'+join(root,'cmd/BonfyreWebAddress/src'),'-include','web_request.h',
   join(temporary,'gateway.c'),join(dependencies,'lib/libbonfyre/bf_msgpack.c'),join(dependencies,'lib/libbonfyre/bf_json.c'),
   process.env.BONFYRE_TEST_SQLITE_LINK||'-lsqlite3','-o',binary]);
  if(compile.exitCode)throw Error(compile.stderr.toString());

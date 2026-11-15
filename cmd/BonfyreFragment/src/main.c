@@ -531,19 +531,32 @@ static void print_usage(void) {
         "  ingest  --store DB --from-run-manifest PATH\n");
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FRAG_COMMANDS(X) \
+    X("create", FRAG_CREATE) \
+    X("diff", FRAG_DIFF) \
+    X("get", FRAG_GET) \
+    X("ingest", FRAG_INGEST) \
+    X("merge", FRAG_MERGE) \
+    X("query", FRAG_QUERY) \
+    X("stats", FRAG_STATS)
+BF_COMMAND_TABLE(frag_commands, FRAG_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) { print_usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(frag_commands,BF_COMMAND_COUNT(frag_commands),cmd,-1);
 
-    if (!strcmp(cmd, "create"))  return cmd_create(argc - 2, argv + 2);
-    if (!strcmp(cmd, "get"))     return cmd_get(argc - 2, argv + 2);
-    if (!strcmp(cmd, "query"))   return cmd_query(argc - 2, argv + 2);
-    if (!strcmp(cmd, "merge"))   return cmd_merge(argc - 2, argv + 2);
-    if (!strcmp(cmd, "diff"))    return cmd_diff(argc - 2, argv + 2);
-    if (!strcmp(cmd, "stats"))   return cmd_stats(argc - 2, argv + 2);
-    if (!strcmp(cmd, "ingest"))  return cmd_ingest(argc - 2, argv + 2);
+    if (cmd_id==FRAG_CREATE)  return cmd_create(argc - 2, argv + 2);
+    if (cmd_id==FRAG_GET)     return cmd_get(argc - 2, argv + 2);
+    if (cmd_id==FRAG_QUERY)   return cmd_query(argc - 2, argv + 2);
+    if (cmd_id==FRAG_MERGE)   return cmd_merge(argc - 2, argv + 2);
+    if (cmd_id==FRAG_DIFF)    return cmd_diff(argc - 2, argv + 2);
+    if (cmd_id==FRAG_STATS)   return cmd_stats(argc - 2, argv + 2);
+    if (cmd_id==FRAG_INGEST)  return cmd_ingest(argc - 2, argv + 2);
 
     fprintf(stderr, "unknown command: %s\n\n", cmd);
     print_usage();

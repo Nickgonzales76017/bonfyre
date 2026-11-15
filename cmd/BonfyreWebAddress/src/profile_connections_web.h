@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_CONNECTIONS_WEB_H
 #define BONFYRE_PROFILE_CONNECTIONS_WEB_H
+#include "form_tree.h"
 #include "../../BonfyreParticipation/src/peer_facets.h"
 /* One profile. Each context is a distinct private participation record.
  * Public posts/art/community records are linked from their original site,
@@ -43,10 +44,10 @@ static void ph_peer_post_teaser(sqlite3 *cms,const PhSite *site){
 }
 static void ph_peer_action(const char *facet,const char *target,const char *choice,
                            unsigned rev,const char *label){
- fputs("<form method=\"post\" action=\"/profile/connections/choice\" class=\"ph-peer-action\">",stdout);
- ph_hidden("facet",facet);ph_hidden("other",target);ph_hidden("choice",choice);
- printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",rev);
- fputs("<button type=\"submit\">",stdout);html(label);fputs("</button></form>",stdout);
+ char r[16];snprintf(r,sizeof(r),"%u",rev);
+ const FtField hidden[]={{"facet",facet},{"other",target},{"choice",choice},{"rev",r}};
+ const FtForm f={.id="ph-peer-action",.action="/profile/connections/choice",.label=label,.hook="peer-action",.hidden=hidden,.nhidden=4};
+ ft_form(stdout,&f);
 }
 static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,const BfPeerCandidate *row,
                          const char *actor){
@@ -74,9 +75,11 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
    fputs("<ol>",stdout);for(size_t i=count;i>0;i--){const BfPeerMessage *m=&messages[i-1];
     fputs("<li><strong>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");fputs("</strong><p>",stdout);html(m->body);fputs("</p></li>",stdout);}
    if(!count)fputs("<li>Start a conversation about this shared context.</li>",stdout);fputs("</ol>",stdout);
-   char nonce[33];ph_nonce(nonce);fputs("<form method=\"post\" action=\"/profile/connections/message\">",stdout);
-   ph_hidden("facet",facet->id);ph_hidden("other",row->subject);ph_hidden("nonce",nonce);
-   fputs("<label>Message<textarea name=\"body\" maxlength=\"1000\" required rows=\"3\"></textarea></label><button type=\"submit\">Send privately</button></form>",stdout);
+   char nonce[33];ph_nonce(nonce);
+   {const FtField hidden[]={{"facet",facet->id},{"other",row->subject},{"nonce",nonce}};
+    static const FtInput msg[]={{.label="Message",.name="body",.maxlength="1000",.required=1,.rows=3}};
+    const FtForm f={.id="ph-message",.action="/profile/connections/message",.label="Send privately",.hidden=hidden,.nhidden=3,.inputs=msg,.ninputs=1};
+    ft_form(stdout,&f);}
   }else fputs("<p>This conversation is no longer available.</p>",stdout);
   fputs("</section>",stdout);
  }
@@ -165,18 +168,19 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
  if(state!=1){
   fputs("<h3>Not participating in this context</h3>"
    "<p>Your public profile is still public. This is a separate permission to receive introductions "
-   "from other opted-in members.</p><form method=\"post\" action=\"/profile/connections/join\">",stdout);
-  ph_hidden("facet",facet->id);ph_hidden("enable","1");
-  printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",revision);
-  fputs("<label><input type=\"checkbox\" name=\"ack\" value=\"1\" required> "
-   "Allow introductions for this context only</label><button type=\"submit\">Join this context</button></form>",stdout);
+   "from other opted-in members.</p>",stdout);
+  {char r[16];snprintf(r,sizeof(r),"%u",revision);
+   const FtField hidden[]={{"facet",facet->id},{"enable","1"},{"rev",r}};
+   static const FtInput ack[]={{.label="Allow introductions for this context only",.type="checkbox",.name="ack",.value="1",.required=1}};
+   const FtForm f={.id="ph-join",.action="/profile/connections/join",.label="Join this context",.hidden=hidden,.nhidden=3,.inputs=ack,.ninputs=1};
+   ft_form(stdout,&f);}
  }else{
   fputs("<h3>You chose to participate</h3><p>Introductions are private. Both people "
-   "must independently agree before any connection is described as mutual.</p>"
-   "<form method=\"post\" action=\"/profile/connections/join\">",stdout);
-  ph_hidden("facet",facet->id);ph_hidden("enable","0");
-  printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",revision);
-  fputs("<button type=\"submit\">Leave this context</button></form>",stdout);
+   "must independently agree before any connection is described as mutual.</p>",stdout);
+  {char r[16];snprintf(r,sizeof(r),"%u",revision);
+   const FtField hidden[]={{"facet",facet->id},{"enable","0"},{"rev",r}};
+   const FtForm f={.id="ph-leave",.action="/profile/connections/join",.label="Leave this context",.hidden=hidden,.nhidden=3};
+   ft_form(stdout,&f);}
  }
  fputs("</section>",stdout);
  if(state==1){

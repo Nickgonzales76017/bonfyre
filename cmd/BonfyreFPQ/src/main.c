@@ -1271,6 +1271,35 @@ static int cmd_v9_analyze(const char *input,
 
 /* ── main ── */
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FPQ_COMMANDS(X) \
+    X("--help", FPQ_OPT_HELP) \
+    X("-h", FPQ_OPT_H) \
+    X("algebra-analyze", FPQ_ALGEBRA_ANALYZE) \
+    X("algebra-compress", FPQ_ALGEBRA_COMPRESS) \
+    X("algebra-edit", FPQ_ALGEBRA_EDIT) \
+    X("algebra-merge", FPQ_ALGEBRA_MERGE) \
+    X("algebra-prune", FPQ_ALGEBRA_PRUNE) \
+    X("compress", FPQ_COMPRESS) \
+    X("convert-fpq", FPQ_CONVERT_FPQ) \
+    X("decompress", FPQ_DECOMPRESS) \
+    X("help", FPQ_HELP) \
+    X("inspect", FPQ_INSPECT) \
+    X("lie-probe", FPQ_LIE_PROBE) \
+    X("quantize", FPQ_QUANTIZE) \
+    X("roundtrip", FPQ_ROUNDTRIP) \
+    X("roundtrip-v4", FPQ_ROUNDTRIP_V4) \
+    X("roundtrip-v5", FPQ_ROUNDTRIP_V5) \
+    X("roundtrip-v6", FPQ_ROUNDTRIP_V6) \
+    X("roundtrip-v7", FPQ_ROUNDTRIP_V7) \
+    X("roundtrip-v8", FPQ_ROUNDTRIP_V8) \
+    X("roundtrip-v9", FPQ_ROUNDTRIP_V9) \
+    X("v9-analyze", FPQ_V9_ANALYZE) \
+    X("write-v9", FPQ_WRITE_V9)
+BF_COMMAND_TABLE(fpq_commands, FPQ_COMMANDS);
+
 int main(int argc, char **argv) {
     /* Ensure real-time output when redirected to file */
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -1281,8 +1310,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    const char *cmd = argv[1];
-    if (!strcmp(cmd, "--help") || !strcmp(cmd, "-h") || !strcmp(cmd, "help")) {
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(fpq_commands,BF_COMMAND_COUNT(fpq_commands),cmd,-1);
+    if (cmd_id==FPQ_OPT_HELP || cmd_id==FPQ_OPT_H || cmd_id==FPQ_HELP) {
         usage();
         return 0;
     }
@@ -1311,51 +1340,51 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (strcmp(cmd, "compress") == 0) {
+    if (cmd_id==FPQ_COMPRESS) {
         if (argc < 4) { usage(); return 1; }
         return cmd_compress(argv[2], argv[3], max_nodes, tolerance,
                             report, tensor_filter, limit);
-    } else if (strcmp(cmd, "decompress") == 0) {
+    } else if (cmd_id==FPQ_DECOMPRESS) {
         if (argc < 4) { usage(); return 1; }
         return cmd_decompress(argv[2], argv[3]);
-    } else if (strcmp(cmd, "inspect") == 0) {
+    } else if (cmd_id==FPQ_INSPECT) {
         if (argc < 3) { usage(); return 1; }
         return cmd_inspect(argv[2]);
-    } else if (strcmp(cmd, "roundtrip") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip(argv[2], max_nodes, tolerance,
                              tensor_filter, limit);
-    } else if (strcmp(cmd, "roundtrip-v4") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V4) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v4(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "roundtrip-v5") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V5) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v5(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "lie-probe") == 0) {
+    } else if (cmd_id==FPQ_LIE_PROBE) {
         if (argc < 3) { usage(); return 1; }
         return cmd_lie_probe(argv[2], tensor_filter, limit);
-    } else if (strcmp(cmd, "roundtrip-v6") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V6) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v6(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "roundtrip-v7") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V7) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v7(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "roundtrip-v8") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V8) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v8(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "roundtrip-v9") == 0) {
+    } else if (cmd_id==FPQ_ROUNDTRIP_V9) {
         if (argc < 3) { usage(); return 1; }
         return cmd_roundtrip_v9(argv[2], tensor_filter, limit, force_bits);
-    } else if (strcmp(cmd, "v9-analyze") == 0) {
+    } else if (cmd_id==FPQ_V9_ANALYZE) {
         if (argc < 3) { usage(); return 1; }
         return cmd_v9_analyze(argv[2], tensor_filter, force_bits);
-    } else if (strcmp(cmd, "write-v9") == 0) {
+    } else if (cmd_id==FPQ_WRITE_V9) {
         if (argc < 4) {
             fprintf(stderr, "Usage: bonfyre-fpq write-v9 <input.safetensors> <output.safetensors> [--bits N]\n");
             return 1;
         }
         return cmd_write_v9(argv[2], argv[3], force_bits);
-    } else if (strcmp(cmd, "convert-fpq") == 0) {
+    } else if (cmd_id==FPQ_CONVERT_FPQ) {
         if (argc < 4) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq convert-fpq <input.safetensors> <output.fpq>\n"
@@ -1366,7 +1395,7 @@ int main(int argc, char **argv) {
             return 1;
         }
         return cmd_convert_fpq(argv[2], argv[3]);
-    } else if (strcmp(cmd, "quantize") == 0) {
+    } else if (cmd_id==FPQ_QUANTIZE) {
         if (argc < 4) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq quantize <input> <output> [--bits N]\n"
@@ -1390,14 +1419,14 @@ int main(int argc, char **argv) {
         }
         /* Default: GGUF path */
         return fpq_gguf_write_v9(in, out, force_bits);
-    } else if (strcmp(cmd, "algebra-analyze") == 0) {
+    } else if (cmd_id==FPQ_ALGEBRA_ANALYZE) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-fpq algebra-analyze <model>\n");
             return 1;
         }
         bwa_analyze_model(argv[2]);
         return 0;
-    } else if (strcmp(cmd, "algebra-prune") == 0) {
+    } else if (cmd_id==FPQ_ALGEBRA_PRUNE) {
         if (argc < 4) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq algebra-prune <input> <output> [--keep-ratio F] [--mode raw|rank|hybrid]\n");
@@ -1435,7 +1464,7 @@ int main(int argc, char **argv) {
         int rc = fpq_safetensors_write(argv[3], raw, n_raw);
         fpq_raw_tensor_free(raw, n_raw);
         return rc;
-    } else if (strcmp(cmd, "algebra-merge") == 0) {
+    } else if (cmd_id==FPQ_ALGEBRA_MERGE) {
         if (argc < 5) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq algebra-merge <model-a> <model-b> <output> [--alpha F]\n");
@@ -1485,7 +1514,7 @@ int main(int argc, char **argv) {
         fpq_raw_tensor_free(raw_a, n_a);
         fpq_raw_tensor_free(raw_b, n_b);
         return rc;
-    } else if (strcmp(cmd, "algebra-compress") == 0) {
+    } else if (cmd_id==FPQ_ALGEBRA_COMPRESS) {
         if (argc < 4) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq algebra-compress <input> <output>\n"
@@ -1684,7 +1713,7 @@ int main(int argc, char **argv) {
         }
         fpq_raw_tensor_free(raw, n_raw);
         return rc;
-    } else if (strcmp(cmd, "algebra-edit") == 0) {
+    } else if (cmd_id==FPQ_ALGEBRA_EDIT) {
         if (argc < 5) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq algebra-edit <model> <delta> <output> "

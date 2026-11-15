@@ -592,23 +592,41 @@ static void usage(void) {
     );
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FQLA_COMMANDS(X) \
+    X("--help", FQLA_OPT_HELP) \
+    X("--version", FQLA_OPT_VERSION) \
+    X("-h", FQLA_OPT_H) \
+    X("bench", FQLA_BENCH) \
+    X("benchmark", FQLA_BENCHMARK) \
+    X("compare-external", FQLA_COMPARE_EXTERNAL) \
+    X("doctor", FQLA_DOCTOR) \
+    X("fwd", FQLA_FWD) \
+    X("gen", FQLA_GEN) \
+    X("run", FQLA_RUN) \
+    X("verify", FQLA_VERIFY) \
+    X("version", FQLA_VERSION)
+BF_COMMAND_TABLE(fqla_commands, FQLA_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(fqla_commands,BF_COMMAND_COUNT(fqla_commands),cmd,-1);
 
-    if (strcmp(cmd, "--help")   == 0 || strcmp(cmd, "-h") == 0) { usage(); return 0; }
-    if (strcmp(cmd, "--version") == 0 || strcmp(cmd, "version") == 0) {
+    if (cmd_id==FQLA_OPT_HELP || cmd_id==FQLA_OPT_H) { usage(); return 0; }
+    if (cmd_id==FQLA_OPT_VERSION || cmd_id==FQLA_VERSION) {
         printf("bonfyre-flashqla v" VERSION "\n"); return 0;
     }
-    if (strcmp(cmd, "doctor")    == 0) return cmd_doctor();
-    if (strcmp(cmd, "gen")       == 0) return cmd_gen(argc, argv);
-    if (strcmp(cmd, "run")       == 0 ||
-        strcmp(cmd, "fwd")       == 0) return cmd_run(argc, argv);
-    if (strcmp(cmd, "verify")    == 0) return cmd_verify(argc, argv);
-    if (strcmp(cmd, "bench")     == 0 ||
-        strcmp(cmd, "benchmark") == 0) return cmd_bench(argc, argv);
-    if (strcmp(cmd, "compare-external") == 0) return cmd_compare_external(argc, argv);
+    if (cmd_id==FQLA_DOCTOR) return cmd_doctor();
+    if (cmd_id==FQLA_GEN) return cmd_gen(argc, argv);
+    if (cmd_id==FQLA_RUN ||
+        cmd_id==FQLA_FWD) return cmd_run(argc, argv);
+    if (cmd_id==FQLA_VERIFY) return cmd_verify(argc, argv);
+    if (cmd_id==FQLA_BENCH ||
+        cmd_id==FQLA_BENCHMARK) return cmd_bench(argc, argv);
+    if (cmd_id==FQLA_COMPARE_EXTERNAL) return cmd_compare_external(argc, argv);
 
     fprintf(stderr, "bonfyre-flashqla: unknown command '%s'\n", cmd);
     usage();

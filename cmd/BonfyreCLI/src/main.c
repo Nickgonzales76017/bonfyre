@@ -2548,26 +2548,79 @@ static void suggest_commands(const char *cmd) {
     }
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CL_COMMANDS(X) \
+    X("--help", CL_OPT_HELP) \
+    X("--version", CL_OPT_VERSION) \
+    X("-h", CL_OPT_H) \
+    X("capabilities", CL_CAPABILITIES) \
+    X("completion", CL_COMPLETION) \
+    X("doctor", CL_DOCTOR) \
+    X("help", CL_HELP) \
+    X("list", CL_LIST) \
+    X("pack-graph", CL_PACK_GRAPH) \
+    X("precision", CL_PRECISION) \
+    X("self", CL_SELF) \
+    X("shell", CL_SHELL) \
+    X("status", CL_STATUS) \
+    X("version", CL_VERSION)
+BF_COMMAND_TABLE(cl_commands, CL_COMMANDS);
+
+#define CLS_COMMANDS(X) \
+    X("apply", CLS_APPLY) \
+    X("commands", CLS_COMMANDS_VERB) \
+    X("inspect", CLS_INSPECT) \
+    X("ontology", CLS_ONTOLOGY) \
+    X("optimize", CLS_OPTIMIZE) \
+    X("plan", CLS_PLAN) \
+    X("publish", CLS_PUBLISH) \
+    X("query", CLS_QUERY) \
+    X("registries", CLS_REGISTRIES) \
+    X("repair", CLS_REPAIR) \
+    X("route", CLS_ROUTE) \
+    X("scan", CLS_SCAN) \
+    X("snapshot", CLS_SNAPSHOT) \
+    X("sync-subcommands", CLS_SYNC_SUBCOMMANDS) \
+    X("validate", CLS_VALIDATE)
+BF_COMMAND_TABLE(cls_commands, CLS_COMMANDS);
+
+#define CLO_COMMANDS(X) \
+    X("--help", CLO_OPT_HELP) \
+    X("-h", CLO_OPT_H) \
+    X("activate", CLO_ACTIVATE) \
+    X("compile", CLO_COMPILE) \
+    X("current", CLO_CURRENT) \
+    X("deactivate", CLO_DEACTIVATE) \
+    X("help", CLO_HELP) \
+    X("install", CLO_INSTALL) \
+    X("plan", CLO_PLAN) \
+    X("remove", CLO_REMOVE) \
+    X("verify", CLO_VERIFY)
+BF_COMMAND_TABLE(clo_commands, CLO_COMMANDS);
+
+
 /* ── main ─────────────────────────────────────────────────────────── */
 int main(int argc, char *argv[]) {
     ListOptions list_opts;
     if (argc < 2) { cmd_help(); return 0; }
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int verb=bf_command_id(cl_commands,BF_COMMAND_COUNT(cl_commands),cmd,-1);
 
-    if (strcmp(cmd, "shell") == 0 || cmd[0] == '@') {
+    if (verb==CL_SHELL || cmd[0] == '@') {
         fprintf(stderr, "bonfyre: semantic shell was retired with the Python control plane; use bonfyre operator for source-bound reads\n");
         return 127;
     }
 
-    if (strcmp(cmd, "help") == 0 || strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
+    if (verb==CL_HELP || verb==CL_OPT_HELP || verb==CL_OPT_H) {
         cmd_help();
         return 0;
     }
-    if (strcmp(cmd, "version") == 0 || strcmp(cmd, "--version") == 0) {
+    if (verb==CL_VERSION || verb==CL_OPT_VERSION) {
         printf("bonfyre 0.2.0\n");
         return 0;
     }
-    if (strcmp(cmd, "list") == 0) {
+    if (verb==CL_LIST) {
         list_opts = parse_list_options(argc, argv);
         g_list_all = list_opts.all;
         if (list_opts.json) cmd_list_json(list_opts.query[0] ? list_opts.query : NULL, &list_opts);
@@ -2575,11 +2628,11 @@ int main(int argc, char *argv[]) {
         else cmd_list(list_opts.query[0] ? list_opts.query : NULL, &list_opts);
         return 0;
     }
-    if (strcmp(cmd, "completion") == 0) {
+    if (verb==CL_COMPLETION) {
         return cmd_completion(argc >= 3 ? argv[2] : "zsh");
     }
-    if (strcmp(cmd, "self") == 0) {
-        const char *sub = argc >= 3 ? argv[2] : NULL;
+    if (verb==CL_SELF) {
+        const char *sub = argc >= 3 ? argv[2] : NULL; const int sub_id=bf_command_id(cls_commands,BF_COMMAND_COUNT(cls_commands),sub,-1);
         const char *root = NULL, *out_dir = NULL, *plan_id = NULL, *question = NULL, *object = NULL, *subject = NULL;
         int dry_run = 0, apply = 0, apply_safe = 0;
         for (int i = 3; i < argc; i++) {
@@ -2589,24 +2642,24 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
             else if (strcmp(argv[i], "--apply-safe") == 0) apply_safe = 1;
             else if (strcmp(argv[i], "--apply") == 0) apply = 1;
-            else if (!question && strcmp(argv[2], "query") == 0) question = argv[i];
-            else if (!object && strcmp(argv[2], "inspect") == 0) object = argv[i];
-            else if (!subject && strcmp(argv[2], "ontology") == 0) subject = argv[i];
+            else if (!question && sub_id==CLS_QUERY) question = argv[i];
+            else if (!object && sub_id==CLS_INSPECT) object = argv[i];
+            else if (!subject && sub_id==CLS_ONTOLOGY) subject = argv[i];
         }
         if (!sub) {
             fprintf(stderr, "usage: bonfyre self snapshot|inspect [OBJECT]|query [QUESTION]|optimize [--dry-run|--apply-safe]|repair [--plan ID]|ontology [SUBJECT]|publish [ID]\n");
             return 2;
         }
-        if (strcmp(sub, "ontology") == 0) return cmd_self_ontology(subject ? subject : "all");
-        if (strcmp(sub, "snapshot") == 0) return cmd_self_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_self");
-        if (strcmp(sub, "inspect") == 0) return cmd_self_inspect(object ? object : "commands");
-        if (strcmp(sub, "query") == 0) return cmd_self_query(question ? question : "plans");
-        if (strcmp(sub, "optimize") == 0) return cmd_self_optimize(root, (apply_safe || apply) && !dry_run);
-        if (strcmp(sub, "repair") == 0) return cmd_self_repair(root, plan_id ? plan_id : "latest", (apply_safe || apply) && !dry_run);
-        if (strcmp(sub, "publish") == 0) return cmd_self_publish(argc >= 4 ? argv[3] : "latest");
+        if (sub_id==CLS_ONTOLOGY) return cmd_self_ontology(subject ? subject : "all");
+        if (sub_id==CLS_SNAPSHOT) return cmd_self_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_self");
+        if (sub_id==CLS_INSPECT) return cmd_self_inspect(object ? object : "commands");
+        if (sub_id==CLS_QUERY) return cmd_self_query(question ? question : "plans");
+        if (sub_id==CLS_OPTIMIZE) return cmd_self_optimize(root, (apply_safe || apply) && !dry_run);
+        if (sub_id==CLS_REPAIR) return cmd_self_repair(root, plan_id ? plan_id : "latest", (apply_safe || apply) && !dry_run);
+        if (sub_id==CLS_PUBLISH) return cmd_self_publish(argc >= 4 ? argv[3] : "latest");
     }
-    if (strcmp(cmd, "precision") == 0) {
-        const char *sub = argc >= 3 ? argv[2] : NULL;
+    if (verb==CL_PRECISION) {
+        const char *sub = argc >= 3 ? argv[2] : NULL; const int sub_id=bf_command_id(cls_commands,BF_COMMAND_COUNT(cls_commands),sub,-1);
         const char *root = NULL, *goal = NULL, *artifact_id = NULL;
         int json = 0, dry_run = 0;
         for (int i = 3; i < argc; i++) {
@@ -2620,13 +2673,13 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "usage: bonfyre precision scan [--json]|route ARTIFACT [--goal tiny|balanced]|validate ARTIFACT|apply ARTIFACT [--dry-run]|ontology\n");
             return 2;
         }
-        if (strcmp(sub, "ontology") == 0) return cmd_precision_ontology();
-        if (strcmp(sub, "scan") == 0 || strcmp(sub, "plan") == 0) return cmd_precision_scan(root, json);
-        if (strcmp(sub, "route") == 0) return cmd_precision_route(root, artifact_id ? artifact_id : "", goal ? goal : "balanced");
-        if (strcmp(sub, "validate") == 0) return cmd_precision_validate(root, artifact_id ? artifact_id : "");
-        if (strcmp(sub, "apply") == 0) return cmd_precision_apply(root, artifact_id ? artifact_id : "", goal ? goal : "balanced", dry_run ? 1 : 0);
+        if (sub_id==CLS_ONTOLOGY) return cmd_precision_ontology();
+        if (sub_id==CLS_SCAN || sub_id==CLS_PLAN) return cmd_precision_scan(root, json);
+        if (sub_id==CLS_ROUTE) return cmd_precision_route(root, artifact_id ? artifact_id : "", goal ? goal : "balanced");
+        if (sub_id==CLS_VALIDATE) return cmd_precision_validate(root, artifact_id ? artifact_id : "");
+        if (sub_id==CLS_APPLY) return cmd_precision_apply(root, artifact_id ? artifact_id : "", goal ? goal : "balanced", dry_run ? 1 : 0);
     }
-    if (strcmp(cmd, "capabilities") == 0 && argc >= 3 && strcmp(argv[2], "ontology") == 0) {
+    if (verb==CL_CAPABILITIES && argc >= 3 && bf_command_id(cls_commands,BF_COMMAND_COUNT(cls_commands),argv[2],-1)==CLS_ONTOLOGY) {
         const char *filter = NULL;
         for (int i = 3; i < argc; i++) {
             if (strcmp(argv[i], "--filter") == 0 && i + 1 < argc) filter = argv[++i];
@@ -2634,8 +2687,8 @@ int main(int argc, char *argv[]) {
         }
         return cmd_capabilities_ontology(filter);
     }
-    if (strcmp(cmd, "status") == 0 || strcmp(cmd, "doctor") == 0) {
-        const char *sub = argc >= 3 ? argv[2] : NULL;
+    if (verb==CL_STATUS || verb==CL_DOCTOR) {
+        const char *sub = argc >= 3 ? argv[2] : NULL; const int sub_id=bf_command_id(cls_commands,BF_COMMAND_COUNT(cls_commands),sub,-1);
         const char *root = NULL;
         const char *out_dir = NULL;
         int json = 0;
@@ -2651,12 +2704,12 @@ int main(int argc, char *argv[]) {
             else if (strcmp(argv[i], "--json") == 0) json = 1;
             else if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
         }
-        if (strcmp(cmd, "status") == 0 && sub) {
-            if (strcmp(sub, "commands") == 0) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }
-            if (strcmp(sub, "registries") == 0) { if (json) cmd_status_registries_json(root); else cmd_status_registries_human(root); return 0; }
-            if (strcmp(sub, "snapshot") == 0) return cmd_status_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_ops_deep");
+        if (verb==CL_STATUS && sub) {
+            if (sub_id==CLS_COMMANDS_VERB) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }
+            if (sub_id==CLS_REGISTRIES) { if (json) cmd_status_registries_json(root); else cmd_status_registries_human(root); return 0; }
+            if (sub_id==CLS_SNAPSHOT) return cmd_status_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_ops_deep");
         }
-        if (strcmp(cmd, "status") == 0 && !sub) {
+        if (verb==CL_STATUS && !sub) {
             /* bare 'bonfyre status' — fast path: path-check only, no subprocess probing */
             int total = 0, ready = 0, missing = 0;
             for (const Route *r = routes; r->cmd; r++) {
@@ -2674,18 +2727,18 @@ int main(int argc, char *argv[]) {
             cmd_status_registries_human(root);
             return 0;
         }
-        if (strcmp(cmd, "doctor") == 0 && sub) {
-            if (strcmp(sub, "commands") == 0) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }
-            if (strcmp(sub, "registries") == 0) { if (json) cmd_status_registries_json(root); else cmd_status_registries_human(root); return 0; }
-            if (strcmp(sub, "snapshot") == 0) return cmd_status_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_ops_deep");
-            if (strcmp(sub, "sync-subcommands") == 0) return cmd_doctor_sync_subcommands(dry_run);
+        if (verb==CL_DOCTOR && sub) {
+            if (sub_id==CLS_COMMANDS_VERB) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }
+            if (sub_id==CLS_REGISTRIES) { if (json) cmd_status_registries_json(root); else cmd_status_registries_human(root); return 0; }
+            if (sub_id==CLS_SNAPSHOT) return cmd_status_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_ops_deep");
+            if (sub_id==CLS_SYNC_SUBCOMMANDS) return cmd_doctor_sync_subcommands(dry_run);
         }
     }
 
     /* PackGraph lives in CMS; the existing delivery-package verb remains "pack". */
-    if (strcmp(cmd, "pack-graph") == 0) {
-        const char *op = argc > 2 ? argv[2] : NULL;
-        if (!op || !strcmp(op, "help") || !strcmp(op, "--help") || !strcmp(op, "-h")) {
+    if (verb==CL_PACK_GRAPH) {
+        const char *op = argc > 2 ? argv[2] : NULL; const int op_id=bf_command_id(clo_commands,BF_COMMAND_COUNT(clo_commands),op,-1);
+        if (!op || op_id==CLO_HELP || op_id==CLO_OPT_HELP || op_id==CLO_OPT_H) {
             puts("usage: bonfyre pack-graph compile|verify|plan|current|install|activate|deactivate|remove [options]");
             puts("  compile --pack ID [--version VERSION] [--out-dir ABSOLUTE_STORE] --db CMS_DB");
             puts("  verify  --pack ID --verify-image BFP_PATH [--cut-digest SHA256] --db CMS_DB");
@@ -2693,9 +2746,9 @@ int main(int argc, char *argv[]) {
             puts("  This command never grants rights: install and activate require reviewed CMS lifecycle authority.");
             return 0;
         }
-        int image = !strcmp(op, "compile") || !strcmp(op, "verify");
-        int lifecycle = !strcmp(op, "plan") || !strcmp(op, "current") || !strcmp(op, "install") ||
-            !strcmp(op, "activate") || !strcmp(op, "deactivate") || !strcmp(op, "remove");
+        int image = op_id==CLO_COMPILE || op_id==CLO_VERIFY;
+        int lifecycle = op_id==CLO_PLAN || op_id==CLO_CURRENT || op_id==CLO_INSTALL ||
+            op_id==CLO_ACTIVATE || op_id==CLO_DEACTIVATE || op_id==CLO_REMOVE;
         if (!image && !lifecycle) {
             fprintf(stderr, "bonfyre pack-graph: unknown operation %s; use --help\n", op);
             return 2;

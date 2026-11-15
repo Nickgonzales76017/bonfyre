@@ -422,8 +422,8 @@ const puppeteer=createRequire(path.join(root,'tools/creator-ingest/package.json'
   await advance(()=>page.click('a[href="/s/prices/observed?kind=service"]'));
   assert.equal(await page.$eval('input[name=kind]',n=>n.value),'service');
   assert.equal(await page.$eval('a[href="/s/prices/observed?kind=service"]',n=>n.getAttribute('aria-current')),'page');
-  await page.type('.price-find [name=q]','Fixture Comparative Transport');
-  await advance(()=>page.click('.price-find button'));
+  await page.type('[data-price-find] [name=q]','Fixture Comparative Transport');
+  await advance(()=>page.click('[data-price-find] button'));
   const comparison=await page.$eval('[data-price-comparison]',n=>n.textContent);
   for(const good of ['Same-day publisher comparisons','Comparative Low','Comparative High','10.00 USD','15.00 USD'])
     assert(comparison.includes(good),'Missing comparison '+good);

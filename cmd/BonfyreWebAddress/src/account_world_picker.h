@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ACCOUNT_WORLD_PICKER_H
 #define BONFYRE_ACCOUNT_WORLD_PICKER_H
+#include "form_tree.h"
 /* The picker never grants a licence or imports material. It selects exact
  * retained references for the existing revisioned, account-scoped World API.
  * Saved references are private to the authenticated self actor; source rows
@@ -61,10 +62,12 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
     }
     sqlite3_finalize(st);st=NULL;if(found)fputs("</ul>",stdout);
     else fputs("<p>No retained references are saved in this account yet. You can choose items from a published source below.</p>",stdout);
-    fputs("<h4>Browse observed sources</h4><form method=\"get\" action=\"/workspace/worlds\" class=\"aw-picker-search\">",stdout);
-    ph_hidden("site",site);char number[24];snprintf(number,sizeof(number),"%lld",(long long)world);ph_hidden("world",number);ph_hidden("space",space);
-    fputs("<label>Search publisher, topic, or source<input name=\"q\" type=\"search\" maxlength=\"95\" value=\"",stdout);
-    html(query?query:"");fputs("\" placeholder=\"Find retained sources\"></label><button type=\"submit\">Search</button></form>",stdout);
+    fputs("<h4>Browse observed sources</h4>",stdout);
+    {char number[24];snprintf(number,sizeof(number),"%lld",(long long)world);
+     const FtField hidden[]={{"site",site},{"world",number},{"space",space}};
+     const FtInput find[]={{.label="Search publisher, topic, or source",.type="search",.name="q",.maxlength="95",.value=query?query:"",.placeholder="Find retained sources"}};
+     const FtForm f={.id="aw-picker-search",.method="get",.action="/workspace/worlds",.label="Search",.hook="aw-picker-search",.hidden=hidden,.nhidden=3,.inputs=find,.ninputs=1};
+     ft_form(stdout,&f);}
     found=0;
     if(sqlite3_prepare_v2(db,
         "SELECT source,label,family FROM internet_source WHERE namespace='root' AND status='published' "

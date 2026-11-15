@@ -43,6 +43,7 @@ function size(path) { try { return statSync(path).size; } catch { return 0; } }
 export function resolveProgram(args, { runFn = nativeRun } = {}) {
   const cmsPath = args.cmsDb ?? join(args.estate, "cms.db");
   const cms = new Database(cmsPath, args.apply ? { readwrite: true } : { readonly: true });
+  if (args.apply) cms.exec("PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864");
   const namespace = args.namespace ?? "root";
   try {
     const hasDemands=cms.query("PRAGMA table_info(program_template)").all().some(c=>c.name==="address_demands");

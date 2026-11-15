@@ -3275,6 +3275,8 @@ architecture cmd-surface-scene
   witness md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)
   witness SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)
   witness 2026-11-11 vocabulary at 46 with ui:choice and ui:field plus ui:action methods and containment; safe_type admits every safe HTML input type while file/image stay refused; suite proves search renders and uploads deny atomically
+  witness 2026-11-15 ui:action takes named submit buttons (name/value, formnovalidate, quiet/danger tone) and one validated data-* hook; ui:field renders select options, checkbox checked, pattern/min/max/step/autocomplete; FtForm in cmd/BonfyreWebAddress/src/form_tree.h builds them; native_authoring_components_test proves each attribute, hook charset refusal and atomic denial of an unsafe field name
+  forbidden_inference a form rendered through FtForm -> its post is authorized; the owner that receives the post still checks origin, nonce, revision and authority
   source_lineage current command directory and command_smoke.json census
   known_gap built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work
 

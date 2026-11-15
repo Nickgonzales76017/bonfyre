@@ -403,8 +403,9 @@ static int serve_world_public(const char *method,const char *target,const char *
     return 1;
 }
 
-static int serve_account_world_workspace(const char *method,const char *target,const char *query,const char *body,
-                                          const char *raw,const char *host,const char *bearer,const char *auth_db){
+static int serve_account_world_workspace(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     if(!strcmp(target,"/workspace/world"))return world_web_api(method,query,body,raw,host,bearer,auth_db);
     if(world_lit_route(method,target,query,body,raw,host,bearer,auth_db))return 1;
     if(!strcmp(target,"/workspace/world/film"))return world_cine_api(method,query,body,raw,host,bearer,auth_db);

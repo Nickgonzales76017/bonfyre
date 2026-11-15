@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SOURCE_DESK_H
 #define BONFYRE_SOURCE_DESK_H
+#include "../generated/native_estate_hosts.h"
 static int session_institution_authorized(const char *,const char *,const char *,const char *);
 static int page_query_has_key(const char *,const char *);
 /* Sources, feeds and connections, one native owner of their pages.
@@ -445,7 +446,7 @@ static void sd_connect(const char *route,const char *host,const char *query,cons
  fputs("<dl class=\"sx-stats\"><div><dt>Sources readable</dt><dd>",stdout);sd_num(sources);fputs("</dd></div><div><dt>MCP</dt><dd>/mcp<small>Model Context Protocol</small></dd></div><div><dt>A2A</dt><dd>Agent card<small>/.well-known/agent-card.json</small></dd></div><div><dt>WebSub</dt><dd>Hub<small>push in, push out</small></dd></div></dl>",stdout);
  fputs("<div class=\"sx-split sx-settings\"><section class=\"sx-panel\" aria-labelledby=\"sx-mcp\"><p class=\"sx-kicker\">Your desktop tools</p><h2 id=\"sx-mcp\">MCP server</h2>"
        "<p>Point Claude, Cursor or any MCP client at Aurekai. The tools read sources and kept passages with your account's own limits; nothing is granted that your account does not already have.</p>"
-       "<pre class=\"sx-code\">{\"mcpServers\":{\"aurekai\":{\"url\":\"https://aurekai.work/mcp\"}}}</pre>",stdout);
+       "<pre class=\"sx-code\">{\"mcpServers\":{\"aurekai\":{\"url\":\"" BF_ORIGIN_WORK "/mcp\"}}}</pre>",stdout);
  fputs(signed_in?"<a class=\"sx-btn\" href=\"/account\">Review your sessions</a>":"<a class=\"sx-btn sx-primary\" href=\"/login?next=%2Fconnect\">Sign in to authorize a tool</a>",stdout);
  fputs("</section><section class=\"sx-panel\" aria-labelledby=\"sx-a2a\"><p class=\"sx-kicker\">Other agents</p><h2 id=\"sx-a2a\">Agent-to-agent</h2><p>Other agents discover what Aurekai offers from its agent card and call it over A2A. A call is an ask; nothing past a person's own submit is done for them.</p>"
        "<a class=\"sx-btn\" href=\"/.well-known/agent-card.json\">Read the agent card</a></section></div>",stdout);
@@ -489,7 +490,9 @@ static int sd_route_compiled(const char *host,const char *route){
  sqlite3_finalize(st);if(fabric)sqlite3_close(fabric);sqlite3_close(cms);return found;
 }
 
-static int serve_source_desk(const char *method,const char *target,const char *query,const char *host,const char *accept,const char *bearer,const char *auth_db){
+static int serve_source_desk(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host=r->host; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)host;(void)accept;(void)bearer;(void)auth_db;
  if(strcmp(method,"GET")||(wants_json(accept)&&!wants_html(accept)))return 0;
  int sources=!strcmp(target,"/sources")||!strcmp(target,"/sources/")||!strcmp(target,"/link")||!strcmp(target,"/link/");
  int legacy=!strcmp(target,"/foreign/workbench")||!strcmp(target,"/foreign/workbench/")||!strcmp(target,"/s/work/foreign-twins")||!strcmp(target,"/s/work/foreign-twins/");

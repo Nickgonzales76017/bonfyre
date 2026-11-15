@@ -1,5 +1,6 @@
 #ifndef BONFYRE_MATRIX_CLOSURE_BOOTSTRAP_H
 #define BONFYRE_MATRIX_CLOSURE_BOOTSTRAP_H
+#include "../generated/native_estate_hosts.h"
 #include "tenant_host_binding.h"
 /* Extracted verbatim from main.c lines 122-1016 (mechanical split, no logic changes). */
 static int opt_positive_int(int argc, char **argv, const char *name,
@@ -48,20 +49,17 @@ static int studio_safe_slug_arg(const char *text);
 static int emit_native_world_page(const char *path, const char *target, const char *query);
 static int emit_page_program_route(const char *root, const char *target, const char *host, const char *query);
 #include "public_code.h"
-static int emit_item_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db);
+static int emit_item_page(const BfRequest *r);
 static void wire_send(int socket_fd, FILE *captured, const char *accept_encoding, const char *if_none_match);
 static const char *wire_site_root;
 static int emit_item_calendar(const char *target, const char *host);
 static int emit_agenda_calendar(const char *target, const char *host);
-static int serve_page_changes(const char *root, const char *method, const char *target, const char *body, const char *raw,
-                              const char *host, const char *bearer, const char *auth_db);
-static int emit_about_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db);
-static int serve_page_save(const char *method, const char *target, const char *body, const char *raw,
-                           const char *host, const char *bearer, const char *auth_db);
-static int govern_act(const char *method, const char *target, const char *body, const char *raw,
-                      const char *host, const char *bearer, const char *auth_db);
-static int emit_saved_page(const char *root, const char *host, const char *bearer, const char *auth_db);
-static int emit_parcel_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db);
+static int serve_page_changes(const BfRequest *r);
+static int emit_about_page(const BfRequest *r);
+static int serve_page_save(const BfRequest *r);
+static int govern_act(const BfRequest *r);
+static int emit_saved_page(const BfRequest *r);
+static int emit_parcel_page(const BfRequest *r);
 static int flow_safe_term(const char *in, char *out, size_t cap);
 static void num_fix(char *v, size_t cap);
 static void page_emit_property_results(const char *q);
@@ -414,7 +412,7 @@ static int bootstrap_owned(BfMatrix *m) {
      * membership remains with the discovery owner and starts honestly empty. */
     for (i = 0; i < sizeof(internet_views) / sizeof(internet_views[0]); i++) {
         char address[512];
-        if (snprintf(address, sizeof(address), "https://internet.aurekai.work%s", internet_views[i]) >= (int)sizeof(address) ||
+        if (snprintf(address, sizeof(address), BF_ORIGIN_INTERNET "%s", internet_views[i]) >= (int)sizeof(address) ||
             bf_matrix_address_bind(m, "institution:aurekai:internet", "standing_query", address,
                                    "configured:internet-observatory-view") != BF_MATRIX_OK) return 2;
     }

@@ -497,18 +497,32 @@ static void usage(void) {
         "answer, and none is made up for it.\n");
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define RSN_COMMANDS(X) \
+    X("ask", RSN_ASK) \
+    X("branch", RSN_BRANCH) \
+    X("commit", RSN_COMMIT) \
+    X("diff", RSN_DIFF) \
+    X("log", RSN_LOG) \
+    X("run", RSN_RUN) \
+    X("start", RSN_START) \
+    X("status", RSN_STATUS)
+BF_COMMAND_TABLE(rsn_commands, RSN_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc < 2) { usage(); return 1; }
-    const char *cmd = argv[1];
-    if (!strcmp(cmd, "start"))  return cmd_start(argc - 2, argv + 2);
-    if (!strcmp(cmd, "branch")) return cmd_branch(argc - 2, argv + 2);
-    if (!strcmp(cmd, "run"))    return cmd_run(argc - 2, argv + 2);
-    if (!strcmp(cmd, "ask"))    return cmd_ask(argc - 2, argv + 2);
-    if (!strcmp(cmd, "diff"))   return cmd_diff(argc - 2, argv + 2);
-    if (!strcmp(cmd, "commit")) return cmd_commit(argc - 2, argv + 2);
-    if (!strcmp(cmd, "status")) return cmd_status(argc - 2, argv + 2, 0);
-    if (!strcmp(cmd, "log"))    return cmd_status(argc - 2, argv + 2, 1);
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(rsn_commands,BF_COMMAND_COUNT(rsn_commands),cmd,-1);
+    if (cmd_id==RSN_START)  return cmd_start(argc - 2, argv + 2);
+    if (cmd_id==RSN_BRANCH) return cmd_branch(argc - 2, argv + 2);
+    if (cmd_id==RSN_RUN)    return cmd_run(argc - 2, argv + 2);
+    if (cmd_id==RSN_ASK)    return cmd_ask(argc - 2, argv + 2);
+    if (cmd_id==RSN_DIFF)   return cmd_diff(argc - 2, argv + 2);
+    if (cmd_id==RSN_COMMIT) return cmd_commit(argc - 2, argv + 2);
+    if (cmd_id==RSN_STATUS) return cmd_status(argc - 2, argv + 2, 0);
+    if (cmd_id==RSN_LOG)    return cmd_status(argc - 2, argv + 2, 1);
     fprintf(stderr, "bonfyre-reason: unknown command '%s'\n", cmd);
     usage();
     return 1;

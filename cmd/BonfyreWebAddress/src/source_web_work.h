@@ -31,9 +31,10 @@ static void sw_page(void){
  const char *tail="<main data-web-workbench class=\"web-workbench\"><nav aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span aria-hidden=\"true\"> / </span><a href=\"/sources\">Links and sources</a><span aria-hidden=\"true\"> / </span><span>Web research</span></nav><header class=\"ww-heading\"><div><p class=\"ww-eyebrow\">Read, review, retain</p><h1>Bring the web into your work.</h1><p>Search with Exa or Firecrawl, read exact pages, and keep the source material you want to work with.</p></div><a href=\"/apps?context=self\">Your work</a></header><p data-web-status role=\"status\" aria-live=\"polite\">Opening your research workspace…</p><div data-web-content></div><noscript><p>Web research needs JavaScript. <a href=\"/sources\">Browse known sources</a> or open <a href=\"/apps?context=self\">your work</a>.</p></noscript></main>" BF_ESTATE_FOOT "<script type=\"module\" src=\"/apps/web-workbench.mjs\"></script></body></html>";
  fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",stdout);fputs(head,stdout);fputs(BF_ESTATE_BAR,stdout);fputs(tail,stdout);
 }
-static int serve_source_web_work(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
+static int serve_source_web_work(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *query=rq->query; const char *body=rq->body; const char *raw=rq->raw; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
  if(!strcmp(target,"/sources/web")||!strcmp(target,"/sources/web/")){if(strcmp(method,"GET"))aw_error(405,"Use GET to open web research.\n");else sw_page();return 1;}
- if(strcmp(target,"/sources/_web"))return 0;
  int writing=!strcmp(method,"POST");SwQuery q;
  if((!writing&&strcmp(method,"GET"))||!sw_query(query,&q)||!sw_operation(&q,writing)){aw_error(400,"Use one declared web-research operation and its exact coordinates.\n");return 1;}
  char provider_origin[64]="";

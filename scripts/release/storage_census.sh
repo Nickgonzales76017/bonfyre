@@ -21,6 +21,40 @@ if [ "$#" -eq 1 ] && [ "$1" = "--cms-wal-diagnose" ]; then
   if command -v launchctl >/dev/null 2>&1; then launchctl list | grep -F "com.bonfyre.public-web-address" || :; fi
   echo "WEB_AND_CMS_PROCESSES (pid ppid elapsed executable; no arguments):"
   ps -axo pid,ppid,etime,comm | awk 'NR==1 || /bonfyre-web-address|bonfyre-cms/' | head -n 50
+  echo "DETACHED_SITE_HOME_PID (default bonfyre site home; identity only):"
+  owned="$HOME/.bonfyre/sites/serve.pid"
+  if [ -f "$owned" ] && [ ! -L "$owned" ]; then
+    owned_pid=$(awk 'NR==1 {print $1}' "$owned")
+    printf "SITE_PID_RECORD %s\n" "$owned_pid"
+    case "$owned_pid" in
+      ""|*[!0-9]*) echo "SITE_PID_PROCESS INVALID_RECORD" ;;
+      *)
+        recorded_exec=$(ps -p "$owned_pid" -o comm= 2>/dev/null || :)
+        if [ -z "$recorded_exec" ]; then echo "SITE_PID_PROCESS NOT_RUNNING";
+        else
+          case "$recorded_exec" in
+            "$HOME/Developer/Bonfyre/cmd/BonfyreWebAddress/bonfyre-web-address") echo "SITE_PID_PROCESS CHECKOUT_BINARY_UNVERIFIED_PORT" ;;
+            "$HOME/.bonfyre/releases/"*/bin/bonfyre-web-address) echo "SITE_PID_PROCESS FROZEN_RELEASE_UNVERIFIED_PORT" ;;
+            *) echo "SITE_PID_PROCESS OTHER_OR_UNVERIFIED_EXECUTABLE" ;;
+          esac
+          if command -v lsof >/dev/null 2>&1; then
+            lsof -nP -a -p "$owned_pid" -iTCP -sTCP:LISTEN 2>/dev/null |
+              awk 'NR>1 && NF>=9 {printf "SITE_PID_LISTENER %s\n",$9}' | head -n 10 || :
+          fi
+        fi
+        ;;
+    esac
+  else echo "SITE_PID_RECORD NOT_PRESENT"; fi
+  echo "DETACHED_CHECKOUT_WEB_LISTENERS (no signals, no command arguments):"
+  if command -v lsof >/dev/null 2>&1; then
+    ps -axo pid=,ppid=,comm= | awk '$2==1 && index($0,"/cmd/BonfyreWebAddress/bonfyre-web-address"){print $1}' | head -n 24 |
+    while IFS= read -r webpid; do
+      [ -n "$webpid" ] || continue
+      state=$(ps -p "$webpid" -o stat= 2>/dev/null | tr -d " " || :)
+      ports=$(lsof -nP -a -p "$webpid" -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 && NF>=9 {print $9}' | head -n 8 | paste -sd, - || :)
+      printf "DETACHED_WEB pid=%s state=%s listeners=%s\n" "$webpid" "${state:-gone}" "${ports:--}"
+    done
+  fi
   echo "CMS_FILE_OPEN_HANDLES (open is not proof of an active read transaction):"
   if command -v lsof >/dev/null 2>&1; then lsof -nP "$db" "$db-wal" "$db-shm" 2>/dev/null | head -n 75 || :; fi
   echo "READ_ONLY: no checkpoint, schema change, release or process action was attempted."

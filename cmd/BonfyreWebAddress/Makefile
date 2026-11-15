@@ -131,6 +131,11 @@ WEB_ROUTES_HEADER := generated/native_web_routes.h
 $(WEB_ROUTES_HEADER): ../../schemas/control/web-routes.cue tools/compile_web_routes.sh src/web_request.h
 	@sh tools/compile_web_routes.sh
 build/web_main.o build/compact/web_main.o: $(WEB_ROUTES_HEADER)
+# Estate origins are declared in CUE; a page names a territory, never a host literal.
+ESTATE_HOSTS_HEADER := generated/native_estate_hosts.h
+$(ESTATE_HOSTS_HEADER): ../../schemas/control/estate-hosts.cue tools/compile_estate_hosts.sh
+	@sh tools/compile_estate_hosts.sh
+build/web_main.o build/compact/web_main.o build/web_people_projection.o build/compact/web_people_projection.o build/web_site_mcp.o build/compact/web_site_mcp.o: $(ESTATE_HOSTS_HEADER)
 # The brand voice is compiled from one owned source; branding is not authorization.
 BRAND_CUT_HEADER := generated/native_brand_cuts.h
 $(BRAND_CUT_HEADER): ../../branding/voice.mjs tools/compile_brand_cuts.mjs

@@ -133,7 +133,7 @@ test('task focus contains long diagnostics and labels progress as an update',asy
 });
 test('changing workspaces from a task opens the destination board without carrying the task',async()=>{
  const focused=await f.request('/work-board?context=self&task='+ids.twilio,{cookie:owner.cookie});expect(focused.status).toBe(200);
- const picker=focused.body.match(/<form class="work-board-picker"[\s\S]*?<\/form>/)?.[0]??'';
+ const picker=focused.body.match(/<form [^>]*data-work-board-picker[\s\S]*?<\/form>/)?.[0]??'';
  expect(picker).toContain('name="context"');expect(picker).toContain('institution:'+ids.mine);
  expect(picker).not.toContain('name="task"');
  const destination=await f.request('/work-board?'+new URLSearchParams({context:'institution:'+ids.mine}),{cookie:owner.cookie});

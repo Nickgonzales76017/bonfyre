@@ -1250,6 +1250,20 @@ static void print_usage(void) {
         "  bonfyre-vec status\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define VEC_COMMANDS(X) \
+    X("compare", VEC_COMPARE) \
+    X("count", VEC_COUNT) \
+    X("delete", VEC_DELETE) \
+    X("fixture", VEC_FIXTURE) \
+    X("init", VEC_INIT) \
+    X("insert", VEC_INSERT) \
+    X("neighbors", VEC_NEIGHBORS) \
+    X("sae-rerank", VEC_SAE_RERANK) \
+    X("search", VEC_SEARCH)
+BF_COMMAND_TABLE(vec_commands, VEC_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     enum { VC_STATUS };
@@ -1272,19 +1286,19 @@ int main(int argc, char **argv) {
 
     if (argc < 3) { print_usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(vec_commands,BF_COMMAND_COUNT(vec_commands),cmd,-1);
 
-    if (strcmp(cmd, "init") == 0) {
+    if (cmd_id==VEC_INIT) {
         int width = VEC_DIMS;
         for (int i = 3; i + 1 < argc; i++) if (strcmp(argv[i], "--dims") == 0) width = atoi(argv[i + 1]);
         return cmd_init(argv[2], width);
-    } else if (strcmp(cmd, "insert") == 0) {
+    } else if (cmd_id==VEC_INSERT) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_insert(argv[2], argv[3]);
-    } else if (strcmp(cmd, "delete") == 0) {
+    } else if (cmd_id==VEC_DELETE) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_delete(argv[2], argc - 3, argv + 3);
-    } else if (strcmp(cmd, "search") == 0) {
+    } else if (cmd_id==VEC_SEARCH) {
         if (argc < 4) { print_usage(); return 1; }
         int top_k = 10, exact = 0;
         for (int i = 4; i < argc; i++) {
@@ -1295,21 +1309,21 @@ int main(int argc, char **argv) {
         }
         return exact ? cmd_search_exact(argv[2], argv[3], top_k)
                      : cmd_search(argv[2], argv[3], top_k);
-    } else if (strcmp(cmd, "compare") == 0) {
+    } else if (cmd_id==VEC_COMPARE) {
         if (argc < 5) { print_usage(); return 1; }
         return cmd_compare(argv[2], argv[3], argv[4]);
-    } else if (strcmp(cmd, "neighbors") == 0) {
+    } else if (cmd_id==VEC_NEIGHBORS) {
         int k = 5;
         if (argc < 3) { fprintf(stderr, "usage: bonfyre-vec neighbors <db> [--top N]\n"); return 1; }
         for (int i = 3; i < argc; i++)
             if (strcmp(argv[i], "--top") == 0 && i + 1 < argc) k = atoi(argv[++i]);
         return cmd_neighbors(argv[2], k);
-    } else if (strcmp(cmd, "count") == 0) {
+    } else if (cmd_id==VEC_COUNT) {
         return cmd_count(argv[2]);
-    } else if (strcmp(cmd, "fixture") == 0) {
+    } else if (cmd_id==VEC_FIXTURE) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_fixture(argv[2], argv[3]);
-    } else if (strcmp(cmd, "sae-rerank") == 0) {
+    } else if (cmd_id==VEC_SAE_RERANK) {
         if (argc < 5) { print_usage(); return 1; }
         int top_k = 10;
         float sae_weight = 0.25f;

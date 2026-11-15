@@ -207,9 +207,9 @@ static void cp_meter(const char *actor, const char *model, long bytes, long ms,
     if (auth_call(argv, NULL, out, sizeof(out)) != 0)
         fprintf(stderr, "companions: meter record failed for %s\n", attempt);
 }
-static int serve_companions(const char *method, const char *target, const char *query,
-                            const char *body, const char *raw, const char *host,
-                            const char *bearer, const char *auth_db, const char *accept) {
+static int serve_companions(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     int listing = !strcmp(target, "/companions") || !strcmp(target, "/companions/");
     int mutate = !strcmp(target, "/companions/affinity");
     int plans = !strcmp(target, "/companions/plans") || !strcmp(target, "/companions/plans/");

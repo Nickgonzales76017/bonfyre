@@ -141,13 +141,22 @@ static void usage(void) {
           "       bonfyre-domain apply --ip IPV4 [--host @] [--only DOMAIN] --secrets FILE --apply\n", stderr);
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define DOM_COMMANDS(X) \
+    X("apply", DOM_APPLY) \
+    X("plan", DOM_PLAN) \
+    X("status", DOM_STATUS)
+BF_COMMAND_TABLE(dom_commands, DOM_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     const char *verb, *only, *ip, *record, *secrets_path; SecretSet secrets; int applying, any = 0, failures = 0; size_t i;
     if (argc < 2) { usage(); return 2; }
-    verb = argv[1]; only = option(argc, argv, "--only"); ip = option(argc, argv, "--ip"); record = option(argc, argv, "--host"); secrets_path = option(argc, argv, "--secrets"); applying = !strcmp(verb, "apply");
-    if (strcmp(verb, "status") && strcmp(verb, "plan") && strcmp(verb, "apply")) { usage(); return 2; }
-    if ((!strcmp(verb, "plan") || applying) && !is_ip(ip)) { fputs("bonfyre-domain: --ip must be one IPv4 address\n", stderr); return 2; }
+    verb = argv[1]; const int verb_id = bf_command_id(dom_commands, BF_COMMAND_COUNT(dom_commands), verb, -1); only = option(argc, argv, "--only"); ip = option(argc, argv, "--ip"); record = option(argc, argv, "--host"); secrets_path = option(argc, argv, "--secrets"); applying = verb_id==DOM_APPLY;
+    if ((verb_id!=DOM_STATUS) && (verb_id!=DOM_PLAN) && (verb_id!=DOM_APPLY)) { usage(); return 2; }
+    if ((verb_id==DOM_PLAN || applying) && !is_ip(ip)) { fputs("bonfyre-domain: --ip must be one IPv4 address\n", stderr); return 2; }
     if (applying && !has_flag(argc, argv, "--apply")) { fputs("bonfyre-domain: apply requires explicit --apply\n", stderr); return 2; }
     if (load_secrets(secrets_path, &secrets) < 0) { fprintf(stderr, "bonfyre-domain: cannot read declared secrets file: %s\n", secrets_path ? secrets_path : "(missing --secrets)"); return 2; }
     for (i = 0; DOMAINS[i].name; ++i) {

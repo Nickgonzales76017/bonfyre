@@ -69,11 +69,8 @@ static int serve_program_workspace(const char *method,const char *target,const c
         PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;
         int choices=psetup_destinations(bearer,auth_db,rows,&count);
         if(choices==1){
-            fputs("<form class=\"program-context\" action=\"/programs\" method=\"get\"><label for=\"program-context\">Workspace</label><select id=\"program-context\" name=\"context\">",stdout);
-            for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,in.context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}
-            fputs("</select>",stdout);
-            if(*in.template_id){fputs("<input type=\"hidden\" name=\"template\" value=\"",stdout);html(in.template_id);fputs("\">",stdout);}
-            fputs("<button>Switch</button></form>",stdout);
+            const FtField hidden[]={{*in.template_id?"template":NULL,in.template_id}};
+            psetup_picker("program-context","/programs","Workspace","Switch",rows,count,choices,in.context,hidden,1);
         }else fputs("<p role=\"alert\">Your workspaces could not be listed. Refresh to change workspace.</p>",stdout);
         fputs("<div data-program-app><p role=\"status\">Opening your programs…</p></div><noscript>Enable JavaScript to open and work on a program.</noscript></section><script type=\"module\" src=\"/apps/program-workspace.mjs\"></script>",stdout);
         psetup_end();return 1;

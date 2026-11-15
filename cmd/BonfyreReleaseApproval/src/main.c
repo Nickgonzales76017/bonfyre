@@ -22,8 +22,16 @@
 
 static int word(const char *s, size_t max) { size_t n = strlen(s); return n && n <= max && strspn(s, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:.@_") == n; }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define RAP_COMMANDS(X) \
+    X("approve", RAP_APPROVE) \
+    X("list", RAP_LIST)
+BF_COMMAND_TABLE(rap_commands, RAP_COMMANDS);
+
 int main(int argc, char **argv) {
-    const char *cmd = argc > 1 ? argv[1] : "", *home = getenv("HOME") ? getenv("HOME") : "", *release = NULL, *actor = NULL;
+    const char *cmd = argc > 1 ? argv[1] : "", *home = getenv("HOME") ? getenv("HOME") : "", *release = NULL, *actor = NULL; const int cmd_id=bf_command_id(rap_commands,BF_COMMAND_COUNT(rap_commands),cmd,-1);
     char opdb[1024], approvals[1024];
     snprintf(opdb, sizeof(opdb), "%s/.bonfyre/operator/operator.sqlite3", home);
     snprintf(approvals, sizeof(approvals), "%s/.bonfyre/state/approvals", home);
@@ -34,11 +42,11 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--actor") && i + 1 < argc) actor = argv[++i];
         else { fprintf(stderr, "unknown argument %s\n", argv[i]); return 2; }
     }
-    if (strcmp(cmd, "list") && strcmp(cmd, "approve")) { fputs("usage: bonfyre-release-approval list | approve --release R --actor A\n", stderr); return 2; }
+    if ((cmd_id!=RAP_LIST) && (cmd_id!=RAP_APPROVE)) { fputs("usage: bonfyre-release-approval list | approve --release R --actor A\n", stderr); return 2; }
     sqlite3 *db = NULL; sqlite3_stmt *q = NULL;
     if (sqlite3_open_v2(opdb, &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) { fprintf(stderr, "cannot open %s\n", opdb); return 1; }
     sqlite3_busy_timeout(db, 3000);
-    if (!strcmp(cmd, "list")) {
+    if (cmd_id==RAP_LIST) {
         bf_jsonw w; bf_jsonw_init(&w, 0); bf_jsonw_obj(&w); bf_jsonw_key(&w, "open"); bf_jsonw_arr(&w);
         if (sqlite3_prepare_v2(db, "SELECT substr(dedupe_key,18),id,details,last_error FROM goals WHERE source='release-approval' AND dedupe_key LIKE 'release-approval:%' AND state NOT IN('resolved','superseded') ORDER BY updated_at DESC LIMIT 20", -1, &q, NULL) == SQLITE_OK)
             while (sqlite3_step(q) == SQLITE_ROW) {

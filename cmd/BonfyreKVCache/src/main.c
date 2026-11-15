@@ -1255,11 +1255,30 @@ static int parse_hex32(const char *hex, uint8_t out[32]) {
     return 0;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define KVC_COMMANDS(X) \
+    X("--help", KVC_OPT_HELP) \
+    X("-h", KVC_OPT_H) \
+    X("ancestry", KVC_ANCESTRY) \
+    X("benchmark", KVC_BENCHMARK) \
+    X("chain", KVC_CHAIN) \
+    X("context-compile", KVC_CONTEXT_COMPILE) \
+    X("context-verify", KVC_CONTEXT_VERIFY) \
+    X("fetch", KVC_FETCH) \
+    X("kvgc", KVC_KVGC) \
+    X("kvlog", KVC_KVLOG) \
+    X("kvpack", KVC_KVPACK) \
+    X("roundtrip", KVC_ROUNDTRIP) \
+    X("store", KVC_STORE)
+BF_COMMAND_TABLE(kvc_commands, KVC_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
 
-    const char *cmd = argv[1];
-    if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(kvc_commands,BF_COMMAND_COUNT(kvc_commands),cmd,-1);
+    if (cmd_id==KVC_OPT_HELP || cmd_id==KVC_OPT_H) {
         usage(); return 0;
     }
 
@@ -1268,7 +1287,7 @@ int main(int argc, char **argv) {
     if ((v = bf_arg_value(argc, argv, "--bits"))) bits = atoi(v);
 
     /* ── store: persist a .bfkv blob by (model_hash, ctx_hash) ── */
-    if (strcmp(cmd, "store") == 0) {
+    if (cmd_id==KVC_STORE) {
         if (argc < 5) {
             fprintf(stderr, "Usage: bonfyre-kvcache store <model_hash_hex> <ctx_hash_hex> <file.bfkv>\n");
             return 1;
@@ -1290,7 +1309,7 @@ int main(int argc, char **argv) {
     }
 
     /* ── fetch: retrieve a .bfkv blob by (model_hash, ctx_hash) ── */
-    if (strcmp(cmd, "fetch") == 0) {
+    if (cmd_id==KVC_FETCH) {
         if (argc < 4) {
             fprintf(stderr, "Usage: bonfyre-kvcache fetch <model_hash_hex> <ctx_hash_hex> [--out file]\n");
             return 1;
@@ -1320,7 +1339,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd, "roundtrip") == 0) {
+    if (cmd_id==KVC_ROUNDTRIP) {
         if (argc < 3) { usage(); return 1; }
         const char *input_path = argv[2];
 
@@ -1349,7 +1368,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd, "benchmark") == 0) {
+    if (cmd_id==KVC_BENCHMARK) {
         /* A benchmark measures a tensor somebody recorded. Gaussian noise
          * stood here once and reported a pass; noise is not a key/value
          * cache, and its cosine says nothing about one. */
@@ -1393,19 +1412,19 @@ int main(int argc, char **argv) {
         return r.cosine > 0.999 ? 0 : 2;
     }
 
-    if (strcmp(cmd, "context-verify") == 0) {
+    if (cmd_id==KVC_CONTEXT_VERIFY) {
         return kvcache_cmd_context_verify_(argc - 1, argv + 1);
     }
-    if (strcmp(cmd, "context-compile") == 0) {
+    if (cmd_id==KVC_CONTEXT_COMPILE) {
         return kvcache_cmd_context_compile_(argc - 1, argv + 1);
     }
 
     /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
-    if (strcmp(cmd, "chain")    == 0) return kvcache_cmd_chain_   (argc-1, argv+1);
-    if (strcmp(cmd, "ancestry") == 0) return kvcache_cmd_ancestry_(argc-1, argv+1);
-    if (strcmp(cmd, "kvlog")    == 0) return kvcache_cmd_kvlog_   (argc-1, argv+1);
-    if (strcmp(cmd, "kvpack")   == 0) return kvcache_cmd_kvpack_  (argc-1, argv+1);
-    if (strcmp(cmd, "kvgc")     == 0) return kvcache_cmd_kvgc_    (argc-1, argv+1);
+    if (cmd_id==KVC_CHAIN) return kvcache_cmd_chain_   (argc-1, argv+1);
+    if (cmd_id==KVC_ANCESTRY) return kvcache_cmd_ancestry_(argc-1, argv+1);
+    if (cmd_id==KVC_KVLOG) return kvcache_cmd_kvlog_   (argc-1, argv+1);
+    if (cmd_id==KVC_KVPACK) return kvcache_cmd_kvpack_  (argc-1, argv+1);
+    if (cmd_id==KVC_KVGC) return kvcache_cmd_kvgc_    (argc-1, argv+1);
 
     fprintf(stderr, "Unknown command: %s\n", cmd);
     usage();

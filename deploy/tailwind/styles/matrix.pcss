@@ -67,9 +67,9 @@ body .subj .price-kinds a{flex:none;display:inline-flex;align-items:center;gap:8
 body .subj .price-kinds a[aria-current]{background:var(--lime);border-color:var(--lime);color:#0d130f;font-weight:600}
 body .subj .price-kinds small{opacity:.65;font-size:.72rem}
 body .subj:has(.price-strip) .subj-note{font-size:1rem;max-width:58ch}
-body .subj .price-find{display:flex;gap:8px;margin:1.25rem 0 0;padding:4px 6px 4px 14px;border:1px solid var(--line);border-radius:14px;background:#141c17}
-body .subj .price-find input{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;padding:10px 2px}
-body .subj .price-find button{font:600 .85rem 'DM Sans',sans-serif;border:0;border-radius:10px;padding:8px 16px;background:var(--lime);color:#0d130f;cursor:pointer}
+body .subj [data-price-find]{display:flex;gap:8px;margin:1.25rem 0 0;padding:4px 6px 4px 14px;border:1px solid var(--line);border-radius:14px;background:#141c17}
+body .subj [data-price-find] input{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;padding:10px 2px}
+body .subj [data-price-find] button{font:600 .85rem 'DM Sans',sans-serif;border:0;border-radius:10px;padding:8px 16px;background:var(--lime);color:#0d130f;cursor:pointer}
 body .subj:has(.price-strip){counter-reset:ledger}
 body .subj:has(.price-strip) .room-h{counter-increment:ledger;margin:clamp(3rem,6vw,5rem) 0 1rem;padding-top:clamp(2rem,4vw,3rem);border-top:1px solid var(--line);font-size:clamp(1.8rem,3.4vw,2.6rem);line-height:1.08;letter-spacing:-.035em}
 body .subj:has(.price-strip) .room-h::before{content:counter(ledger,decimal-leading-zero) " / ledger";display:block;margin-bottom:.8rem;font:500 .68rem/1 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}

@@ -1,5 +1,7 @@
 #ifndef BONFYRE_COMMUNITY_JOURNEY_WEB_H
 #define BONFYRE_COMMUNITY_JOURNEY_WEB_H
+#include "form_tree.h"
+#include "../generated/native_estate_hosts.h"
 #include "../../BonfyreCMS/src/community_read.h"
 /* Community UI over existing records; account identity comes only from Auth. */
 typedef struct {char operation[24],community[97],target[97],expected[65],request[33],title[161],text[6001];} CjwForm;
@@ -58,7 +60,7 @@ static void cjw_search_thread_head(void *context) {
     while (take && (unsigned char)post->body[take] >= 0x80 &&
            ((unsigned char)post->body[take]&0xc0)==0x80) --take;
     memcpy(desc,post->body,take);desc[take]=0;
-    snprintf(url,sizeof(url),"https://aurekai.life/community/%s/thread/%s/",
+    snprintf(url,sizeof(url),BF_ORIGIN_LIFE "/community/%s/thread/%s/",
              c->community->key,root);
     snprintf(author,sizeof(author),"Member %s",
              cjr_actor(post->author)?post->author+5:"unknown");
@@ -171,7 +173,10 @@ static void cjw_begin(const char *title,const char *key,const char *description,
 static void cjw_end(void){fputs("</div>",stdout);ak_app_close();}
 static void cjw_form_fields(const CjwForm *p){ph_hidden("operation",p->operation);ph_hidden("community",p->community);ph_hidden("target",p->target);ph_hidden("expected",p->expected);ph_hidden("request",p->request);ph_hidden("title",p->title);ph_hidden("text",p->text);}
 static void cjw_action(const char *op,const char *key,const char *target,const char *expected,const char *label){
- fputs("<form method=\"post\" action=\"/community/action\">",stdout);ph_hidden("operation",op);ph_hidden("community",key);ph_hidden("target",target?target:"");ph_hidden("expected",expected?expected:"");fputs("<button type=\"submit\" data-community-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
+ const FtField hidden[]={{"operation",op},{"community",key},{"target",target?target:""},{"expected",expected?expected:""}};
+ const FtSubmit go[]={{.label=label,.hook="community-action",.hook_value=op}};
+ const FtForm f={.id="cj-action",.action="/community/action",.hidden=hidden,.nhidden=4,.submits=go,.nsubmits=1};
+ ft_form(stdout,&f);
 }
 static void cjw_name(const char *actor,const char *viewer,const char *owner){if(viewer&&*viewer&&!strcmp(actor,viewer))html("You");else if(owner&&*owner&&!strcmp(actor,owner))html("Community steward");else{fputs("Member ",stdout);html(cjr_actor(actor)?actor+5:"unknown");}}
 static int cjw_member_state(sqlite3 *db,const CjrCommunity *c,const char *actor,CjrMember *m){if(!actor||!*actor){memset(m,0,sizeof(*m));snprintf(m->digest,sizeof(m->digest),"absent");return 0;}return cjr_member(db,c->key,actor,m);}
@@ -280,7 +285,11 @@ static void cjw_directory(sqlite3 *db,const char *q,long long cursor,int guilds)
  {sqlite3_stmt *s=NULL;snprintf(sql,sizeof(sql),"SELECT b.interest_label,COUNT(*)%s AND COALESCE(b.interest_label,'')<>'' GROUP BY b.interest_label ORDER BY COUNT(*) DESC LIMIT 8",scope);
   if(db&&sqlite3_prepare_v2(db,sql,-1,&s,NULL)==SQLITE_OK){sqlite3_bind_text(s,1,CJR_POLICY,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,"",-1,SQLITE_STATIC);sqlite3_bind_int(s,3,guilds);while(sqlite3_step(s)==SQLITE_ROW){const char *l=(const char*)sqlite3_column_text(s,0);printf("<a class=\"ak-chip\" href=\"%s?q=",route);url_query_value(l);fputs("\"",stdout);if(q&&*q&&!strcmp(q,l))fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(l);printf(" <b>%d</b></a>",sqlite3_column_int(s,1));}}sqlite3_finalize(s);}
  fputs("</nav>",stdout);
- printf("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Registry</span><h2>%s</h2></div><form class=\"cj-search\" method=\"get\" action=\"%s\" role=\"search\"><input type=\"search\" name=\"q\" aria-label=\"Find by name or interest\" placeholder=\"Find by name or interest\" value=\"",guilds?"Chambers of craft":"Communities",route);html(q);fputs("\"><button type=\"submit\">Find</button></form></header>",stdout);
+ printf("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Registry</span><h2>%s</h2></div>",guilds?"Chambers of craft":"Communities");
+ {const FtInput find[]={{.label="Find by name or interest",.type="search",.name="q",.value=q,.placeholder="Find by name or interest"}};
+  const FtForm f={.id="cj-search",.method="get",.action=route,.label="Find",.hook="community-search",.inputs=find,.ninputs=1};
+  ft_form(stdout,&f);}
+ fputs("</header>",stdout);
  sqlite3_stmt *s=NULL;int count=0,more=0;long long last=0;char group[161]="\x01";
  const char *list=
    "SELECT b.community,b.id,COALESCE(b.interest_label,''),b.governance_scope,"
@@ -378,7 +387,9 @@ static void cjw_exchange(sqlite3 *db,int signed_in){
  fputs("<a class=\"sx-btn\" href=\"/community/new\">Start a community</a><a class=\"sx-btn\" href=\"/guilds\">Browse guilds</a></nav></section></div>",stdout);
  ak_app_close();
 }
-static int serve_community_journey(const char *method,const char *path,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const char *accept){
+static int serve_community_journey(const BfRequest *r) {
+    const char *method=r->method; const char *path=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)path;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
  char path_community[97]={0}, path_post[97]={0}; int permalink=0;
  if(path&&!strncmp(path,"/community/",11)){
   const char *first=path+11, *break_at=strstr(first,"/thread/");

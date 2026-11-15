@@ -38,6 +38,7 @@ static sqlite3 *open_store(int mode){sqlite3 *db=NULL;const char *p=getenv("PJ_F
 static sqlite3 *cms_open_rw(void){return open_store(SQLITE_OPEN_READWRITE);}
 static sqlite3 *cms_open_ro(void){return open_store(SQLITE_OPEN_READONLY);}
 #include "../src/participant_state.h"
+#include "../src/web_request.h"
 #include "../src/participant_journey.h"
 int main(int argc,char **argv){
     if(argc==2&&!strcmp(argv[1],"--headers")){
@@ -66,6 +67,7 @@ int main(int argc,char **argv){
     }
     if(pj_legacy(argv[1],argv[2],argv[4],raw,argv[5],argv[6],"fixture-auth"))return 0;
     const char *accept=getenv("PJ_ACCEPT");if(!accept)accept="text/html";
-    if(serve_participant_journey(argv[1],argv[2],argv[3],argv[4],raw,argv[5],argv[6],"fixture-auth",accept))return 0;
+    BfRequest request={.method=argv[1],.target=argv[2],.query=argv[3],.body=argv[4],.raw=raw,.host=argv[5],.bearer=argv[6],.auth_db="fixture-auth",.accept=accept};
+    if(serve_participant_journey(&request))return 0;
     protocol_reply(404,"text/plain","Fixture route not found");return 0;
 }

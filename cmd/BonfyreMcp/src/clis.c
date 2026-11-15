@@ -162,20 +162,48 @@ static bf_jv *obj_kv(const char *k, bf_jv *v) { bf_jv *o = bf_jv_obj(); bf_jv_se
 #define N(x) bf_jv_num(x)
 #define CALL(var, name, args) do { var = sp_call(o, name, args, err); if (!var) goto fail; } while (0)
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define MCPV_COMMANDS(X) \
+    X("authority", MCPV_AUTHORITY) \
+    X("closure", MCPV_CLOSURE) \
+    X("delta", MCPV_DELTA) \
+    X("dependency", MCPV_DEPENDENCY) \
+    X("flux", MCPV_FLUX) \
+    X("full-smoke", MCPV_FULL_SMOKE) \
+    X("ingest", MCPV_INGEST) \
+    X("mission-bootstrap", MCPV_MISSION_BOOTSTRAP) \
+    X("mission-finalize", MCPV_MISSION_FINALIZE) \
+    X("native-smoke", MCPV_NATIVE_SMOKE) \
+    X("phenotype", MCPV_PHENOTYPE) \
+    X("place", MCPV_PLACE) \
+    X("r5-smoke", MCPV_R5_SMOKE) \
+    X("r6-smoke", MCPV_R6_SMOKE) \
+    X("r7-smoke", MCPV_R7_SMOKE) \
+    X("replay", MCPV_REPLAY) \
+    X("saturate", MCPV_SATURATE) \
+    X("status", MCPV_STATUS) \
+    X("tokenize", MCPV_TOKENIZE) \
+    X("tokenizers", MCPV_TOKENIZERS) \
+    X("verify", MCPV_VERIFY) \
+    X("version", MCPV_VERSION)
+BF_COMMAND_TABLE(mcpv_commands, MCPV_COMMANDS);
+
 static int spines_run(Owned *o, int argc, char **argv, bf_jv **result, char *err) {
     static const char *names[] = { "status", "verify", "flux", "closure", "saturate", "authority", "phenotype", "place",
                                    "r5-smoke", "r6-smoke", "r7-smoke", "full-smoke" };
-    const char *command = argc ? argv[0] : NULL; int known = 0;
+    const char *command = argc ? argv[0] : NULL; const int verb=bf_command_id(mcpv_commands,BF_COMMAND_COUNT(mcpv_commands),command,-1); int known = 0;
     for (size_t i = 0; command && i < sizeof names / sizeof *names; i++) if (!strcmp(names[i], command)) known = 1;
     if (!known) { snprintf(err, ERR_MAX, "usage: bonfyre-spines status|verify|flux|closure|saturate|authority|phenotype|place|r5-smoke|r6-smoke|r7-smoke|full-smoke"); return -1; }
     Opt opts[8]; int nopts = 0, arity = 0;
 #define O(n, b, d) opts[nopts++] = (Opt){ n, b, d, NULL, 0 }
-    if (!strcmp(command, "flux")) arity = 5;
-    else if (!strcmp(command, "closure")) { arity = 2; O("depth", 0, "16"); }
-    else if (!strcmp(command, "saturate")) { arity = 1; O("iterations", 0, "12"); O("terms", 0, "2048"); }
-    else if (!strcmp(command, "authority")) { arity = 1; O("actor", 0, "operator"); O("resource", 0, ""); }
-    else if (!strcmp(command, "phenotype")) { arity = 1; O("mission-id", 0, ""); O("tokens", 0, "0"); O("privacy", 0, "internal"); }
-    else if (!strcmp(command, "place")) { O("mission-id", 0, ""); O("phenotype-id", 0, ""); O("privacy", 0, "internal"); O("effect", 0, "CANDIDATE_WRITE");
+    if (verb==MCPV_FLUX) arity = 5;
+    else if (verb==MCPV_CLOSURE) { arity = 2; O("depth", 0, "16"); }
+    else if (verb==MCPV_SATURATE) { arity = 1; O("iterations", 0, "12"); O("terms", 0, "2048"); }
+    else if (verb==MCPV_AUTHORITY) { arity = 1; O("actor", 0, "operator"); O("resource", 0, ""); }
+    else if (verb==MCPV_PHENOTYPE) { arity = 1; O("mission-id", 0, ""); O("tokens", 0, "0"); O("privacy", 0, "internal"); }
+    else if (verb==MCPV_PLACE) { O("mission-id", 0, ""); O("phenotype-id", 0, ""); O("privacy", 0, "internal"); O("effect", 0, "CANDIDATE_WRITE");
         O("bytes", 0, "0"); O("gpu", 1, "false"); O("local-only", 1, "false"); }
     char **pos = calloc((size_t)argc + 1, sizeof *pos); int npos;
     bf_jv *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL, *f = NULL, *g = NULL, *r5 = NULL, *r6 = NULL, *r7 = NULL;
@@ -183,36 +211,36 @@ static int spines_run(Owned *o, int argc, char **argv, bf_jv **result, char *err
     if (npos != arity) { snprintf(err, ERR_MAX, "expected %d positional arguments for %s", arity, command); goto fail; }
     double n1, n2;
 #define V(name) opt(opts, nopts, name)
-    if (!strcmp(command, "status")) { CALL(*result, "spines_status", bf_jv_obj()); goto ok; }
-    if (!strcmp(command, "verify")) { CALL(*result, "spines_verify", bf_jv_obj()); goto ok; }
-    if (!strcmp(command, "flux")) {
+    if (verb==MCPV_STATUS) { CALL(*result, "spines_status", bf_jv_obj()); goto ok; }
+    if (verb==MCPV_VERIFY) { CALL(*result, "spines_verify", bf_jv_obj()); goto ok; }
+    if (verb==MCPV_FLUX) {
         bf_jv *payload = jsx_parse(pos[4], strlen(pos[4]), err); if (!payload) goto fail;
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "stream", S(pos[0])); bf_jv_set(x, "kind", S("operator.append"));
         bf_jv_set(x, "subject_kind", S(pos[1])); bf_jv_set(x, "subject_id", S(pos[2])); bf_jv_set(x, "operation", S(pos[3]));
         bf_jv_set(x, "payload", payload); CALL(*result, "r5_flux_append", x); goto ok;
     }
-    if (!strcmp(command, "closure")) {
+    if (verb==MCPV_CLOSURE) {
         if (spines_integer(V("depth"), &n1, err)) goto fail;
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "root_kind", S(pos[0])); bf_jv_set(x, "root_id", S(pos[1])); bf_jv_set(x, "max_depth", N(n1));
         CALL(*result, "r5_affected_closure", x); goto ok;
     }
-    if (!strcmp(command, "saturate")) {
+    if (verb==MCPV_SATURATE) {
         if (spines_integer(V("iterations"), &n1, err) || spines_integer(V("terms"), &n2, err)) goto fail;
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "term", S(pos[0])); bf_jv_set(x, "max_iterations", N(n1)); bf_jv_set(x, "max_terms", N(n2));
         CALL(*result, "r6_saturate", x); goto ok;
     }
-    if (!strcmp(command, "authority")) {
+    if (verb==MCPV_AUTHORITY) {
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "actor", S(V("actor"))); bf_jv_set(x, "effect_class", S(pos[0]));
         if (*V("resource")) bf_jv_set(x, "resource", S(V("resource")));
         CALL(*result, "r6_authority_preflight", x); goto ok;
     }
-    if (!strcmp(command, "phenotype")) {
+    if (verb==MCPV_PHENOTYPE) {
         if (spines_integer(V("tokens"), &n1, err)) goto fail;
         bf_jv *x = bf_jv_obj(); if (*V("mission-id")) bf_jv_set(x, "mission_id", S(V("mission-id")));
         bf_jv_set(x, "model_family", S(pos[0])); bf_jv_set(x, "token_count", N(n1)); bf_jv_set(x, "privacy_class", S(V("privacy")));
         CALL(*result, "r7_phenotype_compile", x); goto ok;
     }
-    if (!strcmp(command, "place")) {
+    if (verb==MCPV_PLACE) {
         if (spines_integer(V("bytes"), &n1, err)) goto fail;
         bf_jv *x = bf_jv_obj(); if (*V("mission-id")) bf_jv_set(x, "mission_id", S(V("mission-id")));
         if (*V("phenotype-id")) bf_jv_set(x, "phenotype_id", S(V("phenotype-id")));
@@ -220,8 +248,8 @@ static int spines_run(Owned *o, int argc, char **argv, bf_jv **result, char *err
         bf_jv_set(x, "requires_gpu", bf_jv_bool(opt_on(opts, nopts, "gpu"))); bf_jv_set(x, "remote_allowed", bf_jv_bool(!opt_on(opts, nopts, "local-only")));
         CALL(*result, "r7_placement_compile", x); goto ok;
     }
-    int full = !strcmp(command, "full-smoke");
-    if (full || !strcmp(command, "r5-smoke")) {
+    int full = verb==MCPV_FULL_SMOKE;
+    if (full || verb==MCPV_R5_SMOKE) {
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "stream", S("smoke")); bf_jv_set(x, "kind", S("smoke.object")); bf_jv_set(x, "subject_kind", S("smoke"));
         bf_jv_set(x, "subject_id", S("r5-r7")); bf_jv_set(x, "operation", S("UPSERT"));
         bf_jv *pl = bf_jv_obj(); bf_jv_set(pl, "state", S("ready")); bf_jv_set(pl, "ready", bf_jv_bool(1)); bf_jv_set(pl, "counter", N(1)); bf_jv_set(x, "payload", pl);
@@ -237,7 +265,7 @@ static int spines_run(Owned *o, int argc, char **argv, bf_jv **result, char *err
         bf_jv_set(r5, "first", a); bf_jv_set(r5, "second", b); bf_jv_set(r5, "parity", c); a = b = c = NULL;
         if (!full) { *result = r5; r5 = NULL; goto ok; }
     }
-    if (full || !strcmp(command, "r6-smoke")) {
+    if (full || verb==MCPV_R6_SMOKE) {
         CALL(a, "r6_saturate", obj_kv("term", S("add(0,mul(add(2,3),1))")));
         bf_jv *x = bf_jv_obj(); jsx_set_opt(x, "term", jsx_get(a, "selected_term")); jsx_set_opt(x, "source_run_id", jsx_get(a, "run_id")); bf_jv_set(x, "fuel", N(10000));
         CALL(b, "r6_helix_compile", x);
@@ -255,7 +283,7 @@ static int spines_run(Owned *o, int argc, char **argv, bf_jv **result, char *err
         a = b = c = d = e = NULL;
         if (!full) { *result = r6; r6 = NULL; goto ok; }
     }
-    if (full || !strcmp(command, "r7-smoke")) {
+    if (full || verb==MCPV_R7_SMOKE) {
         CALL(a, "r7_hardware_census", obj_kv("node_id", S("local")));
         CALL(b, "r7_model_discover", bf_jv_obj());
         bf_jv *x = bf_jv_obj(); bf_jv_set(x, "mission_id", S("smoke-r7")); bf_jv_set(x, "model_family", S("BonfyreQwenFPQ")); bf_jv_set(x, "token_count", N(4096)); bf_jv_set(x, "privacy_class", S("internal"));
@@ -315,7 +343,7 @@ fail:
 /* ── v6 ─────────────────────────────────────────────────────── */
 int cli_v6(int argc, char **argv) {
     char err[ERR_MAX], path[4096];
-    if (argc == 1 && (!strcmp(argv[0], "--version") || !strcmp(argv[0], "version"))) { puts("bonfyre-v6 6.1.0"); return 0; }
+    if (argc == 1 && (!strcmp(argv[0], "--version") || bf_command_id(mcpv_commands,BF_COMMAND_COUNT(mcpv_commands),argv[0],-1)==MCPV_VERSION)) { puts("bonfyre-v6 6.1.0"); return 0; }
     static const char *cmds[] = { "status", "verify", "estate", "workgraph", "resources", "backends", "missions", "history", "sparse", "proof", "outcomes" };
     Owned o = { 0 }; bf_jv *result = NULL;
     if (owned_endpoint("BONFYRE_V6_URL", "http://127.0.0.1:3058", &o.url, err)) goto fail;
@@ -331,7 +359,7 @@ int cli_v6(int argc, char **argv) {
     if (!result) goto fail;
     jsx_print(stdout, result);
     const bf_jv *ver = jsx_get(result, "verified");
-    int code = !strcmp(argv[0], "verify") && !(ver && ver->type == BF_JV_BOOL && ver->b) ? 1 : 0;
+    int code = bf_command_id(mcpv_commands,BF_COMMAND_COUNT(mcpv_commands),argv[0],-1)==MCPV_VERIFY && !(ver && ver->type == BF_JV_BOOL && ver->b) ? 1 : 0;
     bf_jv_free(result); free(o.token);
     return code;
 fail:
@@ -594,17 +622,17 @@ static int recursive_parse(int argc, char **argv, const bf_jv *tools, const char
         *text = "bonfyre-recursive 5.1.0-recursive-r1\n"; *code = 0; return 1;
     }
     for (int i = 0; i < argc; i++) if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) { *text = RECURSIVE_HELP; *code = 0; return 1; }
-    const char *command = argv[0]; char **rest = argv + 1; int nrest = argc - 1;
+    const char *command = argv[0]; const int verb=bf_command_id(mcpv_commands,BF_COMMAND_COUNT(mcpv_commands),command,-1); char **rest = argv + 1; int nrest = argc - 1;
     Found found[8]; int nf = 0, np = 0; char **pos = calloc((size_t)argc + 1, sizeof *pos); int rc = -1;
     bf_jv *a = NULL; *timeout = 120000;
-    if (!strcmp(command, "status") || !strcmp(command, "replay") || !strcmp(command, "tokenizers")) {
+    if (verb==MCPV_STATUS || verb==MCPV_REPLAY || verb==MCPV_TOKENIZERS) {
         if (positional(nrest, 0, command, err)) goto out;
-        *tool = !strcmp(command, "status") ? "recursive_status" : !strcmp(command, "replay") ? "substrate_replay_verify" : "tokenizer_list";
+        *tool = verb==MCPV_STATUS ? "recursive_status" : verb==MCPV_REPLAY ? "substrate_replay_verify" : "tokenizer_list";
         a = bf_jv_obj();
-    } else if (!strcmp(command, "native-smoke")) {
+    } else if (verb==MCPV_NATIVE_SMOKE) {
         if (positional(nrest, 0, command, err)) goto out;
         rc = 2; goto out;
-    } else if (!strcmp(command, "ingest")) {
+    } else if (verb==MCPV_INGEST) {
         const Spec s[] = { { "--kind", "kind", 's', NULL }, { "--classification", "classification", 's', NULL }, { "--schema", "schema", 's', NULL }, { 0 } };
         if (options(1, rest, nrest, s, found, &nf, pos, &np, err) || positional(np, 1, command, err)) goto out;
         bf_jv *k = found_get(found, nf, "kind"), *c = found_get(found, nf, "classification"), *sc = found_get(found, nf, "schema");
@@ -612,29 +640,29 @@ static int recursive_parse(int argc, char **argv, const bf_jv *tools, const char
         bf_jv_set(a, "classification", c ? bf_jv_clone(c) : S("internal"));
         if (jsx_truthy(sc)) bf_jv_set(a, "schema_name", bf_jv_clone(sc));
         *tool = "artifact_ingest"; *timeout = 1800000;
-    } else if (!strcmp(command, "tokenize")) {
+    } else if (verb==MCPV_TOKENIZE) {
         const Spec s[] = { { "--tokenizer", "tokenizer", 's', NULL }, { 0 } };
         if (options(1, rest, nrest, s, found, &nf, pos, &np, err) || positional(np, 1, command, err)) goto out;
         bf_jv *t = found_get(found, nf, "tokenizer");
         a = bf_jv_obj(); bf_jv_set(a, "artifact_id", S(pos[0])); bf_jv_set(a, "tokenizer_id", t ? bf_jv_clone(t) : S("lexeme-v1"));
         *tool = "token_artifact_compile"; *timeout = 1800000;
-    } else if (!strcmp(command, "delta")) {
+    } else if (verb==MCPV_DELTA) {
         if (positional(nrest, 2, command, err)) goto out;
         a = bf_jv_obj(); bf_jv_set(a, "source_token_artifact_id", S(rest[0])); bf_jv_set(a, "target_token_artifact_id", S(rest[1]));
         *tool = "token_delta_derive"; *timeout = 1800000;
-    } else if (!strcmp(command, "dependency")) {
+    } else if (verb==MCPV_DEPENDENCY) {
         if (positional(nrest, 5, command, err)) goto out;
         const char *k[] = { "source_kind", "source_id", "target_kind", "target_id", "edge_kind" };
         a = bf_jv_obj(); for (int i = 0; i < 5; i++) bf_jv_set(a, k[i], S(rest[i]));
         *tool = "dependency_register";
-    } else if (!strcmp(command, "closure")) {
+    } else if (verb==MCPV_CLOSURE) {
         const Spec s[] = { { "--depth", "depth", 'i', NULL }, { 0 } };
         if (options(1, rest, nrest, s, found, &nf, pos, &np, err) || positional(np, 2, command, err)) goto out;
         bf_jv *dv = found_get(found, nf, "depth"); double depth = dv ? dv->n : 12;
         if (depth < 0 || depth > 64) { snprintf(err, ERR_MAX, "--depth must be between 0 and 64"); goto out; }
         a = bf_jv_obj(); bf_jv_set(a, "root_kind", S(pos[0])); bf_jv_set(a, "root_id", S(pos[1])); bf_jv_set(a, "max_depth", N(depth));
         *tool = "affected_closure_compile";
-    } else if (!strcmp(command, "mission-bootstrap")) {
+    } else if (verb==MCPV_MISSION_BOOTSTRAP) {
         const Spec s[] = { { "--context", "context", 's', NULL }, { "--tokenizer", "tokenizer", 's', NULL }, { 0 } };
         if (options(1, rest, nrest, s, found, &nf, pos, &np, err) || positional(np, 2, command, err)) goto out;
         bf_jv *m = read_mission(pos[0], err); if (!m) goto out;
@@ -643,7 +671,7 @@ static int recursive_parse(int argc, char **argv, const bf_jv *tools, const char
         if (jsx_truthy(cx)) bf_jv_set(a, "context_packet_path", bf_jv_clone(cx));
         bf_jv_set(a, "tokenizer_id", t ? bf_jv_clone(t) : S("lexeme-v1"));
         *tool = "recursive_mission_bootstrap"; *timeout = 3600000;
-    } else if (!strcmp(command, "mission-finalize")) {
+    } else if (verb==MCPV_MISSION_FINALIZE) {
         const Spec s[] = { { "--source-bfp-root", "source", 's', NULL }, { "--target-bfp-root", "target", 's', NULL }, { "--changed-section", "sections", 'r', NULL }, { 0 } };
         if (options(1, rest, nrest, s, found, &nf, pos, &np, err) || positional(np, 1, command, err)) goto out;
         bf_jv *m = read_mission(pos[0], err); if (!m) goto out;

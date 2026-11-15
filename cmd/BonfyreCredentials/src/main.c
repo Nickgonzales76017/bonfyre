@@ -1448,8 +1448,30 @@ done:
     return ok;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CRED_COMMANDS(X) \
+    X("apply", CRED_APPLY) \
+    X("bootstrap", CRED_BOOTSTRAP) \
+    X("clear", CRED_CLEAR) \
+    X("generate", CRED_GENERATE) \
+    X("github-app-convert", CRED_GITHUB_APP_CONVERT) \
+    X("github-app-customer", CRED_GITHUB_APP_CUSTOMER) \
+    X("github-app-installations", CRED_GITHUB_APP_INSTALLATIONS) \
+    X("github-app-verify", CRED_GITHUB_APP_VERIFY) \
+    X("init-key", CRED_INIT_KEY) \
+    X("openapi", CRED_OPENAPI) \
+    X("ready", CRED_READY) \
+    X("serve", CRED_SERVE) \
+    X("set", CRED_SET) \
+    X("status", CRED_STATUS) \
+    X("verify", CRED_VERIFY) \
+    X("verify-all", CRED_VERIFY_ALL)
+BF_COMMAND_TABLE(cred_commands, CRED_COMMANDS);
+
 int main(int argc, char **argv) {
-    Registry reg = {0}; unsigned char key[32]; int rc = 1; const char *cmd = argc > 1 ? argv[1] : "";
+    Registry reg = {0}; unsigned char key[32]; int rc = 1; const char *cmd = argc > 1 ? argv[1] : ""; const int cmd_id=bf_command_id(cred_commands,BF_COMMAND_COUNT(cred_commands),cmd,-1);
     const char *providers_path = argc > 2 ? arg(argc, argv, "--providers") : NULL, *actor = argc > 2 ? arg(argc, argv, "--actor") : NULL;
     char *providers_text = NULL;
     umask(077);
@@ -1457,10 +1479,10 @@ int main(int argc, char **argv) {
     if (argc > 2 && arg(argc, argv, "--account")) {
         const char *a = arg(argc, argv, "--account"); size_t n = strlen(a);
         if (!n || n > 128 || strspn(a, "abcdefghijklmnopqrstuvwxyz0123456789-_.@+") != n) { fprintf(stderr, "credentials: --account takes lowercase letters, digits and - _ . @ +\n"); return 2; }
-        if (!strcmp(cmd, "serve")) { fputs("credentials: the loopback page serves the estate account only\n", stderr); return 2; }
+        if (cmd_id==CRED_SERVE) { fputs("credentials: the loopback page serves the estate account only\n", stderr); return 2; }
         g_account = a;
     }
-    if (!strcmp(cmd, "init-key")) return init_key(arg(argc, argv, "--key")) ? 0 : 1;
+    if (cmd_id==CRED_INIT_KEY) return init_key(arg(argc, argv, "--key")) ? 0 : 1;
     if (!(reg.db = open_store(arg(argc, argv, "--db")))) { usage(); return 2; }
     if (providers_path) {
         char err[160] = "";
@@ -1468,41 +1490,41 @@ int main(int argc, char **argv) {
         if (!(reg.declared = bf_json_parse_str(providers_text, err, sizeof(err)))) { fprintf(stderr, "credentials: providers: %s: %s\n", providers_path, err[0] ? err : "not valid JSON"); free(providers_text); sqlite3_close(reg.db); return 2; }
     }
     if (!actor) actor = "operator-cli";
-    if (!strcmp(cmd, "status")) { status_json(&reg, stdout); rc = 0; goto out; }
-    if (!strcmp(cmd, "clear")) { rc = arg(argc, argv, "--provider") && arg(argc, argv, "--field") && op_clear(&reg, arg(argc, argv, "--provider"), arg(argc, argv, "--field"), actor) ? 0 : 1; if (!rc) printf("{\"cleared\":true}\n"); goto out; }
-    if (!strcmp(cmd, "openapi")) {
+    if (cmd_id==CRED_STATUS) { status_json(&reg, stdout); rc = 0; goto out; }
+    if (cmd_id==CRED_CLEAR) { rc = arg(argc, argv, "--provider") && arg(argc, argv, "--field") && op_clear(&reg, arg(argc, argv, "--provider"), arg(argc, argv, "--field"), actor) ? 0 : 1; if (!rc) printf("{\"cleared\":true}\n"); goto out; }
+    if (cmd_id==CRED_OPENAPI) {
         char *spec = arg(argc, argv, "--spec") ? read_file(arg(argc, argv, "--spec"), NULL) : NULL;
         rc = spec && valid_id(arg(argc, argv, "--provider"), 64) && import_openapi(reg.db, arg(argc, argv, "--provider"), arg(argc, argv, "--name"), spec, arg(argc, argv, "--spec"), actor) ? 0 : 1;
         free(spec); goto out;
     }
     if (!load_key(arg(argc, argv, "--key"), key)) { fprintf(stderr, "credentials: key unreadable\n"); rc = 2; goto out; }
-    if (!strcmp(cmd, "bootstrap")) { rc = op_bootstrap(&reg, key, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "verify-all")) { rc = op_verify_all(&reg, key, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "github-app-convert")) { rc = op_github_app_convert(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "github-app-installations")) { rc = op_github_app_installations(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "github-app-customer")) { rc = op_github_app_customer(&reg, key, arg(argc, argv, "--api"), arg(argc, argv, "--installation"), actor, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "github-app-verify")) { rc = op_github_app_verify(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
-    else if (!strcmp(cmd, "ready") && arg(argc, argv, "--provider")) { int ready = provider_ready(&reg, key, arg(argc, argv, "--provider")); printf("{\"ready\":%s}\n", ready ? "true" : "false"); rc = ready ? 0 : 4; }
-    else if (!strcmp(cmd, "set")) {
+    if (cmd_id==CRED_BOOTSTRAP) { rc = op_bootstrap(&reg, key, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_VERIFY_ALL) { rc = op_verify_all(&reg, key, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_GITHUB_APP_CONVERT) { rc = op_github_app_convert(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_GITHUB_APP_INSTALLATIONS) { rc = op_github_app_installations(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_GITHUB_APP_CUSTOMER) { rc = op_github_app_customer(&reg, key, arg(argc, argv, "--api"), arg(argc, argv, "--installation"), actor, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_GITHUB_APP_VERIFY) { rc = op_github_app_verify(&reg, key, arg(argc, argv, "--api"), actor, stdout) ? 0 : 1; }
+    else if (cmd_id==CRED_READY && arg(argc, argv, "--provider")) { int ready = provider_ready(&reg, key, arg(argc, argv, "--provider")); printf("{\"ready\":%s}\n", ready ? "true" : "false"); rc = ready ? 0 : 4; }
+    else if (cmd_id==CRED_SET) {
         char value[MAX_VALUE]; size_t n = fread(value, 1, sizeof(value) - 1, stdin);
         value[n] = '\0';
         while (n && isspace((unsigned char)value[n - 1])) value[--n] = '\0';
         rc = n && arg(argc, argv, "--provider") && arg(argc, argv, "--field") && op_set(&reg, key, arg(argc, argv, "--provider"), arg(argc, argv, "--field"), value, actor) ? 0 : 1;
         OPENSSL_cleanse(value, sizeof(value));
         if (!rc) printf("{\"stored\":true,\"shown_again\":false}\n");
-    } else if (!strcmp(cmd, "generate")) {
+    } else if (cmd_id==CRED_GENERATE) {
         char value[128];
         rc = arg(argc, argv, "--provider") && arg(argc, argv, "--field") && op_generate(&reg, key, arg(argc, argv, "--provider"), arg(argc, argv, "--field"), actor, value, sizeof(value)) ? 0 : 1;
         if (!rc) { printf("{\"generated\":true"); if (flag(argc, argv, "--reveal")) { printf(",\"value_shown_once\":"); jstr(stdout, value); } printf("}\n"); }
         OPENSSL_cleanse(value, sizeof(value));
-    } else if (!strcmp(cmd, "apply") && arg(argc, argv, "--provider") && arg(argc, argv, "--url")) {
+    } else if (cmd_id==CRED_APPLY && arg(argc, argv, "--provider") && arg(argc, argv, "--url")) {
         rc = apply_provider(&reg, key, arg(argc, argv, "--provider"), arg(argc, argv, "--url"), stdout, 0);
         if (!rc) audit(reg.db, actor, arg(argc, argv, "--provider"), "", "apply", "headers issued to a fetcher");
-    } else if (!strcmp(cmd, "verify") && arg(argc, argv, "--provider")) {
+    } else if (cmd_id==CRED_VERIFY && arg(argc, argv, "--provider")) {
         int status = 0;
         rc = verify_provider(&reg, key, arg(argc, argv, "--provider"), actor, &status);
         printf("{\"provider\":"); jstr(stdout, arg(argc, argv, "--provider")); printf(",\"http_status\":%d,\"outcome\":\"%s\"}\n", status, rc == 0 ? "accepted" : rc == 4 ? "missing required field" : rc == 2 ? "no check declared" : "refused");
-    } else if (!strcmp(cmd, "serve") && arg(argc, argv, "--auth-db") && arg(argc, argv, "--auth-binary")) {
+    } else if (cmd_id==CRED_SERVE && arg(argc, argv, "--auth-db") && arg(argc, argv, "--auth-binary")) {
         Server s; memset(&s, 0, sizeof(s));
         s.auth_binary = arg(argc, argv, "--auth-binary"); s.auth_db = arg(argc, argv, "--auth-db");
         s.port = arg(argc, argv, "--port") ? atoi(arg(argc, argv, "--port")) : 18910;

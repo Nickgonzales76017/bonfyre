@@ -51,6 +51,7 @@ export function main(argv = process.argv.slice(2)) {
   const cms = new Database(join(args.estate, "cms.db"));
   const fabric = new Database(join(args.estate, "subject_fabric.db"));
   cms.exec("PRAGMA busy_timeout=60000");
+  if (args.apply) cms.exec("PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864");
   fabric.exec("PRAGMA busy_timeout=60000");
   try {
     const publishers = archive.query("SELECT publisher, COUNT(*) AS items, COUNT(DISTINCT source) AS sources FROM item WHERE COALESCE(publisher,'')<>'' GROUP BY publisher HAVING items >= ? ORDER BY items DESC LIMIT ?").all(args.minItems, args.limit);

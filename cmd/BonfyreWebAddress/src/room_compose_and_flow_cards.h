@@ -55,9 +55,9 @@ static size_t ambient_render(char *out, size_t cap, size_t w,
  * nearby occurrences and deal structure -- so the room is honest about which of
  * those this estate can actually supply.
  */
-static int serve_room(const char *method, const char *target, const char *query,
-                      const char *bearer, const char *auth_db, const char *accept)
-{
+static int serve_room(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;(void)accept;
     static char body[262144], rows[131072];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     char kind[32], ident[160], raw[192];
@@ -858,9 +858,9 @@ static int serve_held_page_make(const char *target, const char *query,
     flow_reply(body); return 1;
 }
 
-static int serve_compose(const char *method, const char *target, const char *query,
-                         const char *req_body, const char *bearer, const char *auth_db)
-{
+static int serve_compose(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *req_body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)req_body;(void)bearer;(void)auth_db;
     static char body[131072];
     char raw[1024], text[1024], esc[2048];
     int signed_in, may_write;
@@ -1165,9 +1165,9 @@ static void surfaceir_trace(const char *kind, const char *closure,
     sqlite3_close(db);
 }
 
-static int serve_surfaceir(const char *method, const char *target, const char *query,
-                           const char *bearer, const char *auth_db)
-{
+static int serve_surfaceir(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char body[262144];
     sqlite3 *db; sqlite3_stmt *st = NULL;
     size_t w = 0;

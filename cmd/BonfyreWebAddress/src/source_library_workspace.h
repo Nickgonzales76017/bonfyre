@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SOURCE_LIBRARY_WORKSPACE_H
 #define BONFYRE_SOURCE_LIBRARY_WORKSPACE_H
+#include "form_tree.h"
 /* Source library, native on the one shell. One flow: paste a link or pick a
  * source Aurekai already reads, see what it is, press Follow, and it is in
  * your library. Following writes one bonfyre.source-material.v1 link record
@@ -104,9 +105,11 @@ static int slw_param(const char *query,const char *name,char *out,size_t cap){
     return 0;
 }
 static void slw_follow_form(const char *id,const char *url,const char *title,const char *back,int primary){
-    fputs("<form method=\"post\" action=\"/apps/",stdout);html(id);fputs("/_follow\" class=\"ak-src-follow\">",stdout);
-    psetup_hidden("url",url);if(title&&*title)psetup_hidden("title",title);if(back&&*back)psetup_hidden("back",back);
-    printf("<button class=\"ak-btn%s\" type=\"submit\">Follow</button></form>",primary?" is-primary":"");
+    char action[200];snprintf(action,sizeof(action),"/apps/%s/_follow",id);
+    const FtField hidden[]={{"url",url},{title&&*title?"title":NULL,title},{back&&*back?"back":NULL,back}};
+    const FtSubmit go[]={{.label="Follow",.tone=primary?NULL:"quiet"}};
+    const FtForm f={.id="src-follow",.action=action,.hook="src-follow",.hidden=hidden,.nhidden=3,.submits=go,.nsubmits=1};
+    ft_form(stdout,&f);
 }
 
 static int slw_follow(const char *method,const char *body,const char *raw,const char *host,const char *id,const char *subject,const char *scope,const char *actor){
@@ -178,15 +181,20 @@ static int slw_page(const char *query,const char *id,const char *subject,const c
     fputs("<section class=\"ak-ask ak-src-finder\"><nav class=\"ak-src-modes\" aria-label=\"How to find a source\">",stdout);
     printf("<a href=\"/apps/%s/sources/\"%s>Browse known sources</a><a href=\"/apps/%s/sources/?mode=link\"%s>Bring a web address</a></nav>",id,link?"":" aria-current=\"page\"",id,link?" aria-current=\"page\"":"");
     if(!link){
-        printf("<form method=\"get\" action=\"/apps/%s/sources/\" class=\"ak-src-search\" role=\"search\"><input type=\"search\" name=\"q\" maxlength=\"140\" placeholder=\"Search by name, address or topic\" aria-label=\"Search sources\" value=\"",id);html(q);
-        fputs("\"><button class=\"ak-btn is-primary\" type=\"submit\">Search</button></form><nav class=\"ak-src-topics\" aria-label=\"Topics\">",stdout);
+        {char action[200];snprintf(action,sizeof(action),"/apps/%s/sources/",id);
+         const FtInput find[]={{.label="Search sources",.type="search",.name="q",.maxlength="140",.value=q,.placeholder="Search by name, address or topic"}};
+         const FtForm f={.id="src-search",.method="get",.action=action,.label="Search",.hook="src-search",.inputs=find,.ninputs=1};
+         ft_form(stdout,&f);}
+        fputs("<nav class=\"ak-src-topics\" aria-label=\"Topics\">",stdout);
         static const char *topics[][2]={{"","All sources"},{"podcast","Podcasts"},{"music","Music"},{"science","Science"},{"video","Video"},{"recall","Recalls"},{"gov","Government"}};
         for(size_t i=0;i<sizeof(topics)/sizeof(topics[0]);i++){printf("<a class=\"ak-chip\" href=\"/apps/%s/sources/%s%s\"%s>",id,*topics[i][0]?"?q=":"",topics[i][0],!strcmp(q,topics[i][0])?" aria-current=\"page\"":"");fputs(topics[i][1],stdout);if(!strcmp(q,topics[i][0])&&known_ok)printf(" <b>%lld</b>",total);fputs("</a>",stdout);}
         fputs("</nav>",stdout);
     }else{
         char url[1100];int valid=*pasted&&slw_url(pasted,url,sizeof(url));
-        printf("<form method=\"get\" action=\"/apps/%s/sources/\" class=\"ak-src-search\"><input type=\"url\" name=\"url\" required maxlength=\"2000\" placeholder=\"Paste a link, like https://example.org/feed\" aria-label=\"Web address\" value=\"",id);html(pasted);
-        fputs("\"><button class=\"ak-btn is-primary\" type=\"submit\">Look it up</button></form>",stdout);
+        {char action[200];snprintf(action,sizeof(action),"/apps/%s/sources/",id);
+         const FtInput link_in[]={{.label="Web address",.type="url",.name="url",.required=1,.maxlength="2000",.value=pasted,.placeholder="Paste a link, like https://example.org/feed"}};
+         const FtForm f={.id="src-link",.method="get",.action=action,.label="Look it up",.hook="src-link",.inputs=link_in,.ninputs=1};
+         ft_form(stdout,&f);}
         if(*pasted&&!valid)fputs("<p class=\"ak-src-alert\" role=\"alert\">That doesn't look like a public web address. Use the full link, starting with https://, without a login or private network address.</p>",stdout);
         if(valid){
             char host_name[256];slw_host(url,host_name,sizeof(host_name));SlwKnown match[3];int mn=0;long long mt=0,mx=-1;

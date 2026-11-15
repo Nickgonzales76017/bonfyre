@@ -2,6 +2,7 @@
 #ifndef _DARWIN_C_SOURCE
 #define _DARWIN_C_SOURCE
 #endif
+#include "../generated/native_estate_hosts.h"
 #include "markdown_fence.h"
 /*
  * A site's own MCP server.
@@ -89,9 +90,9 @@ static void site_icon_metadata(FILE *out, const McpSite *site) {
     if (!site->reading) return;
     /* Syndicated publisher hosts may not have Matrix asset routes. */
     fputs(",\"icons\":[{\"src\":", out);
-    jtext(out, "https://aurekai.live/assets/aurekai-knight-48.png");
+    jtext(out, BF_ORIGIN_LIVE "/assets/aurekai-knight-48.png");
     fputs(",\"mimeType\":\"image/png\",\"sizes\":[\"48x48\"]},{\"src\":", out);
-    jtext(out, "https://aurekai.live/assets/aurekai-knight.png");
+    jtext(out, BF_ORIGIN_LIVE "/assets/aurekai-knight.png");
     fputs(",\"mimeType\":\"image/png\",\"sizes\":[\"168x168\"]}]", out);
 }
 static void site_browser_icon(FILE *out, const McpSite *site) {

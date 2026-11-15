@@ -340,6 +340,16 @@ static void print_usage(void) {
         "  bonfyre-canon status\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CAN_COMMANDS(X) \
+    X("diff", CAN_DIFF) \
+    X("hash", CAN_HASH) \
+    X("literals", CAN_LITERALS) \
+    X("normalize", CAN_NORMALIZE) \
+    X("parse", CAN_PARSE)
+BF_COMMAND_TABLE(can_commands, CAN_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     enum { CN_STATUS };
@@ -355,20 +365,20 @@ int main(int argc, char **argv) {
 
     if (argc < 3) { print_usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(can_commands,BF_COMMAND_COUNT(can_commands),cmd,-1);
     const char *file1 = argv[2];
 
-    if (strcmp(cmd, "parse") == 0) {
+    if (cmd_id==CAN_PARSE) {
         return cmd_parse(file1, (argc > 3) ? argv[3] : "output");
-    } else if (strcmp(cmd, "hash") == 0) {
+    } else if (cmd_id==CAN_HASH) {
         return cmd_hash(file1, (argc > 3) ? argv[3] : "output");
-    } else if (strcmp(cmd, "diff") == 0) {
+    } else if (cmd_id==CAN_DIFF) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_diff(file1, argv[3], (argc > 4) ? argv[4] : "output");
-    } else if (strcmp(cmd, "normalize") == 0) {
+    } else if (cmd_id==CAN_NORMALIZE) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_normalize(file1, argv[3]);
-    } else if (strcmp(cmd, "literals") == 0) {
+    } else if (cmd_id==CAN_LITERALS) {
         return bf_canon_c_literals(file1, (argc > 3) ? argv[3] : "output");
     }
 

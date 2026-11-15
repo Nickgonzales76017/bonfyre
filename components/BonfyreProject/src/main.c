@@ -5658,13 +5658,70 @@ static int foreign_store_defaults(void) {
 
 #include "message_review.h"
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define PJ_COMMANDS(X) \
+    X("activation", PJ_ACTIVATION) \
+    X("cms", PJ_CMS) \
+    X("discovery", PJ_DISCOVERY) \
+    X("foreign", PJ_FOREIGN) \
+    X("index", PJ_INDEX) \
+    X("message", PJ_MESSAGE) \
+    X("refresh", PJ_REFRESH) \
+    X("session", PJ_SESSION) \
+    X("sign", PJ_SIGN) \
+    X("stitch", PJ_STITCH) \
+    X("version", PJ_VERSION)
+BF_COMMAND_TABLE(pj_commands, PJ_COMMANDS);
+
+#define PJS_COMMANDS(X) \
+    X("admissible", PJS_ADMISSIBLE) \
+    X("bind", PJS_BIND) \
+    X("body", PJS_BODY) \
+    X("check", PJS_CHECK) \
+    X("compose", PJS_COMPOSE) \
+    X("conflicts", PJS_CONFLICTS) \
+    X("decide", PJS_DECIDE) \
+    X("diff", PJS_DIFF) \
+    X("duplicates", PJS_DUPLICATES) \
+    X("edges", PJS_EDGES) \
+    X("end", PJS_END) \
+    X("history", PJS_HISTORY) \
+    X("hydration", PJS_HYDRATION) \
+    X("observe", PJS_OBSERVE) \
+    X("open", PJS_OPEN) \
+    X("pack", PJS_PACK) \
+    X("pack-bodies", PJS_PACK_BODIES) \
+    X("pack-bodies-verify", PJS_PACK_BODIES_VERIFY) \
+    X("pack-retire", PJS_PACK_RETIRE) \
+    X("pack-verify", PJS_PACK_VERIFY) \
+    X("project-demand", PJS_PROJECT_DEMAND) \
+    X("promote", PJS_PROMOTE) \
+    X("receipt", PJS_RECEIPT) \
+    X("reconcile", PJS_RECONCILE) \
+    X("record", PJS_RECORD) \
+    X("reheat", PJS_REHEAT) \
+    X("relate", PJS_RELATE) \
+    X("release-compile", PJS_RELEASE_COMPILE) \
+    X("release-deliver", PJS_RELEASE_DELIVER) \
+    X("release-impact", PJS_RELEASE_IMPACT) \
+    X("resolve", PJS_RESOLVE) \
+    X("review", PJS_REVIEW) \
+    X("run", PJS_RUN) \
+    X("select", PJS_SELECT) \
+    X("take", PJS_TAKE) \
+    X("twins", PJS_TWINS)
+BF_COMMAND_TABLE(pjs_commands, PJS_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         print_usage();
         return 1;
     }
-    if (!strcmp(argv[1], "foreign") && foreign_store_defaults()) return 2;
-    if (argc >= 3 && !strcmp(argv[1], "message") && !strcmp(argv[2], "review"))
+    const int sub=bf_command_id(pjs_commands,BF_COMMAND_COUNT(pjs_commands),(argc >= 3 ? argv[2] : NULL),-1); const int verb=bf_command_id(pj_commands,BF_COMMAND_COUNT(pj_commands),argv[1],-1);
+    if (verb==PJ_FOREIGN && foreign_store_defaults()) return 2;
+    if (argc >= 3 && verb==PJ_MESSAGE && sub==PJS_REVIEW)
         return message_review(argc, argv);
 
     char cms_resolved[PATH_MAX];
@@ -5674,9 +5731,9 @@ int main(int argc, char **argv) {
     const char *index_bin = default_binary("BONFYRE_INDEX_BINARY", argv[0], index_resolved, sizeof(index_resolved), "BonfyreIndex", "bonfyre-index", "../BonfyreIndex/bonfyre-index");
     const char *stitch_bin = default_binary("BONFYRE_STITCH_BINARY", argv[0], stitch_resolved, sizeof(stitch_resolved), "BonfyreStitch", "bonfyre-stitch", "../BonfyreStitch/bonfyre-stitch");
 
-    if (strcmp(argv[1], "cms") == 0 || strcmp(argv[1], "index") == 0 || strcmp(argv[1], "stitch") == 0) {
+    if (verb==PJ_CMS || verb==PJ_INDEX || verb==PJ_STITCH) {
         if (argc < 3) return 1;
-        const char *target = strcmp(argv[1], "cms") == 0 ? cms_bin : (strcmp(argv[1], "index") == 0 ? index_bin : stitch_bin);
+        const char *target = verb==PJ_CMS ? cms_bin : (verb==PJ_INDEX ? index_bin : stitch_bin);
         char **child = calloc((size_t)argc, sizeof(char *));
         if (!child) return 1;
         child[0] = (char *)target;
@@ -5686,7 +5743,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "refresh") == 0) {
+    if (verb==PJ_REFRESH) {
         if (argc < 3) {
             print_usage();
             return 1;
@@ -5702,8 +5759,8 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "activation") == 0 && argc >= 4 &&
-        strcmp(argv[2], "project-demand") == 0) {
+    if (verb==PJ_ACTIVATION && argc >= 4 &&
+        sub==PJS_PROJECT_DEMAND) {
         const char *db_path = NULL;
         for (int i = 4; i < argc; i++) {
             if (strcmp(argv[i], "--db") == 0 && i + 1 < argc) db_path = argv[++i];
@@ -5719,13 +5776,13 @@ int main(int argc, char **argv) {
         return activation_project_demand(argv[3], db_path);
     }
 
-    if (strcmp(argv[1], "activation") == 0 && argc >= 3 &&
-        (strcmp(argv[2], "select") == 0 || strcmp(argv[2], "bind") == 0 ||
-         strcmp(argv[2], "reconcile") == 0)) {
+    if (verb==PJ_ACTIVATION && argc >= 3 &&
+        (sub==PJS_SELECT || sub==PJS_BIND ||
+         sub==PJS_RECONCILE)) {
         const char *resource = NULL, *service = NULL, *actor = NULL, *mechanism = "service";
         const char *evidence = "", *db_path = NULL;
-        int first = !strcmp(argv[2], "reconcile") ? 3 : 4;
-        if (strcmp(argv[2], "reconcile") != 0) resource = argc >= 4 ? argv[3] : NULL;
+        int first = sub==PJS_RECONCILE ? 3 : 4;
+        if (sub!=PJS_RECONCILE) resource = argc >= 4 ? argv[3] : NULL;
         else if (argc >= 4 && strncmp(argv[3], "--", 2) != 0) { resource = argv[3]; first = 4; }
         for (int i = first; i < argc; i++) {
             if (!strcmp(argv[i], "--db") && i + 1 < argc) db_path = argv[++i];
@@ -5735,54 +5792,54 @@ int main(int argc, char **argv) {
             else if (!strcmp(argv[i], "--evidence") && i + 1 < argc) evidence = argv[++i];
             else { print_usage(); return 1; }
         }
-        if (!db_path || !*db_path || ((!strcmp(argv[2], "select") || !strcmp(argv[2], "bind")) &&
+        if (!db_path || !*db_path || ((sub==PJS_SELECT || sub==PJS_BIND) &&
             (!resource || !*resource || !actor || !*actor)) ||
-            (!strcmp(argv[2], "bind") && (!service || !*service || !evidence || !*evidence))) {
+            (sub==PJS_BIND && (!service || !*service || !evidence || !*evidence))) {
             print_usage(); return 1;
         }
-        if (!strcmp(argv[2], "select")) return activation_select(resource, actor, mechanism, evidence, db_path);
-        if (!strcmp(argv[2], "bind")) return activation_bind(resource, service, actor, evidence, db_path);
+        if (sub==PJS_SELECT) return activation_select(resource, actor, mechanism, evidence, db_path);
+        if (sub==PJS_BIND) return activation_bind(resource, service, actor, evidence, db_path);
         return activation_reconcile(resource, db_path);
     }
 
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "duplicates") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_DUPLICATES) {
         char mdb_buf[PATH_MAX]; const char *mdb = foreign_matrix_db(mdb_buf, sizeof(mdb_buf));
         return foreign_duplicate_identities(mdb);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 5 && (strcmp(argv[2], "receipt") == 0 || strcmp(argv[2], "pack-retire") == 0)) {
+    if (verb==PJ_FOREIGN && argc >= 5 && (sub==PJS_RECEIPT || sub==PJS_PACK_RETIRE)) {
 #ifdef BONFYRE_HAVE_ZSTD
-        if (!strcmp(argv[2], "pack-retire")) return foreign_pack_retire(argv[3], argv[4]);
+        if (sub==PJS_PACK_RETIRE) return foreign_pack_retire(argv[3], argv[4]);
         return foreign_receipt(argv[3], argv[4]);
 #else
         fprintf(stderr, "this build carries no zstd, so it reads no receipt pack\n");
         return 1;
 #endif
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 5 && (strcmp(argv[2], "pack") == 0 || strcmp(argv[2], "pack-verify") == 0)) {
+    if (verb==PJ_FOREIGN && argc >= 5 && (sub==PJS_PACK || sub==PJS_PACK_VERIFY)) {
 #ifdef BONFYRE_HAVE_ZSTD
-        return strcmp(argv[2], "pack") == 0 ? foreign_pack(argv[3], argv[4]) : foreign_pack_verify(argv[3], argv[4]);
+        return sub==PJS_PACK ? foreign_pack(argv[3], argv[4]) : foreign_pack_verify(argv[3], argv[4]);
 #else
         fprintf(stderr, "this build carries no zstd, so it neither writes nor reads a receipt pack\n");
         return 1;
 #endif
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 5 && (strcmp(argv[2], "pack-bodies") == 0 || strcmp(argv[2], "pack-bodies-verify") == 0 || strcmp(argv[2], "body") == 0)) {
+    if (verb==PJ_FOREIGN && argc >= 5 && (sub==PJS_PACK_BODIES || sub==PJS_PACK_BODIES_VERIFY || sub==PJS_BODY)) {
 #ifdef BONFYRE_HAVE_ZSTD
-        if (!strcmp(argv[2], "body")) return foreign_body(argv[3], argv[4]);
-        return strcmp(argv[2], "pack-bodies") == 0 ? foreign_pack_bodies(argv[3], argv[4]) : foreign_pack_bodies_verify(argv[3], argv[4]);
+        if (sub==PJS_BODY) return foreign_body(argv[3], argv[4]);
+        return sub==PJS_PACK_BODIES ? foreign_pack_bodies(argv[3], argv[4]) : foreign_pack_bodies_verify(argv[3], argv[4]);
 #else
         fprintf(stderr, "this build carries no zstd, so it neither writes nor reads a receipt pack\n");
         return 1;
 #endif
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "hydration") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_HYDRATION) {
         const char *dir = getenv("BONFYRE_FOREIGN_RECEIPTS");
         if (!dir || !*dir) dir = "/var/lib/bonfyre/foreign/receipts";
         return foreign_hydration(dir);
     }
 
 
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "edges") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_EDGES) {
         const char *gdb = getenv("BONFYRE_FOREIGN_GRAPH");
         const char *scope = "public";
         int a;
@@ -5791,7 +5848,7 @@ int main(int argc, char **argv) {
             if (!strcmp(argv[a], "--scope") && a + 1 < argc) scope = argv[++a];
         return foreign_edges(gdb, scope);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 6 && strcmp(argv[2], "relate") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 6 && sub==PJS_RELATE) {
         const char *gdb = getenv("BONFYRE_FOREIGN_GRAPH");
         const char *federation = "unknown", *carrier = "unknown";
         const char *evidence = "", *scope = "public";
@@ -5805,44 +5862,44 @@ int main(int argc, char **argv) {
         }
         return foreign_relate(gdb, argv[3], argv[4], argv[5], federation, carrier, evidence, scope);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "admissible") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_ADMISSIBLE) {
         const char *dir = getenv("BONFYRE_FOREIGN_RECEIPTS");
         if (!dir || !*dir) dir = "/var/lib/bonfyre/foreign/receipts";
         return foreign_admissible(dir);
     }
 
-    if (strcmp(argv[1], "version") == 0 && argc >= 3) {
-        if (!strcmp(argv[2], "take") && argc >= 5)
+    if (verb==PJ_VERSION && argc >= 3) {
+        if (sub==PJS_TAKE && argc >= 5)
             return cell_version_take(getenv("BONFYRE_CMS_DB"), argv[3], argv[4],
                                      getenv("BONFYRE_ACTOR"));
-        if (!strcmp(argv[2], "diff") && argc >= 5)
+        if (sub==PJS_DIFF && argc >= 5)
             return cell_version_diff(getenv("BONFYRE_CMS_DB"), argv[3], argv[4]);
         fprintf(stderr, "version take <root> <label> | version diff <from> <to>\n");
         return 1;
     }
-    if (strcmp(argv[1], "message") == 0 && argc >= 7 && strcmp(argv[2], "compose") == 0) {
+    if (verb==PJ_MESSAGE && argc >= 7 && sub==PJS_COMPOSE) {
         return cell_message_compose(getenv("BONFYRE_CMS_DB"), argv[3], argv[4], argv[5], argv[6],
                                     getenv("BONFYRE_ACTOR"));
     }
-    if (strcmp(argv[1], "sign") == 0 && argc >= 3) {
-        if (!strcmp(argv[2], "record") && argc >= 6)
+    if (verb==PJ_SIGN && argc >= 3) {
+        if (sub==PJS_RECORD && argc >= 6)
             return cell_sign(getenv("BONFYRE_CMS_DB"), argv[3], argv[4], argv[5],
                              getenv("BONFYRE_ACTOR"));
-        if (!strcmp(argv[2], "check") && argc >= 5)
+        if (sub==PJS_CHECK && argc >= 5)
             return cell_sign_check(getenv("BONFYRE_CMS_DB"), argv[3], argv[4]);
         fprintf(stderr, "sign record <about> <file> <statement> | sign check <signature> <file>\n");
         return 1;
     }
-    if (strcmp(argv[1], "session") == 0 && argc >= 4) {
+    if (verb==PJ_SESSION && argc >= 4) {
         /* open takes a label; end takes what it points at for replay. Passing
          * one as the other put a replay reference in the label slot and then
          * reported the session as having no replay. */
-        const char *label = (!strcmp(argv[2], "open") && argc >= 5) ? argv[4] : "";
-        const char *replay = (!strcmp(argv[2], "end") && argc >= 5) ? argv[4] : "";
+        const char *label = (sub==PJS_OPEN && argc >= 5) ? argv[4] : "";
+        const char *replay = (sub==PJS_END && argc >= 5) ? argv[4] : "";
         return cell_session(getenv("BONFYRE_CMS_DB"), argv[2], argv[3], label,
                             getenv("BONFYRE_ACTOR"), replay);
     }
-    if (strcmp(argv[1], "discovery") == 0 && argc >= 4 && strcmp(argv[2], "run") == 0) {
+    if (verb==PJ_DISCOVERY && argc >= 4 && sub==PJS_RUN) {
         long limit = 0;
         int write = 0, a;
         for (a = 4; a < argc; a++) {
@@ -5852,16 +5909,16 @@ int main(int argc, char **argv) {
         return discovery_run(getenv("BONFYRE_CMS_DB"), getenv("BONFYRE_SOURCE_FRONTIER_DB"),
                              argv[3], limit, write);
     }
-    if (strcmp(argv[1], "discovery") == 0 && argc >= 6 && strcmp(argv[2], "decide") == 0) {
+    if (verb==PJ_DISCOVERY && argc >= 6 && sub==PJS_DECIDE) {
         return discovery_decide(getenv("BONFYRE_CMS_DB"), argv[3], argv[4], argv[5],
                                 getenv("BONFYRE_ACTOR"), argc >= 7 ? argv[6] : "");
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "release-impact") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_RELEASE_IMPACT) {
         int write = (argc >= 4 && !strcmp(argv[3], "--write"));
         return release_impact(getenv("BONFYRE_CMS_DB"), getenv("BONFYRE_SOURCE_FRONTIER_DB"),
                               getenv("BONFYRE_ITEM_ARCHIVE_DB"), getenv("BONFYRE_PRICES_DB"), write);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "release-deliver") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_RELEASE_DELIVER) {
         const char *root = getenv("BONFYRE_RELEASE_ROOT");
         const char *expect = "";
         int a;
@@ -5872,13 +5929,13 @@ int main(int argc, char **argv) {
                                getenv("BONFYRE_SOURCE_FRONTIER_DB"), getenv("BONFYRE_PRICES_DB"),
                                root && *root ? root : "", argv[3], argv[4], expect);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "release-compile") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_RELEASE_COMPILE) {
         int write = (argc >= 4 && !strcmp(argv[3], "--write"));
         return release_compile(getenv("BONFYRE_CMS_DB"), getenv("BONFYRE_PRICES_DB"),
                                getenv("BONFYRE_SOURCE_FRONTIER_DB"),
                                getenv("BONFYRE_ITEM_ARCHIVE_DB"), write);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "twins") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_TWINS) {
         const char *dir = getenv("BONFYRE_FOREIGN_RECEIPTS");
         char mdb_buf[PATH_MAX]; const char *mdb = foreign_matrix_db(mdb_buf, sizeof(mdb_buf));
         long page_offset = 0, page_limit = 0;
@@ -5908,7 +5965,7 @@ int main(int argc, char **argv) {
         }
         return foreign_twins(mdb, page_offset, page_limit, query, expected_generation);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "promote") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_PROMOTE) {
         const char *dir = getenv("BONFYRE_FOREIGN_RECEIPTS");
         char mdb_buf[PATH_MAX]; const char *mdb = foreign_matrix_db(mdb_buf, sizeof(mdb_buf));
         const char *only = NULL;
@@ -5920,14 +5977,14 @@ int main(int argc, char **argv) {
         }
         return foreign_promote(dir, mdb, only, dry, 0);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 &&
-        (strcmp(argv[2], "resolve") == 0 || strcmp(argv[2], "history") == 0 ||
-         strcmp(argv[2], "conflicts") == 0)) {
+    if (verb==PJ_FOREIGN && argc >= 3 &&
+        (sub==PJS_RESOLVE || sub==PJS_HISTORY ||
+         sub==PJS_CONFLICTS)) {
         const char *dir = getenv("BONFYRE_FOREIGN_RECEIPTS");
         if (!dir || !*dir) dir = "/var/lib/bonfyre/foreign/receipts";
         return foreign_resolution(dir, argv[2], argc >= 4 ? argv[3] : NULL);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 3 && strcmp(argv[2], "reheat") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 3 && sub==PJS_REHEAT) {
         const char *receipts = getenv("BONFYRE_FOREIGN_RECEIPTS");
         const char *bodies = getenv("BONFYRE_FOREIGN_BODIES");
         const char *cms = getenv("BONFYRE_CMS_DB");
@@ -5961,7 +6018,7 @@ int main(int argc, char **argv) {
         if (!weather || !*weather) weather = "/var/lib/bonfyre/foreign/weather.json";
         return foreign_reheat(cms, receipts, bodies, weather, dry, only);
     }
-    if (strcmp(argv[1], "foreign") == 0 && argc >= 5 && strcmp(argv[2], "observe") == 0) {
+    if (verb==PJ_FOREIGN && argc >= 5 && sub==PJS_OBSERVE) {
         const char *receipt_path = NULL;
         const char *body_path = NULL;
         const char *observe_right = "public";

@@ -165,7 +165,7 @@ export function run({ verb, estate = join(homedir(), ".bonfyre/estate-local"), p
   const cmsPath = join(estate, "cms.db");
   if (!existsSync(cmsPath)) throw new Error(`CMS database missing: ${cmsPath}`);
   const db = new Database(cmsPath);
-  db.exec("PRAGMA journal_mode=WAL");
+  db.exec("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864");
   try {
     return db.transaction(() => {
       const put = store(db, now());

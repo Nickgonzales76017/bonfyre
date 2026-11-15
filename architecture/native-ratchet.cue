@@ -45,7 +45,7 @@ budget: {
 	// their tests (+36 files / +4,963 lines). No superseded file was found to retire.
 	authored_mjs_files: 1682
 	// 2026-11-14: app flow rebuilds in the browser modules (measured at commit).
-	authored_mjs_lines: 187966
+	authored_mjs_lines: 187969
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SOURCE_PUSH_OPERATIONS_H
 #define BONFYRE_SOURCE_PUSH_OPERATIONS_H
+#include "form_tree.h"
 /* Institution-operator view over the existing WebSub carrier. This file does
  * not change a lease, request a subscription, accept a delivery, or fetch any
  * foreign material. The named native WebSub and ForeignTwin owners do that. */
@@ -28,19 +29,13 @@ static int spo_state_ok(const char *filter) {
     return 0;
 }
 static void spo_filters(const char *q,const char *state) {
-    fputs("<form method=\"get\" action=\"/sources/push\" class=\"spo-filters\">"
-          "<label>Search known topic or hub<input type=\"search\" name=\"q\" maxlength=\"80\" value=\"",stdout);
-    html(q);
-    fputs("\" placeholder=\"Publisher or host\"></label><label>Transport state"
-          "<select name=\"state\">",stdout);
-    static const char *states[]={"all","active","pending","expired","dirty","rejected","unsubscribed","failed"};
-    static const char *labels[]={"All","Active","Awaiting challenge","Lease expired","Source changed","Rejected deliveries","Unsubscribed","Failed"};
-    for(size_t i=0;i<sizeof(states)/sizeof(states[0]);i++){
-        fputs("<option value=\"",stdout);html(states[i]);fputs("\"",stdout);
-        if(!strcmp(state,states[i]))fputs(" selected",stdout);
-        fputs(">",stdout);html(labels[i]);fputs("</option>",stdout);
-    }
-    fputs("</select></label><button type=\"submit\">Filter subscriptions</button></form>",stdout);
+    FtOption states[]={{"all","All",0},{"active","Active",0},{"pending","Awaiting challenge",0},{"expired","Lease expired",0},
+                       {"dirty","Source changed",0},{"rejected","Rejected deliveries",0},{"unsubscribed","Unsubscribed",0},{"failed","Failed",0}};
+    for(size_t i=0;i<sizeof(states)/sizeof(states[0]);i++)states[i].checked=!strcmp(state,states[i].value);
+    const FtInput in[]={{.label="Search known topic or hub",.type="search",.name="q",.maxlength="80",.value=q,.placeholder="Publisher or host"},
+                        {.label="Transport state",.type="select",.name="state",.options=states,.noptions=sizeof(states)/sizeof(states[0])}};
+    const FtForm f={.id="spo-filters",.method="get",.action="/sources/push",.label="Filter subscriptions",.hook="spo-filters",.inputs=in,.ninputs=2};
+    ft_form(stdout,&f);
 }
 /* The material-demand ledger and the downstream FactDelta obligation are
  * separate native WebSub stores. An unbound demand must not disappear merely
@@ -183,10 +178,9 @@ static void spo_refusal(int code,const char *title,const char *why){
     fputs("</p><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/sources\">Back to sources</a></div></div></section>",stdout);
     ak_app_close();
 }
-static int serve_source_push_operations(const char *method,const char *target,
-                                        const char *query,const char *host,
-                                        const char *bearer,const char *auth_db) {
-    if(strcmp(target,"/sources/push")&&strcmp(target,"/sources/push/"))return 0;
+static int serve_source_push_operations(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)host;(void)bearer;(void)auth_db;
     if(strcmp(method,"GET")){aw_error(405,"Read this operator console with GET.\n");return 1;}
     if(!host||strcmp(host,"aurekai.work")){aw_error(404,"This operator console is not on this host.\n");return 1;}
     char actor[160],subject[160];const char *scope=NULL;

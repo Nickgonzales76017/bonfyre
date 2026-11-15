@@ -8,8 +8,9 @@ static void cms_composer_reply(int code,const char *type,const char *body) {
     printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nCache-Control: private, no-store\r\nVary: Cookie, Authorization\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nX-Frame-Options: SAMEORIGIN\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n%s",
         code,code==200?"OK":code==403?"Forbidden":code==409?"Conflict":code==503?"Service Unavailable":"Bad Request",type,strlen(body),body);
 }
-static int serve_cms_composer(const char *method,const char *target,const char *query,const char *body,
-                             const char *bearer,const char *auth_db,const char *origin,const char *host) {
+static int serve_cms_composer(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *origin=r->origin; const char *host=r->host;
+    (void)method;(void)target;(void)query;(void)body;(void)bearer;(void)auth_db;(void)origin;(void)host;
     int home=!strcmp(target,"/cms/compose"),page=!strcmp(target,"/cms/compose/page"),listing=!strcmp(target,"/cms/compose/pages"),visual=!strcmp(target,"/cms/compose/advanced"),revision=!strcmp(target,"/cms/compose/narration-revision"),revising=!strcmp(target,"/cms/compose/revise"),publishing=!strcmp(target,"/cms/compose/publish"),exporting=!strcmp(target,"/cms/compose/export");
     if(!home&&!page&&!listing&&!visual&&!revision&&!revising&&!publishing&&!exporting)return 0;
     int writing=(page||publishing||revising)&&!strcmp(method,"POST");
@@ -117,7 +118,7 @@ static int serve_cms_composer(const char *method,const char *target,const char *
     /* Both editors are pages of the one application: the estate bar, one
      * <main>, the footer and the player. Their layout is composition.css. */
     if(home){sqlite3_close(db);ak_app_http(200,1);ak_app_open("Compose a page","workbench","route-compose");fputs(cms_page_composer_markup,stdout);ak_app_close();return 1;}
-    if(visual){sqlite3_close(db);ak_app_http(200,1);ak_app_open("Visual composition","workbench","route-compose route-compose-visual");fputs(cms_page_composer_visual_markup,stdout);ak_app_close();return 1;}
+    if(visual){sqlite3_close(db);ak_app_http(200,1);ak_app_open("Visual composition","workbench","route-compose route-compose-visual");cms_page_composer_visual_emit();ak_app_close();return 1;}
     if(listing){
         sqlite3_stmt *st=NULL;const char *result=NULL;
         if(sqlite3_prepare_v2(db,"SELECT json_object('pages',json_group_array(json_object('route',route,'title',title,'status',status)),'has_more',(SELECT count(*)>512 FROM site_page WHERE namespace=?1)) FROM (SELECT route,title,status FROM site_page WHERE namespace=?1 ORDER BY route LIMIT 512)",-1,&st,NULL)==SQLITE_OK){

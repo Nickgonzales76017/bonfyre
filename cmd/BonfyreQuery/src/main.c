@@ -353,6 +353,17 @@ static void print_usage(void) {
         "  bonfyre-query status\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define QRY_COMMANDS(X) \
+    X("bridges", QRY_BRIDGES) \
+    X("family", QRY_FAMILY) \
+    X("layers", QRY_LAYERS) \
+    X("scan", QRY_SCAN) \
+    X("sql", QRY_SQL) \
+    X("stats", QRY_STATS)
+BF_COMMAND_TABLE(qry_commands, QRY_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 2) {
@@ -376,26 +387,26 @@ int main(int argc, char **argv) {
         return ok ? 0 : 1;
     }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(qry_commands,BF_COMMAND_COUNT(qry_commands),cmd,-1);
 
-    if (strcmp(cmd, "layers") == 0) {
+    if (cmd_id==QRY_LAYERS) {
         return cmd_layers_native(argc, argv);
     }
-    if (strcmp(cmd, "bridges") == 0) {
+    if (cmd_id==QRY_BRIDGES) {
         return cmd_bridges_native(argc, argv);
     }
 
     if (argc < 3) { print_usage(); return 1; }
 
-    if (strcmp(cmd, "scan") == 0) {
+    if (cmd_id==QRY_SCAN) {
         const char *db = (argc > 3) ? argv[3] : "artifacts.duckdb";
         return cmd_scan(argv[2], db);
-    } else if (strcmp(cmd, "sql") == 0) {
+    } else if (cmd_id==QRY_SQL) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_sql(argv[2], argv[3]);
-    } else if (strcmp(cmd, "stats") == 0) {
+    } else if (cmd_id==QRY_STATS) {
         return cmd_stats(argv[2], (argc > 3) ? argv[3] : "output");
-    } else if (strcmp(cmd, "family") == 0) {
+    } else if (cmd_id==QRY_FAMILY) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_family(argv[2], argv[3]);
     }

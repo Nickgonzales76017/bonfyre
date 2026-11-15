@@ -789,12 +789,28 @@ static void usage(void) {
     );
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define SLI_COMMANDS(X) \
+    X("--help", SLI_OPT_HELP) \
+    X("--version", SLI_OPT_VERSION) \
+    X("-h", SLI_OPT_H) \
+    X("auto-run", SLI_AUTO_RUN) \
+    X("bench", SLI_BENCH) \
+    X("chain", SLI_CHAIN) \
+    X("decode", SLI_DECODE) \
+    X("inspect", SLI_INSPECT) \
+    X("route", SLI_ROUTE) \
+    X("run", SLI_RUN)
+BF_COMMAND_TABLE(sli_commands, SLI_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(sli_commands,BF_COMMAND_COUNT(sli_commands),cmd,-1);
 
-    if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) { usage(); return 0; }
-    if (strcmp(cmd, "--version") == 0) {
+    if (cmd_id==SLI_OPT_HELP || cmd_id==SLI_OPT_H) { usage(); return 0; }
+    if (cmd_id==SLI_OPT_VERSION) {
         printf("bonfyre-sli v" VERSION "\n"); return 0;
     }
 
@@ -807,14 +823,14 @@ int main(int argc, char **argv) {
     const char *nstr       = bf_arg_value(argc, argv, "--n");
     int n_bench = nstr ? atoi(nstr) : 1000;
 
-    if (strcmp(cmd, "inspect") == 0) {
+    if (cmd_id==SLI_INSPECT) {
         if (!model_path) { fprintf(stderr,"sli inspect: --model required\n"); return 1; }
         return cmd_inspect_model(model_path);
     }
 
     /* decode writes the weights this reader reconstructs from a .bqfp, as
      * float32, so they can be compared with the tensor they were encoded from. */
-    if (strcmp(cmd, "decode") == 0) {
+    if (cmd_id==SLI_DECODE) {
         SliTensor decoded = {0};
         FILE *out;
         int ok;
@@ -836,14 +852,14 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd, "run") == 0) {
+    if (cmd_id==SLI_RUN) {
         if (!in_path || !model_path || !out_path) {
             fprintf(stderr,"sli run: --in, --model, --out required\n"); return 1;
         }
         return cmd_run(in_path, model_path, out_path);
     }
 
-    if (strcmp(cmd, "chain") == 0) {
+    if (cmd_id==SLI_CHAIN) {
         if (!in_path || !chain_spec || !models_dir || !out_path) {
             fprintf(stderr,"sli chain: --in, --chain, --models-dir, --out required\n"); return 1;
         }
@@ -854,19 +870,19 @@ int main(int argc, char **argv) {
         return cmd_chain(in_path, chain_spec, models_dir, out_path, gdn_gate, gdn_beta);
     }
 
-    if (strcmp(cmd, "route") == 0) {
+    if (cmd_id==SLI_ROUTE) {
         if (!in_path || !stats_path || !models_dir || !out_path) {
             fprintf(stderr,"sli route: --in, --stats, --models-dir, --out required\n"); return 1;
         }
         return cmd_route(in_path, stats_path, models_dir, out_path);
     }
 
-    if (strcmp(cmd, "bench") == 0) {
+    if (cmd_id==SLI_BENCH) {
         if (!model_path || !in_path) { fprintf(stderr,"sli bench: --model and --in are required; there are no built-in vectors\n"); return 1; }
         return cmd_bench(model_path, in_path, n_bench);
     }
 
-    if (strcmp(cmd, "auto-run") == 0) {
+    if (cmd_id==SLI_AUTO_RUN) {
         return cmd_auto_run(argc, argv);
     }
 

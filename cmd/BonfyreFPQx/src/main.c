@@ -473,16 +473,28 @@ static void usage(void) {
     );
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define FPQX_COMMANDS(X) \
+    X("--help", FPQX_OPT_HELP) \
+    X("--version", FPQX_OPT_VERSION) \
+    X("-h", FPQX_OPT_H) \
+    X("align", FPQX_ALIGN) \
+    X("eval", FPQX_EVAL) \
+    X("inspect", FPQX_INSPECT)
+BF_COMMAND_TABLE(fpqx_commands, FPQX_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(fpqx_commands,BF_COMMAND_COUNT(fpqx_commands),cmd,-1);
 
-    if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) { usage(); return 0; }
-    if (strcmp(cmd, "--version") == 0) {
+    if (cmd_id==FPQX_OPT_HELP || cmd_id==FPQX_OPT_H) { usage(); return 0; }
+    if (cmd_id==FPQX_OPT_VERSION) {
         printf("bonfyre-fpqx v" VERSION "\n"); return 0;
     }
 
-    if (strcmp(cmd, "align") == 0) {
+    if (cmd_id==FPQX_ALIGN) {
         if (argc < 4) {
             fprintf(stderr, "usage: bonfyre-fpqx align <a.bqfp> <b.bqfp> --out DIR\n");
             return 1;
@@ -492,12 +504,12 @@ int main(int argc, char **argv) {
         return cmd_align(argv[2], argv[3], out);
     }
 
-    if (strcmp(cmd, "eval") == 0) {
+    if (cmd_id==FPQX_EVAL) {
         if (argc < 4) { fprintf(stderr, "usage: bonfyre-fpqx eval <a.bqfp> <align.json>\n"); return 1; }
         return cmd_eval(argv[2], argv[3]);
     }
 
-    if (strcmp(cmd, "inspect") == 0) {
+    if (cmd_id==FPQX_INSPECT) {
         if (argc < 3) { fprintf(stderr, "usage: bonfyre-fpqx inspect <align.json>\n"); return 1; }
         return cmd_inspect_alignment(argv[2]);
     }

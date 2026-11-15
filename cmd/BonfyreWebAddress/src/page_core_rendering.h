@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PAGE_CORE_RENDERING_H
 #define BONFYRE_PAGE_CORE_RENDERING_H
+#include "../generated/native_estate_hosts.h"
 /* Extracted verbatim from main.c lines 6405-10681 (mechanical split, no logic changes). */
 static long page_days_from_civil(int y, int m, int d) {
     long era; long yoe, doy, doe; int mp = m > 2 ? m - 3 : m + 9;
@@ -4315,7 +4316,7 @@ static void page_emit_search_identity(const PageDocument *doc, const FrontBrandC
                "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\","
                "\"name\":\"%s\",\"url\":\"https://%s/\","
                "\"publisher\":{\"@type\":\"Organization\",\"name\":\"Aurekai\","
-               "\"url\":\"https://aurekai.work/\"}}</script>", name, host);
+               "\"url\":\"" BF_ORIGIN_WORK "/\"}}</script>", name, host);
     }
 }
 /* Date the material actually present in this view, not the entire estate. */

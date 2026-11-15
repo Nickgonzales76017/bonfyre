@@ -391,10 +391,24 @@ static void matrix(const Table *p, const Table *t) {
     }
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define PEST_COMMANDS(X) \
+    X("check", PEST_CHECK) \
+    X("customer", PEST_CUSTOMER) \
+    X("held", PEST_HELD) \
+    X("matrix", PEST_MATRIX) \
+    X("next", PEST_NEXT) \
+    X("publish", PEST_PUBLISH) \
+    X("summary", PEST_SUMMARY)
+BF_COMMAND_TABLE(pest_commands, PEST_COMMANDS);
+
 int main(int argc, char **argv) {
     const char *dir = ".", *cmd = argc > 1 ? argv[1] : "", *operator_db = NULL; int limit = 12; char wave = 0;
+    const int cmd_id = bf_command_id(pest_commands, BF_COMMAND_COUNT(pest_commands), cmd, -1);
     static Table providers, tracker;
-    if (!strcmp(cmd, "customer")) return customer_cmd(argc, argv);
+    if (cmd_id==PEST_CUSTOMER) return customer_cmd(argc, argv);
     for (int i = 2; i < argc; i++) {
         if (!strcmp(argv[i], "--dir") && i + 1 < argc) dir = argv[++i];
         else if (!strcmp(argv[i], "--limit") && i + 1 < argc) limit = atoi(argv[++i]);
@@ -402,17 +416,17 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--wave") && i + 1 < argc && strlen(argv[i + 1]) == 1 && strchr("ABCD", argv[i + 1][0])) wave = argv[++i][0];
         else { fprintf(stderr, "unknown argument %s\n", argv[i]); return 2; }
     }
-    if (strcmp(cmd, "check") && strcmp(cmd, "summary") && strcmp(cmd, "next") && strcmp(cmd, "matrix") && strcmp(cmd, "publish") && strcmp(cmd, "held")) {
+    if ((cmd_id!=PEST_CHECK) && (cmd_id!=PEST_SUMMARY) && (cmd_id!=PEST_NEXT) && (cmd_id!=PEST_MATRIX) && (cmd_id!=PEST_PUBLISH) && (cmd_id!=PEST_HELD)) {
         fputs("usage: bonfyre-provider-estate check|summary|next|matrix|publish [--dir DIR] [--operator-db FILE] [--limit N] [--wave A|B|C|D]\n", stderr);
         return 2;
     }
     if (limit < 1) limit = 1;
     if (!check(dir, &providers, &tracker)) { fprintf(stderr, "provider estate: %d problem%s\n", errors, errors == 1 ? "" : "s"); return 1; }
-    if (!strcmp(cmd, "check")) printf("provider estate: %d providers, tracker consistent, no credentials found\n", providers.n - 1);
-    else if (!strcmp(cmd, "summary")) summary(&providers, &tracker);
-    else if (!strcmp(cmd, "next")) next(&providers, &tracker, limit, wave);
-    else if (!strcmp(cmd, "held")) held_list(&providers, &tracker);
-    else if (!strcmp(cmd, "publish")) {
+    if (cmd_id==PEST_CHECK) printf("provider estate: %d providers, tracker consistent, no credentials found\n", providers.n - 1);
+    else if (cmd_id==PEST_SUMMARY) summary(&providers, &tracker);
+    else if (cmd_id==PEST_NEXT) next(&providers, &tracker, limit, wave);
+    else if (cmd_id==PEST_HELD) held_list(&providers, &tracker);
+    else if (cmd_id==PEST_PUBLISH) {
         if (!operator_db) { fputs("publish needs --operator-db\n", stderr); return 2; }
         int rc = publish(&providers, &tracker, operator_db, wave); free(providers.text); free(tracker.text); free(routes.text); free(prefill.text); return rc;
     }

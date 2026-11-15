@@ -53,7 +53,9 @@ static void production_card(const BfPublicProduction *p,int detail){
     if(!detail){fputs("<a data-production-inspect href=\"/productions/",stdout);html(p->ns);fputs("/",stdout);html(p->slug);fputs("\">Inspect this production ↗</a>",stdout);}
     fputs("<a data-production-reuse href=\"/cms/productions?context=self&amp;design=",stdout);html(p->ns);fputs("/",stdout);html(p->slug);fputs("\">Use this design →</a></div></article>",stdout);
 }
-static int serve_production_publication(const char *method,const char *target,const char *query){
+static int serve_production_publication(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
     if(!strcmp(target,"/_surface/production-home.js")){
         if(strcmp(method,"GET")||(query&&*query)){production_response(400,"text/plain; charset=utf-8");fputs("Use the public script address without parameters.",stdout);return 1;}
         production_response(200,"application/javascript; charset=utf-8");

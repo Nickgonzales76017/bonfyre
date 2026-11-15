@@ -178,9 +178,8 @@ static int fd_post(const AcnViewer *v, const char *body) {
     return 1;
 }
 static int serve_field_dispatch(const BfRequest *r) {
-    const char *method=r->method,*target=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    const char *method=r->method,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
     (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    if (strcmp(target, "/dispatch") && strcmp(target, "/dispatch/")) return 0;
     int post = !strcmp(method, "POST");
     if (!post && strcmp(method, "GET")) return 0;
     AcnViewer v;

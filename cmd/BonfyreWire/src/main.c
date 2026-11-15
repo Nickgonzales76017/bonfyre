@@ -138,11 +138,30 @@ static int env_truthy(const char *name) {
     return strcmp(v, "1") == 0 || strcmp(v, "true") == 0 || strcmp(v, "TRUE") == 0 || strcmp(v, "yes") == 0;
 }
 
-static void apply_env_policy(const char *cmd, int authorized, int *metadata_only, int *payload, int unencrypted_only) {
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define WIRE_COMMANDS(X) \
+    X("artifacts", WIRE_ARTIFACTS) \
+    X("doctor", WIRE_DOCTOR) \
+    X("flows", WIRE_FLOWS) \
+    X("ingest-pcap", WIRE_INGEST_PCAP) \
+    X("listen", WIRE_LISTEN) \
+    X("media-detect", WIRE_MEDIA_DETECT) \
+    X("meter", WIRE_METER) \
+    X("probe", WIRE_PROBE) \
+    X("recipe", WIRE_RECIPE) \
+    X("report", WIRE_REPORT) \
+    X("route", WIRE_ROUTE) \
+    X("scale", WIRE_SCALE) \
+    X("space-export", WIRE_SPACE_EXPORT)
+BF_COMMAND_TABLE(wire_commands, WIRE_COMMANDS);
+
+static void apply_env_policy(const char *cmd, int authorized, int *metadata_only, int *payload, int unencrypted_only) { const int cmd_id=bf_command_id(wire_commands,BF_COMMAND_COUNT(wire_commands),cmd,-1);
     if (!cmd || !metadata_only || !payload) return;
     if (!env_truthy("BONFYRE_LAB_UNRESTRICTED")) return;
     if (!authorized || !unencrypted_only || *payload) return;
-    if (strcmp(cmd, "ingest-pcap") != 0 && strcmp(cmd, "listen") != 0) return;
+    if (cmd_id!=WIRE_INGEST_PCAP && cmd_id!=WIRE_LISTEN) return;
     *payload = 1;
     *metadata_only = 0;
 }
@@ -174,15 +193,15 @@ int main(int argc, char **argv) {
     const char *cmd, *root, *iface, *path_or_id, *space_name;
     int authorized, dumb_device, metadata_only, payload, unencrypted_only, save_raw, packets, seconds;
     if (argc < 2) { usage(); return 1; }
-    cmd = argv[1];
+    cmd = argv[1]; const int cmd_id = bf_command_id(wire_commands, BF_COMMAND_COUNT(wire_commands), cmd, -1);
     parse_common(argc, argv, &root, &authorized, &dumb_device, &metadata_only, &payload, &unencrypted_only, &save_raw, &iface, &path_or_id, &space_name, &packets, &seconds);
     apply_env_policy(cmd, authorized, &metadata_only, &payload, unencrypted_only);
 
-    if (strcmp(cmd, "doctor") == 0) {
+    if (cmd_id==WIRE_DOCTOR) {
         return bf_wire_doctor_json(root);
     }
 
-    if (strcmp(cmd, "listen") == 0) {
+    if (cmd_id==WIRE_LISTEN) {
         BfWireCapture capture;
         if (enforce_authorized(authorized, dumb_device, payload) != 0) return 1;
         if (!iface || !iface[0]) {
@@ -239,7 +258,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd, "ingest-pcap") == 0) {
+    if (cmd_id==WIRE_INGEST_PCAP) {
         BfWireCapture capture;
         char raw_copy[PATH_MAX];
         if (!path_or_id) {
@@ -278,7 +297,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(cmd, "space-export") == 0) {
+    if (cmd_id==WIRE_SPACE_EXPORT) {
         if (!path_or_id) {
             fprintf(stderr, "bonfyre-wire space-export: requires <capture_id>\n");
             return 1;
@@ -294,16 +313,16 @@ int main(int argc, char **argv) {
         usage();
         return 1;
     }
-    if (strcmp(cmd, "flows") == 0)        return bf_wire_emit_flows_json(root, path_or_id);
-    if (strcmp(cmd, "media-detect") == 0) return bf_wire_emit_media_detect_json(root, path_or_id);
-    if (strcmp(cmd, "meter") == 0)         return bf_wire_emit_meter_json(root, path_or_id);
-    if (strcmp(cmd, "scale") == 0)         return bf_wire_emit_scale_json(root, path_or_id);
-    if (strcmp(cmd, "route") == 0)         return bf_wire_emit_route_json(root, path_or_id);
-    if (strcmp(cmd, "report") == 0)        return bf_wire_write_report(root, path_or_id);
+    if (cmd_id==WIRE_FLOWS)        return bf_wire_emit_flows_json(root, path_or_id);
+    if (cmd_id==WIRE_MEDIA_DETECT) return bf_wire_emit_media_detect_json(root, path_or_id);
+    if (cmd_id==WIRE_METER)         return bf_wire_emit_meter_json(root, path_or_id);
+    if (cmd_id==WIRE_SCALE)         return bf_wire_emit_scale_json(root, path_or_id);
+    if (cmd_id==WIRE_ROUTE)         return bf_wire_emit_route_json(root, path_or_id);
+    if (cmd_id==WIRE_REPORT)        return bf_wire_write_report(root, path_or_id);
     /* ── Discovery commands — full bonfyre pyramid from sandbox observation ── */
-    if (strcmp(cmd, "probe") == 0)         return bf_wire_probe(root, path_or_id);
-    if (strcmp(cmd, "artifacts") == 0)     return bf_wire_artifacts(root, path_or_id);
-    if (strcmp(cmd, "recipe") == 0)        return bf_wire_recipe(root, path_or_id);
+    if (cmd_id==WIRE_PROBE)         return bf_wire_probe(root, path_or_id);
+    if (cmd_id==WIRE_ARTIFACTS)     return bf_wire_artifacts(root, path_or_id);
+    if (cmd_id==WIRE_RECIPE)        return bf_wire_recipe(root, path_or_id);
 
     usage();
     return 1;

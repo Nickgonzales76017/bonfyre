@@ -143,12 +143,12 @@ static int listen_safe_asset(const char *asset) {
     return asset && asset[0] == '/' && asset[1] != '/' && !strstr(asset, "..") && !strchr(asset, '\\');
 }
 
-static int serve_listen_program(const char *method, const char *target, const char *query,
-                                const char *accept) {
+static int serve_listen_program(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)accept;
     char recording[192], subject[256], work_ref[256] = {0}, title[512] = {0}, artist[512] = {0};
     char asset[1024] = {0}, transcript[1024] = {0};
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int as_html;
-    if (strcmp(target, "/_surface/listen-program")) return 0;
     if (strcmp(method, "GET") || !query_value(query, "recording", recording, sizeof(recording)) || !studio_safe_slug_arg(recording)) {
         protocol_reply(400, "application/json", "{\"error\":\"recording_required\"}\n"); return 1;
     }
@@ -197,8 +197,9 @@ unavailable:
 
 /* /community is the human community body, not the federation graph.  The
  * latter remains a distinct projection under its own carrier. */
-static int serve_human_community_page(const char *method, const char *target,
-                                      const char *query, const char *accept) {
+static int serve_human_community_page(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)accept;
     char community[128] = "aurekai-commons";
     sqlite3 *db = NULL; sqlite3_stmt *body = NULL, *posts = NULL;
     const char *title, *description, *governance, *policy, *limit;
@@ -438,8 +439,9 @@ static void html_escape(const char *in, char *out, size_t out_sz) {
     out[w] = '\0';
 }
 
-static int serve_cms_route(const char *method, const char *target,
-                           const char *bearer, const char *auth_db) {
+static int serve_cms_route(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)bearer;(void)auth_db;
     const char *cms_db = getenv("BONFYRE_CMS_DB");
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;

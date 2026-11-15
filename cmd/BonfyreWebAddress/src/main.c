@@ -148,9 +148,9 @@ BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 "var d=document.querySelector('[data-ak-default]');if(d)load(d)})();</script>"
 
 static const char *opt(int argc, char **argv, const char *name) { for (int i = 2; i + 1 < argc; i++) if (!strcmp(argv[i], name)) return argv[i + 1]; return NULL; }
+#include "web_request.h"
 #include "matrix_closure_bootstrap.h"
 #include "app_shell.h"
-#include "web_request.h"
 #include "surface_catalogue_routes.h"
 #include "surface_fragments_and_ops.h"
 #include "auth_routes_and_studio_core.h"
@@ -419,6 +419,95 @@ static int serve_prefork(int argc, char **argv) {
     return 2;
 }
 
+/* Route owners whose bodies once sat inline in the request loop. Which path
+ * reaches each one, under which method and Accept, is declared in
+ * schemas/control/web-routes.cue. */
+/* Existing /people/<person> aliases resolve one published public profile.
+ * Never manufacture a person or host from a publisher byline. */
+static int serve_people_alias(const BfRequest *r) {
+    const char *target=r->target,*query=r->query;
+    if(!target[8]) return 0;
+    char subject[144]={0},public_host[128]={0},tab[24]={0};
+    const char *slug=target+8,*slash=strchr(slug,'/');
+    size_t n=slash?(size_t)(slash-slug):strlen(slug);
+    if(n>0&&n<=63){
+        if(n>=7&&!strncmp(slug,"person:",7))snprintf(subject,sizeof(subject),"%.*s",(int)n,slug);
+        else snprintf(subject,sizeof(subject),"person:%.*s",(int)n,slug);
+    }
+    if(slash&&slash[1]&&strlen(slash+1)<sizeof(tab))snprintf(tab,sizeof(tab),"%s",slash+1);
+    else if(!slash&&query[0])query_value(query,"tab",tab,sizeof(tab));
+    static const char *const tabs[]={"overview","posts","gallery","about","communities","organizations"};
+    int valid=!tab[0]&&(!slash||!slash[1]);
+    for(size_t i=0;i<sizeof(tabs)/sizeof(tabs[0]);i++)if(!strcmp(tab,tabs[i]))valid=1;
+    if(valid&&subject[0]&&bf_public_person_home(subject,public_host,sizeof(public_host)))
+        printf("HTTP/1.1 303 See Other\r\nLocation: https://%s/%s%s\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",public_host,tab[0]?"?tab=":"",tab);
+    else fputs("HTTP/1.1 404 Not Found\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);
+    return 1;
+}
+/* Canonical person navigation must use the exact published subject. Byline
+ * names without an admitted person identity stay source-bound. */
+static int serve_people_directory(const BfRequest *r) {
+    const char *query=r->query;
+    if (r->target[1]=='p' && query[0]) { /* /people, not /organisations */
+        char subject[144] = "", public_host[128] = "";
+        int requested = query_value(query,"subject",subject,sizeof(subject));
+        if (!requested && query_value(query,"who",subject,sizeof(subject)) &&
+            !strncmp(subject,"person:",7)) requested = 1;
+        if (requested) {
+            if (bf_public_person_home(subject,public_host,sizeof(public_host)))
+                printf("HTTP/1.1 303 See Other\r\nLocation: https://%s/\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",public_host);
+            else fputs("HTTP/1.1 404 Not Found\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);
+            return 1;
+        }
+    }
+    return emit_page_program_route(r->root,r->target,r->host,r->query);
+}
+/* A territory's own apex opens on its composed front page. */
+static int serve_front_program(const BfRequest *r) {
+    return emit_page_program_route(r->root,r->target,r->host,r->query);
+}
+/* The plain-words address of the price room. */
+static int serve_price_room_alias(const BfRequest *r) {
+    char where[160];
+    snprintf(where,sizeof(where),"/s/prices/observed%s%.120s",r->query[0]?"?":"",r->query);
+    page_redirect(where); return 1;
+}
+/* The answers left when no page owner took the request. A health probe and a
+ * refused method are transport answers written straight to the connection,
+ * before any page framing; the estate directory, discovery card and resolver
+ * always answer. */
+static int serve_health(const BfRequest *r) {
+    dprintf(r->socket,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"healthy\"}\n");
+    return 1;
+}
+static int serve_method_refused(const BfRequest *r) {
+    if (!strcmp(r->method,"GET")) return 0;
+    dprintf(r->socket,"HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n");
+    return 1;
+}
+static int serve_estate_directory(const BfRequest *r) { (void)r; estate_directory(); return 1; }
+static int serve_discovery(const BfRequest *r) { discovery(r->m,r->host,r->root); return 1; }
+static int serve_resolve(const BfRequest *r) {
+    resolve(r->m,r->host,r->target,bf_request_query_opt(r),1,r->root,r->bearer,r->auth_db);
+    return 1;
+}
+static int serve_examples_retired(const BfRequest *r) {
+    (void)r;
+    protocol_reply(410,"text/plain; charset=utf-8","Released work now appears on the account profile that published it.\n");
+    return 1;
+}
+/* The tail of the table: what answers once no page owner did. Each was a
+ * branch after the ladder; it is now a declared row like every other owner. */
+static int serve_tail_root_discovery(const BfRequest *r) {
+    if ((strcmp(r->target, "/") && *r->target) || !wants_json(r->accept)) return 0;
+    discovery(r->m, r->host, r->root); return 1;
+}
+static int serve_tail_presentation_class(const BfRequest *r) { return serve_presentation_class(r->method, r->target, bf_request_query_opt(r), r->bearer, r->auth_db); }
+static int serve_tail_surface_pattern(const BfRequest *r) { return serve_surface_pattern(r->target, bf_request_query_opt(r), r->accept, r->bearer, r->auth_db); }
+static int serve_tail_door_fragment(const BfRequest *r) { return serve_door_fragment(r->target, bf_request_query_opt(r)); }
+static int serve_tail_aperture_fragment(const BfRequest *r) { return serve_aperture_fragment(r->m, r->host, r->target, bf_request_query_opt(r)); }
+static int serve_tail_surface(const BfRequest *r) { return serve_surface(r->m, r->host, r->target, r->root, r->accept, r->query); }
+static int serve_tail_matrix_asset(const BfRequest *r) { return serve_matrix_asset(r->m, r->host, r->target, r->root, r->if_none_match, bf_request_query_opt(r)); }
 #include "../generated/native_web_routes.h"
 static int serve(BfMatrix *m, int argc, char **argv) {
     const char *p=opt(argc,argv,"--port");
@@ -584,211 +673,20 @@ static int serve(BfMatrix *m, int argc, char **argv) {
           /* Published, content-addressed media has an exact route. Serve it
            * before unrelated page and account handlers can inspect or alter
            * the request; no general route inherits its publication decision. */
-          int handled=0;
-          if(!strncmp(target,"/assets/twin/",13))handled=serve_asset_twin(method,target,b);
-          if(!handled)handled=bf_site_mcp_serve(method,target,query[0]?query:"",bodyp,host,origin_hdr,site_bearer,site_client);
-         if(!handled) handled=serve_vertical_private(method,target,bodyp,bearer,auth_db,host);
-         /* The Observatory owns its human/public maintained views.  It runs
-          * before generic machine-web dispatch so a host-specific closure
-          * cannot accidentally inherit another institution's carrier page. */
-         if(!handled) handled=serve_internet_observatory(m,method,target,bodyp,bearer,auth_db,host);
-         /* Existing /people/<person> aliases resolve one published public profile.
-          * Never manufacture a person or host from a publisher byline. */
-         if(!handled && root && !strcmp(method,"GET") &&
-            !strncmp(target,"/people/",8) && target[8] &&
-            !(wants_json(accept_hdr) && !wants_html(accept_hdr))){
-             char subject[144]={0},public_host[128]={0},tab[24]={0};
-             const char *slug=target+8,*slash=strchr(slug,'/');
-             size_t n=slash?(size_t)(slash-slug):strlen(slug);
-             if(n>0&&n<=63){
-                 if(n>=7&&!strncmp(slug,"person:",7))snprintf(subject,sizeof(subject),"%.*s",(int)n,slug);
-                 else snprintf(subject,sizeof(subject),"person:%.*s",(int)n,slug);
-             }
-             if(slash&&slash[1]&&strlen(slash+1)<sizeof(tab))snprintf(tab,sizeof(tab),"%s",slash+1);
-             else if(!slash&&query[0])query_value(query,"tab",tab,sizeof(tab));
-             static const char *const tabs[]={"overview","posts","gallery","about","communities","organizations"};
-             int valid=!tab[0]&&(!slash||!slash[1]);
-             for(size_t i=0;i<sizeof(tabs)/sizeof(tabs[0]);i++)if(!strcmp(tab,tabs[i]))valid=1;
-             if(valid&&subject[0]&&bf_public_person_home(subject,public_host,sizeof(public_host)))
-                 printf("HTTP/1.1 303 See Other\r\nLocation: https://%s/%s%s\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",public_host,tab[0]?"?tab=":"",tab);
-             else fputs("HTTP/1.1 404 Not Found\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);
-             handled=1;
-         }
-        /* These are public, server-lowered relational directories. Their
-         * exact route cannot be a capability, commerce, studio or protocol
-         * request, so dispatch it before probing those unrelated owners. This
-         * keeps a static full-estate export proportional to its own cut. */
-        if(!handled && root && !(wants_json(accept_hdr) && !wants_html(accept_hdr)))
-            handled=serve_credit_profile(method,target,query);
-        if(!handled && root && !strcmp(method,"GET") &&
-           (!strcmp(target,"/people") || !strcmp(target,"/organisations")) &&
-           !(wants_json(accept_hdr) && !wants_html(accept_hdr))) {
-            /* Canonical person navigation must use the exact published subject.
-             * Byline names without an admitted person identity stay source-bound. */
-            if (!strcmp(target,"/people") && query[0]) {
-                char subject[144] = "", public_host[128] = "";
-                int requested = query_value(query,"subject",subject,sizeof(subject));
-                if (!requested && query_value(query,"who",subject,sizeof(subject)) &&
-                    !strncmp(subject,"person:",7)) requested = 1;
-                if (requested) {
-                    if (bf_public_person_home(subject,public_host,sizeof(public_host)))
-                        printf("HTTP/1.1 303 See Other\r\nLocation: https://%s/\r\nCache-Control: no-store\r\nReferrer-Policy: no-referrer\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",public_host);
-                    else fputs("HTTP/1.1 404 Not Found\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);
-                    handled=1;
-                }
-            }
-            page_request_bearer = bearer; page_request_auth_db = auth_db; page_request_raw = b;
-            if(!handled) handled=emit_page_program_route(root,target,host,query);
-        }
-        if(!handled) handled=serve_machine_web(method,target,host,inm_hdr);
-        if(!handled) handled=subject_artifact(method,target,inm_hdr);
-        if(!handled) handled=serve_indexnow_key(method,target,inm_hdr);
-        if(!handled) handled=serve_websub(method,target,query,b,bodyp);
-        /* A published SitePresentation owns its matching apex before legacy
-         * donor/static fallback.  Hosts without one continue down unchanged. */
-         /* A /w/<world>/spatial request carrying a frontier is a different
-          * question from the spatial surface: it asks what was there at an
-          * instant. Without `at` this returns 0 and the surface answers exactly
-          * as it always did. */
-         if(!handled) handled=serve_spatial_frontier(method,target,query[0]?query:NULL,accept_hdr);
-        /* A territory's own apex opens on its composed front page, ahead of
-         * any SitePresentation that names the same apex.  Institution and
-         * subdomain hosts are not territory apexes and keep their homes. */
-        page_request_bearer = bearer; page_request_auth_db = auth_db; page_request_raw = b;
-        /* A subject's own apex opens on the program published for that
-         * subject.  A member's address exists to carry their surfaces, and a
-         * composed territory front page standing there would make every member
-         * home show the same material -- which is exactly what it did before
-         * this line.  Territory apexes keep the composed home, and a subject
-         * host without a published program still falls through to it. */
-        /* Resolve the source-specific workbench before general SiteProgram
-         * or /s/work material. Ordinary /link retains its native CUE route.
-         * Explicit JSON requests still reach their previous owner. */
-        /* Devices, moving to a new device, Bluesky sync requests, feed agent
-         * rules and field visits: CMS records keyed by the signed-in account. */
-        /* Owners declared in schemas/control/web-routes.cue answer their own paths. */
-        if(!handled){BfRequest request={method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr};handled=bf_web_route_dispatch(&request);}
-        if(!handled)handled=serve_account_activity(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled)handled=serve_source_web_work(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled)handled=serve_source_push_operations(method,target,query,host,bearer,auth_db);
-        if(!handled && root)handled=serve_source_desk(method,target,query,host,accept_hdr,bearer,auth_db);
-        if(!handled)handled=serve_community_journey(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_account_world_workspace(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled)handled=serve_profile_home(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_companions(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_participant_journey(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled && !strcmp(target,"/") && !strcmp(method,"GET") && !host_is_territory_apex(host))
-            handled=serve_site_program(method,target,query[0]?query:NULL,host,accept_hdr,bearer,auth_db);
-        if(!handled && root && !strcmp(target,"/") && !strcmp(method,"GET") &&
-           !(wants_json(accept_hdr) && !wants_html(accept_hdr)))
-            handled=emit_page_program_route(root,target,host,query);
-        if(!handled) handled=serve_page_save(method,target,bodyp,b,host,bearer,auth_db);
-        /* Saying where you stand, putting your name to a role, stating support. */
-        if(!handled) handled=govern_act(method,target,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_role_assume(method,target,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_role_workspace(method,target,query,bearer,auth_db);
-        if(!handled) handled=serve_role_directory(method,target,query,host,bearer,auth_db);
-        if(!handled) handled=serve_role_leave(method,target,bodyp,b,host,bearer,auth_db);
-        /* Work orders, release sign-offs, disputes and vouches (work_orders.h). */
-        if(!handled && root && !strcmp(target,"/saved") && !strcmp(method,"GET"))
-            handled=emit_saved_page(root,host,bearer,auth_db);
-        if(!handled && root && !strncmp(target,"/o/",3))
-            handled=serve_page_changes(root,method,target,bodyp,b,host,bearer,auth_db);
-        if(!handled && root && !strncmp(target,"/about/",7) && !strcmp(method,"GET"))
-            handled=emit_about_page(root,target,host,bearer,auth_db);
-        if(!handled && root && !strncmp(target,"/o/",3) && !strcmp(method,"GET"))
-            handled=emit_item_page(root,target,host,bearer,auth_db);
-        /* The plain-words address of the price room. */
-        if(!handled && !strcmp(target,"/what-things-cost") && !strcmp(method,"GET")) {
-            char where[160];
-            snprintf(where,sizeof(where),"/s/prices/observed%s%.120s",query[0]?"?":"",query);
-            page_redirect(where); handled=1;
-        }
-        if(!handled && (!strcmp(target,"/examples") || !strncmp(target,"/examples/",10)) && !strcmp(method,"GET")) {
-            protocol_reply(410,"text/plain; charset=utf-8","Released work now appears on the account profile that published it.\n");
-            handled=1;
-        }
-        if(!handled) handled=serve_site_program(method,target,query[0]?query:NULL,host,accept_hdr,bearer,auth_db);
-        /* A signed-in person's /inbox is their own; the public donor inbox
-         * keeps answering everyone else (account_inbox_web.h). */
-        if(!handled) handled=serve_account_inbox(method,target,query,bearer,auth_db);
-        /* The studio is a C workbench on the one shell; it answers before the
-         * compiled donor surface that once held the same address. */
-        if(!handled) handled=serve_desk_external_candidate(method,target,query,bearer,auth_db,accept_hdr);
-        if(!handled) handled=serve_desk(method,target,bearer,auth_db,accept_hdr);
-        if(!handled) handled=serve_territory_map(method,target,accept_hdr);
-        if(!handled) handled=serve_native_donor_route(method,target,accept_hdr,root,host,query,bearer,auth_db);
-        /* An authored surface answers before the auth handler, which only
-         * matters for GET: serve_authored_page declines anything else, so a
-         * credential POST still reaches the organ that owns sessions. Without
-         * this ordering the authored /login was written, published, and never
-         * rendered -- the older handler claimed the route first. */
-        if(!handled) handled=serve_account_navigation(method,target,query,bearer,auth_db);
-        if(!handled) handled=serve_authored_page(method,target,query,accept_hdr,bearer,auth_db,root,host);
-        if(!handled) handled=serve_external_candidate_fragment(method,target,query,accept_hdr,bearer,auth_db);
-        if(!handled) handled=serve_auth(method,target,bodyp,bearer,auth_db,accept_hdr,root,host,query);
-        if(!handled) handled=serve_superuser_control(method,target,bodyp,bearer,auth_db,host);
-        if(!handled) handled=serve_desk_external_candidate(method,target,query,bearer,auth_db,accept_hdr);
-        if(!handled) handled=serve_desk(method,target,bearer,auth_db,accept_hdr);
-         if(!handled) handled=serve_membrane(method,target,bearer,auth_db,accept_hdr);
-         if(!handled && root && !strcmp(method,"GET") && !strncmp(target,"/s/parcel/",10) && wants_html(accept_hdr))
-             handled=emit_parcel_page(root,target,host,bearer,auth_db);
-         if(!handled) handled=serve_subject(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_lens(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_room(method,target,query,bearer,auth_db,accept_hdr);
-         if(!handled) handled=serve_compose(method,target,query,bodyp,bearer,auth_db);
-         if(!handled) handled=serve_surfaceir(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_flow(method,target,query,bearer,auth_db);
-         if(!handled && root && wants_html(accept_hdr)) handled=emit_market_fronts(method,target,query,host,root);
-         if(!handled) handled=serve_property_flow(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_market_flow(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_sources_flow(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_agents_flow(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_a2a(method,target,bodyp,host,xpayment,accept_hdr);
-         if(!handled) handled=serve_capability(method,target,xpayment,host,accept_hdr);
-         if(!handled) handled=serve_aperture_submit(method,target,bodyp,accept_hdr,bearer,auth_db);
-         if(!handled) handled=serve_aperture_form(method,target,query,accept_hdr,bearer,auth_db,host);
-         if(!handled) handled=serve_aperture(method,target,query,accept_hdr,bearer,auth_db);
-         if(!handled) handled=serve_twins_page(method,target,accept_hdr);
-         if(!handled) handled=serve_observations_page(method,target,accept_hdr);
-         if(!handled) handled=serve_night_page(method,target,host,accept_hdr);
-         if(!handled) handled=serve_protocols(method,target,host,accept_hdr,query);
-         if(!handled) handled=serve_site_program(method,target,query[0]?query:NULL,host,accept_hdr,bearer,auth_db);
-         if(!handled) handled=serve_world_composition(method,target,query[0]?query:NULL,bearer,auth_db);
-         if(!handled) handled=serve_world_fragments(method,target,query[0]?query:NULL,bearer,auth_db);
-         if(!handled) handled=serve_world_material(method,target,query[0]?query:NULL,accept_hdr);
-         if(!handled) handled=serve_listen_program(method,target,query[0]?query:NULL,accept_hdr);
-         if(!handled) handled=serve_human_community_page(method,target,query[0]?query:NULL,accept_hdr);
-         if(!handled) handled=bf_serve_human_community(method,target,query[0]?query:NULL);
-         if(!handled) handled=serve_production_publication(method,target,query);
-         if(!handled) handled=serve_cms_composer(method,target,query,bodyp,bearer,auth_db,origin_hdr,host);
-         if(!handled) handled=serve_source_publication(method,target,query,bodyp,b,bearer,auth_db,host);
-         if(!handled) handled=serve_cms_api(m,method,target,bodyp,bearer,auth_db,accept_hdr);
-         if(!handled) handled=serve_discovery_review(method,target,bodyp,bearer,auth_db,origin_hdr,host);
-         if(!handled) handled=serve_discovery_verification(method,target,bodyp,bearer,auth_db,origin_hdr,host);
-         if(!handled) handled=serve_discovery_brief(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_cms_partials(method,target,query,bearer,auth_db);
-         if(!handled) handled=serve_cms_route(method,target,bearer,auth_db);
-         if(!handled) handled=serve_studio(m,method,target,bodyp,bearer,auth_db,host,origin_method,institution,accept_hdr);
-        if(!handled) handled=serve_subject_index(method,target,query,accept_hdr);
-        if(!handled) handled=serve_pack_setup(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_account_choices(method,target,query);
-        if(!handled) handled=serve_organization_workspace(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_household_members(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_application_workspace(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled) handled=serve_packs(method,target,query,host,accept_hdr,bearer,auth_db);
-        if(!handled) handled=serve_home_weather_fragment(method,target);
-        if(!handled) handled=serve_foreign_twins(method,target,query);
-        if(!handled) handled=serve_foreign_weather(method,target);
-        if(!handled) handled=serve_foreign_receipts(method,target,query);
-        if(!handled) handled=serve_foreign_body(method,target,query);
-        if(!handled) handled=serve_foreign_edges(method,target,accept_hdr,bearer,auth_db);
-        if(!handled) handled=serve_ops(method,target);
-        if(!handled) handled=serve_matrix_closure(m,method,host,target,query[0]?query:NULL,bearer,auth_db);
+          /* Every owner, its paths and the order they are asked in are declared
+           * in schemas/control/web-routes.cue. */
+          page_request_raw = b;
+          BfRequest request={.method=method,.target=target,.query=query,.body=bodyp,.raw=b,.host=host,.bearer=bearer,
+              .auth_db=auth_db,.accept=accept_hdr,.m=m,.root=root,.origin=origin_hdr,.site_bearer=site_bearer,
+              .site_client=site_client,.if_none_match=inm_hdr,.payment=xpayment,.origin_method=origin_method,
+              .institution=institution,.facts=(!strcmp(method,"GET")?BF_WHEN_GET:0u)|(root?BF_WHEN_SITE_ROOT:0u)|
+              (wants_html(accept_hdr)?BF_WHEN_HTML:0u)|(!(wants_json(accept_hdr)&&!wants_html(accept_hdr))?BF_WHEN_NOT_JSON:0u)|
+              (!host_is_territory_apex(host)?BF_WHEN_NOT_TERRITORY_APEX:0u)|(wants_json(accept_hdr)?BF_WHEN_JSON:0u),.socket=c};
+          int handled=bf_web_route_dispatch(&request);
          fflush(stdout); dup2(sfd,STDOUT_FILENO); close(sfd);
          if(wire){ if(handled) wire_send(c,wire,accept_encoding,inm_hdr); fclose(wire); }
-         if(handled){close(c);continue;}}
-        if(strcmp(method,"GET")) {dprintf(c,"HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n");} else if(!strcmp(target,"/healthz")) {dprintf(c,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"healthy\"}\n");} else {FILE *tail_wire=tmpfile();int saved_fd=dup(STDOUT_FILENO);dup2(tail_wire?fileno(tail_wire):c,STDOUT_FILENO);if(!strcmp(target,"/.well-known/bonfyre/estate"))estate_directory();else if(!strcmp(target,"/.well-known/bonfyre"))discovery(m,host,root);else if((!strcmp(target,"/")||!*target)&&wants_json(accept_hdr))discovery(m,host,root);else if(serve_presentation_class(method,target,query[0]?query:NULL,bearer,auth_db)){}else if(serve_surface_pattern(target,query[0]?query:NULL,accept_hdr,bearer,auth_db)){}else if(serve_door_fragment(target,query[0]?query:NULL)){}else if(serve_aperture_fragment(m,host,target,query[0]?query:NULL)){}else if(serve_surface(m,host,target,root,accept_hdr,query)){}else if(serve_matrix_asset(m,host,target,root,inm_hdr,query[0]?query:NULL)){}else resolve(m,host,target,query[0]?query:NULL,1,root,bearer,auth_db);fflush(stdout);dup2(saved_fd,STDOUT_FILENO);close(saved_fd);if(tail_wire){wire_send(c,tail_wire,accept_encoding,inm_hdr);fclose(tail_wire);}}close(c);} }
+         /* The table ends in rows that always answer, so nothing falls past it. */
+         close(c);}}}
 /* ---------------------------------------------------------- what goes on the wire
  *
  * Every response this server writes goes through one boundary, so the estate
@@ -1216,17 +1114,19 @@ static int publish_static_one(const char *root, const char *out, const char *hos
     /* The owner a request reaches first answers first: a site program (a
      * client's site, a member's page) before the estate's own route. */
     snprintf(estate_request_territory, sizeof(estate_request_territory), "%s", territory_of(host));
+    BfRequest export_request = {.method = "GET", .target = route, .host = host};
     if (machine) {
-        ok = serve_machine_web("GET", route, host, NULL);
+        ok = serve_machine_web(&export_request);
     } else {
+        export_request.accept = "text/html";
         /* A released journal route uses its profile reader. */
         /* Community permalinks are rendered through their real moderation-aware owner. */
         ok = !strcmp(host,"aurekai.life") && !strncmp(route,"/community/",11) ?
-             serve_community_journey("GET",route,NULL,NULL,NULL,host,NULL,NULL,"text/html") : 0;
+             serve_community_journey(&export_request) : 0;
         if (!ok) ok = !strncmp(route, "/blog/", 6) ?
-             serve_profile_home("GET", route, NULL, NULL, NULL, host, NULL, NULL, "text/html") : 0;
+             serve_profile_home(&export_request) : 0;
         if (!ok) ok = bf_site_mcp_serve("GET", route, "", "", host, "", "", "");
-        if (!ok) ok = serve_site_program("GET", route, NULL, host, "text/html", NULL, NULL);
+        if (!ok) ok = serve_site_program(&export_request);
         if (!ok) ok = emit_page_program_route(root, route, host, NULL);
     }
     fflush(stdout);

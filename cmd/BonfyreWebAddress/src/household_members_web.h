@@ -1,5 +1,6 @@
 #ifndef BONFYRE_HOUSEHOLD_MEMBERS_WEB_H
 #define BONFYRE_HOUSEHOLD_MEMBERS_WEB_H
+#include "form_tree.h"
 /* Household access uses native forms and CMS membership revisions. */
 typedef struct { char household[64],email[320],member[64],role[8],revision[24],epoch[24],expires[24],after[24]; } HhmForm;
 static int hhm_form(const char *input,HhmForm *out){
@@ -29,8 +30,9 @@ static int hhm_account(const char *auth_db,const char *email,const char *member,
     if(sqlite3_step(s)==SQLITE_ROW && (!active||sqlite3_column_int(s,1))){snprintf(principal,size,"user:%d",sqlite3_column_int(s,0));ok=sqlite3_step(s)==SQLITE_DONE;}
  done:sqlite3_finalize(s);if(db)sqlite3_close(db);return ok;
 }
-static int serve_household_members(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
-    if(strcmp(target,"/households/access"))return 0;
+static int serve_household_members(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     int post=!strcmp(method,"POST");if(!post&&strcmp(method,"GET")){aw_error(405,"Use GET to review or POST to change household access.\n");return 1;}
     HhmForm input;if(!hhm_form(post?body:query,&input)){aw_error(400,"Invalid household access form or repeated field.\n");return 1;}
     StudioViewer viewer;char actor[64];BfHouseholdAccess access;sqlite3 *db=NULL;sqlite3_stmt *s=NULL;
@@ -52,7 +54,9 @@ static int serve_household_members(const char *method,const char *target,const c
     }
     psetup_start(200,"Household access");fputs("<h1>Household access</h1><p>Household: ",stdout);html(input.household);fputs(". Your access: ",stdout);html(access.role);fputs(".</p><p><a href=\"/packs/setup\">Open configurations</a></p>",stdout);
     if(!steward){fputs("<p>The recorded steward manages membership. Your access applies to this household only; it does not share personal training history or grant supplier purchasing authority.</p>",stdout);sqlite3_close(db);psetup_end();return 1;}
-    fputs("<p>Review an existing account before changing access. Read permits inspection, write permits draft editing, and admin permits configuration changes. Only the steward manages membership. Removing access preserves saved household work.</p><form method=\"get\" action=\"/households/access\">",stdout);psetup_hidden("household",input.household);fputs("<label>Member account email <input type=\"email\" name=\"email\" required maxlength=\"300\"></label><button>Review member</button></form>",stdout);
+    fputs("<p>Review an existing account before changing access. Read permits inspection, write permits draft editing, and admin permits configuration changes. Only the steward manages membership. Removing access preserves saved household work.</p>",stdout);
+    {const FtField hidden[]={{"household",input.household}};static const FtInput email[]={{.label="Member account email",.type="email",.name="email",.maxlength="300",.required=1}};
+     const FtForm review={.id="hhm-review",.method="get",.action="/households/access",.label="Review member",.hidden=hidden,.nhidden=1,.inputs=email,.ninputs=1};ft_form(stdout,&review);}
     char member[64];int requested=*input.email||*input.member;
     if(requested&&hhm_account(auth_db,input.email,input.member,member,sizeof(member),0)){
         long long revision=0,expires=0;char role[8]="none";int effective=0;
@@ -60,8 +64,12 @@ static int serve_household_members(const char *method,const char *target,const c
         fputs("<section class=\"pack-panel\" data-household-member><h2>Review ",stdout);html(member);fputs("</h2><p>Current access: ",stdout);html(effective?role:"none");fputs(". The change below applies only to this household.</p>",stdout);
         if(strcmp(member,actor)){
             char rev[24],epoch[24],expiry[24];snprintf(rev,sizeof(rev),"%lld",revision);snprintf(epoch,sizeof(epoch),"%lld",(long long)access.epoch);snprintf(expiry,sizeof(expiry),"%lld",expires);
-            fputs("<form method=\"post\" action=\"/households/access\" data-household-access-form>",stdout);psetup_hidden("household",input.household);psetup_hidden("member",member);psetup_hidden("revision",rev);psetup_hidden("epoch",epoch);psetup_hidden("expires",expiry);
-            fputs("<label>Access <select name=\"role\">",stdout);const char *roles[]={"none","read","write","admin"};for(size_t i=0;i<4;i++){fputs("<option value=\"",stdout);html(roles[i]);fputs(!strcmp(role,roles[i])?"\" selected>":"\">",stdout);html(roles[i]);fputs("</option>",stdout);}fputs("</select></label><button>Apply reviewed access</button></form>",stdout);
+            const FtField hidden[]={{"household",input.household},{"member",member},{"revision",rev},{"epoch",epoch},{"expires",expiry}};
+            FtOption roles[]={{"none","none",0},{"read","read",0},{"write","write",0},{"admin","admin",0}};
+            for(size_t i=0;i<4;i++)roles[i].checked=!strcmp(role,roles[i].value);
+            const FtInput access_in[]={{.label="Access",.type="select",.name="role",.options=roles,.noptions=4}};
+            const FtForm apply={.id="hhm-access",.action="/households/access",.hook="household-access-form",.label="Apply reviewed access",.hidden=hidden,.nhidden=5,.inputs=access_in,.ninputs=1};
+            ft_form(stdout,&apply);
             if(expires)fputs("<p>This form preserves the existing expiry. An expired membership needs a separately reviewed renewal.</p>",stdout);
         }else fputs("<p>The steward is established by the household record; this form cannot transfer stewardship.</p>",stdout);
         fputs("</section>",stdout);

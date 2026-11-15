@@ -135,9 +135,9 @@ static int aaw_bound_envelope(const unsigned char *bytes,size_t size,const char 
         !bf_mp_pack_kv_str(out,"actor",actor)&&!bf_mp_pack_kv_str(out,"subject",subject)&&!bf_mp_pack_kv_str(out,"scope",scope)&&
         !bf_mp_pack_kv_str(out,"source","account-activity")&&out->len<=AW_PACKET;
 }
-static int serve_account_activity(const char *method,const char *target,const char *query,const char *body,
-                                   const char *raw,const char *host,const char *bearer,const char *auth_db) {
-    if(strcmp(target,"/apps/_activity"))return 0;
+static int serve_account_activity(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     int writing=!strcmp(method,"POST");AawQuery q;
     if((!writing&&strcmp(method,"GET"))||!aaw_query(query,&q)||!aaw_operation(&q,writing)){
         aw_error(400,"Use one declared account activity operation and its exact coordinates.\n");return 1;

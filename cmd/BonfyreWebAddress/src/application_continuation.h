@@ -1,5 +1,6 @@
 #ifndef BONFYRE_APPLICATION_CONTINUATION_H
 #define BONFYRE_APPLICATION_CONTINUATION_H
+#include "form_tree.h"
 #include "account_navigation_markup.h"
 #include "bf_msgpack.h"
 /* Read-only projections of existing ApplicationBinding and CMS record owners.
@@ -355,7 +356,8 @@ static void ac_work_focus(const char *context,const char *task,const char *subje
             static const char *const release_acts[][2]={{"approve","Approve: put this release live"},{"later","Not now"}};
             int release=!strcmp(source,"release-approval");const char *const (*set)[2]=release?release_acts:acts;size_t count=release?2:4;
             fputs("<div class=\"work-focus-acts\" role=\"group\" aria-label=\"Record where this stands\">",stdout);
-            for(size_t a=0;a<count;a++){fputs("<form method=\"post\" action=\"/work-board/act\"><input type=\"hidden\" name=\"context\" value=\"",stdout);html(context);fputs("\"><input type=\"hidden\" name=\"task\" value=\"",stdout);html(task);fputs("\"><input type=\"hidden\" name=\"action\" value=\"",stdout);html(set[a][0]);fputs("\"><button type=\"submit\">",stdout);html(set[a][1]);fputs("</button></form>",stdout);}
+            for(size_t a=0;a<count;a++){const FtField hidden[]={{"context",context},{"task",task},{"action",set[a][0]}};
+                const FtForm f={.id="work-act",.action="/work-board/act",.label=set[a][1],.hidden=hidden,.nhidden=3};ft_form(stdout,&f);}
             fputs("</div>",stdout);
         }
         sqlite3_finalize(s);s=NULL;
@@ -448,7 +450,7 @@ static int ac_feed_query(const char *query,char context[96],char item[160]){
 }
 static void ac_feed_picker(const char *context,const char *item,const char *bearer,const char *auth_db){
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);if(result<0){fputs("<p role=\"alert\">The complete destination list is unavailable.</p>",stdout);return;}
-    fputs("<form class=\"feed-use-picker\" method=\"get\" action=\"/feed-use\"><label>Use this item in <select name=\"context\">",stdout);if(!result)fputs("<option value=\"self\">My personal workspace</option>",stdout);for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}fputs("</select></label>",stdout);psetup_hidden("item",item);fputs(" <button>Change workspace</button></form>",stdout);
+    {const FtField hidden[]={{"item",item}};psetup_picker("feed-use-picker","/feed-use","Use this item in",NULL,rows,count,result,context,hidden,1);}
 }
 static int ac_feed_use(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
     if(strcmp(target,"/feed-use"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use GET to review feed handoffs.\n");return 1;}char context[96],ref[160],actor[160],destination[160],back[1300],family[64],source_kind[64],source[128],key[25];const char *scope=NULL;PageItem item;
@@ -484,10 +486,9 @@ static int ac_relationship_actor_exists(const char *subject,const char *who,cons
 static void ac_relationship_picker(const char *context,const char *subject,const char *who,const char *source,const char *bearer,const char *auth_db){
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);
     if(result<0){fputs("<p role=\"alert\">The complete destination list is unavailable.</p>",stdout);return;}
-    fputs("<form class=\"relationship-destination\" method=\"get\" action=\"/relationships\"><label>Relationship workspace <select name=\"context\">",stdout);
-    if(!result)fputs("<option value=\"self\">My personal workspace</option>",stdout);
-    for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}
-    fputs("</select></label>",stdout);if(subject&&*subject)psetup_hidden("subject",subject);else if(who&&*who&&source&&*source){psetup_hidden("who",who);psetup_hidden("source",source);}fputs(" <button>Change workspace</button></form>",stdout);
+    {int by_subject=subject&&*subject,by_who=!by_subject&&who&&*who&&source&&*source;
+     const FtField hidden[]={{by_subject?"subject":NULL,subject},{by_who?"who":NULL,who},{by_who?"source":NULL,source}};
+     psetup_picker("relationship-destination","/relationships","Relationship workspace",NULL,rows,count,result,context,hidden,3);}
 }
 static int ro_declared(const char *pack,const char *family,const char *source_family,const char *kind,char prefix[128]);
 static void ac_relationship_sources(const char *binding,const char *pack,const char *family,const char *who,const char *source) {

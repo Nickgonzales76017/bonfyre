@@ -41,20 +41,31 @@ static void emit(const bf_jv *v) {
     fwrite(s, 1, n, stdout); fputc('\n', stdout); free(s);
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define DPL_COMMANDS(X) \
+    X("assess", DPL_ASSESS) \
+    X("compile", DPL_COMPILE) \
+    X("digest", DPL_DIGEST) \
+    X("policy", DPL_POLICY) \
+    X("proposal", DPL_PROPOSAL)
+BF_COMMAND_TABLE(dpl_commands, DPL_COMMANDS);
+
 int plane_main(int argc, char **argv) {
     if (argc < 1) { fputs("usage: bonfyre-decide plane digest|policy|compile|proposal|assess < input.json\n", stderr); return 2; }
-    const char *verb = argv[0];
+    const char *verb = argv[0]; const int verb_id=bf_command_id(dpl_commands,BF_COMMAND_COUNT(dpl_commands),verb,-1);
     bf_jv *policy = dp_policy();
-    if (!strcmp(verb, "policy")) { emit(policy); bf_jv_free(policy); return 0; }
+    if (verb_id==DPL_POLICY) { emit(policy); bf_jv_free(policy); return 0; }
     bf_jv *in = read_stdin_json();
-    if (!strcmp(verb, "digest")) {
+    if (verb_id==DPL_DIGEST) {
         char hex[65]; dp_digest(in, hex); puts(hex);
-    } else if (!strcmp(verb, "compile")) {
+    } else if (verb_id==DPL_COMPILE) {
         bf_jv *c = dp_compile_case(in, policy); emit(c); bf_jv_free(c);
-    } else if (!strcmp(verb, "proposal")) {
+    } else if (verb_id==DPL_PROPOSAL) {
         bf_jv *p = dp_proposal(in, policy);
         if (p) { emit(p); bf_jv_free(p); } else puts("null");
-    } else if (!strcmp(verb, "assess")) {
+    } else if (verb_id==DPL_ASSESS) {
         const bf_jv *compiled = bf_jv_get(in, "compiled");
         const char *provider = bf_jv_s(bf_jv_get(in, "provider"));
         const bf_jv *ex = bf_jv_get(in, "execute");

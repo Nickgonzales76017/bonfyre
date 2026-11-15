@@ -122,9 +122,9 @@ static int add_domain_node(Account *a, StrSet *into, const bf_json_doc_t *d, con
 static int read_cpanel(Account *a, Input *in, const bf_json_doc_t *d, char *why, size_t wn) {
     const bf_json_node_t *root = bf_json_root(d), *meta = bf_json_obj_get(d, root, "metadata"), *cr = bf_json_obj_get(d, root, "cpanelresult");
     if (meta) {
-        char *cmd = jget(d, meta, "command");
-        int ok = cmd && !strcmp(cmd, "listaccts");
-        free(cmd);
+        char *called = jget(d, meta, "command");
+        int ok = called && !strcmp(called, "listaccts");
+        free(called);
         if (!ok) { snprintf(why, wn, "WHM API 1 output of a call other than listaccts"); return 0; }
         if (bf_json_get_int(bf_json_obj_get(d, meta, "result")) != 1) { snprintf(why, wn, "WHM reported listaccts as failed"); return 0; }
         const bf_json_node_t *acct = bf_json_dotpath(d, "data.acct");

@@ -77,9 +77,9 @@ static int lower_external_candidate_fragment(const char *query, const char *bear
  * existing SurfaceIR fragment; C resolves presentation class from the session,
  * invokes the read-only C/SQLite reservoir, and returns its HTML. No page
  * builds a card, fetches JSON, or supplies a class/authority coordinate. */
-static int serve_external_candidate_fragment(const char *method, const char *target,
-                                             const char *query, const char *accept,
-                                             const char *bearer, const char *auth_db) {
+static int serve_external_candidate_fragment(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *accept=r->accept; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)accept;(void)bearer;(void)auth_db;
     static char out[131072];
     char shaped[2048], requested_grammar[32] = {0};
     int public_observation = !strcmp(target, "/_surface/external-estate");
@@ -819,10 +819,9 @@ out:
     return found;
 }
 
-static int serve_native_donor_route(const char *method, const char *target,
-                                    const char *accept, const char *root,
-                                    const char *host, const char *query,
-                                    const char *bearer, const char *auth_db) {
+static int serve_native_donor_route(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *accept=r->accept; const char *root=r->root; const char *host=r->host; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)accept;(void)root;(void)host;(void)query;(void)bearer;(void)auth_db;
     const BfNativeSurfaceProgram *program = NULL;
     const char *kind = NULL;
     char path[PATH_MAX], domain[96] = {0}, world[128] = "tonight-in-this-city";
@@ -978,8 +977,9 @@ static int load_world_fragment_plans(sqlite3 *db, const char *world,
 /* Native heterogeneous World composition. This lowerer decides presentation
  * structure only. Subject truth remains in the World/source owners, actor
  * class comes from native closure, and every effect still crosses its owner. */
-static int serve_world_composition(const char *method, const char *target, const char *query,
-                                   const char *bearer, const char *auth_db) {
+static int serve_world_composition(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     char world[128], title[512], character[128], template_name[256], subject[512];
     char grammars[1024], cannot_infer[1024];
     sqlite3 *db = NULL;

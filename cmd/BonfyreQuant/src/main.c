@@ -639,14 +639,27 @@ static void print_version(void) {
            "  ARM NEON vectorized on Apple Silicon\n");
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define QNT_COMMANDS(X) \
+    X("--help", QNT_OPT_HELP) \
+    X("--version", QNT_OPT_VERSION) \
+    X("-h", QNT_OPT_H) \
+    X("benchmark", QNT_BENCHMARK) \
+    X("compare", QNT_COMPARE) \
+    X("encode", QNT_ENCODE) \
+    X("roundtrip", QNT_ROUNDTRIP)
+BF_COMMAND_TABLE(qnt_commands, QNT_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
 
-    const char *cmd = argv[1];
-    if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(qnt_commands,BF_COMMAND_COUNT(qnt_commands),cmd,-1);
+    if (cmd_id==QNT_OPT_HELP || cmd_id==QNT_OPT_H) {
         usage(); return 0;
     }
-    if (strcmp(cmd, "--version") == 0) {
+    if (cmd_id==QNT_OPT_VERSION) {
         print_version(); return 0;
     }
 
@@ -660,7 +673,7 @@ int main(int argc, char **argv) {
     if ((v = bf_arg_value(argc, argv, "--limit")))  limit = atoi(v);
     tensor_filter = bf_arg_value(argc, argv, "--tensor");
 
-    if (strcmp(cmd, "roundtrip") == 0 || strcmp(cmd, "benchmark") == 0) {
+    if (cmd_id==QNT_ROUNDTRIP || cmd_id==QNT_BENCHMARK) {
         const char *model = (argc >= 3 && argv[2][0] != '-') ? argv[2] : NULL;
         if (!model) {
             fprintf(stderr, "bonfyre-quant %s: a model file is required. "
@@ -670,15 +683,15 @@ int main(int argc, char **argv) {
         return measure_model(model, bits, limit, tensor_filter);
     }
 
-    if (strcmp(cmd, "encode") == 0 || strcmp(cmd, "compare") == 0) {
+    if (cmd_id==QNT_ENCODE || cmd_id==QNT_COMPARE) {
         const char *model = (argc >= 3 && argv[2][0] != '-') ? argv[2] : NULL;
-        const char *target = bf_arg_value(argc, argv, strcmp(cmd, "encode") == 0 ? "--out" : "--weights");
+        const char *target = bf_arg_value(argc, argv, cmd_id==QNT_ENCODE ? "--out" : "--weights");
         if (!model || !target) {
             fprintf(stderr, "usage: bonfyre-quant encode MODEL.safetensors --out FILE.bqfp [--tensor NAME] [--bits N]\n"
                             "       bonfyre-quant compare MODEL.safetensors --weights FILE.f32 [--tensor NAME]\n");
             return 1;
         }
-        if (strcmp(cmd, "encode") == 0) g_bqfp_out = target; else g_compare_weights = target; if ((v = bf_arg_value(argc, argv, "--skip"))) g_skip_tensors = atoi(v);
+        if (cmd_id==QNT_ENCODE) g_bqfp_out = target; else g_compare_weights = target; if ((v = bf_arg_value(argc, argv, "--skip"))) g_skip_tensors = atoi(v);
         return measure_model(model, bits, 1, tensor_filter);
     }
 

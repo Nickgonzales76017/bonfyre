@@ -1512,31 +1512,50 @@ static int cmd_embed_log_(int argc, char **argv) {
     return 0;
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define EMB_COMMANDS(X) \
+    X("agree", EMB_AGREE) \
+    X("branch", EMB_BRANCH) \
+    X("distill", EMB_DISTILL) \
+    X("gc", EMB_GC) \
+    X("index", EMB_INDEX) \
+    X("index-q8", EMB_INDEX_Q8) \
+    X("log", EMB_LOG) \
+    X("merge", EMB_MERGE) \
+    X("nearest", EMB_NEAREST) \
+    X("pack", EMB_PACK) \
+    X("refs", EMB_REFS) \
+    X("stat", EMB_STAT) \
+    X("static", EMB_STATIC) \
+    X("tag", EMB_TAG)
+BF_COMMAND_TABLE(emb_commands, EMB_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     /* Subcommand routing */
     if (argc >= 2 && argv[1][0] != '-') {
-        const char *sub = argv[1];
-        if (strcmp(sub, "pack")    == 0) return cmd_embed_pack_   (argc-1, argv+1);
-        if (strcmp(sub, "stat")    == 0) return cmd_embed_stat_   (argc-1, argv+1);
-        if (strcmp(sub, "gc")      == 0) return cmd_embed_gc_     (argc-1, argv+1);
-        if (strcmp(sub, "branch")  == 0) return cmd_embed_branch_ (argc-1, argv+1);
-        if (strcmp(sub, "index")   == 0) return cmd_embed_index_  (argc-1, argv+1);
-        if (strcmp(sub, "index-q8")== 0) {
+        const char *sub = argv[1]; const int sub_id=bf_command_id(emb_commands,BF_COMMAND_COUNT(emb_commands),sub,-1);
+        if (sub_id==EMB_PACK) return cmd_embed_pack_   (argc-1, argv+1);
+        if (sub_id==EMB_STAT) return cmd_embed_stat_   (argc-1, argv+1);
+        if (sub_id==EMB_GC) return cmd_embed_gc_     (argc-1, argv+1);
+        if (sub_id==EMB_BRANCH) return cmd_embed_branch_ (argc-1, argv+1);
+        if (sub_id==EMB_INDEX) return cmd_embed_index_  (argc-1, argv+1);
+        if (sub_id==EMB_INDEX_Q8) {
             char *av2[] = {(char*)"index",(char*)"q8",NULL};
             return cmd_embed_index_(2, av2);
         }
-        if (strcmp(sub, "nearest") == 0) return cmd_embed_nearest_(argc-1, argv+1);
-        if (strcmp(sub, "merge")   == 0) return cmd_embed_merge_  (argc-1, argv+1);
-        if (strcmp(sub, "tag")     == 0) return cmd_embed_tag_    (argc-1, argv+1);
-        if (strcmp(sub, "refs")    == 0) {
+        if (sub_id==EMB_NEAREST) return cmd_embed_nearest_(argc-1, argv+1);
+        if (sub_id==EMB_MERGE) return cmd_embed_merge_  (argc-1, argv+1);
+        if (sub_id==EMB_TAG) return cmd_embed_tag_    (argc-1, argv+1);
+        if (sub_id==EMB_REFS) {
             char *av2[] = {(char*)"tag",(char*)"list",NULL};
             return cmd_embed_tag_(2, av2);
         }
-        if (strcmp(sub, "log")     == 0) return cmd_embed_log_    (argc-1, argv+1);
-        if (strcmp(sub, "distill") == 0) return cmd_embed_distill_(argc-1, argv+1);
-        if (strcmp(sub, "static")  == 0) return cmd_embed_static_ (argc-1, argv+1);
-        if (strcmp(sub, "agree")   == 0) return cmd_embed_agree_  (argc-1, argv+1);
+        if (sub_id==EMB_LOG) return cmd_embed_log_    (argc-1, argv+1);
+        if (sub_id==EMB_DISTILL) return cmd_embed_distill_(argc-1, argv+1);
+        if (sub_id==EMB_STATIC) return cmd_embed_static_ (argc-1, argv+1);
+        if (sub_id==EMB_AGREE) return cmd_embed_agree_  (argc-1, argv+1);
     }
 
     const char *text_path = NULL, *out_path = NULL, *meta_out = NULL;

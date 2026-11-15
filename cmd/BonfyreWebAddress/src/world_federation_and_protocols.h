@@ -415,7 +415,9 @@ static void protocol_hub_page(const char *h) {
  * routes route_presentation publishes for it and the layout each wears, read
  * from the CMS on every request. A route here is an address that answers; the
  * pattern is the screen family it is laid out as. */
-static int serve_territory_map(const char *method, const char *target, const char *accept) {
+static int serve_territory_map(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *accept=r->accept;
+    (void)method;(void)target;(void)accept;
     static const struct { const char *t, *name, *host, *what; } T[] = {
         {"live", "Live", "aurekai.live", "What's on, watching and listening."},
         {"life", "Life", "aurekai.life", "Stories, food, places and people."},
@@ -487,8 +489,9 @@ static int serve_territory_map(const char *method, const char *target, const cha
     return 1;
 }
 
-static int serve_protocols(const char *method, const char *target, const char *host,
-                           const char *accept_hdr, const char *query) {
+static int serve_protocols(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *host=r->host; const char *accept_hdr=r->accept; const char *query=r->query;
+    (void)method;(void)target;(void)host;(void)accept_hdr;(void)query;
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     static char rows[262144];
     static char body[524288];
@@ -933,8 +936,9 @@ static void a2a_reply(int code, const char *body) {
     fflush(stdout);
 }
 
-static int serve_a2a(const char *method, const char *target, const char *body_in,
-                     const char *host, const char *xpayment, const char *accept) {
+static int serve_a2a(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body_in=r->body; const char *host=r->host; const char *xpayment=r->payment; const char *accept=r->accept;
+    (void)method;(void)target;(void)body_in;(void)host;(void)xpayment;(void)accept;
     static char body[49152];
     char accepts[4096], rpc_id[128], rpc_method[64], skill_id[128];
     const char *h = host && *host ? host : "aurekai.life";
@@ -1190,6 +1194,14 @@ static sqlite3 *cms_open_rw(void) {
         if (h) sqlite3_close(h); return NULL;
     }
     sqlite3_busy_timeout(h, 3000);
+    /* This direct public write owner does not pass through BonfyreCMS.
+     * Keep automatic checkpoints and bound recycled WAL high-water bytes
+     * for this connection without interrupting any active transaction. */
+    if (sqlite3_exec(h, "PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864;",
+                     NULL, NULL, NULL) != SQLITE_OK) {
+        sqlite3_close(h);
+        return NULL;
+    }
     return h;
 }
 

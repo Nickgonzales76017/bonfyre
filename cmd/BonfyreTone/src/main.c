@@ -373,6 +373,14 @@ static void print_usage(void) {
         "  bonfyre-tone status\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define TONE_COMMANDS(X) \
+    X("compare", TONE_COMPARE) \
+    X("extract", TONE_EXTRACT) \
+    X("profile", TONE_PROFILE)
+BF_COMMAND_TABLE(tone_commands, TONE_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     enum { TN_STATUS };
@@ -395,15 +403,15 @@ int main(int argc, char **argv) {
 
     if (argc < 3) { print_usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(tone_commands,BF_COMMAND_COUNT(tone_commands),cmd,-1);
     const char *audio = argv[2];
     const char *out_dir = (argc > 3 && argv[3][0] != '-') ? argv[3] : "output";
 
-    if (strcmp(cmd, "extract") == 0) {
+    if (cmd_id==TONE_EXTRACT) {
         return cmd_extract(audio, out_dir);
-    } else if (strcmp(cmd, "profile") == 0) {
+    } else if (cmd_id==TONE_PROFILE) {
         return cmd_profile(audio, out_dir);
-    } else if (strcmp(cmd, "compare") == 0) {
+    } else if (cmd_id==TONE_COMPARE) {
         if (argc < 4) { print_usage(); return 1; }
         const char *audio2 = argv[3];
         const char *dir = (argc > 4) ? argv[4] : "output";

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_CREDIT_PROFILE_PROJECTION_H
 #define BONFYRE_CREDIT_PROFILE_PROJECTION_H
+#include "../generated/native_estate_hosts.h"
 #include "credit_profile_host.h"
 #include "credit_profile_parent.h"
 /* Reuse the published member profile shell for read-only source-attributed
@@ -28,7 +29,7 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
     if(image&&page_image_url_safe(image)&&!page_picture_withheld(image))page_emit_picture(image,"ph-credit-media");
     /* Absolute: the profile also answers at its own credited host, where the
      * item does not; the publication opens on the territory that admitted it. */
-    fputs("<h3><a href=\"https://aurekai.work/o/",stdout);
+    fputs("<h3><a href=\"" BF_ORIGIN_WORK "/o/",stdout);
    url_query_value(source);fputc('/',stdout);url_query_value(key);fputs("\">",stdout);html(title);
    fputs("</a></h3><p>",stdout);
    const char *publisher=(const char*)sqlite3_column_text(s,2),*kind=(const char*)sqlite3_column_text(s,3),*date=(const char*)sqlite3_column_text(s,4);
@@ -40,9 +41,9 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
      * as Discover and A2A, and preserve the source-qualified relationship. */
     if(strlen(source)<128 && strlen(key)==24 && strspn(key,"0123456789abcdef")==24){
       fputs("<nav class=\"ph-source-continuations\" data-publication-continuation aria-label=\"Use this retained publication\">",stdout);
-      fputs("<a href=\"https://signin.aurekai.work/feed-use?context=self&amp;item=",stdout);url_query_value(source);fputs("%2F",stdout);url_query_value(key);
+      fputs("<a href=\"" BF_ORIGIN_SIGNIN "/feed-use?context=self&amp;item=",stdout);url_query_value(source);fputs("%2F",stdout);url_query_value(key);
       fputs("\">" BF_ICON_SPARKLES " Use in installed apps</a>",stdout);
-      fputs("<a href=\"https://signin.aurekai.work/relationships?context=self&amp;who=",stdout);url_query_value(by);
+      fputs("<a href=\"" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",stdout);url_query_value(by);
       fputs("&amp;source=",stdout);url_query_value(source);
       fputs("\">" BF_ICON_BOOKMARK " Keep track of this source credit</a></nav>",stdout);
     }
@@ -53,7 +54,9 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
  if(!shown)fputs("<p class=\"ph-empty\">No matching public archive items in this source.</p>",stdout);
 }
 
-static int serve_credit_profile(const char *method,const char *target,const char *query){
+static int serve_credit_profile(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
     char flag[8]={0},by[513]={0},source[4097]={0},tab[24]="overview",host[128]={0};
     const char *archive=getenv("BONFYRE_ITEM_ARCHIVE_DB");
     sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int found=0;

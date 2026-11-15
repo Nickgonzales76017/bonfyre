@@ -80,6 +80,7 @@ export function main(argv = process.argv.slice(2)) {
     return 2;
   }
   const cms = new Database(cmsPath);
+  cms.exec("PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864");
   const findOffer = cms.query("SELECT id FROM service_offer WHERE namespace=? AND offer_id=?");
   let established = 0, refused = 0, ownerWritten = 0, ownerRefused = 0;
   try {

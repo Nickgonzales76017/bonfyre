@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_HOME_H
 #define BONFYRE_PROFILE_HOME_H
+#include "../generated/native_estate_hosts.h"
 #include "../../BonfyreCMS/src/account_world.h"
 #include "site_authored_document.h"
 #include "affinity_projection.h"
@@ -87,7 +88,7 @@ typedef struct {const char *title,*href,*glyph,*description;} PhJourneyLink;
 static void ph_journey(const PhSite *site){
     static const PhJourneyLink paths[][3]={
         {{"Sources","/sources",BF_ICON_RSS,"Read published sources"},{"Recipes","/recipes",BF_ICON_BOOK,"Search and plan from retained recipes"},{"Feeds","/channels",BF_ICON_ACTIVITY,"Explore publishers and live channels"}},
-        {{"Profile","/profile",BF_ICON_USER,"Your own account and sites"},{"Collections","/profile?tab=saved",BF_ICON_BOOKMARK,"Private saved sources and collections"},{"Operating roles","https://aurekai.work/roles",BF_ICON_BRIEFCASE,"Choose your scoped working posture"}},
+        {{"Profile","/profile",BF_ICON_USER,"Your own account and sites"},{"Collections","/profile?tab=saved",BF_ICON_BOOKMARK,"Private saved sources and collections"},{"Operating roles",BF_ORIGIN_WORK "/roles",BF_ICON_BRIEFCASE,"Choose your scoped working posture"}},
         {{"Posts",NULL,BF_ICON_FILE_TEXT,"Write, review and publish"},{"Worlds",NULL,BF_ICON_WORLD,"Build spaces with retained references"},{"Programs","/programs?context=self",BF_ICON_BOARD,"Continue work in installed programs"}}
     };
     static const char *stages[]={"discover","keep","create"};
@@ -227,7 +228,7 @@ static int ph_retained_link(sqlite3 *cms,const char *ref,char title[768],char hr
  sqlite3_close(archive);
  if(ok)ok=item->title[0]&&item->href[0]&&public_http_url(item->href);
  if(ok){snprintf(title,768,"%.*s",160,item->title);
-   int written=snprintf(href,1401,"https://aurekai.work/o/%s/%s",source,key);
+   int written=snprintf(href,1401,BF_ORIGIN_WORK "/o/%s/%s",source,key);
    ok=written>0&&written<1401&&ph_link(href);}
  free(item);return ok;
 }
@@ -854,7 +855,9 @@ static void ph_interests_public(sqlite3 *db,const PhSite *site,const char *viewe
  fputs("</p></section>",stdout);
 }
 #include "profile_connections_web.h"
-static int serve_profile_home(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const char *accept){char blogslug[97];int private_view=!strcmp(target,"/profile")||!strcmp(target,"/profile/"),mutation=!strncmp(target,"/profile/",9)&&!private_view,apex=!strcmp(target,"/"),blog=ph_blog_slug(target,blogslug,sizeof(blogslug)),bloghome=!strcmp(target,"/blog")||!strcmp(target,"/blog/");if(!private_view&&!mutation&&!apex&&!blog&&!bloghome)return 0;if(apex&&host_is_territory_apex(host))return 0;if(!wants_html(accept)&&!mutation&&!((apex||blog||bloghome)&&!wants_json(accept)&&(!accept||!*accept||strstr(accept,"*/*"))))return 0;
+static int serve_profile_home(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;char blogslug[97];int private_view=!strcmp(target,"/profile")||!strcmp(target,"/profile/"),mutation=!strncmp(target,"/profile/",9)&&!private_view,apex=!strcmp(target,"/"),blog=ph_blog_slug(target,blogslug,sizeof(blogslug)),bloghome=!strcmp(target,"/blog")||!strcmp(target,"/blog/");if(!private_view&&!mutation&&!apex&&!blog&&!bloghome)return 0;if(apex&&host_is_territory_apex(host))return 0;if(!wants_html(accept)&&!mutation&&!((apex||blog||bloghome)&&!wants_json(accept)&&(!accept||!*accept||strstr(accept,"*/*"))))return 0;
  char normalized[256];if(!lower_host(host,normalized))return 0;sqlite3 *db=cms_open_ro();PhSite site={0},sites[16];int count=0,have_site=0;StudioViewer who={0};char actor[192]="";int signed_in=session_identity(bearer,auth_db,&who)&&who.id>0;if(signed_in)ph_actor(who.id,auth_db,actor);
  if(apex){if(!ph_site(db,normalized,NULL,&site)){sqlite3_stmt *claim=NULL;int declared=0;if(db&&sqlite3_prepare_v2(db,"SELECT 1 FROM site_presentation WHERE namespace='root' AND host=?1 AND profile='member-profile-v1' LIMIT 1",-1,&claim,NULL)==SQLITE_OK){sqlite3_bind_text(claim,1,normalized,-1,SQLITE_STATIC);declared=sqlite3_step(claim)==SQLITE_ROW;}sqlite3_finalize(claim);if(db)sqlite3_close(db);if(declared){ph_error(404,"This profile site is not currently published.\n");return 1;}return 0;}have_site=1;}
  if(bloghome){if(strcmp(method,"GET")){ph_error(405,"Open the journal with GET.\n");if(db)sqlite3_close(db);return 1;}if(!db||!ph_site(db,normalized,NULL,&site)){if(db)sqlite3_close(db);return 0;}int served=ph_blog_index(db,&site,normalized,query);sqlite3_close(db);return served;}

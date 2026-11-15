@@ -1,5 +1,6 @@
 #ifndef BONFYRE_MACHINE_WEB_AND_WEBSUB_H
 #define BONFYRE_MACHINE_WEB_AND_WEBSUB_H
+#include "../generated/native_estate_hosts.h"
 /* Extracted verbatim from main.c lines 22435-23599 (mechanical split, no logic changes). */
 static int aperture_push(Action *acts, int n, int cap, const char *label,
                          const char *hint, int strength, int is_write, const char *href) {
@@ -52,7 +53,7 @@ static const char *site_origin_for_host(const char *explicit_host) {
             return public_origin;
     }
     const char *o = getenv("BONFYRE_PUBLIC_ORIGIN");
-    return (o && *o) ? o : "https://aurekai.life";
+    return (o && *o) ? o : BF_ORIGIN_LIFE;
 }
 static const char *site_origin(void) { return site_origin_for_host(NULL); }
 
@@ -167,9 +168,9 @@ static int prefers(const char *accept, const char *type) {
  * because a sitemap is a publication claim and listing an unpublished thing
  * would be one more way to leak it.
  */
-static int serve_machine_web(const char *method, const char *target,
-                             const char *host, const char *inm)
-{
+static int serve_machine_web(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *host=r->host; const char *inm=r->if_none_match;
+    (void)method;(void)target;(void)host;(void)inm;
     static char body[262144];
     size_t w = 0;
     int head_only = !strcmp(method, "HEAD");
@@ -308,8 +309,8 @@ static int serve_machine_web(const char *method, const char *target,
             snprintf(body,sizeof(body),
               "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
               "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
-              "<url><loc>https://aurekai.life/communities</loc></url>\n"
-              "<url><loc>https://aurekai.life/community</loc></url>\n"
+              "<url><loc>" BF_ORIGIN_LIFE "/communities</loc></url>\n"
+              "<url><loc>" BF_ORIGIN_LIFE "/community</loc></url>\n"
               "</urlset>\n");
             return cached_reply_m(body,"application/xml; charset=utf-8",inm,head_only);
         }
@@ -318,7 +319,7 @@ static int serve_machine_web(const char *method, const char *target,
           "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         for(int page=0;page<pages;page++) {
             int n=snprintf(body+w,sizeof(body)-w,
-                "<sitemap><loc>https://aurekai.life/sitemap-community-%d.xml</loc></sitemap>\n",page);
+                "<sitemap><loc>" BF_ORIGIN_LIFE "/sitemap-community-%d.xml</loc></sitemap>\n",page);
             if(n<0||(size_t)n>=sizeof(body)-w)return 0;
             w+=(size_t)n;
         }
@@ -357,7 +358,7 @@ static int serve_machine_web(const char *method, const char *target,
             if(!cjr_key(community)||!cjr_key(post)||!cjr_actor(author)||!lastmod||!*lastmod||
                cjr_community(verify,community,&c)!=1||!cjr_public(&c))continue;
             int n=snprintf(body+w,sizeof(body)-w,
-                "<url><loc>https://aurekai.life/community/%s/thread/%s/</loc><lastmod>%s</lastmod></url>\n",
+                "<url><loc>" BF_ORIGIN_LIFE "/community/%s/thread/%s/</loc><lastmod>%s</lastmod></url>\n",
                 community,post,lastmod);
             if(n<0||(size_t)n>=sizeof(body)-w)break;
             w+=(size_t)n;
@@ -479,9 +480,9 @@ static const char *indexnow_key(void) {
     return (k && *k) ? k : "";
 }
 
-static int serve_indexnow_key(const char *method, const char *target,
-                              const char *inm)
-{
+static int serve_indexnow_key(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *inm=r->if_none_match;
+    (void)method;(void)target;(void)inm;
     static char body[128];
     const char *key = indexnow_key();
     char want[160];
@@ -512,9 +513,9 @@ static int serve_indexnow_key(const char *method, const char *target,
  * becomes a second owner of the fact, which is why the manifest digests the
  * representation rather than asserting a version of the subject.
  */
-static int subject_artifact(const char *method, const char *target,
-                            const char *inm)
-{
+static int subject_artifact(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *inm=r->if_none_match;
+    (void)method;(void)target;(void)inm;
     static char body[131072], rows[65536];
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     char ident[64], leaf[64], sql[2048];
@@ -763,9 +764,9 @@ static sqlite3 *websub_open(int writable) {
     return db;
 }
 
-static int serve_websub(const char *method, const char *target, const char *query,
-                        const char *raw_headers, const char *body_in)
-{
+static int serve_websub(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *raw_headers=r->raw; const char *body_in=r->body;
+    (void)method;(void)target;(void)query;(void)raw_headers;(void)body_in;
     char token[80] = {0}, mode[32] = {0}, topic[1024] = {0}, challenge[256] = {0};
     sqlite3 *db; sqlite3_stmt *st = NULL;
     char want_topic[1024] = {0}, secret[128] = {0}, state[32] = {0}, authority_receipt[1024] = {0};

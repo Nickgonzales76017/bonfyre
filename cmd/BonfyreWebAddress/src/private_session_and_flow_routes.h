@@ -83,9 +83,10 @@ done:
     return 0;
 }
 #include "asset_byte_range.h"
-static int serve_asset_twin(const char *method,const char *target,const char *request) {
+static int serve_asset_twin(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *request=rq->raw;
+    (void)method;(void)target;(void)request;
     char digest[128],path[PATH_MAX],hex[65];
-    if(strncmp(target,"/assets/twin/",13))return 0;
     if(strcmp(method,"GET")&&strcmp(method,"HEAD"))return 0;
     if(!asset_twin_digest_target(target,digest)){
         protocol_reply(404,"application/json","{\"error\":\"asset_twin_not_found\"}\n");return 1;
@@ -451,8 +452,9 @@ static int serve_private_studio_surface(const char *method, const char *target,
     return 1;
 }
 
-static int serve_vertical_private(const char *method, const char *target, const char *body,
-                                 const char *bearer, const char *auth_db, const char *host) {
+static int serve_vertical_private(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *host=r->host;
+    (void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)host;
     const char *estate = private_estate_for_host(host);
     char user[32], actor[64], output[65536], diagnostic[4096], db_path[PATH_MAX], submitted_estate[32];
     const char *binary;
@@ -619,8 +621,9 @@ static void superuser_html_reply(int code, const char *fragment) {
            code, code == 200 ? "OK" : code == 401 ? "Unauthorized" : code == 403 ? "Forbidden" : "Bad Request", strlen(body), body);
 }
 
-static int serve_superuser_control(const char *method, const char *target, const char *body,
-                                   const char *bearer, const char *auth_db, const char *host) {
+static int serve_superuser_control(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *host=r->host;
+    (void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)host;
     char out[32768] = {0}, err[4096] = {0}, escaped[65536], fragment[98304];
     const char *bin = auth_binary();
     int is_action = !strcmp(target, "/studio/admin/user") || !strcmp(target, "/studio/admin/grant") ||
@@ -754,8 +757,9 @@ static int flow_safe_term(const char *in, char *out, size_t cap) {
     return w > 0;
 }
 
-static int serve_property_flow(const char *method, const char *target, const char *query,
-                               const char *bearer, const char *auth_db) {
+static int serve_property_flow(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     const char *bindir = getenv("BONFYRE_BIN_DIR");
     static char rows[262144], body[524288];
     char sql[4096], term[128], raw[128];
@@ -1022,9 +1026,9 @@ static int market_capability_row(const char *name, const char *summary,
       name);
 }
 
-static int serve_market_flow(const char *method, const char *target, const char *query,
-                             const char *bearer, const char *auth_db)
-{
+static int serve_market_flow(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char body[262144];
     size_t w = 0;
 
@@ -1147,7 +1151,9 @@ static int mf_offer_rows(sqlite3 *db, int with_head) {
     return n;
 }
 
-static int emit_market_fronts(const char *method, const char *target, const char *query, const char *host, const char *root) {
+static int emit_market_fronts(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *host=r->host; const char *root=r->root;
+    (void)method;(void)target;(void)query;(void)host;(void)root;
     const char *territory = territory_of(host);
     int is_work = territory && !strcmp(territory, "work"), is_shop = territory && !strcmp(territory, "shop");
     if (strcmp(method, "GET") || (!is_work && !is_shop)) return 0;
@@ -1250,9 +1256,9 @@ static int sources_admitted(const char *prefix) {
     return n;
 }
 
-static int serve_sources_flow(const char *method, const char *target, const char *query,
-                              const char *bearer, const char *auth_db)
-{
+static int serve_sources_flow(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     (void)query;   /* these steps take no parameters yet */
     static char body[262144];
     size_t w = 0;
@@ -1326,9 +1332,9 @@ static int serve_sources_flow(const char *method, const char *target, const char
  * is what it is: an agent discovers a skill, opens work, and the work becomes
  * an event anyone can subscribe to.
  */
-static int serve_agents_flow(const char *method, const char *target, const char *query,
-                             const char *bearer, const char *auth_db)
-{
+static int serve_agents_flow(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     (void)query;   /* these steps take no parameters yet */
     static char body[262144], rows[131072];
     /* sql holds two PATH_MAX paths plus the statement, so it is sized for them

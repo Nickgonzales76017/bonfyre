@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include "../src/workspace_package.h"
 static int mode,calls;
-static int serve_application_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth) {
+#include "../src/web_request.h"
+static int serve_application_workspace(const BfRequest *request) {
+    const char *method=request->method,*target=request->target,*query=request->query,*body=request->body,*raw=request->raw,*host=request->host,*bearer=request->bearer,*auth=request->auth_db;
     assert(!strcmp(method,"GET")&&!*query&&!*body&&!*raw&&!*bearer&&!*auth&&!strcmp(host,"aurekai.work"));calls++;
     const char *text=!strcmp(target,"/apps/a.mjs")?"import './b.mjs';import('./nested/c.mjs');":!strcmp(target,"/apps/b.mjs")?"import './a.mjs';":!strcmp(target,"/apps/nested/c.mjs")?"import '../b.mjs';":NULL;
     if(mode==1&&!strcmp(target,"/apps/b.mjs"))text=NULL;

@@ -10525,7 +10525,8 @@
       "experience_chains": [],
       "family": "command",
       "forbidden_inferences": [
-        "the command exists -> its effect is authorized; Authority gates mutation and read scope still applies"
+        "the command exists -> its effect is authorized; Authority gates mutation and read scope still applies",
+        "a form rendered through FtForm -> its post is authorized; the owner that receives the post still checks origin, nonce, revision and authority"
       ],
       "internal_calculi": [
         "BonfyreSurfaceScene binary"
@@ -10554,7 +10555,8 @@
       "witnesses": [
         "md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)",
         "SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)",
-        "2026-11-11 vocabulary at 46 with ui:choice and ui:field plus ui:action methods and containment; safe_type admits every safe HTML input type while file/image stay refused; suite proves search renders and uploads deny atomically"
+        "2026-11-11 vocabulary at 46 with ui:choice and ui:field plus ui:action methods and containment; safe_type admits every safe HTML input type while file/image stay refused; suite proves search renders and uploads deny atomically",
+        "2026-11-15 ui:action takes named submit buttons (name/value, formnovalidate, quiet/danger tone) and one validated data-* hook; ui:field renders select options, checkbox checked, pattern/min/max/step/autocomplete; FtForm in cmd/BonfyreWebAddress/src/form_tree.h builds them; native_authoring_components_test proves each attribute, hook charset refusal and atomic denial of an unsafe field name"
       ]
     },
     "cmd-swarm": {
@@ -42640,9 +42642,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "ccddf8e8c3258a72d060d3195abf381720e0dbbed964b79bcfe0597ead68f1bf",
+    "declaration_digest": "648a9c320a9bb40be8e79db7f755ab93f49ed412da3a3d3b37e7c76efb1d535b",
     "declaration_files": 155,
-    "generated_at": "2026-11-15T06:57:01Z"
+    "generated_at": "2026-11-15T14:53:20Z"
   },
   "views": {
     "CapabilityView": {

@@ -810,8 +810,9 @@ out:
  * even one which currently resolves to the anonymous presentation cell, never
  * enters this cache: we do not turn an authentication coordinate into a public
  * cache key. */
-static int serve_site_program(const char *method, const char *target, const char *query,
-                              const char *host, const char *accept, const char *bearer, const char *auth_db) {
+static int serve_site_program(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *query=bf_request_query_opt(rq); const char *host=rq->host; const char *accept=rq->accept; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
+    (void)method;(void)target;(void)query;(void)host;(void)accept;(void)bearer;(void)auth_db;
     BfSiteProgramEmit request = {method, target, query, host, accept, bearer, auth_db};
     char key[768], fingerprint[65], site[128] = {0};
     char dependency_storage[32][640];
@@ -843,8 +844,9 @@ static int serve_site_program(const char *method, const char *target, const char
                                   dependencies, dependency_count);
 }
 
-static int serve_world_fragments(const char *method, const char *target, const char *query,
-                                 const char *bearer, const char *auth_db) {
+static int serve_world_fragments(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     char world[128];
     WorldFragmentPlan fragments[WORLD_FRAGMENT_PLAN_MAX];
     sqlite3 *db = NULL;
@@ -1212,11 +1214,11 @@ static int emit_world_material_from_sources(sqlite3 *db, const char *family, cha
     return shown;
 }
 
-static int serve_world_material(const char *method, const char *target, const char *query,
-                                const char *accept) {
+static int serve_world_material(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=bf_request_query_opt(r); const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)accept;
     char world[128], fragment[128], family[64] = {0}, sources[2048] = {0};
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
-    if (strcmp(target, "/_surface/world-material")) return 0;
     if (strcmp(method, "GET") || !query_value(query, "world", world, sizeof(world)) ||
         !query_value(query, "fragment", fragment, sizeof(fragment)) || !studio_safe_slug_arg(world) || !studio_safe_slug_arg(fragment)) {
         protocol_reply(400, "application/json", "{\"error\":\"world_and_fragment_required\"}\n"); return 1;

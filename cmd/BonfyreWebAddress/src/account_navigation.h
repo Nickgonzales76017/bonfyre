@@ -73,9 +73,10 @@ static void account_navigation_emit(const char *bearer,const char *auth_db) {
 #include "account_review_web.h"
 /* Cached public shells request only this private, bounded native fragment.
  * It does not return tokens, email, account IDs or hidden destination counts. */
-static int serve_account_navigation(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db) {
+static int serve_account_navigation(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     if(!strcmp(target,"/account/review"))return serve_account_review(method,query,bearer,auth_db);
-    if(strcmp(target,"/account/navigation"))return 0;
     if(strcmp(method,"GET") || (query&&*query)) {
         fputs("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nCache-Control: private, no-store\r\nConnection: close\r\n\r\nUse the current account navigation without parameters.\n",stdout);return 1;
     }

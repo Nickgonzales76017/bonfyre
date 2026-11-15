@@ -42,8 +42,8 @@ try{
   assert.equal(await page.$$eval('[data-role-program]',n=>n.length),3);
   assert.equal(await page.$eval('[name=scope]',n=>n.value),scope);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'390px role directory overflow');
-  await page.type('.role-search [name=q]','internet');
-  await move(()=>page.click('.role-search button'));
+  await page.type('[data-role-search] [name=q]','internet');
+  await move(()=>page.click('[data-role-search] button'));
   assert.equal(await page.$$eval('[data-role-program]',n=>n.length),1);
   assert.match(page.url(),/scope=community%3Abrowser-role-smoke/);
   assert.equal(await page.$eval('[data-role-program] [name=scope]',n=>n.value),scope);
@@ -61,7 +61,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'390px role detail overflow');
   await page.setViewport({width:1365,height:900});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'desktop role detail overflow');
-  await move(()=>page.click('.role-end button[type=submit]'));
+  await move(()=>page.click('[data-role-end] button[type=submit]'));
   assert.equal(new URL(page.url()).pathname,'/roles');
   assert(!((await page.$eval('[data-role-assignments]',n=>n.textContent)).includes(scope)),'ended assignment remains active');
   assert.deepEqual(errors,[]);

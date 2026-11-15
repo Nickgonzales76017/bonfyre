@@ -981,6 +981,15 @@ static void print_usage(void) {
         "  bonfyre-tag status\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define TAG_COMMANDS(X) \
+    X("batch", TAG_BATCH) \
+    X("detect-lang", TAG_DETECT_LANG) \
+    X("predict", TAG_PREDICT) \
+    X("train", TAG_TRAIN)
+BF_COMMAND_TABLE(tag_commands, TAG_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     enum { TG_STATUS };
@@ -996,9 +1005,9 @@ int main(int argc, char **argv) {
 
     if (argc < 3) { print_usage(); return 1; }
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(tag_commands,BF_COMMAND_COUNT(tag_commands),cmd,-1);
 
-    if (strcmp(cmd, "predict") == 0) {
+    if (cmd_id==TAG_PREDICT) {
         if (argc < 4) { print_usage(); return 1; }
         const char *model_path = argv[2];
         const char *text = argv[3];
@@ -1016,7 +1025,7 @@ int main(int argc, char **argv) {
         int rc = cmd_predict(model_path, text, out, top_k, &model);
         ft_model_free(&model);
         return rc;
-    } else if (strcmp(cmd, "batch") == 0) {
+    } else if (cmd_id==TAG_BATCH) {
         if (argc < 4) { print_usage(); return 1; }
         const char *model_path = argv[2];
         FtModel model;
@@ -1027,10 +1036,10 @@ int main(int argc, char **argv) {
         int rc = cmd_batch(model_path, argv[3], (argc > 4) ? argv[4] : "output", &model);
         ft_model_free(&model);
         return rc;
-    } else if (strcmp(cmd, "train") == 0) {
+    } else if (cmd_id==TAG_TRAIN) {
         if (argc < 4) { print_usage(); return 1; }
         return cmd_train(argv[2], argv[3]);
-    } else if (strcmp(cmd, "detect-lang") == 0) {
+    } else if (cmd_id==TAG_DETECT_LANG) {
         return cmd_detect_lang(argv[2], (argc > 3) ? argv[3] : "output");
     }
 

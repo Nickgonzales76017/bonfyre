@@ -774,9 +774,6 @@ static int serve_work_order_writes(const char *method,const char *target,const c
 static int serve_work_orders(const BfRequest *r) {
     const char *method=r->method,*target=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
     (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    if(!target)return 0;
-    int family=!strcmp(target,"/work-orders")||!strncmp(target,"/work-orders/",13)||!strncmp(target,"/disputes/",10)||!strcmp(target,"/vouches")||!strncmp(target,"/vouches/",9);
-    if(!family)return 0;
     if(serve_work_order_writes(method,target,body,raw,host,bearer,auth_db))return 1;
     if(!wo_host(host)){wo_reply(404,"Work orders are not kept at this address.\n");return 1;}
     if(strcmp(method,"GET")){wo_reply(405,"Read this page with GET.\n");return 1;}

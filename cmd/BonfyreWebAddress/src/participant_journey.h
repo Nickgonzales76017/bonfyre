@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PARTICIPANT_JOURNEY_H
 #define BONFYRE_PARTICIPANT_JOURNEY_H
+#include "form_tree.h"
 /* HTML and HTTP adapters around the existing native participation relations.
  * No client-side account database and no implicit external participation. */
 #include <strings.h>
@@ -108,9 +109,6 @@ static int pj_login_url(const char *next,char out[2600]){
     char encoded[2400];if(!pj_local_path(next)||!pj_encode(next,encoded,sizeof(encoded)))return 0;
     int n=snprintf(out,2600,"/session/continue?next=%s",encoded);return n>0&&n<2600;
 }
-static void pj_hidden(const char *key,const char *value){
-    fputs("<input type=\"hidden\" name=\"",stdout);html(key);fputs("\" value=\"",stdout);html(value);fputs("\">",stdout);
-}
 static int pj_external_link(const char *s){
     if(!s||!public_http_url(s)||strlen(s)>2048)return 0;
     for(const unsigned char *p=(const unsigned char*)s;*p;p++)if(*p<=32||*p==127||strchr("\\<>\"",*p))return 0;
@@ -145,9 +143,9 @@ static void pj_document(const PjRecord *r){
         const char *actions[]={"follow","unfollow","request","withdraw"};
         const char *labels[]={"Follow in my activity","Stop following","Request participation","Withdraw my request"};
         for(size_t i=0;i<4;i++)if(pj_action_offered(r,actions[i])){
-            fputs("<form method=\"post\" action=\"/participation/change\">",stdout);
-            pj_hidden("kind",pj_kind_name(r->kind));pj_hidden("id",r->target);pj_hidden("action",actions[i]);pj_hidden("expected",r->expected);
-            fputs("<button type=\"submit\">",stdout);html(labels[i]);fputs("</button></form>",stdout);
+            const FtField hidden[]={{"kind",pj_kind_name(r->kind)},{"id",r->target},{"action",actions[i]},{"expected",r->expected}};
+            const FtForm f={.id="pj-change",.action="/participation/change",.label=labels[i],.hidden=hidden,.nhidden=4};
+            ft_form(stdout,&f);
         }
         fputs("<p><a href=\"/profile?tab=activity&amp;kind=",stdout);html(pj_kind_name(r->kind));fputs("\">Return to my activity</a></p>",stdout);
     }
@@ -180,8 +178,9 @@ static int pj_legacy(const char *method,const char *target,const char *body,cons
     sqlite3_close(db);if(code!=200){pj_error(code);return 1;}
     page_redirect(pj_local_path(back)?back:path);return 1;
 }
-static int serve_participant_journey(const char *method,const char *target,const char *query,
-    const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const char *accept){
+static int serve_participant_journey(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *query=rq->query; const char *body=rq->body; const char *raw=rq->raw; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db; const char *accept=rq->accept;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     int mutation=target&&!strcmp(target,"/participation/change");
     if(!target||(!mutation&&strcmp(target,"/participation")))return 0;
     if(strcmp(method,mutation?"POST":"GET")){pj_error(405);return 1;}
@@ -213,8 +212,11 @@ static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,co
     char actor[64];snprintf(actor,sizeof(actor),"user:%ld",uid);
     fputs("<section class=\"pj-activity\" data-private-participation><h2>My activity</h2><p class=\"pj-notice\">Only you can see this activity. Switching profile sites does not publish it.</p><nav class=\"pj-filter\" aria-label=\"Activity type\">",stdout);
     for(int i=1;i<=2;i++){fputs("<a href=\"",stdout);pj_profile_url(site,(PjKind)i,"",0);fputs("\"",stdout);if(i==(int)kind)fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(i==1?"Following":"Community requests");fputs("</a>",stdout);}
-    fputs("</nav><form method=\"get\" action=\"/profile\">",stdout);pj_hidden("tab","activity");pj_hidden("kind",pj_kind_name(kind));if(site&&*site)pj_hidden("site",site);
-    fputs("<input type=\"search\" name=\"q\" aria-label=\"Search my activity\" placeholder=\"Search current public titles\" maxlength=\"159\" value=\"",stdout);html(q?q:"");fputs("\"><button type=\"submit\">Search activity</button></form>",stdout);
+    fputs("</nav>",stdout);
+    {const FtField hidden[]={{"tab","activity"},{"kind",pj_kind_name(kind)},{site&&*site?"site":NULL,site}};
+     const FtInput find[]={{.label="Search my activity",.type="search",.name="q",.maxlength="159",.value=q?q:"",.placeholder="Search current public titles"}};
+     const FtForm f={.id="pj-search",.method="get",.action="/profile",.label="Search activity",.hidden=hidden,.nhidden=3,.inputs=find,.ninputs=1};
+     ft_form(stdout,&f);}
     const char *sql=kind==PJ_COMMUNITY?
       "SELECT m.id,m.community FROM community_membership m WHERE m.namespace='root' AND m.member_subject=?1 "
       "AND (?2=0 OR m.id<?2) AND (?3='' OR EXISTS(SELECT 1 FROM community_body c WHERE c.namespace='root' "

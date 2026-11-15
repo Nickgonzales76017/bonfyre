@@ -63,6 +63,8 @@ body.ak-app .ak-pattern :is(.ak-actions, .ak-buttons, form) > :is(button, .ak-bu
 body.ak-app .ak-pattern.ak-action > button:first-of-type:hover { background: color-mix(in srgb, var(--ak-primary) 88%, #fff); }
 body.ak-app .ak-pattern :is(button, .ak-button).ak-tone-danger,
 body.ak-app .ak-pattern .ak-tone-danger :is(button, .ak-button) { background: transparent; border-color: #ff8a80; color: #ff8a80; }
+/* A quiet action steps back even when it is the only button in its form. */
+body.ak-app .ak-pattern :is(button, .ak-button).ak-tone-quiet { background: transparent; border-color: var(--ak-outline-variant); color: var(--ak-on-surface); }
 body.ak-app .ak-pattern .ak-button-group { display: inline-flex; }
 body.ak-app .ak-pattern .ak-button-group > * { border-radius: 0; margin-left: -1px; }
 body.ak-app .ak-pattern .ak-button-group > :first-child { border-radius: 999px 0 0 999px; margin-left: 0; }

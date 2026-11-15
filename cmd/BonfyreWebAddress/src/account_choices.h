@@ -11,8 +11,10 @@ static int aq_query(const char *input,AccountChoiceQuery *out){memset(out,0,size
   if((seen&bit)||!og_human(eq+1,(size_t)(end-eq-1),dest,cap))return 0;seen|=bit;p=*end?end+1:end;if(!*p&&*end)return 0;
  }return !*out->after||aq_host(out->after);
 }
-static int serve_account_choices(const char *method,const char *target,const char *query){
- if(strcmp(target,"/account/choices/institutions"))return 0;if(strcmp(method,"GET")){aw_error(405,"Use a read to choose a public institution.\n");return 1;}
+static int serve_account_choices(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query;
+    (void)method;(void)target;(void)query;
+ if(strcmp(method,"GET")){aw_error(405,"Use a read to choose a public institution.\n");return 1;}
  AccountChoiceQuery input;if(!aq_query(query,&input)){aw_error(400,"Search by a name using the current catalogue controls.\n");return 1;}
  const char *path=getenv("BONFYRE_SOURCE_FRONTIER_DB");sqlite3 *db=NULL;sqlite3_stmt *s=NULL;
  if(!path||!*path||sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);aw_error(503,"The public institution directory is unavailable. Try again; no relationship has changed.\n");return 1;}

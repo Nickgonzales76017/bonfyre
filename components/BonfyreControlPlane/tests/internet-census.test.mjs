@@ -58,7 +58,7 @@ test('heartbeat delegates whole-census weather to native refresh owner', () => {
   expect(service).toContain('--project /usr/local/bin/bonfyre-project');
   expect(service).not.toContain('/usr/local/bin/bonfyre-reheat');
   expect(project).toContain('static int foreign_reheat(');
-  expect(project).toContain('strcmp(argv[2], "reheat")');
+  expect(project).toMatch(/X\("reheat", *PJS_REHEAT\)/);
 });
 
 test('native reheat preserves authored census and honors refusal and activated demand', () => {

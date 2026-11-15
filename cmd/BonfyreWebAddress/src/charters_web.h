@@ -252,7 +252,6 @@ static int ch_commit(sqlite3 *db, const char *actor, const ChForm *p, char back[
 static int serve_charters(const BfRequest *r) {
     const char *method=r->method,*path=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
     (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    if (!path || (strcmp(path, "/charters") && strcmp(path, "/charters/") && strncmp(path, "/charters/", 10))) return 0;
     int post = !strcmp(method, "POST");
     if (!post && !wants_html(accept)) return 0;
     StudioViewer who = {0}; char actor[64] = "";

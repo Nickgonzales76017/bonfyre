@@ -51,7 +51,7 @@ function surfacePrograms(repo) {
 class Store {
   constructor(path, now) {
     this.db = new Database(path);
-    this.db.exec("PRAGMA busy_timeout=60000; PRAGMA journal_mode=WAL");
+    this.db.exec("PRAGMA busy_timeout=60000; PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864");
     this.ns = "root";
     this.now = now;
     this.columns = new Map();

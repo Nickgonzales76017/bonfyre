@@ -306,28 +306,50 @@ static void usage(FILE *out) {
           "  url-def TERM\n", out);
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define XMAP_COMMANDS(X) \
+    X("--help", XMAP_OPT_HELP) \
+    X("-h", XMAP_OPT_H) \
+    X("chain", XMAP_CHAIN) \
+    X("chain-def", XMAP_CHAIN_DEF) \
+    X("find", XMAP_FIND) \
+    X("help", XMAP_HELP) \
+    X("home", XMAP_HOME) \
+    X("home-def", XMAP_HOME_DEF) \
+    X("kind", XMAP_KIND) \
+    X("protocol", XMAP_PROTOCOL) \
+    X("protocol-def", XMAP_PROTOCOL_DEF) \
+    X("record-def", XMAP_RECORD_DEF) \
+    X("resolve", XMAP_RESOLVE) \
+    X("stats", XMAP_STATS) \
+    X("url-def", XMAP_URL_DEF)
+BF_COMMAND_TABLE(xmap_commands, XMAP_COMMANDS);
+
 int main(int argc, char **argv) {
     const char *op, *q;
     long lim;
     infer_root_release(argv[0]);
     if (argc < 2) { usage(stderr); return 2; }
     op = argv[1];
-    if (!strcmp(op, "stats")) return cat_file("manifest.json");
-    if (!strcmp(op, "help") || !strcmp(op, "--help") || !strcmp(op, "-h")) { usage(stdout); return 0; }
+    const int op_id = bf_command_id(xmap_commands, BF_COMMAND_COUNT(xmap_commands), op, -1);
+    if (op_id==XMAP_STATS) return cat_file("manifest.json");
+    if (op_id==XMAP_HELP || op_id==XMAP_OPT_HELP || op_id==XMAP_OPT_H) { usage(stdout); return 0; }
     if (argc < 3) { usage(stderr); return 2; }
     q = argv[2];
-    if (!strcmp(op, "resolve")) return experience_resolve(root_dir(), q, argc > 3 ? argv[3] : NULL);
+    if (op_id==XMAP_RESOLVE) return experience_resolve(root_dir(), q, argc > 3 ? argv[3] : NULL);
     lim = limit_of(argc > 3 ? argv[3] : NULL);
-    if (!strcmp(op, "find")) return query(FIND, q, lim);
-    if (!strcmp(op, "chain")) return query(CHAIN, q, lim);
-    if (!strcmp(op, "protocol")) { int rc = json_definition("protocols.jsonl", q); return rc ? rc : query(PROTOCOL, q, lim); }
-    if (!strcmp(op, "home")) { int rc = json_definition("home_blueprints.jsonl", q); return rc ? rc : query(HOME, q, lim); }
-    if (!strcmp(op, "kind")) return query(KIND, q, lim);
-    if (!strcmp(op, "chain-def")) return json_definition("chains.jsonl", q);
-    if (!strcmp(op, "protocol-def")) return json_definition("protocols.jsonl", q);
-    if (!strcmp(op, "home-def")) return json_definition("home_blueprints.jsonl", q);
-    if (!strcmp(op, "record-def")) return json_definition("app_bindings.jsonl", q);
-    if (!strcmp(op, "url-def")) return json_match("url_grammars.jsonl", q);
+    if (op_id==XMAP_FIND) return query(FIND, q, lim);
+    if (op_id==XMAP_CHAIN) return query(CHAIN, q, lim);
+    if (op_id==XMAP_PROTOCOL) { int rc = json_definition("protocols.jsonl", q); return rc ? rc : query(PROTOCOL, q, lim); }
+    if (op_id==XMAP_HOME) { int rc = json_definition("home_blueprints.jsonl", q); return rc ? rc : query(HOME, q, lim); }
+    if (op_id==XMAP_KIND) return query(KIND, q, lim);
+    if (op_id==XMAP_CHAIN_DEF) return json_definition("chains.jsonl", q);
+    if (op_id==XMAP_PROTOCOL_DEF) return json_definition("protocols.jsonl", q);
+    if (op_id==XMAP_HOME_DEF) return json_definition("home_blueprints.jsonl", q);
+    if (op_id==XMAP_RECORD_DEF) return json_definition("app_bindings.jsonl", q);
+    if (op_id==XMAP_URL_DEF) return json_match("url_grammars.jsonl", q);
     usage(stderr);
     return 2;
 }

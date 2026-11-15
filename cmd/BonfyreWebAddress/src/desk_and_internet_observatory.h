@@ -418,9 +418,9 @@ static void internet_html_reply(const char *page, const BfMatrixAddressResolutio
     fputs(nav_end + strlen("</nav>"), stdout);
 }
 
-static int serve_internet_observatory(BfMatrix *matrix, const char *method, const char *target,
-                                      const char *body, const char *bearer, const char *auth_db,
-                                      const char *host) {
+static int serve_internet_observatory(const BfRequest *r) {
+    BfMatrix *matrix=r->m; const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *host=r->host;
+    (void)matrix;(void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)host;
     static char page[131072];
     BfMatrixAddressResolution resolved;
     const char *view_kind;
@@ -744,10 +744,9 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
     free(next); free(body); return 1;
 }
 
-static int serve_desk_external_candidate(const char *method, const char *target,
-                                         const char *query, const char *bearer,
-                                         const char *auth_db, const char *accept)
-{
+static int serve_desk_external_candidate(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;(void)accept;
     static char body[131072], route_html[32768];
     char occurrence[97] = {0}, foreign_url[1400] = {0};
     char e_occurrence[256], e_url[3000];
@@ -851,9 +850,9 @@ static int studio_count(sqlite3 *db, const char *sql, const char *ns) {
     return n;
 }
 
-static int serve_desk(const char *method, const char *target,
-                      const char *bearer, const char *auth_db, const char *accept)
-{
+static int serve_desk(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)bearer;(void)auth_db;(void)accept;
     DeskRow rows[8];
     PhSite *sites = NULL;
     StudioViewer who = {0};
@@ -1062,10 +1061,9 @@ static int serve_desk(const char *method, const char *target,
  * probing on request: a page that reaches out to five external sites when a
  * person opens it is a page that fails when one of them is slow.
  */
-static int serve_membrane(const char *method, const char *target,
-                          const char *bearer, const char *auth_db,
-                          const char *accept)
-{
+static int serve_membrane(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)method;(void)target;(void)bearer;(void)auth_db;(void)accept;
     static char body[262144];
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
     size_t w = 0;
@@ -1240,9 +1238,9 @@ static int serve_membrane(const char *method, const char *target,
     return 1;
 }
 
-static int serve_flow(const char *method, const char *target, const char *query,
-                      const char *bearer, const char *auth_db)
-{
+static int serve_flow(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char body[262144], card[65536];
     const char *bindir = bindir_or_default();
     char raw[32];
@@ -1388,7 +1386,9 @@ static int serve_flow(const char *method, const char *target, const char *query,
     return 0;
 }
 
-static int serve_studio(BfMatrix *matrix, const char *method, const char *target, const char *body, const char *bearer, const char *auth_db, const char *host, const char *origin_method, const char *institution, const char *accept) {
+static int serve_studio(const BfRequest *r) {
+    BfMatrix *matrix=r->m; const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *host=r->host; const char *origin_method=r->origin_method; const char *institution=r->institution; const char *accept=r->accept;
+    (void)matrix;(void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)host;(void)origin_method;(void)institution;(void)accept;
     int private_foreign_observe = private_foreign_root[0] && !strcmp(target, "/foreign/observe");
     int self_publish = !strcmp(target, "/studio/v1/matrix/self-publish");
     int self_foreign_observe = !strcmp(target, "/studio/v1/self/foreign/observe");

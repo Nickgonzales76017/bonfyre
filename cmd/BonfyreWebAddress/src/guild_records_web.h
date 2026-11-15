@@ -906,7 +906,7 @@ static int serve_guild_records(const BfRequest *r) {
     const char *method=r->method,*path=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
     (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     (void)query;
-    if (!path || strncmp(path, "/guild/", 7) || !strcmp(path, "/guild/new")) return 0;
+    if (!strcmp(path, "/guild/new")) return 0;
     int post = !strcmp(method, "POST");
     if (!post && !wants_html(accept)) return 0;
     StudioViewer who = {0}; char actor[64] = "";

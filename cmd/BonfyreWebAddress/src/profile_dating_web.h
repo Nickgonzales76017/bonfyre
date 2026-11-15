@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_DATING_WEB_H
 #define BONFYRE_PROFILE_DATING_WEB_H
+#include "form_tree.h"
 #include "../../BonfyreParticipation/src/dating.h"
 #include "profile_dating_composition.h"
 /* The Life dating mode belongs to the SAME account profile, authored Life
@@ -37,10 +38,10 @@ static int ph_dating_life_site(sqlite3 *cms,const char *actor,PhSite *site){
  return rows==1&&ph_site(cms,NULL,id,site)&&!strcmp(site->actor,actor);
 }
 static void ph_dating_action(const char *other,const char *choice,unsigned revision,const char *label){
- fputs("<form class=\"ph-dating-action\" method=\"post\" action=\"/profile/dating/choice\">",stdout);
- ph_hidden("other",other);ph_hidden("choice",choice);
- printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",revision);
- fputs("<button type=\"submit\">",stdout);html(label);fputs("</button></form>",stdout);
+ char r[16];snprintf(r,sizeof(r),"%u",revision);
+ const FtField hidden[]={{"other",other},{"choice",choice},{"rev",r}};
+ const FtForm f={.id="ph-dating-action",.action="/profile/dating/choice",.label=label,.hook="dating-action",.hook_value=choice,.hidden=hidden,.nhidden=3};
+ ft_form(stdout,&f);
 }
 static void ph_dating_own_site(sqlite3 *cms,const char *actor){
  PhSite life;
@@ -79,9 +80,11 @@ static void ph_dating_messages(sqlite3 *date,const char *actor,const BfDatingCan
   return;
  }
  ph_nonce(nonce);
- fputs("<form method=\"post\" action=\"/profile/dating/message\" class=\"ph-dating-reply\">",stdout);
- ph_hidden("other",c->subject);ph_hidden("nonce",nonce);
- fputs("<label>Message<textarea name=\"body\" maxlength=\"1000\" required rows=\"3\" placeholder=\"Say hello thoughtfully\"></textarea></label><button type=\"submit\">Send privately</button></form></section>",stdout);
+ {const FtField hidden[]={{"other",c->subject},{"nonce",nonce}};
+  static const FtInput msg[]={{.label="Message",.name="body",.maxlength="1000",.required=1,.rows=3,.placeholder="Say hello thoughtfully"}};
+  const FtForm f={.id="ph-dating-reply",.action="/profile/dating/message",.label="Send privately",.hook="dating-reply",.hidden=hidden,.nhidden=2,.inputs=msg,.ninputs=1};
+  ft_form(stdout,&f);}
+ fputs("</section>",stdout);
 }
 
 
@@ -121,22 +124,23 @@ static void ph_dating_plans(sqlite3 *date,const char *actor,const char *partner)
   else fputs("Awaiting your approval",stdout);
   fputs("</small></div>",stdout);
   if(!p->approved_by_me){
-   fputs("<form method=\"post\" action=\"/profile/dating/plan-approve\">",stdout);
-   ph_hidden("plan",p->key);
-   printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",p->revision);
-   fputs("<button type=\"submit\">Approve this proposal</button></form>",stdout);
+   char r[16];snprintf(r,sizeof(r),"%u",p->revision);
+   const FtField hidden[]={{"plan",p->key},{"rev",r}};
+   const FtForm f={.id="ph-dating-approve",.action="/profile/dating/plan-approve",.label="Approve this proposal",.hidden=hidden,.nhidden=2};
+   ft_form(stdout,&f);
   }
   fputs("</li>",stdout);
  }
  if(count)fputs("</ol>",stdout);
  char id[33];ph_nonce(id);
- fputs("<form class=\"ph-dating-plan-create\" method=\"post\" action=\"/profile/dating/plan\">",stdout);
- ph_hidden("other",partner);ph_hidden("nonce",id);ph_hidden("confirm","1");
- fputs("<label>Activity or shared idea<input name=\"activity\" maxlength=\"160\" required placeholder=\"An art museum, then coffee\"></label>"
- "<label>Public meeting context (optional)<input name=\"context\" maxlength=\"120\" placeholder=\"Choose a venue together\"></label>"
- "<div class=\"ph-dating-plan-money\"><label>Estimated total (USD)<input name=\"estimate\" inputmode=\"decimal\" required placeholder=\"35.00\" maxlength=\"8\"></label>"
- "<label>Maximum budget (USD)<input name=\"budget\" inputmode=\"decimal\" required placeholder=\"60.00\" maxlength=\"8\"></label></div>"
- "<button type=\"submit\">Propose for their review</button></form></section>",stdout);
+ {const FtField hidden[]={{"other",partner},{"nonce",id},{"confirm","1"}};
+  static const FtInput plan[]={{.label="Activity or shared idea",.name="activity",.maxlength="160",.required=1,.placeholder="An art museum, then coffee"},
+                               {.label="Public meeting context (optional)",.name="context",.maxlength="120",.placeholder="Choose a venue together"},
+                               {.label="Estimated total (USD)",.name="estimate",.inputmode="decimal",.required=1,.placeholder="35.00",.maxlength="8"},
+                               {.label="Maximum budget (USD)",.name="budget",.inputmode="decimal",.required=1,.placeholder="60.00",.maxlength="8"}};
+  const FtForm f={.id="ph-dating-plan",.action="/profile/dating/plan",.label="Propose for their review",.hook="dating-plan-create",.hidden=hidden,.nhidden=3,.inputs=plan,.ninputs=4};
+  ft_form(stdout,&f);}
+ fputs("</section>",stdout);
 }
 static void ph_dating_preferences_editor(sqlite3 *db,const char *actor){
  BfDatingAnswer prefs[4];unsigned revision=0;
@@ -268,16 +272,19 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  int eligible=bf_dating_eligible(date,actor);
  fputs("<section class=\"ph-dating-join\" aria-label=\"Dating participation\"><p class=\"ph-kicker\">Your dating participation</p>",stdout);
  if(requested==0||requested==2){
-  fputs("<h3>Participation is off</h3><p>A request begins a private review, not approval. Adult eligibility and moderation require independent verification before discovery.</p><form method=\"post\" action=\"/profile/dating/request\">",stdout);
-  printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",request_rev);
-  ph_hidden("enable","1");
-  fputs("<label><input type=\"checkbox\" name=\"ack\" value=\"1\" required> I request adult-only dating review. This does not publish or contact anyone.</label><button type=\"submit\">Request eligibility review</button></form>",stdout);
+  fputs("<h3>Participation is off</h3><p>A request begins a private review, not approval. Adult eligibility and moderation require independent verification before discovery.</p>",stdout);
+  {char r[16];snprintf(r,sizeof(r),"%u",request_rev);
+   const FtField hidden[]={{"rev",r},{"enable","1"}};
+   static const FtInput ack[]={{.label="I request adult-only dating review. This does not publish or contact anyone.",.type="checkbox",.name="ack",.value="1",.required=1}};
+   const FtForm f={.id="ph-dating-request",.action="/profile/dating/request",.label="Request eligibility review",.hidden=hidden,.nhidden=2,.inputs=ack,.ninputs=1};
+   ft_form(stdout,&f);}
  }else{
   fputs(eligible?"<h3>Participation approved</h3><p>Only explicitly permitted introductions are shown.</p>":
      "<h3>Review requested</h3><p>The request is private. You cannot self-certify eligibility or moderation.</p>",stdout);
-  fputs("<form method=\"post\" action=\"/profile/dating/request\">",stdout);
-  printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",request_rev);
-  ph_hidden("enable","0");fputs("<button type=\"submit\">Withdraw dating participation</button></form>",stdout);
+  {char r[16];snprintf(r,sizeof(r),"%u",request_rev);
+   const FtField hidden[]={{"rev",r},{"enable","0"}};
+   const FtForm f={.id="ph-dating-withdraw",.action="/profile/dating/request",.label="Withdraw dating participation",.hidden=hidden,.nhidden=2};
+   ft_form(stdout,&f);}
  }
  fputs("</section>",stdout);
  if(eligible){

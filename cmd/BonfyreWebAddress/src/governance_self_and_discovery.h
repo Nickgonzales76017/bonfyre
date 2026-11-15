@@ -186,9 +186,9 @@ static int govern_published_id(sqlite3 *db, const char *table, const char *field
     return found;
 }
 
-static int govern_act(const char *method, const char *target, const char *body,
-                      const char *raw, const char *host, const char *bearer,
-                      const char *auth_db) {
+static int govern_act(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     char actor[64], back[400] = {0}, id[200] = {0}, choice[32] = {0}, amount[32] = {0};
     char now[32], ref[40], row_id[288];
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
@@ -483,9 +483,9 @@ static int govern_act(const char *method, const char *target, const char *body,
  * subject graph.  Assuming it is intentionally weaker than receiving an
  * authority grant: the assignment may choose a workbench but every offered
  * effect still performs its own authority check. */
-static int serve_role_assume(const char *method, const char *target, const char *body,
-                             const char *raw, const char *host, const char *bearer,
-                             const char *auth_db) {
+static int serve_role_assume(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     char actor[64], role[96] = {0}, scope[192] = {0}, back[400] = {0};
     char now[32], ref[40], assignment[288], coordinate[320];
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
@@ -563,12 +563,12 @@ static int serve_role_assume(const char *method, const char *target, const char 
 /* The passport reads the compiled posture for its assigning actor only.  It
  * deliberately returns authority requirements as requirements, not grants:
  * this workspace can guide a person globally but cannot authorize an effect. */
-static int serve_role_workspace(const char *method, const char *target, const char *query,
-                                const char *bearer, const char *auth_db) {
+static int serve_role_workspace(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     char actor[64], assignment[288] = {0}, label[512], scope[384], body[24576];
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
     int found = 0;
-    if (!target || strcmp(target, "/roles/workspace")) return 0;
     if (strcmp(method, "GET")) { protocol_reply(405, "application/json", "{\"error\":\"get_required\"}\n"); return 1; }
     if (!page_session_actor(bearer, auth_db, actor, sizeof(actor))) {
         protocol_reply(401, "application/json", "{\"error\":\"sign_in_required\"}\n"); return 1;
@@ -1106,8 +1106,9 @@ static void partial_reply(const char *html_body) {
  * the entire bounded JSON input plus native form controls. */
 enum { CMS_FORM_TEXT_BYTES = 64 * 1024, CMS_FORM_JSON_BYTES = 128 * 1024,
        CMS_FORM_HTML_BYTES = 8 * CMS_FORM_JSON_BYTES };
-static int serve_cms_partials(const char *method, const char *target, const char *query,
-                              const char *bearer, const char *auth_db) {
+static int serve_cms_partials(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char body[CMS_FORM_HTML_BYTES];
     char type[128] = {0}, namespace_name[192] = {0};
     int w = 0;
@@ -1598,10 +1599,9 @@ static void cms_api_status(const char *kind, const char *message, const char *ty
  * identity to the same native CMS owner that records discovery decisions.
  * Stronger HLC/multi-field CAS is not provided by this existing CMS contract:
  * an evaluated_at reheat concurrent with this POST remains a known boundary. */
-static int serve_discovery_review(const char *method, const char *target,
-                                  const char *body, const char *bearer,
-                                  const char *auth_db, const char *origin,
-                                  const char *host) {
+static int serve_discovery_review(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *origin=r->origin; const char *host=r->host;
+    (void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)origin;(void)host;
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
     char set[120], publisher[256], verdict[24], why[550];
@@ -1735,9 +1735,9 @@ static int serve_discovery_review(const char *method, const char *target,
  * into the existing SourceFrontier+ItemArchive handoff compiler. There is no
  * browser-owned acceptance list, no client-supplied source URL, and no external
  * effect. This route cannot create a SourceCollection or publish a World. */
-static int serve_discovery_brief(const char *method, const char *target,
-                                 const char *query, const char *bearer,
-                                 const char *auth_db) {
+static int serve_discovery_brief(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     static char output[1024*1024], diagnostic[8192];
     char set[120], domain[36]="cross-domain", format[12]="html";
     char recipient[140]="Research reviewer";
@@ -1812,10 +1812,9 @@ static int serve_discovery_brief(const char *method, const char *target,
  * The existing human source-review owner and the Economy owner perform all
  * writes/readback. No new acceptance database or in-browser approval state.
  */
-static int serve_discovery_verification(const char *method,const char *target,
-                                         const char *body,const char *bearer,
-                                         const char *auth_db,const char *origin,
-                                         const char *host) {
+static int serve_discovery_verification(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *origin=r->origin; const char *host=r->host;
+    (void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)origin;(void)host;
     static char output[1024*1024], diagnostic[8192];
     char set[120],source[120],domain[36],recipient[140],generation[80],budget[32];
     char actor[32],expected_origin[360];
@@ -1893,8 +1892,9 @@ static int serve_discovery_verification(const char *method,const char *target,
     fflush(stdout);
     return 1;
 }
-static int serve_cms_api(BfMatrix *matrix, const char *method, const char *target, const char *body,
-                         const char *bearer, const char *auth_db, const char *accept) {
+static int serve_cms_api(const BfRequest *r) {
+    BfMatrix *matrix=r->m; const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
+    (void)matrix;(void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)accept;
     const char *prefix = "/cms/v1/api/";
     const char *tail;
     const char *cms_db = getenv("BONFYRE_CMS_DB");

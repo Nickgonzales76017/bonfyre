@@ -12,6 +12,7 @@
  * use; a return without it, late, or for another actor changes nothing. */
 #ifndef BONFYRE_CONNECT_GITHUB_APP_H
 #define BONFYRE_CONNECT_GITHUB_APP_H
+#include "../generated/native_estate_hosts.h"
 
 static int cga_owner(const char *bearer, const char *auth_db, char actor[160]) {
     char subject[160]; const char *scope = NULL, *owner = getenv("BONFYRE_ACCOUNT_WORK_OWNER");
@@ -165,8 +166,8 @@ static int connect_github_app(const char *method, const char *target, const char
         fputs("<form method=\"post\" data-cga action=\"", stdout); html(web); fputs("/settings/apps/new?state=", stdout); html(state); fputs("\"><input type=\"hidden\" name=\"manifest\" value=\"", stdout);
         char manifest[1400];
         snprintf(manifest, sizeof(manifest),
-            "{\"name\":\"%s\",\"url\":\"https://aurekai.work\",\"redirect_url\":\"%s\",\"public\":true,"
-            "\"hook_attributes\":{\"url\":\"https://aurekai.work/\",\"active\":false},"
+            "{\"name\":\"%s\",\"url\":\"" BF_ORIGIN_WORK "\",\"redirect_url\":\"%s\",\"public\":true,"
+            "\"hook_attributes\":{\"url\":\"" BF_ORIGIN_WORK "/\",\"active\":false},"
             "\"default_permissions\":{\"metadata\":\"read\",\"contents\":\"read\",\"issues\":\"write\",\"pull_requests\":\"write\"},"
             "\"description\":\"Aurekai operates repositories it is installed on: reads code and opens issues and pull requests.\"}", name, redirect);
         html(manifest);

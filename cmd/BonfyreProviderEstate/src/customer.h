@@ -53,6 +53,17 @@ static int read_env_value(const char *file, const char *name, char *out, size_t 
     fclose(f); return found;
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define PCUS_COMMANDS(X) \
+    X("access", PCUS_ACCESS) \
+    X("close", PCUS_CLOSE) \
+    X("delete", PCUS_DELETE) \
+    X("open", PCUS_OPEN) \
+    X("show", PCUS_SHOW)
+BF_COMMAND_TABLE(pcus_commands, PCUS_COMMANDS);
+
 /* Stripe's key stays in the Stripe CLI's keychain entry; requests go through
  * `stripe get|post|delete PATH`, and the reply's error object decides status. */
 static int customer_stripe(const char *method, const char *url, const char *body, char *out, size_t cap, int *status) {
@@ -60,7 +71,7 @@ static int customer_stripe(const char *method, const char *url, const char *body
     if (!path) return -1;
     snprintf(verb, sizeof(verb), "%s", !strcmp(method, "GET") ? "get" : !strcmp(method, "DELETE") ? "delete" : "post");
     argv[n++] = "stripe"; argv[n++] = verb; argv[n++] = (char *)path;
-    if (!strcmp(verb, "delete")) argv[n++] = "--confirm";
+    if (!strcmp(method, "DELETE")) argv[n++] = "--confirm";
     snprintf(fields, sizeof(fields), "%s", body ? body : "");
     for (char *f = body ? strtok(fields, "&") : NULL; f && n < 44; f = strtok(NULL, "&")) { argv[n++] = "-d"; argv[n++] = f; }
     argv[n] = NULL;
@@ -230,7 +241,7 @@ void bf_sha256_hex(const uint8_t *data, size_t len, char hex[65]);
  * has a fixed id (akc- and 10 hex of the container name's SHA-256) and is
  * looked up directly. A closed project sits in Google's 30-day soft delete;
  * reopening the same customer restores it with undelete. */
-static int customer_gcp(const char *verb, const char *customer) {
+static int customer_gcp(const char *verb, const char *customer) { const int verb_id=bf_command_id(pcus_commands,BF_COMMAND_COUNT(pcus_commands),verb,-1);
     char name[64], label[128], id[24], hex[65], out[4096], state[32];
     snprintf(name, sizeof(name), "aurekai-c-%s", customer); bf_sha256_hex((const uint8_t *)name, strlen(name), hex); snprintf(id, sizeof(id), "akc-%.10s", hex);
     char *const describe[] = {"gcloud", "projects", "describe", id, "--format=value(lifecycleState,labels.aurekai_container)", NULL};
@@ -238,8 +249,8 @@ static int customer_gcp(const char *verb, const char *customer) {
     state[0] = 0; if (known) { char *tab = strchr(out, '\t'); if (tab) { *tab = 0; snprintf(owner, sizeof(owner), "%s", tab + 1); } snprintf(state, sizeof(state), "%s", out); }
     if (known && *owner && strcmp(owner, name)) { fprintf(stderr, "%s belongs to another container\n", id); return 1; }
     int active = known && !strcmp(state, "ACTIVE");
-    if (!strcmp(verb, "show")) { customer_report("gcp", customer, active ? "open" : "none", active ? id : "", active ? name : "", 200); return active ? 0 : 3; }
-    if (!strcmp(verb, "open")) {
+    if (verb_id==PCUS_SHOW) { customer_report("gcp", customer, active ? "open" : "none", active ? id : "", active ? name : "", 200); return active ? 0 : 3; }
+    if (verb_id==PCUS_OPEN) {
         if (active) { customer_report("gcp", customer, "open", id, name, 200); return 0; }
         if (known && !strcmp(state, "DELETE_REQUESTED")) {
             char *const undelete[] = {"gcloud", "projects", "undelete", id, "--quiet", NULL};
@@ -261,7 +272,7 @@ static int customer_gcp(const char *verb, const char *customer) {
 }
 
 static int customer_cmd(int argc, char **argv) {
-    const char *verb = argc > 2 ? argv[2] : "", *provider = NULL, *customer = NULL, *api = NULL, *mode = "reveal"; char env[1024]; int explicit_env = 0;
+    const char *verb = argc > 2 ? argv[2] : "", *provider = NULL, *customer = NULL, *api = NULL, *mode = "reveal"; const int verb_id=bf_command_id(pcus_commands,BF_COMMAND_COUNT(pcus_commands),verb,-1); char env[1024]; int explicit_env = 0;
     if (getenv("BONFYRE_PROVIDER_ENV") && *getenv("BONFYRE_PROVIDER_ENV")) snprintf(env, sizeof(env), "%s", getenv("BONFYRE_PROVIDER_ENV"));
     else snprintf(env, sizeof(env), "%s/.bonfyre/secrets/cloud.refs.env", getenv("HOME") ? getenv("HOME") : "");
     for (int i = 3; i < argc; i++) {
@@ -272,12 +283,12 @@ static int customer_cmd(int argc, char **argv) {
         else if (!strcmp(argv[i], "--mode") && i + 1 < argc) mode = argv[++i];
         else { fprintf(stderr, "unknown argument %s\n", argv[i]); return 2; }
     }
-    if ((strcmp(verb, "open") && strcmp(verb, "show") && strcmp(verb, "close") && strcmp(verb, "access")) || !provider || !customer) {
+    if (((verb_id!=PCUS_OPEN) && (verb_id!=PCUS_SHOW) && (verb_id!=PCUS_CLOSE) && (verb_id!=PCUS_ACCESS)) || !provider || !customer) {
         fputs("usage: bonfyre-provider-estate customer open|show|close|access [--mode reveal|scoped|wire] --provider neon|sentry|vercel|render|supabase|gcp|stripe --customer SLUG [--env FILE]\n", stderr); return 2;
     }
     if (!strcmp(provider, "gcp")) {
         if (!customer_slug_ok(customer)) { fputs("customer must be lowercase letters, digits and hyphens, at most 40\n", stderr); return 2; }
-        if (!strcmp(verb, "access")) { fputs("gcp has no customer access to hand over yet\n", stderr); return 2; }
+        if (verb_id==PCUS_ACCESS) { fputs("gcp has no customer access to hand over yet\n", stderr); return 2; }
         return customer_gcp(verb, customer);
     }
     const CustomerProvider *p = NULL; for (int i = 0; customer_providers[i].slug; i++) if (!strcmp(customer_providers[i].slug, provider)) p = &customer_providers[i];
@@ -306,7 +317,7 @@ static int customer_cmd(int argc, char **argv) {
      *           Vercel project as an encrypted environment variable;
      *           nothing is printed and no person sees it
      * Nothing is stored here in any mode. */
-    if (!strcmp(verb, "access")) {
+    if (verb_id==PCUS_ACCESS) {
         const char *modes = getenv("BONFYRE_PROVIDER_ACCESS_MODES"); if (!modes || !*modes) modes = "reveal,scoped,wire";
         if (!strstr(modes, mode)) { fprintf(stderr, "access mode %s is turned off here\n", mode); return 2; }
         if (strcmp(mode, "reveal") && strcmp(mode, "scoped") && strcmp(mode, "wire")) { fputs("--mode is reveal, scoped or wire\n", stderr); return 2; }
@@ -365,8 +376,8 @@ static int customer_cmd(int argc, char **argv) {
         bf_jsonw_key(&w, "mode"); bf_jsonw_str(&w, mode); bf_jsonw_key(&w, "kind"); bf_jsonw_str(&w, kind); bf_jsonw_key(&w, "access"); bf_jsonw_str(&w, acc);
         bf_jsonw_obj_end(&w); fwrite(w.buf, 1, w.len, stdout); fputc('\n', stdout); bf_jsonw_free(&w); memset(acc, 0, sizeof(acc)); return 0;
     }
-    if (!strcmp(verb, "show")) { customer_report(provider, customer, found ? "open" : "none", id, found ? where : "", 200); return found ? 0 : 3; }
-    if (!strcmp(verb, "open")) {
+    if (verb_id==PCUS_SHOW) { customer_report(provider, customer, found ? "open" : "none", id, found ? where : "", 200); return found ? 0 : 3; }
+    if (verb_id==PCUS_OPEN) {
         if (found) { customer_report(provider, customer, "open", id, where, 200); return 0; }
         /* Free plans cap projects; a ceiling per provider account keeps one
          * busy organization from exhausting it for everyone. */

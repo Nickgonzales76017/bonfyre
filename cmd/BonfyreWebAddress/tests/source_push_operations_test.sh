@@ -139,12 +139,12 @@ const puppeteer=createRequire(path.join(root,'tools/creator-ingest/package.json'
   await page.click('[data-source-push-row] summary');
   assert.match(await page.$eval('[data-source-push-row] details',n=>n.textContent),/Rejected callbacks/);
   await page.select('select[name=state]','expired');
-  await advance(()=>page.click('.spo-filters button[type=submit]'));
+  await advance(()=>page.click('[data-spo-filters] button[type=submit]'));
   assert.equal(await page.$$eval('[data-source-push-row]',n=>n.length),1);
   assert.equal(await page.$$eval('[data-material-demand]',n=>n.length),2,'independent demand panel incorrectly filtered by subscription state');
-  await page.$eval('.spo-filters input[name=q]',n=>{n.value='unbound';});
+  await page.$eval('[data-spo-filters] input[name=q]',n=>{n.value='unbound';});
   await page.select('select[name=state]','all');
-  await advance(()=>page.click('.spo-filters button[type=submit]'));
+  await advance(()=>page.click('[data-spo-filters] button[type=submit]'));
   assert.equal(await page.$$eval('[data-source-push-row]',n=>n.length),0);
   assert.equal(await page.$$eval('[data-material-demand]',n=>n.length),1);
   assert.match(await page.$eval('[data-material-demand]',n=>n.textContent),/unbound.example.test/);

@@ -1,5 +1,6 @@
 #ifndef PROVIDER_ACCOUNTS_WEB_H
 #define PROVIDER_ACCOUNTS_WEB_H
+#include "form_tree.h"
 /* Provider accounts for an Aurekai organization. Each organization is a
  * customer sub-account; an administrator opens or closes that organization's
  * own container inside a provider account Aurekai holds, and connects
@@ -136,16 +137,20 @@ static void pa_section(const char *org, const char *nonce) {
         else fputs("None yet", stdout);
         fputs("</td><td>", stdout);
         if (state >= 0) {
-            fputs("<form method=\"post\" action=\"/organizations\" data-provider-form>", stdout);
-            psetup_hidden("operation", state ? "provider-close" : "provider-open"); psetup_hidden("organization", org); psetup_hidden("provider", p->slug); psetup_hidden("nonce", nonce);
-            fputs(state ? "<button>Close this account</button>" : "<button>Open an account</button>", stdout); fputs("</form>", stdout);
+            {
+                const FtField hidden[] = {{"operation", state ? "provider-close" : "provider-open"}, {"organization", org}, {"provider", p->slug}, {"nonce", nonce}};
+                const FtForm f = {.id = "pa-account", .action = "/organizations", .label = state ? "Close this account" : "Open an account",
+                                  .hook = "provider-form", .hidden = hidden, .nhidden = 4};
+                ft_form(stdout, &f);
+            }
             if (state && pa_has_access(p->slug)) {
                 static const char *modes[] = {"reveal", "scoped", "wire"}, *labels[] = {"Show the owner login once", "Make a new login and show it once", "Put a new login into this organization's Vercel project"};
                 for (int m = 0; m < 3; m++) {
                     if (!pa_mode_on(modes[m])) continue;
-                    fputs("<form method=\"post\" action=\"/organizations\" data-provider-access=\"", stdout); html(modes[m]); fputs("\">", stdout);
-                    psetup_hidden("operation", "provider-access"); psetup_hidden("organization", org); psetup_hidden("provider", p->slug); psetup_hidden("mode", modes[m]); psetup_hidden("nonce", nonce);
-                    fputs("<button>", stdout); html(labels[m]); fputs("</button></form>", stdout);
+                    const FtField hidden[] = {{"operation", "provider-access"}, {"organization", org}, {"provider", p->slug}, {"mode", modes[m]}, {"nonce", nonce}};
+                    const FtForm f = {.id = "pa-access", .action = "/organizations", .label = labels[m], .hook = "provider-access",
+                                      .hook_value = modes[m], .hidden = hidden, .nhidden = 5};
+                    ft_form(stdout, &f);
                 }
             }
         }

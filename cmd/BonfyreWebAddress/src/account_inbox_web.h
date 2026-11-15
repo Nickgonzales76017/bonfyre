@@ -1,5 +1,7 @@
 #ifndef BONFYRE_ACCOUNT_INBOX_WEB_H
 #define BONFYRE_ACCOUNT_INBOX_WEB_H
+#include "form_tree.h"
+#include "../generated/native_estate_hosts.h"
 #include "account_inbox_dating.h"
 #include "../../BonfyreQueue/src/account_legacy_api.h"
 #include "../../BonfyreParticipation/src/dating.h"
@@ -39,7 +41,7 @@ static void ai_ago(long long ms){
 }
 /* A link on one of Aurekai's own hosts stays on the host the person is using. */
 static void ai_href(const char *url){
-    static const char *const own[]={"https://aurekai.work/","https://aurekai.life/","https://aurekai.live/","https://aurekai.shop/"};
+    static const char *const own[]={BF_ORIGIN_WORK "/",BF_ORIGIN_LIFE "/",BF_ORIGIN_LIVE "/",BF_ORIGIN_SHOP "/"};
     for(size_t i=0;i<4;i++)if(!strncmp(url,own[i],strlen(own[i]))){html(url+strlen(own[i])-1);return;}html(url);
 }
 static int ai_external(const char *url){return strncmp(url,"https://aurekai.",16)!=0;}
@@ -56,8 +58,10 @@ static void ai_sentence(const char *text,size_t cap){
     char line[320];size_t n=strcspn(text,".;\n");if(n>=sizeof(line))n=sizeof(line)-1;if(n>cap)n=cap;memcpy(line,text,n);line[n]=0;html(line);if(text[n]=='.'||text[n]==';')fputs(".",stdout);
 }
 static void ai_act(const char *context,const char *task,const char *action,const char *label,int primary){
-    fputs("<form method=\"post\" action=\"/work-board/act\">",stdout);psetup_hidden("context",context);psetup_hidden("task",task);psetup_hidden("action",action);psetup_hidden("back","inbox");
-    fputs(primary?"<button type=\"submit\" class=\"ak-inbox-primary\" data-inbox-act=\"":"<button type=\"submit\" data-inbox-act=\"",stdout);html(action);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
+    const FtField hidden[]={{"context",context},{"task",task},{"action",action},{"back","inbox"}};
+    const FtSubmit go[]={{.label=label,.tone=primary?NULL:"quiet",.hook="inbox-act",.hook_value=action}};
+    const FtForm f={.id="inbox-act",.action="/work-board/act",.hidden=hidden,.nhidden=4,.submits=go,.nsubmits=1};
+    ft_form(stdout,&f);
 }
 static void ai_meta(const char *who,const char *kind,long long ms){
     fputs("<p class=\"ak-inbox-meta\"><span class=\"ak-inbox-who\" data-who=\"you\">",stdout);html(who);fputs("</span><span>",stdout);html(kind);fputs("</span>",stdout);
@@ -380,9 +384,10 @@ static void ai_peer_inbox(const char *auth_db,long uid,const char *context){
  if(opened)fputs("</ol></section>",stdout);
  sqlite3_close(db);
 }
-static int serve_account_inbox(const char *method,const char *target,const char *query,const char *bearer,const char *auth_db){
+static int serve_account_inbox(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)bearer;(void)auth_db;
     if(!strcmp(target,"/inbox/_summary"))return serve_account_needs_summary(method,query,bearer,auth_db);
-    if(strcmp(target,"/inbox")&&strcmp(target,"/inbox/"))return 0;
     char context[96],done[16],actor[160],subject[160];const char *scope=NULL;
     /* A query this page does not own, or no session, is the public surface's. */
     if(strcmp(method,"GET")||!ai_query(query,context,done))return 0;

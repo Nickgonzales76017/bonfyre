@@ -1,8 +1,9 @@
 #ifndef BONFYRE_SOURCE_PUBLICATION_WEB_H
 #define BONFYRE_SOURCE_PUBLICATION_WEB_H
 /* Existing CMS authority and native binary transport; no browser-owned writes. */
-static int serve_source_publication(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *bearer,const char *auth_db,const char *host) {
-    if(strcmp(target,"/cms/source-publication"))return 0;
+static int serve_source_publication(const BfRequest *rq) {
+    const char *method=rq->method; const char *target=rq->target; const char *query=rq->query; const char *body=rq->body; const char *raw=rq->raw; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db; const char *host=rq->host;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)bearer;(void)auth_db;(void)host;
     int writing=!strcmp(method,"POST");char ns[192]={0},request[65]={0},origin[300]={0},content[80]={0},length[32]={0};
     if((!writing&&strcmp(method,"GET"))||(writing&&query&&*query)){aw_error(400,"Use the exact source-publication address.\n");return 1;}
     if(!session_valid(bearer,auth_db)||!session_authorized(bearer,auth_db,"write")||!cms_namespace_for(bearer,auth_db,ns,sizeof(ns))||strlen(ns)>127){aw_error(403,"A current CMS write grant is required for this publication.\n");return 1;}

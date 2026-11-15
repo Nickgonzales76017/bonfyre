@@ -15,8 +15,7 @@ static void ac_work_board_picker(const char *context,const char *task,const char
     (void)task; /* A selected task belongs to the current workspace, not the next one. */
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);
     if(result<0){fputs("<p role=\"alert\">The complete destination list is unavailable.</p>",stdout);return;}
-    fputs("<form class=\"work-board-picker\" method=\"get\" action=\"/work-board\"><label>Work board <select name=\"context\">",stdout);if(!result)fputs("<option value=\"self\">My personal workspace</option>",stdout);
-    for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}fputs("</select></label> <button>Change workspace</button></form>",stdout);
+    psetup_picker("work-board-picker","/work-board","Work board",NULL,rows,count,result,context,NULL,0);
 }
 /* The operator store named in the account work sources, if any. */
 static int ac_work_operator_path(char *out,size_t cap){

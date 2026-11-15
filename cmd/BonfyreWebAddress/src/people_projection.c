@@ -13,6 +13,7 @@
  * that two identical names are one person. An institution here is a publisher
  * whose channels this estate reads, which says nothing about what it is like.
  */
+#include "../generated/native_estate_hosts.h"
 #include "people_projection.h"
 #include "bf_sqlite_path.h"
 
@@ -185,7 +186,7 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
         if (!subject || !*subject || !host || !*host) continue;
         if (strcmp(current, subject)) {
             if ((unsigned)shown >= page_size) {has_next=1;break;}
-            if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='https://signin.aurekai.work/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
+            if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
             if (!shown)
                 fputs("<section id='people-addressed' class='people-sec' aria-label='People on Aurekai'>"
                       "<header class='people-head'><h2>On Aurekai <small>Estate addresses</small></h2>"
@@ -216,7 +217,7 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
         esc(out, host); fputs("</a>", out);
     }
     sqlite3_finalize(st);
-    if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='https://signin.aurekai.work/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
+    if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
     if (shown) {
         fputs("</ul><nav class='people-pager' aria-label='More published people'>",out);
         if(offset){fputs("<a href='/people?from=",out);fprintf(out,"%u",offset>page_size?offset-page_size:0);
@@ -309,7 +310,7 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     fputs("<a class='ak-chip' href='#people-addressed'>On Aurekai</a>", out);
     fprintf(out, "<a class='ak-chip' aria-current='page' href='#people-credits'>Credited makers <b>%d</b></a>", total);
     fputs("<a class='ak-chip' href='/organisations'>Publishers</a>"
-          "<a class='ak-chip' href='https://signin.aurekai.work/relationships?context=self'>Your relationships</a></nav>", out);
+          "<a class='ak-chip' href='" BF_ORIGIN_SIGNIN "/relationships?context=self'>Your relationships</a></nav>", out);
     member_shown=members_standing(out,cms,needle,offset,page_size);
     if (cms) sqlite3_close(cms);
 
@@ -413,7 +414,7 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
         }
         fprintf(out, "</div><p class='people-count'><b>%d piece%s</b><small>at ", made, made == 1 ? "" : "s");
         esc(out, domain[0] ? domain : source); fputs("</small></p>", out);
-        fputs("<a class='people-keep' data-relationship-review href='https://signin.aurekai.work/relationships?context=self&amp;who=", out);
+        fputs("<a class='people-keep' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=", out);
         url(out, name); fputs("&amp;source=", out); url(out, source); fputs("'>", out); fputs(BF_ICON_BOOKMARK, out); fputs("<span>keep track</span></a></li>", out);
         shown++;
     }
@@ -479,7 +480,7 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             else{fputs(" href='",out);esc(out,route);fputs("?who=",out);url(out,who);fputs("&amp;source=",out);url(out,source);}
             fputs("'>",out);esc(out,source);
             fprintf(out, "</a></h3><p><span>%d published item%s</span></p>"
-                    "<a class='relationship-link' data-relationship-review href='https://signin.aurekai.work/relationships?context=self&amp;who=",
+                    "<a class='relationship-link' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",
                     count, count == 1 ? "" : "s");
             url(out,who); fputs("&amp;source=",out); url(out,source); fputs("'>Keep track</a></li>",out);
             shown++;
@@ -504,7 +505,7 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
           "<div class='people-dossier-head'><p class='people-kicker'>Credited maker</p><h2>", out);
     esc(out, who);
     fputs("</h2><p class='people-credit-source'>Named by <strong>", out); esc(out, source_filter);
-    fprintf(out, "</strong> on %d piece%s this estate kept.</p><a class='relationship-link' data-relationship-review href='https://signin.aurekai.work/relationships?context=self&amp;who=",
+    fprintf(out, "</strong> on %d piece%s this estate kept.</p><a class='relationship-link' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",
             made, made == 1 ? "" : "s");
     url(out,who);fputs("&amp;source=",out);url(out,source_filter);fputs("'>Keep track of them</a></div>", out);
 

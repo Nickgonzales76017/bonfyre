@@ -176,7 +176,7 @@ test('a published cover remains bound to its exact site and current source right
  }}finally{await ctx.close();}
  expect(life.body).not.toContain('data-profile-cover');expect(life.body).not.toContain(image);
  const self=await request('/profile?site='+sites[0].id);
- const form=self.body.match(/<form action="\/profile\/cover\/remove"[^>]*>([\s\S]*?)<\/form>/);
+ const form=self.body.match(/<form [^>]*action="\/profile\/cover\/remove"[^>]*>([\s\S]*?)<\/form>/);
  expect(form).not.toBeNull();const reviewed=hidden(form[1]);
  expect((await request('/profile/cover/remove',{user:other,form:reviewed})).status).toBe(404);
  f.sql.query("UPDATE site_fragment SET position=5101 WHERE namespace=? AND kind='profile-cover'").run(sites[0].id);

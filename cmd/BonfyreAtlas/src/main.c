@@ -1107,24 +1107,61 @@ static bf_jv *with_provenance(const bf_jv *index, bf_jv *result, int checked) {
     return result;
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define AT_COMMANDS(X) \
+    X("audit", AT_AUDIT) \
+    X("build-edges", AT_BUILD_EDGES) \
+    X("cannot-infer", AT_CANNOT_INFER) \
+    X("compile-contracts", AT_COMPILE_CONTRACTS) \
+    X("digest", AT_DIGEST) \
+    X("expand", AT_EXPAND) \
+    X("export", AT_EXPORT) \
+    X("fields", AT_FIELDS) \
+    X("files", AT_FILES) \
+    X("fs", AT_FS) \
+    X("get", AT_GET) \
+    X("loss", AT_LOSS) \
+    X("maturity", AT_MATURITY) \
+    X("parse", AT_PARSE) \
+    X("query", AT_QUERY) \
+    X("schema", AT_SCHEMA) \
+    X("search", AT_SEARCH) \
+    X("summary", AT_SUMMARY) \
+    X("validate", AT_VALIDATE) \
+    X("view", AT_VIEW) \
+    X("wiring", AT_WIRING) \
+    X("wiring-doc", AT_WIRING_DOC) \
+    X("witness-grade", AT_WITNESS_GRADE)
+BF_COMMAND_TABLE(at_commands, AT_COMMANDS);
+
+#define AQ_COMMANDS(X) \
+    X("cannot_infer", AQ_CANNOT_INFER) \
+    X("expand", AQ_EXPAND) \
+    X("get", AQ_GET) \
+    X("loss", AQ_LOSS) \
+    X("search", AQ_SEARCH) \
+    X("summary", AQ_SUMMARY)
+BF_COMMAND_TABLE(aq_commands, AQ_COMMANDS);
+
 static int cmd_query(const char *op_in, const char *arg) {
     char op[32]; snprintf(op, sizeof op, "%s", op_in ? op_in : "");
-    for (char *p = op; *p; p++) if (*p == '-') *p = '_';
-    static const char *ops[6] = {"summary", "get", "search", "cannot_infer", "expand", "loss"};
-    int ok = 0; for (int i = 0; i < 6; i++) if (!strcmp(op, ops[i])) ok = 1;
+    for (char *p = op; *p; p++) if (*p == '-') *p = '_'; const int op_id=bf_command_id(aq_commands,BF_COMMAND_COUNT(aq_commands),op,-1);
+    int ok = op_id >= 0;
     if (!ok) { fprintf(stderr, "usage: bun architecture/atlas-query.mjs <summary|get|search|cannot_infer|expand|loss> [arg]\n"); return 2; }
     int checked; bf_jv *index = load_index(&checked);
-    bf_jv *r = !strcmp(op, "summary") ? q_summary(index) : !strcmp(op, "get") ? q_get(index, arg) : !strcmp(op, "search") ? q_search(index, arg)
-             : !strcmp(op, "cannot_infer") ? q_cannot_infer(index, arg) : !strcmp(op, "expand") ? q_expand(index, arg) : q_loss(index);
+    bf_jv *r = op_id==AQ_SUMMARY ? q_summary(index) : op_id==AQ_GET ? q_get(index, arg) : op_id==AQ_SEARCH ? q_search(index, arg)
+             : op_id==AQ_CANNOT_INFER ? q_cannot_infer(index, arg) : op_id==AQ_EXPAND ? q_expand(index, arg) : q_loss(index);
     r = with_provenance(index, r, checked);
     char *s = bf_jv_dump(r, 2, BF_JV_SORT_JS, NULL);
     printf("%s\n", s);
     return 0;
 }
 
-static int print_query(const char *cmd, const char *arg) {
+static int print_query(const char *cmd, const char *arg) { const int verb=bf_command_id(at_commands,BF_COMMAND_COUNT(at_commands),cmd,-1);
     int checked; bf_jv *index = load_index(&checked);
-    if (!strcmp(cmd, "summary")) {
+    if (verb==AT_SUMMARY) {
         bf_jv *v = q_summary(index);
         printf("atlas: %g architectures, %g views, %g interactions\n", bf_jv_get(v, "architectures")->n, bf_jv_get(v, "views")->n, bf_jv_get(v, "interactions")->n);
         const bf_jv *m = bf_jv_get(v, "maturity"), *f = bf_jv_get(v, "families"), *vn = bf_jv_get(v, "view_names");
@@ -1133,7 +1170,7 @@ static int print_query(const char *cmd, const char *arg) {
         printf("  views:    "); for (size_t i = 0; i < vn->len; i++) printf("%s%s", i ? ", " : "", vn->items[i]->s); printf("\n");
         return 0;
     }
-    if (!strcmp(cmd, "cannot-infer")) {
+    if (verb==AT_CANNOT_INFER) {
         bf_jv *v = q_cannot_infer(index, arg);
         if (!bf_jv_get(v, "exists")->b) { printf("no such architecture: %s\n", arg); return 1; }
         const bf_jv *fi = bf_jv_get(v, "forbidden_inferences");
@@ -1141,7 +1178,7 @@ static int print_query(const char *cmd, const char *arg) {
         if (!fi->len) printf("    %s states no forbidden inference (atlas loss)\n", arg);
         return 0;
     }
-    if (!strcmp(cmd, "get")) {
+    if (verb==AT_GET) {
         bf_jv *v = q_get(index, arg); const bf_jv *r = bf_jv_get(v, "architecture");
         if (!r || r->type == BF_JV_NULL) {
             printf("no such architecture: %s\n", arg);
@@ -1216,10 +1253,10 @@ static int cmd_maturity(const Atlas *a) {
     return 0;
 }
 
-static int cmd_expand(const Atlas *a, const char *cmd, const char *arg) {
+static int cmd_expand(const Atlas *a, const char *cmd, const char *arg) { const int verb=bf_command_id(at_commands,BF_COMMAND_COUNT(at_commands),cmd,-1);
     const Block *v = find(&a->view, arg); const bf_jv *c = list(v, "expands_to");
-    if (!c->len) { printf("no such view%s: %s\n", !strcmp(cmd, "expand") ? " (or empty)" : "", arg); return 1; }
-    if (!strcmp(cmd, "expand")) {
+    if (!c->len) { printf("no such view%s: %s\n", verb==AT_EXPAND ? " (or empty)" : "", arg); return 1; }
+    if (verb==AT_EXPAND) {
         printf("%s expands to %zu:\n", arg, c->len);
         for (size_t i = 0; i < c->len; i++) {
             const Block *b = find(&a->arch, c->items[i]->s);
@@ -1368,19 +1405,19 @@ int main(int argc, char **argv) {
         }
     }
     (void)self;
-    const char *cmd = argc > 1 ? argv[1] : "validate", *arg = argc > 2 ? argv[2] : "";
-    if (!strcmp(cmd, "compile-contracts")) return cmd_contracts(argc - 2, argv + 2);
-    if (!strcmp(cmd, "query")) return cmd_query(arg, argc > 3 ? argv[3] : "");
-    if (!strcmp(cmd, "schema")) { load_schema(); char *s = bf_jv_dump(schema, 0, BF_JV_SORT_NONE, NULL); printf("%s\n", s); return 0; }
-    if (!strcmp(cmd, "digest")) { bf_jv *d = declaration_digest(); char *s = bf_jv_dump(d, 0, BF_JV_SORT_NONE, NULL); printf("%s\n", s); return 0; }
-    if (!strcmp(cmd, "files")) { Strs f = yaff_files(); for (int i = 0; i < f.n; i++) printf("%s/%s\n", dir, f.v[i]); return 0; }
-    if (!strcmp(cmd, "parse")) { load_schema(); return cmd_parse(argc - 2, argv + 2); }
-    if (!strcmp(cmd, "summary") || !strcmp(cmd, "get") || !strcmp(cmd, "search") || !strcmp(cmd, "cannot-infer")) return print_query(cmd, arg);
+    const char *cmd = argc > 1 ? argv[1] : "validate", *arg = argc > 2 ? argv[2] : ""; const int verb=bf_command_id(at_commands,BF_COMMAND_COUNT(at_commands),cmd,-1);
+    if (verb==AT_COMPILE_CONTRACTS) return cmd_contracts(argc - 2, argv + 2);
+    if (verb==AT_QUERY) return cmd_query(arg, argc > 3 ? argv[3] : "");
+    if (verb==AT_SCHEMA) { load_schema(); char *s = bf_jv_dump(schema, 0, BF_JV_SORT_NONE, NULL); printf("%s\n", s); return 0; }
+    if (verb==AT_DIGEST) { bf_jv *d = declaration_digest(); char *s = bf_jv_dump(d, 0, BF_JV_SORT_NONE, NULL); printf("%s\n", s); return 0; }
+    if (verb==AT_FILES) { Strs f = yaff_files(); for (int i = 0; i < f.n; i++) printf("%s/%s\n", dir, f.v[i]); return 0; }
+    if (verb==AT_PARSE) { load_schema(); return cmd_parse(argc - 2, argv + 2); }
+    if (verb==AT_SUMMARY || verb==AT_GET || verb==AT_SEARCH || verb==AT_CANNOT_INFER) return print_query(cmd, arg);
     load_schema();
     Atlas a = load_atlas();
-    if (!strcmp(cmd, "witness-grade")) return cmd_witness_grade(&a, argc - 2, argv + 2);
-    if (!strcmp(cmd, "build-edges")) return cmd_build_edges(&a, argc - 2, argv + 2);
-    if (!strcmp(cmd, "validate")) {
+    if (verb==AT_WITNESS_GRADE) return cmd_witness_grade(&a, argc - 2, argv + 2);
+    if (verb==AT_BUILD_EDGES) return cmd_build_edges(&a, argc - 2, argv + 2);
+    if (verb==AT_VALIDATE) {
         Strs e = {0};
         if (strict) for (int i = 0; i < a.duplicates.n; i++) push(&e, a.duplicates.v[i]);
         Strs v = validate(&a); for (int i = 0; i < v.n; i++) push(&e, v.v[i]);
@@ -1391,11 +1428,11 @@ int main(int argc, char **argv) {
         if (a.duplicates.n) printf("  note: %d duplicate block IDs are last-definition-wins; run atlas.mjs fields\n", a.duplicates.n);
         return 0;
     }
-    if (!strcmp(cmd, "fields")) return cmd_fields(&a);
-    if (!strcmp(cmd, "loss")) return cmd_loss(&a);
-    if (!strcmp(cmd, "maturity")) return cmd_maturity(&a);
-    if (!strcmp(cmd, "expand") || !strcmp(cmd, "view")) return cmd_expand(&a, cmd, arg);
-    if (!strcmp(cmd, "export")) {
+    if (verb==AT_FIELDS) return cmd_fields(&a);
+    if (verb==AT_LOSS) return cmd_loss(&a);
+    if (verb==AT_MATURITY) return cmd_maturity(&a);
+    if (verb==AT_EXPAND || verb==AT_VIEW) return cmd_expand(&a, cmd, arg);
+    if (verb==AT_EXPORT) {
         bf_jv *index = export_index(&a), *organs = organ_projection(index);
         write_json("atlas.index.json", index);
         write_json("atlas.organs.json", organs);
@@ -1403,16 +1440,16 @@ int main(int argc, char **argv) {
         printf("✓ wrote architecture/atlas.organs.json (%zu organs the capability registry can read)\n", organs->len);
         return 0;
     }
-    if (!strcmp(cmd, "wiring") || !strcmp(cmd, "wiring-doc") || !strcmp(cmd, "audit")) {
+    if (verb==AT_WIRING || verb==AT_WIRING_DOC || verb==AT_AUDIT) {
         bf_jv *index = export_index(&a);
-        if (!strcmp(cmd, "wiring")) return cmd_wiring(index);
-        if (!strcmp(cmd, "audit")) return cmd_audit(index);
+        if (verb==AT_WIRING) return cmd_wiring(index);
+        if (verb==AT_AUDIT) return cmd_audit(index);
         char *md = wiring_markdown(index), *p = fmt("%s/WIRING.md", dir);
         FILE *f = fopen(p, "wb"); if (f) { fputs(md, f); fclose(f); }
         printf("wrote architecture/WIRING.md\n");
         return 0;
     }
-    if (!strcmp(cmd, "fs")) { char *o = *arg ? strdup(arg) : fmt("%s/fs", dir); return cmd_fs(&a, o); }
+    if (verb==AT_FS) { char *o = *arg ? strdup(arg) : fmt("%s/fs", dir); return cmd_fs(&a, o); }
     fprintf(stderr, "unknown command: %s\n", cmd);
     return 2;
 }

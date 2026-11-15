@@ -72,7 +72,7 @@ if grep -q 'Brand Operator' "$tmp/roles.html"; then echo 'role directory search 
 [ "$(curl -sS -o /dev/null -w '%{http_code}' -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?page=9999")" = 400 ]
 curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?scope=community%3Afixture" >"$tmp/scoped-roles.html"
 grep -q 'name="scope" value="community:fixture"' "$tmp/scoped-roles.html"
-grep -q 'value="community:fixture" aria-label="Role context scope"' "$tmp/scoped-roles.html"
+grep -q 'value="community:fixture" placeholder="" aria-label="Apply in scope"' "$tmp/scoped-roles.html"
 curl -fsS -H "$host" -H "Cookie: bonfyre_session=$session" "$base/roles?q=internet&scope=community%3Afixture" >"$tmp/scoped-filtered.html"
 [ "$(grep -o 'data-role-program' "$tmp/scoped-filtered.html" | wc -l | tr -d ' ')" = 1 ]
 grep -q 'name="scope" value="community:fixture"' "$tmp/scoped-filtered.html"

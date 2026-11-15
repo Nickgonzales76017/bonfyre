@@ -382,8 +382,21 @@ static const char *const proof_fields[4][5] = {
     {"cash_price_usd", "advertised_base_rent_monthly_usd", "advertised_monthly_rent_usd", "price_usd_month"},
 };
 
-static void execute(const char *op, int argc, char **args, const char *state) {
-    if (!strcmp(op, "route")) {
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define OPR_COMMANDS(X) \
+    X("compare", OPR_COMPARE) \
+    X("diff", OPR_DIFF) \
+    X("project", OPR_PROJECT) \
+    X("prove", OPR_PROVE) \
+    X("reconcile", OPR_RECONCILE) \
+    X("route", OPR_ROUTE) \
+    X("select", OPR_SELECT) \
+    X("why", OPR_WHY)
+BF_COMMAND_TABLE(opr_commands, OPR_COMMANDS);
+
+static void execute(const char *op, int argc, char **args, const char *state) { const int op_id=bf_command_id(opr_commands,BF_COMMAND_COUNT(opr_commands),op,-1);
+    if (op_id==OPR_ROUTE) {
         bf_jsonw_obj(&out);
         bf_jsonw_key(&out, "operator"); bf_jsonw_str(&out, "ROUTE");
         bf_jsonw_key(&out, "program"); program1("ROUTE", "command:BonfyreQuery");
@@ -399,7 +412,7 @@ static void execute(const char *op, int argc, char **args, const char *state) {
         return;
     }
     load_book(state);
-    if (!strcmp(op, "select")) {
+    if (op_id==OPR_SELECT) {
         const char *prefix = option(argc, args, "--prefix"), *kind = option(argc, args, "--kind");
         const char *preds[256]; int np = options(argc, args, "--where", preds);
         Rec **hits = malloc(sizeof *hits * (size_t)nbook); int n = 0;
@@ -426,10 +439,10 @@ static void execute(const char *op, int argc, char **args, const char *state) {
         bf_jsonw_obj_end(&out);
         return;
     }
-    if (!strcmp(op, "diff") || !strcmp(op, "compare") || !strcmp(op, "reconcile")) {
+    if (op_id==OPR_DIFF || op_id==OPR_COMPARE || op_id==OPR_RECONCILE) {
         if (argc < 2) die("%s requires two addresses", op);
         Rec *l = require_record(args[0]), *r = require_record(args[1]);
-        if (!strcmp(op, "diff")) {
+        if (op_id==OPR_DIFF) {
             bf_jsonw_obj(&out);
             bf_jsonw_key(&out, "operator"); bf_jsonw_str(&out, "DIFF");
             bf_jsonw_key(&out, "program"); program2("DIFF", l->address, r->address);
@@ -439,7 +452,7 @@ static void execute(const char *op, int argc, char **args, const char *state) {
             bf_jsonw_obj_end(&out);
             return;
         }
-        if (!strcmp(op, "compare")) { compare(l, r); return; }
+        if (op_id==OPR_COMPARE) { compare(l, r); return; }
         const bf_json_node_t *lp = get(l, "property_id"), *rp = get(r, "property_id");
         int shared = truthy(lp) && strict_eq(l, lp, r, rp);
         int distinct = !strict_eq(l, get(l, "unit_identity"), r, get(r, "unit_identity"));
@@ -460,10 +473,10 @@ static void execute(const char *op, int argc, char **args, const char *state) {
         bf_jsonw_obj_end(&out);
         return;
     }
-    if (!strcmp(op, "why") || !strcmp(op, "prove") || !strcmp(op, "project")) {
+    if (op_id==OPR_WHY || op_id==OPR_PROVE || op_id==OPR_PROJECT) {
         if (argc < 1 || !*args[0]) die("%s requires an address", op);
         Rec *r = require_record(args[0]);
-        if (!strcmp(op, "why")) {
+        if (op_id==OPR_WHY) {
             const char *field = option(argc, args, "--field");
             if (field && *field && !get(r, field)) die("field is not present on %s: %s", r->address, field);
             bf_jsonw_obj(&out);
@@ -484,7 +497,7 @@ static void execute(const char *op, int argc, char **args, const char *state) {
             bf_jsonw_obj_end(&out);
             return;
         }
-        if (!strcmp(op, "prove")) {
+        if (op_id==OPR_PROVE) {
             const char *claim = option(argc, args, "--claim"); int c = -1;
             for (int i = 0; claim && i < 4; i++) if (!strcmp(claim, proof_claims[i])) c = i;
             if (c < 0) die("unknown proof claim");

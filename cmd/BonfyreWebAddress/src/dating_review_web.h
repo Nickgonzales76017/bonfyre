@@ -1,5 +1,6 @@
 #ifndef BONFYRE_DATING_REVIEW_WEB_H
 #define BONFYRE_DATING_REVIEW_WEB_H
+#include "form_tree.h"
 /* /moderation/dating: an institution administrator reviews requests to join
  * introductions. Approving records the age the reviewer confirmed and enrolls
  * the person through the Participation owner; declining closes the request.
@@ -33,12 +34,20 @@ static void dr_page(const char *note, int ok) {
             char when[32] = ""; time_t t = (time_t)rows[i].requested_at; struct tm tm;
             if (gmtime_r(&t, &tm)) strftime(when, sizeof(when), "%Y-%m-%d %H:%M UTC", &tm);
             fputs("<tr><td>", stdout); html(rows[i].subject); fputs("</td><td>", stdout); html(when);
-            fputs("</td><td colspan=\"2\"><form class=\"ak-pattern ak-action dr-row\" method=\"post\" action=\"/moderation/dating\">"
-                  "<input type=\"hidden\" name=\"subject\" value=\"", stdout); html(rows[i].subject);
-            fputs("\"><label class=\"ak-field\"><span>Age</span><input name=\"age\" inputmode=\"numeric\" pattern=\"[0-9]{2,3}\" min=\"18\" max=\"115\" required placeholder=\"18 or over\"></label>"
-                  "<div class=\"ak-actions\"><button type=\"submit\" name=\"decision\" value=\"approve\">Approve</button>"
-                  "<button type=\"submit\" name=\"decision\" value=\"decline\" formnovalidate class=\"ak-tone-danger\">Decline</button></div>"
-                  "</form></td></tr>", stdout);
+            fputs("</td><td colspan=\"2\">", stdout);
+            {
+                char id[32];
+                const FtField hidden[] = {{"subject", rows[i].subject}};
+                static const FtInput age[] = {{.label = "Age", .name = "age", .inputmode = "numeric",
+                    .pattern = "[0-9]{2,3}", .min = "18", .max = "115", .placeholder = "18 or over", .required = 1}};
+                static const FtSubmit decide[] = {{.label = "Approve", .name = "decision", .value = "approve"},
+                    {.label = "Decline", .name = "decision", .value = "decline", .tone = "danger", .novalidate = 1}};
+                snprintf(id, sizeof(id), "dr-%zu", i);
+                const FtForm form = {.id = id, .action = "/moderation/dating", .hidden = hidden, .nhidden = 1,
+                                     .inputs = age, .ninputs = 1, .submits = decide, .nsubmits = 2};
+                ft_form(stdout, &form);
+            }
+            fputs("</td></tr>", stdout);
         }
         fputs("</tbody></table></div></section>", stdout);
     }
@@ -46,9 +55,8 @@ static void dr_page(const char *note, int ok) {
 }
 
 static int serve_dating_review(const BfRequest *r) {
-    const char *method=r->method,*target=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    const char *method=r->method,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
     (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    if (strcmp(target, "/moderation/dating") && strcmp(target, "/moderation/dating/")) return 0;
     char actor[160], subject_ctx[160]; const char *scope = NULL;
     if (psetup_context(bearer, auth_db, "institution:bonfyre", 1, actor, sizeof(actor),
                        subject_ctx, sizeof(subject_ctx), &scope) != 1 || !scope ||

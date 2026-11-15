@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_COVER_PROJECTION_H
 #define BONFYRE_PROFILE_COVER_PROJECTION_H
+#include "form_tree.h"
 #include "profile_cover_source.h"
 #include "../../BonfyreCMS/src/entry_snapshot.h"
 
@@ -69,9 +70,10 @@ static void ph_cover_remove_form(const PhSite *site) {
     fputs("<details class=\"ph-cover-options\"><summary>Cover options</summary>",stdout);
     if(ref[0]&&position>=0){fputs("<a data-cover-adjust href=\"/profile?site=",stdout);url_query_value(site->id);fputs("&amp;tab=artwork&amp;art=",stdout);url_query_value(ref);
         printf("&amp;fx=%d&amp;fy=%d\">Move the focus point</a>",position/101,position%101);}
-    fputs("<form action=\"/profile/cover/remove\" method=\"post\">",stdout);
-    ph_hidden("site",site->id);ph_hidden("id",text);ph_hidden("expected",digest);
-    fputs("<button type=\"submit\">Remove cover</button></form></details>",stdout);
+    {const FtField hidden[]={{"site",site->id},{"id",text},{"expected",digest}};
+     const FtForm f={.id="ph-cover-remove",.action="/profile/cover/remove",.label="Remove cover",.hook="cover-remove",.hidden=hidden,.nhidden=3};
+     ft_form(stdout,&f);}
+    fputs("</details>",stdout);
 done:
     sqlite3_finalize(st);if(db)sqlite3_close(db);
 }

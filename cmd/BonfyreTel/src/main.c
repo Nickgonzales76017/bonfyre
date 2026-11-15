@@ -1101,6 +1101,22 @@ static void usage(void) {
         VERSION);
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define TEL_COMMANDS(X) \
+    X("call", TEL_CALL) \
+    X("hangup", TEL_HANGUP) \
+    X("layer-trace", TEL_LAYER_TRACE) \
+    X("listen", TEL_LISTEN) \
+    X("send-mms", TEL_SEND_MMS) \
+    X("send-sms", TEL_SEND_SMS) \
+    X("status", TEL_STATUS) \
+    X("verify-check", TEL_VERIFY_CHECK) \
+    X("verify-send", TEL_VERIFY_SEND) \
+    X("version", TEL_VERSION)
+BF_COMMAND_TABLE(tel_commands, TEL_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { usage(); return 0; }
     if (argc < 2) { usage(); return 1; }
@@ -1124,13 +1140,13 @@ int main(int argc, char **argv) {
     if (!password) password = DEFAULT_PASS;
     int port = port_str ? atoi(port_str) : DEFAULT_PORT;
 
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(tel_commands,BF_COMMAND_COUNT(tel_commands),cmd,-1);
 
-    if (strcmp(cmd, "version") == 0) {
+    if (cmd_id==TEL_VERSION) {
         printf("bonfyre-tel %s\n", VERSION);
         return 0;
     }
-    if (strcmp(cmd, "layer-trace") == 0 && argc >= 3) {
+    if (cmd_id==TEL_LAYER_TRACE && argc >= 3) {
         return delegate_layeros_tel(argc, argv);
     }
 
@@ -1139,21 +1155,21 @@ int main(int argc, char **argv) {
     sqlite3 *db = open_db(db_path);
     int rc = 1;
 
-    if (strcmp(cmd, "listen") == 0) {
+    if (cmd_id==TEL_LISTEN) {
         rc = cmd_listen(host, port, password, db);
-    } else if (strcmp(cmd, "send-sms") == 0) {
+    } else if (cmd_id==TEL_SEND_SMS) {
         rc = cmd_send_sms(host, port, password, from, to, body, db);
-    } else if (strcmp(cmd, "send-mms") == 0) {
+    } else if (cmd_id==TEL_SEND_MMS) {
         rc = cmd_send_mms(host, port, password, from, to, body, media, db);
-    } else if (strcmp(cmd, "call") == 0) {
+    } else if (cmd_id==TEL_CALL) {
         rc = cmd_call(host, port, password, from, to, record, db);
-    } else if (strcmp(cmd, "hangup") == 0) {
+    } else if (cmd_id==TEL_HANGUP) {
         rc = cmd_hangup(host, port, password, uuid);
-    } else if (strcmp(cmd, "status") == 0) {
+    } else if (cmd_id==TEL_STATUS) {
         rc = cmd_status(db);
-    } else if (strcmp(cmd, "verify-send") == 0) {
+    } else if (cmd_id==TEL_VERIFY_SEND) {
         rc = cmd_verify_send(host, port, password, to, db);
-    } else if (strcmp(cmd, "verify-check") == 0) {
+    } else if (cmd_id==TEL_VERIFY_CHECK) {
         rc = cmd_verify_check(phone, code, db);
     } else {
         fprintf(stderr, "tel: unknown command: %s\n", cmd);

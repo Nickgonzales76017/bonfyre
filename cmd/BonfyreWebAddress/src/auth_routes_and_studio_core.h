@@ -1,5 +1,6 @@
 #ifndef BONFYRE_AUTH_ROUTES_AND_STUDIO_CORE_H
 #define BONFYRE_AUTH_ROUTES_AND_STUDIO_CORE_H
+#include "../generated/native_estate_hosts.h"
 /* Extracted verbatim from main.c lines 2780-4027 (mechanical split, no logic changes). */
 static int valid_token(const char *t) {
     if (!t || strncmp(t, "bfy_", 4)) return 0;
@@ -372,7 +373,7 @@ static int serve_arrival(const char *method, const char *target, const char *acc
           "<header class=\"mf-hero\"><p class=\"mf-kicker\">About Aurekai · The founding page</p>"
           "<h1>One place to read, listen, make and trade, <em>on records you can check.</em></h1>"
           "<p class=\"mf-lede\">Aurekai gathers what people and sources publish, keeps a link back to whoever published it, and gives you a page and tools of your own. It does not act for you. Everything that spends, publishes or sends waits for your own submit.</p>"
-          "<div class=\"mf-hero-actions\"><a class=\"mf-chip\" href=\"/blog/\">Read the journal</a><a class=\"mf-chip\" href=\"https://docs.aurekai.work/\">Guides</a>"
+          "<div class=\"mf-hero-actions\"><a class=\"mf-chip\" href=\"/blog/\">Read the journal</a><a class=\"mf-chip\" href=\"" BF_ORIGIN_DOCS "/\">Guides</a>"
           "<a class=\"mf-cta\" href=\"#join\">Create an account</a></div></header>"
           "<div class=\"mf-body\"><aside class=\"mf-side\"><nav aria-label=\"On this page\"><h2>On this page</h2><ol>"
           "<li><a href=\"#trouble\">00. The trouble with feeds</a></li><li><a href=\"#principles\">01. Four principles</a></li>"
@@ -453,9 +454,9 @@ static int serve_arrival(const char *method, const char *target, const char *acc
           "</section></div></div></main>" BF_ESTATE_FOOT "</body></html>", stdout);
     return 1;
 }
-static int serve_auth(const char *method, const char *target, const char *body,
-                      const char *bearer, const char *db, const char *accept,
-                      const char *root, const char *host, const char *query) {
+static int serve_auth(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *bearer=r->bearer; const char *db=r->auth_db; const char *accept=r->accept; const char *root=r->root; const char *host=r->host; const char *query=r->query;
+    (void)method;(void)target;(void)body;(void)bearer;(void)db;(void)accept;(void)root;(void)host;(void)query;
     char out[8192];
     if(serve_session_handoff(method,target,bearer,db,host,query))return 1;
     if (serve_arrival(method, target, accept, host)) return 1;

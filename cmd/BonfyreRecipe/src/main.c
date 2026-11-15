@@ -839,6 +839,18 @@ static void print_usage(void) {
             "  bonfyre-recipe corpus list PACK.db RECIPE_ID SETS\n\n");
 }
 
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define RCP_COMMANDS(X) \
+    X("add", RCP_ADD) \
+    X("hash", RCP_HASH) \
+    X("init", RCP_INIT) \
+    X("list", RCP_LIST) \
+    X("search", RCP_SEARCH) \
+    X("show", RCP_SHOW) \
+    X("validate", RCP_VALIDATE)
+BF_COMMAND_TABLE(rcp_commands, RCP_COMMANDS);
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     int nutrition=bf_recipe_nutrition_command(argc,argv);
@@ -858,7 +870,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(rcp_commands,BF_COMMAND_COUNT(rcp_commands),cmd,-1);
     const char *db_path_override = NULL;
     
     /* Parse --db option */
@@ -871,10 +883,10 @@ int main(int argc, char **argv) {
     const char *db_path = get_db_path(db_path_override);
     const char *catalog_db_path = get_catalog_db_path(db_path_override);
     
-    if (strcmp(cmd, "init") == 0) {
+    if (cmd_id==RCP_INIT) {
         return cmd_init(db_path);
     }
-    else if (strcmp(cmd, "list") == 0) {
+    else if (cmd_id==RCP_LIST) {
         const char *category = NULL;
         const char *tag = NULL;
         for (int i = 2; i < argc - 1; i++) {
@@ -884,7 +896,7 @@ int main(int argc, char **argv) {
         if (cmd_list_catalog(catalog_db_path, category, tag) == 0) return 0;
         return cmd_list(db_path, category, tag);
     }
-    else if (strcmp(cmd, "show") == 0) {
+    else if (cmd_id==RCP_SHOW) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-recipe show <RECIPE_ID>\n");
             return 1;
@@ -892,14 +904,14 @@ int main(int argc, char **argv) {
         if (cmd_show_catalog(catalog_db_path, argv[2]) == 0) return 0;
         return cmd_show(db_path, argv[2]);
     }
-    else if (strcmp(cmd, "add") == 0) {
+    else if (cmd_id==RCP_ADD) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-recipe add <RECIPE.json>\n");
             return 1;
         }
         return cmd_add(db_path, catalog_db_path, argv[2]);
     }
-    else if (strcmp(cmd, "search") == 0) {
+    else if (cmd_id==RCP_SEARCH) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-recipe search <QUERY>\n");
             return 1;
@@ -907,14 +919,14 @@ int main(int argc, char **argv) {
         if (cmd_search_catalog(catalog_db_path, argv[2]) == 0) return 0;
         return cmd_search(db_path, argv[2]);
     }
-    else if (strcmp(cmd, "validate") == 0) {
+    else if (cmd_id==RCP_VALIDATE) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-recipe validate <RECIPE.json>\n");
             return 1;
         }
         return cmd_validate(argv[2]);
     }
-    else if (strcmp(cmd, "hash") == 0) {
+    else if (cmd_id==RCP_HASH) {
         if (argc < 3) {
             fprintf(stderr, "Usage: bonfyre-recipe hash <RECIPE.json>\n");
             return 1;

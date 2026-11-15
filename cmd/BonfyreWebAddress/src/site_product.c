@@ -39,6 +39,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#include <libproc.h>
+#endif
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -331,13 +334,46 @@ static int server_up(const Site *s) {
     char *const av[] = {"curl", "-s", "-m", "2", "-o", "/dev/null", "-w", "%{http_code}", url, NULL};
     return !run(av, code, sizeof(code), NULL) && !strncmp(code, "200", 3);
 }
+/* A health response alone is not authority to signal a reused/stale PID.
+ * The detached site server must be the exact binary, session leader and
+ * listener on the site-owned port.  Unknown ownership fails closed. */
+static int site_pid_owns_listener(const Site *s, pid_t pid) {
+    char path[PATH_MAX], canonical[PATH_MAX], pid_text[32], port_spec[48], witness[4096];
+    if (pid < 2 || getpgid(pid) != pid) return 0;
+#if defined(__APPLE__)
+    if (proc_pidpath(pid, path, (uint32_t)sizeof(path)) <= 0) return 0;
+#elif defined(__linux__)
+    char proc[64];
+    snprintf(proc, sizeof(proc), "/proc/%ld/exe", (long)pid);
+    ssize_t n = readlink(proc, path, sizeof(path) - 1);
+    if (n <= 0) return 0;
+    path[n] = '\0';
+#else
+    return 0;
+#endif
+    if (!realpath(path, canonical) || strcmp(canonical, s->self)) return 0;
+    snprintf(pid_text, sizeof(pid_text), "%ld", (long)pid);
+    snprintf(port_spec, sizeof(port_spec), "-iTCP:%d", s->port);
+    char *const av[] = {"lsof", "-nP", "-a", "-p", pid_text, port_spec, "-sTCP:LISTEN", NULL};
+    return !run(av, witness, sizeof(witness), NULL) && strstr(witness, "LISTEN") != NULL;
+}
+
 
 /* Starts the resolver's own server over this home, detached, unless one is
  * already answering on the port. */
 static int ensure_server(Site *s) {
     char log_path[PATH_MAX], pid_path[PATH_MAX], port[16];
     pid_t pid;
-    if (server_up(s)) return 0;
+    if (server_up(s)) {
+        FILE *f;
+        int recorded = 0;
+        snprintf(pid_path, sizeof(pid_path), "%s/serve.pid", s->home);
+        f = fopen(pid_path, "r");
+        if (f) { (void)fscanf(f, "%d", &recorded); fclose(f); }
+        if (site_pid_owns_listener(s, (pid_t)recorded)) return 0;
+        fputs("site: port answers but the site home does not own its listener; refusing false serving success\n", stderr);
+        return 8;
+    }
     if (find_share(s)) return 3;
     /* What assistants ask is written to the meter.  Reading and leaving a
      * message are both free; the rate says so on the record. */
@@ -2891,20 +2927,27 @@ static int site_stop(Site *s) {
     f = fopen(pid_path, "r");
     if (!f || fscanf(f, "%d", &pid) != 1 || pid < 2) { if (f) fclose(f); puts("{\"stopped\":false,\"reason\":\"no server was started from this home\"}"); return 0; }
     fclose(f);
-    if (server_up(s)) {
-        if (kill(pid, SIGTERM) && errno != ESRCH) {
-            fputs("site: failed to signal the owned server\n", stderr);
-            return 1;
-        }
-        for (int i = 0; i < 40 && server_up(s); i++) {
-            const struct timespec nap = {0, 100000000L};
-            nanosleep(&nap, NULL);
-        }
-        if (server_up(s)) {
-            fputs("site: server still accepts requests after stop; refusing a misleading restart\n", stderr);
-            return 1;
-        }
+    if (!server_up(s)) {
+        puts("{\"stopped\":false,\"reason\":\"recorded site port is not answering; PID record retained for review\"}");
+        return 0;
     }
+    if (!site_pid_owns_listener(s, (pid_t)pid)) {
+        fputs("site: PID record does not verify the exact site listener; no signal sent\n", stderr);
+        puts("{\"stopped\":false,\"reason\":\"unverified PID owner; no signal sent\"}");
+        return 1;
+    }
+    if (kill(pid, SIGTERM) && errno != ESRCH) {
+        fputs("site: failed to signal the owned server\n", stderr);
+        return 1;
+    }
+    for (int i = 0; i < 40 && server_up(s); i++) {
+        const struct timespec nap = {0, 100000000L};
+        nanosleep(&nap, NULL);
+    }
+    if (server_up(s)) {
+        fputs("site: server still accepts requests after stop; refusing a misleading restart\n", stderr);
+        return 1;
+        }
     unlink(pid_path);
     puts("{\"stopped\":true}");
     return 0;

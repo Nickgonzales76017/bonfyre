@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PACK_SETUP_H
 #define BONFYRE_PACK_SETUP_H
+#include "form_tree.h"
 #include "pack_resolution.h"
 #include "../../BonfyreCMS/src/household_access.h"
 static int session_self_authoring(const char *, const char *);
@@ -192,15 +193,28 @@ static void psetup_link(const PackSetupInput *in,int share,const char *digest) {
 }
 static void psetup_form(const char *op,const char *label,const PackSetupInput *in,const PackSetupResult *state,const char *digest) {
     char rev[24];snprintf(rev,sizeof(rev),"%lld",state->revision);
-    fputs("<form method=\"post\" action=\"/packs/setup\">",stdout);psetup_hidden("pack",in->pack);psetup_hidden("context",in->context);psetup_hidden("version",in->version);
-    psetup_hidden("operation",op);psetup_hidden("revision",rev);psetup_hidden("digest",digest);
-    if(*in->design)psetup_hidden("design",in->design);
-    fputs(!strcmp(op,"install")||!strcmp(op,"activate")?"<button class=\"ak-btn is-primary\" type=\"submit\" data-pack-action=\"":"<button class=\"ak-link-btn\" type=\"submit\" data-pack-action=\"",stdout);html(op);fputs("\">",stdout);html(label);fputs("</button></form>",stdout);
+    const FtField hidden[]={{"pack",in->pack},{"context",in->context},{"version",in->version},{"operation",op},
+                            {"revision",rev},{"digest",digest},{*in->design?"design":NULL,in->design}};
+    const FtSubmit go[]={{.label=label,.hook="pack-action",.hook_value=op}};
+    const FtForm f={.id="pack-setup",.action="/packs/setup",.hidden=hidden,.nhidden=7,.submits=go,.nsubmits=1};
+    ft_form(stdout,&f);
 }
 /* HTML and machine discovery share one bounded read of current destination
  * owners. These choices do not reserve access; each operation checks again. */
 #define PSETUP_DESTINATIONS_MAX 201
 typedef struct {char context[96],label[320];int can_write;} PackSetupDestination;
+/* One workspace picker: the account's destinations as a select, chosen one
+ * marked, the personal workspace offered when the account has no others. */
+static void psetup_picker(const char *id,const char *action,const char *label,const char *button,const PackSetupDestination *rows,
+                                  size_t count,int result,const char *context,const FtField *hidden,unsigned nhidden){
+    FtOption *options=calloc(count+1,sizeof(*options));size_t n=0;
+    if(!options)return;
+    if(!result)options[n++]=(FtOption){"self","My personal workspace",0};
+    for(size_t i=0;i<count;i++)options[n++]=(FtOption){rows[i].context,rows[i].label,!strcmp(rows[i].context,context)};
+    const FtInput in[]={{.label=label,.type="select",.name="context",.options=options,.noptions=(unsigned)n}};
+    const FtForm f={.id=id,.method="get",.action=action,.label=button?button:"Change workspace",.hook=id,.hidden=hidden,.nhidden=nhidden,.inputs=in,.ninputs=1};
+    ft_form(stdout,&f);free(options);
+}
 static int psetup_table(sqlite3 *db,const char *name){
     sqlite3_stmt *s=NULL;int found=-1;
     if(sqlite3_prepare_v2(db,"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?1",-1,&s,NULL)==SQLITE_OK){
@@ -255,12 +269,8 @@ static void psetup_destination_picker_with(const PackSetupInput *in,const char *
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);
     if(result<0)fputs("<p role=\"alert\">The complete destination list is unavailable or exceeds 100 organizations or households. Refresh after the owner is available.</p>",stdout);
     else {
-        fputs("<form method=\"get\" action=\"",stdout);html(target);fputs("\"><label for=\"pack-context\">",stdout);html(label);
-        if(extra_name&&extra_value)psetup_hidden(extra_name,extra_value);
-        fputs("</label><br><select id=\"pack-context\" name=\"context\">",stdout);
-        if(!result)fputs("<option value=\"self\">My personal workspace</option>",stdout);
-        for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,in->context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}
-        fputs("</select>",stdout);psetup_hidden("pack",in->pack);psetup_hidden("version",in->version);fputs(" <button>Change workspace</button></form>",stdout);
+        const FtField hidden[]={{extra_name&&extra_value?extra_name:NULL,extra_value},{"pack",in->pack},{"version",in->version}};
+        psetup_picker("pack-context",target,label,NULL,rows,count,result,in->context,hidden,3);
     }
     fputs("<p><a data-organizations href=\"/organizations",stdout);if(*in->pack){fputs("?pack=",stdout);url_query_value(in->pack);}fputs("\">Create an organization or manage your people</a></p>",stdout);
     if(!strncmp(in->context,"household:",10)){fputs("<p><a href=\"/households/access?household=",stdout);url_query_value(in->context+10);fputs("\">Household access</a></p>",stdout);}
@@ -379,9 +389,9 @@ static void psetup_directory(const PackSetupInput *in,const char *bearer,const c
     fputs("<p class=\"ak-packs-foot\"><span class=\"ak-live\">Showing up to 100 published tools. Setup checks the chosen release and your current access before anything changes.</span></p></div>",stdout);
     psetup_end();
 }
-static int serve_pack_setup(const char *method,const char *target,const char *query,const char *body,
-                            const char *raw,const char *host,const char *bearer,const char *auth_db) {
-    if(strcmp(target,"/packs/setup"))return 0;
+static int serve_pack_setup(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     int post=!strcmp(method,"POST");
     if(!post&&strcmp(method,"GET")){protocol_reply(405,"text/plain","Use GET to review or POST to change setup.\n");return 1;}
     PackSetupInput in;PackSetupResult plan={0},current={0};char actor[160]="public",subject[160]="public";const char *scope="self";

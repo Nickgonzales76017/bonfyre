@@ -1724,19 +1724,42 @@ static void usage(void) {
     );
 }
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define LAY_COMMANDS(X) \
+    X("--help", LAY_OPT_HELP) \
+    X("--version", LAY_OPT_VERSION) \
+    X("-h", LAY_OPT_H) \
+    X("bridge", LAY_BRIDGE) \
+    X("compat", LAY_COMPAT) \
+    X("compose", LAY_COMPOSE) \
+    X("graph", LAY_GRAPH) \
+    X("hash", LAY_HASH) \
+    X("import-recipe", LAY_IMPORT_RECIPE) \
+    X("inspect", LAY_INSPECT) \
+    X("layers", LAY_LAYERS) \
+    X("ontology", LAY_ONTOLOGY) \
+    X("pack-transform", LAY_PACK_TRANSFORM) \
+    X("pull-head", LAY_PULL_HEAD) \
+    X("pull-layer", LAY_PULL_LAYER) \
+    X("registry", LAY_REGISTRY) \
+    X("schema", LAY_SCHEMA)
+BF_COMMAND_TABLE(lay_commands, LAY_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(lay_commands,BF_COMMAND_COUNT(lay_commands),cmd,-1);
     const char *root = bf_arg_value(argc, argv, "--root");
 
-    if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) { usage(); return 0; }
-    if (strcmp(cmd, "--version") == 0) {
+    if (cmd_id==LAY_OPT_HELP || cmd_id==LAY_OPT_H) { usage(); return 0; }
+    if (cmd_id==LAY_OPT_VERSION) {
         printf("bonfyre-layer v" VERSION "\n"); return 0;
     }
 
-    if (strcmp(cmd, "schema") == 0) { puts(SCHEMA_JSON); return 0; }
-    if (strcmp(cmd, "registry") == 0) return cmd_registry(root);
-    if (strcmp(cmd, "import-recipe") == 0) {
+    if (cmd_id==LAY_SCHEMA) { puts(SCHEMA_JSON); return 0; }
+    if (cmd_id==LAY_REGISTRY) return cmd_registry(root);
+    if (cmd_id==LAY_IMPORT_RECIPE) {
         char *child[8];
         int n = 0;
         if (argc < 3) { fprintf(stderr, "usage: bonfyre-layer import-recipe <recipe.yaml> [--root DIR]\n"); return 1; }
@@ -1756,7 +1779,7 @@ int main(int argc, char **argv) {
         child[n] = NULL;
         return delegate_layeros(child);
     }
-    if (strcmp(cmd, "hash") == 0) {
+    if (cmd_id==LAY_HASH) {
         char *child[8];
         int n = 0;
         if (argc < 4) { fprintf(stderr, "usage: bonfyre-layer hash <layer-manifest|layer-payload|layer-tree> <artifact_id> [--root DIR]\n"); return 1; }
@@ -1776,22 +1799,22 @@ int main(int argc, char **argv) {
         child[n] = NULL;
         return delegate_layeros(child);
     }
-    if (strcmp(cmd, "compat") == 0) {
+    if (cmd_id==LAY_COMPAT) {
         if (argc < 4) { fprintf(stderr, "usage: bonfyre-layer compat <layer_a> <layer_b> [--root DIR]\n"); return 1; }
         return cmd_compat(root, argv[2], argv[3]);
     }
-    if (strcmp(cmd, "compose") == 0) {
+    if (cmd_id==LAY_COMPOSE) {
         if (argc < 4) { fprintf(stderr, "usage: bonfyre-layer compose <layer_a> <layer_b> --dry-run [--root DIR]\n"); return 1; }
         return cmd_compose(root, argv[2], argv[3], bf_arg_has(argc, argv, "--dry-run"));
     }
-    if (strcmp(cmd, "bridge") == 0) {
+    if (cmd_id==LAY_BRIDGE) {
         if (argc < 4 || !bf_arg_has(argc, argv, "--suggest")) {
             fprintf(stderr, "usage: bonfyre-layer bridge <layer_a> <layer_b> --suggest [--root DIR]\n");
             return 1;
         }
         return cmd_bridge_suggest(root, argv[2], argv[3]);
     }
-    if (strcmp(cmd, "ontology") == 0) {
+    if (cmd_id==LAY_ONTOLOGY) {
         const char *family = bf_arg_value(argc, argv, "--family");
         char *json = NULL;
         if (bf_layer_family_relations_json(family, &json) != 0 || !json) {
@@ -1803,23 +1826,23 @@ int main(int argc, char **argv) {
         free(json);
         return 0;
     }
-    if (strcmp(cmd, "graph") == 0) {
+    if (cmd_id==LAY_GRAPH) {
         const char *families = bf_arg_value(argc, argv, "--families");
         if (!families) { fprintf(stderr, "usage: bonfyre-layer graph --families T_Q_PROJ,T_K_PROJ [--root DIR]\n"); return 1; }
         return cmd_graph(root, families);
     }
 
-    if (strcmp(cmd, "inspect") == 0) {
+    if (cmd_id==LAY_INSPECT) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-layer inspect <model.onnx>\n"); return 1; }
         return cmd_inspect(argv[2]);
     }
 
-    if (strcmp(cmd, "layers") == 0) {
+    if (cmd_id==LAY_LAYERS) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-layer layers <model.onnx>\n"); return 1; }
         return cmd_layers(argv[2]);
     }
 
-    if (strcmp(cmd, "pull-layer") == 0) {
+    if (cmd_id==LAY_PULL_LAYER) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-layer pull-layer <model.onnx> --range S:E --out DIR\n"); return 1; }
         const char *model = argv[2];
         const char *range = bf_arg_value(argc, argv, "--range");
@@ -1830,7 +1853,7 @@ int main(int argc, char **argv) {
         return cmd_pull_layer(model, range, out);
     }
 
-    if (strcmp(cmd, "pull-head") == 0) {
+    if (cmd_id==LAY_PULL_HEAD) {
         if (argc < 3) { fprintf(stderr,"usage: bonfyre-layer pull-head <model.onnx> --name PREFIX --out DIR\n"); return 1; }
         const char *model = argv[2];
         const char *name  = bf_arg_value(argc, argv, "--name");
@@ -1841,7 +1864,7 @@ int main(int argc, char **argv) {
         return cmd_pull_head(model, name, out);
     }
 
-    if (strcmp(cmd, "pack-transform") == 0) {
+    if (cmd_id==LAY_PACK_TRANSFORM) {
         if (argc < 4) {
             fprintf(stderr,"usage: bonfyre-layer pack-transform <name> <p1.onnx> ... --out DIR\n");
             return 1;

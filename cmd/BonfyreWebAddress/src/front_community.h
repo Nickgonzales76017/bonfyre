@@ -1,5 +1,6 @@
 #ifndef BONFYRE_FRONT_COMMUNITY_H
 #define BONFYRE_FRONT_COMMUNITY_H
+#include "../generated/native_estate_hosts.h"
 #include "../../BonfyreCMS/src/community_discovery.h"
 /* A shared public entrance. These conversations are not classified as
  * belonging to a territory and never contain the visitor's private work. */
@@ -28,7 +29,7 @@ static void front_community_emit(sqlite3 *db) {
           "<div><span class=\"community-front-kicker\">Community conversations</span>"
           "<h2 id=\"community-front-title\">What people are discussing</h2>"
           "<p>Real questions, shared work and replies from Aurekai communities.</p></div>"
-          "<a href=\"https://aurekai.life/communities\">Explore communities</a>"
+          "<a href=\"" BF_ORIGIN_LIFE "/communities\">Explore communities</a>"
           "</div><div class=\"community-front-grid\">",stdout);
     for(size_t i=0;i<found.count;i++) {
         const CjrDiscoveryItem *item=&found.items[i];
@@ -45,7 +46,7 @@ static void front_community_emit(sqlite3 *db) {
         fputs("\"><p class=\"community-from\">",stdout);html(community->title);
         fputs("</p><h3>",stdout);html(post->title[0]?post->title:community->title);
         fputs("</h3><p class=\"community-excerpt\">",stdout);html(excerpt);
-        fputs("</p><a data-community-thread href=\"https://aurekai.life/community/",stdout);
+        fputs("</p><a data-community-thread href=\"" BF_ORIGIN_LIFE "/community/",stdout);
         html(community->key);fputs("/thread/",stdout);html(post->key);
         fputs("/\">Read the conversation</a></article>",stdout);
     }

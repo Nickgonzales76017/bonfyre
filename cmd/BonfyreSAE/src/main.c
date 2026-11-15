@@ -444,18 +444,33 @@ static void print_help(void) {
 
 #include "sae_train.inc"
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define SAE_COMMANDS(X) \
+    X("--help", SAE_OPT_HELP) \
+    X("-h", SAE_OPT_H) \
+    X("activate", SAE_ACTIVATE) \
+    X("gate", SAE_GATE) \
+    X("hash", SAE_HASH) \
+    X("help", SAE_HELP) \
+    X("history", SAE_HISTORY) \
+    X("inspect", SAE_INSPECT) \
+    X("train", SAE_TRAIN)
+BF_COMMAND_TABLE(sae_commands, SAE_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) { print_help(); return 0; }
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(sae_commands,BF_COMMAND_COUNT(sae_commands),cmd,-1);
     int   sub_argc = argc - 2;
     char **sub_argv = argv + 2;
 
-    if (strcmp(cmd, "activate") == 0) return cmd_activate(sub_argc, sub_argv); if (strcmp(cmd, "train")    == 0) return cmd_train   (sub_argc, sub_argv);
-    if (strcmp(cmd, "inspect")  == 0) return cmd_inspect (sub_argc, sub_argv);
-    if (strcmp(cmd, "gate")     == 0) return cmd_gate    (sub_argc, sub_argv);
-    if (strcmp(cmd, "hash")     == 0) return cmd_hash    (sub_argc, sub_argv);
-    if (strcmp(cmd, "history")  == 0) return cmd_history (sub_argc, sub_argv);
-    if (strcmp(cmd, "help")     == 0 || strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0) {
+    if (cmd_id==SAE_ACTIVATE) return cmd_activate(sub_argc, sub_argv); if (cmd_id==SAE_TRAIN) return cmd_train   (sub_argc, sub_argv);
+    if (cmd_id==SAE_INSPECT) return cmd_inspect (sub_argc, sub_argv);
+    if (cmd_id==SAE_GATE) return cmd_gate    (sub_argc, sub_argv);
+    if (cmd_id==SAE_HASH) return cmd_hash    (sub_argc, sub_argv);
+    if (cmd_id==SAE_HISTORY) return cmd_history (sub_argc, sub_argv);
+    if (cmd_id==SAE_HELP || cmd_id==SAE_OPT_HELP || cmd_id==SAE_OPT_H) {
         print_help(); return 0;
     }
     fprintf(stderr, "bonfyre-sae: unknown command '%s'. Try: bonfyre-sae help\n", cmd);

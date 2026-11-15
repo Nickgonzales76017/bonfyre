@@ -1516,6 +1516,31 @@ static int cmd_quic_client(const char *host, int port,
 }
 #endif
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define QFPQ_COMMANDS(X) \
+    X("--help", QFPQ_OPT_HELP) \
+    X("bench-generate", QFPQ_BENCH_GENERATE) \
+    X("doctor", QFPQ_DOCTOR) \
+    X("generate", QFPQ_GENERATE) \
+    X("generate-blender-template", QFPQ_GENERATE_BLENDER_TEMPLATE) \
+    X("generate-hyperframes", QFPQ_GENERATE_HYPERFRAMES) \
+    X("generate-json", QFPQ_GENERATE_JSON) \
+    X("generate-video-script", QFPQ_GENERATE_VIDEO_SCRIPT) \
+    X("help", QFPQ_HELP) \
+    X("prefill-bench", QFPQ_PREFILL_BENCH) \
+    X("quic-client", QFPQ_QUIC_CLIENT) \
+    X("qwen-fpq", QFPQ_QWEN_FPQ) \
+    X("score-probe", QFPQ_SCORE_PROBE) \
+    X("serve", QFPQ_SERVE) \
+    X("serve-local", QFPQ_SERVE_LOCAL) \
+    X("serve-quic", QFPQ_SERVE_QUIC) \
+    X("test-load", QFPQ_TEST_LOAD) \
+    X("test-tensor", QFPQ_TEST_TENSOR) \
+    X("tokenizer-test", QFPQ_TOKENIZER_TEST)
+BF_COMMAND_TABLE(qfpq_commands, QFPQ_COMMANDS);
+
 int main(int argc, char **argv) {
     int arg_start = 2;
     if (argc < 2) {
@@ -1523,15 +1548,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    const char *cmd = argv[1];
-    if (strcmp(cmd, "help") == 0 || strcmp(cmd, "--help") == 0) {
+    const char *cmd = argv[1]; int cmd_id=bf_command_id(qfpq_commands,BF_COMMAND_COUNT(qfpq_commands),cmd,-1);
+    if (cmd_id==QFPQ_HELP || cmd_id==QFPQ_OPT_HELP) {
         usage();
         return 0;
     }
-    if (strcmp(cmd, "qwen-fpq") == 0 && argc >= 3) {
-        cmd = argv[2];
+    if (cmd_id==QFPQ_QWEN_FPQ && argc >= 3) {
+        cmd = argv[2]; cmd_id = bf_command_id(qfpq_commands, BF_COMMAND_COUNT(qfpq_commands), cmd, -1);
         arg_start = 3;
-        if (strcmp(cmd, "help") == 0 || strcmp(cmd, "--help") == 0) {
+        if (cmd_id==QFPQ_HELP || cmd_id==QFPQ_OPT_HELP) {
             usage();
             return 0;
         }
@@ -1627,7 +1652,7 @@ int main(int argc, char **argv) {
     }
     char *resolved_pack = resolve_registry_ref(pack);
     char *resolved_tokenizer = resolve_registry_ref(tokenizer);
-    int needs_model = strcmp(cmd, "quic-client") != 0 && strcmp(cmd, "tokenizer-test") != 0;
+    int needs_model = cmd_id!=QFPQ_QUIC_CLIENT && cmd_id!=QFPQ_TOKENIZER_TEST;
     if (resolved_pack && resolved_pack[0]) pack = resolved_pack;
     if (resolved_tokenizer && resolved_tokenizer[0]) tokenizer = resolved_tokenizer;
     if (connect_addr && connect_addr[0]) {
@@ -1654,40 +1679,40 @@ int main(int argc, char **argv) {
     }
 
     /* Dispatch commands */
-    if (strcmp(cmd, "serve") == 0) {
+    if (cmd_id==QFPQ_SERVE) {
         int rc = cmd_serve(pack, tokenizer, quic_mode, bind_addr, port, cert_path, key_path,
                            bench_warm_cache, bench_resident, bench_speed_mode);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "serve-local") == 0) {
+    else if (cmd_id==QFPQ_SERVE_LOCAL) {
         int rc = cmd_serve(pack, tokenizer, 0, bind_addr, port, cert_path, key_path,
                            bench_warm_cache, bench_resident, bench_speed_mode);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "serve-quic") == 0) {
+    else if (cmd_id==QFPQ_SERVE_QUIC) {
         int rc = cmd_serve(pack, tokenizer, 1, bind_addr, port, cert_path, key_path,
                            bench_warm_cache, bench_resident, bench_speed_mode);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "doctor") == 0) {
+    else if (cmd_id==QFPQ_DOCTOR) {
         int rc = cmd_doctor(pack, tokenizer, prompt_path, golden_out_path, out_path);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "prefill-bench") == 0) {
+    else if (cmd_id==QFPQ_PREFILL_BENCH) {
         int rc = cmd_prefill_bench(pack, tokenizer, prompt_path, prefill_chunk);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "bench-generate") == 0) {
+    else if (cmd_id==QFPQ_BENCH_GENERATE) {
         qwen_bench_options_t opts = {
             .pack = pack,
             .tokenizer_path = tokenizer,
@@ -1709,7 +1734,7 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "score-probe") == 0) {
+    else if (cmd_id==QFPQ_SCORE_PROBE) {
         const char *tname = NULL;
         const char *rows_csv = NULL;
         const char *probe_jsonl_path = NULL;
@@ -1734,20 +1759,20 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "quic-client") == 0) {
+    else if (cmd_id==QFPQ_QUIC_CLIENT) {
         const char *host = (bind_addr && strcmp(bind_addr, "0.0.0.0") == 0) ? "127.0.0.1" : bind_addr;
         int rc = cmd_quic_client(host, port, cert_path, key_path, request_json, json_path, timeout_ms);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "tokenizer-test") == 0) {
+    else if (cmd_id==QFPQ_TOKENIZER_TEST) {
         int rc = cmd_tokenizer_test(tokenizer, text_arg);
         free(resolved_pack);
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "generate") == 0) {
+    else if (cmd_id==QFPQ_GENERATE) {
         if (!prompt_path || !out_path) {
             fprintf(stderr, "Error: generate requires --prompt and --out\n");
             free(resolved_pack);
@@ -1760,7 +1785,7 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "generate-blender-template") == 0) {
+    else if (cmd_id==QFPQ_GENERATE_BLENDER_TEMPLATE) {
         if (!prompt_path) {
             fprintf(stderr, "Error: generate-blender-template requires --prompt\n");
             free(resolved_pack);
@@ -1773,7 +1798,7 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "generate-video-script") == 0) {
+    else if (cmd_id==QFPQ_GENERATE_VIDEO_SCRIPT) {
         if (!prompt_path || !out_path) {
             fprintf(stderr, "Error: generate-video-script requires --prompt and --out\n");
             free(resolved_pack);
@@ -1785,7 +1810,7 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "generate-hyperframes") == 0) {
+    else if (cmd_id==QFPQ_GENERATE_HYPERFRAMES) {
         if (!prompt_path || !out_path) {
             fprintf(stderr, "Error: generate-hyperframes requires --prompt and --out\n");
             free(resolved_pack);
@@ -1797,7 +1822,7 @@ int main(int argc, char **argv) {
         free(resolved_tokenizer);
         return rc;
     }
-    else if (strcmp(cmd, "generate-json") == 0) {
+    else if (cmd_id==QFPQ_GENERATE_JSON) {
         if (!prompt_path || !out_path) {
             fprintf(stderr, "Error: generate-json requires --prompt and --out\n");
             free(resolved_pack);
@@ -1811,7 +1836,7 @@ int main(int argc, char **argv) {
     }
     else
 
-    if (strcmp(cmd, "test-load") == 0) {
+    if (cmd_id==QFPQ_TEST_LOAD) {
         const char *pack = NULL;
 
         for (int i = 2; i < argc; i++) {
@@ -1843,7 +1868,7 @@ int main(int argc, char **argv) {
         return 0; /* load-only gate: let OS reclaim model */
     }
 
-if (strcmp(cmd, "test-tensor") == 0) {
+if (cmd_id==QFPQ_TEST_TENSOR) {
         const char *tname = "model.layers.42.self_attn.q_proj.weight";
         int dump_fp16_rows = 0;
         for (int i = 2; i < argc; i++) {

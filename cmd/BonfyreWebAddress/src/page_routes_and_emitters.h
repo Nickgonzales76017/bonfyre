@@ -1167,11 +1167,11 @@ static void page_redirect(const char *location) {
     printf("HTTP/1.1 303 See Other\r\nLocation: %s\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", location);
 }
 
-static int serve_page_save(const char *method, const char *target, const char *body, const char *raw,
-                           const char *host, const char *bearer, const char *auth_db) {
+static int serve_page_save(const BfRequest *r) {
+    const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)method;(void)target;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     char item[200] = {0}, back[400] = {0}, actor[64], ref_source[128], ref_key[32], next[900];
     const char *slash; int unsave; sqlite3 *db = NULL; PageSaved saved;
-    if (!target || (strcmp(target, "/o/save") && strcmp(target, "/o/unsave"))) return 0;
     unsave = !strcmp(target, "/o/unsave");
     if (strcmp(method, "POST")) { protocol_reply(405, "text/plain; charset=utf-8", "Save is a form submission.\n"); return 1; }
     /* Saving is only ever asked for from this site. */
@@ -1305,7 +1305,9 @@ static int serve_page_save(const char *method, const char *target, const char *b
     return 1;
 }
 
-static int emit_saved_page(const char *root, const char *host, const char *bearer, const char *auth_db) {
+static int emit_saved_page(const BfRequest *rq) {
+    const char *root=rq->root; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
+    (void)root;(void)host;(void)bearer;(void)auth_db;
     char actor[64], path[PATH_MAX]; sqlite3 *db = NULL; sqlite3_stmt *st = NULL; PageMaterial *material; size_t r;
     unsigned char sequence[1] = {0}; int ok = 0;
     (void)host;
@@ -1414,7 +1416,9 @@ static void page_emit_property_results(const char *q) {
     if (shown) fputs("</ol></section>", stdout);
 }
 
-static int emit_parcel_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db) {
+static int emit_parcel_page(const BfRequest *r) {
+    const char *root=r->root; const char *target=r->target; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)root;(void)target;(void)host;(void)bearer;(void)auth_db;
     char account[32], path[PATH_MAX], sql[2400], rows[16384], *template = NULL, *head_end, actor[64] = {0};
     const char *bindir = page_cms_env("BONFYRE_BIN_DIR", "/usr/local/bin");
     char address[256] = {0}, owner[256] = {0}, mail[256] = {0}, mail_city[128] = {0}, legal[512] = {0}, land_value[64] = {0}, improvement[64] = {0};
@@ -2013,7 +2017,9 @@ static void item_like_card(const PageItem *other, time_t now) {
     fputs("<b>", stdout); html(other->title); fputs("</b>", stdout); fputs(close, stdout);
     fputs("<span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span></li>", stdout);
 }
-static int emit_item_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db) {
+static int emit_item_page(const BfRequest *r) {
+    const char *root=r->root; const char *target=r->target; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)root;(void)target;(void)host;(void)bearer;(void)auth_db;
     ItemDepth *depth = NULL; PageMaterial *relations = NULL;
     EstateReferenceStores stores = {0}; EstateReference publisher = {0};
     char source[128], key[32], path[PATH_MAX], family[64] = {0}, url[1024] = {0}, self[1024], publisher_ident[48] = {0}, publisher_name[256] = {0};
@@ -2557,8 +2563,9 @@ static int page_item_by_ref(sqlite3 *db, const char *source, const char *key, Pa
     return 0;
 }
 
-static int serve_page_changes(const char *root, const char *method, const char *target, const char *body, const char *raw,
-                              const char *host, const char *bearer, const char *auth_db) {
+static int serve_page_changes(const BfRequest *r) {
+    const char *root=r->root; const char *method=r->method; const char *target=r->target; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
+    (void)root;(void)method;(void)target;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     char source[128], key[32], path[PATH_MAX], twin[64], receipt_path[PATH_MAX], body_path[PATH_MAX], actor[64] = {0};
     const char *slash, *foreign = getenv("BONFYRE_FOREIGN_ROOT");
     const PageItem *item = NULL; PageMaterial *material = NULL; sqlite3 *db = NULL; char *template = NULL, *head_end;
@@ -2702,7 +2709,9 @@ static int serve_page_changes(const char *root, const char *method, const char *
  * reports -- each still carrying its own source.  The page is organized around
  * the thing, not around who published it.  An identity no retained report
  * names has no page. */
-static int emit_about_page(const char *root, const char *target, const char *host, const char *bearer, const char *auth_db) {
+static int emit_about_page(const BfRequest *rq) {
+    const char *root=rq->root; const char *target=rq->target; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
+    (void)root;(void)target;(void)host;(void)bearer;(void)auth_db;
     const char *ident = target + 7; char path[PATH_MAX], actor[64] = "", *template = NULL, *head_end; size_t n = strlen(ident);
     char publisher_sources[2048], publisher_name[256], atlas_target[64];
     PageMaterial *material = NULL, *scratch = NULL, *pictures = NULL; sqlite3 *db = NULL; int named, k;
