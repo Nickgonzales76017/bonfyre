@@ -74,13 +74,13 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
   if(bf_peer_messages(owner,actor,facet->id,row->subject,messages,8,&count)){
    fputs("<ol>",stdout);for(size_t i=count;i>0;i--){const BfPeerMessage *m=&messages[i-1];
     fputs("<li><strong>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");fputs("</strong><p>",stdout);html(m->body);fputs("</p></li>",stdout);}
-   if(!count)fputs("<li>Start a conversation about this shared context.</li>",stdout);fputs("</ol>",stdout);
+   if(!count)ui_text(stdout, "li", NULL, "Start a conversation about this shared context.");fputs("</ol>",stdout);
    char nonce[33];ph_nonce(nonce);
    {const FtField hidden[]={{"facet",facet->id},{"other",row->subject},{"nonce",nonce}};
     static const FtInput msg[]={{.label="Message",.name="body",.maxlength="1000",.required=1,.rows=3}};
     const FtForm f={.id="ph-message",.action="/profile/connections/message",.label="Send privately",.hidden=hidden,.nhidden=3,.inputs=msg,.ninputs=1};
     ft_form(stdout,&f);}
-  }else fputs("<p>This conversation is no longer available.</p>",stdout);
+  }else ui_text(stdout, "p", NULL, "This conversation is no longer available.");
   fputs("</section>",stdout);
  }
  if(row->shared_topics[0]){fputs("<p class=\"ph-peer-common\">Shared interests: ",stdout);html(row->shared_topics);fputs("</p>",stdout);}
@@ -95,14 +95,14 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
   ph_peer_action(facet->id,row->subject,"accept",row->my_choice_revision,"Accept introduction");
   ph_peer_action(facet->id,row->subject,"pass",row->my_choice_revision,"Pass");
  }else if(row->mine==BF_PEER_INTEREST){
-  fputs("<p class=\"ph-peer-status\">Introduction sent. Conversation is not authorized yet.</p>",stdout);
+  ui_text(stdout, "p", "ph-peer-status", "Introduction sent. Conversation is not authorized yet.");
   ph_peer_action(facet->id,row->subject,"accept",row->my_choice_revision,"Confirm mutual connection");
   ph_peer_action(facet->id,row->subject,"none",row->my_choice_revision,"Withdraw interest");
  }else if(row->mine==BF_PEER_ACCEPT){
-  fputs("<p class=\"ph-peer-status\">Your permission is recorded. Their agreement is still required.</p>",stdout);
+  ui_text(stdout, "p", "ph-peer-status", "Your permission is recorded. Their agreement is still required.");
   ph_peer_action(facet->id,row->subject,"none",row->my_choice_revision,"Withdraw permission");
  }else{
-  fputs("<p class=\"ph-peer-status\">Your introduction is private and does not create a conversation.</p>",stdout);
+  ui_text(stdout, "p", "ph-peer-status", "Your introduction is private and does not create a conversation.");
   ph_peer_action(facet->id,row->subject,"interest",row->my_choice_revision,"Introduce yourself");
   ph_peer_action(facet->id,row->subject,"pass",row->my_choice_revision,"Not now");
  }

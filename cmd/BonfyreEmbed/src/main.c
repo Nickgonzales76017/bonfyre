@@ -730,7 +730,7 @@ static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
 
     char create_vec[256];
     snprintf(create_vec, sizeof(create_vec),
-        BF_STORE_EMBED_VEC_ARTIFACTS, dims);
+        BF_STORE_EMBED_INDEX_VECTOR_DDL, dims);
     sqlite3_exec(vdb->db,
         BF_STORE_EMBED_ARTIFACTS, NULL, NULL, NULL);
     sqlite3_exec(vdb->db, create_vec, NULL, NULL, NULL);

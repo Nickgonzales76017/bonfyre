@@ -3,6 +3,8 @@
 // writes through the existing /cms/compose/page owner and reopens the snapshot.
 import {newAuthoringTree,validateAuthoringTree}
  from "../../../cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs";
+import {numericPresentationAddress}
+ from "./numeric-presentation.mjs";
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const clean=x=>Object.fromEntries(Object.entries(x||{}).filter(([k])=>!new Set(["id","namespace","created_at","updated_at","published_at"]).has(k)));
 const fail=s=>{throw new Error("native authoring: "+s);};
@@ -81,6 +83,7 @@ function authoredRow(value,stored,route){
  const old=stored?clean(stored):{};
  const baseTags=stored?tags(stored):{};
  const meta={...baseTags,authoring_v1:{version:1,parent,
+  numeric_presentation_digest:numericPresentationAddress(node.responsive),
   responsive:clone(node.responsive),
   ...(own(node.props,"editorial")?{editorial:clone(node.props.editorial)}:{}),
   ...(own(node.props,"payload")?{payload:clone(node.props.payload)}:{}),

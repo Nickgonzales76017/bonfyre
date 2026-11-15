@@ -162,7 +162,7 @@ static char *pf_kernel(const char *op,const char *input,const char *as_of){
 static void pf_href(const char *binding,const char *list_key){fputs("/apps/",stdout);html(binding);fputs("/procurement/",stdout);if(list_key&&*list_key){fputs("?list=",stdout);url_query_value(list_key);}}
 static void pf_stage_head(int number,const char *title,const char *state,const char *note){
     (void)number;fputs("<header class=\"ak-toolbar\"><div><h2>",stdout);html(title);fputs("</h2>",stdout);
-    if(note&&*note){fputs("<p>",stdout);html(note);fputs("</p>",stdout);}
+    if(note&&*note){ui_text(stdout, "p", NULL, note);}
     fputs("</div><span class=\"ak-badge\">",stdout);html(state);fputs("</span></header>",stdout);
 }
 static const char *pf_notes[][2]={
@@ -244,26 +244,26 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
             fputs("<form id=\"pf-send\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","send");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);}
         fputs("<div class=\"ak-table-wrap\"><table class=\"ak-table pf-compare\"><thead><tr><th>Item</th><th>Qty</th>",stdout);
         for(size_t i=0;i<f.nquotes;i++){fputs("<th class=\"pf-q",stdout);if(f.quotes[i]==cheapest)fputs(" is-best",stdout);fputs("\"><span>",stdout);pf_supplier(f.quotes[i]);fputs("</span>",stdout);
-            if(f.quotes[i]==cheapest)fputs("<em>Lowest</em>",stdout);fputs("</th>",stdout);}
+            if(f.quotes[i]==cheapest)ui_text(stdout, "em", NULL, "Lowest");fputs("</th>",stdout);}
         if(open)fputs("<th class=\"pf-new\"><input form=\"pf-add\" name=\"supplier\" maxlength=\"200\" placeholder=\"Supplier name\" aria-label=\"Supplier name for a new quote\"></th>",stdout);
         fputs("</tr></thead><tbody>",stdout);
         const bf_json_node_t *rl=pf_at(f.rfq->doc,f.rfq->root,"lines");int index=0;
         for(const bf_json_node_t *l=rl&&rl->type==BF_JSON_ARRAY?bf_json_child_first(f.rfq->doc,rl):NULL;l;l=bf_json_child_next(f.rfq->doc,l),index++){
             char label[1024],line_id[65];long long q=0;pf_nstr(f.rfq->doc,l,"label",label,sizeof(label));pf_nstr(f.rfq->doc,l,"line_id",line_id,sizeof(line_id));pf_int(f.rfq->doc,l,"quantity_requested",&q);
             fputs("<tr><td>",stdout);html(label);printf("</td><td>%lld</td>",q);
-            for(size_t i=0;i<f.nquotes;i++){long long u,e;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_line(f.quotes[i],line_id,&u,&e)&&e>=0){pf_money(e);if(u>=0){fputs("<small>",stdout);pf_money(u);fputs(" each</small>",stdout);}}else fputs("<small>Not quoted</small>",stdout);fputs("</td>",stdout);}
+            for(size_t i=0;i<f.nquotes;i++){long long u,e;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_line(f.quotes[i],line_id,&u,&e)&&e>=0){pf_money(e);if(u>=0){fputs("<small>",stdout);pf_money(u);fputs(" each</small>",stdout);}}else ui_text(stdout, "small", NULL, "Not quoted");fputs("</td>",stdout);}
             if(open)printf("<td class=\"pf-new\"><input form=\"pf-add\" name=\"price%d\" inputmode=\"decimal\" placeholder=\"Price each\" aria-label=\"Price each for ",index),html(label),fputs("\"></td>",stdout);
             fputs("</tr>",stdout);
         }
         const char *fees[][2]={{"freight_cents","Delivery"},{"tax_cents","Tax"},{"other_fees_cents","Other fees"}};const char *fields[]={"delivery","tax","fees"};
         for(int k=0;k<3;k++){
             fputs("<tr class=\"pf-fee\"><td colspan=\"2\">",stdout);html(fees[k][1]);fputs("</td>",stdout);
-            for(size_t i=0;i<f.nquotes;i++){long long v;fputs("<td class=\"pf-q\">",stdout);if(pf_int(f.quotes[i]->doc,f.quotes[i]->root,fees[k][0],&v))pf_money(v);else fputs("<small>Unknown</small>",stdout);fputs("</td>",stdout);}
+            for(size_t i=0;i<f.nquotes;i++){long long v;fputs("<td class=\"pf-q\">",stdout);if(pf_int(f.quotes[i]->doc,f.quotes[i]->root,fees[k][0],&v))pf_money(v);else ui_text(stdout, "small", NULL, "Unknown");fputs("</td>",stdout);}
             if(open){fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"",stdout);fputs(fields[k],stdout);fputs("\" inputmode=\"decimal\" placeholder=\"0.00\" aria-label=\"",stdout);html(fees[k][1]);fputs(" for the new quote\"></td>",stdout);}
             fputs("</tr>",stdout);
         }
         fputs("</tbody><tfoot><tr><td colspan=\"2\">Total</td>",stdout);
-        for(size_t i=0;i<f.nquotes;i++){long long t;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_total(f.quotes[i],&t))pf_money(t);else fputs("<small>Incomplete</small>",stdout);fputs("</td>",stdout);}
+        for(size_t i=0;i<f.nquotes;i++){long long t;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_total(f.quotes[i],&t))pf_money(t);else ui_text(stdout, "small", NULL, "Incomplete");fputs("</td>",stdout);}
         if(open)fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"source\" maxlength=\"400\" placeholder=\"Where it came from\" aria-label=\"Where the new quote came from\"></td>",stdout);
         fputs("</tr>",stdout);
         if(open&&f.nquotes){fputs("<tr class=\"pf-pick\"><td colspan=\"2\">Pick one</td>",stdout);
@@ -290,7 +290,7 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
         printf("<dt>Quotes</dt><dd>%zu</dd><dt>Listed</dt><dd>",f.nquotes);pf_money(list_total);fputs("</dd></dl>",stdout);
         fputs("<label class=\"pf-confirm\"><input type=\"checkbox\" form=\"pf-send\" name=\"confirm\" value=\"yes\" required> I checked the items, amounts and the quote I picked.</label>",stdout);
         fputs("<button class=\"is-primary\" type=\"submit\" form=\"pf-send\">Send for approval</button>",stdout);
-        fputs("<p class=\"pf-safe\">Sending asks for approval in this workspace. It does not order, pay, or contact the supplier.</p>",stdout);
+        ui_text(stdout, "p", "pf-safe", "Sending asks for approval in this workspace. It does not order, pay, or contact the supplier.");
     }else{
         fputs("<p class=\"pf-total\">—</p><p class=\"pf-safe\">",stdout);
         fputs(f.rfq?"Add at least one quote with every price filled in. Then pick it here and send it for approval.":f.list?"Ask for quotes on your list first.":"Save a room's purchase list to begin.",stdout);

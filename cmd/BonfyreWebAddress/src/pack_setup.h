@@ -375,7 +375,7 @@ static void psetup_directory(const PackSetupInput *in,const char *bearer,const c
         fputs("<article class=\"ak-panel ak-pack\" data-pack=\"",stdout);html(pack);fputs("\"><header><span class=\"ak-tag",stdout);fputs(application?" is-on\">Application":"\">Workflow configuration",stdout);
         fputs("</span><span class=\"ak-pack-glyph\" aria-hidden=\"true\">",stdout);page_glyph(bf_pack_icon(pack,raw_kind?raw_kind:""));fputs("</span></header><h3>",stdout);html(label?label:pack);fputs("</h3>",stdout);
         if(!application)psetup_chain(db,pack);
-        if(purpose&&*purpose){fputs("<p>",stdout);html(purpose);fputs("</p>",stdout);}
+        if(purpose&&*purpose){ui_text(stdout, "p", NULL, purpose);}
         if(application&&identity==1){PackSetupResult existing={0};if(!psetup_call("current",&choice,actor,subject,scope,&existing)&&!strcmp(existing.state,"active")){fputs("<div class=\"ak-pack-open\">",stdout);workspace_editor_links(existing.installation);fputs("</div>",stdout);}}
         fputs("<footer><small>",stdout);if(version&&*version){fputs("Release ",stdout);char v[9];snprintf(v,sizeof(v),"%s",version);html(v);}else fputs("No stable release",stdout);
         fputs("</small><a class=\"ak-btn",stdout);fputs(application?" is-primary":"",stdout);fputs("\" data-setup-review href=\"",stdout);psetup_link(&choice,0,NULL);
@@ -435,7 +435,7 @@ static int serve_pack_setup(const BfRequest *r) {
     if(!identity){fputs("<p>Sign in to add this to your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
     else{
         char a[160],sb[160];const char *sc;int canwrite=psetup_context(bearer,auth_db,in.context,1,a,sizeof(a),sb,sizeof(sb),&sc)==1;
-        if(!canwrite)fputs("<p>You can look, but only an administrator of this workspace can change it.</p>",stdout);
+        if(!canwrite)ui_text(stdout, "p", NULL, "You can look, but only an administrator of this workspace can change it.");
         else{
             fputs("<div class=\"ak-actions ak-pack-ops\">",stdout);
             if(result==0&&(!installed||!strcmp(state,"removed")||strcmp(plan.digest,plan.pinned)))psetup_form("install",installed?"Update to this version":"Add to this workspace",&in,&plan,plan.digest);

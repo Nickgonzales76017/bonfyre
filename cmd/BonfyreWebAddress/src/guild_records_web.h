@@ -241,7 +241,7 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
     }
     sqlite3_finalize(s);
     if (shown) fputs("</div>", stdout);
-    else fputs("<p class=\"ak-empty\">No apprentice has logged shop hours in this guild yet.</p>", stdout);
+    else ui_text(stdout, "p", "ak-empty", "No apprentice has logged shop hours in this guild yet.");
     fputs("</section>", stdout);
 
     fputs("<section class=\"ak-sec\" id=\"queue\"><header><div><span class=\"ak-kicker\">Steward's desk</span><h2>Shop hour and bench sign-off queue</h2></div><p>Each item waits for a steward who is not the apprentice. Confirming is a written statement inside this guild only.</p></header><ul class=\"ak-rows\">", stdout);
@@ -263,7 +263,7 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
                 fputs("<span class=\"ak-go\">", stdout); gr_button(id, "Confirm hours", act, f, 3);
                 f[0].value = "hours-decline"; snprintf(id, sizeof(id), "gr-hd-%d", shown);
                 gr_button(id, "Decline", act, f, 3); fputs("</span>", stdout);
-            } else fputs("<span class=\"ak-go\">Awaiting a steward</span>", stdout);
+            } else ui_text(stdout, "span", "ak-go", "Awaiting a steward");
             fputs("</li>", stdout);
         }
     }
@@ -281,7 +281,7 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">Nothing is waiting for a steward.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "Nothing is waiting for a steward.");
     fputs("</section>", stdout);
 
     fputs("<section class=\"ak-sec\" id=\"syllabus\"><header><div><span class=\"ak-kicker\">Curriculum</span><h2>Living syllabus and guild benchmarks</h2></div><p>The stages this guild's steward has written. Each names the shop hours the guild asks for before its bench proof.</p></header>", stdout);
@@ -299,7 +299,7 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
             if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
             fputs("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">Level ", stdout);
             html((const char *)sqlite3_column_text(s, 1)); fputs("</span>", stdout);
-            if (signed_off) fputs("<span class=\"ak-tag is-on\">Signed off</span>", stdout);
+            if (signed_off) ui_text(stdout, "span", "ak-tag is-on", "Signed off");
             fputs("</header><h3>", stdout); html((const char *)sqlite3_column_text(s, 2));
             fputs("</h3><p>", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</p>", stdout);
             if (need > 0) printf("<p><small>Minimum %.0f shop hours</small></p>", need);
@@ -309,7 +309,7 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
     }
     sqlite3_finalize(s);
     if (shown) fputs("</div>", stdout);
-    else fputs("<p class=\"ak-empty\">The steward has not written a curriculum module yet.</p>", stdout);
+    else ui_text(stdout, "p", "ak-empty", "The steward has not written a curriculum module yet.");
     fputs("</section>", stdout);
 
     if (steward) {
@@ -375,7 +375,7 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">You have not linked any bench work yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "You have not linked any bench work yet.");
     if (nmod) {
         ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "proof-submit", nonce);
@@ -385,14 +385,14 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             {"Note for the steward", "text", "text", "", "", 1, "4000", 1, ""},
         };
         gr_form("gr-proof", "Submit bench proof", act, f, 2, in, 3, "Module", "module", opt, nmod);
-    } else fputs("<p class=\"ak-empty\">Bench proofs open once the steward writes a curriculum module.</p>", stdout);
+    } else ui_text(stdout, "p", "ak-empty", "Bench proofs open once the steward writes a curriculum module.");
     fputs("</section>", stdout);
 
     fputs("<aside class=\"ak-panel is-raised\"><span class=\"ak-kicker\">Steward's latest note</span>", stdout);
     if (*note) {
         fputs("<p class=\"ak-lede\">“", stdout); html(note); fputs("”</p><p><small>— ", stdout);
         gr_person(note_by, actor, c->owner); fputs(", ", stdout); html(note_at); fputs("</small></p>", stdout);
-    } else fputs("<p class=\"ak-empty\">When a steward signs off or returns your work, their words appear here.</p>", stdout);
+    } else ui_text(stdout, "p", "ak-empty", "When a steward signs off or returns your work, their words appear here.");
     fputs("</aside></div>", stdout);
 
     fputs("<section class=\"ak-sec\" id=\"hours\"><header><div><span class=\"ak-kicker\">Hours of practice</span><h2>My shop hours</h2></div></header><div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Day</th><th>Activity</th><th>Module</th><th>Hours</th><th>State</th></tr></thead><tbody>", stdout);
@@ -406,14 +406,14 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             html((const char *)sqlite3_column_text(s, 1)); fputs("</td><td>", stdout); html((const char *)sqlite3_column_text(s, 2));
             fputs("</td><td>", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</td><td>", stdout);
             if (!strcmp(state, "confirmed")) { fputs("<span class=\"ak-tag is-on\">Confirmed</span> ", stdout); gr_person(by, actor, c->owner); }
-            else if (!strcmp(state, "declined")) fputs("<span class=\"ak-tag\">Declined</span>", stdout);
-            else fputs("<span class=\"ak-tag\">Awaiting steward</span>", stdout);
+            else if (!strcmp(state, "declined")) ui_text(stdout, "span", "ak-tag", "Declined");
+            else ui_text(stdout, "span", "ak-tag", "Awaiting steward");
             fputs("</td></tr>", stdout);
         }
     }
     sqlite3_finalize(s);
     fputs("</tbody></table></div>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No hours logged yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No hours logged yet.");
     if (nmod) {
         char today[11]; gr_today(today); ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "hours-log", nonce);
@@ -449,7 +449,7 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else fputs("<p class=\"ak-empty\">No modules yet.</p>", stdout);
+    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "No modules yet.");
     fputs("</section>", stdout);
     ak_app_close();
 }
@@ -491,7 +491,7 @@ static void gr_proof(sqlite3 *db, const CjrCommunity *c, const char *actor, cons
         gr_form("gr-decide", "Record my decision", act, f, 3, in, 1, "Decision", "kind", o, 2);
         fputs("</div>", stdout);
     } else if (!strcmp(state, "submitted")) {
-        fputs("<p class=\"ak-empty\">Waiting for a steward who is not the apprentice to write a sign-off.</p>", stdout);
+        ui_text(stdout, "p", "ak-empty", "Waiting for a steward who is not the apprentice to write a sign-off.");
     }
     fputs("</section>", stdout);
 #undef GRC
@@ -526,7 +526,7 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
                 {"What you saw them do", "text", "text", "", "", 1, "4000", 1, ""},
             };
             gr_form("gr-attest", "Record attestation", act, f, 2, in, 2, "Member", "member", opt, n);
-        } else fputs("<p class=\"ak-empty\">This guild has no other active members to attest yet.</p>", stdout);
+        } else ui_text(stdout, "p", "ak-empty", "This guild has no other active members to attest yet.");
         fputs("</section>", stdout);
     }
     fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Register</span><h2>Attested skills</h2></div></header><ul class=\"ak-rows\">", stdout);
@@ -554,7 +554,7 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No skill has been attested in this guild yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No skill has been attested in this guild yet.");
     fputs("</section>", stdout);
     ak_app_close();
 }
@@ -570,7 +570,7 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
     fputs("<article class=\"ak-panel\" id=\"offer-", stdout); html(key); fputs("\"><header><span class=\"ak-tag is-on\">", stdout);
     fputs(gr_kind_label(kind), stdout); fputs("</span><span class=\"ak-tag\">", stdout);
     fputs(!strcmp(state, "open") ? "Open" : "Closed", stdout); fputs("</span></header>", stdout);
-    if (show_guild) { fputs("<span class=\"ak-kicker\">", stdout); html(guild_title); fputs("</span>", stdout); }
+    if (show_guild) { ui_text(stdout, "span", "ak-kicker", guild_title); }
     fputs("<h3>", stdout); html((const char *)sqlite3_column_text(s, 2)); fputs("</h3><p>", stdout);
     html((const char *)sqlite3_column_text(s, 3)); fputs("</p><dl class=\"ak-spec\">", stdout);
     if (*(const char *)sqlite3_column_text(s, 4)) { fputs("<dt>Stated terms</dt><dd class=\"is-on\">", stdout); html((const char *)sqlite3_column_text(s, 4)); fputs("</dd>", stdout); }
@@ -616,7 +616,7 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
         }
         sqlite3_finalize(a);
         fputs("</ul>", stdout);
-        if (!n) fputs("<p class=\"ak-empty\">No applications yet.</p>", stdout);
+        if (!n) ui_text(stdout, "p", "ak-empty", "No applications yet.");
         if (!strcmp(state, "open")) {
             ph_nonce(nonce);
             FtField f[3]; gr_hidden_base(f, "offer-close", nonce); f[2].name = "target"; f[2].value = key;
@@ -650,7 +650,7 @@ static void gr_offers(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         if (shown) { fputs("</div></section>", stdout); any = 1; }
         sqlite3_finalize(s);
     }
-    if (!any) fputs("<p class=\"ak-empty\">This guild has not posted an offer yet.</p>", stdout);
+    if (!any) ui_text(stdout, "p", "ak-empty", "This guild has not posted an offer yet.");
     if (steward) {
         ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "offer-post", nonce);
@@ -687,7 +687,7 @@ static void gr_openings(sqlite3 *db, const char *actor) {
     }
     sqlite3_finalize(s);
     if (shown) fputs("</div>", stdout);
-    else fputs("<p class=\"ak-empty\">No guild has an open apprenticeship or grant right now.</p>", stdout);
+    else ui_text(stdout, "p", "ak-empty", "No guild has an open apprenticeship or grant right now.");
     fputs("</section><section class=\"ak-band\"><div><span class=\"ak-kicker\">Open a bench</span><h2>Offer an apprenticeship</h2><p>Start a guild, write its curriculum, and post an opening with your terms.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/guild/new\">Start a guild</a></div></section>", stdout);
     ak_app_close();
 }
@@ -709,7 +709,7 @@ static void gr_registry(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
             fputs("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">", stdout); html((const char *)sqlite3_column_text(s, 3));
             fputs("</span>", stdout);
-            if (*(const char *)sqlite3_column_text(s, 6)) { fputs("<span class=\"ak-tag is-on\">", stdout); html((const char *)sqlite3_column_text(s, 6)); fputs("</span>", stdout); }
+            if (*(const char *)sqlite3_column_text(s, 6)) { ui_text(stdout, "span", "ak-tag is-on", (const char *)sqlite3_column_text(s, 6)); }
             fputs("</header><h3>", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("</h3><p>", stdout);
             html((const char *)sqlite3_column_text(s, 1)); fputs("</p><dl class=\"ak-spec\">", stdout);
             if (*(const char *)sqlite3_column_text(s, 4)) { fputs("<dt>Where</dt><dd>", stdout); html((const char *)sqlite3_column_text(s, 4)); fputs("</dd>", stdout); }
@@ -719,7 +719,7 @@ static void gr_registry(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else fputs("<p class=\"ak-empty\">No observation has been recorded here yet.</p>", stdout);
+    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "No observation has been recorded here yet.");
     fputs("</section>", stdout);
     if (member) {
         char today[11]; gr_today(today); ph_nonce(nonce);

@@ -85,8 +85,7 @@ static void site_program_emit_navigation(sqlite3 *db, const char *site) {
         const BfNativeSurfaceProgram *program = native_surface_program(grammar);
         if (!program) continue;
         if (!count++) fputs("<nav class=\"site-program-nav\" aria-label=\"Site navigation\">", stdout);
-        fputs("<a href=\"", stdout); html(program->route); fputs("\">", stdout);
-        html(grammar); fputs("</a>", stdout);
+        ui_link(stdout, program->route, NULL, grammar);
     }
     if (count) fputs("</nav>", stdout);
     sqlite3_finalize(st);
@@ -416,14 +415,14 @@ static void site_surface_link(const char *href, const char *label) {
 static void site_surface_emit_header(const SiteMaterialStream *stream) {
     const SiteMaterialItem *item = &stream->item[0];
     fputs("<header>", stdout);
-    if (stream->title[0]) { fputs("<h2>", stdout); html(stream->title); fputs("</h2>", stdout); }
-    else if (item->title[0]) { fputs("<h2>", stdout); html(item->title); fputs("</h2>", stdout); }
-    if (stream->description[0]) { fputs("<p>", stdout); html(stream->description); fputs("</p>", stdout); }
+    if (stream->title[0]) { ui_text(stdout, "h2", NULL, stream->title); }
+    else if (item->title[0]) { ui_text(stdout, "h2", NULL, item->title); }
+    if (stream->description[0]) { ui_text(stdout, "p", NULL, stream->description); }
     /* On an operator's own site the header is the site speaking; the first
      * post's author and instant are that post's, and stay with it. */
-    else if (!site_program_own_render && item->byline[0]) { fputs("<p>", stdout); html(item->byline); fputs("</p>", stdout); }
-    if (stream->metric[0]) { fputs("<small>", stdout); html(stream->metric); fputs("</small>", stdout); }
-    else if (!site_program_own_render && item->when[0]) { fputs("<time>", stdout); html(item->when); fputs("</time>", stdout); }
+    else if (!site_program_own_render && item->byline[0]) { ui_text(stdout, "p", NULL, item->byline); }
+    if (stream->metric[0]) { ui_text(stdout, "small", NULL, stream->metric); }
+    else if (!site_program_own_render && item->when[0]) { ui_text(stdout, "time", NULL, item->when); }
     fputs("</header>", stdout);
 }
 
@@ -461,7 +460,7 @@ static void site_surface_emit_thread(const SiteMaterialStream *stream) {
         } else {
         fputs("</span><time>", stdout); html(stream->item[i].when); fputs("</time></header>", stdout);
         }
-        if (stream->item[i].title[0]) { fputs("<h3>", stdout); html(stream->item[i].title); fputs("</h3>", stdout); }
+        if (stream->item[i].title[0]) { ui_text(stdout, "h3", NULL, stream->item[i].title); }
         fputs("<p>", stdout); html(stream->item[i].body); fputs("</p></article>", stdout);
         if (stream->item[i].reaction_count) { fputs("<small class=\"community-reactions\">", stdout); printf("%d accepted reactions", stream->item[i].reaction_count); fputs("</small>", stdout); }
     }
@@ -479,7 +478,7 @@ static void site_surface_emit_board(const SiteMaterialStream *stream) {
         fputs("<small>", stdout);
         html(stream->item[i].byline); fputs("</small><strong>", stdout); html(stream->item[i].title);
         fputs("</strong>", stdout);
-        if (stream->item[i].body[0]) { fputs("<span>", stdout); html(stream->item[i].body); fputs("</span>", stdout); }
+        if (stream->item[i].body[0]) { ui_text(stdout, "span", NULL, stream->item[i].body); }
         fputs(linked ? "</a></li>" : "</div></li>", stdout);
     }
     fputs("</ol>", stdout);
@@ -487,7 +486,7 @@ static void site_surface_emit_board(const SiteMaterialStream *stream) {
 
 static void site_surface_emit_media(const BfSiteApplicationLowerer *lowerer, const SiteMaterialStream *stream) {
     const SiteMaterialItem *item = &stream->item[0];
-    if (!listen_safe_asset(item->asset)) { fputs("<p class=\"site-program-empty\">No safe public media representation is published for this material.</p>", stdout); return; }
+    if (!listen_safe_asset(item->asset)) { ui_text(stdout, "p", "site-program-empty", "No safe public media representation is published for this material."); return; }
     if (lowerer->layout == BF_SITE_LAYOUT_AUDIO) {
         fputs("<audio controls preload=\"metadata\" src=\"", stdout); html(item->asset); fputs("\"></audio>", stdout);
     } else {
@@ -506,7 +505,7 @@ static void site_surface_render_stream(const BfSiteApplicationLowerer *lowerer, 
     size_t i;
     /* A part with nothing in it still says so in the document; the sheet folds
      * the repeats away so a reader meets the statement once, not per part. */
-    if (!lowerer || !stream || !stream->count) { fputs("<p class=\"site-program-empty\">", stdout); html(lowerer ? lowerer->empty_character : "No native lowerer has been published for this application."); fputs("</p>", stdout); return; }
+    if (!lowerer || !stream || !stream->count) { ui_text(stdout, "p", "site-program-empty", lowerer ? lowerer->empty_character : "No native lowerer has been published for this application."); return; }
     fputs("<article class=\"application-data\">", stdout);
     for (i = 0; i < lowerer->op_count; i++) switch (lowerer->ops[i]) {
     case BF_SITE_OP_HEADER: site_surface_emit_header(stream); break;
@@ -1000,7 +999,7 @@ static const BfWorldMaterialRenderer *world_material_renderer(const char *charac
 static void world_material_open(const BfWorldMaterialRenderer *renderer, const char *says, const char *source) {
     fputs("<section class=\"world-material\"><h2>", stdout);
     html(says && *says ? says : source); fputs("</h2>", stdout);
-    if (renderer->item_variant == BF_WORLD_MATERIAL_FLYER) fputs("<div class=\"rule\"></div>", stdout);
+    if (renderer->item_variant == BF_WORLD_MATERIAL_FLYER) ui_text(stdout, "div", "rule", "");
     fputs("<div class=\"", stdout); html(renderer->container_class); fputs("\">", stdout);
 }
 
@@ -1026,7 +1025,7 @@ static void world_material_item(const BfWorldMaterialRenderer *renderer, const c
         fputs("<a class=\"r\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); fputs("</b><span>", stdout); html(when); fputs("</span></a>", stdout);
         break;
     case BF_WORLD_MATERIAL_ARTICLE:
-        fputs("<a class=\"a\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); fputs("</b><span class=\"au\">", stdout); html(source); fputs("</span>", stdout); if (meta && *meta) { fputs("<span class=\"id\">", stdout); html(meta); fputs("</span>", stdout); } fputs("</a>", stdout);
+        fputs("<a class=\"a\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); fputs("</b><span class=\"au\">", stdout); html(source); fputs("</span>", stdout); if (meta && *meta) { ui_text(stdout, "span", "id", meta); } fputs("</a>", stdout);
         break;
     case BF_WORLD_MATERIAL_ROW:
         fputs("<a class=\"q\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"mag\">&bull;</div><div class=\"place\">", stdout); html(title); fputs("</div><div class=\"when\">", stdout); html(when); fputs("</div></a>", stdout);

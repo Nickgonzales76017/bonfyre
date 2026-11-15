@@ -270,7 +270,7 @@ static void front_head(const PageDocument *doc, const FrontPool *pool, const cha
     fputs(page_front_brand_opened ? "<header class=\"fd-head\"><div class=\"fd-head-words\"><h2>"
                                   : "<header class=\"fd-head\"><div class=\"fd-head-words\"><h1>", stdout);
     html(doc->title); fputs(page_front_brand_opened ? "</h2>" : "</h1>", stdout);
-    if (doc->lede && *doc->lede) { fputs("<p class=\"fd-lede\">", stdout); html(doc->lede); fputs("</p>", stdout); }
+    if (doc->lede && *doc->lede) { ui_text(stdout, "p", "fd-lede", doc->lede); }
     fputs("</div><form class=\"fd-find\" action=\"/search\" method=\"get\" role=\"search\"><label>", stdout);
     page_glyph("search");
     fputs("<span class=\"fd-sr\">Search</span><input type=\"search\" name=\"q\" placeholder=\"Search stories, sources, makers\"></label></form>"
@@ -278,10 +278,10 @@ static void front_head(const PageDocument *doc, const FrontPool *pool, const cha
     html(doc->route); fputs("\" aria-current=\"page\">All</a>", stdout);
     for (i = 0; i < pool->beats; i++) {
         if (!pool->beat[i] || !strcmp(pool->beat[i]->route, doc->route)) continue;
-        fputs("<a href=\"", stdout); html(pool->beat[i]->route); fputs("\">", stdout); html(pool->beat[i]->title); fputs("</a>", stdout);
+        ui_link(stdout, pool->beat[i]->route, NULL, pool->beat[i]->title);
     }
     for (i = 0; i < kinds_n; i++) {
-        fputs("<a href=\"#", stdout); html(kinds_present[i][0]); fputs("\">", stdout); html(kinds_present[i][1]); fputs("</a>", stdout);
+        ui_link_path(stdout, (const char *const[]){"#", kinds_present[i][0]}, 2, kinds_present[i][1]);
     }
     fputs("</nav></header>", stdout);
 }
@@ -302,7 +302,7 @@ static void front_lead(const FrontPool *pool, FrontPick *lead) {
     fputs("<div id=\"fd-lead-text\"><h2>", stdout);
     close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
     fputs("</h2>", stdout);
-    if (item->body[0] && strcmp(item->body, item->title)) { fputs("<p class=\"fd-dek\">", stdout); html(item->body); fputs("</p>", stdout); }
+    if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
     fputs("</div><p class=\"fd-by\">", stdout);
     if (item->by[0]) { html(item->by); }
     if (item->note[0] && strcmp(item->note, item->by)) { fputs(" &middot; ", stdout); html(item->note); }
@@ -323,10 +323,10 @@ static void front_card(const FrontPool *pool, FrontPick *p, int n) {
     snprintf(id, sizeof(id), "fd-t%d", n);
     fputs("<article class=\"fd-card\"><p class=\"fd-card-top\"><span class=\"fd-beat\">", stdout);
     html(front_beat_title(pool, p)); fputs("</span><span class=\"fd-pub\">", stdout); html(front_publisher(item)); fputs("</span></p>", stdout);
-    if (item->by[0] && strcmp(item->by, front_publisher(item))) { fputs("<p class=\"fd-card-by\">", stdout); html(item->by); fputs("</p>", stdout); }
+    if (item->by[0] && strcmp(item->by, front_publisher(item))) { ui_text(stdout, "p", "fd-card-by", item->by); }
     fputs("<div class=\"fd-card-text\" id=\"", stdout); html(id); fputs("\"><h3>", stdout);
     close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); fputs("</h3>", stdout);
-    if (item->body[0] && strcmp(item->body, item->title)) { fputs("<p class=\"fd-dek\">", stdout); html(item->body); fputs("</p>", stdout); }
+    if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
     fputs("</div><footer>", stdout);
     front_listen(item, id, 0, "fd-act");
     fputs("<span class=\"fd-when\">", stdout); front_time(item->at, pool->now); fputs("</span>", stdout);
@@ -412,7 +412,7 @@ static int front_reading(FrontPool *pool, const char *heading, int cap) {
         fputs("<p class=\"fd-card-top\"><span class=\"fd-beat\">", stdout); html(front_publisher(item));
         fputs("</span><span>", stdout); front_time(item->at, pool->now); fputs("</span></p><div class=\"fd-card-text\" id=\"", stdout); html(id); fputs("\"><h3>", stdout);
         close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); fputs("</h3>", stdout);
-        if (item->body[0] && strcmp(item->body, item->title)) { fputs("<p class=\"fd-dek\">", stdout); html(item->body); fputs("</p>", stdout); }
+        if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
         fputs("</div><footer>", stdout); front_listen(item, id, 0, "fd-act"); front_open(item, NULL); fputs("</footer></article>", stdout);
         front_use(picks[i]);
     }

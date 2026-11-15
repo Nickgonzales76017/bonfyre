@@ -34,7 +34,7 @@ static void ch_body(const char *content) {
         if (!n) { if (open) { fputs("</p>", stdout); open = 0; } }
         else if (!strncmp(line, "## ", 3) || !strncmp(line, "# ", 2)) {
             if (open) { fputs("</p>", stdout); open = 0; }
-            fputs("<h2>", stdout); html(line + (line[1] == '#' ? 3 : 2)); fputs("</h2>", stdout);
+            ui_text(stdout, "h2", NULL, line + (line[1] == '#' ? 3 : 2));
         } else {
             if (!open) { fputs("<p>", stdout); open = 1; } else fputs("<br>", stdout);
             html(line);
@@ -99,8 +99,8 @@ static void ch_index(sqlite3 *db, const char *actor, const char *community, cons
         }
     }
     sqlite3_finalize(s);
-    if (shown) { fputs("</ul>", stdout); if (shown == 1) fputs("<p class=\"ak-empty\">No other charters here yet.</p>", stdout); fputs("</section>", stdout); }
-    else fputs("<p class=\"ak-empty\">No community has written a charter here yet.</p>", stdout);
+    if (shown) { fputs("</ul>", stdout); if (shown == 1) ui_text(stdout, "p", "ak-empty", "No other charters here yet."); fputs("</section>", stdout); }
+    else ui_text(stdout, "p", "ak-empty", "No community has written a charter here yet.");
 
     fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Lineage</span><h2>Recent revisions</h2></div></header><ul class=\"ak-rows\">", stdout);
     shown = 0;
@@ -117,7 +117,7 @@ static void ch_index(sqlite3 *db, const char *actor, const char *community, cons
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No revisions yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No revisions yet.");
     fputs("</section>", stdout);
 
     CjrCommunity c;

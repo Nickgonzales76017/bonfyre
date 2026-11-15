@@ -213,7 +213,7 @@ static void acn_devices_page(const AcnViewer *v, const char *added) {
         fputs("</ul>", stdout);
     }
     sqlite3_finalize(st);
-    if (!shown) fputs("<p class=\"ak-empty\">No devices yet. Enroll the first one above.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No devices yet. Enroll the first one above.");
     fputs("</div></section>", stdout);
     if (db) sqlite3_close(db);
     ak_app_close();
@@ -280,7 +280,7 @@ static void acn_export_manifest(sqlite3 *db, const AcnViewer *v, int downloadabl
     int n = (sites && v->person[0] && db) ? ph_sites(db, v->person, sites) : 0;
     fputs("<section class=\"ak-panel\"><header><h2>What the new device takes</h2><span class=\"ak-tag\">", stdout);
     printf("%d %s</span></header>", n, n == 1 ? "address" : "addresses");
-    if (!n) fputs("<p class=\"ak-empty\">This account has no site address yet, so there is no export to take. Your account itself is reached by signing in; nothing about it needs copying.</p>", stdout);
+    if (!n) ui_text(stdout, "p", "ak-empty", "This account has no site address yet, so there is no export to take. Your account itself is reached by signing in; nothing about it needs copying.");
     else {
         fputs("<ul class=\"ak-rows\">", stdout);
         for (int i = 0; i < n; i++) {
@@ -291,7 +291,7 @@ static void acn_export_manifest(sqlite3 *db, const AcnViewer *v, int downloadabl
             if (downloadable) {
                 fputs("<a class=\"ak-btn is-primary\" download href=\"/cms/compose/export?site=", stdout);
                 url_query_value(sites[i].id); fputs("\">Download to this device</a>", stdout);
-            } else fputs("<span class=\"ak-go\">Ready</span>", stdout);
+            } else ui_text(stdout, "span", "ak-go", "Ready");
             fputs("</li>", stdout);
         }
         fputs("</ul>", stdout);
@@ -355,7 +355,7 @@ static void acn_move_page(const AcnViewer *v, const char *fresh_code, const char
         }
     }
     sqlite3_finalize(st);
-    if (!shown) fputs("<div>No codes offered yet.</div>", stdout);
+    if (!shown) ui_text(stdout, "div", NULL, "No codes offered yet.");
     fputs("</div></section><p class=\"ak-empty\">Aurekai does not send anything to the other device. The new device asks for its own copy after you enter the code there, and only this account can use the code.</p>", stdout);
     if (db) sqlite3_close(db);
     ak_app_close();
@@ -511,7 +511,7 @@ static void acn_bluesky_page(const AcnViewer *v, const char *bearer, const char 
         }
     }
     sqlite3_finalize(st);
-    if (!shown) fputs("<div>No sync requests yet.</div>", stdout);
+    if (!shown) ui_text(stdout, "div", NULL, "No sync requests yet.");
     fputs("</div></section>", stdout);
     if (db) sqlite3_close(db);
     ak_app_close();
@@ -569,7 +569,7 @@ static void acn_agents_page(const AcnViewer *v) {
     }
     sqlite3_finalize(st); st = NULL;
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No agent named yet. Name one beside a feed.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No agent named yet. Name one beside a feed.");
     fputs("<p class=\"ak-empty\">A name is how you refer to a client. It does not identify who runs it.</p></section>", stdout);
     /* 02 Feed access matrix */
     fputs("<section><p class=\"ak-kicker\" style=\"margin-bottom:12px\">Feed access</p>", stdout);
@@ -591,7 +591,7 @@ static void acn_agents_page(const AcnViewer *v) {
                 fputs("</ul>", stdout);
             }
             sqlite3_finalize(pr);
-            if (!rules_here) fputs("<p class=\"ak-empty\">No agent has a rule for this feed.</p>", stdout);
+            if (!rules_here) ui_text(stdout, "p", "ak-empty", "No agent has a rule for this feed.");
             static const FtOption acc[] = {{"read", "Full read", 0}, {"summary", "Summaries only", 1}, {"none", "No access", 0}};
             BfAuthoringTree *t = calloc(1, sizeof(*t));
             FtField hidden[] = {{"feed", feed}};

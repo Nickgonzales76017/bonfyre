@@ -67,7 +67,7 @@ static int ac_views(const char *relative,const char *query,const char *id,const 
         psetup_start(200,"Continue this work");size_t nav_size=0;unsigned char *nav=ac_navigation(id,context,pack,&nav_size);if(nav){fwrite(nav,1,nav_size,stdout);free(nav);}
         fputs("<h1>",stdout);html(*title?title:"Continue this work");printf("</h1><p>Saved version %lld. These views open the same record in this destination. Unsaved edits stay in your original tab.</p><div class=\"pack-cards\">",row->revision);
         for(size_t n=0;n<count;n++){AcAlternative *a=&alternatives[n];fputs("<article class=\"pack-panel\"><h2>",stdout);html(a->label);fputs("</h2><p>",stdout);html(a->view);fputs("</p><a data-compatible-view href=\"",stdout);html(a->url);fputs("\">Open this view</a></article>",stdout);}
-        fputs("</div>",stdout);if(!count)fputs("<p>No active editor currently declares a compatible view. The saved record has not changed.</p>",stdout);psetup_end();
+        fputs("</div>",stdout);if(!count)ui_text(stdout, "p", NULL, "No active editor currently declares a compatible view. The saved record has not changed.");psetup_end();
     }
     free(alternatives);free(body);return 1;
  unavailable:free(alternatives);free(body);aw_error(503,"The compatible views could not be resolved completely. Nothing was changed.\n");return 1;

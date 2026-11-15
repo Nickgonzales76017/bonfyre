@@ -6,16 +6,19 @@ const viewportBands=[["desktop","(min-width:1025px)"],
  ["phone","(max-width:760px)"]];
 const viewportStyles=viewportBands.map(([device,media])=>{
  const selector=layout=>`.authored-site [data-${device}-layout="${layout}"]`;
+ const gap=`var(--ak-gap-${device},20px)`;
  const fixed=[
-  `${selector("grid")},${selector("columns")},${selector("split")},${selector("feature")}{display:grid;grid-template-columns:repeat(var(--ak-layout-columns,2),minmax(0,1fr));gap:20px;}`,
+  `${selector("grid")},${selector("columns")},${selector("split")},${selector("feature")}{display:grid;grid-template-columns:repeat(var(--ak-layout-columns,2),minmax(0,1fr));gap:${gap};}`,
   `${selector("split")}{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}`,
   `${selector("feature")}{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}`,
-  `${selector("stack")}{display:flex;flex-direction:column;gap:20px}`,
-  `${selector("masonry")}{display:block;columns:var(--ak-layout-columns,2);column-gap:20px}`,
-  `${selector("masonry")}>*{break-inside:avoid;margin-bottom:20px}`,
-  `${selector("carousel")}{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,80%);overflow-x:auto;scroll-snap-type:x mandatory;gap:20px}`,
+  `${selector("stack")}{display:flex;flex-direction:column;gap:${gap}}`,
+  `${selector("stack")}>*+*{margin-top:0}`,
+  `${selector("masonry")}{display:block;columns:var(--ak-layout-columns,2);column-gap:${gap}}`,
+  `${selector("masonry")}>*{break-inside:avoid;margin-bottom:${gap}}`,
+  `${selector("carousel")}{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,80%);overflow-x:auto;scroll-snap-type:x mandatory;gap:${gap}}`,
   `${selector("carousel")}>*{scroll-snap-align:start}`,
-  `${selector("full-bleed")}{width:100%;max-width:none;margin-inline:0}`
+  `${selector("full-bleed")}{width:100%;max-width:none;margin-inline:0}`,
+  `.authored-site [data-${device}-gap]{gap:${gap}}`
  ];
  const columns=Array.from({length:12},(_,i)=>`.authored-site [data-${device}-columns="${i+1}"]{--ak-layout-columns:${i+1}}`);
  return `@media ${media}{${columns.join("\n")}\n${fixed.join("\n")}}`;

@@ -18,12 +18,19 @@ store_schemas: "cmd/BonfyreVec": {
 				{kind: "table", name: "artifacts", sql: "CREATE TABLE IF NOT EXISTS artifacts(  id TEXT PRIMARY KEY,  source TEXT,  type TEXT,  text TEXT,  metadata TEXT,  created_at TEXT)"},
 			]
 		},
-		{
-			macro:  "BF_STORE_VEC_VEC_ARTIFACTS"
-			source: "cmd/BonfyreVec/src/main.c"
-			statements: [
-				{kind: "virtual_table", name: "vec_artifacts", sql: "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0(  id TEXT PRIMARY KEY,  embedding float[%d])"},
-			]
-		},
 	]
+}
+
+// The vector index: a sqlite-vec vec0 table whose width the owner learns at
+// open. Declared as a vector store; the owner formats _VECTOR_DDL with it.
+store_schemas: "cmd/BonfyreVec": stores: vec_artifacts: {
+	kind:  "vector"
+	macro: "VEC_INDEX"
+	vector: {
+		table:        "vec_artifacts"
+		dimension:    "runtime"
+		metric:       "l2"
+		quantization: "float32"
+		model:        "caller-supplied vectors; bonfyre-vec init --dims N (default 384)"
+	}
 }

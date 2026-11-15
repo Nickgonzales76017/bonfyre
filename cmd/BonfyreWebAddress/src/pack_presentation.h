@@ -28,7 +28,7 @@ static void pack_presentation_open(sqlite3 *db,const char *pack,const char *labe
     sqlite3_finalize(st);
     if(!count){fputs("<div class=\"pack-art-type\" aria-hidden=\"true\"><span>AUREKAI</span><strong>",stdout);html(label);fputs("</strong></div>",stdout);}
     fputs("<span class=\"pack-kind\">",stdout);html(kind);fputs("</span></div><div class=\"pack-copy\"><span class=\"pack-glyph\" aria-hidden=\"true\">",stdout);page_glyph(glyph);fputs("</span><h3>",stdout);html(label);fputs("</h3>",stdout);
-    if(purpose&&*purpose){fputs("<p class=\"pack-purpose\">",stdout);html(purpose);fputs("</p>",stdout);}
+    if(purpose&&*purpose){ui_text(stdout, "p", "pack-purpose", purpose);}
     fputs("<div class=\"pack-card-actions\">",stdout);
 }
 static void pack_presentation_close(void){fputs("</div></div></article>",stdout);}

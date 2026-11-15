@@ -490,7 +490,7 @@ static void depth_fill_channels(const char *source, const char *publisher, const
 
 /* The piece's own lead, as the item's body. */
 static void depth_emit_said(const ItemDepth *d) {
-    for (int k = 0; k < d->paras && d->para[k].section < 0 && k < 2; k++) { fputs("<p class=\"thing-body\">", stdout); html(d->para[k].text); fputs("</p>", stdout); }
+    for (int k = 0; k < d->paras && d->para[k].section < 0 && k < 2; k++) { ui_text(stdout, "p", "thing-body", d->para[k].text); }
 }
 
 /* A publisher's relations across its recent pieces: every organization those

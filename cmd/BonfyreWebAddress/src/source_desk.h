@@ -105,7 +105,7 @@ static void sd_card(sqlite3 *items,sqlite3 *frontier,const char *route,const cha
  sqlite3_stmt *s=NULL;
  fputs("<article class=\"sx-card\"><header><h3><a href=\"",stdout);html(route);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);
  sd_name(frontier,host);fputs("</a></h3>",stdout);
- if(*host){fputs("<span class=\"sx-host\">",stdout);html(host);fputs("</span>",stdout);}
+ if(*host){ui_text(stdout, "span", "sx-host", host);}
  fputs("<span class=\"sx-badge\">",stdout);sd_label(family);fputs("</span></header><p class=\"sx-meta\"><b>Kept</b> · ",stdout);
  html(kind&&*kind?kind:"item");fputs(" · ",stdout);sd_num(n);fputs(n==1?" piece":" pieces",stdout);fputs("</p>",stdout);
  if(sqlite3_prepare_v2(items,"SELECT by FROM item WHERE source=?1 AND by<>'' AND by<>publisher GROUP BY by ORDER BY COUNT(*) DESC LIMIT 2",-1,&s,NULL)==SQLITE_OK){
@@ -216,7 +216,7 @@ static void sd_reading(sqlite3 *items,sqlite3 *frontier,const char *source,const
  fputs("<h2>",stdout);html(title);fputs("</h2><p class=\"sx-byline\">",stdout);if(*by){fputs("By ",stdout);html(by);fputs(" · ",stdout);}sd_ago(sqlite3_column_int64(s,8),sd_col(s,9));fputs("</p>",stdout);
  if(public_http_url(image)){fputs("<figure><img loading=\"lazy\" alt=\"\" src=\"",stdout);html(image);fputs("\"></figure>",stdout);}
  if(*body){fputs("<div class=\"sx-body\"><p>",stdout);html(body);fputs("</p></div>",stdout);}
- else fputs("<p class=\"sx-quiet\">The publisher sent a title only. The piece itself is at their address.</p>",stdout);
+ else ui_text(stdout, "p", "sx-quiet", "The publisher sent a title only. The piece itself is at their address.");
  fputs("<footer class=\"sx-reading-actions\">",stdout);
  fputs("<button type=\"button\" class=\"sx-btn\" data-ak-track data-narrate=\"#sx-reading\" data-title=\"",stdout);html(title);fputs("\" data-by=\"",stdout);html(*by?by:pub);fputs("\">",stdout);sd_icon("listen");fputs("Listen</button>",stdout);
  if(public_http_url(href)){fputs("<a class=\"sx-btn sx-primary\" rel=\"nofollow noopener\" href=\"",stdout);html(href);fputs("\">",stdout);sd_icon("link");fputs("Read at the publisher</a>",stdout);}
@@ -232,7 +232,7 @@ static void sd_register_item(sqlite3_stmt *s,const char *route,const char *param
  fputs("\"",stdout);if(on)fputs(" aria-current=\"true\"",stdout);fputs("><small>",stdout);
  if(show_source){sd_name(frontier,sd_col(s,5));if(*sd_col(s,4)){fputs(" · ",stdout);html(sd_col(s,4));}}else html(*sd_col(s,4)?sd_col(s,4):sd_col(s,5));
  fputs("<time>",stdout);sd_ago(sqlite3_column_int64(s,6),sd_col(s,7));fputs("</time></small><b>",stdout);html(sd_col(s,2));fputs("</b>",stdout);
- if(*sd_col(s,3)){fputs("<span>",stdout);html(sd_col(s,3));fputs("</span>",stdout);}
+ if(*sd_col(s,3)){ui_text(stdout, "span", NULL, sd_col(s,3));}
  fputs("<em>",stdout);sd_label(sd_col(s,8));fputs("</em></a></li>",stdout);
 }
 static void sd_room(const char *route,const char *host,const char *query,const char *source){
@@ -260,7 +260,7 @@ static void sd_room(const char *route,const char *host,const char *query,const c
  if(sqlite3_prepare_v2(items,"SELECT source,key,title,substr(body,1,180),by,publisher,at,first_read,family FROM item WHERE source=?1 AND (?2='' OR title LIKE ?3 OR by LIKE ?3) ORDER BY at DESC LIMIT 40",-1,&s,NULL)==SQLITE_OK){
   int k=0;sqlite3_bind_text(s,1,source,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,q,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,like,-1,SQLITE_TRANSIENT);
   while(sqlite3_step(s)==SQLITE_ROW){sd_register_item(s,route,source,source,key,0,frontier);k++;}
-  if(!k)fputs("<li class=\"sx-empty\">No kept piece matches that.</li>",stdout);sqlite3_finalize(s);s=NULL;}
+  if(!k)ui_text(stdout, "li", "sx-empty", "No kept piece matches that.");sqlite3_finalize(s);s=NULL;}
  fputs("</ol></section>",stdout);
  if(*key)sd_reading(items,frontier,source,key,route);
  fputs("</div></main>",stdout);
@@ -292,7 +292,7 @@ static void sd_reader(const char *route,const char *host,const char *query){
  fputs("</nav><div class=\"sx-split sx-three\"><section class=\"sx-register\" aria-labelledby=\"sx-reg\"><h2 id=\"sx-reg\">Dispatches <span>",stdout);if(day>0){sd_num(day);fputs(" kept in the last day",stdout);}else fputs("newest first",stdout);fputs("</span></h2><ol>",stdout);
  if(items&&sqlite3_prepare_v2(items,"SELECT source,key,title,substr(body,1,140),by,publisher,at,first_read,family FROM item WHERE at>0 AND at<=CAST(strftime('%s','now') AS INTEGER) AND (?1='' OR family=?1) ORDER BY at DESC LIMIT 30",-1,&s,NULL)==SQLITE_OK){
   int k=0;sqlite3_bind_text(s,1,feed,-1,SQLITE_TRANSIENT);while(sqlite3_step(s)==SQLITE_ROW){sd_register_item(s,route,NULL,src,key,1,frontier);k++;}
-  if(!k)fputs("<li class=\"sx-empty\">Nothing has been kept for this feed yet.</li>",stdout);sqlite3_finalize(s);s=NULL;}
+  if(!k)ui_text(stdout, "li", "sx-empty", "Nothing has been kept for this feed yet.");sqlite3_finalize(s);s=NULL;}
  fputs("</ol></section>",stdout);
  if(*src)sd_reading(items,frontier,src,key,"/sources");else fputs("<article class=\"sx-reading\"><p class=\"sx-empty\">No piece is kept yet. Add a feed to start the stream.</p></article>",stdout);
  /* The rail: what else this source holds and where the piece can go. */
@@ -367,7 +367,7 @@ static void sd_connections(const char *route,const char *host,const char *query,
  sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB"),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB");
  sd_page_open(chosen?chosen->name:"Connections",host,route,query,"connections");
  fputs("<main class=\"sx\"><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span>",stdout);
- if(chosen){fputs("<a href=\"/connections\">Connections</a><span>/</span><span>",stdout);html(chosen->name);fputs("</span>",stdout);}else fputs("<span>Connections</span>",stdout);
+ if(chosen){fputs("<a href=\"/connections\">Connections</a><span>/</span><span>",stdout);html(chosen->name);fputs("</span>",stdout);}else ui_text(stdout, "span", NULL, "Connections");
  fputs("<em>",stdout);fputs(signed_in?"signed in":"signed out",stdout);fputs("</em></nav>",stdout);
  if(!chosen){
   long long day=sd_one(items,"SELECT COUNT(*) FROM item WHERE first_read>=strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')",NULL),sources=sd_one(items,"SELECT COUNT(DISTINCT source) FROM item",NULL);
@@ -395,7 +395,7 @@ static void sd_connections(const char *route,const char *host,const char *query,
         "<div class=\"sx-table-wrap\"><table class=\"sx-table\"><thead><tr><th>Piece</th><th>Source</th><th>Kind</th><th>Kept</th></tr></thead><tbody>",stdout);
   {sqlite3_stmt *s=NULL;int k=0;if(items&&sqlite3_prepare_v2(items,"SELECT source,key,title,by,publisher,family,first_read FROM item ORDER BY first_read DESC LIMIT 8",-1,&s,NULL)==SQLITE_OK){
    while(sqlite3_step(s)==SQLITE_ROW){k++;fputs("<tr><td><a href=\"/sources?source=",stdout);url_query_value(sd_col(s,0));fputs("&amp;item=",stdout);url_query_value(sd_col(s,1));fputs("\">",stdout);html(sd_col(s,2));fputs("</a>",stdout);
-    if(*sd_col(s,3)){fputs("<small>",stdout);html(sd_col(s,3));fputs("</small>",stdout);}fputs("</td><td>",stdout);sd_name(frontier,sd_col(s,4));fputs("</td><td><span class=\"sx-badge\">",stdout);sd_label(sd_col(s,5));fputs("</span></td><td>",stdout);html(sd_col(s,6));fputs("</td></tr>",stdout);}
+    if(*sd_col(s,3)){ui_text(stdout, "small", NULL, sd_col(s,3));}fputs("</td><td>",stdout);sd_name(frontier,sd_col(s,4));fputs("</td><td><span class=\"sx-badge\">",stdout);sd_label(sd_col(s,5));fputs("</span></td><td>",stdout);html(sd_col(s,6));fputs("</td></tr>",stdout);}
    sqlite3_finalize(s);}
    if(!k)fputs("<tr><td colspan=\"4\" class=\"sx-empty\">Nothing has been kept yet.</td></tr>",stdout);}
   fputs("</tbody></table></div></section>",stdout);

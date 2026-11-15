@@ -32,16 +32,24 @@ const inputFields=(items,id)=>ar(items).map((p,i)=>{
 const viewportDevices=["desktop","tablet","phone"];
 const viewportLayouts=new Set(["stack","grid","columns","carousel","masonry","split","full-bleed","feature"]);
 export function authoredResponsiveAttributes(node){
- const attrs=[];
+ const attrs=[],variables=[];
  for(const device of viewportDevices){
   const value=node?.responsive?.[device];
-  if(!value||value.layout==null)continue;
-  if(!viewportLayouts.has(value.layout))fail("unsupported responsive layout");
-  const columns=value.columns??2;
-  if(!Number.isInteger(columns)||columns<1||columns>12)fail("unsupported responsive column count");
-  attrs.push(`data-${device}-layout="${q(value.layout)}" data-${device}-columns="${columns}"`);
+  if(!value)continue;
+  if(value.layout!=null){
+   if(!viewportLayouts.has(value.layout))fail("unsupported responsive layout");
+   const columns=value.columns??2;
+   if(!Number.isInteger(columns)||columns<1||columns>12)fail("unsupported responsive column count");
+   attrs.push(`data-${device}-layout="${q(value.layout)}" data-${device}-columns="${columns}"`);
+  }
+  if(value.gap!=null){
+   if(!Number.isInteger(value.gap)||value.gap<0||value.gap>64)fail("unsupported responsive gap");
+   attrs.push(`data-${device}-gap="${value.gap}"`);
+   variables.push(`--ak-gap-${device}:${value.gap}px;`);
+  }
  }
- return attrs.length?" "+attrs.join(" "):"";
+ return (attrs.length?" "+attrs.join(" "):"")+
+  (variables.length?' style="'+variables.join("")+'"':"");
 }
 // C's eight registered Editor.js tools are also the browser/static grammar.
 // Keep markup and escaping aligned with NATIVE_EDITORIAL_TEMPLATES; unsupported

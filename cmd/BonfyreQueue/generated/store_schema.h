@@ -36,4 +36,8 @@
 #define BF_STORE_QUEUE_QUEUE_INBOX_STATES \
     "CREATE TABLE IF NOT EXISTS queue_inbox_states(subject TEXT NOT NULL,scope TEXT NOT NULL,actor TEXT NOT NULL,mission_id TEXT NOT NULL,source_version TEXT NOT NULL,read INTEGER NOT NULL CHECK(read IN(0,1)),dismissed INTEGER NOT NULL CHECK(dismissed IN(0,1)),revision INTEGER NOT NULL CHECK(revision>0),PRIMARY KEY(subject,scope,actor,mission_id));" \
     "CREATE TABLE IF NOT EXISTS queue_inbox_operations(subject TEXT NOT NULL,scope TEXT NOT NULL,actor TEXT NOT NULL,request_id TEXT NOT NULL,mission_id TEXT NOT NULL,source_version TEXT NOT NULL,expected_revision INTEGER NOT NULL,action TEXT NOT NULL,result_revision INTEGER NOT NULL,created_at_ms INTEGER NOT NULL,PRIMARY KEY(subject,scope,actor,request_id));"
+/* store account_work_source: sqlite, declared by cmd/BonfyreQueue */
+#define BF_STORE_QUEUE_WORK_SOURCE_KIND "sqlite"
+#define BF_STORE_QUEUE_WORK_SOURCE_ATTACH "ATTACH DATABASE ? AS src"
+#define BF_STORE_QUEUE_WORK_SOURCE_ATTACH_READONLY 1
 #endif

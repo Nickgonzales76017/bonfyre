@@ -11,6 +11,7 @@
 #include "account_legacy_api.h"
 #include <limits.h>
 #include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
+#include "bf_store_durability.h"
 
 #define AWK_STALE_MS 60000
 #define AWK_SOURCE_LIMIT 16
@@ -336,12 +337,7 @@ done:
 }
 
 static int awk_attach(sqlite3 *db, const char *path) {
-    sqlite3_stmt *q = NULL;
-    char *uri = sqlite3_mprintf("file:%s?mode=ro", path);
-    int ok = uri && sqlite3_prepare_v2(db, "ATTACH DATABASE ? AS src", -1, &q, NULL) == SQLITE_OK &&
-        sqlite3_bind_text(q, 1, uri, -1, SQLITE_TRANSIENT) == SQLITE_OK && sqlite3_step(q) == SQLITE_DONE;
-    sqlite3_finalize(q); sqlite3_free(uri);
-    return ok;
+    return bf_store_attach(db, path, BF_STORE_QUEUE_WORK_SOURCE_ATTACH, BF_STORE_QUEUE_WORK_SOURCE_ATTACH_READONLY);
 }
 
 /* Rebuilds the whole account index only from a complete owner snapshot.

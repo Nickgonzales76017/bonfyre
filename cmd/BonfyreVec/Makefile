@@ -15,6 +15,13 @@ all: $(TARGET)
 test: $(TARGET)
 	bash tests/width_admission_test.sh
 	sh tests/delete_test.sh
+	$(MAKE) vector-store-kind-test
+
+# The vector store kind (schemas/storage/stores) builds and reads back.
+.PHONY: vector-store-kind-test
+vector-store-kind-test: tests/vector_store_kind_test.c generated/store_schema.h
+	$(CC) $(CFLAGS) -Werror $(LOCAL_CFLAGS) -o tests/.vector-store-kind tests/vector_store_kind_test.c $(LDFLAGS)
+	./tests/.vector-store-kind; status=$$?; rm -f tests/.vector-store-kind; exit $$status
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)

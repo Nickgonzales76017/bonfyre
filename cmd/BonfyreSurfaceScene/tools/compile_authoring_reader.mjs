@@ -4,10 +4,22 @@
 import {readFileSync,writeFileSync,mkdirSync} from "node:fs";
 import {dirname} from "node:path";
 import {fileURLToPath} from "node:url";
+import {spawnSync} from "node:child_process";
 import {authoredPatternStyles} from "../../../components/BonfyreServiceSite/authored-pattern-styles.mjs";
+// One pinned CSS transform, native: `bonfyre-surface-scene numeric lightning` (fixtures are test-only).
+export function compileReaderCss({useLightning=false,fixture,engineLabel}={}){
+ const source=authoredPatternStyles+"\n",args=["numeric","lightning",...(fixture?["--lightning-fixture",fixture]:[]),...(engineLabel?["--engine-label",engineLabel]:[])];
+ if(!useLightning)return {css:source,engine:"postcss-compatibility"};
+ const run=spawnSync(fileURLToPath(new URL("../bonfyre-surface-scene",import.meta.url)),args,{input:source,encoding:"utf8",maxBuffer:1<<20});
+ if(run.status!==0)throw Error(String(run.stderr||run.error).trim());
+ return JSON.parse(run.stdout);
+}
+if(process.env.BONFYRE_LIGHTNING_CSS && process.env.BONFYRE_LIGHTNING_CSS!=="1")
+ throw Error("BONFYRE_LIGHTNING_CSS must be 1 or unset");
+const stylesheet=compileReaderCss({useLightning:process.env.BONFYRE_LIGHTNING_CSS==="1"});
 const base=new URL("../../../site/matrix/",import.meta.url);
 const outputs=[
- {name:"authoring-reader.css",body:authoredPatternStyles+"\n"},
+ {name:"authoring-reader.css",body:stylesheet.css},
  {name:"authoring-reader.js",
   body:readFileSync(new URL("../../../components/BonfyreServiceSite/authoring/pattern-runtime.js",import.meta.url),"utf8")}
 ];

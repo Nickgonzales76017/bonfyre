@@ -223,4 +223,8 @@
 #define BF_STORE_CMS_PACK_INSTALLATION_STATE \
     "CREATE TABLE IF NOT EXISTS _pack_installation_state(installation_id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,source_digest TEXT NOT NULL,last_operation TEXT NOT NULL,last_actor TEXT NOT NULL);" \
     "CREATE TABLE IF NOT EXISTS _pack_installation_pin(installation_id INTEGER NOT NULL,pack TEXT NOT NULL,version TEXT NOT NULL,root TEXT NOT NULL,PRIMARY KEY(installation_id,pack));"
+/* store cms: sqlite, declared by cmd/BonfyreCMS */
+#define BF_STORE_CMS_DB_KIND "sqlite"
+#define BF_STORE_CMS_DB_ENV "BONFYRE_CMS_DB"
+#define BF_STORE_CMS_DB_DURABILITY { "cms", "WAL", "NORMAL", 1000, 67108864LL, 16384, 5000, 120000 }
 #endif

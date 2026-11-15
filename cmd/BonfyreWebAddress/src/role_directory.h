@@ -17,10 +17,10 @@ static void role_dir_terms(sqlite3 *db,const char *title,const char *raw,size_t 
         const char *value=(const char*)sqlite3_column_text(stmt,0);
         if(!value||!*value)continue;
         if(!count++)fputs("<ul class=\"ak-rows\">",stdout);
-        fputs("<li>",stdout);html(value);fputs("</li>",stdout);
+        ui_text(stdout, "li", NULL, value);
     }
     sqlite3_finalize(stmt);
-    if(count)fputs("</ul>",stdout);else fputs("<p class=\"ak-empty\">None published.</p>",stdout);
+    if(count)fputs("</ul>",stdout);else ui_text(stdout, "p", "ak-empty", "None published.");
     fputs("</section>",stdout);
 }
 static void role_dir_inline(sqlite3 *db,const char *raw,int limit){
@@ -170,8 +170,8 @@ static void role_dir_assignments(sqlite3 *db,const char *actor){
         fputs("\">Open posture</a></li>",stdout);
     }
     sqlite3_finalize(s);fputs("</ol>",stdout);
-    if(!found)fputs("<p class=\"ak-empty\">You have not taken on a posture yet. Choose one from the registry below.</p>",stdout);
-    if(found==30||step==SQLITE_ROW)fputs("<p class=\"ak-empty\">More postures exist than this view shows.</p>",stdout);
+    if(!found)ui_text(stdout, "p", "ak-empty", "You have not taken on a posture yet. Choose one from the registry below.");
+    if(found==30||step==SQLITE_ROW)ui_text(stdout, "p", "ak-empty", "More postures exist than this view shows.");
     fputs("</div></section>",stdout);
 }
 static int serve_role_directory(const BfRequest *r) {

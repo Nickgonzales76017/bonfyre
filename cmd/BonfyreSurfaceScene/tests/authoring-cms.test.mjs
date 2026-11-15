@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {newAuthoringTree,applyAuthoringEdit} from "../runtime/authoring-tree.mjs";
 import {treeFromNativeSnapshot,toNativePageWrite,openNativeAuthoring,saveNativeAuthoring}
  from "../../../components/BonfyreServiceSite/authoring/native-cms.mjs";
+import {numericPresentationAddress}
+ from "../../../components/BonfyreServiceSite/authoring/numeric-presentation.mjs";
 const digest="a".repeat(64);
 const base=(ns="person-test-work",route="/stories",id=0)=>({
  schema:"bonfyre.page-snapshot.v1",id,digest,
@@ -110,4 +112,13 @@ test("CMS refuses false successful save when post-commit readback lost an author
   {ok:true,json:async()=>({committed:true})}:
   {ok:true,json:async()=>structuredClone(b)};
  await assert.rejects(saveNativeAuthoring({fetcher,base:b,tree:doc}),/readback/);
+});
+test("CMS keeps the layout address in its existing authored fragment metadata",()=>{
+ let doc=newAuthoringTree("person-work");
+ doc=applyAuthoringEdit(doc,{type:"insert",block:{id:"grid",kind:"ui:grid",
+  props:{heading:"Grid",payload:{columns:3}},responsive:{desktop:{layout:"grid",columns:3,gap:17}},children:[]}});
+ const base={schema:"bonfyre.page-snapshot.v1",id:0,digest,snapshot:{namespace:doc.site_id,route:doc.page,page:null,fragments:[]}};
+ const row=toNativePageWrite(base,doc).fragments[0];
+ assert.equal(row.semantic_tags.authoring_v1.numeric_presentation_digest,numericPresentationAddress(doc.blocks[0].responsive));
+ assert.deepEqual(row.semantic_tags.authoring_v1.responsive,doc.blocks[0].responsive);
 });

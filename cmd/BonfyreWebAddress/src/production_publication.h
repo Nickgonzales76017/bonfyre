@@ -49,7 +49,7 @@ static void production_card(const BfPublicProduction *p,int detail){
     fputs("<article class=\"production-edition\" data-production-design><header><span class=\"production-kicker\">Authored / reusable production</span><h3>",stdout);html(p->title);fputs("</h3><span class=\"production-kicker\">",stdout);html(p->layout);fputs(" · ",stdout);html(p->appearance);fputs("</span></header><div class=\"production-copy\"><p>",stdout);html(p->description);fputs("</p><ol class=\"production-outline-preview\">",stdout);
     for(int i=0;i<p->count;i++){printf("<li><b>%02d</b><span>",i+1);html(p->panels[i].label);fputs("<small>",stdout);html(production_label(p->panels[i].kind));fputs(" · ",stdout);html(p->panels[i].role);fputs("</small></span></li>",stdout);}fputs("</ol>",stdout);
     for(int i=0;i<p->edge_count;i++){fputs("<p class=\"production-handoff\">",stdout);html(p->panels[p->edges[i].from].label);fputs(" → ",stdout);html(p->panels[p->edges[i].to].label);fputs("<br>Reviewed finding → editable opportunity</p>",stdout);}
-    fputs("<p class=\"production-scope\">Reuse the arrangement and supported handoffs. Bring your own sources; private material, membership and credentials are not included.</p>",stdout);
+    ui_text(stdout, "p", "production-scope", "Reuse the arrangement and supported handoffs. Bring your own sources; private material, membership and credentials are not included.");
     if(!detail){fputs("<a data-production-inspect href=\"/productions/",stdout);html(p->ns);fputs("/",stdout);html(p->slug);fputs("\">Inspect this production ↗</a>",stdout);}
     fputs("<a data-production-reuse href=\"/cms/productions?context=self&amp;design=",stdout);html(p->ns);fputs("/",stdout);html(p->slug);fputs("\">Use this design →</a></div></article>",stdout);
 }
@@ -77,6 +77,6 @@ if(strcmp(method,"GET")||(query&&*query)){production_response(400,"text/plain; c
     sqlite3_finalize(s);sqlite3_exec(db,"COMMIT",NULL,NULL,NULL);sqlite3_close(db);production_response(200,"text/html; charset=utf-8");
     if(!fragment)ak_app_open("Productions","workbench","route-productions");
     fputs("<section class=\"production-gallery\" data-public-productions><p class=\"production-kicker\">Made with Aurekai / reusable work</p><h2>Start with a production.<br>Make it your own.</h2><p>Inspect an authored arrangement and its supported handoffs. Then bring your own material into the working editors. Showing the latest published designs, up to 24 per catalogue view.</p><div class=\"production-editions\">",stdout);
-    for(int i=0;i<count;i++)production_card(&items[i],0);if(!count)fputs("<p>No reusable productions have been published here yet. Your private working compositions are not listed.</p>",stdout);free(items);fputs("</div><a href=\"/cms/productions?context=self\">Author a production →</a><a href=\"/productions\">Explore published designs ↗</a></section>",stdout);if(!fragment)ak_app_close();return 1;
+    for(int i=0;i<count;i++)production_card(&items[i],0);if(!count)ui_text(stdout, "p", NULL, "No reusable productions have been published here yet. Your private working compositions are not listed.");free(items);fputs("</div><a href=\"/cms/productions?context=self\">Author a production →</a><a href=\"/productions\">Explore published designs ↗</a></section>",stdout);if(!fragment)ak_app_close();return 1;
 }
 #endif

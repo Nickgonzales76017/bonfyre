@@ -441,7 +441,7 @@ static int serve_arrival(const char *method, const char *target, const char *acc
         }
         sqlite3_finalize(st);
         if (rows) fputs("</tbody></table>", stdout);
-        else fputs("<p class=\"mf-empty\">No member pages are published yet. Yours could be the first.</p>", stdout);
+        else ui_text(stdout, "p", "mf-empty", "No member pages are published yet. Yours could be the first.");
     }
     if (db) sqlite3_close(db);
     fputs("<form class=\"mf-ratify\" action=\"/signup\" method=\"post\"><input type=\"hidden\" name=\"next\" value=\"/account\">"

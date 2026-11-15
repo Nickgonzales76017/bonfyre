@@ -1632,7 +1632,7 @@ static const char *page_emit_item_open(const PageItem *item, const char *class_n
 static void page_emit_by(const PageItem *item, time_t now) {
     char when[48];
     page_when(item->at, now, when, sizeof(when));
-    if (item->by[0]) { fputs("<span>", stdout); html(item->by); fputs("</span>", stdout); }
+    if (item->by[0]) { ui_text(stdout, "span", NULL, item->by); }
     if (item->note[0] && strcmp(item->note, item->by) && !item->group[0]) { fputs(" <span class=\"via\">", stdout); html(item->note); fputs("</span>", stdout); }
     if (when[0]) {
         char iso[32]; struct tm tm;
@@ -1940,8 +1940,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         fputs(first->image[0] ? "<article class=\"lead with-picture\">" : "<article class=\"lead\">", stdout);
         close = page_emit_item_open(first, NULL);
         { char sized[1024]; page_picture_at(first->image, 960, sized, sizeof(sized)); page_emit_picture(sized, "lead-picture"); }
-        fputs("<h2>", stdout); html(first->title); fputs("</h2>", stdout); fputs(close, stdout);
-        if (first->body[0]) { fputs("<p class=\"dek\">", stdout); html(first->body); fputs("</p>", stdout); }
+        ui_text(stdout, "h2", NULL, first->title); fputs(close, stdout);
+        if (first->body[0]) { ui_text(stdout, "p", "dek", first->body); }
         fputs("<p class=\"by\">", stdout); page_emit_by(first, now); fputs("</p>",stdout); page_emit_item_continuations(first); fputs("</article>",stdout);
         break;
     case BF_PAGE_TOPOLOGY_INDEX:
@@ -1949,8 +1949,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             close = page_emit_item_open(item, NULL);
-            fputs("<b>", stdout); html(item->title); fputs("</b>", stdout);
-            if (item->body[0]) { fputs("<span class=\"dek\">", stdout); html(item->body); fputs("</span>", stdout); }
+            ui_text(stdout, "b", NULL, item->title);
+            if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
             fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span>", stdout);
             page_emit_picture(item->image, "thumb");
             fputs(close, stdout);
@@ -1979,7 +1979,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             page_when_ahead(item->at, ends, now, when, sizeof(when));
             fputs("<li class=\"agenda-item\">", stdout);
             close = page_emit_item_open(item, NULL);
-            fputs("<b>", stdout); html(item->title); fputs("</b>", stdout);
+            ui_text(stdout, "b", NULL, item->title);
             fputs(close, stdout);
             /* Same local calendar as the event display. This weekend means the
              * upcoming Saturday/Sunday through this Sunday, not all future weekends.
@@ -1997,8 +1997,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 }
                 printf("<data data-agenda-weekend=\"%d\" data-agenda-day-offset=\"%d\" hidden></data>", weekend, offset);
             }
-            if (when[0]) { fputs("<span class=\"starts\">", stdout); html(when); fputs("</span>", stdout); }
-            if (item->where[0]) { fputs("<span class=\"at\">", stdout); html(item->where); fputs("</span>", stdout); }
+            if (when[0]) { ui_text(stdout, "span", "starts", when); }
+            if (item->where[0]) { ui_text(stdout, "span", "at", item->where); }
             fputs("<span class=\"by\">", stdout); html(item->by); fputs("</span></li>", stdout);
         }
         fputs("</ol>", stdout);
@@ -2040,7 +2040,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             page_emit_picture(item->image, "picture");
             fputs("<figcaption>", stdout); html(item->title);
             fputs("<span class=\"by\">", stdout); page_emit_by(item, now);
-            if (item->rights[0]) { fputs("<span class=\"terms\">", stdout); html(item->rights); fputs("</span>", stdout); }
+            if (item->rights[0]) { ui_text(stdout, "span", "terms", item->rights); }
             fputs("</span></figcaption>", stdout); fputs(close, stdout); fputs("</figure>", stdout);
         }
         fputs("</div>", stdout);
@@ -2055,7 +2055,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             close = page_emit_item_open(item, "pin");
             page_emit_picture(item->image, "picture");
             fputs("<span class=\"cap\"><b>", stdout); html(item->title); fputs("</b><span>", stdout); html(item->by); fputs("</span>", stdout);
-            if (item->rights[0]) { fputs("<span class=\"terms\">", stdout); html(item->rights); fputs("</span>", stdout); }
+            if (item->rights[0]) { ui_text(stdout, "span", "terms", item->rights); }
             fputs("</span>", stdout);
             fputs(close, stdout);
         }
@@ -2111,8 +2111,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 if (page_is_video(item)) { fputs("<span class=\"play\">", stdout); page_glyph("play"); fputs("</span>", stdout); }
                 fputs("</span>", stdout);
             }
-            fputs("<b>", stdout); html(item->title); fputs("</b>", stdout);
-            if (item->body[0] && !page_image_url_safe(item->image)) { fputs("<span class=\"dek\">", stdout); html(item->body); fputs("</span>", stdout); }
+            ui_text(stdout, "b", NULL, item->title);
+            if (item->body[0] && !page_image_url_safe(item->image)) { ui_text(stdout, "span", "dek", item->body); }
             fputs(close, stdout);
             fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span>",stdout); page_emit_item_continuations(item); fputs("</article>",stdout);
         }
@@ -2127,7 +2127,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             fputs("<span class=\"kind\">", stdout);
             page_glyph(page_is_video(item) ? "play" : page_is_photo(item) ? "picture" : item->placed ? "pin" : "text");
             fputs("</span><span class=\"what\"><b>", stdout); html(item->title); fputs("</b>", stdout);
-            if (item->body[0]) { fputs("<span class=\"dek\">", stdout); html(item->body); fputs("</span>", stdout); }
+            if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
             fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span></span>", stdout);
             page_emit_picture(item->image, "thumb");
             fputs(close, stdout); fputs("</li>", stdout);
@@ -2161,7 +2161,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 fputs("</span></td>", stdout);
                 if (priced_any) {
                     fputs("<td class=\"price\">", stdout);
-                    if (item_price_as_posted(item->title, price, sizeof(price))) html(price); else fputs("<span class=\"none\">Not stated</span>", stdout);
+                    if (item_price_as_posted(item->title, price, sizeof(price))) html(price); else ui_text(stdout, "span", "none", "Not stated");
                     fputs("</td>", stdout);
                 }
                 fputs("<td class=\"when\">", stdout); html(when);
@@ -2180,7 +2180,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             char when[48];
             page_when(item->at, now, when, sizeof(when));
             fputs("<tr><td class=\"name\">", stdout); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-            if (item->body[0]) { fputs("<span class=\"dek\">", stdout); html(item->body); fputs("</span>", stdout); }
+            if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
             fputs("</td><td>", stdout);
             if (item->by[0] && strcmp(item->by, item->note)) { page_emit_filter_link(ctx, "from", item->by); html(item->by); fputs("</a>", stdout); }
             fputs("</td><td>", stdout);
@@ -2218,8 +2218,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 page_when(item->at, now, when, sizeof(when));
                 fputs("<li>", stdout); close = page_emit_item_open(item, NULL);
                 page_emit_picture(item->image, "thumb");
-                fputs("<b>", stdout); html(item->title); fputs("</b>", stdout);
-                if (when[0]) { fputs("<time>", stdout); html(when); fputs("</time>", stdout); }
+                ui_text(stdout, "b", NULL, item->title);
+                if (when[0]) { ui_text(stdout, "time", NULL, when); }
                 fputs(close, stdout); fputs("</li>", stdout);
             }
             fputs("</ol></section>", stdout);
@@ -2242,7 +2242,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 page_when(item->at, now, when, sizeof(when));
                 printf("<li data-map-point=\"%d\"><button type=\"button\" data-locate-point=\"%d\" aria-pressed=\"false\" aria-label=\"Highlight place %d on map\">Locate</button>", k, k, k+1); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
                 fputs("<span class=\"by\"><span>", stdout); html(item->note[0] ? item->note : item->by); fputs("</span>", stdout);
-                if (when[0]) { fputs("<time>", stdout); html(when); fputs("</time>", stdout); }
+                if (when[0]) { ui_text(stdout, "time", NULL, when); }
                 fputs("</span></li>", stdout);
             }
             fputs("</ol>", stdout);
@@ -2312,8 +2312,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 page_when(item->at, now, when, sizeof(when));
                 fputs("<li>", stdout); close = page_emit_item_open(item, "topic");
                 fputs("<b>", stdout); html(item->title); fputs("</b><span class=\"by\">", stdout);
-                if (strcmp(item->by, item->note)) { fputs("<span>", stdout); html(item->by); fputs("</span>", stdout); }
-                if (when[0]) { fputs("<time>", stdout); html(when); fputs("</time>", stdout); }
+                if (strcmp(item->by, item->note)) { ui_text(stdout, "span", NULL, item->by); }
+                if (when[0]) { ui_text(stdout, "time", NULL, when); }
                 fputs("</span>", stdout); page_emit_picture(item->image, "thumb"); fputs(close, stdout); fputs("</li>", stdout);
             }
             (void)shown;
@@ -2333,11 +2333,11 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             fputs("<div class=\"msg\"><header><b>", stdout); html(item->by); fputs("</b>", stdout);
             {
                 char when[48]; page_when(item->at, now, when, sizeof(when));
-                if (when[0]) { fputs("<time>", stdout); html(when); fputs("</time>", stdout); }
+                if (when[0]) { ui_text(stdout, "time", NULL, when); }
             }
             fputs("</header>", stdout);
-            if (item->title[0]) { fputs("<h4>", stdout); html(item->title); fputs("</h4>", stdout); }
-            if (item->body[0]) { fputs("<p>", stdout); html(item->body); fputs("</p>", stdout); }
+            if (item->title[0]) { ui_text(stdout, "h4", NULL, item->title); }
+            if (item->body[0]) { ui_text(stdout, "p", NULL, item->body); }
             fputs("</div>", stdout);
         }
         if (group) fputs("</div>", stdout);
@@ -2367,7 +2367,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             fputs("</h3><p class=\"np-by\">", stdout); html(first->by);
             if (first->duration_ms > 0) { fputs("<span class=\"dur\">", stdout); page_emit_duration(first->duration_ms); fputs("</span>", stdout); }
             fputs("</p>", stdout);
-            if (first->rights[0]) { fputs("<p class=\"terms\">", stdout); html(first->rights); fputs("</p>", stdout); }
+            if (first->rights[0]) { ui_text(stdout, "p", "terms", first->rights); }
             fputs("</div></div>", stdout);
         }
         fputs("<ol class=\"tracks\">", stdout);
@@ -2884,7 +2884,7 @@ static void page_emit_head(const char *template, const char *head_end, const cha
     const char *d0 = strstr(template, "<meta name=\"description\""), *d1 = d0 ? strchr(d0, '>') : NULL;
     if (t0 && t1 && t1 < head_end) {
         fwrite(cursor, 1, (size_t)(t0 - cursor), stdout);
-        fputs("<title>", stdout); html(title); fputs("</title>", stdout);
+        ui_text(stdout, "title", NULL, title);
         cursor = t1 + strlen("</title>");
     }
     if (d0 && d1 && d0 >= cursor && d1 < head_end) {
@@ -4453,7 +4453,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
             display_lede = "The writers, hosts and makers behind what this estate reads, "
                            "and the people who keep an address here.";
         if (display_lede && *display_lede) {
-            fputs("<p class=\"lede\">", stdout); html(display_lede); fputs("</p>", stdout);
+            ui_text(stdout, "p", "lede", display_lede);
         }
     }
     if (old_reading) {
@@ -4508,7 +4508,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     if (doc->route && !strcmp(doc->route, "/search") && (!doc->q || !*doc->q)) {
         size_t i;
         fputs("<section class=\"region\"><p class=\"note\">Type what you are looking for above, or start from a section:</p><p class=\"jump\">", stdout);
-        for (i = 0; i < BF_PAGE_NAV_COUNT; i++) { fputs("<a href=\"", stdout); html(bf_page_nav[i].route); fputs("\">", stdout); html(bf_page_nav[i].label); fputs("</a>", stdout); }
+        for (i = 0; i < BF_PAGE_NAV_COUNT; i++) { ui_link(stdout, bf_page_nav[i].route, NULL, bf_page_nav[i].label); }
         fputs("</p></section>", stdout);
         shown = 1;
     } else {

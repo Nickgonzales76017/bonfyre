@@ -25,8 +25,8 @@ static void aw_picker_card(const char *site,sqlite3_int64 world,const char *spac
     if(!aw_picker_ref(ref)||!title||!*title)return;
     fputs("<li class=\"aw-picker-card\" data-world-picker-card><div class=\"aw-picker-copy\"><strong>",stdout);
     html(title);fputs("</strong>",stdout);
-    if(by&&*by){fputs("<small>",stdout);html(by);fputs("</small>",stdout);}
-    if(context&&*context){fputs("<small>",stdout);html(context);fputs("</small>",stdout);}
+    if(by&&*by){ui_text(stdout, "small", NULL, by);}
+    if(context&&*context){ui_text(stdout, "small", NULL, context);}
     fputs("<a href=\"/o/",stdout);
     const char *slash=strchr(ref,'/');
     char source[96];size_t n=(size_t)(slash-ref);memcpy(source,ref,n);source[n]=0;
@@ -61,8 +61,8 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
         }
     }
     sqlite3_finalize(st);st=NULL;if(found)fputs("</ul>",stdout);
-    else fputs("<p>No retained references are saved in this account yet. You can choose items from a published source below.</p>",stdout);
-    fputs("<h4>Browse observed sources</h4>",stdout);
+    else ui_text(stdout, "p", NULL, "No retained references are saved in this account yet. You can choose items from a published source below.");
+    ui_text(stdout, "h4", NULL, "Browse observed sources");
     {char number[24];snprintf(number,sizeof(number),"%lld",(long long)world);
      const FtField hidden[]={{"site",site},{"world",number},{"space",space}};
      const FtInput find[]={{.label="Search publisher, topic, or source",.type="search",.name="q",.maxlength="95",.value=query?query:"",.placeholder="Find retained sources"}};
@@ -87,7 +87,7 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
         }
     }
     sqlite3_finalize(st);st=NULL;
-    if(found)fputs("</ul>",stdout);else fputs("<p>No currently observed sources match this search.</p>",stdout);
+    if(found)fputs("</ul>",stdout);else ui_text(stdout, "p", NULL, "No currently observed sources match this search.");
     if(selected&&*selected){
         int admitted=0;
         if(sqlite3_prepare_v2(db,
@@ -96,7 +96,7 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
             sqlite3_bind_text(st,1,selected,-1,SQLITE_TRANSIENT);admitted=sqlite3_step(st)==SQLITE_ROW;
         }
         sqlite3_finalize(st);
-        if(!admitted)fputs("<p>This source is not currently available for selection.</p>",stdout);
+        if(!admitted)ui_text(stdout, "p", NULL, "This source is not currently available for selection.");
         else{
             PageMaterial *material=calloc(1,sizeof(*material));
             if(material){
@@ -115,9 +115,9 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
                                    kind,item->rights);
                 }
                 if(shown)fputs("</ul>",stdout);
-                else fputs("<p>No currently retained pieces are available from this source.</p>",stdout);
+                else ui_text(stdout, "p", NULL, "No currently retained pieces are available from this source.");
                 free(material);
-            }else fputs("<p>The source reader is unavailable. Your draft has not changed.</p>",stdout);
+            }else ui_text(stdout, "p", NULL, "The source reader is unavailable. Your draft has not changed.");
         }
     }
     fputs("</section>",stdout);

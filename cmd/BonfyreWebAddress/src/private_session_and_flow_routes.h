@@ -1141,7 +1141,7 @@ static int mf_offer_rows(sqlite3 *db, int with_head) {
                   "<th scope=\"col\">Offer &amp; shop</th><th scope=\"col\">Price as posted</th><th scope=\"col\">Terms</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
         printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"https://", n); html(h); fputs("/offers\">", stdout); html(what);
         fputs("</a><span class=\"dek\">", stdout); html(shop); fputs(" &middot; sample shop on ", stdout); html(h); fputs("</span></td><td class=\"price\">", stdout);
-        if (price && *price) html(price); else fputs("<span class=\"none\">Not stated</span>", stdout);
+        if (price && *price) html(price); else ui_text(stdout, "span", "none", "Not stated");
         fputs("</td><td class=\"when\">", stdout); html(says && *says ? says : ""); fputs("</td><td class=\"go\"><a class=\"lot-open\" href=\"https://", stdout); html(h);
         if (href && href[0] == '/') html(href); else fputs("/offers", stdout);
         fputs("\"><span class=\"sr\">Ask ", stdout); html(shop); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
@@ -1170,7 +1170,7 @@ static int emit_market_fronts(const BfRequest *r) {
             int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
             printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"/room/capability/", i + 1); html(X402_CATALOG[i].name); fputs("\">", stdout);
             html(X402_CATALOG[i].name); fputs("</a><span class=\"dek\">", stdout); html(X402_CATALOG[i].summary); fputs("</span></td><td class=\"price\">", stdout);
-            if (priced) printf("$%.4g", usd); else fputs("<span class=\"none\">Not for sale</span>", stdout);
+            if (priced) printf("$%.4g", usd); else ui_text(stdout, "span", "none", "Not for sale");
             fputs(priced ? "</td><td class=\"when\">Listed</td>" : "</td><td class=\"when\">Unpriced</td>", stdout);
             fputs("<td class=\"go\"><a class=\"lot-open\" href=\"/room/capability/", stdout); html(X402_CATALOG[i].name);
             fputs("\"><span class=\"sr\">Open ", stdout); html(X402_CATALOG[i].name); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
@@ -1184,7 +1184,7 @@ static int emit_market_fronts(const BfRequest *r) {
         if (!mf_open(root, "/offers", "Offers", "Classes, services and made-to-order work that the shops kept here offer, at the price each one states.", "route-offers")) { if (db) sqlite3_close(db); return 0; }
         fputs("</header>", stdout);
         n = mf_offer_rows(db, 1);
-        if (!n) fputs("<p class=\"market-note\">No shop here has published an offer yet.</p>", stdout);
+        if (!n) ui_text(stdout, "p", "market-note", "No shop here has published an offer yet.");
         else fputs("<p class=\"market-note\">These are sample shops built on Aurekai. Asking opens the shop's own contact page; nothing is booked or paid here.</p>", stdout);
         if (db) sqlite3_close(db);
         mf_close();
@@ -1201,7 +1201,7 @@ static int emit_market_fronts(const BfRequest *r) {
         if (term[0]) {
             fflush(stdout);
             page_emit_property_results(term);
-            fputs("<p class=\"market-note\">Results need a house number. Facts are what the Tarrant Appraisal District roll recorded; they are not a survey, a title search or an appraisal.</p>", stdout);
+            ui_text(stdout, "p", "market-note", "Results need a house number. Facts are what the Tarrant Appraisal District roll recorded; they are not a survey, a title search or an appraisal.");
         }
         /* The merchants: the shops kept on this estate, one row each, with
          * their latest offer in their own words. */
@@ -1220,7 +1220,7 @@ static int emit_market_fronts(const BfRequest *r) {
                                     "<p class=\"place-dek\">Sample shops built on Aurekai. Each runs its own pages, offers and enquiries.</p><ol>", stdout);
                 fputs("<li><div class=\"place-who\"><span>", stdout); html(h); fputs("</span><h3>", stdout); html(name); fputs("</h3></div><blockquote><p>", stdout);
                 html(offer); if (says && *says) { fputs(". ", stdout); html(says); } fputs("</p>", stdout);
-                if (price && *price) { fputs("<small>", stdout); html(price); fputs("</small>", stdout); }
+                if (price && *price) { ui_text(stdout, "small", NULL, price); }
                 fputs("</blockquote><a class=\"place-go\" href=\"https://", stdout); html(h); fputs("/\">Visit the shop</a></li>", stdout);
             }
             sqlite3_finalize(st);

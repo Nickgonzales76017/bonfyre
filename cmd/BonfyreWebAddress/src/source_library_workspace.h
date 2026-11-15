@@ -150,12 +150,12 @@ static int slw_follow(const char *method,const char *body,const char *raw,const 
 static void slw_card(const char *id,const SlwKnown *k,const SlwSaved *rows,int count,const char *back){
     char url[1100];int valid=slw_url(k->url,url,sizeof(url));
     fputs("<article class=\"ak-src-card\"><header><h3><a href=\"/sources?source=",stdout);url_query_value(k->ref);fputs("\">",stdout);html(k->host);fputs("</a></h3>",stdout);
-    if(*k->family){fputs("<span class=\"ak-tag is-on\">",stdout);html(k->family);fputs("</span>",stdout);}
+    if(*k->family){ui_text(stdout, "span", "ak-tag is-on", k->family);}
     fputs("</header><p class=\"ak-src-meta\"><span class=\"ak-src-path\">",stdout);{const char *pp=strstr(k->url,"://");html(pp?pp+3:k->url);}fputs("</span>",stdout);
     if(k->items>0)printf("%lld pieces to read",k->items);else fputs("Nothing to read yet",stdout);
     if(*k->carries&&strcmp(k->carries,"text")){fputs(" &middot; carries ",stdout);html(k->carries);}
     fputs("</p><footer><a class=\"ak-src-read\" href=\"/sources?source=",stdout);url_query_value(k->ref);fputs("\">Read what it publishes</a>",stdout);
-    if(valid&&slw_saved(rows,count,url))fputs("<span class=\"ak-tag\">Following</span>",stdout);
+    if(valid&&slw_saved(rows,count,url))ui_text(stdout, "span", "ak-tag", "Following");
     else if(valid)slw_follow_form(id,url,k->host,back,0);
     fputs("</footer></article>",stdout);
 }
@@ -204,7 +204,7 @@ static int slw_page(const char *query,const char *id,const char *subject,const c
                 for(int i=0;i<mn;i++){fputs("<li><strong>",stdout);html(match[i].host);fputs("</strong><small>",stdout);if(*match[i].family){html(match[i].family);fputs(" &middot; ",stdout);}printf("%lld pieces",match[i].items);fputs("</small><a class=\"ak-go\" href=\"/sources?source=",stdout);url_query_value(match[i].ref);fputs("\">Read</a></li>",stdout);}
                 fputs("</ul>",stdout);}
             else fputs("<p>Aurekai doesn't read this address yet. Following keeps the link in your library so you can come back to it.</p>",stdout);
-            if(lib_ok&&slw_saved(rows,count,url))fputs("<p class=\"ak-src-done\">Already in your library.</p>",stdout);
+            if(lib_ok&&slw_saved(rows,count,url))ui_text(stdout, "p", "ak-src-done", "Already in your library.");
             else{fputs("<div class=\"ak-actions\">",stdout);slw_follow_form(id,url,NULL,"mode=link",1);printf("<a class=\"ak-btn is-quiet\" href=\"/apps/%s/sources/?mode=link\">Not this one</a></div>",id);}
             fputs("<p class=\"ak-src-fine\">Following saves the address only. Aurekai doesn't sign in anywhere, copy paywalled pages or tell the publisher.</p></article>",stdout);
         }
@@ -213,7 +213,7 @@ static int slw_page(const char *query,const char *id,const char *subject,const c
     /* Your library: where a followed source appears. */
     fputs("<section class=\"ak-sec\" id=\"library\"><header><div><span class=\"ak-kicker\">Your library</span><h2>Sources you follow</h2></div></header>",stdout);
     if(!lib_ok)fputs("<p class=\"ak-empty\">Your library couldn't be read just now. Nothing was changed.</p>",stdout);
-    else if(!count)fputs("<p class=\"ak-empty\">Nothing here yet. Paste a link above, or press Follow on a source below.</p>",stdout);
+    else if(!count)ui_text(stdout, "p", "ak-empty", "Nothing here yet. Paste a link above, or press Follow on a source below.");
     else{fputs("<ul class=\"ak-rows ak-src-library\">",stdout);
         for(int i=0;i<count;i++){char h[256];slw_host(rows[i].url,h,sizeof(h));int fresh=*followed&&strstr(rows[i].key,followed)!=NULL;
             printf("<li%s><strong>",fresh?" data-fresh":"");html(rows[i].title);fputs("</strong><small>",stdout);html(h);

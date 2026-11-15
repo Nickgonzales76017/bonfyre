@@ -318,11 +318,8 @@ static sqlite3 *mt_open_ro(const char *meter_path) {
  * belongs to a task only when exactly one task and one provider name it. */
 static int mt_attach_work(sqlite3 *db, const char *work_path) {
     sqlite3_stmt *s = NULL;
-    char *uri = sqlite3_mprintf("file:%s?mode=ro", work_path);
-    int ok = uri && sqlite3_prepare_v2(db, "ATTACH DATABASE ? AS work", -1, &s, NULL) == SQLITE_OK &&
-             sqlite3_bind_text(s, 1, uri, -1, SQLITE_TRANSIENT) == SQLITE_OK && sqlite3_step(s) == SQLITE_DONE;
-    sqlite3_finalize(s); sqlite3_free(uri);
-    if (!ok) return 0;
+    int ok;
+    if (!bf_store_attach(db, work_path, BF_STORE_METER_WORK_INDEX_ATTACH, BF_STORE_METER_WORK_INDEX_ATTACH_READONLY)) return 0;
     if (sqlite3_prepare_v2(db, "SELECT 1 FROM work.pragma_table_info('account_work_run') WHERE name='provider_session_ref'", -1, &s, NULL) != SQLITE_OK) return 0;
     ok = sqlite3_step(s) == SQLITE_ROW;
     sqlite3_finalize(s);

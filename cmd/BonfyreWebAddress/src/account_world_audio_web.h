@@ -132,8 +132,8 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
     /* schedule: stations only */
     WaSlot slots[AWA_SLOT_LIMIT];int ns=wa_slots(db,subject,site_id,world,space,slots),used[AWA_SLOT_LIMIT+1]={0};
     if(!strcmp(snd.kind,"station")){
-    fputs("<h3>Weekly schedule</h3>",stdout);
-    if(!ns)fputs("<p>No programmes scheduled yet.</p>",stdout);
+    ui_text(stdout, "h3", NULL, "Weekly schedule");
+    if(!ns)ui_text(stdout, "p", NULL, "No programmes scheduled yet.");
     else{fputs("<table data-sound-schedule><thead><tr><th>When</th><th>Programme</th><th></th></tr></thead><tbody>",stdout);
         for(int i=0;i<ns;i++){used[slots[i].slot]=1;int end=slots[i].start+slots[i].minutes;
             printf("<tr data-slot=\"%d\"><td>%s %02d:%02d&ndash;%02d:%02d</td><td>",slots[i].slot,wa_day(slots[i].weekday),slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);
@@ -188,7 +188,7 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
         fputs("<label>Transcript<small>Paste WebVTT from your transcription. Lines arrive unreviewed; reviewed lines are kept when you paste again</small><textarea name=\"vtt\" rows=\"4\" required placeholder=\"WEBVTT\"></textarea></label>"
               "<div class=\"aw-actions\"><button type=\"submit\" class=\"aw-quiet\">Bring in transcript</button></div></form></details>",stdout);
     }
-    sqlite3_finalize(items);if(!shown)fputs("<p>Add a recording to this space first.</p>",stdout);
+    sqlite3_finalize(items);if(!shown)ui_text(stdout, "p", NULL, "Add a recording to this space first.");
     if(state&&!strcmp(state,"public")&&site.host[0]){fputs("<p>Podcast apps can follow <a href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(space);fputs("/feed.xml\">this feed</a> once an episode has a date and a playable recording.</p>",stdout);}
     fputs("</section>",stdout);
 }
@@ -302,8 +302,8 @@ static void world_audio_station(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
     }else if(n){fputs("<p class=\"aw-terms\">The station&rsquo;s time zone is not known here, so what is on now cannot be shown.</p>",stdout);}
     if(n){fputs("<table class=\"aw-schedule\" data-world-schedule><caption>Every week</caption><tbody>",stdout);
         for(int i=0;i<n;i++){int end=slots[i].start+slots[i].minutes;printf("<tr><th scope=\"row\">%s</th><td>%02d:%02d&ndash;%02d:%02d</td><td>",wa_day(slots[i].weekday),slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);
-            if(slots[i].ref[0]&&!strncmp(slots[i].ref,"space:",6)){fputs("<a href=\"/worlds/",stdout);html(slots[i].ref+6);fputs("\">",stdout);html(slots[i].programme);fputs("</a>",stdout);}
-            else if(slots[i].ref[0]){fputs("<a href=\"/o/",stdout);html(slots[i].ref);fputs("\">",stdout);html(slots[i].programme);fputs("</a>",stdout);}
+            if(slots[i].ref[0]&&!strncmp(slots[i].ref,"space:",6)){ui_link_path(stdout, (const char *const[]){"/worlds/", slots[i].ref+6}, 2, slots[i].programme);}
+            else if(slots[i].ref[0]){ui_link_path(stdout, (const char *const[]){"/o/", slots[i].ref}, 2, slots[i].programme);}
             else html(slots[i].programme);
             if(slots[i].host[0]){fputs(" <span>with ",stdout);html(slots[i].host);fputs("</span>",stdout);}fputs("</td></tr>",stdout);}
         fputs("</tbody></table>",stdout);}

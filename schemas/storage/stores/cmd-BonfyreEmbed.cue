@@ -5,13 +5,6 @@ package stores
 store_schemas: "cmd/BonfyreEmbed": {
 	fragments: [
 		{
-			macro:  "BF_STORE_EMBED_VEC_ARTIFACTS"
-			source: "cmd/BonfyreEmbed/src/main.c"
-			statements: [
-				{kind: "virtual_table", name: "vec_artifacts", sql: "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0(  id TEXT PRIMARY KEY, embedding float[%d])"},
-			]
-		},
-		{
 			macro:  "BF_STORE_EMBED_ARTIFACTS"
 			source: "cmd/BonfyreEmbed/src/main.c"
 			statements: [
@@ -19,4 +12,18 @@ store_schemas: "cmd/BonfyreEmbed": {
 			]
 		},
 	]
+}
+
+// The vector index: a sqlite-vec vec0 table whose width the owner learns at
+// open. Declared as a vector store; the owner formats _VECTOR_DDL with it.
+store_schemas: "cmd/BonfyreEmbed": stores: vec_artifacts: {
+	kind:  "vector"
+	macro: "EMBED_INDEX"
+	vector: {
+		table:        "vec_artifacts"
+		dimension:    "runtime"
+		metric:       "l2"
+		quantization: "float32"
+		model:        "the ONNX sentence model bonfyre-embed loads from ~/.cache/bonfyre/models; width is its hidden size"
+	}
 }

@@ -69,7 +69,7 @@ static void ph_dating_messages(sqlite3 *date,const char *actor,const BfDatingCan
    fputs("><span>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");fputs("</span><p>",stdout);
    html(m->body);fputs("</p></li>",stdout);
   }
-  if(!count)fputs("<li>Both of you have agreed to talk. Start with a thoughtful introduction.</li>",stdout);
+  if(!count)ui_text(stdout, "li", NULL, "Both of you have agreed to talk. Start with a thoughtful introduction.");
   fputs("</ol>",stdout);
   if(count>24&&rows[visible-1].id>0){
    fputs("<p class=\"ph-dating-page-link\"><a href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);
@@ -197,7 +197,7 @@ static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
  fputs("</div><a href=\"https://",stdout);
  html(life.host);fputs("/\" rel=\"noopener noreferrer\">Read their Life profile</a></div>",stdout);
  if(candidate->matched){
-  fputs("<p class=\"ph-dating-state\">You have both explicitly accepted the conversation.</p>",stdout);
+  ui_text(stdout, "p", "ph-dating-state", "You have both explicitly accepted the conversation.");
   fputs("<p><a href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);url_query_value(candidate->subject);fputs("\">Open private conversation</a></p>",stdout);
   if(!strcmp(view,"matches")){
    BfDatingMessage latest[1];size_t latest_count=0;
@@ -223,7 +223,7 @@ static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
   ph_dating_action(candidate->subject,"none",candidate->my_choice_revision,"Withdraw interest");
   fputs("</div>",stdout);
  }else if(candidate->mine==BF_DATING_ACCEPT){
-  fputs("<p class=\"ph-dating-state\">Your permission is recorded; they have not independently agreed.</p>",stdout);
+  ui_text(stdout, "p", "ph-dating-state", "Your permission is recorded; they have not independently agreed.");
   ph_dating_action(candidate->subject,"none",candidate->my_choice_revision,"Withdraw permission");
  }else{
   fputs("<p class=\"ph-dating-state\">An introduction asks for their attention. It cannot send an unsolicited private message.</p><div class=\"ph-dating-actions\">",stdout);
@@ -257,7 +257,7 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  }
  if(!strcmp(view,"studio")){
   ph_dating_own_site(cms,actor);
-  fputs("<p class=\"ph-privacy\">The published story uses the same GrapesJS, Puck and Editor.js composer as your other Life pages. Private questions and decisions are stored separately.</p>",stdout);
+  ui_text(stdout, "p", "ph-privacy", "The published story uses the same GrapesJS, Puck and Editor.js composer as your other Life pages. Private questions and decisions are stored separately.");
  }
  sqlite3 *date=ph_dating_open(0);
  if(!date){

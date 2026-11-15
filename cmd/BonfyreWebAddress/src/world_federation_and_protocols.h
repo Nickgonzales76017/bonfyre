@@ -1,6 +1,8 @@
 #ifndef BONFYRE_WORLD_FEDERATION_AND_PROTOCOLS_H
 #define BONFYRE_WORLD_FEDERATION_AND_PROTOCOLS_H
 /* Extracted verbatim from main.c lines 18033-19093 (mechanical split, no logic changes). */
+#include "bf_store_durability.h"
+#include "../generated/store_schema.h"  /* store kinds and durability: schemas/storage/stores */
 static int world_federation_path(const char *target, char *world, size_t world_sz,
                                  const char **leaf) {
     const char *p, *slash;
@@ -467,7 +469,7 @@ static int serve_territory_map(const BfRequest *r) {
             }
         }
         sqlite3_finalize(st); st = NULL;
-        if (!per[i]) fputs("<p class=\"ak-empty\">No route is published for this territory yet.</p>", stdout);
+        if (!per[i]) ui_text(stdout, "p", "ak-empty", "No route is published for this territory yet.");
         fputs("</div></article>", stdout);
     }
     fputs("</div></section>", stdout);
@@ -1162,15 +1164,23 @@ static int serve_a2a(const BfRequest *r) {
  * validation and the published_at stamp. */
 static int session_authorized(const char *bearer, const char *db, const char *scope);
 
-static sqlite3 *cms_open_ro(void) {
-    const char *db = getenv("BONFYRE_CMS_DB");
+/* The CMS store's journal policy, declared once in schemas/storage/stores
+ * (store cms) and shared with the BonfyreCMS writer. Every connection opened
+ * here is leased to the current request: the serve loop closes whatever a
+ * request left open, so no forgotten statement can hold a snapshot that keeps
+ * the WAL from restarting. */
+static const BfStoreDurability cms_store_durability = BF_STORE_CMS_DB_DURABILITY;
+
+__attribute__((noinline)) static sqlite3 *cms_open_ro(void) {
+    const char *db = getenv(BF_STORE_CMS_DB_ENV);
     sqlite3 *h = NULL;
     if (!db || !*db) db = "/var/lib/bonfyre/cms/bonfyre_cms.db";
     if (sqlite3_open_v2(db, &h, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (h) sqlite3_close(h); return NULL; }
     /* A store held for a moment by a writer is not an empty store. Without a
      * wait, a busy read came back as "no rows" and a site's own address was
-     * answered with somebody else's kind of page. */
-    sqlite3_busy_timeout(h, 5000);
+     * answered with somebody else's kind of page. The lease sets the declared
+     * busy timeout. */
+    (void)bf_store_lease(h, &cms_store_durability, 1);
     return h;
 }
 
@@ -1186,22 +1196,22 @@ static sqlite3 *cms_open_ro(void) {
  * money movement belongs to a payment rail and returns a receipt reference,
  * which is a digest of something presented rather than proof of settlement.
  */
-static sqlite3 *cms_open_rw(void) {
-    const char *db = getenv("BONFYRE_CMS_DB");
+__attribute__((noinline)) static sqlite3 *cms_open_rw(void) {
+    const char *db = getenv(BF_STORE_CMS_DB_ENV);
     sqlite3 *h = NULL;
     if (!db || !*db) return NULL;
     if (sqlite3_open_v2(db, &h, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
         if (h) sqlite3_close(h); return NULL;
     }
-    sqlite3_busy_timeout(h, 3000);
-    /* This direct public write owner does not pass through BonfyreCMS.
-     * Keep automatic checkpoints and bound recycled WAL high-water bytes
-     * for this connection without interrupting any active transaction. */
-    if (sqlite3_exec(h, "PRAGMA wal_autocheckpoint=1000; PRAGMA journal_size_limit=67108864;",
-                     NULL, NULL, NULL) != SQLITE_OK) {
+    /* This direct public write owner does not pass through BonfyreCMS, so it
+     * applies the same declared writer policy: checkpoints, a bounded WAL
+     * high-water mark, and a forced TRUNCATE once a starved WAL passes the
+     * declared page count. It never interrupts an active transaction. */
+    if (bf_store_writer(h, &cms_store_durability)) {
         sqlite3_close(h);
         return NULL;
     }
+    (void)bf_store_lease(h, &cms_store_durability, 0);
     return h;
 }
 

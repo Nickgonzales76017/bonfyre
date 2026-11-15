@@ -149,6 +149,7 @@ BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 
 static const char *opt(int argc, char **argv, const char *name) { for (int i = 2; i + 1 < argc; i++) if (!strcmp(argv[i], name)) return argv[i + 1]; return NULL; }
 #include "web_request.h"
+#include "ui_tree.h"
 #include "matrix_closure_bootstrap.h"
 #include "app_shell.h"
 #include "surface_catalogue_routes.h"
@@ -533,6 +534,7 @@ static int serve(BfMatrix *m, int argc, char **argv) {
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) { close(fd); return 2; }
     BfHttpReadiness *requests = bf_http_readiness_create(BF_WEB_MAX_REQUEST_BYTES);
     if (!requests || bf_http_readiness_narrow(requests, BF_WEB_LEGACY_REQUEST_BYTES, "/apps/")) { bf_http_readiness_destroy(requests); close(fd); return 2; }
+    bf_store_leases_serve();
     for (;;) {
         char b[BF_WEB_MAX_REQUEST_BYTES] = {0}, method[8] = {0}, target[BF_WEB_MAX_REQUEST_TARGET] = {0};
         char host[256] = {0}, query[BF_WEB_MAX_QUERY] = {0}, *q;
@@ -683,6 +685,10 @@ static int serve(BfMatrix *m, int argc, char **argv) {
               (wants_html(accept_hdr)?BF_WHEN_HTML:0u)|(!(wants_json(accept_hdr)&&!wants_html(accept_hdr))?BF_WHEN_NOT_JSON:0u)|
               (!host_is_territory_apex(host)?BF_WHEN_NOT_TERRITORY_APEX:0u)|(wants_json(accept_hdr)?BF_WHEN_JSON:0u),.socket=c};
           int handled=bf_web_route_dispatch(&request);
+          /* A store connection lives for one request. Whatever the request
+           * left open is closed here, so no snapshot outlives it (declared:
+           * schemas/storage/stores durability.read_txn_max_ms). */
+          (void)bf_store_leases_end();
          fflush(stdout); dup2(sfd,STDOUT_FILENO); close(sfd);
          if(wire){ if(handled) wire_send(c,wire,accept_encoding,inm_hdr); fclose(wire); }
          /* The table ends in rows that always answer, so nothing falls past it. */

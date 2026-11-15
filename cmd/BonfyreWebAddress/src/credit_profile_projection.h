@@ -51,7 +51,7 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
   }
  }
  sqlite3_finalize(s);
- if(!shown)fputs("<p class=\"ph-empty\">No matching public archive items in this source.</p>",stdout);
+ if(!shown)ui_text(stdout, "p", "ph-empty", "No matching public archive items in this source.");
 }
 
 static int serve_credit_profile(const BfRequest *r) {

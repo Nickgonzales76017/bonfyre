@@ -466,7 +466,7 @@ static int cmd_init(const char *db_path, int width) {
 
     char sql[256];
     snprintf(sql, sizeof(sql),
-        BF_STORE_VEC_VEC_ARTIFACTS, width);
+        BF_STORE_VEC_INDEX_VECTOR_DDL, width);
     rc = sqlite3_exec(db, sql, NULL, NULL, &err);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "[vec] Failed to create vec_artifacts table: %s\n", err);

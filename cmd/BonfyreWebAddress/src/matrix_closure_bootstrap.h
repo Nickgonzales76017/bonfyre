@@ -770,7 +770,7 @@ static void emit_resolved_identity_metadata(const BfMatrixAddressResolution *res
     const char *desc = copy ? copy->description :
         "Receipted observation, work and capability — legible to people and to machines.";
     const char *canon = resolved && *resolved->canonical_address ? resolved->canonical_address : NULL;
-    fputs("<title>", stdout); html(title); fputs("</title>", stdout);
+    ui_text(stdout, "title", NULL, title);
     fputs(BF_AUREKAI_FAVICON_LINK, stdout);
     fputs("<meta name=\"description\" content=\"", stdout); html(desc); fputs("\">", stdout);
     fputs("<meta property=\"og:title\" content=\"", stdout); html(title); fputs("\">", stdout);
@@ -819,7 +819,7 @@ static int emit_matrix_index(const char *root, const BfMatrixAddressResolution *
         const char *desc  = copy ? copy->description
                                  : "Receipted observation, work and capability — legible to people and to machines.";
         const char *canon = *out->canonical_address ? out->canonical_address : NULL;
-        fputs("<title>", stdout); html(title); fputs("</title>", stdout);
+        ui_text(stdout, "title", NULL, title);
         fputs(BF_AUREKAI_FAVICON_LINK, stdout);
         fputs("<meta name=\"description\" content=\"", stdout); html(desc); fputs("\">", stdout);
         fputs("<meta property=\"og:title\" content=\"", stdout); html(title); fputs("\">", stdout);

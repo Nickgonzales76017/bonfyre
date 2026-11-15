@@ -66,10 +66,10 @@ static void cjw_programme_requirements(sqlite3 *db,const CjrCommunity *guild,con
         fputs("</li>",stdout);
     }
     sqlite3_finalize(s);
-    if(!count)fputs("<li>No published programme requirements in this scope.</li>",stdout);
+    if(!count)ui_text(stdout, "li", NULL, "No published programme requirements in this scope.");
     fputs("</ul>",stdout);
     if(count==30||step==SQLITE_ROW)
-        fputs("<p>More requirements exist. Use the owning programme workspace for the full record.</p>",stdout);
+        ui_text(stdout, "p", NULL, "More requirements exist. Use the owning programme workspace for the full record.");
 }
 static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward){
     if(!db||!community)return;
@@ -130,10 +130,10 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
         fputs("</li>",stdout);
     }
     sqlite3_finalize(s);
-    if(!count)fputs("<li>No programmes are explicitly bound to this guild yet.</li>",stdout);
+    if(!count)ui_text(stdout, "li", NULL, "No programmes are explicitly bound to this guild yet.");
     fputs("</ol>",stdout);
     if(count>=20||step==SQLITE_ROW)
-        fputs("<p>Additional programmes exist in the owning programme workspace.</p>",stdout);
+        ui_text(stdout, "p", NULL, "Additional programmes exist in the owning programme workspace.");
     char role_scope[140];snprintf(role_scope,sizeof(role_scope),"community:%s",community->key);
     fputs("<p><a data-guild-role-bridge href=\"/roles?scope=",stdout);url_query_value(role_scope);
     fputs("\">Choose a role for this guild</a>. Role postures organize your work; they do not enroll members, grant authority or execute guild operations.</p>",stdout);

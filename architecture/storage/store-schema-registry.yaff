@@ -9,10 +9,57 @@ architecture store-schema-registry
   source_path schemas/storage/stores/store.cue
   source_path scripts/compile-store-schemas.sh
   source_path .githooks/pre-commit
+  source_path lib/libbonfyre/include/bf_store_durability.h
+  source_path cmd/BonfyreCMS/tests/store_durability_test.c
+  source_path cmd/BonfyreVec/tests/vector_store_kind_test.c
   invariant each fragment is byte-for-byte the literal the owner executed before, so stores created before and after the move have identical sqlite_master text; the move changes where the text lives, not what SQLite sees
   invariant joined in order, a fragment's statements are the fragment; kind and name are read from each statement and a table, index, view or trigger row must start with the matching CREATE clause
   invariant a generated header is never edited by hand; compile-store-schemas.sh --check refuses a header that differs from the registry, and the pre-commit hook runs it
   invariant the ui-ratchet handwritten_ddl count of CREATE TABLE in cmd/*/src and components/*/src C and H sources may only go down
+  invariant a declared store names its kind (sqlite, vector, ranker, columnar, dynamic) and the compiler emits BF_STORE_<macro>_KIND plus that kind's shape constants (vector table, width or runtime, metric, quantization, model; ranker key space; columnar format, cold glob, hot shadow DDL, promotion rule; dynamic declaring table, shard, attach); every owner in opened_by gets the same constants
+  invariant a store with durability compiles to one BfStoreDurability initializer; every writer of the CMS store (bonfyre-cms and WebAddress cms_open_rw) applies it through bf_store_writer, and every WebAddress cms_open_ro/rw connection is leased to the request that opened it
+  invariant a writer commit that leaves the WAL at or past wal_truncate_pages runs a TRUNCATE checkpoint; after a refusal it waits another wal_truncate_pages before retrying, so a long reader costs writers one wait per threshold
+  invariant at the end of every served request, connections the request left open are finalized and closed and reported on stderr; a request that holds a leased store past read_txn_max_ms is ended by SIGALRM (worker exits 75 and the pool restarts)
+  invariant the ui-ratchet handwritten_store_shapes count (CREATE VIRTUAL TABLE, USING vec0, "ATTACH, read_parquet( in C sources) may only go down
+  forbidden_inference a declared durability policy -> the WAL is bounded; a reader blocked outside SQLite inside the deadline, or an owner that opens the file without the policy, still pins it
+  forbidden_inference a vector store declared -> its embeddings are current, were made by the named model, or that sqlite-vec is loadable where the owner runs
+  forbidden_inference a declared ranker, columnar or dynamic store -> an owner opens it that way; those kinds compile but no owner has moved onto them yet
   forbidden_inference a declared table -> the owner's store exists, is migrated, holds data, or that any other owner may read or write it; the registry names DDL, not access rights or a migration plan
   witness scripts/compile-store-schemas.sh --check; a compiled probe prints every macro and matches the 219 literals captured from the hand-written sources byte for byte; Auth, Finance, Entity and Space stores created by the old and new binaries have identical .schema output; owner test suites pass
+  witness make -C cmd/BonfyreCMS store-durability-test: under the declared CMS policy with a reader process that always holds a read transaction, a passive-only writer's WAL reaches 460 MB while the declared writer stays at 67.5 MB (bound 67.7 MB, 6 truncations); a leaked statement pins the WAL to 231 MB until bf_store_leases_end reaps it, then the WAL falls back under the bound; a request blocked past read_txn_max_ms exits 75
+  witness make -C cmd/BonfyreVec vector-store-kind-test: vec_artifacts built from BF_STORE_VEC_INDEX_VECTOR_DDL at width 4 holds exactly the registry text in sqlite_master and sqlite-vec answers the nearest neighbours a, c
+  witness WebAddress serving preview copies across ~1900 GET requests (HTML, JSON, signed-in) reaped no leased CMS connection
+  known_gap the 13 GB CMS WAL of 2026-11-15 was written by the release activity-public-20261021, whose bonfyre-web-address and bonfyre-cms carry no wal_autocheckpoint, journal_size_limit or TRUNCATE policy at all; the leak or long reader in that build was not identified, and the fix takes effect only once a release built from this tree is installed
+  known_gap about fifteen WebAddress handlers open the CMS file directly with sqlite3_open_v2 (account_world_* POST writers, site_mcp, people_projection, world_cache, governance) and are neither leased nor under the writer policy
+  known_gap ranker, columnar and dynamic kinds compile to constants but no owner uses them yet (BitNet rank_source attach, Spatial and ConnectionCatalog parquet reads, detail_depth and SurfaceMaturity dynamic attaches remain hand-written)
   known_gap DDL composed with C macros (cmd/BonfyreCMS account_world_literature, account_world_music, account_world_audio) and DDL built at run time with format arguments (BonfyreBridge) are still in source; ALTER TABLE migrations and columns added after creation live in owner code, not here; Makefiles do not yet list generated/store_schema.h as a prerequisite, so a registry change needs a rebuild of the owner
+
+interaction store-durability-binds-cms-writers
+  source store-schema-registry
+  destination cmd-c-m-s
+  relation compiled-journal-policy
+  preserves journal mode, synchronous, autocheckpoint pages, journal_size_limit, truncate threshold, busy timeout and read deadline exactly as declared for store cms
+  drops any claim that the store's contents, migrations or access rights are governed by the policy
+  forbidden_inference the policy is applied -> no reader can pin the WAL
+  binding cmd/BonfyreCMS/src/main.c bf_store_writer(g_db, &cms_store_durability)
+  witness make -C cmd/BonfyreCMS store-durability-test
+
+interaction store-durability-leases-web-readers
+  source store-schema-registry
+  destination cmd-web-address
+  relation request-scoped-store-lease
+  preserves one CMS connection lifetime per request; leaked connections closed at request end; requests past read_txn_max_ms ended
+  drops which owner leaked, beyond the caller address printed on stderr
+  forbidden_inference zero reaped leases in a crawl -> no route leaks; only the routes asked were observed
+  binding cmd/BonfyreWebAddress/src/world_federation_and_protocols.h cms_open_ro/cms_open_rw; cmd/BonfyreWebAddress/src/main.c bf_store_leases_end after bf_web_route_dispatch
+  witness WebAddress gate tests and a preview-copy crawl with leak reports counted
+
+interaction vector-kind-compiles-vec-index
+  source store-schema-registry
+  destination cmd-vec
+  relation vector-store-ddl
+  preserves table name, runtime width passed by the owner, l2 metric, float32 elements
+  drops the embed model's identity; the model string is a description, not a passport check
+  forbidden_inference a vector store declared -> its embeddings are current
+  binding cmd/BonfyreVec/src/main.c and cmd/BonfyreEmbed/src/main.c format BF_STORE_*_INDEX_VECTOR_DDL with their width
+  witness make -C cmd/BonfyreVec vector-store-kind-test

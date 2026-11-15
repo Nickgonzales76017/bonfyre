@@ -76,8 +76,8 @@ static void ai_release(const char *context,const AcPersonGoal *g){
     char changes[700];int approved=ai_approved(g->release);
     fputs("<li class=\"ak-inbox-item\" data-needs=\"you\" data-inbox-kind=\"release\" id=\"",stdout);html(g->id);fputs("\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("check");fputs("</span><div class=\"ak-inbox-body\">",stdout);
     ai_meta(approved?"Approved by you":"Needs you","Release to approve",(long long)(g->at*1000));
-    fputs("<h3>",stdout);html(g->title);fputs("</h3>",stdout);
-    if(ai_line(g->details,"What it changes:",changes,sizeof(changes))||ai_line(g->details,NULL,changes,sizeof(changes))){fputs("<p class=\"ak-inbox-text\">",stdout);html(changes);fputs("</p>",stdout);}
+    ui_text(stdout, "h3", NULL, g->title);
+    if(ai_line(g->details,"What it changes:",changes,sizeof(changes))||ai_line(g->details,NULL,changes,sizeof(changes))){ui_text(stdout, "p", "ak-inbox-text", changes);}
     if(*g->error&&!approved){fputs("<p class=\"ak-inbox-warn\"><strong>Last try:</strong> ",stdout);ai_sentence(g->error,220);fputs("</p>",stdout);}
     fputs("<div class=\"ak-inbox-acts\">",stdout);
     if(approved)fputs("<p class=\"ak-inbox-status\" role=\"status\">Going live now. This updates when the release reports back.</p>",stdout);
@@ -89,9 +89,9 @@ static void ai_provider(const char *context,const AcPersonGoal *g){
     if(u){size_t n=strcspn(u," \t\r\n<>\"'()");while(n>8&&strchr(".,;:",u[n-1]))n--;if(n<sizeof(url)){memcpy(url,u,n);url[n]=0;}}
     fputs("<li class=\"ak-inbox-item\" data-needs=\"you\" data-inbox-kind=\"provider\" id=\"",stdout);html(g->id);fputs("\"><span class=\"ak-inbox-mark\" aria-hidden=\"true\">",stdout);page_glyph("login");fputs("</span><div class=\"ak-inbox-body\">",stdout);
     ai_meta("Needs you","Provider account step",(long long)(g->at*1000));
-    fputs("<h3>",stdout);html(g->title);fputs("</h3>",stdout);
-    if(ai_line(g->details,NULL,first,sizeof(first))){fputs("<p class=\"ak-inbox-text\">",stdout);html(first);fputs("</p>",stdout);}
-    if(*g->error){fputs("<p class=\"ak-inbox-note\">",stdout);html(g->error);fputs("</p>",stdout);}
+    ui_text(stdout, "h3", NULL, g->title);
+    if(ai_line(g->details,NULL,first,sizeof(first))){ui_text(stdout, "p", "ak-inbox-text", first);}
+    if(*g->error){ui_text(stdout, "p", "ak-inbox-note", g->error);}
     fputs("<div class=\"ak-inbox-acts\">",stdout);
     if(*url){fputs("<a class=\"ak-inbox-signin\" data-inbox-signin href=\"",stdout);ai_href(url);fputs(ai_external(url)?"\" target=\"_blank\" rel=\"noopener noreferrer\">Sign in and make the key</a>":"\">Connect</a>",stdout);}
     ai_act(context,g->id,"done","Done, it's set up",!*url);ai_act(context,g->id,"email","Waiting on email or phone",0);ai_act(context,g->id,"review","Waiting on the provider",0);ai_act(context,g->id,"later","Not now",0);
@@ -442,7 +442,7 @@ static int serve_account_inbox(const BfRequest *r) {
     if(agent_count<=0){fputs("<li class=\"ak-inbox-empty\">",stdout);fputs(agent_count<0?"Agent work is not connected on this site.":"No agent is working right now.",stdout);fputs("</li>",stdout);}
     if(running>agent_count&&agent_count>0)printf("<li class=\"ak-inbox-empty\">%d more on the work board.</li>",running-agent_count);
     fputs("</ol><h3 id=\"agents-stopped\">Agent work that stopped",stdout);if(stopped)printf(" · %d",stopped);fputs("</h3><ol data-inbox-group=\"agents-stopped\">",stdout);
-    for(int i=0;i<halted_n;i++)ai_agent_row(context,&halted[i],1);if(!halted_n)fputs("<li class=\"ak-inbox-empty\">None.</li>",stdout);
+    for(int i=0;i<halted_n;i++)ai_agent_row(context,&halted[i],1);if(!halted_n)ui_text(stdout, "li", "ak-inbox-empty", "None.");
     fputs("</ol><a class=\"ak-inbox-side-link\" href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">Everything on the work board</a></aside></div></section>",stdout);
     psetup_end();
     ac_person_free(people,person_count>0?(size_t)person_count:0);free(people);free(agents);free(halted);free(credit);free(invites);free(admin);return 1;

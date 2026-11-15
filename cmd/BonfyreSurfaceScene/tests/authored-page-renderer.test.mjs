@@ -4,6 +4,10 @@ import {newAuthoringTree,validateAuthoringTree}
  from "../runtime/authoring-tree.mjs";
 import {renderAuthoredProfilePreview}
  from "../../../components/BonfyreServiceSite/authored-page-renderer.mjs";
+import {authoredResponsiveAttributes} from "../../../components/BonfyreServiceSite/authored-pattern-renderer.mjs";
+import {authoredPatternStyles} from "../../../components/BonfyreServiceSite/authored-pattern-styles.mjs";
+import {compileReaderCss,generatedReaderAssets} from "../tools/compile_authoring_reader.mjs";
+import {readFileSync} from "node:fs";
 import {sectionHelpers}
  from "../../../components/BonfyreServiceSite/section-helpers.mjs";
 import {kinds}
@@ -135,4 +139,23 @@ test("public composition is continuous and disclosures are deliberate in both co
  assert.equal(html.includes('<details class="ak-disclosure" open'),false);
  const native=NATIVE_AUTHORING_TEMPLATES.find(x=>x.kind==="ui:accordion");
  assert.ok(native&&!native.start.includes(" open"),"native must not open a disclosure by default");
+});
+test("browser responsive gap carriers match the native numeric vocabulary",()=>{
+ const attrs=authoredResponsiveAttributes({responsive:{desktop:{layout:"grid",columns:3,gap:17},phone:{gap:0}}});
+ assert.match(attrs,/data-desktop-layout="grid" data-desktop-columns="3"/);
+ for(const carried of [/data-desktop-gap="17"/,/data-phone-gap="0"/,/--ak-gap-desktop:17px;/,/--ak-gap-phone:0px;/])assert.match(attrs,carried);
+ assert.doesNotMatch(attrs,/data-phone-layout/);
+ assert.ok(authoredPatternStyles.includes("var(--ak-gap-desktop,20px)"));
+ assert.ok(authoredPatternStyles.includes("var(--ak-gap-phone,20px)"));
+ assert.throws(()=>authoredResponsiveAttributes({responsive:{phone:{gap:100}}}),/unsupported responsive gap/);
+});
+test("reader stylesheet stays byte-identical; Lightning is one native, fail-closed transform",()=>{
+ const expected=readFileSync(new URL("../../../site/matrix/authoring-reader.css",import.meta.url),"utf8");
+ assert.equal(compileReaderCss().engine,"postcss-compatibility");
+ assert.equal(compileReaderCss().css,expected);
+ assert.equal(generatedReaderAssets().find(x=>x.name==="authoring-reader.css").body,expected);
+ const same=compileReaderCss({useLightning:true,fixture:"/bin/cat",engineLabel:"fixture:byte-identical"});
+ assert.equal(same.engine,"fixture:byte-identical");
+ assert.equal(same.css,expected);
+ assert.throws(()=>compileReaderCss({useLightning:true,fixture:"/bin/cat",engineLabel:"pretend-real"}),/fixture/);
 });

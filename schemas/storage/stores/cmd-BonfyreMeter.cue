@@ -31,3 +31,10 @@ store_schemas: "cmd/BonfyreMeter": {
 		},
 	]
 }
+
+// The Work index, read beside the meter store to join sessions to tasks.
+store_schemas: "cmd/BonfyreMeter": stores: work_index: {
+	kind:  "sqlite"
+	macro: "METER_WORK_INDEX"
+	attach: {as: "work"}
+}

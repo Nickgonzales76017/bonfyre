@@ -43,6 +43,15 @@ read-indexes-test: $(TARGET) tests/read_indexes_test.c
 	trap 'rm -f "$$witness"' 0 1 2 15; \
 	$(CC) $(CFLAGS) tests/read_indexes_test.c -lsqlite3 -o "$$witness"; "$$witness" "$$(pwd)/$(TARGET)"
 
+# The store's declared durability keeps its WAL bounded under a write loop
+# while a reader is open, and a leaked reader is released at request end.
+.PHONY: store-durability-test
+all: store-durability-test
+store-durability-test: tests/store_durability_test.c generated/store_schema.h ../../lib/libbonfyre/include/bf_store_durability.h
+	@set -eu; witness=$$(mktemp "$${TMPDIR:-/tmp}/cms-store-durability.XXXXXX"); \
+	trap 'rm -f "$$witness"' 0 1 2 15; \
+	$(CC) $(CFLAGS) -Werror tests/store_durability_test.c -lsqlite3 -o "$$witness"; "$$witness"
+
 .PHONY: pack-lifecycle-witness
 pack-lifecycle-witness: $(TARGET)
 	bun tests/pack_lifecycle_test.mjs

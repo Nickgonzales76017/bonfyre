@@ -53,8 +53,8 @@ static int serve_household_members(const BfRequest *r) {
         fputs("HTTP/1.1 303 See Other\r\nLocation: /households/access?household=",stdout);url_query_value(input.household);fputs("&member=",stdout);url_query_value(member);fputs("\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;
     }
     psetup_start(200,"Household access");fputs("<h1>Household access</h1><p>Household: ",stdout);html(input.household);fputs(". Your access: ",stdout);html(access.role);fputs(".</p><p><a href=\"/packs/setup\">Open configurations</a></p>",stdout);
-    if(!steward){fputs("<p>The recorded steward manages membership. Your access applies to this household only; it does not share personal training history or grant supplier purchasing authority.</p>",stdout);sqlite3_close(db);psetup_end();return 1;}
-    fputs("<p>Review an existing account before changing access. Read permits inspection, write permits draft editing, and admin permits configuration changes. Only the steward manages membership. Removing access preserves saved household work.</p>",stdout);
+    if(!steward){ui_text(stdout, "p", NULL, "The recorded steward manages membership. Your access applies to this household only; it does not share personal training history or grant supplier purchasing authority.");sqlite3_close(db);psetup_end();return 1;}
+    ui_text(stdout, "p", NULL, "Review an existing account before changing access. Read permits inspection, write permits draft editing, and admin permits configuration changes. Only the steward manages membership. Removing access preserves saved household work.");
     {const FtField hidden[]={{"household",input.household}};static const FtInput email[]={{.label="Member account email",.type="email",.name="email",.maxlength="300",.required=1}};
      const FtForm review={.id="hhm-review",.method="get",.action="/households/access",.label="Review member",.hidden=hidden,.nhidden=1,.inputs=email,.ninputs=1};ft_form(stdout,&review);}
     char member[64];int requested=*input.email||*input.member;
@@ -70,10 +70,10 @@ static int serve_household_members(const BfRequest *r) {
             const FtInput access_in[]={{.label="Access",.type="select",.name="role",.options=roles,.noptions=4}};
             const FtForm apply={.id="hhm-access",.action="/households/access",.hook="household-access-form",.label="Apply reviewed access",.hidden=hidden,.nhidden=5,.inputs=access_in,.ninputs=1};
             ft_form(stdout,&apply);
-            if(expires)fputs("<p>This form preserves the existing expiry. An expired membership needs a separately reviewed renewal.</p>",stdout);
-        }else fputs("<p>The steward is established by the household record; this form cannot transfer stewardship.</p>",stdout);
+            if(expires)ui_text(stdout, "p", NULL, "This form preserves the existing expiry. An expired membership needs a separately reviewed renewal.");
+        }else ui_text(stdout, "p", NULL, "The steward is established by the household record; this form cannot transfer stewardship.");
         fputs("</section>",stdout);
-    }else if(requested)fputs("<p>No existing account was found. This page does not send invitations or create accounts.</p>",stdout);
+    }else if(requested)ui_text(stdout, "p", NULL, "No existing account was found. This page does not send invitations or create accounts.");
     if(access.epoch&&sqlite3_prepare_v2(db,"SELECT member,role FROM _household_membership WHERE household_row=?1 AND CAST(substr(member,6) AS INTEGER)>?2 ORDER BY CAST(substr(member,6) AS INTEGER) LIMIT 51",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_int64(s,1,access.id);sqlite3_bind_int(s,2,atoi(input.after));int count=0,last=0,more=0;fputs("<h2>Recorded memberships</h2><ul>",stdout);
         while(sqlite3_step(s)==SQLITE_ROW){if(count==50){more=1;break;}const char *m=(const char *)sqlite3_column_text(s,0);if(!bhh_actor(m))continue;fputs("<li><a href=\"/households/access?household=",stdout);url_query_value(input.household);fputs("&amp;member=",stdout);url_query_value(m);fputs("\">Review ",stdout);html(m);fputs("</a></li>",stdout);last=atoi(m+5);count++;}

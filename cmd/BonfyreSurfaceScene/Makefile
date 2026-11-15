@@ -2,13 +2,18 @@ CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
 CFLAGS += -I../../lib/libbonfyre/include
 TARGET = bonfyre-surface-scene
-SRC = src/main.c
+SRC = src/main.c src/numeric_presentation.c
+NUMERIC_HEADER = generated/native_numeric_presentation.h
+NUMERIC_JSON = ../../components/BonfyreServiceSite/authoring/numeric-presentation.vocabulary.json
 MD_SRC = src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c
 LIB = ../../lib/libbonfyre/libbonfyre.a
 
 all: $(TARGET) authoring-bundle test
 
-$(TARGET): $(SRC) $(MD_SRC) $(LIB)
+$(NUMERIC_HEADER) $(NUMERIC_JSON): ../../schemas/control/numeric-presentation.cue tools/compile_numeric_vocabulary.sh
+	sh tools/compile_numeric_vocabulary.sh
+
+$(TARGET): $(SRC) $(MD_SRC) $(LIB) $(NUMERIC_HEADER) src/numeric_presentation.h
 	$(CC) $(CFLAGS) -Ivendor/md4c -o $(TARGET) $(SRC) $(MD_SRC) $(LIB) -lsqlite3
 
 $(LIB):
@@ -47,6 +52,7 @@ test: $(TARGET)
 	@tmp=$$(mktemp /tmp/bonfyre-native-md4c-XXXXXX); trap 'rm -f "$$tmp"' EXIT; $(CC) -std=c11 -Wall -Wextra -Werror -Ivendor/md4c tests/native_authoring_markdown_test.c src/authoring_markdown.c vendor/md4c/md4c.c vendor/md4c/md4c-html.c vendor/md4c/entity.c -o "$$tmp" && "$$tmp"
 	@node --test tests/authoring_prototype.test.mjs
 	@node --test tests/authoring-tree.test.mjs
+	@sh tests/numeric_presentation_native_test.sh ./$(TARGET)
 	@node --test tests/authoring-cms.test.mjs
 	@bun test tests/journal-import.test.mjs
 	@bun test tests/intake-registry.test.mjs

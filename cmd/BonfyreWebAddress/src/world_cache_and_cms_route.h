@@ -179,11 +179,11 @@ static int serve_listen_program(const BfRequest *r) {
         fputs("<header class=\"ak-wb-hero is-solo listen-program\"><div><p class=\"ak-kicker\">Listen <span>/</span> Recording</p><h1>",stdout);html(title);
         /* an artist reference that is still an identifier is not a name to show */
         const char *by = strchr(artist, ':') ? "" : artist;
-        fputs("</h1>",stdout);if(*by){fputs("<p class=\"ak-lede\">",stdout);html(by);fputs("</p>",stdout);}fputs("<div class=\"ak-actions\">",stdout);
+        fputs("</h1>",stdout);if(*by){ui_text(stdout, "p", "ak-lede", by);}fputs("<div class=\"ak-actions\">",stdout);
         if(listen_safe_asset(asset)){fputs("<button type=\"button\" class=\"ak-btn is-primary\" data-ak-track data-ak-default data-src=\"",stdout);html(asset);fputs("\" data-title=\"",stdout);html(title);fputs("\" data-by=\"",stdout);html(*by?by:"Listen");fputs("\">Play</button>",stdout);}
         if(listen_safe_asset(transcript)){fputs("<a class=\"ak-btn\" href=\"",stdout);html(transcript);fputs("\">Transcript</a>",stdout);}
         fputs("</div>",stdout);
-        if(!listen_safe_asset(asset))fputs("<p class=\"ak-empty\">This recording is listed here, but no public audio for it has been published.</p>",stdout);
+        if(!listen_safe_asset(asset))ui_text(stdout, "p", "ak-empty", "This recording is listed here, but no public audio for it has been published.");
         fputs("<p class=\"ak-empty\">The work, its release, credits and rights are kept as separate records.</p></div></header>",stdout);
         ak_app_close();
     }
@@ -228,15 +228,15 @@ static int serve_human_community_page(const BfRequest *r) {
     fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Community <span>/</span> ", stdout); html(governance); fputs("</p><h1>",stdout); html(title); fputs("</h1><p class=\"ak-lede\">",stdout); html(description);
     fputs("</p></div>",stdout);
     printf("<dl class=\"ak-stats\"><div><dt>Members</dt><dd>%d</dd></div><div><dt>Here now</dt><dd class=\"is-on\">%d</dd></div></dl></header>", members, present);
-    if (policy && *policy) { fputs("<p class=\"ak-empty\">",stdout); html(policy); fputs("</p>",stdout); }
+    if (policy && *policy) { ui_text(stdout, "p", "ak-empty", policy); }
     char limit_text[1024]; snprintf(limit_text, sizeof(limit_text), "%s", limit ? limit : "");
     sqlite3_finalize(body); body = NULL;
     surface_emit_participation_nav();
     if (sqlite3_prepare_v2(db, "SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100", -1, &posts, NULL) != SQLITE_OK) goto unavailable;
     sqlite3_bind_text(posts, 1, community, -1, SQLITE_TRANSIENT);
     fputs("<section class=\"ak-sec\" aria-labelledby=\"cb-posts-h\"><header><h2 id=\"cb-posts-h\">Conversation</h2></header><ol class=\"ak-rows cb-posts\">",stdout); int any_post=0;
-    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); any_post=1; fputs("<li class=\"post\"><small>",stdout); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} fputs("</small>",stdout); if(ptitle&&*ptitle){fputs("<strong>",stdout);html(ptitle);fputs("</strong>",stdout);} fputs("<p>",stdout);html(text);fputs("</p>",stdout); if(reactions) printf("<small>%d accepted reactions</small>", reactions); fputs("</li>",stdout); }
-    if (!any_post) fputs("<li class=\"ak-empty\">Nobody has posted here yet.</li>",stdout);
+    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); any_post=1; fputs("<li class=\"post\"><small>",stdout); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} fputs("</small>",stdout); if(ptitle&&*ptitle){ui_text(stdout, "strong", NULL, ptitle);} ui_text(stdout, "p", NULL, text); if(reactions) printf("<small>%d accepted reactions</small>", reactions); fputs("</li>",stdout); }
+    if (!any_post) ui_text(stdout, "li", "ak-empty", "Nobody has posted here yet.");
     fputs("</ol></section>",stdout);
     sqlite3_finalize(posts); sqlite3_close(db); fputs("<p class=\"ak-empty cb-limit\">",stdout); html(limit_text); fputs(" Federation is projected elsewhere.</p>",stdout); ak_app_close(); return 1;
 unavailable:
@@ -474,11 +474,11 @@ static int serve_cms_route(const BfRequest *r) {
                     const char *r = (const char *)sqlite3_column_text(ist, 0), *t = (const char *)sqlite3_column_text(ist, 1),
                                *d = (const char *)sqlite3_column_text(ist, 2);
                     fputs("<li><a href=\"/", stdout); html(r ? r : ""); fputs("\"><strong>", stdout); html(t ? t : "");
-                    fputs("</strong>", stdout); if (d && *d) { fputs("<small>", stdout); html(d); fputs("</small>", stdout); }
+                    fputs("</strong>", stdout); if (d && *d) { ui_text(stdout, "small", NULL, d); }
                     fputs("</a></li>", stdout); any = 1;
                 }
             }
-            if (!any) fputs("<li class=\"ak-empty\">No published notes yet.</li>", stdout);
+            if (!any) ui_text(stdout, "li", "ak-empty", "No published notes yet.");
         }
         if (ist) sqlite3_finalize(ist);
         sqlite3_close(idb);
@@ -518,7 +518,7 @@ static int serve_cms_route(const BfRequest *r) {
                     const char *p = content ? content : "";
                     while (*p) {
                         const char *e = strstr(p, "\n\n"); size_t n = e ? (size_t)(e - p) : strlen(p);
-                        if (n) { char *para = strndup(p, n); if (para) { fputs("<p>", stdout); html(para); fputs("</p>", stdout); free(para); } }
+                        if (n) { char *para = strndup(p, n); if (para) { ui_text(stdout, "p", NULL, para); free(para); } }
                         if (!e) break; p = e + 2; while (*p == '\n') p++;
                     }
                 }

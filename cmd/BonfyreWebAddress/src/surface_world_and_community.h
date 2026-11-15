@@ -396,7 +396,7 @@ static void surface_emit_pack_demands(const NativeSurfaceContext *ctx) {
         fputs("</div>",stdout);
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
-    if (!n) fputs("<p class=\"bf-native-empty\">Nothing has been asked for here yet.</p>",stdout);
+    if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing has been asked for here yet.");
 }
 
 static void surface_emit_capability_programs(const NativeSurfaceContext *ctx) {
@@ -414,7 +414,7 @@ static void surface_emit_capability_programs(const NativeSurfaceContext *ctx) {
         fputs("</div>",stdout);
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
-    if (!n) fputs("<p class=\"bf-native-empty\">Nothing is on offer here yet.</p>",stdout);
+    if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing is on offer here yet.");
 }
 
 static void surface_emit_world_catalogue(const NativeSurfaceContext *ctx) {
@@ -429,13 +429,13 @@ static void surface_emit_world_catalogue(const NativeSurfaceContext *ctx) {
             if (!world || !studio_safe_slug_arg(world)) continue;
             /* The character dresses the page; it is not something to read. */
             fputs("<article class=\"bf-program-row\" data-character=\"",stdout); html(character ? character : ""); fputs("\"><header><a href=\"/w/",stdout); html(world); fputs("\"><strong>",stdout); html(title); fputs("</strong></a></header>",stdout);
-            if (lede && *lede) { fputs("<p>",stdout); html(lede); fputs("</p>",stdout); }
+            if (lede && *lede) { ui_text(stdout, "p", NULL, lede); }
             fputs("</article>",stdout); n++;
         }
         fputs("</div>",stdout);
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
-    if (!n) fputs("<p class=\"bf-native-empty\">Nothing here yet.</p>",stdout);
+    if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing here yet.");
 }
 
 static void surface_emit_subjects(const NativeSurfaceContext *ctx) {
@@ -454,9 +454,9 @@ static void surface_emit_subjects(const NativeSurfaceContext *ctx) {
             fputs("</span><div class=\"media-body\"><p class=\"font-weight-bold username mb-0\">", stdout); html(s->name);
             fputs("</p><p class=\"text-lighter mb-0\" style=\"font-size:13px\">published ", stdout); html(s->kind);
             fputs("</p></div></div></div><div class=\"px-3 py-3\"><p class=\"mb-2\">", stdout); html(primary); fputs("</p>", stdout);
-            if (s->capacity[0]) { fputs("<span class=\"badge badge-light mr-1\">", stdout); html(s->capacity); fputs("</span>", stdout); }
+            if (s->capacity[0]) { ui_text(stdout, "span", "badge badge-light mr-1", s->capacity); }
             if (s->price[0]) { fputs("<span class=\"badge badge-light mr-1\">$", stdout); html(s->price); fputs("</span>", stdout); }
-            if (s->safety[0]) { fputs("<p class=\"bf-cant\">", stdout); html(s->safety); fputs("</p>", stdout); }
+            if (s->safety[0]) { ui_text(stdout, "p", "bf-cant", s->safety); }
             fputs("<p class=\"mb-0 mt-3\"><a class=\"btn btn-light font-weight-bold rounded-pill\" href=\"", stdout); surface_world_href(ctx->world, NULL); fputs("\">Open this World</a></p></div></div></article>", stdout);
         }
     }
@@ -475,7 +475,7 @@ static void surface_emit_publications(const NativeSurfaceContext *ctx) {
         html(p->title); if (p->href[0]) fputs("</a>", stdout); fputs("</p></div></div></article>", stdout);
     }
     if (!shown && surface_reading_narrowed(ctx))
-        fputs("<p class=\"note\">Nothing here matches this search.</p>", stdout);
+        ui_text(stdout, "p", "note", "Nothing here matches this search.");
 }
 
 static void surface_emit_world_fragments(const NativeSurfaceContext *ctx) {
@@ -586,7 +586,7 @@ static void surface_emit_community_limit(const NativeSurfaceContext *ctx,
 static void surface_emit_community_posts(const NativeSurfaceContext *ctx) {
     surface_emit_participation_nav();
     sqlite3 *db=cms_open_ro(); sqlite3_stmt *st=NULL; char community[128]={0}; int n=0;
-    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);fputs("<article class=\"post-listing my-2\"><small class=\"text-muted\">",stdout);html(author);fputs(" · ",stdout);html(at);if(reply&&*reply)fputs(" · reply",stdout);fputs("</small>",stdout);if(title&&*title){fputs("<h2 class=\"h6 mb-1\">",stdout);html(title);fputs("</h2>",stdout);}fputs("<div class=\"md-div\">",stdout);html(body);fputs("</div>",stdout);if(reactions)printf("<small class=\"text-muted\">%d accepted reactions</small>",reactions);fputs("</article>",stdout);n++;} }
+    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);fputs("<article class=\"post-listing my-2\"><small class=\"text-muted\">",stdout);html(author);fputs(" · ",stdout);html(at);if(reply&&*reply)fputs(" · reply",stdout);fputs("</small>",stdout);if(title&&*title){ui_text(stdout, "h2", "h6 mb-1", title);}ui_text(stdout, "div", "md-div", body);if(reactions)printf("<small class=\"text-muted\">%d accepted reactions</small>",reactions);fputs("</article>",stdout);n++;} }
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
     if (!n) fputs(surface_reading_narrowed(ctx) ?

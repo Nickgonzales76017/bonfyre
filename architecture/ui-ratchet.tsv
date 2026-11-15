@@ -6,5 +6,7 @@ dispatch_branches	1
 route_path_compares	20
 cli_verb_ladders	126
 handwritten_ddl	32
+handwritten_store_shapes	20
 hand_printed_controls	607
+hand_printed_markup	5107
 hardcoded_hosts	11

@@ -530,7 +530,12 @@ body.ak-app .fd :is(h1,h2,h3),body.ak-app .ak-zen :is(h1,h2,h3){font-family:var(
 .route-compose .cms-review [role=status]{padding:0 24px;font-size:13px;color:var(--ak-on-variant)}
 .route-compose .cms-review-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;padding:16px 24px;background:var(--ak-surface-mid);border-top:1px solid var(--ak-outline-variant)}
 .route-compose .cmc-check{display:flex;gap:10px;align-items:center;font-size:15px}
-.route-compose .cmc-visual{min-height:60vh;margin-top:18px;padding:12px;border:1px solid var(--ak-outline-variant);border-radius:22px;background:var(--ak-surface-low)}
+.route-compose .cmc-visual{min-height:60vh;margin-top:18px;padding:0;border:1px solid var(--ak-outline-variant);border-radius:22px;background:var(--ak-surface-low);overflow:hidden}
+/* Visual editor (Stitch artboard editor): a compact head, then the
+ * pages rail | canvas | inspector workbench at full width. */
+.route-compose-visual .cmc-visual-head h1{font-size:clamp(2rem,4vw,3.25rem)}
+.route-compose-visual .cmc-visual-head .ak-lede{max-width:46rem}
+.route-compose-visual .cmc-visual{margin-inline:calc(-1 * clamp(0px,2vw,24px))}
 @media(max-width:1080px){.route-compose .cmc-desk{grid-template-columns:minmax(200px,.8fr) minmax(0,2fr)}.route-compose #inspector{grid-column:1/-1}}
 @media(max-width:720px){.route-compose .cmc-head,.route-compose .cmc-desk{grid-template-columns:minmax(0,1fr)}.route-compose #canvas[data-cms-layout=cards],.route-compose #canvas[data-cms-layout=split] section{grid-template-columns:minmax(0,1fr)}.route-compose #canvas[data-cms-layout=split] section>*{grid-column:1!important}.route-compose .cms-review-item{grid-template-columns:1fr}.route-compose .cmc-sheet #canvas{min-height:280px}}
 /* Tool directory and setup workbench (/packs/setup; Stitch: tool packs

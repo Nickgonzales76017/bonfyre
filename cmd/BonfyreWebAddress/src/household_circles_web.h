@@ -64,7 +64,7 @@ static void hc_care_index(sqlite3 *db, const char *actor, const char *invite_cir
             FtField f[3]; gr_hidden_base(f, "accept", nonce); f[2].name = "target"; f[2].value = token;
             char act[160]; snprintf(act, sizeof(act), "/care/%s/act", invite_circle);
             gr_button("hc-accept", "Join this care circle", act, f, 3);
-        } else fputs("<p class=\"ak-empty\">This invitation has already been used or withdrawn.</p>", stdout);
+        } else ui_text(stdout, "p", "ak-empty", "This invitation has already been used or withdrawn.");
         fputs("</section>", stdout);
     }
     fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Yours</span><h2>Circles you belong to</h2></div></header><ul class=\"ak-rows\">", stdout);
@@ -81,7 +81,7 @@ static void hc_care_index(sqlite3 *db, const char *actor, const char *invite_cir
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">You are not in a care circle yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "You are not in a care circle yet.");
     fputs("</section>", stdout);
     ph_nonce(nonce);
     FtField f[2]; gr_hidden_base(f, "create", nonce);
@@ -171,7 +171,7 @@ static void hc_care(sqlite3 *db, const char *key, const char *actor, const char 
     }
     sqlite3_finalize(s);
     fputs("</ul>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No shared tasks yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No shared tasks yet.");
     {
         ph_nonce(nonce);
         FtField f[3]; gr_hidden_base(f, "add", nonce); f[2].name = "kind"; f[2].value = "task";
@@ -189,7 +189,7 @@ static void hc_care(sqlite3 *db, const char *key, const char *actor, const char 
             fputs("<p class=\"ak-lede\">“", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("”</p><p><small>", stdout);
             html((const char *)sqlite3_column_text(s, 0)); fputs(" — ", stdout); gr_person((const char *)sqlite3_column_text(s, 2), actor, NULL);
             fputs(", ", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</small></p>", stdout);
-        } else fputs("<p class=\"ak-empty\">No notes yet.</p>", stdout);
+        } else ui_text(stdout, "p", "ak-empty", "No notes yet.");
     }
     sqlite3_finalize(s);
     fputs("</aside></div>", stdout);
@@ -314,10 +314,10 @@ static void hc_pantry(sqlite3 *db, const char *actor, const char *chosen) {
         fputs("</nav>", stdout);
     }
     sqlite3_finalize(s);
-    if (!count) fputs("<p class=\"ak-empty\">You are not in a household yet.</p>", stdout);
+    if (!count) ui_text(stdout, "p", "ak-empty", "You are not in a household yet.");
     fputs("</aside></header>", stdout);
     if (!*household || !bhh_context(db, household, actor, &access) || bhh_rank(access.role) < 1) {
-        if (*chosen) fputs("<p class=\"ak-empty\">That household is not one you belong to.</p>", stdout);
+        if (*chosen) ui_text(stdout, "p", "ak-empty", "That household is not one you belong to.");
         ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "household-open", nonce);
         GrIn in[] = {{"Household name", "text", "title", "", "", 0, "160", 1, ""}};
@@ -345,7 +345,7 @@ static void hc_pantry(sqlite3 *db, const char *actor, const char *chosen) {
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else fputs("<p class=\"ak-empty\">Nothing on the calendar yet.</p>", stdout);
+    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "Nothing on the calendar yet.");
     fputs("</section>", stdout);
 
     fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Cellar and stores</span><h2>Pantry entries</h2></div></header><div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Date</th><th>Entry</th><th>Kind</th><th>Quantity</th><th>Where</th><th>Recorded by</th></tr></thead><tbody>", stdout);
@@ -367,7 +367,7 @@ static void hc_pantry(sqlite3 *db, const char *actor, const char *chosen) {
     }
     sqlite3_finalize(s);
     fputs("</tbody></table></div>", stdout);
-    if (!shown) fputs("<p class=\"ak-empty\">No pantry entries yet.</p>", stdout);
+    if (!shown) ui_text(stdout, "p", "ak-empty", "No pantry entries yet.");
     fputs("</section>", stdout);
     if (write) {
         char today[11]; gr_today(today); ph_nonce(nonce);

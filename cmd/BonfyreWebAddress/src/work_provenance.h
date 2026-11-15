@@ -208,10 +208,10 @@ static void ac_work_provenance(const char *context,const char *task,const char *
                 fputs("<p class=\"wp-tokens\" data-usage>",stdout);static const char *const names[]={" in"," out"," read from cache"," written to cache"};int any=0;
                 for(int c=0;c<4;c++)if(sqlite3_column_type(s,12+c)==SQLITE_INTEGER){fputs("<span>",stdout);wp_num(sqlite3_column_int64(s,12+c));fputs(names[c],stdout);fputs("</span> ",stdout);any=1;}
                 if(sqlite3_column_type(s,16)==SQLITE_INTEGER){fputs("<span>about $",stdout);printf("%.2f",(double)sqlite3_column_int64(s,16)/1000000.0);fputs(" estimated</span> ",stdout);}
-                if(!any)fputs("<span>Tokens not reported</span>",stdout);fputs("</p>",stdout);
+                if(!any)ui_text(stdout, "span", NULL, "Tokens not reported");fputs("</p>",stdout);
             }else fputs("<p class=\"wp-tokens\" data-usage=\"unreported\"><span>Tokens not reported</span></p>",stdout);
             if(sqlite3_column_int(s,8))fputs("<span class=\"wp-limit\" data-limit>Stopped at the provider's usage limit</span>",stdout);
-            fputs("</div><div class=\"wp-wall\">",stdout);if(sqlite3_column_type(s,7)==SQLITE_INTEGER){fputs("<span data-wall>",stdout);wp_wall(sqlite3_column_int64(s,7));fputs("</span>",stdout);}else fputs("<span>time not recorded</span>",stdout);
+            fputs("</div><div class=\"wp-wall\">",stdout);if(sqlite3_column_type(s,7)==SQLITE_INTEGER){fputs("<span data-wall>",stdout);wp_wall(sqlite3_column_int64(s,7));fputs("</span>",stdout);}else ui_text(stdout, "span", NULL, "time not recorded");
             fputs("<small>",stdout);wp_when(sqlite3_column_int64(s,6));fputs("</small></div></li>",stdout);
         }
         if(shown)fputs("</ol>",stdout);else fputs("<p class=\"wp-empty\" data-runs=\"none\">No runs are recorded for this work.</p>",stdout);

@@ -163,7 +163,7 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
             fputs("<section class=\"ph-gallery\" data-profile-gallery><div class=\"ph-gallery-head\"><h2>Gallery</h2>", stdout);
             if (!full) { fputs("<a href=\"", stdout); ph_url(site, "gallery", owner); fputs("\">See the whole gallery</a>", stdout); }
             fputs("</div>", stdout);
-            if (owner) fputs("<p class=\"ph-privacy\">Pieces marked private are visible only to you. Visitors see a piece only after you choose to show it.</p>", stdout);
+            if (owner) ui_text(stdout, "p", "ph-privacy", "Pieces marked private are visible only to you. Visitors see a piece only after you choose to show it.");
             fputs("<div class=\"ph-gallery-grid\">", stdout);
         }
         const char *span = seen % 7 == 0 ? "wide" : (seen % 7 == 1 || seen % 7 == 4) ? "tall" : "normal";
@@ -176,8 +176,8 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
             fputs("<a class=\"ph-art-frame\" href=\"", stdout); ph_art_link(&ref); fputs("\"><img loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\" src=\"", stdout);
             html(art.image); fputs("\" alt=\"", stdout); html(art.title); fputs("\"></a><figcaption><a href=\"", stdout); ph_art_link(&ref); fputs("\">", stdout);
             html(art.title); fputs("</a>", stdout);
-            if (art.by[0]) { fputs("<span>", stdout); html(art.by); fputs("</span>", stdout); }
-            fputs("<small>Public domain (CC0)</small>", stdout);
+            if (art.by[0]) { ui_text(stdout, "span", NULL, art.by); }
+            ui_text(stdout, "small", NULL, "Public domain (CC0)");
         } else {
             fputs("<div class=\"ph-art-frame\" aria-hidden=\"true\"></div><figcaption><span class=\"ph-art-state\">Hidden from visitors</span><span>The source for this piece changed or is no longer available, so it is not shown publicly. Remove it, or add it again from its page.</span>", stdout);
         }
@@ -194,7 +194,7 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
     }
     if (shown) {
         fputs("</div>", stdout);
-        if (more && full) fputs("<p>Only the first 48 pieces are shown.</p>", stdout);
+        if (more && full) ui_text(stdout, "p", NULL, "Only the first 48 pieces are shown.");
         fputs("</section>", stdout);
     } else if (full) {
         fputs("<div class=\"ph-empty\" data-profile-gallery-empty><h2>", stdout);
@@ -218,7 +218,7 @@ static void ph_artwork_view(sqlite3 *db, const PhSite *sites, int count, const P
     PhArtRef ref; PhArt art; PhArtRow cover, entry; char coordinate[160];
     int fx = ph_focus_value(fxs, 50), fy = ph_focus_value(fys, 50);
     int have_cover = -1;
-    fputs("<h2>Use this artwork on your profile</h2>", stdout);
+    ui_text(stdout, "h2", NULL, "Use this artwork on your profile");
     if (site && ph_art_ref(art_text, &ref)) {
         /* Reopening the current header starts from its saved focus point. */
         ph_cover_coordinate(site, coordinate);
@@ -243,7 +243,7 @@ static void ph_artwork_view(sqlite3 *db, const PhSite *sites, int count, const P
     html(art.image); fputs("\" alt=\"", stdout); html(art.title);
     printf("\" style=\"object-position:%d%% %d%%\" referrerpolicy=\"no-referrer\"></div><figcaption><strong>", fx, fy);
     html(art.title); fputs("</strong>", stdout);
-    if (art.by[0]) { fputs("<span>", stdout); html(art.by); fputs("</span>", stdout); }
+    if (art.by[0]) { ui_text(stdout, "span", NULL, art.by); }
     fputs("<span>Public domain (CC0)</span><a href=\"", stdout); ph_art_link(&ref); fputs("\">Artwork record</a>", stdout);
     if (public_http_url(art.href)) { fputs("<a rel=\"noopener noreferrer\" href=\"", stdout); html(art.href); fputs("\">Where it comes from ↗</a>", stdout); }
     fputs("</figcaption></figure><div class=\"ph-art-choices\">", stdout);

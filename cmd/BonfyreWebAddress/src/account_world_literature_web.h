@@ -205,7 +205,7 @@ static void world_lit_piece(sqlite3 *db,const PhSite *site,sqlite3_int64 world,i
     if(!strcmp(t.w.kind,"interactive"))pi=wl_first(&t);else for(int i=0;i<t.np&&pi<0;i++)if(wl_open(&t.p[i],today))pi=i;
     printf("<article class=\"aw-piece aw-work\" id=\"piece-%d\" data-kind=\"text\" data-world-piece=\"",position);html(ref);fputs("\" data-work-kind=\"",stdout);html(t.w.kind);
     fputs("\" data-shown=\"text\"><div class=\"aw-words\"><p class=\"aw-role\">",stdout);world_web_words(role);fputs("</p><h2><a href=\"",stdout);wl_read_href(home,work,NULL);fputs("\">",stdout);html(t.w.title);fputs("</a></h2>",stdout);
-    wl_credit(&t.w);if(note&&*note){fputs("<p class=\"aw-note\">",stdout);html(note);fputs("</p>",stdout);}
+    wl_credit(&t.w);if(note&&*note){ui_text(stdout, "p", "aw-note", note);}
     wl_recitation(db,&t.w);
     if(pi>=0&&wl_is_poem(t.w.kind))wl_text(&t,pi,0);
     else if(pi>=0){ /* the opening paragraph, then the way in */
@@ -325,7 +325,7 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
             fputs("</li>",stdout);}
         fputs("</ol>",stdout);
         if(first_open>=0){fputs("<p><a class=\"aw-door\" href=\"",stdout);wl_read_href(space,work,t.p[first_open].passage);fputs("\">Start reading</a></p>",stdout);}
-        else fputs("<p class=\"aw-note\">Nothing is out yet.</p>",stdout);
+        else ui_text(stdout, "p", "aw-note", "Nothing is out yet.");
         fputs("</nav>",stdout);
     }else{
         fputs("<article class=\"aw-text\" id=\"aw-text\" data-passage=\"",stdout);html(t.p[pi].passage);fputs("\">",stdout);wl_text(&t,pi,1);fputs("</article>",stdout);
@@ -510,7 +510,7 @@ static void wl_diff(const char *old,const char *now){
     enum{MAXL=600};const char *a[MAXL],*b[MAXL];size_t al[MAXL],bl[MAXL];int na=0,nb=0;
     for(const char *p=old;*p&&na<MAXL;){const char *e=strchr(p,'\n');a[na]=p;al[na++]=e?(size_t)(e-p):strlen(p);if(!e)break;p=e+1;}
     for(const char *p=now;*p&&nb<MAXL;){const char *e=strchr(p,'\n');b[nb]=p;bl[nb++]=e?(size_t)(e-p):strlen(p);if(!e)break;p=e+1;}
-    if(na>=MAXL||nb>=MAXL){fputs("<p class=\"aw-terms\">Too long to compare line by line here.</p>",stdout);return;}
+    if(na>=MAXL||nb>=MAXL){ui_text(stdout, "p", "aw-terms", "Too long to compare line by line here.");return;}
     short *L=calloc((size_t)(na+1)*(size_t)(nb+1),sizeof(short));if(!L)return;
     #define LL(i,j) L[(size_t)(i)*(size_t)(nb+1)+(size_t)(j)]
     for(int i=na-1;i>=0;i--)for(int j=nb-1;j>=0;j--)LL(i,j)=al[i]==bl[j]&&!memcmp(a[i],b[j],al[i])?(short)(LL(i+1,j+1)+1):(LL(i+1,j)>=LL(i,j+1)?LL(i+1,j):LL(i,j+1));
@@ -586,7 +586,7 @@ static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id
                     fputs("<li><div>",stdout);html(t.c[c].label);fputs(" &rarr; ",stdout);html(to>=0&&t.p[to].title[0]?t.p[to].title:t.c[c].target);fputs("</div>",stdout);
                     wl_form(site_id,world,space,"unchoice",revision,NULL);ph_hidden("work",w->work);ph_hidden("passage",x->passage);char cn[4];snprintf(cn,sizeof(cn),"%d",t.c[c].number);ph_hidden("number",cn);
                     fputs("<button type=\"submit\" class=\"aw-quiet\">Remove</button></form></li>",stdout);}
-                if(nc)fputs("</ol>",stdout);else fputs("<p>No choices: this passage is an ending.</p>",stdout);
+                if(nc)fputs("</ol>",stdout);else ui_text(stdout, "p", NULL, "No choices: this passage is an ending.");
                 int free_n=0;for(int k=1;k<=AWL_CHOICE_LIMIT&&!free_n;k++)if(!used[k])free_n=k;
                 if(free_n){wl_form(site_id,world,space,"choice",revision,"choice");ph_hidden("work",w->work);ph_hidden("passage",x->passage);char cn[4];snprintf(cn,sizeof(cn),"%d",free_n);ph_hidden("number",cn);
                     fputs("<div class=\"aw-row\"><label>A choice readers can make<input name=\"label\" required maxlength=\"200\"></label><label>Leads to<select name=\"target\">",stdout);

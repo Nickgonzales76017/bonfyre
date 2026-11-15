@@ -146,7 +146,7 @@ static int page_emit_media_spaces(sqlite3 *db,const char *route,const char *quer
         if(events){
             fputs("<p><time datetime=\"",stdout);html(starts);fputs("\">",stdout);html(starts);fputs("</time>",stdout);
             if(venue&&*venue){fputs(" &middot; ",stdout);html(venue);}fputs("</p>",stdout);
-        }else if(lede&&*lede){fputs("<p>",stdout);html(lede);fputs("</p>",stdout);}
+        }else if(lede&&*lede){ui_text(stdout, "p", NULL, lede);}
         if(events)page_media_screening_record(archive,film_ref);
         fputs("<p><a href=\"",stdout);page_media_space_link(publisher,space,NULL);
         fputs("\">Open published space</a> &middot; <a href=\"https://",stdout);html(publisher);
@@ -279,7 +279,7 @@ static void ms_excerpt(const PageItem *it,const char *cls){
 }
 static void ms_when(const PageItem *it,time_t now){
     char when[48];page_when(it->at,now,when,sizeof(when));
-    if(when[0]){fputs("<time>",stdout);html(when);fputs("</time>",stdout);}
+    if(when[0]){ui_text(stdout, "time", NULL, when);}
 }
 static void ms_dur(const PageItem *it){
     if(it->duration_ms<=0)return;
@@ -335,12 +335,12 @@ static void ms_narrowed(const char *route,const char *from,const char *q){
     fputs("&middot; <a href=\"",stdout);html(route);fputs("\">Show all</a></p>",stdout);
 }
 static void ms_empty(const char *what){
-    fputs("<p class=\"ms-empty\">",stdout);html(what);fputs("</p>",stdout);
+    ui_text(stdout, "p", "ms-empty", what);
 }
 static void ms_section_head(const char *kicker,const char *title,const char *aside){
     fputs("<header class=\"ms-sh\"><div><p class=\"ms-kicker\">",stdout);html(kicker);
     fputs("</p><h2>",stdout);html(title);fputs("</h2></div>",stdout);
-    if(aside&&*aside){fputs("<p class=\"ms-aside\">",stdout);html(aside);fputs("</p>",stdout);}
+    if(aside&&*aside){ui_text(stdout, "p", "ms-aside", aside);}
     fputs("</header>",stdout);
 }
 
@@ -359,7 +359,7 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
     fputs("<header class=\"ms-head\"><p class=\"ms-kicker\"><i class=\"ms-dot\"></i>",stdout);
     fputs(strcmp(host,"aurekai.work")?"Live &middot; listening queue":"Work &middot; listening queue",stdout);
     fputs("</p><h1>",stdout);html(title);fputs("</h1>",stdout);
-    if(lede&&*lede){fputs("<p class=\"ms-lede\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     printf("<ul class=\"ms-stats\"><li><b>%d</b> publishers</li><li><b>%d</b> recordings</li>",ms_publishers(l),recordings);
     if(narrated)printf("<li><b>%d</b> read aloud</li>",narrated);
     if(total_ms>=60000)printf("<li><b>%ld</b> hours to hear</li>",total_ms/3600000+(total_ms%3600000>=1800000));
@@ -373,9 +373,9 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
     ms_img(lead,640,"ms-cover");
     fputs("<p class=\"ms-badge\"><i class=\"ms-dot\"></i>Up first</p><p class=\"ms-now-src\"><small>From</small><b>",stdout);
     html(ms_from(lead));fputs("</b></p></div><div class=\"ms-now-body\"><p class=\"ms-meta\">",stdout);
-    if(lead->group[0]){fputs("<span class=\"ms-tag\">",stdout);html(lead->group);fputs("</span>",stdout);}
+    if(lead->group[0]){ui_text(stdout, "span", "ms-tag", lead->group);}
     ms_when(lead,now);ms_dur(lead);fputs("</p><h2>",stdout);ms_title_link(lead);fputs("</h2>",stdout);
-    if(lead->by[0]){fputs("<p class=\"ms-by\">",stdout);html(lead->by);fputs("</p>",stdout);}
+    if(lead->by[0]){ui_text(stdout, "p", "ms-by", lead->by);}
     ms_excerpt(lead,"ms-excerpt");
     ms_wave(lead,64);
     fputs("<div class=\"ms-controls\">",stdout);
@@ -450,7 +450,7 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
     if(!lead&&l->count)lead=l->item[0];
     fputs("<header class=\"ms-head ms-head-slim\"><p class=\"ms-kicker\"><i class=\"ms-dot\"></i>Live &middot; music</p><h1>",stdout);
     html(title);fputs("</h1>",stdout);
-    if(lede&&*lede){fputs("<p class=\"ms-lede\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     ms_narrowed(route,from,q);fputs("</header>",stdout);
     if(!lead){ms_empty("No music has been released here yet.");return;}
     fputs("<div class=\"ms-music-grid\"><aside class=\"ms-library\" aria-label=\"Library\"><section><p class=\"ms-kicker\">Library</p><ul>",stdout);
@@ -472,11 +472,11 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
     fputs("</ul></section><section><p class=\"ms-kicker\">Yours</p><ul><li><a href=\"/profile\">Your page</a></li><li><a href=\"/apps\">Your tools</a></li><li><a href=\"/listen\">Listening queue</a></li></ul></section></aside>",stdout);
     fputs("<div class=\"ms-music-main\"><section class=\"ms-record\" aria-label=\"On the turntable\"><div class=\"ms-record-art\">",stdout);
     ms_img(lead,560,"ms-cover");fputs("</div><div class=\"ms-record-body\"><p class=\"ms-meta\">",stdout);
-    if(lead->group[0]){fputs("<span class=\"ms-tag\">",stdout);html(lead->group);fputs("</span>",stdout);}
+    if(lead->group[0]){ui_text(stdout, "span", "ms-tag", lead->group);}
     ms_when(lead,now);fputs("</p><h2>",stdout);ms_title_link(lead);fputs("</h2>",stdout);
-    if(lead->by[0]){fputs("<p class=\"ms-by\">",stdout);html(lead->by);fputs("</p>",stdout);}
+    if(lead->by[0]){ui_text(stdout, "p", "ms-by", lead->by);}
     ms_excerpt(lead,"ms-excerpt");
-    if(lead->rights[0]){fputs("<p class=\"ms-rights\">",stdout);html(lead->rights);fputs("</p>",stdout);}
+    if(lead->rights[0]){ui_text(stdout, "p", "ms-rights", lead->rights);}
     fputs("<div class=\"ms-controls\">",stdout);
     if(ms_playable(lead)){fputs("<button type=\"button\" class=\"ms-primary\"",stdout);ms_track(lead,1);fputs(">",stdout);page_glyph("play");fputs("Play</button>",stdout);}
     ms_keep(lead,route,0);ms_make();
@@ -543,7 +543,7 @@ static void ms_cinema_card(const PageItem *it,time_t now,int width){
     fputs("<li><div class=\"ms-card-art\">",stdout);
     const char *close=page_emit_item_open(it,"ms-art-link");ms_img(it,width,"ms-cover");fputs(close,stdout);
     if(it->duration_ms>0){fputs("<span class=\"ms-over\">",stdout);page_emit_duration(it->duration_ms);fputs("</span>",stdout);}
-    if(it->rights[0]){fputs("<span class=\"ms-over ms-over-l\">",stdout);html(it->rights);fputs("</span>",stdout);}
+    if(it->rights[0]){ui_text(stdout, "span", "ms-over ms-over-l", it->rights);}
     fputs("</div><p class=\"ms-kicker\">",stdout);html(ms_from(it));fputs("</p><h3>",stdout);ms_title_link(it);fputs("</h3>",stdout);
     ms_excerpt(it,"ms-card-text");
     fputs("<footer><span>",stdout);if(it->by[0]&&strcmp(it->by,ms_from(it)))html(it->by);else ms_when(it,now);fputs("</span>",stdout);
@@ -560,7 +560,7 @@ static void ms_cinema(const MsList *l,const MsList *sound,const char *route,cons
     const char *territory=strcmp(host,"aurekai.work")?"Live":"Work";
     if(!lead){
         fputs("<header class=\"ms-head\"><p class=\"ms-kicker\"><i class=\"ms-dot\"></i>",stdout);html(territory);fputs("</p><h1>",stdout);html(title);fputs("</h1>",stdout);
-        if(lede&&*lede){fputs("<p class=\"ms-lede\">",stdout);html(lede);fputs("</p>",stdout);}
+        if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
         ms_narrowed(route,from,q);fputs("</header>",stdout);
         ms_empty("Nothing has been released here yet.");return;
     }
@@ -568,12 +568,12 @@ static void ms_cinema(const MsList *l,const MsList *sound,const char *route,cons
     fputs("<section class=\"ms-marquee\" aria-label=\"Featured\">",stdout);
     if(page_image_url_safe(sized))page_emit_picture(sized,"ms-marquee-bg");
     fputs("<div class=\"ms-marquee-body\"><p class=\"ms-meta\"><span class=\"ms-tag\"><i class=\"ms-dot\"></i>",stdout);html(territory);fputs(" &middot; ",stdout);html(title);fputs("</span>",stdout);
-    if(lead->group[0]){fputs("<span class=\"ms-tag ms-tag-quiet\">",stdout);html(lead->group);fputs("</span>",stdout);}
+    if(lead->group[0]){ui_text(stdout, "span", "ms-tag ms-tag-quiet", lead->group);}
     fputs("</p><h1>",stdout);ms_title_link(lead);fputs("</h1><p class=\"ms-facts\">",stdout);
-    fputs("<span>",stdout);html(ms_from(lead));fputs("</span>",stdout);ms_when(lead,now);ms_dur(lead);
-    if(lead->rights[0]){fputs("<span class=\"ms-chip\">",stdout);html(lead->rights);fputs("</span>",stdout);}
+    ui_text(stdout, "span", NULL, ms_from(lead));ms_when(lead,now);ms_dur(lead);
+    if(lead->rights[0]){ui_text(stdout, "span", "ms-chip", lead->rights);}
     fputs("</p>",stdout);
-    if(lead->body[0])ms_excerpt(lead,"ms-lede");else if(lede&&*lede){fputs("<p class=\"ms-lede\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lead->body[0])ms_excerpt(lead,"ms-lede");else if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     fputs("<div class=\"ms-controls\">",stdout);
     if(page_item_has_page(lead)){fputs("<a class=\"ms-primary\" href=\"/o/",stdout);page_url_escape(lead->source);fputs("/",stdout);page_url_escape(lead->key);fputs("\">",stdout);page_glyph("play");fputs("Watch</a>",stdout);}
     else if(public_http_url(lead->href)){fputs("<a class=\"ms-primary\" rel=\"noopener\" href=\"",stdout);html(lead->href);fputs("\">",stdout);page_glyph("play");fputs("Watch at the publisher</a>",stdout);}
@@ -645,7 +645,7 @@ static void ms_art(const MsList *l,const char *route,const char *title,const cha
     if(!lead&&l->count)lead=l->item[0];
     fputs("<header class=\"ms-head ms-mono-head\"><div><p class=\"ms-kicker\"><i class=\"ms-dot\"></i>Live &middot; monograph of the visual commons</p><h1>",stdout);
     html(title);fputs("</h1>",stdout);
-    if(lede&&*lede){fputs("<p class=\"ms-lede\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     ms_narrowed(route,from,q);
     fputs("</div><div class=\"ms-controls ms-controls-col\"><button type=\"button\" class=\"ms-primary\" data-ak-track data-narrate=\".ms-art-text\" data-title=\"",stdout);
     html(title);fputs("\" data-by=\"Aurekai\">",stdout);page_glyph("listen");fputs("Hear this page read</button>",stdout);

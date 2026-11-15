@@ -61,3 +61,10 @@ store_schemas: "cmd/BonfyreQueue": {
 		},
 	]
 }
+
+// The account's work source, read beside the queue store when its work is listed.
+store_schemas: "cmd/BonfyreQueue": stores: account_work_source: {
+	kind:  "sqlite"
+	macro: "QUEUE_WORK_SOURCE"
+	attach: {as: "src"}
+}

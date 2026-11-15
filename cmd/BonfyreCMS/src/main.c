@@ -71,10 +71,12 @@
 #include "provenance.h"
 #include "transfer.h"
 #include "compact_bindings.h"
+#include "bf_store_durability.h"
 #include "bench_metrics.h"
 #include <bonfyre.h>
 #include "entry_snapshot.h"
-#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
+#include "../generated/store_schema.h"  /* store DDL and durability: schemas/storage/stores */
+static const BfStoreDurability cms_store_durability = BF_STORE_CMS_DB_DURABILITY;
 
 #define VERSION "0.1.0"
 #define MAX_BODY   (1024 * 1024)   /* 1 MB max request body */
@@ -4490,13 +4492,12 @@ int main(int argc, char **argv) {
         db_exec(g_db, "PRAGMA temp_store=MEMORY;");
         db_exec(g_db, "PRAGMA cache_size=-32768;");
     } else {
-        /* Reclaim recycled WAL high-water marks instead of retaining gigabytes.
-         * Passive checkpoints do not truncate a WAL by default. This is a
-         * per-writer connection policy, not a cap on in-flight transactions. */
-        if (db_exec(g_db, "PRAGMA journal_mode=WAL;") ||
-            db_exec(g_db, "PRAGMA synchronous=NORMAL;") ||
-            db_exec(g_db, "PRAGMA wal_autocheckpoint=1000;") ||
-            db_exec(g_db, "PRAGMA journal_size_limit=67108864;")) {
+        /* The store's journal policy is declared once (schemas/storage/stores,
+         * store cms) and applied here: WAL, passive checkpoints, a bounded
+         * high-water mark, and a TRUNCATE checkpoint once a starved WAL passes
+         * the declared page count. A per-writer policy, not a cap on what a
+         * transaction may write. */
+        if (bf_store_writer(g_db, &cms_store_durability)) {
             fputs("[fatal] CMS WAL retention policy unavailable\n", stderr);
             sqlite3_close(g_db);
             free(schemas_dir_owned);

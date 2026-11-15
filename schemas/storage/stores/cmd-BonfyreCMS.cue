@@ -468,3 +468,24 @@ store_schemas: "cmd/BonfyreCMS": {
 		},
 	]
 }
+
+// The CMS store: written by BonfyreCMS, read and written per request by the
+// WebAddress serve workers. Its WAL once grew to 13 GB beside an 837 MB store
+// because a reader's snapshot kept every checkpoint from restarting the log;
+// the writer forces a TRUNCATE past wal_truncate_pages and the workers close
+// what a request left open (bf_store_durability.h).
+store_schemas: "cmd/BonfyreCMS": stores: cms: {
+	kind:      "sqlite"
+	macro:     "CMS_DB"
+	env:       "BONFYRE_CMS_DB"
+	opened_by: ["cmd/BonfyreWebAddress"]
+	durability: {
+		journal_mode:       "WAL"
+		synchronous:        "NORMAL"
+		wal_autocheckpoint: 1000
+		journal_size_limit: 67108864
+		wal_truncate_pages: 16384
+		busy_timeout_ms:    5000
+		read_txn_max_ms:    120000
+	}
+}

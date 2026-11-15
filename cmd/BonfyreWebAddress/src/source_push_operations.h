@@ -126,7 +126,7 @@ static void spo_material_demands(sqlite3 *db,const char *q,const char *state,uns
         printf("%d",sqlite3_column_int(st,4));
         fputs("</dd></div></dl></li>",stdout);
     }
-    if(!n)fputs("<li>No material observation demands match this view.</li>",stdout);
+    if(!n)ui_text(stdout, "li", NULL, "No material observation demands match this view.");
     fputs("</ol>",stdout);
     spo_page_links(q,state,page,dpage,fpage,1,step==SQLITE_ROW);
     fputs("</section>",stdout);
@@ -162,7 +162,7 @@ static void spo_fact_handoffs(sqlite3 *db,const char *q,const char *state,unsign
         printf("%d",sqlite3_column_int(st,2));
         fputs("</dd></div><div><dt>Standing</dt><dd>Pending downstream notification</dd></div></dl></li>",stdout);
     }
-    if(!n)fputs("<li>No pending native FactDelta handoffs match this view.</li>",stdout);
+    if(!n)ui_text(stdout, "li", NULL, "No pending native FactDelta handoffs match this view.");
     fputs("</ol>",stdout);
     spo_page_links(q,state,page,dpage,fpage,2,step==SQLITE_ROW);
     fputs("</section>",stdout);
@@ -294,7 +294,7 @@ static int serve_source_push_operations(const BfRequest *r) {
     }
     int more=rc==SQLITE_ROW;
     sqlite3_finalize(st);
-    if(!n)fputs("<li>No matching subscriptions in the retained native carrier.</li>",stdout);
+    if(!n)ui_text(stdout, "li", NULL, "No matching subscriptions in the retained native carrier.");
     fputs("</ol>",stdout);
     spo_page_links(q,state,page,dpage,fpage,0,more);
     fputs("</section>",stdout);

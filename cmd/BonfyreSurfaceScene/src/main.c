@@ -12,6 +12,7 @@
 #include "bonfyre.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include "authoring_markdown.h"
+#include "numeric_presentation.h"
 
 typedef struct { char *p; size_t n, cap; } Buf;
 
@@ -374,7 +375,7 @@ static int drain_handoffs(const char *dbpath,const char *ns,const char *scope,co
     return failed?6:0;
 }
 
-static void usage(void){fprintf(stderr,"usage: bonfyre-surface-scene <compile|sync|sync-all|lower|drain> --db FILE [--ns NS] [--site ID] [--world ID] [--subject ADDRESS] [--actor-scope public] [--frontier REF] [--intent TEXT] [--handoff FILE|--lowerer-dir DIRECTORY] [--limit N]\n       bonfyre-surface-scene render-md [--max-html N] < input.md > output.html\n");}
+static void usage(void){fprintf(stderr,"usage: bonfyre-surface-scene <compile|sync|sync-all|lower|drain> --db FILE [--ns NS] [--site ID] [--world ID] [--subject ADDRESS] [--actor-scope public] [--frontier REF] [--intent TEXT] [--handoff FILE|--lowerer-dir DIRECTORY] [--limit N]\n       bonfyre-surface-scene render-md [--max-html N] < input.md > output.html\n       bonfyre-surface-scene numeric <verb> ... < input.json (layout vocabulary: schemas/control/numeric-presentation.cue)\n");}
 
 static int render_md(int argc,char **argv){
     long cap=262144;const char *m=opt(argc,argv,"--max-html",NULL);
@@ -390,10 +391,11 @@ static int render_md(int argc,char **argv){
 
 int main(int argc,char **argv){
     if(argc<2){usage();return 2;}
-    enum{SS_COMPILE,SS_DRAIN,SS_LOWER,SS_RENDER_MD,SS_SYNC,SS_SYNC_ALL};
-    static const BfCommandEntry scene_commands[]={{"compile",SS_COMPILE,0,NULL},{"drain",SS_DRAIN,0,NULL},{"lower",SS_LOWER,0,NULL},{"render-md",SS_RENDER_MD,0,NULL},{"sync",SS_SYNC,0,NULL},{"sync-all",SS_SYNC_ALL,0,NULL}};
+    enum{SS_COMPILE,SS_DRAIN,SS_LOWER,SS_NUMERIC,SS_RENDER_MD,SS_SYNC,SS_SYNC_ALL};
+    static const BfCommandEntry scene_commands[]={{"compile",SS_COMPILE,0,NULL},{"drain",SS_DRAIN,0,NULL},{"lower",SS_LOWER,0,NULL},{"numeric",SS_NUMERIC,0,NULL},{"render-md",SS_RENDER_MD,0,NULL},{"sync",SS_SYNC,0,NULL},{"sync-all",SS_SYNC_ALL,0,NULL}};
     const BfCommandEntry *command=bf_command_lookup(scene_commands,sizeof(scene_commands)/sizeof(scene_commands[0]),argv[1]);
     if(command&&command->id==SS_RENDER_MD)return render_md(argc,argv);
+    if(command&&command->id==SS_NUMERIC)return bf_numeric_main(argc-1,argv+1,argv[0]);
     const char *db=opt(argc,argv,"--db",NULL);if(!db){usage();return 2;}
     schemas_dir_arg=opt(argc,argv,"--schemas",NULL);
     scene_schema_arg=opt(argc,argv,"--scene-schema",NULL);

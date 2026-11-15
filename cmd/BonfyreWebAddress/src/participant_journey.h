@@ -126,7 +126,7 @@ static void pj_document(const PjRecord *r){
         fputs(r->kind==PJ_COMMUNITY?"community/":"publication_occurrence/",stdout);url_query_value(r->target);
         fputs("\">Open the full ",stdout);fputs(r->kind==PJ_COMMUNITY?"community":"source",stdout);fputs(" page</a>",stdout);
         if(pj_external_link(r->href)){fputs("<p><a class=\"pj-source-link\" target=\"_blank\" rel=\"noopener noreferrer\" href=\"",stdout);html(r->href);fputs("\">Visit the original publisher ↗</a></p>",stdout);}
-    }else fputs("<p class=\"pj-notice\">This source is no longer public. Your private record remains available; it does not reveal the withdrawn content.</p>",stdout);
+    }else ui_text(stdout, "p", "pj-notice", "This source is no longer public. Your private record remains available; it does not reveal the withdrawn content.");
     fputs("<p class=\"pj-notice\">",stdout);
     html(r->kind==PJ_COMMUNITY?"Your request is kept in Aurekai. It does not join or contact a community on another site.":"Keep this in your private activity. Registration and subscriptions on the original site remain separate.");
     fputs("</p></section><aside class=\"pj-state\" aria-label=\"Your participation\"><h2>",stdout);html(pj_state_label(r));fputs("</h2>",stdout);
@@ -134,7 +134,7 @@ static void pj_document(const PjRecord *r){
         if(pj_login_url(path,login)){fputs("<p>Sign in to keep this choice in your account. You will return to this same page before anything changes.</p><a class=\"pj-button\" data-participant-signin href=\"",stdout);html(login);fputs("\">Sign in to continue</a>",stdout);}
     }else{
         if(r->present){fputs("<p>Kept for you<time>",stdout);html(r->began);fputs("</time></p>",stdout);}
-        if(r->kind==PJ_COMMUNITY&&!strcmp(r->state,"requested")&&!strcmp(r->status,"published"))fputs("<p>Your request is saved in Aurekai. Membership has not been accepted yet.</p>",stdout);
+        if(r->kind==PJ_COMMUNITY&&!strcmp(r->state,"requested")&&!strcmp(r->status,"published"))ui_text(stdout, "p", NULL, "Your request is saved in Aurekai. Membership has not been accepted yet.");
         if(r->kind==PJ_COMMUNITY&&!strcmp(r->state,"active"))fputs(r->expired?"<p>This membership's expiry has passed. Its community manages renewal.</p>":"<p>Your membership is active. Open the community to continue.</p>",stdout);
         if(r->managed&&r->visible){
             fputs("<p>Manage your participation from the community itself.</p><a class=\"pj-button\" href=\"/community?community=",stdout);
@@ -206,7 +206,7 @@ static void pj_profile_url(const char *site,PjKind kind,const char *q,sqlite3_in
 /* Private read projection: the root participation actor is the authenticated
  * user, independent from the selected public profile/site's person identity. */
 static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,const char *q,sqlite3_int64 cursor){
-    if(!db||uid<1){fputs("<p>Your private activity could not be read.</p>",stdout);return;}
+    if(!db||uid<1){ui_text(stdout, "p", NULL, "Your private activity could not be read.");return;}
     if(!pj_kind_name(kind)[0])kind=PJ_OCCURRENCE;
     char actor[64];snprintf(actor,sizeof(actor),"user:%ld",uid);
     fputs("<section class=\"pj-activity\" data-private-participation><h2>My activity</h2><p class=\"pj-notice\">Only you can see this activity. Switching profile sites does not publish it.</p><nav class=\"pj-filter\" aria-label=\"Activity type\">",stdout);
@@ -238,7 +238,7 @@ static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,co
         fputs("</p></div><aside><span class=\"pj-status\">",stdout);html(pj_state_label(&r));fputs("</span><a href=\"",stdout);html(path);fputs("\">Open this activity →</a></aside></article>",stdout);
     }
     sqlite3_finalize(s);
-    if(step!=SQLITE_DONE&&step!=SQLITE_ROW)fputs("<p>The activity page could not be read completely. Reload before treating it as a complete list.</p>",stdout);
+    if(step!=SQLITE_DONE&&step!=SQLITE_ROW)ui_text(stdout, "p", NULL, "The activity page could not be read completely. Reload before treating it as a complete list.");
     else if(!count)fputs("<div class=\"pj-empty\"><h3>No matching activity</h3><p>Follow a public source or request participation from its community page. Return here to see its current state.</p><a href=\"/discover\">Explore public material</a></div>",stdout);
     if(more){fputs("<a class=\"pj-more\" href=\"",stdout);pj_profile_url(site,kind,q,last);fputs("\">Earlier activity</a>",stdout);}
     fputs("</section>",stdout);

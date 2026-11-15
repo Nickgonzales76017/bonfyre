@@ -18,7 +18,15 @@ measure(){
   printf 'route_path_compares\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -oE 'str(n)?cmp\((target|path),"/[^"]*"' | wc -l | tr -d ' ')"
   printf 'cli_verb_ladders\t%s\n' "$(grep -rhoE 'strcmp\((argv\[[0-9]\]|cmd|verb|command|sub|op), ?"[a-z][a-z0-9-]*"\)' "$root"/cmd/*/src "$root"/components/*/src 2>/dev/null | wc -l | tr -d ' ')"
   printf 'handwritten_ddl\t%s\n' "$(find "$root"/cmd/*/src "$root"/components/*/src -type f \( -name '*.c' -o -name '*.h' \) -exec cat {} + 2>/dev/null | grep -o 'CREATE TABLE' | wc -l | tr -d ' ')"
-  printf 'hand_printed_controls\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h | grep -oE '<(button|input|select|textarea|form)[ >]' | wc -l | tr -d ' ')"
+  # Store shapes written by hand instead of declared as a store kind in
+  # schemas/storage/stores: virtual/vector table DDL, ATTACH statements and
+  # parquet reads in C sources (generated headers are not counted).
+  printf 'handwritten_store_shapes\t%s\n' "$(find "$root"/cmd/*/src "$root"/components/*/src -type f \( -name '*.c' -o -name '*.h' \) -exec cat {} + 2>/dev/null | grep -oE 'CREATE VIRTUAL TABLE|USING vec0|"ATTACH |read_parquet\(' | wc -l | tr -d ' ')"
+  # ui_tree.h is the builder layer pages call instead; its own tags are the one copy.
+  printf 'hand_printed_controls\t%s\n' "$(ls "$root"/cmd/BonfyreWebAddress/src/*.h | grep -v '/ui_tree\.h$' | xargs cat | grep -oE '<(button|input|select|textarea|form)[ >]' | wc -l | tr -d ' ')"
+  # Markup printed tag by tag instead of through the shared builders
+  # (src/ui_tree.h, form_tree.h, the SurfaceScene component vocabulary).
+  printf 'hand_printed_markup\t%s\n' "$(ls "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -v '/ui_tree\.h$' | xargs cat | grep -oE '(fputs|printf)\("<|fprintf\([a-z_>.-]+, ?"<' | wc -l | tr -d ' ')"
   printf 'hardcoded_hosts\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -oE 'https://[a-z]*\.?aurekai\.(work|life|live|shop)' | wc -l | tr -d ' ')"
 }
 case "${1:-check}" in

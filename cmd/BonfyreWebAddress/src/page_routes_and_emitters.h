@@ -725,8 +725,8 @@ static int page_emit_around_precomputed(const char *source, const char *key, con
         if (kind && !strcmp(kind, "event") && at > 0) {
             char when[48];
             page_when_ahead(at, at + 86400, now, when, sizeof(when));
-            fputs("<span>", stdout); html(when); fputs("</span>", stdout);
-        } else if (by && *by) { fputs("<span>", stdout); html(by); fputs("</span>", stdout); }
+            ui_text(stdout, "span", NULL, when);
+        } else if (by && *by) { ui_text(stdout, "span", NULL, by); }
         fputs("</span></li>", stdout);
     }
     if (shown) fputs("</ol><p class=\"src\">Distance is between the two points these sources state; being near something is not being about it.</p></section>", stdout);
@@ -769,11 +769,11 @@ static int page_emit_kin(const char *source, const char *key, const char *not_id
         if (not_ident && *not_ident && ident && !strcmp(ident, not_ident)) continue;
         if (!shown++) fputs("<section class=\"region region-kin\"><h2 class=\"region-label\">Also reported by</h2><ol class=\"more kin\">", stdout);
         fputs(image && page_image_url_safe(image) ? "<li class=\"with-picture\">" : "<li>", stdout);
-        fputs("<a href=\"/", stdout); html(kin); fputs("\">", stdout); html(title); fputs("</a>", stdout);
+        ui_link_path(stdout, (const char *const[]){"/", kin}, 2, title);
         if (image && page_image_url_safe(image)) { char sized[1024]; page_picture_at(image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
         fputs("<span class=\"by\">", stdout);
-        if (publisher && *publisher) { fputs("<span>", stdout); html(publisher); fputs("</span>", stdout); }
-        else if (by && *by) { fputs("<span>", stdout); html(by); fputs("</span>", stdout); }
+        if (publisher && *publisher) { ui_text(stdout, "span", NULL, publisher); }
+        else if (by && *by) { ui_text(stdout, "span", NULL, by); }
         fputs("</span></li>", stdout);
     }
     if (shown)
@@ -832,7 +832,7 @@ static int page_emit_around(sqlite3 *db, double lat, double lon, const char *not
         if (item->kind == BF_PAGE_MATERIAL_EVENT && item->at > 0) {
             char when[48];
             page_when_ahead(item->at, item->duration_ms > 0 ? item->at + item->duration_ms / 1000 : item->at + 86400, now, when, sizeof(when));
-            fputs("<span>", stdout); html(when); fputs("</span>", stdout);
+            ui_text(stdout, "span", NULL, when);
         } else page_emit_by(item, now);
         fputs("</span></li>", stdout);
     }
@@ -1044,9 +1044,9 @@ static int page_emit_entities(const char *title) {
             fputs("\" rel=\"noopener noreferrer\" target=\"_blank\">", stdout); html(tag);
             fputs("</a></span>", stdout);
         }
-        if (has_where) { fputs("<span>", stdout); html(where); fputs("</span>", stdout); }
-        if (has_tag && tag_from[0]) { fputs("<span>", stdout); html(tag_from); fputs("</span>", stdout); }
-        else if (has_where && where_from[0]) { fputs("<span>", stdout); html(where_from); fputs("</span>", stdout); }
+        if (has_where) { ui_text(stdout, "span", NULL, where); }
+        if (has_tag && tag_from[0]) { ui_text(stdout, "span", NULL, tag_from); }
+        else if (has_where && where_from[0]) { ui_text(stdout, "span", NULL, where_from); }
         fputs("</span></li>", stdout);
     }
     sqlite3_finalize(st);
@@ -1599,8 +1599,8 @@ static void page_emit_reuse(const PageItem *item) {
             fputs("<ul class=\"terms-list\">", stdout);
             fputs(licence->commercial ? "<li>You may use it in something you sell.</li>" : "<li>Not for commercial use.</li>", stdout);
             fputs(licence->adapt ? "<li>You may crop, edit or remix it.</li>" : "<li>Use it as it is, without changes.</li>", stdout);
-            if (licence->credit) fputs("<li>Credit who made it.</li>", stdout);
-            if (licence->share_alike) fputs("<li>Share what you make from it under the same terms.</li>", stdout);
+            if (licence->credit) ui_text(stdout, "li", NULL, "Credit who made it.");
+            if (licence->share_alike) ui_text(stdout, "li", NULL, "Share what you make from it under the same terms.");
             fputs("</ul>", stdout);
         }
         fputs("<p>Credit it like this wherever you use it:</p><input readonly value=\"", stdout);
@@ -1709,7 +1709,7 @@ static void page_emit_pictures_of(sqlite3 *db, const PageItem *item, time_t now)
             fputs("<figure class=\"photo\">", stdout); close = page_emit_item_open(it, NULL);
             page_emit_picture(it->image, "picture");
             fputs("<figcaption>", stdout); html(it->title); fputs("<span class=\"by\">", stdout); page_emit_by(it, now);
-            if (it->rights[0]) { fputs("<span class=\"terms\">", stdout); html(it->rights); fputs("</span>", stdout); }
+            if (it->rights[0]) { ui_text(stdout, "span", "terms", it->rights); }
             fputs("</span></figcaption>", stdout); fputs(close, stdout); fputs("</figure>", stdout);
         }
         fputs("</div></section>", stdout);
@@ -2013,8 +2013,8 @@ static void item_like_card(const PageItem *other, time_t now) {
     const char *close; char host[128];
     fputs("<li>", stdout); close = page_emit_item_open(other, NULL);
     if (page_image_url_safe(other->image)) page_emit_picture(other->image, "like-picture");
-    else { page_publisher(other->href, host, sizeof(host)); fputs("<span class=\"like-picture is-empty\">", stdout); html(host[0] ? host : other->note); fputs("</span>", stdout); }
-    fputs("<b>", stdout); html(other->title); fputs("</b>", stdout); fputs(close, stdout);
+    else { page_publisher(other->href, host, sizeof(host)); ui_text(stdout, "span", "like-picture is-empty", host[0] ? host : other->note); }
+    ui_text(stdout, "b", NULL, other->title); fputs(close, stdout);
     fputs("<span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span></li>", stdout);
 }
 static int emit_item_page(const BfRequest *r) {
@@ -2161,10 +2161,10 @@ static int emit_item_page(const BfRequest *r) {
         goto done;
     }
     fputs("<p class=\"crumbs\">", stdout);
-    if (program) { fputs("<a href=\"", stdout); html(program->route); fputs("\">", stdout); html(program->title); fputs("</a>", stdout); }
+    if (program) { ui_link(stdout, program->route, NULL, program->title); }
     if (item->note[0]) { fputs(" &middot; ", stdout); page_emit_filter_link(&(PageEmitContext){.route = program ? program->route : "/search", .now = now, .db = NULL, .surface_scene = NULL}, "from", item->note); html(item->note); fputs("</a>", stdout); }
     fputs("</p>", stdout);
-    if (snapshot) fputs("<p class=\"narrowed\">You saved this. Its source has moved on, so this is what it published when you kept it.</p>", stdout);
+    if (snapshot) ui_text(stdout, "p", "narrowed", "You saved this. Its source has moved on, so this is what it published when you kept it.");
     fputs("<article class=\"thing\">", stdout);
     {
         char embed[1100];
@@ -2250,7 +2250,7 @@ static int emit_item_page(const BfRequest *r) {
         page_emit_by(&shown, now);
     }
     fputs("</p>", stdout);
-    if (from_projection) fputs("<p class=\"narrowed\">Read from a public source earlier. Its current version may differ.</p>", stdout);
+    if (from_projection) ui_text(stdout, "p", "narrowed", "Read from a public source earlier. Its current version may differ.");
     if (from_archive) {
         /* Kept, not current: this estate read it, and its source has since
          * moved on.  The link still goes to the source, which may have moved
@@ -2264,7 +2264,7 @@ static int emit_item_page(const BfRequest *r) {
      * short body the census kept is the fallback. */
     if ((depth = calloc(1, sizeof(*depth))) && depth_read(source, item, depth)) depth_resolve_names(depth, &stores);
     if (depth && depth->paras) depth_emit_said(depth);
-    else if (item->body[0]) { fputs("<p class=\"thing-body\">", stdout); html(item->body); fputs("</p>", stdout); }
+    else if (item->body[0]) { ui_text(stdout, "p", "thing-body", item->body); }
     if (depth) depth_emit_facts(depth);
     if (item->kind == BF_PAGE_MATERIAL_EVENT && item->at > 0) {
         /* What the organizer stated, as a person reads it: when it starts, how
@@ -2299,10 +2299,10 @@ static int emit_item_page(const BfRequest *r) {
             fputs(item_says(t, "from $") || item_says(t, "starting at") ? "From" : "Listed at", stdout);
             fputs("</small> ", stdout); html(price); fputs("</li>", stdout); chips++;
         }
-        if (item_says(t, "free s&h") || item_says(t, "free shipping")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>Free shipping, as posted</li>", stdout); }
-        if (item_says(t, "w/ s&s") || item_says(t, "subscribe")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>With subscription</li>", stdout); }
-        if (item_says(t, "pickup")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>Pickup offered</li>", stdout); }
-        if (item->rights[0]) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); fputs("<li>", stdout); html(item->rights); fputs("</li>", stdout); }
+        if (item_says(t, "free s&h") || item_says(t, "free shipping")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "Free shipping, as posted"); }
+        if (item_says(t, "w/ s&s") || item_says(t, "subscribe")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "With subscription"); }
+        if (item_says(t, "pickup")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "Pickup offered"); }
+        if (item->rights[0]) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, item->rights); }
         if (chips) fputs("</ul>", stdout);
     }
     /* The few things a person came to do sit together: open it where it lives,
@@ -2682,14 +2682,14 @@ static int serve_page_changes(const BfRequest *r) {
             }
             fputs("</ol>", stdout);
         } else {
-            fputs("<p class=\"narrowed\">The Internet Archive has no earlier copies of this page.</p>", stdout);
+            ui_text(stdout, "p", "narrowed", "The Internet Archive has no earlier copies of this page.");
         }
         if (doc) bf_json_free(doc);
         free(text);
     } else if (fresh == -1) {
-        fputs("<p class=\"narrowed\">The Internet Archive did not answer when this was looked up in the last hour. Try again later.</p>", stdout);
+        ui_text(stdout, "p", "narrowed", "The Internet Archive did not answer when this was looked up in the last hour. Try again later.");
     } else {
-        fputs("<p class=\"narrowed\">Its history has not been looked up yet.</p>", stdout);
+        ui_text(stdout, "p", "narrowed", "Its history has not been looked up yet.");
     }
     if (!fresh) {
         fputs("<form class=\"verb-form\" method=\"post\" action=\"/o/changes\"><input type=\"hidden\" name=\"item\" value=\"", stdout);
@@ -2903,12 +2903,12 @@ static int emit_native_world_shelf(const char *path) {
         while (part && *part) {
             char *comma = strchr(part, ','); if (comma) *comma = '\0';
             while (*part && isspace((unsigned char)*part)) part++;
-            if (*part && world_grammar_route(part)) { fputs("<i>", stdout); html(part); fputs("</i>", stdout); }
+            if (*part && world_grammar_route(part)) { ui_text(stdout, "i", NULL, part); }
             part = comma ? comma + 1 : NULL;
         }
         fputs("</div></div></a>", stdout); count++;
     }
-    if (!count) fputs("<p class=\"note\">No World is published yet.</p>", stdout);
+    if (!count) ui_text(stdout, "p", "note", "No World is published yet.");
     fputs("</section></main>" BF_ESTATE_FOOT "</body></html>", stdout);
     sqlite3_finalize(st); sqlite3_close(db); free(template); return 1;
 out:

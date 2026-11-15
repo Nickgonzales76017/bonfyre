@@ -879,7 +879,7 @@ static int serve_desk(const BfRequest *r) {
     ak_app_open("Studio", "workbench", "route-studio");
     fputs("<div class=\"ak-wb-strip\"><span>Studio</span>", stdout);
     if (signed_in) { fputs("<span>Signed in as <b>", stdout); html(who.name[0] ? who.name : who.email); fputs("</b></span>", stdout); }
-    else fputs("<span>Signed out</span>", stdout);
+    else ui_text(stdout, "span", NULL, "Signed out");
     printf("<span>Addresses <b>%d</b></span><span>Pages <b>%d</b></span>", site_n, pages);
     printf("<span class=\"ak-live%s\">%s</span></div>", "", site_n ? "Your pages answer at your address" : "Nothing published from here yet");
 
@@ -973,8 +973,8 @@ static int serve_desk(const BfRequest *r) {
             fputs("</tbody></table></div>", stdout);
             sqlite3_finalize(st);
         }
-        if (!shown) fputs("<p class=\"ak-empty\">No pages yet. Open the composer and give the first one an address.</p>", stdout);
-    } else fputs("<p class=\"ak-empty\">Pages appear here once an address carries them.</p>", stdout);
+        if (!shown) ui_text(stdout, "p", "ak-empty", "No pages yet. Open the composer and give the first one an address.");
+    } else ui_text(stdout, "p", "ak-empty", "Pages appear here once an address carries them.");
     fputs("</div></section>", stdout);
 
     /* How the address looks: the one design choice that dresses every page
@@ -982,7 +982,7 @@ static int serve_desk(const BfRequest *r) {
     fputs("<section class=\"ak-sec\" id=\"design\"><header><div><span class=\"ak-kicker\">Type and design</span><h2>How your pages look</h2></div>"
           "<p>One design sets the typefaces, colours and spacing for every page at the address. The newest choice wins.</p></header><div class=\"ak-panel studio-design\">", stdout);
     if (site_n) ph_theme_edit(db, &sites[0]);
-    else fputs("<p class=\"ak-empty\">Choose a design once an address is bound to you.</p>", stdout);
+    else ui_text(stdout, "p", "ak-empty", "Choose a design once an address is bound to you.");
     fputs("</div></section>", stdout);
 
     /* A copy to keep: every page snapshot of an address in one file. */

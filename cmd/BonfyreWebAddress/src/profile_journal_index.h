@@ -91,7 +91,7 @@ static int ph_blog_index(sqlite3 *db,const PhSite *site,const char *host,const c
     /* The newest article leads, the way the hub opens on one story. */
     fputs("<section class=\"fd-lead fd-lead-plain ak-journal-lead\" aria-label=\"Newest article\"><div class=\"fd-lead-words\"><p class=\"fd-kicker\"><span>",stdout);
     html(cat&&*cat?cat:"Journal");fputs("</span><span>",stdout);html(when);fputs("</span></p><div id=\"jl-lead\"><h2><a href=\"",stdout);fwrite(route,1,6+len,stdout);fputs("/\">",stdout);html(t);fputs("</a></h2>",stdout);
-    if(lede&&*lede){fputs("<p class=\"fd-dek\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lede&&*lede){ui_text(stdout, "p", "fd-dek", lede);}
     fputs("</div><p class=\"fd-by\">",stdout);html(by&&*by?by:site->name);printf(" &middot; %ld min read</p><div class=\"fd-lead-actions\"><a class=\"fd-primary\" href=\"",mins);
     fwrite(route,1,6+len,stdout);fputs("/\">Read the article</a><button type=\"button\" class=\"fd-ghost\" data-ak-track data-ak-default data-title=\"",stdout);html(t);
     fputs("\" data-by=\"",stdout);html(by&&*by?by:site->name);fputs("\" data-narrate=\"#jl-lead\">",stdout);page_glyph("narration");fputs("<span>Read aloud</span></button></div></div></section>"
@@ -99,7 +99,7 @@ static int ph_blog_index(sqlite3 *db,const PhSite *site,const char *host,const c
    } else {
     fputs("<li><p class=\"fd-card-top\"><span class=\"fd-beat\">",stdout);html(cat&&*cat?cat:"Journal");fputs("</span><span>",stdout);html(when);
     printf("%s%ld min read</span></p><h3><a href=\"",when[0]?" &middot; ":"",mins);fwrite(route,1,6+len,stdout);fputs("/\">",stdout);html(t);fputs("</a></h3>",stdout);
-    if(lede&&*lede){fputs("<p class=\"fd-dek\">",stdout);html(lede);fputs("</p>",stdout);}
+    if(lede&&*lede){ui_text(stdout, "p", "fd-dek", lede);}
     fputs("</li>",stdout);
    }
    count++;
@@ -108,7 +108,7 @@ static int ph_blog_index(sqlite3 *db,const PhSite *site,const char *host,const c
  sqlite3_finalize(st);
  if(count)fputs("</ol></section>",stdout);
  else if(subject[0]||find[0])fputs("<p class=\"fd-empty\">No articles match. <a href=\"/blog/\">Show every article</a>.</p>",stdout);
- else fputs("<p class=\"fd-empty\">Nothing has been published here yet.</p>",stdout);
+ else ui_text(stdout, "p", "fd-empty", "Nothing has been published here yet.");
  fputs("</div>",stdout);
  ph_shell_close();
  return 1;

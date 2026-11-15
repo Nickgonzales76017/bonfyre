@@ -82,7 +82,7 @@ static void ph_dating_public_prompt(sqlite3 *cms,const PhSite *site){
  if(sqlite3_step(s)==SQLITE_ROW){
   const char *value=(const char *)sqlite3_column_text(s,0);
   if(value&&*value&&strlen(value)<=500){
-   fputs("<blockquote class=\"ph-date-prompt\">",stdout);html(value);fputs("</blockquote>",stdout);
+   ui_text(stdout, "blockquote", "ph-date-prompt", value);
   }
  }
  sqlite3_finalize(s);

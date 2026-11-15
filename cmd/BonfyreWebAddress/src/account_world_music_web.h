@@ -311,14 +311,14 @@ static void world_music_studio(sqlite3 *db,const char *subject,const char *site_
             fputs("</td><td>",stdout);wm_form(site_id,world,space,"untrack",revision,NULL);ph_hidden("id",rel->id);char nb[8];snprintf(nb,sizeof(nb),"%d",disc);ph_hidden("disc",nb);snprintf(nb,sizeof(nb),"%d",pos);ph_hidden("position",nb);
             fputs("<button type=\"submit\" class=\"aw-quiet\">Remove</button></form></td></tr>",stdout);
         }
-        sqlite3_finalize(t);if(tracks)fputs("</tbody></table>",stdout);else fputs("<p>No tracks yet.</p>",stdout);
+        sqlite3_finalize(t);if(tracks)fputs("</tbody></table>",stdout);else ui_text(stdout, "p", NULL, "No tracks yet.");
         if(nrecs){wm_form(site_id,world,space,"track",revision,"track");ph_hidden("id",rel->id);
             fputs("<div class=\"aw-row\"><label>Recording<select name=\"recording\">",stdout);
             for(int k=0;k<nrecs;k++){fputs("<option value=\"",stdout);html(recs[k]);fputs("\">",stdout);html(recs[k]);fputs("</option>",stdout);}
             printf("</select></label><label>Disc<input type=\"number\" name=\"disc\" min=\"1\" max=\"9\" value=\"1\"></label><label>Track<input type=\"number\" name=\"position\" min=\"1\" max=\"99\" value=\"%d\"></label></div>",maxpos+1);
             fputs("<div class=\"aw-actions\"><button type=\"submit\">Add the track</button></div></form>",stdout);}
         /* release credits */
-        fputs("<p><strong>Release credits</strong></p>",stdout);if(!wm_credits(db,subject,site_id,world,space,"release",rel->id,"data-credits"))fputs("<p>None yet.</p>",stdout);
+        fputs("<p><strong>Release credits</strong></p>",stdout);if(!wm_credits(db,subject,site_id,world,space,"release",rel->id,"data-credits"))ui_text(stdout, "p", NULL, "None yet.");
         /* preparation checklist */
         int cover_ok=1;if(rel->cover[0]){const PageItem *ci=wm_piece(db,&P,rel->cover);cover_ok=wm_open_photo(ci);fputs("<p>Cover ",stdout);wm_media_check(ci,1);fputs("</p>",stdout);}
         fputs("<ul class=\"aw-checks\" data-release-checks>",stdout);
@@ -484,7 +484,7 @@ static void wm_release_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,c
     sqlite3_stmt *s=NULL;int ed=0;
     if(awm_rows(db,NULL,site->id,world,space,AWM_RELEASES,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,8),rel->id)){
         if(!ed++)fputs("<p class=\"aw-note\" data-music-editions>Also issued as ",stdout);else fputs(", ",stdout);
-        fputs("<a href=\"/worlds/",stdout);html(space);fputs("/release/",stdout);html(wm_col(s,0));fputs("\">",stdout);html(wm_col(s,1));fputs("</a>",stdout);if(*wm_col(s,3)){fputs(" (",stdout);html(wm_col(s,3));fputs(")",stdout);}}
+        ui_link_path(stdout, (const char *const[]){"/worlds/", space, "/release/", wm_col(s,0)}, 4, wm_col(s,1));if(*wm_col(s,3)){fputs(" (",stdout);html(wm_col(s,3));fputs(")",stdout);}}
     sqlite3_finalize(s);if(ed)fputs(".</p>",stdout);
     /* tracklist */
     int discs=1,n=0;
@@ -495,10 +495,10 @@ static void wm_release_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,c
         char recid[65];snprintf(recid,sizeof(recid),"%s",wm_col(s,3));wm_track_row(db,&P,site,world,space,recid,sqlite3_column_int(s,1),sqlite3_column_int(s,2),discs>1);}
     sqlite3_finalize(s);printf("</ol><meta itemprop=\"numTracks\" content=\"%d\"></section>",n);
     if(rel->notes[0]){fputs("<section class=\"aw-liner\" aria-label=\"Liner notes\"><h2 class=\"region-label\">Liner notes</h2>",stdout);
-        char *copy=strdup(rel->notes);for(char *line=copy?strtok(copy,"\n"):NULL;line;line=strtok(NULL,"\n")){size_t l=strlen(line);if(l&&line[l-1]=='\r')line[l-1]=0;if(*line){fputs("<p>",stdout);html(line);fputs("</p>",stdout);}}free(copy);fputs("</section>",stdout);}
+        char *copy=strdup(rel->notes);for(char *line=copy?strtok(copy,"\n"):NULL;line;line=strtok(NULL,"\n")){size_t l=strlen(line);if(l&&line[l-1]=='\r')line[l-1]=0;if(*line){ui_text(stdout, "p", NULL, line);}}free(copy);fputs("</section>",stdout);}
     fputs("<section class=\"aw-liner\" aria-label=\"Credits\">",stdout);
     if(awm_rows(db,NULL,site->id,world,space,AWM_CREDITS,NULL,&s)==1){int any=0;while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,1),"release")&&!strcmp(wm_col(s,2),rel->id))any=1;
-        sqlite3_finalize(s);s=NULL;if(any){fputs("<h2 class=\"region-label\">Credits</h2>",stdout);wm_credits(db,NULL,site->id,world,space,"release",rel->id,"data-release-credits");}}
+        sqlite3_finalize(s);s=NULL;if(any){ui_text(stdout, "h2", "region-label", "Credits");wm_credits(db,NULL,site->id,world,space,"release",rel->id,"data-release-credits");}}
     fputs("</section>",stdout);
     n=0;if(awm_rows(db,NULL,site->id,world,space,AWM_ROOMS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,2),"release")&&!strcmp(wm_col(s,3),rel->id)){
         if(!n++)fputs("<section aria-label=\"Listening rooms\"><h2 class=\"region-label\">Listen together</h2><ul class=\"aw-marks\">",stdout);
@@ -516,7 +516,7 @@ static void wm_recording_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world
     world_web_public_head(200,rec.title,site->name,"");
     fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-release\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-recording=\"",stdout);html(rec.id);fputs("\">",stdout);
     wm_bar(site,space,space_title);
-    fputs("<header class=\"hero\"><p class=\"aw-role\">Recording</p><h1>",stdout);html(rec.title);fputs("</h1>",stdout);if(party.name[0]){fputs("<p class=\"lede\">",stdout);html(party.name);fputs("</p>",stdout);}
+    fputs("<header class=\"hero\"><p class=\"aw-role\">Recording</p><h1>",stdout);html(rec.title);fputs("</h1>",stdout);if(party.name[0]){ui_text(stdout, "p", "lede", party.name);}
     fputs("<p class=\"aw-epmeta\">",stdout);if(found&&it.duration_ms>0){wm_ms(it.duration_ms);}if(rec.isrc[0]){fputs(found&&it.duration_ms>0?" &middot; ISRC ":"ISRC ",stdout);html(rec.isrc);}wm_mb("recording",rec.mbid);fputs("</p></header>",stdout);
     /* the same article shape as a space piece, so the sound additions' marks and seek script find it */
     fputs("<article class=\"aw-piece\" id=\"piece-1\" data-kind=\"audio\"><div class=\"aw-words\">",stdout);
@@ -559,7 +559,7 @@ static void wm_work_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-release\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-work=\"",stdout);html(id);fputs("\">",stdout);
     wm_bar(site,space,space_title);fputs("<header class=\"hero\"><p class=\"aw-role\">Song</p><h1>",stdout);html(title);fputs("</h1><p class=\"aw-epmeta\">",stdout);
     if(*iswc){fputs("ISWC ",stdout);html(iswc);}wm_mb("work",mbid);fputs("</p></header>",stdout);
-    fputs("<section class=\"aw-liner\"><h2 class=\"region-label\">Written by</h2>",stdout);if(!wm_credits(db,NULL,site->id,world,space,"work",id,"data-work-credits"))fputs("<p class=\"aw-body\">No writers are credited.</p>",stdout);fputs("</section>",stdout);
+    fputs("<section class=\"aw-liner\"><h2 class=\"region-label\">Written by</h2>",stdout);if(!wm_credits(db,NULL,site->id,world,space,"work",id,"data-work-credits"))ui_text(stdout, "p", "aw-body", "No writers are credited.");fputs("</section>",stdout);
     sqlite3_stmt *s=NULL;int n=0;
     if(awm_rows(db,NULL,site->id,world,space,AWM_RECORDINGS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,1),id)){
         if(!n++)fputs("<section class=\"aw-liner\"><h2 class=\"region-label\">Recordings</h2><ul class=\"aw-marks\" data-music-work-recordings>",stdout);
@@ -582,7 +582,7 @@ static void wm_room_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-room\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-room=\"",stdout);html(id);
     fputs("\" data-state=\"",stdout);html(state);fputs("\" data-starts=\"",stdout);html(starts);fputs("\">",stdout);wm_bar(site,space,space_title);
     fputs("<header class=\"hero\"><p class=\"aw-role\">Listening room</p><h1><a href=\"/worlds/",stdout);html(space);fputs(!strcmp(target,"release")?"/release/":"/recording/",stdout);html(target_id);fputs("\">",stdout);html(what);
-    fputs("</a></h1><p class=\"lede\"><time datetime=\"",stdout);html(starts);fputs("Z\">",stdout);cine_when(starts);fputs(" UTC</time></p>",stdout);if(note[0]){fputs("<p class=\"aw-note\">",stdout);html(note);fputs("</p>",stdout);}
+    fputs("</a></h1><p class=\"lede\"><time datetime=\"",stdout);html(starts);fputs("Z\">",stdout);cine_when(starts);fputs(" UTC</time></p>",stdout);if(note[0]){ui_text(stdout, "p", "aw-note", note);}
     if(ticket[0]&&strcmp(state,"cancelled")){fputs("<p class=\"aw-listen\"><a rel=\"noopener\" href=\"",stdout);html(ticket);fputs("\">Tickets</a></p>",stdout);}fputs("</header>",stdout);
     if(!strcmp(state,"cancelled")){fputs("<p class=\"aw-note\" data-room-cancelled>This listening room has been cancelled.</p></main></body></html>",stdout);return;}
     WmPieces P;wm_open(&P);int playable=0;
@@ -593,7 +593,7 @@ static void wm_room_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
         int plays=wa_open_audio(it);if(plays)playable++;
         printf("<li class=\"aw-track\"%s",plays?" data-room-plays":"");if(plays){fputs(" data-src=\"",stdout);html(it->asset);printf("\" data-ms=\"%ld\"",it->duration_ms>0?it->duration_ms:0L);}
         fputs("><div class=\"aw-words\"><h3><a href=\"/worlds/",stdout);html(space);fputs("/recording/",stdout);html(rec.id);fputs("\">",stdout);html(rec.title);fputs("</a></h3>",stdout);
-        if(plays){fputs("<p class=\"aw-terms\">",stdout);html(it->rights);fputs("</p>",stdout);}else wm_refusal(it);fputs("</div></li>",stdout);}
+        if(plays){ui_text(stdout, "p", "aw-terms", it->rights);}else wm_refusal(it);fputs("</div></li>",stdout);}
     fputs("</ol></section>",stdout);
     if(!playable)fputs("<p class=\"aw-note\" data-room-silent>None of these recordings can be played here, so the room is a list to follow where each is published.</p>",stdout);
     fputs("<script>(()=>{const main=document.querySelector('[data-music-room]'),btn=document.querySelector('[data-room-join]'),player=document.querySelector('[data-room-player]'),"
@@ -676,7 +676,7 @@ static int serve_world_collection(const char *method,const char *query,const cha
                 fputs(have?"<p class=\"aw-note\" data-collected>It is in your collection.</p><button type=\"submit\" class=\"aw-quiet\">Remove from your collection</button></form>":
                            "<button type=\"submit\">Add to your collection</button></form>",stdout);fputs("</section>",stdout);}
         }
-        sqlite3_finalize(row);free(rel);if(!shown)fputs("<p class=\"aw-note\">That release is not published right now.</p>",stdout);
+        sqlite3_finalize(row);free(rel);if(!shown)ui_text(stdout, "p", "aw-note", "That release is not published right now.");
     }
     sqlite3_stmt *s=NULL;int n=0;
     if(awm_collection(db,member,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){

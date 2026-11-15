@@ -14,4 +14,8 @@
 /* cmd/BonfyreMeter/src/main.c */
 #define BF_STORE_METER_IDX_EVENTS_PHYSICAL_ATTEMPT \
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_events_physical_attempt ON events(physical_attempt_ref) WHERE physical_attempt_ref <> ''"
+/* store work_index: sqlite, declared by cmd/BonfyreMeter */
+#define BF_STORE_METER_WORK_INDEX_KIND "sqlite"
+#define BF_STORE_METER_WORK_INDEX_ATTACH "ATTACH DATABASE ? AS work"
+#define BF_STORE_METER_WORK_INDEX_ATTACH_READONLY 1
 #endif

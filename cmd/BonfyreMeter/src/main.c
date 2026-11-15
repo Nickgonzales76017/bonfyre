@@ -34,6 +34,7 @@
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
+#include "bf_store_durability.h"
 
 static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
@@ -552,11 +553,7 @@ static int cmd_work_costs(const char *meter_path,const char *work_path,const cha
     if(!meter_path||!*meter_path||!work_path||*work_path!='/'||!subject||!*subject||
        !scope||!*scope||!work_id||!*work_id) return 2;
     if(sqlite3_open_v2(meter_path,&db,SQLITE_OPEN_READONLY|SQLITE_OPEN_URI,NULL)!=SQLITE_OK)goto done;
-    uri=sqlite3_mprintf("file:%s?mode=ro",work_path);
-    if(!uri||sqlite3_prepare_v2(db,"ATTACH DATABASE ? AS work",-1,&s,NULL)!=SQLITE_OK)goto done;
-    sqlite3_bind_text(s,1,uri,-1,SQLITE_TRANSIENT);
-    if(sqlite3_step(s)!=SQLITE_DONE)goto done;
-    sqlite3_finalize(s);s=NULL;
+    if(!bf_store_attach(db,work_path,BF_STORE_METER_WORK_INDEX_ATTACH,BF_STORE_METER_WORK_INDEX_ATTACH_READONLY))goto done;
     if(sqlite3_prepare_v2(db,"SELECT 1 FROM work.account_work WHERE id=?1 AND subject=?2 AND scope=?3",-1,&s,NULL)!=SQLITE_OK)goto done;
     sqlite3_bind_text(s,1,work_id,-1,SQLITE_TRANSIENT);
     sqlite3_bind_text(s,2,subject,-1,SQLITE_TRANSIENT);

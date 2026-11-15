@@ -210,7 +210,7 @@ static void world_cine_studio(sqlite3 *db,const char *subject,const char *site,s
             fputs("<button type=\"submit\" class=\"aw-quiet\">",stdout);fputs(!strcmp(st,"draft")?"Delete":"Cancel screening",stdout);fputs("</button></form>",stdout);}
         fputs("</div></li>",stdout);
     }
-    sqlite3_finalize(rows);rows=NULL;if(!have)fputs("<li>No screenings yet.</li>",stdout);fputs("</ol>",stdout);
+    sqlite3_finalize(rows);rows=NULL;if(!have)ui_text(stdout, "li", NULL, "No screenings yet.");fputs("</ol>",stdout);
     fputs("<form method=\"post\" action=\"/workspace/world/film\" data-cine-form=\"screening\">",stdout);cine_hidden(site,world,space,"screening");
     fputs("<div class=\"aw-row\"><label>Film<small>One of the films in this space, or a piece address</small><input name=\"ref\" required maxlength=\"160\" list=\"cine-films\">",stdout);
     if(aw_items(db,subject,site,world,space,&rows)==1)cine_film_options(db,&films,rows,"cine-films");sqlite3_finalize(rows);rows=NULL;
@@ -242,8 +242,8 @@ static void world_cine_studio(sqlite3 *db,const char *subject,const char *site,s
         fputs("</span></div><form method=\"post\" action=\"/workspace/world/film\">",stdout);cine_hidden(site,world,space,"unnote");char n[24];snprintf(n,sizeof(n),"%lld",(long long)id);ph_hidden("item",n);
         fputs("<button type=\"submit\" class=\"aw-quiet\">Remove</button></form></li>",stdout);
     }
-    sqlite3_finalize(rows);rows=NULL;if(!have)fputs("<li>Nothing logged yet.</li>",stdout);fputs("</ol>",stdout);
-    if(count>AW_CLUB_PAGE)fputs("<p>Showing your newest 20 entries.</p>",stdout);
+    sqlite3_finalize(rows);rows=NULL;if(!have)ui_text(stdout, "li", NULL, "Nothing logged yet.");fputs("</ol>",stdout);
+    if(count>AW_CLUB_PAGE)ui_text(stdout, "p", NULL, "Showing your newest 20 entries.");
     fputs("<form method=\"post\" action=\"/workspace/world/film\" data-cine-form=\"note\">",stdout);cine_hidden(site,world,space,"note");
     fputs("<div class=\"aw-row\"><label>Film<input name=\"ref\" required maxlength=\"160\" list=\"cine-films\"></label><label>Watched on<input type=\"date\" name=\"watched\" required></label>"
           "<label>Rating<select name=\"rating\"><option value=\"0\">No rating</option>",stdout);
@@ -282,9 +282,9 @@ static void world_cine_public(sqlite3 *db,const PhSite *site,sqlite3_int64 world
             fputs("<article class=\"aw-show\" id=\"screening-",stdout);html(sid);fputs("\" data-screening=\"",stdout);html(sid);fputs("\" data-state=\"",stdout);html(st);
             fputs("\" data-shown=\"",stdout);fputs(play?"media":"link",stdout);fputs("\"><p class=\"aw-when\"><time datetime=\"",stdout);html(starts);fputs("\">",stdout);cine_when(starts);
             fputs("</time> &middot; ",stdout);html(venue);if(cancelled)fputs(" &middot; <strong>Cancelled</strong>",stdout);fputs("</p><h3>",stdout);
-            if(it){fputs("<a href=\"/o/",stdout);html(ref);fputs("\">",stdout);html(it->title);fputs("</a>",stdout);}else fputs("A film no longer available from its source",stdout);
-            fputs("</h3>",stdout);if(it&&it->by[0]){fputs("<p class=\"by\">",stdout);html(it->by);fputs("</p>",stdout);}
-            if(note&&*note){fputs("<p class=\"aw-note\">",stdout);html(note);fputs("</p>",stdout);}
+            if(it){ui_link_path(stdout, (const char *const[]){"/o/", ref}, 2, it->title);}else fputs("A film no longer available from its source",stdout);
+            fputs("</h3>",stdout);if(it&&it->by[0]){ui_text(stdout, "p", "by", it->by);}
+            if(note&&*note){ui_text(stdout, "p", "aw-note", note);}
             if(play){fputs("<details class=\"aw-watch\"><summary>Watch it here</summary><video controls preload=\"none\" playsinline",stdout);
                 if(world_web_https(it->image)&&page_image_url_safe(it->image)){fputs(" poster=\"",stdout);html(it->image);fputs("\"",stdout);}
                 fputs(" src=\"",stdout);html(it->asset);fputs("\"><a href=\"",stdout);html(it->asset);fputs("\">Open the film file</a></video></details>",stdout);}
@@ -307,7 +307,7 @@ static void world_cine_public(sqlite3 *db,const PhSite *site,sqlite3_int64 world
             if(!shown++)fputs("<section class=\"aw-diary\" aria-labelledby=\"aw-diary-h\" data-world-diary><h2 id=\"aw-diary-h\" class=\"region-label\">From the diary</h2>",stdout);
             fputs("<article class=\"aw-entry\"><p class=\"aw-when\">",stdout);cine_when(watched);if(rewatch)fputs(" &middot; watched again",stdout);
             if(rating){fputs(" &middot; ",stdout);cine_stars(rating);}fputs("</p><h3><a href=\"/o/",stdout);html(ref);fputs("\">",stdout);html(it->title);fputs("</a></h3>",stdout);
-            if(words&&*words){fputs("<p class=\"aw-note\">",stdout);html(words);fputs("</p>",stdout);}fputs("</article>",stdout);
+            if(words&&*words){ui_text(stdout, "p", "aw-note", words);}fputs("</article>",stdout);
         }
         if(shown)fputs("</section>",stdout);
     }
@@ -376,9 +376,9 @@ static int serve_world_club(const char *method,const char *query,const char *bea
         else{if(it){fputs("<a href=\"https://",stdout);html(site.host);fputs("/o/",stdout);html(ref);fputs("\">",stdout);}cine_film_title(it,ref);if(it)fputs("</a>",stdout);}
         fputs("</h3><p class=\"by\">Proposed by ",stdout);html(!strcmp(by,viewer)?"you":name);printf(" &middot; %lld vote%s",votes,votes==1?"":"s");
         if(!strcmp(st,"hidden"))fputs(" &middot; hidden from members",stdout);fputs("</p>",stdout);
-        if(note&&*note){fputs("<p class=\"aw-note\">",stdout);html(note);fputs("</p>",stdout);}
+        if(note&&*note){ui_text(stdout, "p", "aw-note", note);}
         fputs("</div><div class=\"aw-acts\">",stdout);
-        if(voted)fputs("<span class=\"aw-mark\">You voted</span>",stdout);
+        if(voted)ui_text(stdout, "span", "aw-mark", "You voted");
         else if(!strcmp(st,"open")){cine_room_form(site_id,space,"vote");ph_hidden("item",n);fputs("<button type=\"submit\">Vote for it</button></form>",stdout);}
         if(host&&!strcmp(st,"open")){fputs("<form method=\"post\" action=\"/workspace/world/film\">",stdout);ph_hidden("site",site_id);char w[24];snprintf(w,sizeof(w),"%lld",(long long)world);
             ph_hidden("world",w);ph_hidden("operation","hide");ph_hidden("space",space);ph_hidden("kind","pick");ph_hidden("item",n);ph_hidden("return","club");fputs("<button type=\"submit\" class=\"aw-quiet\">Hide</button></form>",stdout);}
@@ -404,7 +404,7 @@ static int serve_world_club(const char *method,const char *query,const char *bea
         printf("<li data-club-post=\"%lld\" data-state=\"",(long long)id);html(st);fputs("\"><p class=\"by\">",stdout);html(mine?"You":name);
         if(*ref){const PageItem *it=cine_film(db,&films,ref);if(it){fputs(" on ",stdout);html(it->title);}else if(!strncmp(ref,"works/",6)){fputs(" on ",stdout);wl_club_title(db,&site,world,ref,0);}}
         if(!strcmp(st,"hidden"))fputs(" &middot; hidden from members",stdout);fputs("</p>",stdout);
-        if(!strcmp(st,"retracted"))fputs("<p class=\"aw-body\">Withdrawn by its author.</p>",stdout);else{fputs("<p class=\"aw-note\">",stdout);html(words);fputs("</p>",stdout);}
+        if(!strcmp(st,"retracted"))ui_text(stdout, "p", "aw-body", "Withdrawn by its author.");else{ui_text(stdout, "p", "aw-note", words);}
         fputs("<div class=\"aw-acts\">",stdout);
         if(mine&&strcmp(st,"retracted")){cine_room_form(site_id,space,"retract");ph_hidden("item",n);fputs("<button type=\"submit\" class=\"aw-quiet\">Withdraw</button></form>",stdout);}
         if(host&&!mine){char w[24];snprintf(w,sizeof(w),"%lld",(long long)world);
