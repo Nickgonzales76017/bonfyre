@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 #include <duckdb.h>
 #include <bf_jsonw.h>
+#include <bf_command_lookup.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -79,7 +80,9 @@ int main(int argc, char **argv) {
     "AND f.copies=1 AND s.copies=1 THEN '1' ELSE '0' END "
     "FROM f LEFT JOIN s ON f.source_goal_id=s.source_goal_id AND f.original_ordinal=s.original_ordinal "
     "ORDER BY f.catalogue,f.source_goal_id,f.original_ordinal LIMIT ? OFFSET ?";
-  if (argc < 2 || strcmp(argv[1], "list")) goto usage;
+  enum { CC_LIST };
+  static const BfCommandEntry catalog_commands[] = {{"list", CC_LIST, 0, NULL}};
+  if (argc < 2 || bf_command_id(catalog_commands, BF_COMMAND_COUNT(catalog_commands), argv[1], -1) != CC_LIST) goto usage;
   for (int i = 2; i < argc; i++) {
     if (i + 1 >= argc) goto usage;
     const char *key = argv[i++], *value = argv[i];

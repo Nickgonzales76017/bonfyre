@@ -405,8 +405,17 @@ static double js_number_arg(const char *v, double fallback) {
     return d;
 }
 
-int monitor_main(int argc, char **argv) {
-    if (argc > 0 && (!strcmp(argv[0], "--help") || !strcmp(argv[0], "-h") || !strcmp(argv[0], "help"))) { fputs(MONITOR_USAGE, stdout); return 0; }
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define DMN_COMMANDS(X) \
+    X("--help", DMN_OPT_HELP) \
+    X("-h", DMN_OPT_H) \
+    X("help", DMN_HELP)
+BF_COMMAND_TABLE(dmn_commands, DMN_COMMANDS);
+
+int monitor_main(int argc, char **argv) { const int verb=bf_command_id(dmn_commands,BF_COMMAND_COUNT(dmn_commands),(argc > 0 ? argv[0] : NULL),-1);
+    if (argc > 0 && (verb==DMN_OPT_HELP || verb==DMN_OPT_H || verb==DMN_HELP)) { fputs(MONITOR_USAGE, stdout); return 0; }
     static const char *const repeatable[] = {"watch", NULL};
     DpFlags fl; dp_flags(&fl, argc, argv, repeatable);
     char **names; int nn = dp_flag_list(&fl, "watch", &names);

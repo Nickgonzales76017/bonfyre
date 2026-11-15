@@ -316,36 +316,48 @@ static int command_stats(const char *queue_file) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CQUE_COMMANDS(X) \
+    X("claim", CQUE_CLAIM) \
+    X("complete", CQUE_COMPLETE) \
+    X("enqueue", CQUE_ENQUEUE) \
+    X("fail", CQUE_FAIL) \
+    X("list", CQUE_LIST) \
+    X("stats", CQUE_STATS)
+BF_COMMAND_TABLE(cque_commands, CQUE_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cque_commands,BF_COMMAND_COUNT(cque_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 3) {
         print_usage();
         return 1;
     }
 
-    if (strcmp(argv[1], "enqueue") == 0) {
+    if (verb==CQUE_ENQUEUE) {
         return command_enqueue(argc, argv);
     }
-    if (strcmp(argv[1], "list") == 0) {
+    if (verb==CQUE_LIST) {
         return command_list(argv[2]);
     }
-    if (strcmp(argv[1], "claim") == 0) {
+    if (verb==CQUE_CLAIM) {
         return command_claim(argc, argv);
     }
-    if (strcmp(argv[1], "complete") == 0) {
+    if (verb==CQUE_COMPLETE) {
         if (argc != 4) {
             print_usage();
             return 1;
         }
         return update_record_status(argv[2], atoi(argv[3]), "completed");
     }
-    if (strcmp(argv[1], "fail") == 0) {
+    if (verb==CQUE_FAIL) {
         if (argc != 4) {
             print_usage();
             return 1;
         }
         return update_record_status(argv[2], atoi(argv[3]), "failed");
     }
-    if (strcmp(argv[1], "stats") == 0) {
+    if (verb==CQUE_STATS) {
         return command_stats(argv[2]);
     }
 

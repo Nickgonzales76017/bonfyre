@@ -960,6 +960,16 @@ static int runtime_delegate(const char *binary, int argc, char **argv) {
     return rc;
 }
 
+/* Second words (service types and help) in strcmp order for the shared lookup. */
+#define RTS_COMMANDS(X) \
+    X("--help", RTS_OPT_HELP) \
+    X("-h", RTS_OPT_H) \
+    X("help", RTS_HELP) \
+    X("moq", RTS_MOQ) \
+    X("proxy", RTS_PROXY) \
+    X("swarm-worker", RTS_SWARM_WORKER)
+BF_COMMAND_TABLE(rts_commands, RTS_COMMANDS);
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         print_usage();
@@ -1020,13 +1030,14 @@ int main(int argc, char **argv) {
                           RB_COUNT);
     }
 
+    const int sub = argc >= 3 ? bf_command_id(rts_commands, BF_COMMAND_COUNT(rts_commands), argv[2], -1) : -1;
     if (RUNTIME_IS(RC_PROXY)) {
         char **child = calloc((size_t)argc + 1, sizeof(char *));
         if (!child) return 1;
         int c = 0;
         child[c++] = (char *)proxy_bin;
         if (argc >= 3 &&
-            (strcmp(argv[2], "--help") == 0 || strcmp(argv[2], "help") == 0 || strcmp(argv[2], "-h") == 0)) {
+            (sub == RTS_OPT_HELP || sub == RTS_HELP || sub == RTS_OPT_H)) {
             /* bonfyre-proxy prints usage when run without a subcommand */
         } else {
             for (int i = 2; i < argc; i++) child[c++] = argv[i];
@@ -1079,7 +1090,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "usage: bonfyre-runtime service <proxy|moq|swarm-worker> [args...]\n");
             return 1;
         }
-        if (strcmp(argv[2], "proxy") == 0) {
+        if (sub == RTS_PROXY) {
             char **child = calloc((size_t)argc + 2, sizeof(char *));
             if (!child) return 1;
             int c = 0;
@@ -1091,7 +1102,7 @@ int main(int argc, char **argv) {
             free(child);
             return rc;
         }
-        if (strcmp(argv[2], "moq") == 0) {
+        if (sub == RTS_MOQ) {
             char **child = calloc((size_t)argc + 2, sizeof(char *));
             if (!child) return 1;
             int c = 0;
@@ -1103,7 +1114,7 @@ int main(int argc, char **argv) {
             free(child);
             return rc;
         }
-        if (strcmp(argv[2], "swarm-worker") == 0) {
+        if (sub == RTS_SWARM_WORKER) {
             char **child = calloc((size_t)argc + 2, sizeof(char *));
             if (!child) return 1;
             int c = 0;
@@ -1125,7 +1136,7 @@ int main(int argc, char **argv) {
         int c = 0;
         child[c++] = (char *)moq_bin;
         if (argc >= 3 &&
-            (strcmp(argv[2], "help") == 0 || strcmp(argv[2], "--help") == 0)) {
+            (sub == RTS_HELP || sub == RTS_OPT_HELP)) {
             child[c++] = "help";
         } else {
             child[c++] = "video-relay";

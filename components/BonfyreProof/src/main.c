@@ -243,7 +243,15 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CPRF_COMMANDS(X) \
+    X("bundle", CPRF_BUNDLE) \
+    X("inspect", CPRF_INSPECT)
+BF_COMMAND_TABLE(cprf_commands, CPRF_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cprf_commands,BF_COMMAND_COUNT(cprf_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 3) {
         fprintf(stderr,
                 "Usage:\n"
@@ -251,10 +259,10 @@ int main(int argc, char **argv) {
                 "  bonfyre-proof bundle <proof-dir> <output-dir>\n");
         return 1;
     }
-    if (strcmp(argv[1], "inspect") == 0 && argc == 3) {
+    if (verb==CPRF_INSPECT && argc == 3) {
         return command_inspect(argv[2]);
     }
-    if (strcmp(argv[1], "bundle") == 0 && argc == 4) {
+    if (verb==CPRF_BUNDLE && argc == 4) {
         return command_bundle(argv[2], argv[3]);
     }
     fprintf(stderr, "Invalid command.\n");

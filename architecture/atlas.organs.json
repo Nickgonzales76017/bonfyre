@@ -432,13 +432,13 @@
     "publishes": "FPQRepresentation"
   },
   "BonfyreFPQx": {
-    "architecture": "cmd-f-p-qx",
-    "description": "What does the BonfyreFPQx capability organ realize, and by what contract?",
-    "domain": "Model / FPQ",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
-    "publishes": "FPQRepresentation"
+    "publishes": ""
   },
   "BonfyreFacet": {
     "architecture": "protocol-facet-compiler",
@@ -486,9 +486,9 @@
     "publishes": ""
   },
   "BonfyreFragment": {
-    "architecture": "cmd-fragment",
-    "description": "What does the BonfyreFragment capability organ realize, and by what contract?",
-    "domain": "Command / Fragment",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -603,13 +603,13 @@
     "publishes": ""
   },
   "BonfyreKVCache": {
-    "architecture": "cmd-k-v-cache",
-    "description": "What does the BonfyreKVCache capability organ realize, and by what contract?",
-    "domain": "Model / KV",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
-    "publishes": "KVPassport"
+    "publishes": ""
   },
   "BonfyreLatentAtlas": {
     "architecture": "latent-coordinate-atlas",
@@ -621,9 +621,9 @@
     "publishes": "LatentChart"
   },
   "BonfyreLayer": {
-    "architecture": "cmd-layer",
-    "description": "What does the BonfyreLayer capability organ realize, and by what contract?",
-    "domain": "Command / Layer",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -1044,9 +1044,9 @@
     "publishes": ""
   },
   "BonfyreQuant": {
-    "architecture": "cmd-quant",
-    "description": "What does the BonfyreQuant capability organ realize, and by what contract?",
-    "domain": "Command / Quant",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
@@ -1107,13 +1107,13 @@
     "publishes": ""
   },
   "BonfyreReleaseApproval": {
-    "architecture": "release-approval-mcp",
-    "description": "Can the owner approve an offered release from an MCP client instead of the work board button?",
-    "domain": "Release / Human Approval",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
-    "layer": "institutional",
+    "layer": "",
     "maturity": "implemented",
-    "publishes": "ReleaseApproval"
+    "publishes": ""
   },
   "BonfyreRender": {
     "architecture": "native-command-dispatch",
@@ -1197,18 +1197,18 @@
     "publishes": ""
   },
   "BonfyreSAE": {
-    "architecture": "cmd-s-a-e",
-    "description": "What does the BonfyreSAE capability organ realize, and by what contract?",
-    "domain": "Command / SAE",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",
     "publishes": ""
   },
   "BonfyreSLI": {
-    "architecture": "cmd-s-l-i",
-    "description": "What does the BonfyreSLI capability organ realize, and by what contract?",
-    "domain": "Command / SLI",
+    "architecture": "native-command-dispatch",
+    "description": "How does a native organ resolve a declared verb once without duplicating string dispatch or laundering a verb into authority?",
+    "domain": "Command / Native Entry",
     "family": "command",
     "layer": "",
     "maturity": "implemented",

@@ -285,28 +285,39 @@ static int cmd_export(const char *root, const char *fmt) {
     return 0;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc >= 3 && strcmp(argv[1], "assess") == 0) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CLDG_COMMANDS(X) \
+    X("assess", CLDG_ASSESS) \
+    X("assess-json", CLDG_ASSESS_JSON) \
+    X("delta", CLDG_DELTA) \
+    X("export", CLDG_EXPORT) \
+    X("portfolio", CLDG_PORTFOLIO)
+BF_COMMAND_TABLE(cldg_commands, CLDG_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(cldg_commands,BF_COMMAND_COUNT(cldg_commands),(argc > 1 ? argv[1] : NULL),-1);
+    if (argc >= 3 && verb==CLDG_ASSESS) {
         FamilyValue fv = assess_family(argv[2]);
         print_family_report(&fv);
         return 0;
     }
-    if (argc >= 3 && strcmp(argv[1], "assess-json") == 0) {
+    if (argc >= 3 && verb==CLDG_ASSESS_JSON) {
         FamilyValue fv = assess_family(argv[2]);
         print_family_json(&fv);
         return 0;
     }
-    if (argc >= 3 && strcmp(argv[1], "portfolio") == 0) {
+    if (argc >= 3 && verb==CLDG_PORTFOLIO) {
         return cmd_portfolio(argv[2]);
     }
-    if (argc >= 3 && strcmp(argv[1], "delta") == 0) {
+    if (argc >= 3 && verb==CLDG_DELTA) {
         /* For now, delta simply reports current values */
         FamilyValue fv = assess_family(argv[2]);
         printf("DELTA (current snapshot — historical tracking coming):\n");
         print_family_report(&fv);
         return 0;
     }
-    if (argc >= 3 && strcmp(argv[1], "export") == 0) {
+    if (argc >= 3 && verb==CLDG_EXPORT) {
         const char *fmt = "json";
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--format") == 0) fmt = argv[i+1];

@@ -115,7 +115,15 @@ static int command_inspect_status(const char *path) {
     return valid ? 0 : 1;
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CSYN_COMMANDS(X) \
+    X("inspect-intake", CSYN_INSPECT_INTAKE) \
+    X("inspect-status", CSYN_INSPECT_STATUS)
+BF_COMMAND_TABLE(csyn_commands, CSYN_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(csyn_commands,BF_COMMAND_COUNT(csyn_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc != 3) {
         fprintf(stderr,
                 "Usage:\n"
@@ -124,10 +132,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (strcmp(argv[1], "inspect-intake") == 0) {
+    if (verb==CSYN_INSPECT_INTAKE) {
         return command_inspect_intake(argv[2]);
     }
-    if (strcmp(argv[1], "inspect-status") == 0) {
+    if (verb==CSYN_INSPECT_STATUS) {
         return command_inspect_status(argv[2]);
     }
 

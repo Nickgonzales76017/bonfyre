@@ -1035,7 +1035,14 @@ static int pipeline_ledger(const char *outdir, const char *family,
  * Main: run full pipeline
  * ================================================================ */
 
-int main(int argc, char *argv[]) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CPIP_COMMANDS(X) \
+    X("run", CPIP_RUN)
+BF_COMMAND_TABLE(cpip_commands, CPIP_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(cpip_commands,BF_COMMAND_COUNT(cpip_commands),(argc > 1 ? argv[1] : NULL),-1);
     const char *input = NULL;
     const char *type = "text";
     const char *outdir = NULL;
@@ -1044,7 +1051,7 @@ int main(int argc, char *argv[]) {
     const char *key_file = NULL;  /* #15 */
     const char *tier = "free";
 
-    if (argc >= 2 && strcmp(argv[1], "run") == 0) {
+    if (argc >= 2 && verb==CPIP_RUN) {
         if (argc >= 3) input = argv[2];
         for (int i = 3; i < argc - 1; i++) {
             if (strcmp(argv[i], "--type") == 0) type = argv[i+1];

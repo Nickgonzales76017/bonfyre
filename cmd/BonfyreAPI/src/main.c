@@ -72,28 +72,50 @@ static const char *arg_get(int argc, char **argv, const char *flag);
 static int api_scope_exact(const char *key, const char *wanted);
 static int api_public_command(const char *cli, const char *name);
 
+#include "bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define APIL_COMMANDS(X) \
+    X("compat", APIL_COMPAT) \
+    X("compose", APIL_COMPOSE) \
+    X("get", APIL_GET) \
+    X("lineage", APIL_LINEAGE)
+BF_COMMAND_TABLE(apil_commands, APIL_COMMANDS);
+
+#define APIH_COMMANDS(X) \
+    X("--help", APIH_OPT_HELP) \
+    X("-h", APIH_OPT_H) \
+    X("help", APIH_HELP)
+BF_COMMAND_TABLE(apih_commands, APIH_COMMANDS);
+
+#define APIC_COMMANDS(X) \
+    X("layer", APIC_LAYER) \
+    X("serve", APIC_SERVE) \
+    X("status", APIC_STATUS)
+BF_COMMAND_TABLE(apic_commands, APIC_COMMANDS);
+
 static int delegate_layer_api(int argc, char **argv) {
     if (argc < 4) return 1;
-    const char *root = arg_get(argc, argv, "--root");
-    if (strcmp(argv[2], "get") == 0) {
+    const char *root = arg_get(argc, argv, "--root"); const int layer_op=bf_command_id(apil_commands,BF_COMMAND_COUNT(apil_commands),argv[2],-1);
+    if (layer_op==APIL_GET) {
         char *json = NULL;
         if (bf_layer_load_json(root, argv[3], &json) != 0) return 1;
         puts(json);
         free(json);
         return 0;
-    } else if (strcmp(argv[2], "lineage") == 0) {
+    } else if (layer_op==APIL_LINEAGE) {
         char *json = NULL;
         if (bf_layer_graph_edges_json(root, argv[3], &json) != 0) return 1;
         puts(json);
         free(json);
         return 0;
-    } else if (strcmp(argv[2], "compat") == 0 && argc >= 5) {
+    } else if (layer_op==APIL_COMPAT && argc >= 5) {
         char *json = NULL;
         if (bf_layer_compat_json(root, argv[3], argv[4], &json) != 0) return 1;
         puts(json);
         free(json);
         return 0;
-    } else if (strcmp(argv[2], "compose") == 0 && argc >= 5) {
+    } else if (layer_op==APIL_COMPOSE && argc >= 5) {
         char *json = NULL;
         int dry_run = 0;
         for (int i = 5; i < argc; i++) {
@@ -1708,11 +1730,11 @@ static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
             http_resp_json(resp, 404, "{\"error\":\"unknown command\"}"); return;
         }
     }
-    const char *verb = segs[3];
+    const char *verb = segs[3]; const int verb_id=bf_command_id(apih_commands,BF_COMMAND_COUNT(apih_commands),verb,-1);
     /* A per-key route grant cannot classify an arbitrary native effect.
      * Only the common help ABI is proven no-effect across the CLI surface.
      * Other verbs need an explicit native owner effect/read contract. */
-    if (strcmp(verb, "--help") && strcmp(verb, "-h") && strcmp(verb, "help")) {
+    if ((verb_id!=APIH_OPT_HELP) && (verb_id!=APIH_OPT_H) && (verb_id!=APIH_HELP)) {
         http_resp_json(resp, 403, "{\"error\":\"native effect classification required\"}"); return;
     }
     if (!api_command_scope(req->auth_token, name, verb)) {
@@ -2015,13 +2037,13 @@ int main(int argc, char **argv) {
         if (strcmp(argv[i], "--db") == 0 || strcmp(argv[i], "--port") == 0 ||
             strcmp(argv[i], "--static") == 0 || strcmp(argv[i], "--uploads") == 0) { i++; continue; }
     }
-    if (!cmd) { usage(); return 1; }
+    if (!cmd) { usage(); return 1; } const int cmd_id=bf_command_id(apic_commands,BF_COMMAND_COUNT(apic_commands),cmd,-1);
 
-    if (strcmp(cmd, "layer") == 0) {
+    if (cmd_id==APIC_LAYER) {
         return delegate_layer_api(argc, argv);
     }
 
-    if (strcmp(cmd, "serve") == 0) {
+    if (cmd_id==APIC_SERVE) {
         int port = 8080;
         const char *p = arg_get(argc, argv, "--port");
         if (p) port = atoi(p);
@@ -2048,7 +2070,7 @@ int main(int argc, char **argv) {
         sqlite3_close(g_db);
         return rc;
 
-    } else if (strcmp(cmd, "status") == 0) {
+    } else if (cmd_id==APIC_STATUS) {
         printf("BonfyreAPI v%s\n", VERSION);
         printf("Use 'bonfyre-api serve' to start, then GET /api/status for live dashboard.\n");
         return 0;

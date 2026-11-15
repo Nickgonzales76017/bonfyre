@@ -21796,7 +21796,7 @@
         "Stitch compiles a recipe through direct compiler argv with a bounded source filename, rather than interpreting recipe or output bytes as shell syntax"
       ],
       "known_gaps": [
-        "the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op,\"verb\") with no space after the comma) is 0 outside cmd/BonfyreWebAddress after the 2026-11-15 conversion of Auth, Finance, Model, Control, Physics, Net, Graph, Outreach, Space, Flow, Entity, Compete, Tier, Pay, Economy, Upper90, Recipe, ExperienceStage, Time, Atlas contracts, RepositoryFabric, AccountContinuity, WarehouseSeed, SurfaceScene, Compress record-factor, Queue account-work/inbox and the components/ Finance, Outreach and Graph copies; the same shape written with a space after the comma is not counted and remains in about 743 comparisons across 72 files (largest: components/BonfyreProject, BonfyreObsidian, BonfyreCLI, BonfyreMcp clis.c, BonfyreAtlas main); usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone"
+        "the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op, ?\"verb\"), with or without a space after the comma) is 0 outside cmd/BonfyreWebAddress; comparisons on other variable names (kind, mode, action, method, option values) are not counted and many remain; a few one-word entrypoints (WarehouseSeed seed, ConnectionCatalog list) use a one-row literal table; usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone"
       ],
       "layer": "",
       "maturity": "implemented",
@@ -21910,6 +21910,34 @@
         "cmd/BonfyreCompress/src/record_factor_cli.c",
         "cmd/BonfyreQueue/src/account_work.h",
         "cmd/BonfyreQueue/src/account_inbox.h",
+        "cmd/BonfyreMcp/src/clis.c",
+        "cmd/BonfyreDecide/src/plane.c",
+        "cmd/BonfyreDecide/src/books.c",
+        "cmd/BonfyreDecide/src/manifest.c",
+        "cmd/BonfyreDecide/src/monitor.c",
+        "cmd/BonfyreProviderEstate/src/customer.h",
+        "components/BonfyreProject/src/main.c",
+        "cmd/BonfyreAPI/src/main.c",
+        "cmd/BonfyreAtlas/src/main.c",
+        "cmd/BonfyreCLI/src/main.c",
+        "cmd/BonfyreCredentials/src/main.c",
+        "cmd/BonfyreEmbed/src/main.c",
+        "cmd/BonfyreExperienceMap/src/main.c",
+        "cmd/BonfyreFPQ/src/main.c",
+        "cmd/BonfyreFPQx/src/main.c",
+        "cmd/BonfyreFlashQLA/src/main.c",
+        "cmd/BonfyreFragment/src/main.c",
+        "cmd/BonfyreKVCache/src/main.c",
+        "cmd/BonfyreLayer/src/main.c",
+        "cmd/BonfyreObsidian/src/main.c",
+        "cmd/BonfyreProviderEstate/src/main.c",
+        "cmd/BonfyreQuant/src/main.c",
+        "cmd/BonfyreQwenFPQ/src/main.c",
+        "cmd/BonfyreReleaseApproval/src/main.c",
+        "cmd/BonfyreSAE/src/main.c",
+        "cmd/BonfyreSLI/src/main.c",
+        "cmd/BonfyreTel/src/main.c",
+        "cmd/BonfyreWire/src/main.c",
         "cmd/BonfyreEconomy/src/main.c",
         "cmd/BonfyreUpper90/src/main.c",
         "cmd/BonfyreRepositoryFabric/src/main.c",
@@ -42642,9 +42670,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "648a9c320a9bb40be8e79db7f755ab93f49ed412da3a3d3b37e7c76efb1d535b",
+    "declaration_digest": "ebc7e8f25772122665215362d59f6426033f94c3f90acdb7490f9f6d423ea46c",
     "declaration_files": 155,
-    "generated_at": "2026-11-15T14:53:20Z"
+    "generated_at": "2026-11-15T15:02:31Z"
   },
   "views": {
     "CapabilityView": {

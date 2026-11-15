@@ -846,17 +846,29 @@ static int ends_with_ci(const char *s, const char *suffix) {
 }
 static const char *str_flag(const DpFlags *fl, const char *k) { const char *v = dp_flag(fl, k); return v && strcmp(v, DP_TRUE) ? v : NULL; }
 
-int books_main(int argc, char **argv) {
-    if (argc > 0 && (!strcmp(argv[0], "--help") || !strcmp(argv[0], "-h") || !strcmp(argv[0], "help"))) { fputs(BOOKS_USAGE, stdout); return 0; }
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define DBK_COMMANDS(X) \
+    X("--help", DBK_OPT_HELP) \
+    X("-h", DBK_OPT_H) \
+    X("help", DBK_HELP) \
+    X("inspect", DBK_INSPECT) \
+    X("learn", DBK_LEARN) \
+    X("review", DBK_REVIEW)
+BF_COMMAND_TABLE(dbk_commands, DBK_COMMANDS);
+
+int books_main(int argc, char **argv) { const int verb=bf_command_id(dbk_commands,BF_COMMAND_COUNT(dbk_commands),(argc > 0 ? argv[0] : NULL),-1);
+    if (argc > 0 && (verb==DBK_OPT_HELP || verb==DBK_OPT_H || verb==DBK_HELP)) { fputs(BOOKS_USAGE, stdout); return 0; }
     DpFlags fl;
-    if (argc > 0 && !strcmp(argv[0], "inspect")) {
+    if (argc > 0 && verb==DBK_INSPECT) {
         dp_flags(&fl, argc - 1, argv + 1, NULL);
         if (!str_flag(&fl, "workbook")) dp_fail("bonfyre books inspect needs --workbook FILE");
         bf_jv *r = books_inspect_workbook(str_flag(&fl, "workbook"));
         char *s = bf_jv_dump(r, 2, BF_JV_SORT_NONE, NULL); printf("%s\n", s); free(s);
         return 0;
     }
-    if (argc > 0 && !strcmp(argv[0], "review")) {   /* a Books report (JSON) as the review workbook */
+    if (argc > 0 && verb==DBK_REVIEW) {   /* a Books report (JSON) as the review workbook */
         dp_flags(&fl, argc - 1, argv + 1, NULL);
         const char *in = str_flag(&fl, "report"), *outp = str_flag(&fl, "out");
         if (!in || !outp) dp_fail("bonfyre books review needs --report FILE and --out FILE");
@@ -867,7 +879,7 @@ int books_main(int argc, char **argv) {
         dp_write_file(outp, x, n);
         return 0;
     }
-    if (argc > 0 && !strcmp(argv[0], "learn")) {
+    if (argc > 0 && verb==DBK_LEARN) {
         dp_flags(&fl, argc - 1, argv + 1, NULL);
         if (!dp_flag(&fl, "history") || !dp_flag(&fl, "out")) dp_fail("bonfyre books learn needs --history FILE and --out FILE");
         Mapping map = parse_columns(dp_flag(&fl, "columns"));

@@ -104,7 +104,15 @@ static void print_usage(void) {
             "  bonfyre-render package <proof-dir> <offer-dir> <output-dir>\n");
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CRND_COMMANDS(X) \
+    X("artifact", CRND_ARTIFACT) \
+    X("package", CRND_PACKAGE)
+BF_COMMAND_TABLE(crnd_commands, CRND_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(crnd_commands,BF_COMMAND_COUNT(crnd_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 2) {
         print_usage();
         return 1;
@@ -117,7 +125,7 @@ int main(int argc, char **argv) {
     const char *narrate_bin = default_binary("BONFYRE_NARRATE_BINARY", argv[0], narrate_resolved, sizeof(narrate_resolved), "BonfyreNarrate", "bonfyre-narrate", "../BonfyreNarrate/bonfyre-narrate");
     const char *pack_bin = default_binary("BONFYRE_PACK_BINARY", argv[0], pack_resolved, sizeof(pack_resolved), "BonfyrePack", "bonfyre-pack", "../BonfyrePack/bonfyre-pack");
 
-    if (strcmp(argv[1], "package") == 0) {
+    if (verb==CRND_PACKAGE) {
         if (argc != 5) {
             print_usage();
             return 1;
@@ -133,7 +141,7 @@ int main(int argc, char **argv) {
         return run_command(pack_argv);
     }
 
-    if (strcmp(argv[1], "artifact") == 0) {
+    if (verb==CRND_ARTIFACT) {
         if (argc < 4) {
             print_usage();
             return 1;

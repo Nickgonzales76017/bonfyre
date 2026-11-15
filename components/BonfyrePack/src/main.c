@@ -87,8 +87,15 @@ static int command_assemble(const char *proof_dir, const char *offer_dir, const 
     return 0;
 }
 
-int main(int argc, char **argv) {
-    if (argc == 5 && strcmp(argv[1], "assemble") == 0) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CPCK_COMMANDS(X) \
+    X("assemble", CPCK_ASSEMBLE)
+BF_COMMAND_TABLE(cpck_commands, CPCK_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cpck_commands,BF_COMMAND_COUNT(cpck_commands),(argc > 1 ? argv[1] : NULL),-1);
+    if (argc == 5 && verb==CPCK_ASSEMBLE) {
         return command_assemble(argv[2], argv[3], argv[4]);
     }
     fprintf(stderr, "Usage:\n  bonfyre-pack assemble <proof-dir> <offer-dir> <output-dir>\n");

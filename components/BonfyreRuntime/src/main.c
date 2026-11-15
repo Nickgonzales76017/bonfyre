@@ -81,7 +81,17 @@ static void print_usage(void) {
             "  bonfyre-runtime ledger <ledger args...>\n");
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CRUN_COMMANDS(X) \
+    X("ledger", CRUN_LEDGER) \
+    X("queue", CRUN_QUEUE) \
+    X("run", CRUN_RUN) \
+    X("run-ledger", CRUN_RUN_LEDGER)
+BF_COMMAND_TABLE(crun_commands, CRUN_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(crun_commands,BF_COMMAND_COUNT(crun_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 2) {
         print_usage();
         return 1;
@@ -94,7 +104,7 @@ int main(int argc, char **argv) {
     const char *pipeline_bin = default_binary("BONFYRE_PIPELINE_BINARY", argv[0], pipeline_resolved, sizeof(pipeline_resolved), "BonfyrePipeline", "bonfyre-pipeline", "../BonfyrePipeline/bonfyre-pipeline");
     const char *ledger_bin = default_binary("BONFYRE_LEDGER_BINARY", argv[0], ledger_resolved, sizeof(ledger_resolved), "BonfyreLedger", "bonfyre-ledger", "../BonfyreLedger/bonfyre-ledger");
 
-    if (strcmp(argv[1], "queue") == 0) {
+    if (verb==CRUN_QUEUE) {
         if (argc < 3) return 1;
         char **child = calloc((size_t)argc, sizeof(char *));
         if (!child) return 1;
@@ -105,7 +115,7 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "ledger") == 0) {
+    if (verb==CRUN_LEDGER) {
         if (argc < 3) return 1;
         char **child = calloc((size_t)argc, sizeof(char *));
         if (!child) return 1;
@@ -116,12 +126,12 @@ int main(int argc, char **argv) {
         return rc;
     }
 
-    if (strcmp(argv[1], "run") == 0 || strcmp(argv[1], "run-ledger") == 0) {
+    if (verb==CRUN_RUN || verb==CRUN_RUN_LEDGER) {
         if (argc < 3) {
             print_usage();
             return 1;
         }
-        const int with_ledger = (strcmp(argv[1], "run-ledger") == 0);
+        const int with_ledger = (verb==CRUN_RUN_LEDGER);
         const char *input = argv[2];
         const char *out_dir = NULL;
         for (int i = 3; i < argc - 1; i++) {

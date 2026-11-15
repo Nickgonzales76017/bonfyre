@@ -987,18 +987,14 @@ static void print_usage(void) {
     X("batch", TAG_BATCH) \
     X("detect-lang", TAG_DETECT_LANG) \
     X("predict", TAG_PREDICT) \
+    X("status", TAG_STATUS) \
     X("train", TAG_TRAIN)
 BF_COMMAND_TABLE(tag_commands, TAG_COMMANDS);
 
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
-    enum { TG_STATUS };
-    static const BfCommandEntry tag_commands[] = {
-        {"status", TG_STATUS, 0, NULL},
-    };
-    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(tag_commands,
-        sizeof(tag_commands) / sizeof(tag_commands[0]), argv[1]);
-    if (command && command->id == TG_STATUS) {
+    const int status_id = argc < 2 ? -1 : bf_command_id(tag_commands, BF_COMMAND_COUNT(tag_commands), argv[1], -1);
+    if (status_id == TAG_STATUS) {
         printf("{\"binary\":\"bonfyre-tag\",\"status\":\"ok\",\"version\":\"2.0.0\"}\n");
         return 0;
     }

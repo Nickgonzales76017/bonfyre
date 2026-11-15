@@ -360,22 +360,33 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CHSH_COMMANDS(X) \
+    X("dedup", CHSH_DEDUP) \
+    X("file", CHSH_FILE) \
+    X("merkle", CHSH_MERKLE) \
+    X("node", CHSH_NODE) \
+    X("verify", CHSH_VERIFY)
+BF_COMMAND_TABLE(chsh_commands, CHSH_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(chsh_commands,BF_COMMAND_COUNT(chsh_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 2) goto usage;
 
-    if (strcmp(argv[1], "file") == 0 && argc >= 3)
+    if (verb==CHSH_FILE && argc >= 3)
         return cmd_file(argv[2]);
 
-    if (strcmp(argv[1], "node") == 0 && argc >= 6)
+    if (verb==CHSH_NODE && argc >= 6)
         return cmd_node(argv[2], argv[3], argv[4], argv[5]);
 
-    if (strcmp(argv[1], "merkle") == 0 && argc >= 3)
+    if (verb==CHSH_MERKLE && argc >= 3)
         return cmd_merkle(argv[2], 0);
 
-    if (strcmp(argv[1], "verify") == 0 && argc >= 3)
+    if (verb==CHSH_VERIFY && argc >= 3)
         return cmd_merkle(argv[2], 1);
 
-    if (strcmp(argv[1], "dedup") == 0 && argc >= 3)
+    if (verb==CHSH_DEDUP && argc >= 3)
         return cmd_dedup(argv[2]);
 
 usage:

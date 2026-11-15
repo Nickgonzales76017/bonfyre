@@ -525,8 +525,17 @@ static char *itad_held_tsv(const bf_jv *report) {
     return b.buf;
 }
 
-int manifest_main(int argc, char **argv) {
-    if (argc > 0 && (!strcmp(argv[0], "--help") || !strcmp(argv[0], "-h") || !strcmp(argv[0], "help"))) { fputs(MANIFEST_USAGE, stdout); return 0; }
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define DMF_COMMANDS(X) \
+    X("--help", DMF_OPT_HELP) \
+    X("-h", DMF_OPT_H) \
+    X("help", DMF_HELP)
+BF_COMMAND_TABLE(dmf_commands, DMF_COMMANDS);
+
+int manifest_main(int argc, char **argv) { const int verb=bf_command_id(dmf_commands,BF_COMMAND_COUNT(dmf_commands),(argc > 0 ? argv[0] : NULL),-1);
+    if (argc > 0 && (verb==DMF_OPT_HELP || verb==DMF_OPT_H || verb==DMF_HELP)) { fputs(MANIFEST_USAGE, stdout); return 0; }
     static const char *const repeatable[] = {"photo", "listing", NULL};
     DpFlags fl; dp_flags(&fl, argc, argv, repeatable);
     char **photos, **listings; int np = dp_flag_list(&fl, "photo", &photos), nl = dp_flag_list(&fl, "listing", &listings);

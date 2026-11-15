@@ -148,7 +148,18 @@ static int cmd_savings(const char *dir) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CCMP_COMMANDS(X) \
+    X("family", CCMP_FAMILY) \
+    X("pack", CCMP_PACK) \
+    X("savings", CCMP_SAVINGS) \
+    X("train", CCMP_TRAIN) \
+    X("unpack", CCMP_UNPACK)
+BF_COMMAND_TABLE(ccmp_commands, CCMP_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(ccmp_commands,BF_COMMAND_COUNT(ccmp_commands),(argc > 1 ? argv[1] : NULL),-1);
     const char *dict = NULL;
     int level = 19;
 
@@ -157,17 +168,17 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "--level") == 0) level = atoi(argv[i+1]);
     }
 
-    if (argc >= 3 && strcmp(argv[1], "train") == 0) {
+    if (argc >= 3 && verb==CCMP_TRAIN) {
         const char *dict_out = "family.dict";
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--dict-out") == 0) dict_out = argv[i+1];
         return cmd_train(argv[2], dict_out);
     }
-    if (argc >= 4 && strcmp(argv[1], "pack") == 0)
+    if (argc >= 4 && verb==CCMP_PACK)
         return cmd_pack(argv[2], argv[3], dict, level);
-    if (argc >= 4 && strcmp(argv[1], "unpack") == 0)
+    if (argc >= 4 && verb==CCMP_UNPACK)
         return cmd_unpack(argv[2], argv[3], dict);
-    if (argc >= 3 && strcmp(argv[1], "family") == 0) {
+    if (argc >= 3 && verb==CCMP_FAMILY) {
         const char *out = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--out") == 0) out = argv[i+1];
@@ -178,7 +189,7 @@ int main(int argc, char *argv[]) {
         }
         return cmd_family(argv[2], dict, out);
     }
-    if (argc >= 3 && strcmp(argv[1], "savings") == 0)
+    if (argc >= 3 && verb==CCMP_SAVINGS)
         return cmd_savings(argv[2]);
 
     fprintf(stderr,

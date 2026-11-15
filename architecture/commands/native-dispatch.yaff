@@ -111,6 +111,34 @@ architecture native-command-dispatch
   source_path cmd/BonfyreCompress/src/record_factor_cli.c
   source_path cmd/BonfyreQueue/src/account_work.h
   source_path cmd/BonfyreQueue/src/account_inbox.h
+  source_path cmd/BonfyreMcp/src/clis.c
+  source_path cmd/BonfyreDecide/src/plane.c
+  source_path cmd/BonfyreDecide/src/books.c
+  source_path cmd/BonfyreDecide/src/manifest.c
+  source_path cmd/BonfyreDecide/src/monitor.c
+  source_path cmd/BonfyreProviderEstate/src/customer.h
+  source_path components/BonfyreProject/src/main.c
+  source_path cmd/BonfyreAPI/src/main.c
+  source_path cmd/BonfyreAtlas/src/main.c
+  source_path cmd/BonfyreCLI/src/main.c
+  source_path cmd/BonfyreCredentials/src/main.c
+  source_path cmd/BonfyreEmbed/src/main.c
+  source_path cmd/BonfyreExperienceMap/src/main.c
+  source_path cmd/BonfyreFPQ/src/main.c
+  source_path cmd/BonfyreFPQx/src/main.c
+  source_path cmd/BonfyreFlashQLA/src/main.c
+  source_path cmd/BonfyreFragment/src/main.c
+  source_path cmd/BonfyreKVCache/src/main.c
+  source_path cmd/BonfyreLayer/src/main.c
+  source_path cmd/BonfyreObsidian/src/main.c
+  source_path cmd/BonfyreProviderEstate/src/main.c
+  source_path cmd/BonfyreQuant/src/main.c
+  source_path cmd/BonfyreQwenFPQ/src/main.c
+  source_path cmd/BonfyreReleaseApproval/src/main.c
+  source_path cmd/BonfyreSAE/src/main.c
+  source_path cmd/BonfyreSLI/src/main.c
+  source_path cmd/BonfyreTel/src/main.c
+  source_path cmd/BonfyreWire/src/main.c
   source_path cmd/BonfyreEconomy/src/main.c
   source_path cmd/BonfyreUpper90/src/main.c
   source_path cmd/BonfyreRepositoryFabric/src/main.c
@@ -137,4 +165,4 @@ architecture native-command-dispatch
   invariant Stitch compiles a recipe through direct compiler argv with a bounded source filename, rather than interpreting recipe or output bytes as shell syntax
   forbidden_inference a recognized command -> valid arguments, a current owner closure, provider or institutional authority, evidence admission, or permission to perform an effect
   witness scripts/tests/native_command_tables.test.mjs checks every declared native owner table and Runtime's delegated table; ExternalEstate route-cost/participation/native tests, Spatial native test, SourceFrontier native test, WebSub optimized/ASan tests, Runtime and Queue dispatch tests, WebAddress native route tests, Provider smoke tests, Index native checks, LatentAtlas native tests, CMS native tests, Facet compiler and reader-agreement tests, Discipl composition test, Family native list and help checks, Attention smoke test, Admission smoke test, OperatorStore archive test, and Stitch native command checks exercise the descriptor cuts
-  known_gap the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op,"verb") with no space after the comma) is 0 outside cmd/BonfyreWebAddress after the 2026-11-15 conversion of Auth, Finance, Model, Control, Physics, Net, Graph, Outreach, Space, Flow, Entity, Compete, Tier, Pay, Economy, Upper90, Recipe, ExperienceStage, Time, Atlas contracts, RepositoryFabric, AccountContinuity, WarehouseSeed, SurfaceScene, Compress record-factor, Queue account-work/inbox and the components/ Finance, Outreach and Graph copies; the same shape written with a space after the comma is not counted and remains in about 743 comparisons across 72 files (largest: components/BonfyreProject, BonfyreObsidian, BonfyreCLI, BonfyreMcp clis.c, BonfyreAtlas main); usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone
+  known_gap the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op, ?"verb"), with or without a space after the comma) is 0 outside cmd/BonfyreWebAddress; comparisons on other variable names (kind, mode, action, method, option values) are not counted and many remain; a few one-word entrypoints (WarehouseSeed seed, ConnectionCatalog list) use a one-row literal table; usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone

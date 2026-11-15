@@ -16,7 +16,7 @@ measure(){
   printf 'own_documents\t%s\n' "$(count '<!doctype html')"
   printf 'dispatch_branches\t%s\n' "$(grep -o 'handled=[a-z_]*(' "$root/cmd/BonfyreWebAddress/src/main.c" | wc -l | tr -d ' ')"
   printf 'route_path_compares\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -oE 'str(n)?cmp\((target|path),"/[^"]*"' | wc -l | tr -d ' ')"
-  printf 'cli_verb_ladders\t%s\n' "$(grep -rhoE 'strcmp\((argv\[[0-9]\]|cmd|verb|command|sub|op),"[a-z][a-z0-9-]*"\)' "$root"/cmd/*/src "$root"/components/*/src 2>/dev/null | wc -l | tr -d ' ')"
+  printf 'cli_verb_ladders\t%s\n' "$(grep -rhoE 'strcmp\((argv\[[0-9]\]|cmd|verb|command|sub|op), ?"[a-z][a-z0-9-]*"\)' "$root"/cmd/*/src "$root"/components/*/src 2>/dev/null | wc -l | tr -d ' ')"
   printf 'hand_printed_controls\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h | grep -oE '<(button|input|select|textarea|form)[ >]' | wc -l | tr -d ' ')"
   printf 'hardcoded_hosts\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -oE 'https://[a-z]*\.?aurekai\.(work|life|live|shop)' | wc -l | tr -d ' ')"
 }

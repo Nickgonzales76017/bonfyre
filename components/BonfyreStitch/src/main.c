@@ -279,15 +279,25 @@ static int cmd_cache_stats(const char *cache_dir) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
-    if (argc >= 3 && strcmp(argv[1], "plan") == 0) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CSTI_COMMANDS(X) \
+    X("cache-stats", CSTI_CACHE_STATS) \
+    X("materialize", CSTI_MATERIALIZE) \
+    X("plan", CSTI_PLAN) \
+    X("prune", CSTI_PRUNE)
+BF_COMMAND_TABLE(csti_commands, CSTI_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(csti_commands,BF_COMMAND_COUNT(csti_commands),(argc > 1 ? argv[1] : NULL),-1);
+    if (argc >= 3 && verb==CSTI_PLAN) {
         const char *target = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--target") == 0) target = argv[i+1];
         if (!target) { fprintf(stderr, "plan requires --target\n"); return 1; }
         return cmd_plan(argv[2], target);
     }
-    if (argc >= 3 && strcmp(argv[1], "materialize") == 0) {
+    if (argc >= 3 && verb==CSTI_MATERIALIZE) {
         const char *target = NULL;
         for (int i = 3; i < argc - 1; i++)
             if (strcmp(argv[i], "--target") == 0) target = argv[i+1];
@@ -298,13 +308,13 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "[stitch] (full execution requires all operator binaries to be installed)\n");
         return 0;
     }
-    if (argc >= 3 && strcmp(argv[1], "prune") == 0) {
+    if (argc >= 3 && verb==CSTI_PRUNE) {
         int keep_pinned = 0;
         for (int i = 3; i < argc; i++)
             if (strcmp(argv[i], "--keep-pinned") == 0) keep_pinned = 1;
         return cmd_prune(argv[2], keep_pinned);
     }
-    if (argc >= 2 && strcmp(argv[1], "cache-stats") == 0) {
+    if (argc >= 2 && verb==CSTI_CACHE_STATS) {
         const char *cache = NULL;
         for (int i = 2; i < argc - 1; i++)
             if (strcmp(argv[i], "--cache") == 0) cache = argv[i+1];

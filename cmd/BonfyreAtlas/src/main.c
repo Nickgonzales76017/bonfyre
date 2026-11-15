@@ -1152,7 +1152,7 @@ static int cmd_query(const char *op_in, const char *arg) {
     if (!ok) { fprintf(stderr, "usage: bun architecture/atlas-query.mjs <summary|get|search|cannot_infer|expand|loss> [arg]\n"); return 2; }
     int checked; bf_jv *index = load_index(&checked);
     bf_jv *r = op_id==AQ_SUMMARY ? q_summary(index) : op_id==AQ_GET ? q_get(index, arg) : op_id==AQ_SEARCH ? q_search(index, arg)
-             : op_id==AQ_CANNOT_INFER ? q_cannot_infer(index, arg) : op_id==AQ_EXPAND ? q_expand(index, arg) : q_loss(index);
+             : op_id==AQ_CANNOT_INFER ? q_cannot_infer(index, arg) : op_id==AQ_EXPAND ? q_expand(index, arg) : op_id==AQ_LOSS ? q_loss(index) : NULL;
     r = with_provenance(index, r, checked);
     char *s = bf_jv_dump(r, 2, BF_JV_SORT_JS, NULL);
     printf("%s\n", s);

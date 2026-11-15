@@ -132,13 +132,22 @@ static int command_chunk(int argc, char **argv) {
     return run_process(ffmpeg_argv);
 }
 
-int main(int argc, char **argv) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CMPR_COMMANDS(X) \
+    X("chunk", CMPR_CHUNK) \
+    X("inspect", CMPR_INSPECT) \
+    X("normalize", CMPR_NORMALIZE)
+BF_COMMAND_TABLE(cmpr_commands, CMPR_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cmpr_commands,BF_COMMAND_COUNT(cmpr_commands),(argc > 1 ? argv[1] : NULL),-1);
     if (argc < 3) {
         print_usage();
         return 1;
     }
 
-    if (strcmp(argv[1], "inspect") == 0) {
+    if (verb==CMPR_INSPECT) {
         if (argc != 3) {
             print_usage();
             return 1;
@@ -146,7 +155,7 @@ int main(int argc, char **argv) {
         return command_inspect(argv[2]);
     }
 
-    if (strcmp(argv[1], "normalize") == 0) {
+    if (verb==CMPR_NORMALIZE) {
         if (argc < 4) {
             print_usage();
             return 1;
@@ -154,7 +163,7 @@ int main(int argc, char **argv) {
         return command_normalize(argc, argv);
     }
 
-    if (strcmp(argv[1], "chunk") == 0) {
+    if (verb==CMPR_CHUNK) {
         if (argc < 4) {
             print_usage();
             return 1;

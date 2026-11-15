@@ -174,8 +174,15 @@ static int command_generate(const char *bundle_json_path, const char *output_dir
     return 0;
 }
 
-int main(int argc, char **argv) {
-    if (argc == 4 && strcmp(argv[1], "generate") == 0) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define COFR_COMMANDS(X) \
+    X("generate", COFR_GENERATE)
+BF_COMMAND_TABLE(cofr_commands, COFR_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cofr_commands,BF_COMMAND_COUNT(cofr_commands),(argc > 1 ? argv[1] : NULL),-1);
+    if (argc == 4 && verb==COFR_GENERATE) {
         return command_generate(argv[2], argv[3]);
     }
     fprintf(stderr, "Usage:\n  bonfyre-offer generate <proof-bundle.json> <output-dir>\n");

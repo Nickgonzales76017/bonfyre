@@ -1937,8 +1937,15 @@ static const BfCommandEntry discipl_commands[] = {
 #undef DISCIPL_ENTRY
 };
 
+/* Second words of the actors/contracts nouns, sorted for the shared lookup. */
+#define DCS_COMMANDS(X) \
+    X("import", DCS_IMPORT) \
+    X("list", DCS_LIST)
+BF_COMMAND_TABLE(dcs_commands, DCS_COMMANDS);
+
 int main(int argc, char **argv) {
     const char *root = arg_value(argc, argv, "--root");
+    const int sub = argc >= 3 ? bf_command_id(dcs_commands, BF_COMMAND_COUNT(dcs_commands), argv[2], -1) : -1;
     const BfCommandEntry *command;
     if (argc < 2) { usage(); return 1; }
     command = bf_command_lookup(discipl_commands,
@@ -1949,11 +1956,11 @@ int main(int argc, char **argv) {
             case DC_HELP_ALIAS: usage(); return 0;
             case DC_INIT: return cmd_init(root);
             case DC_ACTORS:
-                if (argc >= 3 && strcmp(argv[2], "import") == 0) return cmd_actors_import(root);
+                if (argc >= 3 && sub == DCS_IMPORT) return cmd_actors_import(root);
                 break;
             case DC_CONTRACTS:
-                if (argc >= 3 && strcmp(argv[2], "import") == 0) return cmd_contracts_import(root);
-                if (argc >= 3 && strcmp(argv[2], "list") == 0) return cmd_contracts_list(arg_value(argc, argv, "--family"));
+                if (argc >= 3 && sub == DCS_IMPORT) return cmd_contracts_import(root);
+                if (argc >= 3 && sub == DCS_LIST) return cmd_contracts_list(arg_value(argc, argv, "--family"));
                 break;
             case DC_SEED_COMMANDS: return cmd_seed_commands(root);
             case DC_RUN: return cmd_run(root, argc, argv);

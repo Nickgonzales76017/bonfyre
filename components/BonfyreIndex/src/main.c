@@ -2072,7 +2072,26 @@ static int cmd_stats(const char *db_path) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CIDX_COMMANDS(X) \
+    X("build", CIDX_BUILD) \
+    X("bundle-diff", CIDX_BUNDLE_DIFF) \
+    X("bundle-layout", CIDX_BUNDLE_LAYOUT) \
+    X("collapse-ledger", CIDX_COLLAPSE_LEDGER) \
+    X("collapse-plan", CIDX_COLLAPSE_PLAN) \
+    X("collapse-preview", CIDX_COLLAPSE_PREVIEW) \
+    X("confidence-preview", CIDX_CONFIDENCE_PREVIEW) \
+    X("equivalence", CIDX_EQUIVALENCE) \
+    X("merge-manifest", CIDX_MERGE_MANIFEST) \
+    X("reuse", CIDX_REUSE) \
+    X("search", CIDX_SEARCH) \
+    X("stats", CIDX_STATS) \
+    X("validate-preview", CIDX_VALIDATE_PREVIEW)
+BF_COMMAND_TABLE(cidx_commands, CIDX_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(cidx_commands,BF_COMMAND_COUNT(cidx_commands),(argc > 1 ? argv[1] : NULL),-1);
     const char *db = "bonfyre-index.db";
     int json_mode = 0;
 
@@ -2084,10 +2103,10 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "--json") == 0) { json_mode = 1; break; }
     }
 
-    if (argc >= 3 && strcmp(argv[1], "build") == 0)
+    if (argc >= 3 && verb==CIDX_BUILD)
         return cmd_build(argv[2], db);
 
-    if (argc >= 3 && strcmp(argv[1], "search") == 0) {
+    if (argc >= 3 && verb==CIDX_SEARCH) {
         const char *type = NULL;
         int limit = 20;
         for (int i = 3; i < argc - 1; i++) {
@@ -2097,10 +2116,10 @@ int main(int argc, char *argv[]) {
         return cmd_search(argv[2], db, type, limit);
     }
 
-    if (argc >= 2 && strcmp(argv[1], "reuse") == 0)
+    if (argc >= 2 && verb==CIDX_REUSE)
         return cmd_reuse(db);
 
-    if (argc >= 2 && strcmp(argv[1], "equivalence") == 0) {
+    if (argc >= 2 && verb==CIDX_EQUIVALENCE) {
         int limit = 20;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2108,7 +2127,7 @@ int main(int argc, char *argv[]) {
         return cmd_equivalence(db, limit, json_mode);
     }
 
-    if (argc >= 2 && strcmp(argv[1], "collapse-preview") == 0) {
+    if (argc >= 2 && verb==CIDX_COLLAPSE_PREVIEW) {
         int limit = 20;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2116,7 +2135,7 @@ int main(int argc, char *argv[]) {
         return cmd_collapse_preview(db, limit, json_mode);
     }
 
-    if (argc >= 2 && strcmp(argv[1], "confidence-preview") == 0) {
+    if (argc >= 2 && verb==CIDX_CONFIDENCE_PREVIEW) {
         int limit = 20;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2124,7 +2143,7 @@ int main(int argc, char *argv[]) {
         return cmd_confidence_preview(db, limit, json_mode);
     }
 
-    if (argc >= 2 && strcmp(argv[1], "collapse-plan") == 0) {
+    if (argc >= 2 && verb==CIDX_COLLAPSE_PLAN) {
         int limit = 20;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2132,7 +2151,7 @@ int main(int argc, char *argv[]) {
         return cmd_collapse_plan(db, limit, json_mode);
     }
 
-    if (argc >= 3 && strcmp(argv[1], "collapse-ledger") == 0) {
+    if (argc >= 3 && verb==CIDX_COLLAPSE_LEDGER) {
         int limit = 20;
         for (int i = 3; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2140,7 +2159,7 @@ int main(int argc, char *argv[]) {
         return cmd_collapse_ledger(db, argv[2], limit);
     }
 
-    if (argc >= 3 && strcmp(argv[1], "merge-manifest") == 0) {
+    if (argc >= 3 && verb==CIDX_MERGE_MANIFEST) {
         int limit = 20;
         for (int i = 3; i < argc - 1; i++) {
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
@@ -2148,19 +2167,19 @@ int main(int argc, char *argv[]) {
         return cmd_merge_manifest(db, argv[2], limit);
     }
 
-    if (argc >= 4 && strcmp(argv[1], "bundle-layout") == 0) {
+    if (argc >= 4 && verb==CIDX_BUNDLE_LAYOUT) {
         return cmd_bundle_layout(argv[2], argv[3]);
     }
 
-    if (argc >= 3 && strcmp(argv[1], "validate-preview") == 0) {
+    if (argc >= 3 && verb==CIDX_VALIDATE_PREVIEW) {
         return cmd_validate_preview_artifact(argv[2]);
     }
 
-    if (argc >= 4 && strcmp(argv[1], "bundle-diff") == 0) {
+    if (argc >= 4 && verb==CIDX_BUNDLE_DIFF) {
         return cmd_bundle_diff(argv[2], argv[3]);
     }
 
-    if (argc >= 2 && strcmp(argv[1], "stats") == 0)
+    if (argc >= 2 && verb==CIDX_STATS)
         return cmd_stats(db);
 
     fprintf(stderr,

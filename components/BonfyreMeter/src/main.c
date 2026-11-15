@@ -264,12 +264,22 @@ static int cmd_top(const char *db_path, int limit) {
 
 /* ---------- main ---------- */
 
-int main(int argc, char *argv[]) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CMTR_COMMANDS(X) \
+    X("invoice", CMTR_INVOICE) \
+    X("record", CMTR_RECORD) \
+    X("top", CMTR_TOP) \
+    X("usage", CMTR_USAGE)
+BF_COMMAND_TABLE(cmtr_commands, CMTR_COMMANDS);
+
+int main(int argc, char *argv[]) { const int verb=bf_command_id(cmtr_commands,BF_COMMAND_COUNT(cmtr_commands),(argc > 1 ? argv[1] : NULL),-1);
     const char *db = "bonfyre-meter.db";
     for (int i = 1; i < argc - 1; i++)
         if (strcmp(argv[i], "--db") == 0) db = argv[i+1];
 
-    if (argc >= 2 && strcmp(argv[1], "record") == 0) {
+    if (argc >= 2 && verb==CMTR_RECORD) {
         const char *key = NULL, *op = NULL;
         long bytes = 0; int dur = 0;
         for (int i = 2; i < argc - 1; i++) {
@@ -281,7 +291,7 @@ int main(int argc, char *argv[]) {
         if (!key || !op) { fprintf(stderr, "record requires --key and --op\n"); return 1; }
         return cmd_record(db, key, op, bytes, dur);
     }
-    if (argc >= 2 && strcmp(argv[1], "usage") == 0) {
+    if (argc >= 2 && verb==CMTR_USAGE) {
         const char *key = NULL, *since = NULL;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--key") == 0) key = argv[i+1];
@@ -290,7 +300,7 @@ int main(int argc, char *argv[]) {
         if (!key) { fprintf(stderr, "usage requires --key\n"); return 1; }
         return cmd_usage(db, key, since);
     }
-    if (argc >= 2 && strcmp(argv[1], "invoice") == 0) {
+    if (argc >= 2 && verb==CMTR_INVOICE) {
         const char *key = NULL, *period = NULL;
         for (int i = 2; i < argc - 1; i++) {
             if (strcmp(argv[i], "--key") == 0) key = argv[i+1];
@@ -299,7 +309,7 @@ int main(int argc, char *argv[]) {
         if (!key) { fprintf(stderr, "invoice requires --key\n"); return 1; }
         return cmd_invoice(db, key, period);
     }
-    if (argc >= 2 && strcmp(argv[1], "top") == 0) {
+    if (argc >= 2 && verb==CMTR_TOP) {
         int limit = 10;
         for (int i = 2; i < argc - 1; i++)
             if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);

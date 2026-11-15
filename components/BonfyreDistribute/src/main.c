@@ -113,14 +113,23 @@ static int command_message(const char *offers_path, const char *offer_name, cons
     return 0;
 }
 
-int main(int argc, char **argv) {
-    if (argc >= 3 && strcmp(argv[1], "offers") == 0) {
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CDST_COMMANDS(X) \
+    X("message", CDST_MESSAGE) \
+    X("offers", CDST_OFFERS) \
+    X("snapshot", CDST_SNAPSHOT)
+BF_COMMAND_TABLE(cdst_commands, CDST_COMMANDS);
+
+int main(int argc, char **argv) { const int verb=bf_command_id(cdst_commands,BF_COMMAND_COUNT(cdst_commands),(argc > 1 ? argv[1] : NULL),-1);
+    if (argc >= 3 && verb==CDST_OFFERS) {
         return command_offers(argv[2]);
     }
-    if (argc >= 3 && strcmp(argv[1], "snapshot") == 0) {
+    if (argc >= 3 && verb==CDST_SNAPSHOT) {
         return command_snapshot(argv[2]);
     }
-    if (argc >= 5 && strcmp(argv[1], "message") == 0) {
+    if (argc >= 5 && verb==CDST_MESSAGE) {
         return command_message(argv[2], argv[3], argv[4]);
     }
     fprintf(stderr,

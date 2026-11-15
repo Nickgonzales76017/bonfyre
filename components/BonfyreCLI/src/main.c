@@ -132,20 +132,32 @@ static int try_exec(const char *binary, const char *sibling_dir, char **argv) {
     return -1;
 }
 
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+/* Verb vocabularies, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+#define CCLI_COMMANDS(X) \
+    X("--help", CCLI_OPT_HELP) \
+    X("--version", CCLI_OPT_VERSION) \
+    X("-h", CCLI_OPT_H) \
+    X("help", CCLI_HELP) \
+    X("list", CCLI_LIST) \
+    X("version", CCLI_VERSION)
+BF_COMMAND_TABLE(ccli_commands, CCLI_COMMANDS);
+
 int main(int argc, char *argv[]) {
     if (argc < 2) goto usage;
-    const char *cmd = argv[1];
+    const char *cmd = argv[1]; const int cmd_id=bf_command_id(ccli_commands,BF_COMMAND_COUNT(ccli_commands),cmd,-1);
 
     /* Special built-in commands */
-    if (strcmp(cmd, "help") == 0 || strcmp(cmd, "--help") == 0 || strcmp(cmd, "-h") == 0)
+    if (cmd_id==CCLI_HELP || cmd_id==CCLI_OPT_HELP || cmd_id==CCLI_OPT_H)
         goto usage;
 
-    if (strcmp(cmd, "version") == 0 || strcmp(cmd, "--version") == 0) {
+    if (cmd_id==CCLI_VERSION || cmd_id==CCLI_OPT_VERSION) {
         printf("bonfyre 0.1.0\n");
         return 0;
     }
 
-    if (strcmp(cmd, "list") == 0) {
+    if (cmd_id==CCLI_LIST) {
         printf("Available commands:\n\n");
         const char *section = "";
         for (const Route *r = routes; r->cmd; r++) {

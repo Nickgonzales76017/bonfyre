@@ -1261,18 +1261,14 @@ static void print_usage(void) {
     X("insert", VEC_INSERT) \
     X("neighbors", VEC_NEIGHBORS) \
     X("sae-rerank", VEC_SAE_RERANK) \
-    X("search", VEC_SEARCH)
+    X("search", VEC_SEARCH) \
+    X("status", VEC_STATUS)
 BF_COMMAND_TABLE(vec_commands, VEC_COMMANDS);
 
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
-    enum { VC_STATUS };
-    static const BfCommandEntry vec_commands[] = {
-        {"status", VC_STATUS, 0, NULL},
-    };
-    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(vec_commands,
-        sizeof(vec_commands) / sizeof(vec_commands[0]), argv[1]);
-    if (command && command->id == VC_STATUS) {
+    const int status_id = argc < 2 ? -1 : bf_command_id(vec_commands, BF_COMMAND_COUNT(vec_commands), argv[1], -1);
+    if (status_id == VEC_STATUS) {
         printf("{\"binary\":\"bonfyre-vec\",\"status\":\"ok\",\"version\":\"3.0.0\","
                "\"backend\":\"sqlite-vec-native\",\"simd\":\""
 #ifdef __ARM_NEON

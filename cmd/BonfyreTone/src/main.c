@@ -378,18 +378,14 @@ static void print_usage(void) {
 #define TONE_COMMANDS(X) \
     X("compare", TONE_COMPARE) \
     X("extract", TONE_EXTRACT) \
-    X("profile", TONE_PROFILE)
+    X("profile", TONE_PROFILE) \
+    X("status", TONE_STATUS)
 BF_COMMAND_TABLE(tone_commands, TONE_COMMANDS);
 
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
-    enum { TN_STATUS };
-    static const BfCommandEntry tone_commands[] = {
-        {"status", TN_STATUS, 0, NULL},
-    };
-    const BfCommandEntry *command = argc < 2 ? NULL : bf_command_lookup(tone_commands,
-        sizeof(tone_commands) / sizeof(tone_commands[0]), argv[1]);
-    if (command && command->id == TN_STATUS) {
+    const int status_id = argc < 2 ? -1 : bf_command_id(tone_commands, BF_COMMAND_COUNT(tone_commands), argv[1], -1);
+    if (status_id == TONE_STATUS) {
         /* Status is whether the organ can do its work, which means whether
          * its engine is there. It used to print ok without looking. */
         int opensmile = opensmile_configured();
