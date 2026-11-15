@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* Declared in main.c */
 extern unsigned long long fnv1a64(const void *data, size_t len);
@@ -31,29 +32,15 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int egraph_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _equivalences ("
-        "  id            INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  class_id      INTEGER NOT NULL,"
-        "  repr_type     TEXT NOT NULL,"
-        "  repr_hash     TEXT NOT NULL,"
-        "  target_type   TEXT NOT NULL,"
-        "  target_id     INTEGER NOT NULL,"
-        "  materialized  INTEGER DEFAULT 0,"
-        "  cost          REAL DEFAULT 1.0,"
-        "  data          TEXT,"
-        "  ts            TEXT NOT NULL"
-        ");",
+        BF_STORE_CMS_EQUIVALENCES,
 
-        "CREATE INDEX IF NOT EXISTS idx_eq_class ON _equivalences(class_id);",
-        "CREATE INDEX IF NOT EXISTS idx_eq_target ON _equivalences(target_type, target_id);",
-        "CREATE INDEX IF NOT EXISTS idx_eq_repr ON _equivalences(target_type, target_id, repr_type);",
-        "CREATE INDEX IF NOT EXISTS idx_eq_mat ON _equivalences(materialized, cost);",
+        BF_STORE_CMS_IDX_EQ_CLASS,
+        BF_STORE_CMS_IDX_EQ_TARGET,
+        BF_STORE_CMS_IDX_EQ_REPR,
+        BF_STORE_CMS_IDX_EQ_MAT,
 
         /* Class counter table */
-        "CREATE TABLE IF NOT EXISTS _egraph_meta ("
-        "  key   TEXT PRIMARY KEY,"
-        "  value TEXT NOT NULL"
-        ");",
+        BF_STORE_CMS_EGRAPH_META,
         "INSERT OR IGNORE INTO _egraph_meta (key, value) VALUES ('next_class_id', '1');",
 
         NULL

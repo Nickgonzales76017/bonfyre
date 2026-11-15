@@ -53,4 +53,11 @@ if ! sh "$repo_root/scripts/native-ratchet.sh" check; then
   exit 1
 fi
 
+# 4. Store DDL is declared once in schemas/storage/stores; each owner's
+#    generated/store_schema.h must be what that registry compiles to.
+if ! sh "$repo_root/scripts/compile-store-schemas.sh" --check; then
+  echo "pre-commit: a store schema header drifted from schemas/storage/stores (see above)." >&2
+  exit 1
+fi
+
 exit 0

@@ -37,6 +37,7 @@
 #include <bf_json.h>
 
 #include "bf_lex.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* ── Section constants ────────────────────────────────────────────── */
 #define SEC_SITES   "Websites and content"
 #define SEC_MEDIA   "Recordings and video"
@@ -1140,25 +1141,7 @@ static int compress_blob_if_possible(const char *raw_path, const char *compresse
 
 static int create_self_db_schema(sqlite3 *db) {
     const char *sql =
-        "CREATE TABLE IF NOT EXISTS fragments ("
-        " fragment_id TEXT PRIMARY KEY,"
-        " kind TEXT NOT NULL,"
-        " key_text TEXT,"
-        " value_json TEXT NOT NULL,"
-        " score REAL DEFAULT 0,"
-        " created_at TEXT NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS plans ("
-        " plan_id TEXT PRIMARY KEY,"
-        " kind TEXT NOT NULL,"
-        " status TEXT NOT NULL,"
-        " score REAL DEFAULT 0,"
-        " payload_json TEXT NOT NULL,"
-        " created_at TEXT NOT NULL"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_fragments_kind ON fragments(kind);"
-        "CREATE INDEX IF NOT EXISTS idx_fragments_key ON fragments(key_text);"
-        "CREATE INDEX IF NOT EXISTS idx_plans_kind ON plans(kind);";
+        BF_STORE_CLI_FRAGMENTS;
     char *errmsg = NULL;
     if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
         if (errmsg) sqlite3_free(errmsg);
@@ -1169,18 +1152,7 @@ static int create_self_db_schema(sqlite3 *db) {
 
 static int create_self_graph_schema(sqlite3 *db) {
     const char *sql =
-        "CREATE TABLE IF NOT EXISTS nodes ("
-        " node_id TEXT PRIMARY KEY,"
-        " kind TEXT NOT NULL,"
-        " payload_json TEXT NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS edges ("
-        " src_id TEXT NOT NULL,"
-        " rel TEXT NOT NULL,"
-        " dst_id TEXT NOT NULL,"
-        " meta_json TEXT,"
-        " PRIMARY KEY(src_id, rel, dst_id)"
-        ");";
+        BF_STORE_CLI_NODES;
     char *errmsg = NULL;
     if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
         if (errmsg) sqlite3_free(errmsg);
@@ -1191,15 +1163,7 @@ static int create_self_graph_schema(sqlite3 *db) {
 
 static int create_self_index_schema(sqlite3 *db) {
     const char *sql =
-        "CREATE TABLE IF NOT EXISTS kv_index ("
-        " key_text TEXT PRIMARY KEY,"
-        " kind TEXT NOT NULL,"
-        " value_text TEXT"
-        ");"
-        "CREATE TABLE IF NOT EXISTS family_counts ("
-        " family TEXT PRIMARY KEY,"
-        " count_value INTEGER NOT NULL"
-        ");";
+        BF_STORE_CLI_KV_INDEX;
     char *errmsg = NULL;
     if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
         if (errmsg) sqlite3_free(errmsg);

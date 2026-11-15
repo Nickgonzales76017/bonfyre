@@ -51,6 +51,7 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define VERSION         "1.0.0"
 #define DEFAULT_HOST    "127.0.0.1"
 #define DEFAULT_PORT    8021
@@ -68,38 +69,7 @@ static const char *layeros_binary(void) {
 /* ── SQLite schema ─────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS calls ("
-    "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  uuid       TEXT NOT NULL,"
-    "  direction  TEXT NOT NULL,"   /* inbound | outbound */
-    "  caller     TEXT,"
-    "  callee     TEXT,"
-    "  started_at TEXT NOT NULL,"
-    "  ended_at   TEXT,"
-    "  duration_s REAL,"
-    "  recording  TEXT,"           /* path to .wav */
-    "  pipeline   TEXT,"           /* pipeline job id */
-    "  status     TEXT DEFAULT 'active'"
-    ");"
-    "CREATE TABLE IF NOT EXISTS messages ("
-    "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  direction   TEXT NOT NULL,"
-    "  from_number TEXT,"
-    "  to_number   TEXT,"
-    "  body        TEXT,"
-    "  media_url   TEXT,"
-    "  sent_at     TEXT NOT NULL,"
-    "  status      TEXT DEFAULT 'sent'"
-    ");"
-    "CREATE TABLE IF NOT EXISTS verify_codes ("
-    "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  phone      TEXT NOT NULL,"
-    "  code       TEXT NOT NULL,"
-    "  created_at TEXT NOT NULL,"
-    "  expires_at TEXT NOT NULL,"
-    "  verified   INTEGER DEFAULT 0,"
-    "  attempts   INTEGER DEFAULT 0"
-    ");";
+    BF_STORE_TEL_CALLS;
 
 /* ── Utility ───────────────────────────────────────────────────────── */
 

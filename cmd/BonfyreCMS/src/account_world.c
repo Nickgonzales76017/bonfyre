@@ -1,6 +1,7 @@
 #include "account_world.h"
 #include <string.h>
 #include <limits.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* 1 = success, 0 = absent/refused/conflict, -1 = storage error.
  * Every mutation runs under an immediate transaction. */
@@ -16,33 +17,7 @@ static int text_ok(const char *s, size_t max) {
 static int step_done(sqlite3_stmt *s) { return sqlite3_step(s)==SQLITE_DONE; }
 int aw_initialize(sqlite3 *db) {
     const char *sql =
-      "CREATE TABLE IF NOT EXISTS account_world_binding("
-      "world_id INTEGER PRIMARY KEY,subject TEXT NOT NULL,namespace TEXT NOT NULL);"
-      "CREATE TABLE IF NOT EXISTS account_world_space("
-      "world_id INTEGER NOT NULL,space_id TEXT NOT NULL,title TEXT NOT NULL,renderer TEXT NOT NULL,"
-      "template_ref TEXT NOT NULL,layout_ref TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>0),"
-      "PRIMARY KEY(world_id,space_id));"
-      "CREATE TABLE IF NOT EXISTS account_world_space_style("
-      "world_id INTEGER NOT NULL,space_id TEXT NOT NULL,medium TEXT NOT NULL,character TEXT NOT NULL,lede TEXT NOT NULL,"
-      "PRIMARY KEY(world_id,space_id));"
-      "CREATE TABLE IF NOT EXISTS account_world_item("
-      "world_id INTEGER NOT NULL,space_id TEXT NOT NULL,position INTEGER NOT NULL CHECK(position BETWEEN 1 AND 24),"
-      "ref TEXT NOT NULL,role TEXT NOT NULL,note TEXT NOT NULL,PRIMARY KEY(world_id,space_id,position));"
-      "CREATE TABLE IF NOT EXISTS account_world_release("
-      "world_id INTEGER NOT NULL,space_id TEXT NOT NULL,namespace TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('public','withdrawn')),"
-      "revision INTEGER NOT NULL CHECK(revision>0),title TEXT NOT NULL,renderer TEXT NOT NULL,medium TEXT NOT NULL,"
-      "character TEXT NOT NULL,lede TEXT NOT NULL,PRIMARY KEY(world_id,space_id));"
-      "CREATE INDEX IF NOT EXISTS account_world_release_ns ON account_world_release(namespace,space_id,state);"
-      "CREATE TABLE IF NOT EXISTS account_world_release_item("
-      "world_id INTEGER NOT NULL,space_id TEXT NOT NULL,position INTEGER NOT NULL,ref TEXT NOT NULL,role TEXT NOT NULL,"
-      "note TEXT NOT NULL,PRIMARY KEY(world_id,space_id,position));"
-      "CREATE TRIGGER IF NOT EXISTS account_world_bound_delete BEFORE DELETE ON world "
-      "WHEN EXISTS(SELECT 1 FROM account_world_binding WHERE world_id=OLD.id) "
-      "BEGIN SELECT RAISE(ABORT,'bound world cannot be deleted'); END;"
-      "CREATE TRIGGER IF NOT EXISTS account_world_bound_identity BEFORE UPDATE OF id,subject,namespace,world ON world "
-      "WHEN EXISTS(SELECT 1 FROM account_world_binding WHERE world_id=OLD.id) AND "
-      "(NEW.id IS NOT OLD.id OR NEW.subject IS NOT OLD.subject OR NEW.namespace IS NOT OLD.namespace OR NEW.world IS NOT OLD.world) "
-      "BEGIN SELECT RAISE(ABORT,'bound world identity cannot change'); END;";
+      BF_STORE_CMS_ACCOUNT_WORLD_BINDING;
     return db && sqlite3_exec(db,sql,NULL,NULL,NULL)==SQLITE_OK && aw_cine_initialize(db)==1 ? 1 : -1;
 }
 int aw_bind(sqlite3 *db,const char *subject,const char *ns,sqlite3_int64 id) {
@@ -284,24 +259,7 @@ static int film_ref(const char *ref){return ref&&strncmp(ref,"space:",6)&&ref_ok
 static int words_ok(const char *s,size_t max){return prose_ok(s,max)&&s&&*s&&strspn(s," \t\r\n")!=strlen(s);}
 int aw_cine_initialize(sqlite3 *db) {
     const char *sql=
-      "CREATE TABLE IF NOT EXISTS account_world_screening(world_id INTEGER NOT NULL,space_id TEXT NOT NULL,screening_id TEXT NOT NULL,"
-      "starts TEXT NOT NULL,venue TEXT NOT NULL,ref TEXT NOT NULL,note TEXT NOT NULL,"
-      "state TEXT NOT NULL CHECK(state IN('draft','announced','cancelled')),PRIMARY KEY(world_id,space_id,screening_id));"
-      "CREATE TABLE IF NOT EXISTS account_world_club(world_id INTEGER NOT NULL,space_id TEXT NOT NULL,"
-      "state TEXT NOT NULL CHECK(state IN('open','closed')),PRIMARY KEY(world_id,space_id));"
-      "CREATE TABLE IF NOT EXISTS account_world_club_member(world_id INTEGER NOT NULL,space_id TEXT NOT NULL,member TEXT NOT NULL,"
-      "state TEXT NOT NULL CHECK(state IN('member','left','removed')),PRIMARY KEY(world_id,space_id,member));"
-      "CREATE TABLE IF NOT EXISTS account_world_club_pick(pick_id INTEGER PRIMARY KEY,world_id INTEGER NOT NULL,space_id TEXT NOT NULL,"
-      "ref TEXT NOT NULL,note TEXT NOT NULL,proposed_by TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('open','hidden')));"
-      "CREATE INDEX IF NOT EXISTS account_world_club_pick_space ON account_world_club_pick(world_id,space_id,state);"
-      "CREATE TABLE IF NOT EXISTS account_world_club_vote(pick_id INTEGER NOT NULL,member TEXT NOT NULL,PRIMARY KEY(pick_id,member));"
-      "CREATE TABLE IF NOT EXISTS account_world_club_post(post_id INTEGER PRIMARY KEY,world_id INTEGER NOT NULL,space_id TEXT NOT NULL,"
-      "author TEXT NOT NULL,ref TEXT NOT NULL,body TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('shown','hidden','retracted')));"
-      "CREATE INDEX IF NOT EXISTS account_world_club_post_space ON account_world_club_post(world_id,space_id,post_id);"
-      "CREATE TABLE IF NOT EXISTS account_world_note(note_id INTEGER PRIMARY KEY,world_id INTEGER NOT NULL,ref TEXT NOT NULL,"
-      "watched TEXT NOT NULL,rating INTEGER NOT NULL CHECK(rating BETWEEN 0 AND 10),rewatch INTEGER NOT NULL CHECK(rewatch IN(0,1)),"
-      "body TEXT NOT NULL,visibility TEXT NOT NULL CHECK(visibility IN('private','public')));"
-      "CREATE INDEX IF NOT EXISTS account_world_note_day ON account_world_note(world_id,watched,note_id);";
+      BF_STORE_CMS_ACCOUNT_WORLD_SCREENING;
     return db&&sqlite3_exec(db,sql,NULL,NULL,NULL)==SQLITE_OK?1:-1;
 }
 

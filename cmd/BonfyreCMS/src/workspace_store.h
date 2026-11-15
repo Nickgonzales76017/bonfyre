@@ -2,6 +2,7 @@
 #define BONFYRE_CMS_WORKSPACE_STORE_H
 #include "bf_msgpack.h"
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* Candidate records extend the CMS owner. Published material stays in its
  * source package; each destination retains exact changed record bodies once. */
 #define CW_MAX_PACKET (512u * 1024u)
@@ -24,15 +25,7 @@ typedef struct {
 } CwChange;
 static int cw_schema(sqlite3 *db) {
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS _application_workspace(binding_id TEXT PRIMARY KEY,cms_id INTEGER NOT NULL UNIQUE,installation_id INTEGER NOT NULL,family TEXT NOT NULL,release TEXT NOT NULL,entry TEXT NOT NULL);"
-        "CREATE INDEX IF NOT EXISTS _application_workspace_install ON _application_workspace(installation_id);"
-        "CREATE TABLE IF NOT EXISTS _workspace_body(scope_key TEXT NOT NULL,digest TEXT NOT NULL,body BLOB NOT NULL,PRIMARY KEY(scope_key,digest));"
-        "CREATE TABLE IF NOT EXISTS _workspace_record(scope_key TEXT NOT NULL,record_key TEXT NOT NULL,revision INTEGER NOT NULL,body_digest TEXT,deleted INTEGER NOT NULL,actor TEXT NOT NULL,PRIMARY KEY(scope_key,record_key));"
-        "CREATE TABLE IF NOT EXISTS _workspace_blob(id INTEGER PRIMARY KEY,scope_key TEXT NOT NULL,digest TEXT NOT NULL,bytes INTEGER NOT NULL,complete INTEGER NOT NULL,body BLOB NOT NULL,UNIQUE(scope_key,digest));"
-        "CREATE TABLE IF NOT EXISTS _workspace_blob_piece(blob_id INTEGER NOT NULL,offset INTEGER NOT NULL,bytes INTEGER NOT NULL,digest TEXT NOT NULL,PRIMARY KEY(blob_id,offset));"
-        "CREATE TABLE IF NOT EXISTS _workspace_epoch(scope_key TEXT PRIMARY KEY,revision INTEGER NOT NULL);"
-        "CREATE TABLE IF NOT EXISTS _workspace_operation(scope_key TEXT NOT NULL,request_id TEXT NOT NULL,digest TEXT NOT NULL,actor TEXT NOT NULL,PRIMARY KEY(scope_key,request_id));"
-        "CREATE TABLE IF NOT EXISTS _workspace_operation_row(scope_key TEXT NOT NULL,request_id TEXT NOT NULL,ordinal INTEGER NOT NULL,record_key TEXT NOT NULL,revision INTEGER NOT NULL,body_digest TEXT,deleted INTEGER NOT NULL,PRIMARY KEY(scope_key,request_id,ordinal));",
+        BF_STORE_CMS_APPLICATION_WORKSPACE,
         NULL,NULL,NULL)==SQLITE_OK;
 }
 static int cw_token(const char *s,size_t cap) {

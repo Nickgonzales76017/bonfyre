@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
@@ -43,13 +44,7 @@ static char *last_line(const unsigned char *data,size_t size){
 }
 static int schema(sqlite3 *db){
     return sqlite3_exec(db,
-      "CREATE TABLE IF NOT EXISTS estate_evidence_sync_receipts("
-      "sync_id TEXT PRIMARY KEY,cms_path TEXT NOT NULL,publication_count INTEGER NOT NULL,"
-      "publication_watermark TEXT NOT NULL,considered INTEGER NOT NULL,exact INTEGER NOT NULL,"
-      "unresolved INTEGER NOT NULL,evidence_relations INTEGER NOT NULL,foreign_observations INTEGER NOT NULL,"
-      "measured_invariants INTEGER NOT NULL,proven_invariants INTEGER NOT NULL,generation TEXT NOT NULL DEFAULT '',"
-      "synced_at TEXT NOT NULL);"
-      "CREATE INDEX IF NOT EXISTS estate_evidence_sync_latest ON estate_evidence_sync_receipts(synced_at DESC,sync_id DESC);",
+      BF_STORE_SEMANTIC_OPTIMIZER_ESTATE_EVIDENCE_SYNC_RECEIPTS,
       NULL,NULL,NULL)==SQLITE_OK;
 }
 static int open_owners(const char *path,EvidenceOwners *o,FILE *err){

@@ -39,6 +39,7 @@
 #include <bonfyre.h>
 #include <bf_commerce_stage.h>
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_PATH  2048
 
@@ -49,34 +50,7 @@ static void iso_now(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 /* ── Database ─────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS invoices ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  user_id INTEGER,"
-    "  api_key TEXT,"
-    "  period_start TEXT,"
-    "  period_end TEXT,"
-    "  amount_cents INTEGER NOT NULL DEFAULT 0,"
-    "  line_items_json TEXT,"
-    "  status TEXT NOT NULL DEFAULT 'pending',"
-    "  created_at TEXT NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS payments ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  invoice_id INTEGER,"
-    "  user_id INTEGER,"
-    "  amount_cents INTEGER NOT NULL,"
-    "  method TEXT NOT NULL,"
-    "  reference TEXT,"
-    "  created_at TEXT NOT NULL,"
-    "  FOREIGN KEY (invoice_id) REFERENCES invoices(id)"
-    ");"
-    "CREATE TABLE IF NOT EXISTS credits ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  user_id INTEGER NOT NULL,"
-    "  amount_cents INTEGER NOT NULL,"
-    "  reason TEXT,"
-    "  created_at TEXT NOT NULL"
-    ");";
+    BF_STORE_PAY_INVOICES;
 
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db=NULL;

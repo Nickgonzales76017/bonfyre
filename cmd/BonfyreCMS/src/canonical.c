@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* Declared in main.c */
 extern unsigned long long fnv1a64(const void *data, size_t len);
@@ -609,27 +610,12 @@ char *structural_signature(const char *json) {
 
 int families_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _families ("
-        "  id            INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_hash   TEXT NOT NULL,"
-        "  content_type  TEXT NOT NULL,"
-        "  generator     TEXT,"
-        "  member_count  INTEGER DEFAULT 0,"
-        "  created_at    TEXT NOT NULL,"
-        "  UNIQUE(family_hash, content_type)"
-        ");",
+        BF_STORE_CMS_FAMILIES,
 
-        "CREATE INDEX IF NOT EXISTS idx_families_hash ON _families(family_hash);",
-        "CREATE INDEX IF NOT EXISTS idx_families_type ON _families(content_type);",
+        BF_STORE_CMS_IDX_FAMILIES_HASH,
+        BF_STORE_CMS_IDX_FAMILIES_TYPE,
 
-        "CREATE TABLE IF NOT EXISTS _family_members ("
-        "  family_id     INTEGER NOT NULL,"
-        "  target_type   TEXT NOT NULL,"
-        "  target_id     INTEGER NOT NULL,"
-        "  bindings      TEXT,"
-        "  PRIMARY KEY(target_type, target_id),"
-        "  FOREIGN KEY(family_id) REFERENCES _families(id)"
-        ");",
+        BF_STORE_CMS_FAMILY_MEMBERS,
         NULL
     };
     for (int i = 0; stmts[i]; i++) {

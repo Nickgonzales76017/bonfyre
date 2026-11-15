@@ -36,6 +36,7 @@
 #include "recipe_nutrition.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_PATH 4096
 #define MAX_JSON 1048576  /* 1 MB max recipe size */
@@ -158,42 +159,7 @@ static int json_extract_string_array_preview(const char *json, const char *key,
  * ═══════════════════════════════════════════════════════════════════ */
 
 static const char *SCHEMA_SQL = 
-    "CREATE TABLE IF NOT EXISTS recipes ("
-    "  recipe_id TEXT PRIMARY KEY,"
-    "  name TEXT NOT NULL,"
-    "  version TEXT NOT NULL,"
-    "  hash TEXT UNIQUE NOT NULL,"
-    "  json_data TEXT NOT NULL,"
-    "  created_at INTEGER NOT NULL,"
-    "  category TEXT,"
-    "  UNIQUE(recipe_id, version)"
-    ");"
-    
-    "CREATE TABLE IF NOT EXISTS recipe_tags ("
-    "  recipe_id TEXT,"
-    "  tag TEXT,"
-    "  FOREIGN KEY(recipe_id) REFERENCES recipes(recipe_id),"
-    "  PRIMARY KEY(recipe_id, tag)"
-    ");"
-    
-    "CREATE TABLE IF NOT EXISTS models ("
-    "  model_name TEXT PRIMARY KEY,"
-    "  hash TEXT NOT NULL,"
-    "  size_mb INTEGER,"
-    "  source_url TEXT"
-    ");"
-    
-    "CREATE TABLE IF NOT EXISTS recipe_models ("
-    "  recipe_id TEXT,"
-    "  model_name TEXT,"
-    "  FOREIGN KEY(recipe_id) REFERENCES recipes(recipe_id),"
-    "  FOREIGN KEY(model_name) REFERENCES models(model_name),"
-    "  PRIMARY KEY(recipe_id, model_name)"
-    ");"
-    
-    "CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5("
-    "  recipe_id UNINDEXED, name, description, tags"
-    ");";
+    BF_STORE_RECIPE_RECIPES;
 
 /* ═══════════════════════════════════════════════════════════════════
  * Command: init

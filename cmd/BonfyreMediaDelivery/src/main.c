@@ -13,13 +13,14 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static const char *arg(int ac,char **av,const char *name){for(int i=2;i+1<ac;i++)if(!strcmp(av[i],name))return av[i+1];return NULL;}
 static int tok(const char*s){if(!s||!*s||strlen(s)>511)return 0;for(;*s;s++)if(!((*s>='a'&&*s<='z')||(*s>='A'&&*s<='Z')||(*s>='0'&&*s<='9')||*s==':'||*s=='-'||*s=='_'||*s=='.'||*s=='/'))return 0;return 1;}
 static int protocol(const char*s){return s&&(!strcmp(s,"hls")||!strcmp(s,"dash")||!strcmp(s,"moqt"));}
 static void js(const char*s){const unsigned char*p=(const unsigned char*)(s?s:"");putchar('"');for(;*p;p++){if(*p=='"'||*p=='\\'){putchar('\\');putchar(*p);}else if(*p=='\n')fputs("\\n",stdout);else if(*p<32)printf("\\u%04x",*p);else putchar(*p);}putchar('"');}
 static int sql(sqlite3*d,const char*s){char*e=0;int ok=sqlite3_exec(d,s,0,0,&e)==SQLITE_OK;if(!ok){fprintf(stderr,"sqlite: %s\n",e?e:"error");sqlite3_free(e);}return ok;}
-static int open_db(const char*p,sqlite3**d){if(sqlite3_open(p,d)!=SQLITE_OK)return 0;return sql(*d,"PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS media_delivery_right(right_id TEXT PRIMARY KEY,library_id TEXT NOT NULL,subject_ref TEXT NOT NULL,representation_id TEXT NOT NULL,actor_subject TEXT NOT NULL,protocol TEXT NOT NULL CHECK(protocol IN('hls','dash','moqt')),starts_at INTEGER NOT NULL,ends_at INTEGER NOT NULL,state TEXT NOT NULL CHECK(state IN('active','revoked')),evidence_ref TEXT NOT NULL,granted_by TEXT NOT NULL,created_at INTEGER NOT NULL);CREATE INDEX IF NOT EXISTS media_delivery_right_lookup ON media_delivery_right(library_id,subject_ref,representation_id,actor_subject,protocol,state,starts_at,ends_at);CREATE TABLE IF NOT EXISTS media_transport_lease(lease_id TEXT PRIMARY KEY,right_id TEXT NOT NULL,library_id TEXT NOT NULL,subject_ref TEXT NOT NULL,representation_id TEXT NOT NULL,actor_subject TEXT NOT NULL,protocol TEXT NOT NULL,issued_at INTEGER NOT NULL,expires_at INTEGER NOT NULL,state TEXT NOT NULL CHECK(state IN('active','revoked','expired')),created_at INTEGER NOT NULL);");}
+static int open_db(const char*p,sqlite3**d){if(sqlite3_open(p,d)!=SQLITE_OK)return 0;return sql(*d,BF_STORE_MEDIA_DELIVERY_MEDIA_DELIVERY_RIGHT);}
 static int json_str(const char*j,const char*k,char*out,size_t cap){char n[96];const char*p;size_t z=0;if(!j||!k||!out||cap<2||snprintf(n,sizeof(n),"\"%s\"",k)>=(int)sizeof(n))return 0;p=strstr(j,n);if(!p||(p=strchr(p+strlen(n),':'))==0)return 0;while(*++p==' '||*p=='\n'||*p=='\r'||*p=='\t'){}if(*p++!='\"')return 0;while(*p&&*p!='\"'){if(*p=='\\'&&!*++p)return 0;if((unsigned char)*p<32||z+1>=cap)return 0;out[z++]=*p++;}if(*p!='\"'||!z)return 0;out[z]=0;return 1;}
 static int json_state(const char*j,const char*state){char got[80];return json_str(j,"state",got,sizeof(got))&&!strcmp(got,state);}
 static int token_stdin(char*out,size_t cap){size_t n=0;int c;if(!out||cap<2)return 0;while((c=fgetc(stdin))!=EOF){if(c=='\n'||c=='\r')break;if(c<0x21||c>0x7e||n+1>=cap)return 0;out[n++]=(char)c;}out[n]=0;return n>0;}

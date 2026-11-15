@@ -27,6 +27,7 @@
 
 #include "bf_lex.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 extern char **environ;
 
 #ifndef PATH_MAX
@@ -118,15 +119,7 @@ static int ensure_watch_schema(const char *root, char *db_path, size_t db_path_s
     sqlite3 *db = NULL;
     char watch_dir[PATH_MAX];
     const char *schema =
-        "CREATE TABLE IF NOT EXISTS watch_sessions("
-        " session_id TEXT PRIMARY KEY,"
-        " watch_dir TEXT, pipeline TEXT, out_dir TEXT, interval_sec INTEGER,"
-        " dry_run INTEGER, recursive INTEGER, created_at TEXT"
-        ");"
-        "CREATE TABLE IF NOT EXISTS watch_events("
-        " session_id TEXT, event_id TEXT PRIMARY KEY, path TEXT, size INTEGER, mtime INTEGER,"
-        " status TEXT, output_dir TEXT, pipeline TEXT, run_ref TEXT, created_at TEXT"
-        ");";
+        BF_STORE_WATCH_WATCH_SESSIONS;
     if (bf_ensure_dir(root) != 0) return 1;
     join_path(watch_dir, sizeof(watch_dir), root, "watch");
     if (bf_ensure_dir(watch_dir) != 0) return 1;

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 typedef struct { char *data; size_t len, cap; } Buf;
 typedef struct { char *kind; long long count; } KindCount;
@@ -146,7 +147,7 @@ static int kind_cmp(const void *a, const void *b) {
 
 static int raw_table_load(sqlite3 *db, const char *path) {
     FILE *f = fopen(path, "r"); char *line = NULL; size_t cap = 0; sqlite3_stmt *ins = NULL;
-    if (!f || sqlite3_exec(db, "CREATE TABLE raw_external(id TEXT PRIMARY KEY,json TEXT NOT NULL)", NULL, NULL, NULL) != SQLITE_OK) goto fail;
+    if (!f || sqlite3_exec(db, BF_STORE_EXPERIENCE_STAGE_RAW_EXTERNAL, NULL, NULL, NULL) != SQLITE_OK) goto fail;
     if (sqlite3_prepare_v2(db, "INSERT INTO raw_external VALUES(json_extract(?1,'$.id'),?1)", -1, &ins, NULL) != SQLITE_OK) goto fail;
     while (getline(&line, &cap, f) >= 0) {
         sqlite3_bind_text(ins, 1, line, -1, SQLITE_TRANSIENT);

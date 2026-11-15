@@ -49,6 +49,7 @@
 #include <sqlite3.h>
 #include "bf_institutions.h"
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_PATH  2048
 #define MAX_TOKEN 128
@@ -284,64 +285,7 @@ static int safe_actor_subject(const char *actor);
 /* ── Database ─────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS users ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  email TEXT UNIQUE NOT NULL,"
-    "  name TEXT NOT NULL,"
-    "  password_hash TEXT NOT NULL,"
-    "  salt TEXT NOT NULL,"
-    "  tier TEXT NOT NULL DEFAULT 'free',"
-    "  gate_key TEXT,"
-    "  created_at TEXT NOT NULL,"
-    "  active INTEGER NOT NULL DEFAULT 1"
-    ");"
-    "CREATE TABLE IF NOT EXISTS sessions ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  user_id INTEGER NOT NULL,"
-    "  token TEXT UNIQUE NOT NULL,"
-    "  created_at TEXT NOT NULL,"
-    "  expires_at TEXT NOT NULL,"
-    "  scope TEXT NOT NULL DEFAULT 'read',"
-    "  active INTEGER NOT NULL DEFAULT 1,"
-    "  FOREIGN KEY (user_id) REFERENCES users(id)"
-    ");"
-    "CREATE TABLE IF NOT EXISTS institution_grants ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  user_id INTEGER NOT NULL,"
-    "  institution TEXT NOT NULL,"
-    "  role TEXT NOT NULL CHECK(role IN ('read','write','admin')),"
-    "  granted_at TEXT NOT NULL,"
-    "  expires_at TEXT,"
-    "  active INTEGER NOT NULL DEFAULT 1,"
-    "  UNIQUE(user_id,institution),"
-    "  FOREIGN KEY (user_id) REFERENCES users(id)"
-    ");"
-    "CREATE INDEX IF NOT EXISTS institution_grants_lookup "
-    "  ON institution_grants(user_id,institution,active);"
-    "CREATE TABLE IF NOT EXISTS actor_closure_bindings ("
-    "  user_id INTEGER PRIMARY KEY,"
-    "  actor_subject TEXT NOT NULL,"
-    "  state TEXT NOT NULL CHECK(state IN ('active','revoked')),"
-    "  bound_at TEXT NOT NULL,"
-    "  FOREIGN KEY (user_id) REFERENCES users(id)"
-    ");"
-    "CREATE INDEX IF NOT EXISTS actor_closure_bindings_lookup "
-    "  ON actor_closure_bindings(actor_subject,state);"
-    "CREATE TABLE IF NOT EXISTS external_account_links ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  user_id INTEGER NOT NULL,"
-    "  provider TEXT NOT NULL,"
-    "  remote_account TEXT NOT NULL,"
-    "  profile_url TEXT NOT NULL,"
-    "  display_name TEXT NOT NULL DEFAULT '',"
-    "  proof_state TEXT NOT NULL CHECK(proof_state IN ('declared','verified','revoked')) DEFAULT 'declared',"
-    "  connected_at TEXT NOT NULL,"
-    "  updated_at TEXT NOT NULL,"
-    "  UNIQUE(user_id,provider,remote_account),"
-    "  FOREIGN KEY (user_id) REFERENCES users(id)"
-    ");"
-    "CREATE INDEX IF NOT EXISTS external_account_links_user_current "
-    "  ON external_account_links(user_id,proof_state,updated_at);";
+    BF_STORE_AUTH_USERS;
 
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db;
@@ -353,10 +297,7 @@ static sqlite3 *open_db(const char *path) {
         fprintf(stderr,"Schema error: %s\n",err);
         sqlite3_free(err); sqlite3_close(db); return NULL;
     }
-    if (sqlite3_exec(db,"CREATE TABLE IF NOT EXISTS session_handoffs ("
-        "code_hash TEXT PRIMARY KEY, origin_session INTEGER NOT NULL, destination TEXT NOT NULL,"
-        "state_hash TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL,"
-        "consumed_at TEXT, FOREIGN KEY(origin_session) REFERENCES sessions(id));",NULL,NULL,&err)!=SQLITE_OK){
+    if (sqlite3_exec(db,BF_STORE_AUTH_SESSION_HANDOFFS,NULL,NULL,&err)!=SQLITE_OK){
         fprintf(stderr,"Session handoff schema unavailable.\n");sqlite3_free(err);sqlite3_close(db);return NULL;
     }
     /* Databases created before scoped authority retain their sessions and are

@@ -61,6 +61,7 @@
 #include "bonfyre.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #ifdef BF_HAS_FOUNTAIN
 #include <bf_fountain.h>
 #endif
@@ -345,44 +346,17 @@ static int init_peer_db(swarm_state_t *state, const char *override_path) {
 
     /* Peer table: who has what */
     sqlite3_exec(state->index_db,
-        "CREATE TABLE IF NOT EXISTS peers ("
-        "  peer_id TEXT NOT NULL,"
-        "  addr TEXT NOT NULL,"
-        "  port INTEGER NOT NULL,"
-        "  info_hash TEXT NOT NULL,"
-        "  bytes_uploaded INTEGER DEFAULT 0,"
-        "  bytes_downloaded INTEGER DEFAULT 0,"
-        "  last_seen TEXT DEFAULT (datetime('now')),"
-        "  gate_token TEXT,"
-        "  PRIMARY KEY (peer_id, info_hash)"
-        ");",
+        BF_STORE_SWARM_PEERS,
         NULL, NULL, NULL);
 
     /* Artifact table: what's available in the swarm */
     sqlite3_exec(state->index_db,
-        "CREATE TABLE IF NOT EXISTS swarm_artifacts ("
-        "  info_hash TEXT PRIMARY KEY,"
-        "  family_key TEXT,"
-        "  artifact_type TEXT,"
-        "  size INTEGER,"
-        "  piece_count INTEGER,"
-        "  piece_hashes BLOB,"
-        "  seeders INTEGER DEFAULT 0,"
-        "  leechers INTEGER DEFAULT 0,"
-        "  created_at TEXT DEFAULT (datetime('now'))"
-        ");",
+        BF_STORE_SWARM_SWARM_ARTIFACTS,
         NULL, NULL, NULL);
 
     /* Meter log: per-peer transfer accounting for BonfyreMeter */
     sqlite3_exec(state->index_db,
-        "CREATE TABLE IF NOT EXISTS swarm_meter ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  peer_id TEXT NOT NULL,"
-        "  info_hash TEXT NOT NULL,"
-        "  direction TEXT NOT NULL,"  /* 'upload' or 'download' */
-        "  bytes INTEGER NOT NULL,"
-        "  recorded_at TEXT DEFAULT (datetime('now'))"
-        ");",
+        BF_STORE_SWARM_SWARM_METER,
         NULL, NULL, NULL);
 
     return 0;

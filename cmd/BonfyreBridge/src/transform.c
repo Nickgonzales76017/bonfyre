@@ -553,6 +553,7 @@ typedef struct { char kind[48], ref[160], detail[320]; } Exc;
 static Exc g_exc[MAX_EXC]; static int g_nexc;
 static void exc(const char *k, const char *ref, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
 #include <stdarg.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 static void exc(const char *k, const char *ref, const char *fmt, ...) {
     if (g_nexc >= MAX_EXC) return;
     Exc *e = &g_exc[g_nexc++];
@@ -921,7 +922,7 @@ int bridge_schema_map_main(int argc, char **argv) {
         fputs("BEGIN;\n", o);
         for (int i = 0; i < ntab; i++) {
             Tab *t = &tabs[i];
-            fprintf(o, "CREATE TABLE \"%s\" (\n", t->tgt);
+            fprintf(o, BF_STORE_BRIDGE_S, t->tgt);
             int npk = 0;
             for (int k = 0; k < t->ncols; k++) {
                 fprintf(o, "  \"%s\" %s%s,\n", t->cols[k].tgt, t->cols[k].tgt_type, t->cols[k].notnull || t->cols[k].pk ? " NOT NULL" : "");
@@ -983,7 +984,7 @@ int bridge_schema_map_main(int argc, char **argv) {
                 Rows ic; char q[256];
                 snprintf(q, sizeof q, "SELECT name FROM pragma_index_info('%s') ORDER BY seqno", cell(&ix, i, 0));
                 if (!sqlite_rows(src.db, q, &ic)) { rows_free(&ic); continue; }
-                fprintf(o, "CREATE INDEX \"%s\" ON \"%s\" (", cell(&ix, i, 0), t->tgt);
+                fprintf(o, BF_STORE_BRIDGE_S_2, cell(&ix, i, 0), t->tgt);
                 for (int k = 0; k < ic.nrows; k++) {
                     const char *tc = cell(&ic, k, 0);
                     for (int m = 0; m < t->ncols; m++) if (!strcmp(t->cols[m].src, tc)) tc = t->cols[m].tgt;

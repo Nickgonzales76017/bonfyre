@@ -1,5 +1,5 @@
 {
-  "atlas_declaration_digest": "648a9c320a9bb40be8e79db7f755ab93f49ed412da3a3d3b37e7c76efb1d535b",
+  "atlas_declaration_digest": "5f94a21809540fb40bb7f15727c04792f3d8e1d1d9feab0eeb19cbdffaa59382",
   "interactions": [
     {
       "destination": "occurrence-spine",
@@ -9728,6 +9728,24 @@
         "exact controlled host-to-institution binding, current session validity, required read-or-write role, grant revocation/expiry, and original request method only"
       ],
       "relation": "exact_revocable_institution_admission",
+      "source": "web-address-edge"
+    },
+    {
+      "destination": "web-route-table",
+      "drops": [
+        "nothing the owner needs; it adds no session, grant or authority of its own"
+      ],
+      "forbidden_inferences": [
+        "a declared route or its path name -> an authorized caller, an allowed method or an owner that will answer"
+      ],
+      "id": "web-address-edge-asks-declared-route-owners",
+      "invalidates_on": [
+        "any edit to schemas/control/web-routes.cue or to an owner's BfRequest signature"
+      ],
+      "preserves": [
+        "the parsed method, target, query, body, Host, Accept, session bearer, auth store, origin, payment and institution headers in one BfRequest, the declared row order, each row's request facts and the matched row's path name"
+      ],
+      "relation": "ordered_declared_owner_dispatch",
       "source": "web-address-edge"
     },
     {
@@ -32202,7 +32220,7 @@
         "Stitch compiles a recipe through direct compiler argv with a bounded source filename, rather than interpreting recipe or output bytes as shell syntax"
       ],
       "known_gaps": [
-        "the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op,\"verb\") with no space after the comma) is 0 outside cmd/BonfyreWebAddress after the 2026-11-15 conversion of Auth, Finance, Model, Control, Physics, Net, Graph, Outreach, Space, Flow, Entity, Compete, Tier, Pay, Economy, Upper90, Recipe, ExperienceStage, Time, Atlas contracts, RepositoryFabric, AccountContinuity, WarehouseSeed, SurfaceScene, Compress record-factor, Queue account-work/inbox and the components/ Finance, Outreach and Graph copies; the same shape written with a space after the comma is not counted and remains in about 743 comparisons across 72 files (largest: components/BonfyreProject, BonfyreObsidian, BonfyreCLI, BonfyreMcp clis.c, BonfyreAtlas main); usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone"
+        "the ui-ratchet cli_verb_ladders count (strcmp(argv[n]|cmd|verb|command|sub|op, ?\"verb\"), with or without a space after the comma) is 0 outside cmd/BonfyreWebAddress; comparisons on other variable names (kind, mode, action, method, option values) are not counted and many remain; a few one-word entrypoints (WarehouseSeed seed, ConnectionCatalog list) use a one-row literal table; usage text is still hand-written beside each table, not generated from it; no live throughput gain has been measured from lookup alone"
       ],
       "layer": "",
       "maturity": "implemented",
@@ -32316,6 +32334,34 @@
         "cmd/BonfyreCompress/src/record_factor_cli.c",
         "cmd/BonfyreQueue/src/account_work.h",
         "cmd/BonfyreQueue/src/account_inbox.h",
+        "cmd/BonfyreMcp/src/clis.c",
+        "cmd/BonfyreDecide/src/plane.c",
+        "cmd/BonfyreDecide/src/books.c",
+        "cmd/BonfyreDecide/src/manifest.c",
+        "cmd/BonfyreDecide/src/monitor.c",
+        "cmd/BonfyreProviderEstate/src/customer.h",
+        "components/BonfyreProject/src/main.c",
+        "cmd/BonfyreAPI/src/main.c",
+        "cmd/BonfyreAtlas/src/main.c",
+        "cmd/BonfyreCLI/src/main.c",
+        "cmd/BonfyreCredentials/src/main.c",
+        "cmd/BonfyreEmbed/src/main.c",
+        "cmd/BonfyreExperienceMap/src/main.c",
+        "cmd/BonfyreFPQ/src/main.c",
+        "cmd/BonfyreFPQx/src/main.c",
+        "cmd/BonfyreFlashQLA/src/main.c",
+        "cmd/BonfyreFragment/src/main.c",
+        "cmd/BonfyreKVCache/src/main.c",
+        "cmd/BonfyreLayer/src/main.c",
+        "cmd/BonfyreObsidian/src/main.c",
+        "cmd/BonfyreProviderEstate/src/main.c",
+        "cmd/BonfyreQuant/src/main.c",
+        "cmd/BonfyreQwenFPQ/src/main.c",
+        "cmd/BonfyreReleaseApproval/src/main.c",
+        "cmd/BonfyreSAE/src/main.c",
+        "cmd/BonfyreSLI/src/main.c",
+        "cmd/BonfyreTel/src/main.c",
+        "cmd/BonfyreWire/src/main.c",
         "cmd/BonfyreEconomy/src/main.c",
         "cmd/BonfyreUpper90/src/main.c",
         "cmd/BonfyreRepositoryFabric/src/main.c",
@@ -42915,6 +42961,56 @@
       "witnesses": [
         "components/BonfyreControlPlane/tests/web-lowering.test.mjs checks that one address answers a human in HTML and a machine in JSON, that search narrows and compounds with a slice, that every pattern answers it, that the page builds no records in script, that each record carries an encoded affordance, and that the page calls no endpoint which answers 404",
         "components/BonfyreControlPlane/tests/web-lowering.test.mjs checks that one address answers a human in HTML and a machine in JSON, that search narrows and compounds with a slice, that every pattern answers it, that the page builds no records in script, that each record carries an encoded affordance, and that the page calls no endpoint which answers 404"
+      ]
+    },
+    {
+      "canonical_name": "WebRouteTable",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Forwarding / HTTP Route Declaration",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "forwarding",
+      "forbidden_inferences": [
+        "a declared route -> the request is authorized, the caller is signed in, the method is allowed, or the owner will answer",
+        "a row's when facts -> content negotiation is complete or the representation the owner returns",
+        "a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token"
+      ],
+      "id": "web-route-table",
+      "internal_calculi": [],
+      "invariants": [
+        "the CUE list order is the dispatch order; the first owner that answers ends the request, and an owner already asked for a request is not asked again",
+        "a row's when facts (get, site_root, html, not_json, json, not_territory_apex) are computed once per request from the method, Accept, Host and server root; an owner is asked only when every fact its row names holds",
+        "an owner asked through a row sees that row's declared name in BfRequest.as; a caller that picks an owner directly (the static export, the public asset export) asks it through the owner's own first matching row so it sees the same name",
+        "the table ends in rows that always answer (the resolver, then a transport-level 405 for any non-GET), so nothing falls past dispatch",
+        "owners still check their own method, origin, session and authority; the table only decides who is asked",
+        "main.c holds one dispatch call and no per-owner branch; the ui-ratchet dispatch_branches and route_path_compares counts may only go down"
+      ],
+      "known_gaps": [
+        "some owners still sit on any rows and decide their own paths inside (studio, superuser control, account continuity, companions, matrix closure, governance acts and several app workspaces); their path checks use a spaced or different-variable form that the route_path_compares count does not see",
+        "the static_asset_closure_test fixture answers bf_web_route_ask by calling the owner directly, so it does not exercise the row lookup"
+      ],
+      "layer": "forwarding",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Which native owner is asked about a public path, under which request facts, and in what order, without a hand-written branch per page in the WebAddress request loop?",
+      "source_paths": [
+        "schemas/control/web-routes.cue",
+        "cmd/BonfyreWebAddress/tools/compile_web_routes.sh",
+        "cmd/BonfyreWebAddress/src/web_request.h",
+        "cmd/BonfyreWebAddress/generated/native_web_routes.h",
+        "cmd/BonfyreWebAddress/src/main.c",
+        "cmd/BonfyreWebAddress/Makefile",
+        "scripts/ui-ratchet.sh"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server"
       ]
     },
     {

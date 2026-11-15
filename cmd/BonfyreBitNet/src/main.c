@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <bonfyre.h>
 #include <bf_admission.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 typedef struct { char *data; size_t len, cap; } Buffer;
 typedef struct {
@@ -373,7 +374,7 @@ static int write_handoff(const char *root, const char *run, const Candidate *c, 
 out:if(fd>=0)close(fd);free(b.data);return ok;
 }
 static int persist(sqlite3 *db,const char*run,const char*representation,const char*scope,const char*query,const char*gate_state,Candidate*cs,int n,int dims){sqlite3_stmt*s=NULL,*envelope=NULL;int ok=0;char digest[65];
-    if(sqlite3_exec(db,"PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS bitnet_rank_run(run_id TEXT PRIMARY KEY,representation_id TEXT NOT NULL,scope TEXT NOT NULL,query_digest TEXT NOT NULL,gate_state TEXT NOT NULL,dimensions INTEGER NOT NULL,candidate_count INTEGER NOT NULL,created_at INTEGER NOT NULL);CREATE TABLE IF NOT EXISTS embedding_projection(run_id TEXT NOT NULL,candidate_identity TEXT NOT NULL,representation_id TEXT NOT NULL,source_digest TEXT NOT NULL,vector_digest TEXT NOT NULL,vector BLOB NOT NULL,score REAL NOT NULL,exact_verifier TEXT NOT NULL,lowerer_ref TEXT NOT NULL,causal_frontier TEXT NOT NULL,PRIMARY KEY(run_id,candidate_identity));CREATE TABLE IF NOT EXISTS ranked_candidate_envelope(run_id TEXT NOT NULL,rank INTEGER NOT NULL,candidate_identity TEXT NOT NULL,candidate_kind TEXT NOT NULL,owner_ref TEXT NOT NULL,exact_verifier TEXT NOT NULL,lowerer_ref TEXT NOT NULL,PRIMARY KEY(run_id,rank),UNIQUE(run_id,candidate_identity));BEGIN IMMEDIATE;",NULL,NULL,NULL)!=SQLITE_OK)return 0;
+    if(sqlite3_exec(db,BF_STORE_BIT_NET_BITNET_RANK_RUN,NULL,NULL,NULL)!=SQLITE_OK)return 0;
     bf_sha256_hex((const uint8_t*)query,strlen(query),digest);if(sqlite3_prepare_v2(db,"INSERT INTO bitnet_rank_run VALUES(?1,?2,?3,?4,?5,?6,?7,?8)",-1,&s,NULL)!=SQLITE_OK)goto out;sqlite3_bind_text(s,1,run,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,representation,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,scope,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,4,digest,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,5,gate_state,-1,SQLITE_TRANSIENT);sqlite3_bind_int(s,6,dims);sqlite3_bind_int(s,7,n);sqlite3_bind_int64(s,8,(sqlite3_int64)time(NULL));if(sqlite3_step(s)!=SQLITE_DONE)goto out;sqlite3_finalize(s);s=NULL;
     if(sqlite3_prepare_v2(db,"INSERT INTO embedding_projection VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",-1,&s,NULL)!=SQLITE_OK)goto out;
     if(sqlite3_prepare_v2(db,"INSERT INTO ranked_candidate_envelope VALUES(?1,?2,?3,?4,?5,?6,?7)",-1,&envelope,NULL)!=SQLITE_OK)goto out;
@@ -456,7 +457,7 @@ static int evaluate_retention(const char *rank_path, const char *run,
     if(sqlite3_step(meta)!=SQLITE_ROW||!sqlite3_column_text(meta,0)||(n=sqlite3_column_int(meta,2))<1)goto done;
     snprintf(rep,sizeof(rep),"%s",sqlite3_column_text(meta,0));snprintf(gate,sizeof(gate),"%s",sqlite3_column_text(meta,1)?(const char*)sqlite3_column_text(meta,1):"");
     sqlite3_finalize(meta);meta=NULL;
-    stage="exact_owner_ledger";if(sqlite3_open(":memory:",&mem)!=SQLITE_OK||sqlite3_exec(mem,"CREATE TABLE q(identity TEXT PRIMARY KEY,observed INTEGER NOT NULL)",NULL,NULL,NULL)!=SQLITE_OK||
+    stage="exact_owner_ledger";if(sqlite3_open(":memory:",&mem)!=SQLITE_OK||sqlite3_exec(mem,BF_STORE_BIT_NET_Q,NULL,NULL,NULL)!=SQLITE_OK||
        sqlite3_prepare_v2(mem,"SELECT json_extract(?1,'$.run_id'),json_extract(?1,'$.representation_id'),json_extract(?1,'$.gate_state'),json_extract(?1,'$.candidate_identity'),json_extract(?1,'$.exact_verifier_ref'),json_extract(?1,'$.query_state'),json_extract(?1,'$.outcome') WHERE json_valid(?1) AND json_extract(?1,'$.schema')='bonfyre-exact-owner-query-evidence.v1'",-1,&parse,NULL)!=SQLITE_OK||
        sqlite3_prepare_v2(mem,"INSERT INTO q VALUES(?1,?2)",-1,&insert,NULL)||!(evidence=fopen(evidence_path,"r")))goto done;
     while((len=getline(&line,&cap,evidence))>0){const char *r,*p,*g,*id,*v,*state,*outcome;if(len&&line[len-1]=='\n')line[--len]=0;sqlite3_bind_text(parse,1,line,(int)len,SQLITE_TRANSIENT);if(sqlite3_step(parse)!=SQLITE_ROW){sqlite3_reset(parse);sqlite3_clear_bindings(parse);continue;}r=(const char*)sqlite3_column_text(parse,0);p=(const char*)sqlite3_column_text(parse,1);g=(const char*)sqlite3_column_text(parse,2);id=(const char*)sqlite3_column_text(parse,3);v=(const char*)sqlite3_column_text(parse,4);state=(const char*)sqlite3_column_text(parse,5);outcome=(const char*)sqlite3_column_text(parse,6);

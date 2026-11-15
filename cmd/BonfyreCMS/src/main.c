@@ -74,6 +74,7 @@
 #include "bench_metrics.h"
 #include <bonfyre.h>
 #include "entry_snapshot.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION "0.1.0"
 #define MAX_BODY   (1024 * 1024)   /* 1 MB max request body */
@@ -714,52 +715,18 @@ int db_exec(sqlite3 *db, const char *sql) {
 
 static int bootstrap_meta_schema(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _content_types ("
-        "  name TEXT PRIMARY KEY,"
-        "  schema_json TEXT NOT NULL,"
-        "  created_at TEXT NOT NULL,"
-        "  updated_at TEXT NOT NULL"
-        ");",
+        BF_STORE_CMS_CONTENT_TYPES,
 
-        "CREATE TABLE IF NOT EXISTS _relations ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  source_type TEXT NOT NULL,"
-        "  source_id INTEGER NOT NULL,"
-        "  target_type TEXT NOT NULL,"
-        "  target_id INTEGER NOT NULL,"
-        "  relation TEXT NOT NULL,"
-        "  kind TEXT NOT NULL,"
-        "  position INTEGER DEFAULT 0,"
-        "  UNIQUE(source_type, source_id, target_type, target_id, relation)"
-        ");",
+        BF_STORE_CMS_RELATIONS,
 
-        "CREATE INDEX IF NOT EXISTS idx_rel_source ON _relations(source_type, source_id);",
-        "CREATE INDEX IF NOT EXISTS idx_rel_target ON _relations(target_type, target_id);",
+        BF_STORE_CMS_IDX_REL_SOURCE,
+        BF_STORE_CMS_IDX_REL_TARGET,
 
-        "CREATE TABLE IF NOT EXISTS _hooks ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type TEXT NOT NULL,"
-        "  event TEXT NOT NULL,"
-        "  command TEXT NOT NULL,"
-        "  enabled INTEGER DEFAULT 1"
-        ");",
+        BF_STORE_CMS_HOOKS,
 
-        "CREATE TABLE IF NOT EXISTS _permissions ("
-        "  token_hash TEXT NOT NULL,"
-        "  content_type TEXT NOT NULL,"
-        "  action TEXT NOT NULL,"
-        "  namespace_scope TEXT DEFAULT 'root',"
-        "  PRIMARY KEY(token_hash, content_type, action)"
-        ");",
+        BF_STORE_CMS_PERMISSIONS,
 
-        "CREATE TABLE IF NOT EXISTS _tokens ("
-        "  token_hash TEXT PRIMARY KEY,"
-        "  label TEXT,"
-        "  scope TEXT DEFAULT 'root',"
-        "  created_at TEXT NOT NULL,"
-        "  expires_at TEXT,"
-        "  active INTEGER DEFAULT 1"
-        ");",
+        BF_STORE_CMS_TOKENS,
 
         NULL
     };
@@ -791,9 +758,7 @@ static int create_content_table(sqlite3 *db, const ContentType *ct) {
     sqlite3_stmt *pragma = NULL;
     sqlite3_str *builder = sqlite3_str_new(db);
     sqlite3_str_appendf(builder,
-        "CREATE TABLE IF NOT EXISTS \"%w\" (id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "namespace TEXT DEFAULT 'root' NOT NULL,created_at TEXT NOT NULL,"
-        "updated_at TEXT NOT NULL,published_at TEXT,status TEXT DEFAULT 'draft'", ct->name);
+        BF_STORE_CMS_W, ct->name);
     for (int i = 0; i < ct->field_count; i++) {
         const FieldDef *fd = &ct->fields[i];
         const char *type = fd->type == FT_UID ? "TEXT" : sql_type_for(fd->type);
@@ -828,16 +793,16 @@ static int create_content_table(sqlite3 *db, const ContentType *ct) {
         fprintf(stderr, "[migrate] staged column %s.%s (%s)\n", ct->name, fd->name, field_type_name(fd->type));
     }
     if (schema_exec_owned(db, sqlite3_mprintf(
-            "CREATE INDEX IF NOT EXISTS \"idx_%w_ns\" ON \"%w\"(namespace)", ct->name, ct->name)) != 0) return -1;
+            BF_STORE_CMS_IDX_W_NS, ct->name, ct->name)) != 0) return -1;
     /* Add indexes only after all required columns exist. */
     for (int i = 0; i < ct->field_count; i++) {
         const FieldDef *fd = &ct->fields[i];
         if (!sql_type_for(fd->type)) continue;
         if (fd->unique_within_namespace) {
             if (schema_exec_owned(db, sqlite3_mprintf("DROP INDEX IF EXISTS \"idx_%w_%w\"", ct->name, fd->name)) != 0) return -1;
-            sql = sqlite3_mprintf("CREATE UNIQUE INDEX IF NOT EXISTS \"idx_%w_%w_ns\" ON \"%w\"(namespace,\"%w\")", ct->name, fd->name, ct->name, fd->name);
+            sql = sqlite3_mprintf(BF_STORE_CMS_IDX_W_W_NS, ct->name, fd->name, ct->name, fd->name);
         } else if (fd->type == FT_UID) {
-            sql = sqlite3_mprintf("CREATE UNIQUE INDEX IF NOT EXISTS \"idx_%w_%w\" ON \"%w\"(\"%w\")", ct->name, fd->name, ct->name, fd->name);
+            sql = sqlite3_mprintf(BF_STORE_CMS_IDX_W_W, ct->name, fd->name, ct->name, fd->name);
         } else continue;
         if (schema_exec_owned(db, sql) != 0) return -1;
     }
@@ -1969,9 +1934,7 @@ static int publication_count(sqlite3 *db, const char *ns) {
  * from being cleared by an older emitter. */
 static int publication_delta_outbox_boot(sqlite3 *db) {
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS _publication_delta_outbox("
-        "namespace TEXT NOT NULL,source TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 1,"
-        "PRIMARY KEY(namespace,source))", NULL, NULL, NULL) == SQLITE_OK ? 0 : -1;
+        BF_STORE_CMS_PUBLICATION_DELTA_OUTBOX, NULL, NULL, NULL) == SQLITE_OK ? 0 : -1;
 }
 static int publication_delta_outbox_mark(sqlite3 *db, const char *ns, const char *source) {
     sqlite3_stmt *st = NULL;
@@ -2873,7 +2836,7 @@ static int entry_page_write(sqlite3 *db, const char *ns, const char *body) {
     }
     /* Retain old identities until after commit for the exact invalidations.
      * This temporary table lives only in this CMS connection. */
-    if (sqlite3_exec(db, "CREATE TEMP TABLE page_write_retired AS SELECT id,coordinate,status FROM site_fragment WHERE 0", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    if (sqlite3_exec(db, BF_STORE_CMS_PAGE_WRITE_RETIRED, NULL, NULL, NULL) != SQLITE_OK) goto done;
     if (sqlite3_prepare_v2(db, "INSERT INTO page_write_retired SELECT id,coordinate,status FROM site_fragment WHERE namespace=?1 AND page=?2", -1, &st, NULL) != SQLITE_OK) goto done;
     sqlite3_bind_text(st, 1, ns, -1, SQLITE_STATIC); sqlite3_bind_text(st, 2, route, -1, SQLITE_STATIC);
     if (sqlite3_step(st) != SQLITE_DONE) goto done;
@@ -5679,7 +5642,7 @@ int main(int argc, char **argv) {
         /* Phase 17: raw JSON baseline create (INSERT only, no hooks) */
         {
             clock_gettime(CLOCK_MONOTONIC, &ts0);
-            sqlite3_exec(g_db, "CREATE TABLE IF NOT EXISTS _baseline_raw (id INTEGER PRIMARY KEY, data TEXT)", NULL, NULL, NULL);
+            sqlite3_exec(g_db, BF_STORE_CMS_BASELINE_RAW, NULL, NULL, NULL);
             sqlite3_exec(g_db, "BEGIN", NULL, NULL, NULL);
             for (int i = 1; i <= N; i++) {
                 char body[1024];
@@ -5706,10 +5669,7 @@ int main(int argc, char **argv) {
         /* Phase 18: deferred-mode create — INSERT + op log only, then batch discover */
         {
             /* Create a temporary table to hold deferred entries */
-            sqlite3_exec(g_db, "CREATE TABLE IF NOT EXISTS _deferred_bench "
-                "(id INTEGER PRIMARY KEY, title TEXT, slug TEXT, vertical TEXT, "
-                "base_price INTEGER, min_threshold INTEGER, current_stake_count INTEGER, "
-                "offer_status TEXT, namespace TEXT, created_at TEXT, updated_at TEXT, status TEXT)",
+            sqlite3_exec(g_db, BF_STORE_CMS_DEFERRED_BENCH,
                 NULL, NULL, NULL);
             int deferred_create_failures = 0;
 

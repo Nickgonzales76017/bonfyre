@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern void iso_timestamp(char *buf, size_t sz);
 extern int db_exec(sqlite3 *db, const char *sql);
@@ -23,22 +24,9 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int tc_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _type_constraints ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_id   INTEGER NOT NULL,"
-        "  position    INTEGER NOT NULL,"
-        "  field_name  TEXT NOT NULL,"
-        "  kind        INTEGER NOT NULL,"
-        "  range_lo    REAL DEFAULT 0.0,"
-        "  range_hi    REAL DEFAULT 0.0,"
-        "  enum_vals   TEXT,"
-        "  pattern     TEXT,"
-        "  is_optional INTEGER DEFAULT 0,"
-        "  inferred_at TEXT NOT NULL,"
-        "  UNIQUE(family_id, position)"
-        ");",
+        BF_STORE_CMS_TYPE_CONSTRAINTS,
 
-        "CREATE INDEX IF NOT EXISTS idx_tc_fam ON _type_constraints(family_id);",
+        BF_STORE_CMS_IDX_TC_FAM,
 
         NULL
     };

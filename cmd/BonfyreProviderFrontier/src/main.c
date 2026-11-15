@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -274,8 +275,7 @@ static int material_manifest(int argc, char **argv)
         sqlite3_open(":memory:", &memory) != SQLITE_OK ||
         !(exact = fopen(exact_path, "r")) || !(receipts = fopen(receipts_path, "r"))) goto done;
     if (sqlite3_exec(memory,
-        "CREATE TABLE exact_owner(rank INTEGER PRIMARY KEY,identity TEXT UNIQUE NOT NULL,source_digest TEXT NOT NULL,owner_ref TEXT NOT NULL,lowerer_ref TEXT NOT NULL,receipt_id TEXT,outcome TEXT NOT NULL CHECK(outcome IN ('observed','unobserved')),evidence_digest TEXT NOT NULL);"
-        "CREATE TABLE receipt(receipt_id TEXT PRIMARY KEY,identity TEXT NOT NULL,observed_at TEXT NOT NULL,content_sha256 TEXT NOT NULL,body_path TEXT NOT NULL);",
+        BF_STORE_PROVIDER_FRONTIER_EXACT_OWNER,
         NULL, NULL, NULL) != SQLITE_OK) goto done;
     stage = "complete_provider_run";
     if (sqlite3_prepare_v2(provider,

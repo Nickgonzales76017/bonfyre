@@ -41,6 +41,7 @@
 #include <sqlite3.h>
 #include "bonfyre.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_PATH  2048
 #define MAX_NAME  256
@@ -123,21 +124,7 @@ static const char *followup_move(int days) {
 /* ── Database ─────────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS sends ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  channel TEXT NOT NULL,"
-    "  target TEXT NOT NULL,"
-    "  offer_name TEXT,"
-    "  template TEXT,"
-    "  message_preview TEXT,"
-    "  sent_at TEXT NOT NULL,"
-    "  reply_type TEXT,"
-    "  reply_notes TEXT,"
-    "  replied_at TEXT,"
-    "  source_message_id TEXT,"
-    "  source_sent_at TEXT,"
-    "  reply_message_id TEXT"
-    ");";
+    BF_STORE_OUTREACH_SENDS;
 
 /* Source evidence stays separate from offer identity; add nullable columns
  * without changing pre-existing sends or their recorded timestamps. */
@@ -159,19 +146,7 @@ static int ensure_evidence_columns(sqlite3 *db) {
         }
     }
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS outreach_responses ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "send_id INTEGER NOT NULL REFERENCES sends(id),"
-        "source_message_id TEXT NOT NULL UNIQUE,"
-        "received_at TEXT NOT NULL,"
-        "classification TEXT NOT NULL,"
-        "notes TEXT);"
-        "CREATE INDEX IF NOT EXISTS ix_outreach_responses_send "
-        "ON outreach_responses(send_id,received_at);"
-        "CREATE UNIQUE INDEX IF NOT EXISTS ux_outreach_source ON sends(source_message_id) "
-        "WHERE source_message_id IS NOT NULL;"
-        "CREATE UNIQUE INDEX IF NOT EXISTS ux_outreach_reply ON sends(reply_message_id) "
-        "WHERE reply_message_id IS NOT NULL;",NULL,NULL,NULL)!=SQLITE_OK;
+        BF_STORE_OUTREACH_OUTREACH_RESPONSES,NULL,NULL,NULL)!=SQLITE_OK;
 }
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db;

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 enum { BF_VERIFY_MAX_NEEDS=16, BF_VERIFY_MAX_ROUTES=15 };
 typedef struct {
@@ -79,31 +80,7 @@ static int done(sqlite3 *db,sqlite3_stmt *s) {
 static int schema(sqlite3 *db) {
     char *e=NULL;
     const char *sql=
-      "CREATE TABLE IF NOT EXISTS verification_cases("
-      "case_id TEXT PRIMARY KEY,domain TEXT NOT NULL,subject_ref TEXT NOT NULL,"
-      "budget_cents INTEGER NOT NULL CHECK(budget_cents>=0),"
-      "state TEXT NOT NULL DEFAULT 'proposal' CHECK(state='proposal'),"
-      "created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP) STRICT;"
-      "CREATE TABLE IF NOT EXISTS verification_needs("
-      "case_id TEXT NOT NULL REFERENCES verification_cases(case_id),"
-      "need_id TEXT NOT NULL,kind TEXT NOT NULL,weight INTEGER NOT NULL CHECK(weight IN(1,3,5)),"
-      "source_ref TEXT NOT NULL,PRIMARY KEY(case_id,need_id)) WITHOUT ROWID,STRICT;"
-      "CREATE TABLE IF NOT EXISTS verification_offers("
-      "case_id TEXT NOT NULL REFERENCES verification_cases(case_id),route_id TEXT NOT NULL,"
-      "provider_ref TEXT NOT NULL,method TEXT NOT NULL,"
-      "base_cents INTEGER NOT NULL CHECK(base_cents>=0),"
-      "labor_cents INTEGER NOT NULL CHECK(labor_cents>=0),"
-      "travel_cents INTEGER NOT NULL CHECK(travel_cents>=0),"
-      "visit_group TEXT NOT NULL,quote_state TEXT NOT NULL CHECK(quote_state IN('estimate','quoted')),"
-      "availability TEXT NOT NULL CHECK(availability IN('unknown','conditional','ready')),"
-      "quote_ref TEXT NOT NULL,availability_ref TEXT NOT NULL,"
-      "PRIMARY KEY(case_id,route_id)) WITHOUT ROWID,STRICT;"
-      "CREATE TABLE IF NOT EXISTS verification_coverage("
-      "case_id TEXT NOT NULL,route_id TEXT NOT NULL,need_id TEXT NOT NULL,"
-      "PRIMARY KEY(case_id,route_id,need_id),"
-      "FOREIGN KEY(case_id,route_id) REFERENCES verification_offers(case_id,route_id),"
-      "FOREIGN KEY(case_id,need_id) REFERENCES verification_needs(case_id,need_id)"
-      ") WITHOUT ROWID,STRICT;";
+      BF_STORE_ECONOMY_VERIFICATION_CASES;
     int rc=sqlite3_exec(db,sql,NULL,NULL,&e);
     if(rc!=SQLITE_OK){fprintf(stderr,"verification schema refused: %s\n",e?e:"invalid");sqlite3_free(e);return 2;}
     return 0;

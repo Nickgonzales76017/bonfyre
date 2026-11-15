@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include "source_constellations.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static const char *arg(int argc,char **argv,const char *name){for(int i=2;i+1<argc;i++)if(!strcmp(argv[i],name))return argv[i+1];return NULL;}
 
@@ -23,9 +24,7 @@ static void host_of(const char *url,char *out,size_t cap){
 
 static int schema(sqlite3 *db){
     const char *q=
-      "CREATE TABLE estate(id TEXT PRIMARY KEY,name TEXT,url TEXT,host TEXT,kind TEXT);"
-      "CREATE INDEX estate_url ON estate(url);CREATE INDEX estate_host ON estate(host);CREATE INDEX estate_name ON estate(name);"
-      "CREATE TABLE showcase(id TEXT PRIMARY KEY,label TEXT,authority TEXT,url TEXT,host TEXT,carrier TEXT,auth TEXT,protocols TEXT,worlds INTEGER);";
+      BF_STORE_SHOWCASE_CROSSWALK_ESTATE;
     return sqlite3_exec(db,q,NULL,NULL,NULL)==SQLITE_OK;
 }
 

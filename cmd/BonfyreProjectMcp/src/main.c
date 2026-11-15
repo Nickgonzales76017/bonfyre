@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -442,7 +443,7 @@ static int work_db(const char *home, sqlite3 **db) {
     if(lstat(dir,&st)!=0||!S_ISDIR(st.st_mode)||S_ISLNK(st.st_mode))return 1;
     if(snprintf(path,sizeof path,"%s/operator.sqlite3",dir)>=(int)sizeof path||!regular_file(path))return 1;
     if(sqlite3_open_v2(path,db,SQLITE_OPEN_READWRITE|SQLITE_OPEN_FULLMUTEX,NULL)!=SQLITE_OK)return 1;sqlite3_busy_timeout(*db,2000);
-    return work_exec(*db,"CREATE TABLE IF NOT EXISTS operator_run_context(run_id TEXT PRIMARY KEY,agent TEXT NOT NULL,role TEXT NOT NULL,session_id TEXT NOT NULL,interactive INTEGER NOT NULL DEFAULT 1);CREATE UNIQUE INDEX IF NOT EXISTS operator_run_context_session ON operator_run_context(session_id);");
+    return work_exec(*db,BF_STORE_PROJECT_MCP_OPERATOR_RUN_CONTEXT);
 }
 static int cmd_work_session_open(const char *home,const char *goal,const char *agent,const char *role,const char *session) {
     if(!work_atom(goal,128)||!work_label(agent,80)||!work_label(role,80)||!work_atom(session,96)){fprintf(stderr,"invalid interactive work coordinates\n");return 2;}

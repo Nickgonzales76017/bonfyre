@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_SPACE_DB"
@@ -61,29 +62,7 @@ static void ensure_parent_dir(const char *path) {
 }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "CREATE TABLE IF NOT EXISTS spaces("
-    "  name      TEXT PRIMARY KEY,"
-    "  created   INTEGER NOT NULL,"
-    "  accessed  INTEGER NOT NULL,"
-    "  mode      TEXT NOT NULL DEFAULT 'rw'" /* rw|ro|append */
-    ");"
-    "CREATE TABLE IF NOT EXISTS entries("
-    "  space     TEXT NOT NULL REFERENCES spaces(name) ON DELETE CASCADE,"
-    "  key       TEXT NOT NULL,"
-    "  value     BLOB NOT NULL,"
-    "  written   INTEGER NOT NULL,"
-    "  ttl_s     INTEGER,"
-    "  PRIMARY KEY(space,key)"
-    ");"
-    "CREATE TABLE IF NOT EXISTS attachments("
-    "  space     TEXT NOT NULL REFERENCES spaces(name) ON DELETE CASCADE,"
-    "  stage     TEXT NOT NULL,"
-    "  attached  INTEGER NOT NULL,"
-    "  detached  INTEGER,"
-    "  PRIMARY KEY(space,stage)"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_entries_space ON entries(space);";
+    BF_STORE_SPACE_SPACES;
 
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_parent_dir(path);

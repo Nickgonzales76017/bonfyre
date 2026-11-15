@@ -1,6 +1,7 @@
 #ifndef BONFYRE_CMS_PACK_LIFECYCLE_H
 #define BONFYRE_CMS_PACK_LIFECYCLE_H
 #include "../../BonfyreWebAddress/src/pack_resolution.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* Installation metadata belongs beside the existing CMS rows. It contains
  * version pins, never copied pack bodies, product state, credentials or grants. */
 typedef struct {
@@ -33,8 +34,7 @@ static int cpack_schema(sqlite3 *db) {
     }
     sqlite3_finalize(s); if (step != SQLITE_DONE || count != 2) return 0;
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS _pack_installation_state(installation_id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,source_digest TEXT NOT NULL,last_operation TEXT NOT NULL,last_actor TEXT NOT NULL);"
-        "CREATE TABLE IF NOT EXISTS _pack_installation_pin(installation_id INTEGER NOT NULL,pack TEXT NOT NULL,version TEXT NOT NULL,root TEXT NOT NULL,PRIMARY KEY(installation_id,pack));",
+        BF_STORE_CMS_PACK_INSTALLATION_STATE,
         NULL, NULL, NULL) == SQLITE_OK;
 }
 static int cpack_read(sqlite3 *db, const char *ns, const char *subject, const char *scope,

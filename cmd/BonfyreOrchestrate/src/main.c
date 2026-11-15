@@ -12,6 +12,7 @@
 
 #include "bf_lex.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define MAX_PLAN_STEPS 32
 #define MAX_TEXT 128
 #define MODEL_TEXT 96
@@ -729,29 +730,7 @@ static int ensure_policy_db(sqlite3 **db) {
     }
     if (sqlite3_open(path, db) != SQLITE_OK) return 1;
     const char *sql =
-        "CREATE TABLE IF NOT EXISTS orchestration_policy ("
-        "signature TEXT PRIMARY KEY,"
-        "state_key TEXT NOT NULL DEFAULT '',"
-        "family TEXT NOT NULL DEFAULT 'general',"
-        "input_type TEXT NOT NULL DEFAULT '',"
-        "latency_class TEXT NOT NULL DEFAULT '',"
-        "surface TEXT NOT NULL DEFAULT '',"
-        "booster_csv TEXT NOT NULL,"
-        "predicted_confidence REAL NOT NULL,"
-        "predicted_information_gain REAL NOT NULL,"
-        "avg_quality_gain REAL NOT NULL DEFAULT 0,"
-        "avg_latency_delta REAL NOT NULL DEFAULT 0,"
-        "avg_regret REAL NOT NULL DEFAULT 0,"
-        "exec_score REAL NOT NULL DEFAULT 0,"
-        "artifact_score REAL NOT NULL DEFAULT 0,"
-        "tensor_score REAL NOT NULL DEFAULT 0,"
-        "cms_score REAL NOT NULL DEFAULT 0,"
-        "retrieval_score REAL NOT NULL DEFAULT 0,"
-        "value_score REAL NOT NULL DEFAULT 0,"
-        "policy_score REAL NOT NULL DEFAULT 0,"
-        "samples INTEGER NOT NULL DEFAULT 0,"
-        "updated_at TEXT NOT NULL"
-        ");";
+        BF_STORE_ORCHESTRATE_ORCHESTRATION_POLICY;
 
     sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN state_key TEXT NOT NULL DEFAULT '';", NULL, NULL, NULL);
     sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN family TEXT NOT NULL DEFAULT 'general';", NULL, NULL, NULL);

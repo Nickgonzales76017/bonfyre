@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern uint64_t fnv1a64(const void *data, size_t len);
 extern void     iso_timestamp(char *buf, size_t sz);
@@ -19,30 +20,7 @@ extern int      db_exec(sqlite3 *db, const char *sql);
 int prov_bootstrap(sqlite3 *db)
 {
     const char *ddl =
-        "CREATE TABLE IF NOT EXISTS _merkle_tree ("
-        "  node_id    INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  ns         TEXT NOT NULL,"
-        "  depth      INTEGER NOT NULL,"
-        "  left_child INTEGER,"         /* node_id or NULL for leaf */
-        "  right_child INTEGER,"
-        "  op_id      INTEGER,"         /* non-NULL only for leaves */
-        "  hash       INTEGER NOT NULL"  /* uint64 stored as int64 */
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_merkle_ns "
-        "  ON _merkle_tree(ns, depth);"
-        "CREATE INDEX IF NOT EXISTS idx_merkle_op "
-        "  ON _merkle_tree(op_id);"
-        "CREATE TABLE IF NOT EXISTS _compaction_manifests ("
-        "  manifest_id  INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type TEXT NOT NULL,"
-        "  merkle_root  INTEGER NOT NULL,"
-        "  family_count INTEGER NOT NULL DEFAULT 0,"
-        "  gen_hash     INTEGER NOT NULL,"
-        "  eigen_hash   INTEGER NOT NULL,"
-        "  created_at   TEXT NOT NULL"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_manifest_ct "
-        "  ON _compaction_manifests(content_type);";
+        BF_STORE_CMS_MERKLE_TREE;
     return db_exec(db, ddl);
 }
 

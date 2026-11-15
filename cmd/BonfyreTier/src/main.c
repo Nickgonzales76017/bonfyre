@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_TIER_DB"
@@ -46,31 +47,7 @@ static void db_path(char *buf,size_t len){
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS tiers("
-    "  name        TEXT PRIMARY KEY,"
-    "  max_ms      INTEGER NOT NULL,"
-    "  description TEXT NOT NULL,"
-    "  color       TEXT"
-    ");"
-    "CREATE TABLE IF NOT EXISTS assignments("
-    "  recipe      TEXT NOT NULL,"
-    "  stage       TEXT NOT NULL,"
-    "  tier        TEXT NOT NULL REFERENCES tiers(name),"
-    "  updated     INTEGER NOT NULL,"
-    "  PRIMARY KEY(recipe,stage)"
-    ");"
-    "CREATE TABLE IF NOT EXISTS observations("
-    "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  recipe      TEXT NOT NULL,"
-    "  stage       TEXT NOT NULL,"
-    "  latency_ms  INTEGER NOT NULL,"
-    "  violated    INTEGER NOT NULL DEFAULT 0,"
-    "  tier        TEXT,"
-    "  ts          INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_obs_recipe ON observations(recipe,stage);";
+    BF_STORE_TIER_TIERS;
 
 static const struct {const char *name;int max_ms;const char *desc;} TIER_DEFS[]={
     {"instant",   10,     "Sub-10ms: in-memory lookups, cache reads, metadata ops"},

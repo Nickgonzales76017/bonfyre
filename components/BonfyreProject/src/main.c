@@ -891,6 +891,7 @@ static int obs_from_text(const char *buf, ForeignObs *row) {
  * packed name wins, so an observation written after packing is never hidden
  * by an older packed copy. Packing changes where receipts live, not what any
  * of them says, and `pack-verify` proves that byte for byte. */
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #ifdef BONFYRE_HAVE_ZSTD
 #include <zstd.h>
 #include <zdict.h>
@@ -1033,10 +1034,7 @@ static int foreign_pack(const char *dir, const char *pack) {
     if (snprintf(tmp, sizeof(tmp), "%s.packing", pack) >= (int)sizeof(tmp)) goto done;
     unlink(tmp);
     if (sqlite3_open(tmp, &db) != SQLITE_OK) goto done;
-    if (sqlite3_exec(db, "PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
-                         "CREATE TABLE meta(key TEXT PRIMARY KEY, value BLOB);"
-                         "CREATE TABLE receipt(name TEXT PRIMARY KEY, bytes INTEGER NOT NULL, z BLOB NOT NULL) WITHOUT ROWID;"
-                         "BEGIN", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    if (sqlite3_exec(db, BF_STORE_C_PROJECT_META, NULL, NULL, NULL) != SQLITE_OK) goto done;
     if (sqlite3_prepare_v2(db, "INSERT INTO meta VALUES('dictionary', ?1)", -1, &ins, NULL) != SQLITE_OK) goto done;
     sqlite3_bind_blob(ins, 1, dict_len ? dict : "", (int)dict_len, SQLITE_STATIC);
     if (sqlite3_step(ins) != SQLITE_DONE) goto done;
@@ -1177,10 +1175,7 @@ static int foreign_pack_bodies(const char *dir, const char *pack) {
     if (snprintf(tmp, sizeof(tmp), "%s.packing", pack) >= (int)sizeof(tmp)) goto done;
     unlink(tmp);
     if (sqlite3_open(tmp, &db) != SQLITE_OK) goto done;
-    if (sqlite3_exec(db, "PRAGMA page_size=65536; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;"
-                         "CREATE TABLE body(name TEXT PRIMARY KEY, sha256 TEXT NOT NULL) WITHOUT ROWID;"
-                         "CREATE TABLE blob(sha256 TEXT PRIMARY KEY, bytes INTEGER NOT NULL, z BLOB NOT NULL);"
-                         "BEGIN", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    if (sqlite3_exec(db, BF_STORE_C_PROJECT_BODY, NULL, NULL, NULL) != SQLITE_OK) goto done;
     if (sqlite3_prepare_v2(db, "INSERT INTO body VALUES(?1, ?2)", -1, &name_ins, NULL) != SQLITE_OK ||
         sqlite3_prepare_v2(db, "INSERT INTO blob VALUES(?1, ?2, ?3)", -1, &blob_ins, NULL) != SQLITE_OK ||
         sqlite3_prepare_v2(db, "SELECT 1 FROM blob WHERE sha256=?1", -1, &have, NULL) != SQLITE_OK) goto done;
@@ -4930,21 +4925,7 @@ static int foreign_graph_open(const char *path, sqlite3 **out) {
     sqlite3 *db = NULL;
     if (sqlite3_open(path, &db) != SQLITE_OK) return 0;
     if (sqlite3_exec(db,
-            "CREATE TABLE IF NOT EXISTS foreign_relations ("
-            " id INTEGER PRIMARY KEY,"
-            " subject_from TEXT NOT NULL,"
-            " predicate TEXT NOT NULL,"
-            " subject_to TEXT NOT NULL,"
-            " source_federation TEXT NOT NULL,"
-            " carrier TEXT NOT NULL,"
-            " observed_at TEXT NOT NULL,"
-            " evidence TEXT NOT NULL,"
-            " scope TEXT NOT NULL DEFAULT 'public',"
-            " claim_state TEXT NOT NULL DEFAULT 'observed',"
-            " admitted_as TEXT,"
-            " UNIQUE(subject_from, predicate, subject_to, source_federation));"
-            "CREATE INDEX IF NOT EXISTS foreign_relations_scope"
-            "  ON foreign_relations(scope);", NULL, NULL, NULL) != SQLITE_OK) {
+            BF_STORE_C_PROJECT_FOREIGN_RELATIONS, NULL, NULL, NULL) != SQLITE_OK) {
         sqlite3_close(db);
         return 0;
     }

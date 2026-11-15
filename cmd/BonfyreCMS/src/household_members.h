@@ -2,17 +2,13 @@
 #define BONFYRE_CMS_HOUSEHOLD_MEMBERS_H
 #include "household_access.h"
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* Membership state belongs to the same CMS transaction as the household.
  * The HTTP boundary supplies an authenticated user principal. Local CLI actor
  * arguments are not authentication and must never be exposed as browser input. */
 static int chh_schema(sqlite3 *db) {
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS _household_authority(household_row INTEGER PRIMARY KEY,epoch INTEGER NOT NULL);"
-        "CREATE TABLE IF NOT EXISTS _household_membership(household_row INTEGER NOT NULL,member TEXT NOT NULL,role TEXT NOT NULL,revision INTEGER NOT NULL,authority_epoch INTEGER NOT NULL,expires_at INTEGER NOT NULL,granted_by TEXT NOT NULL,PRIMARY KEY(household_row,member));"
-        "INSERT OR IGNORE INTO _household_authority SELECT id,1 FROM household;"
-        "CREATE TRIGGER IF NOT EXISTS _household_authority_changed AFTER UPDATE OF steward,status,household_id,namespace ON household WHEN OLD.steward IS NOT NEW.steward OR OLD.status IS NOT NEW.status OR OLD.household_id IS NOT NEW.household_id OR OLD.namespace IS NOT NEW.namespace BEGIN INSERT INTO _household_authority VALUES(NEW.id,1) ON CONFLICT(household_row) DO UPDATE SET epoch=epoch+1; END;"
-        "CREATE TRIGGER IF NOT EXISTS _household_authority_deleted AFTER DELETE ON household BEGIN UPDATE _household_authority SET epoch=epoch+1 WHERE household_row=OLD.id; END;"
-        "CREATE TRIGGER IF NOT EXISTS _household_authority_inserted AFTER INSERT ON household BEGIN INSERT INTO _household_authority VALUES(NEW.id,1) ON CONFLICT(household_row) DO UPDATE SET epoch=epoch+1; END;",
+        BF_STORE_CMS_HOUSEHOLD_AUTHORITY,
         NULL,NULL,NULL)==SQLITE_OK;
 }
 static int chh_members(sqlite3 *db,const char *operation,const char *household,const char *actor,

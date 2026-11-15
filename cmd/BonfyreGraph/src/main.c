@@ -33,6 +33,7 @@
 
 #include "bf_lex.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define MAX_PATH  2048
 #define MAX_IDS   512
 #define MAX_LINE  65536
@@ -145,38 +146,7 @@ static int json_array_count(const char *arr) {
 /* ── SQLite schema ────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS atoms ("
-    "  atom_id TEXT PRIMARY KEY,"
-    "  content_hash TEXT NOT NULL,"
-    "  media_type TEXT NOT NULL,"
-    "  path TEXT,"
-    "  byte_size INTEGER,"
-    "  label TEXT"
-    ");"
-    "CREATE TABLE IF NOT EXISTS operators ("
-    "  operator_id TEXT PRIMARY KEY,"
-    "  op TEXT NOT NULL,"
-    "  inputs TEXT NOT NULL,"
-    "  output TEXT NOT NULL,"
-    "  params TEXT DEFAULT '{}',"
-    "  node_hash TEXT,"
-    "  version TEXT DEFAULT '1.0.0',"
-    "  deterministic INTEGER DEFAULT 1"
-    ");"
-    "CREATE TABLE IF NOT EXISTS realizations ("
-    "  realization_id TEXT PRIMARY KEY,"
-    "  media_type TEXT NOT NULL,"
-    "  path TEXT,"
-    "  content_hash TEXT,"
-    "  byte_size INTEGER,"
-    "  pinned INTEGER DEFAULT 0,"
-    "  produced_by TEXT,"
-    "  label TEXT"
-    ");"
-    "CREATE TABLE IF NOT EXISTS meta ("
-    "  key TEXT PRIMARY KEY,"
-    "  value TEXT"
-    ");";
+    BF_STORE_GRAPH_ATOMS;
 
 /* ── Node hash computation ────────────────────────────────────────────── */
 

@@ -18,6 +18,7 @@
 
 #include "bf_lex.h"
 #include "address_resolve.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* The native candidate reservoir is deliberately narrow: it imports observed
  * source occurrences and CUE-compiled presentation demand, performs only
  * deterministic candidate selection, and emits a fragment. It cannot fetch a
@@ -133,74 +134,7 @@ static int table_has_column(sqlite3 *db, const char *table, const char *column);
 
 static int init_schema(sqlite3 *db) {
     int ok = exec_sql(db,
-      "PRAGMA journal_mode=WAL;"
-      "CREATE TABLE IF NOT EXISTS occurrence("
-      " id TEXT PRIMARY KEY,observed_name TEXT NOT NULL,source_ref TEXT NOT NULL,"
-      " primary_url TEXT NOT NULL,source_kind TEXT NOT NULL,section TEXT NOT NULL,raw_json TEXT NOT NULL);"
-      "CREATE TABLE IF NOT EXISTS occurrence_temporal("
-      " occurrence_id TEXT PRIMARY KEY,state TEXT NOT NULL CHECK(state IN ('bearing','not_evident')),basis TEXT NOT NULL) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS occurrence_temporal_mode("
-      " occurrence_id TEXT NOT NULL,mode TEXT NOT NULL CHECK(mode IN ('feed','live_update','history','forecast','schedule','telemetry')),"
-      " PRIMARY KEY(occurrence_id,mode)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS occurrence_temporal_mode_lookup ON occurrence_temporal_mode(mode,occurrence_id);"
-      "CREATE TABLE IF NOT EXISTS occurrence_term(occurrence_id TEXT NOT NULL,axis TEXT NOT NULL,term TEXT NOT NULL,"
-      " PRIMARY KEY(occurrence_id,axis,term)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS occurrence_term_lookup ON occurrence_term(axis,term,occurrence_id);"
-      /* AddressPlane's derived forwarding index.  It is rebuilt from the
-       * canonical occurrence terms, so it owns no source fact.  Terms are
-       * assigned deterministically into 62-bit SQLite-safe words; a caller
-       * may cheaply reject impossible candidates before any exact owner read. */
-      "CREATE TABLE IF NOT EXISTS address_bit(axis TEXT NOT NULL,term TEXT NOT NULL,word INTEGER NOT NULL,bit INTEGER NOT NULL,"
-      " PRIMARY KEY(axis,term)) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS candidate_mask(occurrence_id TEXT NOT NULL,word INTEGER NOT NULL,provides INTEGER NOT NULL,"
-      " PRIMARY KEY(occurrence_id,word)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS candidate_mask_word ON candidate_mask(word);"
-      /* CandidateAdvertisement is the non-owning common forwarding record.
-       * It carries coordinates and immutable owner references only.  Exact
-       * state remains in the named owner and must be checked after this cut. */
-      "CREATE TABLE IF NOT EXISTS candidate_advertisement("
-      " identity TEXT PRIMARY KEY,candidate_kind TEXT NOT NULL,owner_ref TEXT NOT NULL,"
-      " exact_verifier TEXT NOT NULL,lowerer_ref TEXT NOT NULL,validity_frontier TEXT NOT NULL DEFAULT '',"
-      " canonical_json TEXT NOT NULL) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS candidate_advertisement_term("
-      " identity TEXT NOT NULL,axis TEXT NOT NULL,term TEXT NOT NULL,"
-      " PRIMARY KEY(identity,axis,term),"
-      " FOREIGN KEY(identity) REFERENCES candidate_advertisement(identity)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS candidate_advertisement_term_lookup ON candidate_advertisement_term(axis,term,identity);"
-      "CREATE TABLE IF NOT EXISTS candidate_advertisement_mask("
-      " identity TEXT NOT NULL,word INTEGER NOT NULL,provides INTEGER NOT NULL,"
-      " PRIMARY KEY(identity,word),"
-      " FOREIGN KEY(identity) REFERENCES candidate_advertisement(identity)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS candidate_advertisement_mask_word ON candidate_advertisement_mask(word);"
-      /* Dependencies are declared addresses, not materialized owner facts.
-       * FactDelta later intersects these rows to find a cut. */
-      "CREATE TABLE IF NOT EXISTS candidate_advertisement_dependency("
-      " identity TEXT NOT NULL,dependency_ref TEXT NOT NULL,"
-      " PRIMARY KEY(identity,dependency_ref),"
-      " FOREIGN KEY(identity) REFERENCES candidate_advertisement(identity)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS candidate_advertisement_dependency_lookup ON candidate_advertisement_dependency(dependency_ref,identity);"
-      /* Durable hand-off from a FactDelta cut to the candidate's declared
-       * lowerer.  This queue owns neither semantic execution nor effects. */
-      "CREATE TABLE IF NOT EXISTS candidate_lowering_queue("
-      " delta_id TEXT NOT NULL,identity TEXT NOT NULL,candidate_kind TEXT NOT NULL,"
-      " owner_ref TEXT NOT NULL,lowerer_ref TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'queued',"
-      " causal_writes_json TEXT NOT NULL DEFAULT '[]',"
-      " queued_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),"
-      " PRIMARY KEY(delta_id,identity)) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS address_delta_receipt("
-      " delta_id TEXT PRIMARY KEY,source_path TEXT NOT NULL,processed_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),"
-      " affected_count INTEGER NOT NULL) WITHOUT ROWID;"
-      /* ExperienceMap is a compiled, read-only projection of this exact
-       * occurrence reservoir.  Keeping it adjacent to the occurrence—not in
-       * a browser catalogue—lets a human surface use the deep chains without
-       * pretending that a chain admits, authorizes, or invokes a source. */
-      "CREATE TABLE IF NOT EXISTS occurrence_experience(occurrence_id TEXT PRIMARY KEY,experience_json TEXT NOT NULL,stage_json TEXT NOT NULL DEFAULT '{}') WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS experience_chain(chain_id TEXT PRIMARY KEY,chain_json TEXT NOT NULL) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS presentation_cell(grammar TEXT NOT NULL,presentation_class TEXT NOT NULL,cell_json TEXT NOT NULL,"
-      " PRIMARY KEY(grammar,presentation_class)) WITHOUT ROWID;"
-      "CREATE TABLE IF NOT EXISTS presentation_demand(grammar TEXT NOT NULL,presentation_class TEXT NOT NULL,axis TEXT NOT NULL,term TEXT NOT NULL,"
-      " PRIMARY KEY(grammar,presentation_class,axis,term)) WITHOUT ROWID;"
-      "CREATE INDEX IF NOT EXISTS presentation_demand_lookup ON presentation_demand(grammar,presentation_class,axis,term);");
+      BF_STORE_EXTERNAL_ESTATE_OCCURRENCE);
     /* Additive queue migration: old address indexes retain their completed
      * cuts, while all newly published handoffs preserve their causal writes. */
     if (ok && !table_has_column(db, "candidate_lowering_queue", "causal_writes_json"))
@@ -230,17 +164,7 @@ static int rebuild_forwarding_index(sqlite3 *db) {
 }
 static int rebuild_temporal_classification(sqlite3 *db) {
     return exec_sql(db,
-      "DELETE FROM occurrence_temporal_mode;DELETE FROM occurrence_temporal;"
-      "DROP VIEW IF EXISTS temp.temporal_source_text;"
-      "CREATE TEMP VIEW temporal_source_text AS SELECT id,source_kind,lower(observed_name||' '||section||' '||coalesce(json_extract(raw_json,'$.raw_source_text'),'')) AS text FROM occurrence;"
-      "INSERT INTO occurrence_temporal_mode SELECT id,'feed' FROM temporal_source_text WHERE source_kind='rss';"
-      "INSERT OR IGNORE INTO occurrence_temporal_mode SELECT id,'live_update' FROM temporal_source_text WHERE text LIKE '%real-time%' OR text LIKE '%realtime%' OR text LIKE '%real time%' OR text LIKE '%websocket%' OR text LIKE '%web socket%' OR text LIKE '%websub%' OR text LIKE '%mqtt%' OR text LIKE '%server-sent events%' OR text LIKE '%eventsource%' OR text LIKE '%event stream%' OR text LIKE '%event-stream%' OR text LIKE '%notification%' OR text LIKE '%alert%' OR text LIKE '%updated every%' OR text LIKE '%updates every%' OR text LIKE '%refresh every%';"
-      "INSERT OR IGNORE INTO occurrence_temporal_mode SELECT id,'history' FROM temporal_source_text WHERE text LIKE '%historical%' OR text LIKE '%time series%' OR text LIKE '%time-series%' OR text LIKE '%timeseries%';"
-      "INSERT OR IGNORE INTO occurrence_temporal_mode SELECT id,'forecast' FROM temporal_source_text WHERE text LIKE '%forecast%' OR text LIKE '%nowcast%';"
-      "INSERT OR IGNORE INTO occurrence_temporal_mode SELECT id,'schedule' FROM temporal_source_text WHERE text LIKE '%schedule%' OR text LIKE '%calendar%';"
-      "INSERT OR IGNORE INTO occurrence_temporal_mode SELECT id,'telemetry' FROM temporal_source_text WHERE text LIKE '%telemetry%';"
-      "INSERT INTO occurrence_temporal(occurrence_id,state,basis) SELECT id,CASE WHEN EXISTS(SELECT 1 FROM occurrence_temporal_mode m WHERE m.occurrence_id=temporal_source_text.id) THEN 'bearing' ELSE 'not_evident' END,CASE WHEN EXISTS(SELECT 1 FROM occurrence_temporal_mode m WHERE m.occurrence_id=temporal_source_text.id) THEN 'source_description_or_kind' ELSE 'listing_no_temporal_evidence' END FROM temporal_source_text;"
-      "DROP VIEW temporal_source_text;");
+      BF_STORE_EXTERNAL_ESTATE_TEMPORAL_SOURCE_TEXT);
 }
 static int import_occurrences(sqlite3 *db, const char *path) {
     FILE *f=fopen(path,"r"); char *line=NULL; size_t cap=0; ssize_t n; sqlite3_stmt *base=NULL,*terms=NULL; int rows=0;
@@ -794,7 +718,7 @@ static int consume_fact_delta(sqlite3 *db, const char *path) {
     if(sqlite3_prepare_v2(db,"SELECT 1 FROM address_delta_receipt WHERE delta_id=?",-1,&out,NULL)!=SQLITE_OK)goto fail_tx;
     sqlite3_bind_text(out,1,delta,-1,SQLITE_TRANSIENT);
     if(sqlite3_step(out)==SQLITE_ROW){sqlite3_finalize(out);exec_sql(db,"ROLLBACK;");sqlite3_close(json);free(body);printf("{\"delta_id\":");json_text(delta);puts(",\"state\":\"already_processed\",\"truth\":\"dependency_cut_only\"}");free(delta);return 1;}sqlite3_finalize(out);out=NULL;
-    if(!exec_sql(db,"CREATE TEMP TABLE IF NOT EXISTS address_delta_cut(identity TEXT PRIMARY KEY,candidate_kind TEXT NOT NULL,owner_ref TEXT NOT NULL) WITHOUT ROWID;DELETE FROM address_delta_cut;"))goto fail_tx;
+    if(!exec_sql(db,BF_STORE_EXTERNAL_ESTATE_ADDRESS_DELTA_CUT))goto fail_tx;
     if(sqlite3_prepare_v2(json,"SELECT value FROM json_each(?1,'$.writes')",-1,&writes,NULL)!=SQLITE_OK)goto fail_tx;
     if(sqlite3_prepare_v2(db,"INSERT OR IGNORE INTO address_delta_cut(identity,candidate_kind,owner_ref) SELECT a.identity,a.candidate_kind,a.owner_ref FROM candidate_advertisement_dependency d JOIN candidate_advertisement a ON a.identity=d.identity WHERE d.dependency_ref=?",-1,&insert,NULL)!=SQLITE_OK)goto fail_tx;
     sqlite3_bind_text(writes,1,body,n,SQLITE_TRANSIENT);
@@ -1322,7 +1246,7 @@ static int run_address_worker(const char *index_path,const char *cms,const char 
 static int emit_protocols(const char *path) {
     sqlite3 *db=NULL;sqlite3_stmt *st=NULL;char *body=NULL;size_t n=0;int emitted=0;
     if(!(body=read_all(path,&n)))return -1;if(sqlite3_open(":memory:",&db)!=SQLITE_OK){free(body);return -1;}
-    if(sqlite3_exec(db,"CREATE TABLE p(j TEXT)",NULL,NULL,NULL)!=SQLITE_OK){sqlite3_close(db);free(body);return -1;}
+    if(sqlite3_exec(db,BF_STORE_EXTERNAL_ESTATE_P,NULL,NULL,NULL)!=SQLITE_OK){sqlite3_close(db);free(body);return -1;}
     {char *line=body,*next;while(line&&*line){next=strchr(line,'\n');if(next)*next++='\0';if(*line){sqlite3_stmt *ins=NULL;if(sqlite3_prepare_v2(db,"INSERT INTO p VALUES(?)",-1,&ins,NULL)!=SQLITE_OK){sqlite3_close(db);free(body);return -1;}sqlite3_bind_text(ins,1,line,-1,SQLITE_TRANSIENT);if(sqlite3_step(ins)!=SQLITE_DONE){sqlite3_finalize(ins);sqlite3_close(db);free(body);return -1;}sqlite3_finalize(ins);}line=next;}}
     if(sqlite3_prepare_v2(db,"SELECT json_extract(j,'$.id'),j FROM p ORDER BY json_extract(j,'$.id')",-1,&st,NULL)!=SQLITE_OK){sqlite3_close(db);free(body);return -1;}
     while(sqlite3_step(st)==SQLITE_ROW){const char *id=(const char*)sqlite3_column_text(st,0);char identity[320],ref[320];const char*axes[]={"protocol","operation"};const char*vals[]={id?id:"","interaction"};const char*deps[1];if(!id||!*id)continue;snprintf(identity,sizeof(identity),"protocol:%s",id);snprintf(ref,sizeof(ref),"ProtocolCommons:%s",id);deps[0]=ref;emit_record(identity,"protocol_chain",ref,"ProtocolContract:conformance","ProtocolCompiler:late_carrier","",axes,vals,2,deps,1);emitted++;}sqlite3_finalize(st);sqlite3_close(db);free(body);return emitted;

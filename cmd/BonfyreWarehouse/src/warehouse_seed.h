@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 static int warehouse_rows_bound(sqlite3_stmt *s, int i, const char *frontier) {
   const char *p = frontier ? strstr(frontier, ";rows:") : NULL;
   if (!p) return sqlite3_bind_null(s, i) == SQLITE_OK;
@@ -21,21 +22,11 @@ static int warehouse_rows_bound(sqlite3_stmt *s, int i, const char *frontier) {
 }
 static int warehouse_seed(sqlite3 *db) {
   const char *ddl[] = {
-    "CREATE TABLE IF NOT EXISTS warehouse_snapshot_head("
-      "semantic_kind TEXT NOT NULL,representation_kind TEXT NOT NULL,"
-      "generation INTEGER NOT NULL CHECK(generation>0),representation_id TEXT NOT NULL,"
-      "digest TEXT NOT NULL,frontier TEXT NOT NULL,created_at TEXT NOT NULL,changed_at TEXT NOT NULL,"
-      "PRIMARY KEY(semantic_kind,representation_kind))",
-    "CREATE TABLE IF NOT EXISTS warehouse_snapshot_stats("
-      "semantic_kind TEXT NOT NULL,representation_kind TEXT NOT NULL,"
-      "generation INTEGER NOT NULL,representation_id TEXT NOT NULL,digest TEXT NOT NULL,"
-      "realization_count INTEGER NOT NULL,max_realization_bytes INTEGER,frontier_rows INTEGER,"
-      "updated_at TEXT NOT NULL,PRIMARY KEY(semantic_kind,representation_kind))",
-    "CREATE INDEX IF NOT EXISTS idx_warehouse_ri_latest "
-      "ON representation_instance(schema_ref,kind,created_at DESC,id DESC)",
-    "CREATE INDEX IF NOT EXISTS idx_warehouse_pr_live "
-      "ON physical_realization(representation_id,available,digest)",
-    "CREATE INDEX IF NOT EXISTS idx_warehouse_sb_kind ON source_binding(semantic_kind)"
+    BF_STORE_WAREHOUSE_WAREHOUSE_SNAPSHOT_HEAD,
+    BF_STORE_WAREHOUSE_WAREHOUSE_SNAPSHOT_STATS,
+    BF_STORE_WAREHOUSE_IDX_WAREHOUSE_RI_LATEST,
+    BF_STORE_WAREHOUSE_IDX_WAREHOUSE_PR_LIVE,
+    BF_STORE_WAREHOUSE_IDX_WAREHOUSE_SB_KIND
   };
   const char *candidate_sql =
     "SELECT sb.semantic_kind,ri.id,ri.digest,ri.frontier,ri.created_at,"

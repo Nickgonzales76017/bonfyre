@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "bf_lex.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 static void print_usage(const char *prog) {
     printf("BonfyreFrappeCompiler — Universal Uplift Runtime Compiler\n\n");
     printf("Usage: %s [options] <app_path>\n\n", prog);
@@ -529,24 +530,7 @@ static int emit_surface_db(const char *path, const BfAppPack *pack) {
         return -1;
     }
     if (surface_db_exec(db,
-          "PRAGMA journal_mode=WAL;"
-          "CREATE TABLE IF NOT EXISTS frappe_program("
-          " program_id TEXT PRIMARY KEY, slug TEXT NOT NULL, app TEXT NOT NULL, doctype TEXT NOT NULL,"
-          " module TEXT, title_field TEXT, description TEXT,"
-          " submittable INT, child INT, single INT, tree INT, read_only INT, guest_readable INT,"
-          " field_count INT, rendered INT, withheld INT, layout INT,"
-          " organs TEXT, cannot_infer TEXT);"
-          "CREATE TABLE IF NOT EXISTS frappe_field("
-          " program_id TEXT NOT NULL, ord INT NOT NULL,"
-          " tab TEXT, tab_ord INT, tab_empty INT,"
-          " section TEXT, section_ord INT, collapsible INT, column_ord INT,"
-          " field TEXT, label TEXT, presentation TEXT, organ TEXT,"
-          " required INT, read_only INT, in_list_view INT,"
-          " reference TEXT, depends_on TEXT, withheld TEXT,"
-          " PRIMARY KEY(program_id, ord));"
-          "CREATE INDEX IF NOT EXISTS frappe_program_app ON frappe_program(app);"
-          "CREATE UNIQUE INDEX IF NOT EXISTS frappe_program_slug ON frappe_program(slug);"
-          "CREATE INDEX IF NOT EXISTS frappe_field_program ON frappe_field(program_id, ord);") != 0)
+          BF_STORE_FRAPPE_COMPILER_FRAPPE_PROGRAM) != 0)
         goto done;
 
     /* A recompile replaces this app's programs rather than accumulating them:
@@ -820,12 +804,7 @@ static int emit_condition_db(const char *path, const BfAppPack *pack) {
     int rc = -1;
     if (sqlite3_open(path, &db) != SQLITE_OK) goto done;
     if (surface_db_exec(db,
-          "CREATE TABLE IF NOT EXISTS frappe_condition("
-          " program_id TEXT NOT NULL, app TEXT NOT NULL, field TEXT NOT NULL, property TEXT NOT NULL,"
-          " status TEXT NOT NULL, plan_id TEXT, plan TEXT, kind TEXT NOT NULL, said TEXT,"
-          " reads TEXT, missing_operation TEXT, source TEXT NOT NULL,"
-          " PRIMARY KEY(program_id, field, property));"
-          "CREATE INDEX IF NOT EXISTS frappe_condition_plan ON frappe_condition(plan_id);") != 0) goto done;
+          BF_STORE_FRAPPE_COMPILER_FRAPPE_CONDITION) != 0) goto done;
     if (sqlite3_prepare_v2(db, "DELETE FROM frappe_condition WHERE app=?1", -1, &del, NULL) != SQLITE_OK) goto done;
     sqlite3_bind_text(del, 1, app, -1, SQLITE_STATIC);
     sqlite3_step(del);
@@ -2477,11 +2456,7 @@ static int emit_metric_db(const char *path, const BfAppPack *pack, const char *a
     int rc = -1;
     if (sqlite3_open(path, &db) != SQLITE_OK || sqlite3_open(":memory:", &meta) != SQLITE_OK) goto done;
     if (surface_db_exec(db,
-          "CREATE TABLE IF NOT EXISTS frappe_metric("
-          " app TEXT NOT NULL, metric TEXT NOT NULL, kind TEXT NOT NULL, doctype TEXT NOT NULL,"
-          " status TEXT NOT NULL, said TEXT, needs TEXT, missing_operation TEXT, definition TEXT,"
-          " PRIMARY KEY(app, kind, metric));"
-          "CREATE INDEX IF NOT EXISTS frappe_metric_doctype ON frappe_metric(doctype);") != 0) goto done;
+          BF_STORE_FRAPPE_COMPILER_FRAPPE_METRIC) != 0) goto done;
     if (sqlite3_prepare_v2(db, "DELETE FROM frappe_metric WHERE app=?1", -1, &del, NULL) != SQLITE_OK) goto done;
     sqlite3_bind_text(del, 1, app, -1, SQLITE_STATIC);
     sqlite3_step(del);

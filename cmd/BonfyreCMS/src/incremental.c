@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern unsigned long long fnv1a64(const void *data, size_t len);
 extern void iso_timestamp(char *buf, size_t sz);
@@ -24,36 +25,12 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int incr_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _incr_eigen ("
-        "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_id  INTEGER NOT NULL,"
-        "  position   INTEGER NOT NULL,"
-        "  field_name TEXT NOT NULL,"
-        "  count      INTEGER DEFAULT 0,"
-        "  mean       REAL DEFAULT 0.0,"
-        "  m2         REAL DEFAULT 0.0,"       /* Welford's M2 accumulator */
-        "  variance   REAL DEFAULT 0.0,"
-        "  eigenvalue REAL DEFAULT 0.0,"
-        "  min_val    REAL DEFAULT 0.0,"
-        "  max_val    REAL DEFAULT 0.0,"
-        "  is_numeric INTEGER DEFAULT 0,"
-        "  distinct_count INTEGER DEFAULT 0,"
-        "  updated_at TEXT NOT NULL,"
-        "  UNIQUE(family_id, position)"
-        ");",
+        BF_STORE_CMS_INCR_EIGEN,
 
-        "CREATE INDEX IF NOT EXISTS idx_ieig_fam ON _incr_eigen(family_id);",
+        BF_STORE_CMS_IDX_IEIG_FAM,
 
         /* Absorbed constants record */
-        "CREATE TABLE IF NOT EXISTS _absorbed_constants ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_id   INTEGER NOT NULL,"
-        "  position    INTEGER NOT NULL,"
-        "  field_name  TEXT NOT NULL,"
-        "  const_value TEXT NOT NULL,"
-        "  absorbed_at TEXT NOT NULL,"
-        "  UNIQUE(family_id, position)"
-        ");",
+        BF_STORE_CMS_ABSORBED_CONSTANTS,
 
         NULL
     };

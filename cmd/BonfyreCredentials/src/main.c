@@ -51,6 +51,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_VALUE 4096
 #define MAX_BODY (1024 * 1024)
@@ -163,29 +164,13 @@ static int unseal(const unsigned char key[32], const char *provider, const char 
 /* A rollback journal, not WAL: the page service and the reheat run as
  * different users, and WAL side files left by one would lock out the other. */
 static const char *schema_sql =
-    "PRAGMA journal_mode=DELETE;"
-    "CREATE TABLE IF NOT EXISTS imported_provider(provider TEXT PRIMARY KEY, declaration TEXT NOT NULL, spec_source TEXT NOT NULL, imported_at TEXT NOT NULL);"
-    "CREATE TABLE IF NOT EXISTS sealed_field(provider TEXT NOT NULL, field TEXT NOT NULL, sealed BLOB NOT NULL, last4 TEXT NOT NULL, generated INTEGER NOT NULL,"
-    " set_by TEXT NOT NULL, set_at TEXT NOT NULL, account TEXT NOT NULL DEFAULT '', PRIMARY KEY(provider, account, field));"
-    "CREATE TABLE IF NOT EXISTS verification(provider TEXT NOT NULL, at TEXT NOT NULL, http_status INTEGER NOT NULL, outcome TEXT NOT NULL, account TEXT NOT NULL DEFAULT '');"
-    "CREATE TABLE IF NOT EXISTS token_cache(provider TEXT NOT NULL, sealed BLOB NOT NULL, expires_at INTEGER NOT NULL, account TEXT NOT NULL DEFAULT '', PRIMARY KEY(provider, account));"
-    "CREATE TABLE IF NOT EXISTS audit(at TEXT NOT NULL, actor TEXT NOT NULL, provider TEXT NOT NULL, field TEXT NOT NULL, action TEXT NOT NULL, outcome TEXT NOT NULL, account TEXT NOT NULL DEFAULT '');";
+    BF_STORE_CREDENTIALS_IMPORTED_PROVIDER;
 
 /* Stores made before accounts existed keyed a value by provider and field
  * alone, so a second account's key for the same provider would have replaced
  * the first.  Their rows move, unchanged, into the estate's own account. */
 static const char *account_migration_sql =
-    "BEGIN IMMEDIATE;"
-    "CREATE TABLE sealed_field_accounts(provider TEXT NOT NULL, field TEXT NOT NULL, sealed BLOB NOT NULL, last4 TEXT NOT NULL, generated INTEGER NOT NULL,"
-    " set_by TEXT NOT NULL, set_at TEXT NOT NULL, account TEXT NOT NULL DEFAULT '', PRIMARY KEY(provider, account, field));"
-    "INSERT INTO sealed_field_accounts SELECT provider, field, sealed, last4, generated, set_by, set_at, '' FROM sealed_field;"
-    "DROP TABLE sealed_field; ALTER TABLE sealed_field_accounts RENAME TO sealed_field;"
-    "CREATE TABLE token_cache_accounts(provider TEXT NOT NULL, sealed BLOB NOT NULL, expires_at INTEGER NOT NULL, account TEXT NOT NULL DEFAULT '', PRIMARY KEY(provider, account));"
-    "INSERT INTO token_cache_accounts SELECT provider, sealed, expires_at, '' FROM token_cache;"
-    "DROP TABLE token_cache; ALTER TABLE token_cache_accounts RENAME TO token_cache;"
-    "ALTER TABLE verification ADD COLUMN account TEXT NOT NULL DEFAULT '';"
-    "ALTER TABLE audit ADD COLUMN account TEXT NOT NULL DEFAULT '';"
-    "COMMIT;";
+    BF_STORE_CREDENTIALS_SEALED_FIELD_ACCOUNTS;
 
 static int has_column(sqlite3 *db, const char *table, const char *column) {
     sqlite3_stmt *st = NULL; char sql[96]; int found = 0;

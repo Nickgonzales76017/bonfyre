@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_COMPETE_DB"
@@ -44,36 +45,7 @@ static void db_path(char *buf,size_t len){
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS competitions("
-    "  id        TEXT PRIMARY KEY,"
-    "  recipe    TEXT NOT NULL,"
-    "  stage     TEXT NOT NULL,"
-    "  status    TEXT NOT NULL DEFAULT 'active'," /* active|paused|concluded */
-    "  created   INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS variants("
-    "  id         TEXT PRIMARY KEY,"
-    "  comp_id    TEXT NOT NULL REFERENCES competitions(id),"
-    "  label      TEXT NOT NULL,"
-    "  config     TEXT,"
-    "  promoted   INTEGER NOT NULL DEFAULT 0,"
-    "  wins       INTEGER NOT NULL DEFAULT 0,"
-    "  losses     INTEGER NOT NULL DEFAULT 0,"
-    "  created    INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS results("
-    "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  comp_id    TEXT NOT NULL REFERENCES competitions(id),"
-    "  variant_id TEXT NOT NULL REFERENCES variants(id),"
-    "  input_hash TEXT,"
-    "  score      REAL NOT NULL,"
-    "  metric     TEXT NOT NULL DEFAULT 'composite',"
-    "  latency_ms INTEGER,"
-    "  ts         INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_results_comp ON results(comp_id,variant_id);";
+    BF_STORE_COMPETE_COMPETITIONS;
 
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);

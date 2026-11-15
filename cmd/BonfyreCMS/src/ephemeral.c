@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* ================================================================
  * Internal helpers (defined in main.c, declared here for linkage)
@@ -31,23 +32,12 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int ops_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _ops ("
-        "  id        INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  op_type   TEXT NOT NULL,"
-        "  target    TEXT NOT NULL,"
-        "  target_id INTEGER,"
-        "  namespace TEXT NOT NULL DEFAULT 'root',"
-        "  payload   TEXT NOT NULL,"
-        "  hash      TEXT NOT NULL,"
-        "  parent    TEXT,"
-        "  ts        TEXT NOT NULL,"
-        "  actor     TEXT DEFAULT ''"
-        ");",
+        BF_STORE_CMS_OPS,
 
-        "CREATE INDEX IF NOT EXISTS idx_ops_target ON _ops(target, target_id);",
-        "CREATE INDEX IF NOT EXISTS idx_ops_hash ON _ops(hash);",
-        "CREATE INDEX IF NOT EXISTS idx_ops_ns ON _ops(namespace);",
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_ops_hash_uniq ON _ops(hash);",
+        BF_STORE_CMS_IDX_OPS_TARGET,
+        BF_STORE_CMS_IDX_OPS_HASH,
+        BF_STORE_CMS_IDX_OPS_NS,
+        BF_STORE_CMS_IDX_OPS_HASH_UNIQ,
         NULL
     };
     for (int i = 0; stmts[i]; i++) {

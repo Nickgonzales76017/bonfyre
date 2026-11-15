@@ -50,6 +50,7 @@
 #include <strings.h>
 
 #include "bf_lex.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define EARTH_RADIUS_M 6371008.8
 
 /* ---------------------------------------------------------------- time ---- */
@@ -393,87 +394,7 @@ static void migrate_extent_columns(sqlite3 *db) {
 
 static int init_schema(sqlite3 *db) {
     int ok = exec_sql(db,
-      "PRAGMA journal_mode=WAL;"
-      "CREATE TABLE IF NOT EXISTS spatial_fact("
-      "  fact_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-      "  observation_id TEXT NOT NULL,"
-      "  subject TEXT NOT NULL,"
-      "  geometry_kind TEXT NOT NULL,"
-      "  lon REAL, lat REAL,"
-      "  geometry TEXT NOT NULL,"
-      "  crs TEXT NOT NULL,"
-      "  observed_at TEXT NOT NULL,"
-      "  effective_at TEXT NOT NULL,"
-      "  valid_until TEXT,"
-      "  recorded_at TEXT NOT NULL,"
-      "  observation_mode TEXT NOT NULL,"
-      "  source_occurrence TEXT NOT NULL,"
-      "  derived_from TEXT NOT NULL DEFAULT '[]',"
-      "  retracts INTEGER,"
-      "  retraction_reason TEXT,"
-      "  accuracy_h REAL,"
-      "  provenance TEXT NOT NULL);"
-      /* An extent's box. Stored only to narrow -- a box is a cheap rejection
-       * and never an answer, so nothing reports a distance to one. */
-
-      "CREATE INDEX IF NOT EXISTS spatial_fact_subject"
-      "  ON spatial_fact(subject, effective_at);"
-      "CREATE INDEX IF NOT EXISTS spatial_fact_knowledge"
-      "  ON spatial_fact(recorded_at);"
-      /* Retractions are rare and the check for them is asked once per candidate
-       * row. Without this the check falls onto the recorded_at index, which at a
-       * late knowledge frontier matches nearly every fact ever written, and a
-       * single-subject reconstruction degrades to scanning the whole log tens of
-       * times over. Partial, so it stays the size of the retractions and not of
-       * the log. */
-      "CREATE INDEX IF NOT EXISTS spatial_fact_retraction"
-      "  ON spatial_fact(retracts, recorded_at) WHERE retracts IS NOT NULL;"
-      /* An observation coordinate is looked up by name twice: once when a
-       * derivation asks whether its basis still stands, and once on every
-       * ingested feature to decide whether this document has been observed
-       * before. Both were scanning the whole log, which made intake quadratic in
-       * the size of the estate and made a single reconstruction pay for every
-       * fact ever written. */
-      "CREATE INDEX IF NOT EXISTS spatial_fact_observation"
-      "  ON spatial_fact(observation_id);"
-      /* Derivations are a small minority of facts and only a derivation can be
-       * orphaned, so the set of them is worth naming. Partial, so it stays the
-       * size of the derivations rather than of the log. */
-      "CREATE INDEX IF NOT EXISTS spatial_fact_derived"
-      "  ON spatial_fact(fact_id) WHERE derived_from <> '[]';"
-      /* Derived state, maintained from the delta rather than recomputed. It
-       * holds the latest fact this estate knows for each subject; expiry is
-       * still applied at read time against the instant actually asked about,
-       * because "current" is a question and not a stored answer. */
-      "CREATE TABLE IF NOT EXISTS current_spatial_state("
-      "  subject TEXT PRIMARY KEY,"
-      "  fact_id INTEGER NOT NULL,"
-      "  effective_at TEXT NOT NULL,"
-      "  maintained_through INTEGER NOT NULL);"
-      /* Identifier lineage. A source may change the identifier it prefers for a
-       * thing while still publishing the identifiers it used before: USGS says
-       * exactly that about its GeoJSON event `id` and its `ids` list. Without
-       * this table a preferred-id change splits one earthquake into two
-       * subjects, and nothing afterwards can tell they were ever one.
-       *
-       * What is recorded is that a source declared these identifiers together
-       * at an observed time. It is not an assertion that two events are the
-       * same physical event -- the source said so, and the source can be
-       * wrong. */
-      "CREATE TABLE IF NOT EXISTS subject_alias("
-      "  alias TEXT PRIMARY KEY,"
-      "  subject TEXT NOT NULL,"
-      "  first_seen TEXT NOT NULL,"
-      "  last_seen TEXT NOT NULL,"
-      "  declared_by TEXT NOT NULL);"
-      "CREATE INDEX IF NOT EXISTS subject_alias_subject ON subject_alias(subject);"
-      "CREATE TABLE IF NOT EXISTS maintenance_watermark("
-      "  name TEXT PRIMARY KEY,"
-      "  last_fact_id INTEGER NOT NULL);"
-      "CREATE TRIGGER IF NOT EXISTS spatial_fact_no_update BEFORE UPDATE ON spatial_fact"
-      "  BEGIN SELECT RAISE(ABORT,'spatial facts are append-only: retract, do not update'); END;"
-      "CREATE TRIGGER IF NOT EXISTS spatial_fact_no_delete BEFORE DELETE ON spatial_fact"
-      "  BEGIN SELECT RAISE(ABORT,'spatial facts are append-only: retract, do not delete'); END;");
+      BF_STORE_SPATIAL_SPATIAL_FACT);
     if (ok) migrate_extent_columns(db);
     return ok;
 }
@@ -685,8 +606,7 @@ static int cmd_retract(sqlite3 *db, int argc, char **argv) {
 static int build_orphan_set(sqlite3 *db, const char *as_of) {
     sqlite3_stmt *st = NULL;
     int ok;
-    if (!exec_sql(db, "DROP TABLE IF EXISTS temp.orphan;"
-                      "CREATE TEMP TABLE orphan(fact_id INTEGER PRIMARY KEY);")) return 0;
+    if (!exec_sql(db, BF_STORE_SPATIAL_ORPHAN)) return 0;
     if (sqlite3_prepare_v2(db,
         "INSERT OR IGNORE INTO temp.orphan(fact_id) "
         "SELECT DISTINCT d0.fact_id FROM spatial_fact d0, json_each(d0.derived_from) d "
@@ -752,8 +672,7 @@ static int build_latest_set(sqlite3 *db, const char *subject_source,
     sqlite3_stmt *st = NULL;
     char sql[4096];
     int ok;
-    if (!exec_sql(db, "DROP TABLE IF EXISTS temp.frontier_latest;"
-                      "CREATE TEMP TABLE frontier_latest(fact_id INTEGER PRIMARY KEY);"))
+    if (!exec_sql(db, BF_STORE_SPATIAL_FRONTIER_LATEST))
         return 0;
     snprintf(sql, sizeof(sql),
         "INSERT OR IGNORE INTO temp.frontier_latest(fact_id) "
@@ -859,9 +778,7 @@ static int cmd_durable(sqlite3 *db, int argc, char **argv, const char *db_path) 
             return 2;
         }
         snprintf(sql, sizeof(sql),
-            "INSTALL sqlite; LOAD sqlite;"
-            "ATTACH '%s' AS thawed (TYPE sqlite);"
-            "CREATE TABLE thawed.spatial_fact AS SELECT * FROM read_parquet('%s');", out, from);
+            BF_STORE_SPATIAL_THAWED_SPATIAL_FACT, out, from);
         if (!run_duckdb(sql, NULL, 0)) return 1;
         printf("{\"thawed_to\":"); json_text(out);
         printf(",\"from\":"); json_text(from);
@@ -1231,10 +1148,7 @@ static int spatial_query(sqlite3 *db, int argc, char **argv, const char *shape) 
                             "instant and have it recomputed.\n", stale < 0 ? 0 : stale);
             return 1;
         }
-        if (!exec_sql(db, "DROP TABLE IF EXISTS temp.frontier_latest;"
-                          "CREATE TEMP TABLE frontier_latest(fact_id INTEGER PRIMARY KEY);"
-                          "INSERT OR IGNORE INTO temp.frontier_latest(fact_id) "
-                          "SELECT fact_id FROM current_spatial_state;")) return 1;
+        if (!exec_sql(db, BF_STORE_SPATIAL_FRONTIER_LATEST_2)) return 1;
     } else {
         char subject_source[2048];
         snprintf(subject_source, sizeof(subject_source),
@@ -2171,8 +2085,7 @@ static int cmd_world(sqlite3 *db, int argc, char **argv) {
             snprintf(insert, sizeof(insert),
                 "INSERT OR IGNORE INTO temp.frontier_latest(fact_id) "
                 "SELECT fact_id FROM (%s) WHERE fact_id IS NOT NULL", subject_source);
-            if (!exec_sql(db, "DROP TABLE IF EXISTS temp.frontier_latest;"
-                              "CREATE TEMP TABLE frontier_latest(fact_id INTEGER PRIMARY KEY);") ||
+            if (!exec_sql(db, BF_STORE_SPATIAL_FRONTIER_LATEST_3) ||
                 sqlite3_prepare_v2(db, insert, -1, &bindable, NULL) != SQLITE_OK) {
                 fprintf(stderr, "world: %s\n", sqlite3_errmsg(db));
                 exec_sql(db, "DETACH DATABASE plane;");

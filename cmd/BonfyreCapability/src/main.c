@@ -51,6 +51,7 @@
 #include "bf_control.h"
 #include "bf_jv.h"
 #include "bf_jsonw.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.1.0"
 #define DB_ENV     "BONFYRE_CAPABILITY_DB"
@@ -145,28 +146,7 @@ static void resolve_db_path(char *buf, size_t len) {
 }
 
 static const char *SCHEMA =
-    "PRAGMA journal_mode=WAL;"
-    "CREATE TABLE IF NOT EXISTS capabilities("
-    "  id            TEXT PRIMARY KEY,"
-    "  name          TEXT NOT NULL,"
-    "  description   TEXT NOT NULL,"
-    "  tags          TEXT,"
-    "  binary        TEXT NOT NULL,"
-    "  command       TEXT,"
-    "  model_id      TEXT,"
-    "  hardware_tier TEXT NOT NULL DEFAULT 'cpu',"
-    "  cost_estimate REAL NOT NULL DEFAULT 0.0,"
-    "  latency_tier  TEXT NOT NULL DEFAULT 'fast',"
-    "  stage_class   TEXT,"
-    "  artifact_out  TEXT,"
-    "  keywords      TEXT,"
-    "  source        TEXT NOT NULL DEFAULT 'manual',"
-    "  updated       INTEGER NOT NULL"
-    ");"
-    "CREATE VIRTUAL TABLE IF NOT EXISTS cap_fts USING fts5("
-    "  id,name,description,tags,binary,"
-    "  content='capabilities',content_rowid='rowid'"
-    ");";
+    BF_STORE_CAPABILITY_CAPABILITIES;
 
 static const BuiltinCapability BUILTINS[] = {
     {
@@ -1801,21 +1781,7 @@ static int cmd_maturity(int argc, char **argv) {
  * deployment (installed_matches says whether ~/.bonfyre/bin runs those
  * bytes), not a priced product and not authority to invoke anything. */
 static const char *REPAIR_SCHEMA =
-    "CREATE TABLE IF NOT EXISTS verified_repairs("
-    "  id               TEXT PRIMARY KEY,"
-    "  claim            TEXT NOT NULL,"
-    "  vector_file      TEXT NOT NULL,"
-    "  vector_sha256    TEXT NOT NULL,"
-    "  case_text        TEXT NOT NULL,"
-    "  runs             INTEGER NOT NULL,"
-    "  before_sha256    TEXT NOT NULL,"
-    "  before_source    TEXT,"
-    "  after_binary     TEXT NOT NULL,"
-    "  after_sha256     TEXT NOT NULL,"
-    "  installed_sha256 TEXT,"
-    "  record           TEXT NOT NULL,"
-    "  admitted         INTEGER NOT NULL"
-    ");";
+    BF_STORE_CAPABILITY_VERIFIED_REPAIRS;
 
 static const char *jv_str_at(const bf_jv *o, const char *a, const char *b) {
     const bf_jv *v = bf_jv_get(o, a);

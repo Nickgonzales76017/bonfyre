@@ -5,6 +5,7 @@
  * a dismissal cannot acknowledge, cancel, retry or otherwise mutate that work. */
 #include "account_work.h"
 #include <errno.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define QBOX_REV_MAX INT64_C(9007199254740991)
 #define QBOX_INPUT_MAX 4096
 
@@ -24,16 +25,7 @@ static inline int qbox_action(const char *s) {
 }
 static inline int qbox_schema(sqlite3 *db) {
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS queue_inbox_states("
-        "subject TEXT NOT NULL,scope TEXT NOT NULL,actor TEXT NOT NULL,mission_id TEXT NOT NULL,"
-        "source_version TEXT NOT NULL,read INTEGER NOT NULL CHECK(read IN(0,1)),"
-        "dismissed INTEGER NOT NULL CHECK(dismissed IN(0,1)),revision INTEGER NOT NULL CHECK(revision>0),"
-        "PRIMARY KEY(subject,scope,actor,mission_id));"
-        "CREATE TABLE IF NOT EXISTS queue_inbox_operations("
-        "subject TEXT NOT NULL,scope TEXT NOT NULL,actor TEXT NOT NULL,request_id TEXT NOT NULL,"
-        "mission_id TEXT NOT NULL,source_version TEXT NOT NULL,expected_revision INTEGER NOT NULL,"
-        "action TEXT NOT NULL,result_revision INTEGER NOT NULL,created_at_ms INTEGER NOT NULL,"
-        "PRIMARY KEY(subject,scope,actor,request_id));",NULL,NULL,NULL)==SQLITE_OK;
+        BF_STORE_QUEUE_QUEUE_INBOX_STATES,NULL,NULL,NULL)==SQLITE_OK;
 }
 static inline void qbox_bind_audience(sqlite3_stmt *q,const char *subject,const char *scope,const char *actor) {
     sqlite3_bind_text(q,1,subject,-1,SQLITE_TRANSIENT);

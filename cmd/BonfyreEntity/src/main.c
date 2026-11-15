@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_ENTITY_DB"
@@ -44,39 +45,7 @@ static void db_path(char *buf, size_t len) {
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA =
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS entities ("
-    "  id          TEXT PRIMARY KEY,"
-    "  display     TEXT NOT NULL,"
-    "  kind        TEXT NOT NULL DEFAULT 'person'," /* person|place|org|object|event */
-    "  confidence  REAL NOT NULL DEFAULT 1.0,"
-    "  obs_count   INTEGER NOT NULL DEFAULT 0,"
-    "  first_seen  INTEGER NOT NULL,"
-    "  last_seen   INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS observations ("
-    "  id        INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  entity    TEXT NOT NULL REFERENCES entities(id),"
-    "  modal     TEXT NOT NULL," /* face|voice|text|email|location|tag */
-    "  value     TEXT NOT NULL,"
-    "  source    TEXT,"
-    "  confidence REAL NOT NULL DEFAULT 1.0,"
-    "  ts        INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS links ("
-    "  a           TEXT NOT NULL REFERENCES entities(id),"
-    "  b           TEXT NOT NULL REFERENCES entities(id),"
-    "  confidence  REAL NOT NULL DEFAULT 1.0,"
-    "  reason      TEXT,"
-    "  created     INTEGER NOT NULL,"
-    "  PRIMARY KEY(a,b)"
-    ");"
-    "CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5("
-    "  id, display, kind, content='entities', content_rowid='rowid'"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_obs_entity ON observations(entity);"
-    "CREATE INDEX IF NOT EXISTS idx_obs_modal  ON observations(modal,value);";
+    BF_STORE_ENTITY_ENTITIES;
 
 static sqlite3 *open_db(void) {
     char path[4096]; db_path(path,sizeof(path)); ensure_dir(path);

@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_TIME_DB"
@@ -96,34 +97,7 @@ static void db_path(char *buf, size_t len) {
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA =
-    "PRAGMA journal_mode=WAL;"
-    "CREATE TABLE IF NOT EXISTS artifacts ("
-    "  id       TEXT PRIMARY KEY,"
-    "  path     TEXT,"
-    "  recipe   TEXT NOT NULL,"
-    "  status   TEXT NOT NULL DEFAULT 'pending',"  /* pending|running|done|failed */
-    "  runs     INTEGER NOT NULL DEFAULT 0,"
-    "  last_run INTEGER,"
-    "  created  INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS runs ("
-    "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  artifact   TEXT NOT NULL,"
-    "  recipe     TEXT NOT NULL,"
-    "  run_id     TEXT,"
-    "  exit_code  INTEGER,"
-    "  out_path   TEXT,"
-    "  ts         INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS triggers ("
-    "  id      INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  event   TEXT NOT NULL,"  /* 'entity_resolved'|'model_updated'|'cron:HH:MM'|custom */
-    "  recipe  TEXT NOT NULL,"
-    "  active  INTEGER NOT NULL DEFAULT 1,"
-    "  created INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_artifacts_status ON artifacts(status);"
-    "CREATE INDEX IF NOT EXISTS idx_runs_artifact    ON runs(artifact);";
+    BF_STORE_TIME_ARTIFACTS;
 
 static void seed(sqlite3 *db) {
     static const struct { const char *ev, *recipe; } T[] = {

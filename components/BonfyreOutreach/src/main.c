@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <sqlite3.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define MAX_PATH  2048
 #define MAX_NAME  256
@@ -125,18 +126,7 @@ static const char *followup_move(int days) {
 /* ── Database ─────────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
-    "CREATE TABLE IF NOT EXISTS sends ("
-    "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  channel TEXT NOT NULL,"
-    "  target TEXT NOT NULL,"
-    "  offer_name TEXT,"
-    "  template TEXT,"
-    "  message_preview TEXT,"
-    "  sent_at TEXT NOT NULL,"
-    "  reply_type TEXT,"
-    "  reply_notes TEXT,"
-    "  replied_at TEXT"
-    ");";
+    BF_STORE_C_OUTREACH_SENDS;
 
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db;

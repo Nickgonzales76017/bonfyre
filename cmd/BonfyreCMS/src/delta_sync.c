@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern unsigned long long fnv1a64(const void *data, size_t len);
 extern void iso_timestamp(char *buf, size_t sz);
@@ -29,17 +30,9 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int delta_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _sync_state ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  remote_id   TEXT NOT NULL,"
-        "  ns          TEXT NOT NULL,"
-        "  last_hash   TEXT NOT NULL,"
-        "  last_op_id  INTEGER DEFAULT 0,"
-        "  synced_at   TEXT NOT NULL,"
-        "  UNIQUE(remote_id, ns)"
-        ");",
+        BF_STORE_CMS_SYNC_STATE,
 
-        "CREATE INDEX IF NOT EXISTS idx_sync_remote ON _sync_state(remote_id, ns);",
+        BF_STORE_CMS_IDX_SYNC_REMOTE,
 
         NULL
     };

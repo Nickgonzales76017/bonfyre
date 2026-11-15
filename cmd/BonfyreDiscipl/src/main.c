@@ -25,6 +25,7 @@
 #include <bf_json.h>
 #include <bf_command_lookup.h>
 #include "bf_lex.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 typedef struct {
     char family[128];
@@ -1434,9 +1435,7 @@ static int cmd_bind_commands(const char *root, int argc, char **argv)
     if (bf_layer_state_db_path(root, "discipl.db", db_path, sizeof(db_path)) != 0) return 1;
     if (sqlite3_open(db_path, &db) != SQLITE_OK) return 1;
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS discipl_invocation("
-        " family TEXT PRIMARY KEY, binary TEXT, subcommand TEXT, wants_outdir INTEGER,"
-        " verified_at TEXT, fixture TEXT)", NULL, NULL, NULL);
+        BF_STORE_DISCIPL_DISCIPL_INVOCATION, NULL, NULL, NULL);
 
     printf("{\"schema\":\"bonfyre-discipl-invocation-binding.v1\",\"commands\":%d,\"bound\":[", total);
     for (i = 0; i < total; i++) {

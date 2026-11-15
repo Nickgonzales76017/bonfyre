@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* shared helpers from main.c */
 extern uint64_t fnv1a64(const void *data, size_t len);
@@ -31,27 +32,7 @@ extern int      db_exec(sqlite3 *db, const char *sql);
 int meta_bootstrap(sqlite3 *db)
 {
     const char *ddl =
-        "CREATE TABLE IF NOT EXISTS _meta_families ("
-        "  meta_family_id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type   TEXT NOT NULL,"
-        "  meta_generator TEXT NOT NULL,"
-        "  meta_arity     INTEGER NOT NULL DEFAULT 0,"
-        "  member_count   INTEGER NOT NULL DEFAULT 0,"
-        "  level          INTEGER NOT NULL DEFAULT 2,"
-        "  compression    REAL NOT NULL DEFAULT 0,"
-        "  created_at     TEXT NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS _meta_members ("
-        "  meta_family_id INTEGER NOT NULL,"
-        "  family_id      TEXT NOT NULL,"
-        "  generator      TEXT NOT NULL,"
-        "  meta_bindings  TEXT NOT NULL DEFAULT '[]',"
-        "  PRIMARY KEY (meta_family_id, family_id)"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_meta_members_ct "
-        "  ON _meta_families(content_type);"
-        "CREATE INDEX IF NOT EXISTS idx_meta_members_fam "
-        "  ON _meta_members(family_id);";
+        BF_STORE_CMS_META_FAMILIES;
     return db_exec(db, ddl);
 }
 

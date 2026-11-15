@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define PEER_SQL(db,sql) (sqlite3_exec(db,sql,NULL,NULL,NULL)==SQLITE_OK)
 static int peer_tx(sqlite3 *db){return db&&sqlite3_get_autocommit(db)&&PEER_SQL(db,"BEGIN IMMEDIATE");}
 static int peer_finish(sqlite3 *db,int ok){
@@ -25,31 +26,14 @@ static int peer_facet_key(const char *s){
 int bf_peer_store_init(sqlite3 *db){
  /* Definitions are governed by the native owner. A new facet adds *no*
   * relationship, conversation, CMS publication or capability by itself. */
- return db&&PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_facet("
-  "id TEXT PRIMARY KEY,label TEXT NOT NULL,description TEXT NOT NULL,"
-  "territory TEXT NOT NULL,owner TEXT NOT NULL,scope TEXT NOT NULL,"
-  "active INTEGER NOT NULL CHECK(active IN (0,1)))")&&
- PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_participation("
-  "subject TEXT NOT NULL,facet TEXT NOT NULL,revision INTEGER NOT NULL,"
-  "state TEXT NOT NULL CHECK(state IN ('active','withdrawn')),"
-  "PRIMARY KEY(subject,facet))")&&
- PEER_SQL(db,"CREATE INDEX IF NOT EXISTS peer_participation_feed ON peer_participation(facet,state,subject)")&&
- PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_interests(subject TEXT NOT NULL,facet TEXT NOT NULL,participation_revision INTEGER NOT NULL,revision INTEGER NOT NULL,topics TEXT NOT NULL,PRIMARY KEY(subject,facet))")&&
- PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_choice("
-  "subject TEXT NOT NULL,target TEXT NOT NULL,facet TEXT NOT NULL,"
-  "choice INTEGER NOT NULL,revision INTEGER NOT NULL,"
-  "subject_rev INTEGER NOT NULL,target_rev INTEGER NOT NULL,"
-  "PRIMARY KEY(subject,target,facet),CHECK(subject<>target),"
-  "CHECK(choice BETWEEN 0 AND 4))")&&
- PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_message(id INTEGER PRIMARY KEY,facet TEXT NOT NULL,"
-  "sender TEXT NOT NULL,recipient TEXT NOT NULL,nonce TEXT NOT NULL,body TEXT NOT NULL,"
-  "sent_at INTEGER NOT NULL,sender_epoch INTEGER NOT NULL,recipient_epoch INTEGER NOT NULL,"
-  "sender_choice_revision INTEGER NOT NULL,recipient_choice_revision INTEGER NOT NULL,"
-  "UNIQUE(sender,nonce),CHECK(sender<>recipient))")&&
- PEER_SQL(db,"CREATE INDEX IF NOT EXISTS peer_message_thread ON peer_message(facet,sender,recipient,id)")&&
- PEER_SQL(db,"CREATE TABLE IF NOT EXISTS peer_block("
-  "subject TEXT NOT NULL,target TEXT NOT NULL,PRIMARY KEY(subject,target),"
-  "CHECK(subject<>target))")&&
+ return db&&PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_FACET)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_PARTICIPATION)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_PARTICIPATION_FEED)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_INTERESTS)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_CHOICE)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_MESSAGE)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_MESSAGE_THREAD)&&
+ PEER_SQL(db,BF_STORE_PARTICIPATION_PEER_BLOCK_2)&&
  PEER_SQL(db,"INSERT OR IGNORE INTO peer_facet VALUES"
   "('personal','People & friendships','Meet other members through shared interests and introductions.',"
   "'life','BonfyreParticipation','introductions',1),"

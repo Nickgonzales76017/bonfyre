@@ -32,6 +32,7 @@
 #include <poll.h>
 #include "bf_crypto.h"
 #include "bf_msgpack.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define ST_MAX_BYTES (64u * 1024u * 1024u)
 #define ST_MAX_FRAME 1024u
@@ -341,11 +342,7 @@ static int st_index_open(const st_options *o, sqlite3 **db) {
     if (sqlite3_open_v2(path, db, flags, NULL) != SQLITE_OK) return -1;
     sqlite3_busy_timeout(*db, 1000);
     return sqlite3_exec(*db,
-        "CREATE TABLE IF NOT EXISTS swarm_scoped_transfers ("
-        "transfer_id TEXT NOT NULL, direction TEXT NOT NULL, scope_hash TEXT NOT NULL, "
-        "recipient_hash TEXT NOT NULL, sha256 TEXT NOT NULL, size_bytes INTEGER NOT NULL, "
-        "expires INTEGER NOT NULL, state TEXT NOT NULL, created_at INTEGER NOT NULL, "
-        "updated_at INTEGER NOT NULL, PRIMARY KEY(transfer_id,direction));", NULL, NULL, NULL) == SQLITE_OK ? 0 : -1;
+        BF_STORE_SWARM_SWARM_SCOPED_TRANSFERS, NULL, NULL, NULL) == SQLITE_OK ? 0 : -1;
 }
 
 static int st_index_begin(sqlite3 *db, const st_options *o, const char *direction) {

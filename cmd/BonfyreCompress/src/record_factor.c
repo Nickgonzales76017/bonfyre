@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #ifdef BONFYRE_HAVE_ZSTD
 #include <zstd.h>
 #include <zdict.h>
@@ -213,13 +214,7 @@ int bf_record_factor_build(const char *source,const char *target,FILE *report) {
     if(train(f,line,&codec))goto done;
     sprintf(tmp,"%s.build-XXXXXX",target);fd=mkstemp(tmp);if(fd<0)goto done;close(fd);fd=-1;
     if(sqlite3_open(tmp,&db)!=SQLITE_OK)goto done;
-    if(sql(db,"PRAGMA application_id=1112688198;PRAGMA user_version=2;PRAGMA foreign_keys=ON;PRAGMA journal_mode=DELETE;"
-       "CREATE TABLE record_dictionary(id INTEGER PRIMARY KEY,payload BLOB NOT NULL,digest TEXT NOT NULL);"
-       "CREATE TABLE record_atom(id INTEGER PRIMARY KEY,digest TEXT NOT NULL,raw_bytes INTEGER NOT NULL,codec INTEGER NOT NULL,payload BLOB NOT NULL);"
-       "CREATE UNIQUE INDEX build_atom_digest ON record_atom(digest);"
-       "CREATE TABLE record(seq INTEGER PRIMARY KEY,record_key TEXT NOT NULL UNIQUE,title TEXT NOT NULL,kind TEXT NOT NULL,source_url TEXT NOT NULL,keywords TEXT NOT NULL,digest TEXT NOT NULL,raw_bytes INTEGER NOT NULL,parts INTEGER NOT NULL);"
-       "CREATE TABLE record_part(record INTEGER NOT NULL REFERENCES record(seq),ordinal INTEGER NOT NULL,atom INTEGER NOT NULL REFERENCES record_atom(id),PRIMARY KEY(record,ordinal)) WITHOUT ROWID;"
-       "CREATE VIRTUAL TABLE record_search USING fts5(title,keywords,content='record',content_rowid='seq');BEGIN IMMEDIATE;"))goto done;
+    if(sql(db,BF_STORE_COMPRESS_RECORD_DICTIONARY))goto done;
     char dict_sha[65];bf_sha256_hex(codec.size?codec.bytes:(const void*)"",codec.size,dict_sha);
     if(prep(db,&meta,"INSERT INTO record_dictionary VALUES(1,?,?)"))goto done;
     sqlite3_bind_blob(meta,1,codec.size?codec.bytes:"",(int)codec.size,SQLITE_STATIC);sqlite3_bind_text(meta,2,dict_sha,-1,SQLITE_TRANSIENT);

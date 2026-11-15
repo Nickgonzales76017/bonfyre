@@ -34,6 +34,7 @@
 #include <bonfyre.h>
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* portable CPU count (macOS + Linux) */
 #ifdef __APPLE__
@@ -729,12 +730,9 @@ static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
 
     char create_vec[256];
     snprintf(create_vec, sizeof(create_vec),
-        "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0("
-        "  id TEXT PRIMARY KEY, embedding float[%d])", dims);
+        BF_STORE_EMBED_VEC_ARTIFACTS, dims);
     sqlite3_exec(vdb->db,
-        "CREATE TABLE IF NOT EXISTS artifacts("
-        "  id TEXT PRIMARY KEY, source TEXT, type TEXT, text TEXT,"
-        "  metadata TEXT, created_at TEXT)", NULL, NULL, NULL);
+        BF_STORE_EMBED_ARTIFACTS, NULL, NULL, NULL);
     sqlite3_exec(vdb->db, create_vec, NULL, NULL, NULL);
 
     if (sqlite3_prepare_v2(vdb->db,

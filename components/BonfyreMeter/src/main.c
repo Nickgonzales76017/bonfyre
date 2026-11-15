@@ -35,6 +35,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static void iso_timestamp(char *buf, size_t sz) {
     time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
@@ -75,17 +76,7 @@ static sqlite3 *db_open(const char *path) {
 
 static void ensure_schema(sqlite3 *db) {
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS events ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  key_id TEXT NOT NULL,"
-        "  op TEXT NOT NULL,"
-        "  bytes INTEGER DEFAULT 0,"
-        "  duration_ms INTEGER DEFAULT 0,"
-        "  timestamp TEXT NOT NULL,"
-        "  cost REAL DEFAULT 0.0"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_events_key ON events(key_id);"
-        "CREATE INDEX IF NOT EXISTS idx_events_ts ON events(timestamp);",
+        BF_STORE_C_METER_EVENTS,
         NULL, NULL, NULL);
 }
 

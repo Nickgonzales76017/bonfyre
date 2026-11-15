@@ -4,6 +4,7 @@
 #include "bf_utf8.h"
 #include <errno.h>
 #include <limits.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* Auth owns this explicit admission genesis, not a legal organization registry.
  * Request [1, session, operation, string_arguments]; response [1,status,message,rows,cursor].
  * A new realm is derived from the authenticated creator and creation nonce.
@@ -11,22 +12,7 @@
 #define ORG_MAX_INPUT 8192
 #define ORG_PAGE 50
 static const char *organization_schema =
- "CREATE TABLE IF NOT EXISTS institution_origins("
- "institution TEXT PRIMARY KEY,creator INTEGER NOT NULL,request_digest TEXT NOT NULL,"
- "label TEXT NOT NULL,created_at TEXT NOT NULL,UNIQUE(creator,request_digest),"
- "FOREIGN KEY(creator) REFERENCES users(id));"
- "CREATE TABLE IF NOT EXISTS institution_invitations("
- "digest TEXT PRIMARY KEY,institution TEXT NOT NULL,issuer INTEGER NOT NULL,email TEXT NOT NULL,"
- "role TEXT NOT NULL CHECK(role IN('read','write','admin')),created_at TEXT NOT NULL,expires_at TEXT NOT NULL,"
- "grant_expires_at TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('pending','accepted','revoked')),"
- "revision INTEGER NOT NULL DEFAULT 1,accepted_by INTEGER,request_hours INTEGER NOT NULL,"
- "FOREIGN KEY(institution) REFERENCES institution_origins(institution));"
- "CREATE INDEX IF NOT EXISTS institution_invitations_scope ON institution_invitations(institution,digest);"
- "CREATE TABLE IF NOT EXISTS institution_subaccounts("
- "subaccount TEXT PRIMARY KEY,institution TEXT NOT NULL,creator INTEGER NOT NULL,"
- "request_digest TEXT NOT NULL,label TEXT NOT NULL,created_at TEXT NOT NULL,"
- "UNIQUE(institution,creator,request_digest),"
- "FOREIGN KEY(institution) REFERENCES institution_origins(institution));";
+ BF_STORE_AUTH_INSTITUTION_ORIGINS;
 static int org_text(bf_mp_reader_t *r,char *out,size_t cap){
  bf_mp_value_t v;if(bf_mp_read_next(r,&v)!=BF_MP_STR||v.v.raw.len>=cap)return 0;
  for(size_t i=0;i<v.v.raw.len;i++)if(v.v.raw.ptr[i]<32||v.v.raw.ptr[i]==127)return 0;

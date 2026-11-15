@@ -43,6 +43,7 @@
 #include "bf_lex.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 extern char **environ;
 
 /* ================================================================
@@ -482,20 +483,13 @@ static int pipeline_index(const char *artifacts_dir, const char *outdir,
         NULL, NULL, NULL);
 
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS families ("
-        "  id INTEGER PRIMARY KEY, artifact_id TEXT UNIQUE, artifact_type TEXT,"
-        "  source_system TEXT, created_at TEXT, root_hash TEXT, family_key TEXT, canonical_key TEXT, path TEXT,"
-        "  n_atoms INTEGER, n_operators INTEGER, n_realizations INTEGER, component_total INTEGER, indexed_at TEXT"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_families_type ON families(artifact_type);"
-        "CREATE INDEX IF NOT EXISTS idx_families_family_key ON families(family_key);"
-        "CREATE INDEX IF NOT EXISTS idx_families_canonical ON families(canonical_key);",
+        BF_STORE_PIPELINE_FAMILIES,
         NULL, NULL, NULL);
     sqlite3_exec(db, "ALTER TABLE families ADD COLUMN family_key TEXT;", NULL, NULL, NULL);
     sqlite3_exec(db, "ALTER TABLE families ADD COLUMN canonical_key TEXT;", NULL, NULL, NULL);
     sqlite3_exec(db, "ALTER TABLE families ADD COLUMN component_total INTEGER;", NULL, NULL, NULL);
-    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_families_family_key ON families(family_key);", NULL, NULL, NULL);
-    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_families_canonical ON families(canonical_key);", NULL, NULL, NULL);
+    sqlite3_exec(db, BF_STORE_PIPELINE_IDX_FAMILIES_FAMILY_KEY, NULL, NULL, NULL);
+    sqlite3_exec(db, BF_STORE_PIPELINE_IDX_FAMILIES_CANONICAL, NULL, NULL, NULL);
 
     /* #13: ts passed from main — no redundant iso_timestamp call */
     sqlite3_exec(db, "BEGIN;", NULL, NULL, NULL);
@@ -658,12 +652,7 @@ static int pipeline_meter(const char *outdir, const char *key, const char *op,
     if (sqlite3_open(db_path, &db) != SQLITE_OK) return 1;
 
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS events ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT, key_id TEXT NOT NULL, op TEXT NOT NULL,"
-        "  bytes INTEGER DEFAULT 0, duration_ms INTEGER DEFAULT 0,"
-        "  timestamp TEXT NOT NULL, cost REAL DEFAULT 0.0"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_events_key ON events(key_id);",
+        BF_STORE_PIPELINE_EVENTS,
         NULL, NULL, NULL);
 
     /* Usage only. A price is an admitted rate, which is BonfyreMeter's to hold;

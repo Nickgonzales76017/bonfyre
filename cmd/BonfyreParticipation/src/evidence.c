@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static int starts_external(const char *v) { return v && !strncmp(v, "external:", 9); }
 
@@ -56,10 +57,7 @@ static int insert_fact(sqlite3 *db, const char *occ, const char *axis,
 
 int bf_part_evidence_init(sqlite3 *db) {
     const char *sql =
-        "CREATE TABLE participation_fact(occurrence TEXT NOT NULL,axis TEXT NOT NULL,owner TEXT NOT NULL,state TEXT NOT NULL);"
-        "CREATE INDEX participation_fact_occurrence ON participation_fact(occurrence,axis);"
-        "CREATE TABLE participation_edge(occurrence TEXT NOT NULL,source TEXT NOT NULL,target TEXT NOT NULL,"
-        "UNIQUE(occurrence,source,target));";
+        BF_STORE_PARTICIPATION_PARTICIPATION_FACT;
     return db && sqlite3_exec(db, sql, NULL, NULL, NULL) == SQLITE_OK;
 }
 

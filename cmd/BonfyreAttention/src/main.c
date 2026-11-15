@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "bf_lex.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* Delegates to the one implementation. Three byte-identical copies of this
  * existed; they agreed, which was luck rather than design. */
 static const char *option_value(int argc, char **argv, const char *option)
@@ -68,13 +69,7 @@ static BfAttention attention_from_name(const char *name, int *ok)
 static int apply_schema(sqlite3 *db)
 {
     return sqlite3_exec(db,
-        "PRAGMA journal_mode=WAL;"
-        "CREATE TABLE IF NOT EXISTS watches("
-        "watch_id TEXT PRIMARY KEY,subject TEXT NOT NULL,"
-        "temperature TEXT NOT NULL DEFAULT 'warm',reheat_at TEXT,reheat_on TEXT NOT NULL DEFAULT '',"
-        "attempts INTEGER NOT NULL DEFAULT 0,last_checked_at TEXT,last_change_at TEXT,"
-        "detail TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL);"
-        "CREATE INDEX IF NOT EXISTS idx_watches_due ON watches(temperature,reheat_at);",
+        BF_STORE_ATTENTION_WATCHES,
         NULL, NULL, NULL) == SQLITE_OK ? 0 : -1;
 }
 

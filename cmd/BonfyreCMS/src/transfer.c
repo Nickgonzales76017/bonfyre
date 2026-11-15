@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern uint64_t fnv1a64(const void *data, size_t len);
 extern void     iso_timestamp(char *buf, size_t sz);
@@ -19,25 +20,7 @@ extern int      db_exec(sqlite3 *db, const char *sql);
 int transfer_bootstrap(sqlite3 *db)
 {
     const char *ddl =
-        "CREATE TABLE IF NOT EXISTS _transfer_templates ("
-        "  template_id  INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  name         TEXT NOT NULL,"
-        "  family_id    TEXT NOT NULL,"
-        "  generator    TEXT NOT NULL,"
-        "  arity        INTEGER NOT NULL,"
-        "  member_count INTEGER NOT NULL DEFAULT 0,"
-        "  created_at   TEXT NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS _transfer_log ("
-        "  id            INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  donor_id      TEXT NOT NULL,"
-        "  recipient_id  TEXT NOT NULL,"
-        "  similarity    REAL NOT NULL,"
-        "  positions_seeded INTEGER NOT NULL DEFAULT 0,"
-        "  transferred_at TEXT NOT NULL"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_transfer_tpl_gen "
-        "  ON _transfer_templates(generator);";
+        BF_STORE_CMS_TRANSFER_TEMPLATES;
     return db_exec(db, ddl);
 }
 

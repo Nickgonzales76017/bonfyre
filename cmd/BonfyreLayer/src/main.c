@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 #include <ctype.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION "1.0.0"
 #define MAX_NODES 8192
@@ -432,25 +433,9 @@ static sqlite3 *open_layer_db(const char *root, char *path_buf, size_t path_buf_
         return NULL;
     }
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS layers ("
-        "id TEXT PRIMARY KEY,"
-        "name TEXT,"
-        "artifact_type TEXT NOT NULL,"
-        "source_model TEXT,"
-        "layer_spec_type TEXT,"
-        "layer_spec_value TEXT,"
-        "node_start INTEGER,"
-        "node_end INTEGER,"
-        "n_nodes INTEGER,"
-        "n_params INTEGER,"
-        "sha256 TEXT,"
-        "format TEXT,"
-        "artifact_path TEXT,"
-        "onnx_path TEXT,"
-        "created_at TEXT NOT NULL"
-        ");",
+        BF_STORE_LAYER_LAYERS,
         NULL, NULL, NULL);
-    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_layers_kind ON layers(artifact_kind);", NULL, NULL, NULL);
+    sqlite3_exec(db, BF_STORE_LAYER_IDX_LAYERS_KIND, NULL, NULL, NULL);
     return db;
 }
 

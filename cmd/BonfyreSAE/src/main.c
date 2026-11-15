@@ -58,6 +58,7 @@
 
 #include <bonfyre.h>
 #include <bf_sae.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION         "1.0.0"
 #define DB_ENV          "BONFYRE_SAE_DB"
@@ -78,35 +79,7 @@ static void db_path(char *buf, size_t len) {
 /* ── schema ───────────────────────────────────────────────────────────────── */
 
 static const char *SCHEMA =
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS activations ("
-    "  id              INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  artifact_id     TEXT,"
-    "  dict_path       TEXT NOT NULL,"
-    "  model_family    TEXT NOT NULL,"
-    "  layer           INTEGER NOT NULL,"
-    "  top_k           INTEGER NOT NULL,"
-    "  feature_hash    TEXT NOT NULL,"
-    "  danger_tripped  INTEGER NOT NULL DEFAULT 0,"
-    "  elapsed_ms      REAL,"
-    "  manifest_path   TEXT,"
-    "  ts              TEXT NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS feature_events ("
-    "  id              INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  activation_id   INTEGER NOT NULL REFERENCES activations(id),"
-    "  feature_id      INTEGER NOT NULL,"
-    "  activation      REAL NOT NULL,"
-    "  normalised      REAL NOT NULL,"
-    "  tags            INTEGER NOT NULL,"
-    "  label           TEXT,"
-    "  rank            INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_fe_fid ON feature_events(feature_id);"
-    "CREATE INDEX IF NOT EXISTS idx_fe_act ON feature_events(activation);"
-    "CREATE INDEX IF NOT EXISTS idx_act_hash ON activations(feature_hash);"
-    "CREATE INDEX IF NOT EXISTS idx_act_model ON activations(model_family, layer);";
+    BF_STORE_SAE_ACTIVATIONS;
 
 static sqlite3 *open_db(void) {
     char path[512]; db_path(path, sizeof(path));

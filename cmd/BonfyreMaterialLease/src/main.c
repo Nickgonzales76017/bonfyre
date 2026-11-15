@@ -9,12 +9,13 @@
 #include <time.h>
 #include <unistd.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 typedef struct { char *identity,*owner; } Item;
 static const char *arg(int argc,char **argv,const char *name){for(int i=2;i+1<argc;i++)if(!strcmp(argv[i],name))return argv[i+1];return NULL;}
 static char *slurp(const char *path,size_t *n){FILE*f=fopen(path,"rb");char*b=NULL;long z;if(!f)return NULL;if(fseek(f,0,SEEK_END)||((z=ftell(f))<0)||fseek(f,0,SEEK_SET)){fclose(f);return NULL;}b=malloc((size_t)z+1);if(!b){fclose(f);return NULL;}if(z&&fread(b,1,(size_t)z,f)!=(size_t)z){free(b);fclose(f);return NULL;}b[z]=0;fclose(f);if(n)*n=(size_t)z;return b;}
 static int execsql(sqlite3*d,const char*q){char*e=NULL;int rc=sqlite3_exec(d,q,NULL,NULL,&e);if(rc!=SQLITE_OK){fprintf(stderr,"sqlite: %s\n",e?e:"error");sqlite3_free(e);return 0;}return 1;}
-static int init(sqlite3*d){return execsql(d,"PRAGMA journal_mode=WAL;CREATE TABLE IF NOT EXISTS material_lease(subject TEXT NOT NULL,scope TEXT NOT NULL,identity TEXT NOT NULL,owner_ref TEXT NOT NULL,updated_at INTEGER NOT NULL,PRIMARY KEY(subject,scope,identity));CREATE INDEX IF NOT EXISTS material_lease_identity ON material_lease(identity);CREATE TABLE IF NOT EXISTS material_transition(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT NOT NULL CHECK(action IN ('acquire','release')),identity TEXT NOT NULL,owner_ref TEXT NOT NULL,refcount_before INTEGER NOT NULL,refcount_after INTEGER NOT NULL,subject TEXT NOT NULL,scope TEXT NOT NULL,created_at INTEGER NOT NULL,emitted INTEGER NOT NULL DEFAULT 0 CHECK(emitted IN (0,1)));CREATE INDEX IF NOT EXISTS material_transition_pending ON material_transition(emitted,id);");}
+static int init(sqlite3*d){return execsql(d,BF_STORE_MATERIAL_LEASE_MATERIAL_LEASE);}
 static void items_free(Item*a,int n){for(int i=0;i<n;i++){free(a[i].identity);free(a[i].owner);}free(a);}
 static int find_item(Item*a,int n,const char*id){for(int i=0;i<n;i++)if(!strcmp(a[i].identity,id))return i;return -1;}
 static int push(Item**a,int*n,const char*id,const char*owner){Item*z=realloc(*a,(size_t)(*n+1)*sizeof(**a));if(!z)return 0;*a=z;z[*n].identity=strdup(id);z[*n].owner=strdup(owner);if(!z[*n].identity||!z[*n].owner)return 0;(*n)++;return 1;}

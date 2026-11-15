@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static const char *arg(int ac,char **av,const char *name){for(int i=2;i+1<ac;i++)if(!strcmp(av[i],name))return av[i+1];return NULL;}
 static int has(int ac,char **av,const char *name){for(int i=2;i<ac;i++)if(!strcmp(av[i],name))return 1;return 0;}
@@ -52,12 +53,7 @@ static int term_atom(const char *in, char *out, size_t cap) {
 }
 static int safe_asset(const char*s){return s&&s[0]=='/'&&s[1]!='/'&&!strstr(s,"..")&&!strchr(s,'\\');}
 static int schema(sqlite3*d){return sql(d,
- "PRAGMA journal_mode=WAL;"
- "CREATE TABLE IF NOT EXISTS media_library(library_id TEXT PRIMARY KEY,mode TEXT NOT NULL CHECK(mode IN('personal','community')),owner_subject TEXT NOT NULL,title TEXT NOT NULL,visibility TEXT NOT NULL CHECK(visibility IN('private','community','public')),state TEXT NOT NULL CHECK(state IN('active','retired')),updated_at INTEGER NOT NULL);"
- "CREATE TABLE IF NOT EXISTS media_library_access(library_id TEXT NOT NULL REFERENCES media_library(library_id) ON DELETE CASCADE,actor_subject TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN('viewer','curator','admin')),state TEXT NOT NULL CHECK(state IN('active','revoked')),updated_at INTEGER NOT NULL,PRIMARY KEY(library_id,actor_subject));"
- "CREATE TABLE IF NOT EXISTS media_library_membership(library_id TEXT NOT NULL REFERENCES media_library(library_id) ON DELETE CASCADE,subject_ref TEXT NOT NULL,media_program_ref TEXT NOT NULL,collection_ref TEXT NOT NULL DEFAULT '',state TEXT NOT NULL CHECK(state IN('active','removed')),added_at INTEGER NOT NULL,PRIMARY KEY(library_id,subject_ref,media_program_ref));"
- "CREATE TABLE IF NOT EXISTS media_playback_session(session_id TEXT PRIMARY KEY,library_id TEXT NOT NULL,actor_subject TEXT NOT NULL,subject_ref TEXT NOT NULL,media_program_ref TEXT NOT NULL,representation_id TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN('prepared','playing','paused','ended')),position_ms INTEGER NOT NULL CHECK(position_ms>=0),opened_at INTEGER NOT NULL,updated_at INTEGER NOT NULL);"
- "CREATE INDEX IF NOT EXISTS media_continue_by_actor ON media_playback_session(actor_subject,library_id,updated_at DESC);");}
+ BF_STORE_MEDIA_LIBRARY_MEDIA_LIBRARY);}
 static int open_db(const char*p,sqlite3**out){if(!p||sqlite3_open_v2(p,out,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,0)!=SQLITE_OK)return 0;sqlite3_busy_timeout(*out,5000);if(!schema(*out)){sqlite3_close(*out);*out=0;return 0;}return 1;}
 static int owner_or_role(sqlite3*d,const char*lib,const char*actor,int manage){sqlite3_stmt*s=0;int ok=0;if(!d||!lib||!actor)return 0;if(sqlite3_prepare_v2(d,"SELECT 1 FROM media_library WHERE library_id=?1 AND state='active' AND owner_subject=?2 UNION ALL SELECT 1 FROM media_library_access WHERE library_id=?1 AND actor_subject=?2 AND state='active' AND (?3=0 OR role IN ('curator','admin')) LIMIT 1",-1,&s,0)!=SQLITE_OK)return 0;sqlite3_bind_text(s,1,lib,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,actor,-1,SQLITE_TRANSIENT);sqlite3_bind_int(s,3,manage);ok=sqlite3_step(s)==SQLITE_ROW;sqlite3_finalize(s);return ok;}
 static int visible(sqlite3*d,const char*lib,const char*actor){sqlite3_stmt*s=0;int ok=0;if(sqlite3_prepare_v2(d,"SELECT 1 FROM media_library WHERE library_id=?1 AND state='active' AND visibility='public' UNION ALL SELECT 1 FROM media_library WHERE library_id=?1 AND state='active' AND owner_subject=?2 UNION ALL SELECT 1 FROM media_library_access WHERE library_id=?1 AND actor_subject=?2 AND state='active' LIMIT 1",-1,&s,0)!=SQLITE_OK)return 0;sqlite3_bind_text(s,1,lib,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,actor?actor:"anonymous",-1,SQLITE_TRANSIENT);ok=sqlite3_step(s)==SQLITE_ROW;sqlite3_finalize(s);return ok;}

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* Declared in main.c */
 extern unsigned long long fnv1a64(const void *data, size_t len);
@@ -35,37 +36,16 @@ extern int db_exec(sqlite3 *db, const char *sql);
 int tensor_ops_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
         /* Per-position eigenvalue / variance tracking */
-        "CREATE TABLE IF NOT EXISTS _tensor_eigen ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_id   INTEGER NOT NULL,"
-        "  position    INTEGER NOT NULL,"
-        "  field_name  TEXT NOT NULL,"
-        "  eigenvalue  REAL DEFAULT 0.0,"
-        "  variance    REAL DEFAULT 0.0,"
-        "  mean        REAL DEFAULT 0.0,"
-        "  updated_at  TEXT NOT NULL,"
-        "  UNIQUE(family_id, position)"
-        ");",
+        BF_STORE_CMS_TENSOR_EIGEN,
 
-        "CREATE INDEX IF NOT EXISTS idx_teig_fam ON _tensor_eigen(family_id);",
+        BF_STORE_CMS_IDX_TEIG_FAM,
 
         /* Columnar per-cell binding storage for efficient compressed-domain ops */
-        "CREATE TABLE IF NOT EXISTS _tensor_cells ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  family_id   INTEGER NOT NULL,"
-        "  target_type TEXT NOT NULL,"
-        "  target_id   INTEGER NOT NULL,"
-        "  position    INTEGER NOT NULL,"
-        "  field_name  TEXT NOT NULL,"
-        "  val_text    TEXT,"
-        "  val_num     REAL,"
-        "  val_type    INTEGER DEFAULT 0,"   /* 0=string, 1=number, 2=bool, 3=null */
-        "  UNIQUE(family_id, target_id, position)"
-        ");",
+        BF_STORE_CMS_TENSOR_CELLS,
 
-        "CREATE INDEX IF NOT EXISTS idx_tcell_fam ON _tensor_cells(family_id, position);",
-        "CREATE INDEX IF NOT EXISTS idx_tcell_target ON _tensor_cells(target_type, target_id);",
-        "CREATE INDEX IF NOT EXISTS idx_tcell_field ON _tensor_cells(family_id, field_name);",
+        BF_STORE_CMS_IDX_TCELL_FAM,
+        BF_STORE_CMS_IDX_TCELL_TARGET,
+        BF_STORE_CMS_IDX_TCELL_FIELD,
 
         NULL
     };

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define QACT_PAGE 20
 #define QACT_NODE_LIMIT 32
@@ -163,15 +164,7 @@ static inline int qact_root_hash(const char *operator_id, const char *input, con
 
 static inline int qact_schema(sqlite3 *db) {
     return sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS queue_activity_scopes("
-        "sequence INTEGER PRIMARY KEY AUTOINCREMENT,mission_id TEXT NOT NULL UNIQUE,"
-        "subject TEXT NOT NULL,scope TEXT NOT NULL,title TEXT NOT NULL,continuation TEXT NOT NULL,"
-        "root_sha256 TEXT NOT NULL,created_at_ms INTEGER NOT NULL);"
-        "CREATE INDEX IF NOT EXISTS queue_activity_scope_page ON queue_activity_scopes(subject,scope,sequence DESC);"
-        "CREATE TRIGGER IF NOT EXISTS queue_activity_scope_immutable_update BEFORE UPDATE ON queue_activity_scopes "
-        "BEGIN SELECT RAISE(ABORT,'queue activity admission is immutable'); END;"
-        "CREATE TRIGGER IF NOT EXISTS queue_activity_scope_immutable_delete BEFORE DELETE ON queue_activity_scopes "
-        "BEGIN SELECT RAISE(ABORT,'queue activity admission is immutable'); END;", NULL, NULL, NULL) == SQLITE_OK;
+        BF_STORE_QUEUE_QUEUE_ACTIVITY_SCOPES, NULL, NULL, NULL) == SQLITE_OK;
 }
 
 /* Reserve before creating the native mission. A crash leaves an invisible

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #define DATE_SQL(db,s) (sqlite3_exec(db,s,NULL,NULL,NULL)==SQLITE_OK)
 static int tx(sqlite3 *db){return db&&sqlite3_get_autocommit(db)&&DATE_SQL(db,"BEGIN IMMEDIATE");}
 static int finish(sqlite3 *db,int ok){if(ok&&DATE_SQL(db,"COMMIT"))return 1;DATE_SQL(db,"ROLLBACK");return 0;}
@@ -13,43 +14,16 @@ static int key(const char *s){return s&&*s&&strlen(s)<80&&
 int bf_dating_store_init(sqlite3 *db){
  /* Specialized private relation owner, not a duplicate Auth/profile database.
   * CMS records can describe authored intents, but only this owner enacts them. */
- return db&&DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_request("
-  "subject TEXT PRIMARY KEY,revision INTEGER NOT NULL,state TEXT NOT NULL,"
-  "updated_at INTEGER NOT NULL,CHECK(state IN ('requested','withdrawn')))")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_verification("
-  "subject TEXT PRIMARY KEY,age INTEGER NOT NULL,eligibility_witness TEXT NOT NULL,"
-  "moderation_witness TEXT NOT NULL,issued_by TEXT NOT NULL,state TEXT NOT NULL,"
-  "valid_until INTEGER NOT NULL)")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_person("
-  "subject TEXT PRIMARY KEY,revision INTEGER NOT NULL,age INTEGER NOT NULL,"
-  "min_age INTEGER NOT NULL,max_age INTEGER NOT NULL,active INTEGER NOT NULL,"
-  "intro INTEGER NOT NULL,eligibility_witness TEXT NOT NULL,moderation_witness TEXT NOT NULL)")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_choice("
-  "actor TEXT NOT NULL,target TEXT NOT NULL,choice INTEGER NOT NULL,revision INTEGER NOT NULL,"
-  "actor_rev INTEGER NOT NULL,target_rev INTEGER NOT NULL,"
-  "PRIMARY KEY(actor,target),CHECK(actor<>target),CHECK(choice BETWEEN 0 AND 4))")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_answer("
-  "subject TEXT NOT NULL,question INTEGER NOT NULL,answer INTEGER NOT NULL,"
-  "importance INTEGER NOT NULL,participant_rev INTEGER NOT NULL,"
-  "PRIMARY KEY(subject,question),CHECK(question BETWEEN 1 AND 4),"
-  "CHECK(answer IN (-1,1)),CHECK(importance BETWEEN 1 AND 5))")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_message("
-  "id INTEGER PRIMARY KEY AUTOINCREMENT,sender TEXT NOT NULL,recipient TEXT NOT NULL,"
-  "nonce TEXT NOT NULL,body TEXT NOT NULL,sent_at INTEGER NOT NULL,"
-  "sender_rev INTEGER NOT NULL,recipient_rev INTEGER NOT NULL,"
-  "UNIQUE(sender,nonce),CHECK(sender<>recipient))")&&
- DATE_SQL(db,"CREATE INDEX IF NOT EXISTS dating_message_lookup "
-  "ON dating_message(recipient,sender,id)")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_plan_detail("
-  "plan_key TEXT PRIMARY KEY,activity TEXT NOT NULL,meeting_context TEXT NOT NULL)")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS dating_plan("
-  "plan_key TEXT PRIMARY KEY,proposer TEXT NOT NULL,partner TEXT NOT NULL,"
-  "revision INTEGER NOT NULL,total_cents INTEGER NOT NULL,"
-  "proposer_rev INTEGER NOT NULL,partner_rev INTEGER NOT NULL,"
-  "yes_proposer INTEGER NOT NULL DEFAULT 0,yes_partner INTEGER NOT NULL DEFAULT 0)")&&
- DATE_SQL(db,"CREATE TABLE IF NOT EXISTS peer_block("
-   "subject TEXT NOT NULL,target TEXT NOT NULL,PRIMARY KEY(subject,target),"
-   "CHECK(subject<>target))")&&
+ return db&&DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_REQUEST)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_VERIFICATION)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_PERSON)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_CHOICE)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_ANSWER)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_MESSAGE)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_MESSAGE_LOOKUP)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_PLAN_DETAIL)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_DATING_PLAN)&&
+ DATE_SQL(db,BF_STORE_PARTICIPATION_PEER_BLOCK)&&
  /* Carry existing dating blocks into the common, cross-context refusal.
   * The original dating_choice remains the dating consent/revision owner. */
  DATE_SQL(db,"INSERT OR IGNORE INTO peer_block(subject,target) "

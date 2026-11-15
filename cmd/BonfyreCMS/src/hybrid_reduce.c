@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern uint64_t fnv1a64(const void *data, size_t len);
 extern void     iso_timestamp(char *buf, size_t sz);
@@ -35,24 +36,7 @@ extern int tensor_reduce(sqlite3 *db, const char *target_type, int target_id,
 int hybrid_bootstrap(sqlite3 *db)
 {
     const char *ddl =
-        "CREATE TABLE IF NOT EXISTS _reduce_memo ("
-        "  family_id  TEXT NOT NULL,"
-        "  target_id  INTEGER NOT NULL,"
-        "  strategy   INTEGER NOT NULL,"
-        "  result     TEXT NOT NULL,"
-        "  created_at TEXT NOT NULL,"
-        "  PRIMARY KEY (family_id, target_id)"
-        ");"
-        "CREATE TABLE IF NOT EXISTS _reduce_profiles ("
-        "  family_id       TEXT NOT NULL,"
-        "  strategy        INTEGER NOT NULL,"
-        "  elapsed_us      INTEGER NOT NULL,"
-        "  result_bytes    INTEGER NOT NULL,"
-        "  profiled_at     TEXT NOT NULL,"
-        "  PRIMARY KEY (family_id, strategy)"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_memo_family "
-        "  ON _reduce_memo(family_id);";
+        BF_STORE_CMS_REDUCE_MEMO;
     return db_exec(db, ddl);
 }
 

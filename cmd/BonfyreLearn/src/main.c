@@ -31,6 +31,7 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_LEARN_DB"
@@ -50,33 +51,7 @@ static void db_path(char *buf,size_t len){
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS feedback("
-    "  id       INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  run_id   TEXT NOT NULL,"
-    "  stage    TEXT,"
-    "  score    REAL NOT NULL,"
-    "  label    TEXT," /* good|bad|neutral */
-    "  ts       INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS thresholds("
-    "  stage    TEXT PRIMARY KEY,"
-    "  quality  REAL NOT NULL DEFAULT 0.75,"
-    "  latency_ms INTEGER NOT NULL DEFAULT 5000,"
-    "  updated  INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS optimizations("
-    "  id       INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  stage    TEXT NOT NULL,"
-    "  metric   TEXT NOT NULL,"
-    "  old_val  REAL NOT NULL,"
-    "  new_val  REAL NOT NULL,"
-    "  reason   TEXT,"
-    "  ts       INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_feedback_run   ON feedback(run_id);"
-    "CREATE INDEX IF NOT EXISTS idx_feedback_stage ON feedback(stage);";
+    BF_STORE_LEARN_FEEDBACK;
 
 /* seed default thresholds for known stages */
 static const char *SEED_STAGES[]={"intake","transcribe","diarize","tag","summarize","translate","qa"};

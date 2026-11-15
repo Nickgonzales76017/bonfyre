@@ -10,6 +10,7 @@
 #include "account_activity.h"
 #include "account_legacy_api.h"
 #include <limits.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define AWK_STALE_MS 60000
 #define AWK_SOURCE_LIMIT 16
@@ -18,22 +19,7 @@
 typedef struct { const char *kind, *path; } AwkSource;
 
 static const char *const awk_schema =
-    "CREATE TABLE IF NOT EXISTS account_work(seq INTEGER PRIMARY KEY,id TEXT NOT NULL UNIQUE,subject TEXT NOT NULL,"
-    "scope TEXT NOT NULL,source TEXT NOT NULL,title TEXT NOT NULL,state TEXT NOT NULL,created_ms INTEGER NOT NULL,updated_ms INTEGER NOT NULL,attention TEXT NOT NULL DEFAULT '');"
-    "CREATE INDEX IF NOT EXISTS account_work_page ON account_work(subject,scope,seq DESC);"
-    "CREATE TABLE IF NOT EXISTS account_work_run(work_id TEXT NOT NULL,run_id TEXT NOT NULL,worker_id TEXT NOT NULL,"
-    "state TEXT NOT NULL,created_ms INTEGER NOT NULL,updated_ms INTEGER NOT NULL,agent TEXT NOT NULL DEFAULT '',role TEXT NOT NULL DEFAULT '',"
-    "session_kind TEXT NOT NULL DEFAULT '',duration_ms INTEGER,limit_signal INTEGER NOT NULL DEFAULT 0,provider_session_ref TEXT NOT NULL DEFAULT '',"
-    "handoff_ref TEXT NOT NULL DEFAULT '');"
-    "CREATE INDEX IF NOT EXISTS account_work_run_work ON account_work_run(work_id,updated_ms DESC);"
-    "CREATE TABLE IF NOT EXISTS account_work_usage(work_id TEXT NOT NULL,run_id TEXT NOT NULL,"
-    "input_tokens INTEGER,output_tokens INTEGER,estimated_micro_usd INTEGER,cache_read_tokens INTEGER,cache_write_tokens INTEGER,PRIMARY KEY(work_id,run_id));"
-    "CREATE INDEX IF NOT EXISTS account_work_usage_work ON account_work_usage(work_id);"
-    "CREATE TABLE IF NOT EXISTS account_work_estimate(work_id TEXT NOT NULL,run_id TEXT NOT NULL,input_tokens INTEGER NOT NULL,output_tokens INTEGER NOT NULL,estimated_micro_usd INTEGER NOT NULL,source_digest TEXT NOT NULL,PRIMARY KEY(work_id,run_id));"
-    "CREATE TABLE IF NOT EXISTS account_work_step(work_id TEXT NOT NULL,node_id TEXT NOT NULL,operator_id TEXT NOT NULL,"
-    "state TEXT NOT NULL,attempt INTEGER NOT NULL,updated_ms INTEGER NOT NULL,output_ref TEXT NOT NULL DEFAULT '');"
-    "CREATE INDEX IF NOT EXISTS account_work_step_work ON account_work_step(work_id,node_id);"
-    "CREATE TABLE IF NOT EXISTS account_work_meta(key TEXT PRIMARY KEY,value INTEGER NOT NULL);";
+    BF_STORE_QUEUE_ACCOUNT_WORK;
 
 /* Each owner's vocabulary mapped onto the workgraph node and worker states the
  * rail knows. Blocked operator goals stay blocked; their failed runs are what
@@ -383,11 +369,7 @@ static int awk_index(const char *path, const char *subject, const char *scope, c
         "ALTER TABLE account_work_run ADD COLUMN provider_session_ref TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE account_work_run ADD COLUMN handoff_ref TEXT NOT NULL DEFAULT ''"};
     for (size_t i = 0; i < sizeof(awk_columns) / sizeof(awk_columns[0]); i++) sqlite3_exec(db, awk_columns[i], NULL, NULL, NULL);
-    if (!awk_exec(db, "CREATE TEMP TABLE w(id,source,title,state,created_ms,updated_ms,attention);"
-                      "CREATE TEMP TABLE r(work_id,run_id,worker_id,state,created_ms,updated_ms,agent DEFAULT '',role DEFAULT '',session_kind DEFAULT '',duration_ms DEFAULT NULL,limit_signal DEFAULT 0,provider_session_ref DEFAULT '',handoff_ref DEFAULT '');"
-                      "CREATE TEMP TABLE s(work_id,node_id,operator_id,state,attempt,updated_ms,output_ref TEXT NOT NULL DEFAULT '');"
-                      "CREATE TEMP TABLE u(work_id,run_id,input_tokens,output_tokens,estimated_micro_usd,cache_read_tokens DEFAULT NULL,cache_write_tokens DEFAULT NULL);"
-                      "CREATE INDEX temp.r_work ON r(work_id);CREATE INDEX temp.s_work ON s(work_id);")) goto done;
+    if (!awk_exec(db, BF_STORE_QUEUE_W)) goto done;
     for (size_t i = 0; i < count; i++) {
         if (!strcmp(sources[i].kind, "meter")) {
             if (meter_path) goto done;
@@ -446,9 +428,7 @@ static int awk_index(const char *path, const char *subject, const char *scope, c
             fprintf(stderr,"account-work: warning: Meter unavailable; Meter token evidence omitted\n");
         } else {
             if (!awk_exec(db,
-                "CREATE INDEX temp.r_session ON r(provider_session_ref);"
-                "CREATE INDEX temp.u_run ON u(work_id,run_id);"
-                "CREATE TEMP TABLE meter_foreign(ref TEXT PRIMARY KEY) WITHOUT ROWID;")) goto done;
+                BF_STORE_QUEUE_TEMP_R_SESSION)) goto done;
             if (sqlite3_prepare_v2(db,
                 "INSERT OR IGNORE INTO temp.meter_foreign SELECT x.provider_session_ref "
                 "FROM account_work_run x JOIN account_work a ON a.id=x.work_id "

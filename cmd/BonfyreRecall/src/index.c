@@ -8,6 +8,7 @@
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static int has_flag(int argc, char **argv, const char *name) {
     for (int i = 2; i < argc; i++) if (!strcmp(argv[i], name)) return 1;
@@ -92,8 +93,7 @@ int bf_recall_word_index(const char *store, const char *input) {
     int rc = sqlite3_open_v2(store, &db, SQLITE_OPEN_READWRITE, NULL);
     if (rc == SQLITE_OK)
         rc = sqlite3_exec(db,
-            "BEGIN;DROP TABLE IF EXISTS passage_words;DROP TABLE IF EXISTS passage_text;"
-            "CREATE TABLE passage_text(id TEXT PRIMARY KEY, text TEXT NOT NULL);", NULL, NULL, &message);
+            BF_STORE_RECALL_PASSAGE_TEXT, NULL, NULL, &message);
     if (rc == SQLITE_OK && input) {
         in = fopen(input, "r");
         rc = in ? sqlite3_prepare_v2(db,
@@ -114,8 +114,7 @@ int bf_recall_word_index(const char *store, const char *input) {
     }
     if (rc == SQLITE_OK)
         rc = sqlite3_exec(db,
-            "CREATE VIRTUAL TABLE passage_words USING fts5(id UNINDEXED, text, tokenize='porter unicode61');"
-            "INSERT INTO passage_words(id, text) SELECT id, text FROM passage_text;COMMIT;",
+            BF_STORE_RECALL_PASSAGE_WORDS,
             NULL, NULL, &message);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "word index failed: %s\n", message ? message : (db ? sqlite3_errmsg(db) : "open failed"));

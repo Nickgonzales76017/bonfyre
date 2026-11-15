@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static int field(sqlite3 *db,const char *json,const char *path,char *out,size_t cap){
     sqlite3_stmt *st=NULL;int ok=0;
@@ -39,7 +40,7 @@ int bf_fm_admit(const char *drafts,const char *db_path,const char *schemas,const
     char temp[]="/tmp/bonfyre-fragment-migration-XXXXXX";int fd=-1,requested=0,skipped=0,pending=0,rc=2;
     if(!drafts||!db_path||!schemas||!namespace_name||!cms_bin||!bf_fm_safe_ident(namespace_name)){fprintf(stderr,"fragment-migration: invalid admission arguments\n");return 2;}
     if(apply&&apply_schema(cms_bin,db_path,schemas)!=0){fprintf(stderr,"fragment-migration: CMS schema admission failed\n");return 1;}
-    if(sqlite3_open(":memory:",&scratch)!=SQLITE_OK||sqlite3_exec(scratch,"CREATE TABLE seen(coordinate TEXT PRIMARY KEY)",NULL,NULL,NULL)!=SQLITE_OK)goto done;
+    if(sqlite3_open(":memory:",&scratch)!=SQLITE_OK||sqlite3_exec(scratch,BF_STORE_FRAGMENT_MIGRATION_SEEN,NULL,NULL,NULL)!=SQLITE_OK)goto done;
     if(sqlite3_open_v2(db_path,&store,SQLITE_OPEN_READWRITE,NULL)==SQLITE_OK)sqlite3_exec(store,"PRAGMA query_only=ON",NULL,NULL,NULL);else{if(store)sqlite3_close(store);store=NULL;}
     if(!(in=fopen(drafts,"r"))||(fd=mkstemp(temp))<0||!(missing=fdopen(fd,"w")))goto done;fd=-1;
     while((nread=getline(&line,&cap,in))>=0){

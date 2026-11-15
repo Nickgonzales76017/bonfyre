@@ -30,6 +30,7 @@
 #include <bonfyre.h>
 #include "verification_planner.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_ECONOMY_DB"
@@ -54,32 +55,7 @@ static int local_model_ready(void) {
 }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS budgets("
-    "  recipe       TEXT PRIMARY KEY,"
-    "  max_usd      REAL NOT NULL,"
-    "  spent        REAL NOT NULL DEFAULT 0.0,"
-    "  reset_period TEXT NOT NULL DEFAULT 'monthly',"
-    "  updated      INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS costs("
-    "  id       INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  recipe   TEXT NOT NULL,"
-    "  stage    TEXT NOT NULL,"
-    "  model    TEXT NOT NULL,"
-    "  usd      REAL NOT NULL,"
-    "  tokens   INTEGER,"
-    "  ts       INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS routes("
-    "  id           INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "  recipe       TEXT NOT NULL,"
-    "  chosen_model TEXT NOT NULL,"
-    "  reason       TEXT,"
-    "  ts           INTEGER NOT NULL"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_costs_recipe ON costs(recipe);";
+    BF_STORE_ECONOMY_BUDGETS;
 
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);

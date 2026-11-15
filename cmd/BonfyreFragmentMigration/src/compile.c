@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static int jt(sqlite3 *db,const char *json,const char *path,char *out,size_t cap){
     sqlite3_stmt *st=NULL;int ok=0;
@@ -61,7 +62,7 @@ int bf_fm_compile(const char *literal_manifest,const char *source_map,const char
     manifest=bf_fm_read_file(literal_manifest);map=bf_fm_read_file(source_map);
     if(!manifest||!map||bf_sha256_file(literal_manifest,msha)!=0||bf_sha256_file(source_map,ssha)!=0||sqlite3_open(":memory:",&db)!=SQLITE_OK)goto done;
     if(!jt(db,manifest,"$.schema_version",mschema,sizeof(mschema))||strcmp(mschema,"bonfyre.surface.literal-candidates.v2")||!jt(db,map,"$.schema_version",sschema,sizeof(sschema))||strcmp(sschema,"bonfyre.surface.source-map.v1")){fprintf(stderr,"fragment-migration: unsupported manifest or source-map schema\n");goto done;}
-    if(bf_fm_ensure_dir(out_dir)!=0||sqlite3_exec(db,"CREATE TABLE equivalence(hash TEXT PRIMARY KEY,n INTEGER NOT NULL)",NULL,NULL,NULL)!=SQLITE_OK)goto done;
+    if(bf_fm_ensure_dir(out_dir)!=0||sqlite3_exec(db,BF_STORE_FRAGMENT_MIGRATION_EQUIVALENCE,NULL,NULL,NULL)!=SQLITE_OK)goto done;
     draft_path=bf_fm_path_join(out_dir,"drafts.jsonl");review_path=bf_fm_path_join(out_dir,"review.jsonl");manifest_path=bf_fm_path_join(out_dir,"manifest.json");
     if(!draft_path||!review_path||!manifest_path||!(drafts=fopen(draft_path,"w"))||!(reviews=fopen(review_path,"w")))goto done;
     if(sqlite3_prepare_v2(db,"SELECT value FROM json_each(?1,'$.candidates')",-1,&candidates,NULL)!=SQLITE_OK)goto done;

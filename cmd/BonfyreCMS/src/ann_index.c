@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <math.h>
 #include <time.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define ANN_QUANT_LEVELS 16
 #define ANN_QUANT_BITS 4
@@ -45,52 +46,20 @@ typedef struct {
 int ann_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
         /* LSH bucket assignments */
-        "CREATE TABLE IF NOT EXISTS _ann_buckets ("
-        "  id          INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type TEXT NOT NULL,"
-        "  table_idx   INTEGER NOT NULL,"
-        "  bucket_hash TEXT NOT NULL,"
-        "  family_id   INTEGER NOT NULL,"
-        "  target_id   INTEGER NOT NULL,"
-        "  UNIQUE(content_type, table_idx, target_id)"
-        ");",
+        BF_STORE_CMS_ANN_BUCKETS,
 
-        "CREATE INDEX IF NOT EXISTS idx_ann_lookup "
-        "ON _ann_buckets(content_type, table_idx, bucket_hash);",
+        BF_STORE_CMS_IDX_ANN_LOOKUP,
 
-        "CREATE INDEX IF NOT EXISTS idx_ann_target "
-        "ON _ann_buckets(content_type, target_id);",
+        BF_STORE_CMS_IDX_ANN_TARGET,
 
         /* Random projection vectors (generated once, reused) */
-        "CREATE TABLE IF NOT EXISTS _ann_projections ("
-        "  id         INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type TEXT NOT NULL,"
-        "  table_idx  INTEGER NOT NULL,"
-        "  bit_idx    INTEGER NOT NULL,"
-        "  dimension  INTEGER NOT NULL,"
-        "  weight     REAL NOT NULL,"
-        "  UNIQUE(content_type, table_idx, bit_idx, dimension)"
-        ");",
+        BF_STORE_CMS_ANN_PROJECTIONS,
 
         /* TurboQuant-inspired sidecar: fixed rotated 4-bit codes plus a
            lightweight residual sign sketch for approximate reranking. */
-        "CREATE TABLE IF NOT EXISTS _ann_quantized ("
-        "  id            INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type  TEXT NOT NULL,"
-        "  family_id     INTEGER NOT NULL,"
-        "  target_id     INTEGER NOT NULL,"
-        "  dim           INTEGER NOT NULL,"
-        "  rot_dim       INTEGER NOT NULL,"
-        "  norm          REAL NOT NULL,"
-        "  clip          REAL NOT NULL,"
-        "  residual_avg  REAL NOT NULL,"
-        "  q4_codes      BLOB NOT NULL,"
-        "  residual_bits BLOB NOT NULL,"
-        "  UNIQUE(content_type, target_id)"
-        ");",
+        BF_STORE_CMS_ANN_QUANTIZED,
 
-        "CREATE INDEX IF NOT EXISTS idx_ann_quantized_lookup "
-        "ON _ann_quantized(content_type, target_id);",
+        BF_STORE_CMS_IDX_ANN_QUANTIZED_LOOKUP,
 
         NULL
     };

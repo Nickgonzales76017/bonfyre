@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sqlite3.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 /* Only declarations are loaded. This reader neither opens owner databases nor
  * invokes a command, provider or model. Search weights rank candidates only. */
@@ -94,10 +95,7 @@ int experience_resolve(const char *root, const char *objective, const char *anch
         sqlite3_create_function(db, "term_score", 1, SQLITE_UTF8, &terms, score, NULL, NULL) != SQLITE_OK) goto done;
     /* A primary key rejects duplicate identities before any result is printed. */
     if (sqlite3_exec(db,
-        "CREATE TABLE graph(body TEXT NOT NULL);"
-        "CREATE TABLE owners(id TEXT PRIMARY KEY NOT NULL CHECK(length(id)>0),body TEXT NOT NULL);"
-        "CREATE TABLE edges(id TEXT PRIMARY KEY NOT NULL,source TEXT NOT NULL,destination TEXT NOT NULL,body TEXT NOT NULL);"
-        "CREATE TABLE workflows(id TEXT PRIMARY KEY NOT NULL,body TEXT NOT NULL);",
+        BF_STORE_EXPERIENCE_MAP_GRAPH,
         NULL, NULL, NULL) != SQLITE_OK ||
         !statement(db, "INSERT INTO graph VALUES(?1)", data)) goto done;
     if (sqlite3_prepare_v2(db,

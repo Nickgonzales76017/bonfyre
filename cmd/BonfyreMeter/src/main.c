@@ -33,6 +33,7 @@
 #include "bonfyre.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
@@ -129,43 +130,7 @@ static sqlite3 *db_open(const char *path) {
 
 static void ensure_schema(sqlite3 *db) {
     sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS events ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  key_id TEXT NOT NULL,"
-        "  op TEXT NOT NULL,"
-        "  bytes INTEGER DEFAULT 0,"
-        "  duration_ms INTEGER DEFAULT 0,"
-        "  timestamp TEXT NOT NULL,"
-        /* Unknown, not zero. A price this estate cannot evidence is an open
-         * question, and a column defaulting to 0.0 answered it with "free" on
-         * every row nobody had a rate for. */
-        "  cost REAL,"
-        "  provider TEXT NOT NULL DEFAULT '',"
-        "  receipt_ref TEXT NOT NULL DEFAULT '',"
-        "  physical_attempt_ref TEXT NOT NULL DEFAULT '',"
-        "  realization_ref TEXT NOT NULL DEFAULT '',"
-        "  rate_id INTEGER,"
-        "  work_subject TEXT NOT NULL DEFAULT '',"
-        "  work_scope TEXT NOT NULL DEFAULT '',"
-        "  work_id TEXT NOT NULL DEFAULT '',"
-        "  work_run_id TEXT NOT NULL DEFAULT ''"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_events_key ON events(key_id);"
-        "CREATE INDEX IF NOT EXISTS idx_events_ts ON events(timestamp);"
-        /* A rate is admitted, with the evidence that admitted it and the date
-         * it took effect. Usage priced without one stays unpriced. */
-        "CREATE TABLE IF NOT EXISTS rate ("
-        "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  provider TEXT NOT NULL,"
-        "  op TEXT NOT NULL,"
-        "  unit TEXT NOT NULL,"
-        "  amount REAL NOT NULL,"
-        "  currency TEXT NOT NULL DEFAULT 'USD',"
-        "  effective_at TEXT NOT NULL,"
-        "  evidence_ref TEXT NOT NULL,"
-        "  observed_at TEXT NOT NULL"
-        ");"
-        "CREATE INDEX IF NOT EXISTS idx_rate_lookup ON rate(provider,op,effective_at);",
+        BF_STORE_METER_EVENTS,
         NULL, NULL, NULL);
     /* A store written before prices had to be evidenced keeps its rows; the
      * columns it lacks are added rather than the store being replaced. */
@@ -178,13 +143,12 @@ static void ensure_schema(sqlite3 *db) {
     sqlite3_exec(db, "ALTER TABLE events ADD COLUMN work_scope TEXT NOT NULL DEFAULT ''", NULL, NULL, NULL);
     sqlite3_exec(db, "ALTER TABLE events ADD COLUMN work_id TEXT NOT NULL DEFAULT ''", NULL, NULL, NULL);
     sqlite3_exec(db, "ALTER TABLE events ADD COLUMN work_run_id TEXT NOT NULL DEFAULT ''", NULL, NULL, NULL);
-    sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS idx_events_work ON events(work_subject,work_scope,work_id)",NULL,NULL,NULL);
+    sqlite3_exec(db, BF_STORE_METER_IDX_EVENTS_WORK,NULL,NULL,NULL);
     /* Existing stores receive these columns above. Create the partial unique
      * index afterwards so migration cannot skip the idempotency law simply
      * because a pre-contract events table already existed. */
     sqlite3_exec(db,
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_events_physical_attempt "
-        "ON events(physical_attempt_ref) WHERE physical_attempt_ref <> ''",
+        BF_STORE_METER_IDX_EVENTS_PHYSICAL_ATTEMPT,
         NULL, NULL, NULL);
 }
 

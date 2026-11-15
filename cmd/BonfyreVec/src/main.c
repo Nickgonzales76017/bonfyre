@@ -32,6 +32,7 @@
 #include <time.h>
 #include <math.h>
 #include <sqlite3.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 #ifdef __ARM_NEON
 #include <arm_neon.h>
 #include "bf_lex.h"
@@ -371,8 +372,7 @@ static int cmd_fixture(const char *db_path, const char *embedding_path) {
     }
     if (sqlite3_open(db_path, &db) != SQLITE_OK) { fprintf(stderr, "vec fixture: cannot open %s\n", db_path); goto done; }
     if (sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS vector_fixture("
-        "id TEXT PRIMARY KEY,embedding BLOB NOT NULL,dimensions INTEGER NOT NULL,metadata TEXT NOT NULL,updated_at TEXT NOT NULL)",
+        BF_STORE_VEC_VECTOR_FIXTURE,
         NULL, NULL, NULL) != SQLITE_OK ||
         sqlite3_exec(db, "DELETE FROM vector_fixture", NULL, NULL, NULL) != SQLITE_OK) goto done;
     if (!fixture_insert(db, "native-reference", native, dimensions, "{\"group\":\"keep\",\"role\":\"native\"}") ||
@@ -456,14 +456,7 @@ static int cmd_init(const char *db_path, int width) {
 
     char *err = NULL;
     int rc = sqlite3_exec(db,
-        "CREATE TABLE IF NOT EXISTS artifacts("
-        "  id TEXT PRIMARY KEY,"
-        "  source TEXT,"
-        "  type TEXT,"
-        "  text TEXT,"
-        "  metadata TEXT,"
-        "  created_at TEXT"
-        ")", NULL, NULL, &err);
+        BF_STORE_VEC_ARTIFACTS, NULL, NULL, &err);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "[vec] Failed to create artifacts table: %s\n", err);
         sqlite3_free(err);
@@ -473,10 +466,7 @@ static int cmd_init(const char *db_path, int width) {
 
     char sql[256];
     snprintf(sql, sizeof(sql),
-        "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0("
-        "  id TEXT PRIMARY KEY,"
-        "  embedding float[%d]"
-        ")", width);
+        BF_STORE_VEC_VEC_ARTIFACTS, width);
     rc = sqlite3_exec(db, sql, NULL, NULL, &err);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "[vec] Failed to create vec_artifacts table: %s\n", err);

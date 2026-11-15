@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 static const char LETTERS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 #define LEASE_SECONDS 600
@@ -46,7 +47,7 @@ static sqlite3 *digest_db(void) {
     mkdir(dir, 0777);
     char *path = dp_fmt("%s/checkpoints.sqlite", dir);
     if (sqlite3_open(path, &db) != SQLITE_OK ||
-        sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS checkpoint_digest (path TEXT PRIMARY KEY, identity TEXT NOT NULL, sha256 TEXT NOT NULL, hashed_at TEXT NOT NULL)", 0, 0, 0) != SQLITE_OK) {
+        sqlite3_exec(db, BF_STORE_DECIDE_CHECKPOINT_DIGEST, 0, 0, 0) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         db = NULL;
     }

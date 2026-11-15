@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 extern unsigned long long fnv1a64(const void *data, size_t len);
 extern void iso_timestamp(char *buf, size_t sz);
@@ -29,20 +30,9 @@ extern int db_exec(sqlite3 *db, const char *sql);
 
 int synthesis_bootstrap(sqlite3 *db) {
     const char *stmts[] = {
-        "CREATE TABLE IF NOT EXISTS _synthesis_candidates ("
-        "  id            INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "  content_type  TEXT NOT NULL,"
-        "  generator     TEXT NOT NULL,"
-        "  arity         INTEGER DEFAULT 0,"
-        "  coverage      INTEGER DEFAULT 0,"
-        "  score         REAL DEFAULT 0.0,"
-        "  compression   REAL DEFAULT 0.0,"
-        "  annotations   TEXT,"     /* JSON: type constraints per position */
-        "  created_at    TEXT NOT NULL,"
-        "  UNIQUE(content_type, generator)"
-        ");",
+        BF_STORE_CMS_SYNTHESIS_CANDIDATES,
 
-        "CREATE INDEX IF NOT EXISTS idx_synth_ct ON _synthesis_candidates(content_type, score DESC);",
+        BF_STORE_CMS_IDX_SYNTH_CT,
 
         NULL
     };

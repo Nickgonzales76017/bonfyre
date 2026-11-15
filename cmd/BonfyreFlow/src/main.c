@@ -30,6 +30,7 @@
 #include <sqlite3.h>
 #include <bonfyre.h>
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 #define VERSION    "1.0.0"
 #define DB_ENV     "BONFYRE_FLOW_DB"
@@ -44,43 +45,7 @@ static void db_path(char *buf,size_t len){
 static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 
 static const char *SCHEMA=
-    "PRAGMA journal_mode=WAL;"
-    "PRAGMA foreign_keys=ON;"
-    "CREATE TABLE IF NOT EXISTS flows("
-    "  id          TEXT PRIMARY KEY,"
-    "  name        TEXT NOT NULL,"
-    "  definition  TEXT NOT NULL," /* full JSON */
-    "  entry_stage TEXT NOT NULL,"
-    "  created     INTEGER NOT NULL,"
-    "  updated     INTEGER NOT NULL"
-    ");"
-    "CREATE TABLE IF NOT EXISTS edges("
-    "  flow_id     TEXT NOT NULL REFERENCES flows(id) ON DELETE CASCADE,"
-    "  from_stage  TEXT NOT NULL,"
-    "  to_stage    TEXT NOT NULL,"
-    "  kind        TEXT NOT NULL DEFAULT 'seq'," /* seq|branch|merge|loop */
-    "  condition   TEXT,"
-    "  PRIMARY KEY(flow_id,from_stage,to_stage)"
-    ");"
-    "CREATE TABLE IF NOT EXISTS runs("
-    "  id            TEXT PRIMARY KEY,"
-    "  flow_id       TEXT NOT NULL REFERENCES flows(id),"
-    "  input         TEXT,"
-    "  status        TEXT NOT NULL DEFAULT 'running'," /* running|done|failed|waiting */
-    "  current_stage TEXT,"
-    "  started       INTEGER NOT NULL,"
-    "  finished      INTEGER"
-    ");"
-    "CREATE TABLE IF NOT EXISTS run_stages("
-    "  run_id  TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,"
-    "  stage   TEXT NOT NULL,"
-    "  status  TEXT NOT NULL DEFAULT 'pending',"
-    "  started INTEGER,"
-    "  done    INTEGER,"
-    "  output  TEXT,"
-    "  PRIMARY KEY(run_id,stage)"
-    ");"
-    "CREATE INDEX IF NOT EXISTS idx_runs_flow ON runs(flow_id);";
+    BF_STORE_FLOW_FLOWS;
 
 static sqlite3 *open_db(void){
     char path[4096];db_path(path,sizeof(path));ensure_dir(path);
