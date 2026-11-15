@@ -1,3 +1,4 @@
+#include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include "../src/dating.h"
@@ -128,6 +129,25 @@ int main(void){
  assert(!bf_dating_can_chat(db,a.subject,b.subject));
  assert(!bf_dating_enroll(db,&a,4));
  sqlite3_close(db);
- puts("dating owner PASS: opt-in CAS, mutuality, safe plans, block, withdrawal");
+ /* Moderation review: a request waits; an administrator approves or declines. */
+ {sqlite3 *m=NULL;assert(sqlite3_open(":memory:",&m)==SQLITE_OK);assert(bf_dating_store_init(m));
+  BfDatingReviewRow rows[8];size_t n=0;
+  assert(bf_dating_review_pending(m,rows,8,&n)&&n==0);
+  assert(bf_dating_request(m,"person:carol",1,0));assert(bf_dating_request(m,"person:dan",1,0));
+  assert(bf_dating_review_pending(m,rows,8,&n)&&n==2);
+  assert(!bf_dating_eligible(m,"person:carol"));
+  assert(!bf_dating_review_approve(m,"person:carol","person:carol",30)); /* never one's own */
+  assert(!bf_dating_review_approve(m,"admin:nick","person:carol",17));   /* adults only */
+  assert(!bf_dating_review_approve(m,"bad moderator","person:carol",30));
+  assert(!bf_dating_review_approve(m,"admin:nick","person:erin",30));    /* no request */
+  assert(bf_dating_review_approve(m,"admin:nick","person:carol",30));
+  assert(bf_dating_eligible(m,"person:carol"));
+  assert(bf_dating_review_pending(m,rows,8,&n)&&n==1&&!strcmp(rows[0].subject,"person:dan"));
+  assert(bf_dating_review_decline(m,"admin:nick","person:dan"));
+  assert(!bf_dating_eligible(m,"person:dan"));
+  assert(bf_dating_review_pending(m,rows,8,&n)&&n==0);
+  assert(!bf_dating_review_decline(m,"admin:nick","person:dan"));        /* already closed */
+  sqlite3_close(m);}
+ puts("dating owner PASS: opt-in CAS, mutuality, safe plans, block, withdrawal, moderation review");
  return 0;
 }

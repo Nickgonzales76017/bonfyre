@@ -269,7 +269,7 @@ static void psetup_destination_picker(const PackSetupInput *in,const char *beare
     psetup_destination_picker_with(in,bearer,auth_db,target,label,NULL,NULL);
 }
 static void psetup_context_picker(const PackSetupInput *in,const char *bearer,const char *auth_db) {
-    psetup_destination_picker_with(in,bearer,auth_db,"/packs/setup","Use this configuration in",*in->design?"design":NULL,in->design);
+    psetup_destination_picker_with(in,bearer,auth_db,"/packs/setup","Use it in",*in->design?"design":NULL,in->design);
 }
 /* Published previews are separate from configuration ownership. Never append
  * actor, session, installation, draft or permission coordinates to these links. */
@@ -420,11 +420,6 @@ static int serve_pack_setup(const char *method,const char *target,const char *qu
     fputs("<div class=\"ak-wb-strip\"><a href=\"/packs/setup?context=",stdout);url_query_value(in.context);fputs("\">Workspace setup</a><span>/</span><a href=\"/apps?context=",stdout);url_query_value(in.context);
     fputs("\">Your work</a><span class=\"ak-live\">",stdout);html(state_words);fputs("</span></div>",stdout);
     fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Set up a tool</p><h1>",stdout);html(label);fputs("</h1><p class=\"ak-lede\">Check what it adds, choose where it goes, then add it and switch it on. Nothing changes until you press a button.</p>",stdout);
-    {   /* One flow, read from the saved state: check, add, switch on, open. */
-        const char *steps[]={"Check what it adds","Add it","Switch it on","Open it"};int at=!strcmp(state,"active")?3:installed&&strcmp(state,"removed")&&strcmp(state,"stale")?2:1;
-        fputs("<ol class=\"ak-steps\" aria-label=\"Setup steps\">",stdout);
-        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);fputs("</li>",stdout);}
-        fputs("</ol>",stdout);}
     if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">See the newest version</a></p>",stdout);}
     fputs("</div><aside class=\"ak-panel is-raised\" data-pack-config><h2>In this workspace</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\"><span class=\"ak-dot",stdout);fputs(strcmp(state,"active")?" is-off":"",stdout);fputs("\">",stdout);html(state_words);fputs("</span></p>",stdout);
     if(!identity){fputs("<p>Sign in to add this to your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
@@ -442,6 +437,11 @@ static int serve_pack_setup(const char *method,const char *target,const char *qu
         if(current_ok&&!strcmp(current.state,"active")){if(!workspace_editor_links(current.installation)){fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-work href=\"/apps?context=",stdout);url_query_value(in.context);fputs("\">Open your work</a></p>",stdout);}fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on</a></p>",stdout);}
     }
     fputs("</aside></header>",stdout);
+    {   /* One flow, read from the saved state: check, add, switch on, open. */
+        const char *steps[]={"Check what it adds","Add it","Switch it on","Open it"};int at=!strcmp(state,"active")?3:installed&&strcmp(state,"removed")&&strcmp(state,"stale")?2:1;
+        fputs("<ol class=\"ak-steps\" aria-label=\"Setup steps\">",stdout);
+        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);fputs("</li>",stdout);}
+        fputs("</ol>",stdout);}
     /* Instrument row: counts read from the plan the owner just resolved. */
     size_t changed=0,added=0;
     if(!result){for(size_t i=0;i<plan.resolution.count;i++){int old=bfpg_find(&plan.pins,plan.resolution.nodes[i].pack);if(old<0)added++;else if(strcmp(plan.pins.nodes[old].version,plan.resolution.nodes[i].version))changed++;}}

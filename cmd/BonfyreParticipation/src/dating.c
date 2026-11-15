@@ -1,6 +1,7 @@
 #include "dating.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <limits.h>
 #define DATE_SQL(db,s) (sqlite3_exec(db,s,NULL,NULL,NULL)==SQLITE_OK)
 static int tx(sqlite3 *db){return db&&sqlite3_get_autocommit(db)&&DATE_SQL(db,"BEGIN IMMEDIATE");}
@@ -596,4 +597,57 @@ int bf_dating_messages(sqlite3 *db,const char *actor,const char *target,
   snprintf(out[n].body,sizeof(out[n].body),"%s",body);n++;
  }
  sqlite3_finalize(s);*count=n;return 1;
+}
+
+/* ---- moderation review ------------------------------------------------- */
+static int review_ref_part(const char *s){return s&&*s&&strlen(s)<96&&
+ strspn(s,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:-")==strlen(s);}
+int bf_dating_review_pending(sqlite3 *db,BfDatingReviewRow *rows,size_t cap,size_t *count){
+ sqlite3_stmt *s=NULL;size_t n=0;
+ if(count)*count=0;
+ if(!db||!rows||!cap||!count)return 0;
+ if(sqlite3_prepare_v2(db,"SELECT r.subject,r.updated_at FROM dating_request r "
+    "WHERE r.state='requested' AND NOT EXISTS(SELECT 1 FROM dating_person p "
+    "WHERE p.subject=r.subject AND p.active=1) ORDER BY r.updated_at,r.subject LIMIT ?1",
+    -1,&s,NULL)!=SQLITE_OK)return 0;
+ sqlite3_bind_int64(s,1,(sqlite3_int64)cap);
+ while(n<cap&&sqlite3_step(s)==SQLITE_ROW){
+  const char *subject=(const char*)sqlite3_column_text(s,0);
+  if(!subject||!bf_dating_subject(subject))continue;
+  snprintf(rows[n].subject,sizeof(rows[n].subject),"%s",subject);
+  rows[n].requested_at=sqlite3_column_int64(s,1);n++;
+ }
+ sqlite3_finalize(s);*count=n;return 1;
+}
+int bf_dating_review_approve(sqlite3 *db,const char *moderator,const char *subject,unsigned age){
+ sqlite3_stmt *s=NULL;int ok=0;unsigned request_revision=0,person_revision=0;
+ char eligibility[160],moderation[160];long long now=(long long)time(NULL);
+ if(!db||!bf_dating_subject(subject)||!review_ref_part(moderator)||!strcmp(moderator,subject)||
+    age<18||age>115)return 0;
+ if(snprintf(eligibility,sizeof(eligibility),"review:age:%s:%lld",moderator,now)>=(int)sizeof(eligibility)||
+    snprintf(moderation,sizeof(moderation),"review:approved:%s:%lld",moderator,now)>=(int)sizeof(moderation)||
+    !ref(eligibility)||!ref(moderation)||!tx(db))return 0;
+ if(request_state(db,subject,&request_revision)!=1)goto done;
+ if(sqlite3_prepare_v2(db,"INSERT INTO dating_verification"
+    "(subject,age,eligibility_witness,moderation_witness,issued_by,state,valid_until) "
+    "VALUES(?1,?2,?3,?4,'BonfyreAuth','verified',?5) ON CONFLICT(subject) DO UPDATE SET "
+    "age=excluded.age,eligibility_witness=excluded.eligibility_witness,"
+    "moderation_witness=excluded.moderation_witness,issued_by='BonfyreAuth',"
+    "state='verified',valid_until=excluded.valid_until",-1,&s,NULL)!=SQLITE_OK)goto done;
+ sqlite3_bind_text(s,1,subject,-1,SQLITE_TRANSIENT);sqlite3_bind_int(s,2,(int)age);
+ sqlite3_bind_text(s,3,eligibility,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,4,moderation,-1,SQLITE_TRANSIENT);
+ sqlite3_bind_int64(s,5,now+365LL*86400LL);
+ ok=sqlite3_step(s)==SQLITE_DONE;
+done:sqlite3_finalize(s);
+ if(!finish(db,ok))return 0;
+ /* Enrollment re-checks the request and the verification it just recorded. */
+ if(current_revision(db,subject,&person_revision)<0)return 0;
+ BfDatingEnrollment e={subject,eligibility,moderation,age,18,115,1};
+ return bf_dating_enroll(db,&e,person_revision);
+}
+int bf_dating_review_decline(sqlite3 *db,const char *moderator,const char *subject){
+ unsigned revision=0;
+ if(!db||!bf_dating_subject(subject)||!review_ref_part(moderator)||!strcmp(moderator,subject))return 0;
+ if(request_state(db,subject,&revision)!=1)return 0;
+ return bf_dating_request(db,subject,0,revision);
 }

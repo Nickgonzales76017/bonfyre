@@ -20,7 +20,7 @@ const list=(value,max=256)=>Array.isArray(value)&&value.length<=max;
 const templateId=value=>bounded(value,160)&&/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value);
 
 export async function programRequest(context,operation,{instance='',body,request,signal}={}){
- requireValue(contextPattern.test(context)&&['catalog','read','review','prepare','change','change-receipt','source-status','source-plan','source-recover','source-read','source-start','source-item','source-decision'].includes(operation),'Choose an admitted program destination.');
+ requireValue(contextPattern.test(context)&&['catalog','read','review','prepare','change','change-receipt','source-status','source-plan','source-recover','source-read','source-start','source-item','source-decision'].includes(operation),'Choose a workspace for this program.');
  requireValue(!instance||operation==='read'&&instancePattern.test(instance),'Choose an exact saved program.');
  const query=new URLSearchParams({context,operation});if(instance)query.set('instance',instance);
  const answer=await packet('/apps/_programs?'+query,{body,request,signal,allowErrorPacket:true});
@@ -39,7 +39,7 @@ export function programTemplate(value){
 }
 export function installedProgramTools(reply,binding){
  requireValue(list(reply,4)&&reply.length===4&&reply[0]===1&&list(reply[3],64),'The installed tools could not be read.');
- requireBinding(reply[1]===binding.subject&&reply[2]===binding.scope,'The installed tools belong to a different destination. Refresh Programs.');
+ requireBinding(reply[1]===binding.subject&&reply[2]===binding.scope,'The installed tools belong to a different workspace. Refresh Programs.');
  const seen=new Set();
  return reply[3].map(row=>{
   requireValue(list(row,6)&&row.length===6&&/^ws-[a-f0-9]{40}$/.test(row[0])&&bounded(row[1],96)&&/^[a-z0-9-]+(?:\/[a-z0-9-]+)*\/$/.test(row[2])&&hex(row[3])&&bounded(row[4],256)&&typeof row[5]==='boolean'&&!seen.has(row[0]),'An installed tool has an incomplete binding.');
@@ -75,7 +75,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  // Unsaved edits are disposable, account-bound view state. Native owners keep
  // the saved records and receipts; this map is never a second persistence store.
  const memories=new Map();
- const status=el('p','Reading this destination…','program-status');status.setAttribute('role','status');
+ target.classList.add('ak-pattern');const status=el('p','Opening your programs…','program-status');status.setAttribute('role','status');
  const toolbar=el('div','','program-toolbar'),refresh=button('Refresh',()=>void load({preserveDrafts:true})),work=link('All your tools','/apps?'+new URLSearchParams({context})),switcher=button('Browse programs',()=>setIndexOpen(layout.dataset.indexOpen!=='true'));switcher.className='program-switcher';toolbar.append(work,switcher,refresh);
  const layout=el('div','','program-layout'),aside=el('aside','','program-index'),main=el('section','','program-detail');main.tabIndex=-1;main.setAttribute('aria-label','Program details');
  aside.id='program-index-'+(++surfaceId);switcher.setAttribute('aria-controls',aside.id);setIndexOpen(true);
@@ -104,37 +104,36 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   }
   if(!index.childElementCount)index.append(el('li',query?'No programs match this search.':mode==='templates'?'No templates are available.':'Choose a template to prepare your first program.','program-empty'));
  }
- function names(title,rows){const section=el('section'),heading=el('h3',title),items=el('ul','','program-chips');for(const item of rows)items.append(el('li',human(item)));section.append(heading,items);return section;}
+ function names(title,rows){const section=el('section'),heading=el('h3',title),items=el('ul','','program-chips');for(const item of rows)items.append(el('li',human(item),'ak-badge'));section.append(heading,items);return section;}
  function toolSection(roles){
-  const section=el('section','','program-tools'),choices=programServiceContinuations(roles,tools,{context,toolsAvailable:!toolsUnavailable}),grid=el('div','','program-continuations');
-  section.append(el('h3','Continue through Aurekai'),el('p','Each continuation keeps its own owner. Opening one does not copy this program, complete a requirement, or grant an effect.'));
+  const section=el('section','','program-tools ak-pattern'),choices=programServiceContinuations(roles,tools,{context,toolsAvailable:!toolsUnavailable}),grid=el('div','','ak-catalogue');
+  section.append(el('h3','Where to continue'),el('p','Each tool keeps its own saved work. Opening one does not copy this program or complete a requirement.'));
   for(const choice of choices){
    const card=el('article','','program-continuation');card.dataset.continuationKind=choice.kind;card.dataset.continuationState=choice.state;
-   const head=el('div','','program-continuation-head'),kind=el('span',choice.kind==='workspace'?(choice.state==='ready'?'Installed editor':choice.state==='unknown'?'Editor availability unknown':'Workspace setup'):choice.kind==='surface'?'Native surface':choice.kind==='account'?'Account prerequisite':choice.kind==='pending'?'Pending exact owner':'Unresolved facet','program-continuation-kind');
+   const head=el('div','','program-continuation-head'),kind=el('span',choice.kind==='workspace'?(choice.state==='ready'?'Ready to open':choice.state==='unknown'?'Not checked':'Needs setup'):choice.kind==='surface'?'On Aurekai':choice.kind==='account'?'Needs your account':'Not available yet','ak-badge');
    head.append(kind);
    if(choice.href)head.append(link(choice.state==='not_installed'?'Set up '+choice.label:choice.state==='unknown'?'Review '+choice.label:choice.label,choice.href));
    else head.append(el('strong',choice.label));
    card.append(head,el('p',choice.description));
-   if(choice.owner_families?.length)card.append(el('small','Owner family: '+choice.owner_families.join(', ')));
    if(choice.roles?.length)card.append(el('small','For: '+choice.roles.map(human).join(', ')));
    grid.append(card);
   }
-  if(!choices.length)grid.append(el('p','No typed continuation is declared for these facets yet.','program-empty'));
+  if(!choices.length)grid.append(el('p','Nothing to open for this program yet.','program-empty'));
   section.append(grid);
-  if(toolsUnavailable)section.append(el('p','Installed editor availability could not be checked; native surfaces and account prerequisites remain usable.'));
-  section.append(link('Review installed services','/apps?'+new URLSearchParams({context})),document.createTextNode(' · '),link('Set up services','/packs/setup?'+new URLSearchParams({context})));return section;
+  if(toolsUnavailable)section.append(el('p','Your installed tools could not be checked. The other links still work.'));
+  section.append(link('Your tools','/apps?'+new URLSearchParams({context})),document.createTextNode(' · '),link('Add a tool','/packs/setup?'+new URLSearchParams({context})));return section;
  }
  function showTemplate(template,{reviewed=false}={}){
   clearDetail();setIndexOpen(false);
   main.replaceChildren(el('p',human(template.archetype),'program-eyebrow'),el('h2',template.name),el('p',template.description||'Review the requirements before preparing this program.','program-description'));
   main.append(names('Work to prepare',template.capability_families),names('Parts of this program',template.semantic_slots));
   if(template.funding_candidates.length){const funding=names('Funding sources to investigate',template.funding_candidates);funding.append(el('p','Each source needs its own eligibility, scope and cost review.'));main.append(funding);}
-  const actions=el('div','','program-actions');
+  const actions=el('div','','program-actions ak-actions');
   if(reviewed){
-   main.append(el('p','This review is for '+destinationLabel+'. Preparing keeps a private program and its open requirements in this destination.','program-review'));
+   main.append(el('p','This is for '+destinationLabel+'. Preparing saves a private program and its open requirements there.','program-review'));
    const prepare=button(review.existing?'Open prepared program':'Prepare this program',()=>void prepareProgram(template));prepare.disabled=!canWrite||busy;actions.append(prepare,button('Back to template',()=>{review=null;showTemplate(template);}));
   }else {const eligible=template.subject_kinds.includes(context==='self'?'person':context.split(':')[0]),inspect=button('Review setup',()=>void reviewProgram(template));inspect.disabled=!canWrite||!eligible||busy;actions.append(inspect);
-   if(!eligible)main.append(el('p','This template needs a destination of this kind: '+template.subject_kinds.map(human).join(', ')+'. Preparation is unavailable from this workspace.'));
+   if(!eligible)main.append(el('p','This template is for: '+template.subject_kinds.map(human).join(', ')+'. Choose that kind of workspace to prepare it.'));
    else if(!canWrite)main.append(el('p','You have read access here. A member with write access can prepare a program.'));}
   main.append(actions,toolSection(template.semantic_slots));
  }
@@ -152,7 +151,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  function fields(title,rows){const section=el('section','','program-facts');if(title)section.append(el('h4',title));const values=el('dl');for(const [label,value]of rows){values.append(el('dt',label),el('dd',value||'Not recorded'));}section.append(values);return section;}
  function validateInstance(instance){
   requireValue(object(instance)&&instancePattern.test(instance.instance_id)&&hex(instance.revision)&&list(instance.requirements,256)&&list(instance.bindings,64)&&list(instance.funding,64)&&list(instance.work_links,256),'The saved program is incomplete.');
-  requireBinding(instance.owner_subject===binding?.subject,'The saved program belongs to another destination. Refresh Programs.');
+  requireBinding(instance.owner_subject===binding?.subject,'The saved program belongs to another workspace. Refresh Programs.');
   for(const row of instance.requirements)requireValue(object(row)&&bounded(row.requirement_id,240)&&bounded(row.statement,12000)&&bounded(row.state,80)&&bounded(row.owner,256),'A saved requirement is incomplete.');
   for(const row of instance.funding)requireValue(object(row)&&bounded(row.package_id,240)&&bounded(row.funding_program,1000)&&list(row.scope,256)&&list(row.cost_codes,256),'A funding work package is incomplete.');
   for(const row of instance.work_links)savedWorkHref(row);return instance;
@@ -183,7 +182,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
     if(!actual){version.textContent='This saved record is no longer available. Choose another saved record or detach this reference.';open.removeAttribute('href');open.setAttribute('aria-disabled','true');}
     else if(actual.revision!==row.record_revision){version.textContent='The editor now has version '+actual.revision+'. Review that version to update this attachment.';open.removeAttribute('href');open.setAttribute('aria-disabled','true');}
     else{version.textContent='Saved version '+row.record_revision+' is current.';open.href=savedWorkHref(row);open.removeAttribute('aria-disabled');}
-   }catch(error){if(signal.aborted||!current(ticket))return;if(error.status===401||error.status===403){invalidate('Access to this destination changed. Refresh Programs.');return;}version.textContent='The current saved version could not be checked. '+error.message;}finally{if(!signal.aborted&&current(ticket))check.disabled=false;}});
+   }catch(error){if(signal.aborted||!current(ticket))return;if(error.status===401||error.status===403){invalidate('Access to this workspace changed. Refresh Programs.');return;}version.textContent='The current saved version could not be checked. '+error.message;}finally{if(!signal.aborted&&current(ticket))check.disabled=false;}});
    actions.append(check,writeButton('Update saved version',()=>openPicker(row)),writeButton('Detach from program',()=>{const review=el('div','','program-plan-review');review.append(el('p','Detach “'+(row.label||row.record_key)+'” from this program? Its saved record stays in the editor.'),writeButton('Detach this reference',()=>void saveChange(instance,{kind:'work-unlink',link_id:row.link_id},{success:'Saved-work reference detached.'})),button('Keep attached',()=>review.remove()));item.append(review);controls();}));item.append(actions);items.append(item);}
   section.append(items);if(!rows.length)section.append(el('p','Attach a saved plan, task, board or source from an installed tool. You can reopen its exact saved version here.','program-help'));
   const attach=writeButton('Attach saved work',()=>{if(pickerCleanup)return;openPicker();});section.append(attach,pickerHost);host.append(section);
@@ -196,7 +195,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   const hint=el('p','Open the tool to create or edit work. Return here to read and attach its saved version.','program-help'),state=el('p','','program-record-state'),working=el('div'),read=button('Read saved records',()=>void readRecords()),editor=newTab('Open installed tool','#'),actions=el('div','','program-inline-actions');actions.append(read,editor);
   const pager=el('nav','','program-inline-actions'),previous=button('Previous saved records',()=>{if(pageAt>0)void readRecords(pageHistory[pageAt-1]);}),next=button('Next saved records',()=>{if(lastPage?.more)void readRecords({cursor:lastPage.cursor,epoch:lastPage.epoch,index:pageAt+1});});pager.setAttribute('aria-label','Saved record pages');pager.append(previous,next);pager.hidden=true;
   host.replaceChildren(label,actions,hint,state,working,pager);
-  if(!available.length||toolsUnavailable){host.replaceChildren(el('p',toolsUnavailable?'Installed tools could not be checked. Refresh Programs to try again.':'Enable a tool for this destination before attaching saved work.'),link('Review available tools','/packs/setup?'+new URLSearchParams({context})));return()=>{};}
+  if(!available.length||toolsUnavailable){host.replaceChildren(el('p',toolsUnavailable?'Installed tools could not be checked. Refresh Programs to try again.':'Enable a tool for this workspace before attaching saved work.'),link('Review available tools','/packs/setup?'+new URLSearchParams({context})));return()=>{};}
   const live=epoch=>!destroyed&&!signal.aborted&&current(ticket)&&sameActivityBinding(expected,binding)&&epoch===readEpoch;
   function showEditor(){const tool=available.find(row=>row.id===choice.value);if(!tool)return;editor.href=tool.href;editor.textContent='Open '+tool.label;editor.setAttribute('aria-label','Open '+tool.label+' — opens in another tab');}showEditor();
   choice.addEventListener('change',()=>{readEpoch++;readController?.abort();collection?.destroy();collection=null;working.replaceChildren();state.textContent='';draft.values.workspace=choice.value;draft.dirty=true;read.disabled=false;pager.hidden=true;pageHistory=[];lastPage=null;showEditor();},{signal});
@@ -209,7 +208,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
      const title=el('label','Name in this program'),input=document.createElement('input');input.type='text';input.maxLength=200;input.value=recordTitle(row).slice(0,200);input.setAttribute('aria-label','Name in this program');title.append(input);detail.append(title,el('p','This attaches a reference to this saved version. Continue editing in '+tool.label+'.','program-help'));
      detail.append(writeButton('Attach this saved version',()=>{const label=input.value.trim();if(!label){input.focus();input.setCustomValidity('Give this saved work a name.');input.reportValidity();return;}input.setCustomValidity('');void saveChange(instance,{kind:'work-link',target_kind:targetKind,target_id:targetId,workspace_binding:tool.id,record_key:row.key,record_revision:row.revision,label},{draftKey:key,success:'Saved work attached. Reopen its saved version from this program.'});}));controls();
     }});if(draft.recordKey&&rows.some(row=>row.id===draft.recordKey))collection.inspect(draft.recordKey);
-   }catch(error){if(!live(epoch))return;if(error.status===401||error.status===403){invalidate('Access to this destination changed. Refresh Programs.');return;}state.textContent=error.message||'Saved records are unavailable.';}
+   }catch(error){if(!live(epoch))return;if(error.status===401||error.status===403){invalidate('Access to this workspace changed. Refresh Programs.');return;}state.textContent=error.message||'Saved records are unavailable.';}
    finally{if(live(epoch))read.disabled=choice.disabled=false;}
   }
   void readRecords();return()=>{destroyed=true;readEpoch++;readController?.abort();collection?.destroy();};
@@ -220,7 +219,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   const disposers=[],collections=[],header=el('header','','program-work-header'),heading=el('div'),commands=button('Actions',()=>{});let fundingCollection=null;
   heading.append(el('p',destinationLabel+' · '+human(instance.archetype||'Program'),'program-eyebrow'),el('h2',instance.name||template?.name||instance.template_id),el('p',open.length+' requirements still open · '+instance.work_links.length+' saved records','program-summary'));header.append(heading,commands);main.append(header);
   const recovery=el('section','','program-recovery');main.append(recovery);renderRecovery(recovery);
-  const tablist=el('div','','program-work-tabs');tablist.setAttribute('aria-label','Program work areas');const panels=new Map(),entries=[];
+  const tablist=el('div','','program-work-tabs ak-tabs');tablist.setAttribute('aria-label','Program work areas');const panels=new Map(),entries=[];
   for(const [id,label]of [['work','Work'],['sources','Sources'],['funding','Funding'],['overview','Overview']]){const control=button(label,()=>{}),panel=el('section','','program-panel');panel.dataset.programArea=id;tablist.append(control);panels.set(id,panel);entries.push({id,button:control,panel});}
   main.append(tablist,...panels.values());const tabsView=mountTabs(tablist,entries,{selected:saved.tab,onSelect:id=>{saved.tab=id;}});disposers.push(()=>tabsView.destroy());
   const workPanel=panels.get('work'),workTitle=el('div','','program-area-heading');workTitle.append(el('h3','Requirements'),el('p','Choose a requirement, prepare its inputs and reopen the saved work that supports it.'));workPanel.append(workTitle);
@@ -231,7 +230,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
     else if(row.kind==='capability'||row.statement.toLowerCase().includes('source')){const find=button('Find supporting sources',()=>tabsView.select('sources'));find.className='program-primary';host.append(find);}
     const cleanups=[];cleanups.push(planForm(host,instance,{key:'deadline:'+row.requirement_id,title:'Plan this requirement',description:'Set the working deadline, then attach the saved material this requirement needs.',fields:[{key:'deadline',label:'Working deadline',type:'date'}],values:{deadline:storedDate(row.deadline)},change:values=>({kind:'requirement-plan',requirement_id:row.requirement_id,deadline:values.deadline}),reviewLabel:'Review deadline',saveLabel:'Save reviewed deadline',success:'Working deadline saved.',signal}));
     cleanups.push(renderSavedWork(host,instance,'requirement',row.requirement_id,{signal}));
-    const owner=el('details','','program-owner-detail');owner.append(el('summary','Owner review · '+human(row.state)),fields('',[['Owner',ownerLabel(row.owner)],['Accepted evidence',row.evidence_ref||'No accepted evidence recorded'],['Satisfied by',row.satisfied_by||'Awaiting owner review']]));host.append(owner);
+    const owner=el('section','','program-owner-detail');owner.append(el('h4','Review · '+human(row.state)),fields('',[['Reviewed by',ownerLabel(row.owner)],['Accepted evidence',row.evidence_ref||'None recorded yet'],['Met by',row.satisfied_by||'Waiting for review']]));host.append(owner);
     controls();return()=>cleanups.forEach(fn=>fn?.());
    }});collections.push(collection);collection.inspect(rows.some(row=>row.id===saved.requirement)?saved.requirement:rows[0].id);
   }else workHost.append(el('p','This program has no recorded requirements.'));
@@ -241,12 +240,12 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
     return planForm(detail,instance,{key:'funding:'+row.package_id,title:'Prepare the package',description:'List one scope item or cost code per line. Review the changes before saving.',fields:[{key:'scope',label:'Scope',multiline:true,rows:5,help:'Up to 32 entries, 400 characters each.'},{key:'cost_codes',label:'Cost codes',multiline:true,rows:4,help:'Up to 32 entries, 120 characters each.'}],values:{scope:row.scope.join('\n'),cost_codes:row.cost_codes.join('\n')},change:values=>{const output={kind:'funding-plan',package_id:row.package_id};for(const [field,max]of [['scope',400],['cost_codes',120]]){output[field]=values[field].split(/\r?\n/).map(value=>value.trim()).filter(Boolean);requireValue(output[field].length<=32&&output[field].every(value=>value.length<=max&&!/[\x00-\x1f\x7f]/.test(value)),'Use up to 32 '+human(field)+' entries of at most '+max+' characters each.');}return output;},reviewLabel:'Review funding plan',saveLabel:'Save reviewed funding plan',success:'Funding scope and cost codes saved.',signal});
    }});fundingCollection=collection;collections.push(collection);collection.inspect(rows.some(row=>row.id===saved.funding)?saved.funding:rows[0].id);
   }else fundingPanel.append(el('p','This template has no funding work package.'));
-  const sources=panels.get('sources'),sourceExecution=el('div');sourceExecution.dataset.programSourceWork='';sources.append(sourceExecution);const localSources=el('details','','program-local-sources');localSources.append(el('summary','Local source collection'));
+  const sources=panels.get('sources'),sourceExecution=el('div');sourceExecution.dataset.programSourceWork='';sources.append(sourceExecution);const localSources=el('section','','program-local-sources');localSources.append(el('h4','Sources already saved here'));
   const collection=instance.source_collection;
   if(collection){const selector=collection.source_selector||{},refs=[...(selector.resolved_source_refs||[]),...(selector.resolved_dependency_refs||[])];localSources.append(fields('Current source collection',[['Resolution',human(selector.resolution_state||'Not resolved')],['Source types',(collection.material_kind||[]).map(human).join(', ')],['Refresh policy',human(collection.refresh_policy||'On demand')]]));
-   const refreshSources=writeButton('Refresh local source matches',()=>void saveChange(instance,{kind:'sources-refresh'},{success:'Local source matches refreshed.'}));localSources.append(refreshSources,el('p','Checks the retained local source index for this program’s declared needs.','program-help'));
-   if(refs.length){const listNode=el('ul','','program-source-refs');for(const ref of refs)listNode.append(el('li',typeof ref==='string'?ref:JSON.stringify(ref)));localSources.append(el('h4','Retained local matches'),listNode);}
-   else localSources.append(el('p','No local matches are retained yet.'));
+   const refreshSources=writeButton('Look for matches again',()=>void saveChange(instance,{kind:'sources-refresh'},{success:'Matches updated.'}));localSources.append(refreshSources,el('p','Looks through the sources saved here for what this program needs.','program-help'));
+   if(refs.length){const listNode=el('ul','','program-source-refs');for(const ref of refs)listNode.append(el('li',typeof ref==='string'?ref:String(ref?.title||ref?.name||ref?.url||'Saved source')));localSources.append(el('h4','Saved matches'),listNode);}
+   else localSources.append(el('p','No matches saved yet.'));
   }else localSources.append(el('p','The prepared source collection is unavailable.'));sources.append(localSources);
   const overview=panels.get('overview');overview.append(el('h3','Program overview'),el('p',template?.description||'Keep this program’s requirements, saved work and source preparation together.','program-description'));
   const overviewSignal=new AbortController();disposers.push(()=>overviewSignal.abort());
@@ -255,14 +254,14 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   const roles=[...new Set([...(template?.semantic_slots||[]),...instance.bindings.filter(row=>bounded(row.program_role,128)).map(row=>row.program_role)])];overview.append(toolSection(roles));
   const pending=instance.bindings.filter(row=>!row.lowered_by);if(pending.length)overview.append(names('Parts awaiting an editor connection',pending.map(row=>row.program_role)));
   const address='/programs?'+new URLSearchParams({context,instance:instance.instance_id}),footer=el('div','','program-actions program-footer');footer.append(link('Link to this program',address),newTab('Open account research','/sources/web?'+new URLSearchParams({context})),newTab('Model Commons','/s/models/all?'+new URLSearchParams({context})));main.append(footer);
-  const palette=mountCommandPalette(commands,{scope:main,label:'Program actions',commands:()=>[{id:'work',label:'Open requirements',run:()=>tabsView.select('work')},{id:'sources',label:'Find and review program sources',run:()=>tabsView.select('sources')},{id:'funding',label:'Prepare funding work packages',run:()=>tabsView.select('funding')},{id:'overview',label:'Open saved work and program parts',run:()=>tabsView.select('overview')},{id:'refresh',label:'Read the current saved program',disabled:busy||sourceBusy||!!pendingChange,reason:'Finish the current save or check its receipt first.',run:()=>readInstance(instance.instance_id)}],onError:fail});disposers.push(()=>palette.destroy());
+  const palette=mountCommandPalette(commands,{scope:main,label:'Program actions',commands:()=>[{id:'work',label:'Open requirements',run:()=>tabsView.select('work')},{id:'sources',label:'Find and review program sources',run:()=>tabsView.select('sources')},{id:'funding',label:'Prepare funding work packages',run:()=>tabsView.select('funding')},{id:'overview',label:'Open saved work and program parts',run:()=>tabsView.select('overview')},{id:'refresh',label:'Read the current saved program',disabled:busy||sourceBusy||!!pendingChange,reason:'Finish the current save or check that it saved first.',run:()=>readInstance(instance.instance_id)}],onError:fail});disposers.push(()=>palette.destroy());
   let sourceView=null;workspaceView={destroy(){sourceView?.destroy();for(const fn of disposers)fn();for(const item of collections)item.destroy();},lock(locked,sourceLocked){for(const item of collections)item.controller.lock(locked);sourceView?.setLocked(sourceLocked);},tabs:tabsView,sourceExecution};
   saved.source??={};sourceView=mountProgramSourceWork(sourceExecution,{context,binding,instance,call,canWrite,signal:controller.signal,memory:saved.source,onBusy(value){sourceBusy=value;controls();if(binding&&!disposed&&!suspended)renderIndex();},onAccessFailure:fail});controls();
   if(globalThis.location?.pathname==='/programs')history.replaceState(null,'',address);
  }
  function renderRecovery(host){
   host.replaceChildren();host.hidden=!pendingChange;if(!pendingChange)return;
-  host.append(el('h3','Check the saved outcome'),el('p',pendingChange.phase==='not-found'?'This request has no saved receipt yet. Check again or retry the same change.':'The save has not been confirmed. Check its receipt before making another change.'));
+  host.append(el('h3','Check the saved outcome'),el('p',pendingChange.phase==='not-found'?'This change is not saved yet. Check again or retry the same change.':'The save has not been confirmed. Check that it saved before making another change.'));
   const check=button('Check saved change',()=>void checkChange());check.dataset.programRecovery='read';host.append(check);
   if(pendingChange.phase==='not-found'){const retry=button('Retry the same save',()=>void sendChange());retry.dataset.programRecovery='write';host.append(retry);}
  }
@@ -290,23 +289,23 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   }finally{if(current(ticket)){busy=false;controls();renderIndex();}}
  }
  async function checkChange(){
-  if(!pendingChange||busy||!binding)return;const pending=pendingChange,ticket=generation;busy=true;controls();status.textContent='Checking this change’s saved receipt…';
+  if(!pendingChange||busy||!binding)return;const pending=pendingChange,ticket=generation;busy=true;controls();status.textContent='Checking that this change saved…';
   try{const value=await call(context,'change-receipt',{body:{expectedBinding:pending.request.expectedBinding,instance_id:pending.request.instance_id,request_id:pending.request.request_id},signal:controller.signal});if(!current(ticket)||pendingChange!==pending)return;
    requireValue(typeof value.found==='boolean','The change receipt lookup is incomplete.');const currentInstance=checkedChangeReply(value,pending,{receiptRequired:value.found});retainInstance(currentInstance);busy=false;
    if(value.found){pendingChange=null;if(pending.draftKey)memory(pending.request.instance_id).drafts.delete(pending.draftKey);showInstance(currentInstance);status.textContent='Save confirmed. The current saved program is open.';delete status.dataset.error;}
-   else{requireValue(value.receipt===null,'An unconfirmed change returned an unexpected receipt.');pending.phase='not-found';showInstance(currentInstance);status.textContent='No saved receipt was found yet. Retry keeps this same change identity.';delete status.dataset.error;}
+   else{requireValue(value.receipt===null,'An unconfirmed change returned an unexpected receipt.');pending.phase='not-found';showInstance(currentInstance);status.textContent='This change is not saved yet. Retrying sends the same change, never a second one.';delete status.dataset.error;}
   }catch(error){if(current(ticket)&&pendingChange===pending){busy=false;fail(error);if(pendingChange){pending.phase='uncertain';const host=main.querySelector('.program-recovery');if(host)renderRecovery(host);}}}
   finally{if(current(ticket)){busy=false;controls();renderIndex();}}
  }
  async function readInstance(id){
   if(!binding||busy||sourceBusy||pendingChange)return;const ticket=generation,expected=binding;busy=true;controls();clearDetail();main.append(el('p','Reading the saved program…'));
   try{const value=await call(context,'read',{instance:id,signal:controller.signal});if(!current(ticket))return;requireBinding(sameActivityBinding(expected,value.binding));
-   requireValue(list(value.instances,256),'The saved program list is incomplete.');const instance=value.instances.find(row=>row.instance_id===id);requireValue(instance,'This program was not found in the current destination.');
+   requireValue(list(value.instances,256),'The saved program list is incomplete.');const instance=value.instances.find(row=>row.instance_id===id);requireValue(instance,'This program was not found in the current workspace.');
    busy=false;uncertain=false;review=null;retainInstance(instance);showInstance(instance);status.textContent='Saved program opened in '+destinationLabel+'.';delete status.dataset.error;
   }catch(error){if(current(ticket)){clearDetail();if(uncertain&&!accessFailure(error))main.append(el('h2','Check the saved outcome'),el('p','The saved outcome could not be read. You can check the same program again.'),button('Check saved program',()=>void readInstance(id)));fail(error);}}finally{if(current(ticket)){busy=false;controls();renderIndex();}}
  }
  async function reviewProgram(template){
-  const ticket=generation,expected=binding;busy=true;controls();main.querySelectorAll('button').forEach(node=>node.disabled=true);status.textContent='Reviewing the current template and destination…';
+  const ticket=generation,expected=binding;busy=true;controls();main.querySelectorAll('button').forEach(node=>node.disabled=true);status.textContent='Reviewing the current template and workspace…';
   try{const value=await call(context,'review',{body:{template_id:template.template_id,expectedBinding:expected},signal:controller.signal});if(!current(ticket))return;requireBinding(sameActivityBinding(expected,value.binding));requireValue(hex(value.review_digest)&&preparedPattern.test(value.instance_id),'The review is incomplete.');
    review=value;busy=false;showTemplate(programTemplate(value.template),{reviewed:true});status.textContent='Review ready. Preparation will use this exact template.';delete status.dataset.error;
   }catch(error){if(current(ticket)){review=null;busy=false;if(!accessFailure(error))showTemplate(template);fail(error);}}finally{if(current(ticket)){busy=false;controls();}}
@@ -325,7 +324,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
   }}finally{if(current(ticket)){busy=false;controls();}}
  }
  async function load({preserveDrafts=false}={}){
-  if(disposed||suspended||busy||sourceBusy||pendingChange)return;const previous=preserveDrafts?binding:null,previousSelection=selected;invalidate('Reading programs for this destination…',{keepDrafts:!!previous});const ticket=generation;controller=new AbortController();busy=true;controls();delete status.dataset.error;
+  if(disposed||suspended||busy||sourceBusy||pendingChange)return;const previous=preserveDrafts?binding:null,previousSelection=selected;invalidate('Opening your programs…',{keepDrafts:!!previous});const ticket=generation;controller=new AbortController();busy=true;controls();delete status.dataset.error;
   try{
    const value=await call(context,'catalog',{signal:controller.signal});if(!current(ticket))return;
    requireValue(list(value.templates,256)&&list(value.instances,256),'The program catalog is incomplete.');
@@ -336,14 +335,14 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
    toolsUnavailable=false;if(installed.status==='fulfilled')try{tools=installedProgramTools(installed.value,binding);}catch(error){if(accessFailure(error))throw error;toolsUnavailable=true;}else {if(accessFailure(installed.reason))throw installed.reason;toolsUnavailable=true;}
    busy=false;setMode(instances.length?'saved':'templates');renderIndex();controls();status.textContent=toolsUnavailable?'Programs loaded. Installed tools could not be checked; reopen Your work to continue.':instances.length+' prepared programs · '+templates.length+' reusable templates';
    const initial=previous&&sameActivityBinding(previous,binding)&&previousSelection?previousSelection:root.dataset.instance,wanted=!initial&&templateId(root.dataset.template)?root.dataset.template:'',kept=wanted?instances.find(r=>r.template_id===wanted)?.instance_id:'',offered=wanted&&!kept?templates.find(t=>t.template_id===wanted):null,open=kept||initial;if(open&&instances.some(r=>r.instance_id===open)){selected=open;setMode('saved');showInstance(instances.find(r=>r.instance_id===open));renderIndex();}
-   else if(offered){selected=wanted;setMode('templates');renderIndex();showTemplate(offered);status.textContent='Review this template before preparing a program for '+destinationLabel+'.';}else if(initial||root.dataset.template){main.replaceChildren(el('p',initial?'That program is not available in this destination.':'That template is not offered in this destination.'));}
-   else {setIndexOpen(true);main.replaceChildren(el('h2',instances.length?'Continue where you left off':'Choose a starting point'),el('p',instances.length?'Open a program to review its requirements and continue in your tools.':'Browse an institutional or recurring-work template. Review its setup, then prepare a private program for this destination.'));}
+   else if(offered){selected=wanted;setMode('templates');renderIndex();showTemplate(offered);status.textContent='Review this template before preparing a program for '+destinationLabel+'.';}else if(initial||root.dataset.template){main.replaceChildren(el('p',initial?'That program is not available in this workspace.':'That template is not offered in this workspace.'));}
+   else {setIndexOpen(true);main.replaceChildren(el('h2',instances.length?'Continue where you left off':'Choose a starting point'),el('p',instances.length?'Open a program to review its requirements and continue in your tools.':'Pick a template, review its setup, then prepare a private program for this workspace.'));}
   }catch(error){if(current(ticket)){templates=[];instances=[];tools=[];binding=null;memories.clear();clearDetail();index.replaceChildren(el('li','Programs could not be read. Refresh after access is available.','program-empty'));fail(error);}}finally{if(current(ticket)){busy=false;controls();}}
  }
  const accountChanged=()=>{invalidate('Your account changed. Refresh to read its programs.');};
- const activityInvalidated=()=>invalidate('Checking the current account destination…');
+ const activityInvalidated=()=>invalidate('Checking your account…');
  const destinationChanged=event=>{const next=event.detail?.context;if(!contextPattern.test(next)||suspended)return;
-  if(next!==context){invalidate('Opening the selected destination…');location.assign('/programs?'+new URLSearchParams({context:next,...(templateId(root.dataset.template)?{template:root.dataset.template}:{})}));}
+  if(next!==context){invalidate('Opening that workspace…');location.assign('/programs?'+new URLSearchParams({context:next,...(templateId(root.dataset.template)?{template:root.dataset.template}:{})}));}
   else {if(binding&&event.detail?.binding&&!sameActivityBinding(binding,event.detail.binding))invalidate('Checking the current account…');if(!binding&&!busy)void load();}
  };
  const hide=()=>{suspended=true;invalidate('Reopen Programs to check the current account.');},show=()=>{if(suspended){suspended=false;void load();}};

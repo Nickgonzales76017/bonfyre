@@ -301,7 +301,7 @@
     "names_provable_in_checkout": 19,
     "note": "session-reuse-census proves 41 shipped repos but does not enumerate all 41 names inside this project root"
   },
-  "primary_build_digest": "39b62dda33a0f159605619ab3df29ef965d432c25c849b32252ab3c3592c4d51",
+  "primary_build_digest": "cb19e6e8549bf4396d5724d77981bcbd6cb3bd110d0afc9989d9e28c6f0de81d",
   "reference_lattice": {
     "app_reference_chain_counts": {
       "agriculture": 14,

@@ -656,8 +656,9 @@ static int acn_agents_post(const AcnViewer *v, const char *body) {
     return 1;
 }
 
-static int serve_account_continuity(const char *method, const char *target, const char *query, const char *body,
-                                    const char *raw, const char *host, const char *bearer, const char *auth_db) {
+static int serve_account_continuity(const BfRequest *r) {
+    const char *method=r->method,*target=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     int devices = !strcmp(target, "/account/devices") || !strcmp(target, "/account/devices/revoke");
     int move = !strcmp(target, "/account/move"), receive = !strcmp(target, "/account/move/receive");
     int bluesky = !strcmp(target, "/connections/bluesky/sync"), agents = !strcmp(target, "/account/agents");

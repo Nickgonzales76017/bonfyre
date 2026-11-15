@@ -1296,7 +1296,7 @@ static int serve_sources_flow(const char *method, const char *target, const char
           "</div>"
           "<article class=\"mk-detail\">"
           "<p class=\"eyebrow\"><i></i>The one act that fills them</p>"
-          "<h3>Admit a source</h3>"
+          "<h3>Add a source</h3>"
           "<p class=\"mk-desc\">Point at a public URL. robots.txt is checked before anything is fetched, the "
           "exact bytes are retained with a receipt and a content digest, and the result never becomes canonical "
           "truth. Images, fonts and themes come in the same way.</p>"

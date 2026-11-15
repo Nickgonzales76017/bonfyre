@@ -1,4 +1,9 @@
 collapses	76
 inline_styles	64
-machine_words	18
+machine_words	11
 own_documents	76
+dispatch_branches	99
+route_path_compares	184
+cli_verb_ladders	396
+hand_printed_controls	784
+hardcoded_hosts	44

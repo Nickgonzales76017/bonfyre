@@ -771,8 +771,9 @@ static int serve_work_order_writes(const char *method,const char *target,const c
 }
 
 /* ------------------------------------------------------------ the reads */
-static int serve_work_orders(const char *method,const char *target,const char *query,const char *body,const char *raw,
-                             const char *host,const char *bearer,const char *auth_db){
+static int serve_work_orders(const BfRequest *r) {
+    const char *method=r->method,*target=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     if(!target)return 0;
     int family=!strcmp(target,"/work-orders")||!strncmp(target,"/work-orders/",13)||!strncmp(target,"/disputes/",10)||!strcmp(target,"/vouches")||!strncmp(target,"/vouches/",9);
     if(!family)return 0;

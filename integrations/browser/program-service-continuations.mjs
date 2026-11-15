@@ -14,8 +14,8 @@ export function programServiceContinuations(roles,tools,{context='self',toolsAva
  for(const raw of [...new Set(roles.map(value=>String(value??'')).filter(Boolean))]){
   const role=key(raw),basis=grammarBasis[role],mapped=basis?.state==='typed'?basis.continuation:role,specs=roleSpecs[mapped]||[];
   if(!specs.length){
-   if(basis?.state==='pending_exact_owner'){add('pending:'+role,{kind:'pending',state:'pending_exact_owner',label:human(raw),description:'Aurekai knows this interaction family, but its exact Program owner continuation is not wired yet.',href:null,owner_families:[...basis.owner_families],boundary:'InteractionGrammar names the owner family and target lowerer only; no owner result, rendered surface, authority or effect is inferred.'},raw);}
-   else add('unresolved:'+role,{kind:'unresolved',state:'unresolved',label:human(raw),description:'No typed Aurekai continuation is declared for this program facet yet.',href:null,boundary:'No owner is inferred from an unknown semantic slot.'},raw);
+   if(basis?.state==='pending_exact_owner'){add('pending:'+role,{kind:'pending',state:'pending_exact_owner',label:human(raw),description:'This part of the program does not have a tool yet.',href:null,owner_families:[...basis.owner_families],boundary:'InteractionGrammar names the owner family and target lowerer only; no owner result, rendered surface, authority or effect is inferred.'},raw);}
+   else add('unresolved:'+role,{kind:'unresolved',state:'unresolved',label:human(raw),description:'Nothing opens for this part of the program yet.',href:null,boundary:'No owner is inferred from an unknown semantic slot.'},raw);
    continue;
   }
   for(const spec of specs){

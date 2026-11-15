@@ -902,9 +902,9 @@ static int gr_parse(const char *body, GrForm *p) {
     return *p->op && strlen(p->request) == 32 && strspn(p->request, "0123456789abcdef") == 32;
 }
 
-static int serve_guild_records(const char *method, const char *path, const char *query, const char *body,
-                               const char *raw, const char *host, const char *bearer, const char *auth_db,
-                               const char *accept) {
+static int serve_guild_records(const BfRequest *r) {
+    const char *method=r->method,*path=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     (void)query;
     if (!path || strncmp(path, "/guild/", 7) || !strcmp(path, "/guild/new")) return 0;
     int post = !strcmp(method, "POST");

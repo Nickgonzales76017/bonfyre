@@ -150,6 +150,7 @@ BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 static const char *opt(int argc, char **argv, const char *name) { for (int i = 2; i + 1 < argc; i++) if (!strcmp(argv[i], name)) return argv[i + 1]; return NULL; }
 #include "matrix_closure_bootstrap.h"
 #include "app_shell.h"
+#include "web_request.h"
 #include "surface_catalogue_routes.h"
 #include "surface_fragments_and_ops.h"
 #include "auth_routes_and_studio_core.h"
@@ -418,6 +419,7 @@ static int serve_prefork(int argc, char **argv) {
     return 2;
 }
 
+#include "../generated/native_web_routes.h"
 static int serve(BfMatrix *m, int argc, char **argv) {
     const char *p=opt(argc,argv,"--port");
     const char *listen_fd_arg=opt(argc,argv,"--listen-fd");
@@ -664,16 +666,13 @@ static int serve(BfMatrix *m, int argc, char **argv) {
          * Explicit JSON requests still reach their previous owner. */
         /* Devices, moving to a new device, Bluesky sync requests, feed agent
          * rules and field visits: CMS records keyed by the signed-in account. */
-        if(!handled)handled=serve_account_continuity(method,target,query,bodyp,b,host,bearer,auth_db);
-        if(!handled)handled=serve_field_dispatch(method,target,query,bodyp,b,host,bearer,auth_db);
+        /* Owners declared in schemas/control/web-routes.cue answer their own paths. */
+        if(!handled){BfRequest request={method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr};handled=bf_web_route_dispatch(&request);}
         if(!handled)handled=serve_account_activity(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_source_web_work(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_source_push_operations(method,target,query,host,bearer,auth_db);
         if(!handled && root)handled=serve_source_desk(method,target,query,host,accept_hdr,bearer,auth_db);
         if(!handled)handled=serve_community_journey(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_guild_records(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_household_circles(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
-        if(!handled)handled=serve_charters(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
         if(!handled)handled=serve_account_world_workspace(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled)handled=serve_profile_home(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
         if(!handled)handled=serve_companions(method,target,query,bodyp,b,host,bearer,auth_db,accept_hdr);
@@ -691,7 +690,6 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         if(!handled) handled=serve_role_directory(method,target,query,host,bearer,auth_db);
         if(!handled) handled=serve_role_leave(method,target,bodyp,b,host,bearer,auth_db);
         /* Work orders, release sign-offs, disputes and vouches (work_orders.h). */
-        if(!handled) handled=serve_work_orders(method,target,query,bodyp,b,host,bearer,auth_db);
         if(!handled && root && !strcmp(target,"/saved") && !strcmp(method,"GET"))
             handled=emit_saved_page(root,host,bearer,auth_db);
         if(!handled && root && !strncmp(target,"/o/",3))

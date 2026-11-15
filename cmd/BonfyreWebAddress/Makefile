@@ -126,6 +126,11 @@ EXPERIENCE_PROGRAM_HEADER := generated/native_experience_composition.h
 $(EXPERIENCE_PROGRAM_HEADER): generated/native_page_composition.h ../BonfyreSurfaceScene/runtime/experience-programs.mjs ../BonfyreSurfaceScene/runtime/stitch-grammar.mjs tools/compile_experience_programs.mjs
 	@bun tools/compile_experience_programs.mjs
 build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER)
+# Route owners are declared in CUE, compiled once, never wired by hand in main.c.
+WEB_ROUTES_HEADER := generated/native_web_routes.h
+$(WEB_ROUTES_HEADER): ../../schemas/control/web-routes.cue tools/compile_web_routes.sh src/web_request.h
+	@sh tools/compile_web_routes.sh
+build/web_main.o build/compact/web_main.o: $(WEB_ROUTES_HEADER)
 # The brand voice is compiled from one owned source; branding is not authorization.
 BRAND_CUT_HEADER := generated/native_brand_cuts.h
 $(BRAND_CUT_HEADER): ../../branding/voice.mjs tools/compile_brand_cuts.mjs

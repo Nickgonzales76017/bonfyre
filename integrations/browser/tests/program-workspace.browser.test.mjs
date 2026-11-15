@@ -150,8 +150,8 @@ chromeTest('browser prepares and reopens the real private program with current i
   expect(await page.run(link('Connections')+".getAttribute('href')")).toBe('/apps/connections?context=self');
   expect(await page.run('document.querySelector("[data-continuation-kind=surface]").dataset.continuationState')).toBe('available');
   expect(await page.run('document.querySelector("[data-continuation-kind=account]").dataset.continuationState')).toBe('available');
-  expect(await page.text('.program-tools')).toContain('No typed Aurekai continuation is declared for this program facet yet.');
-  expect(await page.text('.program-tools')).toContain('Each continuation keeps its own owner');
+  expect(await page.text('.program-tools')).toContain('Nothing opens for this part of the program yet.');
+  expect(await page.text('.program-tools')).toContain('Each tool keeps its own saved work');
   expect(await page.run(link('Model Commons')+".getAttribute('href')")).toBe('/s/models/all?context=self');
   expect(await page.text('.program-detail')).toContain('Parts awaiting an editor connection');
   const address=await page.run('location.href');db.exec("UPDATE program_requirement SET state='met'");await page.tab.go(await page.run('location.href'));await page.wait(visible(heading('Requirements')));
@@ -185,9 +185,10 @@ chromeTest('access revocation on saved reads, reviews and preparation clears all
 chromeTest('installed tools access refusal clears private programs while ordinary tool unavailability remains explicit',async visit=>{
  prepare();toolsDenied=true;const blocked=await visit();try{await cleared(blocked);}finally{await blocked.close();}
  toolsDenied=false;toolsUnavailable=true;const degraded=await visit();try{
-  expect(await degraded.text('.program-status')).toContain('Installed tools could not be checked');
+   await degraded.wait('document.querySelector(".program-status")?.textContent.includes("Installed tools could not be checked")');
+   expect(await degraded.text('.program-status')).toContain('Installed tools could not be checked');
   await degraded.click(button(/^Community learning education(?: |$)/));await degraded.wait(visible(heading('Requirements')));
-  expect(await degraded.text('.program-tools')).toContain('Installed editor availability could not be checked');
+  expect(await degraded.text('.program-tools')).toContain('Your installed tools could not be checked');
  }finally{await degraded.close();}
 });
 
@@ -210,13 +211,13 @@ chromeTest('reviewed template drift refuses preparation and read-only members ca
   expect(await page.text('.program-status')).toContain('template or destination changed');
  }finally{await page.close();}
  const readonly=await visit('readonly=1');try{await choose(readonly);expect(await readonly.run(button('Review setup')+'.disabled')).toBe(true);}finally{await readonly.close();}
- db.query('UPDATE program_template SET subject_kinds=?').run('["facility"]');const domain=await visit();try{await choose(domain);expect(await domain.run(button('Review setup')+'.disabled')).toBe(true);expect(await domain.text('.program-detail')).toContain('This template needs a destination of this kind: facility.');}finally{await domain.close();}
+ db.query('UPDATE program_template SET subject_kinds=?').run('["facility"]');const domain=await visit();try{await choose(domain);expect(await domain.run(button('Review setup')+'.disabled')).toBe(true);expect(await domain.text('.program-detail')).toContain('This template is for: facility. Choose that kind of workspace to prepare it.');}finally{await domain.close();}
 });
 
 chromeTest('a template link opens the reviewed template unprepared, then only this account\'s prepared program',async visit=>{
  const fresh=await visit('template=learning');try{await fresh.wait(visible(button('Review setup')));expect(await fresh.run('Boolean('+heading('Community learning')+')')).toBe(true);expect(await fresh.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);}finally{await fresh.close();}
  const instance=prepare(),kept=await visit('template=learning');try{await kept.wait(visible(heading('Requirements')));expect(await kept.run('location.search')).toContain('instance='+instance.instance_id);}finally{await kept.close();}
- actor='user:20';const other=await visit('template=learning'),missing=await visit('template=absent-template');try{await other.wait(visible(button('Review setup')));expect(await other.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);await missing.wait(visible(named('p','That template is not offered in this destination.')));expect(calls.filter(row=>['review','prepare','change','source-plan','source-start','source-decision'].includes(row.operation))).toEqual([]);}finally{await other.close();await missing.close();}
+ actor='user:20';const other=await visit('template=learning'),missing=await visit('template=absent-template');try{await other.wait(visible(button('Review setup')));expect(await other.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);await missing.wait(visible(named('p','That template is not offered in this workspace.')));expect(calls.filter(row=>['review','prepare','change','source-plan','source-start','source-decision'].includes(row.operation))).toEqual([]);}finally{await other.close();await missing.close();}
 });
 
 chromeTest('shared rail invalidation clears the page immediately and cached-page recovery rechecks the account',async visit=>{
@@ -225,12 +226,12 @@ chromeTest('shared rail invalidation clears the page immediately and cached-page
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bonfyre:activity-context-invalidated',{detail:{context:'self'}})));
   expect(await page.text('.program-detail')).toBe('');expect(await page.text('.program-list')).toBe('');
   actor='user:20';await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bonfyre:activity-context-changed',{detail:{context:'self',binding:{actor:'user:20',subject:'user:20',scope:'self'}}})));
-  await page.wait(visible(named('p','That program is not available in this destination.')));expect(await page.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);
+  await page.wait(visible(named('p','That program is not available in this workspace.')));expect(await page.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);
   expect(await page.run(button('Your programs')+'.textContent')).toBe('Your programs');
   await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));const before=calls.length;
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bonfyre:activity-context-changed',{detail:{context:'self'}})));
   expect(calls.length).toBe(before);expect(await page.text('.program-detail')).toBe('');
-  await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));await page.wait(visible(named('p','That program is not available in this destination.')));expect(calls.length).toBeGreaterThan(before);
+  await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));await page.wait(visible(named('p','That program is not available in this workspace.')));expect(calls.length).toBeGreaterThan(before);
   await page.evaluate(()=>{window.dispatchEvent(new CustomEvent('bonfyre:activity-context-invalidated',{detail:{context:'institution:studio'}}));window.dispatchEvent(new CustomEvent('bonfyre:activity-context-changed',{detail:{context:'institution:studio'}}));});
   await page.wait("location.pathname+location.search==='/programs?context=institution%3Astudio'");await page.wait(visible(heading('Choose a starting point')));expect(count()).toBe(1);
  }finally{await page.close();}

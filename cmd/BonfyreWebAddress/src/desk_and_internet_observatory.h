@@ -598,8 +598,8 @@ static int serve_internet_observatory(BfMatrix *matrix, const char *method, cons
             "<div class=\"mk-money\"><label>Typed kind<input name=\"kind\" required pattern=\"[A-Za-z0-9:._-]+\" placeholder=\"agent:a2a\"></label>"
             "<label>Source index<input name=\"source\" required pattern=\"[A-Za-z0-9:._-]+\" placeholder=\"official-registry\"></label></div>"
             "<label>Query / discovery receipt input<textarea name=\"query\" required placeholder=\"protocol=A2A; capability=hotel-booking; registry page 2\"></textarea></label>"
-            "<p class=\"subj-note\">Adding this creates CandidateAddress + QueryReceipt lineage only. It never fetches the target or grants a relationship, tool right, payment, or effect authority.</p>"
-            "<button class=\"button primary\" type=\"submit\">Retain candidate <span>&rarr;</span></button></form><div id=\"candidate-result\"></div>",
+            "<p class=\"subj-note\">Adding an address only records where it came from. Nothing is fetched, and it gives no access, tool use or payment.</p>"
+            "<button class=\"button primary\" type=\"submit\">Add to the list <span>&rarr;</span></button></form><div id=\"candidate-result\"></div>",
             internet_count(db, NULL));
         w += (size_t)snprintf(page + w, sizeof(page) - w,
             "<section class=\"desk-q\"><div class=\"desk-qh\"><h3>Compile a source passport</h3><span class=\"desk-n\">one selected origin</span></div>"
@@ -610,7 +610,7 @@ static int serve_internet_observatory(BfMatrix *matrix, const char *method, cons
         if (db) {
             sqlite3_stmt *listed = NULL;
             w += (size_t)snprintf(page + w, sizeof(page) - w,
-                "<section class=\"desk-q\"><div class=\"desk-qh\"><h3>Retained candidate frontier</h3><span class=\"desk-n\">private operator state</span></div>");
+                "<section class=\"desk-q\"><div class=\"desk-qh\"><h3>Addresses on the list</h3><span class=\"desk-n\">private operator state</span></div>");
             if (sqlite3_prepare_v2(db,
                 "SELECT c.id,c.address,c.candidate_kind,c.source_index,p.best_carrier,p.robots_allows FROM candidate_address c LEFT JOIN source_passport p ON p.candidate_id=c.id ORDER BY c.id DESC LIMIT 16",
                 -1, &listed, NULL) == SQLITE_OK) {

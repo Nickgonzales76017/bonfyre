@@ -424,9 +424,9 @@ static int hc_status(int code, const char *back) {
     return 1;
 }
 
-static int serve_household_circles(const char *method, const char *path, const char *query, const char *body,
-                                   const char *raw, const char *host, const char *bearer, const char *auth_db,
-                                   const char *accept) {
+static int serve_household_circles(const BfRequest *r) {
+    const char *method=r->method,*path=r->target,*query=r->query,*body=r->body,*raw=r->raw,*host=r->host,*bearer=r->bearer,*auth_db=r->auth_db,*accept=r->accept;
+    (void)method;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
     if (!path) return 0;
     int care = !strcmp(path, "/care") || !strcmp(path, "/care/") || !strncmp(path, "/care/", 6);
     int pantry = !strcmp(path, "/pantry") || !strcmp(path, "/pantry/") || !strcmp(path, "/pantry/act");

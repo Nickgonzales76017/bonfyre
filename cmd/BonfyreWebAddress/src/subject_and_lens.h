@@ -747,7 +747,7 @@ static int serve_subject(const char *method, const char *target, const char *que
         snprintf(login_href, sizeof(login_href), "/login?next=/s/publication_occurrence/%s", ident);
         snprintf(facts, sizeof(facts),
           "<dl class=\"flow-facts\"><div><dt>Observed event time</dt><dd>%s</dd></div>"
-          "<div><dt>Retained from</dt><dd>%s</dd></div></dl><p class=\"subj-desc\">%s</p>"
+          "<div><dt>Saved from</dt><dd>%s</dd></div></dl><p class=\"subj-desc\">%s</p>"
           "<p class=\"subj-note\">This is retained public event material. Following it is private to this estate; it does not RSVP, register, notify, or establish attendance.</p>",
           ewhen[0] ? ewhen : "not stated", esource[0] ? esource : "retained public source", esummary);
         if (public_http_url(href)) n = aperture_push(acts, n, 8, "Open the organizer's public page", "the retained source remains external", 2, 0, href);

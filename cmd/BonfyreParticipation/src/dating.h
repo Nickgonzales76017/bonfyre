@@ -65,4 +65,12 @@ int bf_dating_propose(sqlite3 *db,const char *a,const char *b,const char *plan_k
                       const uint64_t *costs,size_t count,uint64_t min,uint64_t max);
 int bf_dating_approve(sqlite3 *db,const char *actor,const char *plan_key,
                       unsigned expected_revision,int *mutually_approved);
+/* Moderation: a person's request waits for an administrator's review. An
+ * approval records the reviewed age and both witnesses (issued through an
+ * Auth-verified administrator session) and enrolls the person; a decline
+ * closes the request. Nobody can review their own request. */
+typedef struct { char subject[192]; long long requested_at; } BfDatingReviewRow;
+int bf_dating_review_pending(sqlite3 *db,BfDatingReviewRow *rows,size_t cap,size_t *count);
+int bf_dating_review_approve(sqlite3 *db,const char *moderator,const char *subject,unsigned age);
+int bf_dating_review_decline(sqlite3 *db,const char *moderator,const char *subject);
 #endif

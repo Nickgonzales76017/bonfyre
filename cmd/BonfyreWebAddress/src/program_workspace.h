@@ -65,16 +65,16 @@ static int serve_program_workspace(const char *method,const char *target,const c
         psetup_start(200,"Programs");
         fputs("<link rel=\"stylesheet\" href=\"/apps/program-workspace.css\"><section data-program-workspace data-context=\"",stdout);html(in.context);
         fputs("\" data-instance=\"",stdout);html(in.instance);fputs("\" data-template=\"",stdout);html(in.template_id);printf("\" data-can-write=\"%s\">",can_write?"true":"false");
-        fputs("<header class=\"program-intro\"><p class=\"program-eyebrow\">Aurekai · continuing work</p><h1>Programs</h1><p>Turn an institutional plan, service or recurring need into work you can continue.</p></header>",stdout);
+        fputs("<header class=\"program-intro\"><p class=\"program-eyebrow\">Your work</p><h1>Programs</h1><p>Turn a plan, a service or a recurring need into work you can pick up again.</p></header>",stdout);
         PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;
         int choices=psetup_destinations(bearer,auth_db,rows,&count);
         if(choices==1){
-            fputs("<form class=\"program-context\" action=\"/programs\" method=\"get\"><label for=\"program-context\">Work belonging to</label><select id=\"program-context\" name=\"context\">",stdout);
+            fputs("<form class=\"program-context\" action=\"/programs\" method=\"get\"><label for=\"program-context\">Workspace</label><select id=\"program-context\" name=\"context\">",stdout);
             for(size_t i=0;i<count;i++){fputs("<option value=\"",stdout);html(rows[i].context);fputs(!strcmp(rows[i].context,in.context)?"\" selected>":"\">",stdout);html(rows[i].label);fputs("</option>",stdout);}
             fputs("</select>",stdout);
             if(*in.template_id){fputs("<input type=\"hidden\" name=\"template\" value=\"",stdout);html(in.template_id);fputs("\">",stdout);}
-            fputs("<button>Change workspace</button></form>",stdout);
-        }else fputs("<p role=\"alert\">The complete destination list is unavailable. Refresh to change workspace.</p>",stdout);
+            fputs("<button>Switch</button></form>",stdout);
+        }else fputs("<p role=\"alert\">Your workspaces could not be listed. Refresh to change workspace.</p>",stdout);
         fputs("<div data-program-app><p role=\"status\">Opening your programs…</p></div><noscript>Enable JavaScript to open and work on a program.</noscript></section><script type=\"module\" src=\"/apps/program-workspace.mjs\"></script>",stdout);
         psetup_end();return 1;
     }

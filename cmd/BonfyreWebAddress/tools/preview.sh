@@ -80,6 +80,10 @@ eval "$(plutil -convert json -o - "$plist" | bun -e '
 const env=JSON.parse(await Bun.stdin.text()).EnvironmentVariables||{};
 for(const [k,v] of Object.entries(env))console.log("export "+k+"="+JSON.stringify(String(v)).replaceAll("$","\\$"));')"
 export BONFYRE_CMS_DB="$home/cms.db" BONFYRE_PUBLIC_PROJECTION_DB="$home/projection.db"
+# Introductions keep their own private store; preview gets a separate one so a
+# test request or review never reaches the live participation database.
+export BONFYRE_PARTICIPATION_DB="$home/participation.db"; unset BONFYRE_DATING_DB
+[ -f "$home/participation.db" ] || { "$repo/cmd/BonfyreParticipation/bonfyre-participation" dating-init --db "$home/participation.db" >/dev/null && "$repo/cmd/BonfyreParticipation/bonfyre-participation" peer-init --db "$home/participation.db" >/dev/null; }
 nohup "$bin" serve --db "$home/matrix.db" --auth-db "$home/auth.db" --port "$port" --workers 2 \
   --site-root "$repo/site/matrix" > "$home/preview.log" 2>&1 &
 echo $! > "$pidfile"
