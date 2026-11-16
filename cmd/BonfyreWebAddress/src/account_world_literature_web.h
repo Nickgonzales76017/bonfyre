@@ -400,7 +400,7 @@ static int world_lit_api(const char *method,const char *query,const char *body,c
     /* text arrives with the browser's CRLF line ends; the owner keeps "\n" */
     {char *s=val[WL_BODY],*d=s;for(;*s;s++)if(*s!='\r')*d++=*s;*d=0;}
     const char *path=getenv("BONFYRE_CMS_DB");sqlite3 *db=NULL;char subject[160],again[160];const char *site=val[WL_SITE],*space=val[WL_SPACE];
-    if(!path||!*path||sqlite3_open_v2(path,&db,post?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);free(buf);aw_error(503,"Workspace unavailable.\n");return 1;}
+    if(!path||!*path||!(db=post?cms_open_rw():cms_open_ro())){if(db)sqlite3_close(db);free(buf);aw_error(503,"Workspace unavailable.\n");return 1;}
     sqlite3_busy_timeout(db,2000);
     #define WL_ADMIT(out) (reader?cine_member_admit(bearer,auth_db,db,site,post,out):world_web_admit(bearer,auth_db,db,site,post,out))
     if(!WL_ADMIT(subject)){sqlite3_close(db);free(buf);aw_error(404,"Workspace unavailable.\n");return 1;}

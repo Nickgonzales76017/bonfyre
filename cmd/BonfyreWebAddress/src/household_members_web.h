@@ -1,6 +1,7 @@
 #ifndef BONFYRE_HOUSEHOLD_MEMBERS_WEB_H
 #define BONFYRE_HOUSEHOLD_MEMBERS_WEB_H
 #include "form_tree.h"
+#include "web_store.h"
 /* Household access uses native forms and CMS membership revisions. */
 typedef struct { char household[64],email[320],member[64],role[8],revision[24],epoch[24],expires[24],after[24]; } HhmForm;
 static int hhm_form(const char *input,HhmForm *out){
@@ -23,7 +24,7 @@ static int hhm_form(const char *input,HhmForm *out){
 }
 static int hhm_account(const char *auth_db,const char *email,const char *member,char *principal,size_t size,int active){
     sqlite3 *db=NULL;sqlite3_stmt *s=NULL;int ok=0;principal[0]=0;
-    if(!auth_db||sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(!auth_db||bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
     const char *sql=email&&*email?"SELECT id,active FROM users WHERE email=?1":"SELECT id,active FROM users WHERE id=?1";
     if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK)goto done;
     if(email&&*email)sqlite3_bind_text(s,1,email,-1,SQLITE_STATIC);else if(bhh_actor(member))sqlite3_bind_int(s,1,atoi(member+5));else goto done;

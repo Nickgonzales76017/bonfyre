@@ -1,4 +1,5 @@
 #include "public_projection_cache.h"
+#include "web_store.h"
 
 #include "bonfyre.h"
 
@@ -26,7 +27,7 @@ int bf_public_projection_forward(FILE *capture, FILE *out) {
 static sqlite3 *open_cache(const char *path, int writable, int busy_ms) {
     sqlite3 *db = NULL;
     int flags = writable ? SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE : SQLITE_OPEN_READONLY;
-    if (!path || !*path || sqlite3_open_v2(path, &db, flags, NULL) != SQLITE_OK) {
+    if (!path || !*path || bf_store_open(path, &db, flags, &bf_store_policy_public_projection) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return NULL;
     }

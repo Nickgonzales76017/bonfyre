@@ -4,6 +4,7 @@
  * mutual-gated companions, persisted acceptance and hashed receipts. */
 #define _POSIX_C_SOURCE 200809L
 #include "dateplan_projection.h"
+#include "web_store.h"
 #include "bf_json.h"
 #include "bf_jsonw.h"
 #include "form_tree.h"
@@ -332,7 +333,7 @@ static int dateplan_model_id(char *out, size_t cap) {
     }
     catalog = getenv("BONFYRE_MODEL_CATALOG");
     if (!catalog || !*catalog) return 0;
-    if (sqlite3_open_v2(catalog, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) return 0;
+    if (bf_store_open(catalog, &db, SQLITE_OPEN_READONLY, &bf_store_policy_model_catalog) != SQLITE_OK) return 0;
     if (sqlite3_prepare_v2(db, "SELECT dst_node_id FROM catalog_edges"
                            " WHERE src_node_id='capability:dateplan-generate'"
                            " AND rel='uses_model' LIMIT 1", -1, &st, NULL) == SQLITE_OK &&
@@ -360,7 +361,7 @@ int bf_dateplan_price(const char *model, double *in_rate, double *out_rate,
     *out_rate = 0;
     observed_at[0] = '\0';
     if (!prices || !*prices) return 0;
-    if (sqlite3_open_v2(prices, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) return 0;
+    if (bf_store_open(prices, &db, SQLITE_OPEN_READONLY, &bf_store_policy_prices) != SQLITE_OK) return 0;
     if (sqlite3_prepare_v2(db,
             "SELECT MAX(CASE WHEN unit='token in' THEN amount END),"
             " MAX(CASE WHEN unit='token out' THEN amount END), MAX(observed_at)"

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_DESK_AND_INTERNET_OBSERVATORY_H
 #define BONFYRE_DESK_AND_INTERNET_OBSERVATORY_H
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 29042-31735 (mechanical split, no logic changes). */
 static int desk_unpriced_caps(DeskRow *out, int cap, int *listed) {
     int n = 0;
@@ -62,7 +63,7 @@ static int desk_unpriced_offers(DeskRow *out, int cap, int *total) {
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int n = 0;
     *total = 0;
     if (!fin || !*fin) fin = "/var/lib/bonfyre/state/finance.db";
-    if (sqlite3_open_v2(fin, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(fin, &db, SQLITE_OPEN_READONLY, &bf_store_policy_finance) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -114,7 +115,7 @@ static int desk_open_work(DeskRow *out, int cap, int *total) {
     *total = 0;
     if (snprintf(workdb, sizeof(workdb), "%s/fleming-work.db", fleming_root()) >= (int)sizeof(workdb))
         return 0;
-    if (sqlite3_open_v2(workdb, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(workdb, &db, SQLITE_OPEN_READONLY, &bf_store_policy_fleming_work) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -158,7 +159,7 @@ static int desk_held_messages(DeskRow *out, int cap, int *total) {
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int n = 0;
     *total = 0;
     if (!path || !path[0]) return 0;
-    if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_held_message) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -203,7 +204,7 @@ static int desk_held_pages(DeskRow *out, int cap, int *total) {
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int n = 0;
     *total = 0;
     if (!path || !*path) return 0;
-    if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_browser_queue) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -254,7 +255,7 @@ static const char *internet_db_path(void) {
 static sqlite3 *internet_open(int writable) {
     sqlite3 *db = NULL;
     int flags = writable ? SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE : SQLITE_OPEN_READONLY;
-    if (sqlite3_open_v2(internet_db_path(), &db, flags, NULL) != SQLITE_OK) {
+    if (bf_store_open(internet_db_path(), &db, flags, &bf_store_policy_internet) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return NULL;
     }
@@ -1090,7 +1091,7 @@ static int serve_membrane(const BfRequest *r) {
       "same institution reads the machine-readable internet back. This is both halves, "
       "measured rather than assumed.</p>");
 
-    if (sqlite3_open_v2(dbp, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(dbp, &db, SQLITE_OPEN_READONLY, &bf_store_policy_membrane) != SQLITE_OK) {
         w += (size_t)snprintf(body + w, sizeof(body) - w,
           "<p class=\"desk-empty\">The membrane store has not been written yet. "
           "It is filled by probing sources and folding the access log; until then "
@@ -1722,7 +1723,7 @@ static int serve_studio(const BfRequest *r) {
          * claimable unit of work rather than a decorative record. */
         if (snprintf(wsql, sizeof(wsql),
                 "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
-                "ATTACH '%s' AS w (TYPE sqlite, READ_ONLY); "
+                BF_STORE_WEB_FLEMING_WORK_DUCKDB_ATTACH
                 "SELECT n.mission_id, n.input_uri AS account, n.status, m.created_at "
                 "FROM w.workgraph_nodes n JOIN w.missions m ON m.id = n.mission_id "
                 "WHERE n.operator_id = 'queue.fleming-watch' AND n.mission_id NOT LIKE 'account-%%' "
@@ -1911,8 +1912,8 @@ static int serve_studio(const BfRequest *r) {
         }
         if (snprintf(sql, sizeof(sql),
                 "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
-                "ATTACH '%s' AS ec (TYPE sqlite, READ_ONLY); "
-                "ATTACH '%s' AS fi (TYPE sqlite, READ_ONLY); "
+                BF_STORE_WEB_ECONOMY_SCAN_DUCKDB_ATTACH
+                BF_STORE_WEB_FINANCE_SCAN_DUCKDB_ATTACH
                 "SELECT 'bonfyre-financial-membrane.v1' AS membrane, "
                 " (SELECT count(*) FROM ec.budgets) AS budgets, "
                 " (SELECT coalesce(sum(max_usd),0) FROM ec.budgets) AS usd_capped, "

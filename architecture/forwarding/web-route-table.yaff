@@ -4,13 +4,16 @@ architecture web-route-table
   domain Forwarding / HTTP Route Declaration
   layer forwarding
   semantic_question Which native owner is asked about a public path, under which request facts, and in what order, without a hand-written branch per page in the WebAddress request loop?
-  purpose Declares every WebAddress route owner once in CUE as an ordered row (owner, exact, strict, prefix or any match, a path, optional request facts, an optional name for the path) and compiles it into a static table that one dispatcher walks. Owners take one BfRequest and test the declared name of the path they were asked about, so a path is spelled in one place.
+  purpose Declares every WebAddress route owner once in CUE as an ordered row (owner, exact, strict, prefix, any, records or semantic match, a path, optional request facts, an optional name for the path, an optional plain-words title) and compiles it into a static table that one dispatcher walks. Owners take one BfRequest and test the declared name of the path they were asked about, so a path is spelled in one place. A records row's paths are rows of a store declared in schemas/storage/stores (the first: published CMS notes, wiki_page rows under /notes/), so a new page is a record and answers without a rebuild. The table ends in one semantic row: when the resolver finds nothing at an HTML address, the 404 page offers up to five titled rows and guest-readable records nearest the missing path, ranked by the higher of the distilled static embedding cosine and a character-trigram overlap.
   maturity implemented
   source_path schemas/control/web-routes.cue
   source_path cmd/BonfyreWebAddress/tools/compile_web_routes.sh
   source_path cmd/BonfyreWebAddress/src/web_request.h
   source_path cmd/BonfyreWebAddress/generated/native_web_routes.h
   source_path cmd/BonfyreWebAddress/src/main.c
+  source_path cmd/BonfyreWebAddress/src/web_route_kinds.h
+  source_path cmd/BonfyreWebAddress/src/surface_fragments_and_ops.h
+  source_path cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh
   source_path cmd/BonfyreWebAddress/Makefile
   source_path scripts/ui-ratchet.sh
   invariant the CUE list order is the dispatch order; the first owner that answers ends the request, and an owner already asked for a request is not asked again
@@ -19,9 +22,21 @@ architecture web-route-table
   invariant the table ends in rows that always answer (the resolver, then a transport-level 405 for any non-GET), so nothing falls past dispatch
   invariant owners still check their own method, origin, session and authority; the table only decides who is asked
   invariant main.c holds one dispatch call and no per-owner branch; the ui-ratchet dispatch_branches and route_path_compares counts may only go down
+  invariant a records row asks its store only after its prefix matched, read-only through the store's declared durability and request lease (cms_open_ro for the cms store), with a declared SELECT that tests exactly what the owner tests; the compiler refuses a store not declared as opened by cmd/BonfyreWebAddress, and a statement that would write is refused at run time
+  invariant a records row sits in its owner's old place in the order and adds no when fact; the owner keeps its method, session and guest checks (a published note that is not guest-readable still answers 401 from the owner)
+  invariant the semantic row is exactly one and last; it never matches a request, and only the resolver's HTML not-found branch reads it; machine representations keep the resolver's JSON verdict byte for byte
+  invariant a suggestion is offered only from a titled row whose when facts hold for a browser GET on this host and server, or from a record set's declared suggest query that applies the owner's own index rule (published and guest-readable); the status stays 404
+  forbidden_inference a suggestion -> the route exists for this caller, the caller may open it, or the owner will answer
+  forbidden_inference a high suggestion score -> the same meaning; the static vector has no word order and scores compare only within one .bfse
+  forbidden_inference a records match -> the owner will answer 200 or that the record is readable by this caller
   forbidden_inference a declared route -> the request is authorized, the caller is signed in, the method is allowed, or the owner will answer
   forbidden_inference a row's when facts -> content negotiation is complete or the representation the owner returns
   forbidden_inference a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token
+  witness cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh (make web-route-kinds-witness): a running server 404s /notes/river-crossing, answers 200 the moment the wiki_page row is inserted with no rebuild or restart, keeps the owner's 401 for a non-guest note and 404 for a draft, ranks the record first for /notes/river-crosing, offers /communities for /comunities and /what-things-cost for /prices, shows the empty state for /zqxjv, never offers non-guest or draft records, and keeps the JSON not_found verdict for machines
+  witness 2026-11-15 comparison of 1,720 requests (every declared path, path+x and path+/ plus 29 tail paths; GET and POST; text/html and application/json) against a binary built from HEAD on cloned stores: 0 status or redirect differences, 1,539 identical bodies, 177 differing bodies all GET text/html 404s, and 4 /ops bodies that vary between repeated requests on HEAD itself
   witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server
   known_gap some owners still sit on any rows and decide their own paths inside (studio, superuser control, account continuity, companions, matrix closure, governance acts and several app workspaces); their path checks use a spaced or different-variable form that the route_path_compares count does not see
+  known_gap only one record set exists (CMS notes); member addresses (/people/<person>) stay a prefix row because that owner answers its own 404 and redirect, and route_presentation rows are presentation only (their owner keeps the route), so neither is a route source yet
+  known_gap the ranker is the static model blended with trigrams; the BitNet address ranker is SHADOW-only on ARM and is not used here, and suggestion quality is measured only by the witness cases, not by a labelled set of missed paths
+  known_gap other owners' own 404s (an owner that answers 404 itself) do not reach the resolver tail and show no suggestions
   known_gap the static_asset_closure_test fixture answers bf_web_route_ask by calling the owner directly, so it does not exercise the row lookup

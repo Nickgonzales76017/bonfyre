@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "auth_continuation.h"
+#include "web_store.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 #include "site_product.h"
 #include "site_mcp.h"
@@ -152,6 +153,7 @@ static const char *opt(int argc, char **argv, const char *name) { for (int i = 2
 #include "ui_tree.h"
 #include "matrix_closure_bootstrap.h"
 #include "app_shell.h"
+#include "web_route_kinds.h"
 #include "surface_catalogue_routes.h"
 #include "surface_fragments_and_ops.h"
 #include "auth_routes_and_studio_core.h"
@@ -183,7 +185,7 @@ static int estate_directory(void) {
            "Access-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n");
     printf("{\"version\":\"bonfyre-estate-v1\",\"hosts\":[");
     int wrote = 0;
-    if (mdb && sqlite3_open_v2(mdb, &db, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+    if (mdb && bf_store_open(mdb, &db, SQLITE_OPEN_READONLY, &bf_store_policy_matrix) == SQLITE_OK) {
         sqlite3_stmt *st = NULL;
         if (sqlite3_prepare_v2(db,
                 "SELECT hostname, institution_id, territory, default_scope, "
@@ -250,7 +252,7 @@ static int discovery(BfMatrix *m, const char *host_in, const char *root) {
         sqlite3 *hdb = NULL;
         int wrote = 0;
         printf(",\"institution_hosts\":[");
-        if (mdb && sqlite3_open_v2(mdb, &hdb, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+        if (mdb && bf_store_open(mdb, &hdb, SQLITE_OPEN_READONLY, &bf_store_policy_matrix) == SQLITE_OK) {
             sqlite3_stmt *st = NULL;
             if (sqlite3_prepare_v2(hdb,
                     "SELECT hostname, territory, default_scope FROM matrix_domains "
@@ -489,7 +491,11 @@ static int serve_method_refused(const BfRequest *r) {
 static int serve_estate_directory(const BfRequest *r) { (void)r; estate_directory(); return 1; }
 static int serve_discovery(const BfRequest *r) { discovery(r->m,r->host,r->root); return 1; }
 static int serve_resolve(const BfRequest *r) {
+    /* A path nobody answered gets the semantic row's suggestions, offered
+     * only where a browser following them would be asked the same way. */
+    bf_route_tail_facts=r->facts;
     resolve(r->m,r->host,r->target,bf_request_query_opt(r),1,r->root,r->bearer,r->auth_db);
+    bf_route_tail_facts=0;
     return 1;
 }
 static int serve_examples_retired(const BfRequest *r) {

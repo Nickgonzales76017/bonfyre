@@ -18,6 +18,7 @@
  */
 #define _POSIX_C_SOURCE 200809L
 #include "source_depth_projection.h"
+#include "web_store.h"
 #include "bf_sqlite_path.h"
 
 #include <sqlite3.h>
@@ -57,7 +58,7 @@ static const char *standing(const char *state, const char *refusal) {
 }
 
 static sqlite3 *open_ledger(const char *db_path) {
-    return bf_sqlite_open_readonly_path(db_path, 1500);
+    return bf_store_open_ro(db_path, 1500, &bf_store_policy_source_frontier);
 }
 
 static void pager(FILE *out, const char *route, const char *host, const char *family,
@@ -384,7 +385,7 @@ int bf_source_depth_channel(FILE *out, const char *db_path, const char *address,
 
     /* What the estate actually kept from it: the floor of the lattice. */
     if (source[0] && archive_path && *archive_path) {
-        sqlite3 *archive = bf_sqlite_open_readonly_path(archive_path, 1500);
+        sqlite3 *archive = bf_store_open_ro(archive_path, 1500, &bf_store_policy_item_archive);
         if (archive) {
             if (sqlite3_prepare_v2(archive,
                     "SELECT key, title, kind, COALESCE(first_read,'') FROM item WHERE source=?1"

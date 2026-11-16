@@ -941,6 +941,7 @@ static int serve_home_weather_fragment(const BfRequest *r) {
  * observation existed; nothing served it, so every surface that wanted to know
  * what the estate had observed had to be told rather than shown. */
 #include "foreign_catalogue_query.h"
+#include "web_store.h"
 
 static int serve_foreign_twins(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query;
@@ -1284,7 +1285,7 @@ static int serve_packs(const BfRequest *r) {
         sqlite3 *mdb = NULL;
         if (!mp || !*mp) mp = "/var/lib/bonfyre/matrix.db";
         if (lower_host(host_in, host) &&
-            sqlite3_open_v2(mp, &mdb, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+            bf_store_open(mp, &mdb, SQLITE_OPEN_READONLY, &bf_store_policy_matrix) == SQLITE_OK) {
             sqlite3_stmt *ms = NULL;
             if (sqlite3_prepare_v2(mdb,
                     "SELECT institution_id FROM matrix_domains WHERE hostname = ? LIMIT 1",
@@ -1617,7 +1618,7 @@ static int serve_subject_index(const BfRequest *r) {
     }
     (void)accept;   /* one projection: this is the machine index the pages read */
     if (!dbpath || !*dbpath) dbpath = "/var/lib/bonfyre/matrix.db";
-    if (sqlite3_open_v2(dbpath, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(dbpath, &db, SQLITE_OPEN_READONLY, &bf_store_policy_matrix) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         protocol_reply(503, "application/json", "{\"error\":\"matrix_unavailable\"}\n");
         return 1;

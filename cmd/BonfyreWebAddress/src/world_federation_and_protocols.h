@@ -613,7 +613,7 @@ static int serve_protocols(const BfRequest *r) {
         }
         snprintf(esql, sizeof(esql),
           "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
-          "ATTACH '%s' AS w (TYPE sqlite, READ_ONLY); "
+          BF_STORE_WEB_FLEMING_WORK_DUCKDB_ATTACH
           "SELECT '1.0' AS specversion, "
           "'org.bonfyre.workgraph.' || n.status AS type, "
           "'https://%s/a2a' AS source, n.mission_id AS id, m.created_at AS time, "
@@ -1164,23 +1164,21 @@ static int serve_a2a(const BfRequest *r) {
  * validation and the published_at stamp. */
 static int session_authorized(const char *bearer, const char *db, const char *scope);
 
-/* The CMS store's journal policy, declared once in schemas/storage/stores
- * (store cms) and shared with the BonfyreCMS writer. Every connection opened
- * here is leased to the current request: the serve loop closes whatever a
- * request left open, so no forgotten statement can hold a snapshot that keeps
- * the WAL from restarting. */
-static const BfStoreDurability cms_store_durability = BF_STORE_CMS_DB_DURABILITY;
+/* The CMS store's journal policy is declared once in schemas/storage/stores
+ * (store cms, bf_store_policy_cms) and shared with the BonfyreCMS writer.
+ * Every connection opened here is leased to the current request: the serve
+ * loop closes whatever a request left open, so no forgotten statement can
+ * hold a snapshot that keeps the WAL from restarting. */
 
 __attribute__((noinline)) static sqlite3 *cms_open_ro(void) {
     const char *db = getenv(BF_STORE_CMS_DB_ENV);
     sqlite3 *h = NULL;
     if (!db || !*db) db = "/var/lib/bonfyre/cms/bonfyre_cms.db";
-    if (sqlite3_open_v2(db, &h, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (h) sqlite3_close(h); return NULL; }
     /* A store held for a moment by a writer is not an empty store. Without a
      * wait, a busy read came back as "no rows" and a site's own address was
      * answered with somebody else's kind of page. The lease sets the declared
      * busy timeout. */
-    (void)bf_store_lease(h, &cms_store_durability, 1);
+    (void)bf_store_open(db, &h, SQLITE_OPEN_READONLY, &bf_store_policy_cms);
     return h;
 }
 
@@ -1200,18 +1198,13 @@ __attribute__((noinline)) static sqlite3 *cms_open_rw(void) {
     const char *db = getenv(BF_STORE_CMS_DB_ENV);
     sqlite3 *h = NULL;
     if (!db || !*db) return NULL;
-    if (sqlite3_open_v2(db, &h, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
-        if (h) sqlite3_close(h); return NULL;
-    }
     /* This direct public write owner does not pass through BonfyreCMS, so it
      * applies the same declared writer policy: checkpoints, a bounded WAL
      * high-water mark, and a forced TRUNCATE once a starved WAL passes the
-     * declared page count. It never interrupts an active transaction. */
-    if (bf_store_writer(h, &cms_store_durability)) {
-        sqlite3_close(h);
-        return NULL;
-    }
-    (void)bf_store_lease(h, &cms_store_durability, 0);
+     * declared page count. It never interrupts an active transaction.
+     * bf_store_open applies it for a read-write open of a store that
+     * declares durability, then leases the connection to the request. */
+    (void)bf_store_open(db, &h, SQLITE_OPEN_READWRITE, &bf_store_policy_cms);
     return h;
 }
 

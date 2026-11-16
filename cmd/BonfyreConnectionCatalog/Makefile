@@ -5,7 +5,7 @@ LDLIBS += ../../lib/libbonfyre/libbonfyre.a -L/opt/homebrew/lib -lduckdb -lm
 
 all: bonfyre-connection-catalog
 
-bonfyre-connection-catalog: src/main.c ../../lib/libbonfyre/libbonfyre.a
+bonfyre-connection-catalog: src/main.c generated/store_schema.h ../../lib/libbonfyre/libbonfyre.a
 	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
 
 test: bonfyre-connection-catalog

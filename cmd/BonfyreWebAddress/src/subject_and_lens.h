@@ -1,6 +1,7 @@
 #ifndef BONFYRE_SUBJECT_AND_LENS_H
 #define BONFYRE_SUBJECT_AND_LENS_H
 #include "form_tree.h"
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 23600-27582 (mechanical split, no logic changes). */
 static size_t subject_conditions(const char *ident, const char *kind,
                                  char *out, size_t cap) {
@@ -112,7 +113,7 @@ static int subject_generic(const char *kind, const char *ident,
     {
         const char *mp = getenv("BONFYRE_MATRIX_DB");
         if (!mp || !*mp) mp = "/var/lib/bonfyre/matrix.db";
-        if (sqlite3_open_v2(mp, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (bf_store_open(mp, &db, SQLITE_OPEN_READONLY, &bf_store_policy_matrix) != SQLITE_OK) {
             if (db) sqlite3_close(db);
             return 0;
         }
@@ -443,7 +444,7 @@ static int serve_subject(const BfRequest *r) {
 
         if (!fpath || !*fpath ||
             bf_sqlite_readonly_uri(uri, sizeof(uri), fpath) >= (int)sizeof(uri) ||
-            sqlite3_open_v2(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+            bf_store_open(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) != SQLITE_OK) {
             if (fr) sqlite3_close(fr);
             subject_miss("No admitted public source frontier is readable here.");
             return 1;
@@ -818,7 +819,7 @@ static int serve_subject(const BfRequest *r) {
         char uri[PATH_MAX];
 
         if (fpath && *fpath && bf_sqlite_readonly_uri(uri, sizeof(uri), fpath) < (int)sizeof(uri) &&
-            sqlite3_open_v2(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+            bf_store_open(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) == SQLITE_OK &&
             sqlite3_prepare_v2(fr, "SELECT host, COALESCE(NULLIF(name,''),host) FROM root"
                                    " WHERE host = ?1 LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
             sqlite3_bind_text(st, 1, ident, -1, SQLITE_STATIC);
@@ -1288,7 +1289,7 @@ static int serve_subject(const BfRequest *r) {
             int shown = 0;
             if (cpath && *cpath &&
                 bf_sqlite_readonly_uri(uri, sizeof(uri), cpath) < (int)sizeof(uri) &&
-                sqlite3_open_v2(uri, &cdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+                bf_store_open(uri, &cdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_commitment) == SQLITE_OK &&
                 sqlite3_prepare_v2(cdb,
                   "SELECT c.committer, c.resource,"
                   " (SELECT e.state FROM commitment_events e WHERE e.commitment_id=c.commitment_id"
@@ -1344,7 +1345,7 @@ static int serve_subject(const BfRequest *r) {
             }
             if (ppath && *ppath &&
                 bf_sqlite_readonly_uri(puri, sizeof(puri), ppath) < (int)sizeof(puri) &&
-                sqlite3_open_v2(puri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK) {
+                bf_store_open(puri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_prices) == SQLITE_OK) {
                 if (sqlite3_prepare_v2(pdb,
                       "SELECT COUNT(*), COUNT(DISTINCT publisher) FROM observed_price"
                       " WHERE currency='USD'", -1, &ps, NULL) == SQLITE_OK &&
@@ -1502,7 +1503,7 @@ static int serve_subject(const BfRequest *r) {
         int rates = 0;
 
         if (fpath && *fpath && bf_sqlite_readonly_uri(uri, sizeof(uri), fpath) < (int)sizeof(uri) &&
-            sqlite3_open_v2(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+            bf_store_open(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) == SQLITE_OK &&
             sqlite3_prepare_v2(fr,
               "SELECT SUM(state='candidate'), SUM(state IN ('admitted','active')),"
               " (SELECT COUNT(*) FROM root) FROM channel", -1, &st, NULL) == SQLITE_OK &&
@@ -1527,7 +1528,7 @@ static int serve_subject(const BfRequest *r) {
         /* One line per admitted rate: the provider's own figure, multiplied by
          * the work that is actually outstanding, carrying the document. */
         if (mpath && *mpath && bf_sqlite_readonly_uri(uri, sizeof(uri), mpath) < (int)sizeof(uri) &&
-            sqlite3_open_v2(uri, &me, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK) {
+            bf_store_open(uri, &me, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_meter) == SQLITE_OK) {
             if (sqlite3_prepare_v2(me,
                   "SELECT provider, op, unit, amount, currency, COALESCE(evidence_ref,'')"
                   " FROM rate ORDER BY provider", -1, &st, NULL) == SQLITE_OK) {
@@ -1624,7 +1625,7 @@ static int serve_subject(const BfRequest *r) {
 
         if (!path || !*path) path = "";
         if (!*path || bf_sqlite_readonly_uri(uri, sizeof(uri), path) >= (int)sizeof(uri) ||
-            sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+            bf_store_open(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_prices) != SQLITE_OK) {
             if (db) sqlite3_close(db);
             subject_miss("No price observatory is readable here.");
             return 1;
@@ -1928,7 +1929,7 @@ static int serve_subject(const BfRequest *r) {
          * has no linear axis that shows both. */
         if ((db2 = NULL, path && *path &&
              bf_sqlite_readonly_uri(uri, sizeof(uri), path) < (int)sizeof(uri) &&
-             sqlite3_open_v2(uri, &db2, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK)) {
+             bf_store_open(uri, &db2, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_prices) == SQLITE_OK)) {
             if (sqlite3_prepare_v2(db2,
                   "SELECT CAST(FLOOR(LOG10(amount)) AS INTEGER) AS mag, COUNT(*)"
                   " FROM observed_price WHERE amount > 0"
@@ -1999,7 +2000,7 @@ static int serve_subject(const BfRequest *r) {
 
         if (!fpath || !*fpath ||
             bf_sqlite_readonly_uri(uri, sizeof(uri), fpath) >= (int)sizeof(uri) ||
-            sqlite3_open_v2(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+            bf_store_open(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) != SQLITE_OK) {
             if (fr) sqlite3_close(fr);
             subject_miss("No source frontier is readable here.");
             return 1;
@@ -2166,7 +2167,7 @@ static int serve_subject(const BfRequest *r) {
           "<div data-bf-list data-bf-row-height=\"44\">");
         if (fpath && *fpath &&
             bf_sqlite_readonly_uri(uri, sizeof(uri), fpath) < (int)sizeof(uri) &&
-            sqlite3_open_v2(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+            bf_store_open(uri, &fr, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) == SQLITE_OK &&
             sqlite3_prepare_v2(fr,
               "SELECT c.exact_address, COALESCE(c.protocol,'unknown')"
               " FROM channel c JOIN root r ON r.root_id=c.root_id"
@@ -2566,7 +2567,7 @@ static int serve_subject(const BfRequest *r) {
         {
             const char *prices = getenv("BONFYRE_PRICES_DB"); sqlite3 *pdb = NULL; sqlite3_stmt *ps = NULL; int rows = 0;
             if (prices && *prices && bf_sqlite_readonly_uri(uri, sizeof(uri), prices) < (int)sizeof(uri) &&
-                sqlite3_open_v2(uri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+                bf_store_open(uri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_prices) == SQLITE_OK &&
                 sqlite3_prepare_v2(pdb,
                   "SELECT item, MAX(CASE WHEN unit='token in' THEN amount END), MAX(CASE WHEN unit='token out' THEN amount END), publisher, observed_at"
                   " FROM observed_price WHERE kind='inference' AND currency='USD' GROUP BY item,source,publisher,observed_at,evidence_ref"
@@ -2648,7 +2649,7 @@ static int serve_subject(const BfRequest *r) {
             int priced = 0;
             if (ppath && *ppath &&
                 bf_sqlite_readonly_uri(uri, sizeof(uri), ppath) < (int)sizeof(uri) &&
-                sqlite3_open_v2(uri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+                bf_store_open(uri, &pdb, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_prices) == SQLITE_OK &&
                 sqlite3_prepare_v2(pdb,
                   "SELECT publisher, amount, currency, unit, observed_at FROM observed_price"
                   " WHERE kind='inference' AND (lower(item)=lower(?1) OR lower(item)=lower(?2)) ORDER BY observed_at DESC LIMIT 6",
@@ -3270,7 +3271,7 @@ static int serve_subject(const BfRequest *r) {
 
         if (!path || !*path ||
             bf_sqlite_readonly_uri(uri, sizeof(uri), path) >= (int)sizeof(uri) ||
-            sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+            bf_store_open(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_frappe_surface) != SQLITE_OK) {
             if (db) sqlite3_close(db);
             subject_miss("No compiled application surfaces are readable here.");
             return 1;
@@ -3413,7 +3414,7 @@ static int serve_subject(const BfRequest *r) {
 
         if (!path || !*path ||
             bf_sqlite_readonly_uri(uri, sizeof(uri), path) >= (int)sizeof(uri) ||
-            sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+            bf_store_open(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_frappe_surface) != SQLITE_OK) {
             if (db) sqlite3_close(db);
             subject_miss("No compiled application surfaces are readable here.");
             return 1;
@@ -3625,7 +3626,7 @@ static int serve_subject(const BfRequest *r) {
             }
             if (cms_path && *cms_path &&
                 bf_sqlite_readonly_uri(cms_uri, sizeof(cms_uri), cms_path) < (int)sizeof(cms_uri) &&
-                sqlite3_open_v2(cms_uri, &cms, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK) {
+                bf_store_open(cms_uri, &cms, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_cms) == SQLITE_OK) {
                 sqlite3_stmt *probe = NULL;
                 char sql[320];
                 if (sqlite3_prepare_v2(cms, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1", -1, &probe, NULL) == SQLITE_OK) {

@@ -15,6 +15,7 @@
  */
 #include "../generated/native_estate_hosts.h"
 #include "people_projection.h"
+#include "web_store.h"
 #include "bf_sqlite_path.h"
 
 #include <stdio.h>
@@ -81,8 +82,8 @@ static void url(FILE *out, const char *s) {
     }
 }
 
-static sqlite3 *open_read_only(const char *path) {
-    return bf_sqlite_open_readonly_path(path, 1500);
+static sqlite3 *open_read_only(const char *path, const BfStoreDurability *policy) {
+    return bf_store_open_ro(path, 1500, policy);
 }
 
 /* Only a published, destination-owned member presentation can establish a
@@ -121,7 +122,7 @@ static int people_member_host(sqlite3 *cms,const char *subject,char *out,size_t 
 }
 int bf_public_person_home(const char *subject,char *out,size_t cap){
     const char *cms_path=getenv("BONFYRE_CMS_DB");
-    sqlite3 *cms=cms_path&&*cms_path?open_read_only(cms_path):NULL;
+    sqlite3 *cms=cms_path&&*cms_path?open_read_only(cms_path, &bf_store_policy_cms):NULL;
     if(!cms){if(out&&cap)out[0]=0;return 0;}
     int ok=people_member_host(cms,subject,out,cap);
     sqlite3_close(cms);return ok;
@@ -233,9 +234,9 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
 
 int bf_people_index_ordered(FILE *out, const char *archive_path, const char *route,
                             const char *needle, unsigned offset, unsigned page_size, int recent_first) {
-    sqlite3 *db = open_read_only(archive_path); sqlite3_stmt *st = NULL, *where = NULL, *latest = NULL;
+    sqlite3 *db = open_read_only(archive_path, &bf_store_policy_item_archive); sqlite3_stmt *st = NULL, *where = NULL, *latest = NULL;
     const char *cms_path = getenv("BONFYRE_CMS_DB");
-    sqlite3 *cms = cms_path && *cms_path ? open_read_only(cms_path) : NULL;
+    sqlite3 *cms = cms_path && *cms_path ? open_read_only(cms_path, &bf_store_policy_cms) : NULL;
     int shown = 0, member_shown = 0, total = 0, sources = 0, subjects = 0, surfaces = 0, cms_attached = 0;
     /* Names equal to a publisher's own name are the outlet crediting itself. */
     static const char named_base[] =
@@ -262,21 +263,8 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
      * person. Use only the source owner's exact label/publisher declaration:
      * never fuzzy-match a brand and never join equal names across sources.
      */
-    if (cms_path && *cms_path) {
-        char uri[PATH_MAX * 3 + 32];
-        if (bf_sqlite_readonly_uri(uri, sizeof(uri), cms_path) < (int)sizeof(uri)) {
-            char *attach = sqlite3_mprintf("ATTACH DATABASE %Q AS cms_source", uri);
-            if (attach && sqlite3_exec(db, attach, NULL, NULL, NULL) == SQLITE_OK) {
-                sqlite3_stmt *probe = NULL;
-                if (sqlite3_prepare_v2(db,
-                      "SELECT 1 FROM cms_source.sqlite_master WHERE type='table' AND name='internet_source'",
-                      -1, &probe, NULL) == SQLITE_OK && sqlite3_step(probe) == SQLITE_ROW)
-                    cms_attached = 1;
-                sqlite3_finalize(probe);
-            }
-            sqlite3_free(attach);
-        }
-    }
+    if (cms_path && *cms_path && bf_store_attach(db, cms_path, BF_STORE_WEB_PEOPLE_CMS_ATTACH, BF_STORE_WEB_PEOPLE_CMS_ATTACH_READONLY))
+        cms_attached = bf_store_schema_has(db, "cms_source", "internet_source");
     /* Materialize the exact source labels once. A correlated scan of the CMS
      * for every archived item saturated all six public workers on /people. */
     const char *source_cte = cms_attached ?
@@ -447,7 +435,7 @@ int bf_people_index(FILE *out, const char *archive_path, const char *route,
 
 int bf_person_page(FILE *out, const char *archive_path, const char *who,
                    const char *source_filter, const char *route) {
-    sqlite3 *db = open_read_only(archive_path); sqlite3_stmt *st = NULL;
+    sqlite3 *db = open_read_only(archive_path, &bf_store_policy_item_archive); sqlite3_stmt *st = NULL;
     int shown = 0, made = 0;
     if (!db || !who || !*who) { if (db) sqlite3_close(db); return 0; }
 
@@ -544,12 +532,12 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
 
 int bf_organisations_index(FILE *out, const char *ledger_path, const char *route,
                            const char *needle, unsigned offset, unsigned page_size) {
-    sqlite3 *db = open_read_only(ledger_path); sqlite3_stmt *st = NULL;
+    sqlite3 *db = open_read_only(ledger_path, &bf_store_policy_source_frontier); sqlite3_stmt *st = NULL;
     /* The directory and the addresses are the same fact read twice: the store
      * that publishes a subject's presentation is the only thing that can say
      * whether this estate gave that institution an address. */
     const char *cms_path = getenv("BONFYRE_CMS_DB");
-    sqlite3 *cms = cms_path && *cms_path ? open_read_only(cms_path) : NULL;
+    sqlite3 *cms = cms_path && *cms_path ? open_read_only(cms_path, &bf_store_policy_cms) : NULL;
     int shown = 0, total = 0;
     if (!db) { if (cms) sqlite3_close(cms); return 0; }
 

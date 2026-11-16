@@ -1,5 +1,6 @@
 #ifndef BONFYRE_WORK_BOARD_H
 #define BONFYRE_WORK_BOARD_H
+#include "web_store.h"
 
 /* Account work remains a read-only projection until a separately guarded
  * person-owned action is posted. This support layer owns no account state. */
@@ -48,7 +49,7 @@ static int ac_work_needs_person(const char *source){return ac_work_person_source
 static int ac_work_listed(const char *task,const char *subject,const char *scope){
     const char *index=getenv("BONFYRE_ACCOUNT_WORK_DB");sqlite3 *db=NULL;sqlite3_stmt *s=NULL;int listed=0;
     if(!task||strncmp(task,"account-operator-",17)||!index||*index!='/')return 0;
-    if(sqlite3_open_v2(index,&db,SQLITE_OPEN_READONLY,NULL)==SQLITE_OK){sqlite3_busy_timeout(db,1000);
+    if(bf_store_open(index, &db, SQLITE_OPEN_READONLY, &bf_store_policy_account_work)==SQLITE_OK){sqlite3_busy_timeout(db,1000);
         if(sqlite3_prepare_v2(db,"SELECT 1 FROM account_work WHERE id=?1 AND subject=?2 AND scope=?3",-1,&s,NULL)==SQLITE_OK){
             sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,subject,-1,SQLITE_STATIC);sqlite3_bind_text(s,3,scope,-1,SQLITE_STATIC);listed=sqlite3_step(s)==SQLITE_ROW;}
         sqlite3_finalize(s);}
@@ -64,7 +65,7 @@ static void ac_person_free(AcPersonGoal *rows,size_t count){for(size_t i=0;i<cou
 static int ac_person_goals(const char *subject,const char *scope,AcPersonGoal *rows,size_t cap){
     char operator_db[PATH_MAX];sqlite3 *db=NULL;sqlite3_stmt *s=NULL;size_t n=0;
     if(!ac_work_operator_path(operator_db,sizeof(operator_db)))return -1;
-    if(sqlite3_open_v2(operator_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){sqlite3_close(db);return -1;}sqlite3_busy_timeout(db,1000);
+    if(bf_store_open(operator_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_operator)!=SQLITE_OK){sqlite3_close(db);return -1;}sqlite3_busy_timeout(db,1000);
     if(sqlite3_prepare_v2(db,"SELECT id,source,title,details,last_error,updated_at,dedupe_key FROM goals WHERE source IN('release-approval','provider-estate','provider-estate-checklist') "
         "AND state NOT IN('resolved','superseded') ORDER BY priority DESC,updated_at DESC LIMIT 200",-1,&s,NULL)==SQLITE_OK){
         while(n<cap&&sqlite3_step(s)==SQLITE_ROW){

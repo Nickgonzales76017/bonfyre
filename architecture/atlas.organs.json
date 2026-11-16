@@ -99,13 +99,13 @@
     "publishes": "Authority"
   },
   "BonfyreBitNet": {
-    "architecture": "bitnet-address-ranker",
-    "description": "Given an AddressPlane survivor frontier and an admitted learned representation, which existing typed handles should be tried first without changing eligibility?",
-    "domain": "Model / Addressable Candidate Narrowing",
-    "family": "model",
-    "layer": "model/execution",
+    "architecture": "store-schema-registry",
+    "description": "Which tables, indexes, views and triggers does each native owner create in its SQLite store, declared once rather than hand-written as C string literals in every owner?",
+    "domain": "Storage / Native Store DDL",
+    "family": "storage",
+    "layer": "substrate",
     "maturity": "implemented",
-    "publishes": "RankedCandidateFrontier"
+    "publishes": ""
   },
   "BonfyreBraidAudit": {
     "architecture": "cmd-braid-audit",
@@ -243,13 +243,13 @@
     "publishes": ""
   },
   "BonfyreConnectionCatalog": {
-    "architecture": "connection-source-catalog",
-    "description": "Which retained connection source candidates can be inspected with their original coordinates?",
-    "domain": "Identity / Connection Discovery",
-    "family": "identity",
-    "layer": "institutional",
+    "architecture": "store-schema-registry",
+    "description": "Which tables, indexes, views and triggers does each native owner create in its SQLite store, declared once rather than hand-written as C string literals in every owner?",
+    "domain": "Storage / Native Store DDL",
+    "family": "storage",
+    "layer": "substrate",
     "maturity": "implemented",
-    "publishes": "ConnectionSourceCandidate"
+    "publishes": ""
   },
   "BonfyreContextCut": {
     "architecture": "decision-plane",

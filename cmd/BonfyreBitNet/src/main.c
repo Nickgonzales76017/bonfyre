@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <bonfyre.h>
 #include <bf_admission.h>
+#include "bf_store_durability.h"
 #include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 
 typedef struct { char *data; size_t len, cap; } Buffer;
@@ -457,7 +458,7 @@ static int evaluate_retention(const char *rank_path, const char *run,
     if(sqlite3_step(meta)!=SQLITE_ROW||!sqlite3_column_text(meta,0)||(n=sqlite3_column_int(meta,2))<1)goto done;
     snprintf(rep,sizeof(rep),"%s",sqlite3_column_text(meta,0));snprintf(gate,sizeof(gate),"%s",sqlite3_column_text(meta,1)?(const char*)sqlite3_column_text(meta,1):"");
     sqlite3_finalize(meta);meta=NULL;
-    stage="exact_owner_ledger";if(sqlite3_open(":memory:",&mem)!=SQLITE_OK||sqlite3_exec(mem,BF_STORE_BIT_NET_Q,NULL,NULL,NULL)!=SQLITE_OK||
+    stage="exact_owner_ledger";if(sqlite3_open_v2(":memory:",&mem,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI,NULL)!=SQLITE_OK||sqlite3_exec(mem,BF_STORE_BIT_NET_Q,NULL,NULL,NULL)!=SQLITE_OK||
        sqlite3_prepare_v2(mem,"SELECT json_extract(?1,'$.run_id'),json_extract(?1,'$.representation_id'),json_extract(?1,'$.gate_state'),json_extract(?1,'$.candidate_identity'),json_extract(?1,'$.exact_verifier_ref'),json_extract(?1,'$.query_state'),json_extract(?1,'$.outcome') WHERE json_valid(?1) AND json_extract(?1,'$.schema')='bonfyre-exact-owner-query-evidence.v1'",-1,&parse,NULL)!=SQLITE_OK||
        sqlite3_prepare_v2(mem,"INSERT INTO q VALUES(?1,?2)",-1,&insert,NULL)||!(evidence=fopen(evidence_path,"r")))goto done;
     while((len=getline(&line,&cap,evidence))>0){const char *r,*p,*g,*id,*v,*state,*outcome;if(len&&line[len-1]=='\n')line[--len]=0;sqlite3_bind_text(parse,1,line,(int)len,SQLITE_TRANSIENT);if(sqlite3_step(parse)!=SQLITE_ROW){sqlite3_reset(parse);sqlite3_clear_bindings(parse);continue;}r=(const char*)sqlite3_column_text(parse,0);p=(const char*)sqlite3_column_text(parse,1);g=(const char*)sqlite3_column_text(parse,2);id=(const char*)sqlite3_column_text(parse,3);v=(const char*)sqlite3_column_text(parse,4);state=(const char*)sqlite3_column_text(parse,5);outcome=(const char*)sqlite3_column_text(parse,6);
@@ -473,9 +474,11 @@ static int evaluate_retention(const char *rank_path, const char *run,
     /* q is a private validation table. Attach the immutable run into that
      * connection so the join cannot accidentally read an unrelated writable
      * table from the rank database. */
-    stage="rank_join";if(sqlite3_prepare_v2(mem,"ATTACH DATABASE ?1 AS rank_source",-1,&meta,NULL)!=SQLITE_OK)goto done;
-    sqlite3_bind_text(meta,1,rank_path,-1,SQLITE_TRANSIENT);if(sqlite3_step(meta)!=SQLITE_DONE)goto done;sqlite3_finalize(meta);meta=NULL;
-    if(sqlite3_prepare_v2(mem,"SELECT e.rank,q.observed FROM rank_source.ranked_candidate_envelope e JOIN q ON q.identity=e.candidate_identity WHERE e.run_id=?1 ORDER BY e.rank",-1,&rows,NULL)!=SQLITE_OK)goto done;
+    /* The rank store is the declared ranker store (schemas/storage/stores,
+     * store rank): attached read-only under its declared name, and its
+     * frontier read by the generated order query. */
+    stage="rank_join";if(!bf_store_attach(mem,rank_path,BF_STORE_BITNET_RANK_ATTACH,BF_STORE_BITNET_RANK_ATTACH_READONLY))goto done;
+    if(sqlite3_prepare_v2(mem,"SELECT f." BF_STORE_BITNET_RANK_RANKER_ORDER_COLUMN ",q.observed FROM (" BF_STORE_BITNET_RANK_RANKER_FRONTIER ") f JOIN q ON q.identity=f." BF_STORE_BITNET_RANK_RANKER_KEY_COLUMN " ORDER BY f." BF_STORE_BITNET_RANK_RANKER_ORDER_COLUMN,-1,&rows,NULL)!=SQLITE_OK)goto done;
     sqlite3_bind_text(rows,1,run,-1,SQLITE_TRANSIENT);
     while(sqlite3_step(rows)==SQLITE_ROW){int pos=sqlite3_column_int(rows,0),hit=sqlite3_column_int(rows,1);if(pos!=row_count++)goto done;for(int i=0;i<8;i++)if(pos<cuts[i])cut_observed[i]+=hit;}
     stage="rank_coverage";if(row_count!=n||bf_sha256_file(evidence_path,digest)!=0)goto done;

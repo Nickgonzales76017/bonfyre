@@ -1,6 +1,7 @@
 #ifndef BONFYRE_PROFILE_DATING_WEB_H
 #define BONFYRE_PROFILE_DATING_WEB_H
 #include "form_tree.h"
+#include "web_store.h"
 #include "../../BonfyreParticipation/src/dating.h"
 #include "profile_dating_composition.h"
 /* The Life dating mode belongs to the SAME account profile, authored Life
@@ -10,7 +11,7 @@ static sqlite3 *ph_dating_open(int write){
  const char *path=getenv("BONFYRE_PARTICIPATION_DB");sqlite3 *db=NULL;
  if(!path||!*path)path=getenv("BONFYRE_DATING_DB");
  if(!path||*path!='/'||strlen(path)>4096)return NULL;
- if(sqlite3_open_v2(path,&db,write?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){
+ if(bf_store_open(path, &db, write?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY, &bf_store_policy_participation)!=SQLITE_OK){
   if(db)sqlite3_close(db);return NULL;
  }
  sqlite3_busy_timeout(db,1200);return db;

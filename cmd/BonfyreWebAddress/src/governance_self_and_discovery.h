@@ -80,7 +80,7 @@ static int govern_settle(const char *body, const char *actor, const char *now,
     }
     if (!mpath || !*mpath ||
         bf_sqlite_readonly_uri(uri, sizeof(uri), mpath) >= (int)sizeof(uri) ||
-        sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+        bf_store_open(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_matrix) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         snprintf(why, why_cap, "no metered store is configured here, so no rate can be read");
         return 0;
@@ -150,7 +150,7 @@ static int institution_frontier_admitted(const char *host) {
 
     if (!host || !*host || !path || !*path ||
         bf_sqlite_readonly_uri(uri, sizeof(uri), path) >= (int)sizeof(uri) ||
-        sqlite3_open_v2(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) {
+        bf_store_open(uri, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_source_frontier) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -1062,6 +1062,7 @@ static const char *site_speculation_html(void) {
 }
 
 #include "../../BonfyreCMS/src/entry_snapshot.h"
+#include "web_store.h"
 static int cms_namespace_for(const char *bearer, const char *auth_db,
                              char *out, size_t out_sz) {
     char user[32];

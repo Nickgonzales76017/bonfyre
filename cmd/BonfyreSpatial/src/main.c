@@ -50,7 +50,8 @@
 #include <strings.h>
 
 #include "bf_lex.h"
-#include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
+#include "bf_store_durability.h"
+#include "../generated/store_schema.h"  /* store DDL and kinds: schemas/storage/stores */
 #define EARTH_RADIUS_M 6371008.8
 
 /* ---------------------------------------------------------------- time ---- */
@@ -792,11 +793,11 @@ static int cmd_durable(sqlite3 *db, int argc, char **argv, const char *db_path) 
         char hot_sql[PATH_MAX + 512], cold_sql[PATH_MAX + 512];
         char hot[256] = {0}, cold[256] = {0};
         snprintf(hot_sql, sizeof(hot_sql),
-            "INSTALL sqlite; LOAD sqlite; ATTACH '%s' AS hot (TYPE sqlite, READ_ONLY);"
+            "INSTALL sqlite; LOAD sqlite; " BF_STORE_SPATIAL_FACT_COLD_COLUMNAR_HOT_ATTACH
             "COPY (" FIDELITY_SELECT "AS fidelity FROM hot.spatial_fact) TO '/dev/stdout' (FORMAT csv, HEADER false);",
             db_path);
         snprintf(cold_sql, sizeof(cold_sql),
-            "COPY (" FIDELITY_SELECT "AS fidelity FROM read_parquet('%s')) TO '/dev/stdout' (FORMAT csv, HEADER false);",
+            "COPY (" FIDELITY_SELECT "AS fidelity FROM " BF_STORE_SPATIAL_FACT_COLD_COLUMNAR_COLD_SCAN ") TO '/dev/stdout' (FORMAT csv, HEADER false);",
             out);
         if (!run_duckdb(hot_sql, hot, sizeof(hot))) return 1;
         if (!run_duckdb(cold_sql, cold, sizeof(cold))) return 1;
@@ -813,9 +814,8 @@ static int cmd_durable(sqlite3 *db, int argc, char **argv, const char *db_path) 
 
     snprintf(sql, sizeof(sql),
         "INSTALL sqlite; LOAD sqlite;"
-        "ATTACH '%s' AS hot (TYPE sqlite, READ_ONLY);"
-        "COPY (SELECT * FROM hot.spatial_fact ORDER BY fact_id) TO '%s' "
-        "  (FORMAT parquet, COMPRESSION zstd);", db_path, out);
+        BF_STORE_SPATIAL_FACT_COLD_COLUMNAR_HOT_ATTACH
+        BF_STORE_SPATIAL_FACT_COLD_COLUMNAR_EXPORT, db_path, out);
     if (!run_duckdb(sql, NULL, 0)) return 1;
     printf("{\"exported\":"); json_text(out);
     printf(",\"representation\":\"parquet+zstd\","
@@ -2034,17 +2034,10 @@ static int cmd_world(sqlite3 *db, int argc, char **argv) {
 
     if (!build_orphan_set(db, as_of)) return 1;
     {
-        char uri[PATH_MAX * 3];
-        sqlite3_stmt *attach = NULL;
-        if (bf_sqlite_readonly_uri(uri, sizeof(uri), index_path) >= (int)sizeof(uri) ||
-            sqlite3_prepare_v2(db, "ATTACH DATABASE ?1 AS plane", -1, &attach, NULL) != SQLITE_OK ||
-            sqlite3_bind_text(attach, 1, uri, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
-            sqlite3_step(attach) != SQLITE_DONE) {
+        if (!bf_store_attach(db, index_path, BF_STORE_SPATIAL_ADDRESS_PLANE_ATTACH, BF_STORE_SPATIAL_ADDRESS_PLANE_ATTACH_READONLY)) {
             fprintf(stderr, "spatial plane attach failed: %s\n", sqlite3_errmsg(db));
-            sqlite3_finalize(attach);
             return 1;
         }
-        sqlite3_finalize(attach);
     }
 
     /* How large the spatial population was before any narrowing, so the cut can

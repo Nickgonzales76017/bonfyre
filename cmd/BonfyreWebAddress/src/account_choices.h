@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ACCOUNT_CHOICES_H
 #define BONFYRE_ACCOUNT_CHOICES_H
+#include "web_store.h"
 /* Public institution discovery reads the existing admitted SourceFrontier.
  * The selected host continues through the existing institution owner, which
  * rereads admission. This catalogue never grants or stores a relationship. */
@@ -17,7 +18,7 @@ static int serve_account_choices(const BfRequest *r) {
  if(strcmp(method,"GET")){aw_error(405,"Use a read to choose a public institution.\n");return 1;}
  AccountChoiceQuery input;if(!aq_query(query,&input)){aw_error(400,"Search by a name using the current catalogue controls.\n");return 1;}
  const char *path=getenv("BONFYRE_SOURCE_FRONTIER_DB");sqlite3 *db=NULL;sqlite3_stmt *s=NULL;
- if(!path||!*path||sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);aw_error(503,"The public institution directory is unavailable. Try again; no relationship has changed.\n");return 1;}
+ if(!path||!*path||bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_source_frontier)!=SQLITE_OK){if(db)sqlite3_close(db);aw_error(503,"The public institution directory is unavailable. Try again; no relationship has changed.\n");return 1;}
  const char *sql="SELECT r.host,COALESCE(NULLIF(trim(r.name),''),r.host),count(c.channel_id) FROM root r JOIN channel c ON c.root_id=r.root_id WHERE c.state IN ('admitted','active') AND r.host>?1 AND (instr(lower(COALESCE(r.name,'')),lower(?2))>0 OR instr(lower(r.host),lower(?2))>0) GROUP BY r.host HAVING count(DISTINCT r.root_id)=1 ORDER BY r.host LIMIT 21";
  if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){sqlite3_close(db);aw_error(503,"The public institution directory could not be read.\n");return 1;}sqlite3_bind_text(s,1,input.after,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,input.query,-1,SQLITE_STATIC);
  struct {char host[254],label[501];long long channels;} rows[20];unsigned count=0;int more=0,step;char last[254]="";

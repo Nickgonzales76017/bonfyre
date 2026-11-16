@@ -22,6 +22,10 @@ measure(){
   # schemas/storage/stores: virtual/vector table DDL, ATTACH statements and
   # parquet reads in C sources (generated headers are not counted).
   printf 'handwritten_store_shapes\t%s\n' "$(find "$root"/cmd/*/src "$root"/components/*/src -type f \( -name '*.c' -o -name '*.h' \) -exec cat {} + 2>/dev/null | grep -oE 'CREATE VIRTUAL TABLE|USING vec0|"ATTACH |read_parquet\(' | wc -l | tr -d ' ')"
+  # Store files a serve worker opens without the declared policy and request
+  # lease (bf_store_open / cms_open_ro / cms_open_rw, bf_store_durability.h).
+  # A private ":memory:" scratch database is not an estate store.
+  printf 'direct_store_opens\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -E 'sqlite3_open(_v2)?\(|bf_sqlite_open_readonly_path\(' | grep -vc '":memory:"' | tr -d ' ')"
   # ui_tree.h is the builder layer pages call instead; its own tags are the one copy.
   printf 'hand_printed_controls\t%s\n' "$(ls "$root"/cmd/BonfyreWebAddress/src/*.h | grep -v '/ui_tree\.h$' | xargs cat | grep -oE '<(button|input|select|textarea|form)[ >]' | wc -l | tr -d ' ')"
   # Markup printed tag by tag instead of through the shared builders

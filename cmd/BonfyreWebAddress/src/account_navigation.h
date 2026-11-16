@@ -10,7 +10,7 @@ static int account_public_profile_at(long user_id,const char *auth_db,const char
     const char *matrix_db=getenv("BONFYRE_MATRIX_DB");int ok=0,rows=0;
     if(out&&cap)out[0]=0;
     if(user_id<1||!auth_db||!matrix_db||!out||cap<16)return 0;
-    if(sqlite3_open_v2(auth_db,&adb,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(bf_store_open(auth_db, &adb, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
     if(sqlite3_prepare_v2(adb,
         "SELECT actor_subject FROM actor_closure_bindings WHERE user_id=?1 AND state='active' LIMIT 2",
         -1,&s,NULL)!=SQLITE_OK)goto done;
@@ -24,7 +24,7 @@ static int account_public_profile_at(long user_id,const char *auth_db,const char
     sqlite3_finalize(s);s=NULL;if(rows!=1)goto done;
     if(snprintf(institution,sizeof(institution),"inst:%s",actor)>=(int)sizeof(institution))goto done;
     for(size_t i=5;institution[i];i++)if(institution[i]==':'||institution[i]=='.')institution[i]='-';
-    if(sqlite3_open_v2(matrix_db,&mdb,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(bf_store_open(matrix_db, &mdb, SQLITE_OPEN_READONLY, &bf_store_policy_matrix)!=SQLITE_OK)goto done;
     if(sqlite3_prepare_v2(mdb,
         "SELECT d.hostname FROM matrix_domains d WHERE d.institution_id=?1 AND d.territory=?3 "
         "AND EXISTS(SELECT 1 FROM matrix_presences p WHERE p.subject_id=?2 AND p.territory=?3 "
@@ -71,6 +71,7 @@ static void account_navigation_emit(const char *bearer,const char *auth_db) {
     fputs("</div>",stdout);
 }
 #include "account_review_web.h"
+#include "web_store.h"
 /* Cached public shells request only this private, bounded native fragment.
  * It does not return tokens, email, account IDs or hidden destination counts. */
 static int serve_account_navigation(const BfRequest *r) {

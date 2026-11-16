@@ -1,6 +1,7 @@
 #ifndef BONFYRE_SOURCE_DESK_H
 #define BONFYRE_SOURCE_DESK_H
 #include "form_tree.h"
+#include "web_store.h"
 #include "../generated/native_estate_hosts.h"
 static int session_institution_authorized(const char *,const char *,const char *,const char *);
 static int page_query_has_key(const char *,const char *);
@@ -17,9 +18,9 @@ static int page_query_has_key(const char *,const char *);
 
 #define SD_LIST 24
 
-static sqlite3 *sd_open_env(const char *var){
+static sqlite3 *sd_open_env(const char *var,const BfStoreDurability *policy){
  const char *p=getenv(var);sqlite3 *db=NULL;
- if(!p||!*p||sqlite3_open_v2(p,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);return NULL;}
+ if(!p||!*p||bf_store_open(p, &db, SQLITE_OPEN_READONLY, policy)!=SQLITE_OK){if(db)sqlite3_close(db);return NULL;}
  sqlite3_busy_timeout(db,1500);return db;
 }
 static const char *sd_col(sqlite3_stmt *s,int i){const char *t=(const char*)sqlite3_column_text(s,i);return t?t:"";}
@@ -129,7 +130,7 @@ static void sd_hub(const char *route,const char *host,const char *query){
  if(*fam&&!sd_safe_word(fam,sizeof fam))fam[0]=0;
  if(*off&&strspn(off,"0123456789")==strlen(off))offset=(unsigned)strtoul(off,NULL,10);if(offset>100000)offset=0;
  int most=!strcmp(sort,"most");
- sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB"),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB");
+ sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB",&bf_store_policy_item_archive),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB",&bf_store_policy_source_frontier);
  long long sources=sd_one(items,"SELECT COUNT(DISTINCT source) FROM item",NULL),pieces=sd_one(items,"SELECT COUNT(*) FROM item",NULL);
  long long families=sd_one(items,"SELECT COUNT(DISTINCT family) FROM item WHERE family<>''",NULL);
  sd_page_open("Links and sources",host,route,query,"hub");
@@ -239,7 +240,7 @@ static void sd_room(const char *route,const char *host,const char *query,const c
  char key[64]="",q[121]="",like[130];sqlite3_stmt *s=NULL;
  if(query){query_value(query,"item",key,sizeof key);query_value(query,"q",q,sizeof q);}
  snprintf(like,sizeof like,"%%%s%%",q);
- sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB"),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB");
+ sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB",&bf_store_policy_item_archive),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB",&bf_store_policy_source_frontier);
  char pub[160]="",fam[80]="",first[32]="";long long n=0;
  if(items&&sqlite3_prepare_v2(items,"SELECT MAX(publisher),MAX(family),COUNT(*),MIN(first_read) FROM item WHERE source=?1",-1,&s,NULL)==SQLITE_OK){
   sqlite3_bind_text(s,1,source,-1,SQLITE_TRANSIENT);if(sqlite3_step(s)==SQLITE_ROW){snprintf(pub,sizeof pub,"%s",sd_col(s,0));snprintf(fam,sizeof fam,"%s",sd_col(s,1));n=sqlite3_column_int64(s,2);snprintf(first,sizeof first,"%s",sd_col(s,3));}
@@ -274,7 +275,7 @@ static void sd_reader(const char *route,const char *host,const char *query){
  if(query){query_value(query,"read",read,sizeof read);query_value(query,"feed",feed,sizeof feed);}
  if(*feed&&!sd_safe_word(feed,sizeof feed))feed[0]=0;
  {char *slash=strrchr(read,'/');if(slash&&slash!=read&&slash[1]&&(size_t)(slash-read)<sizeof src){memcpy(src,read,(size_t)(slash-read));src[slash-read]=0;snprintf(key,sizeof key,"%s",slash+1);}}
- sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB"),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB");
+ sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB",&bf_store_policy_item_archive),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB",&bf_store_policy_source_frontier);
  long long day=sd_one(items,"SELECT COUNT(*) FROM item WHERE first_read>=strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 day')",NULL);
  long long all=sd_one(items,"SELECT COUNT(*) FROM item WHERE at>0",NULL);
  if(!*src&&items&&sqlite3_prepare_v2(items,"SELECT source,key FROM item WHERE at>0 AND at<=CAST(strftime('%s','now') AS INTEGER) AND (?1='' OR family=?1) ORDER BY at DESC LIMIT 1",-1,&s,NULL)==SQLITE_OK){
@@ -364,7 +365,7 @@ static void sd_connections(const char *route,const char *host,const char *query,
  char provider[24]="";if(query)query_value(query,"provider",provider,sizeof provider);
  SdLink links[24];int nl=sd_links(bearer,auth_db,links,24),signed_in=nl>=0;if(nl<0)nl=0;
  const SdProvider *chosen=NULL;for(size_t i=0;i<sizeof sd_providers/sizeof sd_providers[0];i++)if(!strcmp(provider,sd_providers[i].key))chosen=&sd_providers[i];
- sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB"),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB");
+ sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB",&bf_store_policy_item_archive),*frontier=sd_open_env("BONFYRE_SOURCE_FRONTIER_DB",&bf_store_policy_source_frontier);
  sd_page_open(chosen?chosen->name:"Connections",host,route,query,"connections");
  fputs("<main class=\"sx\"><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span>",stdout);
  if(chosen){fputs("<a href=\"/connections\">Connections</a><span>/</span><span>",stdout);html(chosen->name);fputs("</span>",stdout);}else ui_text(stdout, "span", NULL, "Connections");
@@ -442,7 +443,7 @@ static void sd_connections(const char *route,const char *host,const char *query,
 /* /connect: the tools and agents side — what an outside program can use. */
 static void sd_connect(const char *route,const char *host,const char *query,const char *bearer,const char *auth_db){
  int signed_in=bearer&&*bearer&&session_valid(bearer,auth_db);
- sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB");long long sources=sd_one(items,"SELECT COUNT(DISTINCT source) FROM item",NULL);if(items)sqlite3_close(items);
+ sqlite3 *items=sd_open_env("BONFYRE_ITEM_ARCHIVE_DB",&bf_store_policy_item_archive);long long sources=sd_one(items,"SELECT COUNT(DISTINCT source) FROM item",NULL);if(items)sqlite3_close(items);
  sd_page_open("Tools and agents",host,route,query,"connect");
  fputs("<main class=\"sx\"><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span><a href=\"/connections\">Connections</a><span>/</span><span>Tools and agents</span></nav>"
        "<header class=\"sx-hero\"><div><p class=\"sx-kicker\">Carriers</p><h1>Tools, agents and push feeds</h1><p>How outside programs read what Aurekai keeps: an MCP server for your desktop tools, an A2A card for other agents, and WebSub so publishers can push new posts instead of being polled.</p></div>"
@@ -487,7 +488,7 @@ static int sd_route_compiled(const char *host,const char *route){
  const char *path=getenv("BONFYRE_SUBJECT_FABRIC_DB");
  if(!path||!*path||!host||!*host)return 0;
  if(!(cms=cms_open_ro()))return 0;
- if(page_subject_for_host(cms,host,subject,sizeof subject)&&(fabric=bf_sqlite_open_readonly_path(path,1000))&&
+ if(page_subject_for_host(cms,host,subject,sizeof subject)&&(fabric=bf_store_open_ro(path,1000,&bf_store_policy_subject_fabric))&&
     sqlite3_prepare_v2(fabric,"SELECT 1 FROM subject_route WHERE subject=?1 AND scope='public' AND route=?2 LIMIT 1",-1,&st,NULL)==SQLITE_OK){
   sqlite3_bind_text(st,1,subject,-1,SQLITE_TRANSIENT);sqlite3_bind_text(st,2,route,-1,SQLITE_TRANSIENT);
   found=sqlite3_step(st)==SQLITE_ROW;}

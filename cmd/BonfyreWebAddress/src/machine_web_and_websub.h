@@ -1,6 +1,7 @@
 #ifndef BONFYRE_MACHINE_WEB_AND_WEBSUB_H
 #define BONFYRE_MACHINE_WEB_AND_WEBSUB_H
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 22435-23599 (mechanical split, no logic changes). */
 static int aperture_push(Action *acts, int n, int cap, const char *label,
                          const char *hint, int strength, int is_write, const char *href) {
@@ -730,7 +731,7 @@ static sqlite3 *websub_open(int writable) {
     sqlite3 *db = NULL;
     int flags = writable ? (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
                          : SQLITE_OPEN_READONLY;
-    if (sqlite3_open_v2(websub_db_path(), &db, flags, NULL) != SQLITE_OK) {
+    if (bf_store_open(websub_db_path(), &db, flags, &bf_store_policy_websub) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return NULL;
     }

@@ -1,6 +1,7 @@
 #ifndef BONFYRE_CREDIT_PROFILE_PROJECTION_H
 #define BONFYRE_CREDIT_PROFILE_PROJECTION_H
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 #include "credit_profile_host.h"
 #include "credit_profile_parent.h"
 /* Reuse the published member profile shell for read-only source-attributed
@@ -82,7 +83,7 @@ static int serve_credit_profile(const BfRequest *r) {
         if(!valid){if(!explicit_profile)return 0;ph_error(404,"This public profile section is unavailable.\n");return 1;}
         snprintf(tab,sizeof(tab),"%s",chosen);
     }
-    if(!archive||!(db=bf_sqlite_open_readonly_path(archive,1500))){
+    if(!archive||!(db=bf_store_open_ro(archive,1500,&bf_store_policy_item_archive))){
         ph_error(503,"The retained publication archive is unavailable.\n");return 1;
     }
     if(sqlite3_prepare_v2(db,
@@ -98,7 +99,7 @@ static int serve_credit_profile(const BfRequest *r) {
     sqlite3_finalize(st);
     const char *cms_path=getenv("BONFYRE_CMS_DB");
     if(found&&cms_path&&*cms_path){
-        sqlite3 *cms=bf_sqlite_open_readonly_path(cms_path,1500);
+        sqlite3 *cms=bf_store_open_ro(cms_path,1500,&bf_store_policy_cms);
         sqlite3_stmt *source_decl=NULL;
         if(!cms||sqlite3_prepare_v2(cms,
             "SELECT 1 FROM internet_source WHERE source=?1 AND status='published'"
@@ -117,7 +118,7 @@ static int serve_credit_profile(const BfRequest *r) {
     }
     if(!found){sqlite3_close(db);if(!explicit_profile)return 0;ph_error(404,"No retained publication credits that name and source.\n");return 1;}
     BfCreditProfileParent parent;
-    sqlite3 *parent_cms=cms_path&&*cms_path?bf_sqlite_open_readonly_path(cms_path,1500):NULL;
+    sqlite3 *parent_cms=cms_path&&*cms_path?bf_store_open_ro(cms_path,1500,&bf_store_policy_cms):NULL;
     bf_credit_profile_parent(parent_cms,db,by,source,&parent);
     if(parent_cms)sqlite3_close(parent_cms);
     PhSite profile={0};

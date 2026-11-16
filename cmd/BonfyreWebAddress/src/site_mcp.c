@@ -3,6 +3,7 @@
 #define _DARWIN_C_SOURCE
 #endif
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 #include "markdown_fence.h"
 /*
  * A site's own MCP server.
@@ -865,7 +866,7 @@ static long calls_since(const char *key_id, long seconds) {
      * its WAL files away, a readonly handle cannot recreate the shared-memory
      * index, its SELECT fails, and the count read 0 -- so no limit ever held.
      * This handle only reads. */
-    if (sqlite3_open_v2(meter_db, &db, SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+    if (bf_store_open(meter_db, &db, SQLITE_OPEN_READWRITE, &bf_store_policy_meter) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
     sqlite3_busy_timeout(db, 1000);
     now_iso(since, sizeof(since), seconds);
     if (sqlite3_prepare_v2(db, "SELECT count(*) FROM events WHERE key_id=?1 AND timestamp>=?2", -1, &st, NULL) == SQLITE_OK) {
@@ -2509,7 +2510,7 @@ static int estate_shared_host(const char *cms_db, const char *host_header) {
     colon = strrchr(host, ':');
     if (colon && !strchr(colon, ']')) *colon = '\0';
     for (int i = 0; roots[i]; i++) if (!strcmp(host, roots[i])) return 1;
-    if (sqlite3_open_v2(cms_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 1; }
+    if (bf_store_open(cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (db) sqlite3_close(db); return 1; }
     sqlite3_busy_timeout(db, 2000);
     if (sqlite3_prepare_v2(db, "SELECT 1 FROM site_presentation s JOIN site_program p ON p.site_id=s.site_id AND p.status='published' "
                                "WHERE s.host=?1 AND s.status='published' AND s.territory='independent' LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
@@ -2552,7 +2553,7 @@ int bf_site_mcp_serve(const char *method, const char *target, const char *query,
             by_path[n++] = *p;
         }
         by_path[n] = '\0';
-        if (n && sqlite3_open_v2(cms_db, &db, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+        if (n && bf_store_open(cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) == SQLITE_OK) {
             sqlite3_busy_timeout(db, 2000);
             if (load_site(db, host, by_path, &site) && !site.reading) {
                 snprintf(relay_base, sizeof(relay_base), "%s", site.host);
@@ -2569,7 +2570,7 @@ int bf_site_mcp_serve(const char *method, const char *target, const char *query,
     /* A site's own search: its published sections as a static index. */
     if (!strcmp(method, "GET") && !local && !shared &&
         (!strcmp(target, "/_search/passages.json") || !strcmp(target, "/_search/index.bfsi") || !strcmp(target, "/_search/model.bfse"))) {
-        if (sqlite3_open_v2(cms_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+        if (bf_store_open(cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
         sqlite3_busy_timeout(db, 2000);
         if (!load_site(db, host, NULL, &site)) { sqlite3_close(db); return 0; }
         serve_site_search(db, &site, target, cms_db);
@@ -2582,7 +2583,7 @@ int bf_site_mcp_serve(const char *method, const char *target, const char *query,
                  target[0] == '/' && target[1] && strlen(target) < 120 && strncmp(target, "/assets/", 8) && strncmp(target, "/_", 2) &&
                  !strchr(target, '.');
     if (!is_mcp && !is_llms && !is_card && !is_server_card && !is_a2a && !is_contact && !maybe_page) return 0;
-    if (sqlite3_open_v2(cms_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+    if (bf_store_open(cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
     sqlite3_busy_timeout(db, 2000);
     if (!load_site(db, host, by_path[0] ? by_path : NULL, &site)) { sqlite3_close(db); return 0; }
     if (is_mcp && !site_origin_allowed(origin, host, &site)) {

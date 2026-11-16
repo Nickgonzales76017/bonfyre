@@ -153,7 +153,7 @@ static int world_music_api(const char *method,const char *query,const char *body
     if(!member&&(!world_web_number(v[WM_WORLD],&world,0)||(post&&!world_web_number(v[WM_REVISION],&rev,0))))WM_FAIL(400,"Invalid workspace request.\n");
     if(member&&(*v[WM_WORLD]||*v[WM_REVISION]||!*v[WM_ID]))WM_FAIL(400,"Invalid workspace request.\n");
     const char *path=getenv("BONFYRE_CMS_DB");sqlite3 *db=NULL;char subject[160],again[160],actor[160];const char *scope=NULL;const char *site=v[WM_SITE],*space=v[WM_SPACE];
-    if(!path||!*path||sqlite3_open_v2(path,&db,post?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);WM_FAIL(503,"Workspace unavailable.\n");}
+    if(!path||!*path||!(db=post?cms_open_rw():cms_open_ro())){if(db)sqlite3_close(db);WM_FAIL(503,"Workspace unavailable.\n");}
     sqlite3_busy_timeout(db,2000);PhSite where;
     #define WM_ADMIT(out) (member?(psetup_context(bearer,auth_db,"self",post?2:0,actor,sizeof(actor),out,160,&scope)==1&&ph_site(db,NULL,site,&where)):world_web_admit(bearer,auth_db,db,site,post,out))
     if(!WM_ADMIT(subject)){sqlite3_close(db);WM_FAIL(404,"Workspace unavailable.\n");}

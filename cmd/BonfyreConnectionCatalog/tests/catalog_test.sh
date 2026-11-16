@@ -69,3 +69,19 @@ for limit in 0 101 -1; do
   test ! -s "$tmp/refused.json"
 done
 echo 'connection catalog tests passed'
+
+# Columnar store kind (schemas/storage/stores: connection_facets, connection_entries):
+# a file lacking a declared column is refused before the query runs, and the
+# real catalogue files, when this host has them, read back through the same
+# declared schema.
+if "$catalog" list --facets "$tmp/entries.parquet" --entries "$tmp/entries.parquet" > "$tmp/undeclared.json" 2> "$tmp/undeclared.err"; then
+  echo "accepted a facets file without its declared columns" >&2; exit 1
+fi
+grep -q "lacks declared column catalogue" "$tmp/undeclared.err"
+real=${BONFYRE_CONNECTION_CATALOG_DIR:-$HOME/.bonfyre/estate-local}
+if [ -r "$real/workboard-connector-facets-20261102-v2.parquet" ] && [ -r "$real/workboard-source-entries-20261102.parquet" ]; then
+  "$catalog" list --facets "$real/workboard-connector-facets-20261102-v2.parquet" \
+    --entries "$real/workboard-source-entries-20261102.parquet" --limit 5 > "$tmp/real.json"
+  python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert len(d["entries"])==5, d' "$tmp/real.json"
+  echo "columnar store kind: real catalogue Parquet read back through the declared schema"
+fi

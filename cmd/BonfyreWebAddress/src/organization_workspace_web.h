@@ -1,6 +1,7 @@
 #ifndef BONFYRE_ORGANIZATION_WORKSPACE_WEB_H
 #define BONFYRE_ORGANIZATION_WORKSPACE_WEB_H
 #include "form_tree.h"
+#include "web_store.h"
 /* Ordinary forms call Auth's existing admission owner. Cookies, member grants,
  * packages, editor records and provider authority keep their existing owners. */
 typedef struct {char organization[97],name[161],nonce[65],email[321],role[8],hours[4],secret[65],operation[24],digest[65],revision[24],expiry[64],expected[8],after[97],pack[97],provider[24],mode[8];} OgForm;
@@ -73,7 +74,7 @@ static int og_origin(const char *raw,const char *host){char origin[512],type[128
 static int og_pending(const char *raw,char secret[65]){char cookies[8192];if(!aw_header(raw,"Cookie",cookies,sizeof(cookies)))return 0;int found=0;for(char *p=cookies;*p;){while(*p==' ')p++;char *end=strchr(p,';');if(!end)end=p+strlen(p);const char *key="aurekai_org_invite=";size_t n=strlen(key);if((size_t)(end-p)>=n&&!strncmp(p,key,n)){if(found++||(size_t)(end-p)!=n+64)return 0;memcpy(secret,p+n,64);secret[64]=0;}p=*end?end+1:end;}return found==1&&og_token(secret);}
 static void og_members(const char *id,const char *token,const char *auth_db){
  if(!session_institution_authorized(token,auth_db,id,"admin"))return;
- sqlite3 *db=NULL;sqlite3_stmt *q=NULL;if(sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+ sqlite3 *db=NULL;sqlite3_stmt *q=NULL;if(bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
  const char *sql="SELECT u.id,u.name,u.email,g.role,COALESCE(g.expires_at,''),g.active FROM institution_grants g JOIN users u ON u.id=g.user_id WHERE g.institution=? ORDER BY u.id LIMIT 101";
  if(sqlite3_prepare_v2(db,sql,-1,&q,NULL)!=SQLITE_OK)goto done;sqlite3_bind_text(q,1,id,-1,SQLITE_STATIC);StudioViewer me;if(!session_identity(token,auth_db,&me))goto done;
  fputs("<section><h2>People and access</h2><p>Read permits inspection, write permits editing, and admin permits configuration and access management. Changes use the existing Auth owner and recheck the reviewed role and expiry.</p><div class=\"scroll\"><table><thead><tr><th>Person</th><th>Access</th><th>Reviewed change</th></tr></thead><tbody>",stdout);
@@ -150,7 +151,7 @@ static int serve_organization_workspace(const BfRequest *r) {
  if(have_result){fputs("<p class=\"result\" role=\"status\">",stdout);html(result.message);fputs("</p>",stdout);if(!strcmp(form.operation,"invite")&&result.count==2&&result.rows[1].count==4){fputs("<p>Send this private link to ",stdout);html(form.email);fputs(". It expires at ",stdout);html(result.rows[0].value[3]);fputs(".</p><a class=\"invite-link\" data-org-invitation href=\"/organizations/join#",stdout);html(result.rows[1].value[2]);fputs("\">Open or copy the private invitation link</a>",stdout);}}
  if(*form.organization){
   sqlite3 *names=NULL;sqlite3_stmt *name=NULL;
-  if(sqlite3_open_v2(auth_db,&names,SQLITE_OPEN_READONLY,NULL)==SQLITE_OK&&sqlite3_prepare_v2(names,"SELECT label FROM institution_origins WHERE institution=?",-1,&name,NULL)==SQLITE_OK){sqlite3_bind_text(name,1,form.organization,-1,SQLITE_STATIC);if(sqlite3_step(name)==SQLITE_ROW){fputs("<h2 data-org-name>",stdout);html((const char *)sqlite3_column_text(name,0));fputs("</h2>",stdout);}}sqlite3_finalize(name);if(names)sqlite3_close(names);
+  if(bf_store_open(auth_db, &names, SQLITE_OPEN_READONLY, &bf_store_policy_auth)==SQLITE_OK&&sqlite3_prepare_v2(names,"SELECT label FROM institution_origins WHERE institution=?",-1,&name,NULL)==SQLITE_OK){sqlite3_bind_text(name,1,form.organization,-1,SQLITE_STATIC);if(sqlite3_step(name)==SQLITE_ROW){fputs("<h2 data-org-name>",stdout);html((const char *)sqlite3_column_text(name,0));fputs("</h2>",stdout);}}sqlite3_finalize(name);if(names)sqlite3_close(names);
   fputs("<p>Destination: <code>",stdout);html(form.organization);fputs("</code></p>",stdout);og_open_links(form.organization,form.pack);og_members(form.organization,token,auth_db);og_subaccounts(form.organization,token,auth_db);
   if(session_institution_authorized(token,auth_db,form.organization,"admin")){
    og_subaccount_create_form(form.organization,nonce);

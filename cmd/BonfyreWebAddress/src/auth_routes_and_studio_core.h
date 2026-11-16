@@ -1,6 +1,7 @@
 #ifndef BONFYRE_AUTH_ROUTES_AND_STUDIO_CORE_H
 #define BONFYRE_AUTH_ROUTES_AND_STUDIO_CORE_H
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 2780-4027 (mechanical split, no logic changes). */
 static int valid_token(const char *t) {
     if (!t || strncmp(t, "bfy_", 4)) return 0;
@@ -1345,7 +1346,7 @@ static const char *native_presentation_class(const char *bearer, const char *aut
     const char *answer = "anonymous";
     if (!session_identity(bearer, auth_db, &who)) return answer;
     answer = "personal";
-    if (sqlite3_open_v2(auth_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) goto done;
+    if (bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth) != SQLITE_OK) goto done;
     if (sqlite3_prepare_v2(db,
         "SELECT g.institution,g.role,g.expires_at FROM sessions s JOIN institution_grants g ON g.user_id=s.user_id "
         "WHERE s.token=? AND g.active=1", -1, &st, NULL) != SQLITE_OK) goto done;

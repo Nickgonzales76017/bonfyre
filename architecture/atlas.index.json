@@ -29167,7 +29167,9 @@
         "a CapabilityProgram -> credential, price, spend authority, payment, settlement or a completed effect",
         "an ExperienceStage -> a linear user journey, authority or a completed state transition",
         "a renderer layout -> material ownership, source admission, a provider, rights, authority or an effect",
-        "WorkExample.made_with -> client account ownership, client endorsement, delivery, availability or authority to use the account's records"
+        "WorkExample.made_with -> client account ownership, client endorsement, delivery, availability or authority to use the account's records",
+        "a filled settings summary -> a saved page; values are a draft until the composer's save is acknowledged and read back",
+        "the workspace home's counts -> publication, review or audience; they count site_page rows of this namespace only"
       ],
       "internal_calculi": [],
       "invariants": [
@@ -29206,14 +29208,18 @@
         "browser narration speaks nested article blocks once and omits hidden descendants while accepting an explicitly selected hidden text source",
         "rejected recordings and failed browser narration restore the play control and expose a retry message",
         "a member journal index uses the estate navigation and footer while its published articles remain scoped to the site's namespace",
-        "the page composer opens a profile site namespace only through ?site= with the exact profile ownership proof (write session, bound actor, published member site, Matrix presence); anything else keeps the actor workspace, and the served composer threads the site through read, save, listing and history so a site edit can never land in the wrong namespace"
+        "the page composer opens a profile site namespace only through ?site= with the exact profile ownership proof (write session, bound actor, published member site, Matrix presence); anything else keeps the actor workspace, and the served composer threads the site through read, save, listing and history so a site edit can never land in the wrong namespace",
+        "the visual editor's pages rail and \"This page\" settings are native markup from the site_page records (form_tree/ui_tree builders): a recent-pages list, one primary \"Start a page\" with a server-made unguessable draft address, and the page's settings as an edit-in-place summary whose article rows show only once the page is an article; page-directory.mjs only reads that form at save time",
+        "/cms/compose with no route is the native workspace home in the Stitch artboard layout (pages, one start-a-page field, drafts waiting, a three-number summary) laid out through the numeric presentation vocabulary; ?route= hands over to the section composer unchanged",
+        "?new=article without a route gets its /blog/draft-<20 hex>/ address and article defaults from the server; the browser no longer mints article addresses"
       ],
       "known_gaps": [
         "the journal index still renders a lead and a ruled list; the assigned editorial Discover screen uses a split lead and a card grid, so page parity remains unverified and incomplete",
         "the existing Ghost marketplace compiler still derives 238 visual vectors from category/hash variation rather than 238 separately observed complete SiteProfiles; its generated fingerprints must remain reference candidates until each profile has measured masthead, hero, section sequence, media geometry, mobile collapse, motion and application-slot contracts",
         "current public donor shells still contain legacy browser renderers. They must be replaced aperture-by-aperture by native initial HTML and HTMX fragment boundaries from this composition contract; no generic external-estate card lowerer may substitute for that work",
         "Agriculture now has native PublicationFeed, Community, Board, Listen and Watch lowerers with an explicit WeatherObservation empty state. It still needs a real WeatherObservation owner/lowerer, Ghost profile slot geometry, HTMX refresh contracts and the remaining application lowerers before it can replace an established public donor surface.",
-        "journal narration through the estate player needs browser and responsive visual verification against its Stitch screen"
+        "journal narration through the estate player needs browser and responsive visual verification against its Stitch screen",
+        "cms_page_composer.test.mjs lost-reply step fails against the in-tree bonfyre-cms: its page-read drops site_fragment semantic_tags and projection_contract, so the browser cannot confirm an interrupted save (the release bonfyre-cms keeps them)"
       ],
       "layer": "surface",
       "maturity": "declared",
@@ -29270,7 +29276,9 @@
         "cmd/BonfyreWebAddress/src/cms_page_composer_markup.h",
         "cmd/BonfyreWebAddress/tests/cms_page_composer.test.mjs",
         "cmd/BonfyreWebAddress/src/cms_page_composer_visual.h",
-        "components/BonfyreServiceSite/authoring/entry.mjs"
+        "components/BonfyreServiceSite/authoring/entry.mjs",
+        "cmd/BonfyreWebAddress/src/cms_page_composer_home.h",
+        "components/BonfyreServiceSite/authoring/page-directory.mjs"
       ],
       "subscribes": [],
       "views": [],
@@ -29288,7 +29296,8 @@
         "cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs uses controlled browser speech and audio engines to check nested article text, hidden text, speech errors and rejected recording playback",
         "2026-11-10 the reference post served 200 from preview at nick.aurekai.work/blog/a-job-posting-has-more-than-one-job/ with both reference section headings in order, estate canonical, mature four-sheet style refs and no GitHub Pages origin leak; unpublished slug answered 404 and all five style assets 200",
         "2026-11-11 cms_page_composer.test.mjs proves an owner opens, saves and lists in the site namespace while another account and an unknown site get 403 with actor-namespace isolation; live preview returned the real site snapshot for person-nick-work and the profile edit tab links into it",
-        "2026-11-11 the visual workspace bundle (Puck, GrapesJS, Editor.js, narration handoff) builds stamped bonfyre:generated, serves with its shells at /cms/compose/advanced, and mounted in headless Chrome with zero console errors listing the site's pages"
+        "2026-11-11 the visual workspace bundle (Puck, GrapesJS, Editor.js, narration handoff) builds stamped bonfyre:generated, serves with its shells at /cms/compose/advanced, and mounted in headless Chrome with zero console errors listing the site's pages",
+        "2026-11-15 in a lane preview over cloned stores, Chrome edited the heading in the server-drawn settings and saved it through \"Save this page\" (snapshot heading read back), the Article choice revealed and hid byline/date rows, and ?new=article opened /blog/draft-<hex>/ with kind article and identity article:draft-<hex>; zero page errors; cms_advanced_composer.test.mjs 2/2 and profile_site_scope.test.mjs 38/38 pass"
       ]
     },
     "sli-execution": {
@@ -30155,7 +30164,10 @@
       "forbidden_inferences": [
         "a declared durability policy -> the WAL is bounded; a reader blocked outside SQLite inside the deadline, or an owner that opens the file without the policy, still pins it",
         "a vector store declared -> its embeddings are current, were made by the named model, or that sqlite-vec is loadable where the owner runs",
-        "a declared ranker, columnar or dynamic store -> an owner opens it that way; those kinds compile but no owner has moved onto them yet",
+        "a ranker store declared -> its order is relevant, admitted or better than the deterministic frontier; the kind names where the learned order lives, the passport decides what it may be used for",
+        "a columnar store whose files carry the declared columns -> their rows are correct, current or complete; the check is names only, not types or content",
+        "a dynamic join that attached -> the joined store is fresh or that the request may read every row in it; the probe proves one table exists",
+        "a lease-only declaration -> WebAddress governs that store's journal; the writer owns its policy",
         "a declared table -> the owner's store exists, is migrated, holds data, or that any other owner may read or write it; the registry names DDL, not access rights or a migration plan"
       ],
       "internal_calculi": [],
@@ -30164,7 +30176,12 @@
         "joined in order, a fragment's statements are the fragment; kind and name are read from each statement and a table, index, view or trigger row must start with the matching CREATE clause",
         "a generated header is never edited by hand; compile-store-schemas.sh --check refuses a header that differs from the registry, and the pre-commit hook runs it",
         "the ui-ratchet handwritten_ddl count of CREATE TABLE in cmd/*/src and components/*/src C and H sources may only go down",
-        "a declared store names its kind (sqlite, vector, ranker, columnar, dynamic) and the compiler emits BF_STORE_<macro>_KIND plus that kind's shape constants (vector table, width or runtime, metric, quantization, model; ranker key space; columnar format, cold glob, hot shadow DDL, promotion rule; dynamic declaring table, shard, attach); every owner in opened_by gets the same constants",
+        "a declared store names its kind (sqlite, vector, ranker, columnar, dynamic) and the compiler emits BF_STORE_<macro>_KIND plus that kind's shape constants: vector table, width or runtime, metric, quantization, model; ranker key space, run and frontier tables, key and order columns, weights passport and the generated frontier order query; columnar format, cold location, declared columns, a bound cold scan, a missing-columns check over parquet_schema, and for a hot shadow its DuckDB attach, ordered export and (ddl columns) hot DDL, plus the promotion rule; dynamic shard, and for shard named a BfStoreJoin array (schema name, env, probe table, required) with the bound ATTACH ?1 AS ?2; every owner in opened_by gets the same constants",
+        "a store declares durability (writer policy) or lease (reader busy timeout and read deadline), never both; either compiles to a static bf_store_policy_<name> in the owner's header",
+        "every store file a WebAddress serve worker opens goes through bf_store_open, bf_store_open_ro or cms_open_ro/rw with its declared policy; the ui-ratchet direct_store_opens count (raw sqlite3_open*/bf_sqlite_open_readonly_path in WebAddress src, private :memory: databases excepted) is 0 and may only stay there",
+        "bf_store_open applies a declared writer policy only on a read-write open of a store that declares durability; a lease-only store opened read-write keeps its writer's pragmas",
+        "lease state is one process-wide table shared by every translation unit (weak definitions), so a connection opened in site_mcp.c or detail_depth.c is reaped by the serve loop in main.c; a leak report names the opening file:line",
+        "a process-lifetime handle (the receipt pack) is opened with bf_store_open_held: declared busy timeout, never leased, so the end of a request cannot close it",
         "a store with durability compiles to one BfStoreDurability initializer; every writer of the CMS store (bonfyre-cms and WebAddress cms_open_rw) applies it through bf_store_writer, and every WebAddress cms_open_ro/rw connection is leased to the request that opened it",
         "a writer commit that leaves the WAL at or past wal_truncate_pages runs a TRUNCATE checkpoint; after a refusal it waits another wal_truncate_pages before retrying, so a long reader costs writers one wait per threshold",
         "at the end of every served request, connections the request left open are finalized and closed and reported on stderr; a request that holds a leased store past read_txn_max_ms is ended by SIGALRM (worker exits 75 and the pool restarts)",
@@ -30172,9 +30189,11 @@
       ],
       "known_gaps": [
         "the 13 GB CMS WAL of 2026-11-15 was written by the release activity-public-20261021, whose bonfyre-web-address and bonfyre-cms carry no wal_autocheckpoint, journal_size_limit or TRUNCATE policy at all; the leak or long reader in that build was not identified, and the fix takes effect only once a release built from this tree is installed",
-        "about fifteen WebAddress handlers open the CMS file directly with sqlite3_open_v2 (account_world_* POST writers, site_mcp, people_projection, world_cache, governance) and are neither leased nor under the writer policy",
-        "ranker, columnar and dynamic kinds compile to constants but no owner uses them yet (BitNet rank_source attach, Spatial and ConnectionCatalog parquet reads, detail_depth and SurfaceMaturity dynamic attaches remain hand-written)",
-        "DDL composed with C macros (cmd/BonfyreCMS account_world_literature, account_world_music, account_world_audio) and DDL built at run time with format arguments (BonfyreBridge) are still in source; ALTER TABLE migrations and columns added after creation live in owner code, not here; Makefiles do not yet list generated/store_schema.h as a prerequisite, so a registry change needs a rebuild of the owner"
+        "most stores WebAddress opens are declared under cmd/BonfyreWebAddress with written_by naming the real owner; they move to their owners' files (WebAddress joining opened_by) as those owners declare them",
+        "handwritten_store_shapes keeps 2: BonfyreBridge composes DuckDB ATTACH for endpoints named at run time, and BonfyreCanon's classifier matches the text \"ATTACH \" in literals it reads; neither is a store shape",
+        "the CMS store-durability witness's bounded-WAL step is timing-sensitive under machine load (1 of 5 runs refused one TRUNCATE with both the HEAD and the tree header)",
+        "the tenant and site shards of the dynamic kind compile but no owner uses them; the owners moved are named joins",
+        "DDL composed with C macros (cmd/BonfyreCMS account_world_literature, account_world_music, account_world_audio) and DDL built at run time with format arguments (BonfyreBridge) are still in source; ALTER TABLE migrations and columns added after creation live in owner code, not here; BitNet, ConnectionCatalog, SurfaceMaturity and WebAddress's dynamic witness now list generated/store_schema.h as a prerequisite; other owners' Makefiles do not yet"
       ],
       "layer": "substrate",
       "maturity": "implemented",
@@ -30189,7 +30208,16 @@
         ".githooks/pre-commit",
         "lib/libbonfyre/include/bf_store_durability.h",
         "cmd/BonfyreCMS/tests/store_durability_test.c",
-        "cmd/BonfyreVec/tests/vector_store_kind_test.c"
+        "cmd/BonfyreVec/tests/vector_store_kind_test.c",
+        "schemas/storage/stores/cmd-BonfyreWebAddress.cue",
+        "schemas/storage/stores/cmd-BonfyreConnectionCatalog.cue",
+        "schemas/storage/stores/cmd-BonfyreSurfaceMaturity.cue",
+        "cmd/BonfyreWebAddress/src/web_store.h",
+        "cmd/BonfyreBitNet/tests/ranker_store_kind_test.c",
+        "cmd/BonfyreWebAddress/tests/dynamic_store_kind_test.c",
+        "cmd/BonfyreConnectionCatalog/tests/catalog_test.sh",
+        "cmd/BonfyreSpatial/tests/spatial_test.sh",
+        "scripts/ui-ratchet.sh"
       ],
       "subscribes": [],
       "views": [],
@@ -30197,7 +30225,12 @@
         "scripts/compile-store-schemas.sh --check; a compiled probe prints every macro and matches the 219 literals captured from the hand-written sources byte for byte; Auth, Finance, Entity and Space stores created by the old and new binaries have identical .schema output; owner test suites pass",
         "make -C cmd/BonfyreCMS store-durability-test: under the declared CMS policy with a reader process that always holds a read transaction, a passive-only writer's WAL reaches 460 MB while the declared writer stays at 67.5 MB (bound 67.7 MB, 6 truncations); a leaked statement pins the WAL to 231 MB until bf_store_leases_end reaps it, then the WAL falls back under the bound; a request blocked past read_txn_max_ms exits 75",
         "make -C cmd/BonfyreVec vector-store-kind-test: vec_artifacts built from BF_STORE_VEC_INDEX_VECTOR_DDL at width 4 holds exactly the registry text in sqlite_master and sqlite-vec answers the nearest neighbours a, c",
-        "WebAddress serving preview copies across ~1900 GET requests (HTML, JSON, signed-in) reaped no leased CMS connection"
+        "WebAddress serving preview copies across ~1900 GET requests (HTML, JSON, signed-in) reaped no leased CMS connection",
+        "make -C cmd/BonfyreBitNet ranker-store-kind-test: a rank store built from the bitnet_rank_run fragment, attached read-only by BF_STORE_BITNET_RANK_ATTACH, returns its frontier through BF_STORE_BITNET_RANK_RANKER_FRONTIER in rank order and refuses a write; contract_test.sh evaluate-retention passes through the same attach",
+        "sh cmd/BonfyreConnectionCatalog/tests/catalog_test.sh: a facets file lacking catalogue is refused by the declared missing-columns check; the real 7,106-row connector-facets and 10,052-row source-entries Parquet files read back through the declared schema",
+        "sh cmd/BonfyreSpatial/tests/spatial_test.sh: the exported cold Parquet carries all 19 declared spatial_fact_cold columns and hot/cold fidelity is identical",
+        "make -C cmd/BonfyreWebAddress dynamic-store-kind-test: item_depth joins by its declared rows; a present store with its probe joins, an absent store and one without its probe table do not; joined stores refuse writes",
+        "2026-11-15 tree vs HEAD WebAddress binaries on separate preview lanes, 376 requests (188 routes x HTML/JSON): identical status and Location everywhere; bodies identical except routes-agent 404 pages, asset version hashes, nonces and the capability listing order of the archived tree; zero leases reaped, no deadline exits"
       ]
     },
     "subject-index": {
@@ -32465,6 +32498,9 @@
       "experience_chains": [],
       "family": "forwarding",
       "forbidden_inferences": [
+        "a suggestion -> the route exists for this caller, the caller may open it, or the owner will answer",
+        "a high suggestion score -> the same meaning; the static vector has no word order and scores compare only within one .bfse",
+        "a records match -> the owner will answer 200 or that the record is readable by this caller",
         "a declared route -> the request is authorized, the caller is signed in, the method is allowed, or the owner will answer",
         "a row's when facts -> content negotiation is complete or the representation the owner returns",
         "a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token"
@@ -32476,10 +32512,17 @@
         "an owner asked through a row sees that row's declared name in BfRequest.as; a caller that picks an owner directly (the static export, the public asset export) asks it through the owner's own first matching row so it sees the same name",
         "the table ends in rows that always answer (the resolver, then a transport-level 405 for any non-GET), so nothing falls past dispatch",
         "owners still check their own method, origin, session and authority; the table only decides who is asked",
-        "main.c holds one dispatch call and no per-owner branch; the ui-ratchet dispatch_branches and route_path_compares counts may only go down"
+        "main.c holds one dispatch call and no per-owner branch; the ui-ratchet dispatch_branches and route_path_compares counts may only go down",
+        "a records row asks its store only after its prefix matched, read-only through the store's declared durability and request lease (cms_open_ro for the cms store), with a declared SELECT that tests exactly what the owner tests; the compiler refuses a store not declared as opened by cmd/BonfyreWebAddress, and a statement that would write is refused at run time",
+        "a records row sits in its owner's old place in the order and adds no when fact; the owner keeps its method, session and guest checks (a published note that is not guest-readable still answers 401 from the owner)",
+        "the semantic row is exactly one and last; it never matches a request, and only the resolver's HTML not-found branch reads it; machine representations keep the resolver's JSON verdict byte for byte",
+        "a suggestion is offered only from a titled row whose when facts hold for a browser GET on this host and server, or from a record set's declared suggest query that applies the owner's own index rule (published and guest-readable); the status stays 404"
       ],
       "known_gaps": [
         "some owners still sit on any rows and decide their own paths inside (studio, superuser control, account continuity, companions, matrix closure, governance acts and several app workspaces); their path checks use a spaced or different-variable form that the route_path_compares count does not see",
+        "only one record set exists (CMS notes); member addresses (/people/<person>) stay a prefix row because that owner answers its own 404 and redirect, and route_presentation rows are presentation only (their owner keeps the route), so neither is a route source yet",
+        "the ranker is the static model blended with trigrams; the BitNet address ranker is SHADOW-only on ARM and is not used here, and suggestion quality is measured only by the witness cases, not by a labelled set of missed paths",
+        "other owners' own 404s (an owner that answers 404 itself) do not reach the resolver tail and show no suggestions",
         "the static_asset_closure_test fixture answers bf_web_route_ask by calling the owner directly, so it does not exercise the row lookup"
       ],
       "layer": "forwarding",
@@ -32495,12 +32538,17 @@
         "cmd/BonfyreWebAddress/src/web_request.h",
         "cmd/BonfyreWebAddress/generated/native_web_routes.h",
         "cmd/BonfyreWebAddress/src/main.c",
+        "cmd/BonfyreWebAddress/src/web_route_kinds.h",
+        "cmd/BonfyreWebAddress/src/surface_fragments_and_ops.h",
+        "cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh",
         "cmd/BonfyreWebAddress/Makefile",
         "scripts/ui-ratchet.sh"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
+        "cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh (make web-route-kinds-witness): a running server 404s /notes/river-crossing, answers 200 the moment the wiki_page row is inserted with no rebuild or restart, keeps the owner's 401 for a non-guest note and 404 for a draft, ranks the record first for /notes/river-crosing, offers /communities for /comunities and /what-things-cost for /prices, shows the empty state for /zqxjv, never offers non-guest or draft records, and keeps the JSON not_found verdict for machines",
+        "2026-11-15 comparison of 1,720 requests (every declared path, path+x and path+/ plus 29 tail paths; GET and POST; text/html and application/json) against a binary built from HEAD on cloned stores: 0 status or redirect differences, 1,539 identical bodies, 177 differing bodies all GET text/html 404s, and 4 /ops bodies that vary between repeated requests on HEAD itself",
         "cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server"
       ]
     },
@@ -35014,6 +35062,36 @@
       "relation": "post_commit_typed_change_notice",
       "source": "cmd-c-m-s"
     },
+    "columnar-kind-binds-connection-catalog": {
+      "destination": "cmd-web-address",
+      "drops": [
+        "any hot shadow; the catalogue keeps none"
+      ],
+      "forbidden_inferences": [
+        "the catalogue files carry the declared columns -> their candidates are verified sources"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the declared facets and entries columns, bound cold scans, refusal of a file lacking a declared column"
+      ],
+      "relation": "columnar-cold-only-read",
+      "source": "store-schema-registry"
+    },
+    "columnar-kind-binds-spatial-durable-tier": {
+      "destination": "cmd-spatial",
+      "drops": [
+        "columns added later by ALTER TABLE from the declared promise (they still ride along in the export)"
+      ],
+      "forbidden_inferences": [
+        "a cold file with the declared columns -> it may replace the hot store; only --verify identical says the same facts"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "hot table spatial_fact as source, DuckDB read-only hot attach, export ordered by fact_id with zstd, cold scan for verify, thaw-only promotion"
+      ],
+      "relation": "columnar-hot-shadow-export",
+      "source": "store-schema-registry"
+    },
     "command-law-seeds-discipl": {
       "destination": "discipl-composition",
       "drops": [
@@ -35909,6 +35987,36 @@
       ],
       "relation": "shared-catalog-and-route-transport",
       "source": "dual-agent-fabric-native-owner"
+    },
+    "dynamic-kind-binds-detail-depth": {
+      "destination": "detail-depth",
+      "drops": [
+        "freshness of the joined stores"
+      ],
+      "forbidden_inferences": [
+        "a join attached -> the item page may show every row of the joined store"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "schema names fr, fp, dd, jt, their environment variables and probe tables; read-only URI attaches bound as ?1/?2"
+      ],
+      "relation": "named-store-joins",
+      "source": "store-schema-registry"
+    },
+    "dynamic-kind-binds-surface-maturity": {
+      "destination": "cmd-surface-maturity",
+      "drops": [
+        "which estate directory names each file; the owner resolves paths"
+      ],
+      "forbidden_inferences": [
+        "every join attached -> the estate is mature; the audit gates decide that"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the seven estate joins (cms required) attached read-only under their declared names"
+      ],
+      "relation": "named-store-joins",
+      "source": "store-schema-registry"
     },
     "each-rung-is-produced-by-the-owner-that-owns-it": {
       "destination": "commitment-graph",
@@ -39950,6 +40058,21 @@
       "relation": "projects_admitted_work_graph_and_native_recipient_state",
       "source": "cmd-queue"
     },
+    "ranker-kind-binds-bitnet-rank-store": {
+      "destination": "cmd-bit-net",
+      "drops": [
+        "the representation passport's standing; the weights string names the passport, it does not check it"
+      ],
+      "forbidden_inferences": [
+        "a ranker store declared -> its rank is relevance, selection or admission"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "run and frontier tables, key and order columns, read-only attach as rank_source, rank order of the frontier"
+      ],
+      "relation": "ranker-store-attach-and-frontier",
+      "source": "store-schema-registry"
+    },
     "ratchet-measures-command-vectors": {
       "destination": "native-ratchet",
       "drops": [
@@ -41640,14 +41763,14 @@
     "store-durability-leases-web-readers": {
       "destination": "cmd-web-address",
       "drops": [
-        "which owner leaked, beyond the caller address printed on stderr"
+        "which owner leaked, beyond the opening file:line (or caller address) printed on stderr"
       ],
       "forbidden_inferences": [
         "zero reaped leases in a crawl -> no route leaks; only the routes asked were observed"
       ],
       "invalidates_on": [],
       "preserves": [
-        "one CMS connection lifetime per request; leaked connections closed at request end; requests past read_txn_max_ms ended"
+        "one connection lifetime per request for every declared store a worker opens (CMS and the lease-only stores); leaked connections closed at request end; requests past read_txn_max_ms ended"
       ],
       "relation": "request-scoped-store-lease",
       "source": "store-schema-registry"
@@ -42434,6 +42557,41 @@
       "relation": "links_shared_composition_units_into_serving_binary",
       "source": "cmd-web-address"
     },
+    "web-route-table-ranks-not-found-with-static-embedding": {
+      "destination": "static-semantic-search",
+      "drops": [
+        "word order (static vectors) and every candidate below the declared floor or past five"
+      ],
+      "forbidden_inferences": [
+        "a suggestion -> the route exists or the caller may open it",
+        "a suggestion score -> the same meaning or a score comparable across models"
+      ],
+      "invalidates_on": [
+        "a new .bfse, a change to the semantic row, or a change to any row's title"
+      ],
+      "preserves": [
+        "the missing path's words, each titled row's path and title, each guest-readable record's path and title, and the .bfse the vectors come from"
+      ],
+      "relation": "not_found_suggestion_ranking",
+      "source": "web-route-table"
+    },
+    "web-route-table-reads-declared-record-stores": {
+      "destination": "store-schema-registry",
+      "drops": [
+        "every column but whether a row exists; the owner reads the record itself"
+      ],
+      "forbidden_inferences": [
+        "a records match -> the owner will answer 200 or that the caller may read the record"
+      ],
+      "invalidates_on": [
+        "a change to the store's declaration in schemas/storage/stores, to its opened_by list, or to the owner's own record query"
+      ],
+      "preserves": [
+        "the request path bound at ?1 of the row's declared read-only SELECT, the store's declared durability and request lease, and the row's place in the dispatch order"
+      ],
+      "relation": "records_route_reads_declared_store",
+      "source": "web-route-table"
+    },
     "web-source-publication-uses-native-cms-transaction": {
       "destination": "cmd-c-m-s",
       "drops": [
@@ -42848,9 +43006,9 @@
   },
   "provenance": {
     "cannot_infer": "a matching digest -> a correct atlas; it says this index was built from these declaration bytes and nothing more",
-    "declaration_digest": "9e04124c0096054f9e0ea1396fdc8cc782d54ed00cd58fcbb13727c294564a85",
+    "declaration_digest": "f470f6cfadb220b0bf578636232f2f051ff1e6ad2d357eaf7efe06df99c06598",
     "declaration_files": 157,
-    "generated_at": "2026-11-15T23:22:29Z"
+    "generated_at": "2026-11-16T02:03:26Z"
   },
   "views": {
     "CapabilityView": {

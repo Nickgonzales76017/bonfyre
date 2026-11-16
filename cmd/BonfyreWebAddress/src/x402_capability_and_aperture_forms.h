@@ -1,12 +1,13 @@
 #ifndef BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
 #define BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 14174-15948 (mechanical split, no logic changes). */
 static int x402_price_usd(const char *name, double *out) {
     const char *fin = getenv("BONFYRE_FINANCE_DB");
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int found = 0;
     if (!fin || !*fin) fin = "/var/lib/bonfyre/state/finance.db";
-    if (sqlite3_open_v2(fin, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+    if (bf_store_open(fin, &db, SQLITE_OPEN_READONLY, &bf_store_policy_finance) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
     if (sqlite3_prepare_v2(db, "SELECT sell_price FROM services WHERE name = ? LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, name, -1, SQLITE_TRANSIENT);
         if (sqlite3_step(st) == SQLITE_ROW) { *out = sqlite3_column_double(st, 0); found = 1; }
@@ -102,7 +103,7 @@ static void room_settlement(char *out, size_t cap, const char *institution_id) {
     if (!institution_id || !*institution_id) return;
 
     if (path && *path && bf_sqlite_readonly_uri(uri, sizeof(uri), path) < (int)sizeof(uri) &&
-        sqlite3_open_v2(uri, &mx, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+        bf_store_open(uri, &mx, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_matrix) == SQLITE_OK &&
         sqlite3_prepare_v2(mx, "SELECT COALESCE(institution_kind,''), COALESCE(world,''),"
                                " COALESCE(evidence_ref,'') FROM matrix_institutions"
                                " WHERE institution_id = ?1 LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
@@ -123,7 +124,7 @@ static void room_settlement(char *out, size_t cap, const char *institution_id) {
         const char *mpath = getenv("BONFYRE_METER_DB");
         sqlite3 *me = NULL;
         if (mpath && *mpath && bf_sqlite_readonly_uri(uri, sizeof(uri), mpath) < (int)sizeof(uri) &&
-            sqlite3_open_v2(uri, &me, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) == SQLITE_OK &&
+            bf_store_open(uri, &me, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_meter) == SQLITE_OK &&
             sqlite3_prepare_v2(me, "SELECT COUNT(DISTINCT receipt_ref),"
                                    " SUM(trim(realization_ref) <> '') FROM events", -1, &st, NULL) == SQLITE_OK) {
             if (sqlite3_step(st) == SQLITE_ROW) {
@@ -1035,7 +1036,7 @@ static int serve_aperture_submit(const BfRequest *rq) {
         snprintf(sql, sizeof(sql),
             "SELECT COUNT(*) AS observations, COUNT(DISTINCT page_sha256) AS pages, "
             "COUNT(DISTINCT candidate_id) AS candidates, MIN(observed_at) AS first_seen, "
-            "MAX(observed_at) AS last_seen FROM read_parquet('%s') WHERE src_id='%s'",
+            "MAX(observed_at) AS last_seen FROM " BF_STORE_WEB_FOREIGN_OBSERVATIONS_COLUMNAR_COLD_SCAN " WHERE src_id='%s'",
             parquet, src);
         out[0] = '\0';
         {

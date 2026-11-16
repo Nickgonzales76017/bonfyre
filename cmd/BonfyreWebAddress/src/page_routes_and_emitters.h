@@ -853,12 +853,13 @@ static int page_emit_around(sqlite3 *db, double lat, double lon, const char *not
  * original link, and never presents it as current.
  */
 #include "item_credit_indexes.h"
+#include "web_store.h"
 static sqlite3 *page_archive_open(int writable) {
     const char *path = getenv("BONFYRE_ITEM_ARCHIVE_DB");
     sqlite3 *db = NULL;
     if (!path || !*path) return NULL;
     if (writable) {
-        if (sqlite3_open(path, &db) != SQLITE_OK) { sqlite3_close(db); return NULL; }
+        if (bf_store_open(path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, &bf_store_policy_item_archive) != SQLITE_OK) { sqlite3_close(db); return NULL; }
         sqlite3_busy_timeout(db, 5000);
         if (sqlite3_exec(db, "PRAGMA journal_mode=DELETE;"
             "CREATE TABLE IF NOT EXISTS item(source TEXT NOT NULL, key TEXT NOT NULL, kind TEXT NOT NULL, family TEXT DEFAULT '',"
@@ -871,7 +872,7 @@ static sqlite3 *page_archive_open(int writable) {
             "CREATE INDEX IF NOT EXISTS item_by_ident ON item(ident);", NULL, NULL, NULL) != SQLITE_OK) { sqlite3_close(db); return NULL; }
         return db;
     }
-    return bf_sqlite_open_readonly_path(path, 1500);
+    return bf_store_open_ro(path, 1500, &bf_store_policy_item_archive);
 }
 
 static int page_archive_item(sqlite3 *archive, const char *source, const char *key, PageItem *item, char *family, size_t family_cap) {
@@ -967,7 +968,7 @@ static int page_collect_archive_source(const char *source, PageMaterial *materia
  */
 static sqlite3 *page_entity_open(void) {
     const char *path = getenv("BONFYRE_ENTITY_DB");
-    return bf_sqlite_open_readonly_path(path, 1000);
+    return bf_store_open_ro(path, 1000, &bf_store_policy_entity);
 }
 
 /* One observation of a given modal, most confident first. */
@@ -1730,7 +1731,7 @@ static void page_emit_sounds_similar(sqlite3 *db, const PageItem *item, time_t n
     Near near[64] = {0};
     if (!path || !*path || item->kind != BF_PAGE_MATERIAL_AUDIO) return;
     snprintf(address, sizeof(address), "o/%s/%s", item->source, item->key);
-    if (sqlite3_open_v2(path, &atlas, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { sqlite3_close(atlas); return; }
+    if (bf_store_open(path, &atlas, SQLITE_OPEN_READONLY, &bf_store_policy_latent_atlas) != SQLITE_OK) { sqlite3_close(atlas); return; }
     if (sqlite3_prepare_v2(atlas, "SELECT coordinate FROM projection WHERE address=? AND chart_id='spectrum-24'", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, address, -1, SQLITE_TRANSIENT);
         if (sqlite3_step(st) == SQLITE_ROW && sqlite3_column_bytes(st, 0) == 24 * 4) { memcpy(mine, sqlite3_column_blob(st, 0), sizeof(mine)); have = 1; }
@@ -1779,7 +1780,7 @@ static void page_emit_sounds_similar(sqlite3 *db, const PageItem *item, time_t n
 /* The atlas, when this estate keeps one: read-only, and optional. */
 static sqlite3 *page_atlas_open(void) {
     const char *path = getenv("BONFYRE_LATENT_ATLAS_DB"); sqlite3 *atlas = NULL;
-    if (!path || !*path || sqlite3_open_v2(path, &atlas, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { sqlite3_close(atlas); return NULL; }
+    if (!path || !*path || bf_store_open(path, &atlas, SQLITE_OPEN_READONLY, &bf_store_policy_latent_atlas) != SQLITE_OK) { sqlite3_close(atlas); return NULL; }
     return atlas;
 }
 

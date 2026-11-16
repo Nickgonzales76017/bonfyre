@@ -2,6 +2,7 @@
 #define BONFYRE_PROCUREMENT_DOWNSTREAM_STATUS_H
 
 #include "bf_commerce.h"
+#include "web_store.h"
 
 typedef struct PdsOrder {
     char key[512], id[160], digest[65], commitment[256], exchange[256], body_sha[65];
@@ -109,7 +110,7 @@ static int pds_status(const char *method,const char *query,const char *binding,c
     char protocol_ids[64][BF_COMMITMENT_ID_MAX],protocol_enactments[64][BF_COMMITMENT_ID_MAX],protocol_states[64][32],protocol_actors[64][256],protocol_times[64][64];size_t protocol_count=0;
     int commitment_found=0,commitment_delivered=0;
     snprintf(origin,sizeof(origin),"procurement-order:%s",order.digest);
-    if(sqlite3_open_v2(commitment_path,&cdb,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(cdb)sqlite3_close(cdb);aw_error(503,"The commitment owner could not be read.\n");return 1;}
+    if(bf_store_open(commitment_path, &cdb, SQLITE_OPEN_READONLY, &bf_store_policy_commitment)!=SQLITE_OK){if(cdb)sqlite3_close(cdb);aw_error(503,"The commitment owner could not be read.\n");return 1;}
     if(sqlite3_prepare_v2(cdb,"SELECT c.commitment_id,c.enactment,e.state,e.actor,e.at FROM commitments c JOIN commitment_events e ON e.seq=(SELECT max(e2.seq) FROM commitment_events e2 WHERE e2.commitment_id=c.commitment_id) WHERE c.origin=?1 ORDER BY c.commitment_id",-1,&s,NULL)!=SQLITE_OK){sqlite3_close(cdb);aw_error(503,"The commitment owner could not be read.\n");return 1;}
     sqlite3_bind_text(s,1,origin,-1,SQLITE_STATIC);
     while(sqlite3_step(s)==SQLITE_ROW){
@@ -140,7 +141,7 @@ static int pds_status(const char *method,const char *query,const char *binding,c
     }
     sqlite3_close(cdb);
 
-    if(sqlite3_open_v2(commerce_path,&xdb,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(xdb)sqlite3_close(xdb);aw_error(503,"The commerce owner could not be read.\n");return 1;}
+    if(bf_store_open(commerce_path, &xdb, SQLITE_OPEN_READONLY, &bf_store_policy_commerce)!=SQLITE_OK){if(xdb)sqlite3_close(xdb);aw_error(503,"The commerce owner could not be read.\n");return 1;}
     if(sqlite3_prepare_v2(xdb,"SELECT stage FROM commerce_progress WHERE exchange=?1",-1,&s,NULL)!=SQLITE_OK){sqlite3_close(xdb);aw_error(503,"The commerce owner could not be read.\n");return 1;}
     int reached[BF_COMMERCE_STAGE_COUNT]={0};BfCommerceStage furthest=BF_COMMERCE_PRODUCT;int furthest_found=0;
     sqlite3_bind_text(s,1,order.exchange,-1,SQLITE_STATIC);

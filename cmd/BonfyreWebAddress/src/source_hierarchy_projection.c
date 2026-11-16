@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "source_hierarchy_projection.h"
+#include "web_store.h"
 
 #include <sqlite3.h>
 #include <ctype.h>
@@ -122,7 +123,7 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
     if (reader_count > 32) reader_count = 32;
     if (root_limit < 1) root_limit = 8;
     if (channels_per_family < 1) channels_per_family = 8;
-    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) goto done;
+    if (bf_store_open(db_path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_source_frontier) != SQLITE_OK) goto done;
     if (!table_exists(db, "channel") || !table_exists(db, "channel_census") ||
         !table_exists(db, "root") || !table_exists(db, "family")) goto done;
 

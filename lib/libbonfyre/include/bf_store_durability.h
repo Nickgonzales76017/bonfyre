@@ -27,6 +27,7 @@
  * leaked one. Neither is a cap on what a single transaction may write. */
 
 #include <signal.h>
+#include <stdlib.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <string.h>
@@ -44,11 +45,16 @@ typedef struct {
     int read_txn_max_ms;          /* longest a request may hold the store */
 } BfStoreDurability;
 
+/* Process-wide state is shared by every translation unit that includes this
+ * header: a weak definition in each object, one symbol after linking. A
+ * connection leased in site_mcp.c is reaped by the serve loop in main.c. */
+#define BF_STORE_SHARED __attribute__((weak))
+
 /* Observed by witnesses; never consulted for authority. */
 typedef struct {
     long long passive, truncated, truncate_busy, leases_reaped, interrupted;
 } BfStoreDurabilityCounters;
-static BfStoreDurabilityCounters bf_store_durability_counters;
+BF_STORE_SHARED BfStoreDurabilityCounters bf_store_durability_counters;
 
 /* After a refused TRUNCATE the next attempt waits for the WAL to grow by
  * another wal_truncate_pages, so a reader that legitimately runs long costs
@@ -110,14 +116,72 @@ static inline int bf_store_writer(sqlite3 *db, const BfStoreDurability *policy) 
 /* Attach a declared store (its generated _ATTACH statement) to db. A
  * read-only attach names the file as a file: URI with mode=ro, so db must
  * have been opened with SQLITE_OPEN_URI. Returns 1 when attached. */
-static inline int bf_store_attach(sqlite3 *db, const char *path, const char *attach_sql, int readonly) {
+/* A filesystem path as a read-only file: URI; every byte with URI meaning
+ * ('?', '#', '%', spaces ...) is percent-encoded. Caller frees. */
+static inline char *bf_store_readonly_uri(const char *path) {
+    static const char hex[] = "0123456789ABCDEF";
+    size_t n = path ? strlen(path) : 0, used = 0;
+    char *uri = path ? (char *)sqlite3_malloc64(n * 3 + 16) : NULL;
+    if (!uri) return NULL;
+    memcpy(uri, "file:", 5); used = 5;
+    for (const unsigned char *p = (const unsigned char *)path; *p; p++) {
+        unsigned char c = *p;
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+            c == '/' || c == '-' || c == '_' || c == '.' || c == '~') uri[used++] = (char)c;
+        else { uri[used++] = '%'; uri[used++] = hex[c >> 4]; uri[used++] = hex[c & 15]; }
+    }
+    memcpy(uri + used, "?mode=ro", 9);
+    return uri;
+}
+
+/* Attach a declared store (its generated _ATTACH statement, ?1 the file and,
+ * when the statement has one, ?2 the schema name) to db. A read-only attach
+ * names the file as a file: URI with mode=ro, so db must have been opened
+ * with SQLITE_OPEN_URI. Returns 1 when attached. */
+static inline int bf_store_attach_as(sqlite3 *db, const char *path, const char *attach_sql, const char *as, int readonly) {
     sqlite3_stmt *st = NULL;
-    char *uri = readonly ? sqlite3_mprintf("file:%s?mode=ro", path) : sqlite3_mprintf("%s", path);
+    char *uri = !path || !*path ? NULL : readonly ? bf_store_readonly_uri(path) : sqlite3_mprintf("%s", path);
     int ok = uri && sqlite3_prepare_v2(db, attach_sql, -1, &st, NULL) == SQLITE_OK &&
-             sqlite3_bind_text(st, 1, uri, -1, SQLITE_TRANSIENT) == SQLITE_OK && sqlite3_step(st) == SQLITE_DONE;
+             sqlite3_bind_text(st, 1, uri, -1, SQLITE_TRANSIENT) == SQLITE_OK &&
+             (!as || sqlite3_bind_text(st, 2, as, -1, SQLITE_TRANSIENT) == SQLITE_OK) &&
+             sqlite3_step(st) == SQLITE_DONE;
     sqlite3_finalize(st);
     sqlite3_free(uri);
     return ok;
+}
+#define bf_store_attach(db, path, attach_sql, readonly) bf_store_attach_as((db), (path), (attach_sql), NULL, (readonly))
+
+/* ---- dynamic joins -------------------------------------------------------
+ * A dynamic store of shard "named" declares which further stores join one
+ * connection, under which schema name, and the table whose presence makes the
+ * join usable. The compiler emits them as a BfStoreJoin array. */
+typedef struct { const char *as; const char *env; const char *probe; int required; } BfStoreJoin;
+
+/* 1 when the schema holds the table. */
+static inline int bf_store_schema_has(sqlite3 *db, const char *schema, const char *table) {
+    sqlite3_stmt *st = NULL; int ok = 0;
+    char *sql = sqlite3_mprintf("SELECT 1 FROM \"%w\".sqlite_master WHERE type='table' AND name=?1 LIMIT 1", schema);
+    if (sql && sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(st, 1, table, -1, SQLITE_TRANSIENT);
+        ok = sqlite3_step(st) == SQLITE_ROW;
+    }
+    sqlite3_finalize(st);
+    sqlite3_free(sql);
+    return ok;
+}
+
+/* Join one declared store read-only: path, or the join's env when path is
+ * NULL. Returns 1 only when it attached and its probe table is there. */
+static inline int bf_store_join(sqlite3 *db, const BfStoreJoin *join, const char *path, const char *attach_sql) {
+    if (!path && join->env) path = getenv(join->env);
+    if (!path || !*path || !bf_store_attach_as(db, path, attach_sql, join->as, 1)) return 0;
+    return !join->probe || bf_store_schema_has(db, join->as, join->probe);
+}
+
+/* The declared join named as, or NULL. */
+static inline const BfStoreJoin *bf_store_join_named(const BfStoreJoin *joins, int count, const char *as) {
+    for (int i = 0; i < count; i++) if (!strcmp(joins[i].as, as)) return &joins[i];
+    return NULL;
 }
 
 /* ---- request leases ------------------------------------------------------
@@ -126,12 +190,12 @@ static inline int bf_store_attach(sqlite3 *db, const char *path, const char *att
 #ifndef BF_STORE_LEASES_MAX
 #define BF_STORE_LEASES_MAX 64
 #endif
-typedef struct { sqlite3 *db; const BfStoreDurability *policy; struct timespec opened; const void *caller; } BfStoreLease;
-static BfStoreLease bf_store_leases[BF_STORE_LEASES_MAX];
+typedef struct { sqlite3 *db; const BfStoreDurability *policy; struct timespec opened; const void *caller; const char *site; } BfStoreLease;
+BF_STORE_SHARED BfStoreLease bf_store_leases[BF_STORE_LEASES_MAX];
 /* Leases exist only in a process that serves requests; a batch command that
  * holds one connection for its whole run is not bounded by a request. */
-static int bf_store_leases_serving;
-static volatile sig_atomic_t bf_store_deadline_armed;
+BF_STORE_SHARED int bf_store_leases_serving;
+BF_STORE_SHARED volatile sig_atomic_t bf_store_deadline_armed;
 
 /* The deadline that does not depend on SQLite running. A request blocked
  * outside SQLite (a child process, a socket, a lock) while it holds a
@@ -185,14 +249,14 @@ static inline int bf_store_lease_trace(unsigned type, void *arg, void *p, void *
  * usable, only unbounded; returns -1 so a witness can see it. */
 /* caller is the code address that asked for the connection (atos or
  * addr2line names it), so a leak report points at the owner that leaked. */
-static inline int bf_store_lease_at(sqlite3 *db, const BfStoreDurability *policy, int readonly, const void *caller) {
+static inline int bf_store_lease_site(sqlite3 *db, const BfStoreDurability *policy, int readonly, const void *caller, const char *site) {
     if (!db || !policy) return -1;
     if (policy->busy_timeout_ms > 0) sqlite3_busy_timeout(db, policy->busy_timeout_ms);
     if (!bf_store_leases_serving) return 0;
     for (int i = 0; i < BF_STORE_LEASES_MAX; i++) {
         BfStoreLease *lease = &bf_store_leases[i];
         if (lease->db) continue;
-        lease->db = db; lease->policy = policy; lease->caller = caller;
+        lease->db = db; lease->policy = policy; lease->caller = caller; lease->site = site;
         clock_gettime(CLOCK_MONOTONIC, &lease->opened);
         sqlite3_trace_v2(db, SQLITE_TRACE_CLOSE, bf_store_lease_trace, lease);
         if (!bf_store_deadline_armed && policy->read_txn_max_ms > 0) {
@@ -204,7 +268,61 @@ static inline int bf_store_lease_at(sqlite3 *db, const BfStoreDurability *policy
     }
     return -1;
 }
+#define bf_store_lease_at(db, policy, readonly, caller) bf_store_lease_site((db), (policy), (readonly), (caller), NULL)
 #define bf_store_lease(db, policy, readonly) bf_store_lease_at((db), (policy), (readonly), __builtin_return_address(0))
+
+/* ---- opening a declared store --------------------------------------------
+ * The one way an owner that serves requests opens a store file: the call
+ * sqlite3_open_v2 would be, plus the store's declared policy. The connection
+ * gets the declared busy timeout and is leased to the current request (a
+ * read-only one also gets the read deadline). A read-write open of a store
+ * that declares durability (journal_mode set) also applies the writer policy;
+ * a store declared with lease only names no journal policy and gets none.
+ * Returns the SQLite result; on failure *out is NULL and nothing is left open.
+ * site names the call for the leak report. */
+static inline int bf_store_open_site(const char *path, sqlite3 **out, int flags, const BfStoreDurability *policy, const char *site) {
+    sqlite3 *db = NULL;
+    int rc;
+    *out = NULL;
+    if (!path || !*path || !policy) return SQLITE_CANTOPEN;
+    rc = sqlite3_open_v2(path, &db, flags, NULL);
+    if (rc != SQLITE_OK) { if (db) sqlite3_close(db); return rc; }
+    if ((flags & SQLITE_OPEN_READWRITE) && policy->journal_mode && bf_store_writer(db, policy)) {
+        sqlite3_close(db);
+        return SQLITE_CANTOPEN;
+    }
+    (void)bf_store_lease_site(db, policy, !(flags & SQLITE_OPEN_READWRITE), NULL, site);
+    *out = db;
+    return SQLITE_OK;
+}
+#define BF_STORE_SITE_STR2(x) #x
+#define BF_STORE_SITE_STR(x) BF_STORE_SITE_STR2(x)
+#define bf_store_open(path, out, flags, policy) bf_store_open_site((path), (out), (flags), (policy), __FILE__ ":" BF_STORE_SITE_STR(__LINE__))
+
+/* bf_sqlite_open_readonly_path() with the store's lease: read-only, the
+ * caller's busy timeout in place of the declared one, NULL on failure. */
+#define bf_store_open_ro(path, busy_ms, policy) bf_store_open_ro_site((path), (busy_ms), (policy), __FILE__ ":" BF_STORE_SITE_STR(__LINE__))
+static inline sqlite3 *bf_store_open_ro_site(const char *path, int busy_ms, const BfStoreDurability *policy, const char *site) {
+    sqlite3 *db = NULL;
+    if (bf_store_open_site(path, &db, SQLITE_OPEN_READONLY, policy, site) != SQLITE_OK) return NULL;
+    if (busy_ms > 0) sqlite3_busy_timeout(db, busy_ms);
+    return db;
+}
+
+/* The same open for a connection the process keeps for its whole life (a
+ * read-only pack consulted by every request): the declared busy timeout,
+ * never a lease, because the end of a request must not close it. */
+static inline int bf_store_open_held(const char *path, sqlite3 **out, int flags, const BfStoreDurability *policy) {
+    sqlite3 *db = NULL;
+    int rc;
+    *out = NULL;
+    if (!path || !*path || !policy) return SQLITE_CANTOPEN;
+    rc = sqlite3_open_v2(path, &db, flags, NULL);
+    if (rc != SQLITE_OK) { if (db) sqlite3_close(db); return rc; }
+    if (policy->busy_timeout_ms > 0) sqlite3_busy_timeout(db, policy->busy_timeout_ms);
+    *out = db;
+    return SQLITE_OK;
+}
 
 static inline int bf_store_open_statements(sqlite3 *db) {
     int n = 0;
@@ -223,9 +341,14 @@ static inline int bf_store_leases_end(void) {
         sqlite3 *db = lease->db;
         sqlite3_stmt *st;
         if (!db) continue;
-        fprintf(stderr, "store %s: a connection opened from %p outlived its request (%d statements open); closed\n",
-                lease->policy && lease->policy->store ? lease->policy->store : "?", lease->caller,
-                bf_store_open_statements(db));
+        if (lease->site)
+            fprintf(stderr, "store %s: a connection opened at %s outlived its request (%d statements open); closed\n",
+                    lease->policy && lease->policy->store ? lease->policy->store : "?", lease->site,
+                    bf_store_open_statements(db));
+        else
+            fprintf(stderr, "store %s: a connection opened from %p outlived its request (%d statements open); closed\n",
+                    lease->policy && lease->policy->store ? lease->policy->store : "?", lease->caller,
+                    bf_store_open_statements(db));
         while ((st = sqlite3_next_stmt(db, NULL)) != NULL) sqlite3_finalize(st);
         if (!sqlite3_get_autocommit(db)) (void)sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL);
         memset(lease, 0, sizeof(*lease));

@@ -1,5 +1,5 @@
 {
-  "atlas_declaration_digest": "395c439ead876e9d4395c9ca110fe094b40320675792a13fcaa1a5217524e407",
+  "atlas_declaration_digest": "9e04124c0096054f9e0ea1396fdc8cc782d54ed00cd58fcbb13727c294564a85",
   "interactions": [
     {
       "destination": "occurrence-spine",
@@ -8985,6 +8985,38 @@
       "source": "placement-plane"
     },
     {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "any claim that the store's contents, migrations or access rights are governed by the policy"
+      ],
+      "forbidden_inferences": [
+        "the policy is applied -> no reader can pin the WAL"
+      ],
+      "id": "store-durability-binds-cms-writers",
+      "invalidates_on": [],
+      "preserves": [
+        "journal mode, synchronous, autocheckpoint pages, journal_size_limit, truncate threshold, busy timeout and read deadline exactly as declared for store cms"
+      ],
+      "relation": "compiled-journal-policy",
+      "source": "store-schema-registry"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "which owner leaked, beyond the caller address printed on stderr"
+      ],
+      "forbidden_inferences": [
+        "zero reaped leases in a crawl -> no route leaks; only the routes asked were observed"
+      ],
+      "id": "store-durability-leases-web-readers",
+      "invalidates_on": [],
+      "preserves": [
+        "one CMS connection lifetime per request; leaked connections closed at request end; requests past read_txn_max_ms ended"
+      ],
+      "relation": "request-scoped-store-lease",
+      "source": "store-schema-registry"
+    },
+    {
       "destination": "presentation-template",
       "drops": [
         "arbitrary CSS, foreign font URLs and semantic data ownership in the template"
@@ -9576,6 +9608,22 @@
       ],
       "relation": "width_admission",
       "source": "vector-body-admission"
+    },
+    {
+      "destination": "cmd-vec",
+      "drops": [
+        "the embed model's identity; the model string is a description, not a passport check"
+      ],
+      "forbidden_inferences": [
+        "a vector store declared -> its embeddings are current"
+      ],
+      "id": "vector-kind-compiles-vec-index",
+      "invalidates_on": [],
+      "preserves": [
+        "table name, runtime width passed by the owner, l2 metric, float32 elements"
+      ],
+      "relation": "vector-store-ddl",
+      "source": "store-schema-registry"
     },
     {
       "destination": "unlock-graph",
@@ -20757,7 +20805,10 @@
       "family": "command",
       "forbidden_inferences": [
         "the command exists -> its effect is authorized; Authority gates mutation and read scope still applies",
-        "a form rendered through FtForm -> its post is authorized; the owner that receives the post still checks origin, nonce, revision and authority"
+        "a form rendered through FtForm -> its post is authorized; the owner that receives the post still checks origin, nonce, revision and authority",
+        "a numeric presentation address or a derived numeric CSS cut -> publication, ownership or authority; it is presentation only and the cache is never the CMS owner",
+        "a page drawn through ui_tree.h builders -> its data was checked; builders escape and lay out only, the owner still reads, scopes and authorizes",
+        "HVM4/egglog agreement on a numeric selection -> the generated CSS is good design; it proves the selection, not the look"
       ],
       "id": "cmd-surface-scene",
       "internal_calculi": [
@@ -20765,6 +20816,7 @@
       ],
       "invariants": [],
       "known_gaps": [
+        "Lightning CSS is fail-closed until a pinned lightningcss 1.33.0 CLI is installed (BONFYRE_LIGHTNINGCSS or deploy/tailwind/node_modules/.bin); the C content store reads CMS snapshots directly and does not rerun the full browser authoring-tree validation",
         "built by make -C cmd/BonfyreSurfaceScene (bonfyre-surface-scene, answers --help, installed in ~/.bonfyre/bin; checked 2026-11-07); not yet exercised on a real workload; deeper WiringSpec fact flow and authority admission are separate work"
       ],
       "layer": "",
@@ -20780,7 +20832,11 @@
         "cmd/BonfyreSurfaceScene/src/authoring_template.c",
         "cmd/BonfyreSurfaceScene/src/authoring_native_components.c",
         "cmd/BonfyreSurfaceScene/src/authoring_editorial.c",
-        "cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs"
+        "cmd/BonfyreSurfaceScene/runtime/authoring-tree.mjs",
+        "cmd/BonfyreSurfaceScene/src/numeric_presentation.c",
+        "schemas/control/numeric-presentation.cue",
+        "cmd/BonfyreSurfaceScene/tools/compile_numeric_vocabulary.sh",
+        "cmd/BonfyreWebAddress/src/ui_tree.h"
       ],
       "subscribes": [],
       "views": [],
@@ -20788,7 +20844,9 @@
         "md4c markdown, mustach composition, 43-component render, public authored document and site fragment projection tests pass (checked 2026-11-10)",
         "SurfaceScene bun suite passes 135 across 28 files including Puck/GrapesJS adapter and Chromium tests (checked 2026-11-10)",
         "2026-11-11 vocabulary at 46 with ui:choice and ui:field plus ui:action methods and containment; safe_type admits every safe HTML input type while file/image stay refused; suite proves search renders and uploads deny atomically",
-        "2026-11-15 ui:action takes named submit buttons (name/value, formnovalidate, quiet/danger tone) and one validated data-* hook; ui:field renders select options, checkbox checked, pattern/min/max/step/autocomplete; FtForm in cmd/BonfyreWebAddress/src/form_tree.h builds them; native_authoring_components_test proves each attribute, hook charset refusal and atomic denial of an unsafe field name"
+        "2026-11-15 ui:action takes named submit buttons (name/value, formnovalidate, quiet/danger tone) and one validated data-* hook; ui:field renders select options, checkbox checked, pattern/min/max/step/autocomplete; FtForm in cmd/BonfyreWebAddress/src/form_tree.h builds them; native_authoring_components_test proves each attribute, hook charset refusal and atomic denial of an unsafe field name",
+        "2026-11-15 numeric presentation vocabulary declared once in schemas/control/numeric-presentation.cue, generated to a C header and the browser table; `bonfyre-surface-scene numeric` (address, normalize, factor, expand, select, css, compile, lightning, intern, resolve, counts, cut) matched the retired JS byte for byte on factor/expand/select/compile/cut with real HVM4 and egglog; tests/numeric_presentation_native_test.sh passes 54 checks in make test",
+        "2026-11-15 cmd/BonfyreWebAddress/src/ui_tree.h builders (ui_text, ui_link, ui_link_path, ui_rows, ui_table, ui_empty, ui_stat, ui_tag, ui_section_open, ui_toggle_group, ui_search, ui_layout_open) replaced 474 hand-printed tag sites; 940 of 956 preview routes byte-identical before/after (the 16 others differ by one byte inside a pre-existing truncated channel href in item_depth.h, same both ways on rerun); ui-ratchet hand_printed_markup counts the rest"
       ]
     },
     {
@@ -40683,6 +40741,9 @@
       "experience_chains": [],
       "family": "storage",
       "forbidden_inferences": [
+        "a declared durability policy -> the WAL is bounded; a reader blocked outside SQLite inside the deadline, or an owner that opens the file without the policy, still pins it",
+        "a vector store declared -> its embeddings are current, were made by the named model, or that sqlite-vec is loadable where the owner runs",
+        "a declared ranker, columnar or dynamic store -> an owner opens it that way; those kinds compile but no owner has moved onto them yet",
         "a declared table -> the owner's store exists, is migrated, holds data, or that any other owner may read or write it; the registry names DDL, not access rights or a migration plan"
       ],
       "id": "store-schema-registry",
@@ -40691,9 +40752,17 @@
         "each fragment is byte-for-byte the literal the owner executed before, so stores created before and after the move have identical sqlite_master text; the move changes where the text lives, not what SQLite sees",
         "joined in order, a fragment's statements are the fragment; kind and name are read from each statement and a table, index, view or trigger row must start with the matching CREATE clause",
         "a generated header is never edited by hand; compile-store-schemas.sh --check refuses a header that differs from the registry, and the pre-commit hook runs it",
-        "the ui-ratchet handwritten_ddl count of CREATE TABLE in cmd/*/src and components/*/src C and H sources may only go down"
+        "the ui-ratchet handwritten_ddl count of CREATE TABLE in cmd/*/src and components/*/src C and H sources may only go down",
+        "a declared store names its kind (sqlite, vector, ranker, columnar, dynamic) and the compiler emits BF_STORE_<macro>_KIND plus that kind's shape constants (vector table, width or runtime, metric, quantization, model; ranker key space; columnar format, cold glob, hot shadow DDL, promotion rule; dynamic declaring table, shard, attach); every owner in opened_by gets the same constants",
+        "a store with durability compiles to one BfStoreDurability initializer; every writer of the CMS store (bonfyre-cms and WebAddress cms_open_rw) applies it through bf_store_writer, and every WebAddress cms_open_ro/rw connection is leased to the request that opened it",
+        "a writer commit that leaves the WAL at or past wal_truncate_pages runs a TRUNCATE checkpoint; after a refusal it waits another wal_truncate_pages before retrying, so a long reader costs writers one wait per threshold",
+        "at the end of every served request, connections the request left open are finalized and closed and reported on stderr; a request that holds a leased store past read_txn_max_ms is ended by SIGALRM (worker exits 75 and the pool restarts)",
+        "the ui-ratchet handwritten_store_shapes count (CREATE VIRTUAL TABLE, USING vec0, \"ATTACH, read_parquet( in C sources) may only go down"
       ],
       "known_gaps": [
+        "the 13 GB CMS WAL of 2026-11-15 was written by the release activity-public-20261021, whose bonfyre-web-address and bonfyre-cms carry no wal_autocheckpoint, journal_size_limit or TRUNCATE policy at all; the leak or long reader in that build was not identified, and the fix takes effect only once a release built from this tree is installed",
+        "about fifteen WebAddress handlers open the CMS file directly with sqlite3_open_v2 (account_world_* POST writers, site_mcp, people_projection, world_cache, governance) and are neither leased nor under the writer policy",
+        "ranker, columnar and dynamic kinds compile to constants but no owner uses them yet (BitNet rank_source attach, Spatial and ConnectionCatalog parquet reads, detail_depth and SurfaceMaturity dynamic attaches remain hand-written)",
         "DDL composed with C macros (cmd/BonfyreCMS account_world_literature, account_world_music, account_world_audio) and DDL built at run time with format arguments (BonfyreBridge) are still in source; ALTER TABLE migrations and columns added after creation live in owner code, not here; Makefiles do not yet list generated/store_schema.h as a prerequisite, so a registry change needs a rebuild of the owner"
       ],
       "layer": "substrate",
@@ -40706,12 +40775,18 @@
       "source_paths": [
         "schemas/storage/stores/store.cue",
         "scripts/compile-store-schemas.sh",
-        ".githooks/pre-commit"
+        ".githooks/pre-commit",
+        "lib/libbonfyre/include/bf_store_durability.h",
+        "cmd/BonfyreCMS/tests/store_durability_test.c",
+        "cmd/BonfyreVec/tests/vector_store_kind_test.c"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "scripts/compile-store-schemas.sh --check; a compiled probe prints every macro and matches the 219 literals captured from the hand-written sources byte for byte; Auth, Finance, Entity and Space stores created by the old and new binaries have identical .schema output; owner test suites pass"
+        "scripts/compile-store-schemas.sh --check; a compiled probe prints every macro and matches the 219 literals captured from the hand-written sources byte for byte; Auth, Finance, Entity and Space stores created by the old and new binaries have identical .schema output; owner test suites pass",
+        "make -C cmd/BonfyreCMS store-durability-test: under the declared CMS policy with a reader process that always holds a read transaction, a passive-only writer's WAL reaches 460 MB while the declared writer stays at 67.5 MB (bound 67.7 MB, 6 truncations); a leaked statement pins the WAL to 231 MB until bf_store_leases_end reaps it, then the WAL falls back under the bound; a request blocked past read_txn_max_ms exits 75",
+        "make -C cmd/BonfyreVec vector-store-kind-test: vec_artifacts built from BF_STORE_VEC_INDEX_VECTOR_DDL at width 4 holds exactly the registry text in sqlite_master and sqlite-vec answers the nearest neighbours a, c",
+        "WebAddress serving preview copies across ~1900 GET requests (HTML, JSON, signed-in) reaped no leased CMS connection"
       ]
     },
     {

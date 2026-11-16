@@ -1,5 +1,6 @@
 #ifndef BONFYRE_WORK_PROVENANCE_H
 #define BONFYRE_WORK_PROVENANCE_H
+#include "web_store.h"
 /* One account task told as evidence, and the account's kept outputs.
  *
  * The task view under /work-board?task= reads the account work index the
@@ -94,7 +95,7 @@ static void wp_fingerprint(const char *hex){
 }
 static sqlite3 *wp_index(void){
     const char *index=getenv("BONFYRE_ACCOUNT_WORK_DB");sqlite3 *db=NULL;
-    if(!index||*index!='/'||sqlite3_open_v2(index,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){sqlite3_close(db);return NULL;}
+    if(!index||*index!='/'||bf_store_open(index, &db, SQLITE_OPEN_READONLY, &bf_store_policy_account_work)!=SQLITE_OK){sqlite3_close(db);return NULL;}
     sqlite3_busy_timeout(db,1000);return db;
 }
 static void wp_style(void){

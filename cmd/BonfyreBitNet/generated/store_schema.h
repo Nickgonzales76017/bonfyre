@@ -11,4 +11,15 @@
 /* cmd/BonfyreBitNet/src/main.c */
 #define BF_STORE_BIT_NET_Q \
     "CREATE TABLE q(identity TEXT PRIMARY KEY,observed INTEGER NOT NULL)"
+/* store rank: ranker, declared by cmd/BonfyreBitNet */
+#define BF_STORE_BITNET_RANK_KIND "ranker"
+#define BF_STORE_BITNET_RANK_ATTACH "ATTACH DATABASE ? AS rank_source"
+#define BF_STORE_BITNET_RANK_ATTACH_READONLY 1
+#define BF_STORE_BITNET_RANK_RANKER_KEY_SPACE "AddressPlane survivor candidate identities of one forwarded frontier"
+#define BF_STORE_BITNET_RANK_RANKER_RUN_TABLE "bitnet_rank_run"
+#define BF_STORE_BITNET_RANK_RANKER_FRONTIER_TABLE "ranked_candidate_envelope"
+#define BF_STORE_BITNET_RANK_RANKER_KEY_COLUMN "candidate_identity"
+#define BF_STORE_BITNET_RANK_RANKER_ORDER_COLUMN "rank"
+#define BF_STORE_BITNET_RANK_RANKER_WEIGHTS "the ModelRepresentationPassport named by bitnet_rank_run.representation_id (BitNet embedding 270M I2_S, SHADOW unless ADMIT)"
+#define BF_STORE_BITNET_RANK_RANKER_FRONTIER "SELECT rank, candidate_identity FROM rank_source.ranked_candidate_envelope WHERE run_id=?1 ORDER BY rank"
 #endif

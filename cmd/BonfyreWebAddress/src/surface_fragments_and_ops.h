@@ -338,6 +338,9 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
     if (world<0 || scope<0 || !safe(repr,sizeof(repr)) || snprintf(address,sizeof(address),"https://%s%s",host,path_in)>=(int)sizeof(address)) goto bad;
     int rc=bf_matrix_address_resolve(m,address,territory,world,scope,repr,&out);
     if (rc != 1) {
+        /* A person asking for a page gets the not-found page and the declared
+         * pages nearest the path (web_route_kinds.h); machines keep the verdict. */
+        if (rc == 0 && http && !strcasecmp(repr,"HTML") && bf_web_route_not_found(path_in)) return 1;
         if (rc == 0) { if(http) printf("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n"); printf("{\"verdict\":\"not_found\",\"address\":");json(address);printf("}\n"); return 1; }
         if(http) printf("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n");
         puts("{\"verdict\":\"resolution_error\"}"); return 2;

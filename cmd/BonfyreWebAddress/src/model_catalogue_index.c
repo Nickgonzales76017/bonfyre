@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "model_catalogue_index.h"
+#include "web_store.h"
 #include "glyph_set.h"
 #include "bf_sqlite_path.h"
 #include <sqlite3.h>
@@ -62,7 +63,7 @@ int bf_model_catalogue_find(const char *path,const char *want,char *facts,size_t
     if(want&&!*want)want=NULL;
     escaped(want,ewant,sizeof(ewant));
     if(!path||!*path||bf_sqlite_readonly_uri(uri,sizeof(uri),path)>=(int)sizeof(uri)||
-       sqlite3_open_v2(uri,&db,SQLITE_OPEN_READONLY|SQLITE_OPEN_URI,NULL)!=SQLITE_OK)goto done;
+       bf_store_open(uri, &db, SQLITE_OPEN_READONLY|SQLITE_OPEN_URI, &bf_store_policy_model_catalog)!=SQLITE_OK)goto done;
     if(sqlite3_prepare_v2(db,
        "SELECT (SELECT COUNT(*) FROM catalog_nodes WHERE kind='model'),"
        " (SELECT COUNT(*) FROM catalog_nodes WHERE kind='capability'),"
@@ -202,7 +203,7 @@ int bf_model_catalogue_detail(const char *path,const char *ident,
 
     if(!path||!*path||
        bf_sqlite_readonly_uri(uri,sizeof(uri),path)>=(int)sizeof(uri)||
-       sqlite3_open_v2(uri,&db,SQLITE_OPEN_READONLY|SQLITE_OPEN_URI,NULL)!=SQLITE_OK){
+       bf_store_open(uri, &db, SQLITE_OPEN_READONLY|SQLITE_OPEN_URI, &bf_store_policy_model_catalog)!=SQLITE_OK){
         if(db)sqlite3_close(db);
         return -1;
     }

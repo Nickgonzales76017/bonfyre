@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "community_projection.h"
+#include "web_store.h"
 
 #include <ctype.h>
 #include <sqlite3.h>
@@ -81,7 +82,7 @@ int bf_serve_human_community(const char *method, const char *target, const char 
     if (!method || strcmp(method, "GET")) { reply(405, "{\"error\":\"GET required\"}\n"); return 1; }
     if (!query_community(query, community, sizeof(community))) { reply(400, "{\"error\":\"community_required\"}\n"); return 1; }
     if (!path || !*path) path = "/var/lib/bonfyre/cms/bonfyre_cms.db";
-    if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) goto unavailable;
+    if (bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) goto unavailable;
     if (!type_exists(db, "community_body") || !type_exists(db, "community_membership") || !type_exists(db, "community_post")) goto unavailable;
     if (sqlite3_prepare_v2(db,
         "SELECT subject_address,title,COALESCE(description,''),visibility,COALESCE(governance_scope,''),COALESCE(moderation_policy,''),cannot_infer "

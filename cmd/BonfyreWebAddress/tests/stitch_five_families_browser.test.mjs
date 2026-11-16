@@ -98,7 +98,7 @@ try{
   assert(html.includes('data-cms-layout')&&html.includes('cms-projection-proof'));
   const p=await browser.newPage(),writes=[];p.on('pageerror',e=>errors.push(e.message));
   await p.setRequestInterception(true);p.on('request',async r=>{const u=new URL(r.url());if(r.method()!=='GET')writes.push(r.url());
-   if(u.pathname==='/cms/compose')return r.respond({status:200,contentType:'text/html',body:html});
+   if(u.pathname==='/cms/compose')return r.respond({status:200,contentType:'text/html; charset=utf-8',body:html});
    if(u.pathname==='/cms/compose/pages')return r.respond({status:200,contentType:'application/json',body:JSON.stringify({pages:[],has_more:false})});
    if(u.pathname==='/cms/compose/page')return r.respond({status:200,contentType:'application/json',body:JSON.stringify({schema:'bonfyre.page-snapshot.v1',id:5,digest:'a'.repeat(64),snapshot:{route:'/stitch',page:{title:'Native page',heading:'Native page',status:'draft'},fragments:[{coordinate:'section-one',heading:'Publication',body:'Material text',source_ref:'source:one',source_digest:'sha256:one',evidence_ref:'proof:one',slot:'body',status:'draft'}]}})});
    return r.abort();});

@@ -106,7 +106,7 @@ static int world_web_api(const char *method,const char *query,const char *body,c
        (*v[WF_POSITION]&&(!world_web_number(v[WF_POSITION],&position,0)||position>AW_ITEM_LIMIT))||
        (*v[WF_CHARACTER]&&!world_web_look(v[WF_CHARACTER]))){aw_error(400,"Invalid workspace coordinates.\n");return 1;}
     const char *path=getenv("BONFYRE_CMS_DB");sqlite3 *db=NULL;char subject[160],again[160];const char *site=v[WF_SITE],*space=v[WF_SPACE];
-    if(!path||!*path||sqlite3_open_v2(path,&db,post?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);aw_error(503,"Workspace unavailable.\n");return 1;}
+    if(!path||!*path||!(db=post?cms_open_rw():cms_open_ro())){if(db)sqlite3_close(db);aw_error(503,"Workspace unavailable.\n");return 1;}
     sqlite3_busy_timeout(db,2000);
     if(!world_web_admit(bearer,auth_db,db,site,post,subject)){sqlite3_close(db);aw_error(404,"Workspace unavailable.\n");return 1;}
     if(post&&aw_initialize(db)!=1){sqlite3_close(db);aw_error(503,"Workspace unavailable.\n");return 1;}

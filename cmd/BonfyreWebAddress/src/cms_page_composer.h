@@ -2,6 +2,7 @@
 #define BONFYRE_CMS_PAGE_COMPOSER_H
 #include "cms_page_composer_markup.h"
 #include "cms_page_composer_visual.h"
+#include "cms_page_composer_home.h"
 #include "article_revision.h"
 /* A browser carrier for the existing namespace-scoped CMS page aggregate. */
 static void cms_composer_reply(int code,const char *type,const char *body) {
@@ -116,8 +117,34 @@ static int serve_cms_composer(const BfRequest *r) {
     if(self_site_scope&&!exact_owned_site){sqlite3_close(db);cms_composer_reply(403,"application/json","{\"error\":\"A current, owned profile site is required. \"}");return 1;}
     /* Both editors are pages of the one application: the estate bar, one
      * <main>, the footer and the player. Their layout is composition.css. */
-    if(home){sqlite3_close(db);ak_app_http(200,1);ak_app_open("Compose a page","workbench","route-compose");fputs(cms_page_composer_markup,stdout);ak_app_close();return 1;}
-    if(visual){sqlite3_close(db);ak_app_http(200,1);ak_app_open("Visual composition","workbench","route-compose route-compose-visual");cms_page_composer_visual_emit();ak_app_close();return 1;}
+    if(home){
+        /* A page asked for opens the section composer; otherwise the home
+         * shows this workspace's pages and the one way to start a page. */
+        char open_route[128]={0};
+        int opening=bf_lex_form_query(query?query:"","route",open_route,sizeof(open_route))==1&&open_route[0]=='/';
+        ak_app_http(200,1);ak_app_open("Compose a page","workbench","route-compose");
+        if(opening)fputs(cms_page_composer_markup,stdout);
+        else cms_page_composer_home_emit(db,ns,site_arg==1?requested_site:NULL);
+        sqlite3_close(db);ak_app_close();return 1;
+    }
+    if(visual){
+        char selected_route[128]="/",new_mode[16]={0};
+        int chosen=bf_lex_form_query(query?query:"","route",selected_route,sizeof(selected_route));
+        int new_arg=bf_lex_form_query(query?query:"","new",new_mode,sizeof(new_mode));
+        if(chosen<0||(chosen==1&&selected_route[0]!='/')||new_arg<0||
+           (new_arg==1&&strcmp(new_mode,"article"))){
+            sqlite3_close(db);cms_composer_reply(400,"application/json","{\"error\":\"Choose a valid page address or article mode.\"}");return 1;
+        }
+        if(chosen==0){
+            if(new_arg==1&&!cmc_draft_route(selected_route,sizeof(selected_route),"/blog/")){
+                sqlite3_close(db);cms_composer_reply(503,"application/json","{\"error\":\"A new article address could not be created.\"}");return 1;
+            }
+            if(new_arg!=1)snprintf(selected_route,sizeof(selected_route),"/");
+        }
+        ak_app_http(200,1);ak_app_open("Visual composition","workbench","route-compose route-compose-visual");
+        cms_page_composer_visual_emit(db,ns,selected_route,new_arg==1,site_arg==1?requested_site:NULL);
+        sqlite3_close(db);ak_app_close();return 1;
+    }
     if(listing){
         sqlite3_stmt *st=NULL;const char *result=NULL;
         if(sqlite3_prepare_v2(db,"SELECT json_object('pages',json_group_array(json_object('route',route,'title',title,'status',status)),'has_more',(SELECT count(*)>512 FROM site_page WHERE namespace=?1)) FROM (SELECT route,title,status FROM site_page WHERE namespace=?1 ORDER BY route LIMIT 512)",-1,&st,NULL)==SQLITE_OK){

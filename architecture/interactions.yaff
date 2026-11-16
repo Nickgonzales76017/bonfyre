@@ -2668,3 +2668,27 @@ interaction web-address-edge-asks-declared-route-owners
   witness cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh
   binding cmd/BonfyreWebAddress/generated/native_web_routes.h
   binding cmd/BonfyreWebAddress/src/main.c
+
+interaction web-route-table-reads-declared-record-stores
+  source web-route-table
+  destination store-schema-registry
+  relation records_route_reads_declared_store
+  preserves the request path bound at ?1 of the row's declared read-only SELECT, the store's declared durability and request lease, and the row's place in the dispatch order
+  drops every column but whether a row exists; the owner reads the record itself
+  forbidden_inference a records match -> the owner will answer 200 or that the caller may read the record
+  invalidates_on a change to the store's declaration in schemas/storage/stores, to its opened_by list, or to the owner's own record query
+  witness cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh
+  binding cmd/BonfyreWebAddress/tools/compile_web_routes.sh
+  binding cmd/BonfyreWebAddress/src/web_route_kinds.h
+
+interaction web-route-table-ranks-not-found-with-static-embedding
+  source web-route-table
+  destination static-semantic-search
+  relation not_found_suggestion_ranking
+  preserves the missing path's words, each titled row's path and title, each guest-readable record's path and title, and the .bfse the vectors come from
+  drops word order (static vectors) and every candidate below the declared floor or past five
+  forbidden_inference a suggestion -> the route exists or the caller may open it
+  forbidden_inference a suggestion score -> the same meaning or a score comparable across models
+  invalidates_on a new .bfse, a change to the semantic row, or a change to any row's title
+  witness cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh
+  binding cmd/BonfyreWebAddress/src/web_route_kinds.h

@@ -4,6 +4,8 @@
 #include <string.h>
 #include "surface_maturity.h"
 #include "../../../lib/libbonfyre/include/bf_command_lookup.h"
+#include "../../../lib/libbonfyre/include/bf_store_durability.h"
+#include "../generated/store_schema.h"  /* store estate_audit: schemas/storage/stores */
 
 typedef struct {
     int cms_db, items_db, frontier_db, fabric_db, missing_owner_dbs;
@@ -61,16 +63,13 @@ static int estate_path(char *out, size_t cap, const char *estate, const char *na
     return n > 0 && (size_t)n < cap;
 }
 
-static int attach_db(sqlite3 *db, const char *schema, const char *path) {
-    sqlite3_stmt *st = NULL;
-    char sql[96];
+/* The declared joins of store estate_audit (kind dynamic): each owner's
+ * store attaches read-only under its declared schema name. */
+static const BfStoreJoin estate_joins[] = BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOINS;
+
+static int attach_db(sqlite3 *db, int join, const char *path) {
     if (!file_exists(path)) return 0;
-    if (snprintf(sql, sizeof(sql), "ATTACH DATABASE ?1 AS %s", schema) >= (int)sizeof(sql)) return 0;
-    if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) != SQLITE_OK) return 0;
-    sqlite3_bind_text(st, 1, path, -1, SQLITE_TRANSIENT);
-    int ok = sqlite3_step(st) == SQLITE_DONE;
-    sqlite3_finalize(st);
-    return ok;
+    return bf_store_join(db, &estate_joins[join], path, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_ATTACH);
 }
 
 static int table_exists(sqlite3 *db, const char *schema, const char *table) {
@@ -176,14 +175,14 @@ static int load_estate(sqlite3 *db, const char *estate, EstateMetrics *m) {
     else if (home && *home) snprintf(account, sizeof(account), "%s/.bonfyre/state/account-work.db", home);
     if (evidence_override && *evidence_override) snprintf(evidence_path, sizeof(evidence_path), "%s", evidence_override);
     else if (!estate_path(evidence_path, sizeof(evidence_path), estate, "control.db")) return 0;
-    m->cms_db = attach_db(db, "cms", cms);
+    m->cms_db = attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_CMS, cms);
     if (!m->cms_db) return 0;
-    m->items_db = attach_db(db, "items", items);
-    m->frontier_db = attach_db(db, "frontier", frontier);
-    m->fabric_db = attach_db(db, "fabric", fabric);
-    m->account_db = account[0] ? attach_db(db, "acct", account) : 0;
-    m->meter_db = meter[0] ? attach_db(db, "meter", meter) : 0;
-    m->control_db = evidence_path[0] ? attach_db(db, "control", evidence_path) : 0;
+    m->items_db = attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_ITEMS, items);
+    m->frontier_db = attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_FRONTIER, frontier);
+    m->fabric_db = attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_FABRIC, fabric);
+    m->account_db = account[0] ? attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_ACCT, account) : 0;
+    m->meter_db = meter[0] ? attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_METER, meter) : 0;
+    m->control_db = evidence_path[0] ? attach_db(db, BF_STORE_SURFACE_MATURITY_ESTATE_DYNAMIC_JOIN_CONTROL, evidence_path) : 0;
     m->missing_owner_dbs = !m->items_db + !m->frontier_db + !m->fabric_db;
     sqlite3_exec(db, "PRAGMA query_only=ON", NULL, NULL, NULL);
 
@@ -552,7 +551,7 @@ static const char *opt(int argc, char **argv, const char *name) {
 int main(int argc, char **argv) {
     sqlite3 *db = NULL;
     int ok = 0;
-    if (argc < 2 || sqlite3_open(":memory:", &db) != SQLITE_OK) return 2;
+    if (argc < 2 || sqlite3_open_v2(":memory:", &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI, NULL) != SQLITE_OK) return 2;
     enum {
         SM_AUDIT, SM_AXES, SM_BACKFILL_PLAN, SM_CLOSURE,
         SM_ESTATE_AUDIT, SM_ESTATE_GATE, SM_LAKE_CHECK, SM_LIST,

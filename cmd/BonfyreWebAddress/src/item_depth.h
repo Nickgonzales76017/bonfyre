@@ -18,6 +18,7 @@
  * one link away. A body that cannot be read, or an entry that cannot be found
  * in it, shows nothing rather than a guess. Included by main.c before
  * emit_item_page. */
+#include "web_store.h"
 
 #define DEPTH_PARAS 10
 #define DEPTH_SECTIONS 8
@@ -434,7 +435,7 @@ static void depth_channel_words(const char *protocol, const char *material, char
 
 /* Every channel the publisher of this source has, as the frontier knows it. */
 static void depth_fill_channels(const char *source, const char *publisher, const char *publisher_url, PageMaterial *rel) {
-    sqlite3 *db = bf_sqlite_open_readonly_path(getenv("BONFYRE_SOURCE_FRONTIER_DB"), 1000);
+    sqlite3 *db = bf_store_open_ro(getenv("BONFYRE_SOURCE_FRONTIER_DB"), 1000, &bf_store_policy_source_frontier);
     sqlite3_stmt *st = NULL;
     PageStream *channels = &rel->stream[BF_PAGE_MATERIAL_CHANNEL];
     if (!db) return;

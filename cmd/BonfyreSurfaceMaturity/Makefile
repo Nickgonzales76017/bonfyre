@@ -17,7 +17,7 @@ $(MODEL_HEADER): $(MODEL_JSON) tools/embed_json.zig
 	zig run tools/embed_json.zig -- $(MODEL_JSON) $(MODEL_HEADER) bf_surface_maturity_json
 
 $(PROGRAM): src/main.c $(MODEL_HEADER)
-$(PROGRAM): src/account_maturity_print.h
+$(PROGRAM): src/account_maturity_print.h generated/store_schema.h
 	$(CC) $(CFLAGS) -Igenerated -o $@ src/main.c -lsqlite3
 
 test: $(PROGRAM)

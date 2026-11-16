@@ -2,6 +2,7 @@
 #define BONFYRE_WORLD_CACHE_AND_CMS_ROUTE_H
 /* Extracted verbatim from main.c lines 13519-14173 (mechanical split, no logic changes). */
 #include "record_factor.h"
+#include "web_store.h"
 static size_t world_cache_dependencies(const char *world, char storage[][640],
                                        const char **out, size_t cap) {
     sqlite3 *db = NULL;
@@ -264,7 +265,7 @@ static int entity_query(const char *bindir, const char *sql, char *out, size_t o
     if (access(qbin, X_OK) != 0 || access(db, R_OK) != 0) return -1;
     if (snprintf(composed, sizeof(composed),
             "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
-            "ATTACH '%s' AS e (TYPE sqlite, READ_ONLY); %s",
+            BF_STORE_WEB_ESTATE_SCAN_DUCKDB_ATTACH "%s",
             duckdb_home(), db, sql) >= (int)sizeof(composed)) return -1;
     {
         char *argv[] = { qbin, "sql", ":memory:", composed, NULL };
@@ -456,7 +457,7 @@ static int serve_cms_route(const BfRequest *r) {
     if (!strcmp(target, "/notes") || !strcmp(target, "/notes/")) {
         sqlite3 *idb = NULL; sqlite3_stmt *ist = NULL;
         if (!cms_db || !*cms_db) cms_db = "/var/lib/bonfyre/cms/bonfyre_cms.db";
-        if (sqlite3_open_v2(cms_db, &idb, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (idb) sqlite3_close(idb); return 0; }
+        if (bf_store_open(cms_db, &idb, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (idb) sqlite3_close(idb); return 0; }
         printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
         ak_app_open("Notes", "workbench", "route-notes");
         fputs("<header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Aurekai <span>/</span> Notes</p><h1>Notes</h1></div></header><ul class=\"ak-rows notes-list\">", stdout);
@@ -492,7 +493,7 @@ static int serve_cms_route(const BfRequest *r) {
     if (snprintf(route, sizeof(route), "notes/%s", target + 7) >= (int)sizeof(route)) return 0;
     /* Strip a query string: the route is the path, not the request. */
     { char *q = strchr(route, '?'); if (q) *q = '\0'; }
-    if (sqlite3_open_v2(cms_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
+    if (bf_store_open(cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (db) sqlite3_close(db); return 0; }
     if (sqlite3_prepare_v2(db,
             "SELECT title, content, published, allow_guest FROM wiki_page "
             "WHERE route = ? AND status = 'published' LIMIT 1", -1, &st, NULL) == SQLITE_OK) {

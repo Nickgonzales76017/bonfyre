@@ -128,9 +128,15 @@ $(EXPERIENCE_PROGRAM_HEADER): generated/native_page_composition.h ../BonfyreSurf
 build/web_main.o build/compact/web_main.o: $(EXPERIENCE_PROGRAM_HEADER)
 # Route owners are declared in CUE, compiled once, never wired by hand in main.c.
 WEB_ROUTES_HEADER := generated/native_web_routes.h
-$(WEB_ROUTES_HEADER): ../../schemas/control/web-routes.cue tools/compile_web_routes.sh src/web_request.h
+$(WEB_ROUTES_HEADER): ../../schemas/control/web-routes.cue tools/compile_web_routes.sh src/web_request.h $(wildcard ../../schemas/storage/stores/*.cue)
 	@sh tools/compile_web_routes.sh
 build/web_main.o build/compact/web_main.o: $(WEB_ROUTES_HEADER)
+# A records row answers a new store row without a rebuild; a path nobody
+# answers returns 404 with ranked suggestions that never dispatch.
+.PHONY: web-route-kinds-witness
+test: web-route-kinds-witness
+web-route-kinds-witness: $(TARGET)
+	sh tests/web_route_kinds_test.sh ./$(TARGET)
 # Estate origins are declared in CUE; a page names a territory, never a host literal.
 ESTATE_HOSTS_HEADER := generated/native_estate_hosts.h
 $(ESTATE_HOSTS_HEADER): ../../schemas/control/estate-hosts.cue tools/compile_estate_hosts.sh
@@ -1033,3 +1039,9 @@ preview-refresh: $(TARGET)
 	@sh tools/preview.sh refresh
 preview-stop:
 	@sh tools/preview.sh stop
+
+# The dynamic store kind (schemas/storage/stores, store item_depth) joins by its declared rows.
+.PHONY: dynamic-store-kind-test
+dynamic-store-kind-test: tests/dynamic_store_kind_test.c generated/store_schema.h
+	$(CC) -O2 -Wall -Wextra -Werror -std=c11 -I$(ROOT)/lib/libbonfyre/include -o tests/.dynamic-store-kind tests/dynamic_store_kind_test.c -lsqlite3
+	./tests/.dynamic-store-kind; status=$$?; rm -f tests/.dynamic-store-kind; exit $$status

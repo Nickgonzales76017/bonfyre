@@ -68,3 +68,48 @@ store_schemas: "cmd/BonfyreSpatial": {
 		},
 	]
 }
+
+// The durable tier: the hot SQLite spatial_fact log is the source, and a
+// Parquet file is its lossless cold export (durable --out). The cold schema
+// below is every column the fragment creates; columns the owner adds later by
+// ALTER TABLE ride along in the export without being promised here.
+store_schemas: "cmd/BonfyreSpatial": stores: spatial_fact_cold: {
+	kind:  "columnar"
+	macro: "SPATIAL_FACT_COLD"
+	columnar: {
+		format:    "parquet"
+		cold_glob: "argument: durable --out <file.parquet>"
+		order_by:  "fact_id"
+		hot: {table: "spatial_fact", attach_as: "hot", ddl: "fragment"}
+		columns: [
+			{name: "fact_id", type: "int64"},
+			{name: "observation_id", type: "utf8"},
+			{name: "subject", type: "utf8"},
+			{name: "geometry_kind", type: "utf8"},
+			{name: "lon", type: "float64"},
+			{name: "lat", type: "float64"},
+			{name: "geometry", type: "utf8"},
+			{name: "crs", type: "utf8"},
+			{name: "observed_at", type: "utf8"},
+			{name: "effective_at", type: "utf8"},
+			{name: "valid_until", type: "utf8"},
+			{name: "recorded_at", type: "utf8"},
+			{name: "observation_mode", type: "utf8"},
+			{name: "source_occurrence", type: "utf8"},
+			{name: "derived_from", type: "utf8"},
+			{name: "retracts", type: "int64"},
+			{name: "retraction_reason", type: "utf8"},
+			{name: "accuracy_h", type: "float64"},
+			{name: "provenance", type: "utf8"},
+		]
+		promote: "thaw only: durable --thaw restores a cold file into a new SQLite file (BF_STORE_SPATIAL_THAWED_SPATIAL_FACT), never into the live hot store; durable --verify must report identical first"
+	}
+}
+
+// The AddressPlane index a spatial cut reads beside the spatial store.
+store_schemas: "cmd/BonfyreSpatial": stores: address_plane: {
+	kind:       "sqlite"
+	macro:      "SPATIAL_ADDRESS_PLANE"
+	written_by: "bonfyre-address-plane (--index)"
+	attach: {as: "plane"}
+}

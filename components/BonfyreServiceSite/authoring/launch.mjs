@@ -141,29 +141,13 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
  if(!root)throw Error("An authoring root is required");
  const {base,tree}=await openNativeAuthoring({route,site,fetcher,editablePublished:!!site});
  let authoritative=base;
- const layout=el("div","authoring-site-workspace");
- const navigationHost=el("div","authoring-page-navigation");
- const editorHost=el("div","authoring-page-editor");
- layout.append(navigationHost,editorHost);root.replaceChildren(layout);
+ // The rail (pages and page settings) is server markup; the canvas mounts beside it.
+ const navigationHost=root.querySelector("[data-authoring-rail]"),editorHost=root.querySelector("[data-authoring-editor]");
+ if(!navigationHost||!editorHost)throw Error("The page rail did not load. Reload the page.");
  const dialog=reviewDialog(()=>directory.getDraft());
  let desk=null,navigationAccepted=false;
- const directory=mountAuthoringPageDirectory(navigationHost,{base,route,site,fetcher,
-  onDraftChanged:()=>desk?.setPageDirty(directory.isDirty()),
-  onCreateArticle(){
-   if(desk?.isDirty()||directory.isDirty()){
-    if(!confirm("Discard unsaved changes and start an article?"))return;
-   }
-   navigationAccepted=true;
-   location.assign("/cms/compose/advanced?new=article"+(site?"&site="+encodeURIComponent(site):""));
-  },
-  onNavigate(next){
-   if(desk?.isDirty()||directory.isDirty()){
-    if(!confirm("Discard unsaved changes and open another page?"))return;
-   }
-   navigationAccepted=true;
-   location.assign("/cms/compose/advanced?route="+encodeURIComponent(next)+(site?"&site="+encodeURIComponent(site):""));
-  }
- });
+ const directory=mountAuthoringPageDirectory(navigationHost,{
+  onDraftChanged:()=>desk?.setPageDirty(directory.isDirty()),onSave:()=>desk?.save()});
  // Normal authoring composes native pages. Migration is explicitly opt-in.
  if(new URLSearchParams(location.search).get("mode")==="migration"){
  navigationHost.append(journalIntakePanel(async article=>{
@@ -225,8 +209,6 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
    if(authoritative.id!==0||tree.blocks.length)throw Error("Start a new article in an unused page address.");
    const slug=route.split("/").filter(Boolean).at(-1);
    if(!slug||!/^draft-[a-f0-9]{20}$/.test(slug))throw Error("New article address was not created securely.");
-   directory.setJournalMetadata({title:"Untitled article",heading:"Untitled article",
-    editorial_kind:"article",media_subject_ref:"article:"+slug});
    await desk.createArticle();
   }
  }catch(error){
@@ -241,28 +223,17 @@ export async function mountNativeAurekaiEditor(root,{route="/",site="",newArticl
 export async function bootNativeAurekaiEditor(){
  const root=document.querySelector("[data-aurekai-authoring]");
  if(!root)return;
+ // The server chose the page (and a fresh address for a new article).
  const params=new URLSearchParams(location.search),site=params.get("site")||"";
- const newArticle=params.get("new")==="article"&&!params.has("route");
- let route=params.get("route")||"/";
- if(newArticle){
-  if(!globalThis.crypto?.getRandomValues)throw Error("Secure browser identity required for new pages.");
-  const bytes=new Uint8Array(10);globalThis.crypto.getRandomValues(bytes);
-  route="/blog/draft-"+Array.from(bytes,x=>x.toString(16).padStart(2,"0")).join("")+"/";
-  const next=new URL(location.href);
-  next.searchParams.delete("new");next.searchParams.set("route",route);
+ const route=root.querySelector("[data-authoring-rail]")?.dataset.authoringRail||params.get("route")||"/";
+ const newArticle=params.get("new")==="article";
+ if(params.get("route")!==route||newArticle){
+  const next=new URL(location.href);next.searchParams.set("route",route);next.searchParams.delete("new");
   history.replaceState(history.state,"",next.pathname+next.search+next.hash);
- }
- const field=document.querySelector(".authoring-top input[name=route]");
- if(field)field.value=route;
- if(site){
-  const input=document.createElement("input");input.type="hidden";
-  input.name="site";input.value=site;field?.form?.append(input);
-  const back=document.querySelector(".authoring-top a[href='/cms/compose']");
-  if(back){back.href="/profile?site="+encodeURIComponent(site)+"&tab=posts";back.textContent="← Your profile";}
  }
  try{await mountNativeAurekaiEditor(root,{route,site,newArticle});}
  catch(error){
-  root.replaceChildren(el("p","authoring-error",
+  (root.querySelector("[data-authoring-editor]")||root).replaceChildren(el("p","authoring-error",
    "The native composition workspace did not open: "+error.message));
  }
 }

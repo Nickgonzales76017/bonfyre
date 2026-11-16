@@ -48,4 +48,8 @@
 /* cmd/BonfyreExternalEstate/src/main.c */
 #define BF_STORE_EXTERNAL_ESTATE_P \
     "CREATE TABLE p(j TEXT)"
+/* store advertisement_stage: sqlite, declared by cmd/BonfyreExternalEstate; written by bonfyre-external-estate advertisement emitters (a staged file per generation) */
+#define BF_STORE_EXTERNAL_ADVERTISEMENT_STAGE_KIND "sqlite"
+#define BF_STORE_EXTERNAL_ADVERTISEMENT_STAGE_ATTACH "ATTACH DATABASE ? AS advertisement_stage"
+#define BF_STORE_EXTERNAL_ADVERTISEMENT_STAGE_ATTACH_READONLY 0
 #endif

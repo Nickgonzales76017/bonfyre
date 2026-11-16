@@ -609,6 +609,14 @@ if command -v "${BONFYRE_DUCKDB:-duckdb}" > /dev/null 2>&1; then
   "$bin" durable --db "$mdb" --out "$tmp/cold.parquet" > "$tmp/export.json"
   [ "$(j 'd["representation"]' < "$tmp/export.json")" = "parquet+zstd" ]
   [ -s "$tmp/cold.parquet" ]
+  # Read back, the cold file carries every column the registry declares for
+  # store spatial_fact_cold (schemas/storage/stores, kind columnar).
+  declared=$(sed -n 's/^#define BF_STORE_SPATIAL_FACT_COLD_COLUMNAR_COLUMNS "\(.*\)"$/\1/p' "$(dirname "$0")/../generated/store_schema.h" | tr ',' '\n' | cut -d: -f1)
+  present=$("${BONFYRE_DUCKDB:-duckdb}" -noheader -list -c "SELECT name FROM parquet_schema('$tmp/cold.parquet')")
+  [ "$(printf '%s\n' $declared | wc -l | tr -d ' ')" = 19 ]
+  for column in $declared; do
+    printf '%s\n' "$present" | grep -qx "$column" || { echo "cold file lacks declared column $column" >&2; exit 1; }
+  done
   "$bin" durable --db "$mdb" --out "$tmp/cold.parquet" --verify > "$tmp/verify.json"
   [ "$(j 'd["identical"]' < "$tmp/verify.json")" = "True" ]
   # Equality is by content, so a hot store that has moved on is reported as

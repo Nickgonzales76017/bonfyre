@@ -1,6 +1,7 @@
 #ifndef BONFYRE_APPLICATION_CONTINUATION_H
 #define BONFYRE_APPLICATION_CONTINUATION_H
 #include "form_tree.h"
+#include "web_store.h"
 #include "account_navigation_markup.h"
 #include "bf_msgpack.h"
 /* Read-only projections of existing ApplicationBinding and CMS record owners.
@@ -268,7 +269,7 @@ static int ac_work_board_act(const char *method,const char *body,const char *raw
         char approvals[PATH_MAX],path[PATH_MAX],release[96]="",line[512];sqlite3 *odb=NULL;sqlite3_stmt *q=NULL;int found=0;
         const char *idx=getenv("BONFYRE_ACCOUNT_WORK_DB"),*slash=idx?strrchr(idx,'/'):NULL;
         if(!slash||snprintf(approvals,sizeof(approvals),"%.*s/approvals",(int)(slash-idx),idx)>=(int)sizeof(approvals)){aw_error(503,"Approvals are not configured here.\n");return 1;}
-        if(sqlite3_open_v2(operator_db,&odb,SQLITE_OPEN_READONLY,NULL)==SQLITE_OK&&sqlite3_prepare_v2(odb,"SELECT substr(dedupe_key,18) FROM goals WHERE id=?1 AND source='release-approval' AND dedupe_key LIKE 'release-approval:%' AND state NOT IN('resolved','superseded')",-1,&q,NULL)==SQLITE_OK){
+        if(bf_store_open(operator_db, &odb, SQLITE_OPEN_READONLY, &bf_store_policy_operator)==SQLITE_OK&&sqlite3_prepare_v2(odb,"SELECT substr(dedupe_key,18) FROM goals WHERE id=?1 AND source='release-approval' AND dedupe_key LIKE 'release-approval:%' AND state NOT IN('resolved','superseded')",-1,&q,NULL)==SQLITE_OK){
             sqlite3_bind_text(q,1,task+17,-1,SQLITE_STATIC);if(sqlite3_step(q)==SQLITE_ROW){snprintf(release,sizeof(release),"%s",(const char*)sqlite3_column_text(q,0));found=1;}}
         sqlite3_finalize(q);sqlite3_close(odb);
         if(!found||strspn(release,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")!=strlen(release)){aw_error(409,"That is not an open release approval.\n");return 1;}
@@ -280,7 +281,7 @@ static int ac_work_board_act(const char *method,const char *body,const char *raw
         int wrote=len>0&&write(fd,line,(size_t)len)==len;close(fd);if(!wrote){unlink(path);aw_error(503,"The approval could not be saved.\n");return 1;}
     }
     snprintf(note,sizeof(note),!strcmp(action,"approve")?"Approved by you %s; the release is being put live":!strcmp(action,"email")?"Waiting on an email or phone check (recorded %s)":!strcmp(action,"review")?"Waiting on the provider's review or sales reply (recorded %s)":!strcmp(action,"later")?"Set aside for now (recorded %s)":"Set up (recorded %s)",day);
-    if(sqlite3_open_v2(operator_db,&db,SQLITE_OPEN_READWRITE,NULL)==SQLITE_OK){sqlite3_busy_timeout(db,3000);
+    if(bf_store_open(operator_db, &db, SQLITE_OPEN_READWRITE, &bf_store_policy_operator)==SQLITE_OK){sqlite3_busy_timeout(db,3000);
         if(sqlite3_prepare_v2(db,"UPDATE goals SET state=CASE WHEN ?2='done' THEN 'resolved' ELSE state END,last_error=?3,"
             "priority=CASE WHEN ?2='later' THEN MAX(priority-30,1) ELSE priority END,updated_at=?4 WHERE id=?1 AND (source='provider-estate' OR (source='release-approval' AND ?2 IN('approve','later'))) AND state NOT IN('resolved','superseded')",-1,&s,NULL)==SQLITE_OK){
             sqlite3_bind_text(s,1,task+17,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,action,-1,SQLITE_STATIC);sqlite3_bind_text(s,3,note,-1,SQLITE_STATIC);sqlite3_bind_double(s,4,(double)now);
@@ -328,12 +329,12 @@ static void ac_work_note(const char *text){
 static void ac_work_focus(const char *context,const char *task,const char *subject,const char *scope){
     char operator_db[PATH_MAX];const char *index=getenv("BONFYRE_ACCOUNT_WORK_DB");sqlite3 *db=NULL;sqlite3_stmt *s=NULL;int listed=0;
     if(!task||strncmp(task,"account-operator-",17)||!index||*index!='/'||!ac_work_operator_path(operator_db,sizeof(operator_db)))return;
-    if(sqlite3_open_v2(index,&db,SQLITE_OPEN_READONLY,NULL)==SQLITE_OK){sqlite3_busy_timeout(db,1000);
+    if(bf_store_open(index, &db, SQLITE_OPEN_READONLY, &bf_store_policy_account_work)==SQLITE_OK){sqlite3_busy_timeout(db,1000);
         if(sqlite3_prepare_v2(db,"SELECT 1 FROM account_work WHERE id=?1 AND subject=?2 AND scope=?3",-1,&s,NULL)==SQLITE_OK){
             sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,subject,-1,SQLITE_STATIC);sqlite3_bind_text(s,3,scope,-1,SQLITE_STATIC);listed=sqlite3_step(s)==SQLITE_ROW;}
         sqlite3_finalize(s);s=NULL;}
     sqlite3_close(db);db=NULL;if(!listed)return;
-    if(sqlite3_open_v2(operator_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){sqlite3_close(db);return;}sqlite3_busy_timeout(db,1000);
+    if(bf_store_open(operator_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_operator)!=SQLITE_OK){sqlite3_close(db);return;}sqlite3_busy_timeout(db,1000);
     if(sqlite3_prepare_v2(db,"SELECT title,details,state,attempts,last_error,created_at,updated_at,source FROM goals WHERE id=?1",-1,&s,NULL)!=SQLITE_OK){sqlite3_close(db);return;}
     sqlite3_bind_text(s,1,task+17,-1,SQLITE_STATIC);
     if(sqlite3_step(s)==SQLITE_ROW){
@@ -478,7 +479,7 @@ static int ac_relationship_actor_exists(const char *subject,const char *who,cons
         sqlite3_bind_text(s,1,subject,-1,SQLITE_STATIC);ok=sqlite3_step(s)==SQLITE_ROW;goto done;
     }
     if(!who||!*who||!source||!*source)goto done;
-    {const char *path=getenv("BONFYRE_ITEM_ARCHIVE_DB");if(!path||!*path||sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;sqlite3_busy_timeout(db,1000);}
+    {const char *path=getenv("BONFYRE_ITEM_ARCHIVE_DB");if(!path||!*path||bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_item_archive)!=SQLITE_OK)goto done;sqlite3_busy_timeout(db,1000);}
     if(sqlite3_prepare_v2(db,"SELECT 1 FROM item WHERE by=?1 AND source=?2 LIMIT 1",-1,&s,NULL)!=SQLITE_OK)goto done;
     sqlite3_bind_text(s,1,who,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,source,-1,SQLITE_STATIC);ok=sqlite3_step(s)==SQLITE_ROW;
  done:sqlite3_finalize(s);if(cms)sqlite3_close(cms);if(db)sqlite3_close(db);return ok;

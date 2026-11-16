@@ -10,6 +10,7 @@
 #ifndef BF_RECEIPT_STORE_H
 #define BF_RECEIPT_STORE_H
 #include <dirent.h>
+#include "web_store.h"
 #include <limits.h>
 #include <sqlite3.h>
 #include <stdio.h>
@@ -45,7 +46,7 @@ static int bf_receipt_pack_use(const char *dir) {
         memset(&bf_receipt_pack_held, 0, sizeof(bf_receipt_pack_held));
     }
     if (access(path, R_OK) != 0) return 0;
-    if (sqlite3_open_v2(path, &bf_receipt_pack_held.db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { sqlite3_close(bf_receipt_pack_held.db); bf_receipt_pack_held.db = NULL; return 0; }
+    if (bf_store_open_held(path, &bf_receipt_pack_held.db, SQLITE_OPEN_READONLY, &bf_store_policy_receipt_pack) != SQLITE_OK) { sqlite3_close(bf_receipt_pack_held.db); bf_receipt_pack_held.db = NULL; return 0; }
     if (sqlite3_prepare_v2(bf_receipt_pack_held.db, "SELECT value FROM meta WHERE key='dictionary'", -1, &st, NULL) == SQLITE_OK &&
         sqlite3_step(st) == SQLITE_ROW && sqlite3_column_bytes(st, 0) > 0)
         bf_receipt_pack_held.dict = ZSTD_createDDict(sqlite3_column_blob(st, 0), (size_t)sqlite3_column_bytes(st, 0));

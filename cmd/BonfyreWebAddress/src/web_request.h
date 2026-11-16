@@ -37,18 +37,34 @@ static inline int bf_request_is(const BfRequest *r, const char *as) {
 static inline const char *bf_request_query_opt(const BfRequest *r) {
     return r && r->query && r->query[0] ? r->query : NULL;
 }
-typedef enum { BF_ROUTE_EXACT = 0, BF_ROUTE_PREFIX = 1, BF_ROUTE_STRICT = 2, BF_ROUTE_ANY = 3 } BfRouteMatch;
+typedef enum {
+    BF_ROUTE_EXACT = 0, BF_ROUTE_PREFIX = 1, BF_ROUTE_STRICT = 2, BF_ROUTE_ANY = 3,
+    /* A path under the row's prefix that is a row of a declared store. */
+    BF_ROUTE_RECORDS = 4,
+    /* Never matches: it configures the not-found page's suggestions. */
+    BF_ROUTE_SEMANTIC = 5
+} BfRouteMatch;
 typedef int (*BfRouteOwner)(const BfRequest *);
-typedef struct { const char *path; BfRouteMatch match; BfRouteOwner owner; unsigned when; const char *as; } BfRoute;
+/* 1 when the path is a record of the row's store (src/web_route_kinds.h). */
+typedef int (*BfRouteRecords)(const char *target);
+typedef struct {
+    const char *path; BfRouteMatch match; BfRouteOwner owner; unsigned when; const char *as;
+    BfRouteRecords records;
+    /* Plain words a not-found page may offer this path under; NULL: never. */
+    const char *title;
+} BfRoute;
 /* Exact paths also answer with one trailing slash, strict paths only with
- * their own bytes; prefixes match by bytes; any asks the owner every time. */
+ * their own bytes; prefixes match by bytes; any asks the owner every time;
+ * records ask the store only once the prefix matched. */
 static inline int bf_route_matches(const BfRoute *route, const char *target) {
     size_t n;
     if (!route || !target) return 0;
     if (route->match == BF_ROUTE_ANY) return 1;
-    if (!route->path) return 0;
+    if (route->match == BF_ROUTE_SEMANTIC || !route->path) return 0;
     n = strlen(route->path);
     if (route->match == BF_ROUTE_PREFIX) return !strncmp(target, route->path, n);
+    if (route->match == BF_ROUTE_RECORDS)
+        return !strncmp(target, route->path, n) && route->records && route->records(target);
     if (route->match == BF_ROUTE_STRICT) return !strcmp(target, route->path);
     return !strncmp(target, route->path, n) && (!target[n] || (target[n] == '/' && !target[n + 1]));
 }

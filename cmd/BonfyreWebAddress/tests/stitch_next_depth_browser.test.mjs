@@ -43,7 +43,7 @@ try{
  let snapshot={schema:'bonfyre.page-snapshot.v1',id:12,digest:'a'.repeat(64),snapshot:{route:'/stitch',page:{title:'Source page',heading:'Source page',status:'draft'},fragments:[{coordinate:'one',position:0,heading:'Authored material',body:'Body retained',source_ref:'source:exact',source_digest:'sha256:exact',status:'draft'}]}};
  const writes=[],cms=await chrome.newPage();cms.on('pageerror',e=>failures.push(e.message));
  await cms.setRequestInterception(true);cms.on('request',async req=>{const url=new URL(req.url());
-  if(url.pathname==='/cms/compose')return req.respond({status:200,contentType:'text/html',body:markup});
+  if(url.pathname==='/cms/compose')return req.respond({status:200,contentType:'text/html; charset=utf-8',body:markup});
   if(url.pathname==='/cms/compose/pages')return req.respond({status:200,contentType:'application/json',body:JSON.stringify({pages:[],has_more:false})});
   if(url.pathname==='/cms/compose/page'&&req.method()==='GET')return req.respond({status:200,contentType:'application/json',body:JSON.stringify(snapshot)});
   if(url.pathname==='/cms/compose/page'&&req.method()==='POST'){const submitted=JSON.parse(req.postData());writes.push(submitted);

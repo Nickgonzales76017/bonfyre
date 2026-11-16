@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ROOM_COMPOSE_AND_FLOW_CARDS_H
 #define BONFYRE_ROOM_COMPOSE_AND_FLOW_CARDS_H
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 27583-29041 (mechanical split, no logic changes). */
 static size_t ambient_render(char *out, size_t cap, size_t w,
                              const char *kind, const char *ident)
@@ -767,7 +768,7 @@ static int held_page_read(const char *id, HeldPageSelection *held) {
     sqlite3 *db = NULL; sqlite3_stmt *st = NULL; int found = 0;
     memset(held, 0, sizeof(*held));
     if (!path || !*path || !held_page_id(id)) return 0;
-    if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+    if (bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_browser_queue) != SQLITE_OK) {
         if (db) sqlite3_close(db);
         return 0;
     }
@@ -1100,7 +1101,7 @@ static const char *surfaceir_db(void) {
 static sqlite3 *surfaceir_open(int writable) {
     sqlite3 *db = NULL;
     int flags = writable ? (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE) : SQLITE_OPEN_READONLY;
-    if (sqlite3_open_v2(surfaceir_db(), &db, flags, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return NULL; }
+    if (bf_store_open(surfaceir_db(), &db, flags, &bf_store_policy_surfaceir) != SQLITE_OK) { if (db) sqlite3_close(db); return NULL; }
     if (writable) {
         sqlite3_busy_timeout(db, 2000);
         sqlite3_exec(db,

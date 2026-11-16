@@ -68,27 +68,46 @@ store_schemas: [=~"^(cmd|components)/Bonfyre[A-Za-z0-9]+$"]: #Store
 	if journal_mode == "WAL" {wal_truncate_pages: >wal_autocheckpoint}
 }
 
+// What a store promises a reader that does not write it: how long an open
+// waits on a held lock and how long a request may hold it. A store declared
+// with lease and no durability compiles to a BfStoreDurability with no journal
+// policy, so opening it read-write never changes the writer's pragmas.
+#Lease: {
+	busy_timeout_ms: int & >=0 | *1000
+	read_txn_max_ms: int & >0 | *120000
+}
+
+#Ident: =~"^[a-z_][a-z0-9_]*$"
+
 #StoreDecl: {
 	kind: #StoreKindName
 	// Constant prefix: BF_STORE_<macro>_KIND, _DURABILITY ...
 	macro: =~"^[A-Z0-9_]+$"
 	// The environment variable that names the store's file, when one does.
 	env?: =~"^[A-Z][A-Z0-9_]*$"
+	// The program that writes the file, when the declarer only reads it.
+	written_by?: string & !=""
 	// Other owners that open the same file; they get the same constants.
 	opened_by: [...=~"^(cmd|components)/Bonfyre[A-Za-z0-9]+$"] | *[]
 	// What the owner applies at open. Left out when the owner does not apply
 	// a policy yet; a declared policy that nothing applies would be a claim.
 	durability?: #Durability
-	// Opened by attaching it to another connection under a fixed schema name;
-	// the compiler emits _ATTACH, bound with the file at ?1. Read-only
-	// attaches go through bf_store_attach() as a file: URI with mode=ro.
+	// The reader's side only (see #Lease). A store has durability or lease.
+	lease?: #Lease
+	if durability != _|_ {lease?: _|_}
+	// Opened by attaching it to another connection under a fixed schema name.
+	// engine sqlite: _ATTACH is "ATTACH DATABASE ? AS <as>", bound with the
+	// file at ?1; read-only attaches go through bf_store_attach() as a file:
+	// URI with mode=ro. engine duckdb: _DUCKDB_ATTACH is the DuckDB sqlite
+	// scanner statement, a format taking the file once.
 	attach?: {
-		as:       =~"^[a-z_][a-z0-9_]*$"
+		as:       #Ident
 		readonly: bool | *true
+		engine:   *"sqlite" | "duckdb"
 	}
 	if kind == "vector" {
 		vector: {
-			table: =~"^[a-z_][a-z0-9_]*$"
+			table: #Ident
 			// A fixed width, or "runtime" when the owner learns it from the
 			// model it loads; then _VECTOR_DDL is a format taking the width.
 			dimension: int & >0 | "runtime"
@@ -100,32 +119,64 @@ store_schemas: [=~"^(cmd|components)/Bonfyre[A-Za-z0-9]+$"]: #Store
 		}
 	}
 	if kind == "ranker" {
+		// A learned order over a key space someone else bounded. The run table
+		// says which representation ordered which frontier; the frontier
+		// table holds every key of the run at its rank, so a later slice
+		// widens the attempt without rerunning the model.
 		ranker: {
-			// The declared key space the ranker orders, and its width.
-			key_space: string & !=""
-			key_bits:  int & >0
-			weights:   string & !=""
+			key_space:      string & !=""
+			run_table:      #Ident
+			frontier_table: #Ident
+			run_column:     #Ident | *"run_id"
+			key_column:     #Ident
+			order_column:   #Ident
+			// The representation passport whose vectors order the keys.
+			weights: string & !=""
 		}
 	}
 	if kind == "columnar" {
 		columnar: {
 			format: "parquet" | "arrow"
-			// Cold files, then the hot SQLite table that shadows them.
+			// Where cold files live (a glob, or "argument" when the caller names them).
 			cold_glob: string & !=""
-			hot_table: =~"^[a-z_][a-z0-9_]*$"
-			columns: [...{name: =~"^[a-z_][a-z0-9_]*$", type: "int64" | "float64" | "utf8" | "bool" | "timestamp"}] & [_, ...]
-			// When a cold row is promoted to the hot table.
+			// The cold schema every file must carry (a file may carry more).
+			columns: [...{name: #Ident, type: "int32" | "int64" | "float64" | "utf8" | "bool" | "timestamp"}] & [_, ...]
+			// The order a cold file is written in.
+			order_by?: #Ident
+			// The SQLite table that shadows the cold rows, when one does.
+			//   ddl fragment: the owner's own fragment creates it; the hot
+			//     table is the source and the cold file its lossless export.
+			//   ddl columns: the compiler emits _COLUMNAR_HOT_DDL from columns.
+			hot?: {
+				table:     #Ident
+				attach_as: #Ident | *"hot"
+				ddl:       "fragment" | "columns"
+			}
+			// When a cold row is promoted to (or restored into) a hot table.
 			promote: string & !=""
 		}
 	}
 	if kind == "dynamic" {
 		dynamic: {
-			// The table whose rows declare the shape of further rows.
-			declaring_table: =~"^[a-z_][a-z0-9_]*$"
-			// tenant: one attached file per tenant; site: per site; none: rows only.
-			shard: "tenant" | "site" | "none"
-			columns: [...=~"^[a-z_][a-z0-9_]*$"] & [_, ...]
+			// How further stores join at run time.
+			//   named: a declared set of joins, each attached when present;
+			//   tenant / site: one file per tenant or site, named by rows of
+			//   declaring_table; none: the rows only.
+			shard: "named" | "tenant" | "site" | "none"
+			if shard == "named" {
+				joins: [...{
+					as:  #Ident
+					env?: =~"^[A-Z][A-Z0-9_]*$"
+					// The table whose presence makes the join usable.
+					probe?:   #Ident
+					required: bool | *false
+				}] & [_, ...]
+			}
+			if shard != "named" {
+				// The table whose rows declare the shape of further rows.
+				declaring_table: #Ident
+				columns: [...#Ident] & [_, ...]
+			}
 		}
 	}
 }
-

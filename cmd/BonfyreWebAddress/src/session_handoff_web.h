@@ -6,6 +6,7 @@
  * The old Aurekai apex values below are a temporary release adapter;
  * do not use them when a configured map is invalid. */
 #include "tenant_host_binding.h"
+#include "web_store.h"
 #include "compat/aurekai_legacy.h"
 static const char *sso_host_for(const char *territory){
     int state=bf_tenant_hosts_status();
@@ -47,7 +48,7 @@ static int sso_return_address(const char *candidate,const char *host,char *out,s
  if(n<=tail||strcmp(domain+n-tail,suffix)||!lower_host(domain,normalized)||strcmp(domain,normalized)||
     strspn(domain,"abcdefghijklmnopqrstuvwxyz0123456789-.")!=n||!bf_auth_local_path(path?path:"/"))return 0;
  sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int ok=0;
- if(sqlite3_open_v2(matrix,&db,SQLITE_OPEN_READONLY,NULL)==SQLITE_OK&&sqlite3_prepare_v2(db,
+ if(bf_store_open(matrix, &db, SQLITE_OPEN_READONLY, &bf_store_policy_matrix)==SQLITE_OK&&sqlite3_prepare_v2(db,
     "SELECT 1 FROM matrix_domains WHERE hostname=?1 AND territory=?2 LIMIT 1",-1,&st,NULL)==SQLITE_OK){
   sqlite3_bind_text(st,1,domain,-1,SQLITE_TRANSIENT);sqlite3_bind_text(st,2,territory,-1,SQLITE_TRANSIENT);ok=sqlite3_step(st)==SQLITE_ROW;
  }sqlite3_finalize(st);if(db)sqlite3_close(db);if(ok)snprintf(out,cap,"%s",candidate);return ok;

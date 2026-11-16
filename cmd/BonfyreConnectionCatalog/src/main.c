@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "../generated/store_schema.h"  /* columnar stores: schemas/storage/stores */
 
 static int local_file(const char *path, char out[PATH_MAX]) {
   struct stat st;
@@ -57,6 +58,24 @@ static int hex(const char *s, size_t n) {
     if (!((s[i] >= '0' && s[i] <= '9') || (s[i] >= 'a' && s[i] <= 'f'))) return 0;
   return 1;
 }
+/* A cold file must carry every column the registry declares for its store;
+ * one that lacks any is refused before the catalogue query reads it. */
+static int declared_columns(duckdb_connection conn, const char *missing_sql, const char *path) {
+  duckdb_prepared_statement st = NULL; duckdb_result res = {0}; int ok = 0;
+  if (duckdb_prepare(conn, missing_sql, &st) == DuckDBSuccess &&
+      duckdb_bind_varchar(st, 1, path) == DuckDBSuccess &&
+      duckdb_execute_prepared(st, &res) == DuckDBSuccess) {
+    ok = duckdb_row_count(&res) == 0;
+    for (idx_t i = 0; i < duckdb_row_count(&res); i++) {
+      char *name = duckdb_value_varchar(&res, 0, i);
+      fprintf(stderr, "connection catalog: %s lacks declared column %s\n", path, name ? name : "?");
+      duckdb_free(name);
+    }
+    duckdb_destroy_result(&res);
+  }
+  duckdb_destroy_prepare(&st);
+  return ok;
+}
 static void field(bf_jsonw *w, const char *k, const char *v) {
   bf_jsonw_key(w, k); bf_jsonw_str(w, v);
 }
@@ -68,8 +87,8 @@ int main(int argc, char **argv) {
   duckdb_config config = NULL; bf_jsonw out; int ok = 0, initialized = 0;
   const char *sql =
     "WITH f AS (SELECT * FROM (SELECT *, count(*) OVER (PARTITION BY source_goal_id,original_ordinal) AS copies "
-    "FROM read_parquet(?)) WHERE (?='' OR catalogue=?) AND (?='' OR contains(lower(raw_key),lower(?)))), s AS (SELECT *, "
-    "count(*) OVER (PARTITION BY source_goal_id,original_ordinal) AS copies FROM read_parquet(?)) "
+    "FROM " BF_STORE_CONNECTION_FACETS_COLUMNAR_COLD_SCAN_BOUND ") WHERE (?='' OR catalogue=?) AND (?='' OR contains(lower(raw_key),lower(?)))), s AS (SELECT *, "
+    "count(*) OVER (PARTITION BY source_goal_id,original_ordinal) AS copies FROM " BF_STORE_CONNECTION_ENTRIES_COLUMNAR_COLD_SCAN_BOUND ") "
     "SELECT f.catalogue,f.raw_key,f.source_url_candidate,f.source_goal_id,f.source_goal_key,"
     "cast(f.original_ordinal as varchar),f.row_sha256,s.raw_line,s.goal_source,f.status,"
     "CASE WHEN s.row_sha256=f.row_sha256 AND sha256(s.raw_line)=f.row_sha256 "
@@ -102,6 +121,8 @@ int main(int argc, char **argv) {
       duckdb_set_config(config, "autoload_known_extensions", "false") != DuckDBSuccess ||
       duckdb_open_ext(NULL, &db, config, NULL) != DuckDBSuccess ||
       duckdb_connect(db, &conn) != DuckDBSuccess ||
+      !declared_columns(conn, BF_STORE_CONNECTION_FACETS_COLUMNAR_MISSING_COLUMNS, fp) ||
+      !declared_columns(conn, BF_STORE_CONNECTION_ENTRIES_COLUMNAR_MISSING_COLUMNS, ep) ||
       duckdb_prepare(conn, sql, &stmt) != DuckDBSuccess ||
       duckdb_bind_varchar(stmt, 1, fp) != DuckDBSuccess ||
       duckdb_bind_varchar(stmt, 2, ecosystem) != DuckDBSuccess ||

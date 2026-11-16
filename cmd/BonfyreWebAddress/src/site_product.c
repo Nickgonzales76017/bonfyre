@@ -3,6 +3,7 @@
 #define _DARWIN_C_SOURCE
 #endif
 #include "markdown_fence.h"
+#include "web_store.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 /*
  * site — the product face of the estate's site machinery.
@@ -253,7 +254,7 @@ static int site_init(Site *s, int argc, char **argv, const char *self) {
 
 static sqlite3 *open_cms(const Site *s) {
     sqlite3 *db = NULL;
-    if (sqlite3_open_v2(s->cms_db, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) { if (db) sqlite3_close(db); return NULL; }
+    if (bf_store_open(s->cms_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (db) sqlite3_close(db); return NULL; }
     sqlite3_busy_timeout(db, 3000);
     return db;
 }
@@ -381,7 +382,7 @@ static int ensure_server(Site *s) {
         sqlite3 *meter = NULL;
         long known = 0;
         /* Readonly cannot recreate the WAL index the meter checkpointed away. */
-        if (sqlite3_open_v2(s->meter_db, &meter, SQLITE_OPEN_READWRITE, NULL) == SQLITE_OK) known = count_where(meter, "rate", "provider", "site");
+        if (bf_store_open(s->meter_db, &meter, SQLITE_OPEN_READWRITE, &bf_store_policy_meter) == SQLITE_OK) known = count_where(meter, "rate", "provider", "site");
         if (meter) sqlite3_close(meter);
         if (known < 2) {
             static const char *ops[] = {"site.read", "site.write"};
@@ -1492,7 +1493,7 @@ static int site_meter_usage(Site *s, int argc, char **argv) {
      * handle may open the main DB yet fail its first SELECT when SQLite needs
      * to recreate the shared-memory index. Allow WAL coordination, never
      * database creation or a write statement from this usage query. */
-    int rc = sqlite3_open_v2(s->meter_db, &db, SQLITE_OPEN_READWRITE, NULL);
+    int rc = bf_store_open(s->meter_db, &db, SQLITE_OPEN_READWRITE, &bf_store_policy_meter);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "site usage: meter database unavailable: %s\n", db ? sqlite3_errmsg(db) : "no handle");
         if (db) sqlite3_close(db);
@@ -2151,7 +2152,7 @@ static int site_paid(Site *s, int argc, char **argv) {
     find_binary(pay_bin, sizeof(pay_bin), "BONFYRE_PAY_BINARY", "bonfyre-pay", s->self);
     snprintf(pay_db, sizeof(pay_db), "%s/pay.db", s->home);
     snprintf(customer_key, sizeof(customer_key), "%s:customer:%s", key, reference);
-    if (sqlite3_open_v2(pay_db, &db, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK &&
+    if (bf_store_open(pay_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_pay) == SQLITE_OK &&
         sqlite3_prepare_v2(db, "SELECT id, amount_cents FROM invoices WHERE api_key=?1 ORDER BY id DESC LIMIT 1", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, customer_key, -1, SQLITE_STATIC);
         if (sqlite3_step(st) == SQLITE_ROW) {
@@ -2310,7 +2311,7 @@ static int site_promises(Site *s, int argc, char **argv) {
     if (!key || !slug_ok(key)) { fputs("site promises NAME\n", stderr); return 2; }
     snprintf(commitments_db, sizeof(commitments_db), "%s/commitments.db", s->home);
     snprintf(prefix, sizeof(prefix), "site:%s:%%", key);
-    if (sqlite3_open_v2(commitments_db, &db, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+    if (bf_store_open(commitments_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_commitments_home) == SQLITE_OK) {
         /* Read through the store's own tables' names as it reports them. */
         if (sqlite3_prepare_v2(db, "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%commitment%' ORDER BY length(name) LIMIT 1", -1, &st, NULL) == SQLITE_OK &&
             sqlite3_step(st) == SQLITE_ROW) {

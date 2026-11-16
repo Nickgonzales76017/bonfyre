@@ -28,6 +28,7 @@
  */
 #define _POSIX_C_SOURCE 200809L
 #include "detail_depth.h"
+#include "web_store.h"
 #include "people_projection.h"
 #include "glyph_set.h"
 #include "bf_sqlite_path.h"
@@ -116,40 +117,27 @@ static void plausible_fn(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
     (void)argc; sqlite3_result_int(ctx, bf_people_name_plausible((const char *)sqlite3_value_text(argv[0])));
 }
 
-static int attach(sqlite3 *db, const char *env, const char *as) {
-    const char *path = getenv(env); char uri[PATH_MAX + 32], sql[96]; sqlite3_stmt *st = NULL; int ok = 0;
-    if (!path || !*path || bf_sqlite_readonly_uri(uri, sizeof(uri), path) >= (int)sizeof(uri)) return 0;
-    snprintf(sql, sizeof(sql), "ATTACH DATABASE ?1 AS %s", as);
-    if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
-        sqlite3_bind_text(st, 1, uri, -1, SQLITE_TRANSIENT);
-        ok = sqlite3_step(st) == SQLITE_DONE;
-    }
-    sqlite3_finalize(st);
-    return ok;
-}
+/* The stores that deepen an item join the archive connection by the rows
+ * declared for store item_depth (schemas/storage/stores, kind dynamic):
+ * schema name, the file's environment variable, and the probe table whose
+ * presence makes the join usable. */
+static const BfStoreJoin item_depth_joins[] = BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOINS;
 
-static int has_table(sqlite3 *db, const char *schema, const char *table) {
-    char sql[160]; sqlite3_stmt *st = NULL; int ok = 0;
-    snprintf(sql, sizeof(sql), "SELECT 1 FROM %s.sqlite_master WHERE type='table' AND name=?1", schema);
-    if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
-        sqlite3_bind_text(st, 1, table, -1, SQLITE_STATIC);
-        ok = sqlite3_step(st) == SQLITE_ROW;
-    }
-    sqlite3_finalize(st);
-    return ok;
+static int join(sqlite3 *db, int which, const char *path) {
+    return bf_store_join(db, &item_depth_joins[which], path, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_ATTACH);
 }
 
 static int sess_open(Sess *s) {
     const char *archive = getenv("BONFYRE_ITEM_ARCHIVE_DB"); char uri[PATH_MAX + 32];
     memset(s, 0, sizeof(*s));
     if (!archive || !*archive || bf_sqlite_readonly_uri(uri, sizeof(uri), archive) >= (int)sizeof(uri)) return 0;
-    if (sqlite3_open_v2(uri, &s->db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL) != SQLITE_OK) { sqlite3_close(s->db); s->db = NULL; return 0; }
+    if (bf_store_open(uri, &s->db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_item_archive) != SQLITE_OK) { sqlite3_close(s->db); s->db = NULL; return 0; }
     sqlite3_busy_timeout(s->db, 1500);
     sqlite3_create_function(s->db, "plausible", 1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, plausible_fn, NULL, NULL);
-    s->fr = attach(s->db, "BONFYRE_SOURCE_FRONTIER_DB", "fr") && has_table(s->db, "fr", "channel");
-    s->fp = attach(s->db, "BONFYRE_FRAPPE_SURFACE_DB", "fp") && has_table(s->db, "fp", "frappe_program");
-    s->dd = attach(s->db, "BONFYRE_DETAIL_DEPTH_DB", "dd") && has_table(s->db, "dd", "item_facet");
-    s->jt = attach(s->db, "BONFYRE_CMS_DB", "jt") && has_table(s->db, "jt", "internet_source");
+    s->fr = join(s->db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_FR, NULL);
+    s->fp = join(s->db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_FP, NULL);
+    s->dd = join(s->db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_DD, NULL);
+    s->jt = join(s->db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_JT, NULL);
     if (sqlite3_exec(s->db, "CREATE TEMP TABLE focus(source TEXT NOT NULL, key TEXT NOT NULL, PRIMARY KEY(source,key))", NULL, NULL, NULL) != SQLITE_OK) {
         sqlite3_close(s->db); s->db = NULL; return 0;
     }
@@ -986,11 +974,12 @@ static char *read_body(const char *dir, const char *source, size_t *len) {
 static char *dup_col(sqlite3_stmt *st, int i) { const char *t = (const char *)sqlite3_column_text(st, i); return strdup(t ? t : ""); }
 
 int bf_detail_depth_derive(const char *archive, const char *bodies_dir, const char *out_db, FILE *report) {
-    sqlite3 *in = bf_sqlite_open_readonly_path(archive, 5000), *fr = NULL;
+    sqlite3 *in = NULL, *fr = NULL;
     sqlite3_stmt *sources = NULL, *items = NULL, *own = NULL;
     Derive d = {0};
+    if (bf_store_open(archive, &in, SQLITE_OPEN_READONLY, &bf_store_policy_item_archive) == SQLITE_OK) sqlite3_busy_timeout(in, 5000);
     if (!in || !out_db) { if (in) sqlite3_close(in); return 2; }
-    if (sqlite3_open(out_db, &d.out) != SQLITE_OK) { sqlite3_close(in); sqlite3_close(d.out); return 2; }
+    if (bf_store_open(out_db, &d.out, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, &bf_store_policy_detail_depth) != SQLITE_OK) { sqlite3_close(in); sqlite3_close(d.out); return 2; }
     if (sqlite3_exec(d.out,
           "PRAGMA journal_mode=WAL;"
           "CREATE TABLE IF NOT EXISTS item_facet(source TEXT NOT NULL, key TEXT NOT NULL, facet TEXT NOT NULL, value TEXT NOT NULL,"
@@ -1002,7 +991,8 @@ int bf_detail_depth_derive(const char *archive, const char *bodies_dir, const ch
         sqlite3_prepare_v2(d.out, "INSERT OR IGNORE INTO item_facet VALUES(?1,?2,?3,?4,?5)", -1, &d.put, NULL) != SQLITE_OK) {
         sqlite3_close(in); sqlite3_close(d.out); return 2;
     }
-    fr = bf_sqlite_open_readonly_path(getenv("BONFYRE_SOURCE_FRONTIER_DB"), 5000);
+    if (bf_store_open(getenv(BF_STORE_WEB_SOURCE_FRONTIER_ENV), &fr, SQLITE_OPEN_READONLY, &bf_store_policy_source_frontier) == SQLITE_OK)
+        sqlite3_busy_timeout(fr, 5000);
     /* The ledger has no host index; a temporary one is built in memory. */
     if (fr && sqlite3_exec(fr, "CREATE TEMP TABLE hosts AS SELECT DISTINCT host FROM root; CREATE INDEX temp.hosts_host ON hosts(host)", NULL, NULL, NULL) == SQLITE_OK)
         sqlite3_prepare_v2(fr, "SELECT host FROM temp.hosts WHERE host=?1 OR host=?2 LIMIT 1", -1, &d.root, NULL);
@@ -1069,20 +1059,15 @@ int bf_detail_depth_derive(const char *archive, const char *bodies_dir, const ch
  *            + facet rows (each an edge from a piece to that page)
  * A shared topic counts once per source that carries it. */
 int bf_detail_depth_measure(const char *archive, const char *frontier, const char *depth_db, FILE *out) {
-    sqlite3 *db = bf_sqlite_open_readonly_path(archive, 5000); sqlite3_stmt *st = NULL;
+    sqlite3 *db = NULL; sqlite3_stmt *st = NULL;
     char sql[4096];
-    if (!db) return 2;
+    /* URI-capable, so the declared joins can attach their files read-only. */
+    if (bf_store_open(archive, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, &bf_store_policy_item_archive) != SQLITE_OK) return 2;
+    sqlite3_busy_timeout(db, 5000);
     sqlite3_create_function(db, "plausible", 1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, plausible_fn, NULL, NULL);
-    {   char uri[PATH_MAX + 32]; sqlite3_stmt *a = NULL;
-        const char *paths[2] = {frontier, depth_db}, *names[2] = {"fr", "dd"};
-        for (int i = 0; i < 2; i++) {
-            if (!paths[i] || bf_sqlite_readonly_uri(uri, sizeof(uri), paths[i]) >= (int)sizeof(uri)) continue;
-            snprintf(sql, sizeof(sql), "ATTACH DATABASE ?1 AS %s", names[i]);
-            if (sqlite3_prepare_v2(db, sql, -1, &a, NULL) == SQLITE_OK) { sqlite3_bind_text(a, 1, uri, -1, SQLITE_TRANSIENT); sqlite3_step(a); }
-            sqlite3_finalize(a); a = NULL;
-        }
-    }
-    int dd = has_table(db, "dd", "item_facet"), fr = has_table(db, "fr", "channel");
+    /* The measure names its files; with none named a join stays out. */
+    int fr = frontier && join(db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_FR, frontier);
+    int dd = depth_db && join(db, BF_STORE_WEB_ITEM_DEPTH_DYNAMIC_JOIN_DD, depth_db);
     snprintf(sql, sizeof(sql),
         "WITH s AS (SELECT source, COUNT(*) items, COUNT(DISTINCT CASE WHEN plausible(by) THEN by END) makers,"
         "  COUNT(DISTINCT kind) kinds, COUNT(DISTINCT family) families FROM item GROUP BY source)"

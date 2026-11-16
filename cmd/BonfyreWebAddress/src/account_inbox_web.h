@@ -1,6 +1,7 @@
 #ifndef BONFYRE_ACCOUNT_INBOX_WEB_H
 #define BONFYRE_ACCOUNT_INBOX_WEB_H
 #include "form_tree.h"
+#include "web_store.h"
 #include "../generated/native_estate_hosts.h"
 #include "account_inbox_dating.h"
 #include "../../BonfyreQueue/src/account_legacy_api.h"
@@ -131,7 +132,7 @@ static int ai_credit_attention(const char *state,const char *attention){return s
 static int ai_agent_work(const char *subject,const char *scope,AiWork *rows,size_t cap,int *running,int *stopped,int *waiting,const AcPersonGoal *people,int person_count,AiWork *halted,size_t halt_cap,int *halted_n,AiWork *credit,size_t credit_cap,int *credit_n){
     const char *index=getenv("BONFYRE_ACCOUNT_WORK_DB");sqlite3 *db=NULL;sqlite3_stmt *s=NULL;size_t n=0;*running=*stopped=*waiting=*halted_n=*credit_n=0;
     if(!index||*index!='/')return -1;
-    if(sqlite3_open_v2(index,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){sqlite3_close(db);return -1;}sqlite3_busy_timeout(db,1000);
+    if(bf_store_open(index, &db, SQLITE_OPEN_READONLY, &bf_store_policy_account_work)!=SQLITE_OK){sqlite3_close(db);return -1;}sqlite3_busy_timeout(db,1000);
     const char *attention=ai_column(db,"account_work","attention")?"COALESCE(w.attention,'')":"''";char query[640];
     int query_length=snprintf(query,sizeof(query),"SELECT w.id,w.title,w.state,w.updated_ms,COALESCE((SELECT worker_id FROM account_work_run r WHERE r.work_id=w.id ORDER BY r.updated_ms DESC LIMIT 1),w.source),%s "
         "FROM account_work w WHERE w.subject=?1 AND w.scope=?2 AND w.state IN('running','retry_wait','blocked','dead_letter','ready','defined') ORDER BY w.updated_ms DESC",attention);
@@ -166,7 +167,7 @@ static int ai_table(sqlite3 *db,const char *name){sqlite3_stmt *q=NULL;int found
  * with the invitations still open there. Read-only over the Auth store. */
 static void ai_orgs(const char *auth_db,long user,AiOrg *invites,int *ni,AiOrg *admin,int *na,int *member_n){
     sqlite3 *db=NULL;sqlite3_stmt *q=NULL;char now[32];time_t t=time(NULL);struct tm tm;*ni=*na=*member_n=0;
-    if(!auth_db||!gmtime_r(&t,&tm)||sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){sqlite3_close(db);return;}
+    if(!auth_db||!gmtime_r(&t,&tm)||bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK){sqlite3_close(db);return;}
     strftime(now,sizeof(now),"%Y-%m-%dT%H:%M:%SZ",&tm);sqlite3_busy_timeout(db,1000);
     int has_invites=ai_table(db,"institution_invitations"),has_origins=ai_table(db,"institution_origins");
     if(has_invites&&sqlite3_prepare_v2(db,has_origins?"SELECT i.institution,COALESCE(o.label,i.institution),i.role,i.expires_at FROM institution_invitations i JOIN users u ON lower(u.email)=lower(i.email) LEFT JOIN institution_origins o ON o.institution=i.institution "
@@ -274,7 +275,7 @@ static void ai_signed_out(const char *context){
 static int ai_dating_subject(const char *auth_db,long user,char subject[192]){
  sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int found=0;
  subject[0]=0;
- if(user<1||!auth_db||sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+ if(user<1||!auth_db||bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
  if(sqlite3_prepare_v2(db,
  "SELECT actor_subject FROM actor_closure_bindings "
  "WHERE user_id=?1 AND state='active' LIMIT 2",-1,&st,NULL)!=SQLITE_OK)goto done;
@@ -294,7 +295,7 @@ static void ai_dating_inbox(const char *auth_db,long uid,const char *context){
  char subject[192];sqlite3 *db=NULL;BfDatingCandidate candidates[24];size_t count=0;
  if(strcmp(context,"self")||!path||*path!='/'||strlen(path)>4096||
     !ai_dating_subject(auth_db,uid,subject))return;
- if(sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);return;}
+ if(bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_participation)!=SQLITE_OK){if(db)sqlite3_close(db);return;}
  sqlite3_busy_timeout(db,1000);
  if(!bf_dating_eligible(db,subject)||
     !bf_dating_candidates(db,subject,candidates,24,&count)){sqlite3_close(db);return;}
@@ -339,7 +340,7 @@ static void ai_peer_inbox(const char *auth_db,long uid,const char *context){
  char actor[192];sqlite3 *db=NULL;
  if(strcmp(context,"self")||!path||*path!='/'||strlen(path)>4096||
     !ai_dating_subject(auth_db,uid,actor))return;
- if(sqlite3_open_v2(path,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){
+ if(bf_store_open(path, &db, SQLITE_OPEN_READONLY, &bf_store_policy_participation)!=SQLITE_OK){
   if(db)sqlite3_close(db);return;
  }
  sqlite3_busy_timeout(db,1000);

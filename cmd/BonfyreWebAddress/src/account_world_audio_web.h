@@ -224,7 +224,7 @@ static int world_audio_api(const char *method,const char *query,const char *body
     const char *op=val[WA_OP];
     if(get&&strcmp(op,"draft")){free(buf);aw_error(400,"Invalid workspace request.\n");return 1;}
     const char *path=getenv("BONFYRE_CMS_DB");sqlite3 *db=NULL;char subject[160],again[160];const char *site=val[WA_SITE],*space=val[WA_SPACE];
-    if(!path||!*path||sqlite3_open_v2(path,&db,post?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);free(buf);aw_error(503,"Workspace unavailable.\n");return 1;}
+    if(!path||!*path||!(db=post?cms_open_rw():cms_open_ro())){if(db)sqlite3_close(db);free(buf);aw_error(503,"Workspace unavailable.\n");return 1;}
     sqlite3_busy_timeout(db,2000);
     if(!world_web_admit(bearer,auth_db,db,site,post,subject)){sqlite3_close(db);free(buf);aw_error(404,"Workspace unavailable.\n");return 1;}
     if(post&&awa_initialize(db)!=1){sqlite3_close(db);free(buf);aw_error(503,"Workspace unavailable.\n");return 1;}

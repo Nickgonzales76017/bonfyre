@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ACCOUNT_WORLD_CINEMA_WEB_H
 #define BONFYRE_ACCOUNT_WORLD_CINEMA_WEB_H
+#include "web_store.h"
 /* Screenings, film club and watch diary on an account space.
  *
  * /workspace/world/film   private API (JSON, or a 303 back to the studio or club)
@@ -56,7 +57,7 @@ static void cine_stars(int rating){
 /* A member's name as their account states it; never the account number. */
 static void cine_name(const char *auth_db,const char *subject,char out[129]){
     sqlite3 *db=NULL;sqlite3_stmt *st=NULL;snprintf(out,129,"A member");
-    if(!subject||strncmp(subject,"user:",5)||!auth_db||sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);return;}
+    if(!subject||strncmp(subject,"user:",5)||!auth_db||bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK){if(db)sqlite3_close(db);return;}
     if(sqlite3_prepare_v2(db,"SELECT name FROM users WHERE id=?1",-1,&st,NULL)==SQLITE_OK){
         sqlite3_bind_int64(st,1,strtoll(subject+5,NULL,10));
         if(sqlite3_step(st)==SQLITE_ROW&&sqlite3_column_text(st,0)&&*sqlite3_column_text(st,0))snprintf(out,129,"%s",(const char*)sqlite3_column_text(st,0));
@@ -126,7 +127,7 @@ static int world_cine_api(const char *method,const char *query,const char *body,
        (*v[CF_REWATCH]&&strcmp(v[CF_REWATCH],"1"))||(*v[CF_STATE]&&strcmp(v[CF_STATE],"open")&&strcmp(v[CF_STATE],"closed"))||
        (!strcmp(ret,"studio")&&!op->owner)){aw_error(400,"Invalid workspace coordinates.\n");return 1;}
     const char *path=getenv("BONFYRE_CMS_DB");sqlite3 *db=NULL;char subject[160],again[160];const char *site=v[CF_SITE],*space=v[CF_SPACE],*o=op->op;
-    if(!path||!*path||sqlite3_open_v2(path,&db,post?SQLITE_OPEN_READWRITE:SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK){if(db)sqlite3_close(db);aw_error(503,"Workspace unavailable.\n");return 1;}
+    if(!path||!*path||!(db=post?cms_open_rw():cms_open_ro())){if(db)sqlite3_close(db);aw_error(503,"Workspace unavailable.\n");return 1;}
     sqlite3_busy_timeout(db,2000);
     int admitted=op->owner?world_web_admit(bearer,auth_db,db,site,post,subject):cine_member_admit(bearer,auth_db,db,site,post,subject);
     if(!admitted||(post&&aw_initialize(db)!=1)){sqlite3_close(db);aw_error(admitted?503:404,"Workspace unavailable.\n");return 1;}

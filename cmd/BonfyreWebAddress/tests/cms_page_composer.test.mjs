@@ -19,7 +19,7 @@ beforeAll(async()=>{
 afterAll(async()=>{await browser?.close();await f?.close();},30000);
 test('composition rechecks grants, same origin and actor namespace',async()=>{
  expect((await f.request('/cms/compose')).status).toBe(403);
- expect((await f.request('/cms/compose',{cookie:free.cookie})).status).toBe(403);
+ {const home=await f.request('/cms/compose',{cookie:free.cookie});expect(home.status).toBe(200);expect(home.body).toContain('Claim an address');}
  const initial=json(await read());expect(initial.id).toBe(0);
  const input=payload(initial,{fragments:[section('proof:first','First section')]});
  expect((await save(input,writer.cookie,{Origin:'https://other.test'})).status).toBe(403);
@@ -67,16 +67,16 @@ test('browser creates, rearranges, saves and reopens a composition with provenan
  await tab.click('#add');await fill('field-heading','Second section');await tab.click('#up');
  expect(await tab.$$eval('#canvas h3',x=>x.map(n=>n.textContent))).toEqual(['Second section','First section']);
  await tab.click('#undo');expect(await tab.$$eval('#canvas h3',x=>x.map(n=>n.textContent))).toEqual(['First section','Second section']);await tab.click('#redo');
- await tab.click('#save');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('saved and reopened'));
+ await tab.click('#save');await tab.waitForSelector('#cms-review[open]');await tab.click('#cms-review-confirm');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('saved and reopened'));
  expect(await tab.$eval('#dirty',x=>x.textContent)).toBe('Saved version');expect(await tab.evaluate(()=>window.injected)).toBeUndefined();
  await tab.reload({waitUntil:'networkidle0'});await tab.waitForSelector('#field-title');expect(await tab.$$eval('#canvas h3',x=>x.map(n=>n.textContent))).toEqual(['Second section','First section']);
  let dropped=0;await tab.setRequestInterception(true);
  const intercept=request=>{void(async()=>{if(request.method()==='POST'&&new URL(request.url()).pathname==='/cms/compose/page'&&dropped===0){dropped++;const result=await save(JSON.parse(request.postData()));if(result.status!==200)throw Error('Native lost-reply setup failed');await request.abort();}else await request.continue();})().catch(()=>request.abort().catch(()=>{}));};
- tab.on('request',intercept);await fill('field-lede','Saved despite an interrupted reply');await tab.click('#save');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('confirms your complete composition is saved'));
+ tab.on('request',intercept);await fill('field-lede','Saved despite an interrupted reply');await tab.click('#save');await tab.waitForSelector('#cms-review[open]');await tab.click('#cms-review-confirm');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('confirms your complete composition is saved'));
  expect(dropped).toBe(1);expect(await tab.$eval('#dirty',n=>n.textContent)).toBe('Saved version');tab.off('request',intercept);await tab.setRequestInterception(false);
  const stored=json(await read('/browser-composition'));expect(stored.snapshot.fragments[1].source_ref).toBe('source:browser-proof');expect(stored.snapshot.fragments[1].evidence_ref).toBe('receipt:browser-proof');
  await fill('field-heading','Local edit survives conflict');const external=payload(stored);external.page.heading='Remote edit';expect((await save(external)).status).toBe(200);
- await tab.click('#save');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('draft is still here'));expect(await tab.$eval('#field-heading',n=>n.value)).toBe('Local edit survives conflict');expect(await tab.$eval('#save',n=>n.disabled)).toBe(true);
+ await tab.click('#save');await tab.waitForSelector('#cms-review[open]');await tab.click('#cms-review-confirm');await tab.waitForFunction(()=>document.querySelector('#notice').textContent.includes('draft is still here'));expect(await tab.$eval('#field-heading',n=>n.value)).toBe('Local edit survives conflict');expect(await tab.$eval('#save',n=>n.disabled)).toBe(true);
  await tab.setViewport({width:390,height:844});expect(await tab.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  const proof='/private/tmp/bonfyre-page-authoring/composer-proof';mkdirSync(proof,{recursive:true});await tab.screenshot({path:join(proof,'mobile.png'),fullPage:true});await tab.setViewport({width:1440,height:1000});await tab.screenshot({path:join(proof,'desktop.png'),fullPage:true});expect(errors).toEqual([]);
  }finally{await context.close();}

@@ -24,3 +24,21 @@ store_schemas: "cmd/BonfyreBitNet": {
 		},
 	]
 }
+
+// The rank store: a persisted BitNet run orders an AddressPlane survivor
+// frontier, and the frontier table keeps every survivor at its rank so a later
+// slice widens the attempt without rerunning the model. Retention evaluation
+// attaches it read-only beside its private validation table.
+store_schemas: "cmd/BonfyreBitNet": stores: rank: {
+	kind:  "ranker"
+	macro: "BITNET_RANK"
+	attach: {as: "rank_source"}
+	ranker: {
+		key_space:      "AddressPlane survivor candidate identities of one forwarded frontier"
+		run_table:      "bitnet_rank_run"
+		frontier_table: "ranked_candidate_envelope"
+		key_column:     "candidate_identity"
+		order_column:   "rank"
+		weights:        "the ModelRepresentationPassport named by bitnet_rank_run.representation_id (BitNet embedding 270M I2_S, SHADOW unless ADMIT)"
+	}
+}

@@ -1,6 +1,7 @@
 #ifndef BONFYRE_PACK_SETUP_H
 #define BONFYRE_PACK_SETUP_H
 #include "form_tree.h"
+#include "web_store.h"
 #include "pack_resolution.h"
 #include "../../BonfyreCMS/src/household_access.h"
 static int session_self_authoring(const char *, const char *);
@@ -235,7 +236,7 @@ static int psetup_destinations(const char *bearer,const char *auth_db,PackSetupD
     StudioViewer who;sqlite3 *db=NULL;sqlite3_stmt *s=NULL;int ok=-1,step=SQLITE_DONE;size_t total=1,seen=0;
     *count=0;if(!session_identity(bearer,auth_db,&who)||who.id<1)return 0;
     memset(rows,0,sizeof(*rows)*PSETUP_DESTINATIONS_MAX);snprintf(rows[0].context,sizeof(rows[0].context),"self");snprintf(rows[0].label,sizeof(rows[0].label),"My personal workspace");
-    if(sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
     int origins=psetup_table(db,"institution_origins");if(origins<0||psetup_table(db,"institution_grants")!=1)goto done;
     const char *institutions=origins?
         "SELECT g.institution,COALESCE(NULLIF(o.label,''),g.institution) FROM institution_grants g LEFT JOIN institution_origins o ON o.institution=g.institution WHERE g.user_id=?1 AND g.active=1 AND (g.expires_at IS NULL OR g.expires_at='' OR g.expires_at>=strftime('%Y-%m-%dT%H:%M:%SZ','now')) ORDER BY 2,g.institution LIMIT 101":

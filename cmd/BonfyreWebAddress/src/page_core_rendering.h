@@ -1,6 +1,7 @@
 #ifndef BONFYRE_PAGE_CORE_RENDERING_H
 #define BONFYRE_PAGE_CORE_RENDERING_H
 #include "../generated/native_estate_hosts.h"
+#include "web_store.h"
 /* Extracted verbatim from main.c lines 6405-10681 (mechanical split, no logic changes). */
 static long page_days_from_civil(int y, int m, int d) {
     long era; long yoe, doy, doe; int mp = m > 2 ? m - 3 : m + 9;
@@ -3128,7 +3129,7 @@ static const BfPageProgram *page_program_for_route(const char *route) {
  */
 static sqlite3 *page_frontier_open(void) {
     const char *path = getenv("BONFYRE_SOURCE_FRONTIER_DB");
-    return bf_sqlite_open_readonly_path(path, 1500);
+    return bf_store_open_ro(path, 1500, &bf_store_policy_source_frontier);
 }
 
 static int page_csv_has(const char *list, const char *value);
@@ -3157,7 +3158,7 @@ static int page_share_full(char *taken, size_t cap, const char *value, unsigned 
  * older global PageProgram selector only when this returns zero. */
 static sqlite3 *page_subject_fabric_open(void) {
     const char *path = getenv("BONFYRE_SUBJECT_FABRIC_DB");
-    return bf_sqlite_open_readonly_path(path, 1000);
+    return bf_store_open_ro(path, 1000, &bf_store_policy_subject_fabric);
 }
 static int page_subject_reads_fabric(const char *subject);
 
@@ -3883,7 +3884,7 @@ static int page_stage_focus(PageMaterial *material, const char *focus_ref) {
 
     atlas_path = getenv("BONFYRE_LATENT_ATLAS_DB");
     if (atlas_path && *atlas_path &&
-        sqlite3_open_v2(atlas_path, &atlas, SQLITE_OPEN_READONLY, NULL) == SQLITE_OK) {
+        bf_store_open(atlas_path, &atlas, SQLITE_OPEN_READONLY, &bf_store_policy_latent_atlas) == SQLITE_OK) {
         snprintf(address, sizeof(address), "o/%s/%s", source, key);
         if (sqlite3_prepare_v2(atlas,
             "SELECT CASE WHEN src=?1 THEN dst ELSE src END "

@@ -69,3 +69,12 @@ store_schemas: "cmd/BonfyreExternalEstate": {
 		},
 	]
 }
+
+// A staged advertisement generation, attached beside the live index inside
+// the replacing transaction and copied in by emitter.
+store_schemas: "cmd/BonfyreExternalEstate": stores: advertisement_stage: {
+	kind:       "sqlite"
+	macro:      "EXTERNAL_ADVERTISEMENT_STAGE"
+	written_by: "bonfyre-external-estate advertisement emitters (a staged file per generation)"
+	attach: {as: "advertisement_stage", readonly: false}
+}

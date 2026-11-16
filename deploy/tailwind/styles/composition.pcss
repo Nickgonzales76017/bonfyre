@@ -533,6 +533,24 @@ body.ak-app .fd :is(h1,h2,h3),body.ak-app .ak-zen :is(h1,h2,h3){font-family:var(
 .route-compose .cmc-visual{min-height:60vh;margin-top:18px;padding:0;border:1px solid var(--ak-outline-variant);border-radius:22px;background:var(--ak-surface-low);overflow:hidden}
 /* Visual editor (Stitch artboard editor): a compact head, then the
  * pages rail | canvas | inspector workbench at full width. */
+/* /cms/compose home (cms_page_composer_home.h): pages, start, workspace summary. */
+.route-compose .cmc-home-head{grid-template-columns:minmax(0,1fr)}
+.route-compose .ak-btn[hidden]{display:none}
+.route-compose .cmc-home{align-items:start;padding-bottom:56px}
+.route-compose .cmc-home>.ak-section{display:grid;gap:12px;align-content:start;min-width:0;margin:0}
+.route-compose .cmc-home>.ak-section>h2{margin:0;font:600 20px/1.2 var(--ak-sans);color:var(--ak-on-surface)}
+.route-compose .cmc-home h3{margin:14px 0 0;font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ak-primary)}
+.route-compose .cmc-home-list{list-style:none;margin:0 -10px;padding:0;display:grid;gap:2px}
+.route-compose .cmc-home-list li{display:grid;gap:3px;padding:10px;border-radius:12px;min-width:0}
+.route-compose .cmc-home-list li:hover{background:var(--ak-surface-high)}
+.route-compose .cmc-home-list a{font:600 15px/1.35 var(--ak-sans);text-decoration:none;color:var(--ak-on-surface)!important;overflow-wrap:anywhere}
+.route-compose .cmc-home-list small{font:500 11px/1.4 'DM Mono',monospace;letter-spacing:.04em;color:var(--ak-on-variant);overflow-wrap:anywhere}
+.route-compose .cmc-home-start form.ak-action{display:grid;gap:10px;margin:0}
+.route-compose .cmc-home-start form.ak-action>button{justify-self:start}
+.route-compose .cmc-home .quiet{margin:0}
+.route-compose .cmc-home>.ak-section{align-self:stretch}
+@media(max-width:760px){.route-compose .cmc-home-start{order:-1}}
+.route-compose .cmc-home-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:6px 0 4px}
 .route-compose-visual .cmc-visual-head h1{font-size:clamp(2rem,4vw,3.25rem)}
 .route-compose-visual .cmc-visual-head .ak-lede{max-width:46rem}
 .route-compose-visual .cmc-visual{margin-inline:calc(-1 * clamp(0px,2vw,24px))}

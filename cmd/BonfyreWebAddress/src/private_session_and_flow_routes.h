@@ -63,7 +63,7 @@ static int published_local_media_body(const char *target,char *out,size_t cap){
     if(!root||!*root||!cms||!*cms||!asset_twin_digest_target(target,digest))return 0;
     const char *suffix=target+13+64;
     if(strcmp(suffix,".m4a")&&strcmp(suffix,".vtt"))return 0;
-    if(sqlite3_open_v2(cms,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(bf_store_open(cms, &db, SQLITE_OPEN_READONLY, &bf_store_policy_cms)!=SQLITE_OK)goto done;
     if(sqlite3_prepare_v2(db,
       "SELECT 1 FROM media_program WHERE media_kind='audio' AND "
       "publication_state='published' AND status='published' AND "
@@ -83,6 +83,7 @@ done:
     return 0;
 }
 #include "asset_byte_range.h"
+#include "web_store.h"
 static int serve_asset_twin(const BfRequest *rq) {
     const char *method=rq->method; const char *target=rq->target; const char *request=rq->raw;
     (void)method;(void)target;(void)request;
@@ -1355,7 +1356,7 @@ static int serve_agents_flow(const BfRequest *r) {
         if (access(qbin, X_OK) == 0 && access(workdb, R_OK) == 0) {
             snprintf(sql, sizeof(sql),
               "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
-              "ATTACH '%s' AS w (TYPE sqlite, READ_ONLY); "
+              BF_STORE_WEB_FLEMING_WORK_DUCKDB_ATTACH
               "SELECT status, count(*) AS n FROM w.workgraph_nodes WHERE mission_id NOT LIKE 'account-%%' GROUP BY status",
               duckdb_home(), workdb);
             {

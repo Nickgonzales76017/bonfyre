@@ -11,6 +11,7 @@
  *
  * Reads BONFYRE_SOURCE_FRONTIER_DB and BONFYRE_MATRIX_DB (serve defaults both
  * to the estate directory).  Included by main.c before the page emitters. */
+#include "web_store.h"
 
 typedef struct {
     char root_id[64];   /* the frontier root the reference resolved through */
@@ -72,7 +73,7 @@ static inline int estate_valid_ident(const char *s) {
  * to ask, the slug binding stands. */
 static inline int estate_host_reads_root(const char *slug, const char *root_id) {
     sqlite3 *fabric; sqlite3_stmt *st = NULL; char subject[96]; int ok = 1;
-    if (!root_id || !*root_id || !(fabric = bf_sqlite_open_readonly_path(getenv("BONFYRE_SUBJECT_FABRIC_DB"), 1000))) return 1;
+    if (!root_id || !*root_id || !(fabric = bf_store_open_ro(getenv("BONFYRE_SUBJECT_FABRIC_DB"), 1000, &bf_store_policy_subject_fabric))) return 1;
     snprintf(subject, sizeof(subject), "institution:publisher:%s", slug);
     if (sqlite3_prepare_v2(fabric, "SELECT EXISTS(SELECT 1 FROM subject_reader WHERE subject=?1 AND scope='public' AND root_id=?2), "
                                    "EXISTS(SELECT 1 FROM subject_reader WHERE subject=?1 AND scope='public' AND root_id<>'')", -1, &st, NULL) == SQLITE_OK) {
@@ -104,8 +105,8 @@ static inline int estate_publisher_host(sqlite3 *matrix, const char *root_host, 
 typedef struct { sqlite3 *frontier, *matrix; } EstateReferenceStores;
 
 static inline void estate_reference_open(EstateReferenceStores *s) {
-    s->frontier = bf_sqlite_open_readonly_path(getenv("BONFYRE_SOURCE_FRONTIER_DB"), 1000);
-    s->matrix = bf_sqlite_open_readonly_path(getenv("BONFYRE_MATRIX_DB"), 1000);
+    s->frontier = bf_store_open_ro(getenv("BONFYRE_SOURCE_FRONTIER_DB"), 1000, &bf_store_policy_source_frontier);
+    s->matrix = bf_store_open_ro(getenv("BONFYRE_MATRIX_DB"), 1000, &bf_store_policy_matrix);
 }
 static inline void estate_reference_close(EstateReferenceStores *s) {
     if (s->frontier) sqlite3_close(s->frontier);

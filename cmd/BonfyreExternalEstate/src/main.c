@@ -18,6 +18,7 @@
 
 #include "bf_lex.h"
 #include "address_resolve.h"
+#include "bf_store_durability.h"
 #include "../generated/store_schema.h"  /* store DDL: schemas/storage/stores */
 /* The native candidate reservoir is deliberately narrow: it imports observed
  * source occurrences and CUE-compiled presentation demand, performs only
@@ -1112,8 +1113,7 @@ static int capture_emitter(int out_fd, AdvertisementEmitter kind, const char *pa
 static int replace_advertisement_generation(sqlite3 *db, const char *stage_path, unsigned selected) {
     sqlite3_stmt *attach=NULL;char stage_uri[1024];
     if(!exec_sql(db,"BEGIN IMMEDIATE;"))return 0;
-    if(sqlite3_prepare_v2(db,"ATTACH DATABASE ? AS advertisement_stage",-1,&attach,NULL)!=SQLITE_OK)goto fail;
-    sqlite3_bind_text(attach,1,stage_path,-1,SQLITE_TRANSIENT);if(sqlite3_step(attach)!=SQLITE_DONE){sqlite3_finalize(attach);goto fail;}sqlite3_finalize(attach);attach=NULL;
+    if(!bf_store_attach(db,stage_path,BF_STORE_EXTERNAL_ADVERTISEMENT_STAGE_ATTACH,BF_STORE_EXTERNAL_ADVERTISEMENT_STAGE_ATTACH_READONLY))goto fail;
     for(int i=0;i<=EMIT_INTERACTION_GRAMMAR;i++)if(selected&(1u<<i)){
         if(i==EMIT_INTERACTION_GRAMMAR){
             if(sqlite3_prepare_v2(db,"DELETE FROM candidate_advertisement_dependency WHERE identity IN (SELECT identity FROM candidate_advertisement WHERE candidate_kind='interaction_grammar')",-1,&attach,NULL)!=SQLITE_OK)goto fail;if(sqlite3_step(attach)!=SQLITE_DONE){sqlite3_finalize(attach);goto fail;}sqlite3_finalize(attach);attach=NULL;

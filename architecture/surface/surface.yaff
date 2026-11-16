@@ -1290,6 +1290,15 @@ architecture site-presentation-composition
   source_path cmd/BonfyreWebAddress/src/cms_page_composer_visual.h
   source_path components/BonfyreServiceSite/authoring/entry.mjs
   witness 2026-11-11 the visual workspace bundle (Puck, GrapesJS, Editor.js, narration handoff) builds stamped bonfyre:generated, serves with its shells at /cms/compose/advanced, and mounted in headless Chrome with zero console errors listing the site's pages
+  source_path cmd/BonfyreWebAddress/src/cms_page_composer_home.h
+  source_path components/BonfyreServiceSite/authoring/page-directory.mjs
+  invariant the visual editor's pages rail and "This page" settings are native markup from the site_page records (form_tree/ui_tree builders): a recent-pages list, one primary "Start a page" with a server-made unguessable draft address, and the page's settings as an edit-in-place summary whose article rows show only once the page is an article; page-directory.mjs only reads that form at save time
+  invariant /cms/compose with no route is the native workspace home in the Stitch artboard layout (pages, one start-a-page field, drafts waiting, a three-number summary) laid out through the numeric presentation vocabulary; ?route= hands over to the section composer unchanged
+  invariant ?new=article without a route gets its /blog/draft-<20 hex>/ address and article defaults from the server; the browser no longer mints article addresses
+  witness 2026-11-15 in a lane preview over cloned stores, Chrome edited the heading in the server-drawn settings and saved it through "Save this page" (snapshot heading read back), the Article choice revealed and hid byline/date rows, and ?new=article opened /blog/draft-<hex>/ with kind article and identity article:draft-<hex>; zero page errors; cms_advanced_composer.test.mjs 2/2 and profile_site_scope.test.mjs 38/38 pass
+  known_gap cms_page_composer.test.mjs lost-reply step fails against the in-tree bonfyre-cms: its page-read drops site_fragment semantic_tags and projection_contract, so the browser cannot confirm an interrupted save (the release bonfyre-cms keeps them)
+  forbidden_inference a filled settings summary -> a saved page; values are a draft until the composer's save is acknowledged and read back
+  forbidden_inference the workspace home's counts -> publication, review or audience; they count site_page rows of this namespace only
 
 interaction site-program-lowers-human-community
   source site-presentation-composition

@@ -3,12 +3,13 @@
 /* Public profile continuations reuse Auth's exact actor binding and the native
  * CMS community reader. Private membership and institution grants never project. */
 #include "../../BonfyreCMS/src/community_read.h"
+#include "web_store.h"
 
 static int ph_public_actor_user(const char *actor,const char *auth_db,char out[32]) {
     sqlite3 *db=NULL;sqlite3_stmt *st=NULL;int count=0;long long id=0;
     out[0]=0;
     if(!actor||strncmp(actor,"person:",7)||!auth_db||!*auth_db)return 0;
-    if(sqlite3_open_v2(auth_db,&db,SQLITE_OPEN_READONLY,NULL)!=SQLITE_OK)goto done;
+    if(bf_store_open(auth_db, &db, SQLITE_OPEN_READONLY, &bf_store_policy_auth)!=SQLITE_OK)goto done;
     if(sqlite3_prepare_v2(db,"SELECT user_id FROM actor_closure_bindings WHERE actor_subject=?1 AND state='active' LIMIT 2",-1,&st,NULL)!=SQLITE_OK)goto done;
     sqlite3_bind_text(st,1,actor,-1,SQLITE_STATIC);
     while(sqlite3_step(st)==SQLITE_ROW){count++;id=sqlite3_column_int64(st,0);}
