@@ -1,4 +1,5 @@
 architecture bonfyre-matrix
+  source_lineage earliest source engine/core/include/bf_matrix.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BonfyreMatrix
   family institutional
   domain Institution / Factorized participation

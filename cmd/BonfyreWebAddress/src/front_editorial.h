@@ -197,7 +197,7 @@ static void front_time(time_t at, time_t now) {
     char when[48], iso[32]; struct tm tm;
     page_when(at, now, when, sizeof(when));
     if (!when[0] || !gmtime_r(&at, &tm) || !strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &tm)) return;
-    fputs("<time datetime=\"", stdout); html(iso); fputs("\">", stdout); html(when); fputs("</time>", stdout);
+    ui_open_a(stdout, "time", "datetime", iso); html(when); ui_close(stdout, "time");
 }
 
 static void front_minutes(long ms) {
@@ -228,16 +228,16 @@ static const char *front_publisher(const PageItem *item) {
  * has one, otherwise its own words read aloud. */
 static void front_listen(const PageItem *item, const char *text_id, int is_default, const char *klass) {
     int recording = item->kind == BF_PAGE_MATERIAL_AUDIO && item->asset[0] && public_http_url(item->asset);
-    fputs("<button type=\"button\" class=\"", stdout); html(klass); fputs("\" data-ak-track data-title=\"", stdout); html(item->title);
-    fputs("\" data-by=\"", stdout); html(front_publisher(item));
-    if (recording) { fputs("\" data-src=\"", stdout); html(item->asset); }
-    else { fputs("\" data-narrate=\"#", stdout); html(text_id); }
-    fputs("\"", stdout);
-    if (is_default) fputs(" data-ak-default", stdout);
-    fputs(">", stdout); page_glyph(recording ? "listen" : "narration");
+    fputs("<button type=\"button\" class=\"", stdout); html(klass); ui_lit(stdout, "\" data-ak-track data-title=\""); html(item->title);
+    ui_lit(stdout, "\" data-by=\""); html(front_publisher(item));
+    if (recording) { ui_lit(stdout, "\" data-src=\""); html(item->asset); }
+    else { ui_lit(stdout, "\" data-narrate=\"#"); html(text_id); }
+    ui_lit(stdout, "\"");
+    if (is_default) ui_lit(stdout, " data-ak-default");
+    ui_lit(stdout, ">"); page_glyph(recording ? "listen" : "narration");
     fputs(recording ? "<span>Listen" : "<span>Read aloud", stdout);
     if (recording) front_minutes(item->duration_ms);
-    fputs("</span></button>", stdout);
+    ui_close_n(stdout, "span", "button", NULL);
 }
 
 static const char *front_open_label(const PageItem *item) {
@@ -251,17 +251,17 @@ static const char *front_open_label(const PageItem *item) {
 
 static void front_open(const PageItem *item, const char *label) {
     const char *close = page_emit_item_open(item, "fd-open");
-    html(label ? label : front_open_label(item)); fputs(" <span aria-hidden=\"true\">&rsaquo;</span>", stdout); fputs(close, stdout);
+    html(label ? label : front_open_label(item)); (ui_lit(stdout, " "), ui_elem(stdout, "span", (const UiAttr[]){{"aria-hidden", "true"}}, 1, 0), ui_lit(stdout, "&rsaquo;"), ui_close(stdout, "span")); fputs(close, stdout);
 }
 
 static void front_strip(const FrontPool *pool, int shown) {
     char day[64] = ""; struct tm tm;
     if (page_local_time(pool->now, &tm)) strftime(day, sizeof(day), "%A, %B %e", &tm);
-    fputs("<div class=\"fd-strip\" role=\"note\"><p><span class=\"fd-dot\" aria-hidden=\"true\"></span>Today&#039;s edition", stdout);
-    if (day[0]) { fputs(" &middot; ", stdout); html(day); }
-    fputs("</p><p class=\"fd-strip-facts\">", stdout);
+    (ui_elem(stdout, "div", (const UiAttr[]){{"class", "fd-strip"}, {"role", "note"}}, 2, 0), ui_open(stdout, "p", NULL), ui_elem(stdout, "span", (const UiAttr[]){{"class", "fd-dot"}, {"aria-hidden", "true"}}, 2, 0), ui_close(stdout, "span"), ui_lit(stdout, "Today&#039;s edition"));
+    if (day[0]) { ui_lit(stdout, " &middot; "); html(day); }
+    (ui_close(stdout, "p"), ui_open(stdout, "p", "fd-strip-facts"));
     printf("<span>%d sources read</span>", pool->source_count);
-    if (pool->newest) { fputs("<span>Updated ", stdout); front_time(pool->newest, pool->now); fputs("</span>", stdout); }
+    if (pool->newest) { (ui_open(stdout, "span", NULL), ui_lit(stdout, "Updated ")); front_time(pool->newest, pool->now); ui_close(stdout, "span"); }
     printf("<span class=\"fd-strip-count\">%d items today</span></p></div>", shown);
 }
 
@@ -271,11 +271,11 @@ static void front_head(const PageDocument *doc, const FrontPool *pool, const cha
                                   : "<header class=\"fd-head\"><div class=\"fd-head-words\"><h1>", stdout);
     html(doc->title); fputs(page_front_brand_opened ? "</h2>" : "</h1>", stdout);
     if (doc->lede && *doc->lede) { ui_text(stdout, "p", "fd-lede", doc->lede); }
-    fputs("</div><form class=\"fd-find\" action=\"/search\" method=\"get\" role=\"search\"><label>", stdout);
+    (ui_close(stdout, "div"), ui_elem(stdout, "form", (const UiAttr[]){{"class", "fd-find"}, {"action", "/search"}, {"method", "get"}, {"role", "search"}}, 4, 0), ui_open(stdout, "label", NULL));
     page_glyph("search");
     fputs("<span class=\"fd-sr\">Search</span><input type=\"search\" name=\"q\" placeholder=\"Search stories, sources, makers\"></label></form>"
           "<nav class=\"fd-chips\" aria-label=\"Beats\"><a href=\"", stdout);
-    html(doc->route); fputs("\" aria-current=\"page\">All</a>", stdout);
+    html(doc->route); (ui_lit(stdout, "\" aria-current=\"page\">All"), ui_close(stdout, "a"));
     for (i = 0; i < pool->beats; i++) {
         if (!pool->beat[i] || !strcmp(pool->beat[i]->route, doc->route)) continue;
         ui_link(stdout, pool->beat[i]->route, NULL, pool->beat[i]->title);
@@ -283,37 +283,37 @@ static void front_head(const PageDocument *doc, const FrontPool *pool, const cha
     for (i = 0; i < kinds_n; i++) {
         ui_link_path(stdout, (const char *const[]){"#", kinds_present[i][0]}, 2, kinds_present[i][1]);
     }
-    fputs("</nav></header>", stdout);
+    ui_close_n(stdout, "nav", "header", NULL);
 }
 
 static void front_lead(const FrontPool *pool, FrontPick *lead) {
     const PageItem *item = &lead->item; const char *close;
     int pictured = page_image_url_safe(item->image);
-    fputs("<section class=\"fd-lead", stdout); if (!pictured) fputs(" fd-lead-plain", stdout);
-    fputs("\" aria-label=\"Lead story\">", stdout);
+    fputs("<section class=\"fd-lead", stdout); if (!pictured) ui_lit(stdout, " fd-lead-plain");
+    ui_lit(stdout, "\" aria-label=\"Lead story\">");
     if (pictured) {
         close = page_emit_item_open(item, "fd-lead-picture");
         page_emit_picture(item->image, "fd-lead-img");
         fputs(close, stdout);
     }
-    fputs("<div class=\"fd-lead-words\"><p class=\"fd-kicker\"><span>", stdout);
+    (ui_open(stdout, "div", "fd-lead-words"), ui_open(stdout, "p", "fd-kicker"), ui_open(stdout, "span", NULL));
     html(front_beat_title(pool, lead)[0] ? front_beat_title(pool, lead) : "Lead story");
-    fputs("</span><span>", stdout); front_time(item->at, pool->now); fputs("</span></p>", stdout);
-    fputs("<div id=\"fd-lead-text\"><h2>", stdout);
+    (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_time(item->at, pool->now); ui_close_n(stdout, "span", "p", NULL);
+    (ui_elem(stdout, "div", (const UiAttr[]){{"id", "fd-lead-text"}}, 1, 0), ui_open(stdout, "h2", NULL));
     close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-    fputs("</h2>", stdout);
+    ui_close(stdout, "h2");
     if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
-    fputs("</div><p class=\"fd-by\">", stdout);
+    (ui_close(stdout, "div"), ui_open(stdout, "p", "fd-by"));
     if (item->by[0]) { html(item->by); }
-    if (item->note[0] && strcmp(item->note, item->by)) { fputs(" &middot; ", stdout); html(item->note); }
-    fputs("</p><div class=\"fd-lead-actions\">", stdout);
+    if (item->note[0] && strcmp(item->note, item->by)) { ui_lit(stdout, " &middot; "); html(item->note); }
+    (ui_close(stdout, "p"), ui_open(stdout, "div", "fd-lead-actions"));
     if (public_http_url(item->href)) {
-        fputs("<a class=\"fd-primary\" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(item->href); fputs("\">Open on ", stdout);
-        html(front_publisher(item)[0] ? front_publisher(item) : "the source"); fputs(" <span aria-hidden=\"true\">&nearr;</span></a>", stdout);
+        fputs("<a class=\"fd-primary\" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(item->href); ui_lit(stdout, "\">Open on ");
+        html(front_publisher(item)[0] ? front_publisher(item) : "the source"); (ui_lit(stdout, " "), ui_elem(stdout, "span", (const UiAttr[]){{"aria-hidden", "true"}}, 1, 0), ui_lit(stdout, "&nearr;"), ui_close(stdout, "span"), ui_close(stdout, "a"));
     }
     front_listen(item, "fd-lead-text", 1, "fd-ghost");
     if (page_item_has_page(item)) front_open(item, "Read here");
-    fputs("</div></div></section>", stdout);
+    ui_close_n(stdout, "div", "div", "section", NULL);
 }
 
 /* One dispatch: its beat and publisher, the byline, the headline and its
@@ -321,17 +321,17 @@ static void front_lead(const FrontPool *pool, FrontPick *lead) {
 static void front_card(const FrontPool *pool, FrontPick *p, int n) {
     const PageItem *item = &p->item; char id[24]; const char *close;
     snprintf(id, sizeof(id), "fd-t%d", n);
-    fputs("<article class=\"fd-card\"><p class=\"fd-card-top\"><span class=\"fd-beat\">", stdout);
-    html(front_beat_title(pool, p)); fputs("</span><span class=\"fd-pub\">", stdout); html(front_publisher(item)); fputs("</span></p>", stdout);
+    (ui_open(stdout, "article", "fd-card"), ui_open(stdout, "p", "fd-card-top"), ui_open(stdout, "span", "fd-beat"));
+    html(front_beat_title(pool, p)); (ui_close(stdout, "span"), ui_open(stdout, "span", "fd-pub")); html(front_publisher(item)); ui_close_n(stdout, "span", "p", NULL);
     if (item->by[0] && strcmp(item->by, front_publisher(item))) { ui_text(stdout, "p", "fd-card-by", item->by); }
-    fputs("<div class=\"fd-card-text\" id=\"", stdout); html(id); fputs("\"><h3>", stdout);
-    close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); fputs("</h3>", stdout);
+    (ui_open_a(stdout, "div", "class", "fd-card-text", "id", id), ui_open(stdout, "h3", NULL));
+    close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); ui_close(stdout, "h3");
     if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
-    fputs("</div><footer>", stdout);
+    (ui_close(stdout, "div"), ui_open(stdout, "footer", NULL));
     front_listen(item, id, 0, "fd-act");
-    fputs("<span class=\"fd-when\">", stdout); front_time(item->at, pool->now); fputs("</span>", stdout);
+    ui_open(stdout, "span", "fd-when"); front_time(item->at, pool->now); ui_close(stdout, "span");
     front_open(item, NULL);
-    fputs("</footer></article>", stdout);
+    ui_close_n(stdout, "footer", "article", NULL);
 }
 
 static int front_dispatches(FrontPool *pool, const char *heading, int cap) {
@@ -339,10 +339,10 @@ static int front_dispatches(FrontPool *pool, const char *heading, int cap) {
     if (cap > 12) cap = 12;
     n = front_choose(pool, FRONT_STORIES, 0, 0, picks, cap);
     if (!n) return 0;
-    fputs("<section class=\"fd-dispatches\" aria-labelledby=\"fd-dispatch-h\"><div class=\"fd-section-head\"><h2 id=\"fd-dispatch-h\"><span class=\"fd-dot\" aria-hidden=\"true\"></span>", stdout);
-    html(heading); fputs("</h2><p>Newest first</p></div><div class=\"fd-grid\">", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-dispatches"}, {"aria-labelledby", "fd-dispatch-h"}}, 2, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-dispatch-h"}}, 1, 0), ui_elem(stdout, "span", (const UiAttr[]){{"class", "fd-dot"}, {"aria-hidden", "true"}}, 2, 0), ui_close(stdout, "span"));
+    html(heading); (ui_close(stdout, "h2"), ui_open(stdout, "p", NULL), ui_lit(stdout, "Newest first"), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "div", "fd-grid"));
     for (i = 0; i < n; i++) { front_card(pool, picks[i], i); front_use(picks[i]); }
-    fputs("</div></section>", stdout);
+    ui_close_n(stdout, "div", "section", NULL);
     return n;
 }
 
@@ -350,19 +350,19 @@ static int front_watch(FrontPool *pool) {
     FrontPick *picks[8]; int n, i;
     n = front_choose(pool, FRONT_KIND(BF_PAGE_MATERIAL_VIDEO), 45 * FRONT_DAY, 1, picks, 4);
     if (!n) return 0;
-    fputs("<section class=\"fd-watch\" id=\"fd-watch\" aria-labelledby=\"fd-watch-h\"><div class=\"fd-section-head\"><h2 id=\"fd-watch-h\">Watch</h2><a href=\"/watch\">All video</a></div><div class=\"fd-shelf\">", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-watch"}, {"id", "fd-watch"}, {"aria-labelledby", "fd-watch-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-watch-h"}}, 1, 0), ui_lit(stdout, "Watch"), ui_close(stdout, "h2"), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/watch"}}, 1, 0), ui_lit(stdout, "All video"), ui_close(stdout, "a"), ui_close(stdout, "div"), ui_open(stdout, "div", "fd-shelf"));
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; const char *close = page_emit_item_open(item, "fd-film");
-        fputs("<span class=\"fd-frame\">", stdout);
+        ui_open(stdout, "span", "fd-frame");
         if (page_image_url_safe(item->image)) page_emit_picture(item->image, "fd-film-img");
         else if (page_image_url_safe(item->poster)) page_emit_picture(item->poster, "fd-film-img");
-        fputs("<span class=\"fd-play\" aria-hidden=\"true\">", stdout); page_glyph("play"); fputs("</span>", stdout);
-        if (item->duration_ms > 0) { fputs("<span class=\"fd-dur\">", stdout); page_emit_duration(item->duration_ms); fputs("</span>", stdout); }
-        fputs("</span><span class=\"fd-film-title\">", stdout); html(item->title); fputs("</span><span class=\"fd-film-by\">", stdout);
-        html(front_publisher(item)); fputs("</span>", stdout); fputs(close, stdout);
+        ui_elem(stdout, "span", (const UiAttr[]){{"class", "fd-play"}, {"aria-hidden", "true"}}, 2, 0); page_glyph("play"); ui_close(stdout, "span");
+        if (item->duration_ms > 0) { ui_open(stdout, "span", "fd-dur"); page_emit_duration(item->duration_ms); ui_close(stdout, "span"); }
+        (ui_close(stdout, "span"), ui_open(stdout, "span", "fd-film-title")); html(item->title); (ui_close(stdout, "span"), ui_open(stdout, "span", "fd-film-by"));
+        html(front_publisher(item)); ui_close(stdout, "span"); fputs(close, stdout);
         front_use(picks[i]);
     }
-    fputs("</div></section>", stdout);
+    ui_close_n(stdout, "div", "section", NULL);
     return n;
 }
 
@@ -377,23 +377,23 @@ static int front_hear(FrontPool *pool) {
         if (!seen) picks[n++] = found[i];
     }
     if (!n) return 0;
-    fputs("<section class=\"fd-hear\" id=\"fd-listen\" aria-labelledby=\"fd-listen-h\"><div class=\"fd-section-head\"><h2 id=\"fd-listen-h\">Listen</h2>", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-hear"}, {"id", "fd-listen"}, {"aria-labelledby", "fd-listen-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-listen-h"}}, 1, 0), ui_lit(stdout, "Listen"), ui_close(stdout, "h2"));
     printf("<p>%d new episodes</p></div><ol class=\"fd-tracks\">", n);
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; char id[24]; const char *close;
         snprintf(id, sizeof(id), "fd-h%d", i);
-        fputs("<li data-source=\"", stdout); html(item->source); fputs("\">", stdout);
+        ui_open_a(stdout, "li", "data-source", item->source);
         if (page_image_url_safe(item->image)) page_emit_picture(item->image, "fd-cover");
-        else fputs("<span class=\"fd-cover\" aria-hidden=\"true\"></span>", stdout);
-        fputs("<div class=\"fd-track-words\" id=\"", stdout); html(id); fputs("\"><h3>", stdout);
+        else (ui_elem(stdout, "span", (const UiAttr[]){{"class", "fd-cover"}, {"aria-hidden", "true"}}, 2, 0), ui_close(stdout, "span"));
+        (ui_open_a(stdout, "div", "class", "fd-track-words", "id", id), ui_open(stdout, "h3", NULL));
         close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-        fputs("</h3><p class=\"fd-show\">", stdout); html(front_publisher(item)); fputs("</p></div>", stdout);
-        fputs("<span class=\"fd-when\">", stdout); front_time(item->at, pool->now); fputs("</span>", stdout);
+        (ui_close(stdout, "h3"), ui_open(stdout, "p", "fd-show")); html(front_publisher(item)); ui_close_n(stdout, "p", "div", NULL);
+        ui_open(stdout, "span", "fd-when"); front_time(item->at, pool->now); ui_close(stdout, "span");
         front_listen(item, id, 0, "fd-act");
-        fputs("</li>", stdout);
+        ui_close(stdout, "li");
         front_use(picks[i]);
     }
-    fputs("</ol></section>", stdout);
+    ui_close_n(stdout, "ol", "section", NULL);
     return n;
 }
 
@@ -402,21 +402,21 @@ static int front_reading(FrontPool *pool, const char *heading, int cap) {
     if (cap > 12) cap = 12;
     n = front_choose(pool, FRONT_KIND(BF_PAGE_MATERIAL_PUBLICATION) | FRONT_KIND(BF_PAGE_MATERIAL_POST), 0, 1, picks, cap);
     if (!n) return 0;
-    fputs("<section class=\"fd-reading\" id=\"fd-read\" aria-labelledby=\"fd-read-h\"><div class=\"fd-section-head\"><h2 id=\"fd-read-h\">", stdout);
-    html(heading); fputs("</h2><p>Newest first</p></div><div class=\"fd-columns\">", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-reading"}, {"id", "fd-read"}, {"aria-labelledby", "fd-read-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-read-h"}}, 1, 0));
+    html(heading); (ui_close(stdout, "h2"), ui_open(stdout, "p", NULL), ui_lit(stdout, "Newest first"), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "div", "fd-columns"));
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; char id[24]; const char *close;
         snprintf(id, sizeof(id), "fd-r%d", i);
-        fputs("<article class=\"fd-read\">", stdout);
+        ui_open(stdout, "article", "fd-read");
         if (page_image_url_safe(item->image)) { close = page_emit_item_open(item, "fd-read-picture"); page_emit_picture(item->image, "fd-read-img"); fputs(close, stdout); }
-        fputs("<p class=\"fd-card-top\"><span class=\"fd-beat\">", stdout); html(front_publisher(item));
-        fputs("</span><span>", stdout); front_time(item->at, pool->now); fputs("</span></p><div class=\"fd-card-text\" id=\"", stdout); html(id); fputs("\"><h3>", stdout);
-        close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); fputs("</h3>", stdout);
+        (ui_open(stdout, "p", "fd-card-top"), ui_open(stdout, "span", "fd-beat")); html(front_publisher(item));
+        (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_time(item->at, pool->now); fputs("</span></p><div class=\"fd-card-text\" id=\"", stdout); html(id); (ui_lit(stdout, "\">"), ui_open(stdout, "h3", NULL));
+        close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); ui_close(stdout, "h3");
         if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
-        fputs("</div><footer>", stdout); front_listen(item, id, 0, "fd-act"); front_open(item, NULL); fputs("</footer></article>", stdout);
+        (ui_close(stdout, "div"), ui_open(stdout, "footer", NULL)); front_listen(item, id, 0, "fd-act"); front_open(item, NULL); ui_close_n(stdout, "footer", "article", NULL);
         front_use(picks[i]);
     }
-    fputs("</div></section>", stdout);
+    ui_close_n(stdout, "div", "section", NULL);
     return n;
 }
 
@@ -424,18 +424,18 @@ static int front_going(FrontPool *pool) {
     FrontPick *picks[8]; int n, i;
     n = front_choose(pool, FRONT_KIND(BF_PAGE_MATERIAL_EVENT), 0, 0, picks, 6);
     if (!n) return 0;
-    fputs("<section class=\"fd-going\" id=\"fd-on\" aria-labelledby=\"fd-on-h\"><div class=\"fd-section-head\"><h2 id=\"fd-on-h\">What&#039;s on</h2><a href=\"/whats-on\">Full calendar</a></div><ol class=\"fd-agenda\">", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-going"}, {"id", "fd-on"}, {"aria-labelledby", "fd-on-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-on-h"}}, 1, 0), ui_lit(stdout, "What&#039;s on"), ui_close(stdout, "h2"), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/whats-on"}}, 1, 0), ui_lit(stdout, "Full calendar"), ui_close(stdout, "a"), ui_close(stdout, "div"), ui_open(stdout, "ol", "fd-agenda"));
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; struct tm tm; char date[24] = "", weekday[16] = "", ahead[48] = ""; const char *close;
         if (page_local_time(item->at, &tm)) { strftime(date, sizeof(date), "%e %b", &tm); strftime(weekday, sizeof(weekday), "%A", &tm); }
         page_when_ahead(item->at, item->duration_ms > 0 ? item->at + (time_t)(item->duration_ms / 1000) : 0, pool->now, ahead, sizeof(ahead));
-        fputs("<li><p class=\"fd-date\"><b>", stdout); html(date); fputs("</b><span>", stdout); html(weekday); fputs("</span></p><div><h3>", stdout);
+        (ui_open(stdout, "li", NULL), ui_open(stdout, "p", "fd-date"), ui_open(stdout, "b", NULL)); html(date); (ui_close(stdout, "b"), ui_open(stdout, "span", NULL)); html(weekday); (ui_close(stdout, "span"), ui_close(stdout, "p"), ui_open(stdout, "div", NULL), ui_open(stdout, "h3", NULL));
         close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-        fputs("</h3><p>", stdout); html(item->where[0] ? item->where : front_publisher(item)); fputs("</p></div><p class=\"fd-ahead\">", stdout);
-        html(ahead); fputs("</p></li>", stdout);
+        (ui_close(stdout, "h3"), ui_open(stdout, "p", NULL)); html(item->where[0] ? item->where : front_publisher(item)); (ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "p", "fd-ahead"));
+        html(ahead); ui_close_n(stdout, "p", "li", NULL);
         front_use(picks[i]);
     }
-    fputs("</ol></section>", stdout);
+    ui_close_n(stdout, "ol", "section", NULL);
     return n;
 }
 
@@ -444,18 +444,18 @@ static int front_pictured(FrontPool *pool, const char *heading) {
     n = front_choose(pool, FRONT_KIND(BF_PAGE_MATERIAL_PHOTO), 0, 1, picks, 8);
     for (i = 0; i < n; i++) if (page_image_url_safe(picks[i]->item.image)) kept++;
     if (!kept) return 0;
-    fputs("<section class=\"fd-pictured\" id=\"fd-pictured\" aria-labelledby=\"fd-pic-h\"><div class=\"fd-section-head\"><h2 id=\"fd-pic-h\">", stdout);
-    html(heading); fputs("</h2></div><div class=\"fd-covers\">", stdout);
+    (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-pictured"}, {"id", "fd-pictured"}, {"aria-labelledby", "fd-pic-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-pic-h"}}, 1, 0));
+    html(heading); (ui_close(stdout, "h2"), ui_close(stdout, "div"), ui_open(stdout, "div", "fd-covers"));
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; const char *close;
         if (!page_image_url_safe(item->image)) continue;
         close = page_emit_item_open(item, "fd-cover-item");
         page_emit_picture(item->image, "fd-cover-img");
-        fputs("<span class=\"fd-film-title\">", stdout); html(item->title); fputs("</span><span class=\"fd-film-by\">", stdout);
-        html(front_publisher(item)); fputs("</span>", stdout); fputs(close, stdout);
+        ui_open(stdout, "span", "fd-film-title"); html(item->title); (ui_close(stdout, "span"), ui_open(stdout, "span", "fd-film-by"));
+        html(front_publisher(item)); ui_close(stdout, "span"); fputs(close, stdout);
         front_use(picks[i]);
     }
-    fputs("</div></section>", stdout);
+    ui_close_n(stdout, "div", "section", NULL);
     return kept;
 }
 
@@ -534,7 +534,7 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_AUDIO), 30 * FRONT_DAY, 6) +
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_PUBLICATION) | FRONT_KIND(BF_PAGE_MATERIAL_POST), 0, 6) +
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_EVENT), 0, 6);
-        fputs("<div class=\"fd ", stdout); fputs(hub ? "fd-hub" : "fd-discover", stdout); fputs("\" data-front=\"", stdout); html(territory); fputs("\">", stdout);
+        fputs("<div class=\"fd ", stdout); fputs(hub ? "fd-hub" : "fd-discover", stdout); ui_lit(stdout, "\" data-front=\""); html(territory); ui_lit(stdout, "\">");
         front_strip(&pool, today);
         front_head(doc, &pool, kinds, kinds_n);
     }
@@ -552,7 +552,7 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
         fputs("<p class=\"fd-empty\">Nothing new from this front&#039;s sources yet. The sources are read through the day; "
               "<a href=\"/channels\">see which ones</a>.</p>", stdout);
     front_standard();
-    fputs("</div>", stdout);
+    ui_close(stdout, "div");
     free(pool.pick);
     return shown ? shown : 1;
 }

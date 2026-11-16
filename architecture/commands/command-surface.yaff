@@ -2192,7 +2192,13 @@ architecture cmd-web-address
   source_lineage the 91-command capability surface
   known_gap native WebAddress builds and deployed consumer paths have separate witnesses; full WiringSpec consumes/produces completion remains separate
   source_path cmd/BonfyreRecipe/src/recipe_nutrition.c
+  source_path cmd/BonfyreWebAddress/src/ui_tree.h
+  witness 2026-11-15 dogfood: 24 mistyped ui_open_v(struct-array) call sites across front_community/front_editorial/page_media_spaces/page_routes_and_emitters/page_core_rendering converted to ui_open_a string pairs; tree binary then renders /discover on all four territories in <2s (previously spun in strpbrk), verified against preview lane copies
   witness cmd/BonfyreWebAddress/tests/week_web.test.mjs passes 39 source, native formulation, browser form, request/field-capacity and private CMS/Desk checks
+  witness 2026-11-15 speed lane: retained feed reader (page_tag_attr, rss_tag_text, page_feed_picture, author/podcast:person in page_collect_retained) searched with unbounded strstr, rescanning the rest of the feed for every optional tag an item lacked; bounded bf_span_find (site_and_world_material.h, fuzzed equal to strstr-then-<end over 5M cases) took cold item pages on lane preview copies from 0.24-2.4 s to 0.14-0.37 s with byte-identical HTML apart from relative times
+  witness 2026-11-15 speed lane: /people aggregate memoized per worker in people_projection.c, keyed by archive and CMS file+WAL identity, query, page and a ten-minute clock, and the duplicate COUNT DISTINCT scan folded into one pass; repeat uncached /people 1.0-1.5 s to 0.06-0.13 s, output identical
+  forbidden_inference the per-worker /people memo and the public projection cache are speed, not freshness: a first request on each worker after a store change or clock bucket still pays the full archive aggregate
+  known_gap uncached fronts (/, /listen, /watch) still compose 0.4-1.0 s on an idle machine: per-request CMS connections lose the SQLite page cache and publication_occurrence row reads dominate; a per-source material cache was not built
   invariant native HTTP requests remain bounded to 256 KiB and decoded CMS fields to 64 KiB; this carries the existing 48 KB native form after percent encoding without weakening namespace or schema checks
   known_gap the selected consumer tests and binary build pass; the earlier broader all target failed in the unrelated compile_subject_projection SQLITE_CANTOPEN fixture and has not been certified by these passes
 
@@ -2237,6 +2243,7 @@ architecture cmd-workflow
 
 
 architecture mcp-mesh-call-ledger
+  source_lineage earliest source integrations/mcp/recursive_overlay.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpMeshCallLedger
   family commands
   domain MCP / Read-only call receipts
@@ -2255,6 +2262,7 @@ architecture mcp-mesh-call-ledger
   known_gap this narrow aperture is not the rich gateway and has not been live promoted; the native recursive gateway owns the broader source-level contract
 
 architecture mcp-mesh-ledger-aperture
+  source_lineage earliest source mcp/mesh-ledger.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpMeshLedgerAperture
   family commands
   domain MCP / Authenticated read carrier
@@ -2273,6 +2281,7 @@ architecture mcp-mesh-ledger-aperture
   known_gap this carrier is not deployed and does not expose the rich gateway's prompts, project tools, Oracle tools, task handles, delta intake, events, or metrics
 
 architecture mcp-recursive-native-overlay
+  source_lineage earliest source integrations/mcp/recursive_overlay.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpRecursiveNativeOverlay
   family commands
   domain MCP / Recursive owner-backed transport
@@ -2314,6 +2323,7 @@ architecture mcp-recursive-native-overlay
   known_gap source-level native parity is tested but the deployment promotion has not run here; this entry does not certify the live Oracle or OAuth edge
 
 architecture project-delta-producer
+  source_lineage earliest source integrations/mcp/project_delta_watcher.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProjectDeltaProducer
   family commands
   domain MCP / Local project delta observation
@@ -2342,6 +2352,7 @@ architecture project-delta-producer
   known_gap a porcelain status hash identifies status shape, not content: re-editing an already-dirty tracked file or changing an untracked file without changing its status is not a new delta under the inherited contract
 
 architecture institutional-measurement-surface
+  source_lineage earliest source mcp/rich-native-tools.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InstitutionalMeasurementSurface
   family commands
   domain Commands
@@ -2398,6 +2409,7 @@ architecture cmd-interaction-grammar
   known_gap external callers must arrive through an authenticated owner-specific binding compiler; raw bind is an internal deterministic owner/compiler operation. Actor-specific target lowerers, including MediaLibrary Listen, remain separately responsible for exact access verification.
 
 architecture organ-drift
+  source_lineage earliest source Makefile first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"
   canonical_name OrganDrift
   family command
   domain Command / Which organ a caller actually gets
@@ -3494,6 +3506,7 @@ interaction household-plan-reads-food-reference-estate
   forbidden_inference an existing food-data reference -> a matched nutrient value, completed recall check or authorized provider action
 
 architecture cmd-ocr
+  source_lineage earliest source docs/recipes/I1-image-analysis.json first committed 2026-05-02 in af4b0401 "feat: libbonfyre, FPQx v9-v12, SLI, E8 native training, new binaries, leapfrog/violence BV"
   canonical_name BonfyreOCR
   family command
   domain Surface / OCR
@@ -3534,6 +3547,7 @@ interaction nutritional-plan-existing-cms-retention
   forbidden_inference a private draft -> a published menu or accepted helper booking
 
 architecture cmd-monitor
+  source_lineage earliest source cmd/BonfyreDecide/src/monitor.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BonfyreMonitor
   family command
   domain Command / CheapCognition
@@ -3566,6 +3580,7 @@ architecture cmd-monitor
   forbidden_inference an installed binary -> the current source; it is as fresh as its last make -C cmd/BonfyreDecide install
 
 architecture cmd-books
+  source_lineage earliest source cmd/BonfyreDecide/src/books.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BonfyreBooks
   family command
   domain Command / CheapCognition
@@ -3614,6 +3629,7 @@ architecture cmd-books
   forbidden_inference golden-vector parity with the retired Bun programs -> correctness of their behaviour; the vectors fix what they did, mistakes included, except the listed corrections
 
 architecture cmd-manifest
+  source_lineage earliest source cmd/BonfyreDecide/src/manifest.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BonfyreManifest
   family command
   domain Command / CheapCognition

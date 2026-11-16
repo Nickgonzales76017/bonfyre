@@ -1,5 +1,6 @@
 #ifndef BONFYRE_DATING_REVIEW_WEB_H
 #define BONFYRE_DATING_REVIEW_WEB_H
+#include "ui_tree.h"
 #include "form_tree.h"
 /* /moderation/dating: an institution administrator reviews requests to join
  * introductions. Approving records the age the reviewer confirmed and enrolls
@@ -14,27 +15,22 @@ static void dr_page(const char *note, int ok) {
     if (date) sqlite3_close(date);
     ak_app_http(200, 1);
     ak_app_open("Review introduction requests", "workbench", "route-dating-review");
-    fputs("<section class=\"ak-pattern ak-hero\"><p class=\"ak-eyebrow\">Moderation · Introductions</p>"
-          "<h1>Requests to join introductions</h1>"
-          "<p>Each person asked to take part. Confirm they are an adult and that their profile is fit to be shown, "
-          "then approve. Approving lets them see and be seen by other approved members; declining closes the request. "
-          "Nothing is sent to anyone either way.</p></section>", stdout);
+    ui_open(stdout,"section","ak-pattern ak-hero");ui_open(stdout,"p","ak-eyebrow");ui_copy(stdout,"Moderation · Introductions");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Requests to join introductions");ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"Each person asked to take part. Confirm they are an adult and that their profile is fit to be shown, then approve. Approving lets them see and be seen by other approved members; declining closes the request. Nothing is sent to anyone either way.");ui_close(stdout,"p");ui_close(stdout,"section");
     if (note && *note) {
         fputs(ok ? "<p class=\"ak-pattern ak-alert\" role=\"status\">" : "<p class=\"ak-pattern ak-alert ak-tone-danger\" role=\"alert\">", stdout);
-        html(note); fputs("</p>", stdout);
+        html(note); ui_close(stdout,"p");
     }
     if (!listed) {
-        fputs("<p class=\"ak-pattern ak-alert ak-tone-danger\" role=\"alert\">The private introductions store is not available, so no requests can be shown.</p>", stdout);
+        ui_start(stdout,"p");ui_attr(stdout,"class","ak-pattern ak-alert ak-tone-danger");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"The private introductions store is not available, so no requests can be shown.");ui_close(stdout,"p");
     } else if (!count) {
-        fputs("<section class=\"ak-pattern ak-card\"><h2>Nothing waiting</h2><p>New requests appear here as people ask to join.</p></section>", stdout);
+        ui_open(stdout,"section","ak-pattern ak-card");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Nothing waiting");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"New requests appear here as people ask to join.");ui_close(stdout,"p");ui_close(stdout,"section");
     } else {
-        fputs("<section class=\"ak-pattern ak-section\"><div class=\"ak-table-wrap\"><table class=\"ak-table\"><thead><tr>"
-              "<th>Person</th><th>Asked</th><th>Confirmed age</th><th>Decision</th></tr></thead><tbody>", stdout);
+        ui_open(stdout,"section","ak-pattern ak-section");ui_open(stdout,"div","ak-table-wrap");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Person");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Asked");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Confirmed age");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Decision");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         for (size_t i = 0; i < count; i++) {
             char when[32] = ""; time_t t = (time_t)rows[i].requested_at; struct tm tm;
             if (gmtime_r(&t, &tm)) strftime(when, sizeof(when), "%Y-%m-%d %H:%M UTC", &tm);
-            fputs("<tr><td>", stdout); html(rows[i].subject); fputs("</td><td>", stdout); html(when);
-            fputs("</td><td colspan=\"2\">", stdout);
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL); html(rows[i].subject); ui_close(stdout,"td");ui_open(stdout,"td",NULL); html(when);
+            ui_close(stdout,"td");ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);
             {
                 char id[32];
                 const FtField hidden[] = {{"subject", rows[i].subject}};
@@ -47,9 +43,9 @@ static void dr_page(const char *note, int ok) {
                                      .inputs = age, .ninputs = 1, .submits = decide, .nsubmits = 2};
                 ft_form(stdout, &form);
             }
-            fputs("</td></tr>", stdout);
+            ui_close(stdout,"td");ui_close(stdout,"tr");
         }
-        fputs("</tbody></table></div></section>", stdout);
+        ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");
     }
     ak_app_close();
 }
@@ -63,8 +59,7 @@ static int serve_dating_review(const BfRequest *r) {
         strcmp(scope, "institution") || strcmp(subject_ctx, "institution:bonfyre")) {
         ak_app_http(403, 1);
         ak_app_open("Moderators only", "workbench", "route-dating-review");
-        fputs("<section class=\"ak-pattern ak-card\"><h1>Moderators only</h1><p>Reviewing introduction requests is for an "
-              "Aurekai administrator. Sign in with that account.</p><p><a class=\"ak-button\" href=\"/login?next=/moderation/dating\">Sign in</a></p></section>", stdout);
+        ui_open(stdout,"section","ak-pattern ak-card");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Moderators only");ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"Reviewing introduction requests is for an Aurekai administrator. Sign in with that account.");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-button");ui_attr(stdout,"href","/login?next=/moderation/dating");ui_gt(stdout);ui_copy(stdout,"Sign in");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
         ak_app_close();
         return 1;
     }

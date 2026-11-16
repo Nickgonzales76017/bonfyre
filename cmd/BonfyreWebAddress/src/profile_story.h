@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_STORY_H
 #define BONFYRE_PROFILE_STORY_H
+#include "ui_tree.h"
 /* Public profile story composition: CMS supplies every section, title, link
  * and variant. No saved items, private drafts, accounts or source bodies are
  * automatically published. The site_presentation.site_id is the only scope. */
@@ -50,7 +51,7 @@ static int bf_profile_story_emit(FILE *output,sqlite3 *db,const char *site_id) {
     sqlite3_bind_text(st,1,site_id,-1,SQLITE_TRANSIENT);
     char *body=NULL;size_t bytes=0;FILE *f=open_memstream(&body,&bytes);
     if(!f){sqlite3_finalize(st);return -1;}
-    fputs("<div class=\"ph-storyboard\" data-profile-storyboard aria-label=\"Published projects and stories\">",f);
+    ui_start(f,"div");ui_attr(f,"class","ph-storyboard");ui_flag(f,"data-profile-storyboard");ui_attr(f,"aria-label","Published projects and stories");ui_gt(f);
     int count=0,opened=0,step=SQLITE_DONE;
     while((step=sqlite3_step(st))==SQLITE_ROW) {
         if(count==80){step=SQLITE_DONE;break;}
@@ -63,27 +64,27 @@ static int bf_profile_story_emit(FILE *output,sqlite3 *db,const char *site_id) {
         const char *theme=bf_ps_theme((const char *)sqlite3_column_text(st,6));
         int hero=!strcmp(kind,"profile-hero"),section=!strcmp(kind,"profile-section");
         int quote=!strcmp(kind,"profile-quote")||!strcmp(kind,"profile-action");
-        if(hero||section||quote){if(opened){fputs("</div></section>",f);opened=0;}}
+        if(hero||section||quote){if(opened){ui_close(f,"div");ui_close(f,"section");opened=0;}}
         if(section){
-            fputs("<section class=\"ps-group\" data-theme=\"",f);bf_ps_escape(f,theme);
+            ui_start(f,"section");ui_attr(f,"class","ps-group");ui_attr_open(f,"data-theme");bf_ps_escape(f,theme);
             fputs("\"><header>",f);
-            if(*eyebrow){fputs("<span class=\"ps-eyebrow\">",f);bf_ps_escape(f,eyebrow);fputs("</span>",f);}
-            fputs("<h2>",f);bf_ps_escape(f,heading);fputs("</h2><p>",f);
-            bf_ps_escape(f,copy);fputs("</p></header><div class=\"ps-grid\">",f);opened=1;
+            if(*eyebrow){ui_open(f,"span","ps-eyebrow");bf_ps_escape(f,eyebrow);ui_close(f,"span");}
+            ui_open(f,"h2",NULL);bf_ps_escape(f,heading);ui_close(f,"h2");ui_open(f,"p",NULL);
+            bf_ps_escape(f,copy);ui_close(f,"p");ui_close(f,"header");ui_open(f,"div","ps-grid");opened=1;
         }else{
-            if(!hero&&!quote&&!opened){fputs("<section class=\"ps-group\"><header><h2>Selected work</h2></header><div class=\"ps-grid\">",f);opened=1;}
+            if(!hero&&!quote&&!opened){ui_open(f,"section","ps-group");ui_open(f,"header",NULL);ui_open(f,"h2",NULL);ui_copy(f,"Selected work");ui_close(f,"h2");ui_close(f,"header");ui_open(f,"div","ps-grid");opened=1;}
             fputs(hero?"<section class=\"ps-hero\"":quote?"<aside class=\"ps-quote\"":"<article class=\"ps-card\"",f);
             fputs(" data-theme=\"",f);bf_ps_escape(f,theme);fputs("\">",f);
-            if(*eyebrow){fputs("<span class=\"ps-eyebrow\">",f);bf_ps_escape(f,eyebrow);fputs("</span>",f);}
+            if(*eyebrow){ui_open(f,"span","ps-eyebrow");bf_ps_escape(f,eyebrow);ui_close(f,"span");}
             fputs(hero||quote?"<h2>":"<h3>",f);bf_ps_escape(f,heading);fputs(hero||quote?"</h2>":"</h3>",f);
-            if(*copy){fputs("<p>",f);bf_ps_escape(f,copy);fputs("</p>",f);}
-            if(*label&&bf_ps_url(href)){fputs("<a rel=\"noopener noreferrer\" href=\"",f);bf_ps_escape(f,href);fputs("\">",f);bf_ps_escape(f,label);fputs(" ↗</a>",f);}
+            if(*copy){ui_open(f,"p",NULL);bf_ps_escape(f,copy);ui_close(f,"p");}
+            if(*label&&bf_ps_url(href)){ui_start(f,"a");ui_attr(f,"rel","noopener noreferrer");ui_attr_open(f,"href");bf_ps_escape(f,href);fputs("\">",f);bf_ps_escape(f,label);fputs(" ↗</a>",f);}
             fputs(hero?"</section>":quote?"</aside>":"</article>",f);
         }
         count++;
     }
-    if(opened)fputs("</div></section>",f);
-    fputs("</div>",f);
+    if(opened){ui_close(f,"div");ui_close(f,"section");}
+    ui_close(f,"div");
     int closed=fclose(f);sqlite3_finalize(st);
     if(closed||step!=SQLITE_DONE||!count){free(body);return closed||step!=SQLITE_DONE?-1:0;}
     fwrite(body,1,bytes,output);free(body);

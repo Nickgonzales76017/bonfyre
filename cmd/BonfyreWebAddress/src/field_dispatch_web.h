@@ -1,5 +1,6 @@
 #ifndef BONFYRE_FIELD_DISPATCH_WEB_H
 #define BONFYRE_FIELD_DISPATCH_WEB_H
+#include "ui_tree.h"
 #include "account_continuity_web.h"
 /* Field visits: a signed-in person asks for someone to come to a place at a
  * time for a stated need (field_dispatch, keyed by requester user:N). The
@@ -11,12 +12,12 @@
  * declined may be offered again; any open state may be withdrawn. */
 
 static void fd_state_tag(const char *state) {
-    fputs("<span class=\"ak-tag", stdout);
+    ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-tag");
     if (!strcmp(state, "accepted") || !strcmp(state, "offered")) fputs(" is-on", stdout);
     fputs("\">", stdout);
     fputs(!strcmp(state, "requested") ? "Not yet offered" : !strcmp(state, "offered") ? "Awaiting answer" :
           !strcmp(state, "accepted") ? "Accepted" : !strcmp(state, "declined") ? "Declined" : "Withdrawn", stdout);
-    fputs("</span>", stdout);
+    ui_close(stdout,"span");
 }
 static void fd_page(const AcnViewer *v, const char *said) {
     sqlite3 *db = cms_open_ro();
@@ -27,12 +28,9 @@ static void fd_page(const AcnViewer *v, const char *said) {
     ak_app_open("Field visits", "workbench", "route-field-dispatch");
     acn_head("Field tools · Local dispatch", "Field visits and local dispatch",
             "Ask for someone to come to a place, at a time, for something that needs hands. Offer the request to a member by their address; they accept or decline it themselves.");
-    printf("<dl class=\"ak-stats\"><div><dt>Your requests</dt><dd class=\"is-on\">%d</dd><small>open or answered</small></div>"
-           "<div><dt>Asked of you</dt><dd>%d</dd><small>waiting for your answer</small></div>"
-           "<div><dt>Accepted</dt><dd>%d</dd><small>by the person asked</small></div>"
-           "<div><dt>Messages sent</dt><dd>None</dd><small>tell them yourself</small></div></dl></header>", mine, asked, accepted);
-    if (said) { fputs("<p class=\"cj-notice\" role=\"status\">", stdout); html(said); fputs("</p>", stdout); }
-    fputs("<div class=\"ak-grid is-2\" style=\"align-items:start\">", stdout);
+    ui_open(stdout,"dl","ak-stats");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Your requests");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%d",mine);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"open or answered");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Asked of you");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",asked);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"waiting for your answer");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Accepted");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",accepted);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"by the person asked");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Messages sent");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,"None");ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"tell them yourself");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");ui_close(stdout,"header");
+    if (said) { ui_start(stdout,"p");ui_attr(stdout,"class","cj-notice");ui_attr(stdout,"role","status");ui_gt(stdout); html(said); ui_close(stdout,"p"); }
+    ui_start(stdout,"div");ui_attr(stdout,"class","ak-grid is-2");ui_attr(stdout,"style","align-items:start");ui_gt(stdout);
     /* Left: the queue of the viewer's own requests. */
     fputs("<section><header style=\"margin-bottom:14px\"><span class=\"ak-kicker\">Your dispatch queue</span><h2 style=\"font:600 1.5rem/1.2 var(--ak-sans)\">Requests you made</h2></header>", stdout);
     sqlite3_stmt *st = NULL; int shown = 0;
@@ -42,13 +40,13 @@ static void fd_page(const AcnViewer *v, const char *said) {
         while (sqlite3_step(st) == SQLITE_ROW) {
             char id[24]; snprintf(id, sizeof(id), "%lld", (long long)sqlite3_column_int64(st, 0));
             const char *state = acn_col(st, 5);
-            fputs("<article class=\"ak-panel\" style=\"margin-bottom:12px\" data-dispatch><header><span class=\"ak-kicker\">#", stdout); fputs(id, stdout);
-            fputs("</span>", stdout); fd_state_tag(state); fputs("</header><h3>", stdout); html(acn_col(st, 1));
-            fputs(" · ", stdout); html(acn_col(st, 2)); fputs("</h3><p style=\"margin:6px 0 10px\">", stdout); html(acn_col(st, 3)); fputs("</p><dl class=\"ak-spec\"><dt>Offered to</dt><dd>", stdout);
+            ui_start(stdout,"article");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"style","margin-bottom:12px");ui_flag(stdout,"data-dispatch");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"#"); fputs(id, stdout);
+            ui_close(stdout,"span"); fd_state_tag(state); ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html(acn_col(st, 1));
+            fputs(" · ", stdout); html(acn_col(st, 2)); ui_close(stdout,"h3");ui_start(stdout,"p");ui_attr(stdout,"style","margin:6px 0 10px");ui_gt(stdout); html(acn_col(st, 3)); ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Offered to");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);
             if (*acn_col(st, 4)) html(acn_col(st, 4)); else fputs("nobody yet", stdout);
-            fputs("</dd><dt>Requested</dt><dd>", stdout); acn_when(acn_col(st, 6));
-            if (*acn_col(st, 7)) { fputs("</dd><dt>Answered</dt><dd>", stdout); acn_when(acn_col(st, 7)); }
-            fputs("</dd></dl><div class=\"ak-actions\" style=\"margin-top:12px\">", stdout);
+            ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Requested");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); acn_when(acn_col(st, 6));
+            if (*acn_col(st, 7)) { ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Answered");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); acn_when(acn_col(st, 7)); }
+            ui_close(stdout,"dd");ui_close(stdout,"dl");ui_start(stdout,"div");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"style","margin-top:12px");ui_gt(stdout);
             if (!strcmp(state, "requested") || !strcmp(state, "declined")) {
                 BfAuthoringTree *t = calloc(1, sizeof(*t));
                 FtField f[] = {{"operation", "offer"}, {"dispatch", id}};
@@ -57,13 +55,13 @@ static void fd_page(const AcnViewer *v, const char *said) {
                                     ft_field(t, fid, aid, 0, "Member address", "text", "address", "", "name.aurekai.work", 0, NULL, "200", 1, NULL));
             }
             if (strcmp(state, "withdrawn")) { FtField f[] = {{"operation", "withdraw"}, {"dispatch", id}}; acn_button("fd-withdraw", "Withdraw request", "/dispatch", f, 2); }
-            fputs("</div></article>", stdout);
+            ui_close(stdout,"div");ui_close(stdout,"article");
             shown++;
         }
     }
     sqlite3_finalize(st); st = NULL;
-    if (!shown) fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">No field requests yet. Write the first one with the form.</p></div>", stdout);
-    fputs("</section>", stdout);
+    if (!shown) {ui_open(stdout,"div","ak-panel");ui_open(stdout,"p","ak-empty");ui_copy(stdout,"No field requests yet. Write the first one with the form.");ui_close(stdout,"p");ui_close(stdout,"div");}
+    ui_close(stdout,"section");
     /* Right: the intake form. */
     fputs("<section class=\"ak-ask\"><p class=\"ak-kicker\">New field request</p><h2 style=\"margin:6px 0 14px\">Ask for a visit</h2>", stdout);
     {
@@ -74,7 +72,7 @@ static void fd_page(const AcnViewer *v, const char *said) {
                             ft_field(t, "fd-when", "fd-request", 1, "When", "text", "needed_at", "", "Saturday morning, or 2026-11-20 09:00", 0, NULL, "120", 1, NULL) &&
                             ft_field(t, "fd-need", "fd-request", 2, "What is needed", "text", "need", "", "What has to be done, and anything to bring", 1, "4", "2000", 1, NULL));
     }
-    fputs("<p class=\"ak-empty\">Recording a request tells nobody. Offer it to a member by address, then reach them the way you usually do. Nothing here is a booking, a contract or a payment.</p></section></div>", stdout);
+    ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Recording a request tells nobody. Offer it to a member by address, then reach them the way you usually do. Nothing here is a booking, a contract or a payment.");ui_close(stdout,"p");ui_close(stdout,"section");ui_close(stdout,"div");
     /* Asked of you */
     fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Asked of you</span><h2>Requests offered to you</h2></div>"
           "<p>Each was offered to your member address by the person who wrote it. Accepting is your own word; it books nothing.</p></header>", stdout);
@@ -82,36 +80,45 @@ static void fd_page(const AcnViewer *v, const char *said) {
     if (v->person[0] && db && sqlite3_prepare_v2(db, "SELECT id,place,needed_at,need,state,requested_at FROM field_dispatch WHERE namespace='root' AND assignee_subject=?1 "
                                                      "AND state IN ('offered','accepted') AND status='published' ORDER BY id DESC LIMIT 40", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, v->person, -1, SQLITE_TRANSIENT);
-        fputs("<div class=\"ak-grid is-2\">", stdout);
+        ui_open(stdout,"div","ak-grid is-2");
         while (sqlite3_step(st) == SQLITE_ROW) {
             char id[24]; snprintf(id, sizeof(id), "%lld", (long long)sqlite3_column_int64(st, 0));
-            fputs("<article class=\"ak-panel\" data-asked><header><span class=\"ak-kicker\">#", stdout); fputs(id, stdout); fputs("</span>", stdout); fd_state_tag(acn_col(st, 4));
-            fputs("</header><h3>", stdout); html(acn_col(st, 1)); fputs(" · ", stdout); html(acn_col(st, 2));
-            fputs("</h3><p style=\"margin:6px 0 12px\">", stdout); html(acn_col(st, 3)); fputs("</p>", stdout);
+            ui_start(stdout,"article");ui_attr(stdout,"class","ak-panel");ui_flag(stdout,"data-asked");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"#"); fputs(id, stdout); ui_close(stdout,"span"); fd_state_tag(acn_col(st, 4));
+            ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html(acn_col(st, 1)); fputs(" · ", stdout); html(acn_col(st, 2));
+            ui_close(stdout,"h3");ui_start(stdout,"p");ui_attr(stdout,"style","margin:6px 0 12px");ui_gt(stdout); html(acn_col(st, 3)); ui_close(stdout,"p");
             if (!strcmp(acn_col(st, 4), "offered")) {
-                fputs("<div class=\"ak-actions\">", stdout);
+                ui_open(stdout,"div","ak-actions");
                 FtField a[] = {{"operation", "accept"}, {"dispatch", id}}, d[] = {{"operation", "decline"}, {"dispatch", id}};
                 acn_button("fd-accept", "Accept", "/dispatch", a, 2);
                 acn_button("fd-decline", "Decline", "/dispatch", d, 2);
-                fputs("</div>", stdout);
+                ui_close(stdout,"div");
             }
-            fputs("</article>", stdout);
+            ui_close(stdout,"article");
             shown++;
         }
-        fputs("</div>", stdout);
+        ui_close(stdout,"div");
     }
     sqlite3_finalize(st);
     if (!shown) fputs(v->person[0] ? "<p class=\"ak-empty\">Nobody has offered you a field request.</p>"
                                    : "<p class=\"ak-empty\">Requests are offered to a member address. This account has none yet, so nothing can be offered to it.</p>", stdout);
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     if (db) sqlite3_close(db);
     ak_app_close();
 }
+/* The operations this owner takes, resolved once (strcmp order). */
+#define FD_OPS_LIST(X) \
+    X("accept", FDO_ACCEPT) \
+    X("decline", FDO_DECLINE) \
+    X("offer", FDO_OFFER) \
+    X("request", FDO_REQUEST) \
+    X("withdraw", FDO_WITHDRAW)
+BF_COMMAND_TABLE(fd_ops, FD_OPS_LIST);
 static int fd_post(const AcnViewer *v, const char *body) {
     char op[16], now[40], id[24] = "";
     acn_iso(time(NULL), now, sizeof(now));
     if (!acn_field(body, "operation", op, sizeof(op))) { acn_notice(400, "Choose an action", "Use the controls on the page.", "/dispatch", "Field visits"); return 1; }
-    if (!strcmp(op, "request")) {
+    int opid=bf_command_id(fd_ops,BF_COMMAND_COUNT(fd_ops),op,-1);
+    if (opid==FDO_REQUEST) {
         char place[256], when[160], need[2100], did[25];
         if (!acn_field(body, "place", place, sizeof(place)) || !acn_line(place, 2, 200) ||
             !acn_field(body, "needed_at", when, sizeof(when)) || !acn_line(when, 2, 120) ||
@@ -148,7 +155,7 @@ static int fd_post(const AcnViewer *v, const char *body) {
     bf_jsonw w; bf_jsonw_init(&w, 0); bf_jsonw_obj(&w);
     const char *need_state = NULL, *message = NULL;
     int allowed = 0;
-    if (!strcmp(op, "offer") && is_requester && (!strcmp(state, "requested") || !strcmp(state, "declined"))) {
+    if (opid==FDO_OFFER && is_requester && (!strcmp(state, "requested") || !strcmp(state, "declined"))) {
         char address[256]; PhSite site;
         if (!acn_field(body, "address", address, sizeof(address)) || !acn_line(address, 3, 200)) { if (db) sqlite3_close(db); bf_jsonw_free(&w); acn_notice(400, "Name a member address", "Type the address of the member, such as name.aurekai.work.", "/dispatch", "Field visits"); return 1; }
         for (char *p = address; *p; p++) if (*p >= 'A' && *p <= 'Z') *p = (char)(*p - 'A' + 'a');
@@ -156,10 +163,10 @@ static int fd_post(const AcnViewer *v, const char *body) {
         if (v->person[0] && !strcmp(site.actor, v->person)) { if (db) sqlite3_close(db); bf_jsonw_free(&w); acn_notice(400, "That address is yours", "Offer the request to someone else.", "/dispatch", "Field visits"); return 1; }
         acn_kv(&w, "assignee_subject", site.actor); acn_kv(&w, "assignee_address", site.host); acn_kv(&w, "state", "offered"); acn_kv(&w, "answered_at", "");
         need_state = state; message = "Offered. Nobody was told; let them know where to find it."; allowed = 1;
-    } else if ((!strcmp(op, "accept") || !strcmp(op, "decline")) && is_assignee && !strcmp(state, "offered")) {
-        acn_kv(&w, "state", !strcmp(op, "accept") ? "accepted" : "declined"); acn_kv(&w, "answered_at", now);
-        need_state = "offered"; message = !strcmp(op, "accept") ? "You accepted. This is your word, not a booking." : "You declined."; allowed = 1;
-    } else if (!strcmp(op, "withdraw") && is_requester && strcmp(state, "withdrawn")) {
+    } else if ((opid==FDO_ACCEPT || opid==FDO_DECLINE) && is_assignee && !strcmp(state, "offered")) {
+        acn_kv(&w, "state", opid==FDO_ACCEPT ? "accepted" : "declined"); acn_kv(&w, "answered_at", now);
+        need_state = "offered"; message = opid==FDO_ACCEPT ? "You accepted. This is your word, not a booking." : "You declined."; allowed = 1;
+    } else if (opid==FDO_WITHDRAW && is_requester && strcmp(state, "withdrawn")) {
         acn_kv(&w, "state", "withdrawn"); acn_kv(&w, "status", "archived");
         need_state = state; message = "Request withdrawn."; allowed = 1;
     }
@@ -174,7 +181,7 @@ static int fd_post(const AcnViewer *v, const char *body) {
     if (db) sqlite3_close(db);
     if (!ok) { acn_notice(409, "Change not confirmed", "The request changed while you were looking. Reload it first.", "/dispatch", "Field visits"); return 1; }
     (void)message;
-    acn_redirect(!strcmp(op, "accept") ? "/dispatch?answered=accepted" : !strcmp(op, "decline") ? "/dispatch?answered=declined" : "/dispatch?changed=1");
+    acn_redirect(opid==FDO_ACCEPT ? "/dispatch?answered=accepted" : opid==FDO_DECLINE ? "/dispatch?answered=declined" : "/dispatch?changed=1");
     return 1;
 }
 static int serve_field_dispatch(const BfRequest *r) {

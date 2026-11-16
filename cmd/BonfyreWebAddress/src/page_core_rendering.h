@@ -650,13 +650,13 @@ static int page_tag_attr(const char *start, const char *end, const char *tag, co
     char open[64]; const char *p; size_t tl;
     if (snprintf(open, sizeof(open), "<%s", tag) >= (int)sizeof(open)) return 0;
     tl = strlen(open);
-    for (p = strstr(start, open); p && p < end; p = strstr(p + 1, open)) {
+    for (p = bf_span_find(start, end, open); p; p = bf_span_find(p + 1, end, open)) {
         const char *close, *a; char want[64];
         if (!(p[tl] == ' ' || p[tl] == '\t' || p[tl] == '\n' || p[tl] == '/' || p[tl] == '>')) continue;
         close = strchr(p, '>'); if (!close || close > end) return 0;
         if (snprintf(want, sizeof(want), " %s=", attr) >= (int)sizeof(want)) return 0;
-        a = strstr(p, want);
-        if (a && a < close) {
+        a = bf_span_find(p, close, want);
+        if (a) {
             char q; const char *v = a + strlen(want); const char *stop; size_t n;
             q = *v; if (q != '"' && q != '\'') continue;
             v++; stop = strchr(v, q); if (!stop || stop > close) continue;
@@ -684,13 +684,13 @@ static void page_feed_picture(const char *start, const char *end, char *out, siz
     }
     out[0] = '\0';
     {   /* Some feeds only put the picture inside escaped HTML in the body. */
-        const char *img = strstr(start, "&lt;img"), *raw = strstr(start, "<img");
-        const char *at = img && img < end ? img : (raw && raw < end ? raw : NULL);
-        const char *src = at ? strstr(at, "src=") : NULL;
-        if (src && src < end) {
+        const char *img = bf_span_find(start, end, "&lt;img"), *raw = bf_span_find(start, end, "<img");
+        const char *at = img ? img : raw;
+        const char *src = at ? bf_span_find(at, end, "src=") : NULL;
+        if (src) {
             const char *v = src + 4, *stop; size_t n; int escaped = !strncmp(v, "&quot;", 6);
             if (escaped) v += 6; else if (*v == '"' || *v == '\'') v++;
-            stop = escaped ? strstr(v, "&quot;") : strpbrk(v, "\"' >");
+            stop = escaped ? bf_span_find(v, end, "&quot;") : strpbrk(v, "\"' >");
             if (stop && stop < end && (n = (size_t)(stop - v)) < cap) { memcpy(out, v, n); out[n] = '\0'; page_decode_entities(out); }
             if (!page_image_url_safe(out)) out[0] = '\0';
         }
@@ -1186,8 +1186,8 @@ static void page_collect_retained(sqlite3 *db, const char *source, PageMaterial 
                     !rss_tag_text(cursor, item_end, "published", when, sizeof(when)))
                     rss_tag_text(cursor, item_end, "dc:date", when, sizeof(when));
                 if (!rss_tag_text(cursor, item_end, "dc:creator", who, sizeof(who))) {
-                    const char *author = strstr(cursor, "<author");
-                    if (author && author < item_end) rss_tag_text(author, item_end, "name", who, sizeof(who));
+                    const char *author = bf_span_find(cursor, item_end, "<author");
+                    if (author) rss_tag_text(author, item_end, "name", who, sizeof(who));
                 }
                 page_feed_picture(cursor, item_end, image, sizeof(image));
                 {
@@ -1231,7 +1231,7 @@ static void page_collect_retained(sqlite3 *db, const char *source, PageMaterial 
                     rss_tag_text(cursor, item_end, "podcast:location", where, sizeof(where));
                     {
                         const char *person = cursor; size_t used = 0; int count = 0;
-                        while ((person = strstr(person, "<podcast:person")) && person < item_end && count < 6) {
+                        while ((person = bf_span_find(person, item_end, "<podcast:person")) && count < 6) {
                             char one[96];
                             if (rss_tag_text(person, item_end, "podcast:person", one, sizeof(one)) && !strstr(people, one) && used + strlen(one) + 3 < sizeof(people)) {
                                 used += (size_t)snprintf(people + used, sizeof(people) - used, "%s%s", count ? ", " : "", one); count++;
@@ -1608,25 +1608,25 @@ static int page_item_has_page(const PageItem *item) {
 static const char *page_emit_item_open(const PageItem *item, const char *class_name) {
     if (page_item_has_page(item)) {
         fputs("<a", stdout);
-        if (class_name) { fputs(" class=\"", stdout); html(class_name); fputs("\"", stdout); }
-        fputs(" href=\"/o/", stdout); page_url_escape(item->source); fputs("/", stdout); html(item->key); fputs("\">", stdout);
+        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
+        ui_lit(stdout, " href=\"/o/"); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">");
         return "</a>";
     }
     if (item && estate_address_is_ours(item->href)) {
         fputs("<a", stdout);
-        if (class_name) { fputs(" class=\"", stdout); html(class_name); fputs("\"", stdout); }
-        fputs(" href=\"", stdout); html(item->href); fputs("\">", stdout);
+        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
+        ui_lit(stdout, " href=\""); html(item->href); ui_lit(stdout, "\">");
         return "</a>";
     }
     if (item && public_http_url(item->href)) {
         fputs("<a", stdout);
-        if (class_name) { fputs(" class=\"", stdout); html(class_name); fputs("\"", stdout); }
-        fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(item->href); fputs("\">", stdout);
+        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
+        ui_lit(stdout, " rel=\"noopener\" target=\"_blank\" href=\""); html(item->href); ui_lit(stdout, "\">");
         return "</a>";
     }
     fputs("<span", stdout);
-    if (class_name) { fputs(" class=\"", stdout); html(class_name); fputs("\"", stdout); }
-    fputs(">", stdout);
+    if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
+    ui_lit(stdout, ">");
     return "</span>";
 }
 
@@ -1634,11 +1634,11 @@ static void page_emit_by(const PageItem *item, time_t now) {
     char when[48];
     page_when(item->at, now, when, sizeof(when));
     if (item->by[0]) { ui_text(stdout, "span", NULL, item->by); }
-    if (item->note[0] && strcmp(item->note, item->by) && !item->group[0]) { fputs(" <span class=\"via\">", stdout); html(item->note); fputs("</span>", stdout); }
+    if (item->note[0] && strcmp(item->note, item->by) && !item->group[0]) { (ui_lit(stdout, " "), ui_open(stdout, "span", "via")); html(item->note); ui_close(stdout, "span"); }
     if (when[0]) {
         char iso[32]; struct tm tm;
         if (gmtime_r(&item->at, &tm) && strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &tm)) {
-            fputs(" <time datetime=\"", stdout); html(iso); fputs("\">", stdout); html(when); fputs("</time>", stdout);
+            fputs(" <time datetime=\"", stdout); html(iso); ui_lit(stdout, "\">"); html(when); ui_close(stdout, "time");
         }
     }
 }
@@ -1647,26 +1647,26 @@ static void page_emit_by(const PageItem *item, time_t now) {
  * selected account, installation and the exact item before any effect. */
 static void page_emit_item_continuations(const PageItem *item) {
     if (!page_item_has_page(item)) return;
-    fputs("<nav class=\"page-item-continuations\" aria-label=\"Retained item continuations\">",stdout);
+    ui_elem(stdout, "nav", (const UiAttr[]){{"class", "page-item-continuations"}, {"aria-label", "Retained item continuations"}}, 2, 0);
     fputs("<a data-item-detail href=\"/o/",stdout); page_url_escape(item->source);
-    fputs("/",stdout); page_url_escape(item->key); fputs("\">Read item</a>",stdout);
+    ui_lit(stdout, "/"); page_url_escape(item->key); (ui_lit(stdout, "\">Read item"), ui_close(stdout, "a"));
     if (item->by[0]) {
         fputs("<a data-item-credit href=\"/people?who=",stdout); page_url_escape(item->by);
-        fputs("&amp;source=",stdout); page_url_escape(item->source);
-        fputs("\">Credited maker</a>",stdout);
+        ui_lit(stdout, "&amp;source="); page_url_escape(item->source);
+        (ui_lit(stdout, "\">Credited maker"), ui_close(stdout, "a"));
     }
     fputs("<a data-item-keep href=\"/o/",stdout);page_url_escape(item->source);
-    fputs("/",stdout);page_url_escape(item->key);fputs("#item-keep\">Keep for later</a>",stdout);
+    ui_lit(stdout, "/");page_url_escape(item->key);(ui_lit(stdout, "#item-keep\">Keep for later"), ui_close(stdout, "a"));
     fputs("<a data-item-continue href=\"/feed-use?context=self&amp;item=",stdout);
     page_url_escape(item->source); fputs("%2F",stdout); page_url_escape(item->key);
-    fputs("\">Use in my apps</a></nav>",stdout);
+    (ui_lit(stdout, "\">Use in my apps"), ui_close(stdout, "a"), ui_close(stdout, "nav"));
 }
 
 
 static void page_emit_picture(const char *url, const char *class_name) {
     if (!page_image_url_safe(url)) return;
-    fputs("<img class=\"", stdout); html(class_name); fputs("\" src=\"", stdout); html(url);
-    fputs("\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\">", stdout);
+    fputs("<img class=\"", stdout); html(class_name); ui_lit(stdout, "\" src=\""); html(url);
+    ui_lit(stdout, "\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\">");
 }
 
 static int item_says(const char *hay, const char *needle) {
@@ -1774,17 +1774,17 @@ static const char *page_operation_glyph(const char *operation) {
     if(operation)for(size_t i=0;i<sizeof(cuts)/sizeof(cuts[0]);i++)
         if(!strcmp(operation,cuts[i].operation))return cuts[i].glyph;
     if (!verb) return "activity";
-    if (!strcmp(verb,"support")) return "life";
-    if (!strcmp(verb,"join") || !strcmp(verb,"connect") || !strcmp(verb,"participate")) return "group";
-    if (!strcmp(verb,"vote") || !strcmp(verb,"approve") || !strcmp(verb,"complete")) return "check";
-    if (!strcmp(verb,"follow")) return "calendar";
-    if (!strcmp(verb,"save")) return "save";
-    if (!strcmp(verb,"run") || !strcmp(verb,"play")) return "play";
-    if (!strcmp(verb,"publish") || !strcmp(verb,"share")) return "share";
-    if (!strcmp(verb,"view") || !strncmp(verb,"view",4) || !strcmp(verb,"observe")) return "eye";
-    if (!strcmp(verb,"edit") || !strcmp(verb,"update")) return "edit";
-    if (!strcmp(verb,"offer") || !strcmp(verb,"settle") || !strcmp(verb,"price")) return "cost";
-    if (!strcmp(verb,"create") || !strcmp(verb,"propose") || !strcmp(verb,"open")) return "plus";
+    /* Each verb a card's action may carry, and the one glyph it shows. */
+    static const struct { const char *verb, *glyph; } verbs[] = {
+        {"support","life"},{"join","group"},{"connect","group"},{"participate","group"},
+        {"vote","check"},{"approve","check"},{"complete","check"},{"follow","calendar"},
+        {"save","save"},{"run","play"},{"play","play"},{"publish","share"},{"share","share"},
+        {"observe","eye"},{"edit","edit"},{"update","edit"},{"offer","cost"},{"settle","cost"},
+        {"price","cost"},{"create","plus"},{"propose","plus"},{"open","plus"}
+    };
+    for(size_t i=0;i<sizeof(verbs)/sizeof(verbs[0]);i++)
+        if(!strcmp(verb,verbs[i].verb))return verbs[i].glyph;
+    if (!strncmp(verb,"view",4)) return "eye";
     return "activity";
 }
 typedef struct {
@@ -1833,7 +1833,7 @@ static void page_emit_reading_query(const char *query, const char *replace, cons
 
 static void page_emit_filter_link(const PageEmitContext *ctx, const char *key, const char *value) {
     fputs("<a href=\"", stdout); html(ctx && ctx->route ? ctx->route : "/discover");
-    page_emit_reading_query(ctx ? ctx->query : NULL, key, value); fputs("\">", stdout);
+    page_emit_reading_query(ctx ? ctx->query : NULL, key, value); ui_lit(stdout, "\">");
 }
 
 /* Web Mercator pixels at a zoom level: the projection street map tiles use. */
@@ -1886,7 +1886,7 @@ static void page_emit_map_plate(const PageStream *stream, int take, int numbered
             scale = width / view_w;
         }
         tiles = 1 << zoom;
-        fputs("<div class=\"plate streets\"><svg viewBox=\"0 0 960 480\" role=\"img\" aria-label=\"Street map of these places\">", stdout);
+        (ui_open(stdout, "div", "plate streets"), ui_elem(stdout, "svg", (const UiAttr[]){{"viewBox", "0 0 960 480"}, {"role", "img"}, {"aria-label", "Street map of these places"}}, 3, 0));
         printf("<g transform=\"scale(%.4f)\">", scale);
         for (ty = (int)floor(y0 / 256.0); ty * 256.0 < y0 + height / scale; ty++) {
             if (ty < 0 || ty >= tiles) continue;
@@ -1894,7 +1894,7 @@ static void page_emit_map_plate(const PageStream *stream, int take, int numbered
                 printf("<image href=\"https://tile.openstreetmap.org/%d/%d/%d.png\" x=\"%.1f\" y=\"%.1f\" width=\"256\" height=\"256\"/>",
                        zoom, ((tx % tiles) + tiles) % tiles, ty, tx * 256.0 - x0, ty * 256.0 - y0);
         }
-        fputs("</g>", stdout);
+        ui_close(stdout, "g");
         /* Drawn last-first, so the first place sits on top. */
         for (k = take - 1; k >= 0; k--) {
             const PageItem *item = &stream->item[stream->cursor + k];
@@ -1902,30 +1902,30 @@ static void page_emit_map_plate(const PageStream *stream, int take, int numbered
             if (!item->placed) continue;
             page_mercator(item->lon, item->lat, zoom, &px, &py);
             px = (px - x0) * scale; py = (py - y0) * scale;
-            if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); fputs("/", stdout); html(item->key); fputs("\">", stdout); }
+            if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">"); }
             printf("<g class=\"point%s\" data-map-point=\"%d\"><circle cx=\"%.1f\" cy=\"%.1f\" r=\"%s\"/>", k == 0 ? " newest" : "", k, px, py, numbered ? "11" : "20");
             if (numbered) printf("<text x=\"%.1f\" y=\"%.1f\">%d</text>", px, py + 4.0, k + 1);
-            fputs("<title>", stdout); html(item->title); fputs("</title></g>", stdout);
-            if (page_item_has_page(item)) fputs("</a>", stdout);
+            ui_open(stdout, "title", NULL); html(item->title); ui_close_n(stdout, "title", "g", NULL);
+            if (page_item_has_page(item)) ui_close(stdout, "a");
             shown++;
         }
         (void)shown;
-        fputs("</svg><small class=\"map-credit\">Map &copy; <a href=\"https://www.openstreetmap.org/copyright\" rel=\"noopener\" target=\"_blank\">OpenStreetMap contributors</a></small></div>", stdout);
+        (ui_close(stdout, "svg"), ui_open(stdout, "small", "map-credit"), ui_lit(stdout, "Map &copy; "), ui_elem(stdout, "a", (const UiAttr[]){{"href", "https://www.openstreetmap.org/copyright"}, {"rel", "noopener"}, {"target", "_blank"}}, 3, 0), ui_lit(stdout, "OpenStreetMap contributors"), ui_close(stdout, "a"), ui_close(stdout, "small"), ui_close(stdout, "div"));
         return;
     }
-    fputs("<div class=\"plate\"><svg viewBox=\"0 0 360 180\" role=\"img\" aria-label=\"Map of reported places\">", stdout);
+    (ui_open(stdout, "div", "plate"), ui_elem(stdout, "svg", (const UiAttr[]){{"viewBox", "0 0 360 180"}, {"role", "img"}, {"aria-label", "Map of reported places"}}, 3, 0));
     for (line = 30; line < 360; line += 30) printf("<line class=\"grid\" x1=\"%d\" y1=\"0\" x2=\"%d\" y2=\"180\"/>", line, line);
     for (line = 30; line < 180; line += 30) printf("<line class=\"grid%s\" x1=\"0\" y1=\"%d\" x2=\"360\" y2=\"%d\"/>", line == 90 ? " equator" : "", line, line);
     for (k = 0; k < take; k++) {
         const PageItem *item = &stream->item[stream->cursor + k];
         if (!item->placed) continue;
-        if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); fputs("/", stdout); html(item->key); fputs("\">", stdout); }
+        if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">"); }
         printf("<circle class=\"point%s\" data-map-point=\"%d\" cx=\"%.2f\" cy=\"%.2f\" r=\"%s\"><title>", k == 0 ? " newest" : "", k, item->lon + 180.0, 90.0 - item->lat, k == 0 ? "3" : "1.9");
         if (numbered) printf("%d. ", k + 1);
-        html(item->title); fputs("</title></circle>", stdout);
-        if (page_item_has_page(item)) fputs("</a>", stdout);
+        html(item->title); ui_close_n(stdout, "title", "circle", NULL);
+        if (page_item_has_page(item)) ui_close(stdout, "a");
     }
-    fputs("</svg></div>", stdout);
+    ui_close_n(stdout, "svg", "div", NULL);
 }
 
 /* One page offers one place to start listening, however many listening rhythms
@@ -1943,26 +1943,26 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         { char sized[1024]; page_picture_at(first->image, 960, sized, sizeof(sized)); page_emit_picture(sized, "lead-picture"); }
         ui_text(stdout, "h2", NULL, first->title); fputs(close, stdout);
         if (first->body[0]) { ui_text(stdout, "p", "dek", first->body); }
-        fputs("<p class=\"by\">", stdout); page_emit_by(first, now); fputs("</p>",stdout); page_emit_item_continuations(first); fputs("</article>",stdout);
+        ui_open(stdout, "p", "by"); page_emit_by(first, now); ui_close(stdout, "p"); page_emit_item_continuations(first); ui_close(stdout, "article");
         break;
     case BF_PAGE_TOPOLOGY_INDEX:
-        fputs("<div class=\"index\">", stdout);
+        ui_open(stdout, "div", "index");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             close = page_emit_item_open(item, NULL);
             ui_text(stdout, "b", NULL, item->title);
             if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
-            fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span>", stdout);
+            ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span");
             page_emit_picture(item->image, "thumb");
             fputs(close, stdout);
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         break;
     case BF_PAGE_TOPOLOGY_AGENDA:
         /* An agenda is read forwards and grouped by the day something happens,
          * with the place under it: the rhythm of a printed listings page. */
-        fputs("<div class=\"agenda-tools\" data-agenda-controls role=\"group\" aria-label=\"Filter published upcoming events\"><div class=\"agenda-choices\"><button type=\"button\" data-agenda-filter=\"all\" aria-pressed=\"true\">All dates</button><button type=\"button\" data-agenda-filter=\"today\" aria-pressed=\"false\">Starts today</button><button type=\"button\" data-agenda-filter=\"seven\" aria-pressed=\"false\">Next 7 days</button><button type=\"button\" data-agenda-filter=\"weekend\" aria-pressed=\"false\">This weekend</button></div><label>Find event or venue<input type=\"search\" data-agenda-search maxlength=\"120\" placeholder=\"Find in this agenda\"></label><output data-agenda-count role=\"status\" aria-live=\"polite\"></output><small>Filters only the published events loaded in this agenda. Open an event for its source details.</small></div>",stdout);
-        fputs("<ol class=\"agenda\">", stdout);
+        (ui_elem(stdout, "div", (const UiAttr[]){{"class", "agenda-tools"}, {"data-agenda-controls", NULL}, {"role", "group"}, {"aria-label", "Filter published upcoming events"}}, 4, 0), ui_open(stdout, "div", "agenda-choices"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-agenda-filter", "all"}, {"aria-pressed", "true"}}, 3, 0), ui_lit(stdout, "All dates"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-agenda-filter", "today"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Starts today"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-agenda-filter", "seven"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Next 7 days"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-agenda-filter", "weekend"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "This weekend"), ui_close(stdout, "button"), ui_close(stdout, "div"), ui_open(stdout, "label", NULL), ui_lit(stdout, "Find event or venue"), ui_elem(stdout, "input", (const UiAttr[]){{"type", "search"}, {"data-agenda-search", NULL}, {"maxlength", "120"}, {"placeholder", "Find in this agenda"}}, 4, 0), ui_close(stdout, "label"), ui_elem(stdout, "output", (const UiAttr[]){{"data-agenda-count", NULL}, {"role", "status"}, {"aria-live", "polite"}}, 3, 0), ui_close(stdout, "output"), ui_open(stdout, "small", NULL), ui_lit(stdout, "Filters only the published events loaded in this agenda. Open an event for its source details."), ui_close(stdout, "small"), ui_close(stdout, "div"));
+        ui_open(stdout, "ol", "agenda");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             char day[32] = "", when[48] = ""; struct tm tm;
@@ -1975,10 +1975,10 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             if (day[0] && (!group || strcmp(group, day))) {
                 static char held[32];
                 snprintf(held, sizeof(held), "%s", day); group = held;
-                fputs("<li class=\"agenda-day\"><h3>", stdout); html(day); fputs("</h3></li>", stdout);
+                (ui_open(stdout, "li", "agenda-day"), ui_open(stdout, "h3", NULL)); html(day); ui_close_n(stdout, "h3", "li", NULL);
             }
             page_when_ahead(item->at, ends, now, when, sizeof(when));
-            fputs("<li class=\"agenda-item\">", stdout);
+            ui_open(stdout, "li", "agenda-item");
             close = page_emit_item_open(item, NULL);
             ui_text(stdout, "b", NULL, item->title);
             fputs(close, stdout);
@@ -2000,140 +2000,140 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             }
             if (when[0]) { ui_text(stdout, "span", "starts", when); }
             if (item->where[0]) { ui_text(stdout, "span", "at", item->where); }
-            fputs("<span class=\"by\">", stdout); html(item->by); fputs("</span></li>", stdout);
+            ui_open(stdout, "span", "by"); html(item->by); ui_close_n(stdout, "span", "li", NULL);
         }
-        fputs("</ol>", stdout);
-        fputs("<script>(function(){\n const script=document.currentScript,agenda=script?.previousElementSibling,tools=agenda?.previousElementSibling;\n if(!agenda?.matches('ol.agenda')||!tools?.hasAttribute('data-agenda-controls'))return;\n const entries=[...agenda.children].filter(n=>n.matches('li.agenda-item'));\n const dates=[...agenda.children].filter(n=>n.matches('li.agenda-day'));\n const query=tools.querySelector('[data-agenda-search]'),count=tools.querySelector('[data-agenda-count]');\n const filters=[...tools.querySelectorAll('[data-agenda-filter]')];let mode='all';\n function update(){const term=query.value.trim().toLocaleLowerCase();let visible=0;\n  for(const item of entries){const signal=item.querySelector('[data-agenda-weekend]');const weekend=signal?.dataset.agendaWeekend==='1';const offset=Number(signal?.dataset.agendaDayOffset);const known=signal&&Number.isInteger(offset)&&offset>=0;const windowOk=mode==='all'||(mode==='weekend'&&weekend)||(mode==='today'&&known&&offset===0)||(mode==='seven'&&known&&offset<7);\n   const match=windowOk&&(!term||item.textContent.toLocaleLowerCase().includes(term));\n   item.hidden=!match;if(match)visible++;}\n  for(const date of dates){let cursor=date.nextElementSibling,hasVisible=false;\n   while(cursor&&!cursor.matches('li.agenda-day')){if(cursor.matches('li.agenda-item')&&!cursor.hidden)hasVisible=true;cursor=cursor.nextElementSibling;}\n   date.hidden=!hasVisible;}\n  for(const button of filters)button.setAttribute('aria-pressed',String(button.dataset.agendaFilter===mode));\n  count.textContent='Showing '+visible+' of '+entries.length+' published events on this page.';\n }\n for(const button of filters)button.addEventListener('click',()=>{mode=['all','today','seven','weekend'].includes(button.dataset.agendaFilter)?button.dataset.agendaFilter:'all';update();});\n query.addEventListener('input',update);update();\n})();</script>", stdout);
+        ui_close(stdout, "ol");
+        ui_script(stdout, "(function(){\n const script=document.currentScript,agenda=script?.previousElementSibling,tools=agenda?.previousElementSibling;\n if(!agenda?.matches('ol.agenda')||!tools?.hasAttribute('data-agenda-controls'))return;\n const entries=[...agenda.children].filter(n=>n.matches('li.agenda-item'));\n const dates=[...agenda.children].filter(n=>n.matches('li.agenda-day'));\n const query=tools.querySelector('[data-agenda-search]'),count=tools.querySelector('[data-agenda-count]');\n const filters=[...tools.querySelectorAll('[data-agenda-filter]')];let mode='all';\n function update(){const term=query.value.trim().toLocaleLowerCase();let visible=0;\n  for(const item of entries){const signal=item.querySelector('[data-agenda-weekend]');const weekend=signal?.dataset.agendaWeekend==='1';const offset=Number(signal?.dataset.agendaDayOffset);const known=signal&&Number.isInteger(offset)&&offset>=0;const windowOk=mode==='all'||(mode==='weekend'&&weekend)||(mode==='today'&&known&&offset===0)||(mode==='seven'&&known&&offset<7);\n   const match=windowOk&&(!term||item.textContent.toLocaleLowerCase().includes(term));\n   item.hidden=!match;if(match)visible++;}\n  for(const date of dates){let cursor=date.nextElementSibling,hasVisible=false;\n   while(cursor&&!cursor.matches('li.agenda-day')){if(cursor.matches('li.agenda-item')&&!cursor.hidden)hasVisible=true;cursor=cursor.nextElementSibling;}\n   date.hidden=!hasVisible;}\n  for(const button of filters)button.setAttribute('aria-pressed',String(button.dataset.agendaFilter===mode));\n  count.textContent='Showing '+visible+' of '+entries.length+' published events on this page.';\n }\n for(const button of filters)button.addEventListener('click',()=>{mode=['all','today','seven','weekend'].includes(button.dataset.agendaFilter)?button.dataset.agendaFilter:'all';update();});\n query.addEventListener('input',update);update();\n})();");
         break;
     case BF_PAGE_TOPOLOGY_LIST:
-        fputs("<ol class=\"more\">", stdout);
+        ui_open(stdout, "ol", "more");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
-            fputs("<li>", stdout); close = page_emit_item_open(item, NULL); html(item->title);
-            fputs(close, stdout); fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span></li>", stdout);
+            ui_open(stdout, "li", NULL); close = page_emit_item_open(item, NULL); html(item->title);
+            fputs(close, stdout); ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "li", NULL);
         }
-        fputs("</ol>", stdout);
+        ui_close(stdout, "ol");
         break;
     case BF_PAGE_TOPOLOGY_SHELF:
-        fputs("<div class=\"shelf\">", stdout);
+        ui_open(stdout, "div", "shelf");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             if (item->asset[0]) {
-                fputs("<figure class=\"clip\"><video controls playsinline preload=\"none\" src=\"", stdout); html(item->asset); fputs("\"", stdout);
-                if (item->poster[0]) { fputs(" poster=\"", stdout); html(item->poster); fputs("\"", stdout); }
-                fputs("></video><figcaption>", stdout); html(item->title);
-                if (item->duration_ms > 0) { fputs("<span class=\"by\">", stdout); page_emit_duration(item->duration_ms); fputs("</span>", stdout); }
-                fputs("</figcaption></figure>", stdout);
+                fputs("<figure class=\"clip\"><video controls playsinline preload=\"none\" src=\"", stdout); html(item->asset); ui_lit(stdout, "\"");
+                if (item->poster[0]) { ui_lit(stdout, " poster=\""); html(item->poster); ui_lit(stdout, "\""); }
+                (ui_lit(stdout, ">"), ui_close(stdout, "video"), ui_open(stdout, "figcaption", NULL)); html(item->title);
+                if (item->duration_ms > 0) { ui_open(stdout, "span", "by"); page_emit_duration(item->duration_ms); ui_close(stdout, "span"); }
+                ui_close_n(stdout, "figcaption", "figure", NULL);
             } else {
-                fputs("<figure class=\"clip\">", stdout); close = page_emit_item_open(item, NULL);
-                fputs("<span class=\"frame\">", stdout); page_emit_picture(item->image, "poster"); fputs("<span class=\"play\">", stdout); page_glyph("play"); fputs("</span></span>", stdout);
-                fputs("<figcaption>", stdout); html(item->title);
-                fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span></figcaption>", stdout); fputs(close, stdout); fputs("</figure>", stdout);
+                ui_open(stdout, "figure", "clip"); close = page_emit_item_open(item, NULL);
+                ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "poster"); ui_open(stdout, "span", "play"); page_glyph("play"); ui_close_n(stdout, "span", "span", NULL);
+                ui_open(stdout, "figcaption", NULL); html(item->title);
+                ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ui_close(stdout, "figure");
             }
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         break;
     case BF_PAGE_TOPOLOGY_FIELD:
-        fputs("<div class=\"field\">", stdout);
+        ui_open(stdout, "div", "field");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
-            fputs("<figure class=\"photo\">", stdout); close = page_emit_item_open(item, NULL);
+            ui_open(stdout, "figure", "photo"); close = page_emit_item_open(item, NULL);
             page_emit_picture(item->image, "picture");
-            fputs("<figcaption>", stdout); html(item->title);
-            fputs("<span class=\"by\">", stdout); page_emit_by(item, now);
+            ui_open(stdout, "figcaption", NULL); html(item->title);
+            ui_open(stdout, "span", "by"); page_emit_by(item, now);
             if (item->rights[0]) { ui_text(stdout, "span", "terms", item->rights); }
-            fputs("</span></figcaption>", stdout); fputs(close, stdout); fputs("</figure>", stdout);
+            ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ui_close(stdout, "figure");
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         break;
     case BF_PAGE_TOPOLOGY_WALL:
         /* Pinterest's wall: the picture is the item; its words appear when a
          * person points at it or moves focus to it. */
-        fputs("<div class=\"wall-pins\">", stdout);
+        ui_open(stdout, "div", "wall-pins");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             if (!page_image_url_safe(item->image)) continue;
             close = page_emit_item_open(item, "pin");
             page_emit_picture(item->image, "picture");
-            fputs("<span class=\"cap\"><b>", stdout); html(item->title); fputs("</b><span>", stdout); html(item->by); fputs("</span>", stdout);
+            (ui_open(stdout, "span", "cap"), ui_open(stdout, "b", NULL)); html(item->title); (ui_close(stdout, "b"), ui_open(stdout, "span", NULL)); html(item->by); ui_close(stdout, "span");
             if (item->rights[0]) { ui_text(stdout, "span", "terms", item->rights); }
-            fputs("</span>", stdout);
+            ui_close(stdout, "span");
             fputs(close, stdout);
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         break;
     case BF_PAGE_TOPOLOGY_GRID:
-        if (!ctx->preview) fputs("<section class=\"media-catalogue\" data-media-catalogue data-media-view=\"grid\"><div class=\"media-catalogue-controls\"><div class=\"media-modes\" role=\"group\" aria-label=\"Source material type\"><button type=\"button\" data-media-kind=\"all\" aria-pressed=\"true\">All</button><button type=\"button\" data-media-kind=\"video\" aria-pressed=\"false\">Films &amp; video</button><button type=\"button\" data-media-kind=\"audio\" aria-pressed=\"false\">Audio</button><button type=\"button\" data-media-kind=\"photo\" aria-pressed=\"false\">Images</button><button type=\"button\" data-media-kind=\"other\" aria-pressed=\"false\">Writing &amp; other</button></div><label>Search these retained items<input type=\"search\" data-media-search maxlength=\"120\" placeholder=\"Title, publisher, source\"></label><div class=\"media-modes\" role=\"group\" aria-label=\"Catalogue presentation\"><button type=\"button\" data-media-layout=\"grid\" aria-pressed=\"true\">Gallery</button><button type=\"button\" data-media-layout=\"list\" aria-pressed=\"false\">List</button></div><output role=\"status\" aria-live=\"polite\" data-media-count></output></div>",stdout);
-        fputs("<div class=\"video-grid\">", stdout);
+        if (!ctx->preview) (ui_elem(stdout, "section", (const UiAttr[]){{"class", "media-catalogue"}, {"data-media-catalogue", NULL}, {"data-media-view", "grid"}}, 3, 0), ui_open(stdout, "div", "media-catalogue-controls"), ui_elem(stdout, "div", (const UiAttr[]){{"class", "media-modes"}, {"role", "group"}, {"aria-label", "Source material type"}}, 3, 0), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-kind", "all"}, {"aria-pressed", "true"}}, 3, 0), ui_lit(stdout, "All"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-kind", "video"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Films &amp; video"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-kind", "audio"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Audio"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-kind", "photo"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Images"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-kind", "other"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Writing &amp; other"), ui_close(stdout, "button"), ui_close(stdout, "div"), ui_open(stdout, "label", NULL), ui_lit(stdout, "Search these retained items"), ui_elem(stdout, "input", (const UiAttr[]){{"type", "search"}, {"data-media-search", NULL}, {"maxlength", "120"}, {"placeholder", "Title, publisher, source"}}, 4, 0), ui_close(stdout, "label"), ui_elem(stdout, "div", (const UiAttr[]){{"class", "media-modes"}, {"role", "group"}, {"aria-label", "Catalogue presentation"}}, 3, 0), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-layout", "grid"}, {"aria-pressed", "true"}}, 3, 0), ui_lit(stdout, "Gallery"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-media-layout", "list"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "List"), ui_close(stdout, "button"), ui_close(stdout, "div"), ui_elem(stdout, "output", (const UiAttr[]){{"role", "status"}, {"aria-live", "polite"}, {"data-media-count", NULL}}, 3, 0), ui_close(stdout, "output"), ui_close(stdout, "div"));
+        ui_open(stdout, "div", "video-grid");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             char when[48];
             const char *media_kind = item->kind == BF_PAGE_MATERIAL_VIDEO ? "video" :
                 item->kind == BF_PAGE_MATERIAL_AUDIO ? "audio" : item->kind == BF_PAGE_MATERIAL_PHOTO ? "photo" : "other";
             fputs("<article class=\"page-media-card\" data-media-card data-media-kind=\"",stdout);
-            fputs(media_kind,stdout); fputs("\">",stdout);
+            fputs(media_kind,stdout); ui_lit(stdout, "\">");
             page_when(item->at, now, when, sizeof(when));
             close = page_emit_item_open(item, "video");
-            fputs("<span class=\"frame\">", stdout); page_emit_picture(item->image, "poster");
+            ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "poster");
             if (item->kind == BF_PAGE_MATERIAL_VIDEO || item->kind == BF_PAGE_MATERIAL_AUDIO) {
-                fputs("<span class=\"play\" aria-hidden=\"true\">",stdout);page_glyph("play");fputs("</span>",stdout);
+                ui_elem(stdout, "span", (const UiAttr[]){{"class", "play"}, {"aria-hidden", "true"}}, 2, 0);page_glyph("play");ui_close(stdout, "span");
             } else if (item->kind == BF_PAGE_MATERIAL_PHOTO) {
-                fputs("<span class=\"play\" aria-hidden=\"true\">",stdout);page_glyph("picture");fputs("</span>",stdout);
+                ui_elem(stdout, "span", (const UiAttr[]){{"class", "play"}, {"aria-hidden", "true"}}, 2, 0);page_glyph("picture");ui_close(stdout, "span");
             }
-            fputs("</span>",stdout);
-            fputs("<b>", stdout); html(item->title); fputs("</b><span class=\"by\"><span>", stdout); html(item->by); fputs("</span>", stdout);
-            if (item->note[0] && strcmp(item->note, item->by)) { fputs(" <span class=\"via\">", stdout); html(item->note); fputs("</span>", stdout); }
-            if (when[0]) { fputs(" <time>", stdout); html(when); fputs("</time>", stdout); }
-            fputs("</span>",stdout);fputs(close,stdout);
-            fputs("<div class=\"media-catalogue-proof\"><span>Source: ",stdout);html(item->source);fputs("</span>",stdout);
-            if(item->rights[0]){fputs("<span class=\"terms\">Terms: ",stdout);html(item->rights);fputs("</span>",stdout);}
-            if(item->duration_ms>0){fputs("<span>Duration: ",stdout);page_emit_duration(item->duration_ms);fputs("</span>",stdout);}
-            fputs("</div>",stdout);page_emit_item_continuations(item);fputs("</article>",stdout);
+            ui_close(stdout, "span");
+            ui_open(stdout, "b", NULL); html(item->title); (ui_close(stdout, "b"), ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(item->by); ui_close(stdout, "span");
+            if (item->note[0] && strcmp(item->note, item->by)) { (ui_lit(stdout, " "), ui_open(stdout, "span", "via")); html(item->note); ui_close(stdout, "span"); }
+            if (when[0]) { (ui_lit(stdout, " "), ui_open(stdout, "time", NULL)); html(when); ui_close(stdout, "time"); }
+            ui_close(stdout, "span");fputs(close,stdout);
+            (ui_open(stdout, "div", "media-catalogue-proof"), ui_open(stdout, "span", NULL), ui_lit(stdout, "Source: "));html(item->source);ui_close(stdout, "span");
+            if(item->rights[0]){(ui_open(stdout, "span", "terms"), ui_lit(stdout, "Terms: "));html(item->rights);ui_close(stdout, "span");}
+            if(item->duration_ms>0){(ui_open(stdout, "span", NULL), ui_lit(stdout, "Duration: "));page_emit_duration(item->duration_ms);ui_close(stdout, "span");}
+            ui_close(stdout, "div");page_emit_item_continuations(item);ui_close(stdout, "article");
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         if (!ctx->preview) {
-            fputs("</section>",stdout);
-            fputs("<script>(()=>{\nconst root=document.currentScript?.previousElementSibling;\nif(!root?.matches('[data-media-catalogue]'))return;\nconst cards=[...root.querySelectorAll('[data-media-card]')],input=root.querySelector('[data-media-search]'),count=root.querySelector('[data-media-count]');\nconst kinds=[...root.querySelectorAll('[data-media-kind]:not([data-media-card])')],layouts=[...root.querySelectorAll('[data-media-layout]')];\nlet kind='all',layout='grid';\nfunction update(){const query=input.value.trim().toLocaleLowerCase();let shown=0;\nfor(const card of cards){const matching=(kind==='all'||card.dataset.mediaKind===kind)&&(!query||card.textContent.toLocaleLowerCase().includes(query));card.hidden=!matching;if(matching)shown++;}\nroot.dataset.mediaView=layout;\nfor(const button of kinds)button.setAttribute('aria-pressed',String(button.dataset.mediaKind===kind));\nfor(const button of layouts)button.setAttribute('aria-pressed',String(button.dataset.mediaLayout===layout));\ncount.textContent='Showing '+shown+' of '+cards.length+' retained items on this page. Rights and sources remain as published.';\n}\ninput.addEventListener('input',update);\nfor(const button of kinds)button.addEventListener('click',()=>{kind=button.dataset.mediaKind;update();});\nfor(const button of layouts)button.addEventListener('click',()=>{layout=button.dataset.mediaLayout;update();});\nupdate();\n})();</script>",stdout);
+            ui_close(stdout, "section");
+            ui_script(stdout, "(()=>{\nconst root=document.currentScript?.previousElementSibling;\nif(!root?.matches('[data-media-catalogue]'))return;\nconst cards=[...root.querySelectorAll('[data-media-card]')],input=root.querySelector('[data-media-search]'),count=root.querySelector('[data-media-count]');\nconst kinds=[...root.querySelectorAll('[data-media-kind]:not([data-media-card])')],layouts=[...root.querySelectorAll('[data-media-layout]')];\nlet kind='all',layout='grid';\nfunction update(){const query=input.value.trim().toLocaleLowerCase();let shown=0;\nfor(const card of cards){const matching=(kind==='all'||card.dataset.mediaKind===kind)&&(!query||card.textContent.toLocaleLowerCase().includes(query));card.hidden=!matching;if(matching)shown++;}\nroot.dataset.mediaView=layout;\nfor(const button of kinds)button.setAttribute('aria-pressed',String(button.dataset.mediaKind===kind));\nfor(const button of layouts)button.setAttribute('aria-pressed',String(button.dataset.mediaLayout===layout));\ncount.textContent='Showing '+shown+' of '+cards.length+' retained items on this page. Rights and sources remain as published.';\n}\ninput.addEventListener('input',update);\nfor(const button of kinds)button.addEventListener('click',()=>{kind=button.dataset.mediaKind;update();});\nfor(const button of layouts)button.addEventListener('click',()=>{layout=button.dataset.mediaLayout;update();});\nupdate();\n})();");
         }
         break;
     case BF_PAGE_TOPOLOGY_FEED:
         /* One stream that changes shape with what arrives: a picture takes
          * its own height, a video shows it will play, a story is set as type.
          * Nothing is boxed; the column rhythm does the separating. */
-        fputs("<section class=\"feed-tools\" data-feed-tools aria-label=\"Filter retained feed\"><div class=\"feed-modes\" role=\"group\" aria-label=\"Post format\"><button type=\"button\" data-feed-mode=\"all\" aria-pressed=\"true\">All material</button><button type=\"button\" data-feed-mode=\"is-story\" aria-pressed=\"false\">Stories</button><button type=\"button\" data-feed-mode=\"is-picture\" aria-pressed=\"false\">Images</button><button type=\"button\" data-feed-mode=\"is-video\" aria-pressed=\"false\">Video</button></div><label>Find in loaded feed<input type=\"search\" data-feed-search maxlength=\"120\" placeholder=\"Title, source or text\"></label><output data-feed-count role=\"status\" aria-live=\"polite\"></output></section>",stdout);
-        fputs("<div class=\"feed\">", stdout);
+        (ui_elem(stdout, "section", (const UiAttr[]){{"class", "feed-tools"}, {"data-feed-tools", NULL}, {"aria-label", "Filter retained feed"}}, 3, 0), ui_elem(stdout, "div", (const UiAttr[]){{"class", "feed-modes"}, {"role", "group"}, {"aria-label", "Post format"}}, 3, 0), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-feed-mode", "all"}, {"aria-pressed", "true"}}, 3, 0), ui_lit(stdout, "All material"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-feed-mode", "is-story"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Stories"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-feed-mode", "is-picture"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Images"), ui_close(stdout, "button"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-feed-mode", "is-video"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(stdout, "Video"), ui_close(stdout, "button"), ui_close(stdout, "div"), ui_open(stdout, "label", NULL), ui_lit(stdout, "Find in loaded feed"), ui_elem(stdout, "input", (const UiAttr[]){{"type", "search"}, {"data-feed-search", NULL}, {"maxlength", "120"}, {"placeholder", "Title, source or text"}}, 4, 0), ui_close(stdout, "label"), ui_elem(stdout, "output", (const UiAttr[]){{"data-feed-count", NULL}, {"role", "status"}, {"aria-live", "polite"}}, 3, 0), ui_close(stdout, "output"), ui_close(stdout, "section"));
+        ui_open(stdout, "div", "feed");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             const char *kind = page_is_video(item) ? "is-video" : page_is_photo(item) || page_image_url_safe(item->image) ? "is-picture" : "is-story";
-            fputs("<article class=\"tile ", stdout); fputs(kind, stdout); fputs("\">", stdout);
+            fputs("<article class=\"tile ", stdout); fputs(kind, stdout); ui_lit(stdout, "\">");
             close = page_emit_item_open(item, NULL);
             if (page_image_url_safe(item->image)) {
-                fputs("<span class=\"frame\">", stdout); page_emit_picture(item->image, "picture");
-                if (page_is_video(item)) { fputs("<span class=\"play\">", stdout); page_glyph("play"); fputs("</span>", stdout); }
-                fputs("</span>", stdout);
+                ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "picture");
+                if (page_is_video(item)) { ui_open(stdout, "span", "play"); page_glyph("play"); ui_close(stdout, "span"); }
+                ui_close(stdout, "span");
             }
             ui_text(stdout, "b", NULL, item->title);
             if (item->body[0] && !page_image_url_safe(item->image)) { ui_text(stdout, "span", "dek", item->body); }
             fputs(close, stdout);
-            fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span>",stdout); page_emit_item_continuations(item); fputs("</article>",stdout);
+            ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span"); page_emit_item_continuations(item); ui_close(stdout, "article");
         }
-        fputs("</div>", stdout);
-        fputs("<script>(()=>{\n const feed=document.currentScript?.previousElementSibling,tools=feed?.previousElementSibling;\n if(!feed?.matches('.feed')||!tools?.matches('[data-feed-tools]'))return;\n const cards=[...feed.querySelectorAll(':scope > article.tile')],search=tools.querySelector('[data-feed-search]');\n const modes=[...tools.querySelectorAll('[data-feed-mode]')],count=tools.querySelector('[data-feed-count]');\n let mode='all';function update(){const term=search.value.trim().toLocaleLowerCase();let shown=0;\n  for(const card of cards){const yes=(mode==='all'||card.classList.contains(mode))&&(!term||card.textContent.toLocaleLowerCase().includes(term));card.hidden=!yes;if(yes)shown++;}\n  for(const button of modes)button.setAttribute('aria-pressed',String(mode===button.dataset.feedMode));\n  count.textContent='Showing '+shown+' of '+cards.length+' retained items loaded on this page. Other feeds and earlier pages are unchanged.';\n }\n search.addEventListener('input',update);for(const button of modes)button.addEventListener('click',()=>{mode=button.dataset.feedMode;update();});update();\n})();</script>",stdout);
+        ui_close(stdout, "div");
+        ui_script(stdout, "(()=>{\n const feed=document.currentScript?.previousElementSibling,tools=feed?.previousElementSibling;\n if(!feed?.matches('.feed')||!tools?.matches('[data-feed-tools]'))return;\n const cards=[...feed.querySelectorAll(':scope > article.tile')],search=tools.querySelector('[data-feed-search]');\n const modes=[...tools.querySelectorAll('[data-feed-mode]')],count=tools.querySelector('[data-feed-count]');\n let mode='all';function update(){const term=search.value.trim().toLocaleLowerCase();let shown=0;\n  for(const card of cards){const yes=(mode==='all'||card.classList.contains(mode))&&(!term||card.textContent.toLocaleLowerCase().includes(term));card.hidden=!yes;if(yes)shown++;}\n  for(const button of modes)button.setAttribute('aria-pressed',String(mode===button.dataset.feedMode));\n  count.textContent='Showing '+shown+' of '+cards.length+' retained items loaded on this page. Other feeds and earlier pages are unchanged.';\n }\n search.addEventListener('input',update);for(const button of modes)button.addEventListener('click',()=>{mode=button.dataset.feedMode;update();});update();\n})();");
         break;
     case BF_PAGE_TOPOLOGY_RESULTS:
-        fputs("<ol class=\"results\">", stdout);
+        ui_open(stdout, "ol", "results");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
-            fputs("<li>", stdout); close = page_emit_item_open(item, "result");
-            fputs("<span class=\"kind\">", stdout);
+            ui_open(stdout, "li", NULL); close = page_emit_item_open(item, "result");
+            ui_open(stdout, "span", "kind");
             page_glyph(page_is_video(item) ? "play" : page_is_photo(item) ? "picture" : item->placed ? "pin" : "text");
-            fputs("</span><span class=\"what\"><b>", stdout); html(item->title); fputs("</b>", stdout);
+            (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL)); html(item->title); ui_close(stdout, "b");
             if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
-            fputs("<span class=\"by\">", stdout); page_emit_by(item, now); fputs("</span></span>", stdout);
+            ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "span", NULL);
             page_emit_picture(item->image, "thumb");
-            fputs(close, stdout); fputs("</li>", stdout);
+            fputs(close, stdout); ui_close(stdout, "li");
         }
-        fputs("</ol>", stdout);
+        ui_close(stdout, "ol");
         break;
     case BF_PAGE_TOPOLOGY_TABLE:
         if (ctx && ctx->experience_pattern && !strcmp(ctx->experience_pattern, "market")) {
@@ -2145,9 +2145,9 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             /* A ledger of news or recalls states no prices: the column is left
              * out rather than filled with "not stated". */
             fputs(priced_any ? "<div class=\"ledger-wrap\"><table class=\"ledger trade-index\">" : "<div class=\"ledger-wrap\"><table class=\"ledger trade-index no-price\">", stdout);
-            fputs("<thead><tr><th scope=\"col\">Lot</th><th scope=\"col\">Listing &amp; source</th>", stdout);
-            if (priced_any) fputs("<th scope=\"col\">Price as posted</th>", stdout);
-            fputs("<th scope=\"col\">Listed</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
+            (ui_open(stdout, "thead", NULL), ui_open(stdout, "tr", NULL), ui_elem(stdout, "th", (const UiAttr[]){{"scope", "col"}}, 1, 0), ui_lit(stdout, "Lot"), ui_close(stdout, "th"), ui_elem(stdout, "th", (const UiAttr[]){{"scope", "col"}}, 1, 0), ui_lit(stdout, "Listing &amp; source"), ui_close(stdout, "th"));
+            if (priced_any) (ui_elem(stdout, "th", (const UiAttr[]){{"scope", "col"}}, 1, 0), ui_lit(stdout, "Price as posted"), ui_close(stdout, "th"));
+            (ui_elem(stdout, "th", (const UiAttr[]){{"scope", "col"}}, 1, 0), ui_lit(stdout, "Listed"), ui_close(stdout, "th"), ui_elem(stdout, "th", (const UiAttr[]){{"scope", "col"}}, 1, 0), ui_open(stdout, "span", "sr"), ui_lit(stdout, "Open"), ui_close(stdout, "span"), ui_close(stdout, "th"), ui_close(stdout, "tr"), ui_close(stdout, "thead"), ui_open(stdout, "tbody", NULL));
             for (k = 0; k < take; k++) {
                 const PageItem *item = &stream->item[stream->cursor + k];
                 char when[48], price[48], title[768]; char *cut;
@@ -2156,39 +2156,39 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 page_when(item->at, now, when, sizeof(when));
                 printf("<tr><td class=\"lot\">%02d</td><td class=\"name\">", k + 1);
                 close = page_emit_item_open(item, NULL); html(title); fputs(close, stdout);
-                fputs("<span class=\"dek\">", stdout);
-                if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); fputs("</a>", stdout); }
-                if (item->by[0] && strcmp(item->by, item->note)) { fputs(" &middot; ", stdout); html(item->by); }
-                fputs("</span></td>", stdout);
+                ui_open(stdout, "span", "dek");
+                if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); ui_close(stdout, "a"); }
+                if (item->by[0] && strcmp(item->by, item->note)) { ui_lit(stdout, " &middot; "); html(item->by); }
+                ui_close_n(stdout, "span", "td", NULL);
                 if (priced_any) {
-                    fputs("<td class=\"price\">", stdout);
+                    ui_open(stdout, "td", "price");
                     if (item_price_as_posted(item->title, price, sizeof(price))) html(price); else ui_text(stdout, "span", "none", "Not stated");
-                    fputs("</td>", stdout);
+                    ui_close(stdout, "td");
                 }
-                fputs("<td class=\"when\">", stdout); html(when);
-                fputs("</td><td class=\"go\">", stdout); close = page_emit_item_open(item, "lot-open");
-                fputs("<span class=\"sr\">Open ", stdout); html(title); fputs("</span>", stdout); page_glyph("next"); fputs(close, stdout);
-                fputs("</td></tr>", stdout);
+                ui_open(stdout, "td", "when"); html(when);
+                (ui_close(stdout, "td"), ui_open(stdout, "td", "go")); close = page_emit_item_open(item, "lot-open");
+                (ui_open(stdout, "span", "sr"), ui_lit(stdout, "Open ")); html(title); ui_close(stdout, "span"); page_glyph("next"); fputs(close, stdout);
+                ui_close_n(stdout, "td", "tr", NULL);
             }
-            fputs("</tbody></table></div>", stdout);
+            ui_close_n(stdout, "tbody", "table", "div", NULL);
             break;
         }
         /* A ledger: one line per thing, columns that line up, the way issue
          * trackers and registries let a person scan hundreds at once. */
-        fputs("<div class=\"ledger-wrap\"><table class=\"ledger\"><thead><tr><th>Name</th><th>By</th><th>Where</th><th>When</th></tr></thead><tbody>", stdout);
+        (ui_open(stdout, "div", "ledger-wrap"), ui_open(stdout, "table", "ledger"), ui_open(stdout, "thead", NULL), ui_open(stdout, "tr", NULL), ui_open(stdout, "th", NULL), ui_lit(stdout, "Name"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "By"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "Where"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "When"), ui_close(stdout, "th"), ui_close(stdout, "tr"), ui_close(stdout, "thead"), ui_open(stdout, "tbody", NULL));
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             char when[48];
             page_when(item->at, now, when, sizeof(when));
-            fputs("<tr><td class=\"name\">", stdout); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
+            (ui_open(stdout, "tr", NULL), ui_open(stdout, "td", "name")); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
             if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
-            fputs("</td><td>", stdout);
-            if (item->by[0] && strcmp(item->by, item->note)) { page_emit_filter_link(ctx, "from", item->by); html(item->by); fputs("</a>", stdout); }
-            fputs("</td><td>", stdout);
-            if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); fputs("</a>", stdout); }
-            fputs("</td><td class=\"when\">", stdout); html(when); fputs("</td></tr>", stdout);
+            (ui_close(stdout, "td"), ui_open(stdout, "td", NULL));
+            if (item->by[0] && strcmp(item->by, item->note)) { page_emit_filter_link(ctx, "from", item->by); html(item->by); ui_close(stdout, "a"); }
+            (ui_close(stdout, "td"), ui_open(stdout, "td", NULL));
+            if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); ui_close(stdout, "a"); }
+            (ui_close(stdout, "td"), ui_open(stdout, "td", "when")); html(when); ui_close_n(stdout, "td", "tr", NULL);
         }
-        fputs("</tbody></table></div>", stdout);
+        ui_close_n(stdout, "tbody", "table", "div", NULL);
         break;
     case BF_PAGE_TOPOLOGY_COMMUNITIES: {
         /* Lemmy's community list: who is posting, how much, and what. The
@@ -2203,12 +2203,12 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         }
         for (g = 0; g < group_count; g++) order[g] = g;
         for (g = 1; g < group_count; g++) for (h = g; h > 0 && counts[order[h]] > counts[order[h - 1]]; h--) { int t = order[h]; order[h] = order[h - 1]; order[h - 1] = t; }
-        fputs("<div class=\"communities\">", stdout);
+        ui_open(stdout, "div", "communities");
         for (g = 0; g < group_count && g < (ctx->preview ? 4 : 18); g++) {
             int shown = 0;
             const char *name = names[order[g]];
-            fputs("<section class=\"community\"><header>", stdout);
-            page_emit_filter_link(ctx, "from", name); fputs("<h3>", stdout); html(name[0] ? name : "Elsewhere"); fputs("</h3></a>", stdout);
+            (ui_open(stdout, "section", "community"), ui_open(stdout, "header", NULL));
+            page_emit_filter_link(ctx, "from", name); ui_open(stdout, "h3", NULL); html(name[0] ? name : "Elsewhere"); ui_close_n(stdout, "h3", "a", NULL);
             printf("<small>%d post%s</small></header><ol>", counts[order[g]], counts[order[g]] == 1 ? "" : "s");
             for (k = 0; k < take && shown < (ctx->preview ? 2 : 4); k++) {
                 const PageItem *item = &stream->item[stream->cursor + k];
@@ -2217,42 +2217,42 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 if (strcmp(item_name, name)) continue;
                 shown++;
                 page_when(item->at, now, when, sizeof(when));
-                fputs("<li>", stdout); close = page_emit_item_open(item, NULL);
+                ui_open(stdout, "li", NULL); close = page_emit_item_open(item, NULL);
                 page_emit_picture(item->image, "thumb");
                 ui_text(stdout, "b", NULL, item->title);
                 if (when[0]) { ui_text(stdout, "time", NULL, when); }
-                fputs(close, stdout); fputs("</li>", stdout);
+                fputs(close, stdout); ui_close(stdout, "li");
             }
-            fputs("</ol></section>", stdout);
+            ui_close_n(stdout, "ol", "section", NULL);
         }
-        fputs("</div>", stdout);
+        ui_close(stdout, "div");
         break;
     }
     case BF_PAGE_TOPOLOGY_MAP:
         /* An equirectangular plate beside a numbered list: every point where
          * its source placed it, and every point one tap from its own page. */
-        fputs("<figure class=\"map with-list\">", stdout);
-        if (!ctx->preview) fputs("<div class=\"map-tools\" data-map-tools><label>Find a mapped place<input type=\"search\" data-map-search maxlength=\"120\" placeholder=\"Title or source\"></label><output role=\"status\" aria-live=\"polite\" data-map-count></output></div>",stdout);
+        ui_open(stdout, "figure", "map with-list");
+        if (!ctx->preview) (ui_elem(stdout, "div", (const UiAttr[]){{"class", "map-tools"}, {"data-map-tools", NULL}}, 2, 0), ui_open(stdout, "label", NULL), ui_lit(stdout, "Find a mapped place"), ui_elem(stdout, "input", (const UiAttr[]){{"type", "search"}, {"data-map-search", NULL}, {"maxlength", "120"}, {"placeholder", "Title or source"}}, 4, 0), ui_close(stdout, "label"), ui_elem(stdout, "output", (const UiAttr[]){{"role", "status"}, {"aria-live", "polite"}, {"data-map-count", NULL}}, 3, 0), ui_close(stdout, "output"), ui_close(stdout, "div"));
         page_emit_map_plate(stream, take, 1);
         if (!ctx->preview) {
-            fputs("<ol class=\"places-list\">", stdout);
+            ui_open(stdout, "ol", "places-list");
             for (k = 0; k < take; k++) {
                 const PageItem *item = &stream->item[stream->cursor + k];
                 char when[48];
                 if (!item->placed) continue;
                 page_when(item->at, now, when, sizeof(when));
                 printf("<li data-map-point=\"%d\"><button type=\"button\" data-locate-point=\"%d\" aria-pressed=\"false\" aria-label=\"Highlight place %d on map\">Locate</button>", k, k, k+1); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-                fputs("<span class=\"by\"><span>", stdout); html(item->note[0] ? item->note : item->by); fputs("</span>", stdout);
+                (ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(item->note[0] ? item->note : item->by); ui_close(stdout, "span");
                 if (when[0]) { ui_text(stdout, "time", NULL, when); }
-                fputs("</span></li>", stdout);
+                ui_close_n(stdout, "span", "li", NULL);
             }
-            fputs("</ol>", stdout);
+            ui_close(stdout, "ol");
         }
-        if (!ctx->preview) fputs("<aside data-map-inspector class=\"map-inspector\" aria-label=\"Selected source-placed location\" aria-live=\"polite\" hidden><h3>Selected place</h3><div data-map-inspector-body></div><p>This view repeats the retained source. It does not verify whether a position is current.</p><button type=\"button\" data-map-clear>Clear map focus</button></aside>",stdout);
+        if (!ctx->preview) (ui_elem(stdout, "aside", (const UiAttr[]){{"data-map-inspector", NULL}, {"class", "map-inspector"}, {"aria-label", "Selected source-placed location"}, {"aria-live", "polite"}, {"hidden", NULL}}, 5, 0), ui_open(stdout, "h3", NULL), ui_lit(stdout, "Selected place"), ui_close(stdout, "h3"), ui_elem(stdout, "div", (const UiAttr[]){{"data-map-inspector-body", NULL}}, 1, 0), ui_close(stdout, "div"), ui_open(stdout, "p", NULL), ui_lit(stdout, "This view repeats the retained source. It does not verify whether a position is current."), ui_close(stdout, "p"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-map-clear", NULL}}, 2, 0), ui_lit(stdout, "Clear map focus"), ui_close(stdout, "button"), ui_close(stdout, "aside"));
         printf("<figcaption>%d place%s", take, take == 1 ? "" : "s");
-        if (first->title[0]) { fputs(" &middot; newest: ", stdout); html(first->title); }
-        fputs("</figcaption></figure>", stdout);
-        if (!ctx->preview) fputs("<script>(()=>{\nconst figure=document.currentScript?.previousElementSibling;\nif(!figure?.matches('figure.map.with-list'))return;\nconst tools=figure.querySelector('[data-map-tools]'),rows=[...figure.querySelectorAll('ol.places-list>li[data-map-point]')];\nif(!tools||!rows.length)return;\nconst search=tools.querySelector('[data-map-search]'),count=tools.querySelector('[data-map-count]');\nconst markers=[...figure.querySelectorAll('svg [data-map-point]')],inspector=figure.querySelector('[data-map-inspector]');\nconst inspectorBody=inspector?.querySelector('[data-map-inspector-body]'),clear=inspector?.querySelector('[data-map-clear]');\nlet selected='';\nfunction update(){const query=search.value.trim().toLocaleLowerCase();let visible=0;\n for(const row of rows){const yes=!query||row.textContent.toLocaleLowerCase().includes(query);row.hidden=!yes;if(yes)visible++;}\n count.textContent=visible+' of '+rows.length+' source-placed locations in this list. All plotted positions remain visible.';\n for(const row of rows)row.querySelector('[data-locate-point]')?.setAttribute('aria-pressed',String(row.dataset.mapPoint===selected));\n for(const mark of markers)mark.dataset.selected=String(mark.dataset.mapPoint===selected);\n}\nfunction inspect(id){const row=rows.find(r=>r.dataset.mapPoint===id);if(!row)return;selected=id;update();if(!inspectorBody)return;inspectorBody.replaceChildren();\n const source=row.querySelector('a[href]'),name=source?.textContent?.trim()||row.textContent.replace(/^Locate\\s*/,'').trim();\n const title=document.createElement('strong');title.textContent=name;inspectorBody.append(title);\n const about=row.querySelector('.by')?.textContent?.trim();if(about){const meta=document.createElement('p');meta.textContent=about;inspectorBody.append(meta);}\n if(source){const link=document.createElement('a');link.href=source.href;link.textContent='Open the exact retained source';inspectorBody.append(link);}\n else{const label=document.createElement('p');label.textContent='This source did not declare a navigable record address.';inspectorBody.append(label);}\n inspector.hidden=false;inspector.dataset.selected=id;\n figure.querySelector('.plate')?.scrollIntoView({block:'nearest',behavior:'instant'});\n}\nfunction reset(){selected='';if(inspector){inspector.hidden=true;delete inspector.dataset.selected;}update();}\nfor(const row of rows)row.querySelector('[data-locate-point]')?.addEventListener('click',()=>inspect(row.dataset.mapPoint));\nclear?.addEventListener('click',reset);\nfigure.addEventListener('keydown',event=>{if(event.key==='Escape'&&selected){event.preventDefault();reset();}});\nsearch.addEventListener('input',update);update();\n})();</script>",stdout);
+        if (first->title[0]) { ui_lit(stdout, " &middot; newest: "); html(first->title); }
+        ui_close_n(stdout, "figcaption", "figure", NULL);
+        if (!ctx->preview) ui_script(stdout, "(()=>{\nconst figure=document.currentScript?.previousElementSibling;\nif(!figure?.matches('figure.map.with-list'))return;\nconst tools=figure.querySelector('[data-map-tools]'),rows=[...figure.querySelectorAll('ol.places-list>li[data-map-point]')];\nif(!tools||!rows.length)return;\nconst search=tools.querySelector('[data-map-search]'),count=tools.querySelector('[data-map-count]');\nconst markers=[...figure.querySelectorAll('svg [data-map-point]')],inspector=figure.querySelector('[data-map-inspector]');\nconst inspectorBody=inspector?.querySelector('[data-map-inspector-body]'),clear=inspector?.querySelector('[data-map-clear]');\nlet selected='';\nfunction update(){const query=search.value.trim().toLocaleLowerCase();let visible=0;\n for(const row of rows){const yes=!query||row.textContent.toLocaleLowerCase().includes(query);row.hidden=!yes;if(yes)visible++;}\n count.textContent=visible+' of '+rows.length+' source-placed locations in this list. All plotted positions remain visible.';\n for(const row of rows)row.querySelector('[data-locate-point]')?.setAttribute('aria-pressed',String(row.dataset.mapPoint===selected));\n for(const mark of markers)mark.dataset.selected=String(mark.dataset.mapPoint===selected);\n}\nfunction inspect(id){const row=rows.find(r=>r.dataset.mapPoint===id);if(!row)return;selected=id;update();if(!inspectorBody)return;inspectorBody.replaceChildren();\n const source=row.querySelector('a[href]'),name=source?.textContent?.trim()||row.textContent.replace(/^Locate\\s*/,'').trim();\n const title=document.createElement('strong');title.textContent=name;inspectorBody.append(title);\n const about=row.querySelector('.by')?.textContent?.trim();if(about){const meta=document.createElement('p');meta.textContent=about;inspectorBody.append(meta);}\n if(source){const link=document.createElement('a');link.href=source.href;link.textContent='Open the exact retained source';inspectorBody.append(link);}\n else{const label=document.createElement('p');label.textContent='This source did not declare a navigable record address.';inspectorBody.append(label);}\n inspector.hidden=false;inspector.dataset.selected=id;\n figure.querySelector('.plate')?.scrollIntoView({block:'nearest',behavior:'instant'});\n}\nfunction reset(){selected='';if(inspector){inspector.hidden=true;delete inspector.dataset.selected;}update();}\nfor(const row of rows)row.querySelector('[data-locate-point]')?.addEventListener('click',()=>inspect(row.dataset.mapPoint));\nclear?.addEventListener('click',reset);\nfigure.addEventListener('keydown',event=>{if(event.key==='Escape'&&selected){event.preventDefault();reset();}});\nsearch.addEventListener('input',update);update();\n})();");
         break;
     case BF_PAGE_TOPOLOGY_THREAD:
         if (!first->group[0]) {
@@ -2268,18 +2268,18 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             }
             for (g = 0; g < group_count; g++) if (ctx->stream && !strcasecmp(ctx->stream, groups[g])) selected = g;
             if (ctx->preview) {
-                fputs("<div class=\"streams\">", stdout);
+                ui_open(stdout, "div", "streams");
                 for (g = 0; g < group_count && g < 3; g++) {
                     int n = 0;
-                    fputs("<section class=\"stream\"><h3>", stdout); page_emit_filter_link(ctx, "s", groups[g]); html(groups[g][0] ? groups[g] : "Elsewhere"); fputs("</a></h3><ol>", stdout);
+                    (ui_open(stdout, "section", "stream"), ui_open(stdout, "h3", NULL)); page_emit_filter_link(ctx, "s", groups[g]); html(groups[g][0] ? groups[g] : "Elsewhere"); (ui_close(stdout, "a"), ui_close(stdout, "h3"), ui_open(stdout, "ol", NULL));
                     for (k = 0; k < take && n < 3; k++) {
                         const PageItem *item = &stream->item[stream->cursor + k];
                         if (strcmp(groups[g], item->note)) continue;
-                        n++; fputs("<li>", stdout); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); fputs("</li>", stdout);
+                        n++; ui_open(stdout, "li", NULL); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); ui_close(stdout, "li");
                     }
-                    fputs("</ol></section>", stdout);
+                    ui_close_n(stdout, "ol", "section", NULL);
                 }
-                fputs("</div>", stdout);
+                ui_close(stdout, "div");
                 break;
             }
             {
@@ -2297,51 +2297,51 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                     bf_source_hierarchy_emit(stdout, frontier, readers, reader_count,
                                              ctx->route ? ctx->route : "/channels", 8, 8);
             }
-            fputs("<div class=\"panes\"><nav class=\"pane-list\" aria-label=\"Places\"><ol>", stdout);
+            (ui_open(stdout, "div", "panes"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "pane-list"}, {"aria-label", "Places"}}, 2, 0), ui_open(stdout, "ol", NULL));
             for (g = 0; g < group_count; g++) {
-                fputs("<li>", stdout);
-                fputs("<a href=\"", stdout); html(ctx->route ? ctx->route : "/channels"); fputs("?s=", stdout); page_url_escape(groups[g]); fputs("\"", stdout);
-                if (g == selected) fputs(" aria-current=\"true\"", stdout);
-                fputs(">", stdout); html(groups[g][0] ? groups[g] : "Elsewhere"); printf("<small>%d</small></a></li>", counts[g]);
+                ui_open(stdout, "li", NULL);
+                fputs("<a href=\"", stdout); html(ctx->route ? ctx->route : "/channels"); ui_lit(stdout, "?s="); page_url_escape(groups[g]); ui_lit(stdout, "\"");
+                if (g == selected) ui_lit(stdout, " aria-current=\"true\"");
+                ui_lit(stdout, ">"); html(groups[g][0] ? groups[g] : "Elsewhere"); printf("<small>%d</small></a></li>", counts[g]);
             }
-            fputs("</ol></nav><section class=\"pane-topics\"><h3>", stdout); html(group_count ? groups[selected] : ""); fputs("</h3><ol>", stdout);
+            (ui_close(stdout, "ol"), ui_close(stdout, "nav"), ui_open(stdout, "section", "pane-topics"), ui_open(stdout, "h3", NULL)); html(group_count ? groups[selected] : ""); (ui_close(stdout, "h3"), ui_open(stdout, "ol", NULL));
             for (k = 0; k < take; k++) {
                 const PageItem *item = &stream->item[stream->cursor + k];
                 char when[48];
                 if (!group_count || strcmp(groups[selected], item->note)) continue;
                 shown++;
                 page_when(item->at, now, when, sizeof(when));
-                fputs("<li>", stdout); close = page_emit_item_open(item, "topic");
-                fputs("<b>", stdout); html(item->title); fputs("</b><span class=\"by\">", stdout);
+                ui_open(stdout, "li", NULL); close = page_emit_item_open(item, "topic");
+                ui_open(stdout, "b", NULL); html(item->title); (ui_close(stdout, "b"), ui_open(stdout, "span", "by"));
                 if (strcmp(item->by, item->note)) { ui_text(stdout, "span", NULL, item->by); }
                 if (when[0]) { ui_text(stdout, "time", NULL, when); }
-                fputs("</span>", stdout); page_emit_picture(item->image, "thumb"); fputs(close, stdout); fputs("</li>", stdout);
+                ui_close(stdout, "span"); page_emit_picture(item->image, "thumb"); fputs(close, stdout); ui_close(stdout, "li");
             }
             (void)shown;
-            fputs("</ol></section></div>", stdout);
+            ui_close_n(stdout, "ol", "section", "div", NULL);
             break;
         }
         /* Owners hand over the newest posts; a conversation reads oldest first. */
         for (k = take - 1; k >= 0; k--) {
             const PageItem *item = &stream->item[stream->cursor + k];
             if (!group || strcmp(group, item->group)) {
-                if (group) fputs("</div>", stdout);
+                if (group) ui_close(stdout, "div");
                 group = item->group;
-                fputs("<div class=\"topic\"><h3>", stdout); html(item->group);
-                if (item->note[0]) { fputs(" <small>", stdout); html(item->note); fputs("</small>", stdout); }
-                fputs("</h3>", stdout);
+                (ui_open(stdout, "div", "topic"), ui_open(stdout, "h3", NULL)); html(item->group);
+                if (item->note[0]) { (ui_lit(stdout, " "), ui_open(stdout, "small", NULL)); html(item->note); ui_close(stdout, "small"); }
+                ui_close(stdout, "h3");
             }
-            fputs("<div class=\"msg\"><header><b>", stdout); html(item->by); fputs("</b>", stdout);
+            (ui_open(stdout, "div", "msg"), ui_open(stdout, "header", NULL), ui_open(stdout, "b", NULL)); html(item->by); ui_close(stdout, "b");
             {
                 char when[48]; page_when(item->at, now, when, sizeof(when));
                 if (when[0]) { ui_text(stdout, "time", NULL, when); }
             }
-            fputs("</header>", stdout);
+            ui_close(stdout, "header");
             if (item->title[0]) { ui_text(stdout, "h4", NULL, item->title); }
             if (item->body[0]) { ui_text(stdout, "p", NULL, item->body); }
-            fputs("</div>", stdout);
+            ui_close(stdout, "div");
         }
-        if (group) fputs("</div>", stdout);
+        if (group) ui_close(stdout, "div");
         break;
     case BF_PAGE_TOPOLOGY_TRACKS: {
         /* A listening surface, not a list of links: the first recording that
@@ -2361,52 +2361,52 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             char sized[1024];
             page_offered_a_start = 1;
             page_picture_at(first->image, 480, sized, sizeof(sized));
-            fputs("<div class=\"now-playing\">", stdout);
+            ui_open(stdout, "div", "now-playing");
             if (page_image_url_safe(sized)) page_emit_picture(sized, "sleeve");
-            fputs("<div class=\"np-text\"><p class=\"np-kicker\">Start here</p><h3>", stdout);
+            (ui_open(stdout, "div", "np-text"), ui_open(stdout, "p", "np-kicker"), ui_lit(stdout, "Start here"), ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));
             close = page_emit_item_open(first, NULL); html(first->title); fputs(close, stdout);
-            fputs("</h3><p class=\"np-by\">", stdout); html(first->by);
-            if (first->duration_ms > 0) { fputs("<span class=\"dur\">", stdout); page_emit_duration(first->duration_ms); fputs("</span>", stdout); }
-            fputs("</p>", stdout);
+            (ui_close(stdout, "h3"), ui_open(stdout, "p", "np-by")); html(first->by);
+            if (first->duration_ms > 0) { ui_open(stdout, "span", "dur"); page_emit_duration(first->duration_ms); ui_close(stdout, "span"); }
+            ui_close(stdout, "p");
             if (first->rights[0]) { ui_text(stdout, "p", "terms", first->rights); }
-            fputs("</div></div>", stdout);
+            ui_close_n(stdout, "div", "div", NULL);
         }
-        fputs("<ol class=\"tracks\">", stdout);
+        ui_open(stdout, "ol", "tracks");
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             char sized[1024];
             printf("<li%s", item == first ? " class=\"is-first\"" : "");
             if (item->asset[0]) {
                 playable++;
-                fputs(" data-play=\"", stdout); html(item->asset);
-                fputs("\" data-title=\"", stdout); html(item->title);
-                fputs("\" data-by=\"", stdout); html(item->by);
+                ui_lit(stdout, " data-play=\""); html(item->asset);
+                ui_lit(stdout, "\" data-title=\""); html(item->title);
+                ui_lit(stdout, "\" data-by=\""); html(item->by);
                 if (item->image[0]) { char art[1024]; page_picture_at(item->image, 120, art, sizeof(art));
-                    if (page_image_url_safe(art)) { fputs("\" data-art=\"", stdout); html(art); } }
-                fputs("\" data-href=\"/o/", stdout); page_url_escape(item->source); fputs("/", stdout); html(item->key);
-                fputs("\"", stdout);
+                    if (page_image_url_safe(art)) { ui_lit(stdout, "\" data-art=\""); html(art); } }
+                ui_lit(stdout, "\" data-href=\"/o/"); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key);
+                ui_lit(stdout, "\"");
             }
             printf("><span class=\"no\">%d</span>", k + 1);
             page_picture_at(item->image, 120, sized, sizeof(sized));
             if (page_image_url_safe(sized)) page_emit_picture(sized, "art");
-            fputs("<span class=\"tt\"><b>", stdout);
+            (ui_open(stdout, "span", "tt"), ui_open(stdout, "b", NULL));
             close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
-            fputs("</b><span>", stdout); html(item->by); fputs("</span></span><span class=\"dur\">", stdout);
+            (ui_close(stdout, "b"), ui_open(stdout, "span", NULL)); html(item->by); (ui_close(stdout, "span"), ui_close(stdout, "span"), ui_open(stdout, "span", "dur"));
             page_emit_duration(item->duration_ms);
-            fputs("</span>", stdout);
+            ui_close(stdout, "span");
             if (item->asset[0]) {
                 /* The track hands the deck what it needs and nothing else: one
                  * player for the whole queue, so a recording is followed by the
                  * next instead of ending in silence. */
-                fputs("<button class=\"lift\" type=\"button\">", stdout); page_glyph("play"); fputs("<span>Play</span></button>", stdout);
+                ui_elem(stdout, "button", (const UiAttr[]){{"class", "lift"}, {"type", "button"}}, 2, 0); page_glyph("play"); (ui_open(stdout, "span", NULL), ui_lit(stdout, "Play"), ui_close(stdout, "span"), ui_close(stdout, "button"));
             } else if (page_item_has_page(item)) {
                 /* Played by its host's own player, on its page. */
-                fputs("<a class=\"play-on-page\" href=\"/o/", stdout); page_url_escape(item->source); fputs("/", stdout); html(item->key);
-                fputs("\">", stdout); page_glyph("play"); fputs("<span>Play</span></a>", stdout);
+                fputs("<a class=\"play-on-page\" href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key);
+                ui_lit(stdout, "\">"); page_glyph("play"); (ui_open(stdout, "span", NULL), ui_lit(stdout, "Play"), ui_close(stdout, "span"), ui_close(stdout, "a"));
             }
-            fputs("</li>", stdout);
+            ui_close(stdout, "li");
         }
-        fputs("</ol>", stdout);
+        ui_close(stdout, "ol");
         if (playable) page_emit_deck();
         break;
     }
@@ -2538,14 +2538,14 @@ static int page_emit_house(sqlite3 *db, const char *selector, char *name_out, si
     band = whole ? "paper" : rhythm[page_house_band++ % 4];
     page_house_value(db, tokens, "font_href", font, sizeof(font));
     if (whole && !strncmp(font, "https://fonts.googleapis.com/css2?", 34) && !strpbrk(font, "\"' ")) {
-        fputs("<link rel=\"stylesheet\" data-bf-fonts href=\"", stdout); html(font); fputs("\">", stdout);
+        ui_open_a(stdout, "link", "rel", "stylesheet", "data-bf-fonts", NULL, "href", font);
     }
     fputs("<style data-bf-source=\"presentation_template\" data-bf-profile=\"", stdout); html(template);
-    fputs("\" data-bf-standing=\"published\" data-bf-band=\"", stdout); html(band); fputs("\">", stdout);
+    ui_lit(stdout, "\" data-bf-standing=\"published\" data-bf-band=\""); html(band); ui_lit(stdout, "\">");
     /* The estate's shared front rules dress body, column and bands at this
      * weight; a house says the same at the same weight, later, so it wins. */
-    if (whole) fputs("html body[data-character],html body[data-character] .wrap{", stdout);
-    else { fputs("html body[data-character] .wrap ", stdout); fputs(selector, stdout); fputc('{', stdout); }
+    if (whole) ui_lit(stdout, "html body[data-character],html body[data-character] .wrap{");
+    else { ui_lit(stdout, "html body[data-character] .wrap "); fputs(selector, stdout); fputc('{', stdout); }
     page_house_ground(db, tokens, band);
     page_house_token(db, tokens, "face_display", "--w-face-display");
     page_house_token(db, tokens, "face_body", "--w-face-body");
@@ -2557,21 +2557,21 @@ static int page_emit_house(sqlite3 *db, const char *selector, char *name_out, si
     page_house_token(db, tokens, "display_leading", "--w-display-leading");
     page_house_token(db, tokens, "radius", "--w-radius");
     page_house_token(db, tokens, "measure", "--w-measure");
-    fputs("background:var(--w-ground);color:var(--w-ink);}", stdout);
+    ui_lit(stdout, "background:var(--w-ground);color:var(--w-ink);}");
     if (whole) {
         /* The opening is the masthead: the house's field, edge to edge. */
-        fputs(".wrap>.hero{", stdout); page_house_ground(db, tokens, "field");
-        fputs("background:var(--w-ground);color:var(--w-ink);box-shadow:0 0 0 100vmax var(--w-ground);clip-path:inset(0 -100vmax)}", stdout);
-        fputs(".wrap>.hero h1,.wrap>.hero .lede{color:var(--w-display)}", stdout);
+        ui_lit(stdout, ".wrap>.hero{"); page_house_ground(db, tokens, "field");
+        ui_lit(stdout, "background:var(--w-ground);color:var(--w-ink);box-shadow:0 0 0 100vmax var(--w-ground);clip-path:inset(0 -100vmax)}");
+        ui_lit(stdout, ".wrap>.hero h1,.wrap>.hero .lede{color:var(--w-display)}");
     }
     page_house_value(db, tokens, "media", media, sizeof(media));
     /* A duotone house prints every photograph in its own field colour, so
      * pictures from a hundred publishers read as one paper's. */
     if (!strcmp(media, "duotone") && !strcmp(band, "field")) {
-        fputs("html body[data-character] .wrap ", stdout); fputs(selector, stdout);
-        fputs(" img{filter:grayscale(1) contrast(1.12);mix-blend-mode:multiply}", stdout);
+        ui_lit(stdout, "html body[data-character] .wrap "); fputs(selector, stdout);
+        ui_lit(stdout, " img{filter:grayscale(1) contrast(1.12);mix-blend-mode:multiply}");
     }
-    fputs("</style>", stdout);
+    ui_close(stdout, "style");
     sqlite3_finalize(st);
     return 1;
 }
@@ -2657,14 +2657,14 @@ static void page_emit_profile_for(sqlite3 *db, const char *seed, BfPageMaterial 
              * reader can check the claim against the census row. */
             fputs("<style data-bf-source=\"presentation_template\" data-bf-profile=\"", stdout);
             html(template ? template : "");
-            fputs("\" data-bf-standing=\"", stdout);
+            ui_lit(stdout, "\" data-bf-standing=\"");
             html(standing ? standing : "");
-            fputs("\">", stdout);
+            ui_lit(stdout, "\">");
             /* The page's dress reaches its edges: the column alone left the
              * character's own ground showing down both sides of it. */
-            if (!strcmp(selector, ".wrap")) fputs("body[data-character],", stdout);
+            if (!strcmp(selector, ".wrap")) ui_lit(stdout, "body[data-character],");
             fputs(selector, stdout);
-            fputs("{", stdout);
+            ui_lit(stdout, "{");
             page_profile_token(db, tokens, "ground", "--w-ground");
             page_profile_token(db, tokens, "ink", "--w-ink");
             page_profile_token(db, tokens, "display", "--w-display");
@@ -2685,8 +2685,8 @@ static void page_emit_profile_for(sqlite3 *db, const char *seed, BfPageMaterial 
             page_profile_token(db, tokens, "gap", "--w-gap");
             page_profile_token(db, tokens, "measure", "--w-measure");
             /* The page's own ground follows the profile, not the template's. */
-            fputs("background:var(--w-ground);color:var(--w-ink);}", stdout);
-            fputs("</style>", stdout);
+            ui_lit(stdout, "background:var(--w-ground);color:var(--w-ink);}");
+            ui_close(stdout, "style");
         }
     }
 }
@@ -2846,22 +2846,22 @@ static int page_emit_regions(PageMaterial *material, const unsigned char *sequen
             page_emit_profile_for(ctx ? ctx->db : NULL, seed, region->material, selector, NULL, 0);
             printf("<section class=\"region region-dress-%u region-", (unsigned)i);
         }
-        html(region->role); fputs("\"", stdout);
+        html(region->role); ui_lit(stdout, "\"");
         if (experience_open) bf_native_experience_region(stdout,experience,index,i);
         {
             PageCompatSceneRegion *surface_region =
                 ctx && ctx->surface_scene ? page_surface_scene_record(ctx->surface_scene, region, i) : NULL;
             if (surface_region) {
-                fputs(" data-bonfyre-region=\"", stdout); html(surface_region->id);
-                fputs("\" data-bonfyre-continuity=\"", stdout); html(surface_region->continuity);
-                fputs("\"", stdout);
+                ui_lit(stdout, " data-bonfyre-region=\""); html(surface_region->id);
+                ui_lit(stdout, "\" data-bonfyre-continuity=\""); html(surface_region->continuity);
+                ui_lit(stdout, "\"");
             }
         }
-        if (region->label[0]) { fputs(" aria-label=\"", stdout); html(region->label); fputs("\"><h2 class=\"region-label\">", stdout); html(region->label); fputs("</h2>", stdout); }
-        else fputs(">", stdout);
+        if (region->label[0]) { ui_lit(stdout, " aria-label=\""); html(region->label); (ui_lit(stdout, "\">"), ui_open(stdout, "h2", "region-label")); html(region->label); ui_close(stdout, "h2"); }
+        else ui_lit(stdout, ">");
         if (experience_open) bf_native_experience_focus(stdout,experience);
         page_emit_region(region, stream, take, ctx);
-        fputs("</section>", stdout);
+        ui_close(stdout, "section");
         stream->cursor += take; shown += take;
         /* The mix is the same items in another order; consuming it consumes
          * them, so a later region on the page never repeats one.  That is why
@@ -2890,7 +2890,7 @@ static void page_emit_head(const char *template, const char *head_end, const cha
     }
     if (d0 && d1 && d0 >= cursor && d1 < head_end) {
         fwrite(cursor, 1, (size_t)(d0 - cursor), stdout);
-        fputs("<meta name=\"description\" content=\"", stdout); html(lede); fputs("\">", stdout);
+        ui_open_a(stdout, "meta", "name", "description", "content", lede);
         cursor = d1 + 1;
     }
     fwrite(cursor, 1, (size_t)(head_end - cursor), stdout);
@@ -2909,7 +2909,7 @@ static void page_emit_head(const char *template, const char *head_end, const cha
             if (seen < k) continue;
             fputs("<link rel=\"preconnect\" href=\"https://", stdout); html(host);
             fputs("\" crossorigin><link rel=\"dns-prefetch\" href=\"https://", stdout); html(host);
-            fputs("\">", stdout);
+            ui_lit(stdout, "\">");
             said++;
         }
     }
@@ -3042,35 +3042,35 @@ static void page_emit_surface_scene(const PageDocument *doc, const PageCompatSce
      * runtime. It is a machine-readable compatibility hand-off beside the
      * complete, readable server document; an owned ApplicationBinding may
      * later bind the projected canonical module over these declared regions. */
-    fputs("<template id=\"bonfyre-surface-scene\" data-schema=\"bonfyre-surface-scene.v1\">{\"schema\":\"bonfyre-surface-scene.v1\",\"source_digest\":", stdout);
+    (ui_elem(stdout, "template", (const UiAttr[]){{"id", "bonfyre-surface-scene"}, {"data-schema", "bonfyre-surface-scene.v1"}}, 2, 0), ui_lit(stdout, "{\"schema\":\"bonfyre-surface-scene.v1\",\"source_digest\":"));
     json(digest);
-    fputs(",\"focus\":{\"subject_address\":", stdout); json(subject);
-    fputs(",\"world\":", stdout); json(world);
-    fputs(",\"site_id\":\"\",\"actor_scope\":", stdout); json(scope);
-    fputs(",\"frontier\":\"\",\"intent\":\"read\"},\"lenses\":[\"READ\"],", stdout);
-    fputs("\"world_material\":{\"compatibility_adapter\":\"PageComposition\",\"initial_markup\":\"server\",\"complete_without_script\":true},", stdout);
-    fputs("\"slots\":[{\"slot_id\":\"page-main\",\"extent\":\"page\",\"accepts\":[\"ComposedPublicPage\"],\"max_items\":1,\"htmx_boundary\":\"\"}],", stdout);
-    fputs("\"fragments\":[", stdout);
+    ui_lit(stdout, ",\"focus\":{\"subject_address\":"); json(subject);
+    ui_lit(stdout, ",\"world\":"); json(world);
+    ui_lit(stdout, ",\"site_id\":\"\",\"actor_scope\":"); json(scope);
+    ui_lit(stdout, ",\"frontier\":\"\",\"intent\":\"read\"},\"lenses\":[\"READ\"],");
+    ui_lit(stdout, "\"world_material\":{\"compatibility_adapter\":\"PageComposition\",\"initial_markup\":\"server\",\"complete_without_script\":true},");
+    ui_lit(stdout, "\"slots\":[{\"slot_id\":\"page-main\",\"extent\":\"page\",\"accepts\":[\"ComposedPublicPage\"],\"max_items\":1,\"htmx_boundary\":\"\"}],");
+    ui_lit(stdout, "\"fragments\":[");
     for (i = 0; scene && i < scene->count; i++) {
         const PageCompatSceneRegion *region = &scene->region[i];
         if (i) putchar(',');
-        fputs("{\"fragment_id\":", stdout); json(region->id);
-        fputs(",\"surface_grammar\":\"READ\",\"renderer_family\":\"PageComposition\",\"renderer_variant\":", stdout); json(region->role);
-        fputs(",\"extent\":\"section\",\"continuity_group\":", stdout); json(region->continuity);
-        fputs(",\"source_projection\":\"\",\"media_posture\":\"\",\"temporal_posture\":\"\",\"action_aperture\":\"\"}", stdout);
+        ui_lit(stdout, "{\"fragment_id\":"); json(region->id);
+        ui_lit(stdout, ",\"surface_grammar\":\"READ\",\"renderer_family\":\"PageComposition\",\"renderer_variant\":"); json(region->role);
+        ui_lit(stdout, ",\"extent\":\"section\",\"continuity_group\":"); json(region->continuity);
+        ui_lit(stdout, ",\"source_projection\":\"\",\"media_posture\":\"\",\"temporal_posture\":\"\",\"action_aperture\":\"\"}");
     }
-    fputs("],\"bindings\":[],\"stages\":[],\"renderers\":[],\"patterns\":[],\"presentation\":[],", stdout);
-    fputs("\"operations\":{\"apertures\":[],\"object_contracts\":[],\"proposal_contracts\":[]},", stdout);
-    fputs("\"interaction\":{\"profile_id\":\"page-composition-compatibility\",\"default_lens\":\"READ\",\"lens_order\":[\"READ\"],", stdout);
-    fputs("\"semantic_zoom\":[{\"resolution\":0,\"name\":\"page\"},{\"resolution\":1,\"name\":\"region\"}],\"interaction_depths\":[\"focus\"],", stdout);
-    fputs("\"context_rail\":{},\"relation_halo\":{\"enabled\":false},\"command_aperture\":{},", stdout);
-    fputs("\"transition_policy\":{\"object_permanence\":true,\"view_transition\":\"auto\"},\"mobile_posture\":{},\"desktop_posture\":{},", stdout);
-    fputs("\"live_update_policy\":{\"mode\":\"SurfaceDelta\",\"transport\":\"document\"}},", stdout);
-    fputs("\"runtime_queries\":{\"compatibility_adapter\":\"PageComposition\",\"route\":", stdout); json(route); fputs("},", stdout);
-    fputs("\"dependencies\":[\"compat:page-composition\"", stdout);
+    ui_lit(stdout, "],\"bindings\":[],\"stages\":[],\"renderers\":[],\"patterns\":[],\"presentation\":[],");
+    ui_lit(stdout, "\"operations\":{\"apertures\":[],\"object_contracts\":[],\"proposal_contracts\":[]},");
+    ui_lit(stdout, "\"interaction\":{\"profile_id\":\"page-composition-compatibility\",\"default_lens\":\"READ\",\"lens_order\":[\"READ\"],");
+    ui_lit(stdout, "\"semantic_zoom\":[{\"resolution\":0,\"name\":\"page\"},{\"resolution\":1,\"name\":\"region\"}],\"interaction_depths\":[\"focus\"],");
+    ui_lit(stdout, "\"context_rail\":{},\"relation_halo\":{\"enabled\":false},\"command_aperture\":{},");
+    ui_lit(stdout, "\"transition_policy\":{\"object_permanence\":true,\"view_transition\":\"auto\"},\"mobile_posture\":{},\"desktop_posture\":{},");
+    ui_lit(stdout, "\"live_update_policy\":{\"mode\":\"SurfaceDelta\",\"transport\":\"document\"}},");
+    ui_lit(stdout, "\"runtime_queries\":{\"compatibility_adapter\":\"PageComposition\",\"route\":"); json(route); ui_lit(stdout, "},");
+    ui_lit(stdout, "\"dependencies\":[\"compat:page-composition\"");
     if (route[0]) { snprintf(dependency, sizeof(dependency), "compat:route:%s", route); putchar(','); json(dependency); }
     if (world[0]) { snprintf(dependency, sizeof(dependency), "cms:world:%s", world); putchar(','); json(dependency); }
-    fputs("],\"cannot_infer\":\"compatibility Scene is derived interaction state over server-rendered PageComposition material; it is not source truth, identity, authority, availability, price, proof, commitment, presence or effect state\"}</template>", stdout);
+    (ui_lit(stdout, "],\"cannot_infer\":\"compatibility Scene is derived interaction state over server-rendered PageComposition material; it is not source truth, identity, authority, availability, price, proof, commitment, presence or effect state\"}"), ui_close(stdout, "template"));
 }
 
 static void page_emit_world_tabs(sqlite3 *db, const PageDocument *doc) {
@@ -3102,7 +3102,7 @@ static void page_emit_world_tabs(sqlite3 *db, const PageDocument *doc) {
         char nested_route[320]; const char *route, *label = page_grammar_label(tabs[t]); int k, repeat = 0;
         for (k = 0; k < t; k++) if (!strcmp(tabs[k], tabs[t])) repeat = 1;
         route = label && !repeat ? world_nested_grammar_route(doc->world, tabs[t], nested_route, sizeof(nested_route)) : NULL;
-        if (route) { fputs("<a href=\"", stdout); html(route); page_emit_reading_query(doc->raw_query, NULL, NULL); fputs("\">", stdout); html(label); fputs("</a>", stdout); }
+        if (route) { fputs("<a href=\"", stdout); html(route); page_emit_reading_query(doc->raw_query, NULL, NULL); ui_lit(stdout, "\">"); html(label); ui_close(stdout, "a"); }
     }
 }
 
@@ -3956,35 +3956,34 @@ static void page_emit_nav(const PageDocument *doc) {
     fputs(BF_ESTATE_BAR_HEAD "<header class=\"ak-bar\"><div class=\"ak-bar-top\"><a class=\"ak-brand\" href=\"/\">Aurekai</a>"
           "<nav class=\"ak-places\" aria-label=\"Territories\">", stdout);
     for (p = 0; p < sizeof(places) / sizeof(places[0]); p++) {
-        fputs("<a href=\"https://aurekai.", stdout); html(places[p].territory); fputs("/\"", stdout);
+        fputs("<a href=\"https://aurekai.", stdout); html(places[p].territory); ui_lit(stdout, "/\"");
         /* A front page names its territory; any other page stands in the one the request came to. */
-        if (!strcmp(doc->territory ? doc->territory : estate_request_territory, places[p].territory)) fputs(" aria-current=\"page\"", stdout);
-        fputs(">", stdout); page_glyph(places[p].glyph); fputs("<span>", stdout); html(places[p].label); fputs("</span></a>", stdout);
+        if (!strcmp(doc->territory ? doc->territory : estate_request_territory, places[p].territory)) ui_lit(stdout, " aria-current=\"page\"");
+        ui_lit(stdout, ">"); page_glyph(places[p].glyph); ui_open(stdout, "span", NULL); html(places[p].label); ui_close_n(stdout, "span", "a", NULL);
     }
-    fputs("</nav>", stdout);
+    ui_close(stdout, "nav");
     /* Search is a form, so it works before and without any script. */
     fputs("<form class=\"ak-find\" action=\"", stdout);
     html(doc->world && doc->route ? doc->route : "/search");
-    fputs("\" method=\"get\" role=\"search\">", stdout);
+    ui_lit(stdout, "\" method=\"get\" role=\"search\">");
     if (doc->world) {
-        if (doc->from && *doc->from) { fputs("<input type=\"hidden\" name=\"from\" value=\"", stdout); html(doc->from); fputs("\">", stdout); }
-        if (doc->stream && *doc->stream) { fputs("<input type=\"hidden\" name=\"s\" value=\"", stdout); html(doc->stream); fputs("\">", stdout); }
+        if (doc->from && *doc->from) { ui_open_a(stdout, "input", "type", "hidden", "name", "from", "value", doc->from); }
+        if (doc->stream && *doc->stream) { ui_open_a(stdout, "input", "type", "hidden", "name", "s", "value", doc->stream); }
     }
-    fputs("<label>", stdout); page_glyph("search");
-    fputs("<input type=\"search\" name=\"q\" placeholder=\"Search\" aria-label=\"Search\" value=\"", stdout); html(doc->q ? doc->q : "");
-    fputs("\"></label></form>", stdout);
+    ui_open(stdout, "label", NULL); page_glyph("search");
+    (ui_open_a(stdout, "input", "type", "search", "name", "q", "placeholder", "Search", "aria-label", "Search", "value", doc->q ? doc->q : ""), ui_close(stdout, "label"), ui_close(stdout, "form"));
     /* A person is either signed in, and their saved things are one tap away,
      * or not, and signing in brings them straight back here. */
-    fputs("<div class=\"ak-session-slot\" data-account-slot>",stdout);
+    ui_elem(stdout, "div", (const UiAttr[]){{"class", "ak-session-slot"}, {"data-account-slot", NULL}}, 2, 0);
     /* The page's resolved actor also selects private cache headers. A later
      * successful session lookup must not personalize a declared public body. */
     account_navigation_emit(doc->actor&&*doc->actor?page_request_bearer:NULL,page_request_auth_db);
-    fputs("</div>",stdout);
-    fputs("</div><nav class=\"ak-sections\" aria-label=\"Sections\">", stdout);
+    ui_close(stdout, "div");
+    (ui_close(stdout, "div"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "ak-sections"}, {"aria-label", "Sections"}}, 2, 0));
     for (i = 0; !doc->world && i < BF_PAGE_NAV_COUNT; i++) {
-        fputs("<a href=\"", stdout); html(bf_page_nav[i].route); fputs("\"", stdout);
-        if (doc->route && !strcmp(doc->route, bf_page_nav[i].route)) fputs(" aria-current=\"page\"", stdout);
-        fputs(">", stdout); page_glyph(page_nav_glyph(bf_page_nav[i].route)); fputs("<span>", stdout); html(bf_page_nav[i].label); fputs("</span></a>", stdout);
+        fputs("<a href=\"", stdout); html(bf_page_nav[i].route); ui_lit(stdout, "\"");
+        if (doc->route && !strcmp(doc->route, bf_page_nav[i].route)) ui_lit(stdout, " aria-current=\"page\"");
+        ui_lit(stdout, ">"); page_glyph(page_nav_glyph(bf_page_nav[i].route)); ui_open(stdout, "span", NULL); html(bf_page_nav[i].label); ui_close_n(stdout, "span", "a", NULL);
     }
     /* The two places a visitor arriving from an offer is looking for. */
     fputs(BF_ESTATE_BAR_OUT "</nav>", stdout);
@@ -4144,13 +4143,13 @@ static void page_emit_section(sqlite3 *db, PageProjectionRead *projection, const
                 snprintf(selector, sizeof(selector), ".section-dress-%.40s", program->route + 1);
                 page_emit_profile_for(db, seed, region->material, selector, NULL, 0);
                 fputs("<section class=\"section section-dress-", stdout); html(program->route + 1);
-                fputs(" section-", stdout);
+                ui_lit(stdout, " section-");
             }
             html(region->role); fputs("\"><header class=\"section-head\"><h2><a href=\"", stdout);
-            html(program->route); fputs("\">", stdout); html(program->title); fputs("</a></h2>", stdout);
-            fputs("<a class=\"see-all\" href=\"", stdout); html(program->route); fputs("\">See all</a></header>", stdout);
+            html(program->route); ui_lit(stdout, "\">"); html(program->title); ui_close_n(stdout, "a", "h2", NULL);
+            fputs("<a class=\"see-all\" href=\"", stdout); html(program->route); (ui_lit(stdout, "\">See all"), ui_close(stdout, "a"), ui_close(stdout, "header"));
             page_emit_region(region, stream, take, &ctx);
-            fputs("</section>", stdout);
+            ui_close(stdout, "section");
         }
     }
     free(material);
@@ -4289,7 +4288,7 @@ static void page_emit_search_identity(const PageDocument *doc, const FrontBrandC
     char host[256];
     const char *title, *route;
     if (doc->actor && *doc->actor) {
-        fputs("<meta name=\"robots\" content=\"noindex,nofollow\">", stdout);
+        ui_elem(stdout, "meta", (const UiAttr[]){{"name", "robots"}, {"content", "noindex,nofollow"}}, 2, 0);
         return;
     }
     if (!page_render_host || !lower_host(page_render_host, host) ||
@@ -4301,14 +4300,14 @@ static void page_emit_search_identity(const PageDocument *doc, const FrontBrandC
     title = page_search_apex_title(host, route);
     fputs("<link rel=\"canonical\" href=\"https://", stdout);
     html(host); html(route);
-    fputs("\"><meta property=\"og:type\" content=\"website\"><meta property=\"og:site_name\" content=\"Aurekai\">", stdout);
+    (ui_lit(stdout, "\">"), ui_elem(stdout, "meta", (const UiAttr[]){{"property", "og:type"}, {"content", "website"}}, 2, 0), ui_elem(stdout, "meta", (const UiAttr[]){{"property", "og:site_name"}, {"content", "Aurekai"}}, 2, 0));
     fputs("<meta property=\"og:url\" content=\"https://", stdout);
     html(host); html(route);
     fputs("\"><meta property=\"og:title\" content=\"", stdout);
     html(brand ? brand->headline : title ? title : doc->title);
     fputs("\"><meta property=\"og:description\" content=\"", stdout);
     html(brand ? brand->description : doc->lede ? doc->lede : "");
-    fputs("\"><meta name=\"twitter:card\" content=\"summary\">", stdout);
+    (ui_lit(stdout, "\">"), ui_elem(stdout, "meta", (const UiAttr[]){{"name", "twitter:card"}, {"content", "summary"}}, 2, 0));
     if (title) {
         const char *name = !strcmp(host, "aurekai.work") ? "Aurekai Work" :
                            !strcmp(host, "aurekai.live") ? "Aurekai Live" :
@@ -4395,31 +4394,31 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         doc->route, doc->raw_query, ctx.experience_pattern);
     bf_native_experience_emit_head(stdout,bf_native_experience_find(ctx.experience_pattern));
     if (doc->route)
-        fputs("<link rel=\"alternate\" type=\"application/atom+xml\" title=\"Aurekai public updates\" href=\"/feed.atom\">", stdout);
+        ui_elem(stdout, "link", (const UiAttr[]){{"rel", "alternate"}, {"type", "application/atom+xml"}, {"title", "Aurekai public updates"}, {"href", "/feed.atom"}}, 4, 0);
     if (doc->world) {
-        fputs("<link rel=\"alternate\" type=\"application/atom+xml\" href=\"/w/",stdout); html(doc->world); fputs("/feed.atom\">",stdout);
-        fputs("<link rel=\"alternate\" type=\"application/activity+json\" href=\"/w/",stdout); html(doc->world); fputs("/ap/outbox\">",stdout);
-        fputs("<link rel=\"alternate\" type=\"application/cloudevents-batch+json\" href=\"/w/",stdout); html(doc->world); fputs("/events\">",stdout);
-        fputs("<link rel=\"describedby\" type=\"application/json\" href=\"/w/",stdout); html(doc->world); fputs("/manifest.json\">",stdout);
+        fputs("<link rel=\"alternate\" type=\"application/atom+xml\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/feed.atom\">");
+        fputs("<link rel=\"alternate\" type=\"application/activity+json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/ap/outbox\">");
+        fputs("<link rel=\"alternate\" type=\"application/cloudevents-batch+json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/events\">");
+        fputs("<link rel=\"describedby\" type=\"application/json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/manifest.json\">");
     }
-    if (doc->cannot && *doc->cannot) { fputs("<meta name=\"bonfyre:cannot-infer\" content=\"",stdout); html(doc->cannot); fputs("\">",stdout); }
+    if (doc->cannot && *doc->cannot) { ui_open_a(stdout, "meta", "name", "bonfyre:cannot-infer", "content", doc->cannot); }
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/board") ||
                        (!strcmp(doc->route, "/watch") && ms_mode(page_render_host, doc->route) == MS_NONE)))
-        fputs("<link rel=\"stylesheet\" href=\"/assets/reading-surface.css\">",stdout);
-    fputs("<link rel=\"stylesheet\" href=\"/assets/page-components.css\">",stdout);
-    if (brand_head) fputs("<link rel=\"stylesheet\" href=\"/assets/front-brand.css\">",stdout);
-    fputs("</head>",stdout);
+        ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/reading-surface.css"}}, 2, 0);
+    ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/page-components.css"}}, 2, 0);
+    if (brand_head) ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/front-brand.css"}}, 2, 0);
+    ui_close(stdout, "head");
     fputs("<body class=\"ak-app ", stdout); html(doc->character);
-    if (doc->route) { fputs(" route-", stdout); html(doc->route[1] ? doc->route + 1 : "front"); }
-    if (doc->requested_grammar && *doc->requested_grammar) { fputs(" world-grammar-", stdout); html(doc->requested_grammar); }
-    fputs("\" data-character=\"", stdout); html(doc->character);
-    if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { fputs("\" data-template=\"", stdout); html(doc->template_name); }
-    fputs("\"", stdout);
+    if (doc->route) { ui_lit(stdout, " route-"); html(doc->route[1] ? doc->route + 1 : "front"); }
+    if (doc->requested_grammar && *doc->requested_grammar) { ui_lit(stdout, " world-grammar-"); html(doc->requested_grammar); }
+    ui_lit(stdout, "\" data-character=\""); html(doc->character);
+    if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { ui_lit(stdout, "\" data-template=\""); html(doc->template_name); }
+    ui_lit(stdout, "\"");
     bf_route_presentation_emit_body_attribute_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
-    fputs("><main class=\"wrap\" data-bonfyre-region=\"page-main\" data-bonfyre-continuity=\"page-main\">", stdout);
+    (ui_lit(stdout, ">"), ui_elem(stdout, "main", (const UiAttr[]){{"class", "wrap"}, {"data-bonfyre-region", "page-main"}, {"data-bonfyre-continuity", "page-main"}}, 3, 0));
     page_emit_nav(doc);
-    if (doc->world) { fputs("<nav class=\"tabs\" aria-label=\"Ways in\">", stdout); page_emit_world_tabs(db, doc); fputs("</nav>", stdout); }
+    if (doc->world) { ui_elem(stdout, "nav", (const UiAttr[]){{"class", "tabs"}, {"aria-label", "Ways in"}}, 2, 0); page_emit_world_tabs(db, doc); ui_close(stdout, "nav"); }
     /* Listen, Watch, Film, Music, Stage, Sports and Art are one screen each
      * (page_media_spaces.h), not the generic region sequence below. */
     if (!doc->world && doc->program &&
@@ -4441,13 +4440,13 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         if (page_front_shown) goto close_page;
     }
     if (!brand_head) {
-    fputs("<header class=\"hero\"><h1>", stdout);
+    (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL));
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/watch") || !strcmp(doc->route, "/board"))) {
-        fputs("<span class=\"reading-mark\" aria-hidden=\"true\">", stdout); page_glyph(page_nav_glyph(doc->route)); fputs("</span>", stdout);
+        ui_elem(stdout, "span", (const UiAttr[]){{"class", "reading-mark"}, {"aria-hidden", "true"}}, 2, 0); page_glyph(page_nav_glyph(doc->route)); ui_close(stdout, "span");
     }
     html(doc->title);
-    if (doc->requested_grammar && *doc->requested_grammar && page_grammar_label(doc->requested_grammar)) { fputs(" <em>&middot; ",stdout); html(page_grammar_label(doc->requested_grammar)); fputs("</em>",stdout); }
-    fputs("</h1>", stdout);
+    if (doc->requested_grammar && *doc->requested_grammar && page_grammar_label(doc->requested_grammar)) { (ui_lit(stdout, " "), ui_open(stdout, "em", NULL), ui_lit(stdout, "&middot; ")); html(page_grammar_label(doc->requested_grammar)); ui_close(stdout, "em"); }
+    ui_close(stdout, "h1");
     {
         const char *display_lede = reading_lede;
         if (doc->route && !strcmp(doc->route, "/people"))
@@ -4460,15 +4459,15 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     if (old_reading) {
         struct tm utc; char day[24] = "";
         if (gmtime_r(&page_newest, &utc)) strftime(day, sizeof(day), "%Y-%m-%d", &utc);
-        fputs("<p class=\"note archive-freshness\" data-source-freshness=\"stale\" role=\"status\">", stdout);
-        fputs("Latest dated item in this view: <time datetime=\"", stdout); html(day); fputs("\">", stdout); html(day);
-        fputs("</time>. This is older material, not today's updates. <a href=\"/sources\">Browse sources</a>.</p>", stdout);
+        ui_elem(stdout, "p", (const UiAttr[]){{"class", "note archive-freshness"}, {"data-source-freshness", "stale"}, {"role", "status"}}, 3, 0);
+        fputs("Latest dated item in this view: <time datetime=\"", stdout); html(day); ui_lit(stdout, "\">"); html(day);
+        (ui_close(stdout, "time"), ui_lit(stdout, ". This is older material, not today's updates. "), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/sources"}}, 1, 0), ui_lit(stdout, "Browse sources"), ui_close(stdout, "a"), ui_lit(stdout, "."), ui_close(stdout, "p"));
     }
     if (narrowed) {
-        fputs("<p class=\"narrowed\">Showing ", stdout);
-        if (doc->q && *doc->q) { fputs("matches for <b>", stdout); html(doc->q); fputs("</b>", stdout); }
-        if (doc->from && *doc->from) { fputs(doc->q && *doc->q ? " from <b>" : "items from <b>", stdout); html(doc->from); fputs("</b>", stdout); }
-        fputs(" &middot; <a href=\"", stdout); html(doc->route ? doc->route : "/"); fputs("\">Show all</a></p>", stdout);
+        (ui_open(stdout, "p", "narrowed"), ui_lit(stdout, "Showing "));
+        if (doc->q && *doc->q) { (ui_lit(stdout, "matches for "), ui_open(stdout, "b", NULL)); html(doc->q); ui_close(stdout, "b"); }
+        if (doc->from && *doc->from) { fputs(doc->q && *doc->q ? " from <b>" : "items from <b>", stdout); html(doc->from); ui_close(stdout, "b"); }
+        fputs(" &middot; <a href=\"", stdout); html(doc->route ? doc->route : "/"); (ui_lit(stdout, "\">Show all"), ui_close(stdout, "a"), ui_close(stdout, "p"));
     }
     if (ctx.experience_pattern && !strcmp(ctx.experience_pattern, "market") && material) {
         /* The index's ledger of itself, counted from what the page holds:
@@ -4487,19 +4486,19 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         if (newest) page_when(newest, ctx.now ? ctx.now : time(NULL), when, sizeof(when));
         printf("<dl class=\"market-ledger\"><div><dt>Listed here</dt><dd>%d</dd></div><div><dt>Sources</dt><dd>%d</dd></div>"
                "<div><dt>State a price</dt><dd>%d</dd></div><div><dt>Newest</dt><dd>", mix->count, host_count, priced);
-        html(when[0] ? when : "Nothing yet"); fputs("</dd></div></dl>", stdout);
+        html(when[0] ? when : "Nothing yet"); ui_close_n(stdout, "dd", "div", "dl", NULL);
         if (host_count > 1 || (doc->from && *doc->from)) {
             fputs("<nav class=\"market-from\" aria-label=\"Listings by source\"><a href=\"", stdout); html(doc->route ? doc->route : "/");
             fputs((doc->from && *doc->from) ? "\">All sources</a>" : "\" aria-current=\"page\">All sources</a>", stdout);
             for (h = 0; h < host_count; h++) {
                 int on = doc->from && !strcmp(doc->from, hosts[h]);
-                fputs("<a href=\"", stdout); html(doc->route ? doc->route : "/"); fputs("?from=", stdout); page_url_escape(hosts[h]);
-                fputs(on ? "\" aria-current=\"page\">" : "\">", stdout); html(hosts[h]); fputs("</a>", stdout);
+                fputs("<a href=\"", stdout); html(doc->route ? doc->route : "/"); ui_lit(stdout, "?from="); page_url_escape(hosts[h]);
+                fputs(on ? "\" aria-current=\"page\">" : "\">", stdout); html(hosts[h]); ui_close(stdout, "a");
             }
-            fputs("</nav>", stdout);
+            ui_close(stdout, "nav");
         }
     }
-    fputs("</header>", stdout);
+    ui_close(stdout, "header");
     } /* Other routes and independently owned sites retain their existing document hero. */
     if(!narrowed)page_emit_media_spaces(db,doc->route,doc->raw_query,page_render_host);
     /* A territory's front is edited before it is composed: its own program
@@ -4508,9 +4507,9 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     page_front_drop_used(material);
     if (doc->route && !strcmp(doc->route, "/search") && (!doc->q || !*doc->q)) {
         size_t i;
-        fputs("<section class=\"region\"><p class=\"note\">Type what you are looking for above, or start from a section:</p><p class=\"jump\">", stdout);
+        (ui_open(stdout, "section", "region"), ui_open(stdout, "p", "note"), ui_lit(stdout, "Type what you are looking for above, or start from a section:"), ui_close(stdout, "p"), ui_open(stdout, "p", "jump"));
         for (i = 0; i < BF_PAGE_NAV_COUNT; i++) { ui_link(stdout, bf_page_nav[i].route, NULL, bf_page_nav[i].label); }
-        fputs("</p></section>", stdout);
+        ui_close_n(stdout, "p", "section", NULL);
         shown = 1;
     } else {
         shown = 0;
@@ -4631,7 +4630,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                 /* What it is mostly made of decides how it is dressed. */
                 page_emit_profile(db, doc->route ? doc->route : doc->title,
                                   bf_page_regions[scene[0]].material, look, sizeof(look));
-                if (look[0]) { fputs("<meta name=\"bonfyre:look\" content=\"", stdout); html(look); fputs("\">", stdout); }
+                if (look[0]) { ui_open_a(stdout, "meta", "name", "bonfyre:look", "content", look); }
             }
             if (scene_count > 1) {
                 /* One sequence for the whole page: what the material argues
@@ -4639,7 +4638,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                  * very end -- a mix spends every stream, so a page continues
                  * only as long as none has been shown yet. */
                 unsigned char walk[BF_PAGE_REGION_COUNT * 2]; size_t steps = 0, a, b, pass;
-                if (why[0]) { fputs("<meta name=\"bonfyre:scene\" content=\"", stdout); html(why); fputs("\">", stdout); }
+                if (why[0]) { ui_open_a(stdout, "meta", "name", "bonfyre:scene", "content", why); }
                 for (pass = 0; pass < 2; pass++) {
                     int want_mix = (int)pass;      /* everything else first, mixes last */
                     for (a = 0; a < scene_count && steps < sizeof(walk); a++) {
@@ -4684,9 +4683,9 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         }
     }
     if (!shown && !page_front_shown) {
-        fputs("<p class=\"note\">Nothing here", stdout);
-        if (doc->q && *doc->q) { fputs(" matches <b>", stdout); html(doc->q); fputs("</b>", stdout); }
-        fputs(" right now.</p>", stdout);
+        (ui_open(stdout, "p", "note"), ui_lit(stdout, "Nothing here"));
+        if (doc->q && *doc->q) { (ui_lit(stdout, " matches "), ui_open(stdout, "b", NULL)); html(doc->q); ui_close(stdout, "b"); }
+        (ui_lit(stdout, " right now."), ui_close(stdout, "p"));
     }
 
 close_page:

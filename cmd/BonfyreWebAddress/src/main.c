@@ -30,6 +30,7 @@
 #include "territory_home.h"
 #include "recipe_material.h"
 #include "recipe_week.h"
+#include "../generated/native_estate_hosts.h"
 #include "../generated/native_surface_programs.h"
 #include "../generated/native_presentation_cells.h"
 #include "../generated/native_machine_surfaces.h"
@@ -101,18 +102,18 @@ static const char *page_nav_glyph(const char *route);
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
 "amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\"><link rel=\"stylesheet\" href=\"/assets/aurekai-ui.css?v=1\">"
 #define BF_ESTATE_BAR_OUT \
-"<span class=\"ak-out\"><a href=\"https://docs.aurekai.work/\">" BF_ICON_BOOK "<span>Guides</span></a></span>"
+"<span class=\"ak-out\"><a href=\"" BF_ORIGIN_DOCS "/\">" BF_ICON_BOOK "<span>Guides</span></a></span>"
 #define BF_ESTATE_BAR_CORE \
 "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&" \
 "amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;display=swap\"><link rel=\"stylesheet\" href=\"/assets/aurekai-bar.css?v=5\"><link rel=\"stylesheet\" href=\"/assets/aurekai-ui.css?v=1\">" \
 "<header class=\"ak-bar\"><div class=\"ak-bar-top\"><a class=\"ak-brand\" href=\"/\">Aurekai</a><nav class=\"ak-places\" aria-label=\"Territories\">" \
-"<a href=\"https://aurekai.live/\">" BF_ICON_WORLD "<span>Live</span></a><a href=\"https://aurekai.life/\">" BF_ICON_HEART "<span>Life</span></a>" \
-"<a href=\"https://aurekai.shop/\">" BF_ICON_SHOP "<span>Shop</span></a><a href=\"https://aurekai.work/\">" BF_ICON_BRIEFCASE "<span>Work</span></a></nav>" \
+"<a href=\"" BF_ORIGIN_LIVE "/\">" BF_ICON_WORLD "<span>Live</span></a><a href=\"" BF_ORIGIN_LIFE "/\">" BF_ICON_HEART "<span>Life</span></a>" \
+"<a href=\"" BF_ORIGIN_SHOP "/\">" BF_ICON_SHOP "<span>Shop</span></a><a href=\"" BF_ORIGIN_WORK "/\">" BF_ICON_BRIEFCASE "<span>Work</span></a></nav>" \
 "<form class=\"ak-find\" action=\"/search\" method=\"get\" role=\"search\"><label>" BF_ICON_SEARCH "<input type=\"search\" name=\"q\" placeholder=\"Search\" aria-label=\"Search\"></label></form>" \
 "<div class=\"ak-session-slot\" data-account-slot><!--BF_SESSION_BEGIN--><a class=\"ak-account\" id=\"session-link\" href=\"/login\">" BF_ICON_LOGIN "<span>Sign in</span></a><!--BF_SESSION_END--></div></div>" \
 "<nav class=\"ak-sections\" aria-label=\"Sections\"><a href=\"/discover\">" BF_ICON_COMPASS "<span>Discover</span></a><a href=\"/whats-on\">" BF_ICON_CALENDAR "<span>What&#039;s on</span></a>" \
 "<a href=\"/s/work/all\">" BF_ICON_BRIEFCASE "<span>Work board</span></a><a href=\"/watch\">" BF_ICON_PLAY "<span>Watch</span></a><a href=\"/listen\">" BF_ICON_HEADPHONES "<span>Listen</span></a><a href=\"/board\">" BF_ICON_BOARD "<span>Collections</span></a>" \
-"<span class=\"ak-out\"><a href=\"https://docs.aurekai.work/\">" BF_ICON_BOOK "<span>Guides</span></a></span></nav>" \
+"<span class=\"ak-out\"><a href=\"" BF_ORIGIN_DOCS "/\">" BF_ICON_BOOK "<span>Guides</span></a></span></nav>" \
 "<script>(function(){var b=document.currentScript.parentNode,h=location.hostname.split('.').slice(-2).join('.'),p=location.pathname;b.querySelectorAll('.ak-places a').forEach(function(a){if(a.hostname===h)a.setAttribute('aria-current','page')});b.querySelectorAll('.ak-sections>a').forEach(function(a){var r=a.getAttribute('href');if(p===r||p.indexOf(r+'/')===0)a.setAttribute('aria-current','page')});})();</script>" \
 BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 "</header>"
@@ -123,10 +124,10 @@ BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
  * text is read aloud). data-ak-default marks what the player holds on arrival. */
 #define BF_ESTATE_FOOT \
 "<footer class=\"ak-foot\"><div class=\"ak-foot-grid\"><div><b>Aurekai</b><p>Reading, listening, making and trading in one place, from the sources and people who made them.</p></div>" \
-"<div><h2>Territories</h2><ul><li><a href=\"https://aurekai.live/\">Live: what&#039;s on, watch, listen</a></li><li><a href=\"https://aurekai.life/\">Life: stories, food, places</a></li>" \
-"<li><a href=\"https://aurekai.shop/\">Shop: things worth buying</a></li><li><a href=\"https://aurekai.work/\">Work: jobs, tools, business</a></li></ul></div>" \
+"<div><h2>Territories</h2><ul><li><a href=\"" BF_ORIGIN_LIVE "/\">Live: what&#039;s on, watch, listen</a></li><li><a href=\"" BF_ORIGIN_LIFE "/\">Life: stories, food, places</a></li>" \
+"<li><a href=\"" BF_ORIGIN_SHOP "/\">Shop: things worth buying</a></li><li><a href=\"" BF_ORIGIN_WORK "/\">Work: jobs, tools, business</a></li></ul></div>" \
 "<div><h2>Find</h2><ul><li><a href=\"/discover\">Discover</a></li><li><a href=\"/whats-on\">What&#039;s on</a></li><li><a href=\"/listen\">Listen</a></li><li><a href=\"/people\">People</a></li><li><a href=\"/blog/\">Journal</a></li></ul></div>" \
-"<div><h2>Yours</h2><ul><li><a href=\"/profile\">Your page</a></li><li><a href=\"/apps\">Your tools</a></li><li><a href=\"/studio\">Studio</a></li><li><a href=\"/account/devices\">Your devices</a></li><li><a href=\"/account/agents\">Agent access</a></li><li><a href=\"/dispatch\">Field visits</a></li><li><a href=\"https://docs.aurekai.work/\">Guides</a></li></ul></div></div>" \
+"<div><h2>Yours</h2><ul><li><a href=\"/profile\">Your page</a></li><li><a href=\"/apps\">Your tools</a></li><li><a href=\"/studio\">Studio</a></li><li><a href=\"/account/devices\">Your devices</a></li><li><a href=\"/account/agents\">Agent access</a></li><li><a href=\"/dispatch\">Field visits</a></li><li><a href=\"" BF_ORIGIN_DOCS "/\">Guides</a></li></ul></div></div>" \
 "<div class=\"ak-foot-base\"><span>&copy; Aurekai</span><span>Every item links back to the source that published it.</span></div></footer>" \
 "<div class=\"ak-player\" data-ak-player hidden role=\"region\" aria-label=\"Player\"><button class=\"ak-prev\" type=\"button\" aria-label=\"Previous in queue\" hidden>&#9664;&#9664;</button><button class=\"ak-play\" type=\"button\" aria-label=\"Play\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></button><button class=\"ak-next\" type=\"button\" aria-label=\"Next in queue\" hidden>&#9654;&#9654;</button>" \
 "<div class=\"ak-player-meta\"><span data-ak-title></span><span data-ak-by></span><span data-ak-status role=\"status\"></span></div><button class=\"ak-x\" type=\"button\" aria-label=\"Close player\">&times;</button><div class=\"ak-player-bar\"><i></i></div></div>" \
@@ -178,6 +179,7 @@ static const char *opt(int argc, char **argv, const char *name) { for (int i = 2
 #include "room_compose_and_flow_cards.h"
 #include "desk_and_internet_observatory.h"
 #include "field_dispatch_web.h"
+#include "fact_surface_web.h"
 static int estate_directory(void) {
     const char *mdb = getenv("BONFYRE_MATRIX_DB");
     sqlite3 *db = NULL;
@@ -513,7 +515,8 @@ static int serve_tail_presentation_class(const BfRequest *r) { return serve_pres
 static int serve_tail_surface_pattern(const BfRequest *r) { return serve_surface_pattern(r->target, bf_request_query_opt(r), r->accept, r->bearer, r->auth_db); }
 static int serve_tail_door_fragment(const BfRequest *r) { return serve_door_fragment(r->target, bf_request_query_opt(r)); }
 static int serve_tail_aperture_fragment(const BfRequest *r) { return serve_aperture_fragment(r->m, r->host, r->target, bf_request_query_opt(r)); }
-static int serve_tail_surface(const BfRequest *r) { return serve_surface(r->m, r->host, r->target, r->root, r->accept, r->query); }
+/* /cms (row as "cms_app") is the CMS authoring app, opened inside the estate shell. */
+static int serve_tail_surface(const BfRequest *r) { return serve_surface(r->m, r->host, r->target, r->root, r->accept, r->query, bf_request_is(r, "cms_app")); }
 static int serve_tail_matrix_asset(const BfRequest *r) { return serve_matrix_asset(r->m, r->host, r->target, r->root, r->if_none_match, bf_request_query_opt(r)); }
 #include "../generated/native_web_routes.h"
 static int serve(BfMatrix *m, int argc, char **argv) {
@@ -554,7 +557,7 @@ static int serve(BfMatrix *m, int argc, char **argv) {
         else bodyp[-2] = '\0';
         sscanf(b,"%7s %16383s",method,target);/* Header names are not case-sensitive, and clients built on Node send them in lower case. */ char *h=strstr(b,"\r\nHost:");if(!h)h=strstr(b,"\nHost:");if(!h)h=strstr(b,"\r\nhost:");if(!h)h=strstr(b,"\nhost:");if(h)sscanf(h+(h[0]=='\r'?7:6),"%255s",host);q=strchr(target,'?');if(q){*q++='\0';snprintf(query,sizeof(query),"%s",q);}char *accept=strstr(b,"\r\nAccept:");if(!accept)accept=strstr(b,"\nAccept:");if(!accept)accept=strstr(b,"\r\naccept:");if(!accept)accept=strstr(b,"\naccept:");if(accept&&!strstr(query,"repr=")){char value[256]={0};sscanf(accept+(accept[0]=='\r'?9:8),"%255[^\r\n]",value);const char *repr=repr_from_accept(value);if(repr)snprintf(query+strlen(query),sizeof(query)-strlen(query),"%srepr=%s",query[0]?"&":"",repr);}
         char bearer[128]={0}, cookie_bearer[128]={0};
-        if(strncmp(target,"/apps/",6)){
+        if(strncmp(target,BF_WEB_LARGE_BODY_PREFIX,sizeof(BF_WEB_LARGE_BODY_PREFIX)-1)){
             char length[32];unsigned long long bytes=0;
             if(aw_header(b,"Content-Length",length,sizeof(length)))bytes=strtoull(length,NULL,10);
             if(body_offset>=BF_WEB_LEGACY_REQUEST_BYTES || bytes>=BF_WEB_LEGACY_REQUEST_BYTES-body_offset){
@@ -1613,6 +1616,9 @@ static const BfCommandEntry web_address_commands[] = {
 #undef WEB_ADDRESS_ENTRY
 };
 
+#define DETAIL_DEPTH_VERBS(X) X("derive", DD_DERIVE) X("measure", DD_MEASURE)
+BF_COMMAND_TABLE(detail_depth_verbs, DETAIL_DEPTH_VERBS);
+
 int main(int argc, char **argv) {
     /* The product face: "bonfyre-web-address site ..." or, under its own
      * name, "bonfyre-site ...". */
@@ -1659,10 +1665,11 @@ int main(int argc, char **argv) {
      * Offline: facets from the retained bodies into their own store, and the
      * per-source yield before and after them. */
     if (command->id == WC_DETAIL_DEPTH) {
-        if (argc >= 6 && !strcmp(argv[2], "derive"))
-            return bf_detail_depth_derive(argv[3], argv[4], argv[5], stdout);
-        if (argc >= 6 && !strcmp(argv[2], "measure"))
-            return bf_detail_depth_measure(argv[3], argv[4], argv[5], stdout);
+        switch (argc >= 6 ? bf_command_id(detail_depth_verbs, BF_COMMAND_COUNT(detail_depth_verbs), argv[2], -1) : -1) {
+        case DD_DERIVE: return bf_detail_depth_derive(argv[3], argv[4], argv[5], stdout);
+        case DD_MEASURE: return bf_detail_depth_measure(argv[3], argv[4], argv[5], stdout);
+        default: break;
+        }
         usage();
         return 2;
     }

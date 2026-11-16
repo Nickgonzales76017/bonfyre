@@ -196,13 +196,13 @@ static int govern_act(const BfRequest *r) {
     time_t t;
 
     if (!target) return 0;
-    if (pj_legacy(method,target,body,raw,host,bearer,auth_db)) return 1;
-    is_vote = !strcmp(target, "/govern/vote");
-    is_join = !strcmp(target, "/govern/join");
-    is_opportunity_save = !strcmp(target, "/govern/opportunity-save");
-    is_support = !strcmp(target, "/govern/support");
-    is_settle = !strcmp(target, "/govern/settle");
-    is_connect = !strcmp(target, "/govern/connect");
+    if (pj_legacy(method,r,body,raw,host,bearer,auth_db)) return 1;
+    is_vote = bf_request_is(r, "vote");
+    is_join = bf_request_is(r, "join");
+    is_opportunity_save = bf_request_is(r, "opportunity_save");
+    is_support = bf_request_is(r, "support");
+    is_settle = bf_request_is(r, "settle");
+    is_connect = bf_request_is(r, "connect");
     if (!is_vote && !is_join && !is_opportunity_save && !is_support && !is_settle && !is_connect) return 0;
     if (strcmp(method, "POST")) {
         protocol_reply(405, "text/plain; charset=utf-8", "Taking part is a form submission.\n");
@@ -1612,7 +1612,6 @@ static int serve_discovery_review(const BfRequest *r) {
     long id = 0;
     int matched = 0, rc, verified = 0;
     size_t used;
-    if (strcmp(target, "/discovery/decide")) return 0;
     if (strcmp(method, "POST")) {
         protocol_reply(405, "text/plain", "This decision requires a POST.\n");
         return 1;
@@ -1748,7 +1747,6 @@ static int serve_discovery_brief(const BfRequest *r) {
     const char *script=getenv("BONFYRE_REVIEW_COMPILER");
     const char *bun=getenv("BONFYRE_BUN_BINARY");
     int status;
-    if (strcmp(target,"/discovery/brief")) return 0;
     if (strcmp(method,"GET")) {
         protocol_reply(405,"text/plain","The source brief is read-only and requires GET.\n");
         return 1;
@@ -1827,7 +1825,6 @@ static int serve_discovery_verification(const BfRequest *r) {
     const char *economy_db=getenv("BONFYRE_ECONOMY_DB");
     const char *bun=getenv("BONFYRE_BUN_BINARY");
     size_t len;
-    if(strcmp(target,"/discovery/verification"))return 0;
     if(strcmp(method,"POST")){
         protocol_reply(405,"text/plain","Native verification intake requires POST.\n");
         return 1;

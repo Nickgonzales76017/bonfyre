@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROCUREMENT_FLOW_H
 #define BONFYRE_PROCUREMENT_FLOW_H
+#include "ui_tree.h"
 /* Buying for a saved room, as one guided flow on the one shell: what you need
  * (a saved purchase list) -> compare quotes in one table -> pick one -> send it
  * for approval after an explicit confirm. Every record is derived by the
@@ -161,9 +162,9 @@ static char *pf_kernel(const char *op,const char *input,const char *as_of){
 /* ---- the page ---- */
 static void pf_href(const char *binding,const char *list_key){fputs("/apps/",stdout);html(binding);fputs("/procurement/",stdout);if(list_key&&*list_key){fputs("?list=",stdout);url_query_value(list_key);}}
 static void pf_stage_head(int number,const char *title,const char *state,const char *note){
-    (void)number;fputs("<header class=\"ak-toolbar\"><div><h2>",stdout);html(title);fputs("</h2>",stdout);
+    (void)number;ui_open(stdout,"header","ak-toolbar");ui_open(stdout,"div",NULL);ui_open(stdout,"h2",NULL);html(title);ui_close(stdout,"h2");
     if(note&&*note){ui_text(stdout, "p", NULL, note);}
-    fputs("</div><span class=\"ak-badge\">",stdout);html(state);fputs("</span></header>",stdout);
+    ui_close(stdout,"div");ui_open(stdout,"span","ak-badge");html(state);ui_close(stdout,"span");ui_close(stdout,"header");
 }
 static const char *pf_notes[][2]={
     {"requested","Your quote request is ready. Add each quote you receive below."},
@@ -182,121 +183,121 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
     PfFlow f;pf_flow(set,list_key,&f);char lkey[512]="";if(f.list)snprintf(lkey,sizeof(lkey),"%s",f.list->key);
     int has_room=workspace_package_available(release,"product-room/");
     ak_app_http(200,1);ak_app_open("Buying","workbench","route-procurement");
-    fputs("<div class=\"ak-wb-strip\"><a href=\"/apps?context=self\">Your work</a><span>/</span><b>Buying</b>",stdout);
-    if(has_room){fputs("<a href=\"/apps/",stdout);html(binding);fputs("/product-room/\">Room planner</a>",stdout);}
-    fputs("<span class=\"ak-live\">Nothing is ordered or paid here</span></div>",stdout);
+    ui_open(stdout,"div","ak-wb-strip");ui_start(stdout,"a");ui_attr(stdout,"href","/apps?context=self");ui_gt(stdout);ui_copy(stdout,"Your work");ui_close(stdout,"a");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_open(stdout,"b",NULL);ui_copy(stdout,"Buying");ui_close(stdout,"b");
+    if(has_room){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps/");html(binding);fputs("/product-room/\">Room planner</a>",stdout);}
+    ui_open(stdout,"span","ak-live");ui_copy(stdout,"Nothing is ordered or paid here");ui_close(stdout,"span");ui_close(stdout,"div");
     const char *message=NULL;for(size_t i=0;note&&i<sizeof(pf_notes)/sizeof(pf_notes[0]);i++)if(!strcmp(note,pf_notes[i][0]))message=pf_notes[i][1];
     long long list_total=0;char title[1024]="Buy what your room needs";
     if(f.list){pf_int(f.list->doc,f.list->root,"subtotal_cents",&list_total);char label[512];if(pf_str(f.list,"title",label,sizeof(label))||pf_str(f.list,"name",label,sizeof(label)))snprintf(title,sizeof(title),"%s",label);}
-    fputs("<header class=\"ak-wb-hero is-solo pf-hero\"><div><p class=\"ak-kicker\">Purchase request</p><h1>",stdout);html(title);
-    fputs("</h1><p class=\"ak-lede\">Start from a room's saved list, compare the quotes you get in one table, pick one, and send it for approval. Suppliers hear nothing from here.</p></div></header>",stdout);
-    if(message){fputs("<div class=\"ak-pattern\"><p class=\"ak-alert\" role=\"status\">",stdout);html(message);fputs("</p></div>",stdout);}
+    ui_open(stdout,"header","ak-wb-hero is-solo pf-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Purchase request");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);html(title);
+    ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Start from a room's saved list, compare the quotes you get in one table, pick one, and send it for approval. Suppliers hear nothing from here.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
+    if(message){ui_open(stdout,"div","ak-pattern");ui_start(stdout,"p");ui_attr(stdout,"class","ak-alert");ui_attr(stdout,"role","status");ui_gt(stdout);html(message);ui_close(stdout,"p");ui_close(stdout,"div");}
     {   /* The flow's stages, from the records: one is current, earlier ones are done. */
         const char *steps[]={"What you need","Compare quotes","Pick one","Send for approval"};int at=f.approval?4:f.nquotes?2:f.rfq?1:0;
-        fputs("<ol class=\"ak-steps\" aria-label=\"Buying steps\">",stdout);
-        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);fputs("</li>",stdout);}
-        fputs("</ol>",stdout);}
+        ui_start(stdout,"ol");ui_attr(stdout,"class","ak-steps");ui_attr(stdout,"aria-label","Buying steps");ui_gt(stdout);
+        for(int i=0;i<4;i++){fputs(i<at?"<li class=\"is-done\">":i==at?"<li aria-current=\"step\">":"<li>",stdout);fputs(steps[i],stdout);ui_close(stdout,"li");}
+        ui_close(stdout,"ol");}
     {   long long best_total=-1;size_t items=0;for(size_t i=0;i<f.nquotes;i++){long long t;if(pf_quote_total(f.quotes[i],&t)&&(best_total<0||t<best_total))best_total=t;}
         const bf_json_node_t *ls=f.list?pf_at(f.list->doc,f.list->root,"lines"):NULL;if(ls&&ls->type==BF_JSON_ARRAY)items=(size_t)ls->child_count;
-        printf("<dl class=\"ak-stats is-row\"><div><dt>Items</dt><dd>%zu</dd></div><div><dt>Listed</dt><dd>",items);if(f.list)pf_money(list_total);else fputs("\xe2\x80\x94",stdout);
-        printf("</dd></div><div><dt>Quotes</dt><dd>%zu</dd></div><div><dt>Lowest quote</dt><dd>",f.nquotes);if(best_total>=0)pf_money(best_total);else fputs("\xe2\x80\x94",stdout);
-        fputs("</dd></div><div><dt>Status</dt><dd>",stdout);fputs(f.approval?"Waiting for approval":f.nquotes?"Ready to pick":f.rfq?"Collecting quotes":f.list?"Ready for quotes":"No list yet",stdout);fputs("</dd></div></dl>",stdout);}
-    fputs("<div class=\"pf-layout\"><div class=\"pf-stages\">",stdout);
+        ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Items");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%zu",items);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Listed");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);if(f.list)pf_money(list_total);else fputs("\xe2\x80\x94",stdout);
+        ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Quotes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%zu",f.nquotes);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Lowest quote");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);if(best_total>=0)pf_money(best_total);else fputs("\xe2\x80\x94",stdout);
+        ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Status");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fputs(f.approval?"Waiting for approval":f.nquotes?"Ready to pick":f.rfq?"Collecting quotes":f.list?"Ready for quotes":"No list yet",stdout);ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");}
+    ui_open(stdout,"div","pf-layout");ui_open(stdout,"div","pf-stages");
 
     /* 1. What you need */
     fputs("<section class=\"ak-pattern ak-card pf-stage\" id=\"need\">",stdout);
     pf_stage_head(1,"What you need",f.rfq?"Done":f.list?"Now":"Start here",f.list?"The items and amounts from your saved room.":NULL);
     if(!f.list){
-        fputs("<div class=\"ak-empty-state\"><h3>Nothing to buy yet</h3><p>Plan a room and save its purchase list. It shows up here with every item and amount.</p>",stdout);
-        if(has_room){fputs("<a class=\"ak-btn is-primary\" href=\"/apps/",stdout);html(binding);fputs("/product-room/\">Plan a room</a>",stdout);}
-        fputs("</div>",stdout);
+        ui_open(stdout,"div","ak-empty-state");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Nothing to buy yet");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Plan a room and save its purchase list. It shows up here with every item and amount.");ui_close(stdout,"p");
+        if(has_room){ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps/");html(binding);fputs("/product-room/\">Plan a room</a>",stdout);}
+        ui_close(stdout,"div");
     }else{
         size_t lists=0;for(size_t i=0;i<set->n;i++)if(pf_is(&set->r[i],"procurement-draft:","service-site.room-purchase-list.v1"))lists++;
-        if(lists>1){fputs("<nav class=\"ak-chips\" aria-label=\"Saved purchase lists\">",stdout);
+        if(lists>1){ui_start(stdout,"nav");ui_attr(stdout,"class","ak-chips");ui_attr(stdout,"aria-label","Saved purchase lists");ui_gt(stdout);
             for(size_t i=0;i<set->n;i++){const PfRec *r=&set->r[i];if(!pf_is(r,"procurement-draft:","service-site.room-purchase-list.v1"))continue;char name[512];
-                fputs("<a class=\"ak-chip\" href=\"",stdout);pf_href(binding,r->key);fputs("\"",stdout);if(r==f.list)fputs(" aria-current=\"true\"",stdout);fputs(">",stdout);
-                if(pf_str(r,"title",name,sizeof(name))||pf_str(r,"name",name,sizeof(name)))html(name);else{fputs("List saved ",stdout);pf_str(r,"created_at",name,sizeof(name));pf_day(name);}fputs("</a>",stdout);}
-            fputs("</nav>",stdout);}
-        fputs("<div class=\"ak-table-wrap\"><table class=\"ak-table pf-items\"><thead><tr><th>Item</th><th>Option</th><th>Qty</th><th>Listed each</th><th>Listed total</th></tr></thead><tbody>",stdout);
+                ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr_open(stdout,"href");pf_href(binding,r->key);fputs("\"",stdout);if(r==f.list)fputs(" aria-current=\"true\"",stdout);fputs(">",stdout);
+                if(pf_str(r,"title",name,sizeof(name))||pf_str(r,"name",name,sizeof(name)))html(name);else{fputs("List saved ",stdout);pf_str(r,"created_at",name,sizeof(name));pf_day(name);}ui_close(stdout,"a");}
+            ui_close(stdout,"nav");}
+        ui_open(stdout,"div","ak-table-wrap");ui_open(stdout,"table","ak-table pf-items");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Item");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Option");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Qty");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Listed each");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Listed total");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         const bf_json_node_t *lines=pf_at(f.list->doc,f.list->root,"lines");
         for(const bf_json_node_t *l=lines&&lines->type==BF_JSON_ARRAY?bf_json_child_first(f.list->doc,lines):NULL;l;l=bf_json_child_next(f.list->doc,l)){
             char label[1024],option[1024];long long q=0,u=0,t=0;pf_nstr(f.list->doc,l,"label",label,sizeof(label));pf_nstr(f.list->doc,l,"option",option,sizeof(option));
             pf_int(f.list->doc,l,"quantity",&q);pf_int(f.list->doc,l,"unit_cents",&u);pf_int(f.list->doc,l,"subtotal_cents",&t);
-            fputs("<tr><td>",stdout);html(label);fputs("</td><td>",stdout);html(option);printf("</td><td>%lld</td><td>",q);pf_money(u);fputs("</td><td>",stdout);pf_money(t);fputs("</td></tr>",stdout);
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);html(label);ui_close(stdout,"td");ui_open(stdout,"td",NULL);html(option);ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%lld",q);ui_close(stdout,"td");ui_open(stdout,"td",NULL);pf_money(u);ui_close(stdout,"td");ui_open(stdout,"td",NULL);pf_money(t);ui_close(stdout,"td");ui_close(stdout,"tr");
         }
-        fputs("</tbody><tfoot><tr><td colspan=\"4\">Listed prices when the room was saved</td><td>",stdout);pf_money(list_total);fputs("</td></tr></tfoot></table></div>",stdout);
+        ui_close(stdout,"tbody");ui_open(stdout,"tfoot",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"td");ui_attr(stdout,"colspan","4");ui_gt(stdout);ui_copy(stdout,"Listed prices when the room was saved");ui_close(stdout,"td");ui_open(stdout,"td",NULL);pf_money(list_total);ui_close(stdout,"td");ui_close(stdout,"tr");ui_close(stdout,"tfoot");ui_close(stdout,"table");ui_close(stdout,"div");
         if(!f.rfq){
             fputs("<form class=\"ak-actions\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);
             psetup_hidden("action","request");psetup_hidden("list",lkey);
             fputs("<button type=\"submit\">Get quotes for these items</button><small>Makes a quote request you can share with suppliers yourself. Nothing is sent.</small></form>",stdout);
         }
     }
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
 
     /* 2 + 3. Compare quotes in one table, and pick one */
     long long best=-1;const PfRec *cheapest=NULL;
     for(size_t i=0;i<f.nquotes;i++){long long t;if(pf_quote_total(f.quotes[i],&t)&&(best<0||t<best)){best=t;cheapest=f.quotes[i];}}
-    fputs("<section class=\"ak-pattern ak-card pf-stage\" id=\"quotes\">",stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-pattern ak-card pf-stage");ui_attr(stdout,"id","quotes");ui_gt(stdout);
     pf_stage_head(2,"Compare quotes",f.approval?"Done":f.nquotes?"Now":f.rfq?"Now":"Next",f.rfq?"Type each supplier's prices into the empty column. The lowest complete total is marked.":"Opens once you ask for quotes.");
     if(f.rfq){
         int open=!f.approval;
         if(open){fputs("<form id=\"pf-add\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","quote");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);
             fputs("<form id=\"pf-send\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","send");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);}
-        fputs("<div class=\"ak-table-wrap\"><table class=\"ak-table pf-compare\"><thead><tr><th>Item</th><th>Qty</th>",stdout);
-        for(size_t i=0;i<f.nquotes;i++){fputs("<th class=\"pf-q",stdout);if(f.quotes[i]==cheapest)fputs(" is-best",stdout);fputs("\"><span>",stdout);pf_supplier(f.quotes[i]);fputs("</span>",stdout);
-            if(f.quotes[i]==cheapest)ui_text(stdout, "em", NULL, "Lowest");fputs("</th>",stdout);}
+        ui_open(stdout,"div","ak-table-wrap");ui_open(stdout,"table","ak-table pf-compare");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Item");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Qty");ui_close(stdout,"th");
+        for(size_t i=0;i<f.nquotes;i++){ui_start(stdout,"th");ui_attr_open(stdout,"class");ui_copy(stdout,"pf-q");if(f.quotes[i]==cheapest)fputs(" is-best",stdout);fputs("\"><span>",stdout);pf_supplier(f.quotes[i]);ui_close(stdout,"span");
+            if(f.quotes[i]==cheapest)ui_text(stdout, "em", NULL, "Lowest");ui_close(stdout,"th");}
         if(open)fputs("<th class=\"pf-new\"><input form=\"pf-add\" name=\"supplier\" maxlength=\"200\" placeholder=\"Supplier name\" aria-label=\"Supplier name for a new quote\"></th>",stdout);
-        fputs("</tr></thead><tbody>",stdout);
+        ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         const bf_json_node_t *rl=pf_at(f.rfq->doc,f.rfq->root,"lines");int index=0;
         for(const bf_json_node_t *l=rl&&rl->type==BF_JSON_ARRAY?bf_json_child_first(f.rfq->doc,rl):NULL;l;l=bf_json_child_next(f.rfq->doc,l),index++){
             char label[1024],line_id[65];long long q=0;pf_nstr(f.rfq->doc,l,"label",label,sizeof(label));pf_nstr(f.rfq->doc,l,"line_id",line_id,sizeof(line_id));pf_int(f.rfq->doc,l,"quantity_requested",&q);
-            fputs("<tr><td>",stdout);html(label);printf("</td><td>%lld</td>",q);
-            for(size_t i=0;i<f.nquotes;i++){long long u,e;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_line(f.quotes[i],line_id,&u,&e)&&e>=0){pf_money(e);if(u>=0){fputs("<small>",stdout);pf_money(u);fputs(" each</small>",stdout);}}else ui_text(stdout, "small", NULL, "Not quoted");fputs("</td>",stdout);}
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);html(label);ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%lld",q);ui_close(stdout,"td");
+            for(size_t i=0;i<f.nquotes;i++){long long u,e;ui_open(stdout,"td","pf-q");if(pf_quote_line(f.quotes[i],line_id,&u,&e)&&e>=0){pf_money(e);if(u>=0){ui_open(stdout,"small",NULL);pf_money(u);fputs(" each</small>",stdout);}}else ui_text(stdout, "small", NULL, "Not quoted");ui_close(stdout,"td");}
             if(open)printf("<td class=\"pf-new\"><input form=\"pf-add\" name=\"price%d\" inputmode=\"decimal\" placeholder=\"Price each\" aria-label=\"Price each for ",index),html(label),fputs("\"></td>",stdout);
-            fputs("</tr>",stdout);
+            ui_close(stdout,"tr");
         }
         const char *fees[][2]={{"freight_cents","Delivery"},{"tax_cents","Tax"},{"other_fees_cents","Other fees"}};const char *fields[]={"delivery","tax","fees"};
         for(int k=0;k<3;k++){
-            fputs("<tr class=\"pf-fee\"><td colspan=\"2\">",stdout);html(fees[k][1]);fputs("</td>",stdout);
-            for(size_t i=0;i<f.nquotes;i++){long long v;fputs("<td class=\"pf-q\">",stdout);if(pf_int(f.quotes[i]->doc,f.quotes[i]->root,fees[k][0],&v))pf_money(v);else ui_text(stdout, "small", NULL, "Unknown");fputs("</td>",stdout);}
+            ui_open(stdout,"tr","pf-fee");ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);html(fees[k][1]);ui_close(stdout,"td");
+            for(size_t i=0;i<f.nquotes;i++){long long v;ui_open(stdout,"td","pf-q");if(pf_int(f.quotes[i]->doc,f.quotes[i]->root,fees[k][0],&v))pf_money(v);else ui_text(stdout, "small", NULL, "Unknown");ui_close(stdout,"td");}
             if(open){fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"",stdout);fputs(fields[k],stdout);fputs("\" inputmode=\"decimal\" placeholder=\"0.00\" aria-label=\"",stdout);html(fees[k][1]);fputs(" for the new quote\"></td>",stdout);}
-            fputs("</tr>",stdout);
+            ui_close(stdout,"tr");
         }
-        fputs("</tbody><tfoot><tr><td colspan=\"2\">Total</td>",stdout);
-        for(size_t i=0;i<f.nquotes;i++){long long t;fputs("<td class=\"pf-q\">",stdout);if(pf_quote_total(f.quotes[i],&t))pf_money(t);else ui_text(stdout, "small", NULL, "Incomplete");fputs("</td>",stdout);}
+        ui_close(stdout,"tbody");ui_open(stdout,"tfoot",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);ui_copy(stdout,"Total");ui_close(stdout,"td");
+        for(size_t i=0;i<f.nquotes;i++){long long t;ui_open(stdout,"td","pf-q");if(pf_quote_total(f.quotes[i],&t))pf_money(t);else ui_text(stdout, "small", NULL, "Incomplete");ui_close(stdout,"td");}
         if(open)fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"source\" maxlength=\"400\" placeholder=\"Where it came from\" aria-label=\"Where the new quote came from\"></td>",stdout);
-        fputs("</tr>",stdout);
-        if(open&&f.nquotes){fputs("<tr class=\"pf-pick\"><td colspan=\"2\">Pick one</td>",stdout);
+        ui_close(stdout,"tr");
+        if(open&&f.nquotes){ui_open(stdout,"tr","pf-pick");ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);ui_copy(stdout,"Pick one");ui_close(stdout,"td");
             for(size_t i=0;i<f.nquotes;i++){fputs("<td class=\"pf-q\"><label><input type=\"radio\" form=\"pf-send\" name=\"pick\" value=\"",stdout);html(f.quotes[i]->key);fputs("\"",stdout);if(f.quotes[i]==cheapest)fputs(" checked",stdout);fputs("> Choose</label></td>",stdout);}
-            fputs("<td class=\"pf-new\"></td></tr>",stdout);}
-        fputs("</tfoot></table></div>",stdout);
+            ui_open(stdout,"td","pf-new");ui_close(stdout,"td");ui_close(stdout,"tr");}
+        ui_close(stdout,"tfoot");ui_close(stdout,"table");ui_close(stdout,"div");
         if(open)fputs("<p class=\"ak-actions\"><button class=\"is-primary\" type=\"submit\" form=\"pf-add\">Add this quote</button><small>Prices in dollars. Use 0 when there is no delivery, tax or fee.</small></p>",stdout);
     }
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
 
     /* 4. Send for approval: the ledger */
     fputs("</div><aside class=\"ak-pattern ak-card pf-ledger\" id=\"send\"><p class=\"ak-eyebrow\">Send for approval</p>",stdout);
     if(f.approval){
         long long total=0;char at[32]="",decision[32]="";pf_int(f.approval->doc,f.approval->root,"known_total_cents",&total);pf_str(f.approval,"requested_at",at,sizeof(at));pf_str(f.approval,"authority.decision",decision,sizeof(decision));
-        fputs("<p class=\"pf-total\">",stdout);pf_money(total);fputs("</p><dl class=\"ak-spec\">",stdout);
+        ui_open(stdout,"p","pf-total");pf_money(total);ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
         const bf_json_node_t *lots=pf_at(f.approval->doc,f.approval->root,"order_lots");
         for(const bf_json_node_t *l=lots&&lots->type==BF_JSON_ARRAY?bf_json_child_first(f.approval->doc,lots):NULL;l;l=bf_json_child_next(f.approval->doc,l)){char name[512];long long t=0;
-            if(!pf_nstr(f.approval->doc,l,"supplier.name",name,sizeof(name)))snprintf(name,sizeof(name),"Supplier");pf_int(f.approval->doc,l,"known_total_cents",&t);fputs("<dt>",stdout);html(name);fputs("</dt><dd>",stdout);pf_money(t);fputs("</dd>",stdout);}
-        fputs("<dt>Sent</dt><dd>",stdout);pf_day(at);fputs("</dd><dt>Approval</dt><dd class=\"is-on\">",stdout);fputs(!strcmp(decision,"pending")?"Waiting":decision,stdout);
-        fputs("</dd></dl><p class=\"pf-safe\">Nothing has been ordered or paid, and no supplier was contacted. Once approved, you place the order with the supplier yourself.</p>",stdout);
+            if(!pf_nstr(f.approval->doc,l,"supplier.name",name,sizeof(name)))snprintf(name,sizeof(name),"Supplier");pf_int(f.approval->doc,l,"known_total_cents",&t);ui_open(stdout,"dt",NULL);html(name);ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_money(t);ui_close(stdout,"dd");}
+        ui_open(stdout,"dt",NULL);ui_copy(stdout,"Sent");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_day(at);ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Approval");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fputs(!strcmp(decision,"pending")?"Waiting":decision,stdout);
+        ui_close(stdout,"dd");ui_close(stdout,"dl");ui_open(stdout,"p","pf-safe");ui_copy(stdout,"Nothing has been ordered or paid, and no supplier was contacted. Once approved, you place the order with the supplier yourself.");ui_close(stdout,"p");
     }else if(f.nquotes){
-        fputs("<p class=\"pf-total\">",stdout);if(best>=0)pf_money(best);else fputs("—",stdout);fputs("</p><dl class=\"ak-spec\">",stdout);
-        if(cheapest){fputs("<dt>Lowest quote</dt><dd>",stdout);pf_supplier(cheapest);fputs("</dd>",stdout);}
-        printf("<dt>Quotes</dt><dd>%zu</dd><dt>Listed</dt><dd>",f.nquotes);pf_money(list_total);fputs("</dd></dl>",stdout);
+        ui_open(stdout,"p","pf-total");if(best>=0)pf_money(best);else fputs("—",stdout);ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
+        if(cheapest){ui_open(stdout,"dt",NULL);ui_copy(stdout,"Lowest quote");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_supplier(cheapest);ui_close(stdout,"dd");}
+        ui_open(stdout,"dt",NULL);ui_copy(stdout,"Quotes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%zu",f.nquotes);ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Listed");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_money(list_total);ui_close(stdout,"dd");ui_close(stdout,"dl");
         fputs("<label class=\"pf-confirm\"><input type=\"checkbox\" form=\"pf-send\" name=\"confirm\" value=\"yes\" required> I checked the items, amounts and the quote I picked.</label>",stdout);
         fputs("<button class=\"is-primary\" type=\"submit\" form=\"pf-send\">Send for approval</button>",stdout);
         ui_text(stdout, "p", "pf-safe", "Sending asks for approval in this workspace. It does not order, pay, or contact the supplier.");
     }else{
-        fputs("<p class=\"pf-total\">—</p><p class=\"pf-safe\">",stdout);
+        ui_open(stdout,"p","pf-total");ui_copy(stdout,"—");ui_close(stdout,"p");ui_open(stdout,"p","pf-safe");
         fputs(f.rfq?"Add at least one quote with every price filled in. Then pick it here and send it for approval.":f.list?"Ask for quotes on your list first.":"Save a room's purchase list to begin.",stdout);
-        fputs("</p>",stdout);
+        ui_close(stdout,"p");
     }
-    fputs("</aside></div>",stdout);
+    ui_close(stdout,"aside");ui_close(stdout,"div");
     ak_app_close();pf_free(set);free(set);
 }
 

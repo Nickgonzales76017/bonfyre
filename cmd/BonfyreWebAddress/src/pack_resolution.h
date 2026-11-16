@@ -7,6 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bf_command_lookup.h"
+/* The overlay verbs: the whole vocabulary. An overlay has no verb for
+ * granting authority, widening disclosure, rewriting identity, dropping
+ * evidence or promoting an observation to a fact. */
+#define PACK_OVERLAY_VERBS(X) \
+    X("add", PO_ADD) \
+    X("default", PO_DEFAULT) \
+    X("hide", PO_HIDE) \
+    X("present", PO_PRESENT) \
+    X("specialize", PO_SPECIALIZE) \
+    X("tighten", PO_TIGHTEN)
+BF_COMMAND_TABLE(pack_overlay_verbs, PACK_OVERLAY_VERBS);
+/* The verb's id, or -1 when it is not an overlay verb. */
+static int pack_overlay_verb(const char *v) {
+    return bf_command_id(pack_overlay_verbs, BF_COMMAND_COUNT(pack_overlay_verbs), v, -1);
+}
 #define BFPG_MAX 64
 #define BFPG_BYTES 262144
 
@@ -111,11 +127,12 @@ static int bfpg_walk(sqlite3 *db, BfPackResolution *p, const BfPackResolution *l
     while ((step = sqlite3_step(s)) == SQLITE_ROW) {
         char verb[32], target[192], value[2048];
         if (++edges > 256 || !bfpg_text(s, 0, verb, sizeof(verb)) || !bfpg_text(s, 1, target, sizeof(target)) || !*target || !bfpg_text(s, 2, value, sizeof(value))) goto done;
-        if (strcmp(verb, "hide") && strcmp(verb, "add") && strcmp(verb, "specialize") && strcmp(verb, "present") && strcmp(verb, "tighten") && strcmp(verb, "default")) {
+        int vid = pack_overlay_verb(verb);
+        if (vid < 0) {
             bfpg_failure(p, "forbidden_overlay", pack); goto done;
         }
-        if (!strcmp(verb, "add") && !bfpg_walk(db, p, lock, target, "", "stable", depth + 1)) goto done;
-        if (!strcmp(verb, "tighten") && !strcmp(target, "audience") &&
+        if (vid == PO_ADD && !bfpg_walk(db, p, lock, target, "", "stable", depth + 1)) goto done;
+        if (vid == PO_TIGHTEN && !strcmp(target, "audience") &&
             strcmp(value, "self") && strcmp(value, "household") && strcmp(value, "group") && strcmp(value, "community") && strcmp(value, "public") && strcmp(value, "market") && strcmp(value, "institution")) {
             bfpg_failure(p, "invalid_audience", pack); goto done;
         }

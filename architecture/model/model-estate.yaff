@@ -156,6 +156,7 @@ architecture prepared-execution-graph
   known_gap not built
 
 architecture model-commons
+  source_lineage earliest source integrations/estate/llama_generation.mjs first committed 2026-07-30 in caceb897 "feat(estate): add local GGUF generation profiles"
   source_path cmd/BonfyreWebAddress/src/subject_and_lens.h
   source_path deploy/tailwind/styles/model-commons.pcss
   invariant model price observations use the compiled model stylesheet and retain their source-provided values

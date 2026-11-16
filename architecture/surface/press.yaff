@@ -1,4 +1,5 @@
 architecture the-press
+  source_lineage earliest source site/matrix/press.html first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ThePress
   family surface
   domain Surface / A front page for anything

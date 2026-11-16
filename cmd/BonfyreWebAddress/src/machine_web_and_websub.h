@@ -328,7 +328,7 @@ static int serve_machine_web(const BfRequest *r) {
         return cached_reply_m(body,"application/xml; charset=utf-8",inm,head_only);
     }
 
-    if (!strncmp(target,"/sitemap-community-",19)) {
+    if (bf_request_is(r,"community_sitemap")) {
         unsigned page=0;
         char expected[64];
         if(!host||strcmp(host,"aurekai.life")||

@@ -1,3 +1,4 @@
+#include "ui_tree.h"
 #include "club_projection.h"
 #include "bf_lex.h"
 #include "form_tree.h"
@@ -168,7 +169,7 @@ done:
         return -1;
     }
     if (!ft_render(tree, out)) return -1;
-    if (!n) fputs("<p class=\"bf-native-empty\" data-empty>No interest clubs yet.</p>", out);
+    if (!n) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-empty");ui_gt(out);ui_copy(out,"No interest clubs yet.");ui_close(out,"p");}
     return n;
 }
 
@@ -284,7 +285,7 @@ done:
         return -1;
     }
     if (!ft_render(tree, out)) return -1;
-    if (!n) fputs("<p class=\"bf-native-empty\" data-empty>Nothing new.</p>", out);
+    if (!n) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-empty");ui_gt(out);ui_copy(out,"Nothing new.");ui_close(out,"p");}
     return n;
 }
 
@@ -413,6 +414,6 @@ done:
         return -1;
     }
     if (!ft_render(tree, out)) return -1;
-    if (!n) fputs("<p class=\"bf-native-empty\" data-empty>No upcoming events.</p>", out);
+    if (!n) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-empty");ui_gt(out);ui_copy(out,"No upcoming events.");ui_close(out,"p");}
     return n;
 }

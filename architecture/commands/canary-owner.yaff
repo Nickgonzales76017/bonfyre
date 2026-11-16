@@ -1,6 +1,7 @@
 atlas commands-canary-owner
 
 architecture mcp-bounded-wire-boundary
+  source_lineage earliest source integrations/mcp/http_boundary.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpBoundedWireBoundary
   family commands
   domain MCP / Bounded transport primitives
@@ -30,6 +31,7 @@ architecture mcp-bounded-wire-boundary
   witness integrations/mcp/tests/fabric_transport.test.mjs
 
 architecture fixture-canary-native-owner
+  source_lineage earliest source integrations/mcp/canary_catalog.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name FixtureCanaryNativeOwner
   family commands
   domain Execution / Version-bound evidence and bounded canary routing

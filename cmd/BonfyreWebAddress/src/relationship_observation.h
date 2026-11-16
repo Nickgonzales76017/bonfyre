@@ -1,5 +1,6 @@
 #ifndef BONFYRE_RELATIONSHIP_OBSERVATION_H
 #define BONFYRE_RELATIONSHIP_OBSERVATION_H
+#include "ui_tree.h"
 #include "form_tree.h"
 /* Called only after current native workspace and account admission. Source
  * verification precedes the CMS compare-and-swap; these owners do not share a
@@ -99,13 +100,13 @@ static int ro_serve(const char *method,const char *query,const char *body,const 
         free(answer);bf_mp_writer_free(&write);bf_mp_writer_free(&record);
         if(!okay){aw_error(rc==4?409:503,"The save was not confirmed. Reopen this observation to check its retained record before retrying.\n");return 1;}exists=1;retained_revision=1;snprintf(retained_snapshot,sizeof(retained_snapshot),"%s",snapshot);
     }
-    psetup_start(200,exists?"Saved relationship observation":"Review relationship observation");fputs("<h1>",stdout);fputs(exists?"Saved relationship observation":"Review relationship observation",stdout);fputs("</h1><p>The excerpt below is the current retained source item.</p><p>Source credit: <strong>",stdout);html(item.by[0]?item.by:"No credited name");fputs("</strong> · <code>",stdout);html(item.source);fputs("</code></p><h2>",stdout);html(item.title);fputs("</h2><p>",stdout);html(item.body);fputs("</p><p>Save this source item as an unresolved observation in this workspace. It does not identify a person or establish a business relationship.</p>",stdout);
-    if(exists){fputs("<p data-observation-saved>This observation already has a retained record. Its saved evidence and later edits are unchanged.</p><p>Saved record version ",stdout);printf("%lld",retained_revision);fputs(" · evidence fingerprint <code>",stdout);html(retained_snapshot[0]?retained_snapshot:"not recorded by the earlier writer");fputs("</code></p><p>Current source fingerprint <code>",stdout);html(snapshot);fputs("</code></p><p><a data-observation-open href=\"",stdout);ro_back(context,&item,source_family);fputs("\">Open this source's relationship observations</a></p>",stdout);}else{
+    psetup_start(200,exists?"Saved relationship observation":"Review relationship observation");ui_open(stdout,"h1",NULL);fputs(exists?"Saved relationship observation":"Review relationship observation",stdout);ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"The excerpt below is the current retained source item.");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_copy(stdout,"Source credit: ");ui_open(stdout,"strong",NULL);html(item.by[0]?item.by:"No credited name");ui_close(stdout,"strong");ui_copy(stdout," · ");ui_open(stdout,"code",NULL);html(item.source);ui_close(stdout,"code");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);html(item.title);ui_close(stdout,"h2");ui_open(stdout,"p",NULL);html(item.body);ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_copy(stdout,"Save this source item as an unresolved observation in this workspace. It does not identify a person or establish a business relationship.");ui_close(stdout,"p");
+    if(exists){ui_start(stdout,"p");ui_flag(stdout,"data-observation-saved");ui_gt(stdout);ui_copy(stdout,"This observation already has a retained record. Its saved evidence and later edits are unchanged.");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_copy(stdout,"Saved record version ");printf("%lld",retained_revision);fputs(" · evidence fingerprint <code>",stdout);html(retained_snapshot[0]?retained_snapshot:"not recorded by the earlier writer");ui_close(stdout,"code");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_copy(stdout,"Current source fingerprint ");ui_open(stdout,"code",NULL);html(snapshot);ui_close(stdout,"code");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_flag(stdout,"data-observation-open");ui_attr_open(stdout,"href");ro_back(context,&item,source_family);fputs("\">Open this source's relationship observations</a></p>",stdout);}else{
         {char action[200];snprintf(action,sizeof(action),"/apps/%s/_relationship-observation",binding);
          const FtField hidden[]={{"item",form.item},{"snapshot",snapshot},{"actor",actor},{"release",release}};
          const FtForm f={.id="observation",.action=action,.label="Save unresolved observation",.hook="observation-form",.hidden=hidden,.nhidden=4};
          ft_form(stdout,&f);}
     }
-    fputs("<p><a href=\"",stdout);ro_back(context,&item,source_family);fputs("\">Back to relationship workspace</a></p>",stdout);psetup_end();return 1;
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ro_back(context,&item,source_family);fputs("\">Back to relationship workspace</a></p>",stdout);psetup_end();return 1;
 }
 #endif

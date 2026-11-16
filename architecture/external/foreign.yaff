@@ -311,6 +311,7 @@ architecture blogger-publication-surface
   known_gap live maturity remains below measured until OAuth consent yields retained Blogger response receipts and URLs
   known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture federation-twin
+  source_lineage earliest source components/BonfyreProject/src/main.c first committed 2026-08-23 in 602c78cb "feat(repository): promote compatibility root with measured absorption"
   canonical_name FederationTwin
   family external
   domain External
@@ -357,6 +358,7 @@ architecture federation-twin
   known_gap peers are not yet traversed: the frontier records that nodeinfo was read, and a federation-of-federations walk past depth one is declared and unbuilt
   known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/federation_profile.json; /var/lib/bonfyre/cms/content-types/federation_twin.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 architecture foreign-address-identity
+  source_lineage earliest source scripts/deformation.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/deformation.py which scripts/retire.sh archived at scripts/deformation.py.archive
   canonical_name ForeignAddressIdentity
   family external
   domain External
@@ -396,6 +398,7 @@ architecture foreign-address-identity
   measured 5 of 148 retained observations were boundary responses admitted as evidence before the test existed; four of them were one bot-wall page counted as four distinct sitemaps
 
 architecture round-trip-twin
+  source_lineage earliest source scripts/roundtrip-law.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name RoundTripTwin
   family external
   domain External
@@ -428,6 +431,7 @@ architecture round-trip-twin
   witness scripts/tests/roundtrip_proof_test.mjs proves missing carrier and cross-carrier disagreement remain failures
 
 architecture foreign-relationship-graph
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ForeignTwinGraph.Edges
   family external
   domain External
@@ -465,6 +469,7 @@ architecture foreign-relationship-graph
   known_gap self-private and partner-shared are not derived from any role, because they are per-actor and per-arrangement; until an actor-scoped and an arrangement-scoped grant exist, only the superuser closure reaches them, and inferring them from a rank would hand one person's saved candidate to everyone of equal standing
 
 architecture external-estate-index
+  source_lineage earliest source cmd/BonfyreCMS/content-types/external_resource.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ExternalEstateIndex
   family external
   domain External / Catalogue
@@ -498,6 +503,7 @@ interaction catalogue-is-not-the-map
   forbidden_inference a large catalogue -> a large reach
 
 architecture retained-body-service
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name RetainedBodyService
   family external
   domain External / Retained bytes
@@ -522,6 +528,7 @@ architecture retained-body-service
   known_gap the digest is served and never verified against the bytes; a body corrupted on disk would be served under a digest it no longer matches
 
 architecture content-quarantine
+  source_lineage earliest source cmd/BonfyreCMS/content-types/content_flag.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/content_screen.py which scripts/retire.sh archived at scripts/content_screen.py.archive
   canonical_name ContentQuarantine
   family external
   domain External / Presentation state
@@ -572,6 +579,7 @@ interaction quarantine-holds-back-projection
   forbidden_inference an unflagged source -> a screened one
 
 architecture foreign-publication-corpus
+  source_lineage earliest source cmd/BonfyreCMS/src/main.c first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"
   canonical_name ForeignPublicationCorpus
   family external
   domain External / Retained Material
@@ -617,6 +625,7 @@ architecture foreign-publication-corpus
   known_gap corpus search on the learned store is reachable only through bonfyre-embed and bonfyre-vec on the command line. The CMS ANN index is still hashed-token geometry and is still the one a surface would query.
 
 architecture destination-release
+  source_lineage earliest source schemas/control/destination-release.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DestinationRelease
   family external
   domain External / Observed material on its way to a destination
@@ -676,6 +685,7 @@ interaction destination-release-reads-the-twin
   binding schemas/control/destination-release.cue
 
 architecture discovery-set
+  source_lineage earliest source schemas/control/discovery-set.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DiscoverySet
   family external
   domain External / A working set over observed publishers
@@ -734,6 +744,7 @@ interaction discovery-set-reads-the-frontier
   binding schemas/control/discovery-set.cue
 
 architecture browser-host
+  source_lineage earliest source integrations/browser/host/bonfyre-browser-host.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BrowserHost
   family external
   domain External / Beside the page
@@ -828,6 +839,7 @@ interaction browser-host-asks-foreign-twin
   binding integrations/mcp/recursive_overlay_tools.mjs
 
 architecture page-capture
+  source_lineage earliest source integrations/browser/capture/page-capture.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name PageCapture
   family external
   domain External / A page as the several things it is
@@ -867,6 +879,7 @@ interaction browser-host-asks-page-capture
   binding integrations/browser/capture/page-capture.mjs
 
 architecture browser-engine-provider
+  source_lineage earliest source integrations/browser/engines/chromium-engines.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BrowserEngineProvider
   family external
   domain External / Engines borrowed from the installed browser
@@ -907,6 +920,7 @@ architecture browser-engine-provider
   known_gap nothing in the estate calls these yet: no surface prints a record to PDF, PDF intake does not use the reader, and no organ runs a GPU program through it. WebRTC audio processing and Perfetto are not carried by this path
 
 architecture receipt-pack
+  source_lineage earliest source components/BonfyreProject/tests/receipt_pack_test.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ReceiptPack
   family external
   domain External / Where observations are kept
@@ -965,6 +979,7 @@ interaction receipt-pack-serves-foreign-twin
   binding components/BonfyreProject/src/main.c
 
 architecture media-decode-operation
+  source_lineage earliest source integrations/browser/engines/media-decode.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name MediaDecodeOperation
   family external
   domain External / One media operation, several engines
@@ -984,6 +999,7 @@ architecture media-decode-operation
   known_gap one operation and one frame: no audio, no video stream, no time base beyond the frame's own timestamp, and no encode. Nothing in the estate calls it
 
 architecture text-primitives
+  source_lineage earliest source lib/libbonfyre-text/bf_text.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TextPrimitives
   family external
   domain External / Text identity and bounded matching
@@ -1003,6 +1019,7 @@ architecture text-primitives
   known_gap no owner calls either primitive yet: CMS, Entity, ForeignTwin and the frontier still compare text their own way, and their rules still run on each language's own regular-expression engine
 
 architecture estate-volume-harvest
+  source_lineage earliest source scripts/oracle_volume_harvest.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name EstateVolumeHarvest
   family external
   domain External / What is still only on the old host's disk

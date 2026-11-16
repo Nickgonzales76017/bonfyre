@@ -1,4 +1,5 @@
 architecture session-workflow-recovery
+  source_lineage earliest source cmd/BonfyreSurfaceScene/runtime/authored-workspace-recovery.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SessionWorkflowRecovery
   family surface
   layer native-workspace
@@ -44,6 +45,7 @@ architecture session-workflow-recovery
   interacts session-recovery-composes-data-checks
 
 architecture authored-data-checks
+  source_lineage earliest source cmd/BonfyreSurfaceScene/runtime/authored-data-checks.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name AuthoredDataChecks
   family surface
   layer native-instrument

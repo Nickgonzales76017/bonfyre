@@ -149,15 +149,15 @@ static int slw_follow(const char *method,const char *body,const char *raw,const 
 
 static void slw_card(const char *id,const SlwKnown *k,const SlwSaved *rows,int count,const char *back){
     char url[1100];int valid=slw_url(k->url,url,sizeof(url));
-    fputs("<article class=\"ak-src-card\"><header><h3><a href=\"/sources?source=",stdout);url_query_value(k->ref);fputs("\">",stdout);html(k->host);fputs("</a></h3>",stdout);
+    fputs("<article class=\"ak-src-card\"><header><h3><a href=\"/sources?source=",stdout);url_query_value(k->ref);fputs("\">",stdout);html(k->host);ui_close(stdout,"a"); ui_close(stdout,"h3");
     if(*k->family){ui_text(stdout, "span", "ak-tag is-on", k->family);}
-    fputs("</header><p class=\"ak-src-meta\"><span class=\"ak-src-path\">",stdout);{const char *pp=strstr(k->url,"://");html(pp?pp+3:k->url);}fputs("</span>",stdout);
+    ui_close(stdout,"header"); ui_open(stdout,"p","ak-src-meta"); ui_open(stdout,"span","ak-src-path");{const char *pp=strstr(k->url,"://");html(pp?pp+3:k->url);}ui_close(stdout,"span");
     if(k->items>0)printf("%lld pieces to read",k->items);else fputs("Nothing to read yet",stdout);
     if(*k->carries&&strcmp(k->carries,"text")){fputs(" &middot; carries ",stdout);html(k->carries);}
     fputs("</p><footer><a class=\"ak-src-read\" href=\"/sources?source=",stdout);url_query_value(k->ref);fputs("\">Read what it publishes</a>",stdout);
     if(valid&&slw_saved(rows,count,url))ui_text(stdout, "span", "ak-tag", "Following");
     else if(valid)slw_follow_form(id,url,k->host,back,0);
-    fputs("</footer></article>",stdout);
+    ui_close(stdout,"footer"); ui_close(stdout,"article");
 }
 
 static int slw_page(const char *query,const char *id,const char *subject,const char *scope,const char *actor,const char *context,const char *pack){
@@ -172,65 +172,64 @@ static int slw_page(const char *query,const char *id,const char *subject,const c
     size_t nav_bytes=0;unsigned char *nav=ac_navigation(id,context,pack,&nav_bytes);if(nav){fwrite(nav,1,nav_bytes,stdout);free(nav);}
     printf("<div class=\"ak-wb-strip\"><span>Links and sources</span><span><b>%d</b> in your library</span>",count);
     if(known_ok)printf("<span><b>%lld</b> sources Aurekai reads%s</span>",total,*q?" for this search":"");
-    fputs("<span class=\"ak-live\">Nothing is fetched until you open it</span></div>",stdout);
-    fputs("<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">From the internet to your work</p><h1>Find a source. <em>Work with what it publishes.</em></h1>"
-          "<p class=\"ak-lede\">Browse the sources Aurekai already reads, or bring a web address. Follow the ones you want and they stay in your library.</p></div></section>",stdout);
-    if(*error){fputs("<p class=\"ak-src-alert\" role=\"alert\">",stdout);
-        fputs(!strcmp(error,"address")?"That doesn't look like a public web address. Paste the full link, starting with https://.":!strcmp(error,"changed")?"Your library changed in another tab. Nothing was overwritten; reload and try again.":"Your library couldn't be saved just now. Nothing changed; try again in a moment.",stdout);fputs("</p>",stdout);}
+    ui_text(stdout,"span","ak-live","Nothing is fetched until you open it"); ui_close(stdout,"div");
+    ui_open(stdout,"section","ak-wb-hero is-solo"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("From the internet to your work",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Find a source. ",stdout); ui_open(stdout,"em",NULL); fputs("Work with what it publishes.",stdout); ui_close(stdout,"em"); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Browse the sources Aurekai already reads, or bring a web address. Follow the ones you want and they stay in your library.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_close(stdout,"section");
+    if(*error){ui_open_a(stdout,"p","class","ak-src-alert","role","alert");
+        fputs(!strcmp(error,"address")?"That doesn't look like a public web address. Paste the full link, starting with https://.":!strcmp(error,"changed")?"Your library changed in another tab. Nothing was overwritten; reload and try again.":"Your library couldn't be saved just now. Nothing changed; try again in a moment.",stdout);ui_close(stdout,"p");}
     /* The finder: one control at a time. */
-    fputs("<section class=\"ak-ask ak-src-finder\"><nav class=\"ak-src-modes\" aria-label=\"How to find a source\">",stdout);
+    ui_open(stdout,"section","ak-ask ak-src-finder"); ui_open_a(stdout,"nav","class","ak-src-modes","aria-label","How to find a source");
     printf("<a href=\"/apps/%s/sources/\"%s>Browse known sources</a><a href=\"/apps/%s/sources/?mode=link\"%s>Bring a web address</a></nav>",id,link?"":" aria-current=\"page\"",id,link?" aria-current=\"page\"":"");
     if(!link){
         {char action[200];snprintf(action,sizeof(action),"/apps/%s/sources/",id);
          const FtInput find[]={{.label="Search sources",.type="search",.name="q",.maxlength="140",.value=q,.placeholder="Search by name, address or topic"}};
          const FtForm f={.id="src-search",.method="get",.action=action,.label="Search",.hook="src-search",.inputs=find,.ninputs=1};
          ft_form(stdout,&f);}
-        fputs("<nav class=\"ak-src-topics\" aria-label=\"Topics\">",stdout);
+        ui_open_a(stdout,"nav","class","ak-src-topics","aria-label","Topics");
         static const char *topics[][2]={{"","All sources"},{"podcast","Podcasts"},{"music","Music"},{"science","Science"},{"video","Video"},{"recall","Recalls"},{"gov","Government"}};
-        for(size_t i=0;i<sizeof(topics)/sizeof(topics[0]);i++){printf("<a class=\"ak-chip\" href=\"/apps/%s/sources/%s%s\"%s>",id,*topics[i][0]?"?q=":"",topics[i][0],!strcmp(q,topics[i][0])?" aria-current=\"page\"":"");fputs(topics[i][1],stdout);if(!strcmp(q,topics[i][0])&&known_ok)printf(" <b>%lld</b>",total);fputs("</a>",stdout);}
-        fputs("</nav>",stdout);
+        for(size_t i=0;i<sizeof(topics)/sizeof(topics[0]);i++){printf("<a class=\"ak-chip\" href=\"/apps/%s/sources/%s%s\"%s>",id,*topics[i][0]?"?q=":"",topics[i][0],!strcmp(q,topics[i][0])?" aria-current=\"page\"":"");fputs(topics[i][1],stdout);if(!strcmp(q,topics[i][0])&&known_ok)printf(" <b>%lld</b>",total);ui_close(stdout,"a");}
+        ui_close(stdout,"nav");
     }else{
         char url[1100];int valid=*pasted&&slw_url(pasted,url,sizeof(url));
         {char action[200];snprintf(action,sizeof(action),"/apps/%s/sources/",id);
          const FtInput link_in[]={{.label="Web address",.type="url",.name="url",.required=1,.maxlength="2000",.value=pasted,.placeholder="Paste a link, like https://example.org/feed"}};
          const FtForm f={.id="src-link",.method="get",.action=action,.label="Look it up",.hook="src-link",.inputs=link_in,.ninputs=1};
          ft_form(stdout,&f);}
-        if(*pasted&&!valid)fputs("<p class=\"ak-src-alert\" role=\"alert\">That doesn't look like a public web address. Use the full link, starting with https://, without a login or private network address.</p>",stdout);
+        if(*pasted&&!valid)do{ ui_open_a(stdout,"p","class","ak-src-alert","role","alert"); fputs("That doesn't look like a public web address. Use the full link, starting with https://, without a login or private network address.",stdout); ui_close(stdout,"p"); }while(0);
         if(valid){
             char host_name[256];slw_host(url,host_name,sizeof(host_name));SlwKnown match[3];int mn=0;long long mt=0,mx=-1;
             int looked=slw_known(host_name,0,match,3,&mn,&mt,&mx);
-            fputs("<article class=\"ak-src-found\"><p class=\"ak-kicker\">What it is</p><h2>",stdout);html(host_name);fputs("</h2><p class=\"ak-src-address\">",stdout);html(url);fputs("</p>",stdout);
-            if(looked&&mn){fputs("<p>Aurekai already reads this publisher. ",stdout);printf("%s</p><ul class=\"ak-rows\">",mn==1?"Here is what it publishes:":"These are its feeds:");
-                for(int i=0;i<mn;i++){fputs("<li><strong>",stdout);html(match[i].host);fputs("</strong><small>",stdout);if(*match[i].family){html(match[i].family);fputs(" &middot; ",stdout);}printf("%lld pieces",match[i].items);fputs("</small><a class=\"ak-go\" href=\"/sources?source=",stdout);url_query_value(match[i].ref);fputs("\">Read</a></li>",stdout);}
-                fputs("</ul>",stdout);}
-            else fputs("<p>Aurekai doesn't read this address yet. Following keeps the link in your library so you can come back to it.</p>",stdout);
+            ui_open(stdout,"article","ak-src-found"); ui_text(stdout,"p","ak-kicker","What it is"); ui_open(stdout,"h2",NULL);html(host_name);ui_close(stdout,"h2"); ui_open(stdout,"p","ak-src-address");html(url);ui_close(stdout,"p");
+            if(looked&&mn){ui_open(stdout,"p",NULL); fputs("Aurekai already reads this publisher. ",stdout);printf("%s</p><ul class=\"ak-rows\">",mn==1?"Here is what it publishes:":"These are its feeds:");
+                for(int i=0;i<mn;i++){ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL);html(match[i].host);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);if(*match[i].family){html(match[i].family);fputs(" &middot; ",stdout);}printf("%lld pieces",match[i].items);fputs("</small><a class=\"ak-go\" href=\"/sources?source=",stdout);url_query_value(match[i].ref);fputs("\">Read</a></li>",stdout);}
+                ui_close(stdout,"ul");}
+            else ui_text(stdout,"p",NULL,"Aurekai doesn't read this address yet. Following keeps the link in your library so you can come back to it.");
             if(lib_ok&&slw_saved(rows,count,url))ui_text(stdout, "p", "ak-src-done", "Already in your library.");
-            else{fputs("<div class=\"ak-actions\">",stdout);slw_follow_form(id,url,NULL,"mode=link",1);printf("<a class=\"ak-btn is-quiet\" href=\"/apps/%s/sources/?mode=link\">Not this one</a></div>",id);}
-            fputs("<p class=\"ak-src-fine\">Following saves the address only. Aurekai doesn't sign in anywhere, copy paywalled pages or tell the publisher.</p></article>",stdout);
+            else{ui_open(stdout,"div","ak-actions");slw_follow_form(id,url,NULL,"mode=link",1);printf("<a class=\"ak-btn is-quiet\" href=\"/apps/%s/sources/?mode=link\">Not this one</a></div>",id);}
+            ui_text(stdout,"p","ak-src-fine","Following saves the address only. Aurekai doesn't sign in anywhere, copy paywalled pages or tell the publisher."); ui_close(stdout,"article");
         }
     }
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
     /* Your library: where a followed source appears. */
-    fputs("<section class=\"ak-sec\" id=\"library\"><header><div><span class=\"ak-kicker\">Your library</span><h2>Sources you follow</h2></div></header>",stdout);
-    if(!lib_ok)fputs("<p class=\"ak-empty\">Your library couldn't be read just now. Nothing was changed.</p>",stdout);
+    ui_open_a(stdout,"section","class","ak-sec","id","library"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Your library",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Sources you follow",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_close(stdout,"header");
+    if(!lib_ok)ui_text(stdout,"p","ak-empty","Your library couldn't be read just now. Nothing was changed.");
     else if(!count)ui_text(stdout, "p", "ak-empty", "Nothing here yet. Paste a link above, or press Follow on a source below.");
-    else{fputs("<ul class=\"ak-rows ak-src-library\">",stdout);
+    else{ui_open(stdout,"ul","ak-rows ak-src-library");
         for(int i=0;i<count;i++){char h[256];slw_host(rows[i].url,h,sizeof(h));int fresh=*followed&&strstr(rows[i].key,followed)!=NULL;
-            printf("<li%s><strong>",fresh?" data-fresh":"");html(rows[i].title);fputs("</strong><small>",stdout);html(h);
+            printf("<li%s><strong>",fresh?" data-fresh":"");html(rows[i].title);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(h);
             if(*rows[i].created){fputs(" &middot; added ",stdout);char day[11];snprintf(day,sizeof(day),"%.10s",rows[i].created);html(day);}
             if(fresh)fputs(" &middot; just added",stdout);
-            fputs("</small>",stdout);if(*rows[i].url){fputs("<a class=\"ak-go\" href=\"",stdout);html(rows[i].url);fputs("\" rel=\"noopener noreferrer\" target=\"_blank\">Open &#8599;</a>",stdout);}fputs("</li>",stdout);}
-        fputs("</ul>",stdout);}
-    fputs("</section>",stdout);
+            ui_close(stdout,"small");if(*rows[i].url){ui_open_a(stdout,"a","class","ak-go",UI_DYN,"href","",(rows[i].url),"rel","noopener noreferrer","target","_blank"); fputs("Open &#8599;",stdout); ui_close(stdout,"a");}ui_close(stdout,"li");}
+        ui_close(stdout,"ul");}
+    ui_close(stdout,"section");
     if(!link){
-        fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Sources Aurekai reads</span><h2>",stdout);
-        if(*q){fputs("Matching &ldquo;",stdout);html(q);fputs("&rdquo;",stdout);}else fputs("Known sources",stdout);fputs("</h2></div>",stdout);
-        if(known_ok)printf("<p>%lld sources. Each one links to what it has published.</p>",total);fputs("</header>",stdout);
-        if(!known_ok)fputs("<p class=\"ak-empty\">The list of known sources couldn't be read just now.</p>",stdout);
+        ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"span","ak-kicker","Sources Aurekai reads"); ui_open(stdout,"h2",NULL);
+        if(*q){fputs("Matching &ldquo;",stdout);html(q);fputs("&rdquo;",stdout);}else fputs("Known sources",stdout);ui_close(stdout,"h2"); ui_close(stdout,"div");
+        if(known_ok)printf("<p>%lld sources. Each one links to what it has published.</p>",total);ui_close(stdout,"header");
+        if(!known_ok)ui_text(stdout,"p","ak-empty","The list of known sources couldn't be read just now.");
         else if(!kn)printf("<p class=\"ak-empty\">No known source matches that. <a href=\"/apps/%s/sources/?mode=link\">Bring the web address instead.</a></p>",id);
-        else{fputs("<div class=\"ak-grid is-2 ak-src-grid\">",stdout);for(int i=0;i<kn;i++)slw_card(id,&known[i],rows,count,back);fputs("</div>",stdout);
+        else{ui_open(stdout,"div","ak-grid is-2 ak-src-grid");for(int i=0;i<kn;i++)slw_card(id,&known[i],rows,count,back);ui_close(stdout,"div");
             if(next>=0){printf("<p class=\"ak-src-more\"><a class=\"ak-btn\" href=\"/apps/%s/sources/?offset=%lld",id,next);if(*back){fputs("&amp;",stdout);html(back);}fputs("\">More sources</a></p>",stdout);}}
-        fputs("</section>",stdout);
+        ui_close(stdout,"section");
     }
     psetup_end();free(rows);free(known);return 1;
 }

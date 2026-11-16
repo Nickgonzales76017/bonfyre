@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_COVER_PROJECTION_H
 #define BONFYRE_PROFILE_COVER_PROJECTION_H
+#include "ui_tree.h"
 #include "form_tree.h"
 #include "profile_cover_source.h"
 #include "../../BonfyreCMS/src/entry_snapshot.h"
@@ -41,10 +42,10 @@ static int ph_cover_emit(const PhSite *site) {
     BfProfileCoverSource review = {source,key,item->title,item->by,item->href,item->image,item->rights,
                                    position/101,position%101};
     if (!bf_profile_cover_source_digest(&review, digest) || strcmp(digest, evidence)) goto done;
-    fputs("<figure class=\"ph-cover-art\" data-profile-cover><img src=\"",stdout);
+    ui_start(stdout,"figure");ui_attr(stdout,"class","ph-cover-art");ui_flag(stdout,"data-profile-cover");ui_gt(stdout);ui_start(stdout,"img");ui_attr_open(stdout,"src");
     html(item->image); fputs("\" alt=\"",stdout); html(item->title);
     printf("\" style=\"object-position:%d%% %d%%\" referrerpolicy=\"no-referrer\">",review.focal_x,review.focal_y);
-    fputs("<figcaption class=\"ph-cover-credit\"><a href=\"/o/",stdout); html(source); fputc('/',stdout); html(key);
+    ui_open(stdout,"figcaption","ph-cover-credit");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/o/"); html(source); fputc('/',stdout); html(key);
     fputs("\">",stdout); html(item->title); if (item->by[0]) { fputs(" · ",stdout); html(item->by); }
     fputs(" · CC0</a></figcaption></figure>",stdout);
     result = 1;
@@ -68,7 +69,7 @@ static void ph_cover_remove_form(const PhSite *site) {
     if (!cms_snapshot_row(db,"site_fragment",id,site->id,digest)) goto done;
     snprintf(text,sizeof(text),"%d",id);
     fputs("<details class=\"ph-cover-options\"><summary>Cover options</summary>",stdout);
-    if(ref[0]&&position>=0){fputs("<a data-cover-adjust href=\"/profile?site=",stdout);url_query_value(site->id);fputs("&amp;tab=artwork&amp;art=",stdout);url_query_value(ref);
+    if(ref[0]&&position>=0){ui_start(stdout,"a");ui_flag(stdout,"data-cover-adjust");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?site=");url_query_value(site->id);fputs("&amp;tab=artwork&amp;art=",stdout);url_query_value(ref);
         printf("&amp;fx=%d&amp;fy=%d\">Move the focus point</a>",position/101,position%101);}
     {const FtField hidden[]={{"site",site->id},{"id",text},{"expected",digest}};
      const FtForm f={.id="ph-cover-remove",.action="/profile/cover/remove",.label="Remove cover",.hook="cover-remove",.hidden=hidden,.nhidden=3};

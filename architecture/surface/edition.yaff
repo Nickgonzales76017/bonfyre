@@ -1,4 +1,5 @@
 architecture estate-edition
+  source_lineage earliest source scripts/publish-edition.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/publish_edition.py which scripts/retire.sh archived at scripts/publish_edition.py.archive
   canonical_name EstateEdition
   family surface
   domain Surface / What this estate has to show today

@@ -1,4 +1,5 @@
 architecture store-schema-registry
+  source_lineage earliest source .githooks/pre-commit first committed 2026-08-15 in 1c82a929 "feat(activation+auto): close the opportunity family; make the atlas auto-used"
   canonical_name StoreSchemaRegistry
   family storage
   domain Storage / Native Store DDL

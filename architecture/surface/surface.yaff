@@ -353,6 +353,7 @@ architecture market-interface-clones
   known_gap every source in the estate carries Shape.STArea() and Shape.STLength() and no coordinates, so MapLibre has a real basemap and nothing of this estate's own to place on it; the parcels surface states that rather than plotting anything
 
 architecture operator-console
+  source_lineage earliest source site/matrix/surfaces/console.html first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name OperatorConsole
   family surface
   domain Surface / Operated
@@ -415,6 +416,7 @@ interaction console-reads-the-address-plane
   forbidden_inference a shape in the address -> a shape the estate has stored
 
 architecture surface-renderer
+  source_lineage earliest source cmd/BonfyreCMS/content-types/surface_renderer.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SurfaceRenderer
   family surface
   domain Surface / Interaction grammar
@@ -442,6 +444,7 @@ architecture surface-renderer
   known_gap the nine clone surfaces inline the kit rather than loading it, so they carry no view control; only the compiled estate, the console and the link desk have one
 
 architecture census-reader
+  source_lineage earliest source site/matrix/surfaces/_kit.js first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CensusReader
   family surface
   domain Surface / Contract interpretation
@@ -463,6 +466,7 @@ architecture census-reader
   known_gap the nine clone surfaces inline the kit rather than loading it, so a change to the interpreter reaches them only when they are rebuilt
 
 architecture subject-index
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SubjectIndex
   family surface
   domain Surface / Compression
@@ -483,6 +487,7 @@ architecture subject-index
   witness components/BonfyreControlPlane/tests/surface-renderers.test.mjs checks the index answers for every kind, that foreign twins and institutions share one list, that naming a subject returns its projections with the counts agreeing, and that an unnamed listing carries no constellation
 
 architecture foreign-link-desk
+  source_lineage earliest source cmd/BonfyreWebAddress/src/source_desk.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ForeignTwinWorkspace
   family surface
   domain Surface / External Estate
@@ -582,6 +587,7 @@ interaction index-projects-address-plane
   forbidden_inference an enumerated subject -> a subject this caller may act on
 
 architecture pack-graph
+  source_lineage earliest source cmd/BonfyreCMS/tests/program_continuation_test.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   source_path cmd/BonfyreCMS/tests/program_continuation_test.c
   source_path cmd/BonfyreCMS/tests/program_continuation_test.mk
   source_path cmd/BonfyreCMS/tests/program_continuation_test.md
@@ -637,6 +643,7 @@ architecture pack-graph
   known_gap ResourceWeather does not read pack demand yet, so nothing schedules hydration against it; the demand is declared and the scheduler that would consume it is unbuilt
 
 architecture internet-commons
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InternetCommons
   family surface
   domain Surface / External world
@@ -677,6 +684,7 @@ interaction closure-declares-internet-demand
   forbidden_inference a preferred source -> a source this estate has permission to read
 
 architecture territory-landing
+  source_lineage earliest source site/matrix/surfaces/home.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports site/matrix/surfaces/build/mk_home.py which scripts/retire.sh archived at site/matrix/surfaces/build/mk_home.py.archive
   canonical_name TerritoryLanding
   family surface
   domain Surface / Arrival
@@ -735,6 +743,7 @@ interaction landing-prepares-native-public-route
   binding cmd/BonfyreWebAddress/src/main.c
 
 architecture internet-census
+  source_lineage earliest source cmd/BonfyreCMS/content-types/internet_source.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InternetCensus
   family surface
   domain Surface / External world
@@ -798,6 +807,7 @@ interaction weather-schedules-observation
   forbidden_inference a hot source -> a source anybody is looking at
 
 architecture content-write-surface
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ContentWriteSurface
   family surface
   domain Surface / Authoring
@@ -847,6 +857,7 @@ interaction clones-render-surface-patterns
   forbidden_inference a rendered pattern -> an authorized effect on its subject
 
 architecture world-publication
+  source_lineage earliest source cmd/BonfyreCMS/content-types/world.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports cmd/BonfyreCMS/tools/materialize_world_fragments.py which scripts/retire.sh archived at cmd/BonfyreCMS/tools/materialize_world_fragments.py.archive
   canonical_name WorldPublication
   family surface
   domain Surface / Temporary publication
@@ -934,6 +945,7 @@ interaction world-community-fragment-selects-human-body
   forbidden_inference a World naming Community -> the global Aurekai Commons body, membership, speech or effect authority
 
 architecture human-community-body
+  source_lineage earliest source cmd/BonfyreCMS/content-types/community_body.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HumanCommunityBody
   family surface
   domain Surface / Human community
@@ -1019,6 +1031,11 @@ architecture human-community-body
   witness 2026-11-11 form_tree.h builders compose every companions/profile form (filters, report, plans, quiz, both theme pickers) from ui:action/ui:choice/ui:field; JSON carriers moved to bf_jsonw and the duplicate esc/jes escapers are deleted
   invariant every companions route renders in the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT) with a hero counting distinct published member addresses and a switchboard of the seven companion views; the unfiltered listing composes events, people and clubs from their existing owners and links plans; layout in aurekai-native.css under [data-companions]
   forbidden_inference a like -> mutual interest, a conversation, or permission to contact; only a computed mutual opens anything, and a pass -> rejection of the person rather than exclusion from one discovery surface
+  source_path schemas/control/web-routes.cue
+  source_path cmd/BonfyreWebAddress/tests/profile_claim.test.mjs
+  invariant a new account claims one address once through POST /profile/claim: handle validation, a one-time user-to-person binding, Matrix subject/institution/domain/presence bootstrap and one draft site per territory; claimed drafts wait for the existing publish review and the profile shows the waiting state instead of the setup loop
+  witness 2026-11-15 preview claimed riverstone end to end (303, binding plus 4 domains plus 4 presences plus 8 drafts), refused rival, second-handle, anonymous and bad-handle claims (409, 409, 401, 400), and served the live profile and public apex after CMS publish; profile_claim.test.mjs holds the same contract with 4 passing tests
+  cannot_infer a claimed handle -> a published site, a public presence, identity proof, or authority over anything; only the publish review opens pages
 
 interaction census-reader-serves-every-surface
   source census-reader
@@ -1031,6 +1048,7 @@ interaction census-reader-serves-every-surface
   forbidden_inference an item rendered -> a licence to redistribute it
 
 architecture presentation-template
+  source_lineage earliest source cmd/BonfyreWebAddress/src/site_presentation.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports cmd/BonfyreCMS/tools/compile_palette_profiles.py which scripts/retire.sh archived at cmd/BonfyreCMS/tools/compile_palette_profiles.py.archive
   canonical_name PresentationTemplate
   family surface
   domain Surface / Design language
@@ -1120,6 +1138,7 @@ architecture presentation-template
   witness 2026-11-11 profile Site design and companions Your design pickers list the published catalogue by family and record profile/account scope rows (303, 400 on unknown template); live round-trips flipped both surfaces to the new pick, and the estate-flagship pack adds 48 validated palette options
 
 architecture design-fingerprint
+  source_lineage earliest source cmd/BonfyreCMS/Makefile first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"; ports cmd/BonfyreCMS/tools/ghost_marketplace_templates.py which scripts/retire.sh archived at cmd/BonfyreCMS/tools/ghost_marketplace_templates.py.archive
   canonical_name DesignFingerprint
   family surface
   domain Surface / Measured design language
@@ -1165,6 +1184,7 @@ interaction fingerprint-measures-template
   forbidden_inference a fingerprint match -> a right to import a donor theme or assert semantic equivalence
 
 architecture site-presentation-composition
+  source_lineage earliest source schemas/control/site-presentation.yaff first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   invariant authored cards inside the shared dark journal reader use a legible surface and text contrast
   witness cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs checks rendered journal card contrast and captures desktop and phone pages when requested
   known_gap the journal index still renders a lead and a ruled list; the assigned editorial Discover screen uses a split lead and a card grid, so page parity remains unverified and incomplete
@@ -1349,6 +1369,7 @@ interaction site-program-lowers-watch-program
   forbidden_inference a Watch application binding -> a subject identity, playback session, viewing authority, licence or completed watch event
 
 architecture listen-program
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/promote_commons_recorded_audio.py which scripts/retire.sh archived at scripts/promote_commons_recorded_audio.py.archive
   canonical_name ListenProgram
   family surface
   domain Surface / Music representation
@@ -1407,6 +1428,7 @@ interaction template-dresses-a-world
   forbidden_inference a template resolving -> a template being right for this material
 
 architecture territory-door
+  source_lineage earliest source cmd/BonfyreWebAddress/src/territory_home.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TerritoryDoor
   family surface
   domain Surface / Front door
@@ -1441,6 +1463,7 @@ interaction door-orders-the-estate
   binding site/matrix/surfaces/home.html
 
 architecture canonical-subject-address
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CanonicalSubjectAddress
   family surface
   domain Surface / Canonical address
@@ -1486,6 +1509,7 @@ interaction address-answers-for-every-subject
   forbidden_inference a count of projections -> access to any of them
 
 architecture compounding-slice
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CompoundingSlice
   family surface
   domain Surface / Narrowing
@@ -1528,6 +1552,7 @@ interaction address-counts-what-is-owed
   forbidden_inference a closed condition -> a condition satisfied in the world
 
 architecture reference-contract
+  source_lineage earliest source cmd/BonfyreCMS/content-types/reference_contract.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/reference_check.py which scripts/retire.sh archived at scripts/reference_check.py.archive
   canonical_name ReferenceContract
   family surface
   domain Surface / Reference integrity
@@ -1569,6 +1594,7 @@ interaction reference-check-reads-the-declaration
   forbidden_inference a clean check -> a store nothing can break; it says the names resolve now
 
 architecture parcel-projection
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ParcelProjection
   family surface
   domain Surface / Carrier projection
@@ -1587,8 +1613,11 @@ architecture parcel-projection
   cannot_infer an agreed page -> agreed meaning; the carriers return the same rows, and what each dialect calls them is the profile's business
   cannot_infer assessment roll data -> an MLS listing, a listing agreement, or an appraisal
   witness components/BonfyreControlPlane/tests/live-carrier-conformance.test.mjs reads all three carriers three times and requires that they agree with each other on every read and that the answer does not move between reads, that the projection orders on observation_id rather than on account, that no carrier serves the ordering key, and that a page is answered in under eight seconds
+  source_path cmd/BonfyreWebAddress/tests/carrier_paging_test.sh
+  invariant every SQL-backed carrier walks: ?offset= skips rows of the same ordered projection, a full page links next in the carrier's own grammar (OGC links, OData nextLink, ActivityPub next), a short page ends the walk with no next link, and a bad offset is 400 rather than page one served twice
+  witness 2026-11-15 cmd/BonfyreWebAddress/tests/carrier_paging_test.sh walks a miniature Fleming estate (17 assertions): the outbox covers every source across disjoint pages, OGC/RESO/MISMO agree on the same accounts at every offset, the combined-territory walk crosses the union and ends empty, recorded-rights and the CloudEvents batch page, and abc/-1/1000001 offsets are 400 on all five routes
   known_gap a deterministic page costs about two seconds against under one for the nondeterministic one; the remaining cost is the top-n over six and a half million rows, and a materialised parcel index would remove it
-  known_gap only the first page is ordered; there is no cursor, so a caller cannot ask for the next page and the determinism is per request rather than across a walk
+  known_gap the no-cursor gap is closed: ?offset= plus per-carrier next links walk the whole collection, with the combined-territory union contributing limit+offset rows per source so the outer OFFSET skips across the exact union. What remains is per-source diversification: the union orders by territory, so a page fills from one source before the other rather than interleaving them.
 
 interaction carriers-share-one-projection
   source parcel-projection
@@ -1600,6 +1629,7 @@ interaction carriers-share-one-projection
   forbidden_inference agreement between dialects -> agreement about meaning
 
 architecture actor-presentation-cell
+  source_lineage earliest source schemas/control/surface-presentation-cells.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ActorPresentationCell
   family surface
   domain Surface / Presentation algebra
@@ -1642,6 +1672,7 @@ interaction presentation-cell-lowers-resolved-closure
   binding schemas/control/surface-presentation-cell.cue
 
 architecture web-lowering
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name WebLowering
   family surface
   domain Surface / Physical realisation
@@ -1705,6 +1736,7 @@ interaction lowering-serves-both-projections
   forbidden_inference an affordance on a record -> permission to perform it
 
 architecture public-observation-aperture
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name PublicObservationAperture
   family surface
   domain Surface / Public Aperture
@@ -1730,6 +1762,7 @@ architecture public-observation-aperture
   known_gap the fix is in the repository and the deployed host still serves the previous binary; nothing here claims the live aperture negotiates yet.
 
 architecture clone-grammar-registry
+  source_lineage earliest source schemas/control/clone-grammar.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CloneGrammarRegistry
   family surface
   domain Surface / Thirty product vocabularies over one set of cells
@@ -1811,6 +1844,7 @@ interaction profile-cover-removal-through-cms
   binding cmd/BonfyreWebAddress/src/profile_home.h
 
 architecture guild-records
+  source_lineage earliest source cmd/BonfyreWebAddress/src/guild_records_web.h first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name GuildRecords
   family surface
   domain Surface / Human community
@@ -1840,6 +1874,7 @@ architecture guild-records
   witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh creates a guild through /community/action, writes a module, hours, a proof, a sign-off, an attestation and its revocation, an offer, an application and decision, and an observation through the forms; refuses a stranger, self-confirmation, double confirmation and a foreign origin
 
 architecture household-circles
+  source_lineage earliest source cmd/BonfyreCMS/src/household_access.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HouseholdCircles
   family surface
   domain Surface / Household
@@ -1863,6 +1898,7 @@ architecture household-circles
   witness cmd/BonfyreWebAddress/tests/guild_household_records_test.sh creates a circle, refuses an outsider's read and write, accepts an invitation once and refuses its reuse, and keeps a household pantry from a non-member
 
 architecture community-charters
+  source_lineage earliest source cmd/BonfyreCMS/content-types/wiki_page.json first committed 2026-08-12 in 427a6ce7 "fix(content): write real CMS entries instead of a filesystem-only stand-in"
   canonical_name CommunityCharters
   family surface
   domain Surface / Human community

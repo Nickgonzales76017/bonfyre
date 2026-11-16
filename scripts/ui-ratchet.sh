@@ -32,6 +32,9 @@ measure(){
   # (src/ui_tree.h, form_tree.h, the SurfaceScene component vocabulary).
   printf 'hand_printed_markup\t%s\n' "$(ls "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -v '/ui_tree\.h$' | xargs cat | grep -oE '(fputs|printf)\("<|fprintf\([a-z_>.-]+, ?"<' | wc -l | tr -d ' ')"
   printf 'hardcoded_hosts\t%s\n' "$(cat "$root"/cmd/BonfyreWebAddress/src/*.h "$root"/cmd/BonfyreWebAddress/src/*.c | grep -oE 'https://[a-z]*\.?aurekai\.(work|life|live|shop)' | wc -l | tr -d ' ')"
+  # Facts an organ produces that no page, route or consumer reads (atlas
+  # loss fact_orphan_produced). Wire one in schemas/control/fact-surfaces.cue.
+  printf 'orphan_facts_unsurfaced\t%s\n' "$(bun "$root/architecture/atlas.mjs" loss 2>/dev/null | sed -n 's/^fact_orphan_produced (\([0-9]*\)).*/\1/p' | grep . || echo 999999)"
 }
 case "${1:-check}" in
   measure) measure ;;

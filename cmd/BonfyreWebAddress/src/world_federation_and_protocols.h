@@ -1,5 +1,6 @@
 #ifndef BONFYRE_WORLD_FEDERATION_AND_PROTOCOLS_H
 #define BONFYRE_WORLD_FEDERATION_AND_PROTOCOLS_H
+#include "ui_tree.h"
 /* Extracted verbatim from main.c lines 18033-19093 (mechanical split, no logic changes). */
 #include "bf_store_durability.h"
 #include "../generated/store_schema.h"  /* store kinds and durability: schemas/storage/stores */
@@ -217,13 +218,13 @@ static int emit_world_atom(sqlite3 *db, const BfWorldFederation *world, const ch
         const char *summary=(const char*)sqlite3_column_text(st,4), *observed=(const char*)sqlite3_column_text(st,5);
         html_escape(title?title:"",et,sizeof(et)); html_escape(summary?summary:"",es,sizeof(es));
         html_escape(href?href:"",eh,sizeof(eh)); html_escape(id?id:"",eid,sizeof(eid)); html_escape(source?source:"",esource,sizeof(esource));
-        printf("<entry><title>%s</title><id>urn:bonfyre:publication:%s</id>",et,eid);
+        ui_open(stdout,"entry",NULL);ui_open(stdout,"title",NULL);ui_copy(stdout,et);ui_close(stdout,"title");ui_open(stdout,"id",NULL);ui_copy(stdout,"urn:bonfyre:publication:");ui_copy(stdout,eid);ui_close(stdout,"id");
         if (eh[0]) printf("<link href=\"%s\"/>",eh);
         printf("<updated>%s</updated><category term=\"%s\"/><summary>%s</summary></entry>\n",
                observed&&*observed?observed:stamp,esource,es);
         rc = sqlite3_step(st);
     }
-    fputs("</feed>\n",stdout); sqlite3_finalize(st); return 1;
+    ui_close(stdout,"feed");ui_copy(stdout,"\n"); sqlite3_finalize(st); return 1;
 }
 
 static int emit_world_activitypub(sqlite3 *db, const BfWorldFederation *world, const char *host) {
@@ -334,58 +335,44 @@ static void protocol_hub_page(const char *h) {
     };
     ak_app_http(200, 0);
     ak_app_open("Carriers and identity", "connections", "route-protocols");
-    fputs("<div class=\"ak-wb-strip\"><span>Carriers</span><span>Address <b>", stdout); html(h);
-    printf("</b></span><span>Grammars <b>%d</b></span><span class=\"ak-live\">One record, many carriers</span></div>", PROTOCOL_CARRIERS_N);
-    fputs("<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Build on this &middot; carriers and bridges</p>"
-          "<h1>Carrier protocols and identity bridges</h1>"
-          "<p class=\"ak-lede\">The same subjects, priced tools and receipted observations, spoken in whichever grammar you already use. "
-          "Every address below also answers JSON when a machine asks.</p>"
-          "<div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"#assay\">Test a remote address</a>"
-          "<a class=\"ak-btn\" href=\"/protocols\" type=\"application/json\">Machine view</a></div></div></section>", stdout);
+    ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Carriers");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Address ");ui_open(stdout,"b",NULL); html(h);
+    ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Grammars ");ui_open(stdout,"b",NULL);fprintf(stdout,"%d",PROTOCOL_CARRIERS_N);ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span","ak-live");ui_copy(stdout,"One record, many carriers");ui_close(stdout,"span");ui_close(stdout,"div");
+    ui_open(stdout,"section","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Build on this &middot; carriers and bridges");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Carrier protocols and identity bridges");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"The same subjects, priced tools and receipted observations, spoken in whichever grammar you already use. Every address below also answers JSON when a machine asks.");ui_close(stdout,"p");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr(stdout,"href","#assay");ui_gt(stdout);ui_copy(stdout,"Test a remote address");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/protocols");ui_attr(stdout,"type","application/json");ui_gt(stdout);ui_copy(stdout,"Machine view");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"section");
     {
         int counts[4] = {0};
         for (int i = 0; i < PROTOCOL_CARRIERS_N; i++)
             for (int p = 0; p < 4; p++) if (!strcmp(PROTOCOL_CARRIERS[i].plane, planes[p].plane)) counts[p]++;
-        printf("<dl class=\"ak-stats is-row\"><div><dt>Carriers</dt><dd class=\"is-on\">%d</dd><small>grammars over one record</small></div>"
-               "<div><dt>Payment</dt><dd>%d</dd><small>commerce carriers</small></div>"
-               "<div><dt>Agents</dt><dd>%d</dd><small>tools, tasks and events</small></div>"
-               "<div><dt>Place</dt><dd>%d</dd><small>geospatial and property</small></div></dl>",
-               PROTOCOL_CARRIERS_N, counts[0], counts[1], counts[3]);
+        ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Carriers");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%d",PROTOCOL_CARRIERS_N);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"grammars over one record");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Payment");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",counts[0]);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"commerce carriers");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Agents");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",counts[1]);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"tools, tasks and events");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Place");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",counts[3]);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"geospatial and property");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
     }
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Carrier groups</span><h2>What each carrier is for</h2></div>"
-          "<p>A carrier is a grammar over the one record, never a second owner of the data.</p></header><div class=\"ak-grid is-2\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Carrier groups");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"What each carrier is for");ui_close(stdout,"h2");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"A carrier is a grammar over the one record, never a second owner of the data.");ui_close(stdout,"p");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid is-2");
     for (int p = 0; p < 4; p++) {
         int n = 0;
         for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) n += !strcmp(PROTOCOL_CARRIERS[i].plane, planes[p].plane);
-        printf("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">Group %s</span><span class=\"ak-tag\">%d carriers</span></header><h3>", planes[p].letter, n);
-        html(planes[p].title); fputs("</h3><p>", stdout); html(planes[p].lede); fputs("</p><div class=\"ak-rows\" style=\"margin-top:10px\">", stdout);
+        ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Group ");ui_copy(stdout,planes[p].letter);ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");fprintf(stdout,"%d",n);ui_copy(stdout," carriers");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"h3",NULL);
+        html(planes[p].title); ui_close(stdout,"h3");ui_open(stdout,"p",NULL); html(planes[p].lede); ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-rows");ui_attr(stdout,"style","margin-top:10px");ui_gt(stdout);
         for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) {
             const ProtocolCarrier *c = &PROTOCOL_CARRIERS[i];
             if (strcmp(c->plane, planes[p].plane)) continue;
-            fputs("<a href=\"", stdout); html(c->at); fputs("\"><strong>", stdout); html(c->name);
-            fputs(" <span class=\"ak-tag\">", stdout); html(c->spec); fputs("</span></strong><small>", stdout); html(c->role);
-            fputs("</small><span class=\"ak-go\">Open &rarr;</span></a>", stdout);
+            ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(c->at); fputs("\"><strong>", stdout); html(c->name);
+            fputs(" <span class=\"ak-tag\">", stdout); html(c->spec); ui_close(stdout,"span");ui_close(stdout,"strong");ui_open(stdout,"small",NULL); html(c->role);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go");ui_copy(stdout,"Open &rarr;");ui_close(stdout,"span");ui_close(stdout,"a");
         }
-        fputs("</div></article>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"article");
     }
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Carrier topology</span><h2>Every address, in one table</h2></div></header>"
-          "<div class=\"ak-panel ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Carrier</th><th>Grammar</th><th>Group</th><th>Address</th><th></th></tr></thead><tbody>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Carrier topology");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Every address, in one table");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-panel ak-scroll");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Carrier");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Grammar");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Group");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Address");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     for (int i = 0; i < PROTOCOL_CARRIERS_N; i++) {
         const ProtocolCarrier *c = &PROTOCOL_CARRIERS[i];
         const char *group = "";
         for (int p = 0; p < 4; p++) if (!strcmp(c->plane, planes[p].plane)) group = planes[p].title;
-        fputs("<tr><td><span class=\"ak-dot\">", stdout); html(c->name); fputs("</span></td><td>", stdout); html(c->spec);
-        fputs("</td><td>", stdout); html(group); fputs("</td><td><code>https://", stdout); html(h); html(c->at);
-        fputs("</code></td><td><a href=\"", stdout); html(c->at); fputs("\">Read</a></td></tr>", stdout);
+        ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);ui_open(stdout,"span","ak-dot"); html(c->name); ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td",NULL); html(c->spec);
+        ui_close(stdout,"td");ui_open(stdout,"td",NULL); html(group); ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_open(stdout,"code",NULL);ui_copy(stdout,"https://"); html(h); html(c->at);
+        ui_close(stdout,"code");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(c->at); fputs("\">Read</a></td></tr>", stdout);
     }
-    fputs("</tbody></table></div></section>", stdout);
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\" id=\"assay\"><div class=\"ak-grid is-2\"><article class=\"ak-ask\"><p class=\"ak-kicker\">Test a remote address</p>"
-          "<h2 style=\"margin:8px 0 10px;font:600 1.6rem/1.2 var(--ak-sans)\">Which carriers does it speak?</h2>"
-          "<p style=\"color:var(--ak-on-variant);margin-bottom:16px\">Paste a public address: a feed, a profile, an API. "
-          "It is reviewed before anything is read, and robots.txt is respected.</p>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","assay");ui_gt(stdout);ui_open(stdout,"div","ak-grid is-2");ui_open(stdout,"article","ak-ask");ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Test a remote address");ui_close(stdout,"p");ui_start(stdout,"h2");ui_attr(stdout,"style","margin:8px 0 10px;font:600 1.6rem/1.2 var(--ak-sans)");ui_gt(stdout);ui_copy(stdout,"Which carriers does it speak?");ui_close(stdout,"h2");ui_start(stdout,"p");ui_attr(stdout,"style","color:var(--ak-on-variant);margin-bottom:16px");ui_gt(stdout);ui_copy(stdout,"Paste a public address: a feed, a profile, an API. It is reviewed before anything is read, and robots.txt is respected.");ui_close(stdout,"p");
     {
         BfAuthoringTree *tree = calloc(1, sizeof(*tree));
         int ok = tree && ft_action(tree, "carrier-assay", NULL, 0, "Review this address", "get", "/studio/", NULL, 0) &&
@@ -393,23 +380,17 @@ static void protocol_hub_page(const char *h) {
                           "https://example.org/feed.xml", 0, NULL, "1200", 1, "url");
         if (tree) { if (ok) ft_render(tree, stdout); else { bf_authoring_tree_clear(tree); free(tree); } }
     }
-    fputs("</article><div class=\"ak-console\"><b>carrier review</b><br>"
-          "&gt; robots.txt is read before any fetch<br>&gt; the exact bytes are kept with a receipt<br>"
-          "&gt; what is read is an observation, never the source's truth<br>&gt; nothing is admitted until a person chooses it</div></div></section>", stdout);
+    ui_close(stdout,"article");ui_open(stdout,"div","ak-console");ui_open(stdout,"b",NULL);ui_copy(stdout,"carrier review");ui_close(stdout,"b");ui_open(stdout,"br",NULL);ui_copy(stdout,"&gt; robots.txt is read before any fetch");ui_open(stdout,"br",NULL);ui_copy(stdout,"&gt; the exact bytes are kept with a receipt");ui_open(stdout,"br",NULL);ui_copy(stdout,"&gt; what is read is an observation, never the source's truth");ui_open(stdout,"br",NULL);ui_copy(stdout,"&gt; nothing is admitted until a person chooses it");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Identity</span><h2>How other software finds this address</h2></div></header><div class=\"ak-grid is-3\">", stdout);
-    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">WebFinger</span><h3 style=\"margin-top:12px\">acct:bonfyre@", stdout); html(h);
-    fputs("</h3><p>The account address a Fediverse server looks up first.</p><div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/.well-known/webfinger?resource=acct:bonfyre@", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Identity");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"How other software finds this address");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid is-3");
+    ui_open(stdout,"article","ak-panel");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"WebFinger");ui_close(stdout,"span");ui_start(stdout,"h3");ui_attr(stdout,"style","margin-top:12px");ui_gt(stdout);ui_copy(stdout,"acct:bonfyre@"); html(h);
+    ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"The account address a Fediverse server looks up first.");ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"style","margin-top:14px");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/.well-known/webfinger?resource=acct:bonfyre@");
     html(h); fputs("\">Look it up</a></div></article>", stdout);
-    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">ActivityPub</span><h3 style=\"margin-top:12px\">https://", stdout); html(h);
+    ui_open(stdout,"article","ak-panel");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"ActivityPub");ui_close(stdout,"span");ui_start(stdout,"h3");ui_attr(stdout,"style","margin-top:12px");ui_gt(stdout);ui_copy(stdout,"https://"); html(h);
     fputs("/ap/actor</h3><p>The actor that can be followed, with its inbox and outbox.</p><div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/ap/actor\">Read the actor</a></div></article>", stdout);
-    fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">A2A</span><h3 style=\"margin-top:12px\">Agent card</h3>"
-          "<p>The skills offered to other agents. An advertised skill is not an agreement to perform it.</p>"
-          "<div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn\" href=\"/.well-known/agent.json\">Read the card</a></div></article></div></section>", stdout);
+    ui_open(stdout,"article","ak-panel");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"A2A");ui_close(stdout,"span");ui_start(stdout,"h3");ui_attr(stdout,"style","margin-top:12px");ui_gt(stdout);ui_copy(stdout,"Agent card");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"The skills offered to other agents. An advertised skill is not an agreement to perform it.");ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"style","margin-top:14px");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/.well-known/agent.json");ui_gt(stdout);ui_copy(stdout,"Read the card");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"article");ui_close(stdout,"div");ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">What a carrier is not</p><h2>A projection is not a licence, a listing, an appraisal or an offer.</h2>"
-          "<p>Where a collection is empty it says why. An invented alert or product would be worse than an honest empty list.</p></div>"
-          "<div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/capability\">See the priced tools</a></div></section>", stdout);
+    ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"What a carrier is not");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"A projection is not a licence, a listing, an appraisal or an offer.");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Where a collection is empty it says why. An invented alert or product would be worse than an honest empty list.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/capability");ui_gt(stdout);ui_copy(stdout,"See the priced tools");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -445,47 +426,38 @@ static int serve_territory_map(const BfRequest *r) {
 
     ak_app_http(200, 0);
     ak_app_open("Territories", "spatial", "route-territory");
-    printf("<div class=\"ak-wb-strip\"><span>Topology</span><span>Territories <b>4</b></span><span>Routes <b>%d</b></span><span>Layouts <b>%d</b></span>"
-           "<span class=\"ak-live\">Read from the CMS on this request</span></div>", total, patterns);
-    fputs("<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">One app &middot; four territories</p>"
-          "<h1>How Aurekai is laid out</h1><p class=\"ak-lede\">Every address the app answers, grouped by territory, with the screen each one is laid out as. "
-          "Follow any route to the page itself.</p></div></section>", stdout);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Territories</dt><dd class=\"is-on\">4</dd><small>live, life, shop, work</small></div>"
-           "<div><dt>Routes</dt><dd>%d</dd><small>published addresses</small></div><div><dt>Layouts</dt><dd>%d</dd><small>screen families in use</small></div>"
-           "<div><dt>Worlds</dt><dd>%d</dd><small>published spaces</small></div></dl>", total, patterns, worlds);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Topology</span><h2>Territories and their routes</h2></div>"
-          "<p>A route is an address that answers; the tag is the layout family it wears.</p></header><div class=\"ak-grid is-2 ak-topo\">", stdout);
+    ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Topology");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Territories ");ui_open(stdout,"b",NULL);ui_copy(stdout,"4");ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Routes ");ui_open(stdout,"b",NULL);fprintf(stdout,"%d",total);ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Layouts ");ui_open(stdout,"b",NULL);fprintf(stdout,"%d",patterns);ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span","ak-live");ui_copy(stdout,"Read from the CMS on this request");ui_close(stdout,"span");ui_close(stdout,"div");
+    ui_open(stdout,"section","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"One app &middot; four territories");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"How Aurekai is laid out");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Every address the app answers, grouped by territory, with the screen each one is laid out as. Follow any route to the page itself.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"section");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Territories");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");ui_copy(stdout,"4");ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"live, life, shop, work");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Routes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",total);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"published addresses");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Layouts");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",patterns);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"screen families in use");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Worlds");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",worlds);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"published spaces");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Topology");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Territories and their routes");ui_close(stdout,"h2");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"A route is an address that answers; the tag is the layout family it wears.");ui_close(stdout,"p");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid is-2 ak-topo");
     for (int i = 0; i < 4; i++) {
-        printf("<article class=\"ak-panel\"><header><h2>%s</h2><span class=\"ak-tag is-on\">%d routes</span></header><p>", T[i].name, per[i]);
-        html(T[i].what); fputs("</p><div class=\"ak-rows\" style=\"margin-top:10px\">", stdout);
+        ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"h2",NULL);ui_copy(stdout,T[i].name);ui_close(stdout,"h2");ui_open(stdout,"span","ak-tag is-on");fprintf(stdout,"%d",per[i]);ui_copy(stdout," routes");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"p",NULL);
+        html(T[i].what); ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-rows");ui_attr(stdout,"style","margin-top:10px");ui_gt(stdout);
         if (sqlite3_prepare_v2(db, "SELECT route,pattern FROM route_presentation WHERE status='published' AND territory=?1 ORDER BY route LIMIT 60", -1, &st, NULL) == SQLITE_OK) {
             sqlite3_bind_text(st, 1, T[i].t, -1, SQLITE_STATIC);
             while (sqlite3_step(st) == SQLITE_ROW) {
                 const char *r = (const char *)sqlite3_column_text(st, 0), *p = (const char *)sqlite3_column_text(st, 1);
                 if (!r || r[0] != '/') continue;
-                fputs("<a href=\"https://", stdout); html(T[i].host); html(r); fputs("\"><strong>", stdout); html(r);
-                fputs("</strong><small>", stdout); html(T[i].host); fputs("</small><span class=\"ak-go\"><span class=\"ak-tag\">", stdout);
-                html(p ? p : ""); fputs("</span></span></a>", stdout);
+                ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(T[i].host); html(r); fputs("\"><strong>", stdout); html(r);
+                ui_close(stdout,"strong");ui_open(stdout,"small",NULL); html(T[i].host); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");ui_open(stdout,"span","ak-tag");
+                html(p ? p : ""); ui_close(stdout,"span");ui_close(stdout,"span");ui_close(stdout,"a");
             }
         }
         sqlite3_finalize(st); st = NULL;
         if (!per[i]) ui_text(stdout, "p", "ak-empty", "No route is published for this territory yet.");
-        fputs("</div></article>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"article");
     }
-    fputs("</div></section>", stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Layouts</span><h2>Screen families</h2></div></header><div class=\"ak-panel ak-scroll\">"
-          "<table class=\"ak-table\"><thead><tr><th>Layout</th><th>Routes</th><th>Live</th><th>Life</th><th>Shop</th><th>Work</th></tr></thead><tbody>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Layouts");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Screen families");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-panel ak-scroll");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Layout");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Routes");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Live");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Life");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Shop");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Work");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     if (sqlite3_prepare_v2(db, "SELECT pattern,count(*),sum(territory='live'),sum(territory='life'),sum(territory='shop'),sum(territory='work') "
                                "FROM route_presentation WHERE status='published' GROUP BY pattern ORDER BY 2 DESC,1", -1, &st, NULL) == SQLITE_OK)
         while (sqlite3_step(st) == SQLITE_ROW) {
-            fputs("<tr><td><span class=\"ak-dot\">", stdout); html((const char *)sqlite3_column_text(st, 0));
-            printf("</span></td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td>%d</td></tr>", sqlite3_column_int(st, 1), sqlite3_column_int(st, 2),
-                   sqlite3_column_int(st, 3), sqlite3_column_int(st, 4), sqlite3_column_int(st, 5));
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);ui_open(stdout,"span","ak-dot"); html((const char *)sqlite3_column_text(st, 0));
+            ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%d",sqlite3_column_int(st, 1));ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%d",sqlite3_column_int(st, 2));ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%d",sqlite3_column_int(st, 3));ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%d",sqlite3_column_int(st, 4));ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%d",sqlite3_column_int(st, 5));ui_close(stdout,"td");ui_close(stdout,"tr");
         }
     sqlite3_finalize(st);
-    fputs("</tbody></table></div></section>", stdout);
-    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">Your own address</p><h2>Your pages join this map when you publish them.</h2>"
-          "<p>A person's address carries the same surfaces, bound to them.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/studio\">Open the studio</a></div></section>", stdout);
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");
+    ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Your own address");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Your pages join this map when you publish them.");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"A person's address carries the same surfaces, bound to them.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/studio");ui_gt(stdout);ui_copy(stdout,"Open the studio");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
     sqlite3_close(db);
     return 1;
@@ -500,12 +472,18 @@ static int serve_protocols(const BfRequest *r) {
     char sql[8192];
     char territory[32];
     const char *h = host && *host ? host : "aurekai.life";
-    int limit;
+    int limit, offset;
 
     if (!bindir || !*bindir) bindir = "/usr/local/bin";
     if (strcmp(method, "GET")) return 0;
     if (serve_world_federation(method,target,h)) return 1;
     limit = protocol_limit(query);
+    if (protocol_offset(query, &offset) != 0) {
+        protocol_reply(400, "application/json",
+          "{\"error\":\"invalid_offset\","
+          "\"note\":\"offset must be an integer from 0 to 1000000; the walk ends on an empty page\"}\n");
+        return 1;
+    }
     protocol_territory(query, territory, sizeof(territory));
 
     /* ---- index of every projection ------------------------------------- */
@@ -586,19 +564,28 @@ static int serve_protocols(const BfRequest *r) {
         return 1;
     }
     if (!strcmp(target, "/ap/outbox") || !strncmp(target, "/ap/outbox?", 11)) {
+        /* One row per admitted source, each a few bytes: the default page is
+         * fifty, not ten, so a first read sees the shape of coverage rather
+         * than its head alone. */
+        char next[512];
+        int olimit = protocol_limit_default(query, 50);
         snprintf(sql, sizeof(sql),
-          "SELECT src_id, count(*) AS n FROM observation GROUP BY src_id ORDER BY n DESC LIMIT %d", limit);
+          "SELECT src_id, count(*) AS n FROM observation GROUP BY src_id ORDER BY n DESC, src_id LIMIT %d OFFSET %d",
+          olimit, offset);
         {
             int prc = protocol_rows(bindir, sql, rows, sizeof(rows));
-            if (prc == -2) { protocol_page_too_large(limit); return 1; }
+            if (prc == -2) { protocol_page_too_large(olimit); return 1; }
             if (prc != 0 || !rows[0]) {
                 protocol_reply(503, "application/json", "{\"error\":\"estate_unavailable\"}\n"); return 1;
             }
         }
+        protocol_next_href(next, sizeof(next), h, "/ap/outbox", NULL, olimit, offset, rows);
         snprintf(body, sizeof(body),
           "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"type\":\"OrderedCollection\","
           "\"id\":\"https://%s/ap/outbox\",\"summary\":\"observation coverage by source\","
-          "\"orderedItems\":%s}\n", h, rows);
+          "\"limit\":%d,\"offset\":%d,\"orderedItems\":%s%s%s%s}\n",
+          h, olimit, offset, rows,
+          next[0] ? ",\"next\":\"" : "", next[0] ? next : "", next[0] ? "\"" : "");
         protocol_reply(200, "application/activity+json", body);
         return 1;
     }
@@ -611,6 +598,8 @@ static int serve_protocols(const BfRequest *r) {
             access(qbin, X_OK) != 0 || access(workdb, R_OK) != 0) {
             protocol_reply(503, "application/json", "{\"error\":\"native_workgraph_unavailable\"}\n"); return 1;
         }
+        /* CloudEvents batch content mode is a bare JSON array, so there is no
+         * envelope to carry a next link; the walk is ?offset= until []. */
         snprintf(esql, sizeof(esql),
           "SET home_directory='%s'; INSTALL sqlite; LOAD sqlite; "
           BF_STORE_WEB_FLEMING_WORK_DUCKDB_ATTACH
@@ -621,7 +610,8 @@ static int serve_protocols(const BfRequest *r) {
           "n.operator_id AS subject, n.input_uri AS data "
           "FROM w.workgraph_nodes n JOIN w.missions m ON m.id = n.mission_id "
           "WHERE n.mission_id NOT LIKE 'account-%%' "
-          "ORDER BY m.created_at DESC LIMIT %d", duckdb_home(), workdb, h, limit);
+          "ORDER BY m.created_at DESC, n.mission_id, n.operator_id LIMIT %d OFFSET %d",
+          duckdb_home(), workdb, h, limit, offset);
         {
             char *a[] = { qbin, (char*)"sql", (char*)":memory:", esql, NULL };
             if (auth_call_split(a, NULL, rows, sizeof(rows), diag, sizeof(diag)) != 0 || !rows[0]) {
@@ -665,8 +655,9 @@ static int serve_protocols(const BfRequest *r) {
         return 1;
     }
     if (!strncmp(target, "/ogc/collections/parcels/items", 30)) {
-        char base[8192], profile_fields[4096];
-        if (parcel_projection_sql(base, sizeof(base), territory, limit) != 0 ||
+        char base[8192], profile_fields[4096], next[512];
+        int returned;
+        if (parcel_projection_sql(base, sizeof(base), territory, limit, offset) != 0 ||
             !bf_domain_profile_select_list(profile_fields, sizeof(profile_fields), "parcel", "ogc", BF_AUDIENCE_PUBLIC) ||
             snprintf(sql, sizeof(sql), "SELECT %s FROM (%s)", profile_fields, base) >= (int)sizeof(sql)) {
             protocol_reply(503, "application/json", "{\"error\":\"projection_unavailable\"}\n"); return 1;
@@ -678,19 +669,27 @@ static int serve_protocols(const BfRequest *r) {
                 protocol_reply(503, "application/json", "{\"error\":\"estate_unavailable\"}\n"); return 1;
             }
         }
+        returned = protocol_json_count(rows);
+        if (returned < 0) returned = limit;
+        protocol_next_href(next, sizeof(next), h, "/ogc/collections/parcels/items", territory, limit, offset, rows);
         /* geometry is null: the roll carries area and length, never coordinates.
          * GeoJSON permits a null geometry; inventing one would not be a parcel. */
         snprintf(body, sizeof(body),
           "{\"type\":\"FeatureCollection\",\"numberReturned\":%d,"
           "\"geometry_note\":\"null geometry: the source roll carries Shape.STArea() and Shape.STLength() but no coordinates\","
           "\"features_source\":\"src:tad-parcel-view\",\"properties_rows\":%s,"
-          "\"links\":[{\"rel\":\"self\",\"type\":\"application/geo+json\",\"href\":\"https://%s/ogc/collections/parcels/items\"}]}\n",
-          limit, rows, h);
+          "\"links\":[{\"rel\":\"self\",\"type\":\"application/geo+json\","
+          "\"href\":\"https://%s/ogc/collections/parcels/items?territory=%s&limit=%d&offset=%d\"}%s%s%s]}\n",
+          returned, rows, h, territory, limit, offset,
+          next[0] ? ",{\"rel\":\"next\",\"type\":\"application/geo+json\",\"href\":\"" : "",
+          next[0] ? next : "", next[0] ? "\"}" : "");
         protocol_reply(200, "application/geo+json", body);
         return 1;
     }
 
     if (!strncmp(target, "/ogc/collections/recorded-rights/items", 38)) {
+        char next[512];
+        int returned;
         snprintf(sql, sizeof(sql),
           "SELECT json_extract_string(observed,'$.AccountID') AS account_id, "
           "json_extract_string(observed,'$.ParcelID') AS parcel_id, "
@@ -706,7 +705,8 @@ static int serve_protocols(const BfRequest *r) {
           "upper(json_extract_string(observed,'$.Legal1')) LIKE '%%SUBSURFACE%%' OR "
           "upper(json_extract_string(observed,'$.Legal1')) LIKE '%%AIR RIGHTS%%' OR "
           "upper(json_extract_string(observed,'$.Legal2')) LIKE '%%SUBSURFACE%%' OR "
-          "upper(json_extract_string(observed,'$.Legal2')) LIKE '%%AIR RIGHTS%%') LIMIT %d", limit);
+          "upper(json_extract_string(observed,'$.Legal2')) LIKE '%%AIR RIGHTS%%') "
+          "ORDER BY observation_id LIMIT %d OFFSET %d", limit, offset);
         {
             int prc = protocol_rows(bindir, sql, rows, sizeof(rows));
             if (prc == -2) { protocol_page_too_large(limit); return 1; }
@@ -714,18 +714,26 @@ static int serve_protocols(const BfRequest *r) {
                 protocol_reply(503, "application/json", "{\"error\":\"estate_unavailable\"}\n"); return 1;
             }
         }
+        returned = protocol_json_count(rows);
+        if (returned < 0) returned = limit;
+        protocol_next_href(next, sizeof(next), h, "/ogc/collections/recorded-rights/items", NULL, limit, offset, rows);
         snprintf(body, sizeof(body),
           "{\"type\":\"FeatureCollection\",\"numberReturned\":%d,\"geometry_note\":\"null geometry: legal-description observations are not surveyed passage geometries\","
-          "\"properties_rows\":%s,\"forbidden_inference\":\"a recorded air/subsurface-right observation or shared block description does not prove a physical passage, current access, operating control, ownership, or authority to enter or use it\"}\n",
-          limit, rows);
+          "\"properties_rows\":%s,"
+          "\"links\":[{\"rel\":\"self\",\"type\":\"application/geo+json\","
+          "\"href\":\"https://%s/ogc/collections/recorded-rights/items?limit=%d&offset=%d\"}%s%s%s],"
+          "\"forbidden_inference\":\"a recorded air/subsurface-right observation or shared block description does not prove a physical passage, current access, operating control, ownership, or authority to enter or use it\"}\n",
+          returned, rows, h, limit, offset,
+          next[0] ? ",{\"rel\":\"next\",\"type\":\"application/geo+json\",\"href\":\"" : "",
+          next[0] ? next : "", next[0] ? "\"}" : "");
         protocol_reply(200, "application/geo+json", body);
         return 1;
     }
 
     /* ---- RESO Web API (OData shape) ------------------------------------ */
     if (!strncmp(target, "/reso/Property", 14)) {
-        char base[8192], profile_fields[4096];
-        if (parcel_projection_sql(base, sizeof(base), territory, limit) != 0 ||
+        char base[8192], profile_fields[4096], next[512];
+        if (parcel_projection_sql(base, sizeof(base), territory, limit, offset) != 0 ||
             !bf_domain_profile_select_list(profile_fields, sizeof(profile_fields), "parcel", "reso", BF_AUDIENCE_PUBLIC) ||
             snprintf(sql, sizeof(sql), "SELECT %s FROM (%s)", profile_fields, base) >= (int)sizeof(sql)) {
             protocol_reply(503, "application/json", "{\"error\":\"projection_unavailable\"}\n"); return 1;
@@ -737,18 +745,20 @@ static int serve_protocols(const BfRequest *r) {
                 protocol_reply(503, "application/json", "{\"error\":\"estate_unavailable\"}\n"); return 1;
             }
         }
+        protocol_next_href(next, sizeof(next), h, "/reso/Property", territory, limit, offset, rows);
         snprintf(body, sizeof(body),
-          "{\"@odata.context\":\"https://%s/reso/$metadata#Property\",\"value\":%s,"
+          "{\"@odata.context\":\"https://%s/reso/$metadata#Property\",\"value\":%s%s%s%s,"
           "\"forbidden_inference\":\"assessment roll data is not an MLS listing, a listing agreement, or an appraisal\"}\n",
-          h, rows);
+          h, rows,
+          next[0] ? ",\"@odata.nextLink\":\"" : "", next[0] ? next : "", next[0] ? "\"" : "");
         protocol_reply(200, "application/json", body);
         return 1;
     }
 
     /* ---- MISMO subject property ---------------------------------------- */
     if (!strncmp(target, "/mismo/subject-property", 23)) {
-        char base[8192], profile_fields[4096];
-        if (parcel_projection_sql(base, sizeof(base), territory, limit) != 0 ||
+        char base[8192], profile_fields[4096], next[512];
+        if (parcel_projection_sql(base, sizeof(base), territory, limit, offset) != 0 ||
             !bf_domain_profile_select_list(profile_fields, sizeof(profile_fields), "parcel", "mismo", BF_AUDIENCE_PUBLIC) ||
             snprintf(sql, sizeof(sql), "SELECT %s FROM (%s)", profile_fields, base) >= (int)sizeof(sql)) {
             protocol_reply(503, "application/json", "{\"error\":\"projection_unavailable\"}\n"); return 1;
@@ -760,11 +770,14 @@ static int serve_protocols(const BfRequest *r) {
                 protocol_reply(503, "application/json", "{\"error\":\"estate_unavailable\"}\n"); return 1;
             }
         }
+        protocol_next_href(next, sizeof(next), h, "/mismo/subject-property", territory, limit, offset, rows);
         snprintf(body, sizeof(body),
           "{\"MESSAGE\":{\"ABOUT_VERSIONS\":{\"MISMOReferenceModelIdentifier\":\"3.4\"},"
           "\"DEAL_SETS\":{\"SUBJECT_PROPERTIES\":%s}},"
+          "\"paging\":{\"limit\":%d,\"offset\":%d%s%s%s},"
           "\"forbidden_inference\":\"a subject property projection is not an appraisal, a valuation opinion, or a loan file\"}\n",
-          rows);
+          rows, limit, offset,
+          next[0] ? ",\"next\":\"" : "", next[0] ? next : "", next[0] ? "\"" : "");
         protocol_reply(200, "application/json", body);
         return 1;
     }

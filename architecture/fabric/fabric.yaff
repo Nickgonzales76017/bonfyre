@@ -95,6 +95,7 @@ architecture semantic-derivation
   source_lineage Generation-10 semantic instruction and targeted invalidation contract; Python remains a frozen compatibility oracle while the native core owns runtime derivation
 
 architecture estate-version
+  source_lineage earliest source schemas/control/missing-cells.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name EstateVersion
   family fabric
   domain Fabric / A snapshot of a namespace, by digest
@@ -125,6 +126,7 @@ architecture estate-version
   known_gap a snapshot walks at most twelve directories deep and skips files over 64 MB and every dotfile, so it is a reading of the tree a person keeps rather than of everything on disk
 
 architecture held-message
+  source_lineage earliest source schemas/control/missing-cells.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HeldMessage
   family fabric
   domain Fabric / Something composed for somebody and not sent
@@ -177,6 +179,7 @@ interaction project-reviews-held-messages
   witness components/BonfyreProject/tests/message_review.test.mjs
 
 architecture assent-signature
+  source_lineage earliest source schemas/control/missing-cells.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name AssentSignature
   family fabric
   domain Fabric / Assent bound to exact bytes
@@ -202,6 +205,7 @@ architecture assent-signature
   known_gap there is no signer identity beyond the actor name this estate was given, so a signature says who it was recorded for and not who they are
 
 architecture live-session
+  source_lineage earliest source schemas/control/missing-cells.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name LiveSession
   family fabric
   domain Fabric / Something happening now, or not

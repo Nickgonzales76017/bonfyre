@@ -19,8 +19,9 @@ static int ak_activity_query(const char *query,AkActivityQuery *q){
  if(q->task[0]&&(strspn(q->task,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")!=strlen(q->task)||!isalnum((unsigned char)q->task[0])))return 0;
  return 1;
 }
-static int serve_activity_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db){
- if(strcmp(target,"/apps/_fabric"))return 0;
+static int serve_activity_workspace(const char *method,const char *target,const char *query,const char *body,const char *raw,const char *host,const char *bearer,const char *auth_db,const BfRequest *route){
+    (void)target;
+ if(!bf_request_is(route,"fabric"))return 0;
  AkActivityQuery q;int writing=!strcmp(method,"POST");
  if(!ak_activity_query(query,&q)){
   aw_error(400,"Choose an exact account work operation.\n");return 1;

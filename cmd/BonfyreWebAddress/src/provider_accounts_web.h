@@ -1,5 +1,6 @@
 #ifndef PROVIDER_ACCOUNTS_WEB_H
 #define PROVIDER_ACCOUNTS_WEB_H
+#include "ui_tree.h"
 #include "form_tree.h"
 /* Provider accounts for an Aurekai organization. Each organization is a
  * customer sub-account; an administrator opens or closes that organization's
@@ -66,15 +67,15 @@ static void pa_held(const char *org) {
     if (auth_call_split(argv, "", out, sizeof(out), err, sizeof(err)) != 0) return;
     bf_json_doc_t *d = bf_json_parse_str(out, NULL, 0); const bf_json_node_t *list = d ? bf_json_root(d) : NULL;
     if (!list) { bf_json_free(d); return; }
-    fputs("<section data-provider-held><h2>Accounts Aurekai holds</h2><p>These are the outside accounts this organization holds for its customers. Usable means a customer organization can open its own account there from its page.</p><div class=\"scroll\"><table><thead><tr><th>Service</th><th>Account</th><th>For customers</th></tr></thead><tbody>", stdout);
+    ui_start(stdout,"section");ui_flag(stdout,"data-provider-held");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Accounts Aurekai holds");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"These are the outside accounts this organization holds for its customers. Usable means a customer organization can open its own account there from its page.");ui_close(stdout,"p");ui_open(stdout,"div","scroll");ui_open(stdout,"table",NULL);ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Service");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Account");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"For customers");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     for (const bf_json_node_t *c = bf_json_child_first(d, list); c; c = bf_json_child_next(d, c)) {
         char name[96] = "", account[200] = "", customers[24] = "", gives[240] = "", slug[48] = "";
         const char *keys[] = {"name", "account", "customers", "gives", "slug"}; char *dest[] = {name, account, customers, gives, slug}; size_t caps[] = {sizeof(name), sizeof(account), sizeof(customers), sizeof(gives), sizeof(slug)};
         for (int k = 0; k < 5; k++) { const bf_json_node_t *v = bf_json_obj_get(d, c, keys[k]); if (v) bf_json_get_str_copy(v, dest[k], caps[k]); }
-        fputs("<tr data-held=\"", stdout); html(slug); fputs("\"><td>", stdout); html(name); fputs("<small>", stdout); html(gives); fputs("</small></td><td>", stdout); html(*account ? account : "Connected"); fputs("</td><td>", stdout);
-        html(!strcmp(customers, "usable") ? "Usable" : "Customer side not built yet"); fputs("</td></tr>", stdout);
+        ui_start(stdout,"tr");ui_attr_open(stdout,"data-held"); html(slug); fputs("\"><td>", stdout); html(name); ui_open(stdout,"small",NULL); html(gives); ui_close(stdout,"small");ui_close(stdout,"td");ui_open(stdout,"td",NULL); html(*account ? account : "Connected"); ui_close(stdout,"td");ui_open(stdout,"td",NULL);
+        html(!strcmp(customers, "usable") ? "Usable" : "Customer side not built yet"); ui_close(stdout,"td");ui_close(stdout,"tr");
     }
-    fputs("</tbody></table></div></section>", stdout); bf_json_free(d);
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section"); bf_json_free(d);
 }
 
 /* The organization's own login for a container it holds, shown once on the
@@ -123,7 +124,7 @@ static void pa_section(const char *org, const char *nonce) {
     while (pa_providers[count].slug && count < 16) count++;
     pa_show_all(customer, states, ids, count);
     pa_held(org);
-    fputs("<section data-provider-accounts><h2>Provider accounts</h2><p>This organization can have accounts of its own at outside services, run under Aurekai's provider accounts and closed from here. Closing removes the provider's copy.</p><div class=\"scroll\"><table><thead><tr><th>Service</th><th>This organization</th><th></th></tr></thead><tbody>", stdout);
+    ui_start(stdout,"section");ui_flag(stdout,"data-provider-accounts");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Provider accounts");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"This organization can have accounts of its own at outside services, run under Aurekai's provider accounts and closed from here. Closing removes the provider's copy.");ui_close(stdout,"p");ui_open(stdout,"div","scroll");ui_open(stdout,"table",NULL);ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Service");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"This organization");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     for (int i = 0; pa_providers[i].slug; i++) {
         const PaProvider *p = &pa_providers[i];
         /* Which services organizations are offered is the operator's setting;
@@ -131,11 +132,11 @@ static void pa_section(const char *org, const char *nonce) {
         const char *on = getenv("BONFYRE_PROVIDER_CUSTOMER_PROVIDERS"); char want[32]; snprintf(want, sizeof(want), ",%s,", p->slug); char list[512]; snprintf(list, sizeof(list), ",%s,", on ? on : "");
         if (on && *on && !strstr(list, want)) continue;
         int state = states[i]; snprintf(id, sizeof(id), "%s", ids[i]);
-        fputs("<tr data-provider=\"", stdout); html(p->slug); fputs("\"><td>", stdout); html(p->name); fputs("<small>", stdout); html(p->gives); fputs("</small></td><td>", stdout);
+        ui_start(stdout,"tr");ui_attr_open(stdout,"data-provider"); html(p->slug); fputs("\"><td>", stdout); html(p->name); ui_open(stdout,"small",NULL); html(p->gives); ui_close(stdout,"small");ui_close(stdout,"td");ui_open(stdout,"td",NULL);
         if (state < 0) fputs("Not answering right now", stdout);
-        else if (state) { fputs("Open <small>", stdout); html(id); fputs("</small>", stdout); }
+        else if (state) { fputs("Open <small>", stdout); html(id); ui_close(stdout,"small"); }
         else fputs("None yet", stdout);
-        fputs("</td><td>", stdout);
+        ui_close(stdout,"td");ui_open(stdout,"td",NULL);
         if (state >= 0) {
             {
                 const FtField hidden[] = {{"operation", state ? "provider-close" : "provider-open"}, {"organization", org}, {"provider", p->slug}, {"nonce", nonce}};
@@ -154,9 +155,9 @@ static void pa_section(const char *org, const char *nonce) {
                 }
             }
         }
-        fputs("</td></tr>", stdout);
+        ui_close(stdout,"td");ui_close(stdout,"tr");
     }
-    fputs("<tr data-provider=\"github\"><td>GitHub<small>access to repositories the organization chooses</small></td><td>Owned by the organization</td><td><a href=\"https://github.com/apps/aurekai-3b0542/installations/new\">Connect GitHub</a></td></tr>", stdout);
-    fputs("</tbody></table></div></section>", stdout);
+    ui_start(stdout,"tr");ui_attr(stdout,"data-provider","github");ui_gt(stdout);ui_open(stdout,"td",NULL);ui_copy(stdout,"GitHub");ui_open(stdout,"small",NULL);ui_copy(stdout,"access to repositories the organization chooses");ui_close(stdout,"small");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_copy(stdout,"Owned by the organization");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","https://github.com/apps/aurekai-3b0542/installations/new");ui_gt(stdout);ui_copy(stdout,"Connect GitHub");ui_close(stdout,"a");ui_close(stdout,"td");ui_close(stdout,"tr");
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");
 }
 #endif

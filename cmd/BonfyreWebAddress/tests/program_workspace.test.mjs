@@ -73,11 +73,12 @@ static int aw_native_result(char *const args[],const void *body,size_t bytes,uns
  for(size_t i=4;args[i];i+=2){if(!strcmp(args[i],"--source-db"))snprintf(native_source_db,sizeof(native_source_db),"%s",args[i+1]);if(!strcmp(args[i],"--instance"))snprintf(native_task,sizeof(native_task),"%s",args[i+1]);if(!strcmp(args[i],"--subject"))snprintf(native_subject,sizeof(native_subject),"%s",args[i+1]);if(!strcmp(args[i],"--actor"))snprintf(native_actor,sizeof(native_actor),"%s",args[i+1]);if(!strcmp(args[i],"--operation"))snprintf(native_operation,sizeof(native_operation),"%s",args[i+1]);}
  bf_mp_writer_t w;bf_mp_writer_init(&w,32);bf_mp_pack_array(&w,3);bf_mp_pack_uint(&w,1);bf_mp_pack_bool(&w,1);bf_mp_pack_map(&w,0);if(fault==1)bf_mp_pack_nil(&w);*size=w.len;*out=malloc(w.len);memcpy(*out,w.buf,w.len);bf_mp_writer_free(&w);return fault==2?127:0;
 }
+#include "${resolve(root,'cmd/BonfyreWebAddress/src/web_request.h')}"
 #include "${resolve(root,'cmd/BonfyreWebAddress/src/program_workspace.h')}"
-int main(int argc,char **argv){if(argc!=8)return 2;setenv("BONFYRE_BUN_BINARY","/native/bun",1);setenv("BONFYRE_PROGRAM_OWNER",__FILE__,1);setenv("BONFYRE_PROGRAM_SOURCE_OWNER",__FILE__,1);setenv("BONFYRE_SOURCE_FRONTIER_DB","/native/frontier.db",1);
+int main(int argc,char **argv){if(argc!=8)return 2;BfRequest route;memset(&route,0,sizeof(route));route.as="programs_api";setenv("BONFYRE_BUN_BINARY","/native/bun",1);setenv("BONFYRE_PROGRAM_OWNER",__FILE__,1);setenv("BONFYRE_PROGRAM_SOURCE_OWNER",__FILE__,1);setenv("BONFYRE_SOURCE_FRONTIER_DB","/native/frontier.db",1);
  const unsigned char body[]={0x92,0x01,0x81,0xa1,'a',0};char raw[2048];fault=atoi(argv[7]);snprintf(raw,sizeof(raw),"POST /apps/_programs HTTP/1.1\r\nHost: aurekai.life\r\nOrigin: %s\r\nContent-Type: %s\r\nContent-Length: %s\r\n\r\n",argv[4],argv[5],argv[6]);
  if(fault==3)unsetenv("BONFYRE_SOURCE_FRONTIER_DB");if(fault==4)setenv("BONFYRE_SOURCE_FRONTIER_DB","relative.db",1);if(fault==5)setenv("BONFYRE_PROGRAM_SOURCE_OWNER","/missing-owner.mjs",1);
- if(!serve_program_workspace(argv[2],"/apps/_programs",argv[1],(const char*)body,raw,"aurekai.life",argv[3],"/native/auth.db"))return 3;
+ if(!serve_program_workspace(argv[2],"/apps/_programs",argv[1],(const char*)body,raw,"aurekai.life",argv[3],"/native/auth.db",&route))return 3;
  printf("%d %d %d %s %s %s %zu\n",status_code,native_calls,permission,native_subject,native_actor,native_operation,native_size);if(native_task[0])printf("%s\n",native_task);if(native_source_db[0])printf("%s\n",native_source_db);return 0;}
 `;
  writeFileSync(join(home,'gateway.c'),source);execFileSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-I'+resolve(root,'lib/libbonfyre/include'),join(home,'gateway.c'),resolve(root,'lib/libbonfyre/bf_msgpack.c'),'-o',binary],{stdio:'pipe'});

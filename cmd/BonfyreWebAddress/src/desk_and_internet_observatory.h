@@ -1,5 +1,6 @@
 #ifndef BONFYRE_DESK_AND_INTERNET_OBSERVATORY_H
 #define BONFYRE_DESK_AND_INTERNET_OBSERVATORY_H
+#include "ui_tree.h"
 #include "web_store.h"
 /* Extracted verbatim from main.c lines 29042-31735 (mechanical split, no logic changes). */
 static int desk_unpriced_caps(DeskRow *out, int cap, int *listed) {
@@ -403,7 +404,7 @@ static void internet_html_reply(const char *page, const BfMatrixAddressResolutio
     if (!head) { fputs(page ? page : "", stdout); return; }
     fwrite(page, 1, (size_t)(head - page), stdout);
     internet_context(resolved);
-    fputs("</head>", stdout);
+    ui_close(stdout,"head");
     tail = head + strlen("</head>");
     /* SurfaceIR's document chrome is intentionally shared, but its generic
      * product links are not a lawful navigation contract for this institution.
@@ -413,9 +414,7 @@ static void internet_html_reply(const char *page, const BfMatrixAddressResolutio
     nav_end = nav ? strstr(nav, "</nav>") : NULL;
     if (!nav || !nav_end) { fputs(tail, stdout); return; }
     fwrite(tail, 1, (size_t)(nav - tail), stdout);
-    fputs("<nav><a href=\"/agents\">Agents</a><a href=\"/services\">Services</a>"
-          "<a href=\"/protocols\">Protocols</a><a href=\"/gaps\">Gaps</a>"
-          "<a href=\"/operators/\">Operator Lab</a></nav>", stdout);
+    ui_open(stdout,"nav",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/agents");ui_gt(stdout);ui_copy(stdout,"Agents");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/services");ui_gt(stdout);ui_copy(stdout,"Services");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/protocols");ui_gt(stdout);ui_copy(stdout,"Protocols");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/gaps");ui_gt(stdout);ui_copy(stdout,"Gaps");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/operators/");ui_gt(stdout);ui_copy(stdout,"Operator Lab");ui_close(stdout,"a");ui_close(stdout,"nav");
     fputs(nav_end + strlen("</nav>"), stdout);
 }
 
@@ -707,14 +706,13 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
     FILE *page = open_memstream(&body, &body_size), *continuation = NULL;
     if (!page) { html_error(503, "Review unavailable", "Try opening this address again."); return 1; }
     fprintf(page, SUBJ_HEAD, "Review a public address");
-    fputs("<article class=\"subj desk\"><p class=\"eyebrow\">Studio</p><h2 class=\"subj-name\">Review a public address</h2>", page);
+    ui_open(page,"article","subj desk");ui_open(page,"p","eyebrow");ui_copy(page,"Studio");ui_close(page,"p");ui_open(page,"h2","subj-name");ui_copy(page,"Review a public address");ui_close(page,"h2");
     if (!public_http_url(url)) {
-        fputs("<p>Enter a complete http:// or https:// address. Nothing has been fetched.</p>", page);
+        ui_open(page,"p",NULL);ui_copy(page,"Enter a complete http:// or https:// address. Nothing has been fetched.");ui_close(page,"p");
     } else {
         char escaped[8192];
         html_escape(url, escaped, sizeof(escaped));
-        fprintf(page, "<p class=\"subj-desc\">You supplied this address. Its contents have not been fetched.</p>"
-                      "<p class=\"review-address\" style=\"overflow-wrap:anywhere\">%s</p>", escaped);
+        ui_open(page,"p","subj-desc");ui_copy(page,"You supplied this address. Its contents have not been fetched.");ui_close(page,"p");ui_start(page,"p");ui_attr(page,"class","review-address");ui_attr(page,"style","overflow-wrap:anywhere");ui_gt(page);ui_copy(page,escaped);ui_close(page,"p");
         if (session_valid(bearer, auth_db) && session_authorized(bearer, auth_db, "write")) {
             bf_sha256_hex((const uint8_t *)url, strlen(url), digest);
             fprintf(page, "<form class=\"actions\" action=\"/studio/v1/foreign/observe\" method=\"post\" "
@@ -725,7 +723,7 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
                           "<p>This asks the source for a copy and keeps a receipt. It does not publish the source or verify its claims.</p>"
                           "<div id=\"selected-foreign-result\" aria-live=\"polite\"></div>", digest, escaped);
         } else if (session_valid(bearer, auth_db)) {
-            fputs("<p>Your account can review this address. Reading and retaining its contents requires write access.</p>", page);
+            ui_open(page,"p",NULL);ui_copy(page,"Your account can review this address. Reading and retaining its contents requires write access.");ui_close(page,"p");
         } else {
             continuation = open_memstream(&next, &next_size);
             if (continuation) {
@@ -738,7 +736,7 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
             }
         }
     }
-    fputs("<p><a href=\"/\">Back to the home page</a></p></article>", page);
+    ui_open(page,"p",NULL);ui_start(page,"a");ui_attr(page,"href","/");ui_gt(page);ui_copy(page,"Back to the home page");ui_close(page,"a");ui_close(page,"p");ui_close(page,"article");
     fputs(SUBJ_FOOT, page);
     if (fclose(page)) html_error(503, "Review unavailable", "Try opening this address again.");
     else flow_reply(body);
@@ -821,24 +819,23 @@ static int serve_desk_external_candidate(const BfRequest *r) {
  * region says so in place. */
 static void studio_desk_panel(const char *heading, const char *why, DeskRow *rows, int n, int total,
                               const char *act, const char *empty_means, int may_name) {
-    fputs("<article class=\"ak-panel\"><header><h2>", stdout); html(heading);
-    printf("</h2><span class=\"ak-tag%s\">%d</span></header><p>", total ? " is-on" : "", total);
-    html(why); fputs("</p>", stdout);
-    if (!n) { fputs("<p class=\"ak-empty\">Nothing open. ", stdout); html(empty_means); fputs("</p></article>", stdout); return; }
+    ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"h2",NULL); html(heading);
+    ui_close(stdout,"h2");ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-tag");ui_copy(stdout,total ? " is-on" : "");ui_attr_close(stdout);ui_gt(stdout);fprintf(stdout,"%d",total);ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"p",NULL);
+    html(why); ui_close(stdout,"p");
+    if (!n) { ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Nothing open. "); html(empty_means); ui_close(stdout,"p");ui_close(stdout,"article"); return; }
     if (!may_name) {
-        fputs("<p class=\"ak-empty\">Signed-in accounts with write access see which ones. "
-              "The rows are content nobody has published yet.</p></article>", stdout);
+        ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Signed-in accounts with write access see which ones. The rows are content nobody has published yet.");ui_close(stdout,"p");ui_close(stdout,"article");
         return;
     }
-    fputs("<div class=\"ak-rows\">", stdout);
+    ui_open(stdout,"div","ak-rows");
     for (int i = 0; i < n; i++) {
-        fputs("<a href=\"", stdout); html(rows[i].href); fputs("\"><strong>", stdout); html(rows[i].label);
-        fputs("</strong><small>", stdout); html(rows[i].sub); fputs("</small><span class=\"ak-go\">", stdout);
+        ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(rows[i].href); fputs("\"><strong>", stdout); html(rows[i].label);
+        ui_close(stdout,"strong");ui_open(stdout,"small",NULL); html(rows[i].sub); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
         html(act); fputs(" &rarr;</span></a>", stdout);
     }
-    fputs("</div>", stdout);
-    if (total > n) printf("<p class=\"ak-empty\">%d more not shown.</p>", total - n);
-    fputs("</article>", stdout);
+    ui_close(stdout,"div");
+    if (total > n) {ui_open(stdout,"p","ak-empty");fprintf(stdout,"%d",total - n);ui_copy(stdout," more not shown.");ui_close(stdout,"p");}
+    ui_close(stdout,"article");
 }
 
 static int studio_count(sqlite3 *db, const char *sql, const char *ns) {
@@ -878,29 +875,24 @@ static int serve_desk(const BfRequest *r) {
 
     ak_app_http(200, 1);
     ak_app_open("Studio", "workbench", "route-studio");
-    fputs("<div class=\"ak-wb-strip\"><span>Studio</span>", stdout);
-    if (signed_in) { fputs("<span>Signed in as <b>", stdout); html(who.name[0] ? who.name : who.email); fputs("</b></span>", stdout); }
+    ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Studio");ui_close(stdout,"span");
+    if (signed_in) { ui_open(stdout,"span",NULL);ui_copy(stdout,"Signed in as ");ui_open(stdout,"b",NULL); html(who.name[0] ? who.name : who.email); ui_close(stdout,"b");ui_close(stdout,"span"); }
     else ui_text(stdout, "span", NULL, "Signed out");
-    printf("<span>Addresses <b>%d</b></span><span>Pages <b>%d</b></span>", site_n, pages);
-    printf("<span class=\"ak-live%s\">%s</span></div>", "", site_n ? "Your pages answer at your address" : "Nothing published from here yet");
+    ui_open(stdout,"span",NULL);ui_copy(stdout,"Addresses ");ui_open(stdout,"b",NULL);fprintf(stdout,"%d",site_n);ui_close(stdout,"b");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Pages ");ui_open(stdout,"b",NULL);fprintf(stdout,"%d",pages);ui_close(stdout,"b");ui_close(stdout,"span");
+    ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-live");ui_copy(stdout,"");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,site_n ? "Your pages answer at your address" : "Nothing published from here yet");ui_close(stdout,"span");ui_close(stdout,"div");
 
-    fputs("<section class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Studio &middot; make and publish</p>"
-          "<h1>Make it here. It goes live at your address.</h1>"
-          "<p class=\"ak-lede\">Write a page, arrange its sections and choose how it looks. Saving keeps a draft; "
-          "publishing is a separate step you review, and then the page answers at your own address.</p>"
-          "<div class=\"ak-actions\">", stdout);
+    ui_open(stdout,"section","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Studio &middot; make and publish");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Make it here. It goes live at your address.");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Write a page, arrange its sections and choose how it looks. Saving keeps a draft; publishing is a separate step you review, and then the page answers at your own address.");ui_close(stdout,"p");ui_open(stdout,"div","ak-actions");
     if (signed_in) {
-        fputs("<a class=\"ak-btn is-primary\" href=\"/cms/compose", stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose");
         if (site_n) { fputs("?site=", stdout); url_query_value(sites[0].id); }
         fputs("\">Open the composer</a><a class=\"ak-btn\" href=\"/cms/compose/advanced", stdout);
         if (site_n) { fputs("?site=", stdout); url_query_value(sites[0].id); }
         fputs("\">Visual editor</a><a class=\"ak-btn is-quiet\" href=\"/profile\">Your page</a>", stdout);
-    } else fputs("<a class=\"ak-btn is-primary\" href=\"/login?next=/studio\">Sign in to your studio</a>"
-                 "<a class=\"ak-btn\" href=\"/signup\">Create an account</a>", stdout);
-    fputs("</div></div><dl class=\"ak-stats\">", stdout);
+    } else {ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr(stdout,"href","/login?next=/studio");ui_gt(stdout);ui_copy(stdout,"Sign in to your studio");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/signup");ui_gt(stdout);ui_copy(stdout,"Create an account");ui_close(stdout,"a");}
+    ui_close(stdout,"div");ui_close(stdout,"div");ui_open(stdout,"dl","ak-stats");
     printf("<div><dt>Addresses</dt><dd%s>%d</dd><small>sites bound to you</small></div>", site_n ? " class=\"is-on\"" : "", site_n);
-    printf("<div><dt>Published</dt><dd>%d</dd><small>pages that answer</small></div>", published);
-    printf("<div><dt>Drafts</dt><dd>%d</dd><small>saved, not public</small></div>", pages - published);
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Published");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",published);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"pages that answer");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Drafts");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",pages - published);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"saved, not public");ui_close(stdout,"small");ui_close(stdout,"div");
     printf("<div><dt>Write access</dt><dd%s>%s</dd><small>%s</small></div></dl></section>",
            may_write ? " class=\"is-on\"" : "", may_write ? "Yes" : signed_in ? "Own site" : "No",
            may_write ? "workspace and sites" : signed_in ? "your own sites only" : "sign in first");
@@ -914,38 +906,35 @@ static int serve_desk(const BfRequest *r) {
                           "A page for my bakery with this week's bread and how to order", 0, NULL, "900", 1, NULL);
         if (tree) { if (ok) ft_render(tree, stdout); else { bf_authoring_tree_clear(tree); free(tree); } }
     }
-    fputs("<p class=\"ak-empty\">Reading a sentence changes nothing. You see what it proposes before anything is created.</p></section>", stdout);
+    ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Reading a sentence changes nothing. You see what it proposes before anything is created.");ui_close(stdout,"p");ui_close(stdout,"section");
 
-    fputs("<nav class=\"ak-chips\" aria-label=\"Studio regions\" style=\"padding-top:26px\">"
-          "<a class=\"ak-chip\" href=\"#addresses\">Your addresses</a><a class=\"ak-chip\" href=\"#pages\">Pages</a>"
-          "<a class=\"ak-chip\" href=\"#design\">Design</a><a class=\"ak-chip\" href=\"#copy\">Keep a copy</a><a class=\"ak-chip\" href=\"#open\">Waiting on you</a><a class=\"ak-chip\" href=\"#rules\">What publishing does</a>"
-          "<a class=\"ak-chip\" href=\"/studio/controls\">Every control</a></nav>", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-chips");ui_attr(stdout,"aria-label","Studio regions");ui_attr(stdout,"style","padding-top:26px");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#addresses");ui_gt(stdout);ui_copy(stdout,"Your addresses");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#pages");ui_gt(stdout);ui_copy(stdout,"Pages");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#design");ui_gt(stdout);ui_copy(stdout,"Design");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#copy");ui_gt(stdout);ui_copy(stdout,"Keep a copy");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#open");ui_gt(stdout);ui_copy(stdout,"Waiting on you");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#rules");ui_gt(stdout);ui_copy(stdout,"What publishing does");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","/studio/controls");ui_gt(stdout);ui_copy(stdout,"Every control");ui_close(stdout,"a");ui_close(stdout,"nav");
 
     /* Addresses. */
     fputs("<section class=\"ak-sec\" id=\"addresses\"><header><div><span class=\"ak-kicker\">Where it goes live</span>"
           "<h2>Your addresses</h2></div><p>Each address is a site that carries your pages. Open it, compose for it, or change how it looks.</p></header>", stdout);
     if (!site_n) {
-        fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">", stdout);
+        ui_open(stdout,"div","ak-panel");ui_open(stdout,"p","ak-empty");
         fputs(signed_in ? "No address is bound to this account yet. Your profile is where one is claimed."
                         : "Sign in to see the addresses that carry your pages.", stdout);
-        fputs("</p><div class=\"ak-actions\">", stdout);
+        ui_close(stdout,"p");ui_open(stdout,"div","ak-actions");
         fputs(signed_in ? "<a class=\"ak-btn\" href=\"/profile\">Open your profile</a>" : "<a class=\"ak-btn\" href=\"/login?next=/studio\">Sign in</a>", stdout);
-        fputs("</div></div>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"div");
     } else {
-        fputs("<div class=\"ak-grid\">", stdout);
+        ui_open(stdout,"div","ak-grid");
         for (int i = 0; i < site_n; i++) {
             int sp = studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1", sites[i].id);
             int pp = studio_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1 AND status='published'", sites[i].id);
-            fputs("<article class=\"ak-panel\"><header><span class=\"ak-tag is-on\">", stdout); html(ph_label(sites[i].territory));
-            fputs("</span><span class=\"ak-dot\">live</span></header><h3>", stdout); html(sites[i].host);
-            printf("</h3><p>%d pages &middot; %d published</p><div class=\"ak-actions\" style=\"margin-top:16px\">", sp, pp);
-            fputs("<a class=\"ak-btn is-primary\" href=\"https://", stdout); html(sites[i].host); fputs("/\">Open</a>", stdout);
-            fputs("<a class=\"ak-btn\" href=\"/cms/compose?site=", stdout); url_query_value(sites[i].id); fputs("\">Compose</a>", stdout);
-            fputs("<a class=\"ak-btn is-quiet\" href=\"/profile?site=", stdout); url_query_value(sites[i].id); fputs("\">Settings</a></div></article>", stdout);
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-tag is-on"); html(ph_label(sites[i].territory));
+            ui_close(stdout,"span");ui_open(stdout,"span","ak-dot");ui_copy(stdout,"live");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html(sites[i].host);
+            ui_close(stdout,"h3");ui_open(stdout,"p",NULL);fprintf(stdout,"%d",sp);ui_copy(stdout," pages &middot; ");fprintf(stdout,"%d",pp);ui_copy(stdout," published");ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"style","margin-top:16px");ui_gt(stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(sites[i].host); fputs("/\">Open</a>", stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose?site="); url_query_value(sites[i].id); fputs("\">Compose</a>", stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?site="); url_query_value(sites[i].id); fputs("\">Settings</a></div></article>", stdout);
         }
-        fputs("</div>", stdout);
+        ui_close(stdout,"div");
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
     /* Pages of the first address, newest first, each opened in the composer. */
     fputs("<section class=\"ak-sec\" id=\"pages\"><header><div><span class=\"ak-kicker\">Pages</span><h2>What you have written</h2></div>"
@@ -959,24 +948,24 @@ static int serve_desk(const BfRequest *r) {
             bf_jsonw_arr_end(&ids);
             sqlite3_bind_text(st, 1, ids.buf ? ids.buf : "[]", -1, SQLITE_TRANSIENT);
             bf_jsonw_free(&ids);
-            fputs("<div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Page</th><th>Address</th><th>State</th><th></th></tr></thead><tbody>", stdout);
+            ui_open(stdout,"div","ak-scroll");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Page");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Address");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"State");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
             while (sqlite3_step(st) == SQLITE_ROW) {
                 const char *ns = (const char *)sqlite3_column_text(st, 0), *route = (const char *)sqlite3_column_text(st, 1);
                 const char *title = (const char *)sqlite3_column_text(st, 2), *state = (const char *)sqlite3_column_text(st, 3);
                 if (!ns || !route) continue;
-                fputs("<tr><td>", stdout); html(title ? title : route); fputs("</td><td><code>", stdout); html(route);
-                fputs("</code></td><td><span class=\"ak-tag", stdout); if (state && !strcmp(state, "published")) fputs(" is-on", stdout);
+                ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL); html(title ? title : route); ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_open(stdout,"code",NULL); html(route);
+                ui_close(stdout,"code");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-tag"); if (state && !strcmp(state, "published")) fputs(" is-on", stdout);
                 fputs("\">", stdout); html(state && *state ? state : "draft");
-                fputs("</span></td><td><a href=\"/cms/compose?site=", stdout); url_query_value(ns); fputs("&amp;route=", stdout);
+                ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose?site="); url_query_value(ns); fputs("&amp;route=", stdout);
                 url_query_value(route); fputs("\">Open &rarr;</a></td></tr>", stdout);
                 shown++;
             }
-            fputs("</tbody></table></div>", stdout);
+            ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");
             sqlite3_finalize(st);
         }
         if (!shown) ui_text(stdout, "p", "ak-empty", "No pages yet. Open the composer and give the first one an address.");
     } else ui_text(stdout, "p", "ak-empty", "Pages appear here once an address carries them.");
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
 
     /* How the address looks: the one design choice that dresses every page
      * of the site, saved through the profile's existing /profile/theme. */
@@ -984,22 +973,21 @@ static int serve_desk(const BfRequest *r) {
           "<p>One design sets the typefaces, colours and spacing for every page at the address. The newest choice wins.</p></header><div class=\"ak-panel studio-design\">", stdout);
     if (site_n) ph_theme_edit(db, &sites[0]);
     else ui_text(stdout, "p", "ak-empty", "Choose a design once an address is bound to you.");
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
 
     /* A copy to keep: every page snapshot of an address in one file. */
     fputs("<section class=\"ak-sec\" id=\"copy\"><header><div><span class=\"ak-kicker\">Keep a copy</span><h2>Take your site with you</h2></div>"
           "<p>Download every page and section of an address as one file. Each page carries its own digest, so you can check a copy against what is live.</p></header>", stdout);
     if (site_n) {
-        fputs("<div class=\"ak-grid is-2\">", stdout);
+        ui_open(stdout,"div","ak-grid is-2");
         for (int i = 0; i < site_n; i++) {
-            fputs("<article class=\"ak-panel\"><header><h3>", stdout); html(sites[i].host);
-            fputs("</h3><span class=\"ak-tag\">JSON</span></header><p>Pages, sections, sources and projection settings, exactly as the composer reads them.</p>"
-                  "<div class=\"ak-actions\" style=\"margin-top:14px\"><a class=\"ak-btn is-primary\" download href=\"/cms/compose/export?site=", stdout);
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"h3",NULL); html(sites[i].host);
+            ui_close(stdout,"h3");ui_open(stdout,"span","ak-tag");ui_copy(stdout,"JSON");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"p",NULL);ui_copy(stdout,"Pages, sections, sources and projection settings, exactly as the composer reads them.");ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"style","margin-top:14px");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_flag(stdout,"download");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/export?site=");
             url_query_value(sites[i].id); fputs("\">Download a copy</a></div></article>", stdout);
         }
-        fputs("</div><p class=\"ak-empty\">Bringing a copy back is done page by page in the composer; there is no one-step restore.</p>", stdout);
-    } else fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">There is nothing to copy until an address carries your pages.</p></div>", stdout);
-    fputs("</section>", stdout);
+        ui_close(stdout,"div");ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Bringing a copy back is done page by page in the composer; there is no one-step restore.");ui_close(stdout,"p");
+    } else {ui_open(stdout,"div","ak-panel");ui_open(stdout,"p","ak-empty");ui_copy(stdout,"There is nothing to copy until an address carries your pages.");ui_close(stdout,"p");ui_close(stdout,"div");}
+    ui_close(stdout,"section");
 
     /* What is held open for a decision. */
     fputs("<section class=\"ak-sec\" id=\"open\"><header><div><span class=\"ak-kicker\">Waiting on a decision</span><h2>Held open</h2></div>"
@@ -1025,7 +1013,7 @@ static int serve_desk(const BfRequest *r) {
     n = desk_held_messages(rows, 6, &total);
     studio_desk_panel("Messages written and held", "Nothing here sends a message; each waits for a person.", rows, n, total,
                       "Held", "No message is waiting.", may_write);
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
 
     /* The rules publishing keeps -- each is enforced by the composer route. */
     fputs("<section class=\"ak-sec\" id=\"rules\"><header><div><span class=\"ak-kicker\">What publishing does</span><h2>The rules your pages keep</h2></div></header>"
@@ -1035,15 +1023,15 @@ static int serve_desk(const BfRequest *r) {
           "<article class=\"ak-panel is-raised\"><h3>Only your own address</h3><p>A page publishes to a site bound to your account and to no other, whatever the request says.</p></article>"
           "</div></section>", stdout);
 
-    fputs("<section class=\"ak-band\"><div><p class=\"ak-kicker\">The last step</p><h2>", stdout);
+    ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"The last step");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);
     if (site_n) { fputs("Publish, and it answers at ", stdout); html(sites[0].host); fputs(".", stdout); }
     else fputs("Publish, and it answers at your address.", stdout);
-    fputs("</h2><p>Open a page, save it, review the revision, then publish it from the composer.</p></div><div class=\"ak-actions\">", stdout);
+    ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Open a page, save it, review the revision, then publish it from the composer.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");
     if (site_n) {
-        fputs("<a class=\"ak-btn\" href=\"/cms/compose?site=", stdout); url_query_value(sites[0].id); fputs("\">Compose and publish</a>", stdout);
-        fputs("<a class=\"ak-btn is-quiet\" href=\"https://", stdout); html(sites[0].host); fputs("/\">See it live</a>", stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose?site="); url_query_value(sites[0].id); fputs("\">Compose and publish</a>", stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(sites[0].host); fputs("/\">See it live</a>", stdout);
     } else fputs(signed_in ? "<a class=\"ak-btn\" href=\"/profile\">Claim an address</a>" : "<a class=\"ak-btn\" href=\"/login?next=/studio\">Sign in</a>", stdout);
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
     free(sites);
     if (db) sqlite3_close(db);
@@ -2630,7 +2618,7 @@ static int serve_studio(const BfRequest *r) {
 }
 
 static int serve_surface(BfMatrix *m, const char *host_in, const char *target,
-                         const char *root, const char *accept, const char *query) {
+                         const char *root, const char *accept, const char *query, int cms_app) {
     static const struct { const char *prefix; const char *name; } routes[] = {
         {"/api/",           "api"},
         {"/api",            "api"},
@@ -2774,7 +2762,7 @@ static int serve_surface(BfMatrix *m, const char *host_in, const char *target,
         return 1;
     }
     if (strstr(path, ".html")) {
-        if (emit_closure_linked_html(m, path, host, target, query)) return 1;
+        if (emit_closure_linked_html(m, path, host, target, query, cms_app)) return 1;
         printf("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
         return 1;
     }

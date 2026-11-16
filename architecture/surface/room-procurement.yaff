@@ -1,4 +1,5 @@
 architecture room-procurement-draft
+  source_lineage earliest source components/BonfyreServiceSite/room-procurement.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name RoomProcurementDraft
   family surface
   domain Content / Saved room purchase lists

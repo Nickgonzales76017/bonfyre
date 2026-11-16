@@ -1,6 +1,7 @@
 atlas surface
 
 architecture account-device-keys
+  source_lineage earliest source cmd/BonfyreCMS/content-types/device_key.json first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name AccountDeviceKeys
   family surface
   domain Surface / Account Devices
@@ -25,6 +26,7 @@ architecture account-device-keys
   witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh enrolls a device through the form, reads the row back as "not verified", proves a cross-site enroll writes nothing, a stranger cannot see or revoke it, and the owner's revoke archives it
 
 architecture account-device-move
+  source_lineage earliest source cmd/BonfyreCMS/content-types/device_pairing.json first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name AccountDeviceMove
   family surface
   domain Surface / Account Devices
@@ -51,6 +53,7 @@ architecture account-device-move
   witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh offers a code, proves it is not stored in clear, a stranger cannot redeem it, a second session of the same account redeems it once, and a reuse is refused
 
 architecture bluesky-sync-request
+  source_lineage earliest source cmd/BonfyreCMS/content-types/carrier_sync_request.json first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name BlueskySyncRequest
   family surface
   domain Surface / Connected Identities
@@ -73,6 +76,7 @@ architecture bluesky-sync-request
   witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh shows the empty state, declares a handle through BonfyreAuth, refuses a stranger's request for it, records the owner's request and shows "requested · not run"
 
 architecture feed-agent-policy
+  source_lineage earliest source cmd/BonfyreCMS/content-types/feed_agent_policy.json first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name FeedAgentPolicy
   family surface
   domain Surface / Connected Identities
@@ -97,6 +101,7 @@ architecture feed-agent-policy
   witness cmd/BonfyreWebAddress/tests/account_continuity_test.sh refuses a rule from an account that does not keep the feed, records the owner's rule and updates it in place, and shows "Not yet" for enforcement
 
 architecture field-dispatch
+  source_lineage earliest source cmd/BonfyreCMS/content-types/field_dispatch.json first committed 2026-11-13 in 8a26e2b8 "feat(one-app): one shell, Stitch layouts and new owners across the estate"
   canonical_name FieldDispatch
   family surface
   domain Surface / Field Work

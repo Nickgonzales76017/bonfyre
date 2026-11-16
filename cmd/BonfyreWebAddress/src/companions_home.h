@@ -1,5 +1,6 @@
 #ifndef BONFYRE_COMPANIONS_HOME_H
 #define BONFYRE_COMPANIONS_HOME_H
+#include "ui_tree.h"
 #include "affinity_projection.h"
 #include "club_projection.h"
 #include "dateplan_projection.h"
@@ -111,7 +112,7 @@ static void cp_masthead(sqlite3 *db, const char *actor, const char *kicker, cons
             "AND status='published' AND profile='member-profile-v1' AND subject_address LIKE 'person:%'", -1, &st, NULL) == SQLITE_OK &&
         sqlite3_step(st) == SQLITE_ROW) people = sqlite3_column_int(st, 0);
     sqlite3_finalize(st);
-    fputs("</head><body class=\"ak-app cp-app\"", stdout);
+    ui_close(stdout,"head");ui_start(stdout,"body");ui_attr(stdout,"class","ak-app cp-app");
     if (tmpl[0]) {
         fputs(" data-bf-template=\"", stdout);
         html(tmpl);
@@ -121,28 +122,28 @@ static void cp_masthead(sqlite3 *db, const char *actor, const char *kicker, cons
     html(kicker);
     fputs(" · Degrees of proximity</p><h1>Never walk or sit alone. <em>", stdout);
     html(title);
-    fputs("</em></h1><p class=\"cp-lede\">", stdout);
+    ui_close(stdout,"em");ui_close(stdout,"h1");ui_open(stdout,"p","cp-lede");
     html(lede);
-    fputs("</p></div><aside class=\"cp-count\"><p>People here</p><strong>", stdout);
+    ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","cp-count");ui_open(stdout,"p",NULL);ui_copy(stdout,"People here");ui_close(stdout,"p");ui_open(stdout,"strong",NULL);
     printf("%d", people);
-    fputs("</strong><span>", stdout);
+    ui_close(stdout,"strong");ui_open(stdout,"span",NULL);
     fputs(people == 1 ? "person keeps" : "people keep", stdout);
     fputs(" a public address on Aurekai</span></aside></section>"
           "<section class=\"cp-board\" aria-labelledby=\"cp-board-h\"><header><h2 id=\"cp-board-h\">Ways to find each other</h2>"
           "<p>Each view widens or narrows who you see. Nothing here contacts anyone for you.</p></header>"
           "<nav class=\"cp-switch\" aria-label=\"Companions\">", stdout);
     for (int i = 0; i < 7; i++) {
-        fputs("<a href=\"", stdout);
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");
         fputs(hrefs[i], stdout);
         fputc('"', stdout);
         if (!strcmp(title, names[i])) fputs(" aria-current=\"page\"", stdout);
         printf("><small>0%d</small><b>", i + 1);
         fputs(names[i], stdout);
-        fputs("</b><span>", stdout);
+        ui_close(stdout,"b");ui_open(stdout,"span",NULL);
         fputs(notes[i], stdout);
-        fputs("</span></a>", stdout);
+        ui_close(stdout,"span");ui_close(stdout,"a");
     }
-    fputs("</nav></section>", stdout);
+    ui_close(stdout,"nav");ui_close(stdout,"section");
 }
 static int cp_member_subject(sqlite3 *db, const char *subject) {
     sqlite3_stmt *st = NULL;
@@ -210,17 +211,17 @@ static void cp_meter(const char *actor, const char *model, long bytes, long ms,
 static int serve_companions(const BfRequest *r) {
     const char *method=r->method; const char *target=r->target; const char *query=r->query; const char *body=r->body; const char *raw=r->raw; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db; const char *accept=r->accept;
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;(void)accept;
-    int listing = !strcmp(target, "/companions") || !strcmp(target, "/companions/");
-    int mutate = !strcmp(target, "/companions/affinity");
-    int plans = !strcmp(target, "/companions/plans") || !strcmp(target, "/companions/plans/");
-    int accept_plan = !strcmp(target, "/companions/plans/accept");
-    int report = !strcmp(target, "/companions/report");
-    int clubs = !strcmp(target, "/companions/clubs") || !strcmp(target, "/companions/clubs/");
-    int join = !strcmp(target, "/companions/clubs/join");
-    int events = !strcmp(target, "/companions/events") || !strcmp(target, "/companions/events/");
-    int rsvp = !strcmp(target, "/companions/events/rsvp");
-    int notices = !strcmp(target, "/companions/notices") || !strcmp(target, "/companions/notices/");
-    int theme = !strcmp(target, "/companions/theme");
+    int listing = bf_request_is(r, "companions_listing");
+    int mutate = bf_request_is(r, "companions_mutate");
+    int plans = bf_request_is(r, "companions_plans");
+    int accept_plan = bf_request_is(r, "companions_accept_plan");
+    int report = bf_request_is(r, "companions_report");
+    int clubs = bf_request_is(r, "companions_clubs");
+    int join = bf_request_is(r, "companions_join");
+    int events = bf_request_is(r, "companions_events");
+    int rsvp = bf_request_is(r, "companions_rsvp");
+    int notices = bf_request_is(r, "companions_notices");
+    int theme = bf_request_is(r, "companions_theme");
     if (!listing && !mutate && !plans && !accept_plan && !report && !clubs && !join &&
         !events && !rsvp && !notices && !theme) return 0;
     char normalized[256];
@@ -884,10 +885,9 @@ static int serve_companions(const BfRequest *r) {
         cp_head("Date plans");
         cp_masthead(db, actor, "Companions", "Plans", "Machine-drafted outings from a location, intent and budget. Every plan carries its safety note and admitted cost; nothing books or pays.");
         if (priced)
-            printf("<div class=\"bf-native-slot\"><p class=\"cp-quota\">Priced model: $%.6f in / $%.6f out per million tokens, observed %s.</p></div>",
-                   in_rate * 1e6, out_rate * 1e6, observed);
+            {ui_open(stdout,"div","bf-native-slot");ui_open(stdout,"p","cp-quota");ui_copy(stdout,"Priced model: $");fprintf(stdout,"%.6f",in_rate * 1e6);ui_copy(stdout," in / $");fprintf(stdout,"%.6f",out_rate * 1e6);ui_copy(stdout," out per million tokens, observed ");ui_copy(stdout,observed);ui_copy(stdout,".");ui_close(stdout,"p");ui_close(stdout,"div");}
         else
-            fputs("<div class=\"bf-native-slot\"><p class=\"cp-quota\">No admitted rate for the pinned model; spend is recorded by bytes and time.</p></div>", stdout);
+            {ui_open(stdout,"div","bf-native-slot");ui_open(stdout,"p","cp-quota");ui_copy(stdout,"No admitted rate for the pinned model; spend is recorded by bytes and time.");ui_close(stdout,"p");ui_close(stdout,"div");}
         {
             BfAuthoringTree *tree = calloc(1, sizeof(*tree));
             int ok = 0;
@@ -985,14 +985,13 @@ static int serve_companions(const BfRequest *r) {
         }
         if (signed_in && !strcmp(view, "")) cp_theme_edit(db, actor);
         if (!*view && !*needle && !*territory && !*club && !*cursor) {
-            fputs("<section class=\"cp-section cp-events\"><header><p class=\"cp-kicker\">Going somewhere alone</p><h2>Gatherings you can join</h2>"
-                  "<p>Open gatherings from the clubs here. An RSVP states that you mean to come, nothing more.</p></header>", stdout);
+            ui_open(stdout,"section","cp-section cp-events");ui_open(stdout,"header",NULL);ui_open(stdout,"p","cp-kicker");ui_copy(stdout,"Going somewhere alone");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Gatherings you can join");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Open gatherings from the clubs here. An RSVP states that you mean to come, nothing more.");ui_close(stdout,"p");ui_close(stdout,"header");
             bf_events_page(stdout, db, signed_in ? actor : NULL, "");
-            fputs("</section>", stdout);
+            ui_close(stdout,"section");
         }
-        fputs("<section class=\"cp-section cp-people\"><header><p class=\"cp-kicker\">Kinship and common values</p><h2>", stdout);
+        ui_open(stdout,"section","cp-section cp-people");ui_open(stdout,"header",NULL);ui_open(stdout,"p","cp-kicker");ui_copy(stdout,"Kinship and common values");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);
         fputs(!strcmp(view, "matches") ? "People who liked you back" : !strcmp(view, "attention") ? "People who noticed you" : "People with an address here", stdout);
-        fputs("</h2><p>No endless swiping. Each person keeps their own page, and a like stays private until it is returned.</p></header>", stdout);
+        ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"No endless swiping. Each person keeps their own page, and a like stays private until it is returned.");ui_close(stdout,"p");ui_close(stdout,"header");
         {
             static const char *const values[] = {"", "work", "life", "live", "shop"};
             static const char *const labels[] = {"All territories", "work", "life", "live", "shop"};
@@ -1033,14 +1032,11 @@ static int serve_companions(const BfRequest *r) {
             sqlite3_close(db);
             return 1;
         }
-        fputs("</section>", stdout);
+        ui_close(stdout,"section");
         if (!*view && !*needle && !*territory && !*club && !*cursor) {
-            fputs("<section class=\"cp-section cp-clubs\"><header><p class=\"cp-kicker\">Discovery matrix</p><h2>Clubs with open doors</h2>"
-                  "<p>Small groups around a shared practice. Joining means membership and nothing beyond it.</p></header>", stdout);
+            ui_open(stdout,"section","cp-section cp-clubs");ui_open(stdout,"header",NULL);ui_open(stdout,"p","cp-kicker");ui_copy(stdout,"Discovery matrix");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Clubs with open doors");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Small groups around a shared practice. Joining means membership and nothing beyond it.");ui_close(stdout,"p");ui_close(stdout,"header");
             bf_clubs_page(stdout, db, signed_in ? actor : NULL);
-            fputs("</section><section class=\"cp-cta\"><div><p class=\"cp-kicker\">Host an open seat</p><h2>Going out anyway? Make room for one more.</h2>"
-                  "<p>Draft an outing from a place, an intent and a budget. Every plan carries its safety note and cost. Nothing books or pays for you.</p></div>"
-                  "<nav><a class=\"cp-cta-main\" href=\"/companions/plans\">Plan an outing</a><a href=\"/companions/events\">See every gathering</a></nav></section>", stdout);
+            ui_close(stdout,"section");ui_open(stdout,"section","cp-cta");ui_open(stdout,"div",NULL);ui_open(stdout,"p","cp-kicker");ui_copy(stdout,"Host an open seat");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Going out anyway? Make room for one more.");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Draft an outing from a place, an intent and a budget. Every plan carries its safety note and cost. Nothing books or pays for you.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"nav",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","cp-cta-main");ui_attr(stdout,"href","/companions/plans");ui_gt(stdout);ui_copy(stdout,"Plan an outing");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/companions/events");ui_gt(stdout);ui_copy(stdout,"See every gathering");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"section");
         }
         cp_end();
         sqlite3_close(db);

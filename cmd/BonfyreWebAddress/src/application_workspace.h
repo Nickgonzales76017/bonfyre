@@ -28,7 +28,7 @@ static int workspace_editor_links(long long installation){
         sqlite3_bind_int64(q,1,installation);while(sqlite3_step(q)==SQLITE_ROW){const char *id=(const char *)sqlite3_column_text(q,0),*entry=(const char *)sqlite3_column_text(q,1),*release=(const char *)sqlite3_column_text(q,2);
             if(!id||strlen(id)!=43||strncmp(id,"ws-",3)||strspn(id+3,"abcdef0123456789")!=40||!workspace_package_available(release,entry))continue;
             char word[64];size_t n=0;for(const char *c=!strcmp(entry,"product-room/")?"room editor":entry;*c&&*c!='/'&&n+1<sizeof(word);c++)word[n++]=*c=='-'?' ':*c;word[n]=0;
-            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);fputs("</a></p>",stdout);shown++;
+            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);ui_close(stdout,"a"); ui_close(stdout,"p");shown++;
         }
     }
     sqlite3_finalize(q);if(db)sqlite3_close(db);return shown;
@@ -162,9 +162,9 @@ static int serve_application_workspace(const BfRequest *r) {
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
     if(aw_open_audio_studio(method,bearer,auth_db,r))return 1;
     if(serve_connections_workspace(method,target,query,body,raw,host,bearer,auth_db,r))return 1;
-    if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
-    if(serve_native_command_work(method,target,query,body,raw,host,bearer,auth_db))return 1;
-    if(serve_activity_workspace(method,target,query,body,raw,host,bearer,auth_db))return 1;
+    if(serve_program_workspace(method,target,query,body,raw,host,bearer,auth_db,r))return 1;
+    if(serve_native_command_work(method,target,query,body,raw,host,bearer,auth_db,r))return 1;
+    if(serve_activity_workspace(method,target,query,body,raw,host,bearer,auth_db,r))return 1;
     if(connect_github_app(method,target,query,host,bearer,auth_db))return 1;
     if(ac_work_board_act(method,body,raw,host,bearer,auth_db,r))return 1;
     if(ac_work_outputs(method,query,bearer,auth_db,r))return 1;

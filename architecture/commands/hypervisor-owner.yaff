@@ -1,6 +1,7 @@
 atlas commands-hypervisor-owner
 
 architecture hypervisor-bun-compilation-owner
+  source_lineage earliest source integrations/mcp/hypervisor_schema.sql first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HypervisorBunCompilationOwner
   family commands
   domain Execution / Governed mission compilation and provider registry
@@ -49,6 +50,7 @@ architecture hypervisor-bun-compilation-owner
   known_gap filesystem artifacts and SQLite state are not one atomic transaction; interrupted compilation leaves explicit reconciliation receipts
 
 architecture hypervisor-context-body-cut
+  source_lineage earliest source integrations/mcp/hypervisor_context.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HypervisorContextBodyCut
   family representation
   domain Representation / Purpose-bound mission context residency
@@ -68,6 +70,7 @@ architecture hypervisor-context-body-cut
   known_gap this context does not bypass AddressPlane/ForeignTwin admission and is not a substitute for the separately governed ContextCut material frontier
 
 architecture hypervisor-durable-task-execution
+  source_lineage earliest source integrations/mcp/hypervisor_execution.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name HypervisorDurableTaskExecution
   family execution
   domain Execution / Bounded owner orchestration and effect reconciliation
@@ -123,6 +126,7 @@ interaction hypervisor-execution-consumes-context-body-cut
   witness integrations/mcp/tests/hypervisor_execution.test.mjs
 
 architecture semantic-task-input-plan
+  source_lineage earliest source integrations/mcp/mission_plan.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SemanticTaskInputPlan
   family execution
   domain Execution / Incremental semantic planning

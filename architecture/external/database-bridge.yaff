@@ -1,6 +1,7 @@
 atlas database-bridge
 
 architecture database-bridge
+  source_lineage earliest source cmd/BonfyreBridge/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DatabaseBridge
   family external
   domain Database interoperability

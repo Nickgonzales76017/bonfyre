@@ -27,6 +27,7 @@ architecture release-approval
   source_lineage 2026-10-26 owner direction: anything needing the owner goes through live Aurekai, no ad-hoc terminal asks
 
 architecture release-approval-mcp
+  source_lineage earliest source cmd/BonfyreReleaseApproval/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ReleaseApprovalMcp
   family command
   domain Release / Human Approval

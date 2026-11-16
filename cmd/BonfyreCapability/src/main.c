@@ -1351,7 +1351,8 @@ static void cmd_match(sqlite3 *db, const char *desc) {
                (!strcmp(origin,"discovered") || !strcmp(origin,"atlas-projection")) &&
                (strstr(stored,"Atlas-declared capability.") ||
                 strstr(stored,"Installed organ found") ||
-                !strncmp(stored,"What does ",10)) &&
+                !strncmp(stored,"What does ",10) ||
+                !strncmp(stored,"How does a native organ resolve",31)) &&
                native_owner_source_words(name,words,sizeof(words))) {
                 sc+=score_text(words,tokens,ntokens,&additional_hits);
                 h2+=additional_hits;
@@ -1703,7 +1704,8 @@ static int reconcile_probed(sqlite3 *db, time_t now) {
         organ[n] = '\0';
         if (!organ_facts(organ, desc, sizeof(desc), layer, sizeof(layer),
                          publishes, sizeof(publishes), keywords, sizeof(keywords))) continue;
-        if (!strncmp(desc, "What does ", 10)) {
+        if (!strncmp(desc, "What does ", 10) ||
+            !strncmp(desc, "How does a native organ resolve", 31)) {
             snprintf(desc, sizeof(desc), "%s: %s; %s. Atlas-declared capability.",
                      organ, keywords, publishes[0] ? publishes : "output unspecified");
         }

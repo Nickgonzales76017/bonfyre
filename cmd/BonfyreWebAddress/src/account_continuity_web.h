@@ -1,6 +1,7 @@
 #ifndef BONFYRE_ACCOUNT_CONTINUITY_WEB_H
 #define BONFYRE_ACCOUNT_CONTINUITY_WEB_H
 #include "form_tree.h"
+#include "bf_command_lookup.h"
 /* Account continuity: the devices a person names, moving their own site
  * export to a new device, the declared Bluesky links they ask to have read,
  * and which agents may read each of their saved feeds. Every record is a
@@ -85,15 +86,15 @@ static void acn_signin(const char *next) {
 static void acn_notice(int code, const char *title, const char *message, const char *back, const char *back_label) {
     ak_app_http(code, 1);
     ak_app_open(title, "workbench", "route-account-continuity");
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Nothing was changed</span><h1>", stdout);
+    ui_open(stdout,"header","ak-wb-hero is-solo"); ui_open(stdout,"div",NULL); ui_text(stdout,"span","ak-kicker","Nothing was changed"); ui_open(stdout,"h1",NULL);
     html(title);
-    fputs("</h1><p class=\"ak-lede\" role=\"alert\">", stdout);
+    ui_close(stdout,"h1"); ui_open_a(stdout,"p","class","ak-lede","role","alert");
     html(message);
     fputs("</p><div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"", stdout);
     html(back);
     fputs("\">", stdout);
     html(back_label);
-    fputs("</a></div></div></header>", stdout);
+    ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"header");
     ak_app_close();
 }
 /* Writes go through the one CMS owner; namespace is root, every row carries
@@ -126,22 +127,22 @@ static void acn_button(const char *id, const char *label, const char *action, co
     acn_tree_done(t, t && ft_action(t, id, NULL, 0, label, "post", action, fields, n));
 }
 static void acn_head(const char *kicker, const char *title, const char *lede) {
-    fputs("<header class=\"ak-wb-hero\"><div><span class=\"ak-kicker\">", stdout); html(kicker);
-    fputs("</span><h1>", stdout); html(title);
-    fputs("</h1><p class=\"ak-lede\">", stdout); html(lede); fputs("</p></div>", stdout);
+    ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); html(kicker);
+    ui_close(stdout,"span"); ui_open(stdout,"h1",NULL); html(title);
+    ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); html(lede); ui_close(stdout,"p"); ui_close(stdout,"div");
 }
 static void acn_nav(const char *current) {
     static const struct { const char *href, *label; } tabs[] = {
         {"/account/devices", "Devices"}, {"/account/move", "Move to a new device"},
         {"/account/move/receive", "Receive on this device"}, {"/connections/bluesky/sync", "Bluesky sync"},
         {"/account/agents", "Agents and feeds"}};
-    fputs("<nav class=\"ak-chips\" aria-label=\"Account devices and identities\">", stdout);
+    ui_open_a(stdout,"nav","class","ak-chips","aria-label","Account devices and identities");
     for (size_t i = 0; i < sizeof(tabs) / sizeof(tabs[0]); i++) {
         fputs("<a class=\"ak-chip\" href=\"", stdout); fputs(tabs[i].href, stdout); fputs("\"", stdout);
         if (!strcmp(current, tabs[i].href)) fputs(" aria-current=\"page\"", stdout);
-        fputs(">", stdout); fputs(tabs[i].label, stdout); fputs("</a>", stdout);
+        fputs(">", stdout); fputs(tabs[i].label, stdout); ui_close(stdout,"a");
     }
-    fputs("</nav>", stdout);
+    ui_close(stdout,"nav");
 }
 
 /* ------------------------------------------------------------ devices */
@@ -164,11 +165,11 @@ static void acn_devices_page(const AcnViewer *v, const char *added) {
            "<div><dt>Signs you in</dt><dd>No</dd><small>sign-in still uses your password</small></div></dl></header>", active, revoked);
     acn_nav("/account/devices");
     if (added && *added) {
-        fputs("<p class=\"cj-notice\" role=\"status\">", stdout); html(added); fputs("</p>", stdout);
+        ui_open_a(stdout,"p","class","cj-notice","role","status"); html(added); ui_close(stdout,"p");
     }
-    fputs("<div class=\"ak-grid is-2\">", stdout);
+    ui_open(stdout,"div","ak-grid is-2");
     /* Left: the enrollment form. */
-    fputs("<section class=\"ak-ask\"><p class=\"ak-kicker\">Enrolling device</p><h2 style=\"margin:6px 0 14px\">Name this device and its key</h2>", stdout);
+    ui_open(stdout,"section","ak-ask"); ui_open(stdout,"p","ak-kicker"); fputs("Enrolling device",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"h2","style","margin:6px 0 14px"); fputs("Name this device and its key",stdout); ui_close(stdout,"h2");
     {
         static const FtOption algs[] = {{"ed25519", "Ed25519", 1}, {"p-256", "P-256", 0}, {"rsa", "RSA", 0}, {"other", "Other", 0}};
         BfAuthoringTree *t = calloc(1, sizeof(*t));
@@ -179,42 +180,36 @@ static void acn_devices_page(const AcnViewer *v, const char *added) {
                  ft_choice(t, "dev-alg", "dev-enroll", 2, "Key type", "key_algorithm", algs, 4);
         acn_tree_done(t, ok);
     }
-    fputs("<p class=\"ak-empty\">Type the fingerprint yourself; never paste a private key. Aurekai cannot see inside your device, so this records your word, not a hardware attestation.</p></section>", stdout);
+    ui_text(stdout,"p","ak-empty","Type the fingerprint yourself; never paste a private key. Aurekai cannot see inside your device, so this records your word, not a hardware attestation."); ui_close(stdout,"section");
     /* Right: what is and is not checked. */
-    fputs("<section class=\"ak-panel\"><header><h2>What this records</h2><span class=\"ak-tag\">Your word</span></header><ul class=\"ak-rows\">"
-          "<li><strong>Device name</strong><small>As you typed it</small><span class=\"ak-go\">Kept</span></li>"
-          "<li><strong>Public key fingerprint</strong><small>As you typed it; no key is generated here</small><span class=\"ak-go\">Kept</span></li>"
-          "<li><strong>Hardware attestation</strong><small>Aurekai has no attestation verifier</small><span class=\"ak-go\">Not verified</span></li>"
-          "<li><strong>Sign-in</strong><small>An enrolled key does not sign you in or replace your password</small><span class=\"ak-go\">Unchanged</span></li>"
-          "</ul></section></div>", stdout);
+    ui_open(stdout,"section","ak-panel"); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("What this records",stdout); ui_close(stdout,"h2"); ui_open(stdout,"span","ak-tag"); fputs("Your word",stdout); ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"ul","ak-rows"); ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL); fputs("Device name",stdout); ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("As you typed it",stdout); ui_close(stdout,"small"); ui_open(stdout,"span","ak-go"); fputs("Kept",stdout); ui_close(stdout,"span"); ui_close(stdout,"li"); ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL); fputs("Public key fingerprint",stdout); ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("As you typed it; no key is generated here",stdout); ui_close(stdout,"small"); ui_open(stdout,"span","ak-go"); fputs("Kept",stdout); ui_close(stdout,"span"); ui_close(stdout,"li"); ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL); fputs("Hardware attestation",stdout); ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("Aurekai has no attestation verifier",stdout); ui_close(stdout,"small"); ui_open(stdout,"span","ak-go"); fputs("Not verified",stdout); ui_close(stdout,"span"); ui_close(stdout,"li"); ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL); fputs("Sign-in",stdout); ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("An enrolled key does not sign you in or replace your password",stdout); ui_close(stdout,"small"); ui_open(stdout,"span","ak-go"); fputs("Unchanged",stdout); ui_close(stdout,"span"); ui_close(stdout,"li"); ui_close(stdout,"ul"); ui_close(stdout,"section"); ui_close(stdout,"div");
     /* The list. */
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">On record</span><h2>Your devices</h2></div>"
-          "<p>Revoking marks the device as no longer yours. It stays in this list so you can see when it changed.</p></header><div class=\"ak-panel\">", stdout);
+    ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("On record",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Your devices",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Revoking marks the device as no longer yours. It stays in this list so you can see when it changed.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel");
     sqlite3_stmt *st = NULL; int shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT id,device_label,key_fingerprint,key_algorithm,enrolled_at,COALESCE(revoked_at,''),status "
                                      "FROM device_key WHERE namespace='root' AND account_subject=?1 ORDER BY status='archived',id DESC LIMIT 60",
                                  -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, v->subject, -1, SQLITE_TRANSIENT);
-        fputs("<ul class=\"ak-rows\">", stdout);
+        ui_open(stdout,"ul","ak-rows");
         while (sqlite3_step(st) == SQLITE_ROW) {
             char id[24]; snprintf(id, sizeof(id), "%lld", (long long)sqlite3_column_int64(st, 0));
             int live = !strcmp(acn_col(st, 6), "published");
-            fputs("<li data-device-key><div><strong>", stdout); html(acn_col(st, 1));
+            ui_open_a(stdout,"li","data-device-key",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"strong",NULL); html(acn_col(st, 1));
             fputs("</strong> <span class=\"ak-tag", stdout); if (live) fputs(" is-on", stdout);
             fputs("\">", stdout); fputs(live ? "Enrolled" : "Revoked", stdout);
-            fputs("</span><br><small>", stdout); html(acn_col(st, 3)); fputs(" · ", stdout); html(acn_col(st, 2));
-            fputs("</small><br><small>Enrolled ", stdout); acn_when(acn_col(st, 4));
+            ui_close(stdout,"span"); ui_open(stdout,"br",NULL); ui_open(stdout,"small",NULL); html(acn_col(st, 3)); fputs(" · ", stdout); html(acn_col(st, 2));
+            ui_close(stdout,"small"); ui_open(stdout,"br",NULL); ui_open(stdout,"small",NULL); fputs("Enrolled ",stdout); acn_when(acn_col(st, 4));
             if (!live) { fputs(" · revoked ", stdout); acn_when(acn_col(st, 5)); }
             fputs(" · attestation not verified</small></div>", stdout);
             if (live) { FtField f[] = {{"device", id}}; acn_button("dev-revoke", "Revoke", "/account/devices/revoke", f, 1); }
-            fputs("</li>", stdout);
+            ui_close(stdout,"li");
             shown++;
         }
-        fputs("</ul>", stdout);
+        ui_close(stdout,"ul");
     }
     sqlite3_finalize(st);
     if (!shown) ui_text(stdout, "p", "ak-empty", "No devices yet. Enroll the first one above.");
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
     if (db) sqlite3_close(db);
     ak_app_close();
 }
@@ -278,25 +273,25 @@ static int acn_devices_post(const AcnViewer *v, const char *target, const char *
 static void acn_export_manifest(sqlite3 *db, const AcnViewer *v, int downloadable) {
     PhSite *sites = calloc(16, sizeof(*sites));
     int n = (sites && v->person[0] && db) ? ph_sites(db, v->person, sites) : 0;
-    fputs("<section class=\"ak-panel\"><header><h2>What the new device takes</h2><span class=\"ak-tag\">", stdout);
+    ui_open(stdout,"section","ak-panel"); ui_open(stdout,"header",NULL); ui_text(stdout,"h2",NULL,"What the new device takes"); ui_open(stdout,"span","ak-tag");
     printf("%d %s</span></header>", n, n == 1 ? "address" : "addresses");
     if (!n) ui_text(stdout, "p", "ak-empty", "This account has no site address yet, so there is no export to take. Your account itself is reached by signing in; nothing about it needs copying.");
     else {
-        fputs("<ul class=\"ak-rows\">", stdout);
+        ui_open(stdout,"ul","ak-rows");
         for (int i = 0; i < n; i++) {
             int pages = acn_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1", sites[i].id, NULL);
             int pub = acn_count(db, "SELECT count(*) FROM site_page WHERE namespace=?1 AND status='published'", sites[i].id, NULL);
-            fputs("<li><div><strong>", stdout); html(sites[i].host);
+            ui_open(stdout,"li",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"strong",NULL); html(sites[i].host);
             printf("</strong><br><small>%d pages · %d published · one JSON file with a digest per page</small></div>", pages, pub);
             if (downloadable) {
                 fputs("<a class=\"ak-btn is-primary\" download href=\"/cms/compose/export?site=", stdout);
-                url_query_value(sites[i].id); fputs("\">Download to this device</a>", stdout);
+                url_query_value(sites[i].id); fputs("\">Download to this device",stdout); ui_close(stdout,"a");
             } else ui_text(stdout, "span", "ak-go", "Ready");
-            fputs("</li>", stdout);
+            ui_close(stdout,"li");
         }
-        fputs("</ul>", stdout);
+        ui_close(stdout,"ul");
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     free(sites);
 }
 static void acn_move_page(const AcnViewer *v, const char *fresh_code, const char *fresh_expiry) {
@@ -313,27 +308,25 @@ static void acn_move_page(const AcnViewer *v, const char *fresh_code, const char
            "<div><dt>Code lifetime</dt><dd>10 min</dd><small>then it stops working</small></div>"
            "<div><dt>Credentials copied</dt><dd>None</dd><small>sign in on the new device yourself</small></div></dl></header>", open, received);
     acn_nav("/account/move");
-    fputs("<div class=\"ak-grid is-2\"><section class=\"ak-ask ak-pair\"><p class=\"ak-kicker\">One-use pairing code</p>", stdout);
+    ui_open(stdout,"div","ak-grid is-2"); ui_open(stdout,"section","ak-ask ak-pair"); ui_text(stdout,"p","ak-kicker","One-use pairing code");
     if (fresh_code && *fresh_code) {
-        fputs("<p class=\"ak-pair-code\" data-pairing-code>", stdout);
+        ui_open_a(stdout,"p","class","ak-pair-code","data-pairing-code",(const char *)NULL);
         printf("%.3s<span>&ndash;</span>%.3s", fresh_code, fresh_code + 3);
-        fputs("</p><p>Enter this on the new device at <b>/account/move/receive</b>, signed in to this account. It works once and stops at ", stdout);
+        ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("Enter this on the new device at ",stdout); ui_open(stdout,"b",NULL); fputs("/account/move/receive",stdout); ui_close(stdout,"b"); fputs(", signed in to this account. It works once and stops at ",stdout);
         acn_when(fresh_expiry);
         fputs(". It is shown only now; Aurekai keeps a digest, not the code.</p>", stdout);
     } else {
-        fputs("<p class=\"ak-pair-code is-idle\">&middot;&middot;&middot;<span>&ndash;</span>&middot;&middot;&middot;</p>"
-              "<p>No code is showing. Offer one when the new device is in front of you.</p>", stdout);
+        ui_open(stdout,"p","ak-pair-code is-idle"); fputs("&middot;&middot;&middot;",stdout); ui_open(stdout,"span",NULL); fputs("&ndash;",stdout); ui_close(stdout,"span"); fputs("&middot;&middot;&middot;",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("No code is showing. Offer one when the new device is in front of you.",stdout); ui_close(stdout,"p");
     }
     {
         BfAuthoringTree *t = calloc(1, sizeof(*t));
         FtField f[] = {{"operation", "offer"}};
         acn_tree_done(t, t && ft_action(t, "move-offer", NULL, 0, fresh_code && *fresh_code ? "Offer a new code" : "Offer a pairing code", "post", "/account/move", f, 1));
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     acn_export_manifest(db, v, 0);
-    fputs("</div>", stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Ledger</span><h2>Codes you offered</h2></div>"
-          "<p>Each line is a code this account offered, when, and whether a device used it.</p></header><div class=\"ak-console\">", stdout);
+    ui_close(stdout,"div");
+    ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Ledger",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Codes you offered",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Each line is a code this account offered, when, and whether a device used it.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-console");
     sqlite3_stmt *st = NULL; int shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT id,offered_at,expires_at,state,COALESCE(received_at,'') FROM device_pairing WHERE namespace='root' AND account_subject=?1 ORDER BY id DESC LIMIT 20",
                                  -1, &st, NULL) == SQLITE_OK) {
@@ -342,29 +335,35 @@ static void acn_move_page(const AcnViewer *v, const char *fresh_code, const char
             const char *state = acn_col(st, 3), *exp = acn_col(st, 2);
             int expired = !strcmp(state, "offered") && strcmp(exp, now) <= 0;
             char id[24]; snprintf(id, sizeof(id), "%lld", (long long)sqlite3_column_int64(st, 0));
-            fputs("<div data-pairing>[", stdout); acn_when(acn_col(st, 1)); fputs("] <b>", stdout);
+            ui_open_a(stdout,"div","data-pairing",(const char *)NULL); fputs("[",stdout); acn_when(acn_col(st, 1)); fputs("] <b>", stdout);
             fputs(expired ? "EXPIRED" : !strcmp(state, "offered") ? "OFFERED" : !strcmp(state, "received") ? "RECEIVED" : "WITHDRAWN", stdout);
-            fputs("</b> ", stdout);
+            ui_close(stdout,"b"); fputs(" ",stdout);
             if (!strcmp(state, "received")) { fputs("used by a device signed in to this account at ", stdout); acn_when(acn_col(st, 4)); }
             else if (expired) fputs("never used", stdout);
             else if (!strcmp(state, "offered")) { fputs("open until ", stdout); acn_when(exp); }
             else fputs("withdrawn before use", stdout);
-            fputs("</div>", stdout);
+            ui_close(stdout,"div");
             if (!strcmp(state, "offered") && !expired) { FtField f[] = {{"operation", "withdraw"}, {"pairing", id}}; acn_button("move-withdraw", "Withdraw this code", "/account/move", f, 2); }
             shown++;
         }
     }
     sqlite3_finalize(st);
     if (!shown) ui_text(stdout, "div", NULL, "No codes offered yet.");
-    fputs("</div></section><p class=\"ak-empty\">Aurekai does not send anything to the other device. The new device asks for its own copy after you enter the code there, and only this account can use the code.</p>", stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section"); ui_text(stdout,"p","ak-empty","Aurekai does not send anything to the other device. The new device asks for its own copy after you enter the code there, and only this account can use the code.");
     if (db) sqlite3_close(db);
     ak_app_close();
 }
+/* The operations this owner takes, resolved once (strcmp order). */
+#define ACN_MOVE_OPS_LIST(X) \
+    X("offer", ACM_OFFER) \
+    X("withdraw", ACM_WITHDRAW)
+BF_COMMAND_TABLE(acn_move_ops, ACN_MOVE_OPS_LIST);
 static int acn_move_post(const AcnViewer *v, const char *body, const char *bearer) {
     char op[16], now[40];
     acn_iso(time(NULL), now, sizeof(now));
     if (!acn_field(body, "operation", op, sizeof(op))) { acn_notice(400, "Choose an action", "Offer or withdraw a code from the page.", "/account/move", "Move to a new device"); return 1; }
-    if (!strcmp(op, "withdraw")) {
+    int opid=bf_command_id(acn_move_ops,BF_COMMAND_COUNT(acn_move_ops),op,-1);
+    if (opid==ACM_WITHDRAW) {
         char id[24]; sqlite3 *db = cms_open_ro(); int mine = 0;
         if (acn_field(body, "pairing", id, sizeof(id)) && *id && strspn(id, "0123456789") == strlen(id))
             mine = acn_count(db, "SELECT count(*) FROM device_pairing WHERE namespace='root' AND id=CAST(?1 AS INTEGER) AND account_subject=?2 AND state='offered'", id, v->subject);
@@ -374,7 +373,7 @@ static int acn_move_post(const AcnViewer *v, const char *body, const char *beare
         acn_redirect("/account/move");
         return 1;
     }
-    if (strcmp(op, "offer")) { acn_notice(400, "Choose an action", "Offer or withdraw a code from the page.", "/account/move", "Move to a new device"); return 1; }
+    if (opid!=ACM_OFFER) { acn_notice(400, "Choose an action", "Offer or withdraw a code from the page.", "/account/move", "Move to a new device"); return 1; }
     char raw[9], code[7], digest[65], session[65], expiry[40];
     if (!acn_hex_random(raw, 8)) { acn_notice(503, "No code was made", "A random code could not be prepared. Try again.", "/account/move", "Move to a new device"); return 1; }
     snprintf(code, sizeof(code), "%06lu", strtoul(raw, NULL, 16) % 1000000UL);
@@ -414,19 +413,19 @@ static void acn_receive_page(const AcnViewer *v, int accepted, const char *probl
     acn_head("Account · Move · Receiver", accepted ? "Code accepted on this device" : "Receive your work on this device",
             accepted ? "The code matched an open offer from this account. Download each address below to keep a copy here. Nothing else was copied."
                      : "Enter the code your other device is showing. You must be signed in to the same account here.");
-    fputs("<dl class=\"ak-stats\"><div><dt>Signed in as</dt><dd style=\"font-size:1rem\">", stdout); html(v->who.email);
+    ui_open(stdout,"dl","ak-stats"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Signed in as",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","style","font-size:1rem"); html(v->who.email);
     fputs("</dd><small>the account the code must belong to</small></div><div><dt>Copy</dt><dd", stdout);
     fputs(accepted ? " class=\"is-on\">Ready" : ">Waiting", stdout);
-    fputs("</dd><small>", stdout); fputs(accepted ? "your choice to download" : "for a code", stdout); fputs("</small></div></dl></header>", stdout);
+    ui_close(stdout,"dd"); ui_open(stdout,"small",NULL); fputs(accepted ? "your choice to download" : "for a code", stdout); ui_close(stdout,"small"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"header");
     acn_nav("/account/move/receive");
-    if (problem) { fputs("<p class=\"cj-notice\" role=\"alert\">", stdout); html(problem); fputs("</p>", stdout); }
+    if (problem) { ui_open_a(stdout,"p","class","cj-notice","role","alert"); html(problem); ui_close(stdout,"p"); }
     if (accepted) acn_export_manifest(db, v, 1);
     else {
-        fputs("<section class=\"ak-ask ak-pair\"><p class=\"ak-kicker\">Pairing code</p>", stdout);
+        ui_open(stdout,"section","ak-ask ak-pair"); ui_text(stdout,"p","ak-kicker","Pairing code");
         BfAuthoringTree *t = calloc(1, sizeof(*t));
         acn_tree_done(t, t && ft_action(t, "move-receive", NULL, 0, "Check the code", "post", "/account/move/receive", NULL, 0) &&
                             ft_field(t, "move-code", "move-receive", 0, "Six-digit code", "text", "code", "", "123456", 0, NULL, "7", 1, "numeric"));
-        fputs("<p class=\"ak-empty\">A code works once, for ten minutes, for the account that offered it. Checking it does not download anything.</p></section>", stdout);
+        ui_text(stdout,"p","ak-empty","A code works once, for ten minutes, for the account that offered it. Checking it does not download anything."); ui_close(stdout,"section");
     }
     if (db) sqlite3_close(db);
     ak_app_close();
@@ -475,8 +474,7 @@ static void acn_bluesky_page(const AcnViewer *v, const char *bearer, const char 
            "<div><dt>Repositories read</dt><dd>0</dd><small>no reader has run</small></div>"
            "<div><dt>Sync state</dt><dd>Not run</dd><small>no AT Protocol reader</small></div></dl></header>", bsky, requests);
     acn_nav("/connections/bluesky/sync");
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">1 · Repositories</span><h2>Your declared Bluesky handles</h2></div>"
-          "<p>A handle you declared is your statement, not a verified ownership claim. Add or remove handles on your connections page.</p></header><div class=\"ak-grid is-2\">", stdout);
+    ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("1 · Repositories",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Your declared Bluesky handles",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("A handle you declared is your statement, not a verified ownership claim. Add or remove handles on your connections page.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-grid is-2");
     for (int i = 0; i < nl; i++) {
         if (strcmp(links[i].provider, "bluesky")) continue;
         char last_at[40] = "", last_state[24] = ""; int count = 0;
@@ -487,32 +485,31 @@ static void acn_bluesky_page(const AcnViewer *v, const char *bearer, const char 
             if (sqlite3_step(st) == SQLITE_ROW) { snprintf(last_at, sizeof(last_at), "%s", acn_col(st, 0)); snprintf(last_state, sizeof(last_state), "%s", acn_col(st, 1)); count = sqlite3_column_int(st, 2); }
         }
         sqlite3_finalize(st);
-        fputs("<article class=\"ak-panel\" data-bluesky-link><header><h3>", stdout); html(links[i].account);
-        fputs("</h3><span class=\"ak-tag\">", stdout); html(links[i].state[0] ? links[i].state : "declared"); fputs("</span></header><dl class=\"ak-spec\">", stdout);
-        fputs("<dt>Profile</dt><dd>", stdout); if (public_http_url(links[i].url)) html(links[i].url); else fputs("&mdash;", stdout);
+        ui_open_a(stdout,"article","class","ak-panel","data-bluesky-link",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h3",NULL); html(links[i].account);
+        ui_close(stdout,"h3"); ui_open(stdout,"span","ak-tag"); html(links[i].state[0] ? links[i].state : "declared"); ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"dl","ak-spec");
+        ui_text(stdout,"dt",NULL,"Profile"); ui_open(stdout,"dd",NULL); if (public_http_url(links[i].url)) html(links[i].url); else fputs("&mdash;", stdout);
         printf("</dd><dt>Requests</dt><dd>%d</dd><dt>Last requested</dt><dd>", count); acn_when(last_at[0] ? last_at : NULL);
-        fputs("</dd><dt>State</dt><dd class=\"is-on\" data-sync-state>", stdout);
+        ui_close(stdout,"dd"); ui_open(stdout,"dt",NULL); fputs("State",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","class","is-on","data-sync-state",(const char *)NULL);
         fputs(last_state[0] ? "requested · not run" : "never requested", stdout);
-        fputs("</dd></dl><div class=\"ak-actions\" style=\"margin-top:14px\">", stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"dl"); ui_open_a(stdout,"div","class","ak-actions","style","margin-top:14px");
         FtField f[] = {{"link", links[i].id}};
         acn_button("bsky-request", "Request a repository sync", "/connections/bluesky/sync", f, 1);
-        fputs("</div></article>", stdout);
+        ui_close(stdout,"div"); ui_close(stdout,"article");
     }
-    if (!bsky) fputs("<p class=\"ak-empty\">You have not declared a Bluesky handle. <a href=\"/connections?provider=bluesky\">Link a handle</a> first; this page then lets you ask for its repository to be read.</p>", stdout);
-    fputs("</div></section>", stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">2 · Requests</span><h2>Sync request ledger</h2></div>"
-          "<p>Every request you made, newest first. A request is not a fetch: no repository bytes were downloaded.</p></header><div class=\"ak-console\">", stdout);
+    if (!bsky) do{ ui_open(stdout,"p","ak-empty"); fputs("You have not declared a Bluesky handle. ",stdout); ui_open_a(stdout,"a","href","/connections?provider=bluesky"); fputs("Link a handle",stdout); ui_close(stdout,"a"); fputs(" first; this page then lets you ask for its repository to be read.",stdout); ui_close(stdout,"p"); }while(0);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
+    ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("2 · Requests",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Sync request ledger",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Every request you made, newest first. A request is not a fetch: no repository bytes were downloaded.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-console");
     sqlite3_stmt *st = NULL; int shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT requested_at,remote_account,run_state FROM carrier_sync_request WHERE namespace='root' AND account_subject=?1 ORDER BY id DESC LIMIT 30", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, v->subject, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(st) == SQLITE_ROW) {
-            fputs("<div data-sync-request>[", stdout); acn_when(acn_col(st, 0)); fputs("] <b>#request</b> ", stdout); html(acn_col(st, 1));
+            ui_open_a(stdout,"div","data-sync-request",(const char *)NULL); fputs("[",stdout); acn_when(acn_col(st, 0)); fputs("] <b>#request</b> ", stdout); html(acn_col(st, 1));
             fputs(" &rarr; ", stdout); html(acn_col(st, 2)); fputs(" · not run</div>", stdout); shown++;
         }
     }
     sqlite3_finalize(st);
     if (!shown) ui_text(stdout, "div", NULL, "No sync requests yet.");
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
     if (db) sqlite3_close(db);
     ak_app_close();
 }
@@ -557,38 +554,38 @@ static void acn_agents_page(const AcnViewer *v) {
            "<div><dt>Rules</dt><dd>%d</dd><small>on record</small></div>"
            "<div><dt>Enforced</dt><dd>Not yet</dd><small>no agent reads saved feeds</small></div></dl></header>", feeds, agents, rules);
     acn_nav("/account/agents");
-    fputs("<div class=\"ak-grid is-main\">", stdout);
+    ui_open(stdout,"div","ak-grid is-main");
     /* 01 Agents named in your rules */
-    fputs("<section class=\"ak-panel\"><header><h2>Agents</h2><span class=\"ak-tag\">named by you</span></header><ul class=\"ak-rows\">", stdout);
+    ui_open(stdout,"section","ak-panel"); ui_open(stdout,"header",NULL); ui_text(stdout,"h2",NULL,"Agents"); ui_text(stdout,"span","ak-tag","named by you"); ui_close(stdout,"header"); ui_open(stdout,"ul","ak-rows");
     sqlite3_stmt *st = NULL; int shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT agent,count(*),sum(access='none') FROM feed_agent_policy WHERE namespace='root' AND account_subject=?1 AND status='published' GROUP BY agent ORDER BY agent LIMIT 40", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, v->subject, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(st) == SQLITE_ROW) {
-            fputs("<li><strong>", stdout); html(acn_col(st, 0)); printf("</strong><small>%d feed rules · %d blocked</small></li>", sqlite3_column_int(st, 1), sqlite3_column_int(st, 2)); shown++;
+            ui_open(stdout,"li",NULL); ui_open(stdout,"strong",NULL); html(acn_col(st, 0)); printf("</strong><small>%d feed rules · %d blocked</small></li>", sqlite3_column_int(st, 1), sqlite3_column_int(st, 2)); shown++;
         }
     }
     sqlite3_finalize(st); st = NULL;
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No agent named yet. Name one beside a feed.");
-    fputs("<p class=\"ak-empty\">A name is how you refer to a client. It does not identify who runs it.</p></section>", stdout);
+    ui_text(stdout,"p","ak-empty","A name is how you refer to a client. It does not identify who runs it."); ui_close(stdout,"section");
     /* 02 Feed access matrix */
-    fputs("<section><p class=\"ak-kicker\" style=\"margin-bottom:12px\">Feed access</p>", stdout);
+    ui_open(stdout,"section",NULL); ui_open_a(stdout,"p","class","ak-kicker","style","margin-bottom:12px"); fputs("Feed access",stdout); ui_close(stdout,"p");
     shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT collection,count(*) FROM saved_item WHERE actor=?1 AND status='published' GROUP BY collection ORDER BY collection LIMIT 40", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, v->subject, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *feed = acn_col(st, 0); char fid[24]; snprintf(fid, sizeof(fid), "feed-%d", shown);
-            fputs("<article class=\"ak-panel\" style=\"margin-bottom:14px\" data-feed><header><h3>", stdout); html(feed);
+            ui_open_a(stdout,"article","class","ak-panel","style","margin-bottom:14px","data-feed",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h3",NULL); html(feed);
             printf("</h3><span class=\"ak-tag\">%d saved items</span></header>", sqlite3_column_int(st, 1));
             sqlite3_stmt *pr = NULL; int rules_here = 0;
             if (sqlite3_prepare_v2(db, "SELECT agent,access,decided_at FROM feed_agent_policy WHERE namespace='root' AND account_subject=?1 AND feed=?2 AND status='published' ORDER BY agent", -1, &pr, NULL) == SQLITE_OK) {
                 sqlite3_bind_text(pr, 1, v->subject, -1, SQLITE_TRANSIENT); sqlite3_bind_text(pr, 2, feed, -1, SQLITE_TRANSIENT);
-                fputs("<ul class=\"ak-rows\">", stdout);
+                ui_open(stdout,"ul","ak-rows");
                 while (sqlite3_step(pr) == SQLITE_ROW) {
-                    fputs("<li data-feed-rule><strong>", stdout); html(acn_col(pr, 0)); fputs("</strong><small>decided ", stdout); acn_when(acn_col(pr, 2));
-                    fputs("</small><span class=\"ak-go\">", stdout); fputs(acn_access_label(acn_col(pr, 1)), stdout); fputs("</span></li>", stdout); rules_here++;
+                    ui_open_a(stdout,"li","data-feed-rule",(const char *)NULL); ui_open(stdout,"strong",NULL); html(acn_col(pr, 0)); ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("decided ",stdout); acn_when(acn_col(pr, 2));
+                    ui_close(stdout,"small"); ui_open(stdout,"span","ak-go"); fputs(acn_access_label(acn_col(pr, 1)), stdout); ui_close(stdout,"span"); ui_close(stdout,"li"); rules_here++;
                 }
-                fputs("</ul>", stdout);
+                ui_close(stdout,"ul");
             }
             sqlite3_finalize(pr);
             if (!rules_here) ui_text(stdout, "p", "ak-empty", "No agent has a rule for this feed.");
@@ -599,19 +596,15 @@ static void acn_agents_page(const AcnViewer *v) {
             acn_tree_done(t, t && ft_action(t, aid, NULL, 0, "Save rule", "post", "/account/agents", hidden, 1) &&
                                 ft_field(t, fld, aid, 0, "Agent or MCP client", "text", "agent", "", "Claude Desktop", 0, NULL, "80", 1, NULL) &&
                                 ft_choice(t, cid, aid, 1, "Access", "access", acc, 3));
-            fputs("</article>", stdout);
+            ui_close(stdout,"article");
             shown++;
         }
     }
     sqlite3_finalize(st); st = NULL;
-    if (!shown) fputs("<div class=\"ak-panel\"><p class=\"ak-empty\">You have no saved feeds yet. Save things from <a href=\"/discover\">Discover</a> and each collection appears here with its own rules.</p></div>", stdout);
-    fputs("</section>", stdout);
+    if (!shown) do{ ui_open(stdout,"div","ak-panel"); ui_open(stdout,"p","ak-empty"); fputs("You have no saved feeds yet. Save things from ",stdout); ui_open_a(stdout,"a","href","/discover"); fputs("Discover",stdout); ui_close(stdout,"a"); fputs(" and each collection appears here with its own rules.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); }while(0);
+    ui_close(stdout,"section");
     /* 03 Audit */
-    fputs("<section class=\"ak-panel\"><header><h2>Audit</h2><span class=\"ak-tag\">honest state</span></header>"
-          "<dl class=\"ak-stats\"><div><dt>Agent reads</dt><dd>0</dd><small>none served</small></div><div><dt>Refused</dt><dd>0</dd><small>none asked</small></div></dl>"
-          "<div class=\"ak-console\" style=\"margin-top:14px\"><div><b>enforcement</b> No MCP tool or /connect path serves saved feeds today, so no agent can read them and none has.</div>"
-          "<div><b>when one does</b> it must consult these rules first; a missing rule means no access.</div></div>"
-          "<p class=\"ak-empty\">Your public site posts are a different feed: they stay public to every reader and agent.</p></section></div>", stdout);
+    ui_open(stdout,"section","ak-panel"); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Audit",stdout); ui_close(stdout,"h2"); ui_open(stdout,"span","ak-tag"); fputs("honest state",stdout); ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"dl","ak-stats"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Agent reads",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("0",stdout); ui_close(stdout,"dd"); ui_open(stdout,"small",NULL); fputs("none served",stdout); ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Refused",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("0",stdout); ui_close(stdout,"dd"); ui_open(stdout,"small",NULL); fputs("none asked",stdout); ui_close(stdout,"small"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_open_a(stdout,"div","class","ak-console","style","margin-top:14px"); ui_open(stdout,"div",NULL); ui_open(stdout,"b",NULL); fputs("enforcement",stdout); ui_close(stdout,"b"); fputs(" No MCP tool or /connect path serves saved feeds today, so no agent can read them and none has.",stdout); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"b",NULL); fputs("when one does",stdout); ui_close(stdout,"b"); fputs(" it must consult these rules first; a missing rule means no access.",stdout); ui_close(stdout,"div"); ui_close(stdout,"div"); ui_open(stdout,"p","ak-empty"); fputs("Your public site posts are a different feed: they stay public to every reader and agent.",stdout); ui_close(stdout,"p"); ui_close(stdout,"section"); ui_close(stdout,"div");
     if (db) sqlite3_close(db);
     ak_app_close();
 }

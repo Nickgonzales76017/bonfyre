@@ -1,5 +1,6 @@
 #ifndef BONFYRE_HOUSEHOLD_CIRCLES_WEB_H
 #define BONFYRE_HOUSEHOLD_CIRCLES_WEB_H
+#include "ui_tree.h"
 /* Private circles: a care circle is a community_body with governance_scope
  * care-circle kept in its own CMS namespace ("care"), so no public community
  * read (all of which select namespace 'root') can list it. Its members are
@@ -41,7 +42,7 @@ static int hc_circle(sqlite3 *db, const char *key, const char *actor, char title
     sqlite3_finalize(s); return ok;
 }
 static void hc_strip(const char *here) {
-    fputs("<nav class=\"ak-wb-strip\" aria-label=\"Household\"><span class=\"ak-kicker\">Private · members only</span><a href=\"/care\"", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-wb-strip");ui_attr(stdout,"aria-label","Household");ui_gt(stdout);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Private · members only");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr(stdout,"href","/care");
     if (!strcmp(here, "care")) fputs(" aria-current=\"page\"", stdout);
     fputs(">Care circles</a><a href=\"/pantry\"", stdout);
     if (!strcmp(here, "pantry")) fputs(" aria-current=\"page\"", stdout);
@@ -53,45 +54,45 @@ static void hc_care_index(sqlite3 *db, const char *actor, const char *invite_cir
     ak_app_http(200, 1);
     ak_app_open("Care circles", "workbench", "route-care");
     hc_strip("care");
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Care circle</span><h1>Care circles</h1><p class=\"ak-lede\">A private circle for the people looking after someone: shared tasks and notes, seen only by the people invited. Nothing here is a medical record, and nothing is sent to anyone.</p></div></header>", stdout);
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Care circle");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Care circles");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"A private circle for the people looking after someone: shared tasks and notes, seen only by the people invited. Nothing here is a medical record, and nothing is sent to anyone.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
     if (*token) {
         char circle_title[161] = "";
         gr_row(db, "SELECT c.id,c.title FROM community_body c JOIN community_membership m ON m.namespace='" HC_NS "' AND m.community=c.community AND m.member_subject='invite:'||?2 AND m.state='invited' WHERE c.namespace='" HC_NS "' AND c.community=?1", invite_circle, token, circle_title, sizeof(circle_title), NULL, 0, NULL, 0);
-        fputs("<section class=\"ak-ask\"><span class=\"ak-kicker\">Invitation</span>", stdout);
+        ui_open(stdout,"section","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Invitation");ui_close(stdout,"span");
         if (*circle_title) {
-            fputs("<h2>Join ", stdout); html(circle_title); fputs("</h2><p>You were handed this link by the circle's steward. Joining lets you and the other members see each other's tasks and notes.</p>", stdout);
+            ui_open(stdout,"h2",NULL);ui_copy(stdout,"Join "); html(circle_title); ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"You were handed this link by the circle's steward. Joining lets you and the other members see each other's tasks and notes.");ui_close(stdout,"p");
             ph_nonce(nonce);
             FtField f[3]; gr_hidden_base(f, "accept", nonce); f[2].name = "target"; f[2].value = token;
             char act[160]; snprintf(act, sizeof(act), "/care/%s/act", invite_circle);
             gr_button("hc-accept", "Join this care circle", act, f, 3);
         } else ui_text(stdout, "p", "ak-empty", "This invitation has already been used or withdrawn.");
-        fputs("</section>", stdout);
+        ui_close(stdout,"section");
     }
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Yours</span><h2>Circles you belong to</h2></div></header><ul class=\"ak-rows\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Yours");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Circles you belong to");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     sqlite3_stmt *s = NULL; int shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT c.community,c.title,m.role FROM community_body c JOIN community_membership m ON m.namespace='" HC_NS "' AND m.community=c.community AND m.member_subject=?1 AND m.state='active' AND m.status='published' WHERE c.namespace='" HC_NS "' AND c.governance_scope='care-circle' AND c.status='published' ORDER BY c.id DESC LIMIT 50", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, actor, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             shown++;
-            fputs("<a href=\"/care/", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("\"><strong>", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</strong><small>", stdout);
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/care/"); html((const char *)sqlite3_column_text(s, 0)); fputs("\"><strong>", stdout);
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
             fputs(!strcmp((const char *)sqlite3_column_text(s, 2), "steward") ? "You are its steward" : "Member", stdout);
-            fputs("</small><span class=\"ak-go\">Open</span></a>", stdout);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go");ui_copy(stdout,"Open");ui_close(stdout,"span");ui_close(stdout,"a");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "You are not in a care circle yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     ph_nonce(nonce);
     FtField f[2]; gr_hidden_base(f, "create", nonce);
     GrIn in[] = {
         {"Circle name", "text", "title", "", "", 0, "160", 1, ""},
         {"Who it is for and what it covers", "text", "text", "", "", 1, "2000", 1, ""},
     };
-    fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Start one</span><h2>Start a care circle</h2><p>You become its steward. Nobody else can see it until you hand them an invitation link.</p>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Start one");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Start a care circle");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"You become its steward. Nobody else can see it until you hand them an invitation link.");ui_close(stdout,"p");
     gr_form("hc-create", "Start circle", "/care/act", f, 2, in, 2, NULL, NULL, NULL, 0);
-    fputs("</div></section>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -101,76 +102,76 @@ static void hc_care(sqlite3 *db, const char *key, const char *actor, const char 
     ak_app_http(200, 1);
     ak_app_open(title, "workbench", "route-care");
     hc_strip("care");
-    fputs("<header class=\"ak-wb-hero\"><div><span class=\"ak-kicker\">Private care circle</span><h1>", stdout); html(title);
-    fputs("</h1><p class=\"ak-lede\">", stdout); html(desc); fputs("</p></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Who sees this</span><p>Only the members listed below. It is not a medical record and nothing here is sent to a clinic, an insurer or anyone else.</p>", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Private care circle");ui_close(stdout,"span");ui_open(stdout,"h1",NULL); html(title);
+    ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede"); html(desc); ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","ak-panel");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Who sees this");ui_close(stdout,"span");ui_open(stdout,"p",NULL);ui_copy(stdout,"Only the members listed below. It is not a medical record and nothing here is sent to a clinic, an insurer or anyone else.");ui_close(stdout,"p");
     if (steward) {
         ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "invite", nonce);
         gr_button("hc-invite", "Make an invitation link", act, f, 2);
     }
-    fputs("</aside></header>", stdout);
+    ui_close(stdout,"aside");ui_close(stdout,"header");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">01 / Roster</span><h2>Circle members</h2></div></header><div class=\"ak-grid is-3\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"01 / Roster");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Circle members");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid is-3");
     sqlite3_stmt *s = NULL;
     if (sqlite3_prepare_v2(db, "SELECT membership,member_subject,role,COALESCE(joined_at,'') FROM community_membership WHERE namespace='" HC_NS "' AND community=?1 AND state='active' AND status='published' ORDER BY role='steward' DESC,id LIMIT 40", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *who = (const char *)sqlite3_column_text(s, 1), *r = (const char *)sqlite3_column_text(s, 2);
-            fputs("<article class=\"ak-panel\"><span class=\"ak-tag", stdout); fputs(!strcmp(r, "steward") ? " is-on\">Circle steward" : "\">Member", stdout);
-            fputs("</span><h3>", stdout); gr_person(who, actor, NULL); fputs("</h3><p><small>Joined ", stdout);
-            html((const char *)sqlite3_column_text(s, 3)); fputs("</small></p>", stdout);
+            ui_open(stdout,"article","ak-panel");ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-tag"); fputs(!strcmp(r, "steward") ? " is-on\">Circle steward" : "\">Member", stdout);
+            ui_close(stdout,"span");ui_open(stdout,"h3",NULL); gr_person(who, actor, NULL); ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);ui_copy(stdout,"Joined ");
+            html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"small");ui_close(stdout,"p");
             if (steward && strcmp(who, actor)) {
                 ph_nonce(nonce);
                 FtField f[3]; gr_hidden_base(f, "remove", nonce); f[2].name = "target"; f[2].value = (const char *)sqlite3_column_text(s, 0);
                 char id[120]; snprintf(id, sizeof(id), "hc-rm-%s", (const char *)sqlite3_column_text(s, 0));
                 gr_button(id, "Remove from circle", act, f, 3);
             }
-            fputs("</article>", stdout);
+            ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);
-    fputs("</div>", stdout);
+    ui_close(stdout,"div");
     if (steward) {
         int pending = 0;
         if (sqlite3_prepare_v2(db, "SELECT membership,substr(member_subject,8) FROM community_membership WHERE namespace='" HC_NS "' AND community=?1 AND state='invited' AND status='published' AND member_subject LIKE 'invite:%' ORDER BY id DESC LIMIT 10", -1, &s, NULL) == SQLITE_OK) {
             sqlite3_bind_text(s, 1, key, -1, SQLITE_TRANSIENT);
             while (sqlite3_step(s) == SQLITE_ROW) {
-                if (!pending++) fputs("<div class=\"ak-panel is-raised\" style=\"margin-top:16px\"><h3>Unused invitation links</h3><p>Hand one to the person yourself. Anyone holding a link can join, so withdraw any you no longer need.</p><ul class=\"ak-rows\">", stdout);
-                fputs("<li><strong><code>/care/", stdout); html(key); fputs("?invite=", stdout); html((const char *)sqlite3_column_text(s, 1));
-                fputs("</code></strong><span class=\"ak-go\">", stdout);
+                if (!pending++) {ui_start(stdout,"div");ui_attr(stdout,"class","ak-panel is-raised");ui_attr(stdout,"style","margin-top:16px");ui_gt(stdout);ui_open(stdout,"h3",NULL);ui_copy(stdout,"Unused invitation links");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Hand one to the person yourself. Anyone holding a link can join, so withdraw any you no longer need.");ui_close(stdout,"p");ui_open(stdout,"ul","ak-rows");}
+                ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL);ui_open(stdout,"code",NULL);ui_copy(stdout,"/care/"); html(key); fputs("?invite=", stdout); html((const char *)sqlite3_column_text(s, 1));
+                ui_close(stdout,"code");ui_close(stdout,"strong");ui_open(stdout,"span","ak-go");
                 ph_nonce(nonce);
                 FtField f[3]; gr_hidden_base(f, "remove", nonce); f[2].name = "target"; f[2].value = (const char *)sqlite3_column_text(s, 0);
                 char id[120]; snprintf(id, sizeof(id), "hc-wd-%d", pending);
                 gr_button(id, "Withdraw", act, f, 3);
-                fputs("</span></li>", stdout);
+                ui_close(stdout,"span");ui_close(stdout,"li");
             }
         }
         sqlite3_finalize(s);
-        if (pending) fputs("</ul></div>", stdout);
+        if (pending) {ui_close(stdout,"ul");ui_close(stdout,"div");}
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
-    fputs("<div class=\"ak-grid is-main\" style=\"grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin-top:32px\"><section class=\"ak-panel\"><header><h2>Shared tasks</h2><span class=\"ak-kicker\">02 / Daily rhythm</span></header><ul class=\"ak-rows\">", stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","ak-grid is-main");ui_attr(stdout,"style","grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin-top:32px");ui_gt(stdout);ui_open(stdout,"section","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Shared tasks");ui_close(stdout,"h2");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"02 / Daily rhythm");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     int shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT entry,title,COALESCE(body,''),COALESCE(due_on,''),state,author_subject,COALESCE(done_by,'') FROM care_entry WHERE namespace='" HC_NS "' AND circle=?1 AND kind='task' AND status='published' ORDER BY state='open' DESC,COALESCE(due_on,'9999'),id DESC LIMIT 40", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *state = (const char *)sqlite3_column_text(s, 4);
             shown++;
-            fputs("<li><strong>", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("</strong><small>", stdout);
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
             if (*(const char *)sqlite3_column_text(s, 3)) { fputs("Due ", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs(" · ", stdout); }
-            html((const char *)sqlite3_column_text(s, 2)); fputs("</small><span class=\"ak-go\">", stdout);
+            html((const char *)sqlite3_column_text(s, 2)); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
             if (!strcmp(state, "open")) {
                 ph_nonce(nonce);
                 FtField f[3]; gr_hidden_base(f, "done", nonce); f[2].name = "target"; f[2].value = (const char *)sqlite3_column_text(s, 0);
                 char id[60]; snprintf(id, sizeof(id), "hc-done-%d", shown);
                 gr_button(id, "Mark done", act, f, 3);
             } else { fputs("Done by ", stdout); gr_person((const char *)sqlite3_column_text(s, 6), actor, NULL); }
-            fputs("</span></li>", stdout);
+            ui_close(stdout,"span");ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No shared tasks yet.");
     {
         ph_nonce(nonce);
@@ -182,31 +183,31 @@ static void hc_care(sqlite3 *db, const char *key, const char *actor, const char 
         };
         gr_form("hc-task", "Add task", act, f, 3, in, 3, NULL, NULL, NULL, 0);
     }
-    fputs("</section><aside class=\"ak-panel is-raised\"><header><h2>Latest note</h2><span class=\"ak-kicker\">03 / Journal</span></header>", stdout);
+    ui_close(stdout,"section");ui_open(stdout,"aside","ak-panel is-raised");ui_open(stdout,"header",NULL);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Latest note");ui_close(stdout,"h2");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"03 / Journal");ui_close(stdout,"span");ui_close(stdout,"header");
     if (sqlite3_prepare_v2(db, "SELECT title,COALESCE(body,''),author_subject,created_at FROM care_entry WHERE namespace='" HC_NS "' AND circle=?1 AND kind='note' AND status='published' ORDER BY id DESC LIMIT 1", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, key, -1, SQLITE_TRANSIENT);
         if (sqlite3_step(s) == SQLITE_ROW) {
-            fputs("<p class=\"ak-lede\">“", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("”</p><p><small>", stdout);
+            ui_open(stdout,"p","ak-lede");ui_copy(stdout,"“"); html((const char *)sqlite3_column_text(s, 1)); fputs("”</p><p><small>", stdout);
             html((const char *)sqlite3_column_text(s, 0)); fputs(" — ", stdout); gr_person((const char *)sqlite3_column_text(s, 2), actor, NULL);
-            fputs(", ", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</small></p>", stdout);
+            fputs(", ", stdout); html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"small");ui_close(stdout,"p");
         } else ui_text(stdout, "p", "ak-empty", "No notes yet.");
     }
     sqlite3_finalize(s);
-    fputs("</aside></div>", stdout);
+    ui_close(stdout,"aside");ui_close(stdout,"div");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">04 / Journal</span><h2>Circle notes</h2></div></header><ul class=\"ak-rows\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"04 / Journal");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Circle notes");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT title,COALESCE(body,''),author_subject,created_at FROM care_entry WHERE namespace='" HC_NS "' AND circle=?1 AND kind='note' AND status='published' ORDER BY id DESC LIMIT 30 OFFSET 1", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             shown++;
-            fputs("<li><strong>", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("</strong><small>", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</small><span class=\"ak-go\">", stdout);
-            gr_person((const char *)sqlite3_column_text(s, 2), actor, NULL); fputs("</span></li>", stdout);
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); html((const char *)sqlite3_column_text(s, 0)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
+            gr_person((const char *)sqlite3_column_text(s, 2), actor, NULL); ui_close(stdout,"span");ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul></section>", stdout);
+    ui_close(stdout,"ul");ui_close(stdout,"section");
     {
         ph_nonce(nonce);
         FtField f[3]; gr_hidden_base(f, "add", nonce); f[2].name = "kind"; f[2].value = "note";
@@ -214,11 +215,11 @@ static void hc_care(sqlite3 *db, const char *key, const char *actor, const char 
             {"Heading", "text", "title", "", "", 0, "160", 1, ""},
             {"What you noticed", "text", "text", "", "", 1, "4000", 1, ""},
         };
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Caregiver journal</span><h2>Record a note for the circle</h2><p>Only this circle's members read it.</p>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Caregiver journal");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Record a note for the circle");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Only this circle's members read it.");ui_close(stdout,"p");
         gr_form("hc-note", "Save note", act, f, 3, in, 2, NULL, NULL, NULL, 0);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
     }
-    fputs("<section class=\"ak-band\"><div><span class=\"ak-kicker\">Nourishment</span><h2>Meals and stores</h2><p>A household's pantry and preservation calendar is kept on its own page, for that household's members.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/pantry\">Open the pantry calendar</a></div></section>", stdout);
+    ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Nourishment");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Meals and stores");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"A household's pantry and preservation calendar is kept on its own page, for that household's members.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/pantry");ui_gt(stdout);ui_copy(stdout,"Open the pantry calendar");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -299,76 +300,72 @@ static void hc_pantry(sqlite3 *db, const char *actor, const char *chosen) {
     const char *list = gr_table(db, "_household_membership") ?
         "SELECT h.household_id,h.label FROM household h WHERE h.namespace='root' AND h.status='published' AND (h.steward=?1 OR EXISTS(SELECT 1 FROM _household_membership m JOIN _household_authority a ON a.household_row=m.household_row AND a.epoch=m.authority_epoch WHERE m.household_row=h.id AND m.member=?1 AND m.role IN ('read','write','admin') AND (m.expires_at=0 OR m.expires_at>CAST(strftime('%s','now') AS INTEGER)))) ORDER BY h.label,h.household_id LIMIT 20" :
         "SELECT household_id,label FROM household WHERE namespace='root' AND steward=?1 AND status='published' ORDER BY label,household_id LIMIT 20";
-    fputs("<header class=\"ak-wb-hero\"><div><span class=\"ak-kicker\">Household pantry</span><h1>Pantry and preservation calendar</h1><p class=\"ak-lede\">What your household foraged, put up and has in store, by date. Only your household's members can read it.</p></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Household</span>", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Household pantry");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Pantry and preservation calendar");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"What your household foraged, put up and has in store, by date. Only your household's members can read it.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","ak-panel");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Household");ui_close(stdout,"span");
     if (gr_table(db, "household") && sqlite3_prepare_v2(db, list, -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, actor, -1, SQLITE_TRANSIENT);
-        fputs("<nav class=\"ak-actions\">", stdout);
+        ui_open(stdout,"nav","ak-actions");
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *id = (const char *)sqlite3_column_text(s, 0), *l = (const char *)sqlite3_column_text(s, 1);
             int on = (*chosen && !strcmp(chosen, id)) || (!*chosen && !count);
             if (on) { snprintf(household, sizeof(household), "%s", id); snprintf(label, sizeof(label), "%s", l); }
-            fputs("<a class=\"ak-chip\" href=\"/pantry?household=", stdout); url_query_value(id); fputc('"', stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr_open(stdout,"href");ui_copy(stdout,"/pantry?household="); url_query_value(id); fputc('"', stdout);
             if (on) fputs(" aria-current=\"page\"", stdout);
-            fputs(">", stdout); html(l); fputs("</a>", stdout); count++;
+            fputs(">", stdout); html(l); ui_close(stdout,"a"); count++;
         }
-        fputs("</nav>", stdout);
+        ui_close(stdout,"nav");
     }
     sqlite3_finalize(s);
     if (!count) ui_text(stdout, "p", "ak-empty", "You are not in a household yet.");
-    fputs("</aside></header>", stdout);
+    ui_close(stdout,"aside");ui_close(stdout,"header");
     if (!*household || !bhh_context(db, household, actor, &access) || bhh_rank(access.role) < 1) {
         if (*chosen) ui_text(stdout, "p", "ak-empty", "That household is not one you belong to.");
         ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "household-open", nonce);
         GrIn in[] = {{"Household name", "text", "title", "", "", 0, "160", 1, ""}};
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Start</span><h2>Open a household</h2><p>You become its steward and can give other people access from household access.</p>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Start");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Open a household");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"You become its steward and can give other people access from household access.");ui_close(stdout,"p");
         gr_form("hc-household", "Open household", "/pantry/act", f, 2, in, 1, NULL, NULL, NULL, 0);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
         ak_app_close(); return;
     }
     int write = bhh_rank(access.role) >= 2;
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Entries this season</dt><dd class=\"is-on\">%.0f</dd><small>last 120 days</small></div><div><dt>Foraged</dt><dd>%.0f</dd></div><div><dt>Batches put up</dt><dd>%.0f</dd></div><div><dt>Stores counted</dt><dd>%.0f</dd></div></dl>",
-           gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND julianday(on_date)>=julianday('now')-120", household, NULL),
-           gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='forage'", household, NULL),
-           gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='batch'", household, NULL),
-           gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='store'", household, NULL));
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Entries this season");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND julianday(on_date)>=julianday('now')-120", household, NULL));ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"last 120 days");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Foraged");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='forage'", household, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Batches put up");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='batch'", household, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Stores counted");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' AND kind='store'", household, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Harvest horizon</span><h2>By month</h2></div></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Harvest horizon");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"By month");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     int shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT substr(on_date,1,7),count(*),group_concat(title,' · ') FROM (SELECT on_date,title FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' ORDER BY on_date DESC LIMIT 200) GROUP BY 1 ORDER BY 1 DESC LIMIT 4", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, household, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
-            if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
-            fputs("<article class=\"ak-panel\"><span class=\"ak-kicker\">", stdout); html((const char *)sqlite3_column_text(s, 0));
-            printf("</span><h3>%d entries</h3><p>", sqlite3_column_int(s, 1)); html((const char *)sqlite3_column_text(s, 2));
-            fputs("</p></article>", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid");
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"span","ak-kicker"); html((const char *)sqlite3_column_text(s, 0));
+            ui_close(stdout,"span");ui_open(stdout,"h3",NULL);fprintf(stdout,"%d",sqlite3_column_int(s, 1));ui_copy(stdout," entries");ui_close(stdout,"h3");ui_open(stdout,"p",NULL); html((const char *)sqlite3_column_text(s, 2));
+            ui_close(stdout,"p");ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "Nothing on the calendar yet.");
-    fputs("</section>", stdout);
+    if (shown) ui_close(stdout,"div"); else ui_text(stdout, "p", "ak-empty", "Nothing on the calendar yet.");
+    ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Cellar and stores</span><h2>Pantry entries</h2></div></header><div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Date</th><th>Entry</th><th>Kind</th><th>Quantity</th><th>Where</th><th>Recorded by</th></tr></thead><tbody>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Cellar and stores");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Pantry entries");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-scroll");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Date");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Entry");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Kind");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Quantity");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Where");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Recorded by");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT on_date,title,kind,COALESCE(quantity,''),COALESCE(location,''),author_subject,COALESCE(notes,'') FROM pantry_entry WHERE namespace='root' AND household_id=?1 AND status='published' ORDER BY on_date DESC,id DESC LIMIT 80", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, household, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *kind = (const char *)sqlite3_column_text(s, 2);
             shown++;
-            fputs("<tr><td><code>", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("</code></td><td><strong>", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</strong>", stdout);
-            if (*(const char *)sqlite3_column_text(s, 6)) { fputs("<br><small>", stdout); html((const char *)sqlite3_column_text(s, 6)); fputs("</small>", stdout); }
-            fputs("</td><td><span class=\"ak-tag\">", stdout);
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);ui_open(stdout,"code",NULL); html((const char *)sqlite3_column_text(s, 0)); ui_close(stdout,"code");ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_open(stdout,"strong",NULL);
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"strong");
+            if (*(const char *)sqlite3_column_text(s, 6)) { ui_open(stdout,"br",NULL);ui_open(stdout,"small",NULL); html((const char *)sqlite3_column_text(s, 6)); ui_close(stdout,"small"); }
+            ui_close(stdout,"td");ui_open(stdout,"td",NULL);ui_open(stdout,"span","ak-tag");
             fputs(!strcmp(kind, "forage") ? "Foraged" : !strcmp(kind, "batch") ? "Put up" : "In store", stdout);
-            fputs("</span></td><td>", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</td><td>", stdout);
-            html((const char *)sqlite3_column_text(s, 4)); fputs("</td><td>", stdout);
-            gr_person((const char *)sqlite3_column_text(s, 5), actor, NULL); fputs("</td></tr>", stdout);
+            ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td",NULL); html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"td");ui_open(stdout,"td",NULL);
+            html((const char *)sqlite3_column_text(s, 4)); ui_close(stdout,"td");ui_open(stdout,"td",NULL);
+            gr_person((const char *)sqlite3_column_text(s, 5), actor, NULL); ui_close(stdout,"td");ui_close(stdout,"tr");
         }
     }
     sqlite3_finalize(s);
-    fputs("</tbody></table></div>", stdout);
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No pantry entries yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     if (write) {
         char today[11]; gr_today(today); ph_nonce(nonce);
         FtField f[3]; gr_hidden_base(f, "entry", nonce); f[2].name = "household"; f[2].value = household;
@@ -380,11 +377,11 @@ static void hc_pantry(sqlite3 *db, const char *actor, const char *chosen) {
             {"Where it is kept or was found", "text", "place", "", "", 0, "120", 0, ""},
             {"Notes", "text", "text", "", "", 1, "2000", 0, ""},
         };
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">", stdout); html(label);
-        fputs("</span><h2>Add to the calendar</h2>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker"); html(label);
+        ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Add to the calendar");ui_close(stdout,"h2");
         gr_form("hc-pantry", "Add entry", "/pantry/act", f, 3, in, 5, "Kind", "kind", o, 3);
-        fputs("</div></section>", stdout);
-    } else fputs("<p class=\"ak-empty\">You can read this household's calendar. Its steward can give you write access.</p>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
+    } else {ui_open(stdout,"p","ak-empty");ui_copy(stdout,"You can read this household's calendar. Its steward can give you write access.");ui_close(stdout,"p");}
     ak_app_close();
 }
 static int hc_pantry_commit(sqlite3 *db, const char *actor, const HcForm *p, char back[256]) {

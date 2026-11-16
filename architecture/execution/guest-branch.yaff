@@ -1,6 +1,7 @@
 atlas execution-guest-branch
 
 architecture guest-branch-commit
+  source_lineage earliest source cmd/BonfyreRuntime/src/main.c first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"
   canonical_name GuestBranchCommit
   family execution
   domain Execution / Candidate branches over one deterministic guest
@@ -29,6 +30,7 @@ architecture guest-branch-commit
   known_gap the guest body, its platform file and its build live outside this repository and are named by hash only
 
 architecture connectome-pixel-controller
+  source_lineage earliest source packs/doom-guest/program/fly-setup.sql first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ConnectomePixelController
   family execution
   domain Execution / A controller that reads a rendered frame through a published connectome

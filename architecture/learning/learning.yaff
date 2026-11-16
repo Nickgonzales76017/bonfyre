@@ -39,6 +39,7 @@ architecture capability-genome
   known_gap not built
 
 architecture live-gym
+  source_lineage earliest source scripts/gym_run.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/failure_cohort.py which scripts/retire.sh archived at scripts/failure_cohort.py.archive
   canonical_name LiveGym
   family learning
   domain Learning
@@ -116,6 +117,7 @@ architecture live-gym
   known_gap deformation families are declared in the contract grammar and no gym uses them yet; the first gym measures decay rather than retrieval under degraded description
   known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/live_gym.json; /var/lib/bonfyre/cms/content-types/provider_route.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 architecture representation-market
+  source_lineage earliest source scripts/representation-trial.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/representation_trial.py which scripts/retire.sh archived at scripts/representation_trial.py.archive
   canonical_name RepresentationMarket
   family learning
   domain Learning
@@ -189,6 +191,7 @@ architecture representation-market
   invariant closing a placement gap by moving the compute is preferred to closing it by widening a clearance; one adds a capability and the other removes a boundary
 
 architecture architecture-frontier
+  source_lineage earliest source scripts/architecture-frontier.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/architecture_frontier.py which scripts/retire.sh archived at scripts/architecture_frontier.py.archive
   canonical_name ArchitectureFrontier
   family learning
   domain Learning

@@ -1,4 +1,5 @@
 architecture account-peer-connections
+  source_lineage earliest source cmd/BonfyreWebAddress/tests/profile_site_scope.test.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name AccountPeerConnections
   family surface
   domain Profile / Private introductions

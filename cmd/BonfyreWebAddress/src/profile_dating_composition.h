@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_DATING_COMPOSITION_H
 #define BONFYRE_PROFILE_DATING_COMPOSITION_H
+#include "ui_tree.h"
 #include "profile_dating_stitch.h"
 /* Stitch reference images inform presentation; neither sample people nor
  * sample conversations from those files are generated as CMS members. */
@@ -58,15 +59,15 @@ static PhDatingComposition ph_dating_composition(sqlite3 *cms,const char *view){
 static void ph_dating_view_nav(const char *view){
  static const char *const modes[]={"discover","matches","chat","studio"};
  static const char *const labels[]={"Discover","Matches & messages","Conversation","Profile studio"};
- fputs("<nav class=\"ph-date-switcher\" aria-label=\"Dating experience views\">",stdout);
+ ui_start(stdout,"nav");ui_attr(stdout,"class","ph-date-switcher");ui_attr(stdout,"aria-label","Dating experience views");ui_gt(stdout);
  for(int i=0;i<4;i++){
-  fputs("<a href=\"/profile?tab=dating&amp;view=",stdout);
+  ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=");
   fputs(modes[i],stdout);
   fputs("\"",stdout);
   if(!strcmp(modes[i],view))fputs(" aria-current=\"page\"",stdout);
-  fputs(">",stdout);html(labels[i]);fputs("</a>",stdout);
+  fputs(">",stdout);html(labels[i]);ui_close(stdout,"a");
  }
- fputs("</nav>",stdout);
+ ui_close(stdout,"nav");
 }
 static void ph_dating_public_prompt(sqlite3 *cms,const PhSite *site){
  sqlite3_stmt *s=NULL;
@@ -89,7 +90,7 @@ static void ph_dating_public_prompt(sqlite3 *cms,const PhSite *site){
 }
 static void ph_dating_public_image(sqlite3 *cms,const PhSite *site){
  sqlite3_stmt *s=NULL;int id=0;
- fputs("<figure class=\"ph-date-media\">",stdout);
+ ui_open(stdout,"figure","ph-date-media");
  if(cms&&site&&sqlite3_prepare_v2(cms,"SELECT id FROM site_fragment "
     "WHERE namespace=?1 AND kind='profile-gallery' AND slot='gallery' "
     "AND page='/' AND status='published' AND audience='public' "
@@ -104,11 +105,11 @@ static void ph_dating_public_image(sqlite3 *cms,const PhSite *site){
      ph_art_ref(row.ref,&ref)&&ph_art_resolve(cms,&ref,PH_GALLERY_LABEL,50,50,&art)&&
      !strcmp(row.status,"published")&&!strcmp(row.audience,"public")&&
      !strcmp(art.digest,row.evidence)&&page_image_url_safe(art.image)){
-   fputs("<img loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\" src=\"",stdout);
+   ui_start(stdout,"img");ui_attr(stdout,"loading","lazy");ui_attr(stdout,"decoding","async");ui_attr(stdout,"referrerpolicy","no-referrer");ui_attr_open(stdout,"src");
    html(art.image);fputs("\" alt=\"",stdout);html(art.title);fputs("\">",stdout);
   }
  }
- fputs("<figcaption>",stdout);html(site?site->name:"Life member");
+ ui_open(stdout,"figcaption",NULL);html(site?site->name:"Life member");
  fputs(" · Published Life material</figcaption></figure>",stdout);
 }
 /* Shared CMS token consumers, not a separate dating theme or imported Stitch page. */

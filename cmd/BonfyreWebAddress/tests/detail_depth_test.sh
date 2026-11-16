@@ -24,9 +24,15 @@ tmp="$(mktemp -d "${TMPDIR:-/tmp}/detail-depth.XXXXXX")"
 pid=""
 cleanup() { [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; [ -n "${BONFYRE_TEST_KEEP:-}" ] || rm -rf "$tmp"; }
 trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
 # Copies leave WAL mode: a read-only reader cannot open a WAL file whose
-# -shm has not been created yet.
-for f in items.db frontier.db cms.db frappe-surfaces.db matrix.db; do sqlite3 -readonly "$estate/$f" ".backup $tmp/$f" 2>/dev/null || sqlite3 "file:$estate/$f?immutable=1" ".backup $tmp/$f"; sqlite3 "$tmp/$f" 'PRAGMA journal_mode=DELETE' >/dev/null; done
+# -shm has not been created yet. An APFS clone of the file and its WAL costs
+# no space; a clone that fails its check falls back to a full backup.
+for f in items.db frontier.db cms.db frappe-surfaces.db matrix.db; do
+  if cp -c "$estate/$f" "$tmp/$f" 2>/dev/null && { [ ! -s "$estate/$f-wal" ] || cp -c "$estate/$f-wal" "$tmp/$f-wal"; } &&
+     [ "$(sqlite3 "$tmp/$f" 'PRAGMA quick_check' 2>/dev/null)" = ok ]; then :
+  else rm -f "$tmp/$f" "$tmp/$f-wal" "$tmp/$f-shm"; sqlite3 -readonly "$estate/$f" ".backup $tmp/$f" 2>/dev/null || sqlite3 "file:$estate/$f?immutable=1" ".backup $tmp/$f"; fi
+  sqlite3 "$tmp/$f" 'PRAGMA journal_mode=DELETE' >/dev/null; done
 # Add only to the copied CMS. A draft, a different namespace, an unsafe URL,
 # and an unrelated topic must never appear on a public news detail page.
 sqlite3 "$tmp/cms.db" <<'SQL'

@@ -1,6 +1,7 @@
 atlas external
 
 architecture incumbent-coordination-phenotypes
+  source_lineage earliest source integrations/wordpress/bridge.mjs first committed 2026-07-30 in 2a45fadf "feat(integrations): add wordpress bridge and async cache"
   canonical_name IncumbentCoordinationPhenotypes
   family external
   domain External / Institutional carriers

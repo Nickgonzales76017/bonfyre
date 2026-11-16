@@ -1,4 +1,5 @@
 architecture subject-room-publisher
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SubjectRoomPublisher
   family surface
   domain Surface / A thing on the internet, with an address here
@@ -25,6 +26,7 @@ architecture subject-room-publisher
   known_gap the native publisher-host compiler has a fixture parity witness and staging target, but the live estate has not been replayed and its host presentation depends on an available CMS binary
 
 architecture subject-room-program
+  source_lineage earliest source cmd/BonfyreWebAddress/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SubjectRoomProgram
   family surface
   domain Surface / What a subject is trying to run, and what it still needs

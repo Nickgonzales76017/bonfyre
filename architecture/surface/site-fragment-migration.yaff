@@ -1,4 +1,5 @@
 architecture site-fragment-migration
+  source_lineage earliest source cmd/BonfyreSurface/tools/ast_literal_candidates.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SiteFragmentMigration
   family surface
   domain Surface / Authored fragment migration

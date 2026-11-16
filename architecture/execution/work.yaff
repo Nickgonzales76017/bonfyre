@@ -288,6 +288,7 @@ architecture target-obligation
   known_gap The native proof bridge now closes a target only from an explicit still-PROVEN source-frontier invariant after ForeignTwin receipt -> EvidenceGraph support -> ProofFrontier admission. Actual external effect adapters, complete post-effect observation scheduling and incremental repair remain separate.
 
 architecture inverse-compiler
+  source_lineage earliest source schemas/control/inverse-compiler.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InverseCompiler
   family execution
   domain Execution / Institutional Synthesis
@@ -341,6 +342,7 @@ architecture inverse-compiler
   known_gap recursive prerequisite expansion, compensation enactment, actual external adapters, complete post-effect observation scheduling and incremental affected-cut repair remain separate passes. The compiler emits their typed residual requirements but does not claim they occurred.
 
 architecture resource-reservation
+  source_lineage earliest source engine/core/include/bf_reservation.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ResourceReservation
   family execution
   domain Execution / Resource Admission
@@ -369,6 +371,7 @@ architecture resource-reservation
   witness engine/core/tests/reservation_test.c
   witness cmd/BonfyreSemanticOptimizer/tests/live_inverse_test.c
 architecture pure-execution-tier
+  source_lineage earliest source scripts/pure-job.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name PureExecutionTier
   family execution
   domain Execution
@@ -448,6 +451,7 @@ architecture pure-execution-tier
   invariant the subset lattice refuses past twenty candidates rather than returning part of it; the collapse emits one line per subset, so this is a wall and not a tuning knob, and a truncated lattice answers a different question while looking like the same one
 
 architecture profile-runner-legibility
+  source_lineage earliest source tools/estate/checkpoint93-profile-runner.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProfileRunnerLegibility
   family execution
   domain Execution

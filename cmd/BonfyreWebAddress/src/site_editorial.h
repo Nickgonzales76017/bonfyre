@@ -3,6 +3,7 @@
  * prompt, unreviewed foreign byline or the action aperture. */
 #ifndef BONFYRE_SITE_EDITORIAL_H
 #define BONFYRE_SITE_EDITORIAL_H
+#include "ui_tree.h"
 typedef struct {
     char media_subject[256];
     char kind[24];
@@ -79,21 +80,21 @@ static void site_editorial_read(sqlite3 *db,const McpSite *site,
 }
 static void site_editorial_credit(FILE *out,const SiteEditorial *e) {
     if(!out||!e||!e->article||(!e->author_credit[0]&&!e->published_at[0]))return;
-    fputs("<div class=\"site-article-credit\" aria-label=\"Article details\">",out);
+    ui_start(out,"div");ui_attr(out,"class","site-article-credit");ui_attr(out,"aria-label","Article details");ui_gt(out);
     if(e->author_credit[0]){
-        fputs("<span>By ",out);
-        if(e->author_host[0]){fputs("<a rel=\"author\" href=\"https://",out);
+        ui_open(out,"span",NULL);ui_copy(out,"By ");
+        if(e->author_host[0]){ui_start(out,"a");ui_attr(out,"rel","author");ui_attr_open(out,"href");ui_copy(out,"https://");
             htext(out,e->author_host);fputs("/\">",out);}
         htext(out,e->author_credit);
-        if(e->author_host[0])fputs("</a>",out);
-        fputs("</span>",out);
+        if(e->author_host[0])ui_close(out,"a");
+        ui_close(out,"span");
     }
-    if(e->published_at[0]){fputs("<time datetime=\"",out);htext(out,e->published_at);
-        fputs("\">",out);htext(out,e->published_at);fputs("</time>",out);}
+    if(e->published_at[0]){ui_start(out,"time");ui_attr_open(out,"datetime");htext(out,e->published_at);
+        fputs("\">",out);htext(out,e->published_at);ui_close(out,"time");}
     if(e->updated_at[0]&&strcmp(e->updated_at,e->published_at)>0){
-        fputs("<span>Updated <time datetime=\"",out);htext(out,e->updated_at);
-        fputs("\">",out);htext(out,e->updated_at);fputs("</time></span>",out);}
-    fputs("</div>",out);
+        ui_open(out,"span",NULL);ui_copy(out,"Updated ");ui_start(out,"time");ui_attr_open(out,"datetime");htext(out,e->updated_at);
+        fputs("\">",out);htext(out,e->updated_at);ui_close(out,"time");ui_close(out,"span");}
+    ui_close(out,"div");
 }
 /* Authored citations are one ordered list of published source fragments.
  * The prose may link to them with [1](#source-1); the source list does not
@@ -122,21 +123,20 @@ static void site_editorial_sources(FILE *out,sqlite3 *db,const McpSite *site,
         const char *href=(const char*)sqlite3_column_text(st,2);
         const char *ref=(const char*)sqlite3_column_text(st,3);
         const char *digest=(const char*)sqlite3_column_text(st,4);
-        if(!index)fputs("<section class=\"site-article-sources\" aria-labelledby=\"article-sources-title\">"
-                         "<h2 id=\"article-sources-title\">Sources and notes</h2><ol>",out);
-        fprintf(out,"<li id=\"source-%d\">",++index);
-        if(heading&&*heading){fputs("<strong>",out);htext(out,heading);fputs("</strong>",out);}
-        if(body&&*body){fputs("<p>",out);htext(out,body);fputs("</p>",out);}
-        if(site_editorial_source_href(href)){fputs("<a rel=\"noopener noreferrer\" href=\"",out);
+        if(!index){ui_start(out,"section");ui_attr(out,"class","site-article-sources");ui_attr(out,"aria-labelledby","article-sources-title");ui_gt(out);ui_start(out,"h2");ui_attr(out,"id","article-sources-title");ui_gt(out);ui_copy(out,"Sources and notes");ui_close(out,"h2");ui_open(out,"ol",NULL);}
+        ui_start(out,"li");ui_attr_open(out,"id");ui_copy(out,"source-");fprintf(out,"%d",++index);ui_attr_close(out);ui_gt(out);
+        if(heading&&*heading){ui_open(out,"strong",NULL);htext(out,heading);ui_close(out,"strong");}
+        if(body&&*body){ui_open(out,"p",NULL);htext(out,body);ui_close(out,"p");}
+        if(site_editorial_source_href(href)){ui_start(out,"a");ui_attr(out,"rel","noopener noreferrer");ui_attr_open(out,"href");
             htext(out,href);fputs("\">Read the source</a>",out);}
         if(ref&&*ref){fputs("<details class=\"source-record\"><summary>Source record</summary>"
-                             "<p>Identifier: <code>",out);htext(out,ref);fputs("</code></p>",out);
-            if(digest&&*digest){fputs("<p>Supplied digest: <code>",out);
-                htext(out,digest);fputs("</code></p>",out);}
+                             "<p>Identifier: <code>",out);htext(out,ref);ui_close(out,"code");ui_close(out,"p");
+            if(digest&&*digest){ui_open(out,"p",NULL);ui_copy(out,"Supplied digest: ");ui_open(out,"code",NULL);
+                htext(out,digest);ui_close(out,"code");ui_close(out,"p");}
             fputs("</details>",out);}
-        fputs("</li>",out);
+        ui_close(out,"li");
     }
-    if(index)fputs("</ol></section>",out);
+    if(index){ui_close(out,"ol");ui_close(out,"section");}
     sqlite3_finalize(st);
 }
 

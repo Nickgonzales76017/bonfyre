@@ -5,8 +5,9 @@
  * select an executor, or turn the command into arbitrary shell execution. */
 static int serve_native_command_work(const char *method,const char *target,const char *query,
                                      const char *body,const char *raw,const char *host,
-                                     const char *bearer,const char *auth_db){
-    if(strcmp(target,"/apps/_native-command"))return 0;
+                                     const char *bearer,const char *auth_db,const BfRequest *route){
+    (void)target;
+    if(!bf_request_is(route,"native_command"))return 0;
     if(strcmp(method,"POST")||(query&&*query)){
         aw_error(405,"Use the reviewed command submission method.\n");return 1;
     }

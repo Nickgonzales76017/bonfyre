@@ -1,6 +1,7 @@
 atlas commands-mcp-native-owner
 
 architecture mcp-native-command-clients
+  source_lineage earliest source cmd/BonfyreMcp/Makefile first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpNativeCommandClients
   family commands
   domain Execution / Native MCP owner command clients (W2 first slice)

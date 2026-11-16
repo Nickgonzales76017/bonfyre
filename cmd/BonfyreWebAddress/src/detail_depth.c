@@ -27,6 +27,7 @@
  * thing as -- none of them an identity, an endorsement, or a record held.
  */
 #define _POSIX_C_SOURCE 200809L
+#include "ui_tree.h"
 #include "detail_depth.h"
 #include "web_store.h"
 #include "people_projection.h"
@@ -167,17 +168,17 @@ static void row_open(Emit *e) {
     if (e->open) return;
     e->open = 1;
     if (e->desk) {
-        fputs("<h3 class=\"room-h\">", e->out); esc(e->out, e->heading); fputs("</h3><div class=\"keep-going\" data-detail-depth>", e->out);
+        ui_open(e->out,"h3","room-h"); esc(e->out, e->heading); ui_close(e->out,"h3");ui_start(e->out,"div");ui_attr(e->out,"class","keep-going");ui_flag(e->out,"data-detail-depth");ui_gt(e->out);
     } else {
-        fputs("<section class=\"region keep-going\" aria-label=\"", e->out); esc(e->out, e->heading);
-        fputs("\" data-detail-depth><h2 class=\"region-label\">", e->out); esc(e->out, e->heading); fputs("</h2><ul class=\"more\">", e->out);
+        ui_start(e->out,"section");ui_attr(e->out,"class","region keep-going");ui_attr_open(e->out,"aria-label"); esc(e->out, e->heading);
+        fputs("\" data-detail-depth><h2 class=\"region-label\">", e->out); esc(e->out, e->heading); ui_close(e->out,"h2");ui_open(e->out,"ul","more");
     }
 }
 
 static void row_close(Emit *e, const char *boundary) {
     if (!e->open) return;
-    if (e->desk) { fputs("</div>", e->out); if (boundary) { fputs("<p class=\"subj-note\">", e->out); esc(e->out, boundary); fputs("</p>", e->out); } }
-    else { fputs("</ul>", e->out); if (boundary) { fputs("<p class=\"src\">", e->out); esc(e->out, boundary); fputs("</p>", e->out); } fputs("</section>", e->out); }
+    if (e->desk) { ui_close(e->out,"div"); if (boundary) { ui_open(e->out,"p","subj-note"); esc(e->out, boundary); ui_close(e->out,"p"); } }
+    else { ui_close(e->out,"ul"); if (boundary) { ui_open(e->out,"p","src"); esc(e->out, boundary); ui_close(e->out,"p"); } ui_close(e->out,"section"); }
 }
 
 /* One continuation: an icon, a name that opens the page, what it is. */
@@ -190,17 +191,17 @@ static void row(Emit *e, const char *kind, const char *href_prefix, const char *
     if (!label || !*label) return;
     row_open(e);
     if (e->desk) {
-        fputs("<a class=\"desk-row\" data-depth-kind=\"", e->out); esc(e->out, kind); fputs("\" href=\"", e->out); esc(e->out, self);
+        ui_start(e->out,"a");ui_attr(e->out,"class","desk-row");ui_attr_open(e->out,"data-depth-kind"); esc(e->out, kind); fputs("\" href=\"", e->out); esc(e->out, self);
         fputs("\"><span class=\"desk-l\">", e->out); fputs(glyph(kind), e->out); esc(e->out, label);
-        fputs("</span><span class=\"desk-a\">", e->out); esc(e->out, caption);
-        fputs("</span><span class=\"desk-s\">", e->out);
+        ui_close(e->out,"span");ui_open(e->out,"span","desk-a"); esc(e->out, caption);
+        ui_close(e->out,"span");ui_open(e->out,"span","desk-s");
         if (count > 1) fprintf(e->out, "%d pieces", count);
-        fputs("</span></a>", e->out);
+        ui_close(e->out,"span");ui_close(e->out,"a");
     } else {
-        fputs("<li data-depth-kind=\"", e->out); esc(e->out, kind); fputs("\"><a href=\"", e->out); esc(e->out, self); fputs("\">", e->out);
-        fputs(glyph(kind), e->out); esc(e->out, label); fputs("</a><span class=\"by\">", e->out); esc(e->out, caption);
+        ui_start(e->out,"li");ui_attr_open(e->out,"data-depth-kind"); esc(e->out, kind); fputs("\"><a href=\"", e->out); esc(e->out, self); fputs("\">", e->out);
+        fputs(glyph(kind), e->out); esc(e->out, label); ui_close(e->out,"a");ui_open(e->out,"span","by"); esc(e->out, caption);
         if (count > 1) fprintf(e->out, " &middot; %d", count);
-        fputs("</span></li>", e->out);
+        ui_close(e->out,"span");ui_close(e->out,"li");
     }
     e->rows++;
 }
@@ -272,23 +273,17 @@ static int research_toolkits(Sess *s, FILE *out, const char *source, const char 
         const char *terms = col(rows, 4);
         if (!*label || !research_url(href) || !research_fit(terms, title, body)) continue;
         if (!shown) {
-            fputs("<section class='region region-depth research-guides' data-journalism-toolkits "
-                  "aria-label='Research and verification resources'><h2 class='region-label'>"
-                  "Research and verification tools</h2><p>Explore independent methods for checking "
-                  "the story. Topic matches are suggestions, not fact-checks or endorsements.</p>"
-                  "<ul class='more'>", out);
+            ui_start(out,"section");ui_attr_sq(out,"class","region region-depth research-guides");ui_flag(out,"data-journalism-toolkits");ui_attr_sq(out,"aria-label","Research and verification resources");ui_gt(out);ui_start(out,"h2");ui_attr_sq(out,"class","region-label");ui_gt(out);ui_copy(out,"Research and verification tools");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"Explore independent methods for checking the story. Topic matches are suggestions, not fact-checks or endorsements.");ui_close(out,"p");ui_start(out,"ul");ui_attr_sq(out,"class","more");ui_gt(out);
         }
-        fputs("<li><a rel='noopener noreferrer nofollow' href='", out); esc(out, href);
-        fputs("'>", out); esc(out, label); fputs("</a>", out);
-        if (*description) { fputs("<span class='by'>", out); esc(out, description); fputs("</span>", out); }
-        if (*limitations) { fputs("<small class='src'>", out); esc(out, limitations); fputs("</small>", out); }
-        fputs("</li>", out);
+        ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_sq(out,"rel","noopener noreferrer nofollow");ui_attr_open_sq(out,"href"); esc(out, href);
+        fputs("'>", out); esc(out, label); ui_close(out,"a");
+        if (*description) { ui_start(out,"span");ui_attr_sq(out,"class","by");ui_gt(out); esc(out, description); ui_close(out,"span"); }
+        if (*limitations) { ui_start(out,"small");ui_attr_sq(out,"class","src");ui_gt(out); esc(out, limitations); ui_close(out,"small"); }
+        ui_close(out,"li");
         shown++;
     }
     sqlite3_finalize(rows);
-    if (shown) fputs("</ul><p class='src'>Links open their original publishers. Public access "
-                     "does not imply open-source licensing, reuse rights, current availability or "
-                     "verified claims. Research ethically and check each provider's terms.</p></section>", out);
+    if (shown) {ui_close(out,"ul");ui_start(out,"p");ui_attr_sq(out,"class","src");ui_gt(out);ui_copy(out,"Links open their original publishers. Public access does not imply open-source licensing, reuse rights, current availability or verified claims. Research ethically and check each provider's terms.");ui_close(out,"p");ui_close(out,"section");}
     return shown;
 }
 
@@ -629,11 +624,10 @@ int bf_detail_facet_page(FILE *out, const char *facet, const char *value, const 
     }
     sqlite3_finalize(st); st = NULL;
     if (!pieces) { sess_close(&s); return 0; }
-    fputs("<section class='region region-depth' aria-label='", out); esc(out, topic ? "One topic" : "One printed name");
+    ui_start(out,"section");ui_attr_sq(out,"class","region region-depth");ui_attr_open_sq(out,"aria-label"); esc(out, topic ? "One topic" : "One printed name");
     fputs("' data-detail-facet='", out); esc(out, topic ? "topic" : "mention"); fputs("'><h2 class='region-label'>", out);
     fputs(glyph(topic ? "topic" : "mention"), out); esc(out, value);
-    fprintf(out, "</h2><p class='source-count'>%s by %d piece%s from %d source%s &middot; <a href='", topic ? "Filed under this" : "Printed in",
-            pieces, pieces == 1 ? "" : "s", sources, sources == 1 ? "" : "s");
+    ui_close(out,"h2");ui_start(out,"p");ui_attr_sq(out,"class","source-count");ui_gt(out);ui_copy(out,topic ? "Filed under this" : "Printed in");ui_copy(out," by ");fprintf(out,"%d",pieces);ui_copy(out," piece");ui_copy(out,pieces == 1 ? "" : "s");ui_copy(out," from ");fprintf(out,"%d",sources);ui_copy(out," source");ui_copy(out,sources == 1 ? "" : "s");ui_copy(out," &middot; ");ui_start(out,"a");ui_attr_open_sq(out,"href");
     esc(out, route ? route : "/channels"); fputs("'>the whole ledger</a></p>", out);
     if (sqlite3_prepare_v2(s.db,
           "SELECT i.source, i.key, i.title, i.kind, COALESCE(NULLIF(i.publisher,''),i.by),"
@@ -642,23 +636,23 @@ int bf_detail_facet_page(FILE *out, const char *facet, const char *value, const 
           " WHERE d.facet=?1 AND d.value=?2 AND i.title<>'' ORDER BY i.at DESC LIMIT 40", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, topic ? "topic" : "mention", -1, SQLITE_STATIC);
         sqlite3_bind_text(st, 2, value, -1, SQLITE_TRANSIENT);
-        fputs("<ol class='source-channels'>", out);
+        ui_start(out,"ol");ui_attr_sq(out,"class","source-channels");ui_gt(out);
         while (sqlite3_step(st) == SQLITE_ROW) {
-            fputs("<li><div><a href='/o/", out); url(out, col(st, 0)); fputs("/", out); esc(out, col(st, 1)); fputs("'>", out);
-            esc(out, col(st, 2)); fputs("</a><span class='by'>", out);
-            if (*col(st, 4)) { fputs("<span>", out); esc(out, col(st, 4)); fputs("</span>", out); }
-            if (*col(st, 3)) { fputs("<span>", out); esc(out, col(st, 3)); fputs("</span>", out); }
-            if (*col(st, 5)) { fputs("<time>", out); esc(out, col(st, 5)); fputs("</time>", out); }
-            fputs("</span></div></li>", out);
+            ui_open(out,"li",NULL);ui_open(out,"div",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/"); url(out, col(st, 0)); fputs("/", out); esc(out, col(st, 1)); fputs("'>", out);
+            esc(out, col(st, 2)); ui_close(out,"a");ui_start(out,"span");ui_attr_sq(out,"class","by");ui_gt(out);
+            if (*col(st, 4)) { ui_open(out,"span",NULL); esc(out, col(st, 4)); ui_close(out,"span"); }
+            if (*col(st, 3)) { ui_open(out,"span",NULL); esc(out, col(st, 3)); ui_close(out,"span"); }
+            if (*col(st, 5)) { ui_open(out,"time",NULL); esc(out, col(st, 5)); ui_close(out,"time"); }
+            ui_close(out,"span");ui_close(out,"div");ui_close(out,"li");
             shown++;
         }
-        fputs("</ol>", out);
+        ui_close(out,"ol");
     }
     sqlite3_finalize(st);
-    fputs("<p class='src'>", out);
+    ui_start(out,"p");ui_attr_sq(out,"class","src");ui_gt(out);
     esc(out, topic ? "A topic here is a label each publisher printed on its own piece. Equal labels from different publishers are shown together; that does not make them one subject."
                    : "A printed name is a run of capitalised words as a publisher wrote them. Equal spellings are shown together; that does not make them one person, place or organisation.");
-    fputs("</p></section>", out);
+    ui_close(out,"p");ui_close(out,"section");
     sess_close(&s);
     {   BfDetailFocus focus = {topic ? BF_DETAIL_TOPIC : BF_DETAIL_NAMED, value, NULL, 0};
         shown += bf_detail_continue(out, &focus); }
@@ -680,24 +674,21 @@ int bf_detail_person_work(FILE *out, const char *who, const char *source) {
     sqlite3_bind_text(st, 2, source, -1, SQLITE_TRANSIENT);
     while (sqlite3_step(st) == SQLITE_ROW) {
         if (!shown) {
-            fputs("<section class='region region-person people-dossier' aria-label='Source-bound public credit' data-source-dossier>"
-                  "<div class='people-dossier-head'><p class='people-kicker'>", out); fputs(glyph("maker"), out);
+            ui_start(out,"section");ui_attr_sq(out,"class","region region-person people-dossier");ui_attr_sq(out,"aria-label","Source-bound public credit");ui_flag(out,"data-source-dossier");ui_gt(out);ui_start(out,"div");ui_attr_sq(out,"class","people-dossier-head");ui_gt(out);ui_start(out,"p");ui_attr_sq(out,"class","people-kicker");ui_gt(out); fputs(glyph("maker"), out);
             fputs("Credited maker</p><h2>", out); esc(out, who);
-            fputs("</h2><p class='people-credit-source'>Credited by <strong>", out); esc(out, source);
-            fputs("</strong> in the credit lines of its own feed.</p></div><ol class='people-work-list' aria-label='Their work at this source'>", out);
+            ui_close(out,"h2");ui_start(out,"p");ui_attr_sq(out,"class","people-credit-source");ui_gt(out);ui_copy(out,"Credited by ");ui_open(out,"strong",NULL); esc(out, source);
+            ui_close(out,"strong");ui_copy(out," in the credit lines of its own feed.");ui_close(out,"p");ui_close(out,"div");ui_start(out,"ol");ui_attr_sq(out,"class","people-work-list");ui_attr_sq(out,"aria-label","Their work at this source");ui_gt(out);
         }
-        fputs("<li><a href='/o/", out); url(out, col(st, 0)); fputs("/", out); esc(out, col(st, 1)); fputs("'>", out); esc(out, col(st, 2));
-        fputs("</a><p>", out);
-        if (*col(st, 4)) { fputs("<span>", out); esc(out, col(st, 4)); fputs("</span>", out); }
-        if (*col(st, 3)) { fputs("<span>", out); esc(out, col(st, 3)); fputs("</span>", out); }
-        if (*col(st, 5)) { fputs("<time datetime='", out); esc(out, col(st, 5)); fputs("'>", out); esc(out, col(st, 5)); fputs("</time>", out); }
-        fputs("</p></li>", out);
+        ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/"); url(out, col(st, 0)); fputs("/", out); esc(out, col(st, 1)); fputs("'>", out); esc(out, col(st, 2));
+        ui_close(out,"a");ui_open(out,"p",NULL);
+        if (*col(st, 4)) { ui_open(out,"span",NULL); esc(out, col(st, 4)); ui_close(out,"span"); }
+        if (*col(st, 3)) { ui_open(out,"span",NULL); esc(out, col(st, 3)); ui_close(out,"span"); }
+        if (*col(st, 5)) { ui_start(out,"time");ui_attr_open_sq(out,"datetime"); esc(out, col(st, 5)); fputs("'>", out); esc(out, col(st, 5)); ui_close(out,"time"); }
+        ui_close(out,"p");ui_close(out,"li");
         shown++;
     }
     sqlite3_finalize(st);
-    if (shown) fputs("</ol><p class='people-boundary' data-identity-boundary>Everything here carries this exact name in its "
-                     "publisher's credit line at this exact source. It is publication evidence, not a profile, a verified "
-                     "identity, consent, or an established relationship.</p></section>", out);
+    if (shown) {ui_close(out,"ol");ui_start(out,"p");ui_attr_sq(out,"class","people-boundary");ui_flag(out,"data-identity-boundary");ui_gt(out);ui_copy(out,"Everything here carries this exact name in its publisher's credit line at this exact source. It is publication evidence, not a profile, a verified identity, consent, or an established relationship.");ui_close(out,"p");ui_close(out,"section");}
     sess_close(&s);
     return shown;
 }

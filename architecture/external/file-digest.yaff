@@ -1,6 +1,7 @@
 atlas native-file-digest
 
 architecture native-file-digest
+  source_lineage earliest source lib/libbonfyre/src/bf_sha256.c first committed 2026-04-06 in 7fc614af "Add libbonfyre: canonical artifact contract + typed operator registry"
   canonical_name NativeFileDigest
   family external
   domain External / Platform cryptography

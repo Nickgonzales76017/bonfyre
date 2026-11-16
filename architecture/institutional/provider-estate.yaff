@@ -83,6 +83,7 @@ architecture github-app-connection
   source_lineage 2026-10-26 owner direction: take one provider all the way to a working account instead of listing sign-up pages
 
 architecture provider-customer-accounts
+  source_lineage earliest source cmd/BonfyreProviderEstate/src/customer.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProviderCustomerAccounts
   family identity
   domain Identity / Downstream Provider Tenancy

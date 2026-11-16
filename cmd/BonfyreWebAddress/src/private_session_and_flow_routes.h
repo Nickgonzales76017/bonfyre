@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PRIVATE_SESSION_AND_FLOW_ROUTES_H
 #define BONFYRE_PRIVATE_SESSION_AND_FLOW_ROUTES_H
+#include "ui_tree.h"
 /* Extracted verbatim from main.c lines 21184-22434 (mechanical split, no logic changes). */
 static int asset_twin_digest_target(const char *target, char digest[128]) {
     const char *tail;
@@ -436,7 +437,7 @@ static int serve_private_studio_surface(const char *method, const char *target,
         "<p>Declared CMS grammar is opened only inside the current private namespace.</p></div>"
         "<a class=\"button primary\" href=\"/cms/\">Open Content Studio <span>&rarr;</span></a></div></div>"
         "<div class=\"u90-card\"><div class=\"u90-card-head\"><div><p class=\"u90-kicker\">Physical / mobile</p><h3>Prepare a lawful handoff</h3>"
-        "<p>Physical Carrier recipes—QR, NFC, Wallet, device, or signed handoff—remain inside this same closure. A scan can resolve an address or begin a bounded ceremony; it cannot publish client work, authenticate a person, or authorize an effect by itself.</p></div>"
+        "<p>Physical handoffs—QR, NFC, Wallet, device, or signed handoff—remain inside this same closure. A scan can resolve an address or begin a bounded ceremony; it cannot publish client work, authenticate a person, or authorize an effect by itself.</p></div>"
         "<a class=\"button quiet\" href=\"/cms/\">Open carrier recipes <span>&rarr;</span></a></div></div>"
         "<div class=\"u90-card\"><div class=\"u90-card-head\"><div><p class=\"u90-kicker\">Evidence</p><h3>Observe a public source privately</h3>"
         "<p>ForeignTwin retains an exact body and receipt below this closure; observation never publishes it or promotes a claim.</p></div>"
@@ -627,9 +628,9 @@ static int serve_superuser_control(const BfRequest *r) {
     (void)method;(void)target;(void)body;(void)bearer;(void)auth_db;(void)host;
     char out[32768] = {0}, err[4096] = {0}, escaped[65536], fragment[98304];
     const char *bin = auth_binary();
-    int is_action = !strcmp(target, "/studio/admin/user") || !strcmp(target, "/studio/admin/grant") ||
-                    !strcmp(target, "/studio/admin/revoke") || !strcmp(target, "/studio/admin/sessions-revoke");
-    if (strcmp(target, "/studio/admin") && strcmp(target, "/studio/admin/") && !is_action) return 0;
+    int is_action = bf_request_is(r, "admin_user") || bf_request_is(r, "admin_grant") ||
+                    bf_request_is(r, "admin_revoke") || bf_request_is(r, "admin_sessions_revoke");
+    if (!bf_request_is(r, "admin_home") && !is_action) return 0;
     if (!superuser_host(host)) { superuser_html_reply(404, "<section class=\"studio-result\"><h2>Not found</h2></section>"); return 1; }
     if (!session_institution_authorized(bearer, auth_db, "bonfyre", "admin")) {
         superuser_html_reply(valid_token(bearer) ? 403 : 401,
@@ -642,7 +643,7 @@ static int serve_superuser_control(const BfRequest *r) {
         int id = 0, rc = -1;
         (void)query_value(body, "user_id", id_text, sizeof(id_text));
         if (!superuser_positive_id(id_text, &id)) { superuser_html_reply(400, "<section class=\"studio-result\"><h2>Valid user id required.</h2><p>No native owner was changed.</p></section>"); return 1; }
-        if (!strcmp(target, "/studio/admin/user")) {
+        if (bf_request_is(r, "admin_user")) {
             char *argv[] = { (char *)bin, "--db", (char *)auth_db, "update", "--id", id_text, NULL, NULL, NULL, NULL, NULL };
             (void)query_value(body, "tier", tier, sizeof(tier)); (void)query_value(body, "active", active, sizeof(active));
             if (tier[0] && strcmp(tier, "free") && strcmp(tier, "pro") && strcmp(tier, "enterprise")) { superuser_html_reply(400, "<section class=\"studio-result\"><h2>Unknown tier.</h2></section>"); return 1; }
@@ -650,12 +651,12 @@ static int serve_superuser_control(const BfRequest *r) {
             if (!tier[0] && !active[0]) { superuser_html_reply(400, "<section class=\"studio-result\"><h2>Choose a tier or active state.</h2></section>"); return 1; }
             int n = 6; if (tier[0]) { argv[n++] = "--tier"; argv[n++] = tier; } if (active[0]) { argv[n++] = "--active"; argv[n++] = active; } argv[n] = NULL;
             rc = auth_call_split(argv, NULL, out, sizeof(out), err, sizeof(err));
-        } else if (!strcmp(target, "/studio/admin/grant")) {
+        } else if (bf_request_is(r, "admin_grant")) {
             (void)query_value(body, "institution", institution, sizeof(institution)); (void)query_value(body, "role", role, sizeof(role));
             if (!superuser_institution_name(institution) || (strcmp(role, "read") && strcmp(role, "write") && strcmp(role, "admin"))) { superuser_html_reply(400, "<section class=\"studio-result\"><h2>Valid institution and read/write/admin role required.</h2></section>"); return 1; }
             char *argv[] = { (char *)bin, "--db", (char *)auth_db, "institution-grant", "--user-id", id_text, "--institution", institution, "--role", role, NULL };
             rc = auth_call_split(argv, NULL, out, sizeof(out), err, sizeof(err));
-        } else if (!strcmp(target, "/studio/admin/revoke")) {
+        } else if (bf_request_is(r, "admin_revoke")) {
             (void)query_value(body, "institution", institution, sizeof(institution));
             if (!superuser_institution_name(institution)) { superuser_html_reply(400, "<section class=\"studio-result\"><h2>Valid institution required.</h2></section>"); return 1; }
             char *argv[] = { (char *)bin, "--db", (char *)auth_db, "institution-revoke", "--user-id", id_text, "--institution", institution, NULL };
@@ -1116,10 +1117,10 @@ static int mf_open(const char *root, const char *target, const char *title, cons
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: public, max-age=60\r\nVary: Host, Accept, Cookie\r\nConnection: close\r\n\r\n");
     page_emit_head(template, head_end, title, lede);
     free(template);
-    fputs("<link rel=\"stylesheet\" href=\"/assets/composition.css\"></head><body class=\"ak-app ticker ", stdout); html(route_class);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/composition.css");ui_gt(stdout);ui_close(stdout,"head");ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-app ticker "); html(route_class);
     fputs("\" data-character=\"ticker\" data-aurekai-pattern=\"market\"><main class=\"wrap\">", stdout);
     { PageDocument nav = {0}; nav.route = target; nav.self_path = target; page_emit_nav(&nav); }
-    fputs("<header class=\"hero\"><h1>", stdout); html(title); fputs("</h1><p class=\"lede\">", stdout); html(lede); fputs("</p>", stdout);
+    ui_open(stdout,"header","hero");ui_open(stdout,"h1",NULL); html(title); ui_close(stdout,"h1");ui_open(stdout,"p","lede"); html(lede); ui_close(stdout,"p");
     return 1;
 }
 static void mf_close(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout); }
@@ -1138,17 +1139,16 @@ static int mf_offer_rows(sqlite3 *db, int with_head) {
         const char *price = (const char *)sqlite3_column_text(st, 4), *href = (const char *)sqlite3_column_text(st, 5);
         if (!h || strspn(h, "abcdefghijklmnopqrstuvwxyz0123456789.-") != strlen(h)) continue;
         if (!n++ && with_head)
-            fputs("<section class=\"region region-table\"><div class=\"ledger-wrap\"><table class=\"ledger trade-index\"><thead><tr><th scope=\"col\">Lot</th>"
-                  "<th scope=\"col\">Offer &amp; shop</th><th scope=\"col\">Price as posted</th><th scope=\"col\">Terms</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
-        printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"https://", n); html(h); fputs("/offers\">", stdout); html(what);
-        fputs("</a><span class=\"dek\">", stdout); html(shop); fputs(" &middot; sample shop on ", stdout); html(h); fputs("</span></td><td class=\"price\">", stdout);
+            {ui_open(stdout,"section","region region-table");ui_open(stdout,"div","ledger-wrap");ui_open(stdout,"table","ledger trade-index");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Lot");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Offer &amp; shop");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Price as posted");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Terms");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_open(stdout,"span","sr");ui_copy(stdout,"Open");ui_close(stdout,"span");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);}
+        ui_open(stdout,"tr",NULL);ui_open(stdout,"td","lot");fprintf(stdout,"%02d",n);ui_close(stdout,"td");ui_open(stdout,"td","name");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(h); fputs("/offers\">", stdout); html(what);
+        ui_close(stdout,"a");ui_open(stdout,"span","dek"); html(shop); fputs(" &middot; sample shop on ", stdout); html(h); ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td","price");
         if (price && *price) html(price); else ui_text(stdout, "span", "none", "Not stated");
-        fputs("</td><td class=\"when\">", stdout); html(says && *says ? says : ""); fputs("</td><td class=\"go\"><a class=\"lot-open\" href=\"https://", stdout); html(h);
+        ui_close(stdout,"td");ui_open(stdout,"td","when"); html(says && *says ? says : ""); ui_close(stdout,"td");ui_open(stdout,"td","go");ui_start(stdout,"a");ui_attr(stdout,"class","lot-open");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(h);
         if (href && href[0] == '/') html(href); else fputs("/offers", stdout);
-        fputs("\"><span class=\"sr\">Ask ", stdout); html(shop); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
+        fputs("\"><span class=\"sr\">Ask ", stdout); html(shop); ui_close(stdout,"span"); page_glyph("next"); ui_close(stdout,"a");ui_close(stdout,"td");ui_close(stdout,"tr");
     }
     sqlite3_finalize(st);
-    if (n && with_head) fputs("</tbody></table></div></section>", stdout);
+    if (n && with_head) {ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");}
     return n;
 }
 
@@ -1162,31 +1162,28 @@ static int emit_market_fronts(const BfRequest *r) {
         int listed = 0, i; double usd;
         for (i = 0; i < X402_CATALOG_N; i++) listed += x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
         if (!mf_open(root, "/market", "Market", "What Aurekai sells to people and agents. Each capability has one price, quoted the same through every payment rail.", "route-market")) return 0;
-        printf("<dl class=\"market-ledger\"><div><dt>Capabilities</dt><dd>%d</dd></div><div><dt>Priced</dt><dd>%d</dd></div>"
-               "<div><dt>Not for sale</dt><dd>%d</dd></div><div><dt>Can settle</dt><dd>%s</dd></div></dl></header>",
-               (int)X402_CATALOG_N, listed, (int)X402_CATALOG_N - listed, x402_facilitator()[0] ? "Yes" : "No");
-        fputs("<section class=\"region region-table\"><div class=\"ledger-wrap\"><table class=\"ledger trade-index\"><thead><tr><th scope=\"col\">Lot</th>"
-              "<th scope=\"col\">Capability</th><th scope=\"col\">Price a call</th><th scope=\"col\">Status</th><th scope=\"col\"><span class=\"sr\">Open</span></th></tr></thead><tbody>", stdout);
+        ui_open(stdout,"dl","market-ledger");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Capabilities");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",(int)X402_CATALOG_N);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Priced");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",listed);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Not for sale");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",(int)X402_CATALOG_N - listed);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Can settle");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,x402_facilitator()[0] ? "Yes" : "No");ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");ui_close(stdout,"header");
+        ui_open(stdout,"section","region region-table");ui_open(stdout,"div","ledger-wrap");ui_open(stdout,"table","ledger trade-index");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Lot");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Capability");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Price a call");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Status");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_open(stdout,"span","sr");ui_copy(stdout,"Open");ui_close(stdout,"span");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         for (i = 0; i < X402_CATALOG_N; i++) {
             int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
-            printf("<tr><td class=\"lot\">%02d</td><td class=\"name\"><a href=\"/room/capability/", i + 1); html(X402_CATALOG[i].name); fputs("\">", stdout);
-            html(X402_CATALOG[i].name); fputs("</a><span class=\"dek\">", stdout); html(X402_CATALOG[i].summary); fputs("</span></td><td class=\"price\">", stdout);
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td","lot");fprintf(stdout,"%02d",i + 1);ui_close(stdout,"td");ui_open(stdout,"td","name");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/room/capability/"); html(X402_CATALOG[i].name); fputs("\">", stdout);
+            html(X402_CATALOG[i].name); ui_close(stdout,"a");ui_open(stdout,"span","dek"); html(X402_CATALOG[i].summary); ui_close(stdout,"span");ui_close(stdout,"td");ui_open(stdout,"td","price");
             if (priced) printf("$%.4g", usd); else ui_text(stdout, "span", "none", "Not for sale");
             fputs(priced ? "</td><td class=\"when\">Listed</td>" : "</td><td class=\"when\">Unpriced</td>", stdout);
-            fputs("<td class=\"go\"><a class=\"lot-open\" href=\"/room/capability/", stdout); html(X402_CATALOG[i].name);
-            fputs("\"><span class=\"sr\">Open ", stdout); html(X402_CATALOG[i].name); fputs("</span>", stdout); page_glyph("next"); fputs("</a></td></tr>", stdout);
+            ui_open(stdout,"td","go");ui_start(stdout,"a");ui_attr(stdout,"class","lot-open");ui_attr_open(stdout,"href");ui_copy(stdout,"/room/capability/"); html(X402_CATALOG[i].name);
+            fputs("\"><span class=\"sr\">Open ", stdout); html(X402_CATALOG[i].name); ui_close(stdout,"span"); page_glyph("next"); ui_close(stdout,"a");ui_close(stdout,"td");ui_close(stdout,"tr");
         }
-        fputs("</tbody></table></div></section><p class=\"market-note\">A quote is not a reservation. Nothing settles without a verified payment.</p>", stdout);
+        ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");ui_close(stdout,"section");ui_open(stdout,"p","market-note");ui_copy(stdout,"A quote is not a reservation. Nothing settles without a verified payment.");ui_close(stdout,"p");
         mf_close();
         return 1;
     }
     if (!strcmp(target, "/offers") || !strcmp(target, "/offers/")) {
         sqlite3 *db = cms_open_ro(); int n;
         if (!mf_open(root, "/offers", "Offers", "Classes, services and made-to-order work that the shops kept here offer, at the price each one states.", "route-offers")) { if (db) sqlite3_close(db); return 0; }
-        fputs("</header>", stdout);
+        ui_close(stdout,"header");
         n = mf_offer_rows(db, 1);
         if (!n) ui_text(stdout, "p", "market-note", "No shop here has published an offer yet.");
-        else fputs("<p class=\"market-note\">These are sample shops built on Aurekai. Asking opens the shop's own contact page; nothing is booked or paid here.</p>", stdout);
+        else {ui_open(stdout,"p","market-note");ui_copy(stdout,"These are sample shops built on Aurekai. Asking opens the shop's own contact page; nothing is booked or paid here.");ui_close(stdout,"p");}
         if (db) sqlite3_close(db);
         mf_close();
         return 1;
@@ -1217,19 +1214,17 @@ static int emit_market_fronts(const BfRequest *r) {
                 const char *h = (const char *)sqlite3_column_text(st, 0), *name = (const char *)sqlite3_column_text(st, 1);
                 const char *offer = (const char *)sqlite3_column_text(st, 2), *says = (const char *)sqlite3_column_text(st, 3), *price = (const char *)sqlite3_column_text(st, 4);
                 if (!h || !name || !offer || strspn(h, "abcdefghijklmnopqrstuvwxyz0123456789.-") != strlen(h)) continue;
-                if (!shops++) fputs("<section class=\"region place-merchants\"><p class=\"place-kicker\">Shops kept here</p><h2>Independent merchants</h2>"
-                                    "<p class=\"place-dek\">Sample shops built on Aurekai. Each runs its own pages, offers and enquiries.</p><ol>", stdout);
-                fputs("<li><div class=\"place-who\"><span>", stdout); html(h); fputs("</span><h3>", stdout); html(name); fputs("</h3></div><blockquote><p>", stdout);
-                html(offer); if (says && *says) { fputs(". ", stdout); html(says); } fputs("</p>", stdout);
+                if (!shops++) {ui_open(stdout,"section","region place-merchants");ui_open(stdout,"p","place-kicker");ui_copy(stdout,"Shops kept here");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Independent merchants");ui_close(stdout,"h2");ui_open(stdout,"p","place-dek");ui_copy(stdout,"Sample shops built on Aurekai. Each runs its own pages, offers and enquiries.");ui_close(stdout,"p");ui_open(stdout,"ol",NULL);}
+                ui_open(stdout,"li",NULL);ui_open(stdout,"div","place-who");ui_open(stdout,"span",NULL); html(h); ui_close(stdout,"span");ui_open(stdout,"h3",NULL); html(name); ui_close(stdout,"h3");ui_close(stdout,"div");ui_open(stdout,"blockquote",NULL);ui_open(stdout,"p",NULL);
+                html(offer); if (says && *says) { fputs(". ", stdout); html(says); } ui_close(stdout,"p");
                 if (price && *price) { ui_text(stdout, "small", NULL, price); }
-                fputs("</blockquote><a class=\"place-go\" href=\"https://", stdout); html(h); fputs("/\">Visit the shop</a></li>", stdout);
+                ui_close(stdout,"blockquote");ui_start(stdout,"a");ui_attr(stdout,"class","place-go");ui_attr_open(stdout,"href");ui_copy(stdout,"https://"); html(h); fputs("/\">Visit the shop</a></li>", stdout);
             }
             sqlite3_finalize(st);
-            if (shops) fputs("</ol></section>", stdout);
+            if (shops) {ui_close(stdout,"ol");ui_close(stdout,"section");}
         }
         if (db) sqlite3_close(db);
-        fputs("<aside class=\"place-band\"><div><h2>Ground your page in a real street.</h2><p>Every parcel on the roll has its own page: owner of record, assessed value, when it was built, its neighbours.</p></div>"
-              "<nav><a class=\"is-primary\" href=\"/parcels\">Open the parcel map</a><a href=\"/studio\">Start a shop</a></nav></aside>", stdout);
+        ui_open(stdout,"aside","place-band");ui_open(stdout,"div",NULL);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Ground your page in a real street.");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Every parcel on the roll has its own page: owner of record, assessed value, when it was built, its neighbours.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"nav",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","is-primary");ui_attr(stdout,"href","/parcels");ui_gt(stdout);ui_copy(stdout,"Open the parcel map");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/studio");ui_gt(stdout);ui_copy(stdout,"Start a shop");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"aside");
         mf_close();
         return 1;
     }

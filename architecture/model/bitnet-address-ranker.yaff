@@ -1,6 +1,7 @@
 atlas model
 
 architecture bitnet-address-ranker
+  source_lineage earliest source cmd/BonfyreBitNet/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name BitNetAddressRanker
   family model
   domain Model / Addressable Candidate Narrowing

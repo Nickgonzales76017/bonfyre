@@ -12,6 +12,7 @@
  * use; a return without it, late, or for another actor changes nothing. */
 #ifndef BONFYRE_CONNECT_GITHUB_APP_H
 #define BONFYRE_CONNECT_GITHUB_APP_H
+#include "ui_tree.h"
 #include "../generated/native_estate_hosts.h"
 
 static int cga_owner(const char *bearer, const char *auth_db, char actor[160]) {
@@ -45,8 +46,8 @@ static int cga_credentials(char *bin, char *db, char *key) {
 }
 static void cga_page(int code, const char *title, const char *lead) {
     psetup_start(code, title);
-    fputs("<section class=\"cga\"><h1>", stdout);
-    html(title); fputs("</h1><p>", stdout); html(lead); fputs("</p>", stdout);
+    ui_open(stdout,"section","cga");ui_open(stdout,"h1",NULL);
+    html(title); ui_close(stdout,"h1");ui_open(stdout,"p",NULL); html(lead); ui_close(stdout,"p");
 }
 static void cga_tenancy_script(void) {
     fputs(
@@ -107,7 +108,7 @@ static int connect_github_app(const char *method, const char *target, const char
         if (!cga_credentials(bin, db, key)) { aw_error(503, "The credential store is not available here.\n"); return 1; }
         char *la[12] = {bin, "github-app-installations", "--db", db, "--key", key, "--actor", "github-customers"}; int k = 8;
         if (api && *api) { la[k++] = "--api"; la[k++] = (char *)api; } la[k] = NULL;
-        if (aw_native_result(la, NULL, 0, &list, &size, 0) || !list) { free(list); cga_page(503, "GitHub customers unavailable", "The app installations could not be read. This does not mean the app is disconnected. Stored credentials were not changed."); fputs("<p><a href=\"/connect/github-app/customers\">Retry customer list</a></p></section>", stdout); psetup_end(); return 1; }
+        if (aw_native_result(la, NULL, 0, &list, &size, 0) || !list) { free(list); cga_page(503, "GitHub customers unavailable", "The app installations could not be read. This does not mean the app is disconnected. Stored credentials were not changed."); ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/connect/github-app/customers");ui_gt(stdout);ui_copy(stdout,"Retry customer list");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section"); psetup_end(); return 1; }
         if (validated_id[0]) {
             char plain[40];
             snprintf(plain, sizeof(plain), "%cid%c:%s,", 34, 34, validated_id);
@@ -117,9 +118,9 @@ static int connect_github_app(const char *method, const char *target, const char
           if (api && *api) { vb[j++] = "--api"; vb[j++] = (char *)api; } vb[j] = NULL;
           if (!aw_native_result(vb, NULL, 0, &v, &vs, 1) && v) { const char *sl = strstr((const char *)v, "\"slug\":\""); if (sl) sscanf(sl + 8, "%127[a-z0-9-]", slug); } free(v); }
         cga_page(200, "GitHub customers", "Installed GitHub accounts and what each one chose to share. Check access explicitly before recording a candidate association.");
-        if (slug[0]) { fputs("<p>GitHub installation link: <a data-install-link href=\"https://github.com/apps/", stdout); html(slug); fputs("/installations/new\">https://github.com/apps/", stdout); html(slug); fputs("/installations/new</a></p>", stdout); }
-        fputs("<p data-github-install-boundary>Other accounts can install only if this app is public on GitHub. Installing on your own account does not prove customer onboarding. Existing apps keep their current GitHub visibility.</p>", stdout);
-        fputs("<table class=\"price-table\" data-github-customers><thead><tr><th scope=\"col\">Customer</th><th scope=\"col\">Shared</th><th scope=\"col\">Access check</th></tr></thead><tbody>", stdout);
+        if (slug[0]) { ui_open(stdout,"p",NULL);ui_copy(stdout,"GitHub installation link: ");ui_start(stdout,"a");ui_flag(stdout,"data-install-link");ui_attr_open(stdout,"href");ui_copy(stdout,"https://github.com/apps/"); html(slug); fputs("/installations/new\">https://github.com/apps/", stdout); html(slug); fputs("/installations/new</a></p>", stdout); }
+        ui_start(stdout,"p");ui_flag(stdout,"data-github-install-boundary");ui_gt(stdout);ui_copy(stdout,"Other accounts can install only if this app is public on GitHub. Installing on your own account does not prove customer onboarding. Existing apps keep their current GitHub visibility.");ui_close(stdout,"p");
+        ui_start(stdout,"table");ui_attr(stdout,"class","price-table");ui_flag(stdout,"data-github-customers");ui_gt(stdout);ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Customer");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Shared");ui_close(stdout,"th");ui_start(stdout,"th");ui_attr(stdout,"scope","col");ui_gt(stdout);ui_copy(stdout,"Access check");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         for (const char *p = strstr((const char *)list, "{\"id\":"); p; p = strstr(p + 1, "{\"id\":")) {
             char id[24] = "", account[128] = "", type[32] = "", sel[16] = "";
             sscanf(p, "{\"id\":%23[0-9],\"account\":\"%127[^\"]\",\"type\":\"%31[^\"]\",\"repositories\":\"%15[^\"]\"", id, account, type, sel);
@@ -130,14 +131,14 @@ static int connect_github_app(const char *method, const char *target, const char
                 if (api && *api) { cb[c++] = "--api"; cb[c++] = (char *)api; } cb[c] = NULL;
                 ok = !aw_native_result(cb, NULL, 0, &r, &rs, 0) && r; bindable += ok;
             }
-            fputs("<tr data-installation=\"", stdout); html(id); fputs("\"><th scope=\"row\">", stdout); html(account); fputs(" <small>", stdout); html(type); fputs("</small></th><td>", stdout);
-            html(!strcmp(sel, "all") ? "all repositories" : "chosen repositories"); fputs("</td><td>", stdout);
+            ui_start(stdout,"tr");ui_attr_open(stdout,"data-installation"); html(id); fputs("\"><th scope=\"row\">", stdout); html(account); fputs(" <small>", stdout); html(type); ui_close(stdout,"small");ui_close(stdout,"th");ui_open(stdout,"td",NULL);
+            html(!strcmp(sel, "all") ? "all repositories" : "chosen repositories"); ui_close(stdout,"td");ui_open(stdout,"td",NULL);
             if (ok) { const char *names = strstr((const char *)r, "\"names\":["); const char *cn = strstr((const char *)r, "\"repositories\":"); if (cn) count = atoi(cn + 15);
                 printf("%d repositor%s", count, count == 1 ? "y" : "ies");
                 if (names) { char list_names[600] = ""; sscanf(names + 9, "%599[^]]", list_names); for (char *q = list_names; *q; q++) if (*q == '"') *q = ' '; fputs(": ", stdout); html(list_names); } }
             else if (requested) fputs("access refused by GitHub", stdout);
             else { fputs("Not checked this visit. <a data-check-installation href=\"/connect/github-app/customers?check=", stdout); html(id); fputs("\">Check access</a>", stdout); }
-            fputs("</td></tr>", stdout);
+            ui_close(stdout,"td");ui_close(stdout,"tr");
             if (ok) {
                 fputs("<tr class=\"cga-bind\"><td colspan=\"3\"><button type=\"button\" data-bind-installation data-installation=\"", stdout); html(id);
                 fputs("\" data-account=\"", stdout); html(account); fputs("\" data-account-type=\"", stdout); html(type);
@@ -146,8 +147,8 @@ static int connect_github_app(const char *method, const char *target, const char
             }
             free(r); n++;
         }
-        if (!n) fputs("<tr><td colspan=\"3\">No customer has installed the app yet.</td></tr>", stdout);
-        fputs("</tbody></table>", stdout); if (bindable) cga_tenancy_script(); fputs("<p><a href=\"/work-board?context=self\">Back to the work board</a></p></section>", stdout);
+        if (!n) {ui_open(stdout,"tr",NULL);ui_start(stdout,"td");ui_attr(stdout,"colspan","3");ui_gt(stdout);ui_copy(stdout,"No customer has installed the app yet.");ui_close(stdout,"td");ui_close(stdout,"tr");}
+        ui_close(stdout,"tbody");ui_close(stdout,"table"); if (bindable) cga_tenancy_script(); ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/work-board?context=self");ui_gt(stdout);ui_copy(stdout,"Back to the work board");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
         free(list); psetup_end(); return 1;
     }
     if (!cga_state_dir(dir, sizeof(dir))) { aw_error(503, "Connections are not configured here.\n"); return 1; }
@@ -193,7 +194,7 @@ static int connect_github_app(const char *method, const char *target, const char
         unsigned char *out = NULL, *proof = NULL; size_t size = 0, proof_size = 0;
         int rc = aw_native_result(convert, code, strlen(code), &out, &size, 0);
         memset(code, 0, sizeof(code));
-        if (rc || !out) { free(out); cga_page(502, "GitHub did not hand over the app", "GitHub refused the one-time code, or it was already used. Nothing was stored. Start again from Aurekai."); fputs("<p><a href=\"/connect/github-app\">Start again</a></p></section>", stdout); psetup_end(); return 1; }
+        if (rc || !out) { free(out); cga_page(502, "GitHub did not hand over the app", "GitHub refused the one-time code, or it was already used. Nothing was stored. Start again from Aurekai."); ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/connect/github-app");ui_gt(stdout);ui_copy(stdout,"Start again");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section"); psetup_end(); return 1; }
         char *verify[16] = {bin, "github-app-verify", "--db", db, "--key", key, "--actor", "connect-github-app"}; n = 8;
         if (api && *api) { verify[n++] = "--api"; verify[n++] = (char *)api; } verify[n] = NULL;
         rc = aw_native_result(verify, NULL, 0, &proof, &proof_size, 1);
@@ -204,12 +205,12 @@ static int connect_github_app(const char *method, const char *target, const char
         cga_page(200, verified ? "GitHub is connected" : "GitHub app stored, not yet proven",
                  verified ? "The app exists, its key is sealed in the estate's credential store, and GitHub accepted a request signed with it just now."
                           : "The app was created and its key sealed, but GitHub did not accept a request signed with it. Try the check again from the work board.");
-        fputs("<dl data-github-app><dt>App</dt><dd>", stdout); html(slug); fputs("</dd><dt>App id</dt><dd>", stdout); html(app_id);
-        fputs("</dd><dt>Checked</dt><dd>", stdout); fputs(verified ? "accepted by GitHub" : "not accepted", stdout); fputs("</dd></dl>", stdout);
+        ui_start(stdout,"dl");ui_flag(stdout,"data-github-app");ui_gt(stdout);ui_open(stdout,"dt",NULL);ui_copy(stdout,"App");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); html(slug); ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"App id");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); html(app_id);
+        ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Checked");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); fputs(verified ? "accepted by GitHub" : "not accepted", stdout); ui_close(stdout,"dd");ui_close(stdout,"dl");
         if (slug[0] && strspn(slug, "abcdefghijklmnopqrstuvwxyz0123456789-") == strlen(slug)) {
-            fputs("<p>Next: choose which repositories it works on. <a class=\"cga-install\" rel=\"noopener\" href=\"https://github.com/apps/", stdout); html(slug); fputs("/installations/new\">Install on repositories</a></p>", stdout);
+            ui_open(stdout,"p",NULL);ui_copy(stdout,"Next: choose which repositories it works on. ");ui_start(stdout,"a");ui_attr(stdout,"class","cga-install");ui_attr(stdout,"rel","noopener");ui_attr_open(stdout,"href");ui_copy(stdout,"https://github.com/apps/"); html(slug); fputs("/installations/new\">Install on repositories</a></p>", stdout);
         }
-        fputs("<p><a href=\"/connect/github-app/customers\">GitHub customers</a> · <a href=\"/work-board?context=self\">Back to the work board</a></p></section>", stdout);
+        ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/connect/github-app/customers");ui_gt(stdout);ui_copy(stdout,"GitHub customers");ui_close(stdout,"a");ui_copy(stdout," · ");ui_start(stdout,"a");ui_attr(stdout,"href","/work-board?context=self");ui_gt(stdout);ui_copy(stdout,"Back to the work board");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
         free(out); free(proof); psetup_end(); return 1;
     }
 }

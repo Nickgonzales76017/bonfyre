@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PARTICIPANT_JOURNEY_H
 #define BONFYRE_PARTICIPANT_JOURNEY_H
+#include "ui_tree.h"
 #include "form_tree.h"
 /* HTML and HTTP adapters around the existing native participation relations.
  * No client-side account database and no implicit external participation. */
@@ -119,25 +120,25 @@ static void pj_document(const PjRecord *r){
     char path[768],login[2600];pj_route(r->kind,r->target,path);
     fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: same-origin\r\nX-Content-Type-Options: nosniff\r\nX-Robots-Tag: noindex, nofollow\r\nConnection: close\r\n\r\n",stdout);
     ak_app_open(r->title,"directory","route-participation");
-    fputs("<div class=\"pj-page\" data-participant-journey><nav class=\"pj-breadcrumb\" aria-label=\"Breadcrumb\"><a href=\"/discover\">Discover</a><span aria-hidden=\"true\">/</span><a href=\"/profile?tab=activity\">My activity</a></nav><p class=\"pj-kicker\">",stdout);
-    html(r->kind==PJ_COMMUNITY?"Community participation":"Your interests");fputs("</p><h1>",stdout);html(r->title);fputs("</h1><div class=\"pj-layout\"><section aria-label=\"About this activity\">",stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","pj-page");ui_flag(stdout,"data-participant-journey");ui_gt(stdout);ui_start(stdout,"nav");ui_attr(stdout,"class","pj-breadcrumb");ui_attr(stdout,"aria-label","Breadcrumb");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"href","/discover");ui_gt(stdout);ui_copy(stdout,"Discover");ui_close(stdout,"a");ui_start(stdout,"span");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);ui_copy(stdout,"/");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr(stdout,"href","/profile?tab=activity");ui_gt(stdout);ui_copy(stdout,"My activity");ui_close(stdout,"a");ui_close(stdout,"nav");ui_open(stdout,"p","pj-kicker");
+    html(r->kind==PJ_COMMUNITY?"Community participation":"Your interests");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);html(r->title);ui_close(stdout,"h1");ui_open(stdout,"div","pj-layout");ui_start(stdout,"section");ui_attr(stdout,"aria-label","About this activity");ui_gt(stdout);
     if(r->visible){
-        fputs("<p class=\"pj-source\">",stdout);html(r->description);fputs("</p><a class=\"pj-source-link\" href=\"/s/",stdout);
+        ui_open(stdout,"p","pj-source");html(r->description);ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"class","pj-source-link");ui_attr_open(stdout,"href");ui_copy(stdout,"/s/");
         fputs(r->kind==PJ_COMMUNITY?"community/":"publication_occurrence/",stdout);url_query_value(r->target);
         fputs("\">Open the full ",stdout);fputs(r->kind==PJ_COMMUNITY?"community":"source",stdout);fputs(" page</a>",stdout);
-        if(pj_external_link(r->href)){fputs("<p><a class=\"pj-source-link\" target=\"_blank\" rel=\"noopener noreferrer\" href=\"",stdout);html(r->href);fputs("\">Visit the original publisher ↗</a></p>",stdout);}
+        if(pj_external_link(r->href)){ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","pj-source-link");ui_attr(stdout,"target","_blank");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href");html(r->href);fputs("\">Visit the original publisher ↗</a></p>",stdout);}
     }else ui_text(stdout, "p", "pj-notice", "This source is no longer public. Your private record remains available; it does not reveal the withdrawn content.");
-    fputs("<p class=\"pj-notice\">",stdout);
+    ui_open(stdout,"p","pj-notice");
     html(r->kind==PJ_COMMUNITY?"Your request is kept in Aurekai. It does not join or contact a community on another site.":"Keep this in your private activity. Registration and subscriptions on the original site remain separate.");
-    fputs("</p></section><aside class=\"pj-state\" aria-label=\"Your participation\"><h2>",stdout);html(pj_state_label(r));fputs("</h2>",stdout);
+    ui_close(stdout,"p");ui_close(stdout,"section");ui_start(stdout,"aside");ui_attr(stdout,"class","pj-state");ui_attr(stdout,"aria-label","Your participation");ui_gt(stdout);ui_open(stdout,"h2",NULL);html(pj_state_label(r));ui_close(stdout,"h2");
     if(!r->actor[0]){
-        if(pj_login_url(path,login)){fputs("<p>Sign in to keep this choice in your account. You will return to this same page before anything changes.</p><a class=\"pj-button\" data-participant-signin href=\"",stdout);html(login);fputs("\">Sign in to continue</a>",stdout);}
+        if(pj_login_url(path,login)){ui_open(stdout,"p",NULL);ui_copy(stdout,"Sign in to keep this choice in your account. You will return to this same page before anything changes.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"class","pj-button");ui_flag(stdout,"data-participant-signin");ui_attr_open(stdout,"href");html(login);fputs("\">Sign in to continue</a>",stdout);}
     }else{
-        if(r->present){fputs("<p>Kept for you<time>",stdout);html(r->began);fputs("</time></p>",stdout);}
+        if(r->present){ui_open(stdout,"p",NULL);ui_copy(stdout,"Kept for you");ui_open(stdout,"time",NULL);html(r->began);ui_close(stdout,"time");ui_close(stdout,"p");}
         if(r->kind==PJ_COMMUNITY&&!strcmp(r->state,"requested")&&!strcmp(r->status,"published"))ui_text(stdout, "p", NULL, "Your request is saved in Aurekai. Membership has not been accepted yet.");
         if(r->kind==PJ_COMMUNITY&&!strcmp(r->state,"active"))fputs(r->expired?"<p>This membership's expiry has passed. Its community manages renewal.</p>":"<p>Your membership is active. Open the community to continue.</p>",stdout);
         if(r->managed&&r->visible){
-            fputs("<p>Manage your participation from the community itself.</p><a class=\"pj-button\" href=\"/community?community=",stdout);
+            ui_open(stdout,"p",NULL);ui_copy(stdout,"Manage your participation from the community itself.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"class","pj-button");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");
             url_query_value(r->target);fputs("\">Open community</a>",stdout);
         }
         const char *actions[]={"follow","unfollow","request","withdraw"};
@@ -147,9 +148,9 @@ static void pj_document(const PjRecord *r){
             const FtForm f={.id="pj-change",.action="/participation/change",.label=labels[i],.hidden=hidden,.nhidden=4};
             ft_form(stdout,&f);
         }
-        fputs("<p><a href=\"/profile?tab=activity&amp;kind=",stdout);html(pj_kind_name(r->kind));fputs("\">Return to my activity</a></p>",stdout);
+        ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=activity&amp;kind=");html(pj_kind_name(r->kind));fputs("\">Return to my activity</a></p>",stdout);
     }
-    fputs("</aside></div></div>",stdout);ak_app_close();
+    ui_close(stdout,"aside");ui_close(stdout,"div");ui_close(stdout,"div");ak_app_close();
 }
 static void pj_error(int code){
     protocol_reply(code,"text/plain; charset=utf-8",code==409?
@@ -159,10 +160,10 @@ static void pj_error(int code){
       "Review the exact activity and submit its own form.\n");
 }
 /* Existing form consumers call this branch; no second relation writer remains. */
-static int pj_legacy(const char *method,const char *target,const char *body,const char *raw,
+static int pj_legacy(const char *method,const BfRequest *route,const char *body,const char *raw,
                      const char *host,const char *bearer,const char *auth_db){
-    PjKind kind=target&&!strcmp(target,"/govern/community-join")?PJ_COMMUNITY:
-      target&&!strcmp(target,"/govern/occurrence-follow")?PJ_OCCURRENCE:0;
+    PjKind kind=bf_request_is(route,"community_join")?PJ_COMMUNITY:
+      bf_request_is(route,"occurrence_follow")?PJ_OCCURRENCE:0;
     if(!kind)return 0;
     if(strcmp(method,"POST")){pj_error(405);return 1;}
     char id[200]="",back[600]="",actor[64]="",path[768],login[2600];
@@ -209,9 +210,9 @@ static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,co
     if(!db||uid<1){ui_text(stdout, "p", NULL, "Your private activity could not be read.");return;}
     if(!pj_kind_name(kind)[0])kind=PJ_OCCURRENCE;
     char actor[64];snprintf(actor,sizeof(actor),"user:%ld",uid);
-    fputs("<section class=\"pj-activity\" data-private-participation><h2>My activity</h2><p class=\"pj-notice\">Only you can see this activity. Switching profile sites does not publish it.</p><nav class=\"pj-filter\" aria-label=\"Activity type\">",stdout);
-    for(int i=1;i<=2;i++){fputs("<a href=\"",stdout);pj_profile_url(site,(PjKind)i,"",0);fputs("\"",stdout);if(i==(int)kind)fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(i==1?"Following":"Community requests");fputs("</a>",stdout);}
-    fputs("</nav>",stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","pj-activity");ui_flag(stdout,"data-private-participation");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"My activity");ui_close(stdout,"h2");ui_open(stdout,"p","pj-notice");ui_copy(stdout,"Only you can see this activity. Switching profile sites does not publish it.");ui_close(stdout,"p");ui_start(stdout,"nav");ui_attr(stdout,"class","pj-filter");ui_attr(stdout,"aria-label","Activity type");ui_gt(stdout);
+    for(int i=1;i<=2;i++){ui_start(stdout,"a");ui_attr_open(stdout,"href");pj_profile_url(site,(PjKind)i,"",0);fputs("\"",stdout);if(i==(int)kind)fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(i==1?"Following":"Community requests");ui_close(stdout,"a");}
+    ui_close(stdout,"nav");
     {const FtField hidden[]={{"tab","activity"},{"kind",pj_kind_name(kind)},{site&&*site?"site":NULL,site}};
      const FtInput find[]={{.label="Search my activity",.type="search",.name="q",.maxlength="159",.value=q?q:"",.placeholder="Search current public titles"}};
      const FtForm f={.id="pj-search",.method="get",.action="/profile",.label="Search activity",.hidden=hidden,.nhidden=3,.inputs=find,.ninputs=1};
@@ -226,21 +227,21 @@ static void pj_profile_list(sqlite3 *db,long uid,const char *site,PjKind kind,co
       "AND c.occurrence_id=m.occurrence_id AND c.status='published' AND c.visibility='public' "
       "AND lower(c.assertion_state)='observed' AND instr(lower(c.title),lower(?3))>0)) ORDER BY m.id DESC LIMIT 25";
     sqlite3_stmt *s=NULL;int count=0,step=SQLITE_DONE,more=0;sqlite3_int64 last=0;
-    if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){fputs("<p>The activity owner is unavailable. This is not an empty activity list.</p></section>",stdout);return;}
+    if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){ui_open(stdout,"p",NULL);ui_copy(stdout,"The activity owner is unavailable. This is not an empty activity list.");ui_close(stdout,"p");ui_close(stdout,"section");return;}
     sqlite3_bind_text(s,1,actor,-1,SQLITE_STATIC);sqlite3_bind_int64(s,2,cursor);sqlite3_bind_text(s,3,q?q:"",-1,SQLITE_STATIC);
     while((step=sqlite3_step(s))==SQLITE_ROW){
         if(count==24){more=1;break;}last=sqlite3_column_int64(s,0);count++;
         char id[200];PjRecord r;int code=pj_column(s,1,id,sizeof(id))?pj_load(db,kind,actor,id,&r):503;
-        if(code!=200){fputs("<article class=\"pj-row\"><div><h3>Activity needs review</h3><p>A retained identity could not be resolved safely. No records were changed.</p></div></article>",stdout);continue;}
+        if(code!=200){ui_open(stdout,"article","pj-row");ui_open(stdout,"div",NULL);ui_open(stdout,"h3",NULL);ui_copy(stdout,"Activity needs review");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"A retained identity could not be resolved safely. No records were changed.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"article");continue;}
         char path[768];if(!pj_route(kind,id,path))continue;
-        fputs("<article class=\"pj-row\"><div><h3><a href=\"",stdout);html(path);fputs("\">",stdout);html(r.title);fputs("</a></h3><p>",stdout);
+        ui_open(stdout,"article","pj-row");ui_open(stdout,"div",NULL);ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(path);fputs("\">",stdout);html(r.title);ui_close(stdout,"a");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
         html(r.visible?(kind==PJ_COMMUNITY?"Your saved request and its current membership status.":"Open the original material or manage your follow."):"The source is no longer public. Your private relationship can still be reviewed.");
-        fputs("</p></div><aside><span class=\"pj-status\">",stdout);html(pj_state_label(&r));fputs("</span><a href=\"",stdout);html(path);fputs("\">Open this activity →</a></aside></article>",stdout);
+        ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside",NULL);ui_open(stdout,"span","pj-status");html(pj_state_label(&r));ui_close(stdout,"span");ui_start(stdout,"a");ui_attr_open(stdout,"href");html(path);fputs("\">Open this activity →</a></aside></article>",stdout);
     }
     sqlite3_finalize(s);
     if(step!=SQLITE_DONE&&step!=SQLITE_ROW)ui_text(stdout, "p", NULL, "The activity page could not be read completely. Reload before treating it as a complete list.");
-    else if(!count)fputs("<div class=\"pj-empty\"><h3>No matching activity</h3><p>Follow a public source or request participation from its community page. Return here to see its current state.</p><a href=\"/discover\">Explore public material</a></div>",stdout);
-    if(more){fputs("<a class=\"pj-more\" href=\"",stdout);pj_profile_url(site,kind,q,last);fputs("\">Earlier activity</a>",stdout);}
-    fputs("</section>",stdout);
+    else if(!count){ui_open(stdout,"div","pj-empty");ui_open(stdout,"h3",NULL);ui_copy(stdout,"No matching activity");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Follow a public source or request participation from its community page. Return here to see its current state.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"href","/discover");ui_gt(stdout);ui_copy(stdout,"Explore public material");ui_close(stdout,"a");ui_close(stdout,"div");}
+    if(more){ui_start(stdout,"a");ui_attr(stdout,"class","pj-more");ui_attr_open(stdout,"href");pj_profile_url(site,kind,q,last);fputs("\">Earlier activity</a>",stdout);}
+    ui_close(stdout,"section");
 }
 #endif

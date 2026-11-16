@@ -35,6 +35,7 @@ atlas commons
 # says so in a known_gap instead of rounding the maturity up.
 
 architecture protocol-contract
+  source_lineage earliest source engine/core/src/protocol_contract.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/protocol_evidence.py which scripts/retire.sh archived at components/BonfyreControlPlane/protocol_evidence.py.archive
   canonical_name ProtocolContract
   family commons
   domain Commons / Interaction
@@ -107,6 +108,7 @@ architecture protocol-contract
   known_gap no second protocol state store exists in native code either: evidence_required, WorkGraph, SemanticProgramIR and carrier lowerings must bind the existing owners rather than being reimplemented as a protocol database.
 
 architecture information-policy
+  source_lineage earliest source engine/core/src/information_policy.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InformationPolicy
   family commons
   domain Commons / Disclosure
@@ -152,6 +154,7 @@ architecture information-policy
   known_gap information-policy.cue supplies the exact audience vocabulary to the Bun projection and bf_information_policy_* owns the native C decision ABI. The former Python evaluator and its test are archived after all active callers moved; the remaining gap is binding audience to the arriving AddressPlane territory rather than trusting a caller-supplied label.
 
 architecture domain-profile
+  source_lineage earliest source schemas/control/domain-profile.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/domain_profile.py which scripts/retire.sh archived at components/BonfyreControlPlane/domain_profile.py.archive
   canonical_name DomainProfile
   family commons
   domain Commons / Domain grammar
@@ -299,6 +302,7 @@ interaction profile-specializes-protocol
 # ---------------------------------------------------------------------------
 
 architecture live-semantic-track
+  source_lineage earliest source components/BonfyreControlPlane/live-semantic-track.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name LiveSemanticTrack
   family commons
   domain Commons / Live semantics
@@ -380,6 +384,7 @@ interaction live-track-cools-into-attention
   invalidates_on a kind's declared durability changes
 
 architecture speech-recognition-repair
+  source_lineage earliest source components/BonfyreTranscribe/tests/redecode_test.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name SpeechRecognitionRepair
   family commons
   domain Commons / Speech recognition
@@ -443,6 +448,7 @@ interaction protocol-closes-on-evidence
   witness components/BonfyreControlPlane/tests/test_protocol_evidence.py links the compiled organ both ways -- the C reads rows this module wrote and this module reads rows the C wrote -- and proves contradiction outranks support regardless of write order, falsification survives reproduction, retraction agrees across both implementations, a contradiction is not counted as a supporter, and an enactment reports its two closure conditions separately so a caller can tell which to chase (18 assertions)
 
 architecture occurrence-origin
+  source_lineage earliest source engine/core/src/occurrence_origin.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name OccurrenceOrigin
   family commons
   domain Commons / Occurrence provenance
@@ -481,6 +487,7 @@ architecture occurrence-origin
   known_gap the spine keeps causal ordering separate from origin so no caller can infer an effect from being on the spine; a future unified occurrence write must atomically admit both owners without collapsing their semantic facts.
   known_gap the foreign ingest path now uses the Bun occurrence facade, but its relation insert and the independent OccurrenceSpine insert are not yet one atomic admission; neither partial write may be read as a completed unified occurrence
 architecture publication-program
+  source_lineage earliest source components/BonfyreControlPlane/publication-program.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name PublicationProgram
   family commons
   domain Commons / Publication
@@ -536,6 +543,7 @@ interaction publication-requires-delegated-consent
   binding components/BonfyreControlPlane/publication-program.mjs
 
 architecture standing-address-compiler
+  source_lineage earliest source engine/core/src/standing_address.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name StandingAddressCompiler
   family commons
   domain Commons / Opportunity ranking
@@ -577,6 +585,7 @@ architecture standing-address-compiler
   known_gap relevance is supplied by the caller. Nothing here computes it from place, time, relationships or the live world, so this ranks honestly over scores it did not produce.
   known_gap the native caller ranks an explicit candidate input; PageComposition and SurfacePattern still need an owner-backed opportunity feed before this can become a public recommendation surface.
 architecture surface-pattern
+  source_lineage earliest source cmd/BonfyreCMS/content-types/surface_pattern.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/surface_pattern.py which scripts/retire.sh archived at components/BonfyreControlPlane/surface_pattern.py.archive
   canonical_name SurfacePattern
   family commons
   domain Commons / Surface grammar
@@ -649,6 +658,7 @@ interaction pattern-renders-an-opportunity
   binding components/BonfyreControlPlane/surface-pattern.mjs
 
 architecture commerce-chain
+  source_lineage earliest source engine/core/src/commerce.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/commerce_chain.py which scripts/retire.sh archived at components/BonfyreControlPlane/commerce_chain.py.archive
   canonical_name CommerceChain
   family commons
   domain Commons / Commerce stages
@@ -701,6 +711,7 @@ architecture commerce-chain
   known_gap the stages are recorded by callers and nothing yet drives them from UCP, Beckn, GS1 Digital Link or EPCIS observations, so the chain describes an exchange rather than following one.
 
 architecture retention-gc
+  source_lineage earliest source engine/core/src/retention.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/retention_gc.py which scripts/retire.sh archived at components/BonfyreControlPlane/retention_gc.py.archive
   canonical_name RetentionGC
   family commons
   domain Commons / Retention
@@ -792,6 +803,7 @@ interaction protocol-lowers-to-a-dependency-addressed-program
   forbidden_inference a removed body -> the occurrence did not happen, or what it said was untrue
 
 architecture foreign-live-ingest
+  source_lineage earliest source components/BonfyreControlPlane/foreign-live.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ForeignLiveIngest
   family commons
   domain Commons / Foreign occurrence
@@ -829,6 +841,7 @@ architecture foreign-live-ingest
   known_gap downgraded from measured after review: the witness asserted this module's own declared constants rather than falsifying anything external, which is the maturity laundering this registry forbids. Source and witness lines removed until a test exists that could fail for a reason the module did not author.
 
 architecture protocol-density-law
+  source_lineage earliest source architecture/commons/protocol-commons.yaff first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProtocolDensityLaw
   family commons
   domain Commons / Protocol
@@ -931,6 +944,7 @@ architecture protocol-density-law
   known_gap phenotype compilation is described and unbuilt. Facets are still authored per protocol family rather than selected from the phenotypes an occurrence carries, so the abstraction jump this entry names has not been taken.
 
 architecture protocol-facet-compiler
+  source_lineage earliest source schemas/control/protocol-facet.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProtocolFacetCompiler
   family commons
   domain Commons / Protocol
@@ -996,6 +1010,7 @@ architecture protocol-facet-compiler
   known_gap density reads explicit from_owner and to_owner pairs and does not reimplement the participation report's schema-specific normalizer; a receipt that only carries a twin_id contributes no edge here. Two normalizers would be two opinions, so the gap is recorded rather than closed by duplication.
 
 architecture text-extraction-rules
+  source_lineage earliest source schemas/control/text-rules.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TextExtractionRules
   family commons
   domain Commons / Text
@@ -1045,6 +1060,7 @@ architecture text-extraction-rules
   known_gap the atlas reports the field keys it stores and never reads and does not refuse them. Refusing would fail CI on 272 lines authors already wrote, so the loss is now visible and still present.
 
 architecture marketplace-observation
+  source_lineage earliest source cmd/BonfyreCommerce/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/project_listings.py which scripts/retire.sh archived at scripts/project_listings.py.archive
   canonical_name MarketplaceObservation
   family commons
   domain Commerce / Observed marketplace material

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SITE_AND_WORLD_MATERIAL_H
 #define BONFYRE_SITE_AND_WORLD_MATERIAL_H
+#include "ui_tree.h"
 /* Extracted verbatim from main.c lines 5111-6404 (mechanical split, no logic changes). */
 static int site_program_publications(sqlite3 *db, const char *collection,
                                      NativePublication *out, size_t cap) {
@@ -84,10 +85,10 @@ static void site_program_emit_navigation(sqlite3 *db, const char *site) {
         const char *grammar = (const char *)sqlite3_column_text(st, 0);
         const BfNativeSurfaceProgram *program = native_surface_program(grammar);
         if (!program) continue;
-        if (!count++) fputs("<nav class=\"site-program-nav\" aria-label=\"Site navigation\">", stdout);
+        if (!count++) {ui_start(stdout,"nav");ui_attr(stdout,"class","site-program-nav");ui_attr(stdout,"aria-label","Site navigation");ui_gt(stdout);}
         ui_link(stdout, program->route, NULL, grammar);
     }
-    if (count) fputs("</nav>", stdout);
+    if (count) ui_close(stdout,"nav");
     sqlite3_finalize(st);
 }
 
@@ -408,13 +409,13 @@ static int site_material_resolve(sqlite3 *db, const BfSiteApplicationLowerer *lo
 }
 
 static void site_surface_link(const char *href, const char *label) {
-    if (href && *href && public_http_url(href)) { fputs("<a href=\"", stdout); html(href); fputs("\" rel=\"noopener\" target=\"_blank\">", stdout); html(label); fputs("</a>", stdout); }
+    if (href && *href && public_http_url(href)) { ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(href); fputs("\" rel=\"noopener\" target=\"_blank\">", stdout); html(label); ui_close(stdout,"a"); }
     else html(label);
 }
 
 static void site_surface_emit_header(const SiteMaterialStream *stream) {
     const SiteMaterialItem *item = &stream->item[0];
-    fputs("<header>", stdout);
+    ui_open(stdout,"header",NULL);
     if (stream->title[0]) { ui_text(stdout, "h2", NULL, stream->title); }
     else if (item->title[0]) { ui_text(stdout, "h2", NULL, item->title); }
     if (stream->description[0]) { ui_text(stdout, "p", NULL, stream->description); }
@@ -423,74 +424,74 @@ static void site_surface_emit_header(const SiteMaterialStream *stream) {
     else if (!site_program_own_render && item->byline[0]) { ui_text(stdout, "p", NULL, item->byline); }
     if (stream->metric[0]) { ui_text(stdout, "small", NULL, stream->metric); }
     else if (!site_program_own_render && item->when[0]) { ui_text(stdout, "time", NULL, item->when); }
-    fputs("</header>", stdout);
+    ui_close(stdout,"header");
 }
 
 static void site_surface_emit_lead(const SiteMaterialStream *stream) {
     const SiteMaterialItem *item = &stream->item[0];
-    fputs("<div class=\"application-lead\"><h2>", stdout);
+    ui_open(stdout,"div","application-lead");ui_open(stdout,"h2",NULL);
     site_surface_link(item->href, item->title);
-    fputs("</h2></div>", stdout);
+    ui_close(stdout,"h2");ui_close(stdout,"div");
 }
 
 static void site_surface_emit_stream(const SiteMaterialStream *stream) {
     int i;
     if (stream->count < 2) return;
-    fputs("<ol class=\"application-stream\">", stdout);
+    ui_open(stdout,"ol","application-stream");
     for (i = 1; i < stream->count; i++) {
-        fputs("<li>", stdout); site_surface_link(stream->item[i].href, stream->item[i].title);
-        fputs("<small>", stdout); html(stream->item[i].byline);
+        ui_open(stdout,"li",NULL); site_surface_link(stream->item[i].href, stream->item[i].title);
+        ui_open(stdout,"small",NULL); html(stream->item[i].byline);
         if (stream->item[i].when[0]) { fputs(" · ", stdout); html(stream->item[i].when); }
-        fputs("</small></li>", stdout);
+        ui_close(stdout,"small");ui_close(stdout,"li");
     }
-    fputs("</ol>", stdout);
+    ui_close(stdout,"ol");
 }
 
 static void site_surface_emit_thread(const SiteMaterialStream *stream) {
     int i;
-    fputs("<div class=\"application-thread\">", stdout);
+    ui_open(stdout,"div","application-thread");
     for (i = 0; i < stream->count; i++) {
-        fputs("<article><header><span>", stdout); html(stream->item[i].byline);
+        ui_open(stdout,"article",NULL);ui_open(stdout,"header",NULL);ui_open(stdout,"span",NULL); html(stream->item[i].byline);
         if (site_program_own_render && strlen(stream->item[i].when) >= 10) {
             /* A reader wants the day; the machine keeps the instant. */
             char day[11];
             snprintf(day, sizeof(day), "%.10s", stream->item[i].when);
-            fputs("</span><time datetime=\"", stdout); html(stream->item[i].when); fputs("\">", stdout); html(day);
-            fputs("</time></header>", stdout);
+            ui_close(stdout,"span");ui_start(stdout,"time");ui_attr_open(stdout,"datetime"); html(stream->item[i].when); fputs("\">", stdout); html(day);
+            ui_close(stdout,"time");ui_close(stdout,"header");
         } else {
-        fputs("</span><time>", stdout); html(stream->item[i].when); fputs("</time></header>", stdout);
+        ui_close(stdout,"span");ui_open(stdout,"time",NULL); html(stream->item[i].when); ui_close(stdout,"time");ui_close(stdout,"header");
         }
         if (stream->item[i].title[0]) { ui_text(stdout, "h3", NULL, stream->item[i].title); }
-        fputs("<p>", stdout); html(stream->item[i].body); fputs("</p></article>", stdout);
-        if (stream->item[i].reaction_count) { fputs("<small class=\"community-reactions\">", stdout); printf("%d accepted reactions", stream->item[i].reaction_count); fputs("</small>", stdout); }
+        ui_open(stdout,"p",NULL); html(stream->item[i].body); ui_close(stdout,"p");ui_close(stdout,"article");
+        if (stream->item[i].reaction_count) { ui_open(stdout,"small","community-reactions"); printf("%d accepted reactions", stream->item[i].reaction_count); ui_close(stdout,"small"); }
     }
-    fputs("</div>", stdout);
+    ui_close(stdout,"div");
 }
 
 static void site_surface_emit_board(const SiteMaterialStream *stream) {
     int i;
-    fputs("<ol class=\"application-board\">", stdout);
+    ui_open(stdout,"ol","application-board");
     for (i = 0; i < stream->count; i++) {
         int linked = stream->item[i].href[0] == '/';
-        fputs("<li>", stdout);
-        if (linked) { fputs("<a href=\"", stdout); html(stream->item[i].href); fputs("\">", stdout); }
-        else fputs("<div>", stdout);
-        fputs("<small>", stdout);
-        html(stream->item[i].byline); fputs("</small><strong>", stdout); html(stream->item[i].title);
-        fputs("</strong>", stdout);
+        ui_open(stdout,"li",NULL);
+        if (linked) { ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(stream->item[i].href); fputs("\">", stdout); }
+        else ui_open(stdout,"div",NULL);
+        ui_open(stdout,"small",NULL);
+        html(stream->item[i].byline); ui_close(stdout,"small");ui_open(stdout,"strong",NULL); html(stream->item[i].title);
+        ui_close(stdout,"strong");
         if (stream->item[i].body[0]) { ui_text(stdout, "span", NULL, stream->item[i].body); }
         fputs(linked ? "</a></li>" : "</div></li>", stdout);
     }
-    fputs("</ol>", stdout);
+    ui_close(stdout,"ol");
 }
 
 static void site_surface_emit_media(const BfSiteApplicationLowerer *lowerer, const SiteMaterialStream *stream) {
     const SiteMaterialItem *item = &stream->item[0];
     if (!listen_safe_asset(item->asset)) { ui_text(stdout, "p", "site-program-empty", "No safe public media representation is published for this material."); return; }
     if (lowerer->layout == BF_SITE_LAYOUT_AUDIO) {
-        fputs("<audio controls preload=\"metadata\" src=\"", stdout); html(item->asset); fputs("\"></audio>", stdout);
+        ui_start(stdout,"audio");ui_flag(stdout,"controls");ui_attr(stdout,"preload","metadata");ui_attr_open(stdout,"src"); html(item->asset); fputs("\"></audio>", stdout);
     } else {
-        fputs("<video controls preload=\"metadata\" src=\"", stdout); html(item->asset); fputs("\"", stdout);
+        ui_start(stdout,"video");ui_flag(stdout,"controls");ui_attr(stdout,"preload","metadata");ui_attr_open(stdout,"src"); html(item->asset); fputs("\"", stdout);
         if (listen_safe_asset(item->poster)) { fputs(" poster=\"", stdout); html(item->poster); fputs("\"", stdout); }
         fputs("></video>", stdout);
     }
@@ -498,7 +499,7 @@ static void site_surface_emit_media(const BfSiteApplicationLowerer *lowerer, con
 
 static void site_surface_emit_transcript(const SiteMaterialStream *stream) {
     if (!listen_safe_asset(stream->item[0].transcript)) return;
-    fputs("<p><a href=\"", stdout); html(stream->item[0].transcript); fputs("\">Transcript</a></p>", stdout);
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(stream->item[0].transcript); fputs("\">Transcript</a></p>", stdout);
 }
 
 static void site_surface_render_stream(const BfSiteApplicationLowerer *lowerer, const SiteMaterialStream *stream) {
@@ -506,7 +507,7 @@ static void site_surface_render_stream(const BfSiteApplicationLowerer *lowerer, 
     /* A part with nothing in it still says so in the document; the sheet folds
      * the repeats away so a reader meets the statement once, not per part. */
     if (!lowerer || !stream || !stream->count) { ui_text(stdout, "p", "site-program-empty", lowerer ? lowerer->empty_character : "No native lowerer has been published for this application."); return; }
-    fputs("<article class=\"application-data\">", stdout);
+    ui_open(stdout,"article","application-data");
     for (i = 0; i < lowerer->op_count; i++) switch (lowerer->ops[i]) {
     case BF_SITE_OP_HEADER: site_surface_emit_header(stream); break;
     case BF_SITE_OP_LEAD: site_surface_emit_lead(stream); break;
@@ -516,7 +517,7 @@ static void site_surface_render_stream(const BfSiteApplicationLowerer *lowerer, 
     case BF_SITE_OP_MEDIA: site_surface_emit_media(lowerer, stream); break;
     case BF_SITE_OP_TRANSCRIPT: site_surface_emit_transcript(stream); break;
     }
-    fputs("</article>", stdout);
+    ui_close(stdout,"article");
 }
 
 static int site_material_binding_selector(const BfSiteApplicationLowerer *lowerer,
@@ -546,7 +547,7 @@ static void site_program_emit_binding(sqlite3 *db, const char *kind, const char 
     const BfSiteApplicationLowerer *lowerer = site_application_lowerer(kind);
     SiteMaterialStream stream;
     char selector[256];
-    if (boundary && *boundary) { fputs("<div id=\"", stdout); html(boundary); fputs("\"", stdout); } else fputs("<div", stdout);
+    if (boundary && *boundary) { ui_start(stdout,"div");ui_attr_open(stdout,"id"); html(boundary); fputs("\"", stdout); } else ui_start(stdout,"div");
     fputs(" class=\"site-program-application application-", stdout);
     fputs(site_application_css_class(lowerer), stdout);
     fputs("\" data-application-kind=\"", stdout); html(kind); fputs("\">", stdout);
@@ -555,7 +556,7 @@ static void site_program_emit_binding(sqlite3 *db, const char *kind, const char 
     else
         site_material_resolve(db, lowerer, selector, max_items, &stream, klass);
     site_surface_render_stream(lowerer, &stream);
-    fputs("</div>", stdout);
+    ui_close(stdout,"div");
 }
 
 /* SiteProgram is the executable composition join. JSON remains the bounded
@@ -627,7 +628,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: %s\r\nVary: Host, Accept, Cookie, Authorization\r\nX-Bonfyre-Site-Program: native\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\" class=\"site-program profile-", cache_control); html(profile); fputs(" territory-",stdout); html(territory); fputs("\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>",stdout);
         char own_name[200];
         int own = site_program_own_name(db, profile, territory, own_name, sizeof(own_name));
-        if (own) { html(own_name); fputs("</title>",stdout); }
+        if (own) { html(own_name); ui_close(stdout,"title"); }
         else { html(published_host && *published_host ? published_host : site); fputs(" · Aurekai</title>",stdout); }
         /* Independent customer pages keep their own visual identity. */
         if (!own) fputs(BF_AUREKAI_FAVICON_LINK, stdout);
@@ -644,8 +645,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         if (own) fputs("<link rel=\"stylesheet\" href=\"/assets/own-site.css?v=6\"><link rel=\"mcp\" href=\"/.well-known/mcp/server-card.json\">"
                        "<script src=\"/assets/own-site-agent.js\" defer></script>", stdout);
         else {
-        fputs("<link rel=\"stylesheet\" href=\"/assets/tailwind.css\">"
-              "<link rel=\"stylesheet\" href=\"/assets/world.css\">", stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/tailwind.css");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/world.css");ui_gt(stdout);
         for (lowerer_index = 0; lowerer_index < BF_SITE_APPLICATION_LOWERER_COUNT; lowerer_index++) {
             int seen_asset = 0;
             if (!site_program_uses_application(db, site,
@@ -654,21 +654,20 @@ static int serve_site_program_uncached(const char *method, const char *target, c
             for (prior_lowerer = 0; prior_lowerer < lowerer_index; prior_lowerer++)
                 if (bf_site_application_lowerers[lowerer_index].style_asset && bf_site_application_lowerers[prior_lowerer].style_asset && !strcmp(bf_site_application_lowerers[lowerer_index].style_asset, bf_site_application_lowerers[prior_lowerer].style_asset)) seen_asset = 1;
             if (bf_site_application_lowerers[lowerer_index].style_asset && !seen_asset) {
-                fputs("<link rel=\"stylesheet\" href=\"", stdout);
+                ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr_open(stdout,"href");
                 html(bf_site_application_lowerers[lowerer_index].style_asset);
                 fputs("\">", stdout);
             }
         }
-        fputs("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap\">"
-              "<link rel=\"stylesheet\" href=\"/assets/aurekai-site-program.css?v=2\">", stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/aurekai-site-program.css?v=2");ui_gt(stdout);
         /* A member's world gets the same organs as everything else. */
         fputs("<script src=\"/assets/client-organs.js\" defer></script>", stdout);
         }
         site_program_emit_profile_tokens(db, profile);
         {
             const char *masthead = published_host && *published_host ? published_host : site;
-            fputs("</head><body class=\"site-program-body\">",stdout); if (!own) fputs(BF_ESTATE_BAR,stdout); fputs("<main class=\"site-composition\" data-site=\"",stdout); html(site); fputs("\" data-subject=\"",stdout); html(subject); fputs("\" data-presentation=\"",stdout); html(klass); fputs("\" data-bf-profile=\"",stdout); html(profile); fputs("\"",stdout); bf_site_presentation_attributes(stdout,db,profile); if (own) { fputs(">",stdout); bf_site_bar(own_name); fputs("<header class=\"site-program-masthead\"><p>",stdout); html(masthead); fputs("</p><h1>",stdout); html(own_name); fputs("</h1></header>",stdout); }
-            else { fputs("><header class=\"site-program-masthead\"><p>AUREKAI / ",stdout); html(territory); fputs("</p><h1>",stdout); html(masthead); fputs("</h1><span class=\"site-program-profile\">",stdout); html(profile); fputs("</span></header>",stdout); }
+            ui_close(stdout,"head");ui_open(stdout,"body","site-program-body"); if (!own) fputs(BF_ESTATE_BAR,stdout); ui_start(stdout,"main");ui_attr(stdout,"class","site-composition");ui_attr_open(stdout,"data-site"); html(site); fputs("\" data-subject=\"",stdout); html(subject); fputs("\" data-presentation=\"",stdout); html(klass); fputs("\" data-bf-profile=\"",stdout); html(profile); fputs("\"",stdout); bf_site_presentation_attributes(stdout,db,profile); if (own) { fputs(">",stdout); bf_site_bar(own_name); ui_open(stdout,"header","site-program-masthead");ui_open(stdout,"p",NULL); html(masthead); ui_close(stdout,"p");ui_open(stdout,"h1",NULL); html(own_name); ui_close(stdout,"h1");ui_close(stdout,"header"); }
+            else { fputs("><header class=\"site-program-masthead\"><p>AUREKAI / ",stdout); html(territory); ui_close(stdout,"p");ui_open(stdout,"h1",NULL); html(masthead); ui_close(stdout,"h1");ui_open(stdout,"span","site-program-profile"); html(profile); ui_close(stdout,"span");ui_close(stdout,"header"); }
         }
         site_program_emit_navigation(db, site);
         if (own) bf_site_pages_nav(db, site);
@@ -692,9 +691,9 @@ static int serve_site_program_uncached(const char *method, const char *target, c
              * visitor is shown what has been posted; a list of arrangements
              * with nothing in them is not material, so it is not sent. */
             if (slot && !strcmp(slot, "surfaces") && klass && !strcmp(klass, "anonymous")) continue;
-            fputs("<section class=\"site-program-slot slot-",stdout); html(slot); fputs(" extent-",stdout); html(extent); fputs("\" data-application=\"",stdout); html(kind); fputs("\" data-bf-source=\"application_binding\" data-bf-slot=\"",stdout); html(slot); fputs("\">",stdout);
+            ui_start(stdout,"section");ui_attr_open(stdout,"class");ui_copy(stdout,"site-program-slot slot-"); html(slot); fputs(" extent-",stdout); html(extent); fputs("\" data-application=\"",stdout); html(kind); fputs("\" data-bf-source=\"application_binding\" data-bf-slot=\"",stdout); html(slot); fputs("\">",stdout);
             site_program_emit_binding(db, kind, collection, material_query, max_items, boundary, klass);
-            fputs("</section>",stdout);
+            ui_close(stdout,"section");
         }
         if (more_reading_open) fputs("</div></details>",stdout);
         sqlite3_finalize(slots);
@@ -704,10 +703,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         /* That boundary is the estate speaking about someone else's address.
          * An operator's own site is published by whoever stands at it. */
         if (!own)
-        fputs("<footer class=\"region\"><p class=\"src\">Aurekai put this page together. "
-              "Nothing on it is published, chosen or endorsed by whoever this address belongs to, "
-              "and an empty part means nothing has been added yet, not that nothing exists.</p></footer>",
-              stdout);
+        {ui_open(stdout,"footer","region");ui_open(stdout,"p","src");ui_copy(stdout,"Aurekai put this page together. Nothing on it is published, chosen or endorsed by whoever this address belongs to, and an empty part means nothing has been added yet, not that nothing exists.");ui_close(stdout,"p");ui_close(stdout,"footer");}
         if (own) bf_site_home_extras(db, site, own_name);
         /* The flag was cleared before this read, so an operator's own site
          * wore the estate footer and its links that lead nowhere there. */
@@ -997,10 +993,10 @@ static const BfWorldMaterialRenderer *world_material_renderer(const char *charac
 }
 
 static void world_material_open(const BfWorldMaterialRenderer *renderer, const char *says, const char *source) {
-    fputs("<section class=\"world-material\"><h2>", stdout);
-    html(says && *says ? says : source); fputs("</h2>", stdout);
+    ui_open(stdout,"section","world-material");ui_open(stdout,"h2",NULL);
+    html(says && *says ? says : source); ui_close(stdout,"h2");
     if (renderer->item_variant == BF_WORLD_MATERIAL_FLYER) ui_text(stdout, "div", "rule", "");
-    fputs("<div class=\"", stdout); html(renderer->container_class); fputs("\">", stdout);
+    ui_start(stdout,"div");ui_attr_open(stdout,"class"); html(renderer->container_class); fputs("\">", stdout);
 }
 
 static void world_material_item(const BfWorldMaterialRenderer *renderer, const char *title, const char *meta,
@@ -1010,30 +1006,30 @@ static void world_material_item(const BfWorldMaterialRenderer *renderer, const c
     if (!title || !*title) return;
     switch (renderer->item_variant) {
     case BF_WORLD_MATERIAL_FLYER:
-        fputs("<a class=\"fl noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><span class=\"stamp\">", stdout); html(when); fputs("</span><div class=\"t\"><b>", stdout); html(title); fputs("</b><span>", stdout); html(source); fputs("</span></div></a>", stdout);
+        fputs("<a class=\"fl noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><span class=\"stamp\">", stdout); html(when); ui_close(stdout,"span");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_PIN:
-        fputs("<a class=\"pin noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"cap\"><b>", stdout); html(title); fputs("</b><span>", stdout); html(source); if (meta && *meta) { fputs(" &middot; ", stdout); html(meta); } fputs("</span></div></a>", stdout);
+        fputs("<a class=\"pin noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"cap\"><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); if (meta && *meta) { fputs(" &middot; ", stdout); html(meta); } ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_CASE:
-        fputs("<a class=\"case\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"n\">", stdout); printf("%03d", ordinal); fputs("</div><div class=\"t\"><b>", stdout); html(title); fputs("</b><i>", stdout); html(source); fputs("</i></div><div class=\"w\">", stdout); html(when); fputs("</div></a>", stdout);
+        fputs("<a class=\"case\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"n\">", stdout); printf("%03d", ordinal); ui_close(stdout,"div");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"i",NULL); html(source); ui_close(stdout,"i");ui_close(stdout,"div");ui_open(stdout,"div","w"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_TICK:
-        fputs("<a class=\"t\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"nm\">", stdout); html(title); fputs("<em>", stdout); html(source); fputs("</em></div><div class=\"v\">", stdout); html(when); fputs("</div><div class=\"c\"></div></a>", stdout);
+        fputs("<a class=\"t\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"nm\">", stdout); html(title); ui_open(stdout,"em",NULL); html(source); ui_close(stdout,"em");ui_close(stdout,"div");ui_open(stdout,"div","v"); html(when); ui_close(stdout,"div");ui_open(stdout,"div","c");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_READING:
-        fputs("<a class=\"r\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); fputs("</b><span>", stdout); html(when); fputs("</span></a>", stdout);
+        fputs("<a class=\"r\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(when); ui_close(stdout,"span");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_ARTICLE:
-        fputs("<a class=\"a\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); fputs("</b><span class=\"au\">", stdout); html(source); fputs("</span>", stdout); if (meta && *meta) { ui_text(stdout, "span", "id", meta); } fputs("</a>", stdout);
+        fputs("<a class=\"a\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span","au"); html(source); ui_close(stdout,"span"); if (meta && *meta) { ui_text(stdout, "span", "id", meta); } ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_ROW:
-        fputs("<a class=\"q\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"mag\">&bull;</div><div class=\"place\">", stdout); html(title); fputs("</div><div class=\"when\">", stdout); html(when); fputs("</div></a>", stdout);
+        fputs("<a class=\"q\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"mag\">&bull;</div><div class=\"place\">", stdout); html(title); ui_close(stdout,"div");ui_open(stdout,"div","when"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     }
 }
 
-static void world_material_close(void) { fputs("</div></section>", stdout); }
+static void world_material_close(void) { ui_close(stdout,"div");ui_close(stdout,"section"); }
 
 static int world_material_rows(const char *family, const char *source, const char *says,
                                const char *body, const char *extract, const char *title_field,
@@ -1052,6 +1048,20 @@ static int world_material_rows(const char *family, const char *source, const cha
         world_material_item(renderer, title, meta, href, source, shown + 1); shown++;
     }
     world_material_close(); bf_json_free(doc); return shown;
+}
+
+/* The first occurrence of needle that starts before end, the same answer as
+ * strstr(start, needle) followed by "found < end", without reading the rest of
+ * the document when the item lacks the tag.  A feed reader asking each item
+ * for a dozen optional tags scanned the whole remaining feed for every tag an
+ * item did not carry: quadratic in the feed, seconds on every item page. */
+static const char *bf_span_find(const char *start, const char *end, const char *needle) {
+    size_t nl, tail;
+    if (!start || !end || !needle || end < start) return NULL;
+    nl = strlen(needle);
+    if (!nl) return start < end ? start : NULL;
+    tail = strnlen(end, nl - 1);
+    return memmem(start, (size_t)(end - start) + tail, needle, nl);
 }
 
 /* RSS is read as an observed publication carrier, never guessed as JSON.
@@ -1074,14 +1084,14 @@ static int rss_tag_text(const char *start, const char *end, const char *tag, cha
     char open[96], close[96]; const char *p, *q; size_t n = 0; int in_tag = 0, space = 1;
     if (!start || !end || !tag || !out || cap < 2) return 0;
     snprintf(open, sizeof(open), "<%s", tag); snprintf(close, sizeof(close), "</%s>", tag);
-    for (p = strstr(start, open); p && p < end; p = strstr(p + 1, open)) {
+    for (p = bf_span_find(start, end, open); p; p = bf_span_find(p + 1, end, open)) {
         char after;
         after = p[strlen(open)];
         if (after == '>' || isspace((unsigned char)after)) break;
     }
     if (!p || p >= end || !(p = strchr(p, '>')) || p >= end) return 0;
     p++;
-    q = strstr(p, close); if (!q || q > end) return 0;
+    q = bf_span_find(p, *end ? end + 1 : end, close); if (!q) return 0;
     if ((size_t)(q - p) >= 12 && !strncmp(p, "<![CDATA[", 9) && !strncmp(q - 3, "]]>", 3)) { p += 9; q -= 3; }
     for (; p < q && n + 1 < cap; p++) {
         unsigned char c = (unsigned char)*p;

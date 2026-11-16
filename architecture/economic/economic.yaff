@@ -252,6 +252,7 @@ architecture food-combination-graph
   source_lineage Run8 food-combination-engine real-work observation and FFTS corpus reuse
 
 architecture close-consequence
+  source_lineage earliest source scripts/product_close_consequence.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/product_close_consequence.py which scripts/retire.sh archived at scripts/product_close_consequence.py.archive
   canonical_name CloseConsequence
   family economic
   domain Economic
@@ -301,6 +302,7 @@ architecture close-consequence
   known_gap the $148.9M under-allocated figure is a reconciliation position and not a claim about owed money; a payment received and not yet allocated is unreconciled without anything being wrong
 
 architecture funding-closure
+  source_lineage earliest source scripts/funding-closure.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/funding_closure.py which scripts/retire.sh archived at scripts/funding_closure.py.archive
   canonical_name FundingClosure
   family economic
   domain Economic
@@ -344,6 +346,7 @@ architecture funding-closure
   known_gap no provider_route declares a capital capability, so the external capital market has never been named or asked; measuring it is the same trial machinery the retrieval market already uses
   known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/funding_requirement.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 architecture funding-frontier
+  source_lineage earliest source scripts/funding-frontier.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/funding_frontier.py which scripts/retire.sh archived at scripts/funding_frontier.py.archive
   canonical_name FundingFrontier
   family economic
   domain Economic
@@ -391,6 +394,7 @@ architecture funding-frontier
   known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/funding_route.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 
 architecture funding-prospect-frontier
+  source_lineage earliest source scripts/bootstrap_funding_frontier.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/bootstrap_funding_frontier.py which scripts/retire.sh archived at scripts/bootstrap_funding_frontier.py.archive
   canonical_name FundingProspectFrontier
   family economic
   domain Economic / Funding discovery
@@ -418,6 +422,7 @@ architecture funding-prospect-frontier
   measured 2026-09-25 the full published estate contributed 10 ProgramInstances and 31 separately scoped FundingWorkPackages over 23 declared rails; all 23 were observed through the public Grants.gov Applicant API and yielded a bounded 73-record discovery frontier without any application or payment effect
   known_gap catalogue vocabulary alone produces generic false-adjacent results for several legacy rail names; opportunity-specific eligibility and programme fit must be observed and compiled before any route is promoted beyond discovery
 architecture capital-transformation-network
+  source_lineage earliest source scripts/capital_transform.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CapitalTransformationNetwork
   family economic
   domain Economic
@@ -463,6 +468,7 @@ architecture capital-transformation-network
   known_gap every capital-bearing transformation carries an UNKNOWN cash delta, so the network answers which compositions are permitted and cannot answer how much any of them would raise
 
 architecture route-arbitrage
+  source_lineage earliest source components/BonfyreProject/tools/price-book.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name RouteArbitrage
   family economic
   domain Economic / Routing
@@ -505,6 +511,7 @@ architecture route-arbitrage
   known_gap nothing has been sold. 74 spreads are registered and BonfyreFinance reports no jobs and no margin, which is the honest state: opportunities ranked, nothing transacted
 
 architecture demand-book
+  source_lineage earliest source components/BonfyreProject/tools/discovery-sweep.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DemandBook
   family economic
   domain Economic / Demand
@@ -535,6 +542,7 @@ architecture demand-book
   known_gap github.com carries 2,670 of the MCP occurrences because their primary_url is a repository rather than an endpoint. The per-host cap removed them and the service behind each repository was never reached
 
 architecture institution-identity
+  source_lineage earliest source cmd/BonfyreSign/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name InstitutionIdentity
   family identity
   domain Identity / Attestation
@@ -558,6 +566,7 @@ architecture institution-identity
   known_gap the institution publishes an identity key and no payment address. That is a separate declaration with separate consequences and it is not made here
 
 architecture served-answer
+  source_lineage earliest source components/BonfyreProject/tools/serve.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ServedAnswer
   family economic
   domain Economic / Service
@@ -583,6 +592,7 @@ architecture served-answer
   known_gap the native entrypoint has fixture parity witnesses but the five historical live answers have not been replayed through it; this change does not establish a public buyer or endpoint
 
 architecture rate-discovery
+  source_lineage earliest source scripts/sweep-rates.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name RateDiscovery
   family economic
   domain Economic / Public price statements

@@ -1,4 +1,5 @@
 architecture edge-catalogue
+  source_lineage earliest source scripts/publish_catalog.sh first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name EdgeCatalogue
   family substrate
   domain Substrate / The estate as tables a browser can query
@@ -24,6 +25,7 @@ architecture edge-catalogue
   known_gap the catalogue is a publication pass, not a stream; nothing invalidates it when the archive moves underneath it
 
 architecture reading-room
+  source_lineage earliest source site/matrix/archive.html first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ReadingRoom
   family surface
   domain Surface / The archive, asked directly

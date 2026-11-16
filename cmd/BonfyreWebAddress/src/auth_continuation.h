@@ -1,5 +1,6 @@
 #ifndef BONFYRE_AUTH_CONTINUATION_H
 #define BONFYRE_AUTH_CONTINUATION_H
+#include "ui_tree.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -144,7 +145,7 @@ static int bf_auth_form_document(FILE *out, const char *source, const char *next
             if (!end) return 0;
             fwrite(p, 1, (size_t)(end - p + 1), out); if (bar) fputs(bar, out); p = end + 1; continue;
         }
-        if (!strncmp(p, "</body>", 7)) { if (foot) fputs(foot, out); fputs("</body>", out); p += 7; continue; }
+        if (!strncmp(p, "</body>", 7)) { if (foot) fputs(foot, out); ui_close(out,"body"); p += 7; continue; }
         if (!strncmp(p, "<form ", 6)) {
             const char *end = strchr(p, '>'), *q;
             if (!end || forms++) return 0;
@@ -161,8 +162,8 @@ static int bf_auth_form_document(FILE *out, const char *source, const char *next
             bf_auth_query(out, next); fputc('"', out); p += signup ? 14 : 13; continue;
         }
         if (!strncmp(p, "<p id=\"msg\" class=\"msg\" hidden></p>", 35)) {
-            if (notice && *notice) { fputs("<p id=\"msg\" class=\"msg\" role=\"status\">", out); bf_auth_html(out, notice); fputs("</p>", out); }
-            else fputs("<p id=\"msg\" class=\"msg\" hidden></p>", out);
+            if (notice && *notice) { ui_start(out,"p");ui_attr(out,"id","msg");ui_attr(out,"class","msg");ui_attr(out,"role","status");ui_gt(out); bf_auth_html(out, notice); ui_close(out,"p"); }
+            else {ui_start(out,"p");ui_attr(out,"id","msg");ui_attr(out,"class","msg");ui_flag(out,"hidden");ui_gt(out);ui_close(out,"p");}
             p += 35; continue;
         }
         fputc((unsigned char)*p++, out);

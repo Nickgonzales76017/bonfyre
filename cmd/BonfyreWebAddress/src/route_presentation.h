@@ -1,5 +1,6 @@
 #ifndef BONFYRE_ROUTE_PRESENTATION_H
 #define BONFYRE_ROUTE_PRESENTATION_H
+#include "ui_tree.h"
 /* Which composition pattern (and optional presentation_template) a public
  * route wears on a tenant-owned territory. Authored as route_presentation rows in
  * the CMS, so a design system arrives as data and every surface that reads the
@@ -226,8 +227,7 @@ static inline int bf_route_presentation_emit_reference(FILE *out, sqlite3 *db, s
             if (density && v &&
                 (!strcmp(v,"tight") || !strcmp(v,"airy") || !strcmp(v,"standard")))
                 snprintf(density,12,"%s",v);
-            if(out) fprintf(out,"<meta name=\"aurekai:design-reference\" content=\"%s\">"
-                               "<meta name=\"aurekai:reference-sha256\" content=\"%s\">",id,sha);
+            if(out) {ui_start(out,"meta");ui_attr(out,"name","aurekai:design-reference");ui_attr_open(out,"content");ui_copy(out,id);ui_attr_close(out);ui_gt(out);ui_start(out,"meta");ui_attr(out,"name","aurekai:reference-sha256");ui_attr_open(out,"content");ui_copy(out,sha);ui_attr_close(out);ui_gt(out);}
         }
     }
     sqlite3_finalize(st);
@@ -243,8 +243,7 @@ static inline void bf_route_presentation_emit_head_for(FILE *out, const char *te
     if(state<0)return;
     const char *key=state==1?"bonfyre:composition":bf_legacy_aurekai_composition_meta();
     const char *scope=state==1?"body[data-bf-pattern]":bf_legacy_aurekai_composition_scope();
-    fprintf(out, "<meta name=\"%s\" content=\"%s\">"
-                 "<link rel=\"stylesheet\" href=\"/assets/composition.css\">",key,pattern);
+    ui_start(out,"meta");ui_attr_open(out,"name");ui_copy(out,key);ui_attr_close(out);ui_attr_open(out,"content");ui_copy(out,pattern);ui_attr_close(out);ui_gt(out);ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_attr(out,"href","/assets/composition.css");ui_gt(out);
     if (!territory || !route) return;
     sqlite3 *db=cms_open_ro();
     if (!db) return;

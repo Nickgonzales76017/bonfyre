@@ -1,6 +1,7 @@
 atlas commands-v6-owner
 
 architecture v6-capability-bun-owner
+  source_lineage earliest source integrations/mcp/v6_catalog.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name V6CapabilityBunOwner
   family commands
   domain Execution / Resource evidence, mission candidates and representation distribution
@@ -54,6 +55,7 @@ architecture v6-capability-bun-owner
   known_gap filesystem artifact publication and SQLite updates are not one transaction; interrupted operations require receipt-guided reconciliation
 
 architecture v6-bfp-bounded-interchange
+  source_lineage earliest source integrations/mcp/v6_bfp.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name V6BfpBoundedInterchange
   family representation
   domain Representation / Streamed package and delta interchange

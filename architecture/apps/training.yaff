@@ -1,4 +1,5 @@
 architecture member-training
+  source_lineage earliest source components/BonfyreServiceSite/training-model.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain learning
   canonical_name MemberTraining
   family apps
@@ -81,6 +82,7 @@ interaction member-training-reuses-browser-store
   forbids a local saved record implying a native authenticated actor or paid term
 
 architecture opengym-training-interchange
+  source_lineage earliest source components/BonfyreServiceSite/training-import.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name OpenGymTrainingInterchange
   family external
   domain External applications / Personal training data
@@ -106,6 +108,7 @@ interaction opengym-state-becomes-member-training
   forbids replacing the member's stored history before explicit import review and a successful expected-revision write
 
 architecture training-model-proposal
+  source_lineage earliest source components/BonfyreServiceSite/training-assist-server.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TrainingModelProposal
   family apps
   domain Personal applications / Training adaptation
@@ -134,6 +137,7 @@ interaction member-training-requests-model-proposal
   forbids saved model preferences or a received proposal automatically sending additional records or changing a routine
 
 architecture training-creator-request
+  source_lineage earliest source components/BonfyreServiceSite/training-requests.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain learning
   experience_chain service-case
   experience_chain project
@@ -182,6 +186,7 @@ interaction training-request-uses-native-workgraph
   forbids writing delivered program state before native completion or treating a claim as a paid coaching agreement
 
 architecture training-creator-access
+  source_lineage earliest source components/BonfyreServiceSite/training-creator.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain identity-access
   experience_chain learning
   canonical_name TrainingCreatorAccess
@@ -250,6 +255,7 @@ interaction training-draft-checkpoints-native-work
   forbids a saved draft being treated as delivered or an older reviewed draft overwriting a newer saved revision
 
 architecture training-program-publication
+  source_lineage earliest source cmd/BonfyreCMS/content-types/training_program_release.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain learning
   experience_chain creator-publish
   canonical_name TrainingProgramPublication
@@ -305,6 +311,7 @@ interaction member-training-adopts-published-program
   forbids catalogue refresh or withdrawal deleting or changing the member's routines and workouts
 
 architecture training-program-authoring
+  source_lineage earliest source cmd/BonfyreCMS/content-types/training_program_draft.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain learning
   experience_chain creator-publish
   canonical_name TrainingProgramAuthoring
@@ -347,6 +354,7 @@ interaction training-program-authoring-publishes-review
   forbids editing a draft from changing a previously published or adopted version
 
 architecture training-studio-appearance
+  source_lineage earliest source cmd/BonfyreCMS/content-types/training_studio_presentation.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TrainingStudioAppearance
   family apps
   domain Creator operations / Studio identity and presentation
@@ -400,6 +408,7 @@ interaction member-training-follows-studio-appearance
   forbids studio branding updates replacing a member's explicit local override
 
 architecture training-weekly-plans
+  source_lineage earliest source cmd/BonfyreCMS/content-types/training_plan_draft.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   experience_chain learning
   experience_chain creator-publish
   canonical_name TrainingWeeklyPlans
@@ -457,6 +466,7 @@ interaction member-training-follows-weekly-plan
   forbids plan progress, publication or withdrawal from granting the creator access to personal training
 
 architecture training-device-connections
+  source_lineage earliest source components/BonfyreServiceSite/training-devices.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TrainingDeviceConnections
   family apps
   domain Personal applications / Fitness devices
@@ -512,6 +522,7 @@ interaction training-plan-opens-phone-calendar
   forbids downloading or sharing a calendar file establishing remote calendar acceptance
 
 architecture training-native-watch-companions
+  source_lineage earliest source docs/commercial/fitness-creator-studio-20261011.md first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name TrainingNativeWatchCompanions
   family apps
   domain Mobile and wearable applications / Training

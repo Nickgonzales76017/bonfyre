@@ -1,0 +1,1832 @@
+atlas interactions
+
+# L5 wiring: each interaction is derived from a real call, include, Makefile or table
+# line in the source (see evidence). Class names the strength: invokes (a process is
+# started), compiled_or_built_with, names_in_dispatch_table, named_collaborator.
+
+interaction route-arbitrage-invokes-cmd-external-estate
+  source route-arbitrage
+  destination cmd-external-estate
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence components/BonfyreProject/tools/economic-views.mjs:132 plane = process.env.BONFYRE_EXTERNAL_ESTATE_BINARY || join(repo, "cmd/BonfyreExternalEstate/bonfyre-external-e
+  binding components/BonfyreProject/tools/economic-views.mjs
+
+interaction cmd-control-invokes-cmd-s-a-e
+  source cmd-control
+  destination cmd-s-a-e
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreControl/src/main.c:374 execvp("bonfyre-sae", child_argv);
+  binding cmd/BonfyreControl/src/main.c
+
+interaction cmd-flow-invokes-cmd-run
+  source cmd-flow
+  destination cmd-run
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreFlow/src/main.c:343 " bonfyre-run executes individual stages within a flow\n"
+  binding cmd/BonfyreFlow/src/main.c
+
+interaction cmd-m-c-p-proof-invokes-cmd-graph
+  source cmd-m-c-p-proof
+  destination cmd-graph
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreMCPProof/src/graph.c:11 const char *graph = bf_owner_bin("BONFYRE_GRAPH_BINARY", "bonfyre-graph",
+  binding cmd/BonfyreMCPProof/src/graph.c
+
+interaction cmd-model-invokes-cmd-swarm
+  source cmd-model
+  destination cmd-swarm
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreModel/src/main.c:400 execlp("bonfyre-swarm","bonfyre-swarm","pull", hash, "--out", dest, (char*)NULL);
+  binding cmd/BonfyreModel/src/main.c
+
+interaction cmd-recall-invokes-cmd-paragraph
+  source cmd-recall
+  destination cmd-paragraph
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRecall/src/index.c:364 const char *bin = bf_recall_binpath("BONFYRE_PARAGRAPH_BINARY", "bonfyre-paragraph",
+  binding cmd/BonfyreRecall/src/index.c
+
+interaction cmd-render-invokes-cmd-narrate
+  source cmd-render
+  destination cmd-narrate
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRender/src/main.c:111 const char *narrate_bin = default_binary("BONFYRE_NARRATE_BINARY", argv[0], narrate_resolved, sizeof(narrate_r
+  binding cmd/BonfyreRender/src/main.c
+
+interaction cmd-runtime-invokes-cmd-gen
+  source cmd-runtime
+  destination cmd-gen
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:873 X(GEN, "gen", "BONFYRE_GEN_BINARY", "BonfyreGen", "bonfyre-gen", "../BonfyreGen/bonfyre-gen") \
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-speech-loop-invokes-cmd-transcript-clean
+  source cmd-speech-loop
+  destination cmd-transcript-clean
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreSpeechLoop/src/main.c:162 const char *clean_bin = find_binary("BONFYRE_TRANSCRIPT_CLEAN_BINARY", argv[0],
+  binding cmd/BonfyreSpeechLoop/src/main.c
+
+interaction account-enrollment-invokes-cmd-credentials
+  source account-enrollment
+  destination cmd-credentials
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/browser/onboarding/enrollment.mjs:46 credentials: env.BONFYRE_CREDENTIALS_BINARY ?? join(repo, 'cmd/BonfyreCredentials/bonfyre-credentials'),
+  binding integrations/browser/onboarding/enrollment.mjs
+
+interaction account-enrollment-invokes-cmd-source-frontier
+  source account-enrollment
+  destination cmd-source-frontier
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/browser/host/bonfyre-browser-host.mjs:77 const binary=env.BONFYRE_SOURCE_FRONTIER_BINARY??join(home,".bonfyre/bin/bonfyre-source-frontier");
+  binding integrations/browser/host/bonfyre-browser-host.mjs
+
+interaction address-plane-invokes-cmd-channel
+  source address-plane
+  destination cmd-channel
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/mcp/bonfyre_mcp_2026_adapter.mjs:35 const channelBinary = process.env.BONFYRE_CHANNEL_BINARY || '';
+  binding integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+
+interaction address-plane-invokes-cmd-media-delivery
+  source address-plane
+  destination cmd-media-delivery
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/mcp/bonfyre_mcp_2026_adapter.mjs:33 const mediaDeliveryBinary = process.env.BONFYRE_MEDIA_DELIVERY_BINARY || '';
+  binding integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+
+interaction address-plane-invokes-cmd-media-library
+  source address-plane
+  destination cmd-media-library
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/mcp/bonfyre_mcp_2026_adapter.mjs:30 const mediaBinary = process.env.BONFYRE_MEDIA_LIBRARY_BINARY || '';
+  binding integrations/mcp/bonfyre_mcp_2026_adapter.mjs
+
+interaction discipl-composition-invokes-cmd-s-l-i
+  source discipl-composition
+  destination cmd-s-l-i
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence lib/libbonfyre/src/bf_discipl.c:286 {"SLI", "bonfyre-sli", k_compressed, p_execution, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction native-spines-bun-owner-invokes-cmd-qwen-f-p-q
+  source native-spines-bun-owner
+  destination cmd-qwen-f-p-q
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence integrations/mcp/spines_model.mjs:8 BonfyreQwenFPQ:{kind:'local-llm',executables:['BonfyreQwenFPQ','bonfyre-qwen-fpq'],capabilities:['generation',
+  binding integrations/mcp/spines_model.mjs
+
+interaction route-arbitrage-invokes-cmd-finance
+  source route-arbitrage
+  destination cmd-finance
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence components/BonfyreProject/tools/economic-views.mjs:133 finance = process.env.BONFYRE_FINANCE_BINARY || join(repo, "cmd/BonfyreFinance/bonfyre-finance") } = {}) {
+  binding components/BonfyreProject/tools/economic-views.mjs
+
+interaction cmd-a-p-i-invokes-cmd-auth
+  source cmd-a-p-i
+  destination cmd-auth
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreAPI/src/main.c:477 const char *bin=getenv("BONFYRE_AUTH_BINARY"),*db=getenv("BONFYRE_AUTH_DB");
+  binding cmd/BonfyreAPI/src/main.c
+
+interaction cmd-render-invokes-cmd-pack
+  source cmd-render
+  destination cmd-pack
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRender/src/main.c:112 const char *pack_bin = default_binary("BONFYRE_PACK_BINARY", argv[0], pack_resolved, sizeof(pack_resolved), "B
+  binding cmd/BonfyreRender/src/main.c
+
+interaction cmd-runtime-invokes-cmd-ledger
+  source cmd-runtime
+  destination cmd-ledger
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:872 X(LEDGER, "ledger", "BONFYRE_LEDGER_BINARY", "BonfyreLedger", "bonfyre-ledger", "../BonfyreLedger/bonfyre-ledg
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-runtime-invokes-cmd-orchestrate
+  source cmd-runtime
+  destination cmd-orchestrate
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:884 X(ORCHESTRATE, "orchestrate", "BONFYRE_ORCHESTRATE_BINARY", "BonfyreOrchestrate", "bonfyre-orchestrate", "../B
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-runtime-invokes-cmd-pipeline
+  source cmd-runtime
+  destination cmd-pipeline
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:871 X(PIPELINE, "pipeline", "BONFYRE_PIPELINE_BINARY", "BonfyrePipeline", "bonfyre-pipeline", "../BonfyrePipeline/
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-runtime-invokes-cmd-proxy
+  source cmd-runtime
+  destination cmd-proxy
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:881 X(PROXY, "proxy", "BONFYRE_PROXY_BINARY", "BonfyreProxy", "bonfyre-proxy", "../BonfyreProxy/bonfyre-proxy") \
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-runtime-invokes-cmd-stitch
+  source cmd-runtime
+  destination cmd-stitch
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreRuntime/src/main.c:880 X(STITCH, "stitch", "BONFYRE_STITCH_BINARY", "BonfyreStitch", "bonfyre-stitch", "../BonfyreStitch/bonfyre-stit
+  binding cmd/BonfyreRuntime/src/main.c
+
+interaction cmd-surface-invokes-cmd-c-m-s
+  source cmd-surface
+  destination cmd-c-m-s
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreSurface/tools/stage_fragment_migration.mjs:13 return process.env.BONFYRE_CMS_BINARY || [join(homedir(), '.bonfyre/bin/bonfyre-cms'), join(root, 'cmd/Bonfyre
+  binding cmd/BonfyreSurface/tools/stage_fragment_migration.mjs
+
+interaction cmd-transcribe-invokes-cmd-media-prep
+  source cmd-transcribe
+  destination cmd-media-prep
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreTranscribe/src/main.c:1238 const char *env = getenv("BONFYRE_MEDIA_PREP_BINARY");
+  binding cmd/BonfyreTranscribe/src/main.c
+
+interaction cmd-transcript-family-invokes-cmd-paragraph
+  source cmd-transcript-family
+  destination cmd-paragraph
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreTranscriptFamily/src/main.c:114 const char *paragraph_bin = default_binary("BONFYRE_PARAGRAPH_BINARY", argv[0], paragraph_resolved, sizeof(par
+  binding cmd/BonfyreTranscriptFamily/src/main.c
+
+interaction cmd-web-address-invokes-cmd-upper90
+  source cmd-web-address
+  destination cmd-upper90
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreWebAddress/src/private_session_and_flow_routes.h:259 if (!configured || !*configured) configured = getenv("BONFYRE_UPPER90_BINARY");
+  binding cmd/BonfyreWebAddress/src/private_session_and_flow_routes.h
+
+interaction cmd-web-address-invokes-cmd-domain
+  source cmd-web-address
+  destination cmd-domain
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreWebAddress/src/site_product.c:2287 find_binary(domain_bin, sizeof(domain_bin), "BONFYRE_DOMAIN_BINARY", "bonfyre-domain", s->self);
+  binding cmd/BonfyreWebAddress/src/site_product.c
+
+interaction cmd-web-address-invokes-cmd-pay
+  source cmd-web-address
+  destination cmd-pay
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreWebAddress/src/site_product.c:2061 find_binary(pay_bin, sizeof(pay_bin), "BONFYRE_PAY_BINARY", "bonfyre-pay", s->self);
+  binding cmd/BonfyreWebAddress/src/site_product.c
+
+interaction cmd-web-sub-invokes-cmd-project
+  source cmd-web-sub
+  destination cmd-project
+  relation invokes_binary_by_name
+  preserves the destination program's own command line, exit status and output as the only contract the source sees
+  drops the destination's stores, in-process state and authority; the source holds only what the child returns
+  forbidden_inference the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source
+  invalidates_on the destination's command line or output format, or the source's lookup of the binary path, changing
+  evidence cmd/BonfyreWebSub/src/main.c:513 if (snprintf(executable, sizeof(executable), "%s/bonfyre-project", bindir) >= (int)sizeof(executable) || acces
+  binding cmd/BonfyreWebSub/src/main.c
+
+interaction cmd-gate-builds-with-cmd-sign
+  source cmd-gate
+  destination cmd-sign
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreGate/Makefile:26 $(MAKE) -C ../BonfyreSign
+  binding cmd/BonfyreGate/Makefile
+
+interaction verification-ledger-builds-with-cmd-actors
+  source verification-ledger
+  destination cmd-actors
+  relation compiled_or_built_with
+  preserves the source file's declarations as compiled into the destination program, or the sibling program the destination's Makefile builds first
+  drops runtime behavior of every other program that compiles the same file or builds the same sibling
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreActors/Makefile:5 SRC = src/main.c ../../engine/core/src/actor.c ../../engine/core/src/corroboration.c
+  binding cmd/BonfyreActors/Makefile
+
+interaction cmd-demand-convergence-builds-with-cmd-scoped-demand
+  source cmd-demand-convergence
+  destination cmd-scoped-demand
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreDemandConvergence/Makefile:12 $(MAKE) -C ../BonfyreScopedDemand bonfyre-scoped-demand
+  binding cmd/BonfyreDemandConvergence/Makefile
+
+interaction cmd-experience-convergence-builds-with-cmd-experience-binding
+  source cmd-experience-convergence
+  destination cmd-experience-binding
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreExperienceConvergence/Makefile:7 $(MAKE) -C ../BonfyreExperienceBinding
+  binding cmd/BonfyreExperienceConvergence/Makefile
+
+interaction cmd-material-weather-gate-builds-with-cmd-material-lease
+  source cmd-material-weather-gate
+  destination cmd-material-lease
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreMaterialWeatherGate/Makefile:12 $(MAKE) -C ../BonfyreMaterialLease bonfyre-material-lease
+  binding cmd/BonfyreMaterialWeatherGate/Makefile
+
+interaction cmd-material-weather-reheat-builds-with-cmd-resource-weather-delta
+  source cmd-material-weather-reheat
+  destination cmd-resource-weather-delta
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreMaterialWeatherReheat/Makefile:11 $(MAKE) -C ../BonfyreResourceWeatherDelta bonfyre-resource-weather-delta
+  binding cmd/BonfyreMaterialWeatherReheat/Makefile
+
+interaction cmd-pack-condition-delta-builds-with-cmd-pack-condition
+  source cmd-pack-condition-delta
+  destination cmd-pack-condition
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyrePackConditionDelta/Makefile:13 $(MAKE) -C ../BonfyrePackCondition
+  binding cmd/BonfyrePackConditionDelta/Makefile
+
+interaction cmd-public-world-builds-with-cmd-showcase-estate
+  source cmd-public-world
+  destination cmd-showcase-estate
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyrePublicWorld/Makefile:11 $(MAKE) -C ../BonfyreShowcaseEstate generated/source_constellations.h
+  binding cmd/BonfyrePublicWorld/Makefile
+
+interaction cmd-resource-weather-refresh-builds-with-cmd-resource-weather-transition
+  source cmd-resource-weather-refresh
+  destination cmd-resource-weather-transition
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreResourceWeatherRefresh/Makefile:14 $(MAKE) -C ../BonfyreResourceWeatherTransition bonfyre-resource-weather-transition
+  binding cmd/BonfyreResourceWeatherRefresh/Makefile
+
+interaction cmd-scoped-convergence-builds-with-cmd-scoped-frontier
+  source cmd-scoped-convergence
+  destination cmd-scoped-frontier
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreScopedConvergence/Makefile:9 $(MAKE) -C ../BonfyreScopedFrontier bonfyre-scoped-frontier
+  binding cmd/BonfyreScopedConvergence/Makefile
+
+interaction cmd-scoped-weather-convergence-builds-with-cmd-scoped-lease-reheat
+  source cmd-scoped-weather-convergence
+  destination cmd-scoped-lease-reheat
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreScopedWeatherConvergence/Makefile:11 $(MAKE) -C ../BonfyreScopedLeaseReheat bonfyre-scoped-lease-reheat
+  binding cmd/BonfyreScopedWeatherConvergence/Makefile
+
+interaction cmd-target-attention-builds-with-cmd-attention
+  source cmd-target-attention
+  destination cmd-attention
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreTargetAttention/Makefile:10 @$(MAKE) -C ../BonfyreAttention all >/dev/null; $(MAKE) -C ../BonfyreSemanticOperation all >/dev/null; tmp=$$(
+  binding cmd/BonfyreTargetAttention/Makefile
+
+interaction cmd-actors-builds-with-cmd-origin
+  source cmd-actors
+  destination cmd-origin
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreActors/Makefile:10 $(MAKE) -C ../BonfyreOrigin
+  binding cmd/BonfyreActors/Makefile
+
+interaction cmd-actors-builds-with-cmd-agent-contract
+  source cmd-actors
+  destination cmd-agent-contract
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreActors/Makefile:11 $(MAKE) -C ../BonfyreAgentContract
+  binding cmd/BonfyreActors/Makefile
+
+interaction cmd-actors-builds-with-cmd-standing
+  source cmd-actors
+  destination cmd-standing
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreActors/Makefile:12 $(MAKE) -C ../BonfyreStanding
+  binding cmd/BonfyreActors/Makefile
+
+interaction cmd-actors-builds-with-cmd-household
+  source cmd-actors
+  destination cmd-household
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreActors/Makefile:13 $(MAKE) -C ../BonfyreHousehold
+  binding cmd/BonfyreActors/Makefile
+
+interaction cmd-c-m-s-builds-with-cmd-commerce
+  source cmd-c-m-s
+  destination cmd-commerce
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreCMS/Makefile:133 $(MAKE) -C ../BonfyreCommerce bonfyre-commerce
+  binding cmd/BonfyreCMS/Makefile
+
+interaction cmd-experience-convergence-builds-with-cmd-disturbance-audit
+  source cmd-experience-convergence
+  destination cmd-disturbance-audit
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreExperienceConvergence/Makefile:9 $(MAKE) -C ../BonfyreDisturbanceAudit
+  binding cmd/BonfyreExperienceConvergence/Makefile
+
+interaction cmd-experience-convergence-builds-with-cmd-observation-boundary
+  source cmd-experience-convergence
+  destination cmd-observation-boundary
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreExperienceConvergence/Makefile:10 $(MAKE) -C ../BonfyreObservationBoundary
+  binding cmd/BonfyreExperienceConvergence/Makefile
+
+interaction cmd-experience-convergence-builds-with-cmd-bridge-readiness
+  source cmd-experience-convergence
+  destination cmd-bridge-readiness
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreExperienceConvergence/Makefile:11 $(MAKE) -C ../BonfyreBridgeReadiness
+  binding cmd/BonfyreExperienceConvergence/Makefile
+
+interaction cmd-experience-convergence-builds-with-cmd-experience-stage
+  source cmd-experience-convergence
+  destination cmd-experience-stage
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreExperienceConvergence/Makefile:12 $(MAKE) -C ../BonfyreExperienceStage
+  binding cmd/BonfyreExperienceConvergence/Makefile
+
+interaction cmd-interaction-grammar-builds-with-cmd-external-estate
+  source cmd-interaction-grammar
+  destination cmd-external-estate
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreInteractionGrammar/Makefile:16 $(MAKE) -C ../BonfyreExternalEstate all
+  binding cmd/BonfyreInteractionGrammar/Makefile
+
+interaction cmd-pack-condition-delta-builds-with-cmd-scoped-reheat
+  source cmd-pack-condition-delta
+  destination cmd-scoped-reheat
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyrePackConditionDelta/Makefile:16 $(MAKE) -C ../BonfyreScopedReheat bonfyre-scoped-reheat
+  binding cmd/BonfyrePackConditionDelta/Makefile
+
+interaction cmd-repurpose-builds-with-cmd-brief
+  source cmd-repurpose
+  destination cmd-brief
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreRepurpose/Makefile:11 $(MAKE) -C ../BonfyreBrief
+  binding cmd/BonfyreRepurpose/Makefile
+
+interaction retention-gc-builds-with-cmd-retention
+  source retention-gc
+  destination cmd-retention
+  relation compiled_or_built_with
+  preserves the source file's declarations as compiled into the destination program, or the sibling program the destination's Makefile builds first
+  drops runtime behavior of every other program that compiles the same file or builds the same sibling
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreRetention/Makefile:5 SRC = src/main.c ../../engine/core/src/retention.c
+  binding cmd/BonfyreRetention/Makefile
+
+interaction cmd-scoped-respecialize-builds-with-cmd-scoped-demand
+  source cmd-scoped-respecialize
+  destination cmd-scoped-demand
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreScopedRespecialize/Makefile:13 $(MAKE) -C ../BonfyreScopedDemand bonfyre-scoped-demand
+  binding cmd/BonfyreScopedRespecialize/Makefile
+
+interaction cmd-scoped-weather-convergence-builds-with-cmd-web-sub-lease-gate
+  source cmd-scoped-weather-convergence
+  destination cmd-web-sub-lease-gate
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreScopedWeatherConvergence/Makefile:15 $(MAKE) -C ../BonfyreWebSubLeaseGate bonfyre-websub-lease-gate
+  binding cmd/BonfyreScopedWeatherConvergence/Makefile
+
+interaction cmd-showcase-crosswalk-builds-with-cmd-showcase-estate
+  source cmd-showcase-crosswalk
+  destination cmd-showcase-estate
+  relation test_or_build_target_builds_sibling
+  preserves the sibling program's own build and its command-line contract; the Makefile rule runs it as built
+  drops the sibling's runtime state; building it says nothing about it running or being authorized
+  forbidden_inference the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time
+  invalidates_on the included path, the Makefile rule or the source file's interface changing
+  evidence cmd/BonfyreShowcaseCrosswalk/Makefile:11 $(MAKE) -C ../BonfyreShowcaseEstate generated/source_constellations.h
+  binding cmd/BonfyreShowcaseCrosswalk/Makefile
+
+interaction discipl-composition-lists-cmd-canon
+  source discipl-composition
+  destination cmd-canon
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:265 {"Canon", "bonfyre-canon", k_artifact_code, p_canonical_structural, 1},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-emit
+  source discipl-composition
+  destination cmd-emit
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:277 {"Emit", "bonfyre-emit", k_artifact_brief_rendered, p_deliverable, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-entity
+  source discipl-composition
+  destination cmd-entity
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:268 {"Entity", "bonfyre-entity", k_artifact_observation, p_identity, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-f-p-q
+  source discipl-composition
+  destination cmd-f-p-q
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:285 {"FPQ", "bonfyre-fpq", k_model_tensor, p_compressed, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-index
+  source discipl-composition
+  destination cmd-index
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:280 {"Index", "bonfyre-index", k_artifact, p_search_index, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-proof
+  source discipl-composition
+  destination cmd-proof
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:290 {"Proof", "bonfyre-proof", k_artifact_brief_deliverable, p_proof, 1},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-segment
+  source discipl-composition
+  destination cmd-segment
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:271 {"Segment", "bonfyre-segment", k_transcript_clean, p_segments, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-tag
+  source discipl-composition
+  destination cmd-tag
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:282 {"Tag", "bonfyre-tag", k_text_clean, p_tags, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction discipl-composition-lists-cmd-tone
+  source discipl-composition
+  destination cmd-tone
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence lib/libbonfyre/src/bf_discipl.c:272 {"Tone", "bonfyre-tone", k_audio, p_tone, 0},
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction cmd-c-l-i-lists-cmd-admission
+  source cmd-c-l-i
+  destination cmd-admission
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:288 {"admission", "bonfyre-admission", "BonfyreAdmission", SEC_LAB, "Resource grant admission and protected-floor 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-arrow-stream
+  source cmd-c-l-i
+  destination cmd-arrow-stream
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:255 {"parquet", "bonfyre-arrow-stream", "BonfyreArrowStream", SEC_DATA, "Read a digest-pinned Parquet file as stre
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-bridge
+  source cmd-c-l-i
+  destination cmd-bridge
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:248 {"bridge", "bonfyre-bridge", "BonfyreBridge", SEC_DATA, "Move tables between Postgres, MySQL and SQLite and 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-clips
+  source cmd-c-l-i
+  destination cmd-clips
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:192 {"clips", "bonfyre-clips", "BonfyreClips", SEC_MEDIA, "Cut short clips out of a longer recording", TIER_E
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-compete
+  source cmd-c-l-i
+  destination cmd-compete
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:242 {"compete", "bonfyre-compete", "BonfyreCompete", SEC_MONEY, "Benchmark against competitors", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-detect-objects
+  source cmd-c-l-i
+  destination cmd-detect-objects
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:196 {"detect-objects", "bonfyre-detect-objects", "BonfyreDetectObjects", SEC_MEDIA, "Run a detector on each frame 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-distribute
+  source cmd-c-l-i
+  destination cmd-distribute
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:209 {"distribute", "bonfyre-distribute", "BonfyreDistribute", SEC_WRITE, "Send finished work out to its channels",
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-f-p-qx
+  source cmd-c-l-i
+  destination cmd-f-p-qx
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:272 {"fpqx", "bonfyre-fpqx", "BonfyreFPQx", SEC_LAB, "FPQx extended quantisation", TIER_LAB},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-family
+  source cmd-c-l-i
+  destination cmd-family
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:268 {"family", "bonfyre-family", "BonfyreFamily", SEC_LAB, "Conceptual family browser (specialization taxonomy)"
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-flash-q-l-a
+  source cmd-c-l-i
+  destination cmd-flash-q-l-a
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:279 {"flashqla", "bonfyre-flashqla", "BonfyreFlashQLA", SEC_LAB, "Chunked-prefill GDN attention (FlashQLA tiled ke
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-fragment
+  source cmd-c-l-i
+  destination cmd-fragment
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:216 {"fragment", "bonfyre-fragment", "BonfyreFragment", SEC_SEARCH, "Store, query and merge passages of text", TIE
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-frame-extract
+  source cmd-c-l-i
+  destination cmd-frame-extract
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:193 {"frame-extract", "bonfyre-frame-extract", "BonfyreFrameExtract", SEC_MEDIA, "Save still frames from a video",
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-git-hub-watch
+  source cmd-c-l-i
+  destination cmd-git-hub-watch
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:264 {"github-watch", "bonfyre-github-watch", "BonfyreGitHubWatch", SEC_AUTO, "Turn GitHub notifications into work 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-layer
+  source cmd-c-l-i
+  destination cmd-layer
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:273 {"layer", "bonfyre-layer", "BonfyreLayer", SEC_LAB, "Neural layer operations", TIER_LAB},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-leapfrog
+  source cmd-c-l-i
+  destination cmd-leapfrog
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:276 {"leapfrog", "bonfyre-leapfrog", "BonfyreLeapfrog", SEC_LAB, "Hamiltonian leapfrog integrator (conservation + 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-learn
+  source cmd-c-l-i
+  destination cmd-learn
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:230 {"learn", "bonfyre-learn", "BonfyreLearn", SEC_MODELS, "On-device fine-tuning / adapters", TIER_LAB},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-m-f-a-dict
+  source cmd-c-l-i
+  destination cmd-m-f-a-dict
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:199 {"mfa-dict", "bonfyre-mfa-dict", "BonfyreMFADict", SEC_MEDIA, "MFA forced-alignment dictionary", TIER_LAB},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-net
+  source cmd-c-l-i
+  destination cmd-net
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:278 {"net", "bonfyre-net", "BonfyreNet", SEC_LAB, "Run a netlist of organs in net order, with a trace",
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-offer
+  source cmd-c-l-i
+  destination cmd-offer
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:203 {"offer", "bonfyre-offer", "BonfyreOffer", SEC_WRITE, "Write an offer document from a brief", TIER_EVERYD
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-operator
+  source cmd-c-l-i
+  destination cmd-operator
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:267 {"operator", "bonfyre-operator", "BonfyreOperator", SEC_LAB, "Answer household questions from their sources", 
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-outreach
+  source cmd-c-l-i
+  destination cmd-outreach
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:243 {"outreach", "bonfyre-outreach", "BonfyreOutreach", SEC_MONEY, "Outreach campaigns", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-provider
+  source cmd-c-l-i
+  destination cmd-provider
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:246 {"provider", "bonfyre-provider", "BonfyreProvider", SEC_ACCESS, "Which outside providers can be used right now
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-quant
+  source cmd-c-l-i
+  destination cmd-quant
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:270 {"quant", "bonfyre-quant", "BonfyreQuant", SEC_LAB, "Measure lattice quantisation of a named model", TIER
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-reason
+  source cmd-c-l-i
+  destination cmd-reason
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:226 {"reason", "bonfyre-reason", "BonfyreReason", SEC_MODELS, "Ask your own model; several answers to one prompt
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-scene-detect
+  source cmd-c-l-i
+  destination cmd-scene-detect
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:194 {"scene-detect", "bonfyre-scene-detect", "BonfyreSceneDetect", SEC_MEDIA, "Find where the scenes in a video ch
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-space
+  source cmd-c-l-i
+  destination cmd-space
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:221 {"space", "bonfyre-space", "BonfyreSpace", SEC_SEARCH, "Group material into named spaces", TIER_EVERYDAY}
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-sync
+  source cmd-c-l-i
+  destination cmd-sync
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:249 {"sync", "bonfyre-sync", "BonfyreSync", SEC_DATA, "Keep files in step across machines", TIER_EVERYDAY}
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-tel
+  source cmd-c-l-i
+  destination cmd-tel
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:197 {"tel", "bonfyre-tel", "BonfyreTel", SEC_MEDIA, "Phone calls through FreeSWITCH", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-tier
+  source cmd-c-l-i
+  destination cmd-tier
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:241 {"tier", "bonfyre-tier", "BonfyreTier", SEC_MONEY, "Plans and what each one unlocks", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-time
+  source cmd-c-l-i
+  destination cmd-time
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:265 {"time", "bonfyre-time", "BonfyreTime", SEC_AUTO, "Schedules and dates attached to work", TIER_EVERYDA
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-video-demux
+  source cmd-c-l-i
+  destination cmd-video-demux
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:195 {"video-demux", "bonfyre-video-demux", "BonfyreVideoDemux", SEC_MEDIA, "Split a video into its audio and video
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-violence
+  source cmd-c-l-i
+  destination cmd-violence
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:277 {"violence", "bonfyre-violence", "BonfyreViolence", SEC_LAB, "Real-coupling physics validation (E8 embedding +
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-watch
+  source cmd-c-l-i
+  destination cmd-watch
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:263 {"watch", "bonfyre-watch", "BonfyreWatch", SEC_AUTO, "Act when files in a folder change", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-weaviate-index
+  source cmd-c-l-i
+  destination cmd-weaviate-index
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:222 {"weaviate", "bonfyre-weaviate-index", "BonfyreWeaviateIndex", SEC_SEARCH, "Weaviate vector index bridge", TIE
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-wire
+  source cmd-c-l-i
+  destination cmd-wire
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:290 {"wire", "bonfyre-wire", "BonfyreWire", SEC_LAB, "Consent-based network event layer", TIER_LAB},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction cmd-c-l-i-lists-cmd-workflow
+  source cmd-c-l-i
+  destination cmd-workflow
+  relation names_in_dispatch_table
+  preserves the destination's declared verb or binary name and the one-line description the source's table routes by
+  drops whether the destination is built, installed or authorized; a table row is a name, not a call result
+  forbidden_inference a row in the source's table -> the destination binary exists on this machine or accepts that verb
+  invalidates_on the table row, the destination's binary name or its verbs changing
+  evidence cmd/BonfyreCLI/src/main.c:261 {"workflow", "bonfyre-workflow", "BonfyreWorkflow", SEC_AUTO, "Ready-made suites of steps", TIER_EVERYDAY},
+  binding cmd/BonfyreCLI/src/main.c
+
+interaction bonfyre-fabric-names-cmd-proxy
+  source bonfyre-fabric
+  destination cmd-proxy
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence engine/core/src/fabric_exec.c:1394 file_contains_text(path, "\"binary\":\"bonfyre-proxy\"");
+  binding engine/core/src/fabric_exec.c
+
+interaction demand-book-names-cmd-lex
+  source demand-book
+  destination cmd-lex
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence components/BonfyreProject/tools/discovery-sweep.sh:31 lex=$(cd "$(dirname -- "$0")/../../.." && pwd)/cmd/BonfyreLex/bonfyre-lex
+  binding components/BonfyreProject/tools/discovery-sweep.sh
+
+interaction detail-depth-names-cmd-semantic-optimizer
+  source detail-depth
+  destination cmd-semantic-optimizer
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence scripts/release/estate_maturity_refresh.sh:31 semantic="$ROOT/cmd/BonfyreSemanticOptimizer/bonfyre-semantic-optimizer"
+  binding scripts/release/estate_maturity_refresh.sh
+
+interaction discipl-composition-names-cmd-facet
+  source discipl-composition
+  destination cmd-facet
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence lib/libbonfyre/src/bf_discipl.c:598 snprintf(actor.source_command, sizeof(actor.source_command), "bonfyre-facet compile");
+  binding lib/libbonfyre/src/bf_discipl.c
+
+interaction shell-static-audit-names-cmd-c-m-s
+  source shell-static-audit
+  destination cmd-c-m-s
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence .github/workflows/native-kernel.yml:425 make -C cmd/BonfyreCMS bonfyre-cms
+  binding .github/workflows/native-kernel.yml
+
+interaction representation-manifold-names-cmd-arrow-flight
+  source representation-manifold
+  destination cmd-arrow-flight
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence scripts/representation-manifold-shift.mjs:486 const ts = now(), flight = join(runtime, "bonfyre-arrow-flight"),
+  binding scripts/representation-manifold-shift.mjs
+
+interaction representation-manifold-names-cmd-zarr-forge
+  source representation-manifold
+  destination cmd-zarr-forge
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence scripts/representation-manifold-zarr.mjs:104 const compiler = `bonfyre-zarr-forge.v1:${binaryDigest}:${sha(JSON.stringify(manifest))}`;
+  binding scripts/representation-manifold-zarr.mjs
+
+interaction served-answer-names-cmd-external-estate
+  source served-answer
+  destination cmd-external-estate
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence components/BonfyreProject/tools/serve.mjs:75 plane = join(repo, "cmd/BonfyreExternalEstate/bonfyre-external-estate"),
+  binding components/BonfyreProject/tools/serve.mjs
+
+interaction cmd-world-compiler-names-cmd-c-m-s
+  source cmd-world-compiler
+  destination cmd-c-m-s
+  relation named_collaborator
+  preserves the name the source uses for the destination in a path, string or message
+  drops any guarantee of a call: nothing at this binding is shown to execute the destination
+  forbidden_inference a name in the source -> a call, a shared store or a runtime dependency
+  invalidates_on the named path or string changing
+  evidence cmd/BonfyreWorldCompiler/src/main.c:55 snprintf(buf, cap, "%s/BonfyreCMS/bonfyre-cms", cmd_root);
+  binding cmd/BonfyreWorldCompiler/src/main.c
+
+interaction cmd-fragment-migration-names-write-owner-cmd-c-m-s
+  source cmd-fragment-migration
+  destination cmd-c-m-s
+  relation declares_write_owner
+  preserves the draft-admission receipt's write_owner field and the contract's CMS batch transaction as the only write path
+  drops any publication effect; the receipt itself states publication_effect false
+  forbidden_inference a declared write owner -> a write has happened or was authorized
+  invalidates_on the contract's write_owner or the admission receipt shape changing
+  evidence cmd/BonfyreFragmentMigration/contract.cue:14 write_owner: "BonfyreCMS"; src/admit.c:57
+  binding cmd/BonfyreFragmentMigration/contract.cue
+
+interaction cmd-provider-frontier-feeds-material-manifest-to-cmd-context-cut
+  source cmd-provider-frontier
+  destination cmd-context-cut
+  relation builds_manifest_for
+  preserves the strict material-manifest contract the provider frontier writes after verify, consumed as a diagnostic representation input
+  drops selection and lowerer handoff; the manifest is not a selection
+  forbidden_inference a built manifest -> ContextCut selected or admitted any body
+  invalidates_on the manifest contract or the verify-before-build ordering changing
+  evidence cmd/BonfyreProviderFrontier/src/main.c:246 manifest contract already consumed by BonfyreContextCut
+  binding cmd/BonfyreProviderFrontier/src/main.c
+
+interaction cmd-context-cut-parity-test-runs-cmd-admission
+  source cmd-context-cut
+  destination cmd-admission
+  relation witness_runs_binary
+  preserves the admission binary's own output as the parity test's oracle
+  drops admission authority; the test only compares outputs
+  forbidden_inference a parity test running admission -> production ContextCut runs admission
+  invalidates_on the test's admission invocation or the binary path changing
+  evidence cmd/BonfyreContextCut/tests/live_shadow_parity.test.mjs:10 resolve('cmd/BonfyreAdmission/bonfyre-admission')
+  binding cmd/BonfyreContextCut/tests/live_shadow_parity.test.mjs
+
+interaction cmd-infer-defers-distributed-execution-to-cmd-mo-e
+  source cmd-infer
+  destination cmd-mo-e
+  relation declares_ownership_boundary
+  preserves the stated split: infer keeps retained planning objects, MoE owns the distributed execution path
+  drops any call between the two programs
+  forbidden_inference a boundary comment -> infer calls MoE
+  invalidates_on the Makefile adapter or MoE's execution ownership changing
+  evidence cmd/BonfyreInfer/Makefile:7 distributed execution path stays with BonfyreMoE
+  binding cmd/BonfyreInfer/Makefile
+
+interaction target-obligation-built-into-cmd-semantic-operation
+  source target-obligation
+  destination cmd-semantic-operation
+  relation compiled_or_built_with
+  preserves the target-obligation C store compiled into the semantic-operation program
+  drops the operation's authority; the receipt truth line says a proposal is not proof, work or effect
+  forbidden_inference building the store in -> a proposal is an authorized obligation
+  invalidates_on target_obligation.c or its header interface changing
+  evidence cmd/BonfyreSemanticOperation/Makefile:8 target_obligation.c linked
+  binding cmd/BonfyreSemanticOperation/Makefile
+
+interaction inverse-compiler-header-built-into-cmd-semantic-operation
+  source inverse-compiler
+  destination cmd-semantic-operation
+  relation compiled_or_built_with
+  preserves the generated inverse_programs.h owner grammar compiled in through -I of the optimizer's generated directory
+  drops owners not present in the generated grammar
+  forbidden_inference a compiled grammar -> every owner predicate is checkable
+  invalidates_on the inverse-programs generator output changing
+  evidence cmd/BonfyreSemanticOperation/Makefile:8 -I../BonfyreSemanticOptimizer/generated
+  binding cmd/BonfyreSemanticOperation/Makefile
+
+interaction native-command-dispatch-lookup-in-cmd-lifecycle
+  source native-command-dispatch
+  destination cmd-lifecycle
+  relation compiled_or_built_with
+  preserves the shared verb lookup table call; handlers keep their own arguments
+  drops authority for any verb
+  forbidden_inference a verb resolved -> the verb is authorized
+  invalidates_on bf_command_lookup.h interface changing
+  evidence cmd/BonfyreLifecycle/src/main.c:12 include and :38 bf_command_lookup call
+  binding cmd/BonfyreLifecycle/src/main.c
+
+interaction native-command-dispatch-lookup-in-release-approval-mcp
+  source native-command-dispatch
+  destination release-approval-mcp
+  relation compiled_or_built_with
+  preserves the shared verb lookup; handlers keep their own arguments and exit codes
+  drops authority for any verb
+  forbidden_inference a verb resolved -> the verb is authorized
+  invalidates_on bf_command_lookup.h interface changing
+  evidence cmd/BonfyreReleaseApproval/src/main.c:25 include bf_command_lookup.h
+  binding cmd/BonfyreReleaseApproval/src/main.c
+
+interaction atlas-provenance-index-read-by-cmd-braid-audit
+  source atlas-provenance
+  destination cmd-braid-audit
+  relation reads_exported_index
+  preserves the exported atlas.index.json as the audit's input file
+  drops freshness; the audit reads whatever file is on disk
+  forbidden_inference reading the index -> the index matches the .yaff declarations
+  invalidates_on the index export format changing
+  evidence cmd/BonfyreBraidAudit/Makefile:9 ../../architecture/atlas.index.json
+  binding cmd/BonfyreBraidAudit/Makefile
+
+interaction representation-manifold-runs-c-adbc-probe
+  source representation-manifold
+  destination cmd-a-d-b-c-probe
+  relation binds_probe
+  preserves the probe's driver-initialization result and the exact driver and probe digests the Bun binder records
+  drops any database, query or Flight SQL service; the state stays driver_initialized_unserved
+  forbidden_inference an initialized driver ABI -> a served database or a working query
+  invalidates_on the ADBC ABI, the probe digest or the binder changing
+  evidence architecture/storage/representation-manifold.yaff:55 source_path cmd/BonfyreADBCProbe/src/main.c and the witness at :76
+  binding cmd/BonfyreADBCProbe/src/main.c
+
+interaction store-schema-registry-declares-cmd-latent-atlas-store
+  source store-schema-registry
+  destination cmd-latent-atlas
+  relation declares_store_writer
+  preserves the declared sqlite store, its macro and env variable, with bonfyre-latent-atlas named as writer
+  drops whether the store file exists or is populated
+  forbidden_inference a declared store -> rows exist or the writer ran
+  invalidates_on the store declaration in schemas/storage/stores/cmd-BonfyreWebAddress.cue changing
+  evidence schemas/storage/stores/cmd-BonfyreWebAddress.cue:29 latent_atlas written_by bonfyre-latent-atlas
+  binding schemas/storage/stores/cmd-BonfyreWebAddress.cue
+
+interaction witness-enforcement-grades-through-witness-grade
+  source witness-enforcement
+  destination witness-grade
+  relation same_program_includes
+  preserves the atlas program's maturity-backing check and the witness-grade header it includes
+  drops each rule's own verdict; grading does not decide backing
+  forbidden_inference an included grader -> every witness is graded at validate time
+  invalidates_on witness_grade.h or the validate pass changing
+  evidence cmd/BonfyreAtlas/src/main.c:1340 #include witness_grade.h
+  binding cmd/BonfyreAtlas/src/main.c
+
+interaction assent-signature-realized-in-cmd-web-address
+  source assent-signature
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/tools/compile_missing_cells.zig is a source_path of assent-signature inside the destination program directory
+  binding cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+
+interaction capability-discovery-gap-realized-in-cmd-capability
+  source capability-discovery-gap
+  destination cmd-capability
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreCapability/src/main.c is a source_path of capability-discovery-gap inside the destination program directory
+  binding cmd/BonfyreCapability/src/main.c
+
+interaction compounding-slice-realized-in-cmd-web-address
+  source compounding-slice
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of compounding-slice inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction estate-version-realized-in-cmd-web-address
+  source estate-version
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/tools/compile_missing_cells.zig is a source_path of estate-version inside the destination program directory
+  binding cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+
+interaction foreign-publication-corpus-realized-in-cmd-c-m-s
+  source foreign-publication-corpus
+  destination cmd-c-m-s
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreCMS/src/main.c is a source_path of foreign-publication-corpus inside the destination program directory
+  binding cmd/BonfyreCMS/src/main.c
+
+interaction fpq-mode-select-realized-in-cmd-f-p-q
+  source fpq-mode-select
+  destination cmd-f-p-q
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreFPQ/src/fpq_codec_v2.c is a source_path of fpq-mode-select inside the destination program directory
+  binding cmd/BonfyreFPQ/src/fpq_codec_v2.c
+
+interaction gate-entitlement-realized-in-cmd-gate
+  source gate-entitlement
+  destination cmd-gate
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreGate/src/main.c is a source_path of gate-entitlement inside the destination program directory
+  binding cmd/BonfyreGate/src/main.c
+
+interaction github-app-connection-realized-in-cmd-web-address
+  source github-app-connection
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/connect_github_app.h is a source_path of github-app-connection inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/connect_github_app.h
+
+interaction glyph-vocabulary-realized-in-cmd-web-address
+  source glyph-vocabulary
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/glyph_set.h is a source_path of glyph-vocabulary inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/glyph_set.h
+
+interaction governance-grammar-realized-in-cmd-web-address
+  source governance-grammar
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/tools/compile_governance.zig is a source_path of governance-grammar inside the destination program directory
+  binding cmd/BonfyreWebAddress/tools/compile_governance.zig
+
+interaction hash-identity-realized-in-cmd-hash
+  source hash-identity
+  destination cmd-hash
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreHash is a source_path of hash-identity inside the destination program directory
+  binding cmd/BonfyreHash
+
+interaction institution-identity-realized-in-cmd-sign
+  source institution-identity
+  destination cmd-sign
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreSign/src/main.c is a source_path of institution-identity inside the destination program directory
+  binding cmd/BonfyreSign/src/main.c
+
+interaction institution-planes-realized-in-cmd-web-address
+  source institution-planes
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/tools/compile_planes.zig is a source_path of institution-planes inside the destination program directory
+  binding cmd/BonfyreWebAddress/tools/compile_planes.zig
+
+interaction institutional-worlds-realized-in-cmd-web-address
+  source institutional-worlds
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of institutional-worlds inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction kv-temporal-realized-in-cmd-k-v-cache
+  source kv-temporal
+  destination cmd-k-v-cache
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreKVCache is a source_path of kv-temporal inside the destination program directory
+  binding cmd/BonfyreKVCache
+
+interaction live-session-realized-in-cmd-web-address
+  source live-session
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/tools/compile_missing_cells.zig is a source_path of live-session inside the destination program directory
+  binding cmd/BonfyreWebAddress/tools/compile_missing_cells.zig
+
+interaction model-representation-graph-realized-in-cmd-f-p-q
+  source model-representation-graph
+  destination cmd-f-p-q
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreFPQ/src/fpq_native.c is a source_path of model-representation-graph inside the destination program directory
+  binding cmd/BonfyreFPQ/src/fpq_native.c
+
+interaction native-build-truthfulness-realized-in-cmd-project
+  source native-build-truthfulness
+  destination cmd-project
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreProject/Makefile is a source_path of native-build-truthfulness inside the destination program directory
+  binding cmd/BonfyreProject/Makefile
+
+interaction price-observatory-realized-in-cmd-web-address
+  source price-observatory
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of price-observatory inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction public-observation-aperture-realized-in-cmd-web-address
+  source public-observation-aperture
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of public-observation-aperture inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction release-approval-realized-in-cmd-web-address
+  source release-approval
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/application_continuation.h is a source_path of release-approval inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/application_continuation.h
+
+interaction retained-body-service-realized-in-cmd-web-address
+  source retained-body-service
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of retained-body-service inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction subject-room-program-realized-in-cmd-web-address
+  source subject-room-program
+  destination cmd-web-address
+  relation realized_in_program_source
+  preserves the architecture's declared contract as implemented in this source file of the destination program
+  drops the destination program's other commands and files, which this architecture does not claim
+  forbidden_inference a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract
+  invalidates_on the listed source file or the architecture's declared contract changing
+  evidence cmd/BonfyreWebAddress/src/main.c is a source_path of subject-room-program inside the destination program directory
+  binding cmd/BonfyreWebAddress/src/main.c
+
+interaction claim-graph-shares-source-with-evidence-graph
+  source claim-graph
+  destination evidence-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/evidence.c is a source_path of both claim-graph and evidence-graph
+  binding engine/core/src/evidence.c
+
+interaction cmd-owner-contract-shares-source-with-capability-lattice
+  source cmd-owner-contract
+  destination capability-lattice
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence cmd/BonfyreOwnerContract/src/catalog.c is a source_path of both cmd-owner-contract and capability-lattice
+  binding cmd/BonfyreOwnerContract/src/catalog.c
+
+interaction drive-shares-source-with-cmd-frappe-compiler
+  source drive
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both drive and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction erpnext-shares-source-with-cmd-frappe-compiler
+  source erpnext
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both erpnext and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction frappe-core-shares-source-with-cmd-frappe-compiler
+  source frappe-core
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both frappe-core and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction helpdesk-shares-source-with-cmd-frappe-compiler
+  source helpdesk
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both helpdesk and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction hrms-shares-source-with-cmd-frappe-compiler
+  source hrms
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both hrms and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction insights-shares-source-with-cmd-frappe-compiler
+  source insights
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both insights and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction institutional-cost-graph-shares-source-with-money-graph
+  source institutional-cost-graph
+  destination money-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/economic_graph.c is a source_path of both institutional-cost-graph and money-graph
+  binding engine/core/src/economic_graph.c
+
+interaction lms-shares-source-with-cmd-frappe-compiler
+  source lms
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both lms and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+
+interaction money-graph-shares-source-with-institutional-cost-graph
+  source money-graph
+  destination institutional-cost-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/economic_graph.c is a source_path of both money-graph and institutional-cost-graph
+  binding engine/core/src/economic_graph.c
+
+interaction organ-drift-shares-source-with-appliance-release-manifest
+  source organ-drift
+  destination appliance-release-manifest
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence Makefile is a source_path of both organ-drift and appliance-release-manifest
+  binding Makefile
+
+interaction placement-graph-shares-source-with-runtime-parity-graph
+  source placement-graph
+  destination runtime-parity-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/provider_graph.c is a source_path of both placement-graph and runtime-parity-graph
+  binding engine/core/src/provider_graph.c
+
+interaction provenance-graph-shares-source-with-claim-graph
+  source provenance-graph
+  destination claim-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/evidence.c is a source_path of both provenance-graph and claim-graph
+  binding engine/core/src/evidence.c
+
+interaction recursive-value-graph-shares-source-with-institutional-cost-graph
+  source recursive-value-graph
+  destination institutional-cost-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/economic_graph.c is a source_path of both recursive-value-graph and institutional-cost-graph
+  binding engine/core/src/economic_graph.c
+
+interaction runtime-parity-graph-shares-source-with-placement-graph
+  source runtime-parity-graph
+  destination placement-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/provider_graph.c is a source_path of both runtime-parity-graph and placement-graph
+  binding engine/core/src/provider_graph.c
+
+interaction temporal-evidence-graph-shares-source-with-claim-graph
+  source temporal-evidence-graph
+  destination claim-graph
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence engine/core/src/evidence.c is a source_path of both temporal-evidence-graph and claim-graph
+  binding engine/core/src/evidence.c
+
+interaction wiki-shares-source-with-cmd-frappe-compiler
+  source wiki
+  destination cmd-frappe-compiler
+  relation realized_by_shared_source
+  preserves the declared contract of each architecture as implemented in the one shared source file
+  drops each architecture's own invariants; sharing a file does not merge their claims
+  forbidden_inference two architectures listing one source file -> one holds the other's witness or maturity
+  invalidates_on the shared source file being split or either entry's source_path changing
+  evidence lib/libbonfyre/src/bonfyre_frappe_compiler.c is a source_path of both wiki and cmd-frappe-compiler
+  binding lib/libbonfyre/src/bonfyre_frappe_compiler.c
+

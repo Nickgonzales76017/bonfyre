@@ -1,5 +1,6 @@
 #ifndef BONFYRE_CHARTERS_WEB_H
 #define BONFYRE_CHARTERS_WEB_H
+#include "ui_tree.h"
 /* Community charters and SOPs are wiki_page rows in the root namespace whose
  * route is charters/<community>/<slug>. A public local community's active
  * members write and revise them; everyone reads them. Revisions are the CMS
@@ -31,27 +32,27 @@ static void ch_body(const char *content) {
         if (n >= sizeof(line)) n = sizeof(line) - 1;
         memcpy(line, p, n); line[n] = 0;
         if (n && line[n - 1] == '\r') line[--n] = 0;
-        if (!n) { if (open) { fputs("</p>", stdout); open = 0; } }
+        if (!n) { if (open) { ui_close(stdout,"p"); open = 0; } }
         else if (!strncmp(line, "## ", 3) || !strncmp(line, "# ", 2)) {
-            if (open) { fputs("</p>", stdout); open = 0; }
+            if (open) { ui_close(stdout,"p"); open = 0; }
             ui_text(stdout, "h2", NULL, line + (line[1] == '#' ? 3 : 2));
         } else {
-            if (!open) { fputs("<p>", stdout); open = 1; } else fputs("<br>", stdout);
+            if (!open) { ui_open(stdout,"p",NULL); open = 1; } else ui_open(stdout,"br",NULL);
             html(line);
         }
         p = end ? end + 1 : NULL;
     }
-    if (open) fputs("</p>", stdout);
+    if (open) ui_close(stdout,"p");
 }
 static void ch_open(const char *title, int personal) {
     ak_app_http(200, personal);
     ak_app_open(title, "workbench", "route-charters");
-    fputs("<nav class=\"ak-wb-strip\" aria-label=\"Commons\"><span class=\"ak-kicker\">Knowledge commons</span><a href=\"/charters\">All charters</a><a href=\"/guilds\">Guilds</a><a href=\"/communities\">Communities</a><span class=\"ak-live\">Versioned · revisions kept by the store</span></nav>", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-wb-strip");ui_attr(stdout,"aria-label","Commons");ui_gt(stdout);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Knowledge commons");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr(stdout,"href","/charters");ui_gt(stdout);ui_copy(stdout,"All charters");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/guilds");ui_gt(stdout);ui_copy(stdout,"Guilds");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/communities");ui_gt(stdout);ui_copy(stdout,"Communities");ui_close(stdout,"a");ui_open(stdout,"span","ak-live");ui_copy(stdout,"Versioned · revisions kept by the store");ui_close(stdout,"span");ui_close(stdout,"nav");
 }
 static void ch_index(sqlite3 *db, const char *actor, const char *community, const char *q) {
     char nonce[33];
     ch_open("Charters and SOPs", *actor != 0);
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Living wiki</span><h1>Charters, covenants and working procedures</h1><p class=\"ak-lede\">What each community has written down about how it works: its charter, its standing procedures, its recipes. Members revise them; every revision is kept.</p></div></header>", stdout);
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Living wiki");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Charters, covenants and working procedures");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"What each community has written down about how it works: its charter, its standing procedures, its recipes. Members revise them; every revision is kept.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
     {
         BfAuthoringTree *tree = calloc(1, sizeof(*tree));
         FtField hidden[1] = {{"community", community}};
@@ -61,19 +62,19 @@ static void ch_index(sqlite3 *db, const char *actor, const char *community, cons
         else if (tree) { bf_authoring_tree_clear(tree); free(tree); }
     }
     sqlite3_stmt *s = NULL;
-    fputs("<nav class=\"ak-chips\" aria-label=\"Communities\"><a class=\"ak-chip\" href=\"/charters\"", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-chips");ui_attr(stdout,"aria-label","Communities");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","/charters");
     if (!*community) fputs(" aria-current=\"page\"", stdout);
     printf("><b>%.0f</b> All charters</a>", gr_number(db, "SELECT count(*) FROM wiki_page WHERE namespace='root' AND route LIKE 'charters/%' AND published=1", NULL, NULL));
     if (sqlite3_prepare_v2(db, "SELECT w.community,c.title,count(*) FROM wiki_page w JOIN community_body c ON c.namespace='root' AND c.community=w.community AND c.status='published' AND c.visibility='public' WHERE w.namespace='root' AND w.route LIKE 'charters/%' AND w.published=1 GROUP BY w.community ORDER BY 3 DESC LIMIT 12", -1, &s, NULL) == SQLITE_OK) {
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *k = (const char *)sqlite3_column_text(s, 0);
-            fputs("<a class=\"ak-chip\" href=\"/charters?community=", stdout); url_query_value(k); fputc('"', stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr_open(stdout,"href");ui_copy(stdout,"/charters?community="); url_query_value(k); fputc('"', stdout);
             if (!strcmp(k, community)) fputs(" aria-current=\"page\"", stdout);
-            printf("><b>%d</b> ", sqlite3_column_int(s, 2)); html((const char *)sqlite3_column_text(s, 1)); fputs("</a>", stdout);
+            printf("><b>%d</b> ", sqlite3_column_int(s, 2)); html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"a");
         }
     }
     sqlite3_finalize(s);
-    fputs("</nav>", stdout);
+    ui_close(stdout,"nav");
 
     char like[200]; snprintf(like, sizeof(like), "%%%s%%", q);
     const char *sql = "SELECT w.id,w.title,w.route,substr(w.content,1,600),COALESCE(c.title,''),(SELECT count(*) FROM _ops o WHERE o.target='wiki_page' AND o.target_id=w.id),COALESCE(w.updated_at,w.created_at) FROM wiki_page w LEFT JOIN community_body c ON c.namespace='root' AND c.community=w.community WHERE w.namespace='root' AND w.route LIKE 'charters/%' AND w.published=1 AND (?1='' OR w.community=?1) AND (?2='%%' OR w.title LIKE ?2 OR w.content LIKE ?2) ORDER BY COALESCE(w.updated_at,w.created_at) DESC,w.id DESC LIMIT 40";
@@ -83,42 +84,42 @@ static void ch_index(sqlite3 *db, const char *actor, const char *community, cons
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *route = (const char *)sqlite3_column_text(s, 2);
             if (!shown++) {
-                fputs("<section class=\"ak-sec\"><div class=\"ak-panel is-raised\"><header><span class=\"ak-tag is-on\">Most recently revised</span>", stdout);
-                printf("<span class=\"ak-kicker\">%d revisions</span></header><span class=\"ak-kicker\">", sqlite3_column_int(s, 5));
-                html((const char *)sqlite3_column_text(s, 4)); fputs("</span><h2><a href=\"/", stdout); html(route); fputs("\">", stdout);
-                html((const char *)sqlite3_column_text(s, 1)); fputs("</a></h2><div class=\"ak-lede\">", stdout);
+                ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-panel is-raised");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Most recently revised");ui_close(stdout,"span");
+                ui_open(stdout,"span","ak-kicker");fprintf(stdout,"%d",sqlite3_column_int(s, 5));ui_copy(stdout," revisions");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"span","ak-kicker");
+                html((const char *)sqlite3_column_text(s, 4)); ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/"); html(route); fputs("\">", stdout);
+                html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"a");ui_close(stdout,"h2");ui_open(stdout,"div","ak-lede");
                 ch_body((const char *)sqlite3_column_text(s, 3));
-                fputs("</div><p><a class=\"ak-btn\" href=\"/", stdout); html(route); fputs("\">Read and revise</a></p></div></section>", stdout);
-                fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Index</span><h2>Knowledge tree</h2></div></header><ul class=\"ak-rows\">", stdout);
+                ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/"); html(route); fputs("\">Read and revise</a></p></div></section>", stdout);
+                ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Index");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Knowledge tree");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
                 continue;
             }
-            fputs("<a href=\"/", stdout); html(route); fputs("\"><strong>", stdout); html((const char *)sqlite3_column_text(s, 1));
-            fputs("</strong><small>", stdout); html((const char *)sqlite3_column_text(s, 4));
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/"); html(route); fputs("\"><strong>", stdout); html((const char *)sqlite3_column_text(s, 1));
+            ui_close(stdout,"strong");ui_open(stdout,"small",NULL); html((const char *)sqlite3_column_text(s, 4));
             printf(" · %d revisions · ", sqlite3_column_int(s, 5)); html((const char *)sqlite3_column_text(s, 6));
-            fputs("</small><span class=\"ak-go\">Open</span></a>", stdout);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go");ui_copy(stdout,"Open");ui_close(stdout,"span");ui_close(stdout,"a");
         }
     }
     sqlite3_finalize(s);
-    if (shown) { fputs("</ul>", stdout); if (shown == 1) ui_text(stdout, "p", "ak-empty", "No other charters here yet."); fputs("</section>", stdout); }
+    if (shown) { ui_close(stdout,"ul"); if (shown == 1) ui_text(stdout, "p", "ak-empty", "No other charters here yet."); ui_close(stdout,"section"); }
     else ui_text(stdout, "p", "ak-empty", "No community has written a charter here yet.");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Lineage</span><h2>Recent revisions</h2></div></header><ul class=\"ak-rows\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Lineage");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Recent revisions");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT w.title,w.route,o.ts,COALESCE(json_extract(o.payload,'$.edited_by'),''),COALESCE(json_extract(o.payload,'$.revision_note'),'') FROM _ops o JOIN wiki_page w ON w.id=o.target_id AND w.namespace='root' AND w.route LIKE 'charters/%' AND w.published=1 WHERE o.target='wiki_page' AND o.namespace='root' AND (?1='' OR w.community=?1) ORDER BY o.ts DESC LIMIT 12", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, community, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             shown++;
-            fputs("<a href=\"/", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("#revisions\"><strong>", stdout);
-            html((const char *)sqlite3_column_text(s, 0)); fputs("</strong><small>", stdout);
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/"); html((const char *)sqlite3_column_text(s, 1)); fputs("#revisions\"><strong>", stdout);
+            html((const char *)sqlite3_column_text(s, 0)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
             html(*(const char *)sqlite3_column_text(s, 4) ? (const char *)sqlite3_column_text(s, 4) : "Revised");
             fputs(" · ", stdout); gr_person((const char *)sqlite3_column_text(s, 3), actor, NULL);
-            fputs("</small><span class=\"ak-go\">", stdout); html((const char *)sqlite3_column_text(s, 2)); fputs("</span></a>", stdout);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go"); html((const char *)sqlite3_column_text(s, 2)); ui_close(stdout,"span");ui_close(stdout,"a");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No revisions yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
     CjrCommunity c;
     if (*community && cjr_community(db, community, &c) == 1 && cjr_public(&c) && gr_active(db, &c, actor)) {
@@ -129,26 +130,26 @@ static void ch_index(sqlite3 *db, const char *actor, const char *community, cons
             {"Text (a line starting with # is a section heading)", "text", "text", "", "", 1, "16000", 1, ""},
             {"What this first version says", "text", "note", "First version", "", 0, "400", 0, ""},
         };
-        fputs("<section class=\"ak-sec\" id=\"write\"><div class=\"ak-ask\"><span class=\"ak-kicker\">", stdout); html(c.title);
-        fputs("</span><h2>Write a charter or procedure</h2><p>Members of this community can write and revise it. It is public, like the community.</p>", stdout);
+        ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","write");ui_gt(stdout);ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker"); html(c.title);
+        ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Write a charter or procedure");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Members of this community can write and revise it. It is public, like the community.");ui_close(stdout,"p");
         gr_form("ch-write", "Publish charter", "/charters/act", f, 3, in, 3, NULL, NULL, NULL, 0);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
     } else if (*actor) {
-        fputs("<section class=\"ak-band\"><div><span class=\"ak-kicker\">Contribute</span><h2>Write your community's charter</h2><p>Choose a community you are an active member of.</p></div><div class=\"ak-actions\">", stdout);
+        ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Contribute");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Write your community's charter");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Choose a community you are an active member of.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");
         int any = 0;
         if (sqlite3_prepare_v2(db, "SELECT c.community,c.title FROM community_body c WHERE c.namespace='root' AND c.status='published' AND c.visibility='public' AND (c.created_by_subject=?1 OR EXISTS(SELECT 1 FROM community_membership m WHERE m.namespace='root' AND m.community=c.community AND m.member_subject=?1 AND m.state='active' AND m.status='published')) ORDER BY c.id DESC LIMIT 6", -1, &s, NULL) == SQLITE_OK) {
             sqlite3_bind_text(s, 1, actor, -1, SQLITE_TRANSIENT);
             while (sqlite3_step(s) == SQLITE_ROW) {
                 any++;
-                fputs("<a class=\"ak-btn\" href=\"/charters?community=", stdout); url_query_value((const char *)sqlite3_column_text(s, 0));
-                fputs("#write\">", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("</a>", stdout);
+                ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/charters?community="); url_query_value((const char *)sqlite3_column_text(s, 0));
+                fputs("#write\">", stdout); html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"a");
             }
         }
         sqlite3_finalize(s);
-        if (!any) fputs("<a class=\"ak-btn\" href=\"/communities\">Find a community</a>", stdout);
-        fputs("</div></section>", stdout);
+        if (!any) {ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/communities");ui_gt(stdout);ui_copy(stdout,"Find a community");ui_close(stdout,"a");}
+        ui_close(stdout,"div");ui_close(stdout,"section");
     } else {
-        fputs("<section class=\"ak-band\"><div><span class=\"ak-kicker\">Contribute</span><h2>Write your community's charter</h2><p>Members write and revise their community's charters.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/login?next=%2Fcharters\">Sign in</a></div></section>", stdout);
+        ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Contribute");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Write your community's charter");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Members write and revise their community's charters.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/login?next=%2Fcharters");ui_gt(stdout);ui_copy(stdout,"Sign in");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"section");
     }
     ak_app_close();
 }
@@ -163,29 +164,29 @@ static void ch_page(sqlite3 *db, const char *actor, const char *route) {
     char idtext[24]; snprintf(idtext, sizeof(idtext), "%lld", id);
     int revisions = (int)gr_number(db, "SELECT count(*) FROM _ops WHERE target='wiki_page' AND target_id=CAST(?1 AS INTEGER)", idtext, NULL);
     ch_open(CHC(1), *actor != 0);
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-actions\"><span class=\"ak-tag is-on\">Community charter</span><span class=\"ak-tag\">", stdout);
-    html(CHC(4)); printf("</span><span class=\"ak-tag\">%d revisions</span></p><h1>", revisions); html(CHC(1));
-    fputs("</h1><p class=\"ak-lede\">Last revised ", stdout); html(CHC(5));
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-actions");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Community charter");ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");
+    html(CHC(4)); ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");fprintf(stdout,"%d",revisions);ui_copy(stdout," revisions");ui_close(stdout,"span");ui_close(stdout,"p");ui_open(stdout,"h1",NULL); html(CHC(1));
+    ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Last revised "); html(CHC(5));
     if (*CHC(6)) { fputs(" by ", stdout); gr_person(CHC(6), actor, NULL); }
     fputs(".</p></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Kept by</span><h3>", stdout); html(CHC(4));
-    fputs("</h3><p>Its active members can revise this text. Every revision stays in the record below.</p><p><a class=\"ak-btn\" href=\"/community?community=", stdout);
+    ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Its active members can revise this text. Every revision stays in the record below.");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");
     url_query_value(CHC(3)); fputs("\">Open the community</a></p></aside></header>", stdout);
-    fputs("<article class=\"ak-panel\" style=\"max-width:78ch\">", stdout); ch_body(CHC(2)); fputs("</article>", stdout);
-    fputs("<section class=\"ak-sec\" id=\"revisions\"><header><div><span class=\"ak-kicker\">Lineage ledger</span><h2>Revisions</h2></div></header><ul class=\"ak-rows\">", stdout);
+    ui_start(stdout,"article");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"style","max-width:78ch");ui_gt(stdout); ch_body(CHC(2)); ui_close(stdout,"article");
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","revisions");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Lineage ledger");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Revisions");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     sqlite3_stmt *o = NULL;
     if (sqlite3_prepare_v2(db, "SELECT ts,op_type,COALESCE(json_extract(payload,'$.edited_by'),''),COALESCE(json_extract(payload,'$.revision_note'),''),substr(hash,1,12) FROM _ops WHERE target='wiki_page' AND target_id=?1 ORDER BY ts DESC,id DESC LIMIT 50", -1, &o, NULL) == SQLITE_OK) {
         sqlite3_bind_int64(o, 1, id);
         while (sqlite3_step(o) == SQLITE_ROW) {
-            fputs("<li><strong>", stdout);
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL);
             const char *note = (const char *)sqlite3_column_text(o, 3);
             html(*note ? note : !strcmp((const char *)sqlite3_column_text(o, 1), "create") ? "First version" : "Revised");
-            fputs("</strong><small>", stdout); gr_person((const char *)sqlite3_column_text(o, 2), actor, NULL);
-            fputs(" · ", stdout); html((const char *)sqlite3_column_text(o, 0)); fputs("</small><span class=\"ak-go\"><code>", stdout);
-            html((const char *)sqlite3_column_text(o, 4)); fputs("</code></span></li>", stdout);
+            ui_close(stdout,"strong");ui_open(stdout,"small",NULL); gr_person((const char *)sqlite3_column_text(o, 2), actor, NULL);
+            fputs(" · ", stdout); html((const char *)sqlite3_column_text(o, 0)); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");ui_open(stdout,"code",NULL);
+            html((const char *)sqlite3_column_text(o, 4)); ui_close(stdout,"code");ui_close(stdout,"span");ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(o);
-    fputs("</ul></section>", stdout);
+    ui_close(stdout,"ul");ui_close(stdout,"section");
     CjrCommunity c;
     if (*CHC(3) && cjr_community(db, CHC(3), &c) == 1 && cjr_public(&c) && gr_active(db, &c, actor)) {
         ph_nonce(nonce);
@@ -195,9 +196,9 @@ static void ch_page(sqlite3 *db, const char *actor, const char *route) {
             {"Text", "text", "text", CHC(2), "", 1, "16000", 1, ""},
             {"What you changed", "text", "note", "", "", 0, "400", 1, ""},
         };
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Members only</span><h2>Revise this charter</h2>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Members only");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Revise this charter");ui_close(stdout,"h2");
         gr_form("ch-revise", "Save revision", "/charters/act", f, 4, in, 3, NULL, NULL, NULL, 0);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
     }
 #undef CHC
     sqlite3_finalize(s);

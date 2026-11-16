@@ -1,5 +1,6 @@
 #ifndef BONFYRE_WORLD_CACHE_AND_CMS_ROUTE_H
 #define BONFYRE_WORLD_CACHE_AND_CMS_ROUTE_H
+#include "ui_tree.h"
 /* Extracted verbatim from main.c lines 13519-14173 (mechanical split, no logic changes). */
 #include "record_factor.h"
 #include "web_store.h"
@@ -177,15 +178,15 @@ static int serve_listen_program(const BfRequest *r) {
     else {
         /* One shell; the recording plays in the one player, never its own <audio>. */
         ak_app_open(title, "workbench", "route-listen-program");
-        fputs("<header class=\"ak-wb-hero is-solo listen-program\"><div><p class=\"ak-kicker\">Listen <span>/</span> Recording</p><h1>",stdout);html(title);
+        ui_open(stdout,"header","ak-wb-hero is-solo listen-program");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Listen ");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_copy(stdout," Recording");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);html(title);
         /* an artist reference that is still an identifier is not a name to show */
         const char *by = strchr(artist, ':') ? "" : artist;
-        fputs("</h1>",stdout);if(*by){ui_text(stdout, "p", "ak-lede", by);}fputs("<div class=\"ak-actions\">",stdout);
+        ui_close(stdout,"h1");if(*by){ui_text(stdout, "p", "ak-lede", by);}ui_open(stdout,"div","ak-actions");
         if(listen_safe_asset(asset)){fputs("<button type=\"button\" class=\"ak-btn is-primary\" data-ak-track data-ak-default data-src=\"",stdout);html(asset);fputs("\" data-title=\"",stdout);html(title);fputs("\" data-by=\"",stdout);html(*by?by:"Listen");fputs("\">Play</button>",stdout);}
-        if(listen_safe_asset(transcript)){fputs("<a class=\"ak-btn\" href=\"",stdout);html(transcript);fputs("\">Transcript</a>",stdout);}
-        fputs("</div>",stdout);
+        if(listen_safe_asset(transcript)){ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");html(transcript);fputs("\">Transcript</a>",stdout);}
+        ui_close(stdout,"div");
         if(!listen_safe_asset(asset))ui_text(stdout, "p", "ak-empty", "This recording is listed here, but no public audio for it has been published.");
-        fputs("<p class=\"ak-empty\">The work, its release, credits and rights are kept as separate records.</p></div></header>",stdout);
+        ui_open(stdout,"p","ak-empty");ui_copy(stdout,"The work, its release, credits and rights are kept as separate records.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
         ak_app_close();
     }
     sqlite3_close(db); return 1;
@@ -226,20 +227,20 @@ static int serve_human_community_page(const BfRequest *r) {
     present = community_public_presence_count(db, community);
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
     ak_app_open(title, "workbench", "route-community-body");
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Community <span>/</span> ", stdout); html(governance); fputs("</p><h1>",stdout); html(title); fputs("</h1><p class=\"ak-lede\">",stdout); html(description);
-    fputs("</p></div>",stdout);
-    printf("<dl class=\"ak-stats\"><div><dt>Members</dt><dd>%d</dd></div><div><dt>Here now</dt><dd class=\"is-on\">%d</dd></div></dl></header>", members, present);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Community ");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_copy(stdout," "); html(governance); ui_close(stdout,"p");ui_open(stdout,"h1",NULL); html(title); ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede"); html(description);
+    ui_close(stdout,"p");ui_close(stdout,"div");
+    ui_open(stdout,"dl","ak-stats");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Members");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",members);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Here now");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%d",present);ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");ui_close(stdout,"header");
     if (policy && *policy) { ui_text(stdout, "p", "ak-empty", policy); }
     char limit_text[1024]; snprintf(limit_text, sizeof(limit_text), "%s", limit ? limit : "");
     sqlite3_finalize(body); body = NULL;
     surface_emit_participation_nav();
     if (sqlite3_prepare_v2(db, "SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100", -1, &posts, NULL) != SQLITE_OK) goto unavailable;
     sqlite3_bind_text(posts, 1, community, -1, SQLITE_TRANSIENT);
-    fputs("<section class=\"ak-sec\" aria-labelledby=\"cb-posts-h\"><header><h2 id=\"cb-posts-h\">Conversation</h2></header><ol class=\"ak-rows cb-posts\">",stdout); int any_post=0;
-    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); any_post=1; fputs("<li class=\"post\"><small>",stdout); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} fputs("</small>",stdout); if(ptitle&&*ptitle){ui_text(stdout, "strong", NULL, ptitle);} ui_text(stdout, "p", NULL, text); if(reactions) printf("<small>%d accepted reactions</small>", reactions); fputs("</li>",stdout); }
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"aria-labelledby","cb-posts-h");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_start(stdout,"h2");ui_attr(stdout,"id","cb-posts-h");ui_gt(stdout);ui_copy(stdout,"Conversation");ui_close(stdout,"h2");ui_close(stdout,"header");ui_open(stdout,"ol","ak-rows cb-posts"); int any_post=0;
+    while (sqlite3_step(posts) == SQLITE_ROW) { const char *author=(const char *)sqlite3_column_text(posts,0), *ptitle=(const char *)sqlite3_column_text(posts,1), *text=(const char *)sqlite3_column_text(posts,2), *at=(const char *)sqlite3_column_text(posts,3), *reply=(const char *)sqlite3_column_text(posts,4), *post=(const char *)sqlite3_column_text(posts,5); int reactions=community_post_reaction_count(db,post); any_post=1; ui_open(stdout,"li","post");ui_open(stdout,"small",NULL); html(author); fputs(" · ",stdout); html(at); if(reply&&*reply){fputs(" · reply",stdout);} ui_close(stdout,"small"); if(ptitle&&*ptitle){ui_text(stdout, "strong", NULL, ptitle);} ui_text(stdout, "p", NULL, text); if(reactions) {ui_open(stdout,"small",NULL);fprintf(stdout,"%d",reactions);ui_copy(stdout," accepted reactions");ui_close(stdout,"small");} ui_close(stdout,"li"); }
     if (!any_post) ui_text(stdout, "li", "ak-empty", "Nobody has posted here yet.");
-    fputs("</ol></section>",stdout);
-    sqlite3_finalize(posts); sqlite3_close(db); fputs("<p class=\"ak-empty cb-limit\">",stdout); html(limit_text); fputs(" Federation is projected elsewhere.</p>",stdout); ak_app_close(); return 1;
+    ui_close(stdout,"ol");ui_close(stdout,"section");
+    sqlite3_finalize(posts); sqlite3_close(db); ui_open(stdout,"p","ak-empty cb-limit"); html(limit_text); fputs(" Federation is projected elsewhere.</p>",stdout); ak_app_close(); return 1;
 unavailable:
     if (body) sqlite3_finalize(body);
     if (posts) sqlite3_finalize(posts);
@@ -460,7 +461,7 @@ static int serve_cms_route(const BfRequest *r) {
         if (bf_store_open(cms_db, &idb, SQLITE_OPEN_READONLY, &bf_store_policy_cms) != SQLITE_OK) { if (idb) sqlite3_close(idb); return 0; }
         printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
         ak_app_open("Notes", "workbench", "route-notes");
-        fputs("<header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Aurekai <span>/</span> Notes</p><h1>Notes</h1></div></header><ul class=\"ak-rows notes-list\">", stdout);
+        ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Aurekai ");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_copy(stdout," Notes");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Notes");ui_close(stdout,"h1");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows notes-list");
         {
             int any = 0;
             if (sqlite3_prepare_v2(idb,
@@ -474,16 +475,16 @@ static int serve_cms_route(const BfRequest *r) {
                 while (sqlite3_step(ist) == SQLITE_ROW) {
                     const char *r = (const char *)sqlite3_column_text(ist, 0), *t = (const char *)sqlite3_column_text(ist, 1),
                                *d = (const char *)sqlite3_column_text(ist, 2);
-                    fputs("<li><a href=\"/", stdout); html(r ? r : ""); fputs("\"><strong>", stdout); html(t ? t : "");
-                    fputs("</strong>", stdout); if (d && *d) { ui_text(stdout, "small", NULL, d); }
-                    fputs("</a></li>", stdout); any = 1;
+                    ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/"); html(r ? r : ""); fputs("\"><strong>", stdout); html(t ? t : "");
+                    ui_close(stdout,"strong"); if (d && *d) { ui_text(stdout, "small", NULL, d); }
+                    ui_close(stdout,"a");ui_close(stdout,"li"); any = 1;
                 }
             }
             if (!any) ui_text(stdout, "li", "ak-empty", "No published notes yet.");
         }
         if (ist) sqlite3_finalize(ist);
         sqlite3_close(idb);
-        fputs("</ul>", stdout);
+        ui_close(stdout,"ul");
         ak_app_close();
         fflush(stdout);
         return 1;
@@ -512,7 +513,7 @@ static int serve_cms_route(const BfRequest *r) {
                  * and can be heard in the one player. */
                 printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
                 ak_app_open(title ? title : "Note", "workbench", "route-notes");
-                fputs("<article class=\"notes-read\"><header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/notes/\">Notes</a></p><h1>", stdout);
+                ui_open(stdout,"article","notes-read");ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_start(stdout,"a");ui_attr(stdout,"href","/notes/");ui_gt(stdout);ui_copy(stdout,"Notes");ui_close(stdout,"a");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);
                 html(title ? title : ""); fputs("</h1><div class=\"ak-actions\"><button type=\"button\" class=\"ak-btn\" data-ak-track data-narrate=\"#note-text\" data-title=\"", stdout);
                 html(title ? title : "Note"); fputs("\" data-by=\"Aurekai notes\">Listen</button></div></div></header><div class=\"notes-text\" id=\"note-text\">", stdout);
                 {   /* blank lines separate paragraphs */
@@ -523,7 +524,7 @@ static int serve_cms_route(const BfRequest *r) {
                         if (!e) break; p = e + 2; while (*p == '\n') p++;
                     }
                 }
-                fputs("</div><p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"/notes/\">All notes</a></p></article>", stdout);
+                ui_close(stdout,"div");ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr(stdout,"href","/notes/");ui_gt(stdout);ui_copy(stdout,"All notes");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"article");
                 ak_app_close();
                 fflush(stdout);
                 served = 1;

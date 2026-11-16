@@ -1,4 +1,5 @@
 architecture semantic-operator
+  source_lineage earliest source schemas/control/household-projection.yaff first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports components/BonfyreControlPlane/semantic_operator.py which scripts/retire.sh archived at components/BonfyreControlPlane/semantic_operator.py.archive
   canonical_name HouseholdSemanticOperator
   family forwarding
   domain Forwarding / Semantic Lowering

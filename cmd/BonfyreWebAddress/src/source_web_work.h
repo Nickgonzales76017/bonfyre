@@ -34,7 +34,7 @@ static void sw_page(void){
 static int serve_source_web_work(const BfRequest *rq) {
     const char *method=rq->method; const char *target=rq->target; const char *query=rq->query; const char *body=rq->body; const char *raw=rq->raw; const char *host=rq->host; const char *bearer=rq->bearer; const char *auth_db=rq->auth_db;
     (void)method;(void)target;(void)query;(void)body;(void)raw;(void)host;(void)bearer;(void)auth_db;
- if(!strcmp(target,"/sources/web")||!strcmp(target,"/sources/web/")){if(strcmp(method,"GET"))aw_error(405,"Use GET to open web research.\n");else sw_page();return 1;}
+ if(bf_request_is(rq,"page")){if(strcmp(method,"GET"))aw_error(405,"Use GET to open web research.\n");else sw_page();return 1;}
  int writing=!strcmp(method,"POST");SwQuery q;
  if((!writing&&strcmp(method,"GET"))||!sw_query(query,&q)||!sw_operation(&q,writing)){aw_error(400,"Use one declared web-research operation and its exact coordinates.\n");return 1;}
  char provider_origin[64]="";

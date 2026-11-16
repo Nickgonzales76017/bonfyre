@@ -51,7 +51,7 @@ architecture external-estate-density
   source_path cmd/BonfyreExperienceMap/tools/participation-law.generated.json
   source_path cmd/BonfyreExperienceMap/tools/participation_report.mjs
   source_path cmd/BonfyreExternalEstate/tools/estate-refresh.sh
-  source_path cmd/BonfyreExternalEstate/tools/estate-refresh-summary.mjs
+  source_path cmd/BonfyreExternalEstate/tools/estate-refresh-summary.jq
   source_path cmd/BonfyreExternalEstate/tests/participation_contract.mjs
   source_path cmd/BonfyreFacet/tests/reader_agreement.mjs
   source_path cmd/BonfyreExperienceMap/tools/tsv_contract.mjs

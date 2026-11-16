@@ -1,3 +1,4 @@
+#include "ui_tree.h"
 #include "site_presentation.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -141,7 +142,7 @@ static int bf_site_presentation_emit_with_namespace(FILE *out,sqlite3 *db,const 
     }
     fputs("}</style>",out);sqlite3_reset(token);
     while(sqlite3_step(token)==SQLITE_ROW) if(!strcmp((const char *)sqlite3_column_text(token,0),"font_href")) {
-        fputs("<link rel=\"stylesheet\" data-bf-fonts href=\"",out);escaped(out,(const char *)sqlite3_column_text(token,1));fputs("\">",out);
+        ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_flag(out,"data-bf-fonts");ui_attr_open(out,"href");escaped(out,(const char *)sqlite3_column_text(token,1));fputs("\">",out);
     }
     sqlite3_finalize(token);sqlite3_finalize(st);return 1;
 }

@@ -1,6 +1,7 @@
 atlas surface
 
 architecture foundry-behavior-compiler
+  source_lineage earliest source schemas/control/foundry-behavior-specs.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports cmd/BonfyreCMS/tools/compile_foundry_behavior.py which scripts/retire.sh archived at cmd/BonfyreCMS/tools/compile_foundry_behavior.py.archive
   canonical_name FoundryBehaviorCompiler
   family surface
   domain Surface / Subject behavior compilation

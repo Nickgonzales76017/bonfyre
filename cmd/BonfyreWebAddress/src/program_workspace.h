@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROGRAM_WORKSPACE_H
 #define BONFYRE_PROGRAM_WORKSPACE_H
+#include "ui_tree.h"
 /* ProgramFabric retains program state. This aperture resolves current account
  * authority and carries bounded native packets; it cannot adopt another owner. */
 typedef struct { char context[96],operation[24],instance[160],template_id[161];unsigned seen; } ProgramWorkspaceQuery;
@@ -34,9 +35,10 @@ static int program_workspace_packet(const unsigned char *bytes,size_t size){
     return bf_mp_read_next(&reader,&value)==BF_MP_BOOL&&bf_mp_skip(&reader)==0&&reader.pos==reader.len;
 }
 static int serve_program_workspace(const char *method,const char *target,const char *query,const char *body,
-                                   const char *raw,const char *host,const char *bearer,const char *auth_db){
-    int machine=!strcmp(target,"/apps/_programs");
-    if(!machine&&strcmp(target,"/programs"))return 0;
+                                   const char *raw,const char *host,const char *bearer,const char *auth_db,const BfRequest *route){
+    (void)target;
+    int machine=bf_request_is(route,"programs_api");
+    if(!machine&&!bf_request_is(route,"programs"))return 0;
     ProgramWorkspaceQuery in;int writing=!strcmp(method,"POST");
     if(!program_workspace_query(query,&in,machine)||(!writing&&strcmp(method,"GET"))||(!machine&&writing)){
         aw_error(400,"Choose a current destination and one program operation.\n");return 1;
@@ -65,14 +67,14 @@ static int serve_program_workspace(const char *method,const char *target,const c
         psetup_start(200,"Programs");
         fputs("<link rel=\"stylesheet\" href=\"/apps/program-workspace.css\"><section data-program-workspace data-context=\"",stdout);html(in.context);
         fputs("\" data-instance=\"",stdout);html(in.instance);fputs("\" data-template=\"",stdout);html(in.template_id);printf("\" data-can-write=\"%s\">",can_write?"true":"false");
-        fputs("<header class=\"program-intro\"><p class=\"program-eyebrow\">Your work</p><h1>Programs</h1><p>Turn a plan, a service or a recurring need into work you can pick up again.</p></header>",stdout);
+        ui_open(stdout,"header","program-intro"); ui_text(stdout,"p","program-eyebrow","Your work"); ui_text(stdout,"h1",NULL,"Programs"); ui_text(stdout,"p",NULL,"Turn a plan, a service or a recurring need into work you can pick up again."); ui_close(stdout,"header");
         PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;
         int choices=psetup_destinations(bearer,auth_db,rows,&count);
         if(choices==1){
             const FtField hidden[]={{*in.template_id?"template":NULL,in.template_id}};
             psetup_picker("program-context","/programs","Workspace","Switch",rows,count,choices,in.context,hidden,1);
-        }else fputs("<p role=\"alert\">Your workspaces could not be listed. Refresh to change workspace.</p>",stdout);
-        fputs("<div data-program-app><p role=\"status\">Opening your programs…</p></div><noscript>Enable JavaScript to open and work on a program.</noscript></section><script type=\"module\" src=\"/apps/program-workspace.mjs\"></script>",stdout);
+        }else do{ ui_open_a(stdout,"p","role","alert"); fputs("Your workspaces could not be listed. Refresh to change workspace.",stdout); ui_close(stdout,"p"); }while(0);
+        ui_open_a(stdout,"div","data-program-app",(const char *)NULL); ui_open_a(stdout,"p","role","status"); fputs("Opening your programs…",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"noscript",NULL); fputs("Enable JavaScript to open and work on a program.",stdout); ui_close(stdout,"noscript"); ui_close(stdout,"section"); ui_open_a(stdout,"script","type","module","src","/apps/program-workspace.mjs"); ui_close(stdout,"script");
         psetup_end();return 1;
     }
     size_t bytes=0;

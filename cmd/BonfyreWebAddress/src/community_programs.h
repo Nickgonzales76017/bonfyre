@@ -1,5 +1,6 @@
 #ifndef BONFYRE_COMMUNITY_PROGRAMS_H
 #define BONFYRE_COMMUNITY_PROGRAMS_H
+#include "ui_tree.h"
 /* An account's guild is not a ProgrammeFabric owner. Read the real programmes
  * only when they explicitly name this community's canonical subject. The
  * community owner supplies membership admission; ProgrammeFabric retains all
@@ -21,7 +22,7 @@ static int cjw_programme_note(sqlite3 *db,const CjrCommunity *guild,const char *
     const char *key=ref+15;CjrPost note;
     if(!cjr_key(key)||cjr_post(db,guild->key,key,&note)!=1||!cjr_visible(&note))return 0;
     char root[97];if(!cjr_thread(db,guild->key,&note,root,1))return 0;
-    fputs("<p data-requirement-source-note><a href=\"",stdout);
+    ui_start(stdout,"p");ui_flag(stdout,"data-requirement-source-note");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");
     cjw_href(guild->key,"thread",note.key);
     fputs("\">Open the published workshop note</a> · This source is visible, but completion is not verified.</p>",stdout);
     return 1;
@@ -36,12 +37,12 @@ static void cjw_programme_requirements(sqlite3 *db,const CjrCommunity *guild,con
       "id DESC LIMIT 31";
     if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){
         sqlite3_finalize(s);
-        fputs("<p role=\"status\">The programme requirement read is currently unavailable.</p>",stdout);
+        ui_start(stdout,"p");ui_attr(stdout,"role","status");ui_gt(stdout);ui_copy(stdout,"The programme requirement read is currently unavailable.");ui_close(stdout,"p");
         return;
     }
     sqlite3_bind_text(s,1,instance,-1,SQLITE_TRANSIENT);
     int count=0,step=0;
-    fputs("<ul class=\"cj-program-reqs\" data-program-requirements>",stdout);
+    ui_start(stdout,"ul");ui_attr(stdout,"class","cj-program-reqs");ui_flag(stdout,"data-program-requirements");ui_gt(stdout);
     while((step=sqlite3_step(s))==SQLITE_ROW && count<30){
         const char *id=(const char*)sqlite3_column_text(s,0),
                    *kind=(const char*)sqlite3_column_text(s,1),
@@ -52,40 +53,35 @@ static void cjw_programme_requirements(sqlite3 *db,const CjrCommunity *guild,con
                    *deadline=(const char*)sqlite3_column_text(s,6);
         if(!id||!*id||!statement||!*statement||!state||!*state)continue;
         count++;
-        fputs("<li data-program-requirement><div><strong>",stdout);html(statement);
-        fputs("</strong><p><small>",stdout);html(kind?kind:"Requirement");
+        ui_start(stdout,"li");ui_flag(stdout,"data-program-requirement");ui_gt(stdout);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);html(statement);
+        ui_close(stdout,"strong");ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);html(kind?kind:"Requirement");
         fputs(" · ",stdout);html(state);
         if(deadline&&*deadline){fputs(" · Due ",stdout);html(deadline);}
-        fputs("</small></p></div>",stdout);
+        ui_close(stdout,"small");ui_close(stdout,"p");ui_close(stdout,"div");
         if(steward&&((satisfied&&*satisfied)||(evidence&&*evidence))){
-            fputs("<p class=\"cj-program-evidence\">Retained evidence reference is ",stdout);
+            ui_open(stdout,"p","cj-program-evidence");ui_copy(stdout,"Retained evidence reference is ");
             fputs(evidence&&*evidence?"present":"not supplied",stdout);
             fputs(". This view does not independently verify completion.</p>",stdout);
         }
         if(evidence&&*evidence)cjw_programme_note(db,guild,evidence);
-        fputs("</li>",stdout);
+        ui_close(stdout,"li");
     }
     sqlite3_finalize(s);
     if(!count)ui_text(stdout, "li", NULL, "No published programme requirements in this scope.");
-    fputs("</ul>",stdout);
+    ui_close(stdout,"ul");
     if(count==30||step==SQLITE_ROW)
         ui_text(stdout, "p", NULL, "More requirements exist. Use the owning programme workspace for the full record.");
 }
 static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward){
     if(!db||!community)return;
-    fputs("<section data-community-programmes aria-label=\"Guild programme commitments\">"
-          "<h2>Guild programmes and obligations</h2>"
-          "<p>The programmes shown here explicitly name this guild as their owner. "
-          "A shared programme does not create an apprenticeship, school placement, equipment permission, award, "
-          "funding approval or payment entitlement. Requests and evidence remain with their original owners.</p>",stdout);
+    ui_start(stdout,"section");ui_flag(stdout,"data-community-programmes");ui_attr(stdout,"aria-label","Guild programme commitments");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Guild programmes and obligations");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"The programmes shown here explicitly name this guild as their owner. A shared programme does not create an apprenticeship, school placement, equipment permission, award, funding approval or payment entitlement. Requests and evidence remain with their original owners.");ui_close(stdout,"p");
     if(!cjw_programme_schema(db)){
-        fputs("<p role=\"status\">The programme records are not available in this site context. "
-              "No programmes or requirements are inferred.</p></section>",stdout);
+        ui_start(stdout,"p");ui_attr(stdout,"role","status");ui_gt(stdout);ui_copy(stdout,"The programme records are not available in this site context. No programmes or requirements are inferred.");ui_close(stdout,"p");ui_close(stdout,"section");
         return;
     }
     char subject[140];
     if(snprintf(subject,sizeof(subject),"community_body:%s",community->key)>=(int)sizeof(subject)){
-        fputs("</section>",stdout);return;
+        ui_close(stdout,"section");return;
     }
     sqlite3_stmt *s=NULL;
     const char *sql=
@@ -96,12 +92,12 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
       "WHERE i.namespace='root' AND i.status='published' AND t.status='published' "
       "AND i.owner_subject=?1 ORDER BY i.opened_at DESC,i.id DESC LIMIT 21";
     if(sqlite3_prepare_v2(db,sql,-1,&s,NULL)!=SQLITE_OK){
-        fputs("<p role=\"status\">The programme owner could not be read completely.</p></section>",stdout);
+        ui_start(stdout,"p");ui_attr(stdout,"role","status");ui_gt(stdout);ui_copy(stdout,"The programme owner could not be read completely.");ui_close(stdout,"p");ui_close(stdout,"section");
         sqlite3_finalize(s);return;
     }
     sqlite3_bind_text(s,1,subject,-1,SQLITE_TRANSIENT);
     int count=0,step=0;
-    fputs("<ol class=\"cj-program-list\" data-program-instance-list>",stdout);
+    ui_start(stdout,"ol");ui_attr(stdout,"class","cj-program-list");ui_flag(stdout,"data-program-instance-list");ui_gt(stdout);
     while((step=sqlite3_step(s))==SQLITE_ROW && count<20){
         const char *instance=(const char*)sqlite3_column_text(s,0),
                    *template_id=(const char*)sqlite3_column_text(s,1),
@@ -112,32 +108,32 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
                    *site=(const char*)sqlite3_column_text(s,6);
         if(!instance||!*instance||!template_id||!*template_id||!name||!*name)continue;
         count++;
-        fputs("<li data-program-instance><h3>",stdout);html(name);
-        fputs("</h3><p class=\"cj-program-meta\">",stdout);
+        ui_start(stdout,"li");ui_flag(stdout,"data-program-instance");ui_gt(stdout);ui_open(stdout,"h3",NULL);html(name);
+        ui_close(stdout,"h3");ui_open(stdout,"p","cj-program-meta");
         html(archetype?archetype:"Programme");fputs(" · Opened ",stdout);
-        html(opened?opened:"Date unavailable");fputs("</p>",stdout);
-        if(description&&*description){fputs("<p>",stdout);cjw_excerpt(description);fputs("</p>",stdout);}
+        html(opened?opened:"Date unavailable");ui_close(stdout,"p");
+        if(description&&*description){ui_open(stdout,"p",NULL);cjw_excerpt(description);ui_close(stdout,"p");}
         fputs("<details><summary>Declared work and requirements</summary>",stdout);
         cjw_programme_requirements(db,community,instance,steward);
         fputs("</details>",stdout);
         if(steward){
-            fputs("<p><a href=\"/programs?context=self&amp;template=",stdout);
+            ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/programs?context=self&amp;template=");
             url_query_value(template_id);
             fputs("\">Open the programme owner</a> · ",stdout);
             fputs("Programme edits require separate workspace authority.</p>",stdout);
         }
         (void)site;
-        fputs("</li>",stdout);
+        ui_close(stdout,"li");
     }
     sqlite3_finalize(s);
     if(!count)ui_text(stdout, "li", NULL, "No programmes are explicitly bound to this guild yet.");
-    fputs("</ol>",stdout);
+    ui_close(stdout,"ol");
     if(count>=20||step==SQLITE_ROW)
         ui_text(stdout, "p", NULL, "Additional programmes exist in the owning programme workspace.");
     char role_scope[140];snprintf(role_scope,sizeof(role_scope),"community:%s",community->key);
-    fputs("<p><a data-guild-role-bridge href=\"/roles?scope=",stdout);url_query_value(role_scope);
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_flag(stdout,"data-guild-role-bridge");ui_attr_open(stdout,"href");ui_copy(stdout,"/roles?scope=");url_query_value(role_scope);
     fputs("\">Choose a role for this guild</a>. Role postures organize your work; they do not enroll members, grant authority or execute guild operations.</p>",stdout);
-    fputs("<p><a href=\"",stdout);cjw_href(community->key,"write",NULL);
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");cjw_href(community->key,"write",NULL);
     fputs("\">Document a workshop observation</a>. A member's reviewed contribution "
           "does not, by itself, satisfy a formal programme requirement.</p></section>",stdout);
 }

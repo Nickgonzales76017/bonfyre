@@ -1,4 +1,5 @@
 architecture acquisition-brief-studio
+  source_lineage earliest source components/BonfyreServiceSite/tests/brief-studio-browser.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name Acquisition Brief Studio
   family surface
   domain Surface / Acquisition review and recipient briefs

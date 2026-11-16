@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_DATING_WEB_H
 #define BONFYRE_PROFILE_DATING_WEB_H
+#include "ui_tree.h"
 #include "form_tree.h"
 #include "web_store.h"
 #include "../../BonfyreParticipation/src/dating.h"
@@ -47,11 +48,11 @@ static void ph_dating_action(const char *other,const char *choice,unsigned revis
 static void ph_dating_own_site(sqlite3 *cms,const char *actor){
  PhSite life;
  if(!ph_dating_life_site(cms,actor,&life)){
-  fputs("<p class=\"ph-privacy\">Your Life profile needs a published, exact identity binding before it can appear in introductions. <a href=\"/account#presence\">Manage your Life address</a>.</p>",stdout);
+  ui_open(stdout,"p","ph-privacy");ui_copy(stdout,"Your Life profile needs a published, exact identity binding before it can appear in introductions. ");ui_start(stdout,"a");ui_attr(stdout,"href","/account#presence");ui_gt(stdout);ui_copy(stdout,"Manage your Life address");ui_close(stdout,"a");ui_copy(stdout,".");ui_close(stdout,"p");
   return;
  }
- fputs("<div class=\"ph-dating-editorial\"><div><p class=\"ph-kicker\">Your authored Life profile</p><h3>",stdout);
- html(life.name);fputs("</h3><p>",stdout);html(life.bio);fputs("</p></div><nav aria-label=\"Your Life story tools\"><a href=\"/cms/compose/advanced?site=",stdout);
+ ui_open(stdout,"div","ph-dating-editorial");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Your authored Life profile");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
+ html(life.name);ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(life.bio);ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"nav");ui_attr(stdout,"aria-label","Your Life story tools");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");
  url_query_value(life.id);fputs("\">Compose your profile</a><a href=\"/cms/compose/advanced?site=",stdout);
  url_query_value(life.id);fputs("&amp;new=article\">Write your story</a><a href=\"",stdout);
  ph_url(&life,"gallery",1);fputs("\">Manage your gallery</a><a href=\"https://",stdout);
@@ -59,25 +60,25 @@ static void ph_dating_own_site(sqlite3 *cms,const char *actor){
 }
 static void ph_dating_messages(sqlite3 *date,const char *actor,const BfDatingCandidate *c,long long before_id){
  BfDatingMessage rows[25];size_t count=0;char nonce[33];
- fputs("<section class=\"ph-dating-thread\" aria-label=\"Private conversation\"><h4>Conversation</h4>",stdout);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating-thread");ui_attr(stdout,"aria-label","Private conversation");ui_gt(stdout);ui_open(stdout,"h4",NULL);ui_copy(stdout,"Conversation");ui_close(stdout,"h4");
  if(bf_dating_messages(date,actor,c->subject,before_id,rows,25,&count)){
-  if(before_id){fputs("<p class=\"ph-dating-page-link\"><a href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);
+  if(before_id){ui_open(stdout,"p","ph-dating-page-link");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
    url_query_value(c->subject);fputs("\">Back to latest messages</a></p>",stdout);}
-  fputs("<ol class=\"ph-dating-lines\">",stdout);
+  ui_open(stdout,"ol","ph-dating-lines");
   size_t visible=count>24?24:count;for(size_t i=visible;i>0;i--){
    const BfDatingMessage *m=&rows[i-1];
-   fputs("<li",stdout);if(!strcmp(m->sender,actor))fputs(" class=\"ph-dating-mine\"",stdout);
-   fputs("><span>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");fputs("</span><p>",stdout);
-   html(m->body);fputs("</p></li>",stdout);
+   ui_start(stdout,"li");if(!strcmp(m->sender,actor))fputs(" class=\"ph-dating-mine\"",stdout);
+   fputs("><span>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");ui_close(stdout,"span");ui_open(stdout,"p",NULL);
+   html(m->body);ui_close(stdout,"p");ui_close(stdout,"li");
   }
   if(!count)ui_text(stdout, "li", NULL, "Both of you have agreed to talk. Start with a thoughtful introduction.");
-  fputs("</ol>",stdout);
+  ui_close(stdout,"ol");
   if(count>24&&rows[visible-1].id>0){
-   fputs("<p class=\"ph-dating-page-link\"><a href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);
+   ui_open(stdout,"p","ph-dating-page-link");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
    url_query_value(c->subject);printf("&amp;before=%lld\">Read earlier messages</a></p>",rows[visible-1].id);
   }
  }else{
-  fputs("<p>The conversation is no longer authorized. No private messages were displayed.</p></section>",stdout);
+  ui_open(stdout,"p",NULL);ui_copy(stdout,"The conversation is no longer authorized. No private messages were displayed.");ui_close(stdout,"p");ui_close(stdout,"section");
   return;
  }
  ph_nonce(nonce);
@@ -85,7 +86,7 @@ static void ph_dating_messages(sqlite3 *date,const char *actor,const BfDatingCan
   static const FtInput msg[]={{.label="Message",.name="body",.maxlength="1000",.required=1,.rows=3,.placeholder="Say hello thoughtfully"}};
   const FtForm f={.id="ph-dating-reply",.action="/profile/dating/message",.label="Send privately",.hook="dating-reply",.hidden=hidden,.nhidden=2,.inputs=msg,.ninputs=1};
   ft_form(stdout,&f);}
- fputs("</section>",stdout);
+ ui_close(stdout,"section");
 }
 
 
@@ -105,34 +106,29 @@ static int ph_dating_money(const char *s,uint64_t *out){
 }
 static void ph_dating_plans(sqlite3 *date,const char *actor,const char *partner){
  BfDatingPlan rows[6];size_t count=0;
- fputs("<section class=\"ph-dating-plans\" aria-label=\"Plans shared with this match\">"
- "<div><p class=\"ph-kicker\">The next chapter</p><h4>Make a plan together</h4>"
- "<p>Propose an activity and cost estimate. Both people approve independently; "
- "nothing is booked, purchased, or sent to a venue.</p></div>",stdout);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating-plans");ui_attr(stdout,"aria-label","Plans shared with this match");ui_gt(stdout);ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"The next chapter");ui_close(stdout,"p");ui_open(stdout,"h4",NULL);ui_copy(stdout,"Make a plan together");ui_close(stdout,"h4");ui_open(stdout,"p",NULL);ui_copy(stdout,"Propose an activity and cost estimate. Both people approve independently; nothing is booked, purchased, or sent to a venue.");ui_close(stdout,"p");ui_close(stdout,"div");
  if(!bf_dating_plans(date,actor,partner,rows,6,&count)){
-  fputs("<p class=\"ph-dating-state\">Current plan permissions could not be verified.</p></section>",stdout);return;
+  ui_open(stdout,"p","ph-dating-state");ui_copy(stdout,"Current plan permissions could not be verified.");ui_close(stdout,"p");ui_close(stdout,"section");return;
  }
- if(count)fputs("<ol class=\"ph-dating-plan-list\">",stdout);
+ if(count)ui_open(stdout,"ol","ph-dating-plan-list");
  for(size_t i=0;i<count;i++){
   const BfDatingPlan *p=&rows[i];
-  fputs("<li><div><strong>",stdout);html(*p->activity?p->activity:"Date idea");
-  fputs("</strong><p>",stdout);html(p->meeting_context);
-  printf("</p><small>Estimated USD $%llu.%02llu · ",
-    (unsigned long long)(p->estimated_cents/100),
-    (unsigned long long)(p->estimated_cents%100));
+  ui_open(stdout,"li",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);html(*p->activity?p->activity:"Date idea");
+  ui_close(stdout,"strong");ui_open(stdout,"p",NULL);html(p->meeting_context);
+  ui_close(stdout,"p");ui_open(stdout,"small",NULL);ui_copy(stdout,"Estimated USD $");fprintf(stdout,"%llu",(unsigned long long)(p->estimated_cents/100));ui_copy(stdout,".");fprintf(stdout,"%02llu",(unsigned long long)(p->estimated_cents%100));ui_copy(stdout," · ");
   if(p->approved_by_me&&p->approved_by_other)fputs("Both approved",stdout);
   else if(p->approved_by_me)fputs("Awaiting their approval",stdout);
   else fputs("Awaiting your approval",stdout);
-  fputs("</small></div>",stdout);
+  ui_close(stdout,"small");ui_close(stdout,"div");
   if(!p->approved_by_me){
    char r[16];snprintf(r,sizeof(r),"%u",p->revision);
    const FtField hidden[]={{"plan",p->key},{"rev",r}};
    const FtForm f={.id="ph-dating-approve",.action="/profile/dating/plan-approve",.label="Approve this proposal",.hidden=hidden,.nhidden=2};
    ft_form(stdout,&f);
   }
-  fputs("</li>",stdout);
+  ui_close(stdout,"li");
  }
- if(count)fputs("</ol>",stdout);
+ if(count)ui_close(stdout,"ol");
  char id[33];ph_nonce(id);
  {const FtField hidden[]={{"other",partner},{"nonce",id},{"confirm","1"}};
   static const FtInput plan[]={{.label="Activity or shared idea",.name="activity",.maxlength="160",.required=1,.placeholder="An art museum, then coffee"},
@@ -141,7 +137,7 @@ static void ph_dating_plans(sqlite3 *date,const char *actor,const char *partner)
                                {.label="Maximum budget (USD)",.name="budget",.inputmode="decimal",.required=1,.placeholder="60.00",.maxlength="8"}};
   const FtForm f={.id="ph-dating-plan",.action="/profile/dating/plan",.label="Propose for their review",.hook="dating-plan-create",.hidden=hidden,.nhidden=3,.inputs=plan,.ninputs=4};
   ft_form(stdout,&f);}
- fputs("</section>",stdout);
+ ui_close(stdout,"section");
 }
 static void ph_dating_preferences_editor(sqlite3 *db,const char *actor){
  BfDatingAnswer prefs[4];unsigned revision=0;
@@ -162,7 +158,7 @@ static void ph_dating_preferences_editor(sqlite3 *db,const char *actor){
  "<form method=\"post\" action=\"/profile/dating/preferences\" class=\"ph-dating-preference-form\">",stdout);
  printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",revision);
  for(unsigned i=0;i<4;i++){
-  printf("<fieldset class=\"ph-dating-preference\"><legend>%u. ",i+1);html(questions[i]);
+  ui_open(stdout,"fieldset","ph-dating-preference");ui_open(stdout,"legend",NULL);fprintf(stdout,"%u",i+1);ui_copy(stdout,". ");html(questions[i]);
   fputs("</legend><label>Your choice<select name=\"p",stdout);printf("%u\">",i+1);
   fputs("<option value=\"0\"",stdout);if(!prefs[i].answer)fputs(" selected",stdout);
   fputs(">Prefer not to answer</option>",stdout);
@@ -182,31 +178,30 @@ static void ph_dating_preferences_editor(sqlite3 *db,const char *actor){
 static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
                                      const char *actor,const BfDatingCandidate *candidate,const char *view,long long before_id){
  PhSite life;if(!ph_dating_life_site(cms,candidate->subject,&life))return;
- fputs("<article class=\"ph-dating-person\" data-dating-candidate",stdout);
+ ui_start(stdout,"article");ui_attr(stdout,"class","ph-dating-person");ui_flag(stdout,"data-dating-candidate");
  if(!strcmp(view,"chat"))fputs(" data-selected-peer",stdout);
  fputs(">",stdout);
  if(strcmp(view,"chat"))ph_dating_public_image(cms,&life);
- fputs("<div class=\"ph-dating-person-head\"><div>",stdout);
- fputs("<p class=\"ph-kicker\">Life profile · Reviewed participation</p><h3>",stdout);
- html(life.name);fputs("</h3><p class=\"ph-dating-dek\">",stdout);
- html(life.bio);fputs("</p>",stdout);
+ ui_open(stdout,"div","ph-dating-person-head");ui_open(stdout,"div",NULL);
+ ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Life profile · Reviewed participation");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
+ html(life.name);ui_close(stdout,"h3");ui_open(stdout,"p","ph-dating-dek");
+ html(life.bio);ui_close(stdout,"p");
  if(strcmp(view,"chat"))ph_dating_public_prompt(cms,&life);
  if(candidate->shared_answers>=3){
-  printf("<p class=\"ph-dating-similarity\"><strong>%u%% shared preference agreement</strong> across %u opted-in answers · Not a personality assessment</p>",
-    candidate->agreement_percent,candidate->shared_answers);
+  ui_open(stdout,"p","ph-dating-similarity");ui_open(stdout,"strong",NULL);fprintf(stdout,"%u",candidate->agreement_percent);ui_copy(stdout,"% shared preference agreement");ui_close(stdout,"strong");ui_copy(stdout," across ");fprintf(stdout,"%u",candidate->shared_answers);ui_copy(stdout," opted-in answers · Not a personality assessment");ui_close(stdout,"p");
  }
- fputs("</div><a href=\"https://",stdout);
+ ui_close(stdout,"div");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
  html(life.host);fputs("/\" rel=\"noopener noreferrer\">Read their Life profile</a></div>",stdout);
  if(candidate->matched){
   ui_text(stdout, "p", "ph-dating-state", "You have both explicitly accepted the conversation.");
-  fputs("<p><a href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);url_query_value(candidate->subject);fputs("\">Open private conversation</a></p>",stdout);
+  ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");url_query_value(candidate->subject);fputs("\">Open private conversation</a></p>",stdout);
   if(!strcmp(view,"matches")){
    BfDatingMessage latest[1];size_t latest_count=0;
    if(bf_dating_messages(date,actor,candidate->subject,0,latest,1,&latest_count)&&latest_count){
-    fputs("<a class=\"ph-date-message-preview\" data-dating-message-preview href=\"/profile?tab=dating&amp;view=chat&amp;peer=",stdout);
+    ui_start(stdout,"a");ui_attr(stdout,"class","ph-date-message-preview");ui_flag(stdout,"data-dating-message-preview");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
     url_query_value(candidate->subject);fputs("\"><span>",stdout);
     fputs(!strcmp(latest[0].sender,actor)?"Your latest message":"Their latest message",stdout);
-    fputs("</span><p>",stdout);html(latest[0].body);fputs("</p><strong>Continue conversation</strong></a>",stdout);
+    ui_close(stdout,"span");ui_open(stdout,"p",NULL);html(latest[0].body);ui_close(stdout,"p");ui_open(stdout,"strong",NULL);ui_copy(stdout,"Continue conversation");ui_close(stdout,"strong");ui_close(stdout,"a");
    }
   }
   if(!strcmp(view,"chat")){
@@ -214,27 +209,27 @@ static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
    ph_dating_plans(date,actor,candidate->subject);
   }
  }else if(candidate->introduction_for_me){
-  fputs("<p class=\"ph-dating-state\">They sent an introduction. No conversation opens until you explicitly accept.</p><div class=\"ph-dating-actions\">",stdout);
+  ui_open(stdout,"p","ph-dating-state");ui_copy(stdout,"They sent an introduction. No conversation opens until you explicitly accept.");ui_close(stdout,"p");ui_open(stdout,"div","ph-dating-actions");
   ph_dating_action(candidate->subject,"accept",candidate->my_choice_revision,"Accept introduction");
   ph_dating_action(candidate->subject,"pass",candidate->my_choice_revision,"Pass");
-  fputs("</div>",stdout);
+  ui_close(stdout,"div");
  }else if(candidate->mine==BF_DATING_INTEREST){
-  fputs("<p class=\"ph-dating-state\">Introduction sent. You can explicitly authorize a conversation if they respond.</p><div class=\"ph-dating-actions\">",stdout);
+  ui_open(stdout,"p","ph-dating-state");ui_copy(stdout,"Introduction sent. You can explicitly authorize a conversation if they respond.");ui_close(stdout,"p");ui_open(stdout,"div","ph-dating-actions");
   ph_dating_action(candidate->subject,"accept",candidate->my_choice_revision,"Confirm conversation consent");
   ph_dating_action(candidate->subject,"none",candidate->my_choice_revision,"Withdraw interest");
-  fputs("</div>",stdout);
+  ui_close(stdout,"div");
  }else if(candidate->mine==BF_DATING_ACCEPT){
   ui_text(stdout, "p", "ph-dating-state", "Your permission is recorded; they have not independently agreed.");
   ph_dating_action(candidate->subject,"none",candidate->my_choice_revision,"Withdraw permission");
  }else{
-  fputs("<p class=\"ph-dating-state\">An introduction asks for their attention. It cannot send an unsolicited private message.</p><div class=\"ph-dating-actions\">",stdout);
+  ui_open(stdout,"p","ph-dating-state");ui_copy(stdout,"An introduction asks for their attention. It cannot send an unsolicited private message.");ui_close(stdout,"p");ui_open(stdout,"div","ph-dating-actions");
   ph_dating_action(candidate->subject,"interest",candidate->my_choice_revision,"Introduce yourself");
   ph_dating_action(candidate->subject,"pass",candidate->my_choice_revision,"Not for me");
-  fputs("</div>",stdout);
+  ui_close(stdout,"div");
  }
- fputs("<div class=\"ph-dating-safety\">",stdout);
+ ui_open(stdout,"div","ph-dating-safety");
  ph_dating_action(candidate->subject,"block",candidate->my_choice_revision,"Block this person");
- fputs("</div></article>",stdout);
+ ui_close(stdout,"div");ui_close(stdout,"article");
 }
 static int ph_dating_view_allowed(const char *view){
  return view&&(!strcmp(view,"discover")||!strcmp(view,"matches")||
@@ -246,14 +241,14 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  if(cms)bf_site_presentation_emit_scoped(stdout,cms,"aurekai-dating-editorial",".ph-dating");
  ph_dating_shared_interaction_styles();
  PhDatingComposition copy=ph_dating_composition(cms,view);
- fputs("<section class=\"ph-dating\" data-native-dating data-bf-stitch=\"dating-editorial\" data-dating-view=\"",stdout);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating");ui_flag(stdout,"data-native-dating");ui_attr(stdout,"data-bf-stitch","dating-editorial");ui_attr_open(stdout,"data-dating-view");
  html(view);fputs("\"><header class=\"ph-dating-mast\"><div><p class=\"ph-kicker\">",stdout);
- html(copy.eyebrow);fputs("</p><h2>",stdout);html(copy.heading);
- fputs("</h2><p>",stdout);html(copy.lede);
- fputs("</p></div><div class=\"ph-dating-count\" aria-label=\"Aurekai Life participation\">Life</div></header>",stdout);
+ html(copy.eyebrow);ui_close(stdout,"p");ui_open(stdout,"h2",NULL);html(copy.heading);
+ ui_close(stdout,"h2");ui_open(stdout,"p",NULL);html(copy.lede);
+ ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"div");ui_attr(stdout,"class","ph-dating-count");ui_attr(stdout,"aria-label","Aurekai Life participation");ui_gt(stdout);ui_copy(stdout,"Life");ui_close(stdout,"div");ui_close(stdout,"header");
  ph_dating_view_nav(view);
  if(!bf_dating_subject(actor)){
-  fputs("<p class=\"ph-privacy\" role=\"alert\">Your account needs an exact person identity to open introductions. <a href=\"/account\">Check your identity</a>.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"Your account needs an exact person identity to open introductions. ");ui_start(stdout,"a");ui_attr(stdout,"href","/account");ui_gt(stdout);ui_copy(stdout,"Check your identity");ui_close(stdout,"a");ui_copy(stdout,".");ui_close(stdout,"p");ui_close(stdout,"section");
   return;
  }
  if(!strcmp(view,"studio")){
@@ -262,18 +257,18 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  }
  sqlite3 *date=ph_dating_open(0);
  if(!date){
-  fputs("<p class=\"ph-privacy\" role=\"status\">The private Participation owner is not installed for this account destination. Nothing has been inferred from your public profile.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","status");ui_gt(stdout);ui_copy(stdout,"The private Participation owner is not installed for this account destination. Nothing has been inferred from your public profile.");ui_close(stdout,"p");ui_close(stdout,"section");
   return;
  }
  unsigned request_rev=0;int requested=bf_dating_request_status(date,actor,&request_rev);
  if(requested<0){
-  fputs("<p class=\"ph-privacy\" role=\"alert\">The private participation record could not be verified. No introductions were shown.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"The private participation record could not be verified. No introductions were shown.");ui_close(stdout,"p");ui_close(stdout,"section");
   sqlite3_close(date);return;
  }
  int eligible=bf_dating_eligible(date,actor);
- fputs("<section class=\"ph-dating-join\" aria-label=\"Dating participation\"><p class=\"ph-kicker\">Your dating participation</p>",stdout);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating-join");ui_attr(stdout,"aria-label","Dating participation");ui_gt(stdout);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Your dating participation");ui_close(stdout,"p");
  if(requested==0||requested==2){
-  fputs("<h3>Participation is off</h3><p>A request begins a private review, not approval. Adult eligibility and moderation require independent verification before discovery.</p>",stdout);
+  ui_open(stdout,"h3",NULL);ui_copy(stdout,"Participation is off");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"A request begins a private review, not approval. Adult eligibility and moderation require independent verification before discovery.");ui_close(stdout,"p");
   {char r[16];snprintf(r,sizeof(r),"%u",request_rev);
    const FtField hidden[]={{"rev",r},{"enable","1"}};
    static const FtInput ack[]={{.label="I request adult-only dating review. This does not publish or contact anyone.",.type="checkbox",.name="ack",.value="1",.required=1}};
@@ -287,17 +282,17 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
    const FtForm f={.id="ph-dating-withdraw",.action="/profile/dating/request",.label="Withdraw dating participation",.hidden=hidden,.nhidden=2};
    ft_form(stdout,&f);}
  }
- fputs("</section>",stdout);
+ ui_close(stdout,"section");
  if(eligible){
   if(!strcmp(view,"studio"))ph_dating_preferences_editor(date,actor);
   else if(!strcmp(view,"discover"))
-   fputs("<p class=\"ph-privacy\">Your <a href=\"/profile?tab=dating&amp;view=studio\">private preferences</a> are compared only when both members have answered enough questions. Skipped answers are never inferred.</p>",stdout);
+   {ui_open(stdout,"p","ph-privacy");ui_copy(stdout,"Your ");ui_start(stdout,"a");ui_attr(stdout,"href","/profile?tab=dating&amp;view=studio");ui_gt(stdout);ui_copy(stdout,"private preferences");ui_close(stdout,"a");ui_copy(stdout," are compared only when both members have answered enough questions. Skipped answers are never inferred.");ui_close(stdout,"p");}
   if(strcmp(view,"studio")){
    BfDatingCandidate candidates[24];size_t count=0,shown=0;
    if(bf_dating_candidates(date,actor,candidates,24,&count)){
-    fputs("<header class=\"ph-date-screen-head\"><div><p class=\"ph-date-eyebrow\">Current, mutual permissions</p><h3>",stdout);
+    ui_open(stdout,"header","ph-date-screen-head");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-date-eyebrow");ui_copy(stdout,"Current, mutual permissions");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
     fputs(!strcmp(view,"discover")?"Meet the members":!strcmp(view,"matches")?"Connections and introductions":"Private conversation",stdout);
-    fputs("</h3></div><p>Published profile content comes from each member's own CMS. All contact requires current, reciprocal consent.</p></header><div class=\"ph-dating-collection\" data-dating-collection>",stdout);
+    ui_close(stdout,"h3");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"Published profile content comes from each member's own CMS. All contact requires current, reciprocal consent.");ui_close(stdout,"p");ui_close(stdout,"header");ui_start(stdout,"div");ui_attr(stdout,"class","ph-dating-collection");ui_flag(stdout,"data-dating-collection");ui_gt(stdout);
     for(size_t i=0;i<count;i++){
      const BfDatingCandidate *c=&candidates[i];
      if(!strcmp(view,"matches")&&!(c->matched||c->introduction_for_me))continue;
@@ -306,17 +301,17 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
      shown++;ph_dating_candidate_card(cms,date,actor,c,view,before_id);
     }
     if(!shown){
-     fputs("<div class=\"ph-empty\"><h3>",stdout);
+     ui_open(stdout,"div","ph-empty");ui_open(stdout,"h3",NULL);
      fputs(!strcmp(view,"chat")?"No authorized conversation":
        !strcmp(view,"matches")?"No mutual introductions yet":"No eligible published profiles at the moment",stdout);
-     fputs("</h3><p>Nothing is fabricated. You can still explore members' public work independently.</p><a href=\"/discover\">Explore publications</a></div>",stdout);
+     ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Nothing is fabricated. You can still explore members' public work independently.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"href","/discover");ui_gt(stdout);ui_copy(stdout,"Explore publications");ui_close(stdout,"a");ui_close(stdout,"div");
     }
-    fputs("</div>",stdout);
-   }else fputs("<p class=\"ph-privacy\" role=\"alert\">Current eligibility could not be confirmed. No candidates were displayed.</p>",stdout);
+    ui_close(stdout,"div");
+   }else {ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"Current eligibility could not be confirmed. No candidates were displayed.");ui_close(stdout,"p");}
   }
  }
  sqlite3_close(date);
- fputs("<p class=\"ph-date-privacy-note\"><strong>Consent:</strong> Public stories and gallery media stay CMS-owned. Private preferences, messages and approvals stay in Participation. No plan is a booking.</p></section>",stdout);
+ ui_open(stdout,"p","ph-date-privacy-note");ui_open(stdout,"strong",NULL);ui_copy(stdout,"Consent:");ui_close(stdout,"strong");ui_copy(stdout," Public stories and gallery media stay CMS-owned. Private preferences, messages and approvals stay in Participation. No plan is a booking.");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 static int ph_dating_mutate(const char *input,const char *raw,
                             const char *host,const char *actor,const BfRequest *route){

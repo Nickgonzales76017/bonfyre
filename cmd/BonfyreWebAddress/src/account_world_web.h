@@ -176,25 +176,25 @@ static int serve_world_studio(const char *method,const char *query,const char *b
     /* Without a World named, use the one already bound to this site. */
     if(!world_id){sqlite3_stmt *st=NULL;if(sqlite3_prepare_v2(db,"SELECT b.world_id FROM account_world_binding b JOIN world w ON w.id=b.world_id AND w.namespace=b.namespace AND w.subject=b.subject AND w.status='draft' WHERE b.namespace=?1 AND b.subject=?2 ORDER BY b.world_id LIMIT 1",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_text(st,1,site_id,-1,SQLITE_STATIC);sqlite3_bind_text(st,2,subject,-1,SQLITE_STATIC);if(sqlite3_step(st)==SQLITE_ROW)world_id=sqlite3_column_int64(st,0);}sqlite3_finalize(st);}
     ph_begin(db,&site,site.name,1,"worlds",actor);ph_nav(sites,count,&site,"worlds",1);
-    fputs("<div class=\"aw-studio\" data-world-studio>",stdout);
-    fputs("<div><h2>Your spaces</h2><p>Each space is its own page on <strong>",stdout);html(site.host);
-    fputs("</strong>: a station, a label, a reading room, a screening room, or whatever you make of it. Pieces stay where they are published. A space only points to them.</p></div>",stdout);
+    ui_open_a(stdout,"div","class","aw-studio","data-world-studio",(const char *)NULL);
+    ui_open(stdout,"div",NULL); ui_open(stdout,"h2",NULL); fputs("Your spaces",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("Each space is its own page on ",stdout); ui_open(stdout,"strong",NULL);html(site.host);
+    ui_close(stdout,"strong"); fputs(": a station, a label, a reading room, a screening room, or whatever you make of it. Pieces stay where they are published. A space only points to them.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div");
     sqlite3_stmt *list=NULL;
     if(!world_id||aw_space_list(db,subject,site_id,world_id,&list)!=1){
-        fputs("<section><h3>Start your spaces</h3><p>Nothing is public until you choose to publish a space.</p><form method=\"post\" action=\"/workspace/world\">",stdout);
+        ui_open(stdout,"section",NULL); ui_open(stdout,"h3",NULL); fputs("Start your spaces",stdout); ui_close(stdout,"h3"); ui_open(stdout,"p",NULL); fputs("Nothing is public until you choose to publish a space.",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"form","method","post","action","/workspace/world");
         ph_hidden("site",site_id);ph_hidden("operation","create");ph_hidden("return","studio");
-        fputs("<div class=\"aw-actions\"><button type=\"submit\">Start spaces on this site</button></div></form></section></div>",stdout);
+        ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Start spaces on this site",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form"); ui_close(stdout,"section"); ui_close(stdout,"div");
         sqlite3_finalize(list);ph_end();sqlite3_close(db);return 1;
     }
     char ids[AW_SPACE_LIMIT][65];long long revs[AW_SPACE_LIMIT];int n=0;
-    fputs("<nav class=\"aw-spaces\" aria-label=\"Your spaces\">",stdout);
+    ui_open_a(stdout,"nav","class","aw-spaces","aria-label","Your spaces");
     while(n<AW_SPACE_LIMIT&&sqlite3_step(list)==SQLITE_ROW){
         const char *id=(const char*)sqlite3_column_text(list,0),*title=(const char*)sqlite3_column_text(list,1);
         snprintf(ids[n],65,"%s",id?id:"");revs[n]=sqlite3_column_int64(list,5);
         fputs("<a href=\"/workspace/worlds?site=",stdout);url_query_value(site_id);printf("&amp;world=%lld&amp;space=",(long long)world_id);url_query_value(ids[n]);fputs("\"",stdout);
-        if(!strcmp(ids[n],space))fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(title);fputs("<small>",stdout);html(ids[n]);fputs("</small></a>",stdout);n++;
+        if(!strcmp(ids[n],space))fputs(" aria-current=\"page\"",stdout);fputs(">",stdout);html(title);ui_open(stdout,"small",NULL);html(ids[n]);ui_close(stdout,"small"); ui_close(stdout,"a");n++;
     }
-    sqlite3_finalize(list);fputs("</nav>",stdout);
+    sqlite3_finalize(list);ui_close(stdout,"nav");
     long long revision=-1;for(int i=0;i<n;i++)if(!strcmp(ids[i],space))revision=revs[i];
     if(*space&&revision<0){ui_text(stdout, "p", NULL, "That space is not on this site.");*space=0;}
     if(*space){
@@ -207,51 +207,50 @@ static int serve_world_studio(const char *method,const char *query,const char *b
             snprintf(lede,sizeof(lede),"%s",(const char*)sqlite3_column_text(row,2));snprintf(state,sizeof(state),"%s",(const char*)sqlite3_column_text(row,3));released=sqlite3_column_int64(row,4);
         }
         sqlite3_finalize(row);
-        fputs("<section data-world-space=\"",stdout);html(space);fputs("\"><div class=\"aw-actions\"><h3 style=\"margin:0\">",stdout);html(title);fputs("</h3><span class=\"aw-state\" data-world-state=\"",stdout);
+        ui_open_a(stdout,"section",UI_DYN,"data-world-space","",(space)); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"h3","style","margin:0");html(title);fputs("</h3><span class=\"aw-state\" data-world-state=\"",stdout);
         const char *shown=!strcmp(state,"public")?(released==revision?"public":"changed"):!strcmp(state,"withdrawn")?"withdrawn":"draft";html(shown);fputs("\">",stdout);
-        fputs(!strcmp(shown,"public")?"Public":!strcmp(shown,"changed")?"Public, with unpublished changes":!strcmp(shown,"withdrawn")?"Taken down":"Draft",stdout);fputs("</span>",stdout);
+        fputs(!strcmp(shown,"public")?"Public":!strcmp(shown,"changed")?"Public, with unpublished changes":!strcmp(shown,"withdrawn")?"Taken down":"Draft",stdout);ui_close(stdout,"span");
         if(!strcmp(state,"public")){fputs("<a class=\"ph-button\" href=\"",stdout);world_web_space_href(&site,space);fputs("\">View public page</a>",stdout);}
-        fputs("</div>",stdout);
+        ui_close(stdout,"div");
         /* look */
-        fputs("<form method=\"post\" action=\"/workspace/world\" data-world-form=\"style\">",stdout);world_web_hidden_base(site_id,world_id,space,"style",revision);
-        fputs("<div class=\"aw-row\"><label>What kind of space<small>Radio, label, podcast, newspaper, poetry, cinema, or your own word</small><input name=\"medium\" required maxlength=\"32\" pattern=\"[a-z0-9][a-z0-9-]*\" list=\"aw-media\" value=\"",stdout);html(medium);
-        fputs("\"><datalist id=\"aw-media\"><option value=\"radio\"><option value=\"music\"><option value=\"podcast\"><option value=\"news\"><option value=\"writing\"><option value=\"poetry\"><option value=\"film\"><option value=\"gallery\"><option value=\"archive\"><option value=\"mixed\"></datalist></label>",stdout);
-        fputs("<label>Look<small>How the page is set</small><select name=\"character\">",stdout);
-        for(size_t i=0;i<BF_WORLD_MATERIAL_RENDERER_COUNT;i++){const char *c=bf_world_material_renderers[i].character,*label=world_web_look(c);if(!label)continue;fputs("<option value=\"",stdout);html(c);fputs("\"",stdout);if(!strcmp(c,character))fputs(" selected",stdout);fputs(">",stdout);html(label);fputs("</option>",stdout);}
-        fputs("</select></label></div><label>Introduction<small>Shown under the title</small><textarea name=\"lede\" rows=\"3\" maxlength=\"600\">",stdout);html(lede);fputs("</textarea></label>",stdout);
-        fputs("<div class=\"aw-actions\"><button type=\"submit\">Save the look</button></div></form>",stdout);
+        ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","style");world_web_hidden_base(site_id,world_id,space,"style",revision);
+        ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("What kind of space",stdout); ui_open(stdout,"small",NULL); fputs("Radio, label, podcast, newspaper, poetry, cinema, or your own word",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","medium","required",(const char *)NULL,"maxlength","32","pattern","[a-z0-9][a-z0-9-]*","list","aw-media",UI_DYN,"value","",(medium)); ui_open_a(stdout,"datalist","id","aw-media"); ui_open_a(stdout,"option","value","radio"); ui_open_a(stdout,"option","value","music"); ui_open_a(stdout,"option","value","podcast"); ui_open_a(stdout,"option","value","news"); ui_open_a(stdout,"option","value","writing"); ui_open_a(stdout,"option","value","poetry"); ui_open_a(stdout,"option","value","film"); ui_open_a(stdout,"option","value","gallery"); ui_open_a(stdout,"option","value","archive"); ui_open_a(stdout,"option","value","mixed"); ui_close(stdout,"datalist"); ui_close(stdout,"label");
+        ui_open(stdout,"label",NULL); fputs("Look",stdout); ui_open(stdout,"small",NULL); fputs("How the page is set",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"select","name","character");
+        for(size_t i=0;i<BF_WORLD_MATERIAL_RENDERER_COUNT;i++){const char *c=bf_world_material_renderers[i].character,*label=world_web_look(c);if(!label)continue;fputs("<option value=\"",stdout);html(c);fputs("\"",stdout);if(!strcmp(c,character))fputs(" selected",stdout);fputs(">",stdout);html(label);ui_close(stdout,"option");}
+        ui_close(stdout,"select"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"label",NULL); fputs("Introduction",stdout); ui_open(stdout,"small",NULL); fputs("Shown under the title",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"textarea","name","lede","rows","3","maxlength","600");html(lede);ui_close(stdout,"textarea"); ui_close(stdout,"label");
+        ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Save the look",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");
         /* items */
-        fputs("<h3>In this space</h3><ol class=\"aw-items\" data-world-items>",stdout);
+        ui_open(stdout,"h3",NULL); fputs("In this space",stdout); ui_close(stdout,"h3"); ui_open_a(stdout,"ol","class","aw-items","data-world-items",(const char *)NULL);
         int next=1,have=0;
         if(aw_items(db,subject,site_id,world_id,space,&items)==1)while(sqlite3_step(items)==SQLITE_ROW){
             int pos=sqlite3_column_int(items,0);const char *ref=(const char*)sqlite3_column_text(items,1),*role=(const char*)sqlite3_column_text(items,2),*note=(const char*)sqlite3_column_text(items,3);
             if(pos>=next)next=pos+1;have++;
-            printf("<li data-world-item=\"%d\"><div><strong>%d. ",pos,pos);world_web_words(role);fputs("</strong><br><code>",stdout);html(ref);fputs("</code>",stdout);
-            if(note&&*note){fputs("<br>",stdout);html(note);}fputs("</div><form method=\"post\" action=\"/workspace/world\">",stdout);
+            printf("<li data-world-item=\"%d\"><div><strong>%d. ",pos,pos);world_web_words(role);ui_close(stdout,"strong"); ui_open(stdout,"br",NULL); ui_open(stdout,"code",NULL);html(ref);ui_close(stdout,"code");
+            if(note&&*note){ui_open(stdout,"br",NULL);html(note);}ui_close(stdout,"div"); ui_open_a(stdout,"form","method","post","action","/workspace/world");
             world_web_hidden_base(site_id,world_id,space,"unitem",revision);char p[8];snprintf(p,sizeof(p),"%d",pos);ph_hidden("position",p);
-            fputs("<button type=\"submit\" class=\"aw-quiet\">Remove</button></form></li>",stdout);
+            ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Remove",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"li");
         }
-        sqlite3_finalize(items);if(!have)ui_text(stdout, "li", NULL, "Nothing here yet.");fputs("</ol>",stdout);
+        sqlite3_finalize(items);if(!have)ui_text(stdout, "li", NULL, "Nothing here yet.");ui_close(stdout,"ol");
         if(next<=AW_ITEM_LIMIT){
-            fputs("<form method=\"post\" action=\"/workspace/world\" data-world-form=\"item\">",stdout);world_web_hidden_base(site_id,world_id,space,"item",revision);
+            ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","item");world_web_hidden_base(site_id,world_id,space,"item",revision);
             char p[8];snprintf(p,sizeof(p),"%d",next);ph_hidden("position",p);
-            fputs("<div class=\"aw-row\"><label>Piece<small>The address after /o/ on a piece&rsquo;s page, or a space below</small><input name=\"ref\" required maxlength=\"160\" list=\"aw-portals\"><datalist id=\"aw-portals\">",stdout);
-            for(int i=0;i<n;i++)if(strcmp(ids[i],space)){fputs("<option value=\"space:",stdout);html(ids[i]);fputs("\">",stdout);}
-            fputs("</datalist></label><label>Its part here<small>Track, episode, poem, story, doorway&hellip;</small><input name=\"role\" required maxlength=\"32\" pattern=\"[a-z0-9][a-z0-9-]*\"></label></div>",stdout);
-            fputs("<label>Your note<small>Optional. Shown with the piece</small><textarea name=\"note\" rows=\"2\" maxlength=\"280\"></textarea></label><div class=\"aw-actions\"><button type=\"submit\">Add to this space</button></div></form>",stdout);
+            ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Piece",stdout); ui_open(stdout,"small",NULL); fputs("The address after /o/ on a piece&rsquo;s page, or a space below",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","ref","required",(const char *)NULL,"maxlength","160","list","aw-portals"); ui_open_a(stdout,"datalist","id","aw-portals");
+            for(int i=0;i<n;i++)if(strcmp(ids[i],space)){ui_open_a(stdout,"option",UI_DYN,"value","space:",(ids[i]));}
+            ui_close(stdout,"datalist"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Its part here",stdout); ui_open(stdout,"small",NULL); fputs("Track, episode, poem, story, doorway&hellip;",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","role","required",(const char *)NULL,"maxlength","32","pattern","[a-z0-9][a-z0-9-]*"); ui_close(stdout,"label"); ui_close(stdout,"div");
+            ui_open(stdout,"label",NULL); fputs("Your note",stdout); ui_open(stdout,"small",NULL); fputs("Optional. Shown with the piece",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"textarea","name","note","rows","2","maxlength","280"); ui_close(stdout,"textarea"); ui_close(stdout,"label"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add to this space",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");
         }
         aw_picker_emit(db,site_id,world_id,space,revision,next,who.id,source,q);
         /* release */
-        fputs("<div class=\"aw-actions\">",stdout);
-        if(strcmp(shown,"public")){fputs("<form method=\"post\" action=\"/workspace/world\" data-world-form=\"release\">",stdout);world_web_hidden_base(site_id,world_id,space,"release",revision);
-            fputs("<button type=\"submit\">",stdout);fputs(!strcmp(shown,"changed")?"Publish changes":"Publish this space",stdout);fputs("</button></form>",stdout);}
-        if(!strcmp(state,"public")){fputs("<form method=\"post\" action=\"/workspace/world\" data-world-form=\"withdraw\">",stdout);world_web_hidden_base(site_id,world_id,space,"withdraw",-1);fputs("<button type=\"submit\" class=\"aw-quiet\">Take it down</button></form>",stdout);}
-        fputs("</div>",stdout);
+        ui_open(stdout,"div","aw-actions");
+        if(strcmp(shown,"public")){ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","release");world_web_hidden_base(site_id,world_id,space,"release",revision);
+            ui_open_a(stdout,"button","type","submit");fputs(!strcmp(shown,"changed")?"Publish changes":"Publish this space",stdout);ui_close(stdout,"button"); ui_close(stdout,"form");}
+        if(!strcmp(state,"public")){ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","withdraw");world_web_hidden_base(site_id,world_id,space,"withdraw",-1);ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Take it down",stdout); ui_close(stdout,"button"); ui_close(stdout,"form");}
+        ui_close(stdout,"div");
         world_cine_studio(db,subject,site_id,world_id,space);
         world_audio_studio(db,subject,site_id,world_id,space,revision,state);
         world_lit_studio(db,subject,site_id,world_id,space,revision);
         /* title and room */
-        fputs("<form method=\"post\" action=\"/workspace/world\" data-world-form=\"put\">",stdout);world_web_hidden_base(site_id,world_id,space,"put",revision);
+        ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","put");world_web_hidden_base(site_id,world_id,space,"put",revision);
         ph_hidden("template","template:world-character");ph_hidden("layout","layout:sequence");
         fputs("<div class=\"aw-row\"><label>Title<input name=\"title\" required maxlength=\"256\" value=\"",stdout);html(title);fputs("\"></label><label>Shape<select name=\"renderer\"><option value=\"2d\"",stdout);
         if(!strcmp(renderer,"2d"))fputs(" selected",stdout);fputs(">A page</option><option value=\"3d\"",stdout);if(!strcmp(renderer,"3d"))fputs(" selected",stdout);
@@ -259,13 +258,11 @@ static int serve_world_studio(const char *method,const char *query,const char *b
     }
     /* new space */
     if(n<AW_SPACE_LIMIT){
-        fputs("<section><h3>New space</h3><form method=\"post\" action=\"/workspace/world\" data-world-form=\"new\">",stdout);world_web_hidden_base(site_id,world_id,"","put",0);
+        ui_open(stdout,"section",NULL); ui_open(stdout,"h3",NULL); fputs("New space",stdout); ui_close(stdout,"h3"); ui_open_a(stdout,"form","method","post","action","/workspace/world","data-world-form","new");world_web_hidden_base(site_id,world_id,"","put",0);
         ph_hidden("template","template:world-character");ph_hidden("layout","layout:sequence");
-        fputs("<div class=\"aw-row\"><label>Title<input name=\"title\" required maxlength=\"256\"></label><label>Address<small>Lowercase, used in the link</small><input name=\"space\" required maxlength=\"64\" pattern=\"[a-z0-9][a-z0-9-]*\"></label>"
-              "<label>Shape<select name=\"renderer\"><option value=\"2d\">A page</option><option value=\"3d\">A three-dimensional room with a readable page</option></select></label></div>"
-              "<div class=\"aw-actions\"><button type=\"submit\">Make the space</button></div></form></section>",stdout);
+        ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Title",stdout); ui_open_a(stdout,"input","name","title","required",(const char *)NULL,"maxlength","256"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Address",stdout); ui_open(stdout,"small",NULL); fputs("Lowercase, used in the link",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","space","required",(const char *)NULL,"maxlength","64","pattern","[a-z0-9][a-z0-9-]*"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Shape",stdout); ui_open_a(stdout,"select","name","renderer"); ui_open_a(stdout,"option","value","2d"); fputs("A page",stdout); ui_close(stdout,"option"); ui_open_a(stdout,"option","value","3d"); fputs("A three-dimensional room with a readable page",stdout); ui_close(stdout,"option"); ui_close(stdout,"select"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Make the space",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form"); ui_close(stdout,"section");
     }
-    fputs("</div>",stdout);ph_end();sqlite3_close(db);return 1;
+    ui_close(stdout,"div");ph_end();sqlite3_close(db);return 1;
 }
 
 /* ------------------------------------------------------------------ public */
@@ -283,16 +280,16 @@ static void world_web_public_head(int code,const char *title,const char *site_na
     printf("HTTP/1.1 %d %s\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: public, no-cache\r\nVary: Host\r\n"
            "X-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nConnection: close\r\n\r\n",code,code==200?"OK":"Gone");
     fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>",stdout);
-    html(title);fputs(" · ",stdout);html(site_name);fputs("</title>",stdout);
-    if(lede&&*lede){fputs("<meta name=\"description\" content=\"",stdout);html(lede);fputs("\">",stdout);}
+    html(title);fputs(" · ",stdout);html(site_name);ui_close(stdout,"title");
+    if(lede&&*lede){ui_open_a(stdout,"meta","name","description",UI_DYN,"content","",(lede));}
     fputs("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,600&amp;"
           "family=Instrument+Serif:ital@0;1&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;family=Spline+Sans+Mono:wght@400;600&amp;display=swap\">"
           "<link rel=\"stylesheet\" href=\"/assets/world.css\"></head>",stdout);
 }
 static void world_web_bar(const PhSite *site,const char *medium,int index){
-    fputs("<nav class=\"bar\" aria-label=\"Where you are\"><a class=\"home\" href=\"/\">",stdout);html(site->name);fputs("</a>",stdout);
-    if(medium&&*medium){fputs("<span class=\"ch\">",stdout);world_web_words(medium);fputs("</span>",stdout);}
-    if(!index)fputs("<span class=\"gr\"><a href=\"/worlds\">All spaces</a></span>",stdout);fputs("</nav>",stdout);
+    ui_open_a(stdout,"nav","class","bar","aria-label","Where you are"); ui_open_a(stdout,"a","class","home","href","/");html(site->name);ui_close(stdout,"a");
+    if(medium&&*medium){ui_open(stdout,"span","ch");world_web_words(medium);ui_close(stdout,"span");}
+    if(!index)do{ ui_open(stdout,"span","gr"); ui_open_a(stdout,"a","href","/worlds"); fputs("All spaces",stdout); ui_close(stdout,"a"); ui_close(stdout,"span"); }while(0);ui_close(stdout,"nav");
 }
 static const char *world_web_kind(int kind){
     return kind==BF_PAGE_MATERIAL_AUDIO?"audio":kind==BF_PAGE_MATERIAL_VIDEO?"video":kind==BF_PAGE_MATERIAL_PHOTO?"photo":
@@ -303,19 +300,19 @@ static void world_web_piece(const PageItem *it,int position,const char *ref,cons
     const char *media=kind==BF_PAGE_MATERIAL_AUDIO||kind==BF_PAGE_MATERIAL_VIDEO?it->asset:kind==BF_PAGE_MATERIAL_PHOTO?it->image:"";
     int shown=open&&world_web_https(media);
     printf("<article class=\"aw-piece\" id=\"piece-%d\" data-kind=\"%s\" data-world-piece=\"",position,world_web_kind(kind));html(ref);fputs("\" data-shown=\"",stdout);fputs(shown?"media":"link",stdout);fputs("\">",stdout);
-    if(shown&&kind==BF_PAGE_MATERIAL_PHOTO){fputs("<figure><img loading=\"lazy\" decoding=\"async\" src=\"",stdout);html(media);fputs("\" alt=\"",stdout);html(it->title);fputs("\"></figure>",stdout);}
+    if(shown&&kind==BF_PAGE_MATERIAL_PHOTO){ui_open(stdout,"figure",NULL); ui_open_a(stdout,"img","loading","lazy","decoding","async",UI_DYN,"src","",(media),UI_DYN,"alt","",(it->title)); ui_close(stdout,"figure");}
     else if(shown&&kind==BF_PAGE_MATERIAL_VIDEO){fputs("<figure><video controls preload=\"none\" playsinline",stdout);if(world_web_https(it->image)&&page_image_url_safe(it->image)){fputs(" poster=\"",stdout);html(it->image);fputs("\"",stdout);}fputs(" src=\"",stdout);html(media);fputs("\"><a href=\"",stdout);html(media);fputs("\">Open the film file</a></video></figure>",stdout);}
-    fputs("<div class=\"aw-words\"><p class=\"aw-role\">",stdout);world_web_words(role);fputs("</p><h2><a href=\"/o/",stdout);html(ref);fputs("\">",stdout);html(it->title);fputs("</a></h2>",stdout);
+    ui_open(stdout,"div","aw-words"); ui_open(stdout,"p","aw-role");world_web_words(role);ui_close(stdout,"p"); ui_open(stdout,"h2",NULL); ui_open_a(stdout,"a",UI_DYN,"href","/o/",(ref));html(it->title);ui_close(stdout,"a"); ui_close(stdout,"h2");
     if(it->by[0]){ui_text(stdout, "p", "by", it->by);}
-    if(shown&&kind==BF_PAGE_MATERIAL_AUDIO){fputs("<audio controls preload=\"none\" src=\"",stdout);html(media);fputs("\"></audio>",stdout);}
+    if(shown&&kind==BF_PAGE_MATERIAL_AUDIO){ui_open_a(stdout,"audio","controls",(const char *)NULL,"preload","none",UI_DYN,"src","",(media)); ui_close(stdout,"audio");}
     if(note&&*note){ui_text(stdout, "p", "aw-note", note);}
     if(it->body[0]){ui_text(stdout, "p", "aw-body", it->body);}
-    fputs("<p class=\"aw-terms\">",stdout);
-    if(it->rights[0]){if(world_web_https(it->rights_href)){fputs("<a rel=\"license noopener\" href=\"",stdout);html(it->rights_href);fputs("\">",stdout);html(it->rights);fputs("</a>",stdout);}else html(it->rights);fputs(" · ",stdout);}
+    ui_open(stdout,"p","aw-terms");
+    if(it->rights[0]){if(world_web_https(it->rights_href)){ui_open_a(stdout,"a","rel","license noopener",UI_DYN,"href","",(it->rights_href));html(it->rights);ui_close(stdout,"a");}else html(it->rights);fputs(" · ",stdout);}
     else if(media&&*media)fputs("No open terms stated, so it is linked rather than shown · ",stdout);
-    if(public_http_url(it->href)){fputs("<a rel=\"noopener\" href=\"",stdout);html(it->href);fputs("\">Where it is published</a>",stdout);}else{fputs("From ",stdout);html(it->source);}
+    if(public_http_url(it->href)){ui_open_a(stdout,"a","rel","noopener",UI_DYN,"href","",(it->href)); fputs("Where it is published",stdout); ui_close(stdout,"a");}else{fputs("From ",stdout);html(it->source);}
     if(world_web_https(it->transcript_href)){fputs(" · <a rel=\"noopener\" href=\"",stdout);html(it->transcript_href);fputs("\">Transcript</a>",stdout);}
-    fputs("</p></div></article>",stdout);
+    ui_close(stdout,"p"); ui_close(stdout,"div"); ui_close(stdout,"article");
 }
 static int world_web_resolve(sqlite3 *db,const char *ref,PageMaterial *material,char loaded[96],PageItem *out){
     const char *slash=strchr(ref,'/');char source[96];const PageItem *found=NULL;
@@ -340,14 +337,14 @@ static int serve_world_public(const char *method,const char *target,const char *
         int count=0;
         while(sqlite3_step(row)==SQLITE_ROW){
             if(!count++){world_web_public_head(200,"Spaces",site.name,"");
-                fputs("<body class=\"shelf aw-shelf\" data-world-spaces><main class=\"wrap\">",stdout);world_web_bar(&site,"",1);
-                fputs("<header class=\"hero\"><h1>Spaces</h1><p class=\"lede\">What ",stdout);html(site.name);fputs(" keeps on this site. Each one opens in its own look.</p></header><div class=\"rack\">",stdout);}
+                ui_open_a(stdout,"body","class","shelf aw-shelf","data-world-spaces",(const char *)NULL); ui_open(stdout,"main","wrap");world_web_bar(&site,"",1);
+                ui_open(stdout,"header","hero"); ui_open(stdout,"h1",NULL); fputs("Spaces",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","lede"); fputs("What ",stdout);html(site.name);fputs(" keeps on this site. Each one opens in its own look.</p></header><div class=\"rack\">",stdout);}
             const char *id=(const char*)sqlite3_column_text(row,0),*title=(const char*)sqlite3_column_text(row,1),*medium=(const char*)sqlite3_column_text(row,2),*character=(const char*)sqlite3_column_text(row,3);
-            fputs("<a class=\"cover c-",stdout);html(world_web_look(character)?character:"journal");fputs("\" href=\"/worlds/",stdout);html(id);fputs("\"><div class=\"t\">",stdout);html(title);fputs("</div><div><div class=\"m\">",stdout);world_web_words(medium);fputs("</div></div></a>",stdout);
+            ui_open_a(stdout,"a",UI_DYN,"class","cover c-",(world_web_look(character)?character:"journal"),UI_DYN,"href","/worlds/",(id)); ui_open(stdout,"div","t");html(title);ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"div","m");world_web_words(medium);ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"a");
         }
         sqlite3_finalize(row);sqlite3_close(db);
         if(!count){protocol_reply(404,"text/plain; charset=utf-8","No spaces have been published on this site.\n");return 1;}
-        fputs("</div></main></body></html>",stdout);return 1;
+        ui_close(stdout,"div"); ui_close(stdout,"main"); ui_close(stdout,"body"); ui_close(stdout,"html");return 1;
     }
     if(aw_public_space(db,site.id,space,&row)!=1){sqlite3_close(db);protocol_reply(404,"text/plain; charset=utf-8","There is no space at this address.\n");return 1;}
     char title[257],renderer[8],medium[33],character[33],lede[601],state[16];sqlite3_int64 world_id=sqlite3_column_int64(row,6);
@@ -366,19 +363,19 @@ static int serve_world_public(const char *method,const char *target,const char *
     world_web_public_head(200,title,site.name,lede);
     fputs("<body class=\"",stdout);html(character);fputs(" aw-space\" data-world-look=\"",stdout);html(character);fputs("\" data-medium=\"",stdout);html(medium);fputs("\" data-renderer=\"",stdout);html(renderer);
     fputs("\"><main class=\"wrap\" data-world-space=\"",stdout);html(space);fputs("\">",stdout);world_web_bar(&site,medium,0);
-    fputs("<header class=\"hero\"><h1>",stdout);html(title);fputs("</h1>",stdout);if(*lede){ui_text(stdout, "p", "lede", lede);}fputs("</header>",stdout);
+    ui_open(stdout,"header","hero"); ui_open(stdout,"h1",NULL);html(title);ui_close(stdout,"h1");if(*lede){ui_text(stdout, "p", "lede", lede);}ui_close(stdout,"header");
     if(!strcmp(renderer,"3d"))world_room_begin();
     world_audio_station(db,&site,world_id,space);
-    fputs("<section id=\"world-room-readable\" class=\"aw-pieces\" aria-label=\"In this space\">",stdout);
+    ui_open_a(stdout,"section","id","world-room-readable","class","aw-pieces","aria-label","In this space");
     PageMaterial *material=calloc(1,sizeof(*material));PageItem *item=calloc(1,sizeof(*item));char loaded[96]="";
     for(int i=0;i<n;i++){
         if(!strncmp(rows[i].ref,"space:",6)){
             sqlite3_stmt *p=NULL;
             if(aw_public_space(db,site.id,rows[i].ref+6,&p)==1&&!strcmp((const char*)sqlite3_column_text(p,5),"public")){
                 printf("<article class=\"aw-piece aw-portal\" id=\"piece-%d\" data-kind=\"portal\"><div class=\"aw-words\"><p class=\"aw-role\">",rows[i].position);world_web_words(rows[i].role);
-                fputs("</p><h2><a href=\"/worlds/",stdout);html(rows[i].ref+6);fputs("\">",stdout);html((const char*)sqlite3_column_text(p,0));fputs("</a></h2>",stdout);
+                ui_close(stdout,"p"); ui_open(stdout,"h2",NULL); ui_open_a(stdout,"a",UI_DYN,"href","/worlds/",(rows[i].ref+6));html((const char*)sqlite3_column_text(p,0));ui_close(stdout,"a"); ui_close(stdout,"h2");
                 const char *pl=(const char*)sqlite3_column_text(p,4);if(rows[i].note[0]){ui_text(stdout, "p", "aw-note", rows[i].note);}else if(pl&&*pl){ui_text(stdout, "p", "aw-body", pl);}
-                fputs("</div></article>",stdout);
+                ui_close(stdout,"div"); ui_close(stdout,"article");
             }
             sqlite3_finalize(p);continue;
         }
@@ -386,7 +383,7 @@ static int serve_world_public(const char *method,const char *target,const char *
         if(material&&item&&world_web_resolve(db,rows[i].ref,material,loaded,item)){world_web_piece(item,rows[i].position,rows[i].ref,rows[i].role,rows[i].note);world_audio_episode(db,&site,world_id,space,rows[i].position,rows[i].ref,item);}
         else printf("<article class=\"aw-piece aw-gone\" id=\"piece-%d\" data-kind=\"gone\"><div class=\"aw-words\"><p class=\"aw-body\">This piece is no longer available from where it was published.</p></div></article>",rows[i].position);
     }
-    free(material);free(item);fputs("</section>",stdout);
+    free(material);free(item);ui_close(stdout,"section");
     if(!strcmp(renderer,"3d"))world_room_end();
     world_lit_public(db,&site,world_id,space);
     world_cine_public(db,&site,world_id,space);
@@ -394,12 +391,12 @@ static int serve_world_public(const char *method,const char *target,const char *
     if(aw_public_spaces(db,site.id,&row)==1){
         int shown=0;
         while(sqlite3_step(row)==SQLITE_ROW){const char *id=(const char*)sqlite3_column_text(row,0);if(!id||!strcmp(id,space))continue;
-            if(!shown++)fputs("<nav class=\"aw-elsewhere\" aria-label=\"Other spaces here\"><h2 class=\"region-label\">Also here</h2><ul>",stdout);
-            fputs("<li><a href=\"/worlds/",stdout);html(id);fputs("\">",stdout);html((const char*)sqlite3_column_text(row,1));fputs("</a> <span>",stdout);world_web_words((const char*)sqlite3_column_text(row,2));fputs("</span></li>",stdout);}
-        if(shown)fputs("</ul></nav>",stdout);
+            if(!shown++)do{ ui_open_a(stdout,"nav","class","aw-elsewhere","aria-label","Other spaces here"); ui_open(stdout,"h2","region-label"); fputs("Also here",stdout); ui_close(stdout,"h2"); ui_open(stdout,"ul",NULL); }while(0);
+            ui_open(stdout,"li",NULL); ui_open_a(stdout,"a",UI_DYN,"href","/worlds/",(id));html((const char*)sqlite3_column_text(row,1));ui_close(stdout,"a"); fputs(" ",stdout); ui_open(stdout,"span",NULL);world_web_words((const char*)sqlite3_column_text(row,2));ui_close(stdout,"span"); ui_close(stdout,"li");}
+        if(shown)do{ ui_close(stdout,"ul"); ui_close(stdout,"nav"); }while(0);
     }
     sqlite3_finalize(row);sqlite3_close(db);
-    fputs("<footer class=\"src\">Every piece here is shown from where it is published, under the terms its source states.</footer></main></body></html>",stdout);
+    ui_text(stdout,"footer","src","Every piece here is shown from where it is published, under the terms its source states."); ui_close(stdout,"main"); ui_close(stdout,"body"); ui_close(stdout,"html");
     return 1;
 }
 

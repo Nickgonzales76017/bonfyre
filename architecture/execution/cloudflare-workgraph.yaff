@@ -1,6 +1,7 @@
 atlas execution-cloudflare-workgraph
 
 architecture cloudflare-workgraph-transport
+  source_lineage earliest source integrations/cloudflare/workgraph-envelope.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CloudflareWorkgraphTransport
   family execution
   domain Execution / External intent transport

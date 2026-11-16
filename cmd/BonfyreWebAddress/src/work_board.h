@@ -15,7 +15,7 @@ static int ac_work_board_query(const char *query,char context[96],char task[128]
 static void ac_work_board_picker(const char *context,const char *task,const char *bearer,const char *auth_db){
     (void)task; /* A selected task belongs to the current workspace, not the next one. */
     PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;int result=psetup_destinations(bearer,auth_db,rows,&count);
-    if(result<0){fputs("<p role=\"alert\">The complete destination list is unavailable.</p>",stdout);return;}
+    if(result<0){ui_open_a(stdout,"p","role","alert"); fputs("The complete destination list is unavailable.",stdout); ui_close(stdout,"p");return;}
     psetup_picker("work-board-picker","/work-board","Work board",NULL,rows,count,result,context,NULL,0);
 }
 /* The operator store named in the account work sources, if any. */

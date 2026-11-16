@@ -640,9 +640,9 @@ static const char *page_event_phase_words(PageEventPhase phase) {
 }
 
 static void page_item_action(const char *href, const char *glyph, const char *label, int external, int primary) {
-    fputs(primary ? "<a class=\"verb primary\" href=\"" : "<a class=\"verb\" href=\"", stdout); html(href); fputs("\"", stdout);
-    if (external) fputs(" rel=\"noopener\" target=\"_blank\"", stdout);
-    fputs(">", stdout); page_glyph(glyph); fputs("<span>", stdout); html(label); fputs("</span></a>", stdout);
+    fputs(primary ? "<a class=\"verb primary\" href=\"" : "<a class=\"verb\" href=\"", stdout); html(href); ui_lit(stdout, "\"");
+    if (external) ui_lit(stdout, " rel=\"noopener\" target=\"_blank\"");
+    ui_lit(stdout, ">"); page_glyph(glyph); ui_open(stdout, "span", NULL); html(label); ui_close_n(stdout, "span", "a", NULL);
 }
 
 /* ------------------------------------------------------------- what is around
@@ -712,24 +712,24 @@ static int page_emit_around_precomputed(const char *source, const char *key, con
         char words[48]; const char *slash;
         if (!title || !*title) continue;
         if (not_ident && *not_ident && ident && !strcmp(ident, not_ident)) continue;
-        if (!shown++) fputs("<section class=\"region region-around\"><h2 class=\"region-label\">Around here</h2><ol class=\"more around\">", stdout);
+        if (!shown++) (ui_open(stdout, "section", "region region-around"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Around here"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more around"));
         page_distance_words(metres / 1000.0, words, sizeof(words));
         fputs(image && page_image_url_safe(image) ? "<li class=\"with-picture\">" : "<li>", stdout);
         slash = near && !strncmp(near, "o/", 2) ? strchr(near + 2, '/') : NULL;
-        if (slash) { fputs("<a href=\"/", stdout); html(near); fputs("\">", stdout); }
-        else if (href && public_http_url(href)) { fputs("<a href=\"", stdout); html(href); fputs("\" rel=\"noopener\">", stdout); }
+        if (slash) { ui_open_a(stdout, "a", UI_DYN, "href", "/", near); }
+        else if (href && public_http_url(href)) { fputs("<a href=\"", stdout); html(href); ui_lit(stdout, "\" rel=\"noopener\">"); }
         html(title);
-        if (slash || (href && public_http_url(href))) fputs("</a>", stdout);
+        if (slash || (href && public_http_url(href))) ui_close(stdout, "a");
         if (image && page_image_url_safe(image)) { char sized[1024]; page_picture_at(image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
-        fputs("<span class=\"by\"><span class=\"how-far\">", stdout); html(words); fputs("</span>", stdout);
+        (ui_open(stdout, "span", "by"), ui_open(stdout, "span", "how-far")); html(words); ui_close(stdout, "span");
         if (kind && !strcmp(kind, "event") && at > 0) {
             char when[48];
             page_when_ahead(at, at + 86400, now, when, sizeof(when));
             ui_text(stdout, "span", NULL, when);
         } else if (by && *by) { ui_text(stdout, "span", NULL, by); }
-        fputs("</span></li>", stdout);
+        ui_close_n(stdout, "span", "li", NULL);
     }
-    if (shown) fputs("</ol><p class=\"src\">Distance is between the two points these sources state; being near something is not being about it.</p></section>", stdout);
+    if (shown) (ui_close(stdout, "ol"), ui_open(stdout, "p", "src"), ui_lit(stdout, "Distance is between the two points these sources state; being near something is not being about it."), ui_close(stdout, "p"), ui_close(stdout, "section"));
     sqlite3_finalize(st); sqlite3_close(archive);
     return shown;
 }
@@ -767,14 +767,14 @@ static int page_emit_kin(const char *source, const char *key, const char *not_id
         const char *ident = (const char *)sqlite3_column_text(st, 6);
         if (!title || !*title || !kin) continue;
         if (not_ident && *not_ident && ident && !strcmp(ident, not_ident)) continue;
-        if (!shown++) fputs("<section class=\"region region-kin\"><h2 class=\"region-label\">Also reported by</h2><ol class=\"more kin\">", stdout);
+        if (!shown++) (ui_open(stdout, "section", "region region-kin"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Also reported by"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more kin"));
         fputs(image && page_image_url_safe(image) ? "<li class=\"with-picture\">" : "<li>", stdout);
         ui_link_path(stdout, (const char *const[]){"/", kin}, 2, title);
         if (image && page_image_url_safe(image)) { char sized[1024]; page_picture_at(image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
-        fputs("<span class=\"by\">", stdout);
+        ui_open(stdout, "span", "by");
         if (publisher && *publisher) { ui_text(stdout, "span", NULL, publisher); }
         else if (by && *by) { ui_text(stdout, "span", NULL, by); }
-        fputs("</span></li>", stdout);
+        ui_close_n(stdout, "span", "li", NULL);
     }
     if (shown)
         fputs("</ol><p class=\"src\">These texts closely resemble this one in this estate's own chart of the words "
@@ -821,22 +821,22 @@ static int page_emit_around(sqlite3 *db, double lat, double lon, const char *not
     for (k = 0; k < found && shown < 8; k++) {
         const PageItem *item = near[k].item; char words[48]; const char *close;
         if (!item) continue;
-        if (!shown++) fputs("<section class=\"region region-around\"><h2 class=\"region-label\">Around here</h2><ol class=\"more around\">", stdout);
+        if (!shown++) (ui_open(stdout, "section", "region region-around"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Around here"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more around"));
         page_distance_words(near[k].km, words, sizeof(words));
         fputs(item->image[0] ? "<li class=\"with-picture\">" : "<li>", stdout);
         close = page_emit_item_open(item, NULL);
         html(item->title);
         fputs(close, stdout);
         if (item->image[0]) { char sized[1024]; page_picture_at(item->image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
-        fputs("<span class=\"by\"><span class=\"how-far\">", stdout); html(words); fputs("</span>", stdout);
+        (ui_open(stdout, "span", "by"), ui_open(stdout, "span", "how-far")); html(words); ui_close(stdout, "span");
         if (item->kind == BF_PAGE_MATERIAL_EVENT && item->at > 0) {
             char when[48];
             page_when_ahead(item->at, item->duration_ms > 0 ? item->at + item->duration_ms / 1000 : item->at + 86400, now, when, sizeof(when));
             ui_text(stdout, "span", NULL, when);
         } else page_emit_by(item, now);
-        fputs("</span></li>", stdout);
+        ui_close_n(stdout, "span", "li", NULL);
     }
-    if (shown) fputs("</ol><p class=\"src\">Distance is between the two points these sources state; being near something is not being about it.</p></section>", stdout);
+    if (shown) (ui_close(stdout, "ol"), ui_open(stdout, "p", "src"), ui_lit(stdout, "Distance is between the two points these sources state; being near something is not being about it."), ui_close(stdout, "p"), ui_close(stdout, "section"));
     free(material);
     return shown;
 }
@@ -1037,23 +1037,23 @@ static int page_emit_entities(const char *title) {
         if (!shown++)
             fputs("<section class=\"region names\"><h2 class=\"region-label\">Names and references</h2>"
                   "<ol class=\"more\">", stdout);
-        fputs("<li><strong>", stdout); html(display); fputs("</strong> — ", stdout);
+        (ui_open(stdout, "li", NULL), ui_open(stdout, "strong", NULL)); html(display); (ui_close(stdout, "strong"), ui_lit(stdout, " — "));
         html(kind);
-        fputs("<span class=\"by\">", stdout);
+        ui_open(stdout, "span", "by");
         if (has_tag) {
             fputs("<span><a href=\"https://www.wikidata.org/wiki/", stdout); html(tag);
-            fputs("\" rel=\"noopener noreferrer\" target=\"_blank\">", stdout); html(tag);
-            fputs("</a></span>", stdout);
+            ui_lit(stdout, "\" rel=\"noopener noreferrer\" target=\"_blank\">"); html(tag);
+            ui_close_n(stdout, "a", "span", NULL);
         }
         if (has_where) { ui_text(stdout, "span", NULL, where); }
         if (has_tag && tag_from[0]) { ui_text(stdout, "span", NULL, tag_from); }
         else if (has_where && where_from[0]) { ui_text(stdout, "span", NULL, where_from); }
-        fputs("</span></li>", stdout);
+        ui_close_n(stdout, "span", "li", NULL);
     }
     sqlite3_finalize(st);
     sqlite3_close(db);
     if (shown)
-        fputs("</ol></section>", stdout);
+        ui_close_n(stdout, "ol", "section", NULL);
     return shown;
 }
 
@@ -1073,16 +1073,16 @@ static int page_emit_archive_earlier(const char *source, const char *except_key,
         char when[48] = "";
         if (!title || !*title) continue;
         if (!shown++) {
-            fputs("<section class=\"region region-earlier\"><h2 class=\"region-label\">", stdout); html(heading);
-            fputs("</h2><ol class=\"more\">", stdout);
+            (ui_open(stdout, "section", "region region-earlier"), ui_open(stdout, "h2", "region-label")); html(heading);
+            (ui_close(stdout, "h2"), ui_open(stdout, "ol", "more"));
         }
-        fputs("<li><a href=\"/o/", stdout); page_url_escape(source); fputs("/", stdout); html(key); fputs("\">", stdout);
-        html(title); fputs("</a>", stdout);
+        fputs("<li><a href=\"/o/", stdout); page_url_escape(source); ui_lit(stdout, "/"); html(key); ui_lit(stdout, "\">");
+        html(title); ui_close(stdout, "a");
         if (at > 0) page_when(at, now, when, sizeof(when));
-        if (when[0]) { fputs("<span class=\"by\"><span>", stdout); html(when); fputs("</span></span>", stdout); }
-        fputs("</li>", stdout);
+        if (when[0]) { (ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(when); ui_close_n(stdout, "span", "span", NULL); }
+        ui_close(stdout, "li");
     }
-    if (shown) fputs("</ol></section>", stdout);
+    if (shown) ui_close_n(stdout, "ol", "section", NULL);
     sqlite3_finalize(st); sqlite3_close(archive);
     return shown;
 }
@@ -1382,7 +1382,7 @@ static int page_money(const char *raw, char *out, size_t cap) {
 
 static void page_fact(const char *label, const char *value) {
     if (!value || !*value) return;
-    fputs("<div><dt>", stdout); html(label); fputs("</dt><dd>", stdout); html(value); fputs("</dd></div>", stdout);
+    (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL)); html(label); (ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(value); ui_close_n(stdout, "dd", "div", NULL);
 }
 
 /* Property matches for a search that reads like an address or an account. */
@@ -1406,15 +1406,15 @@ static void page_emit_property_results(const char *q) {
         studio_json_field(rec, "owner", owner, sizeof(owner));
         studio_json_field(rec, "total", total, sizeof(total));
         if (!account[0] || strspn(account, "0123456789") != strlen(account)) continue;
-        if (!shown++) fputs("<section class=\"region region-properties\" aria-label=\"Properties\"><h2 class=\"region-label\">Properties</h2><ol class=\"results\">", stdout);
+        if (!shown++) (ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-properties"}, {"aria-label", "Properties"}}, 2, 0), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Properties"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "results"));
         page_title_case(address[0] ? address : "Address not recorded", pretty, sizeof(pretty));
-        fputs("<li><a class=\"result\" href=\"/s/parcel/", stdout); html(account); fputs("\"><span class=\"kind\">", stdout); page_glyph("pin");
-        fputs("</span><span class=\"what\"><b>", stdout); html(pretty); fputs("</b><span class=\"dek\">", stdout);
+        fputs("<li><a class=\"result\" href=\"/s/parcel/", stdout); html(account); (ui_lit(stdout, "\">"), ui_open(stdout, "span", "kind")); page_glyph("pin");
+        (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL)); html(pretty); (ui_close(stdout, "b"), ui_open(stdout, "span", "dek"));
         { char owner_pretty[256]; page_title_case(owner, owner_pretty, sizeof(owner_pretty)); html(owner_pretty); }
-        if (page_money(total, money, sizeof(money))) { fputs(" &middot; assessed ", stdout); html(money); }
-        fputs("</span><span class=\"by\"><span>Tarrant County property roll</span></span></span></a></li>", stdout);
+        if (page_money(total, money, sizeof(money))) { ui_lit(stdout, " &middot; assessed "); html(money); }
+        (ui_close(stdout, "span"), ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL), ui_lit(stdout, "Tarrant County property roll"), ui_close(stdout, "span"), ui_close(stdout, "span"), ui_close(stdout, "span"), ui_close(stdout, "a"), ui_close(stdout, "li"));
     }
-    if (shown) fputs("</ol></section>", stdout);
+    if (shown) ui_close_n(stdout, "ol", "section", NULL);
 }
 
 static int emit_parcel_page(const BfRequest *r) {
@@ -1466,17 +1466,17 @@ static int emit_parcel_page(const BfRequest *r) {
         snprintf(description, sizeof(description), "%s in Tarrant County, as the appraisal roll records it.", pretty);
         page_emit_head(template, head_end, pretty, description);
     }
-    fputs("</head><body class=\"atlas item-page route-property\" data-character=\"atlas\"><main class=\"wrap\">", stdout);
+    (ui_close(stdout, "head"), ui_elem(stdout, "body", (const UiAttr[]){{"class", "atlas item-page route-property"}, {"data-character", "atlas"}}, 2, 0), ui_open(stdout, "main", "wrap"));
     {
         PageDocument nav = {0};
         nav.route = "/parcels"; nav.actor = actor[0] ? actor : NULL; nav.self_path = target;
         page_emit_nav(&nav);
     }
-    fputs("<p class=\"crumbs\"><a href=\"/search\">Properties</a> &middot; Tarrant County</p><article class=\"thing property\"><div class=\"thing-text\"><h1>", stdout);
-    html(pretty); fputs("</h1><p class=\"by\"><span>Tarrant Appraisal District roll", stdout);
-    if (appraisal[0]) { fputs(", ", stdout); html(appraisal); }
-    fputs("</span><span class=\"via\">account ", stdout); html(account); fputs("</span></p>", stdout);
-    fputs("<nav class=\"verbs\" aria-label=\"Actions\">", stdout);
+    (ui_open(stdout, "p", "crumbs"), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/search"}}, 1, 0), ui_lit(stdout, "Properties"), ui_close(stdout, "a"), ui_lit(stdout, " &middot; Tarrant County"), ui_close(stdout, "p"), ui_open(stdout, "article", "thing property"), ui_open(stdout, "div", "thing-text"), ui_open(stdout, "h1", NULL));
+    html(pretty); (ui_close(stdout, "h1"), ui_open(stdout, "p", "by"), ui_open(stdout, "span", NULL), ui_lit(stdout, "Tarrant Appraisal District roll"));
+    if (appraisal[0]) { ui_lit(stdout, ", "); html(appraisal); }
+    (ui_close(stdout, "span"), ui_open(stdout, "span", "via"), ui_lit(stdout, "account ")); html(account); ui_close_n(stdout, "span", "p", NULL);
+    ui_elem(stdout, "nav", (const UiAttr[]){{"class", "verbs"}, {"aria-label", "Actions"}}, 2, 0);
     {
         char market[200];
         snprintf(market, sizeof(market), "/property/market?account=%s", account);
@@ -1487,7 +1487,7 @@ static int emit_parcel_page(const BfRequest *r) {
         fputs("<input type=\"hidden\" name=\"item\" value=\"", stdout); html(ref);
         fputs("\"><input type=\"hidden\" name=\"return\" value=\"", stdout); html(target);
         fputs(is_saved ? "\"><button class=\"verb is-on\" type=\"submit\" aria-pressed=\"true\">" : "\"><button class=\"verb\" type=\"submit\" aria-pressed=\"false\">", stdout);
-        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); fputs("</button></form>", stdout);
+        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); ui_close_n(stdout, "button", "form", NULL);
         if (may_write) {
             /* The parcel aperture's own work verbs, offered only with write scope. */
             char watch[200];
@@ -1508,8 +1508,8 @@ static int emit_parcel_page(const BfRequest *r) {
         for (p = (const unsigned char *)self; *p && w < (int)sizeof(share) - 8; p++) w += isalnum(*p) || strchr("-._~", *p) ? snprintf(share + w, sizeof(share) - (size_t)w, "%c", *p) : snprintf(share + w, sizeof(share) - (size_t)w, "%%%02X", *p);
         page_item_action(share, "share", "Share", 0, 0);
     }
-    fputs("</nav><p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); fputs("\"></label></p></div>", stdout);
-    fputs("<dl class=\"facts\">", stdout);
+    fputs("</nav><p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); (ui_lit(stdout, "\">"), ui_close(stdout, "label"), ui_close(stdout, "p"), ui_close(stdout, "div"));
+    ui_open(stdout, "dl", "facts");
     page_fact("Owner of record", owner_pretty);
     if (mail[0]) { char m[400], mp[400]; snprintf(m, sizeof(m), "%s, %s", mail, mail_city); page_title_case(m, mp, sizeof(mp)); page_fact("Mailing address", mp); }
     page_fact("Assessed total", page_money(total, money, sizeof(money)) ? money : "");
@@ -1521,7 +1521,7 @@ static int emit_parcel_page(const BfRequest *r) {
     if (atof(acres) > 0) { char v[64]; snprintf(v, sizeof(v), "%.2f acres", atof(acres)); page_fact("Lot", v); }
     if (deed[0] && strcmp(deed, "12-31-1900")) page_fact("Deed recorded", deed);
     { char lp[512]; page_title_case(legal, lp, sizeof(lp)); page_fact("Legal description", lp); }
-    fputs("</dl></article>", stdout);
+    ui_close_n(stdout, "dl", "article", NULL);
     /* Neighbours on the same street, from the same roll. */
     {
         const char *street = strchr(address, ' ');
@@ -1544,20 +1544,20 @@ static int emit_parcel_page(const BfRequest *r) {
                     if (!acc[0] || strspn(acc, "0123456789") != strlen(acc)) continue;
                     if (!shown++) {
                         char st[200]; page_title_case(street + 1, st, sizeof(st));
-                        fputs("<section class=\"region\"><h2 class=\"region-label\">Also on ", stdout); html(st);
-                        fputs("</h2><div class=\"ledger-wrap\"><table class=\"ledger\"><thead><tr><th>Address</th><th>Assessed</th><th>Built</th></tr></thead><tbody>", stdout);
+                        (ui_open(stdout, "section", "region"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Also on ")); html(st);
+                        (ui_close(stdout, "h2"), ui_open(stdout, "div", "ledger-wrap"), ui_open(stdout, "table", "ledger"), ui_open(stdout, "thead", NULL), ui_open(stdout, "tr", NULL), ui_open(stdout, "th", NULL), ui_lit(stdout, "Address"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "Assessed"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "Built"), ui_close(stdout, "th"), ui_close(stdout, "tr"), ui_close(stdout, "thead"), ui_open(stdout, "tbody", NULL));
                     }
                     page_title_case(addr, ap, sizeof(ap));
-                    fputs("<tr><td class=\"name\"><a href=\"/s/parcel/", stdout); html(acc); fputs("\">", stdout); html(ap); fputs("</a></td><td>", stdout);
-                    html(page_money(tv, money, sizeof(money)) ? money : ""); fputs("</td><td class=\"when\">", stdout);
+                    fputs("<tr><td class=\"name\"><a href=\"/s/parcel/", stdout); html(acc); ui_lit(stdout, "\">"); html(ap); (ui_close(stdout, "a"), ui_close(stdout, "td"), ui_open(stdout, "td", NULL));
+                    html(page_money(tv, money, sizeof(money)) ? money : ""); (ui_close(stdout, "td"), ui_open(stdout, "td", "when"));
                     if (atoi(yb) > 1800) html(yb);
-                    fputs("</td></tr>", stdout);
+                    ui_close_n(stdout, "td", "tr", NULL);
                 }
-                if (shown) fputs("</tbody></table></div></section>", stdout);
+                if (shown) ui_close_n(stdout, "tbody", "table", "div", "section", NULL);
             }
         }
     }
-    fputs("<footer class=\"src\">Facts here are what the Tarrant Appraisal District roll recorded; they are not a survey, a title search or an appraisal.</footer></main></body></html>", stdout);
+    (ui_open(stdout, "footer", "src"), ui_lit(stdout, "Facts here are what the Tarrant Appraisal District roll recorded; they are not a survey, a title search or an appraisal."), ui_close(stdout, "footer"), ui_close(stdout, "main"), ui_close(stdout, "body"), ui_close(stdout, "html"));
     if (db) sqlite3_close(db);
     free(template);
     return 1;
@@ -1570,11 +1570,11 @@ static void page_emit_credit(const PageItem *item, const char *element) {
     printf("<%s class=\"credit\">", element);
     if (item->origin[0]) {
         fputs(item->asset[0] && item->kind == BF_PAGE_MATERIAL_AUDIO ? "Recording from " : item->asset[0] ? "Video from " : "Picture from ", stdout);
-        fputs("<a rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(item->origin_href); fputs("\">", stdout); html(item->origin); fputs("</a>", stdout);
+        ui_open_a(stdout, "a", "rel", "noopener", "target", "_blank", "href", item->origin_href); html(item->origin); ui_close(stdout, "a");
     }
     if (item->rights[0]) {
-        if (item->origin[0]) fputs(" &middot; ", stdout);
-        if (item->rights_href[0]) { fputs("<a rel=\"license noopener\" target=\"_blank\" href=\"", stdout); html(item->rights_href); fputs("\">", stdout); html(item->rights); fputs("</a>", stdout); }
+        if (item->origin[0]) ui_lit(stdout, " &middot; ");
+        if (item->rights_href[0]) { ui_open_a(stdout, "a", "rel", "license noopener", "target", "_blank", "href", item->rights_href); html(item->rights); ui_close(stdout, "a"); }
         else html(item->rights);
     }
     printf("</%s>", element);
@@ -1597,23 +1597,23 @@ static void page_emit_reuse(const PageItem *item) {
         const BfPageLicence *licence = page_licence(item->rights, item->rights_href);
         if (licence) {
             /* What its terms let a person do, in plain words. */
-            fputs("<ul class=\"terms-list\">", stdout);
+            ui_open(stdout, "ul", "terms-list");
             fputs(licence->commercial ? "<li>You may use it in something you sell.</li>" : "<li>Not for commercial use.</li>", stdout);
             fputs(licence->adapt ? "<li>You may crop, edit or remix it.</li>" : "<li>Use it as it is, without changes.</li>", stdout);
             if (licence->credit) ui_text(stdout, "li", NULL, "Credit who made it.");
             if (licence->share_alike) ui_text(stdout, "li", NULL, "Share what you make from it under the same terms.");
-            fputs("</ul>", stdout);
+            ui_close(stdout, "ul");
         }
         fputs("<p>Credit it like this wherever you use it:</p><input readonly value=\"", stdout);
-        fputs("&ldquo;", stdout); html(item->title); fputs("&rdquo;", stdout);
-        if (item->by[0] && strcmp(item->by, item->note)) { fputs(" by ", stdout); html(item->by); }
-        fputs(", ", stdout); html(item->rights); fputs(", via ", stdout); html(where_name); fputs("\">", stdout);
-        fputs("<p>", stdout);
-        if (item->rights_href[0]) { fputs("<a rel=\"license noopener\" target=\"_blank\" href=\"", stdout); html(item->rights_href); fputs("\">What ", stdout); html(item->rights); fputs(" lets you do</a> &middot; ", stdout); }
+        ui_lit(stdout, "&ldquo;"); html(item->title); ui_lit(stdout, "&rdquo;");
+        if (item->by[0] && strcmp(item->by, item->note)) { ui_lit(stdout, " by "); html(item->by); }
+        ui_lit(stdout, ", "); html(item->rights); ui_lit(stdout, ", via "); html(where_name); ui_lit(stdout, "\">");
+        ui_open(stdout, "p", NULL);
+        if (item->rights_href[0]) { fputs("<a rel=\"license noopener\" target=\"_blank\" href=\"", stdout); html(item->rights_href); ui_lit(stdout, "\">What "); html(item->rights); (ui_lit(stdout, " lets you do"), ui_close(stdout, "a"), ui_lit(stdout, " &middot; ")); }
     } else {
-        fputs("<p>Its page says who made it and how it may be used.</p><p>", stdout);
+        (ui_open(stdout, "p", NULL), ui_lit(stdout, "Its page says who made it and how it may be used."), ui_close(stdout, "p"), ui_open(stdout, "p", NULL));
     }
-    fputs("<a rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(where_href); fputs(item->origin[0] ? "\">Full size and its terms at " : "\">Its terms at ", stdout); html(where_name); fputs("</a></p></details>", stdout);
+    fputs("<a rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(where_href); fputs(item->origin[0] ? "\">Full size and its terms at " : "\">Its terms at ", stdout); html(where_name); ui_close_n(stdout, "a", "p", "details", NULL);
 }
 
 /* The same thing as other sources report it: today's featured article may
@@ -1634,13 +1634,13 @@ static void page_emit_same_subject(sqlite3 *db, const PageItem *item, time_t now
             for (i = 0; i < other->stream[k].count && shown < 8; i++) {
                 const PageItem *same = &other->stream[k].item[i]; const char *close;
                 if (strcmp(same->ident, item->ident)) continue;
-                if (!shown++) fputs("<section class=\"region same-subject\"><h2 class=\"region-label\">Also about this</h2><ol class=\"more\">", stdout);
-                fputs("<li>", stdout); close = page_emit_item_open(same, NULL); html(same->title); fputs(close, stdout);
-                fputs("<span class=\"by\">", stdout); page_emit_by(same, now); fputs("</span></li>", stdout);
+                if (!shown++) (ui_open(stdout, "section", "region same-subject"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Also about this"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more"));
+                ui_open(stdout, "li", NULL); close = page_emit_item_open(same, NULL); html(same->title); fputs(close, stdout);
+                ui_open(stdout, "span", "by"); page_emit_by(same, now); ui_close_n(stdout, "span", "li", NULL);
             }
         }
     }
-    if (shown) fputs("</ol></section>", stdout);
+    if (shown) ui_close_n(stdout, "ol", "section", NULL);
     page_per_source = saved;
     sqlite3_finalize(st); free(other);
 }
@@ -1704,16 +1704,16 @@ static void page_emit_pictures_of(sqlite3 *db, const PageItem *item, time_t now)
     if (!into || !scratch || !item->ident[0]) { free(into); free(scratch); return; }
     if (page_collect_identity(db, item->ident, 1, into, scratch)) {
         PageStream *photos = &into->stream[BF_PAGE_MATERIAL_PHOTO];
-        fputs("<section class=\"region region-photos\" aria-label=\"Pictures of it\"><h2 class=\"region-label\">Pictures of it</h2><div class=\"field\">", stdout);
+        (ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-photos"}, {"aria-label", "Pictures of it"}}, 2, 0), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Pictures of it"), ui_close(stdout, "h2"), ui_open(stdout, "div", "field"));
         for (k = 0; k < photos->count && shown < 12; k++, shown++) {
             const PageItem *it = &photos->item[k]; const char *close;
-            fputs("<figure class=\"photo\">", stdout); close = page_emit_item_open(it, NULL);
+            ui_open(stdout, "figure", "photo"); close = page_emit_item_open(it, NULL);
             page_emit_picture(it->image, "picture");
-            fputs("<figcaption>", stdout); html(it->title); fputs("<span class=\"by\">", stdout); page_emit_by(it, now);
+            ui_open(stdout, "figcaption", NULL); html(it->title); ui_open(stdout, "span", "by"); page_emit_by(it, now);
             if (it->rights[0]) { ui_text(stdout, "span", "terms", it->rights); }
-            fputs("</span></figcaption>", stdout); fputs(close, stdout); fputs("</figure>", stdout);
+            ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ui_close(stdout, "figure");
         }
-        fputs("</div></section>", stdout);
+        ui_close_n(stdout, "div", "section", NULL);
     }
     free(into); free(scratch);
 }
@@ -1768,11 +1768,11 @@ static void page_emit_sounds_similar(sqlite3 *db, const PageItem *item, time_t n
             snprintf(key, sizeof(key), "%.24s", slash + 1);
             for (j = 0; j < BF_PAGE_MATERIAL_COUNT; j++) material->stream[j].count = material->stream[j].cursor = 0;
             if (!page_item_by_ref(db, source, key, material, &found)) continue;   /* gone from its source: not linked */
-            if (!shown++) fputs("<section class=\"region sounds-similar\"><h2 class=\"region-label\">Sounds similar</h2><p class=\"narrowed\">By how its sound is spread across pitches in its first half-minute, not by who made it.</p><ol class=\"more\">", stdout);
-            fputs("<li>", stdout); close = page_emit_item_open(found, NULL); html(found->title); fputs(close, stdout);
-            fputs("<span class=\"by\">", stdout); page_emit_by(found, now); fputs("</span></li>", stdout);
+            if (!shown++) (ui_open(stdout, "section", "region sounds-similar"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Sounds similar"), ui_close(stdout, "h2"), ui_open(stdout, "p", "narrowed"), ui_lit(stdout, "By how its sound is spread across pitches in its first half-minute, not by who made it."), ui_close(stdout, "p"), ui_open(stdout, "ol", "more"));
+            ui_open(stdout, "li", NULL); close = page_emit_item_open(found, NULL); html(found->title); fputs(close, stdout);
+            ui_open(stdout, "span", "by"); page_emit_by(found, now); ui_close_n(stdout, "span", "li", NULL);
         }
-        if (shown) fputs("</ol></section>", stdout);
+        if (shown) ui_close_n(stdout, "ol", "section", NULL);
         free(material);
     }
 }
@@ -1812,18 +1812,18 @@ static int page_emit_related_items(sqlite3 *db, const char *relation, const char
         for (k = 0; !found && k < material->stream[BF_PAGE_MATERIAL_EVENT].count; k++)
             if (!strcmp(material->stream[BF_PAGE_MATERIAL_EVENT].item[k].key, key)) { found = &material->stream[BF_PAGE_MATERIAL_EVENT].item[k]; break; }
         if (!found) continue;
-        if (!shown++) { fputs("<section class=\"region\"><h2 class=\"region-label\">", stdout); html(heading); fputs("</h2><ol class=\"more\">", stdout); }
-        fputs("<li>", stdout); close = page_emit_item_open(found, NULL); html(found->title); fputs(close, stdout);
-        fputs("<span class=\"by\">", stdout);
+        if (!shown++) { (ui_open(stdout, "section", "region"), ui_open(stdout, "h2", "region-label")); html(heading); (ui_close(stdout, "h2"), ui_open(stdout, "ol", "more")); }
+        ui_open(stdout, "li", NULL); close = page_emit_item_open(found, NULL); html(found->title); fputs(close, stdout);
+        ui_open(stdout, "span", "by");
         if (found->kind == BF_PAGE_MATERIAL_EVENT && found->at > 0) {
             /* An event is spoken of forwards even when it is reached sideways. */
             char when[48];
             page_when_ahead(found->at, found->duration_ms > 0 ? found->at + found->duration_ms / 1000 : found->at + 86400, now, when, sizeof(when));
-            html(when); fputs(" &middot; ", stdout);
+            html(when); ui_lit(stdout, " &middot; ");
         }
-        page_emit_by(found, now); fputs("</span></li>", stdout);
+        page_emit_by(found, now); ui_close_n(stdout, "span", "li", NULL);
     }
-    if (shown) fputs("</ol></section>", stdout);
+    if (shown) ui_close_n(stdout, "ol", "section", NULL);
     sqlite3_finalize(st); sqlite3_close(atlas); free(material);
     return shown;
 }
@@ -1895,10 +1895,10 @@ static int page_emit_atlas_related(sqlite3 *db, const PageItem *item, const char
             for (k = 0; k < material->stream[BF_PAGE_MATERIAL_MIX].count; k++)
                 if (!strcmp(material->stream[BF_PAGE_MATERIAL_MIX].item[k].key, key)) { found = &material->stream[BF_PAGE_MATERIAL_MIX].item[k]; break; }
             if (!found) continue;
-            if (!shown++) fputs("<section class=\"region item-like\"><h2 class=\"region-label\">More like this</h2><ol class=\"like\">", stdout);
+            if (!shown++) (ui_open(stdout, "section", "region item-like"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "More like this"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "like"));
             item_like_card(found, now); (void)close;
         }
-        if (shown) fputs("</ol></section>", stdout);
+        if (shown) ui_close_n(stdout, "ol", "section", NULL);
         free(material);
     }
     free(near);
@@ -1916,7 +1916,7 @@ static int page_emit_atlas_related(sqlite3 *db, const PageItem *item, const char
 static void page_ics_escape(const char *s) {
     for (; s && *s; s++) {
         if (*s == '\\' || *s == ';' || *s == ',') { putchar('\\'); putchar(*s); }
-        else if (*s == '\n' || *s == '\r') fputs("\\n", stdout);
+        else if (*s == '\n' || *s == '\r') ui_lit(stdout, "\\n");
         else putchar(*s);
     }
 }
@@ -1933,18 +1933,18 @@ static void page_emit_ics_event(const PageItem *item, const char *host, const ch
     page_ics_stamp(item->at, starts);
     page_ics_stamp(until, ends);
     page_ics_stamp(time(NULL), stamp);
-    fputs("BEGIN:VEVENT\r\nUID:", stdout); page_ics_escape(source); putchar('-'); page_ics_escape(key);
+    ui_lit(stdout, "BEGIN:VEVENT\r\nUID:"); page_ics_escape(source); putchar('-'); page_ics_escape(key);
     printf("@%s\r\nDTSTAMP:%s\r\nDTSTART:%s\r\nDTEND:%s\r\nSUMMARY:", host && *host ? host : "aurekai.life", stamp, starts, ends);
     page_ics_escape(item->title);
-    if (item->where[0]) { fputs("\r\nLOCATION:", stdout); page_ics_escape(item->where); }
+    if (item->where[0]) { ui_lit(stdout, "\r\nLOCATION:"); page_ics_escape(item->where); }
     if (item->placed) printf("\r\nGEO:%.5f;%.5f", item->lat, item->lon);
-    if (public_http_url(item->href)) { fputs("\r\nURL:", stdout); page_ics_escape(item->href); }
-    fputs("\r\nDESCRIPTION:", stdout);
-    if (item->body[0]) { page_ics_escape(item->body); fputs("\\n\\n", stdout); }
-    fputs("Compiled by Aurekai from what ", stdout); page_ics_escape(item->by);
-    fputs(" published. Times and details are theirs; check the source before you rely on them.", stdout);
-    if (public_http_url(item->href)) { fputs("\\n", stdout); page_ics_escape(item->href); }
-    fputs("\r\nEND:VEVENT\r\n", stdout);
+    if (public_http_url(item->href)) { ui_lit(stdout, "\r\nURL:"); page_ics_escape(item->href); }
+    ui_lit(stdout, "\r\nDESCRIPTION:");
+    if (item->body[0]) { page_ics_escape(item->body); ui_lit(stdout, "\\n\\n"); }
+    ui_lit(stdout, "Compiled by Aurekai from what "); page_ics_escape(item->by);
+    ui_lit(stdout, " published. Times and details are theirs; check the source before you rely on them.");
+    if (public_http_url(item->href)) { ui_lit(stdout, "\\n"); page_ics_escape(item->href); }
+    ui_lit(stdout, "\r\nEND:VEVENT\r\n");
 }
 
 /* /o/<source>/<key>.ics -- one event as a file; /whats-on.ics -- everything
@@ -1969,9 +1969,9 @@ static int emit_item_calendar(const char *target, const char *host) {
     if (!item || item->at <= 0) goto out;
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/calendar; charset=utf-8\r\n"
            "Content-Disposition: attachment; filename=\"event.ics\"\r\nCache-Control: public, max-age=300\r\nConnection: close\r\n\r\n");
-    fputs("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Aurekai//compiled from published calendars//EN\r\nCALSCALE:GREGORIAN\r\n", stdout);
+    ui_lit(stdout, "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Aurekai//compiled from published calendars//EN\r\nCALSCALE:GREGORIAN\r\n");
     page_emit_ics_event(item, host, source, key);
-    fputs("END:VCALENDAR\r\n", stdout);
+    ui_lit(stdout, "END:VCALENDAR\r\n");
     ok = 1;
 out:
     free(material);
@@ -1998,7 +1998,7 @@ static int emit_agenda_calendar(const char *target, const char *host) {
         page_emit_ics_event(item, host, item->source, item->key);
         written++;
     }
-    fputs("END:VCALENDAR\r\n", stdout);
+    ui_lit(stdout, "END:VCALENDAR\r\n");
 out:
     free(material);
     if (db) sqlite3_close(db);
@@ -2012,11 +2012,11 @@ static int pr_item_fingerprint(const PageItem *item,const char *source,const cha
  * naming where it is from, then its title and who published it. */
 static void item_like_card(const PageItem *other, time_t now) {
     const char *close; char host[128];
-    fputs("<li>", stdout); close = page_emit_item_open(other, NULL);
+    ui_open(stdout, "li", NULL); close = page_emit_item_open(other, NULL);
     if (page_image_url_safe(other->image)) page_emit_picture(other->image, "like-picture");
     else { page_publisher(other->href, host, sizeof(host)); ui_text(stdout, "span", "like-picture is-empty", host[0] ? host : other->note); }
     ui_text(stdout, "b", NULL, other->title); fputs(close, stdout);
-    fputs("<span class=\"by\">", stdout); page_emit_by(other, now); fputs("</span></li>", stdout);
+    ui_open(stdout, "span", "by"); page_emit_by(other, now); ui_close_n(stdout, "span", "li", NULL);
 }
 static int emit_item_page(const BfRequest *r) {
     const char *root=r->root; const char *target=r->target; const char *host=r->host; const char *bearer=r->bearer; const char *auth_db=r->auth_db;
@@ -2145,9 +2145,9 @@ static int emit_item_page(const BfRequest *r) {
            "Cache-Control: %s\r\nVary: Host, Accept, Cookie\r\nConnection: close\r\n\r\n",
            item ? "200 OK" : "404 Not Found", actor[0] ? "private, no-store" : "public, max-age=60, stale-while-revalidate=300");
     page_emit_head(template, head_end, item ? item->title : "Not here any more", item && item->body[0] ? item->body : (item ? item->by : ""));
-    if (item && page_image_url_safe(item->image)) { fputs("<meta property=\"og:image\" content=\"", stdout); html(item->image); fputs("\">", stdout); }
-    fputs("</head><body class=\"", stdout); html(program ? program->character : "journal"); fputs(" item-page\" data-character=\"", stdout);
-    html(program ? program->character : "journal"); fputs("\"><main class=\"wrap\">", stdout);
+    if (item && page_image_url_safe(item->image)) { ui_open_a(stdout, "meta", "property", "og:image", "content", item->image); }
+    fputs("</head><body class=\"", stdout); html(program ? program->character : "journal"); ui_lit(stdout, " item-page\" data-character=\"");
+    html(program ? program->character : "journal"); (ui_lit(stdout, "\">"), ui_open(stdout, "main", "wrap"));
     {
         PageDocument nav = {0};
         nav.route = program ? program->route : NULL;
@@ -2156,17 +2156,17 @@ static int emit_item_page(const BfRequest *r) {
         page_emit_nav(&nav);
     }
     if (!item) {
-        fputs("<header class=\"hero\"><h1>Not here any more</h1><p class=\"lede\">This came from a source whose latest material no longer includes it.</p>", stdout);
-        if (program) { fputs("<p class=\"jump\"><a href=\"", stdout); html(program->route); fputs("\">Back to ", stdout); html(program->title); fputs("</a></p>", stdout); }
-        fputs("</header></main></body></html>", stdout);
+        (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL), ui_lit(stdout, "Not here any more"), ui_close(stdout, "h1"), ui_open(stdout, "p", "lede"), ui_lit(stdout, "This came from a source whose latest material no longer includes it."), ui_close(stdout, "p"));
+        if (program) { fputs("<p class=\"jump\"><a href=\"", stdout); html(program->route); ui_lit(stdout, "\">Back to "); html(program->title); ui_close_n(stdout, "a", "p", NULL); }
+        ui_close_n(stdout, "header", "main", "body", "html", NULL);
         goto done;
     }
-    fputs("<p class=\"crumbs\">", stdout);
+    ui_open(stdout, "p", "crumbs");
     if (program) { ui_link(stdout, program->route, NULL, program->title); }
-    if (item->note[0]) { fputs(" &middot; ", stdout); page_emit_filter_link(&(PageEmitContext){.route = program ? program->route : "/search", .now = now, .db = NULL, .surface_scene = NULL}, "from", item->note); html(item->note); fputs("</a>", stdout); }
-    fputs("</p>", stdout);
+    if (item->note[0]) { ui_lit(stdout, " &middot; "); page_emit_filter_link(&(PageEmitContext){.route = program ? program->route : "/search", .now = now, .db = NULL, .surface_scene = NULL}, "from", item->note); html(item->note); ui_close(stdout, "a"); }
+    ui_close(stdout, "p");
     if (snapshot) ui_text(stdout, "p", "narrowed", "You saved this. Its source has moved on, so this is what it published when you kept it.");
-    fputs("<article class=\"thing\">", stdout);
+    ui_open(stdout, "article", "thing");
     {
         char embed[1100];
         char sized[1024];
@@ -2174,35 +2174,35 @@ static int emit_item_page(const BfRequest *r) {
         if ((page_is_video(item) && page_peertube_embed(item->href, embed, sizeof(embed))) ||
             (!item->asset[0] && (page_is_video(item) || item->kind == BF_PAGE_MATERIAL_AUDIO) && page_embed_for(item->href, embed, sizeof(embed)))) {
             fputs("<div class=\"player\"><iframe src=\"", stdout); html(embed);
-            fputs("\" title=\"", stdout); html(item->title);
-            fputs("\" allow=\"fullscreen; picture-in-picture\" allowfullscreen loading=\"lazy\" referrerpolicy=\"no-referrer\" sandbox=\"allow-same-origin allow-scripts allow-popups\"></iframe></div>", stdout);
+            ui_lit(stdout, "\" title=\""); html(item->title);
+            (ui_lit(stdout, "\" allow=\"fullscreen; picture-in-picture\" allowfullscreen loading=\"lazy\" referrerpolicy=\"no-referrer\" sandbox=\"allow-same-origin allow-scripts allow-popups\">"), ui_close(stdout, "iframe"), ui_close(stdout, "div"));
         } else if (item->asset[0] && item->kind == BF_PAGE_MATERIAL_VIDEO) {
             /* A file that plays is played here, from where it is kept. */
-            fputs("<figure class=\"playing\"><div class=\"player\"><video controls playsinline preload=\"metadata\" src=\"", stdout); html(item->asset); fputs("\"", stdout);
-            if (page_image_url_safe(sized)) { fputs(" poster=\"", stdout); html(sized); fputs("\"", stdout); }
-            fputs("></video></div>", stdout); page_emit_credit(item, "figcaption"); fputs("</figure>", stdout);
+            fputs("<figure class=\"playing\"><div class=\"player\"><video controls playsinline preload=\"metadata\" src=\"", stdout); html(item->asset); ui_lit(stdout, "\"");
+            if (page_image_url_safe(sized)) { ui_lit(stdout, " poster=\""); html(sized); ui_lit(stdout, "\""); }
+            (ui_lit(stdout, ">"), ui_close(stdout, "video"), ui_close(stdout, "div")); page_emit_credit(item, "figcaption"); ui_close(stdout, "figure");
         } else if (item->asset[0] && item->kind == BF_PAGE_MATERIAL_AUDIO) {
-            fputs("<figure class=\"hero-picture listening\">", stdout);
+            ui_open(stdout, "figure", "hero-picture listening");
             if (page_image_url_safe(sized)) page_emit_picture(sized, "picture");
-            fputs("<audio controls preload=\"metadata\" src=\"", stdout); html(item->asset); fputs("\"></audio>", stdout);
-            page_emit_credit(item, "figcaption"); fputs("</figure>", stdout);
+            (ui_open_a(stdout, "audio", "controls", NULL, "preload", "metadata", "src", item->asset), ui_close(stdout, "audio"));
+            page_emit_credit(item, "figcaption"); ui_close(stdout, "figure");
         } else if (page_image_url_safe(item->image)) {
-            fputs("<figure class=\"hero-picture\">", stdout); page_emit_picture(page_image_url_safe(sized) ? sized : item->image, "picture");
-            page_emit_credit(item, "figcaption"); fputs("</figure>", stdout);
+            ui_open(stdout, "figure", "hero-picture"); page_emit_picture(page_image_url_safe(sized) ? sized : item->image, "picture");
+            page_emit_credit(item, "figcaption"); ui_close(stdout, "figure");
         } else if (item->placed) {
             PageStream *one = calloc(1, sizeof(*one));
             if (one) {
                 one->count = 1; one->item[0] = *item;
-                fputs("<figure class=\"map\">", stdout); page_emit_map_plate(one, 1, 0); fputs("</figure>", stdout);
+                ui_open(stdout, "figure", "map"); page_emit_map_plate(one, 1, 0); ui_close(stdout, "figure");
                 free(one);
             }
         } else {
             /* The source published no picture: the frame stays, and says so. */
             char from[128];
             page_publisher(item->href, from, sizeof(from));
-            fputs("<figure class=\"hero-picture is-empty\"><figcaption>No picture published", stdout);
-            if (from[0] || item->note[0]) { fputs(" by ", stdout); html(from[0] ? from : item->note); }
-            fputs("</figcaption></figure>", stdout);
+            (ui_open(stdout, "figure", "hero-picture is-empty"), ui_open(stdout, "figcaption", NULL), ui_lit(stdout, "No picture published"));
+            if (from[0] || item->note[0]) { ui_lit(stdout, " by "); html(from[0] ? from : item->note); }
+            ui_close_n(stdout, "figcaption", "figure", NULL);
         }
     }
     if (item->kind == BF_PAGE_MATERIAL_EVENT && item->at > 0) {
@@ -2213,24 +2213,24 @@ static int emit_item_page(const BfRequest *r) {
         time_t ends = item->duration_ms > 0 ? item->at + item->duration_ms / 1000 : 0;
         gmtime_r(&item->at, &tm); strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &tm);
         if (ends > 0 && gmtime_r(&ends, &tm)) strftime(ends_iso, sizeof(ends_iso), "%Y-%m-%dT%H:%M:%SZ", &tm);
-        fputs("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Event\",\"name\":", stdout);
+        (ui_elem(stdout, "script", (const UiAttr[]){{"type", "application/ld+json"}}, 1, 0), ui_lit(stdout, "{\"@context\":\"https://schema.org\",\"@type\":\"Event\",\"name\":"));
         json(item->title);
         printf(",\"startDate\":\"%s\"", iso);
         if (ends_iso[0]) printf(",\"endDate\":\"%s\"", ends_iso);
-        if (item->where[0]) { fputs(",\"location\":{\"@type\":\"Place\",\"name\":", stdout); json(item->where);
+        if (item->where[0]) { ui_lit(stdout, ",\"location\":{\"@type\":\"Place\",\"name\":"); json(item->where);
             if (item->placed) printf(",\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":%.5f,\"longitude\":%.5f}", item->lat, item->lon);
-            fputs("}", stdout); }
-        if (publisher_name[0]) { fputs(",\"organizer\":{\"@type\":\"Organization\",\"name\":", stdout); json(publisher_name); fputs("}", stdout); }
-        if (public_http_url(item->href)) { fputs(",\"url\":", stdout); json(item->href); fputs(",\"isBasedOn\":", stdout); json(item->href); }
-        fputs(",\"description\":\"Compiled by Aurekai from what the organizer published; it is not an invitation, a reservation or a promise that it will happen.\"}</script>", stdout);
+            ui_lit(stdout, "}"); }
+        if (publisher_name[0]) { ui_lit(stdout, ",\"organizer\":{\"@type\":\"Organization\",\"name\":"); json(publisher_name); ui_lit(stdout, "}"); }
+        if (public_http_url(item->href)) { ui_lit(stdout, ",\"url\":"); json(item->href); ui_lit(stdout, ",\"isBasedOn\":"); json(item->href); }
+        (ui_lit(stdout, ",\"description\":\"Compiled by Aurekai from what the organizer published; it is not an invitation, a reservation or a promise that it will happen.\"}"), ui_close(stdout, "script"));
     }
-    fputs("<div class=\"thing-text\">", stdout);
+    ui_open(stdout, "div", "thing-text");
     if (item->kind == BF_PAGE_MATERIAL_EVENT) {
         /* An event says first what it is right now. */
         time_t ends = 0; PageEventPhase phase = page_event_phase(item, now, &ends);
         fputs("<p class=\"phase phase-", stdout);
         fputs(phase == PAGE_EVENT_ON_NOW ? "now" : phase == PAGE_EVENT_SOON ? "soon" : phase == PAGE_EVENT_PAST || phase == PAGE_EVENT_JUST_ENDED ? "past" : "ahead", stdout);
-        fputs("\">", stdout); html(page_event_phase_words(phase)); fputs("</p>", stdout);
+        ui_lit(stdout, "\">"); html(page_event_phase_words(phase)); ui_close(stdout, "p");
     }
     /* Who published it opens the publisher's own address here. */
     estate_reference_open(&stores);
@@ -2238,11 +2238,11 @@ static int emit_item_page(const BfRequest *r) {
     char shown_publisher[256] = "";
     page_short_publisher(publisher.estate && publisher.name[0] ? publisher.name : publisher_name[0] ? publisher_name : item->by,
                          item->href, shown_publisher, sizeof(shown_publisher));
-    fputs("<h1>", stdout); html(item->title); fputs("</h1><p class=\"by\">", stdout);
+    ui_open(stdout, "h1", NULL); html(item->title); (ui_close(stdout, "h1"), ui_open(stdout, "p", "by"));
     if (publisher.estate && publisher.name[0]) {
         PageItem shown = *item;
         snprintf(shown.by, sizeof(shown.by), "%s", "");
-        fputs("<span><a href=\"", stdout); html(publisher.url); fputs("\">", stdout); html(shown_publisher[0] ? shown_publisher : publisher.name); fputs("</a></span>", stdout);
+        fputs("<span><a href=\"", stdout); html(publisher.url); ui_lit(stdout, "\">"); html(shown_publisher[0] ? shown_publisher : publisher.name); ui_close_n(stdout, "a", "span", NULL);
         page_emit_by(&shown, now);
     } else {
         /* No estate profile yet: keep the source byline without its marketing tagline. */
@@ -2250,15 +2250,15 @@ static int emit_item_page(const BfRequest *r) {
         if (shown_publisher[0]) snprintf(shown.by, sizeof(shown.by), "%s", shown_publisher);
         page_emit_by(&shown, now);
     }
-    fputs("</p>", stdout);
+    ui_close(stdout, "p");
     if (from_projection) ui_text(stdout, "p", "narrowed", "Read from a public source earlier. Its current version may differ.");
     if (from_archive) {
         /* Kept, not current: this estate read it, and its source has since
          * moved on.  The link still goes to the source, which may have moved
          * on too. */
-        fputs("<p class=\"kept\">This is what was read here when it was published. ", stdout);
+        (ui_open(stdout, "p", "kept"), ui_lit(stdout, "This is what was read here when it was published. "));
         html(item->by[0] ? item->by : "The source");
-        fputs(" no longer carries it in what it publishes now.</p>", stdout);
+        (ui_lit(stdout, " no longer carries it in what it publishes now."), ui_close(stdout, "p"));
     }
     if (item->kind == BF_PAGE_MATERIAL_PUBLICATION || item->kind == BF_PAGE_MATERIAL_POST) bf_article_listen_emit(stdout);
     /* What the piece says, read from the source's own retained entry; the
@@ -2277,39 +2277,39 @@ static int emit_item_page(const BfRequest *r) {
         strftime(starts_words, sizeof(starts_words), "%A %e %B, %l:%M%p", &tm);
         { struct tm utc; gmtime_r(&item->at, &utc); strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &utc); }
         if (item->duration_ms > 0 && page_local_time(ends, &tm)) strftime(ends_words, sizeof(ends_words), "%l:%M%p", &tm);
-        fputs("<dl class=\"facts event\"><div><dt>Starts</dt><dd><time datetime=\"", stdout); html(iso); fputs("\">", stdout);
-        html(starts_words); fputs("</time></dd></div>", stdout);
-        if (ends_words[0]) { fputs("<div><dt>Until</dt><dd>", stdout); html(ends_words); fputs("</dd></div>", stdout); }
-        if (item->where[0]) { fputs("<div><dt>Where</dt><dd>", stdout); html(item->where); fputs("</dd></div>", stdout); }
-        if (publisher_name[0]) { fputs("<div><dt>Published by</dt><dd>", stdout); html(publisher_name); fputs("</dd></div>", stdout); }
-        fputs("</dl>", stdout);
+        fputs("<dl class=\"facts event\"><div><dt>Starts</dt><dd><time datetime=\"", stdout); html(iso); ui_lit(stdout, "\">");
+        html(starts_words); ui_close_n(stdout, "time", "dd", "div", NULL);
+        if (ends_words[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Until"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(ends_words); ui_close_n(stdout, "dd", "div", NULL); }
+        if (item->where[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Where"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(item->where); ui_close_n(stdout, "dd", "div", NULL); }
+        if (publisher_name[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Published by"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(publisher_name); ui_close_n(stdout, "dd", "div", NULL); }
+        ui_close(stdout, "dl");
     } else if (item->people[0] || item->where[0] || item->duration_ms > 0) {
         /* What the show says about its episode, as facts a person scans. */
-        fputs("<dl class=\"facts episode\">", stdout);
-        if (item->duration_ms > 0) { fputs("<div><dt>Length</dt><dd>", stdout); page_emit_duration(item->duration_ms); fputs("</dd></div>", stdout); }
-        if (item->people[0]) { fputs("<div><dt>With</dt><dd>", stdout); html(item->people); fputs("</dd></div>", stdout); }
-        if (item->where[0]) { fputs("<div><dt>Where</dt><dd>", stdout); html(item->where); fputs("</dd></div>", stdout); }
-        fputs("</dl>", stdout);
+        ui_open(stdout, "dl", "facts episode");
+        if (item->duration_ms > 0) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Length"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); page_emit_duration(item->duration_ms); ui_close_n(stdout, "dd", "div", NULL); }
+        if (item->people[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "With"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(item->people); ui_close_n(stdout, "dd", "div", NULL); }
+        if (item->where[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Where"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(item->where); ui_close_n(stdout, "dd", "div", NULL); }
+        ui_close(stdout, "dl");
     }
     {
         /* Terms as the listing states them, in its own words: a price it
          * names, the delivery it names, the terms its source publishes. */
         char price[48]; int chips = 0; const char *t = item->title;
         if (item_price_as_posted(t, price, sizeof(price)) || item_price_as_posted(item->body, price, sizeof(price))) {
-            fputs("<ul class=\"thing-chips\" aria-label=\"As listed\"><li class=\"is-price\"><small>", stdout);
+            (ui_elem(stdout, "ul", (const UiAttr[]){{"class", "thing-chips"}, {"aria-label", "As listed"}}, 2, 0), ui_open(stdout, "li", "is-price"), ui_open(stdout, "small", NULL));
             fputs(item_says(t, "from $") || item_says(t, "starting at") ? "From" : "Listed at", stdout);
-            fputs("</small> ", stdout); html(price); fputs("</li>", stdout); chips++;
+            (ui_close(stdout, "small"), ui_lit(stdout, " ")); html(price); ui_close(stdout, "li"); chips++;
         }
         if (item_says(t, "free s&h") || item_says(t, "free shipping")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "Free shipping, as posted"); }
         if (item_says(t, "w/ s&s") || item_says(t, "subscribe")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "With subscription"); }
         if (item_says(t, "pickup")) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, "Pickup offered"); }
         if (item->rights[0]) { fputs(chips++ ? "" : "<ul class=\"thing-chips\" aria-label=\"As listed\">", stdout); ui_text(stdout, "li", NULL, item->rights); }
-        if (chips) fputs("</ul>", stdout);
+        if (chips) ui_close(stdout, "ul");
     }
     /* The few things a person came to do sit together: open it where it lives,
      * keep it, pass it on.  Everything else waits behind one quiet disclosure,
      * and nothing that is a section of its own is printed inside this row. */
-    fputs("<nav id=\"item-keep\" class=\"verbs\" aria-label=\"Actions\">", stdout);
+    ui_elem(stdout, "nav", (const UiAttr[]){{"id", "item-keep"}, {"class", "verbs"}, {"aria-label", "Actions"}}, 3, 0);
     if (public_http_url(item->href)) {
         /* The link out is named by where it goes, not by who carried it. */
         char label[320], destination[128];
@@ -2341,10 +2341,10 @@ static int emit_item_page(const BfRequest *r) {
         /* A form, so saving works before and without any script, and comes
          * back to this page. */
         fputs(is_saved ? "<form class=\"verb-form\" method=\"post\" action=\"/o/unsave\">" : "<form class=\"verb-form\" method=\"post\" action=\"/o/save\">", stdout);
-        fputs("<input type=\"hidden\" name=\"item\" value=\"", stdout); html(source); fputs("/", stdout); html(key);
+        fputs("<input type=\"hidden\" name=\"item\" value=\"", stdout); html(source); ui_lit(stdout, "/"); html(key);
         fputs("\"><input type=\"hidden\" name=\"return\" value=\"", stdout); html(target);
         fputs(is_saved ? "\"><button class=\"verb is-on\" type=\"submit\" aria-pressed=\"true\">" : "\"><button class=\"verb\" type=\"submit\" aria-pressed=\"false\">", stdout);
-        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); fputs("</button></form>", stdout);
+        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); ui_close_n(stdout, "button", "form", NULL);
     } else {
         char login[1200];
         snprintf(login, sizeof(login), "/login?next=%s", target);
@@ -2367,9 +2367,9 @@ static int emit_item_page(const BfRequest *r) {
         snprintf(use, sizeof(use), "/feed-use?context=self&item=%s%%2F%s", source, key);
         page_item_action(use, "apps", "Use in your work", 0, 0);
     }
-    fputs("</nav>", stdout);
+    ui_close(stdout, "nav");
     /* Where else this leads, as places rather than buttons. */
-    fputs("<nav class=\"verbs leads\" aria-label=\"Related places\">", stdout);
+    ui_elem(stdout, "nav", (const UiAttr[]){{"class", "verbs leads"}, {"aria-label", "Related places"}}, 2, 0);
     if (publisher.estate && publisher.name[0]) {
         char label[320];
         snprintf(label, sizeof(label), "More from %s", shown_publisher[0] ? shown_publisher : publisher.name);
@@ -2414,9 +2414,9 @@ static int emit_item_page(const BfRequest *r) {
         snprintf(map, sizeof(map), "https://www.openstreetmap.org/?mlat=%.4f&mlon=%.4f#map=7/%.4f/%.4f", item->lat, item->lon, item->lat, item->lon);
         page_item_action(map, "pin", "Open in a map", 1, 0);
     }
-    fputs("</nav>", stdout);
+    ui_close(stdout, "nav");
     /* Tools for people who build with what they read stay one tap away. */
-    fputs("<details class=\"more-verbs\"><summary>More ways to use this</summary><nav class=\"verbs quiet\" aria-label=\"More ways to use this\">", stdout);
+    (ui_open(stdout, "details", "more-verbs"), ui_open(stdout, "summary", NULL), ui_lit(stdout, "More ways to use this"), ui_close(stdout, "summary"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "verbs quiet"}, {"aria-label", "More ways to use this"}}, 2, 0));
     if (!snapshot && strlen(source)<96) {
         char twin[256],digest[65],continuation[768];
         if(pr_source(db,source,twin,sizeof(twin))&&pr_item_fingerprint(item,source,twin,digest)){
@@ -2436,20 +2436,20 @@ static int emit_item_page(const BfRequest *r) {
         snprintf(changes, sizeof(changes), "%s/changes", target);
         page_item_action(changes, "list", "How this page changed", 0, 0);
     }
-    fputs("</nav>", stdout);
+    ui_close(stdout, "nav");
     page_emit_reuse(item);
     if(!snapshot)bf_public_code_emit_details(stdout,host,target);
-    fputs("<p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); fputs("\"></label></p></details>", stdout);
+    fputs("<p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); (ui_lit(stdout, "\">"), ui_close(stdout, "label"), ui_close(stdout, "p"), ui_close(stdout, "details"));
     if (item->placed && (page_image_url_safe(item->image) || item->asset[0])) {
         /* A place with a picture also shows where it is. */
         PageStream *one = calloc(1, sizeof(*one));
         if (one) {
             one->count = 1; one->item[0] = *item;
-            fputs("<figure class=\"map where\">", stdout); page_emit_map_plate(one, 1, 0); fputs("</figure>", stdout);
+            ui_open(stdout, "figure", "map where"); page_emit_map_plate(one, 1, 0); ui_close(stdout, "figure");
             free(one);
         }
     }
-    fputs("</div></article>", stdout);
+    ui_close_n(stdout, "div", "article", NULL);
     /* Sections of their own, after the piece rather than inside its actions. */
     if (item->placed && !page_emit_around_precomputed(source, key, item->ident, now))
         page_emit_around(db, item->lat, item->lon, source, key, item->ident, 2.5, now);
@@ -2472,7 +2472,7 @@ static int emit_item_page(const BfRequest *r) {
         page_scene_in_depth = 0;
         if (count) {
             PageEmitContext rctx = {.route = program ? program->route : "/search", .now = now, .db = db, .surface_scene = NULL};
-            if (why[0]) { fputs("<meta name=\"bonfyre:relations\" content=\"", stdout); html(why); fputs("\">", stdout); }
+            if (why[0]) { ui_open_a(stdout, "meta", "name", "bonfyre:relations", "content", why); }
             page_emit_regions(relations, sequence, count, &rctx);
         }
     }
@@ -2493,27 +2493,27 @@ static int emit_item_page(const BfRequest *r) {
         for (k = 0; k < family_material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 5; k++) {
             const PageItem *other = &family_material->stream[BF_PAGE_MATERIAL_MIX].item[k];
             if (!strcmp(other->source, item->source) || page_words_shared(item->title, other->title) < 1) continue;
-            if (!shown++) fputs("<section class=\"region item-like\"><h2 class=\"region-label\">More like this</h2><ol class=\"like\">", stdout);
+            if (!shown++) (ui_open(stdout, "section", "region item-like"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "More like this"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "like"));
             item_like_card(other, now);
         }
-        if (shown) fputs("</ol></section>", stdout);
+        if (shown) ui_close_n(stdout, "ol", "section", NULL);
     }
     /* Also from the same source: its other listings, in two columns. */
     if (material->stream[BF_PAGE_MATERIAL_MIX].count > 1) {
         int shown = 0;
-        fputs("<section class=\"region item-also\"><h2 class=\"region-label\">Also from ", stdout);
-        html(shown_publisher[0] ? shown_publisher : item->note[0] ? item->note : "here"); fputs("</h2><ol class=\"also\">", stdout);
+        (ui_open(stdout, "section", "region item-also"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Also from "));
+        html(shown_publisher[0] ? shown_publisher : item->note[0] ? item->note : "here"); (ui_close(stdout, "h2"), ui_open(stdout, "ol", "also"));
         for (k = 0; k < material->stream[BF_PAGE_MATERIAL_MIX].count && shown < 6; k++) {
             const PageItem *other = &material->stream[BF_PAGE_MATERIAL_MIX].item[k];
             const char *close; char price[48];
             if (!strcmp(other->key, item->key)) continue;
             shown++;
-            fputs("<li>", stdout); close = page_emit_item_open(other, NULL); html(other->title); fputs(close, stdout);
-            fputs("<span class=\"by\">", stdout);
-            if (item_price_as_posted(other->title, price, sizeof(price))) { fputs("<span>Listed at ", stdout); html(price); fputs("</span> ", stdout); }
-            page_emit_by(other, now); fputs("</span></li>", stdout);
+            ui_open(stdout, "li", NULL); close = page_emit_item_open(other, NULL); html(other->title); fputs(close, stdout);
+            ui_open(stdout, "span", "by");
+            if (item_price_as_posted(other->title, price, sizeof(price))) { (ui_open(stdout, "span", NULL), ui_lit(stdout, "Listed at ")); html(price); (ui_close(stdout, "span"), ui_lit(stdout, " ")); }
+            page_emit_by(other, now); ui_close_n(stdout, "span", "li", NULL);
         }
-        fputs("</ol></section>", stdout);
+        ui_close_n(stdout, "ol", "section", NULL);
     } else if (!snapshot) {
         char heading[320];
         if (shown_publisher[0]) snprintf(heading, sizeof(heading), "Also from %s", shown_publisher);
@@ -2524,7 +2524,7 @@ static int emit_item_page(const BfRequest *r) {
         /* Saving needs an account; the band says what signing in adds and
          * comes back to this page. */
         fputs("<aside class=\"item-join\"><p>Sign in to save items, keep your own shelves and follow the sources you trust.</p><a class=\"verb\" href=\"/login?next=", stdout);
-        html(target); fputs("\">Sign in or join Aurekai</a></aside>", stdout);
+        html(target); (ui_lit(stdout, "\">Sign in or join Aurekai"), ui_close(stdout, "a"), ui_close(stdout, "aside"));
     }
     fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
 done:
@@ -2649,10 +2649,10 @@ static int serve_page_changes(const BfRequest *r) {
         snprintf(title, sizeof(title), "How %s changed", item->title);
         page_emit_head(template, head_end, title, "When the page this links to answered with different content, as the Internet Archive recorded it.");
     }
-    fputs("</head><body class=\"journal item-page\" data-character=\"journal\"><main class=\"wrap\">", stdout);
+    (ui_close(stdout, "head"), ui_elem(stdout, "body", (const UiAttr[]){{"class", "journal item-page"}, {"data-character", "journal"}}, 2, 0), ui_open(stdout, "main", "wrap"));
     { PageDocument nav = {0}; nav.actor = actor[0] ? actor : NULL; nav.self_path = target; page_emit_nav(&nav); }
-    fputs("<p class=\"crumbs\"><a href=\"/o/", stdout); page_url_escape(source); fputs("/", stdout); html(key); fputs("\">", stdout); html(item->title); fputs("</a></p>", stdout);
-    fputs("<header class=\"hero\"><h1>How this page changed</h1><p class=\"lede\">", stdout); html(item->href); fputs("</p></header>", stdout);
+    fputs("<p class=\"crumbs\"><a href=\"/o/", stdout); page_url_escape(source); ui_lit(stdout, "/"); html(key); ui_lit(stdout, "\">"); html(item->title); ui_close_n(stdout, "a", "p", NULL);
+    (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL), ui_lit(stdout, "How this page changed"), ui_close(stdout, "h1"), ui_open(stdout, "p", "lede")); html(item->href); ui_close_n(stdout, "p", "header", NULL);
     if (have) {
         char *text = malloc(262144), err[160];
         bf_json_doc_t *doc = text && world_body_for_twin(twin, text, 262144) ? bf_json_parse_str(text, err, sizeof(err)) : NULL;
@@ -2667,21 +2667,21 @@ static int serve_page_changes(const BfRequest *r) {
             page_json_text(bf_json_arr_get(doc, list[1], 0), 1, first, sizeof(first));
             page_json_text(bf_json_arr_get(doc, list[count - 1], 0), 1, last, sizeof(last));
             printf("<p class=\"narrowed\">The Internet Archive saw this page's content change %d time%s between %.4s and %.4s.</p>", count - 1, count == 2 ? "" : "s", first, last);
-            fputs("<ol class=\"results changes\">", stdout);
+            ui_open(stdout, "ol", "results changes");
             for (i = count - 1; i >= 1 && shown < 60; i--, shown++) {
                 char stamp[16] = "", status[8] = "";
                 page_json_text(bf_json_arr_get(doc, list[i], 0), 1, stamp, sizeof(stamp));
                 page_json_text(bf_json_arr_get(doc, list[i], 1), 1, status, sizeof(status));
                 if (strlen(stamp) != 14 || strspn(stamp, "0123456789") != 14) continue;
                 snprintf(when, sizeof(when), "%.4s-%.2s-%.2s %.2s:%.2s", stamp, stamp + 4, stamp + 6, stamp + 8, stamp + 10);
-                fputs("<li><a class=\"result\" rel=\"noopener\" target=\"_blank\" href=\"https://web.archive.org/web/", stdout); html(stamp); fputs("/", stdout); html(item->href);
-                fputs("\"><span class=\"kind\">", stdout); page_glyph("text"); fputs("</span><span class=\"what\"><b>", stdout);
+                fputs("<li><a class=\"result\" rel=\"noopener\" target=\"_blank\" href=\"https://web.archive.org/web/", stdout); html(stamp); ui_lit(stdout, "/"); html(item->href);
+                (ui_lit(stdout, "\">"), ui_open(stdout, "span", "kind")); page_glyph("text"); (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL));
                 fputs(i == 1 ? "First seen" : !strcmp(status, "200") || !strcmp(status, "-") ? "Content changed" : "Answered differently", stdout);
-                fputs("</b><span class=\"by\"><span>", stdout); html(when); fputs(" UTC</span>", stdout);
-                if (status[0] && strcmp(status, "200") && strcmp(status, "-")) { fputs("<span class=\"via\">answered ", stdout); html(status); fputs("</span>", stdout); }
-                fputs("</span></span></a></li>", stdout);
+                (ui_close(stdout, "b"), ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(when); (ui_lit(stdout, " UTC"), ui_close(stdout, "span"));
+                if (status[0] && strcmp(status, "200") && strcmp(status, "-")) { (ui_open(stdout, "span", "via"), ui_lit(stdout, "answered ")); html(status); ui_close(stdout, "span"); }
+                ui_close_n(stdout, "span", "span", "a", "li", NULL);
             }
-            fputs("</ol>", stdout);
+            ui_close(stdout, "ol");
         } else {
             ui_text(stdout, "p", "narrowed", "The Internet Archive has no earlier copies of this page.");
         }
@@ -2694,11 +2694,11 @@ static int serve_page_changes(const BfRequest *r) {
     }
     if (!fresh) {
         fputs("<form class=\"verb-form\" method=\"post\" action=\"/o/changes\"><input type=\"hidden\" name=\"item\" value=\"", stdout);
-        html(source); fputs("/", stdout); html(key);
-        fputs("\"><button class=\"verb primary\" type=\"submit\">", stdout); page_glyph("search"); fputs(have ? "<span>Look again</span>" : "<span>Look up its history</span>", stdout);
-        fputs("</button></form>", stdout);
+        html(source); ui_lit(stdout, "/"); html(key);
+        (ui_lit(stdout, "\">"), ui_elem(stdout, "button", (const UiAttr[]){{"class", "verb primary"}, {"type", "submit"}}, 2, 0)); page_glyph("search"); fputs(have ? "<span>Look again</span>" : "<span>Look up its history</span>", stdout);
+        ui_close_n(stdout, "button", "form", NULL);
     }
-    fputs("<footer class=\"src\">Captures are what the Internet Archive's crawler saw at those moments, not what every visitor saw or what is true.</footer></main></body></html>", stdout);
+    (ui_open(stdout, "footer", "src"), ui_lit(stdout, "Captures are what the Internet Archive's crawler saw at those moments, not what every visitor saw or what is true."), ui_close(stdout, "footer"), ui_close(stdout, "main"), ui_close(stdout, "body"), ui_close(stdout, "html"));
     free(template); free(material); sqlite3_close(db);
     return 1;
 }
@@ -2740,7 +2740,7 @@ static int emit_about_page(const BfRequest *rq) {
         sqlite3_finalize(pub);
     }
     if (!named && !publisher_sources[0]) {
-        printf("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\nNothing here names that.\n");
+        ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\nNothing here names that.\n");
         goto done;
     }
     if (page_collect_identity(db, ident, 1, pictures, scratch)) {
@@ -2778,29 +2778,29 @@ static int emit_about_page(const BfRequest *rq) {
         const PageItem *first = &material->stream[BF_PAGE_MATERIAL_MIX].item[0];
         const char *title = named ? first->title : publisher_name;
         page_emit_head(template, head_end, title, named && first->body[0] ? first->body : "Everything kept about it, from each of its sources.");
-        fputs("</head><body class=\"atlas item-page\" data-character=\"atlas\"><main class=\"wrap\">", stdout);
+        (ui_close(stdout, "head"), ui_elem(stdout, "body", (const UiAttr[]){{"class", "atlas item-page"}, {"data-character", "atlas"}}, 2, 0), ui_open(stdout, "main", "wrap"));
         { PageDocument nav = {0}; nav.actor = actor[0] ? actor : NULL; nav.self_path = target; page_emit_nav(&nav); }
-        fputs("<header class=\"hero\"><h1>", stdout); html(title); fputs("</h1><p class=\"lede\">", stdout);
+        (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL)); html(title); (ui_close(stdout, "h1"), ui_open(stdout, "p", "lede"));
         if (named) printf("Everything the estate keeps about it: %d report%s from its sources", named, named == 1 ? "" : "s");
-        else fputs("Everything the estate keeps about it, including what it publishes itself", stdout);
+        else ui_lit(stdout, "Everything the estate keeps about it, including what it publishes itself");
         if (pictures->stream[BF_PAGE_MATERIAL_PHOTO].count) printf(" and %d picture%s of it", pictures->stream[BF_PAGE_MATERIAL_PHOTO].count, pictures->stream[BF_PAGE_MATERIAL_PHOTO].count == 1 ? "" : "s");
-        fputs(".</p>", stdout);
+        (ui_lit(stdout, "."), ui_close(stdout, "p"));
         {
             /* A publisher this estate addresses has its own page here. */
             EstateReferenceStores stores = {0}; EstateReference self;
             estate_reference_open(&stores);
             if (estate_reference_resolve(&stores, ident, &self) && strncmp(self.url, "/about/", 7)) {
-                fputs("<p class=\"jump\"><a href=\"", stdout); html(self.url); fputs("\">", stdout);
-                html(self.name[0] ? self.name : title); fputs(" at its own address</a></p>", stdout);
+                fputs("<p class=\"jump\"><a href=\"", stdout); html(self.url); ui_lit(stdout, "\">");
+                html(self.name[0] ? self.name : title); (ui_lit(stdout, " at its own address"), ui_close(stdout, "a"), ui_close(stdout, "p"));
             }
             estate_reference_close(&stores);
         }
-        fputs("</header>", stdout);
-        if (scene_why[0]) { fputs("<meta name=\"bonfyre:scene\" content=\"", stdout); html(scene_why); fputs("\">", stdout); }
+        ui_close(stdout, "header");
+        if (scene_why[0]) { ui_open_a(stdout, "meta", "name", "bonfyre:scene", "content", scene_why); }
         if (sequence_count) {
             char look[64] = "";
             page_emit_profile(db, ident, bf_page_regions[sequence[0]].material, look, sizeof(look));
-            if (look[0]) { fputs("<meta name=\"bonfyre:look\" content=\"", stdout); html(look); fputs("\">", stdout); }
+            if (look[0]) { ui_open_a(stdout, "meta", "name", "bonfyre:look", "content", look); }
         }
     }
     {
@@ -2817,9 +2817,9 @@ static int emit_about_page(const BfRequest *rq) {
                     for (k = 0; k < (int)BF_PAGE_REGION_COUNT; k++) if (!strcmp(bf_page_regions[k].role, "latest")) latest = k;
                     take = own->stream[BF_PAGE_MATERIAL_MIX].count < 12 ? own->stream[BF_PAGE_MATERIAL_MIX].count : 12;
                     if (latest >= 0) {
-                        fputs("<section class=\"region region-latest\" aria-label=\"In its own words\"><h2 class=\"region-label\">In its own words</h2>", stdout);
+                        (ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-latest"}, {"aria-label", "In its own words"}}, 2, 0), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "In its own words"), ui_close(stdout, "h2"));
                         page_emit_region(&bf_page_regions[latest], &own->stream[BF_PAGE_MATERIAL_MIX], take, &ctx);
-                        fputs("</section>", stdout);
+                        ui_close(stdout, "section");
                     }
                 }
                 free(own);
@@ -2852,9 +2852,9 @@ static int emit_about_page(const BfRequest *rq) {
             PageStream *one = calloc(1, sizeof(*one));
             if (one) {
                 one->count = 1; one->item[0] = *lead;
-                fputs("<section class=\"region region-places\" aria-label=\"Where\"><h2 class=\"region-label\">Where</h2><figure class=\"map where\">", stdout);
+                (ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-places"}, {"aria-label", "Where"}}, 2, 0), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Where"), ui_close(stdout, "h2"), ui_open(stdout, "figure", "map where"));
                 page_emit_map_plate(one, 1, 0);
-                fputs("</figure></section>", stdout);
+                ui_close_n(stdout, "figure", "section", NULL);
                 free(one);
             }
         }
@@ -2890,7 +2890,7 @@ static int emit_native_world_shelf(const char *path) {
            "Cache-Control: public, max-age=60, stale-while-revalidate=300\r\n"
            "Vary: Host, Accept\r\nX-Bonfyre-World-Projection: native\r\nConnection: close\r\n\r\n");
     fwrite(template, 1, (size_t)(head_end - template + strlen("</head>")), stdout);
-    fputs("<body class=\"shelf\"><main class=\"wrap\"><nav class=\"bar\" aria-label=\"World navigation\"><a class=\"home\" href=\"/\">&larr; Aurekai</a><span class=\"ch\">worlds</span></nav><header class=\"hero\"><h1>Things that became worlds.</h1><p class=\"lede\">Each is a temporary publication over an addressed subject, made from observed material and existing interaction grammars.</p></header><section class=\"rack\">", stdout);
+    (ui_open(stdout, "body", "shelf"), ui_open(stdout, "main", "wrap"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "bar"}, {"aria-label", "World navigation"}}, 2, 0), ui_elem(stdout, "a", (const UiAttr[]){{"class", "home"}, {"href", "/"}}, 2, 0), ui_lit(stdout, "&larr; Aurekai"), ui_close(stdout, "a"), ui_open(stdout, "span", "ch"), ui_lit(stdout, "worlds"), ui_close(stdout, "span"), ui_close(stdout, "nav"), ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL), ui_lit(stdout, "Things that became worlds."), ui_close(stdout, "h1"), ui_open(stdout, "p", "lede"), ui_lit(stdout, "Each is a temporary publication over an addressed subject, made from observed material and existing interaction grammars."), ui_close(stdout, "p"), ui_close(stdout, "header"), ui_open(stdout, "section", "rack"));
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *world = (const char *)sqlite3_column_text(st, 0);
         const char *title = (const char *)sqlite3_column_text(st, 1);
@@ -2898,7 +2898,7 @@ static int emit_native_world_shelf(const char *path) {
         const char *grammars = (const char *)sqlite3_column_text(st, 3);
         char grammar_copy[1024], *part;
         if (!world || !title || !family || !studio_safe_slug_arg(world) || !studio_safe_slug_arg(family)) continue;
-        fputs("<a class=\"cover c-", stdout); html(family); fputs("\" href=\"/w/", stdout); html(world); fputs("\"><div class=\"t\">", stdout); html(title); fputs("</div><div><div class=\"m\">", stdout); html(family); fputs(" publication</div><div class=\"g\">", stdout);
+        fputs("<a class=\"cover c-", stdout); html(family); ui_lit(stdout, "\" href=\"/w/"); html(world); (ui_lit(stdout, "\">"), ui_open(stdout, "div", "t")); html(title); (ui_close(stdout, "div"), ui_open(stdout, "div", NULL), ui_open(stdout, "div", "m")); html(family); (ui_lit(stdout, " publication"), ui_close(stdout, "div"), ui_open(stdout, "div", "g"));
         snprintf(grammar_copy, sizeof(grammar_copy), "%s", grammars ? grammars : "");
         part = grammar_copy;
         while (part && *part) {
@@ -2907,7 +2907,7 @@ static int emit_native_world_shelf(const char *path) {
             if (*part && world_grammar_route(part)) { ui_text(stdout, "i", NULL, part); }
             part = comma ? comma + 1 : NULL;
         }
-        fputs("</div></div></a>", stdout); count++;
+        ui_close_n(stdout, "div", "div", "a", NULL); count++;
     }
     if (!count) ui_text(stdout, "p", "note", "No World is published yet.");
     fputs("</section></main>" BF_ESTATE_FOOT "</body></html>", stdout);

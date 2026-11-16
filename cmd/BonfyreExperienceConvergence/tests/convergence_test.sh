@@ -108,10 +108,10 @@ stage = load(tmp / "stage.json")
 expected_stage = load(emap / "generated/stage_manifest.json")
 for key in ("binding_records", "chain_stage_edges", "human_chain_count", "records_with_stage_bindings", "unbound_experience_references", "digest"):
     assert stage[key] == expected_stage[key], (key, stage[key], expected_stage[key])
-# Re-pinned 2026-11-13: the one-app convergence (8a26e2b8) re-derived the
+# Re-pinned 2026-11-15 (was 9175e054 from 2026-11-13): the one-app convergence re-derived the
 # stage bindings and left this pin on the previous generation; the compile
 # above matches the regenerated manifest key for key.
-assert stage["digest"] == "9175e054b20c55cd1bd5126ac94c32d3fe9df598081f53aed962f08d15323ee1"
+assert stage["digest"] == "d38a202a3a8ccc5ad37b96b01eb383e98e1cc65ab505149436566339dd6f47bf"
 PY
 
 echo "experience native convergence: PASS (binding regenerated -> 4891 participation -> 250/250 activation -> boundary/readiness/disturbance -> exact stage digest)"

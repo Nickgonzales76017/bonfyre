@@ -141,6 +141,7 @@ architecture capability-closure
   source_lineage capability closure essay
 
 architecture closure-algebra
+  source_lineage earliest source scripts/closure-algebra.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/closure_algebra.py which scripts/retire.sh archived at scripts/closure_algebra.py.archive
   canonical_name ClosureAlgebra
   family capability
   domain Capability
@@ -187,6 +188,7 @@ architecture closure-algebra
   known_gap the requirement key is found by convention from the declared type name, so a domain naming its key differently would need the convention stated in the declaration rather than inferred
   known_gap a source this entry named could not be opened from this checkout -- /var/lib/bonfyre/cms/content-types/closure_domain.json. The line is removed rather than repointed to something that merely looks similar, and what remains listed is the evidence this architecture actually stands on.
 architecture closure-loop
+  source_lineage earliest source scripts/residual-target.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/residual_target.py which scripts/retire.sh archived at scripts/residual_target.py.archive
   canonical_name ClosureLoop
   family capability
   domain Capability
@@ -236,6 +238,7 @@ architecture closure-loop
   known_gap no external route is credentialed for any named capability, so every target stops at the first rung and the market behind it is unmeasured rather than absent
 
 architecture capability-discovery-gap
+  source_lineage earliest source cmd/BonfyreCapability/src/main.c first committed 2026-04-29 in 9289a5f2 "runtime: publish cmd, registry, and operator surfaces"
   canonical_name CapabilityDiscoveryGap
   family capability
   domain Capability / Registry

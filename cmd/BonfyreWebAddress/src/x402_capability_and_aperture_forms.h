@@ -1,5 +1,6 @@
 #ifndef BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
 #define BONFYRE_X402_CAPABILITY_AND_APERTURE_FORMS_H
+#include "ui_tree.h"
 #include "../generated/native_estate_hosts.h"
 #include "web_store.h"
 /* Extracted verbatim from main.c lines 14174-15948 (mechanical split, no logic changes). */
@@ -164,7 +165,7 @@ static void room_settlement(char *out, size_t cap, const char *institution_id) {
       fac && *fac ? "a facilitator stands behind it" : "none: nothing here can settle",
       (asset && *asset) ? asset : net,
       receipts, realized,
-      e_ev[0] ? "<p class=\"subj-note\">Admitted on the evidence: " : "", e_ev, e_ev[0] ? "</p>" : "",
+      e_ev[0] ? "<p class=\"subj-note\">Based on the evidence: " : "", e_ev, e_ev[0] ? "</p>" : "",
       strcmp(world, "DEMO") ? "" :
         "In DEMO the estate admits real public observation and never a live external effect against "
         "a third party, and financial projection is proposal economics rather than revenue.");
@@ -409,15 +410,12 @@ static void capability_catalogue_page(const char *inquiry) {
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n"
            "X-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nConnection: close\r\n\r\n");
     ak_app_open("Capabilities", "workbench", "route-capability");
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Aurekai <span>/</span> Capabilities <span>/</span> x402 resources</p>"
-          "<h1>Capabilities you can call</h1><p class=\"ak-lede\">Each price is read live from the finance service book, and the "
-          "agent-to-agent carrier quotes the same number. Looking is free: nobody can decide to buy what they cannot see first.</p></div>"
-          "<div class=\"ak-actions\">", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Aurekai ");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_copy(stdout," Capabilities ");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_copy(stdout," x402 resources");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Capabilities you can call");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Each price is read live from the finance service book, and the agent-to-agent carrier quotes the same number. Looking is free: nobody can decide to buy what they cannot see first.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");
     if (inquiry && *inquiry) {
-        fputs("<a class=\"ak-btn is-primary\" href=\"", stdout); html(inquiry);
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href"); html(inquiry);
         fputs("\">Discuss your workflow</a><p class=\"cap-note\">Describe the result you need. Scope and pricing are agreed after review.</p>", stdout);
     }
-    fputs("<a class=\"ak-btn\" href=\"/a2a\">Agent-to-agent carrier</a></div></header>", stdout);
+    ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/a2a");ui_gt(stdout);ui_copy(stdout,"Agent-to-agent carrier");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"header");
     printf("<dl class=\"ak-stats is-row\"><div><dt>Capabilities</dt><dd>%d</dd></div><div><dt>Priced to call</dt><dd class=\"is-on\">%d</dd>"
            "<small>%s</small></div>"
            "<div><dt>Payment carrier</dt><dd>x402 v1</dd></div><div><dt>Settlement</dt><dd%s>%s</dd><small>%s</small></div></dl>",
@@ -425,19 +423,17 @@ static void capability_catalogue_page(const char *inquiry) {
            x402_facilitator()[0] ? " class=\"is-on\"" : "",
            x402_facilitator()[0] ? "Facilitator set" : "Refused",
            x402_facilitator()[0] ? "Payments are verified before a result is returned" : "No facilitator is configured, so an unverified payment is never treated as settled");
-    fputs("<div class=\"ak-grid is-2 cap-studio\"><section class=\"ak-panel\" aria-labelledby=\"cap-defs-h\"><header><h2 id=\"cap-defs-h\">Capability definitions</h2>"
-          "<span class=\"ak-tag\">01 / catalogue</span></header><ol class=\"cap-defs\">", stdout);
+    ui_open(stdout,"div","ak-grid is-2 cap-studio");ui_start(stdout,"section");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"aria-labelledby","cap-defs-h");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_start(stdout,"h2");ui_attr(stdout,"id","cap-defs-h");ui_gt(stdout);ui_copy(stdout,"Capability definitions");ui_close(stdout,"h2");ui_open(stdout,"span","ak-tag");ui_copy(stdout,"01 / catalogue");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"ol","cap-defs");
     for (int i = 0; i < X402_CATALOG_N; i++) {
         double usd = 0.0; int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
-        fputs("<li data-capability=\"", stdout); html(X402_CATALOG[i].name); fputs("\"><div class=\"cap-id\"><h3><code>", stdout); html(X402_CATALOG[i].name);
-        fputs("</code></h3><span class=\"ak-tag\">", stdout); html(X402_CATALOG[i].binary); fputs("</span></div><p>", stdout); html(X402_CATALOG[i].summary);
+        ui_start(stdout,"li");ui_attr_open(stdout,"data-capability"); html(X402_CATALOG[i].name); fputs("\"><div class=\"cap-id\"><h3><code>", stdout); html(X402_CATALOG[i].name);
+        ui_close(stdout,"code");ui_close(stdout,"h3");ui_open(stdout,"span","ak-tag"); html(X402_CATALOG[i].binary); ui_close(stdout,"span");ui_close(stdout,"div");ui_open(stdout,"p",NULL); html(X402_CATALOG[i].summary);
         if (priced) printf("</p><p class=\"cap-price\">$%.*f <small>USD / call</small></p>", usd < 0.01 ? 4 : 2, usd);
-        else fputs("</p><p class=\"cap-price is-unpriced\">Unpriced <small>not for sale</small></p>", stdout);
-        fputs("<nav class=\"cap-ways\"><a class=\"ak-chip\" href=\"/capability/", stdout); html(X402_CATALOG[i].name);
+        else {ui_close(stdout,"p");ui_open(stdout,"p","cap-price is-unpriced");ui_copy(stdout,"Unpriced ");ui_open(stdout,"small",NULL);ui_copy(stdout,"not for sale");ui_close(stdout,"small");ui_close(stdout,"p");}
+        ui_open(stdout,"nav","cap-ways");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr_open(stdout,"href");ui_copy(stdout,"/capability/"); html(X402_CATALOG[i].name);
         fputs("\">x402 resource</a><a class=\"ak-chip\" href=\"/a2a\">Over A2A</a></nav></li>", stdout);
     }
-    fputs("</ol></section><div class=\"cap-side\"><section class=\"ak-panel\" aria-labelledby=\"cap-json-h\"><header><h2 id=\"cap-json-h\">As a machine reads it</h2>"
-          "<span class=\"ak-tag is-on\">x402Version 1</span></header><pre class=\"ak-console cap-json\">{\n  \"x402Version\": 1,\n  \"capabilities\": [", stdout);
+    ui_close(stdout,"ol");ui_close(stdout,"section");ui_open(stdout,"div","cap-side");ui_start(stdout,"section");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"aria-labelledby","cap-json-h");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_start(stdout,"h2");ui_attr(stdout,"id","cap-json-h");ui_gt(stdout);ui_copy(stdout,"As a machine reads it");ui_close(stdout,"h2");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"x402Version 1");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"pre","ak-console cap-json");ui_copy(stdout,"{\n  \"x402Version\": 1,\n  \"capabilities\": [");
     for (int i = 0; i < X402_CATALOG_N; i++) {
         double usd = 0.0; int priced = x402_price_usd(X402_CATALOG[i].name, &usd);
         fputs(i ? ",\n    { \"name\": \"" : "\n    { \"name\": \"", stdout); html(X402_CATALOG[i].name);
@@ -582,15 +578,34 @@ static int serve_capability(const BfRequest *r) {
 static void protocol_reply(int code, const char *type, const char *body) {
     /* A page opened with BF_PAGE_OPEN closes on the one footer and player. */
     const char *close = NULL;
+    const char *phrase = "Service Unavailable";
     if (!strncmp(type, "text/html", 9) && strstr(body, " data-ak-page>") && !strstr(body, "class=\"ak-foot\"")) {
         const char *at = strstr(body, "</body>");
         for (const char *n = at; n; n = strstr(n + 1, "</body>")) at = n;
         close = at;
     }
+    /* Every status this surface emits names itself; a 400 that calls itself
+     * "Service Unavailable" sends the caller to check the estate when the
+     * fault is in their own query string. */
+    if (code == 200) phrase = "OK";
+    else if (code == 201) phrase = "Created";
+    else if (code == 204) phrase = "No Content";
+    else if (code == 400) phrase = "Bad Request";
+    else if (code == 401) phrase = "Unauthorized";
+    else if (code == 403) phrase = "Forbidden";
+    else if (code == 404) phrase = "Not Found";
+    else if (code == 405) phrase = "Method Not Allowed";
+    else if (code == 406) phrase = "Not Acceptable";
+    else if (code == 409) phrase = "Conflict";
+    else if (code == 410) phrase = "Gone";
+    else if (code == 413) phrase = "Payload Too Large";
+    else if (code == 422) phrase = "Unprocessable Entity";
+    else if (code == 500) phrase = "Internal Server Error";
+    else if (code == 501) phrase = "Not Implemented";
     size_t foot = close ? strlen(BF_ESTATE_FOOT) : 0;
     printf("HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %zu\r\n"
            "Cache-Control: no-store\r\nConnection: close\r\n\r\n",
-           code, code == 200 ? "OK" : "Service Unavailable", type, strlen(body) + foot);
+           code, phrase, type, strlen(body) + foot);
     if (close) { fwrite(body, 1, (size_t)(close - body), stdout); fputs(BF_ESTATE_FOOT, stdout); fputs(close, stdout); }
     else fputs(body, stdout);
     fflush(stdout);
@@ -686,24 +701,27 @@ static const char *protocol_territory(const char *query, char *out, size_t out_s
  * surviving page rather than for the whole estate. Deterministic, and the
  * extraction cost falls from every row to the page.
  */
-static int parcel_projection_sql(char *sql, size_t sql_sz, const char *territory, int limit) {
+static int parcel_projection_sql(char *sql, size_t sql_sz, const char *territory, int limit, int offset) {
     int n;
     if (!strcmp(territory, "tarrant")) {
         n = snprintf(sql, sql_sz,
           "SELECT %s, 'tarrant' AS territory, 'src:tad-parcel-view' AS source_id FROM ("
             "SELECT observed FROM observation WHERE src_id='src:tad-parcel-view' "
-            "ORDER BY observation_id LIMIT %d)",
-          PARCEL_COLS, limit);
+            "ORDER BY observation_id LIMIT %d OFFSET %d)",
+          PARCEL_COLS, limit, offset);
     } else if (!strcmp(territory, "dallas")) {
         n = snprintf(sql, sql_sz,
           "SELECT %s, 'dallas' AS territory, 'src:dallas-tax-parcels' AS source_id FROM ("
             "SELECT observed FROM observation WHERE src_id='src:dallas-tax-parcels' "
             "AND json_extract_string(observed,'$.COUNTY')='DALLAS COUNTY' "
-            "ORDER BY observation_id LIMIT %d)",
-          DALLAS_PARCEL_COLS, limit);
+            "ORDER BY observation_id LIMIT %d OFFSET %d)",
+          DALLAS_PARCEL_COLS, limit, offset);
     } else {
         /* Each source contributes its own ordered page, and the union of two
-         * pages is small enough to order exactly. */
+         * pages is small enough to order exactly. A walk past the first page
+         * needs each source to contribute the skipped rows too: the inner
+         * fetch is limit+offset per source, and the outer OFFSET then skips
+         * across the exact union the same way it would across one table. */
         n = snprintf(sql, sql_sz,
           "SELECT %s FROM ("
             "(SELECT %s, 'tarrant' AS territory, 'src:tad-parcel-view' AS source_id, "
@@ -717,17 +735,17 @@ static int parcel_projection_sql(char *sql, size_t sql_sz, const char *territory
                "WHERE src_id='src:dallas-tax-parcels' "
                "AND json_extract_string(observed,'$.COUNTY')='DALLAS COUNTY' "
                "ORDER BY observation_id LIMIT %d))"
-          ") ORDER BY territory, observation_id LIMIT %d",
-          PARCEL_OUT, PARCEL_COLS, limit, DALLAS_PARCEL_COLS, limit, limit);
+          ") ORDER BY territory, observation_id LIMIT %d OFFSET %d",
+          PARCEL_OUT, PARCEL_COLS, limit + offset, DALLAS_PARCEL_COLS, limit + offset, limit, offset);
     }
     return n < 0 || (size_t)n >= sql_sz ? -1 : 0;
 }
 
 
 
-static int protocol_limit(const char *query) {
+static int protocol_limit_default(const char *query, int dflt) {
     char raw[32];
-    int n = 10;
+    int n = dflt;
     /* `target` never carries the query string -- the request loop separates it
      * -- so reading it there silently pinned every projection to the default
      * and no caller could page a 6.5M-row estate. */
@@ -735,6 +753,92 @@ static int protocol_limit(const char *query) {
     if (n < 1) n = 1;
     if (n > 1000) n = 1000;  /* a projection is a page, not a bulk export */
     return n;
+}
+
+static int protocol_limit(const char *query) {
+    return protocol_limit_default(query, 10);
+}
+
+/* Where in the ordered rows a page starts. Unlike the limit, a bad offset is
+ * refused rather than clamped: silently serving page one for ?offset=abc
+ * would hand a walker the same rows twice and call it progress. The bound
+ * matches the /recipes collection (desk_and_internet_observatory.h), so one
+ * rule covers every paged surface. Returns 0 with *out set, or -1. */
+static int protocol_offset(const char *query, int *out) {
+    char raw[32];
+    long n;
+    char *end;
+    if (!query_value(query, "offset", raw, sizeof(raw)) || !raw[0]) { *out = 0; return 0; }
+    errno = 0;
+    n = strtol(raw, &end, 10);
+    if (errno || end == raw || *end || n < 0 || n > 1000000) return -1;
+    *out = (int)n;
+    return 0;
+}
+
+/* How many rows a page actually carried. The Fleming reader hands back a raw
+ * JSON array, so the envelopes count its top-level elements: a full page
+ * (count == limit) earns a next link, a short page ends the walk, and OGC's
+ * numberReturned names what was served rather than what was asked. -1 when
+ * the body is not a readable array, in which case callers fall back to the
+ * old behaviour (report the limit, keep the next link) instead of refusing. */
+static int protocol_json_count(const char *json) {
+    int depth = 0, count = 0, in_str = 0, esc = 0;
+    const unsigned char *p;
+    if (!json) return -1;
+    for (p = (const unsigned char *)json; *p; p++) {
+        unsigned char c = *p;
+        if (in_str) {
+            if (esc) esc = 0;
+            else if (c == '\\') esc = 1;
+            else if (c == '"') in_str = 0;
+            continue;
+        }
+        if (c == '"') { in_str = 1; continue; }
+        if (c == '[' || c == '{') {
+            /* Rows arrive as objects; a nested array element would not be
+             * counted, but the Fleming reader never emits one. */
+            if (c == '{' && depth == 1) count++;
+            depth++;
+            continue;
+        }
+        if (c == ']' || c == '}') {
+            depth--;
+            if (depth < 0) return -1;
+            continue;
+        }
+        if (c == ',' || c <= ' ') continue;
+        if (depth == 1 && (c == '-' || (c >= '0' && c <= '9') || c == 't' || c == 'f' || c == 'n')) {
+            /* A scalar element: skip to its end so its letters are not
+             * mistaken for further elements. */
+            count++;
+            while (*p && *p != ',' && *p != ']') p++;
+            if (!*p) break;
+            if (*p == ']') { depth--; continue; }
+            continue;
+        }
+        if (depth == 0 && (c == '-' || (c >= '0' && c <= '9') || c == 't' || c == 'f' || c == 'n' || c == '{')) {
+            /* Not an array at all. */
+            return -1;
+        }
+    }
+    if (in_str || depth != 0) return -1;
+    return count;
+}
+
+/* The walk's next step as an absolute href, or "" when the page just served
+ * was short and the walk ends here. A full page only promises that more rows
+ * MAY follow -- when the collection ends exactly on a page boundary the next
+ * link leads to an empty page, which itself carries no next link. */
+static void protocol_next_href(char *out, size_t out_sz, const char *h, const char *path,
+                               const char *territory, int limit, int offset, const char *rows) {
+    int count = protocol_json_count(rows);
+    if (count >= 0 && count < limit) { out[0] = '\0'; return; }
+    if (territory && *territory)
+        snprintf(out, out_sz, "https://%s%s?territory=%s&limit=%d&offset=%d",
+                 h, path, territory, limit, offset + limit);
+    else
+        snprintf(out, out_sz, "https://%s%s?limit=%d&offset=%d", h, path, limit, offset + limit);
 }
 
 /* Render the protocol surface for whoever is asking.
@@ -858,7 +962,7 @@ static void form_field_list(const char *csv, int as_input) {
              * the sake of a generic loop. */
             {
                 int secret = !strcmp(field, "password");
-                printf("<label class=\"atomic-field\"><span>");
+                ui_open(stdout,"label","atomic-field");ui_open(stdout,"span",NULL);
                 html(field);
                 printf("</span><input name=\"");
                 html(field);
@@ -867,9 +971,9 @@ static void form_field_list(const char *csv, int as_input) {
                        secret ? "current-password" : "off");
             }
         } else {
-            printf("<li><code>");
+            ui_open(stdout,"li",NULL);ui_open(stdout,"code",NULL);
             html(field);
-            printf("</code></li>");
+            ui_close(stdout,"code");ui_close(stdout,"li");
         }
     }
 }
@@ -1637,7 +1741,7 @@ static int serve_aperture_form(const BfRequest *r) {
                 printf("{\"error\":\"aperture_authority_required\",\"operation\":\"%s\","
                        "\"requires\":\"%s\"}\n", operation, req);
             else
-                printf("<p class=\"surface-denied\">This operation is not offered to this session.</p>");
+                {ui_open(stdout,"p","surface-denied");ui_copy(stdout,"This operation is not offered to this session.");ui_close(stdout,"p");}
             return 1;
         }
 
@@ -1696,20 +1800,19 @@ static int serve_aperture_form(const BfRequest *r) {
                     }
                 }
             }
-            printf("<h3>");
+            ui_open(stdout,"h3",NULL);
             html(name);
-            printf("</h3><p class=\"mode\">");
+            ui_close(stdout,"h3");ui_open(stdout,"p","mode");
             html(mode);
             printf(" &middot; identity ");
             html(alloc[0] ? alloc : "none");
-            printf("</p>");
+            ui_close(stdout,"p");
             if (*human) {
-                printf("<div class=\"atomic-inputs\">");
+                ui_open(stdout,"div","atomic-inputs");
                 form_field_list(human, 1);
-                printf("</div>");
+                ui_close(stdout,"div");
             } else {
-                printf("<p>Nothing is asked of a person: this operation is fully closed "
-                       "by its context.</p>");
+                ui_open(stdout,"p",NULL);ui_copy(stdout,"Nothing is asked of a person: this operation is fully closed by its context.");ui_close(stdout,"p");
             }
             if (*closed) {
                 printf("<details class=\"atomic-closed\"><summary>Already resolved by this "
@@ -1724,7 +1827,7 @@ static int serve_aperture_form(const BfRequest *r) {
             page_glyph(page_operation_glyph(operation));
             html(label[0] ? label : object_name_of(operation));
             printf("</button>");
-            if (*note) { printf("<p class=\"owner-note\">"); html(note); printf("</p>"); }
+            if (*note) { ui_open(stdout,"p","owner-note"); html(note); ui_close(stdout,"p"); }
             printf("</form>");
             if (auth_form) {
                 fputs(!strcmp(submit, "/login") ? "<p><a href=\"/signup?next=" : "<p><a href=\"/login?next=", stdout);

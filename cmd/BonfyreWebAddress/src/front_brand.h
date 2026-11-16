@@ -32,19 +32,19 @@ static void front_brand_emit(const char *territory){
     fputs("\" aria-labelledby=\"af-brand-title\"><div class=\"af-brand-top\">"
           "<div class=\"af-brand-mark\">AUREKAI<span>",stdout);
     html(selected->index);
-    fputs(" &middot; THE OPERATING BUSINESS</span></div><span class=\"af-brand-signature\">",stdout);
+    (ui_lit(stdout, " &middot; THE OPERATING BUSINESS"), ui_close(stdout, "span"), ui_close(stdout, "div"), ui_open(stdout, "span", "af-brand-signature"));
     html(front_brand_signature_first);
-    fputs("<br>",stdout);
+    ui_open(stdout, "br", NULL);
     html(front_brand_signature_second);
-    fputs("</span></div><div class=\"af-brand-body\"><div><p class=\"af-brand-category\">",stdout);
+    (ui_close(stdout, "span"), ui_close(stdout, "div"), ui_open(stdout, "div", "af-brand-body"), ui_open(stdout, "div", NULL), ui_open(stdout, "p", "af-brand-category"));
     html(selected->category);
-    fputs("</p><h1 class=\"af-brand-title\" id=\"af-brand-title\">",stdout);
+    (ui_close(stdout, "p"), ui_elem(stdout, "h1", (const UiAttr[]){{"class", "af-brand-title"}, {"id", "af-brand-title"}}, 2, 0));
     html(selected->headline);
-    fputs("</h1></div><div class=\"af-brand-side\"><p>",stdout);
+    (ui_close(stdout, "h1"), ui_close(stdout, "div"), ui_open(stdout, "div", "af-brand-side"), ui_open(stdout, "p", NULL));
     html(selected->description);
     fputs("</p><div class=\"af-brand-links\"><a href=\"",stdout);
     html(selected->action);
-    fputs("\">",stdout);
+    ui_lit(stdout, "\">");
     html(selected->label);
     fputs(" &rarr;</a><a href=\"https://nickgonzales76017.github.io/bonfyre/about/\">"
           "About Aurekai</a></div></div></div>"
@@ -53,12 +53,12 @@ static void front_brand_emit(const char *territory){
     static const char *const names[]={"Work","Life","Live","Shop"};
     for(size_t i=0;i<4;i++){
         fputs("<a href=\"https://aurekai.",stdout);
-        html(domains[i]);fputs("/\"",stdout);
-        if(!strcmp(domains[i],territory))fputs(" aria-current=\"page\"",stdout);
-        fputs("><strong>",stdout);html(names[i]);fputs("</strong><span>",stdout);
-        printf("%02zu",i+1);fputs("</span></a>",stdout);
+        html(domains[i]);ui_lit(stdout, "/\"");
+        if(!strcmp(domains[i],territory))ui_lit(stdout, " aria-current=\"page\"");
+        (ui_lit(stdout, ">"), ui_open(stdout, "strong", NULL));html(names[i]);(ui_close(stdout, "strong"), ui_open(stdout, "span", NULL));
+        printf("%02zu",i+1);ui_close_n(stdout, "span", "a", NULL);
     }
-    fputs("</nav></section>",stdout);
+    ui_close_n(stdout, "nav", "section", NULL);
 
 }
 #endif

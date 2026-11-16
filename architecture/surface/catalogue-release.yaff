@@ -1,4 +1,5 @@
 architecture catalogue-release-review
+  source_lineage earliest source components/BonfyreServiceSite/planner-model.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CatalogueReleaseReview
   family surface
   domain Content / Catalogue and room release review

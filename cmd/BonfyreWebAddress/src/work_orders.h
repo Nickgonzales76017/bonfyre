@@ -130,18 +130,18 @@ static void wo_decisions(sqlite3 *db,const char *auth_db,const char *wo,const ch
         "AND s.signer=p.party_subject AND s.milestone_id=?2 AND s.status='published' "
         "WHERE p.namespace='root' AND p.status='published' AND p.work_order_id=?1 ORDER BY p.named_at,p.id LIMIT 40",-1,&s,NULL)!=SQLITE_OK){sqlite3_finalize(s);return;}
     sqlite3_bind_text(s,1,wo,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,milestone,-1,SQLITE_TRANSIENT);
-    fputs("<ul class=\"wo-signers\">",stdout);
+    ui_open(stdout,"ul","wo-signers");
     while(sqlite3_step(s)==SQLITE_ROW){
         const char *d=wo_col(s,2);
-        fputs("<li><span><strong>",stdout);wo_name(auth_db,wo_col(s,0));fputs("</strong><small>",stdout);html(wo_col(s,1));
+        ui_open(stdout,"li",NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,0));ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(wo_col(s,1));
         fputs("</small></span><span class=\"",stdout);fputs(!strcmp(d,"approve")?"is-on":!strcmp(d,"withhold")?"is-held":"is-wait",stdout);fputs("\">",stdout);
         fputs(!strcmp(d,"approve")?"Approved":!strcmp(d,"withhold")?"Withheld":"Waiting",stdout);
-        if(*d){fputs("<small>",stdout);wo_day(wo_col(s,3));fputs("</small>",stdout);}
-        fputs("</span>",stdout);
+        if(*d){ui_open(stdout,"small",NULL);wo_day(wo_col(s,3));ui_close(stdout,"small");}
+        ui_close(stdout,"span");
         if(*wo_col(s,4)){ui_text(stdout, "q", NULL, wo_col(s,4));}
-        fputs("</li>",stdout);
+        ui_close(stdout,"li");
     }
-    fputs("</ul>",stdout);sqlite3_finalize(s);
+    ui_close(stdout,"ul");sqlite3_finalize(s);
 }
 static void wo_signoff_form(const char *wo,const char *milestone,const char *label,const char *approve_label){
     BfAuthoringTree *t=calloc(1,sizeof(*t));if(!t)return;
@@ -154,12 +154,12 @@ static void wo_signoff_form(const char *wo,const char *milestone,const char *lab
     if(ok)ft_render(t,stdout);else{bf_authoring_tree_clear(t);free(t);}
 }
 static void wo_strip(const char *here){
-    fputs("<div class=\"ak-wb-strip\" data-work-orders><a href=\"/work-board\">Your work</a><span>/</span><a href=\"/work-orders\">Work orders</a>",stdout);
-    if(here){fputs("<span>/</span><b>",stdout);html(here);fputs("</b>",stdout);}
-    if(!here||strcmp(here,"Vouches"))fputs("<a href=\"/vouches\">Vouches</a>",stdout);fputs("<a href=\"/roles\">Roles</a><span class=\"ak-live\">Recorded decisions, no money moved</span></div>",stdout);
+    ui_open_a(stdout,"div","class","ak-wb-strip","data-work-orders",(const char *)NULL); ui_open_a(stdout,"a","href","/work-board"); fputs("Your work",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"a","href","/work-orders"); fputs("Work orders",stdout); ui_close(stdout,"a");
+    if(here){ui_text(stdout,"span",NULL,"/"); ui_open(stdout,"b",NULL);html(here);ui_close(stdout,"b");}
+    if(!here||strcmp(here,"Vouches"))do{ ui_open_a(stdout,"a","href","/vouches"); fputs("Vouches",stdout); ui_close(stdout,"a"); }while(0);ui_open_a(stdout,"a","href","/roles"); fputs("Roles",stdout); ui_close(stdout,"a"); ui_open(stdout,"span","ak-live"); fputs("Recorded decisions, no money moved",stdout); ui_close(stdout,"span"); ui_close(stdout,"div");
 }
 static void wo_foot(void){
-    fputs("<p class=\"ak-packs-foot\"><span class=\"ak-live\">Nothing here holds, moves or pays money, and nothing is sent to anyone. Each record is one person's own submitted decision.</span></p>",stdout);
+    ui_open(stdout,"p","ak-packs-foot"); ui_text(stdout,"span","ak-live","Nothing here holds, moves or pays money, and nothing is sent to anyone. Each record is one person's own submitted decision."); ui_close(stdout,"p");
     psetup_end();
 }
 
@@ -200,19 +200,14 @@ static int wo_index(const char *host,const char *bearer,const char *auth_db){
         "AND EXISTS(SELECT 1 FROM work_order_party me WHERE me.namespace=p.namespace AND me.work_order_id=p.work_order_id AND me.party_subject=?1 AND me.status='published')",actor,NULL,NULL);
     psetup_open(200,"Work orders","ak-wb work-orders");
     wo_strip(NULL);
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Work between people</p><h1>Work orders, sign-offs and disputes</h1>"
-          "<p class=\"ak-lede\">Open a piece of work, name the people doing it, stage it into milestones and state the terms. "
-          "Each party records their own acceptance and their own approval of each milestone. A disagreement goes to an arbiter the parties can see.</p></div>"
-          "<aside class=\"ak-panel is-raised\"><p class=\"ak-kicker\">What is recorded here</p><p>Decisions, in the words and names of the people who made them. "
-          "A milestone shown as approved by 3 of 3 means three people said yes. It is not a payment, no funds are held for it, and nobody is told anything on your behalf.</p></aside></header>",stdout);
+    ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Work between people",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Work orders, sign-offs and disputes",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Open a piece of work, name the people doing it, stage it into milestones and state the terms. Each party records their own acceptance and their own approval of each milestone. A disagreement goes to an arbiter the parties can see.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"aside","ak-panel is-raised"); ui_open(stdout,"p","ak-kicker"); fputs("What is recorded here",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("Decisions, in the words and names of the people who made them. A milestone shown as approved by 3 of 3 means three people said yes. It is not a payment, no funds are held for it, and nobody is told anything on your behalf.",stdout); ui_close(stdout,"p"); ui_close(stdout,"aside"); ui_close(stdout,"header");
     printf("<dl class=\"ak-stats is-row\"><div><dt>Open work orders</dt><dd class=\"%s\">%lld</dd><small>you are a party to</small></div>"
            "<div><dt>Waiting on you</dt><dd class=\"%s\">%lld</dd><small>milestones you have not decided</small></div>"
            "<div><dt>Open disputes</dt><dd>%lld</dd><small>as a party or arbiter</small></div>"
            "<div><dt>Stated compensation</dt><dd>%lld</dd><small>terms recorded, none paid here</small></div></dl>",
            open?"is-on":"",open,waiting?"is-on":"",waiting,disputes,terms);
     /* The ledger: every work order this person is part of, newest first. */
-    fputs("<section class=\"ak-sec\" data-work-order-ledger><header><div><span class=\"ak-kicker\">Release ledger</span><h2>Your work orders</h2></div>"
-          "<p>Each row shows the next milestone still waiting and how many of its parties have approved it.</p></header><div class=\"wo-ledger\">",stdout);
+    ui_open_a(stdout,"section","class","ak-sec","data-work-order-ledger",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Release ledger",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Your work orders",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Each row shows the next milestone still waiting and how many of its parties have approved it.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","wo-ledger");
     sqlite3_stmt *s=NULL;int found=0;
     if(sqlite3_prepare_v2(db,"SELECT w.work_order_id,w.title,w.state,w.currency,w.opened_at,"
         "(SELECT group_concat(q.party_subject,' ') FROM (SELECT party_subject FROM work_order_party x WHERE x.namespace=w.namespace AND x.work_order_id=w.work_order_id AND x.status='published' ORDER BY x.named_at LIMIT 6) q),"
@@ -229,32 +224,29 @@ static int wo_index(const char *host,const char *bearer,const char *auth_db){
         while(sqlite3_step(s)==SQLITE_ROW){
             const char *id=wo_col(s,0);if(!wo_ref_ok(id,"wo-"))continue;found++;
             long long m=wo_parties(db,id);
-            fputs("<article class=\"wo-row\" data-work-order><div><p class=\"ak-kicker\">",stdout);wo_code("WO-",id);
-            fputs(" <span class=\"ak-tag",stdout);fputs(!strcmp(wo_col(s,2),"open")?" is-on\">Open":"\">Closed",stdout);fputs("</span></p><h3><a href=\"/work-orders/",stdout);
-            html(id);fputs("\">",stdout);html(wo_col(s,1));fputs("</a></h3><small>",stdout);
+            ui_open_a(stdout,"article","class","wo-row","data-work-order",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker");wo_code("WO-",id);
+            fputs(" <span class=\"ak-tag",stdout);fputs(!strcmp(wo_col(s,2),"open")?" is-on\">Open":"\">Closed",stdout);ui_close(stdout,"span"); ui_close(stdout,"p"); ui_open(stdout,"h3",NULL); ui_open_a(stdout,"a",UI_DYN,"href","/work-orders/",(id));html(wo_col(s,1));ui_close(stdout,"a"); ui_close(stdout,"h3"); ui_open(stdout,"small",NULL);
             char parties[600];snprintf(parties,sizeof(parties),"%s",wo_col(s,5));int k=0;
             for(char *save=NULL,*p=strtok_r(parties," ",&save);p;p=strtok_r(NULL," ",&save)){if(k++)fputs(", ",stdout);wo_name(auth_db,p);}
-            fputs("</small></div>",stdout);
+            ui_close(stdout,"small"); ui_close(stdout,"div");
             char next[600];snprintf(next,sizeof(next),"%s",wo_col(s,6));
             char *tab1=strchr(next,'\t'),*tab2=tab1?strchr(tab1+1,'\t'):NULL;
             if(tab1&&tab2){*tab1=0;*tab2=0;
-                fputs("<div><span class=\"ak-kicker\">Next milestone</span><p>",stdout);html(tab1+1);
-                if(tab2[1]){fputs("<br><small>",stdout);html(tab2+1);fputs(" ",stdout);html(wo_col(s,3));fputs(" stated</small>",stdout);}
-                fputs("</p></div><div>",stdout);wo_signer_strip(db,id,next,m);fputs("</div>",stdout);
+                ui_open(stdout,"div",NULL); ui_text(stdout,"span","ak-kicker","Next milestone"); ui_open(stdout,"p",NULL);html(tab1+1);
+                if(tab2[1]){ui_open(stdout,"br",NULL); ui_open(stdout,"small",NULL);html(tab2+1);fputs(" ",stdout);html(wo_col(s,3));fputs(" stated</small>",stdout);}
+                ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);wo_signer_strip(db,id,next,m);ui_close(stdout,"div");
             }else{
                 printf("<div><span class=\"ak-kicker\">Milestones</span><p>%s</p></div><div><b class=\"wo-count\">%lld %s</b></div>",
                     sqlite3_column_int64(s,7)?"Every milestone approved by all parties":"No milestones staged yet",m,m==1?"party":"parties");
             }
-            fputs("<a class=\"ak-btn\" href=\"/work-orders/",stdout);html(id);fputs("\">Open</a></article>",stdout);
+            ui_open_a(stdout,"a","class","ak-btn",UI_DYN,"href","/work-orders/",(id)); fputs("Open",stdout); ui_close(stdout,"a"); ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);s=NULL;
     if(!found)ui_text(stdout, "p", "ak-empty", "You are not a party to any work order yet. Open one below, or ask the person opening one to name you on it.");
-    fputs("</div></section>",stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
     /* Stated compensation across the work orders this person is part of. */
-    fputs("<section class=\"ak-sec\" data-compensation-ledger><header><div><span class=\"ak-kicker\">Compensation terms</span><h2>What each party is stated to receive</h2></div>"
-          "<p>These are the amounts and shares written on each work order. Recording them pays nobody; payment happens, if it does, between the people involved and outside this page.</p></header>"
-          "<div class=\"ak-panel ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Party</th><th>Work order</th><th>Part</th><th>Stated compensation</th><th>Basis</th><th>Terms accepted</th></tr></thead><tbody>",stdout);
+    ui_open_a(stdout,"section","class","ak-sec","data-compensation-ledger",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Compensation terms",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("What each party is stated to receive",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("These are the amounts and shares written on each work order. Recording them pays nobody; payment happens, if it does, between the people involved and outside this page.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel ak-scroll"); ui_open(stdout,"table","ak-table"); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("Party",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Work order",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Part",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Stated compensation",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Basis",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Terms accepted",stdout); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL);
     found=0;
     if(sqlite3_prepare_v2(db,"SELECT p.party_subject,p.work_order_id,w.title,p.part,COALESCE(p.compensation_stated,''),COALESCE(p.compensation_basis,''),w.currency,"
         "EXISTS(SELECT 1 FROM work_order_signoff s WHERE s.namespace=p.namespace AND s.work_order_id=p.work_order_id AND s.milestone_id='terms' AND s.signer=p.party_subject AND s.decision='approve' AND s.status='published') "
@@ -264,37 +256,34 @@ static int wo_index(const char *host,const char *bearer,const char *auth_db){
         "ORDER BY w.opened_at DESC,p.named_at LIMIT 60",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,actor,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){found++;
-            fputs("<tr data-compensation-term><td><strong>",stdout);wo_name(auth_db,wo_col(s,0));fputs("</strong></td><td><a href=\"/work-orders/",stdout);html(wo_col(s,1));
-            fputs("\">",stdout);html(wo_col(s,2));fputs("</a></td><td>",stdout);html(wo_col(s,3));fputs("</td><td>",stdout);
+            ui_open_a(stdout,"tr","data-compensation-term",(const char *)NULL); ui_open(stdout,"td",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,0));ui_close(stdout,"strong"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL); ui_open_a(stdout,"a",UI_DYN,"href","/work-orders/",(wo_col(s,1)));html(wo_col(s,2));ui_close(stdout,"a"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL);html(wo_col(s,3));ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
             if(*wo_col(s,4)){html(wo_col(s,4));fputs(" ",stdout);html(wo_col(s,6));}else fputs("&mdash;",stdout);
-            fputs("</td><td>",stdout);html(wo_col(s,5));fputs("</td><td>",stdout);
-            fputs(sqlite3_column_int(s,7)?"<span class=\"ak-tag is-on\">Accepted</span>":"<span class=\"ak-tag\">Not yet</span>",stdout);fputs("</td></tr>",stdout);
+            ui_close(stdout,"td"); ui_open(stdout,"td",NULL);html(wo_col(s,5));ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
+            fputs(sqlite3_column_int(s,7)?"<span class=\"ak-tag is-on\">Accepted</span>":"<span class=\"ak-tag\">Not yet</span>",stdout);ui_close(stdout,"td"); ui_close(stdout,"tr");
         }
     }
     sqlite3_finalize(s);s=NULL;
-    fputs("</tbody></table>",stdout);
+    ui_close(stdout,"tbody"); ui_close(stdout,"table");
     if(!found)ui_text(stdout, "p", "ak-empty", "No compensation has been stated on your work orders. The opener states it when naming each party.");
-    fputs("</div></section>",stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
     /* Disputes this person can see. */
-    fputs("<section class=\"ak-sec\" data-dispute-docket><header><div><span class=\"ak-kicker\">Disputes</span><h2>Open and decided disputes</h2></div>"
-          "<p>A party can raise a dispute on any milestone and name an arbiter who is not a party. The arbiter's decision is written, not enforced.</p></header><div class=\"ak-panel\"><ol class=\"ak-rows\">",stdout);
+    ui_open_a(stdout,"section","class","ak-sec","data-dispute-docket",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Disputes",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Open and decided disputes",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("A party can raise a dispute on any milestone and name an arbiter who is not a party. The arbiter's decision is written, not enforced.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel"); ui_open(stdout,"ol","ak-rows");
     found=0;
     if(sqlite3_prepare_v2(db,"SELECT d.dispute_id,w.title,d.state,d.opened_at,d.arbiter FROM work_dispute d JOIN work_order w ON w.namespace=d.namespace AND w.work_order_id=d.work_order_id AND w.status='published' "
         "WHERE d.namespace='root' AND d.status='published' AND (d.arbiter=?1 OR EXISTS(SELECT 1 FROM work_order_party p WHERE p.namespace=d.namespace AND p.work_order_id=d.work_order_id AND p.party_subject=?1 AND p.status='published')) "
         "ORDER BY d.state='open' DESC,d.opened_at DESC LIMIT 30",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,actor,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){found++;
-            fputs("<li data-dispute><strong>",stdout);wo_code("D-",wo_col(s,0));fputs(" \xc2\xb7 ",stdout);html(wo_col(s,1));fputs("</strong><small>",stdout);
+            ui_open_a(stdout,"li","data-dispute",(const char *)NULL); ui_open(stdout,"strong",NULL);wo_code("D-",wo_col(s,0));fputs(" \xc2\xb7 ",stdout);html(wo_col(s,1));ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);
             fputs(!strcmp(wo_col(s,2),"decided")?"Decided":"Open",stdout);fputs(" \xc2\xb7 arbiter ",stdout);wo_name(auth_db,wo_col(s,4));fputs(" \xc2\xb7 opened ",stdout);wo_day(wo_col(s,3));
-            fputs("</small><a class=\"ak-go\" href=\"/disputes/",stdout);html(wo_col(s,0));fputs("\">Open hearing</a></li>",stdout);
+            ui_close(stdout,"small"); ui_open_a(stdout,"a","class","ak-go",UI_DYN,"href","/disputes/",(wo_col(s,0))); fputs("Open hearing",stdout); ui_close(stdout,"a"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ol>",stdout);if(!found)ui_text(stdout, "p", "ak-empty", "No disputes involve you.");fputs("</div></section>",stdout);
-    fputs("<section class=\"ak-sec\" data-work-order-compose><header><div><span class=\"ak-kicker\">Compose</span><h2>Open a work order</h2></div>"
-          "<p>You state the work and the terms. On the next page you name each party and stage the milestones. Nobody is told; share the page with the people you name.</p></header><div class=\"ak-ask\">",stdout);
+    ui_close(stdout,"ol");if(!found)ui_text(stdout, "p", "ak-empty", "No disputes involve you.");ui_close(stdout,"div"); ui_close(stdout,"section");
+    ui_open_a(stdout,"section","class","ak-sec","data-work-order-compose",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Compose",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Open a work order",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("You state the work and the terms. On the next page you name each party and stage the milestones. Nobody is told; share the page with the people you name.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-ask");
     wo_compose_form(bearer,auth_db);
-    fputs("</div></section>",stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section");
     sqlite3_close(db);wo_foot();return 1;
 }
 
@@ -359,15 +348,14 @@ static int wo_detail(const char *id,const char *bearer,const char *auth_db){
     psetup_open(200,o.title,"ak-wb work-orders work-order");
     char code[16];snprintf(code,sizeof(code),"WO-%.6s",o.id+3);for(char *p=code;*p;p++)*p=(char)toupper((unsigned char)*p);
     wo_strip(code);
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Work order ",stdout);html(code);fputs(" \xc2\xb7 ",stdout);
+    ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Work order ",stdout);html(code);fputs(" \xc2\xb7 ",stdout);
     fputs(open?(fixed?"Terms accepted":"Being composed"):"Closed",stdout);
-    fputs("</p><h1>",stdout);html(o.title);fputs("</h1><p class=\"ak-lede\">",stdout);html(o.scope);fputs("</p></div>"
-          "<aside class=\"ak-panel is-raised wo-vault\" data-release-summary><p class=\"ak-kicker\">Stated across milestones</p><p class=\"wo-sum\">",stdout);
-    printf("%.2f <small>",total);html(o.currency);fputs("</small></p><dl class=\"ak-spec\"><dt>Opened by</dt><dd>",stdout);wo_name(auth_db,o.opened_by);
-    fputs("</dd><dt>On behalf of</dt><dd>",stdout);if(!strcmp(o.on_behalf,"self"))fputs("Themselves",stdout);else html(o.on_behalf);
+    ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);html(o.title);ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede");html(o.scope);ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open_a(stdout,"aside","class","ak-panel is-raised wo-vault","data-release-summary",(const char *)NULL); ui_open(stdout,"p","ak-kicker"); fputs("Stated across milestones",stdout); ui_close(stdout,"p"); ui_open(stdout,"p","wo-sum");
+    printf("%.2f <small>",total);html(o.currency);ui_close(stdout,"small"); ui_close(stdout,"p"); ui_open(stdout,"dl","ak-spec"); ui_open(stdout,"dt",NULL); fputs("Opened by",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL);wo_name(auth_db,o.opened_by);
+    ui_close(stdout,"dd"); ui_text(stdout,"dt",NULL,"On behalf of"); ui_open(stdout,"dd",NULL);if(!strcmp(o.on_behalf,"self"))fputs("Themselves",stdout);else html(o.on_behalf);
     printf("</dd><dt>Milestones</dt><dd>%lld</dd><dt>Terms accepted</dt><dd class=\"is-on\">%lld of %lld</dd><dt>Opened</dt><dd>",stages,accepted,m);wo_day(o.opened_at);
-    fputs("</dd></dl><p class=\"wo-note\">A stated amount is a written term. No funds are held for this work order and none move when a milestone is approved.</p></aside></header>",stdout);
-    fputs("<div class=\"wo-split\"><section class=\"wo-stages\" data-milestones><header class=\"wo-head\"><span class=\"ak-kicker\">Staged milestones</span>",stdout);
+    ui_close(stdout,"dd"); ui_close(stdout,"dl"); ui_text(stdout,"p","wo-note","A stated amount is a written term. No funds are held for this work order and none move when a milestone is approved."); ui_close(stdout,"aside"); ui_close(stdout,"header");
+    ui_open(stdout,"div","wo-split"); ui_open_a(stdout,"section","class","wo-stages","data-milestones",(const char *)NULL); ui_open(stdout,"header","wo-head"); ui_open(stdout,"span","ak-kicker"); fputs("Staged milestones",stdout); ui_close(stdout,"span");
     printf("<span class=\"ak-tag\">%lld staged</span></header>",stages);
     int found=0;
     if(sqlite3_prepare_v2(db,"SELECT milestone_id,sequence,title,scope,COALESCE(amount_stated,''),COALESCE(due_on,'') FROM work_order_milestone "
@@ -375,56 +363,56 @@ static int wo_detail(const char *id,const char *bearer,const char *auth_db){
         sqlite3_bind_text(s,1,id,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){found++;
             const char *mid=wo_col(s,0);long long n=wo_approvals(db,id,mid);
-            fputs("<article class=\"ak-panel wo-stage\" data-milestone><header><p class=\"ak-kicker\">Milestone ",stdout);html(wo_col(s,1));
-            fputs(n>=m&&m>0?" <span class=\"ak-tag is-on\">Approved by all</span>":"",stdout);fputs("</p>",stdout);
-            if(*wo_col(s,4)){fputs("<b class=\"wo-amt\">",stdout);html(wo_col(s,4));fputs(" ",stdout);html(o.currency);fputs("<small>stated</small></b>",stdout);}
-            fputs("</header><h3>",stdout);html(wo_col(s,2));fputs("</h3><p>",stdout);html(wo_col(s,3));fputs("</p>",stdout);
-            if(*wo_col(s,5)){fputs("<p class=\"wo-due\">Due ",stdout);html(wo_col(s,5));fputs("</p>",stdout);}
-            fputs("<div class=\"wo-release\" data-release-ledger><div class=\"wo-quorum\"><span class=\"ak-kicker\">Release sign-off</span>",stdout);wo_signer_strip(db,id,mid,m);fputs("</div>",stdout);
+            ui_open_a(stdout,"article","class","ak-panel wo-stage","data-milestone",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Milestone ",stdout);html(wo_col(s,1));
+            fputs(n>=m&&m>0?" <span class=\"ak-tag is-on\">Approved by all</span>":"",stdout);ui_close(stdout,"p");
+            if(*wo_col(s,4)){ui_open(stdout,"b","wo-amt");html(wo_col(s,4));fputs(" ",stdout);html(o.currency);ui_open(stdout,"small",NULL); fputs("stated",stdout); ui_close(stdout,"small"); ui_close(stdout,"b");}
+            ui_close(stdout,"header"); ui_open(stdout,"h3",NULL);html(wo_col(s,2));ui_close(stdout,"h3"); ui_open(stdout,"p",NULL);html(wo_col(s,3));ui_close(stdout,"p");
+            if(*wo_col(s,5)){ui_open(stdout,"p","wo-due"); fputs("Due ",stdout);html(wo_col(s,5));ui_close(stdout,"p");}
+            ui_open_a(stdout,"div","class","wo-release","data-release-ledger",(const char *)NULL); ui_open(stdout,"div","wo-quorum"); ui_open(stdout,"span","ak-kicker"); fputs("Release sign-off",stdout); ui_close(stdout,"span");wo_signer_strip(db,id,mid,m);ui_close(stdout,"div");
             wo_decisions(db,auth_db,id,mid);
             if(party&&open)wo_signoff_form(id,mid,"Record your decision","Approve this milestone's release");
-            fputs("</div></article>",stdout);
+            ui_close(stdout,"div"); ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);s=NULL;
     if(!found)ui_text(stdout, "p", "ak-empty", "No milestones are staged yet. The opener stages them before the parties accept the terms.");
-    if(opener&&open&&!fixed){fputs("<div class=\"ak-ask wo-add\"><p class=\"ak-kicker\">Add a milestone</p>",stdout);wo_milestone_form(id);fputs("</div>",stdout);}
+    if(opener&&open&&!fixed){ui_open(stdout,"div","ak-ask wo-add"); ui_text(stdout,"p","ak-kicker","Add a milestone");wo_milestone_form(id);ui_close(stdout,"div");}
     else if(opener&&fixed)ui_text(stdout, "p", "ak-empty", "A party has accepted these terms, so the milestones are fixed as they accepted them.");
-    fputs("</section><aside class=\"wo-side\"><section class=\"ak-panel\" data-parties><header><h2>Parties and stated terms</h2></header>",stdout);
-    fputs("<ul class=\"wo-parties\">",stdout);
+    ui_close(stdout,"section"); ui_open(stdout,"aside","wo-side"); ui_open_a(stdout,"section","class","ak-panel","data-parties",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Parties and stated terms",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header");
+    ui_open(stdout,"ul","wo-parties");
     if(sqlite3_prepare_v2(db,"SELECT p.party_subject,p.part,COALESCE(p.compensation_stated,''),COALESCE(p.compensation_basis,''),COALESCE(r.label,''),"
         "EXISTS(SELECT 1 FROM work_order_signoff x WHERE x.namespace=p.namespace AND x.work_order_id=p.work_order_id AND x.milestone_id='terms' AND x.signer=p.party_subject AND x.decision='approve' AND x.status='published') "
         "FROM work_order_party p LEFT JOIN role_program r ON r.namespace=p.namespace AND r.role_id=p.role_program AND r.status='published' "
         "WHERE p.namespace='root' AND p.status='published' AND p.work_order_id=?1 ORDER BY p.named_at,p.id LIMIT 40",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,id,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){
-            fputs("<li data-party><span><strong>",stdout);wo_name(auth_db,wo_col(s,0));fputs("</strong><small>",stdout);html(wo_col(s,1));
+            ui_open_a(stdout,"li","data-party",(const char *)NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,0));ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(wo_col(s,1));
             if(*wo_col(s,4)){fputs(" \xc2\xb7 ",stdout);html(wo_col(s,4));}
-            if(*wo_col(s,3)){fputs("<br>",stdout);html(wo_col(s,3));}
-            fputs("</small></span><span>",stdout);
-            if(*wo_col(s,2)){fputs("<b>",stdout);html(wo_col(s,2));fputs(" ",stdout);html(o.currency);fputs("</b>",stdout);}
-            fputs(sqlite3_column_int(s,5)?"<em class=\"is-on\">Accepted</em>":"<em>Not accepted</em>",stdout);fputs("</span></li>",stdout);
+            if(*wo_col(s,3)){ui_open(stdout,"br",NULL);html(wo_col(s,3));}
+            ui_close(stdout,"small"); ui_close(stdout,"span"); ui_open(stdout,"span",NULL);
+            if(*wo_col(s,2)){ui_open(stdout,"b",NULL);html(wo_col(s,2));fputs(" ",stdout);html(o.currency);ui_close(stdout,"b");}
+            fputs(sqlite3_column_int(s,5)?"<em class=\"is-on\">Accepted</em>":"<em>Not accepted</em>",stdout);ui_close(stdout,"span"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);s=NULL;
-    fputs("</ul><h3>Terms as stated</h3><p class=\"wo-terms\">",stdout);html(o.terms);fputs("</p>",stdout);
-    if(party&&open){fputs("<div class=\"wo-accept\">",stdout);wo_signoff_form(id,"terms","Record your answer to these terms","Accept these terms");fputs("</div>",stdout);}
-    fputs("</section>",stdout);
-    if(opener&&open&&!fixed){fputs("<section class=\"ak-ask\" data-name-party><p class=\"ak-kicker\">Name a party</p><p>They must already have an account. Nobody is invited or told; they see this work order once named.</p>",stdout);wo_party_form(db,id);fputs("</section>",stdout);}
-    fputs("<section class=\"ak-panel\" data-disputes><header><h2>Disputes</h2></header><ol class=\"ak-rows\">",stdout);
+    ui_close(stdout,"ul"); ui_text(stdout,"h3",NULL,"Terms as stated"); ui_open(stdout,"p","wo-terms");html(o.terms);ui_close(stdout,"p");
+    if(party&&open){ui_open(stdout,"div","wo-accept");wo_signoff_form(id,"terms","Record your answer to these terms","Accept these terms");ui_close(stdout,"div");}
+    ui_close(stdout,"section");
+    if(opener&&open&&!fixed){ui_open_a(stdout,"section","class","ak-ask","data-name-party",(const char *)NULL); ui_open(stdout,"p","ak-kicker"); fputs("Name a party",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("They must already have an account. Nobody is invited or told; they see this work order once named.",stdout); ui_close(stdout,"p");wo_party_form(db,id);ui_close(stdout,"section");}
+    ui_open_a(stdout,"section","class","ak-panel","data-disputes",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Disputes",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header"); ui_open(stdout,"ol","ak-rows");
     found=0;
     if(sqlite3_prepare_v2(db,"SELECT dispute_id,state,arbiter,opened_at FROM work_dispute WHERE namespace='root' AND status='published' AND work_order_id=?1 ORDER BY opened_at DESC LIMIT 20",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,id,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){found++;
-            fputs("<li data-dispute><strong>",stdout);wo_code("D-",wo_col(s,0));fputs(" \xc2\xb7 ",stdout);fputs(!strcmp(wo_col(s,1),"decided")?"Decided":"Open",stdout);
-            fputs("</strong><small>Arbiter ",stdout);wo_name(auth_db,wo_col(s,2));fputs(" \xc2\xb7 ",stdout);wo_day(wo_col(s,3));
-            fputs("</small><a class=\"ak-go\" href=\"/disputes/",stdout);html(wo_col(s,0));fputs("\">Open hearing</a></li>",stdout);
+            ui_open_a(stdout,"li","data-dispute",(const char *)NULL); ui_open(stdout,"strong",NULL);wo_code("D-",wo_col(s,0));fputs(" \xc2\xb7 ",stdout);fputs(!strcmp(wo_col(s,1),"decided")?"Decided":"Open",stdout);
+            ui_close(stdout,"strong"); ui_open(stdout,"small",NULL); fputs("Arbiter ",stdout);wo_name(auth_db,wo_col(s,2));fputs(" \xc2\xb7 ",stdout);wo_day(wo_col(s,3));
+            ui_close(stdout,"small"); ui_open_a(stdout,"a","class","ak-go",UI_DYN,"href","/disputes/",(wo_col(s,0))); fputs("Open hearing",stdout); ui_close(stdout,"a"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ol>",stdout);if(!found)ui_text(stdout, "p", "ak-empty", "No dispute has been raised.");
-    if(party&&open){fputs("<details class=\"wo-raise\"><summary class=\"ak-btn\">Raise a dispute</summary>",stdout);wo_dispute_form(db,id);fputs("</details>",stdout);}
-    fputs("</section></aside></div>",stdout);
+    ui_close(stdout,"ol");if(!found)ui_text(stdout, "p", "ak-empty", "No dispute has been raised.");
+    if(party&&open){ui_open(stdout,"details","wo-raise"); ui_text(stdout,"summary","ak-btn","Raise a dispute");wo_dispute_form(db,id);ui_close(stdout,"details");}
+    ui_close(stdout,"section"); ui_close(stdout,"aside"); ui_close(stdout,"div");
     sqlite3_close(db);wo_foot();return 1;
 }
 
@@ -453,21 +441,21 @@ static int wo_dispute_page(const char *id,const char *bearer,const char *auth_db
     char code[16];snprintf(code,sizeof(code),"D-%.6s",id+3);for(char *p=code;*p;p++)*p=(char)toupper((unsigned char)*p);
     psetup_open(200,about,"ak-wb work-orders hearing");
     wo_strip(code);
-    fputs("<header class=\"ak-panel wo-docket\"><div><p class=\"ak-kicker\">Dispute ",stdout);html(code);fputs(" \xc2\xb7 <a href=\"/work-orders/",stdout);html(wo);fputs("\">",stdout);html(o.title);
-    fputs("</a> \xc2\xb7 <span class=\"ak-live\">",stdout);fputs(open?"Awaiting the arbiter":"Decided",stdout);fputs("</span></p><h1>",stdout);html(about);fputs("</h1><p>Raised by ",stdout);
+    ui_open(stdout,"header","ak-panel wo-docket"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Dispute ",stdout);html(code);fputs(" \xc2\xb7 <a href=\"/work-orders/",stdout);html(wo);fputs("\">",stdout);html(o.title);
+    ui_close(stdout,"a"); fputs(" \xc2\xb7 ",stdout); ui_open(stdout,"span","ak-live");fputs(open?"Awaiting the arbiter":"Decided",stdout);ui_close(stdout,"span"); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);html(about);ui_close(stdout,"h1"); ui_open(stdout,"p",NULL); fputs("Raised by ",stdout);
     wo_name(auth_db,raised);fputs(" on ",stdout);wo_day(opened);fputs(".</p></div><dl class=\"ak-stats\"><div><dt>Arbiter</dt><dd class=\"is-on\">",stdout);wo_name(auth_db,arbiter);
     printf("</dd><small>named by the party who raised it</small></div><div><dt>Responses</dt><dd>%lld</dd><small>written into this hearing</small></div></dl></header>",responses);
-    fputs("<div class=\"wo-split\"><section class=\"ak-panel wo-feed\" data-hearing-feed><header><h2>Claim and responses</h2></header><ol class=\"wo-statements\"><li class=\"is-claim\"><p class=\"ak-kicker\">Claim \xc2\xb7 ",stdout);
-    wo_name(auth_db,raised);fputs(" \xc2\xb7 ",stdout);wo_day(opened);fputs("</p><blockquote>",stdout);html(claim);fputs("</blockquote></li>",stdout);
+    ui_open(stdout,"div","wo-split"); ui_open_a(stdout,"section","class","ak-panel wo-feed","data-hearing-feed",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Claim and responses",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header"); ui_open(stdout,"ol","wo-statements"); ui_open(stdout,"li","is-claim"); ui_open(stdout,"p","ak-kicker"); fputs("Claim \xc2\xb7 ",stdout);
+    wo_name(auth_db,raised);fputs(" \xc2\xb7 ",stdout);wo_day(opened);ui_close(stdout,"p"); ui_open(stdout,"blockquote",NULL);html(claim);ui_close(stdout,"blockquote"); ui_close(stdout,"li");
     if(sqlite3_prepare_v2(db,"SELECT author,body,stated_at FROM dispute_statement WHERE namespace='root' AND status='published' AND dispute_id=?1 ORDER BY stated_at,id LIMIT 200",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,id,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){
-            fputs("<li data-statement><p class=\"ak-kicker\">",stdout);fputs(!strcmp(wo_col(s,0),arbiter)?"Arbiter \xc2\xb7 ":"",stdout);wo_name(auth_db,wo_col(s,0));fputs(" \xc2\xb7 ",stdout);wo_day(wo_col(s,2));
-            fputs("</p><blockquote>",stdout);html(wo_col(s,1));fputs("</blockquote></li>",stdout);
+            ui_open_a(stdout,"li","data-statement",(const char *)NULL); ui_open(stdout,"p","ak-kicker");fputs(!strcmp(wo_col(s,0),arbiter)?"Arbiter \xc2\xb7 ":"",stdout);wo_name(auth_db,wo_col(s,0));fputs(" \xc2\xb7 ",stdout);wo_day(wo_col(s,2));
+            ui_close(stdout,"p"); ui_open(stdout,"blockquote",NULL);html(wo_col(s,1));ui_close(stdout,"blockquote"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);s=NULL;
-    fputs("</ol>",stdout);
+    ui_close(stdout,"ol");
     if(open){
         BfAuthoringTree *t=calloc(1,sizeof(*t));
         if(t){FtField hidden[1]={{"dispute",id}};
@@ -475,34 +463,34 @@ static int wo_dispute_page(const char *id,const char *bearer,const char *auth_db
                    ft_field(t,"ds-body","ds-say",0,"Your response","text","body","","What you saw, what you hold, what you are asking for",1,"3","6000",1,"");
             if(ok)ft_render(t,stdout);else{bf_authoring_tree_clear(t);free(t);}}
     }
-    fputs("</section><aside class=\"wo-side\"><section class=\"ak-panel\" data-hearing-panel><header><h2>Who is in this hearing</h2></header><ul class=\"wo-parties\">",stdout);
-    fputs("<li><span><strong>",stdout);wo_name(auth_db,arbiter);fputs("</strong><small>Arbiter</small></span><span>",stdout);
-    fputs(open?"<em>Deciding</em>":"<em class=\"is-on\">Decision written</em>",stdout);fputs("</span></li>",stdout);
+    ui_close(stdout,"section"); ui_open(stdout,"aside","wo-side"); ui_open_a(stdout,"section","class","ak-panel","data-hearing-panel",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Who is in this hearing",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header"); ui_open(stdout,"ul","wo-parties");
+    ui_open(stdout,"li",NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,arbiter);ui_close(stdout,"strong"); ui_text(stdout,"small",NULL,"Arbiter"); ui_close(stdout,"span"); ui_open(stdout,"span",NULL);
+    fputs(open?"<em>Deciding</em>":"<em class=\"is-on\">Decision written</em>",stdout);ui_close(stdout,"span"); ui_close(stdout,"li");
     if(sqlite3_prepare_v2(db,"SELECT p.party_subject,p.part,EXISTS(SELECT 1 FROM dispute_statement x WHERE x.namespace=p.namespace AND x.dispute_id=?2 AND x.author=p.party_subject AND x.status='published') "
         "FROM work_order_party p WHERE p.namespace='root' AND p.status='published' AND p.work_order_id=?1 ORDER BY p.named_at LIMIT 40",-1,&s,NULL)==SQLITE_OK){
         sqlite3_bind_text(s,1,wo,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,id,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){
-            fputs("<li><span><strong>",stdout);wo_name(auth_db,wo_col(s,0));fputs("</strong><small>",stdout);html(wo_col(s,1));
-            fputs(!strcmp(wo_col(s,0),raised)?" \xc2\xb7 raised it":"",stdout);fputs("</small></span><span>",stdout);
-            fputs(!strcmp(wo_col(s,0),raised)||sqlite3_column_int(s,2)?"<em class=\"is-on\">Heard</em>":"<em>No response yet</em>",stdout);fputs("</span></li>",stdout);
+            ui_open(stdout,"li",NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,0));ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(wo_col(s,1));
+            fputs(!strcmp(wo_col(s,0),raised)?" \xc2\xb7 raised it":"",stdout);ui_close(stdout,"small"); ui_close(stdout,"span"); ui_open(stdout,"span",NULL);
+            fputs(!strcmp(wo_col(s,0),raised)||sqlite3_column_int(s,2)?"<em class=\"is-on\">Heard</em>":"<em>No response yet</em>",stdout);ui_close(stdout,"span"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul><p class=\"wo-note\">The arbiter is a person the raising party named. They are not a party to the work order, and they hold no power over anyone's account or money.</p></section></aside></div>",stdout);
-    fputs("<section class=\"ak-sec wo-decision\" data-decision><header><div><span class=\"ak-kicker\">Decision</span><h2>",stdout);
-    fputs(open?"The arbiter's decision":"What the arbiter decided",stdout);fputs("</h2></div><p>A decision is the arbiter's written view. It changes no sign-off and moves no money. The parties record anything that follows from it themselves.</p></header>",stdout);
-    if(!open){fputs("<div class=\"ak-panel is-raised\"><p class=\"ak-kicker\">",stdout);wo_name(auth_db,arbiter);fputs(" \xc2\xb7 ",stdout);wo_day(decided);fputs("</p><blockquote class=\"wo-ruling\">",stdout);html(decision);fputs("</blockquote></div>",stdout);}
+    ui_close(stdout,"ul"); ui_text(stdout,"p","wo-note","The arbiter is a person the raising party named. They are not a party to the work order, and they hold no power over anyone's account or money."); ui_close(stdout,"section"); ui_close(stdout,"aside"); ui_close(stdout,"div");
+    ui_open_a(stdout,"section","class","ak-sec wo-decision","data-decision",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Decision",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL);
+    fputs(open?"The arbiter's decision":"What the arbiter decided",stdout);ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_text(stdout,"p",NULL,"A decision is the arbiter's written view. It changes no sign-off and moves no money. The parties record anything that follows from it themselves."); ui_close(stdout,"header");
+    if(!open){ui_open(stdout,"div","ak-panel is-raised"); ui_open(stdout,"p","ak-kicker");wo_name(auth_db,arbiter);fputs(" \xc2\xb7 ",stdout);wo_day(decided);ui_close(stdout,"p"); ui_open(stdout,"blockquote","wo-ruling");html(decision);ui_close(stdout,"blockquote"); ui_close(stdout,"div");}
     else if(is_arbiter){
-        fputs("<div class=\"ak-ask\">",stdout);
+        ui_open(stdout,"div","ak-ask");
         BfAuthoringTree *t=calloc(1,sizeof(*t));
         if(t){FtField hidden[1]={{"dispute",id}};FtOption confirm[1]={{"yes","I have read the claim and the responses, and this is my decision",0}};
             int ok=ft_action(t,"ds-decide",NULL,0,"Record my decision","post","/disputes/decide",hidden,1)&&
                    ft_field(t,"ds-decision","ds-decide",0,"Your decision","text","decision","","What you decide and why, in words the parties can act on",1,"5","6000",1,"")&&
                    ft_choice(t,"ds-confirm","ds-decide",1,"Confirm","confirm",confirm,1);
             if(ok)ft_render(t,stdout);else{bf_authoring_tree_clear(t);free(t);}}
-        fputs("</div>",stdout);
+        ui_close(stdout,"div");
     }else ui_text(stdout, "p", "ak-empty", "The arbiter has not written a decision yet.");
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
     sqlite3_close(db);wo_foot();return 1;
 }
 
@@ -536,15 +524,11 @@ static int wo_vouches(const char *query,const char *bearer,const char *auth_db){
     long long revoked=wo_count(db,"SELECT count(*) FROM role_vouch WHERE namespace='root' AND status='published' AND state='revoked'",NULL,NULL,NULL);
     psetup_open(200,"Vouches","ak-wb work-orders vouches");
     wo_strip("Vouches");
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-kicker\">Peer vouching</p><h1>Vouch for someone in a role</h1>"
-          "<p class=\"ak-lede\">Say, in your own name, that you know someone's work in one of the published operating roles. You can take a vouch back at any time.</p></div>"
-          "<aside class=\"ak-panel is-raised\"><p class=\"ak-kicker\">What a vouch is</p><p>A personal statement. It appoints nobody, grants nothing and certifies nothing. "
-          "A number of vouches is not an election, and every operation still checks its own authority.</p></aside></header>",stdout);
+    ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Peer vouching",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Vouch for someone in a role",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Say, in your own name, that you know someone's work in one of the published operating roles. You can take a vouch back at any time.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"aside","ak-panel is-raised"); ui_open(stdout,"p","ak-kicker"); fputs("What a vouch is",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("A personal statement. It appoints nobody, grants nothing and certifies nothing. A number of vouches is not an election, and every operation still checks its own authority.",stdout); ui_close(stdout,"p"); ui_close(stdout,"aside"); ui_close(stdout,"header");
     printf("<dl class=\"ak-stats is-row\"><div><dt>Standing vouches</dt><dd>%lld</dd><small>across all members</small></div><div><dt>You have given</dt><dd class=\"%s\">%lld</dd><small>still standing</small></div>"
            "<div><dt>You have received</dt><dd class=\"%s\">%lld</dd><small>still standing</small></div><div><dt>Taken back</dt><dd>%lld</dd><small>revoked by their voucher</small></div></dl>",
            standing,given?"is-on":"",given,received?"is-on":"",received,revoked);
-    fputs("<section class=\"ak-sec\" data-vouch-nominations><header><div><span class=\"ak-kicker\">Who is vouched for</span><h2>Standing vouches by person and role</h2></div>"
-          "<p>Grouped by the person vouched for and the role. Add your own if you know their work.</p></header><div class=\"wo-ledger\">",stdout);
+    ui_open_a(stdout,"section","class","ak-sec","data-vouch-nominations",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Who is vouched for",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Standing vouches by person and role",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Grouped by the person vouched for and the role. Add your own if you know their work.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","wo-ledger");
     int found=0;
     if(sqlite3_prepare_v2(db,"SELECT v.vouched_subject,v.role_program,COALESCE(r.label,v.role_program),v.context_scope,count(*),max(v.vouched_at),"
         "sum(v.voucher=?1) FROM role_vouch v LEFT JOIN role_program r ON r.namespace=v.namespace AND r.role_id=v.role_program AND r.status='published' "
@@ -552,42 +536,41 @@ static int wo_vouches(const char *query,const char *bearer,const char *auth_db){
         sqlite3_bind_text(s,1,actor,-1,SQLITE_TRANSIENT);
         while(sqlite3_step(s)==SQLITE_ROW){found++;
             const char *who=wo_col(s,0);long long n=sqlite3_column_int64(s,4);
-            fputs("<article class=\"wo-row\" data-vouch-group><div><p class=\"ak-kicker\">",stdout);html(wo_col(s,3));fputs("</p><h3>",stdout);wo_name(auth_db,who);
-            fputs("</h3><small>",stdout);html(wo_col(s,2));fputs("</small></div>",stdout);
-            printf("<div><b class=\"wo-count\">%lld %s</b><small>latest ",n,n==1?"vouch":"vouches");wo_day(wo_col(s,5));fputs("</small></div><div></div>",stdout);
+            ui_open_a(stdout,"article","class","wo-row","data-vouch-group",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker");html(wo_col(s,3));ui_close(stdout,"p"); ui_open(stdout,"h3",NULL);wo_name(auth_db,who);
+            ui_close(stdout,"h3"); ui_open(stdout,"small",NULL);html(wo_col(s,2));ui_close(stdout,"small"); ui_close(stdout,"div");
+            printf("<div><b class=\"wo-count\">%lld %s</b><small>latest ",n,n==1?"vouch":"vouches");wo_day(wo_col(s,5));ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_close(stdout,"div");
             if(sqlite3_column_int(s,6))ui_text(stdout, "span", "ak-tag is-on", "You vouched");
             else if(strcmp(who,actor)){fputs("<a class=\"ak-btn\" href=\"/vouches?for=",stdout);url_query_value(who);fputs("#vouch\">Vouch</a>",stdout);}
             else ui_text(stdout, "span", "ak-tag", "You");
-            fputs("</article>",stdout);
+            ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);s=NULL;
     if(!found)ui_text(stdout, "p", "ak-empty", "Nobody has vouched for anyone yet.");
-    fputs("</div></section><section class=\"ak-sec\" id=\"vouch\" data-vouch-give><header><div><span class=\"ak-kicker\">Vouch</span><h2>",stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section"); ui_open_a(stdout,"section","class","ak-sec","id","vouch","data-vouch-give",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Vouch",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL);
     if(*subject){fputs("Vouch for ",stdout);wo_name(auth_db,subject);}else fputs("Vouch for a member",stdout);
-    fputs("</h2></div><p>Name them by the email on their account. They are not notified; the vouch appears here under your name.</p></header><div class=\"ak-ask\">",stdout);
+    ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_text(stdout,"p",NULL,"Name them by the email on their account. They are not notified; the vouch appears here under your name."); ui_close(stdout,"header"); ui_open(stdout,"div","ak-ask");
     wo_vouch_form(db,*subject?subject:NULL);
-    fputs("</div></section><section class=\"ak-sec\" data-vouch-ledger><header><div><span class=\"ak-kicker\">Ledger</span><h2>Recent vouches</h2></div></header>"
-          "<div class=\"ak-panel ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Date</th><th>Voucher</th><th>For</th><th>Role</th><th>Scope</th><th>State</th><th></th></tr></thead><tbody>",stdout);
+    ui_close(stdout,"div"); ui_close(stdout,"section"); ui_open_a(stdout,"section","class","ak-sec","data-vouch-ledger",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Ledger",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Recent vouches",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel ak-scroll"); ui_open(stdout,"table","ak-table"); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("Date",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Voucher",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("For",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Role",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Scope",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("State",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL);
     found=0;
     if(sqlite3_prepare_v2(db,"SELECT v.vouch_id,v.voucher,v.vouched_subject,COALESCE(r.label,v.role_program),v.context_scope,v.state,v.vouched_at,v.statement "
         "FROM role_vouch v LEFT JOIN role_program r ON r.namespace=v.namespace AND r.role_id=v.role_program AND r.status='published' "
         "WHERE v.namespace='root' AND v.status='published' ORDER BY v.vouched_at DESC,v.id DESC LIMIT 50",-1,&s,NULL)==SQLITE_OK){
         while(sqlite3_step(s)==SQLITE_ROW){found++;
             int mine=!strcmp(wo_col(s,1),actor),standing_row=!strcmp(wo_col(s,5),"standing");
-            fputs("<tr data-vouch><td>",stdout);wo_day(wo_col(s,6));fputs("</td><td>",stdout);wo_name(auth_db,wo_col(s,1));fputs("</td><td><strong>",stdout);wo_name(auth_db,wo_col(s,2));
-            fputs("</strong><br><small>",stdout);html(wo_col(s,7));fputs("</small></td><td>",stdout);html(wo_col(s,3));fputs("</td><td><code>",stdout);html(wo_col(s,4));fputs("</code></td><td>",stdout);
-            fputs(standing_row?"<span class=\"ak-tag is-on\">Standing</span>":"<span class=\"ak-tag\">Revoked</span>",stdout);fputs("</td><td>",stdout);
+            ui_open_a(stdout,"tr","data-vouch",(const char *)NULL); ui_open(stdout,"td",NULL);wo_day(wo_col(s,6));ui_close(stdout,"td"); ui_open(stdout,"td",NULL);wo_name(auth_db,wo_col(s,1));ui_close(stdout,"td"); ui_open(stdout,"td",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,2));
+            ui_close(stdout,"strong"); ui_open(stdout,"br",NULL); ui_open(stdout,"small",NULL);html(wo_col(s,7));ui_close(stdout,"small"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL);html(wo_col(s,3));ui_close(stdout,"td"); ui_open(stdout,"td",NULL); ui_open(stdout,"code",NULL);html(wo_col(s,4));ui_close(stdout,"code"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
+            fputs(standing_row?"<span class=\"ak-tag is-on\">Standing</span>":"<span class=\"ak-tag\">Revoked</span>",stdout);ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
             if(mine&&standing_row){
                 BfAuthoringTree *t=calloc(1,sizeof(*t));
                 if(t){char fid[48];snprintf(fid,sizeof(fid),"vr-%.40s",wo_col(s,0));FtField hidden[1]={{"vouch",wo_col(s,0)}};
                     if(ft_action(t,fid,NULL,0,"Take back","post","/vouches/revoke",hidden,1))ft_render(t,stdout);else{bf_authoring_tree_clear(t);free(t);}}
             }
-            fputs("</td></tr>",stdout);
+            ui_close(stdout,"td"); ui_close(stdout,"tr");
         }
     }
     sqlite3_finalize(s);
-    fputs("</tbody></table>",stdout);if(!found)ui_text(stdout, "p", "ak-empty", "No vouches recorded yet.");fputs("</div></section>",stdout);
+    ui_close(stdout,"tbody"); ui_close(stdout,"table");if(!found)ui_text(stdout, "p", "ak-empty", "No vouches recorded yet.");ui_close(stdout,"div"); ui_close(stdout,"section");
     sqlite3_close(db);wo_foot();return 1;
 }
 

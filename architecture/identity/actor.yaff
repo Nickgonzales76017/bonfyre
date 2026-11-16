@@ -57,6 +57,7 @@ architecture actor-graph
   known_gap the native caller is an explicit operator CLI, not yet a standing archive-to-actor ingestion pass; a credited byline remains asserted until an operator supplies its provenance and no name is auto-merged into an identity.
   interacts web-address-edge
 architecture role-program-compiler
+  source_lineage earliest source schemas/control/role-program-specs.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports cmd/BonfyreCMS/tools/compile_role_program.py which scripts/retire.sh archived at cmd/BonfyreCMS/tools/compile_role_program.py.archive
   canonical_name RoleProgramCompiler
   family identity
   domain Identity / Operating posture
@@ -159,6 +160,7 @@ architecture hash-identity
   source_lineage identity federation seed
 
 architecture estate-identity-graph
+  source_lineage earliest source cmd/BonfyreEntity/src/main.c first committed 2026-04-29 in 9289a5f2 "runtime: publish cmd, registry, and operator surfaces"; ports scripts/resolve_entities.py which scripts/retire.sh archived at scripts/resolve_entities.py.archive
   canonical_name EstateIdentityGraph
   family identity
   domain Identity / What the estate's material names

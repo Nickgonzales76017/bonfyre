@@ -1,6 +1,7 @@
 #ifndef BONFYRE_CAMPAIGN_WORKSPACE_H
 #define BONFYRE_CAMPAIGN_WORKSPACE_H
 
+#include "ui_tree.h"
 #include "../../BonfyreCampaign/src/campaign.h"
 #include "bf_lex.h"
 #include "bf_utf8.h"
@@ -173,7 +174,7 @@ static int cwl_page(int status, const char *back, const char *action, const CwlF
         "<body class=\"ak-app route-campaign\" data-aurekai-pattern=\"workbench\">" BF_ESTATE_BAR "<main class=\"ak-wb\"><p class=\"ak-kicker\"><a href=\"", out);
     bf_lex_html_emit(out, back);
     fputs("\">Back to campaign workspace</a></p><header class=\"ak-wb-hero is-solo\"><div><h1>Build a campaign link</h1><p class=\"ak-lede\">Add source, medium and campaign tags to a destination. Copy the completed link into the message or creative you plan to share.</p></div></header>", out);
-    if (error && *error) { fputs("<div class=\"cwl-notice\" role=\"alert\"><strong>Check this link</strong><p>", out); bf_lex_html_emit(out, error); fputs("</p></div>", out); }
+    if (error && *error) { ui_start(out,"div");ui_attr(out,"class","cwl-notice");ui_attr(out,"role","alert");ui_gt(out);ui_open(out,"strong",NULL);ui_copy(out,"Check this link");ui_close(out,"strong");ui_open(out,"p",NULL); bf_lex_html_emit(out, error); ui_close(out,"p");ui_close(out,"div"); }
     if (result && *result) {
         fputs("<section class=\"ak-panel cwl-result\" aria-labelledby=\"result-heading\"><h2 id=\"result-heading\">Link ready to copy</h2><label for=\"campaign-result\">Completed campaign URL</label><textarea id=\"campaign-result\" rows=\"5\" readonly spellcheck=\"false\" aria-describedby=\"copy-help\">", out);
         bf_lex_html_emit(out, result);

@@ -35,7 +35,7 @@ static void wp_wall(long long ms){
 }
 static void wp_when(long long ms){
     time_t t=(time_t)(ms/1000);struct tm tm;char day[40];if(ms<=0||!gmtime_r(&t,&tm))return;
-    strftime(day,sizeof(day),"%d %b %Y, %H:%M UTC",&tm);printf("<time datetime=\"%lld\">",ms);html(day);fputs("</time>",stdout);
+    strftime(day,sizeof(day),"%d %b %Y, %H:%M UTC",&tm);printf("<time datetime=\"%lld\">",ms);html(day);ui_close(stdout,"time");
 }
 /* Agent names as people say them; anything else is shown as the owner wrote it. */
 static void wp_agent(const char *agent){
@@ -90,8 +90,8 @@ static void wp_digest(const char *ref,char hex[65]){
     bf_sha256_hex((const uint8_t *)ref,strlen(ref),hex);
 }
 static void wp_fingerprint(const char *hex){
-    fputs("<code class=\"wp-digest\" title=\"sha256:",stdout);html(hex);fputs("\" data-digest=\"",stdout);html(hex);fputs("\">sha256:",stdout);
-    printf("%.12s…%.6s",hex,hex+58);fputs("</code>",stdout);
+    ui_open_a(stdout,"code","class","wp-digest",UI_DYN,"title","sha256:",(hex),UI_DYN,"data-digest","",(hex)); fputs("sha256:",stdout);
+    printf("%.12s…%.6s",hex,hex+58);ui_close(stdout,"code");
 }
 static sqlite3 *wp_index(void){
     const char *index=getenv("BONFYRE_ACCOUNT_WORK_DB");sqlite3 *db=NULL;
@@ -99,7 +99,7 @@ static sqlite3 *wp_index(void){
     sqlite3_busy_timeout(db,1000);return db;
 }
 static void wp_style(void){
-    fputs("<link rel=\"stylesheet\" href=\"/assets/work-continuation.css\">",stdout);
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/work-continuation.css");
 }
 
 /* ---------- Meter token records for this task ---------- */
@@ -109,11 +109,11 @@ static long long wp_field_num(const char *s){return s&&strspn(s,"0123456789")==s
 static void wp_meter(const char *task,const char *subject,const char *scope){
     const char *meter_db=getenv("BONFYRE_METER_DB"),*index=getenv("BONFYRE_ACCOUNT_WORK_DB"),*bin=getenv("BONFYRE_METER_BINARY"),*bindir=getenv("BONFYRE_BIN_DIR");
     char binary[PATH_MAX];unsigned char *out=NULL;size_t size=0;
-    fputs("<h3 id=\"tokens\">",stdout);page_glyph("cost");fputs("Tokens the meter recorded</h3>",stdout);
+    ui_open_a(stdout,"h3","id","tokens");page_glyph("cost");fputs("Tokens the meter recorded</h3>",stdout);
     if(bin&&*bin=='/')snprintf(binary,sizeof(binary),"%s",bin);
     else if(snprintf(binary,sizeof(binary),"%s/bonfyre-meter",bindir&&*bindir=='/'?bindir:"/usr/local/bin")>=(int)sizeof(binary))binary[0]=0;
     if(!meter_db||*meter_db!='/'||!index||*index!='/'||!*binary||access(binary,X_OK)){
-        fputs("<p class=\"wp-note\" data-meter=\"unavailable\">Token records are not connected on this site, so the counts above are only what each run reported itself.</p>",stdout);return;}
+        ui_open_a(stdout,"p","class","wp-note","data-meter","unavailable"); fputs("Token records are not connected on this site, so the counts above are only what each run reported itself.",stdout); ui_close(stdout,"p");return;}
     char *args[]={binary,"work-tokens","--db",(char*)meter_db,"--work-db",(char*)index,"--subject",(char*)subject,"--scope",(char*)scope,"--mission",(char*)task,NULL};
     int rc=aw_native_result(args,NULL,0,&out,&size,1);
     if(rc||!out){
@@ -136,22 +136,22 @@ static void wp_meter(const char *task,const char *subject,const char *scope){
         else if(!strcmp(k,"valuation_coverage"))snprintf(coverage,sizeof(coverage),"%s",v);else if(!strcmp(k,"provisional_valuation_usd"))snprintf(price,sizeof(price),"%s",v);
     }
     free(out);
-    if(runs<0){fputs("<p class=\"wp-note\" data-meter=\"unavailable\">The token record response could not be read. Try again.</p>",stdout);return;}
-    fputs("<p class=\"wp-note\" data-meter=\"read\">Matched only by the exact session each run names, never by time or title. ",stdout);
+    if(runs<0){ui_open_a(stdout,"p","class","wp-note","data-meter","unavailable"); fputs("The token record response could not be read. Try again.",stdout); ui_close(stdout,"p");return;}
+    ui_open_a(stdout,"p","class","wp-note","data-meter","read"); fputs("Matched only by the exact session each run names, never by time or title. ",stdout);
     if(exact){wp_num(evidenced);fputs(" of ",stdout);wp_num(exact);fputs(exact==1?" session on this work has token records.":" sessions on this work have token records.",stdout);}
     else fputs("No run on this work names a session the meter can match.",stdout);
     if(nokey>0){fputs(" ",stdout);wp_num(nokey);fputs(nokey==1?" run started without a session key, so nothing is matched to it.":" runs started without a session key, so nothing is matched to them.",stdout);}
     if(shared>0){fputs(" ",stdout);wp_num(shared);fputs(shared==1?" session also appears on other work and is left out rather than split.":" sessions also appear on other work and are left out rather than split.",stdout);}
     if(failed_used>0){fputs(" ",stdout);wp_num(failed_used);fputs(failed_used==1?" failed run still used tokens.":" failed runs still used tokens.",stdout);}
-    (void)without;fputs("</p>",stdout);
+    (void)without;ui_close(stdout,"p");
     if(model_count){
-        fputs("<div class=\"wp-scroll\"><table class=\"wp-models\" data-meter-models><thead><tr><th scope=\"col\">Model</th><th scope=\"col\">Records</th><th scope=\"col\">Fresh input</th><th scope=\"col\">Cached input</th><th scope=\"col\">Cache writes</th><th scope=\"col\">Output</th><th scope=\"col\">Reasoning</th></tr></thead><tbody>",stdout);
-        for(int i=0;i<model_count;i++){const WpModel *m=&models[i];fputs("<tr><th scope=\"row\">",stdout);wp_agent(m->provider);fputs(" <small>",stdout);html(m->model);fputs("</small></th>",stdout);
-            long long cells[]={m->records,m->uncached,m->cached,m->write,m->output};for(size_t c=0;c<5;c++){fputs("<td>",stdout);if(cells[c]>=0)wp_num(cells[c]);else fputs("not reported",stdout);fputs("</td>",stdout);}
-            fputs("<td>",stdout);if(m->reasoning_known)wp_num(m->reasoning);else fputs("not reported",stdout);fputs("</td></tr>",stdout);}
-        fputs("</tbody></table></div>",stdout);
+        ui_open(stdout,"div","wp-scroll"); ui_open_a(stdout,"table","class","wp-models","data-meter-models",(const char *)NULL); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open_a(stdout,"th","scope","col"); fputs("Model",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Records",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Fresh input",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Cached input",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Cache writes",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Output",stdout); ui_close(stdout,"th"); ui_open_a(stdout,"th","scope","col"); fputs("Reasoning",stdout); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL);
+        for(int i=0;i<model_count;i++){const WpModel *m=&models[i];ui_open(stdout,"tr",NULL); ui_open_a(stdout,"th","scope","row");wp_agent(m->provider);fputs(" <small>",stdout);html(m->model);ui_close(stdout,"small"); ui_close(stdout,"th");
+            long long cells[]={m->records,m->uncached,m->cached,m->write,m->output};for(size_t c=0;c<5;c++){ui_open(stdout,"td",NULL);if(cells[c]>=0)wp_num(cells[c]);else fputs("not reported",stdout);ui_close(stdout,"td");}
+            ui_open(stdout,"td",NULL);if(m->reasoning_known)wp_num(m->reasoning);else fputs("not reported",stdout);ui_close(stdout,"td"); ui_close(stdout,"tr");}
+        ui_close(stdout,"tbody"); ui_close(stdout,"table"); ui_close(stdout,"div");
     }
-    fputs("<p class=\"wp-note\" data-valuation=\"",stdout);html(coverage);fputs("\">",stdout);
+    ui_open_a(stdout,"p","class","wp-note",UI_DYN,"data-valuation","",(coverage));
     if(!records)fputs("No token records, so nothing to price.",stdout);
     else if(valued>0&&*price&&strcmp(price,"unknown")){fputs("At the rates admitted for these models, ",stdout);wp_num(valued);fputs(" of ",stdout);wp_num(valued+unvalued);double usd=strtod(price,NULL);if(usd<0.005)fputs(" records come to less than one cent",stdout);else{fputs(" records come to about $",stdout);printf("%.2f",usd);}fputs(". That is an estimate, not a charge.",stdout);}
     else fputs("No admitted rate covers these records, so no price is shown. Unknown is not zero.",stdout);
@@ -178,70 +178,70 @@ static void ac_work_provenance(const char *context,const char *task,const char *
         while(sqlite3_step(s)==SQLITE_ROW){const char *st=(const char*)sqlite3_column_text(s,0);if(!st)continue;steps[wp_step_kind(st)]+=sqlite3_column_int64(s,1);outputs+=sqlite3_column_int64(s,2);}}
     sqlite3_finalize(s);s=NULL;
     wp_style();
-    fputs("<section class=\"wp\" id=\"provenance\" data-work-provenance data-task=\"",stdout);html(task);fputs("\" data-task-state=\"",stdout);html(state);fputs("\" aria-labelledby=\"wp-title\"><header><p class=\"wp-kicker\">",stdout);
-    html(wp_task_words(state));if(updated>0){fputs(" · last change ",stdout);wp_when(updated);}fputs("</p><h2 id=\"wp-title\">",stdout);
+    ui_open_a(stdout,"section","class","wp","id","provenance","data-work-provenance",(const char *)NULL,UI_DYN,"data-task","",(task),UI_DYN,"data-task-state","",(state),"aria-labelledby","wp-title"); ui_open(stdout,"header",NULL); ui_open(stdout,"p","wp-kicker");
+    html(wp_task_words(state));if(updated>0){fputs(" · last change ",stdout);wp_when(updated);}ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","wp-title");
     /* Assistant goals already carry their own heading in the focus above. */
     if(strncmp(task,"account-operator-",17)&&*title){html(title);}else fputs("How this work was done",stdout);
-    fputs("</h2><dl class=\"wp-sum\"><div><dt>Runs</dt><dd data-sum=\"runs\">",stdout);wp_num(total_runs);fputs("</dd></div><div><dt>Failed runs</dt><dd data-sum=\"failed-runs\"",stdout);if(failed_runs)fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(failed_runs);
-    fputs("</dd></div><div><dt>Agent time</dt><dd data-sum=\"wall\">",stdout);if(walls)wp_wall(wall);else fputs("not recorded",stdout);
-    fputs("</dd></div><div><dt>Verified steps</dt><dd data-sum=\"verified\">",stdout);wp_num(steps[0]);fputs("</dd></div><div><dt>Failed steps</dt><dd data-sum=\"failed-steps\"",stdout);if(steps[1])fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(steps[1]);
-    fputs("</dd></div><div><dt>Outputs kept</dt><dd data-sum=\"outputs\">",stdout);wp_num(outputs);fputs("</dd></div></dl></header>",stdout);
+    ui_close(stdout,"h2"); ui_open(stdout,"dl","wp-sum"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Runs",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","runs");wp_num(total_runs);fputs("</dd></div><div><dt>Failed runs</dt><dd data-sum=\"failed-runs\"",stdout);if(failed_runs)fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(failed_runs);
+    ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Agent time",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","wall");if(walls)wp_wall(wall);else fputs("not recorded",stdout);
+    ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Verified steps",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","verified");wp_num(steps[0]);fputs("</dd></div><div><dt>Failed steps</dt><dd data-sum=\"failed-steps\"",stdout);if(steps[1])fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(steps[1]);
+    ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Outputs kept",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","outputs");wp_num(outputs);ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"header");
 
     /* Who worked on it. */
-    fputs("<h3 id=\"runs\">",stdout);page_glyph("robot");fputs("Who worked on it</h3><p class=\"wp-note\">Each run as its owner recorded it. Tokens are what the run itself reported when it ended.</p>",stdout);
+    ui_open_a(stdout,"h3","id","runs");page_glyph("robot");fputs("Who worked on it</h3><p class=\"wp-note\">Each run as its owner recorded it. Tokens are what the run itself reported when it ended.</p>",stdout);
     if(sqlite3_prepare_v2(db,"SELECT r.run_id,r.agent,r.worker_id,r.role,r.session_kind,r.state,r.created_ms,r.duration_ms,r.limit_signal,r.provider_session_ref,"
         "r.state='running' AND a.state IN('complete','dead_letter','cancelled'),u.run_id IS NOT NULL,u.input_tokens,u.output_tokens,u.cache_read_tokens,u.cache_write_tokens,u.estimated_micro_usd "
         "FROM account_work_run r JOIN account_work a ON a.id=r.work_id LEFT JOIN account_work_usage u ON u.work_id=r.work_id AND u.run_id=r.run_id "
         "WHERE a.id=?1 AND a.subject=?2 AND a.scope=?3 ORDER BY r.created_ms,r.run_id LIMIT ?4",-1,&s,NULL)!=SQLITE_OK){
-        fputs("<p class=\"wp-empty\" data-runs=\"unavailable\">Run details are not in this index yet.</p>",stdout);
+        ui_open_a(stdout,"p","class","wp-empty","data-runs","unavailable"); fputs("Run details are not in this index yet.",stdout); ui_close(stdout,"p");
     }else{
         int shown=0;sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,subject,-1,SQLITE_STATIC);sqlite3_bind_text(s,3,scope,-1,SQLITE_STATIC);sqlite3_bind_int(s,4,WP_RUNS);
         while(sqlite3_step(s)==SQLITE_ROW){
             const char *agent=(const char*)sqlite3_column_text(s,1),*worker=(const char*)sqlite3_column_text(s,2),*role=(const char*)sqlite3_column_text(s,3),*kind=(const char*)sqlite3_column_text(s,4),*rs=(const char*)sqlite3_column_text(s,5),*session=(const char*)sqlite3_column_text(s,9);
             int unconfirmed=sqlite3_column_int(s,10),reported=sqlite3_column_int(s,11);if(!rs)continue;
-            if(!shown)fputs("<ol class=\"wp-list\" data-runs>",stdout);shown++;
-            fputs("<li class=\"wp-run\" data-state=\"",stdout);html(rs);fputs("\"",stdout);if(unconfirmed)fputs(" data-unconfirmed",stdout);fputs("><div><strong>",stdout);wp_agent(agent&&*agent?agent:worker);fputs("</strong>",stdout);
-            if((role&&*role)||(kind&&*kind)){fputs("<small>",stdout);if(role&&*role)wp_words(role);if(role&&*role&&kind&&*kind)fputs(" · ",stdout);if(kind&&*kind){wp_words(kind);fputs(" session",stdout);}fputs("</small>",stdout);}
+            if(!shown)ui_open_a(stdout,"ol","class","wp-list","data-runs",(const char *)NULL);shown++;
+            fputs("<li class=\"wp-run\" data-state=\"",stdout);html(rs);fputs("\"",stdout);if(unconfirmed)fputs(" data-unconfirmed",stdout);fputs("><div><strong>",stdout);wp_agent(agent&&*agent?agent:worker);ui_close(stdout,"strong");
+            if((role&&*role)||(kind&&*kind)){ui_open(stdout,"small",NULL);if(role&&*role)wp_words(role);if(role&&*role&&kind&&*kind)fputs(" · ",stdout);if(kind&&*kind){wp_words(kind);fputs(" session",stdout);}ui_close(stdout,"small");}
             /* The session id is a Meter join key only; the page says it exists, never what it is. */
-            if(session&&*session)fputs("<small data-session>Session recorded for token matching</small>",stdout);
-            fputs("</div><div><span data-run-state>",stdout);fputs(wp_run_words(rs,unconfirmed),stdout);fputs("</span>",stdout);
+            if(session&&*session)do{ ui_open_a(stdout,"small","data-session",(const char *)NULL); fputs("Session recorded for token matching",stdout); ui_close(stdout,"small"); }while(0);
+            ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open_a(stdout,"span","data-run-state",(const char *)NULL);fputs(wp_run_words(rs,unconfirmed),stdout);ui_close(stdout,"span");
             if(reported){
-                fputs("<p class=\"wp-tokens\" data-usage>",stdout);static const char *const names[]={" in"," out"," read from cache"," written to cache"};int any=0;
-                for(int c=0;c<4;c++)if(sqlite3_column_type(s,12+c)==SQLITE_INTEGER){fputs("<span>",stdout);wp_num(sqlite3_column_int64(s,12+c));fputs(names[c],stdout);fputs("</span> ",stdout);any=1;}
-                if(sqlite3_column_type(s,16)==SQLITE_INTEGER){fputs("<span>about $",stdout);printf("%.2f",(double)sqlite3_column_int64(s,16)/1000000.0);fputs(" estimated</span> ",stdout);}
-                if(!any)ui_text(stdout, "span", NULL, "Tokens not reported");fputs("</p>",stdout);
-            }else fputs("<p class=\"wp-tokens\" data-usage=\"unreported\"><span>Tokens not reported</span></p>",stdout);
-            if(sqlite3_column_int(s,8))fputs("<span class=\"wp-limit\" data-limit>Stopped at the provider's usage limit</span>",stdout);
-            fputs("</div><div class=\"wp-wall\">",stdout);if(sqlite3_column_type(s,7)==SQLITE_INTEGER){fputs("<span data-wall>",stdout);wp_wall(sqlite3_column_int64(s,7));fputs("</span>",stdout);}else ui_text(stdout, "span", NULL, "time not recorded");
-            fputs("<small>",stdout);wp_when(sqlite3_column_int64(s,6));fputs("</small></div></li>",stdout);
+                ui_open_a(stdout,"p","class","wp-tokens","data-usage",(const char *)NULL);static const char *const names[]={" in"," out"," read from cache"," written to cache"};int any=0;
+                for(int c=0;c<4;c++)if(sqlite3_column_type(s,12+c)==SQLITE_INTEGER){ui_open(stdout,"span",NULL);wp_num(sqlite3_column_int64(s,12+c));fputs(names[c],stdout);ui_close(stdout,"span"); fputs(" ",stdout);any=1;}
+                if(sqlite3_column_type(s,16)==SQLITE_INTEGER){ui_open(stdout,"span",NULL); fputs("about $",stdout);printf("%.2f",(double)sqlite3_column_int64(s,16)/1000000.0);fputs(" estimated</span> ",stdout);}
+                if(!any)ui_text(stdout, "span", NULL, "Tokens not reported");ui_close(stdout,"p");
+            }else do{ ui_open_a(stdout,"p","class","wp-tokens","data-usage","unreported"); ui_open(stdout,"span",NULL); fputs("Tokens not reported",stdout); ui_close(stdout,"span"); ui_close(stdout,"p"); }while(0);
+            if(sqlite3_column_int(s,8))do{ ui_open_a(stdout,"span","class","wp-limit","data-limit",(const char *)NULL); fputs("Stopped at the provider's usage limit",stdout); ui_close(stdout,"span"); }while(0);
+            ui_close(stdout,"div"); ui_open(stdout,"div","wp-wall");if(sqlite3_column_type(s,7)==SQLITE_INTEGER){ui_open_a(stdout,"span","data-wall",(const char *)NULL);wp_wall(sqlite3_column_int64(s,7));ui_close(stdout,"span");}else ui_text(stdout, "span", NULL, "time not recorded");
+            ui_open(stdout,"small",NULL);wp_when(sqlite3_column_int64(s,6));ui_close(stdout,"small"); ui_close(stdout,"div"); ui_close(stdout,"li");
         }
-        if(shown)fputs("</ol>",stdout);else fputs("<p class=\"wp-empty\" data-runs=\"none\">No runs are recorded for this work.</p>",stdout);
-        if(total_runs>shown&&shown){fputs("<p class=\"wp-note\">Showing the first ",stdout);wp_num(shown);fputs(" of ",stdout);wp_num(total_runs);fputs(" runs.</p>",stdout);}
+        if(shown)ui_close(stdout,"ol");else do{ ui_open_a(stdout,"p","class","wp-empty","data-runs","none"); fputs("No runs are recorded for this work.",stdout); ui_close(stdout,"p"); }while(0);
+        if(total_runs>shown&&shown){ui_open(stdout,"p","wp-note"); fputs("Showing the first ",stdout);wp_num(shown);fputs(" of ",stdout);wp_num(total_runs);fputs(" runs.</p>",stdout);}
     }
     sqlite3_finalize(s);s=NULL;
 
     /* What it did: failed steps first, then the rest in order. */
-    fputs("<h3 id=\"steps\">",stdout);page_glyph("needs");fputs("What it did</h3>",stdout);
+    ui_open_a(stdout,"h3","id","steps");page_glyph("needs");fputs("What it did</h3>",stdout);
     if(sqlite3_prepare_v2(db,"SELECT node_id,operator_id,state,attempt FROM account_work_step WHERE work_id=?1 ORDER BY state NOT IN('dead_letter','blocked','cancel_requested'),updated_ms,node_id LIMIT ?2",-1,&s,NULL)==SQLITE_OK){
         int shown=0;sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_int(s,2,WP_STEPS);
         while(sqlite3_step(s)==SQLITE_ROW){const char *op=(const char*)sqlite3_column_text(s,1),*st=(const char*)sqlite3_column_text(s,2);int attempt=sqlite3_column_int(s,3);if(!st)continue;
-            if(!shown){fputs("<p class=\"wp-note\">Verified means the step's owner recorded it as done. A failed step names what to look at first.</p><ul class=\"wp-steps\" data-steps>",stdout);}shown++;
+            if(!shown){ui_open(stdout,"p","wp-note"); fputs("Verified means the step's owner recorded it as done. A failed step names what to look at first.",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"ul","class","wp-steps","data-steps",(const char *)NULL);}shown++;
             int k=wp_step_kind(st);fputs("<li data-step=\"",stdout);fputs(k==0?"verified":k==1?"failed":"open",stdout);fputs("\"><span>",stdout);wp_words(op&&*op?op:(const char*)sqlite3_column_text(s,0));
-            if(attempt>1)printf(" <small>(try %d)</small>",attempt);fputs("</span><span>",stdout);fputs(wp_step_words(st),stdout);fputs("</span></li>",stdout);}
-        if(shown){fputs("</ul>",stdout);long long all=steps[0]+steps[1]+steps[2];if(all>shown){fputs("<p class=\"wp-note\">Showing ",stdout);wp_num(shown);fputs(" of ",stdout);wp_num(all);fputs(" steps.</p>",stdout);}}
-        else fputs("<p class=\"wp-empty\" data-steps=\"none\">No steps are recorded for this work.</p>",stdout);
+            if(attempt>1)printf(" <small>(try %d)</small>",attempt);ui_close(stdout,"span"); ui_open(stdout,"span",NULL);fputs(wp_step_words(st),stdout);ui_close(stdout,"span"); ui_close(stdout,"li");}
+        if(shown){ui_close(stdout,"ul");long long all=steps[0]+steps[1]+steps[2];if(all>shown){ui_open(stdout,"p","wp-note"); fputs("Showing ",stdout);wp_num(shown);fputs(" of ",stdout);wp_num(all);fputs(" steps.</p>",stdout);}}
+        else do{ ui_open_a(stdout,"p","class","wp-empty","data-steps","none"); fputs("No steps are recorded for this work.",stdout); ui_close(stdout,"p"); }while(0);
     }
     sqlite3_finalize(s);s=NULL;
 
     /* What it kept. */
-    fputs("<h3 id=\"outputs\">",stdout);page_glyph("receipt");fputs("What it kept</h3>",stdout);
+    ui_open_a(stdout,"h3","id","outputs");page_glyph("receipt");fputs("What it kept</h3>",stdout);
     if(sqlite3_prepare_v2(db,"SELECT operator_id,output_ref,updated_ms FROM account_work_step WHERE work_id=?1 AND state='complete' AND output_ref<>'' ORDER BY updated_ms,node_id LIMIT ?2",-1,&s,NULL)==SQLITE_OK){
         int shown=0;sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_int(s,2,WP_OUTPUTS);
         while(sqlite3_step(s)==SQLITE_ROW){const char *op=(const char*)sqlite3_column_text(s,0),*ref=(const char*)sqlite3_column_text(s,1);char hex[65];if(!ref)continue;
-            if(!shown)fputs("<p class=\"wp-note\">Each output is held by the owner that made it. Its fingerprint is here so anyone holding the file can check it is the same one; this page does not open or share the file.</p><ol class=\"wp-list\" data-outputs>",stdout);shown++;
-            wp_digest(ref,hex);fputs("<li class=\"wp-out\"><div><strong>",stdout);wp_words(op);fputs("</strong><small>",stdout);fputs(!strncmp(ref,"sha256:",7)?"Receipt checked against the owner's copy when indexed":"Pipeline output",stdout);fputs("</small></div><div>",stdout);
-            wp_fingerprint(hex);fputs("</div><div>",stdout);wp_when(sqlite3_column_int64(s,2));fputs("</div></li>",stdout);}
-        if(shown)fputs("</ol>",stdout);else fputs("<p class=\"wp-empty\" data-outputs=\"none\">This work has not kept an output yet. Work that fails or is still running keeps none.</p>",stdout);
+            if(!shown)do{ ui_open(stdout,"p","wp-note"); fputs("Each output is held by the owner that made it. Its fingerprint is here so anyone holding the file can check it is the same one; this page does not open or share the file.",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"ol","class","wp-list","data-outputs",(const char *)NULL); }while(0);shown++;
+            wp_digest(ref,hex);ui_open(stdout,"li","wp-out"); ui_open(stdout,"div",NULL); ui_open(stdout,"strong",NULL);wp_words(op);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);fputs(!strncmp(ref,"sha256:",7)?"Receipt checked against the owner's copy when indexed":"Pipeline output",stdout);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);
+            wp_fingerprint(hex);ui_close(stdout,"div"); ui_open(stdout,"div",NULL);wp_when(sqlite3_column_int64(s,2));ui_close(stdout,"div"); ui_close(stdout,"li");}
+        if(shown)ui_close(stdout,"ol");else do{ ui_open_a(stdout,"p","class","wp-empty","data-outputs","none"); fputs("This work has not kept an output yet. Work that fails or is still running keeps none.",stdout); ui_close(stdout,"p"); }while(0);
     }
     sqlite3_finalize(s);s=NULL;sqlite3_close(db);
 
@@ -249,12 +249,12 @@ static void ac_work_provenance(const char *context,const char *task,const char *
 
     /* Where to go from here: existing owners only. */
     int stopped=!strcmp(state,"blocked")||!strcmp(state,"dead_letter")||!strcmp(state,"retry_wait");
-    fputs("<h3 id=\"next\">",stdout);page_glyph("play");fputs("Pick up from here</h3><p class=\"wp-note\" data-next=\"",stdout);fputs(stopped?"stopped":!strcmp(state,"complete")?"finished":"open",stdout);fputs("\">",stdout);
+    ui_open_a(stdout,"h3","id","next");page_glyph("play");fputs("Pick up from here</h3><p class=\"wp-note\" data-next=\"",stdout);fputs(stopped?"stopped":!strcmp(state,"complete")?"finished":"open",stdout);fputs("\">",stdout);
     if(stopped&&steps[1])fputs("It stopped on the failed step listed first above. The agent that owns it picks it up again; this page does not restart it.",stdout);
     else if(stopped)fputs("It is stopped. The agent that owns it picks it up again; this page does not restart it.",stdout);
     else if(!strcmp(state,"complete"))fputs("It finished. What it kept stays with its owner and is listed with the rest of this account's outputs.",stdout);
     else fputs("It is still open. This page updates when its owner records the next run.",stdout);
-    (void)source;fputs("</p><nav class=\"wp-next\" aria-label=\"Continue this work\">",stdout);
+    (void)source;ui_close(stdout,"p"); ui_open_a(stdout,"nav","class","wp-next","aria-label","Continue this work");
     if(stopped){fputs("<a href=\"/inbox?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("bell");fputs("See what needs you</a>",stdout);}
     fputs("<a href=\"/work-board/outputs?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("receipt");fputs("All outputs</a><a href=\"/s/models/all?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("robot");fputs("Try another model</a><a href=\"/programs?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("apps");fputs("Programs</a></nav></section>",stdout);
 }
@@ -270,7 +270,7 @@ static int ac_work_outputs(const char *method,const char *query,const char *bear
     if(access==0){snprintf(back,sizeof(back),"/work-board/outputs%s%s",*query?"?":"",query);fputs("HTTP/1.1 303 See Other\r\nLocation: /login?next=",stdout);url_query_value(back);fputs("\r\nCache-Control: private, no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;}
     if(access!=1){aw_error(403,"This account cannot open those outputs.\n");return 1;}
     psetup_start(200,"Account outputs");wp_style();
-    fputs("<section class=\"wp\" data-work-outputs data-context=\"",stdout);html(context);fputs("\"><header><p class=\"wp-kicker\">Account work</p><h2>Outputs</h2><p class=\"wp-note\">What this account's agents finished and kept, newest first. Each one opens the work that made it, with who ran it, what failed along the way and the tokens it used.</p></header>",stdout);
+    ui_open_a(stdout,"section","class","wp","data-work-outputs",(const char *)NULL,UI_DYN,"data-context","",(context)); ui_open(stdout,"header",NULL); ui_open(stdout,"p","wp-kicker"); fputs("Account work",stdout); ui_close(stdout,"p"); ui_open(stdout,"h2",NULL); fputs("Outputs",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p","wp-note"); fputs("What this account's agents finished and kept, newest first. Each one opens the work that made it, with who ran it, what failed along the way and the tokens it used.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header");
     ac_work_board_picker(context,"",bearer,auth_db);
     sqlite3 *db=wp_index();sqlite3_stmt *s=NULL;int shown=0;
     if(!db||sqlite3_prepare_v2(db,"SELECT a.id,a.title,s.operator_id,s.output_ref,s.updated_ms FROM account_work_step s JOIN account_work a ON a.id=s.work_id "
@@ -279,10 +279,10 @@ static int ac_work_outputs(const char *method,const char *query,const char *bear
     }else{
         sqlite3_bind_text(s,1,destination,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,scope?scope:"",-1,SQLITE_STATIC);sqlite3_bind_int(s,3,WP_OUTPUTS);
         while(sqlite3_step(s)==SQLITE_ROW){const char *id=(const char*)sqlite3_column_text(s,0),*title=(const char*)sqlite3_column_text(s,1),*op=(const char*)sqlite3_column_text(s,2),*ref=(const char*)sqlite3_column_text(s,3);char hex[65];
-            if(!id||!ref||!ac_word(id))continue;if(!shown)fputs("<ol class=\"wp-list\" data-outputs>",stdout);shown++;wp_digest(ref,hex);
-            fputs("<li class=\"wp-out\"><div><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(id);fputs("#provenance\">",stdout);html(title&&*title?title:"Untitled work");fputs("</a><small>",stdout);wp_words(op);fputs("</small></div><div>",stdout);
-            wp_fingerprint(hex);fputs("</div><div>",stdout);wp_when(sqlite3_column_int64(s,4));fputs("</div></li>",stdout);}
-        if(shown)fputs("</ol>",stdout);else fputs("<p class=\"wp-empty\" data-outputs=\"none\">No work on this account has kept an output yet.</p>",stdout);
+            if(!id||!ref||!ac_word(id))continue;if(!shown)ui_open_a(stdout,"ol","class","wp-list","data-outputs",(const char *)NULL);shown++;wp_digest(ref,hex);
+            fputs("<li class=\"wp-out\"><div><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(id);fputs("#provenance\">",stdout);html(title&&*title?title:"Untitled work");ui_close(stdout,"a"); ui_open(stdout,"small",NULL);wp_words(op);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);
+            wp_fingerprint(hex);ui_close(stdout,"div"); ui_open(stdout,"div",NULL);wp_when(sqlite3_column_int64(s,4));ui_close(stdout,"div"); ui_close(stdout,"li");}
+        if(shown)ui_close(stdout,"ol");else do{ ui_open_a(stdout,"p","class","wp-empty","data-outputs","none"); fputs("No work on this account has kept an output yet.",stdout); ui_close(stdout,"p"); }while(0);
     }
     sqlite3_finalize(s);sqlite3_close(db);
     fputs("<nav class=\"wp-next\" aria-label=\"Account work\"><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("board");fputs("Work board</a><a href=\"/inbox?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("bell");fputs("Inbox</a></nav></section>",stdout);

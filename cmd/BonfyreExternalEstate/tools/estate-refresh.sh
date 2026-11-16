@@ -92,4 +92,5 @@ bun cmd/BonfyreExperienceMap/tools/participation_report.mjs \
   --evidence "$estate/evidence.jsonl" > "$estate/report.json"
 "$facet" density --corpus "$corpus" --evidence "$estate/evidence.jsonl" > "$estate/density.json"
 
-bun cmd/BonfyreExternalEstate/tools/estate-refresh-summary.mjs "$estate/report.json" "$estate/density.json"
+jq -r --slurpfile report "$estate/report.json" --slurpfile density "$estate/density.json" \
+  -f cmd/BonfyreExternalEstate/tools/estate-refresh-summary.jq cmd/BonfyreExperienceMap/tools/participation-law.generated.json

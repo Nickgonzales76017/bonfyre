@@ -1,5 +1,6 @@
 #ifndef BONFYRE_SITE_AUTHORING_EDITORIAL_H
 #define BONFYRE_SITE_AUTHORING_EDITORIAL_H
+#include "ui_tree.h"
 /* C projection of the exact Editor.js block grammar retained under
  * semantic_tags.authoring_v1.editorial. This emits only escaped, bounded
  * published material. It never treats editor data as raw HTML or effects. */
@@ -32,7 +33,7 @@ static int bf_aeb_list(FILE *out,sqlite3 *db,const char *items,int ordered){
     while((step=sqlite3_step(st))==SQLITE_ROW){
         if(++seen>128){sqlite3_finalize(st);return -1;}
         if(sqlite3_column_type(st,0)!=SQLITE_TEXT){sqlite3_finalize(st);return -1;}
-        fputs("<li>",out);bf_aeb_text(out,(const char*)sqlite3_column_text(st,0));fputs("</li>",out);
+        ui_open(out,"li",NULL);bf_aeb_text(out,(const char*)sqlite3_column_text(st,0));ui_close(out,"li");
     }
     fputs(ordered?"</ol>":"</ul>",out);
     sqlite3_finalize(st);return step==SQLITE_DONE?0:-1;
@@ -44,19 +45,19 @@ static int bf_aeb_table(FILE *out,sqlite3 *db,const char *rows){
                     "FROM json_each(?1) AS r JOIN json_each(r.value) AS c "
                     "ORDER BY CAST(r.key AS INTEGER),CAST(c.key AS INTEGER)";
     if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK)return -1;
-    sqlite3_bind_text(st,1,rows,-1,SQLITE_TRANSIENT);fputs("<div class=\"site-authored-table\"><table><tbody>",out);
+    sqlite3_bind_text(st,1,rows,-1,SQLITE_TRANSIENT);ui_open(out,"div","site-authored-table");ui_open(out,"table",NULL);ui_open(out,"tbody",NULL);
     while((step=sqlite3_step(st))==SQLITE_ROW){
         int row=sqlite3_column_int(st,0);
         if(row<0||row>=25||++count>300||sqlite3_column_type(st,1)!=SQLITE_TEXT){sqlite3_finalize(st);return -1;}
         if(row!=prior){
-            if(prior>=0)fputs("</tr>",out);
-            fputs("<tr>",out);prior=row;cols=0;
+            if(prior>=0)ui_close(out,"tr");
+            ui_open(out,"tr",NULL);prior=row;cols=0;
         }
         if(++cols>12){sqlite3_finalize(st);return -1;}
-        fputs("<td>",out);bf_aeb_text(out,(const char*)sqlite3_column_text(st,1));fputs("</td>",out);
+        ui_open(out,"td",NULL);bf_aeb_text(out,(const char*)sqlite3_column_text(st,1));ui_close(out,"td");
     }
-    if(prior>=0)fputs("</tr>",out);
-    fputs("</tbody></table></div>",out);
+    if(prior>=0)ui_close(out,"tr");
+    ui_close(out,"tbody");ui_close(out,"table");ui_close(out,"div");
     sqlite3_finalize(st);return step==SQLITE_DONE?0:-1;
 }
 /* 1=rendered exact structured blocks, 0=no blocks, -1=invalid.
@@ -90,20 +91,20 @@ static int bf_site_editorial_blocks(FILE *out,sqlite3 *db,const char *tags){
         const char *caption=(const char*)sqlite3_column_text(st,3);
         if(!type){invalid=1;break;}
         if(!strcmp(type,"paragraph")){
-            fputs("<p>",render);bf_aeb_text(render,body);fputs("</p>",render);
+            ui_open(render,"p",NULL);bf_aeb_text(render,body);ui_close(render,"p");
         }else if(!strcmp(type,"header")){
             int level=sqlite3_column_type(st,2)==SQLITE_INTEGER?sqlite3_column_int(st,2):2;
             if(level<2)level=2;if(level>6)level=6;
             fprintf(render,"<h%d>",level);bf_aeb_text(render,body);fprintf(render,"</h%d>",level);
         }else if(!strcmp(type,"quote")){
-            fputs("<blockquote><p>",render);bf_aeb_text(render,body);
-            fputs("</p>",render);
-            if(caption&&*caption){fputs("<cite>",render);bf_aeb_text(render,caption);fputs("</cite>",render);}
-            fputs("</blockquote>",render);
+            ui_open(render,"blockquote",NULL);ui_open(render,"p",NULL);bf_aeb_text(render,body);
+            ui_close(render,"p");
+            if(caption&&*caption){ui_open(render,"cite",NULL);bf_aeb_text(render,caption);ui_close(render,"cite");}
+            ui_close(render,"blockquote");
         }else if(!strcmp(type,"code")){
-            fputs("<pre><code>",render);bf_aeb_text(render,(const char*)sqlite3_column_text(st,4));
-            fputs("</code></pre>",render);
-        }else if(!strcmp(type,"delimiter"))fputs("<hr>",render);
+            ui_open(render,"pre",NULL);ui_open(render,"code",NULL);bf_aeb_text(render,(const char*)sqlite3_column_text(st,4));
+            ui_close(render,"code");ui_close(render,"pre");
+        }else if(!strcmp(type,"delimiter"))ui_open(render,"hr",NULL);
         else if(!strcmp(type,"list")||!strcmp(type,"checklist")){
             const char *items=(const char*)sqlite3_column_text(st,6);
             const char *style=(const char*)sqlite3_column_text(st,5);

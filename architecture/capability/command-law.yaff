@@ -27,6 +27,7 @@ architecture command-law
   source_lineage run6/run7 second deep read -- 91 commands as deep calculi
   known_gap every source this entry names is archived, so nothing here is a live implementation a reader can open and run. Whether a native owner has taken this work over is not established in this entry; until one is named and witnessed here, the architecture stands on retired code.
 architecture witness-enforcement
+  source_lineage earliest source cmd/BonfyreAtlas/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports architecture/check_maturity_backing.py which scripts/retire.sh archived at architecture/check_maturity_backing.py.archive
   canonical_name WitnessEnforcement
   family institutional
   domain Institutional

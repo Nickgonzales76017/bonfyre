@@ -1,5 +1,6 @@
 #ifndef BONFYRE_APP_SHELL_H
 #define BONFYRE_APP_SHELL_H
+#include "ui_tree.h"
 /* The one application shell for pages that are built in C rather than
  * composed by page_core_rendering: the estate bar, a single <main>, the one
  * footer and the one player. A page states its title and its composition
@@ -18,7 +19,7 @@ static void ak_app_open_with_head(const char *title, const char *pattern, const 
           "<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">"
           "<link rel=\"stylesheet\" href=\"/assets/composition.css\">", stdout);
     if (emit_head) emit_head(head_context);
-    fputs("</head><body class=\"ak-app", stdout);
+    ui_close(stdout,"head");ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-app");
     if (route_class && *route_class) { fputc(' ', stdout); html(route_class); }
     fputs("\" data-aurekai-pattern=\"", stdout);
     html(pattern && *pattern ? pattern : "workbench");

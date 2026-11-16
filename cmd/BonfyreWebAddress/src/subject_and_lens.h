@@ -1778,7 +1778,7 @@ static int serve_subject(const BfRequest *r) {
                         char ei[200], lo[48], hi[48], el[200], eh[200]; double a = sqlite3_column_double(st, 3), b = sqlite3_column_double(st, 4);
                         if (!code || !item) continue;
                         if (!any++) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                            "<h3 class=\"room-h\">Observed barcode price ranges</h3><p class=\"subj-note\">Retained observations for a barcode across publishers and dates. Prices may have changed; the range is not a current offer or a guaranteed saving.</p><table class=\"price-table\"><thead><tr><th scope=\"col\">Product</th>"
+                            "<h3 class=\"room-h\">Observed barcode price ranges</h3><p class=\"subj-note\">Saved observations for a barcode across publishers and dates. Prices may have changed; the range is not a current offer or a guaranteed saving.</p><table class=\"price-table\"><thead><tr><th scope=\"col\">Product</th>"
                             "<th scope=\"col\">Cheapest</th><th scope=\"col\">Dearest</th><th scope=\"col\">Gap</th></tr></thead><tbody>");
                         html_escape(item, ei, sizeof(ei)); price_amount(a, lo, sizeof(lo)); price_amount(b, hi, sizeof(hi));
                         html_escape((const char *)sqlite3_column_text(st, 5), el, sizeof(el)); html_escape((const char *)sqlite3_column_text(st, 6), eh, sizeof(eh));
@@ -1803,7 +1803,7 @@ static int serve_subject(const BfRequest *r) {
                         const char *drug = (const char *)sqlite3_column_text(st, 0);
                         if (!drug || !*drug) continue;
                         if (!any++) fw += (size_t)snprintf(facts + fw, sizeof(facts) - fw,
-                            "<h3 class=\"room-h\">Medicine observations by name</h3><p class=\"subj-note\">Retained NADAC unit-price observations grouped by listed name. Records may differ in strength, form, package, maker or date; compare the individual listings before drawing conclusions.</p><table class=\"price-table\"><thead><tr><th scope=\"col\">Medicine</th>"
+                            "<h3 class=\"room-h\">Medicine observations by name</h3><p class=\"subj-note\">Saved NADAC unit-price observations grouped by listed name. Records may differ in strength, form, package, maker or date; compare the individual listings before drawing conclusions.</p><table class=\"price-table\"><thead><tr><th scope=\"col\">Medicine</th>"
                             "<th scope=\"col\">Lowest a unit</th><th scope=\"col\">Highest a unit</th><th scope=\"col\">Records</th></tr></thead><tbody>");
                         html_escape(drug, ed, sizeof(ed)); price_amount(a, lo, sizeof(lo)); price_amount(b, hi, sizeof(hi));
                         if (strlen(drug) >= sizeof(want_q) || !url_query_buffer(drug, find, sizeof(find))) continue;

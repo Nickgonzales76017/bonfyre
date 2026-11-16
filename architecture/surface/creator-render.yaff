@@ -61,6 +61,7 @@ interaction creator-plan-lowers-native-pcm
 
 
 architecture creator-browser-mix
+  source_lineage earliest source Aurekai/src/creator-wasm.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name CreatorBrowserMix
   family surface
   domain Creator / Browser offline audio
@@ -96,6 +97,7 @@ interaction creator-native-kernel-to-browser
 
 
 architecture service-creator-audio
+  source_lineage earliest source components/BonfyreServiceSite/sections/creator.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ServiceSiteCreatorAudio
   family surface
   domain Creator / Public sample workspace

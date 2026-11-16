@@ -14,8 +14,11 @@ static int code_host(const char *host) {
     }
     return label&&host[strlen(host)-1]!='-';
 }
+/* An item page: the emit_item_page prefix row in schemas/control/web-routes.cue,
+ * then <namespace>/<24 hex>. A code is only ever made for that shape. */
+#define CODE_ITEM_PREFIX "/o/"
 static int code_item_path(const char *path) {
-    if(!path||strncmp(path,"/o/",3))return 0;
+    if(!path||strncmp(path,CODE_ITEM_PREFIX,sizeof(CODE_ITEM_PREFIX)-1))return 0;
     const char *slash=strchr(path+3,'/');
     size_t n=slash?(size_t)(slash-(path+3)):0;
     if(!n||n>=128||!slash||strlen(slash+1)!=24||strspn(slash+1,"0123456789abcdef")!=24)return 0;

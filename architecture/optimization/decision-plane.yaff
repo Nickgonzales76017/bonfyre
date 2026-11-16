@@ -1,6 +1,7 @@
 atlas optimization-decision-plane
 
 architecture decision-plane
+  source_lineage earliest source components/BonfyreDecision/decision-plane.cue first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DecisionPlane
   owns DecisionCase
   owns TypedQuestionProgram
@@ -82,6 +83,7 @@ architecture decision-plane
   interacts protocol-contract
 
 architecture native-joint-decision-head
+  source_lineage earliest source lib/libbonfyre/include/bf_decision_head.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name NativeJointDecisionHead
   owns JointSchemaHeadExecution
   owns NativeDecisionWeightLayout
@@ -132,6 +134,7 @@ architecture native-joint-decision-head
   interacts decision-plane
 
 architecture decision-cut
+  source_lineage earliest source components/BonfyreDecision/decision-cut.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name DecisionCut
   owns DerivedContextCut
   consumes DiagnosticDecisionReceipt

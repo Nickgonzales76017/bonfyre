@@ -1,5 +1,6 @@
 #ifndef BONFYRE_STITCH_IDENTITY_H
 #define BONFYRE_STITCH_IDENTITY_H
+#include "ui_tree.h"
 /* Stitch lane 1 (identity), 2026-11-06: People, profile and organisation
  * pages take the dark Stitch layout. This file is presentation only. Data
  * comes from the owners that already render these pages: people_projection.c
@@ -167,15 +168,6 @@ static void bf_stitch_identity_head(FILE *out, const char *view) {
  * invitation for the account it was sent to. */
 static void bf_stitch_identity_organisations_lead(FILE *out, const char *host) {
     if (!bf_stitch_identity_view(host, "/organisations", NULL)) return;
-    fputs("<section class=\"si-org-lead\" aria-label=\"Your organisation\" data-identity-org-lead>"
-          "<div><p class=\"si-eyebrow\">Organisations</p>"
-          "<h2>Run your organisation here</h2>"
-          "<p>Give a business, team or club its own shared space. You choose who joins and what each person can change, "
-          "and its work stays apart from your own. Starting one does not claim an existing company's name.</p></div>"
-          "<nav class=\"si-org-actions\" aria-label=\"Organisation actions\">"
-          "<a href=\"/organizations\" data-identity-org-start>Start or manage an organisation</a>"
-          "<a href=\"/organizations/join\">Open an invitation</a>"
-          "<a href=\"/people\">Find people</a>"
-          "</nav></section>", out);
+    ui_start(out,"section");ui_attr(out,"class","si-org-lead");ui_attr(out,"aria-label","Your organisation");ui_flag(out,"data-identity-org-lead");ui_gt(out);ui_open(out,"div",NULL);ui_open(out,"p","si-eyebrow");ui_copy(out,"Organisations");ui_close(out,"p");ui_open(out,"h2",NULL);ui_copy(out,"Run your organisation here");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"Give a business, team or club its own shared space. You choose who joins and what each person can change, and its work stays apart from your own. Starting one does not claim an existing company's name.");ui_close(out,"p");ui_close(out,"div");ui_start(out,"nav");ui_attr(out,"class","si-org-actions");ui_attr(out,"aria-label","Organisation actions");ui_gt(out);ui_start(out,"a");ui_attr(out,"href","/organizations");ui_flag(out,"data-identity-org-start");ui_gt(out);ui_copy(out,"Start or manage an organisation");ui_close(out,"a");ui_start(out,"a");ui_attr(out,"href","/organizations/join");ui_gt(out);ui_copy(out,"Open an invitation");ui_close(out,"a");ui_start(out,"a");ui_attr(out,"href","/people");ui_gt(out);ui_copy(out,"Find people");ui_close(out,"a");ui_close(out,"nav");ui_close(out,"section");
 }
 #endif

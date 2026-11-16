@@ -42,7 +42,7 @@ static int serve_door_fragment(const char *target, const char *query) {
     if (!db || !cms_type_registered(db, "site_door")) {
         if (db) sqlite3_close(db);
         /* Empty fragment: the page keeps whatever it rendered itself. */
-        printf("HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
+        ui_lit(stdout, "HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
         return 1;
     }
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
@@ -57,15 +57,15 @@ static int serve_door_fragment(const char *target, const char *query) {
             const char *body = (const char *)sqlite3_column_text(st, 2);
             const char *ways = (const char *)sqlite3_column_text(st, 3);
             if (!eyebrow || !heading || !body) continue;
-            printf("<article class=\"door\"><p class=\"eyebrow\"><i></i>");
+            (ui_open(stdout, "article", "door"), ui_open(stdout, "p", "eyebrow"), ui_open(stdout, "i", NULL), ui_close(stdout, "i"));
             html(eyebrow);
-            printf("</p><h3>");
+            (ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));
             html(heading);
-            printf("</h3><p>");
+            (ui_close(stdout, "h3"), ui_open(stdout, "p", NULL));
             html(body);
-            printf("</p><div class=\"ways\">");
+            (ui_close(stdout, "p"), ui_open(stdout, "div", "ways"));
             if (ways) ways_html(ways);
-            printf("</div></article>");
+            ui_close_n(stdout, "div", "article", NULL);
             rows++;
         }
     }
@@ -82,31 +82,31 @@ static int serve_aperture_fragment(BfMatrix *m, const char *host_in, const char 
     BfMatrixDomainResolution domain;
     if (strcmp(target, "/_surface/intake")) return 0;
     if (!lower_host(host_in, host) || bf_matrix_domain_resolve(m, host, &domain) != 1) {
-        printf("HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n");
-        printf("<div id=\"intake-result\" class=\"intake-result\"><p>This host is not a configured Matrix territory.</p></div>\n");
+        ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n");
+        (ui_elem(stdout, "div", (const UiAttr[]){{"id", "intake-result"}, {"class", "intake-result"}}, 2, 0), ui_open(stdout, "p", NULL), ui_lit(stdout, "This host is not a configured Matrix territory."), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_lit(stdout, "\n"));
         return 1;
     }
-    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
+    ui_lit(stdout, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
     if (!query_value(query, "url", url, sizeof(url)) || !public_http_url(url)) {
-        printf("<div id=\"intake-result\" class=\"intake-result\"><p>Enter an http:// or https:// public address to prepare an evidence route.</p></div>\n");
+        (ui_elem(stdout, "div", (const UiAttr[]){{"id", "intake-result"}, {"class", "intake-result"}}, 2, 0), ui_open(stdout, "p", NULL), ui_lit(stdout, "Enter an http:// or https:// public address to prepare an evidence route."), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_lit(stdout, "\n"));
         return 1;
     }
     if (query_value(query, "occurrence", occurrence, sizeof(occurrence)) && !safe(occurrence, sizeof(occurrence))) occurrence[0] = '\0';
-    printf("<div id=\"intake-result\" class=\"intake-result\"><p>Route prepared. Nothing has been fetched, claimed, or promoted.</p>");
+    (ui_elem(stdout, "div", (const UiAttr[]){{"id", "intake-result"}, {"class", "intake-result"}}, 2, 0), ui_open(stdout, "p", NULL), ui_lit(stdout, "Route prepared. Nothing has been fetched, claimed, or promoted."), ui_close(stdout, "p"));
     if (occurrence[0]) {
-        printf("<p><strong>Candidate route context:</strong> ");
+        (ui_open(stdout, "p", NULL), ui_open(stdout, "strong", NULL), ui_lit(stdout, "Candidate route context:"), ui_close(stdout, "strong"), ui_lit(stdout, " "));
         html(occurrence);
-        printf(". This preserves the ExternalEstate occurrence coordinate only; Studio must still observe the source independently.</p>");
+        (ui_lit(stdout, ". This preserves the ExternalEstate occurrence coordinate only; Studio must still observe the source independently."), ui_close(stdout, "p"));
     }
     printf("<form action=\"/studio/\" method=\"get\"><input type=\"hidden\" name=\"foreign_url\" value=\"");
     html(url);
-    printf("\">");
+    ui_lit(stdout, "\">");
     if (occurrence[0]) {
         printf("<input type=\"hidden\" name=\"foreign_occurrence\" value=\"");
         html(occurrence);
-        printf("\">");
+        ui_lit(stdout, "\">");
     }
-    printf("<button class=\"button primary\" type=\"submit\">Review in Studio <span>→</span></button></form></div>\n");
+    (ui_elem(stdout, "button", (const UiAttr[]){{"class", "button primary"}, {"type", "submit"}}, 2, 0), ui_lit(stdout, "Review in Studio "), ui_open(stdout, "span", NULL), ui_lit(stdout, "→"), ui_close(stdout, "span"), ui_close(stdout, "button"), ui_close(stdout, "form"), ui_close(stdout, "div"), ui_lit(stdout, "\n"));
     return 1;
 }
 
@@ -271,7 +271,7 @@ static int serve_matrix_asset(BfMatrix *m, const char *host_in, const char *targ
         if (!lower_host(host_in, host) ||
             (bf_matrix_domain_resolve(m, host, &domain) != 1 && !native_member_session_host(host)) ||
             !emit_file_response_cached(root, assets[i].file, assets[i].type, inm, query)) {
-            printf("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
+            ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
         }
         return 1;
     }
@@ -287,19 +287,19 @@ static int serve_matrix_closure(const BfRequest *r) {
     (void)m;(void)method;(void)host;(void)target;(void)query;(void)bearer;(void)auth_db;
     BfMatrixAddressResolution resolution;
     char crate[1024], zarr[1024], path[1024];
-    int want_crate = !strcmp(target, "/ro-crate/") || !strcmp(target, "/ro-crate/ro-crate-metadata.json");
-    int want_zarr = !strcmp(target, "/zarr/zarr.json");
+    int want_crate = bf_request_is(r, "crate");
+    int want_zarr = bf_request_is(r, "zarr");
     if (!want_crate && !want_zarr) return 0;
     if (strcmp(method, "GET") && strcmp(method, "HEAD")) {
-        printf("HTTP/1.1 405 Method Not Allowed\r\nAllow: GET, HEAD\r\nConnection: close\r\n\r\n");
+        ui_lit(stdout, "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET, HEAD\r\nConnection: close\r\n\r\n");
         return 1;
     }
     if (!closure_query_path(query, path)) {
-        printf("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"invalid_closure_address\"}\n");
+        ui_lit(stdout, "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"invalid_closure_address\"}\n");
         return 1;
     }
     if (!matrix_path_resolution(m, host, path, &resolution) || !closure_urls_for_path(host, path, crate, zarr)) {
-        printf("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"matrix_closure_not_found\"}\n");
+        ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"verdict\":\"matrix_closure_not_found\"}\n");
         return 1;
     }
     /* Actor-owned self presences are addressable but not public simply because
@@ -312,7 +312,7 @@ static int serve_matrix_closure(const BfRequest *r) {
         if (!session_valid(bearer, auth_db) || !studio_auth_user(bearer, auth_db, actor, sizeof(actor)) ||
             snprintf(expected, sizeof(expected), "subject:actor-%s:", actor) >= (int)sizeof(expected) ||
             strncmp(resolution.subject_id, expected, strlen(expected))) {
-            printf("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nCache-Control: private, no-store\r\nX-Robots-Tag: noindex, nofollow, noarchive, nosnippet\r\nConnection: close\r\n\r\n{\"verdict\":\"matrix_closure_not_found\"}\n");
+            ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nCache-Control: private, no-store\r\nX-Robots-Tag: noindex, nofollow, noarchive, nosnippet\r\nConnection: close\r\n\r\n{\"verdict\":\"matrix_closure_not_found\"}\n");
             return 1;
         }
     }
@@ -341,8 +341,8 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
         /* A person asking for a page gets the not-found page and the declared
          * pages nearest the path (web_route_kinds.h); machines keep the verdict. */
         if (rc == 0 && http && !strcasecmp(repr,"HTML") && bf_web_route_not_found(path_in)) return 1;
-        if (rc == 0) { if(http) printf("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n"); printf("{\"verdict\":\"not_found\",\"address\":");json(address);printf("}\n"); return 1; }
-        if(http) printf("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n");
+        if (rc == 0) { if(http) ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n"); ui_lit(stdout, "{\"verdict\":\"not_found\",\"address\":");json(address);ui_lit(stdout, "}\n"); return 1; }
+        if(http) ui_lit(stdout, "HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n");
         puts("{\"verdict\":\"resolution_error\"}"); return 2;
     }
     if (out.scope == BF_MATRIX_SELF &&
@@ -351,7 +351,7 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
         if (!session_valid(bearer, auth_db) || !studio_auth_user(bearer, auth_db, actor, sizeof(actor)) ||
             snprintf(expected, sizeof(expected), "subject:actor-%s:", actor) >= (int)sizeof(expected) ||
             strncmp(out.subject_id, expected, strlen(expected))) {
-            if (http) printf("HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nCache-Control: private, no-store\r\nX-Robots-Tag: noindex, nofollow, noarchive, nosnippet\r\nConnection: close\r\n\r\n");
+            if (http) ui_lit(stdout, "HTTP/1.1 404 Not Found\r\nContent-Type: application/json\r\nCache-Control: private, no-store\r\nX-Robots-Tag: noindex, nofollow, noarchive, nosnippet\r\nConnection: close\r\n\r\n");
             puts("{\"verdict\":\"not_found\"}"); return 1;
         }
     }
@@ -364,18 +364,18 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
         printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><title>");html(out.subject_id);
         printf(" \xc2\xb7 Aurekai</title><link rel=\"describedby\" type=\"application/ld+json\" href=\"");html(crate);printf("\"><link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"");html(zarr);
         fputs("\"><link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\"><link rel=\"stylesheet\" href=\"/assets/composition.css\"></head><body class=\"ak-app route-address\" data-aurekai-pattern=\"workbench\">" BF_ESTATE_BAR "<main class=\"ak-wb\" data-bonfyre-subject=\"",stdout);
-        html(out.subject_id);printf("\" data-bonfyre-presence=\"");html(out.presence_id);
-        printf("\"><header class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\">Address <span>/</span> ");html(out.territory);printf("</p><h1>");html(out.subject_id);printf("</h1></div></header>");
-        printf("<dl class=\"ak-spec ak-panel address-facts\"><dt>Territory</dt><dd>");html(out.territory);printf("</dd><dt>Presence</dt><dd>");html(out.presence_id);
-        printf("</dd><dt>Canonical address</dt><dd class=\"is-on\"><a href=\"");html(out.canonical_address);printf("\">");html(out.canonical_address);printf("</a></dd>");
+        html(out.subject_id);ui_lit(stdout, "\" data-bonfyre-presence=\"");html(out.presence_id);
+        (ui_lit(stdout, "\">"), ui_open(stdout, "header", "ak-wb-hero is-solo"), ui_open(stdout, "div", NULL), ui_open(stdout, "p", "ak-kicker"), ui_lit(stdout, "Address "), ui_open(stdout, "span", NULL), ui_lit(stdout, "/"), ui_close(stdout, "span"), ui_lit(stdout, " "));html(out.territory);(ui_close(stdout, "p"), ui_open(stdout, "h1", NULL));html(out.subject_id);ui_close_n(stdout, "h1", "div", "header", NULL);
+        (ui_open(stdout, "dl", "ak-spec ak-panel address-facts"), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Territory"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));html(out.territory);(ui_close(stdout, "dd"), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Presence"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));html(out.presence_id);
+        printf("</dd><dt>Canonical address</dt><dd class=\"is-on\"><a href=\"");html(out.canonical_address);ui_lit(stdout, "\">");html(out.canonical_address);ui_close_n(stdout, "a", "dd", NULL);
         if(standing_rc==1)printf("<dt>Live members</dt><dd data-bonfyre-standing-members=\"%d\">%d</dd>",standing_members,standing_members);
         fputs("</dl><p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"",stdout);html(crate);fputs("\">Machine description</a><a class=\"ak-btn is-quiet\" href=\"",stdout);html(zarr);
         fputs("\">Data array</a></p></main>" BF_ESTATE_FOOT "</body></html>\n",stdout); return 0;
     }
     if (http) printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n",content_type(out.representation));
-    printf("{\"verdict\":\"resolved\",\"subject_id\":");json(out.subject_id);printf(",\"presence_id\":");json(out.presence_id);printf(",\"host\":");json(host);printf(",\"matched_host\":");json(domain_rc==1 ? domain.matched_hostname : host);printf(",\"canonical_host\":");json(domain_rc==1 ? domain.canonical_hostname : host);printf(",\"institution_id\":");json(domain_rc==1 ? domain.institution_id : "");printf(",\"path\":");json(path_in);printf(",\"address_kind\":");json(out.address_kind);printf(",\"canonical_address\":");json(out.canonical_address);printf(",\"is_alias\":%s",out.is_alias ? "true" : "false");if(standing_rc==1)printf(",\"standing_members\":%d",standing_members);printf(",\"territory\":");json(out.territory);printf(",\"world\":");json(bf_matrix_world_name(out.world));printf(",\"audience\":");json(bf_matrix_scope_name(out.scope));printf(",\"representation\":");json(out.representation);printf("}\n");return 0;
-failed: if(http) printf("HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n"); puts("{\"verdict\":\"domain_resolution_error\"}"); return 2;
-bad: if(http) printf("HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\n\r\n"); puts("{\"verdict\":\"invalid_address_context\"}");return 2;
+    ui_lit(stdout, "{\"verdict\":\"resolved\",\"subject_id\":");json(out.subject_id);ui_lit(stdout, ",\"presence_id\":");json(out.presence_id);ui_lit(stdout, ",\"host\":");json(host);ui_lit(stdout, ",\"matched_host\":");json(domain_rc==1 ? domain.matched_hostname : host);ui_lit(stdout, ",\"canonical_host\":");json(domain_rc==1 ? domain.canonical_hostname : host);ui_lit(stdout, ",\"institution_id\":");json(domain_rc==1 ? domain.institution_id : "");ui_lit(stdout, ",\"path\":");json(path_in);ui_lit(stdout, ",\"address_kind\":");json(out.address_kind);ui_lit(stdout, ",\"canonical_address\":");json(out.canonical_address);printf(",\"is_alias\":%s",out.is_alias ? "true" : "false");if(standing_rc==1)printf(",\"standing_members\":%d",standing_members);ui_lit(stdout, ",\"territory\":");json(out.territory);ui_lit(stdout, ",\"world\":");json(bf_matrix_world_name(out.world));ui_lit(stdout, ",\"audience\":");json(bf_matrix_scope_name(out.scope));ui_lit(stdout, ",\"representation\":");json(out.representation);ui_lit(stdout, "}\n");return 0;
+failed: if(http) ui_lit(stdout, "HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n"); puts("{\"verdict\":\"domain_resolution_error\"}"); return 2;
+bad: if(http) ui_lit(stdout, "HTTP/1.1 400 Bad Request\r\nContent-Type: application/json\r\n\r\n"); puts("{\"verdict\":\"invalid_address_context\"}");return 2;
 }
 static int resolve_cli(BfMatrix *m, int argc, char **argv) {
     const char *query = opt(argc, argv, "--query");
@@ -512,7 +512,7 @@ static int emit_generated_surface(const char *name) {
         printf("HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json\r\n"
                "Connection: close\r\n\r\n"
                "{\"error\":\"capability registry unreachable\",\"surface\":");
-        json(name); printf("}\n");
+        json(name); ui_lit(stdout, "}\n");
         return 1;
     }
 
@@ -818,7 +818,7 @@ static int serve_ops(const BfRequest *r) {
              rrc == 127 ? "organ not reachable"
                         : "organ produced no output; its state is likely unreadable "
                           "from this service");
-      json(organ); printf("}\n");
+      json(organ); ui_lit(stdout, "}\n");
       return 1;
     }
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n"

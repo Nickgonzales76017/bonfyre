@@ -84,31 +84,26 @@ static int serve_account_review(const char *method,const char *query,const char 
     }
     sqlite3_finalize(registry);sqlite3_close(db);
     ak_app_http(200,1);ak_app_open("Review work","workbench","route-account-review");
-    fputs("<div data-account-review><section class=\"br-hero\"><div><p class=\"br-eyebrow\">Your account / Review and drafts</p><h1>Work ready for<br>another look.</h1>"
-        "<p>See the drafts and review holds available in this CMS destination. Resume in the existing editor; nothing here approves a release, publishes an article, sends a message or spends money.</p></div><div class=\"br-total\"><strong>",stdout);
+    ui_open_a(stdout,"div","data-account-review",(const char *)NULL); ui_open(stdout,"section","br-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","br-eyebrow"); fputs("Your account / Review and drafts",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Work ready for",stdout); ui_open(stdout,"br",NULL); fputs("another look.",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p",NULL); fputs("See the drafts and review holds available in this CMS destination. Resume in the existing editor; nothing here approves a release, publishes an article, sends a message or spends money.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"div","br-total"); ui_open(stdout,"strong",NULL);
     printf("%d",total);
-    fputs("</strong><span>accessible CMS draft and review records</span></div></section><nav class=\"br-links\" aria-label=\"Continue reviewing\">"
-        "<a href=\"/inbox?context=self\">Decisions waiting on you</a><a href=\"/cms/compose/advanced\">Review authored pages</a><a href=\"/cms/\">All content drafts</a><a href=\"/apps?context=self\">Saved work in installed editors</a></nav>"
-        "<section><div class=\"br-heading\"><div><p class=\"br-eyebrow br-eyebrow-quiet\">Native CMS</p><h2>Drafts and held work</h2><p>",stdout);
+    ui_close(stdout,"strong"); ui_open(stdout,"span",NULL); fputs("accessible CMS draft and review records",stdout); ui_close(stdout,"span"); ui_close(stdout,"div"); ui_close(stdout,"section"); ui_open_a(stdout,"nav","class","br-links","aria-label","Continue reviewing"); ui_open_a(stdout,"a","href","/inbox?context=self"); fputs("Decisions waiting on you",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","/cms/compose/advanced"); fputs("Review authored pages",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","/cms/"); fputs("All content drafts",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","/apps?context=self"); fputs("Saved work in installed editors",stdout); ui_close(stdout,"a"); ui_close(stdout,"nav"); ui_open(stdout,"section",NULL); ui_open(stdout,"div","br-heading"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","br-eyebrow br-eyebrow-quiet"); fputs("Native CMS",stdout); ui_close(stdout,"p"); ui_open(stdout,"h2",NULL); fputs("Drafts and held work",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL);
     printf("%d drafts · %d other review states · %d registered types",draft_total,total-draft_total,type_total);
-    fputs("</p></div><label>Find work <input id=\"br-find\" type=\"search\" aria-label=\"Search reviews\" placeholder=\"Title, state or type\"></label></div><ol class=\"br-list\">",stdout);
+    ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"label",NULL); fputs("Find work ",stdout); ui_open_a(stdout,"input","id","br-find","type","search","aria-label","Search reviews","placeholder","Title, state or type"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"ol","br-list");
     for(size_t i=0;i<shown;i++){
         BfReviewRow *item=&rows[i];
-        fputs("<li class=\"br-row\" data-review-row><div><small>",stdout);html(item->type);
-        fputs(" · ",stdout);html(item->status);fputs("</small><h3>",stdout);
+        ui_open_a(stdout,"li","class","br-row","data-review-row",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"small",NULL);html(item->type);
+        fputs(" · ",stdout);html(item->status);ui_close(stdout,"small"); ui_open(stdout,"h3",NULL);
         html(item->title);fputs("</h3></div><a href=\"",stdout);
         if(!strcmp(item->type,"site_page")&&item->route[0]=='/'){
             fputs("/cms/compose/advanced?route=",stdout);url_query_value(item->route);
         }else if(!strcmp(item->type,"site_fragment"))fputs("/cms/compose/advanced",stdout);
         else fputs("/cms/",stdout);
-        fputs("\">Open in editor</a></li>",stdout);
+        fputs("\">Open in editor",stdout); ui_close(stdout,"a"); ui_close(stdout,"li");
     }
-    fputs("</ol>",stdout);
-    if(!shown)fputs("<p class=\"br-note\">No draft records were found in this account's accessible CMS namespace. Another publisher or installed editor may still have work waiting.</p>",stdout);
-    if((int)shown<total){fputs("<p class=\"br-note\">Showing ",stdout);printf("%zu of %d",shown,total);fputs(" records; open Content Studio for the rest.</p>",stdout);}
-    fputs("<p id=\"br-empty\" class=\"br-note\" hidden>No matching records in this view.</p></section><section class=\"br-footer br-note\"><h2>One place to continue, not a new approval system</h2>"
-        "<p>Inbox owns human approval requests; Content Studio owns CMS drafts; installed editors own their saved work. Material held by another publication remains with that publisher until its release owner admits it.</p></section></div>"
-        "<script>(()=>{const q=document.getElementById('br-find'),rows=[...document.querySelectorAll('[data-review-row]')],empty=document.getElementById('br-empty');q.addEventListener('input',()=>{const s=q.value.trim().toLowerCase();let count=0;for(const row of rows){row.hidden=!row.textContent.toLowerCase().includes(s);if(!row.hidden)count++;}empty.hidden=count!==0||!s;});})();</script>",stdout);
+    ui_close(stdout,"ol");
+    if(!shown)ui_text(stdout,"p","br-note","No draft records were found in this account's accessible CMS namespace. Another publisher or installed editor may still have work waiting.");
+    if((int)shown<total){ui_open(stdout,"p","br-note"); fputs("Showing ",stdout);printf("%zu of %d",shown,total);fputs(" records; open Content Studio for the rest.</p>",stdout);}
+    ui_open_a(stdout,"p","id","br-empty","class","br-note","hidden",(const char *)NULL); fputs("No matching records in this view.",stdout); ui_close(stdout,"p"); ui_close(stdout,"section"); ui_open(stdout,"section","br-footer br-note"); ui_open(stdout,"h2",NULL); fputs("One place to continue, not a new approval system",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("Inbox owns human approval requests; Content Studio owns CMS drafts; installed editors own their saved work. Material held by another publication remains with that publisher until its release owner admits it.",stdout); ui_close(stdout,"p"); ui_close(stdout,"section"); ui_close(stdout,"div"); ui_open(stdout,"script",NULL); fputs("(()=>{const q=document.getElementById('br-find'),rows=[...document.querySelectorAll('[data-review-row]')],empty=document.getElementById('br-empty');q.addEventListener('input',()=>{const s=q.value.trim().toLowerCase();let count=0;for(const row of rows){row.hidden=!row.textContent.toLowerCase().includes(s);if(!row.hidden)count++;}empty.hidden=count!==0||!s;});})();",stdout); ui_close(stdout,"script");
     ak_app_close();
     free(rows);return 1;
 }

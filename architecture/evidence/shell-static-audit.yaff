@@ -1,6 +1,7 @@
 atlas evidence-shell-static-audit
 
 architecture shell-static-audit
+  source_lineage earliest source .github/workflows/native-kernel.yml first committed 2026-08-14 in 617a2736 "ci(native): build and exercise the native kernel"
   canonical_name ShellStaticAudit
   family evidence
   domain Evidence / Shell source analysis
@@ -20,6 +21,7 @@ architecture shell-static-audit
   known_gap ShellCheck cannot analyze scripts whose interpreter is outside its supported shell family; scripts/bonfyre_repo_inventory.sh remains explicitly unsupported, and the audit neither replaces runtime tests nor applies fixes
 
 architecture javascript-static-audit
+  source_lineage earliest source .github/workflows/native-kernel.yml first committed 2026-08-14 in 617a2736 "ci(native): build and exercise the native kernel"
   canonical_name JavaScriptStaticAudit
   family evidence
   domain Evidence / Exact source analysis coverage

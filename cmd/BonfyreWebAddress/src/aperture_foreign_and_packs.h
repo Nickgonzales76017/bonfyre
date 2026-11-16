@@ -1,5 +1,6 @@
 #ifndef BONFYRE_APERTURE_FOREIGN_AND_PACKS_H
 #define BONFYRE_APERTURE_FOREIGN_AND_PACKS_H
+#include "ui_tree.h"
 /* Extracted verbatim from main.c lines 15949-18032 (mechanical split, no logic changes). */
 static int twin_classified_kind(const char *subject, char *out, size_t cap) {
     sqlite3 *db = cms_open_ro();
@@ -84,7 +85,7 @@ static int serve_aperture(const BfRequest *r) {
     if (as_json)
         printf("{\"subject\":\"%s\",\"subject_kind\":\"%s\",\"apertures\":[", subject, kind);
     else
-        printf("<ul class=\"apertures\">");
+        ui_open(stdout,"ul","apertures");
 
     if (sqlite3_prepare_v2(db,
             "SELECT object_name, birth_mode, birth_operation, collection_lens, "
@@ -118,17 +119,17 @@ static int serve_aperture(const BfRequest *r) {
                        offered ? "," : "", name, op, mode ? mode : "", lens ? lens : "",
                        cap ? cap : "", state, alloc, closed, human, subject, op);
             } else {
-                printf("<li><strong>");
+                ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL);
                 html(name);
-                printf("</strong> <span class=\"mode\">");
+                ui_close(stdout,"strong");ui_copy(stdout," ");ui_open(stdout,"span","mode");
                 html(mode ? mode : "");
-                printf("</span> <a href=\"/_aperture/form?subject=");
+                ui_close(stdout,"span");ui_copy(stdout," ");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/_aperture/form?subject=");
                 html(subject);
                 printf("&amp;operation=");
                 html(op);
                 printf("\">");
                 html(op);
-                printf("</a></li>");
+                ui_close(stdout,"a");ui_close(stdout,"li");
             }
             offered++;
         }
@@ -142,9 +143,8 @@ static int serve_aperture(const BfRequest *r) {
                "the grammar applies and the actor is admitted, and the native owner still "
                "owns what happens\"}\n", offered, withheld);
     else {
-        printf("</ul>");
-        if (withheld) printf("<p class=\"surface-denied\">%d further operation(s) exist here "
-                             "and are not offered to this session.</p>", withheld);
+        ui_close(stdout,"ul");
+        if (withheld) {ui_open(stdout,"p","surface-denied");fprintf(stdout,"%d",withheld);ui_copy(stdout," further operation(s) exist here and are not offered to this session.");ui_close(stdout,"p");}
     }
     fflush(stdout);
     return 1;
@@ -280,18 +280,17 @@ static const char *aperture_html(const char *subject, const char *operation,
     if (!subject || !*subject) return out;
     view = open_memstream(&markup, &length);
     if (!view) return out;
-    fputs("<section class=\"wrap\" style=\"padding:8px 0 48px\">", view);
+    ui_start(view,"section");ui_attr(view,"class","wrap");ui_attr(view,"style","padding:8px 0 48px");ui_gt(view);
     if (notice && *notice) {
-        fputs("<p class=\"surface-status\" role=\"status\">", view);
-        bf_auth_html(view, notice); fputs("</p>", view);
+        ui_start(view,"p");ui_attr(view,"class","surface-status");ui_attr(view,"role","status");ui_gt(view);
+        bf_auth_html(view, notice); ui_close(view,"p");
     }
     if (operation && *operation) {
-        fputs("<div class=\"apertures\" hx-get=\"/_aperture/form?subject=", view);
+        ui_start(view,"div");ui_attr(view,"class","apertures");ui_attr_open(view,"hx-get");ui_copy(view,"/_aperture/form?subject=");
         bf_auth_query(view, subject); fputs("&amp;operation=", view); bf_auth_query(view, operation);
         if (next && *next) { fputs("&amp;next=", view); bf_auth_query(view, next); }
     } else {
-        fputs("<p class=\"eyebrow\"><i></i><span>What you may do here</span></p>"
-              "<div class=\"apertures\" hx-get=\"/_aperture?subject=", view);
+        ui_open(view,"p","eyebrow");ui_open(view,"i",NULL);ui_close(view,"i");ui_open(view,"span",NULL);ui_copy(view,"What you may do here");ui_close(view,"span");ui_close(view,"p");ui_start(view,"div");ui_attr(view,"class","apertures");ui_attr_open(view,"hx-get");ui_copy(view,"/_aperture?subject=");
         bf_auth_query(view, subject);
     }
     fputs("\" hx-trigger=\"load\" hx-swap=\"innerHTML\"></div></section>", view);
@@ -477,26 +476,21 @@ static int serve_authored_page(const BfRequest *r) {
                 printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
                        "Cache-Control: no-store\r\nConnection: close\r\n\r\n");
                 if (extent == EXTENT_CHIP) {
-                    printf("<a class=\"chip\" href=\"%s\">", route);
+                    ui_start(stdout,"a");ui_attr(stdout,"class","chip");ui_attr_open(stdout,"href");ui_copy(stdout,route);ui_attr_close(stdout);ui_gt(stdout);
                     html(heading);
-                    printf("</a>");
+                    ui_close(stdout,"a");
                 } else if (extent == EXTENT_CARD) {
-                    printf("<article class=\"door\"><p class=\"eyebrow\"><i></i>%s</p><h3>", eyebrow);
+                    ui_open(stdout,"article","door");ui_open(stdout,"p","eyebrow");ui_open(stdout,"i",NULL);ui_close(stdout,"i");ui_copy(stdout,eyebrow);ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
                     html(heading);
-                    printf("</h3><p>");
+                    ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
                     html(lede);
-                    printf("</p><div class=\"ways\"><a class=\"way\" href=\"%s\">Open</a></div></article>",
-                           route);
+                    ui_close(stdout,"p");ui_open(stdout,"div","ways");ui_start(stdout,"a");ui_attr(stdout,"class","way");ui_attr_open(stdout,"href");ui_copy(stdout,route);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"article");
                 } else {
-                    printf("<section class=\"hero wrap\"><div class=\"eyebrow\"><i></i><span>%s</span></div>"
-                           "<h1>", eyebrow);
+                    ui_open(stdout,"section","hero wrap");ui_open(stdout,"div","eyebrow");ui_open(stdout,"i",NULL);ui_close(stdout,"i");ui_open(stdout,"span",NULL);ui_copy(stdout,eyebrow);ui_close(stdout,"span");ui_close(stdout,"div");ui_open(stdout,"h1",NULL);
                     html(heading);
-                    printf("</h1><p class=\"lede\">");
+                    ui_close(stdout,"h1");ui_open(stdout,"p","lede");
                     html(lede);
-                    printf("</p></section><div class=\"wrap\"><div class=\"doors\" "
-                           "hx-get=\"/_surface/doors?page=%s\" hx-trigger=\"load\" "
-                           "hx-swap=\"innerHTML\"></div></div>",
-                           doors);
+                    ui_close(stdout,"p");ui_close(stdout,"section");ui_open(stdout,"div","wrap");ui_start(stdout,"div");ui_attr(stdout,"class","doors");ui_attr_open(stdout,"hx-get");ui_copy(stdout,"/_surface/doors?page=");ui_copy(stdout,doors);ui_attr_close(stdout);ui_attr(stdout,"hx-trigger","load");ui_attr(stdout,"hx-swap","innerHTML");ui_gt(stdout);ui_close(stdout,"div");ui_close(stdout,"div");
                 }
                 fflush(stdout);
                 return 1;
@@ -1044,14 +1038,8 @@ static int pack_layer_rank(const char *layer) {
 }
 
 /* The closed list. Everything an overlay is allowed to be. */
-static int pack_verb_allowed(const char *v) {
-    static const char *ok[] = { "hide", "add", "specialize", "present",
-                                "tighten", "default", NULL };
-    int i;
-    if (!v) return 0;
-    for (i = 0; ok[i]; i++) if (!strcmp(v, ok[i])) return 1;
-    return 0;
-}
+#include "pack_resolution.h"
+static int pack_verb_allowed(const char *v) { return pack_overlay_verb(v) >= 0; }
 
 /* Audience, narrowest first. A tighten may move down this list and never up,
  * whichever layer asks. */
@@ -1327,12 +1315,12 @@ static int serve_packs(const BfRequest *r) {
     if (scoped && !wants_json(accept)) {
         PackSetupInput selected; (void)psetup_input(query, &selected);
         psetup_start(200, "Active configuration");
-        fputs("<h1>Active configuration</h1><p>These installed versions are current for the selected workspace. Each product still checks its own data access and execution permissions.</p><table><thead><tr><th>Behavior</th><th>Version</th><th>Role in this configuration</th></tr></thead><tbody>", stdout);
+        ui_open(stdout,"h1",NULL);ui_copy(stdout,"Active configuration");ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"These installed versions are current for the selected workspace. Each product still checks its own data access and execution permissions.");ui_close(stdout,"p");ui_open(stdout,"table",NULL);ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Behavior");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Version");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Role in this configuration");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         for (i = 0; i < count; i++) {
-            fputs("<tr><td>", stdout); html(nodes[i].pack); fputs("</td><td>", stdout); html(nodes[i].version);
-            fputs("</td><td>", stdout); fputs(nodes[i].active ? "Selected configuration" : "Required behavior", stdout); fputs("</td></tr>", stdout);
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL); html(nodes[i].pack); ui_close(stdout,"td");ui_open(stdout,"td",NULL); html(nodes[i].version);
+            ui_close(stdout,"td");ui_open(stdout,"td",NULL); fputs(nodes[i].active ? "Selected configuration" : "Required behavior", stdout); ui_close(stdout,"td");ui_close(stdout,"tr");
         }
-        fputs("</tbody></table><p><a href=\"", stdout); psetup_link(&selected, 0, NULL);
+        ui_close(stdout,"tbody");ui_close(stdout,"table");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); psetup_link(&selected, 0, NULL);
         fputs("\">Manage this installation</a></p>", stdout); psetup_end(); sqlite3_close(db); return 1;
     }
     printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n");
@@ -1392,28 +1380,29 @@ static int serve_packs(const BfRequest *r) {
                 json_escape_into(targ ? targ : "", et, sizeof(et));
                 json_escape_into((const char *)sqlite3_column_text(st, 6), ew, sizeof(ew));
 
-                if (!strcmp(verb, "hide") && !strncmp(targ, "view:", 5)) {
+                int vid = pack_overlay_verb(verb);
+                if (vid == PO_HIDE && !strncmp(targ, "view:", 5)) {
                     /* Hiding a grammar is presentation, not policy: the pattern
                      * behind it still answers, and a machine asking for it gets
                      * the same bytes. This says only that this person does not
                      * want to be handed that view. */
                     if (view_hidden_n < 16)
                         snprintf(view_hidden[view_hidden_n++], 32, "%s", targ + 5);
-                } else if (!strcmp(verb, "present") && !strncmp(targ, "view:", 5)) {
+                } else if (vid == PO_PRESENT && !strncmp(targ, "view:", 5)) {
                     if (view_order_n < 16) {
                         snprintf(view_order[view_order_n], 32, "%s", targ + 5);
                         view_rank[view_order_n] = val && *val ? atoi(val) : 99;
                         view_order_n++;
                     }
-                } else if (!strcmp(verb, "hide")) {
+                } else if (vid == PO_HIDE) {
                     int hi = pack_find(nodes, count, targ);
                     if (hi >= 0) {
                         nodes[hi].hidden = 1;
                         snprintf(nodes[hi].hidden_by, sizeof(nodes[hi].hidden_by), "%s", ov);
                     }
-                } else if (!strcmp(verb, "add")) {
+                } else if (vid == PO_ADD) {
                     count = pack_close(db, nodes, count, targ, 1, 0);
-                } else if (!strcmp(verb, "tighten") && !strcmp(targ, "audience")) {
+                } else if (vid == PO_TIGHTEN && !strcmp(targ, "audience")) {
                     int r = pack_audience_rank(val);
                     /* Narrower only. A later layer may tighten further and can
                      * never widen what an earlier one narrowed. */
@@ -1421,7 +1410,7 @@ static int serve_packs(const BfRequest *r) {
                         audience_rank = r;
                         snprintf(audience, sizeof(audience), "%s", val);
                     }
-                } else if (!strcmp(verb, "default") && !strcmp(targ, "keep")) {
+                } else if (vid == PO_DEFAULT && !strcmp(targ, "keep")) {
                     snprintf(keep, sizeof(keep), "%s", val);
                 }
                 printf("%s{\"overlay\":\"%s\",\"overrides\":\"%s\",\"layer\":\"%s\","

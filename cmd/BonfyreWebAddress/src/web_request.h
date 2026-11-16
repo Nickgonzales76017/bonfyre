@@ -17,6 +17,9 @@ enum {
     BF_WHEN_NOT_TERRITORY_APEX = 1u << 4, /* host is not a territory apex */
     BF_WHEN_JSON = 1u << 5,               /* Accept names JSON */
 };
+/* The one path prefix whose owners (application workspaces) read bodies past
+ * the legacy request limit; every other request is refused 413 above it. */
+#define BF_WEB_LARGE_BODY_PREFIX "/apps/"
 typedef struct {
     const char *method, *target, *query, *body, *raw, *host, *bearer, *auth_db, *accept;
     struct BfMatrix *m;

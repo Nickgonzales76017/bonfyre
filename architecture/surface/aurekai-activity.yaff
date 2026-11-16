@@ -1,6 +1,7 @@
 atlas surface-aurekai-activity
 
 architecture aurekai-activity
+  source_lineage earliest source cmd/BonfyreWebAddress/src/account_navigation.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   source_path integrations/browser/aurekai-activity.pcss
   source_path cmd/BonfyreWebAddress/src/account_navigation.h
   invariant account navigation menu visibility and mobile action layout are compiled into the shared activity stylesheet rather than embedded in the private response fragment
@@ -277,6 +278,7 @@ interaction fabric-agent-runs-to-aurekai-agents-lane
   witness cmd/BonfyreQueue/tests/account_work_index_test.sh flags a credit-refused operator run and leaves an ordinary failed run unflagged
 
 architecture account-relationship-observations
+  source_lineage earliest source cmd/BonfyreWebAddress/src/relationship_observation.h first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name AccountRelationshipObservations
   family surface
   domain Surface / Account relationship observations

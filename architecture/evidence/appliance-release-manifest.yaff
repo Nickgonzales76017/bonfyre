@@ -1,6 +1,7 @@
 atlas evidence-appliance-release-manifest
 
 architecture appliance-release-manifest
+  source_lineage earliest source Makefile first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"; ports scripts/gen_manifest.py which scripts/retire.sh archived at scripts/gen_manifest.py.archive
   canonical_name ApplianceReleaseManifest
   owns BuildTreeArtifactInventory
   publishes ApplianceCompatibilityManifest

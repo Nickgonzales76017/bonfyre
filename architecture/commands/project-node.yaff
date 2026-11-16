@@ -1,6 +1,7 @@
 atlas commands-project-node
 
 architecture mcp-project-native-owner
+  source_lineage earliest source integrations/mcp/project_catalog.json first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name McpProjectNativeOwner
   family commands
   domain MCP / Local project and native operation owner
@@ -138,6 +139,7 @@ interaction project-generation-names-proof-owners
   known_gap a books profile belongs to this machine, not to a client organisation; ChatGPT sees new operations only after its cached tool list is refreshed
 
 architecture project-spines-distributed-binding
+  source_lineage earliest source integrations/mcp/project_spines.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ProjectSpinesDistributedBinding
   family commands
   domain Execution / Authenticated owner federation

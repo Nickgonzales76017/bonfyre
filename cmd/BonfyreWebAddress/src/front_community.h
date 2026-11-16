@@ -41,15 +41,13 @@ static void front_community_emit(sqlite3 *db) {
         if(take>=sizeof(excerpt))take=sizeof(excerpt)-1;
         while(take&&((unsigned char)post->body[take]&0xc0)==0x80)take--;
         memcpy(excerpt,post->body,take);excerpt[take]=0;
-        fputs("<article class=\"community-front-card\" data-community-discovery=\"",stdout);
-        html(community->key);
-        fputs("\"><p class=\"community-from\">",stdout);html(community->title);
-        fputs("</p><h3>",stdout);html(post->title[0]?post->title:community->title);
-        fputs("</h3><p class=\"community-excerpt\">",stdout);html(excerpt);
+        (ui_open_a(stdout, "article", "class", "community-front-card", "data-community-discovery", community->key), ui_open(stdout, "p", "community-from"));html(community->title);
+        (ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));html(post->title[0]?post->title:community->title);
+        (ui_close(stdout, "h3"), ui_open(stdout, "p", "community-excerpt"));html(excerpt);
         fputs("</p><a data-community-thread href=\"" BF_ORIGIN_LIFE "/community/",stdout);
-        html(community->key);fputs("/thread/",stdout);html(post->key);
-        fputs("/\">Read the conversation</a></article>",stdout);
+        html(community->key);ui_lit(stdout, "/thread/");html(post->key);
+        (ui_lit(stdout, "/\">Read the conversation"), ui_close(stdout, "a"), ui_close(stdout, "article"));
     }
-    fputs("</div></section>",stdout);
+    ui_close_n(stdout, "div", "section", NULL);
 }
 #endif

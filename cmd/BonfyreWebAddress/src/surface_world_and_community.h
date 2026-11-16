@@ -259,15 +259,15 @@ static void surface_emit_reading_controls(const NativeSurfaceContext *ctx) {
     query_value(ctx->query, "q", q, sizeof(q));
     fputs("<form class=\"bf-reading-controls\" method=\"get\" role=\"search\" action=\"", stdout);
     html(ctx->target); fputs("\"><label>Search this view <input type=\"search\" name=\"q\" value=\"", stdout);
-    html(q); fputs("\"></label>", stdout);
+    html(q); (ui_lit(stdout, "\">"), ui_close(stdout, "label"));
     for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
         char value[256] = {0};
         if (query_value(ctx->query, keys[i], value, sizeof(value)) && *value) {
             fputs("<input type=\"hidden\" name=\"", stdout); html(keys[i]);
-            fputs("\" value=\"", stdout); html(value); fputs("\">", stdout);
+            ui_lit(stdout, "\" value=\""); html(value); ui_lit(stdout, "\">");
         }
     }
-    fputs("<button type=\"submit\">Search</button></form>", stdout);
+    (ui_elem(stdout, "button", (const UiAttr[]){{"type", "submit"}}, 1, 0), ui_lit(stdout, "Search"), ui_close(stdout, "button"), ui_close(stdout, "form"));
 }
 
 static const char *next_native_marker(const char *from, const char *kind) {
@@ -304,7 +304,7 @@ static const BfSurfaceProgramSlot *native_surface_slot(const char *program, int 
 }
 
 static void surface_world_href(const char *world, const char *cut) {
-    fputs("/w/", stdout); html(world);
+    ui_lit(stdout, "/w/"); html(world);
     if (cut && *cut) { fputc('/', stdout); html(cut); }
 }
 
@@ -318,12 +318,12 @@ static void surface_emit_territory_nav(const NativeSurfaceContext *ctx) {
     for (i = 0; i < 4; i++) {
         if (ctx->presentation->territory_nav == BF_SURFACE_NAV_STREAM) {
             fputs("<li class=\"nav-item\"><a class=\"nav-link", stdout);
-            if (!strcmp(ctx->territory, territories[i])) fputs(" font-weight-bold text-white", stdout);
-            fputs("\" href=\"https://aurekai.", stdout); html(territories[i]);
-            fputs("/discover\">.", stdout); html(territories[i]); fputs("</a></li>", stdout);
+            if (!strcmp(ctx->territory, territories[i])) ui_lit(stdout, " font-weight-bold text-white");
+            ui_lit(stdout, "\" href=\"https://aurekai."); html(territories[i]);
+            ui_lit(stdout, "/discover\">."); html(territories[i]); ui_close_n(stdout, "a", "li", NULL);
         } else {
             fputs("<a href=\"https://aurekai.", stdout); html(territories[i]);
-            fputs("/stage\">.", stdout); html(territories[i]); fputs("</a>", stdout);
+            ui_lit(stdout, "/stage\">."); html(territories[i]); ui_close(stdout, "a");
         }
     }
 }
@@ -337,7 +337,7 @@ static void surface_emit_world_link(const NativeSurfaceContext *ctx, const BfSur
     case BF_SURFACE_LINK_STAGE: fputs("<a class=\"bg-primary text-white rounded px-4 py-2 font-semibold text-center\" href=\"", stdout); break;
     default: fputs("<a class=\"btn btn-light btn-sm rounded-pill font-weight-bold\" href=\"", stdout); break;
     }
-    surface_world_href(ctx->world, op->cut); fputs("\">", stdout); html(label ? label : "World"); fputs("</a>", stdout);
+    surface_world_href(ctx->world, op->cut); ui_lit(stdout, "\">"); html(label ? label : "World"); ui_close(stdout, "a");
 }
 
 static void surface_emit_world_nav(const NativeSurfaceContext *ctx) {
@@ -355,21 +355,21 @@ static void surface_emit_world_nav(const NativeSurfaceContext *ctx) {
             fputs("<li class=\"nav-item\"><a class=\"nav-link px-2 font-weight-bold\" href=\"", stdout);
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_COMMUNITY) {
             fputs("<li class=\"nav-item\"><a class=\"nav-link", stdout);
-            if (!strcmp(cut, "community")) fputs(" active", stdout);
-            fputs("\" href=\"", stdout);
+            if (!strcmp(cut, "community")) ui_lit(stdout, " active");
+            ui_lit(stdout, "\" href=\"");
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_MARKET) {
             fputs("<li><a href=\"", stdout);
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_BOARD) {
             fputs("<a class=\"t\"", stdout);
-            if (!strcmp(cut, "board")) fputs(" aria-current=\"page\"", stdout);
-            fputs(" href=\"", stdout);
+            if (!strcmp(cut, "board")) ui_lit(stdout, " aria-current=\"page\"");
+            ui_lit(stdout, " href=\"");
         } else {
             fputs("<a href=\"", stdout);
         }
         if (candidate->world_route) surface_world_href(ctx->world, cut);
         else fputs(candidate->route, stdout);
-        fputs("\">", stdout); html(page_grammar_label(cut) ? page_grammar_label(cut) : cut); fputs("</a>", stdout);
-        if (ctx->presentation->world_nav == BF_SURFACE_NAV_STREAM || ctx->presentation->world_nav == BF_SURFACE_NAV_COMMUNITY || ctx->presentation->world_nav == BF_SURFACE_NAV_MARKET) fputs("</li>", stdout);
+        ui_lit(stdout, "\">"); html(page_grammar_label(cut) ? page_grammar_label(cut) : cut); ui_close(stdout, "a");
+        if (ctx->presentation->world_nav == BF_SURFACE_NAV_STREAM || ctx->presentation->world_nav == BF_SURFACE_NAV_COMMUNITY || ctx->presentation->world_nav == BF_SURFACE_NAV_MARKET) ui_close(stdout, "li");
     }
 }
 
@@ -383,17 +383,17 @@ static void surface_emit_pack_demands(const NativeSurfaceContext *ctx) {
     if (db && cms_type_registered(db, "pack_demand") && sqlite3_prepare_v2(db,
         "SELECT pack,demand_kind,needs,COALESCE(preferred_sources,''),COALESCE(body_regime,'') "
         "FROM pack_demand WHERE status='published' ORDER BY pack,demand_kind,id LIMIT 48", -1, &st, NULL) == SQLITE_OK) {
-        fputs("<div class=\"bf-program-list bf-pack-demands\">", stdout);
+        ui_open(stdout, "div", "bf-program-list bf-pack-demands");
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *pack=(const char *)sqlite3_column_text(st,0), *kind=(const char *)sqlite3_column_text(st,1),
                 *needs=(const char *)sqlite3_column_text(st,2), *preferred=(const char *)sqlite3_column_text(st,3),
                 *regime=(const char *)sqlite3_column_text(st,4);
-            fputs("<article class=\"bf-program-row\"><header><strong>",stdout); html(pack); fputs("</strong><span>",stdout); html(kind); fputs("</span></header><p>",stdout); html(needs); fputs("</p>",stdout);
-            if (preferred && *preferred) { fputs("<small>preferred source families · ",stdout); html(preferred); fputs("</small>",stdout); }
-            if (regime && *regime) { fputs("<small>body regime · ",stdout); html(regime); fputs("</small>",stdout); }
-            fputs("</article>",stdout); n++;
+            (ui_open(stdout, "article", "bf-program-row"), ui_open(stdout, "header", NULL), ui_open(stdout, "strong", NULL)); html(pack); (ui_close(stdout, "strong"), ui_open(stdout, "span", NULL)); html(kind); (ui_close(stdout, "span"), ui_close(stdout, "header"), ui_open(stdout, "p", NULL)); html(needs); ui_close(stdout, "p");
+            if (preferred && *preferred) { (ui_open(stdout, "small", NULL), ui_lit(stdout, "preferred source families · ")); html(preferred); ui_close(stdout, "small"); }
+            if (regime && *regime) { (ui_open(stdout, "small", NULL), ui_lit(stdout, "body regime · ")); html(regime); ui_close(stdout, "small"); }
+            ui_close(stdout, "article"); n++;
         }
-        fputs("</div>",stdout);
+        ui_close(stdout, "div");
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
     if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing has been asked for here yet.");
@@ -405,13 +405,13 @@ static void surface_emit_capability_programs(const NativeSurfaceContext *ctx) {
     if (db && cms_type_registered(db, "capability_program") && sqlite3_prepare_v2(db,
         "SELECT application_kind,action,authority_requirement,failure_projection "
         "FROM capability_program WHERE status='published' ORDER BY application_kind,action,id LIMIT 48", -1, &st, NULL) == SQLITE_OK) {
-        fputs("<div class=\"bf-program-list bf-capability-programs\">",stdout);
+        ui_open(stdout, "div", "bf-program-list bf-capability-programs");
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *app=(const char *)sqlite3_column_text(st,0), *action=(const char *)sqlite3_column_text(st,1),
                 *authority=(const char *)sqlite3_column_text(st,2), *failure=(const char *)sqlite3_column_text(st,3);
-            fputs("<article class=\"bf-program-row\"><header><strong>",stdout); html(action); fputs("</strong><span>",stdout); html(app); fputs("</span></header><p>Requires current authority · ",stdout); html(authority); fputs("</p><small>if unavailable · ",stdout); html(failure); fputs("</small></article>",stdout); n++;
+            (ui_open(stdout, "article", "bf-program-row"), ui_open(stdout, "header", NULL), ui_open(stdout, "strong", NULL)); html(action); (ui_close(stdout, "strong"), ui_open(stdout, "span", NULL)); html(app); (ui_close(stdout, "span"), ui_close(stdout, "header"), ui_open(stdout, "p", NULL), ui_lit(stdout, "Requires current authority · ")); html(authority); (ui_close(stdout, "p"), ui_open(stdout, "small", NULL), ui_lit(stdout, "if unavailable · ")); html(failure); ui_close_n(stdout, "small", "article", NULL); n++;
         }
-        fputs("</div>",stdout);
+        ui_close(stdout, "div");
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
     if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing is on offer here yet.");
@@ -422,17 +422,17 @@ static void surface_emit_world_catalogue(const NativeSurfaceContext *ctx) {
     (void)ctx;
     if (db && cms_type_registered(db, "world") && sqlite3_prepare_v2(db,
         "SELECT world,title,character,COALESCE(lede,'') FROM world WHERE status='published' ORDER BY id DESC LIMIT 48", -1, &st, NULL) == SQLITE_OK) {
-        fputs("<div class=\"bf-program-list bf-world-catalogue\">",stdout);
+        ui_open(stdout, "div", "bf-program-list bf-world-catalogue");
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *world=(const char *)sqlite3_column_text(st,0), *title=(const char *)sqlite3_column_text(st,1),
                 *character=(const char *)sqlite3_column_text(st,2), *lede=(const char *)sqlite3_column_text(st,3);
             if (!world || !studio_safe_slug_arg(world)) continue;
             /* The character dresses the page; it is not something to read. */
-            fputs("<article class=\"bf-program-row\" data-character=\"",stdout); html(character ? character : ""); fputs("\"><header><a href=\"/w/",stdout); html(world); fputs("\"><strong>",stdout); html(title); fputs("</strong></a></header>",stdout);
+            fputs("<article class=\"bf-program-row\" data-character=\"",stdout); html(character ? character : ""); fputs("\"><header><a href=\"/w/",stdout); html(world); (ui_lit(stdout, "\">"), ui_open(stdout, "strong", NULL)); html(title); ui_close_n(stdout, "strong", "a", "header", NULL);
             if (lede && *lede) { ui_text(stdout, "p", NULL, lede); }
-            fputs("</article>",stdout); n++;
+            ui_close(stdout, "article"); n++;
         }
-        fputs("</div>",stdout);
+        ui_close(stdout, "div");
     }
     if (st) { sqlite3_finalize(st); } if (db) sqlite3_close(db);
     if (!n) ui_text(stdout, "p", "bf-native-empty", "Nothing here yet.");
@@ -445,19 +445,19 @@ static void surface_emit_subjects(const NativeSurfaceContext *ctx) {
         if (!surface_reading_matches(ctx, s->name, s->summary, native_night_primary(s, ctx->territory))) continue;
         if (ctx->presentation->subjects == BF_SURFACE_SUBJECT_STAGE) {
             fputs("<a class=\"mbz-card snap-center sm:max-w-xs w-[18rem] shrink-0 flex flex-col text-left p-3 rounded-lg\" href=\"", stdout);
-            surface_world_href(ctx->world, NULL); fputs("\"><span class=\"text-xs uppercase tracking-widest opacity-70\">", stdout); html(s->kind);
-            fputs("</span><span class=\"font-semibold mt-1 truncate\">", stdout); html(s->name);
-            fputs("</span><span class=\"text-sm opacity-90 mt-1\">", stdout); html(s->tonight[0] ? s->tonight : s->summary); fputs("</span></a>", stdout);
+            surface_world_href(ctx->world, NULL); (ui_lit(stdout, "\">"), ui_open(stdout, "span", "text-xs uppercase tracking-widest opacity-70")); html(s->kind);
+            (ui_close(stdout, "span"), ui_open(stdout, "span", "font-semibold mt-1 truncate")); html(s->name);
+            (ui_close(stdout, "span"), ui_open(stdout, "span", "text-sm opacity-90 mt-1")); html(s->tonight[0] ? s->tonight : s->summary); ui_close_n(stdout, "span", "a", NULL);
         } else {
             const char *primary = native_night_primary(s, ctx->territory);
-            fputs("<article class=\"timeline-status-component mb-4\"><div class=\"card shadow-sm\" style=\"border-radius:15px\"><div class=\"card-header border-0\"><div class=\"media align-items-center\"><span class=\"bf-av mr-2\" aria-hidden=\"true\">", stdout); html(s->kind);
-            fputs("</span><div class=\"media-body\"><p class=\"font-weight-bold username mb-0\">", stdout); html(s->name);
-            fputs("</p><p class=\"text-lighter mb-0\" style=\"font-size:13px\">published ", stdout); html(s->kind);
-            fputs("</p></div></div></div><div class=\"px-3 py-3\"><p class=\"mb-2\">", stdout); html(primary); fputs("</p>", stdout);
+            (ui_open(stdout, "article", "timeline-status-component mb-4"), ui_elem(stdout, "div", (const UiAttr[]){{"class", "card shadow-sm"}, {"style", "border-radius:15px"}}, 2, 0), ui_open(stdout, "div", "card-header border-0"), ui_open(stdout, "div", "media align-items-center"), ui_elem(stdout, "span", (const UiAttr[]){{"class", "bf-av mr-2"}, {"aria-hidden", "true"}}, 2, 0)); html(s->kind);
+            (ui_close(stdout, "span"), ui_open(stdout, "div", "media-body"), ui_open(stdout, "p", "font-weight-bold username mb-0")); html(s->name);
+            (ui_close(stdout, "p"), ui_elem(stdout, "p", (const UiAttr[]){{"class", "text-lighter mb-0"}, {"style", "font-size:13px"}}, 2, 0), ui_lit(stdout, "published ")); html(s->kind);
+            (ui_close(stdout, "p"), ui_close(stdout, "div"), ui_close(stdout, "div"), ui_close(stdout, "div"), ui_open(stdout, "div", "px-3 py-3"), ui_open(stdout, "p", "mb-2")); html(primary); ui_close(stdout, "p");
             if (s->capacity[0]) { ui_text(stdout, "span", "badge badge-light mr-1", s->capacity); }
-            if (s->price[0]) { fputs("<span class=\"badge badge-light mr-1\">$", stdout); html(s->price); fputs("</span>", stdout); }
+            if (s->price[0]) { (ui_open(stdout, "span", "badge badge-light mr-1"), ui_lit(stdout, "$")); html(s->price); ui_close(stdout, "span"); }
             if (s->safety[0]) { ui_text(stdout, "p", "bf-cant", s->safety); }
-            fputs("<p class=\"mb-0 mt-3\"><a class=\"btn btn-light font-weight-bold rounded-pill\" href=\"", stdout); surface_world_href(ctx->world, NULL); fputs("\">Open this World</a></p></div></div></article>", stdout);
+            fputs("<p class=\"mb-0 mt-3\"><a class=\"btn btn-light font-weight-bold rounded-pill\" href=\"", stdout); surface_world_href(ctx->world, NULL); (ui_lit(stdout, "\">Open this World"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_close(stdout, "div"), ui_close(stdout, "article"));
         }
     }
 }
@@ -468,11 +468,11 @@ static void surface_emit_publications(const NativeSurfaceContext *ctx) {
         const NativePublication *p = &ctx->publications[i];
         if (!surface_reading_matches(ctx, p->attribution, p->title, "")) continue;
         shown++;
-        fputs("<article class=\"timeline-status-component mb-4\"><div class=\"card shadow-sm\" style=\"border-radius:15px\"><div class=\"card-header border-0\"><p class=\"font-weight-bold username mb-0\">", stdout); html(p->attribution);
-        fputs("</p><p class=\"text-lighter mb-0\" style=\"font-size:13px\">observed publication", stdout); if (p->when[0]) { fputs(" · ", stdout); html(p->when); }
-        fputs("</p></div><div class=\"px-3 py-3\"><p class=\"mb-0 font-weight-bold\">", stdout);
-        if (p->href[0]) { fputs("<a href=\"", stdout); html(p->href); fputs("\" rel=\"noopener\" target=\"_blank\">", stdout); }
-        html(p->title); if (p->href[0]) fputs("</a>", stdout); fputs("</p></div></div></article>", stdout);
+        (ui_open(stdout, "article", "timeline-status-component mb-4"), ui_elem(stdout, "div", (const UiAttr[]){{"class", "card shadow-sm"}, {"style", "border-radius:15px"}}, 2, 0), ui_open(stdout, "div", "card-header border-0"), ui_open(stdout, "p", "font-weight-bold username mb-0")); html(p->attribution);
+        (ui_close(stdout, "p"), ui_elem(stdout, "p", (const UiAttr[]){{"class", "text-lighter mb-0"}, {"style", "font-size:13px"}}, 2, 0), ui_lit(stdout, "observed publication")); if (p->when[0]) { ui_lit(stdout, " · "); html(p->when); }
+        (ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "div", "px-3 py-3"), ui_open(stdout, "p", "mb-0 font-weight-bold"));
+        if (p->href[0]) { fputs("<a href=\"", stdout); html(p->href); ui_lit(stdout, "\" rel=\"noopener\" target=\"_blank\">"); }
+        html(p->title); if (p->href[0]) ui_close(stdout, "a"); ui_close_n(stdout, "p", "div", "div", "article", NULL);
     }
     if (!shown && surface_reading_narrowed(ctx))
         ui_text(stdout, "p", "note", "Nothing here matches this search.");
@@ -484,18 +484,18 @@ static void surface_emit_world_fragments(const NativeSurfaceContext *ctx) {
         "SELECT fragment_id,surface_grammar,renderer_family,COALESCE(visible_sections,''),COALESCE(source_projection,'') FROM world_fragment WHERE world=?1 AND status='published' ORDER BY ordinal,id", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, ctx->world, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(st) == SQLITE_ROW) { const char *id=(const char *)sqlite3_column_text(st,0),*grammar=(const char *)sqlite3_column_text(st,1),*renderer=(const char *)sqlite3_column_text(st,2),*sections=(const char *)sqlite3_column_text(st,3),*projection=(const char *)sqlite3_column_text(st,4); if(!id||!grammar||!renderer)continue;
-            fputs("<article class=\"pin-card grid-item\"><a class=\"pin-preview-image\" href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);fputs("\"><span class=\"pin-shade\"><b>",stdout);html(grammar);fputs("</b></span><span class=\"pin-terr\">",stdout);html(renderer);fputs("</span><span class=\"pin-gen\">world view</span></a><div class=\"pin-footer\"><p class=\"description\">",stdout);html(sections&&*sections?sections:"Published World fragment");fputs("</p><p class=\"details\"><a href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);fputs("\">Open ",stdout);html(grammar);fputs("</a>",stdout);if(projection&&*projection)fputs(" · native projection",stdout);fputs("</p></div></article>",stdout);n++; }
+            fputs("<article class=\"pin-card grid-item\"><a class=\"pin-preview-image\" href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);(ui_lit(stdout, "\">"), ui_open(stdout, "span", "pin-shade"), ui_open(stdout, "b", NULL));html(grammar);(ui_close(stdout, "b"), ui_close(stdout, "span"), ui_open(stdout, "span", "pin-terr"));html(renderer);(ui_close(stdout, "span"), ui_open(stdout, "span", "pin-gen"), ui_lit(stdout, "world view"), ui_close(stdout, "span"), ui_close(stdout, "a"), ui_open(stdout, "div", "pin-footer"), ui_open(stdout, "p", "description"));html(sections&&*sections?sections:"Published World fragment");fputs("</p><p class=\"details\"><a href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);ui_lit(stdout, "\">Open ");html(grammar);ui_close(stdout, "a");if(projection&&*projection)ui_lit(stdout, " · native projection");ui_close_n(stdout, "p", "div", "article", NULL);n++; }
     }
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
-    if (!n) fputs("<section class=\"pn-refuse\"><strong>No published arrangement exists for this World.</strong></section>", stdout);
+    if (!n) (ui_open(stdout, "section", "pn-refuse"), ui_open(stdout, "strong", NULL), ui_lit(stdout, "No published arrangement exists for this World."), ui_close(stdout, "strong"), ui_close(stdout, "section"));
 }
 
 static int community_active_member_count(sqlite3 *db, const char *community);
 static int community_public_presence_count(sqlite3 *db, const char *community);
 static int community_post_reaction_count(sqlite3 *db, const char *post);
 static void surface_emit_participation_nav(void){
-    fputs("<nav aria-label=\"Community discovery\"><a href=\"/communities\">Find communities</a> · <a href=\"/community/new\">Start a community</a> · <a href=\"/profile?tab=communities\">My communities</a></nav>",stdout);
+    (ui_elem(stdout, "nav", (const UiAttr[]){{"aria-label", "Community discovery"}}, 1, 0), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/communities"}}, 1, 0), ui_lit(stdout, "Find communities"), ui_close(stdout, "a"), ui_lit(stdout, " · "), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/community/new"}}, 1, 0), ui_lit(stdout, "Start a community"), ui_close(stdout, "a"), ui_lit(stdout, " · "), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/profile?tab=communities"}}, 1, 0), ui_lit(stdout, "My communities"), ui_close(stdout, "a"), ui_close(stdout, "nav"));
 }
 
 static int world_community_id(sqlite3 *db, const char *world, char *out, size_t out_sz) {
@@ -579,14 +579,14 @@ static void surface_emit_community_limit(const NativeSurfaceContext *ctx,
     if (db && surface_community_id(db, ctx, community, sizeof(community)))
         got = surface_community_body(db, community, 4, value, sizeof(value));
     if (db) sqlite3_close(db);
-    if (got) { fputs("<strong>What this is not.</strong> ", stdout); html(value); fputs(" ", stdout); }
+    if (got) { (ui_open(stdout, "strong", NULL), ui_lit(stdout, "What this is not."), ui_close(stdout, "strong"), ui_lit(stdout, " ")); html(value); ui_lit(stdout, " "); }
     if (op->text) html(op->text);
 }
 
 static void surface_emit_community_posts(const NativeSurfaceContext *ctx) {
     surface_emit_participation_nav();
     sqlite3 *db=cms_open_ro(); sqlite3_stmt *st=NULL; char community[128]={0}; int n=0;
-    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);fputs("<article class=\"post-listing my-2\"><small class=\"text-muted\">",stdout);html(author);fputs(" · ",stdout);html(at);if(reply&&*reply)fputs(" · reply",stdout);fputs("</small>",stdout);if(title&&*title){ui_text(stdout, "h2", "h6 mb-1", title);}ui_text(stdout, "div", "md-div", body);if(reactions)printf("<small class=\"text-muted\">%d accepted reactions</small>",reactions);fputs("</article>",stdout);n++;} }
+    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);(ui_open(stdout, "article", "post-listing my-2"), ui_open(stdout, "small", "text-muted"));html(author);ui_lit(stdout, " · ");html(at);if(reply&&*reply)ui_lit(stdout, " · reply");ui_close(stdout, "small");if(title&&*title){ui_text(stdout, "h2", "h6 mb-1", title);}ui_text(stdout, "div", "md-div", body);if(reactions)printf("<small class=\"text-muted\">%d accepted reactions</small>",reactions);ui_close(stdout, "article");n++;} }
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
     if (!n) fputs(surface_reading_narrowed(ctx) ?
@@ -600,7 +600,7 @@ static int surface_offer_count(const char *world) {
 }
 
 static void surface_emit_offer_status(const NativeSurfaceContext *ctx) { printf("<li>Published: %d</li><li>Drafts: not shown</li>", surface_offer_count(ctx->world)); }
-static void surface_emit_offer_empty(const NativeSurfaceContext *ctx) { if(!surface_offer_count(ctx->world)) { fputs("<section class=\"rounded-lg border border-neutral-200 p-6 dark:border-neutral-700\"><h2 class=\"text-lg font-semibold\">Nothing is listed here yet.</h2><p class=\"mt-4\"><a class=\"underline\" href=\"",stdout);surface_world_href(ctx->world,"stage");fputs("\">See what is on</a></p></section>",stdout); } }
+static void surface_emit_offer_empty(const NativeSurfaceContext *ctx) { if(!surface_offer_count(ctx->world)) { fputs("<section class=\"rounded-lg border border-neutral-200 p-6 dark:border-neutral-700\"><h2 class=\"text-lg font-semibold\">Nothing is listed here yet.</h2><p class=\"mt-4\"><a class=\"underline\" href=\"",stdout);surface_world_href(ctx->world,"stage");(ui_lit(stdout, "\">See what is on"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "section")); } }
 
 /* SurfaceProgram may ask for the lawful actions of the World it resolved, but
  * it cannot name an action, its authority, or an endpoint in its presentation
@@ -664,22 +664,22 @@ static void surface_emit_subject_apertures(const NativeSurfaceContext *ctx) {
         if (!operation || !*operation ||
             (requires && *requires && !surface_authority_satisfied(requires, ctx->bearer, ctx->auth_db)))
             continue;
-        if (!offered) fputs("<nav class=\"bf-surface-apertures\" aria-label=\"Available actions\">", stdout);
+        if (!offered) ui_elem(stdout, "nav", (const UiAttr[]){{"class", "bf-surface-apertures"}, {"aria-label", "Available actions"}}, 2, 0);
         fputs("<a class=\"bf-surface-aperture\" hx-get=\"/_aperture/form?subject=", stdout);
         surface_query_value(subject);
-        fputs("&amp;operation=", stdout);
+        ui_lit(stdout, "&amp;operation=");
         surface_query_value(operation);
-        fputs("\" hx-target=\"#bf-aperture-result\" hx-swap=\"innerHTML\" href=\"/_aperture/form?subject=", stdout);
+        ui_lit(stdout, "\" hx-target=\"#bf-aperture-result\" hx-swap=\"innerHTML\" href=\"/_aperture/form?subject=");
         surface_query_value(subject);
-        fputs("&amp;operation=", stdout);
+        ui_lit(stdout, "&amp;operation=");
         surface_query_value(operation);
-        fputs("\">", stdout);
+        ui_lit(stdout, "\">");
         page_glyph(page_operation_glyph(operation));
         html(label && *label ? label : operation);
-        fputs("</a>", stdout);
+        ui_close(stdout, "a");
         offered++;
     }
-    if (offered) fputs("</nav><section id=\"bf-aperture-result\" aria-live=\"polite\"></section>", stdout);
+    if (offered) (ui_close(stdout, "nav"), ui_elem(stdout, "section", (const UiAttr[]){{"id", "bf-aperture-result"}, {"aria-live", "polite"}}, 2, 0), ui_close(stdout, "section"));
 out:
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
@@ -723,22 +723,22 @@ static void bf_surface_render_native_document(const BfNativeSurfaceProgram *prog
                                               const NativeSurfaceContext *ctx) {
     unsigned short slot;
     fputs("<body class=\"bf-native-surface renderer-", stdout); html(program->presentation->renderer);
-    fputs(" territory-", stdout); html(ctx->territory);
-    fputs("\"", stdout);
+    ui_lit(stdout, " territory-"); html(ctx->territory);
+    ui_lit(stdout, "\"");
     bf_route_presentation_emit_body_attribute_for(stdout, ctx->territory, program->route, NULL, bf_route_presentation_native_pattern(ctx->territory, program->route));
     fputs(">" BF_ESTATE_BAR "<main class=\"bf-native-layout\"><header class=\"bf-native-masthead\"><p class=\"bf-native-kicker\">AUREKAI · ", stdout);
-    html(ctx->territory); fputs("</p><h1>", stdout);
+    html(ctx->territory); (ui_close(stdout, "p"), ui_open(stdout, "h1", NULL));
     html(page_grammar_label(program->program) ? page_grammar_label(program->program) : program->program);
-    fputs("</h1></header>", stdout);
+    ui_close_n(stdout, "h1", "header", NULL);
     surface_emit_reading_controls(ctx);
     for (slot = 0; slot < program->slot_count; slot++) {
         const BfSurfaceProgramSlot *compiled_slot = &program->slots[slot];
         if (!compiled_slot->count) continue;
         printf("<section class=\"bf-native-slot bf-native-slot-%u\">", slot);
         bf_surface_render_program_slot(compiled_slot, program, ctx);
-        fputs("</section>", stdout);
+        ui_close(stdout, "section");
     }
-    fputs("</main></body></html>", stdout);
+    ui_close_n(stdout, "main", "body", "html", NULL);
 }
 
 static int emit_native_donor_surface(const char *path, const char *kind, const char *territory,
@@ -753,7 +753,7 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
     if (!(limit=strstr(body,"<script"))) {free(body);return 0;}
     count=publication_count=0;
     if(strcmp(kind,"link")){db=cms_open_ro();count=db?native_night_subjects(db,subjects,NATIVE_NIGHT_MAX):0;publication_count=db?native_publications(db,publications,NATIVE_PUBLICATION_MAX,publication_scope):0;if(db)sqlite3_close(db);}
-    printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nVary: Host\r\nX-Bonfyre-Surface-Program: CUE-native\r\nConnection: close\r\n\r\n");
+    ui_lit(stdout, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\nVary: Host\r\nX-Bonfyre-Surface-Program: CUE-native\r\nConnection: close\r\n\r\n");
     cursor=body;
     { const BfNativeSurfaceProgram *program = native_surface_program(kind);
       NativeSurfaceContext ctx;
@@ -767,9 +767,9 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
            * what makes that structure readable in every territory. */
           {
               fwrite(body,1,(size_t)(head_end-body),stdout);
-              fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=2\">",stdout);
+              ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/aurekai-native.css?v=2"}}, 2, 0);
               bf_route_presentation_emit_head_for(stdout, territory, program->route, NULL, bf_route_presentation_native_pattern(territory, program->route));
-              fputs("</head>",stdout);
+              ui_close(stdout, "head");
           }
           bf_surface_render_native_document(program, &ctx);
       } else {
@@ -794,7 +794,7 @@ static int emit_native_donor_surface(const char *path, const char *kind, const c
       }
       if (program->document_mode != BF_SURFACE_DOCUMENT_NATIVE) while(cursor<limit){const char *mark=next_native_marker(cursor,kind), *mark_end; const BfSurfaceProgramSlot *compiled_slot; int slot=-1; if(!mark||mark>=limit){fwrite(cursor,1,(size_t)(limit-cursor),stdout);break;} mark_end=strstr(mark,"-->"); if(!mark_end||mark_end>=limit||(slot=native_surface_slot_number(mark))<0||(compiled_slot=native_surface_slot(kind,slot))==NULL||!compiled_slot->count){free(body);return 0;} fwrite(cursor,1,(size_t)(mark-cursor),stdout); bf_surface_render_program_slot(compiled_slot, program, &ctx); cursor=(char *)mark_end+3;}
     }
-    if (native_surface_program(kind)->document_mode != BF_SURFACE_DOCUMENT_NATIVE) { fputs("</body></html>",stdout); }free(body);return 1;
+    if (native_surface_program(kind)->document_mode != BF_SURFACE_DOCUMENT_NATIVE) { ui_close_n(stdout, "body", "html", NULL); }free(body);return 1;
 }
 
 /* Discover and Stage keep their Pixelfed/Mobilizon documents, but the browser
@@ -1041,17 +1041,17 @@ static int serve_world_composition(const BfRequest *r) {
         return 1;
     }
 
-    printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
-    fputs("{\"schema_version\":\"bonfyre.surface_composition.v1\",\"world\":", stdout); json(world);
-    fputs(",\"world_address\":", stdout); { char address[192]; snprintf(address, sizeof(address), "/w/%s", world); json(address); }
-    fputs(",\"title\":", stdout); json(title);
-    fputs(",\"subject_address\":", stdout);
+    ui_lit(stdout, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
+    ui_lit(stdout, "{\"schema_version\":\"bonfyre.surface_composition.v1\",\"world\":"); json(world);
+    ui_lit(stdout, ",\"world_address\":"); { char address[192]; snprintf(address, sizeof(address), "/w/%s", world); json(address); }
+    ui_lit(stdout, ",\"title\":"); json(title);
+    ui_lit(stdout, ",\"subject_address\":");
     if (*subject) json(subject); else { char fallback[192]; snprintf(fallback, sizeof(fallback), "world:%s", world); json(fallback); }
-    fputs(",\"character\":", stdout); json(character);
-    fputs(",\"template_baseline\":", stdout); json(template_name);
-    fputs(",\"presentation_class\":", stdout); json(klass);
-    fputs(",\"interaction_density\":", stdout); json(world_cell->density);
-    fputs(",\"ordered_fragments\":[", stdout);
+    ui_lit(stdout, ",\"character\":"); json(character);
+    ui_lit(stdout, ",\"template_baseline\":"); json(template_name);
+    ui_lit(stdout, ",\"presentation_class\":"); json(klass);
+    ui_lit(stdout, ",\"interaction_density\":"); json(world_cell->density);
+    ui_lit(stdout, ",\"ordered_fragments\":[");
     {
         char work[sizeof(grammars)];
         char *p, *end;
@@ -1078,22 +1078,22 @@ static int serve_world_composition(const BfRequest *r) {
                  * value from turning a presentation identifier into a buffer
                  * claim. */
                 snprintf(fragment_id, sizeof(fragment_id), "%s:%02d:%.96s", world, fragment_count, start);
-                fputs("{\"fragment_id\":", stdout); json(fragment_id);
-                fputs(",\"surface_grammar\":", stdout); json(start);
-                fputs(",\"renderer_family\":", stdout); json(cell->renderer_family);
-                fputs(",\"renderer_variant\":", stdout); json(cell->renderer_variant);
-                fputs(",\"extent\":", stdout); json(cell->extent);
-                fputs(",\"interaction_density\":", stdout); json(cell->density);
-                fputs(",\"template\":", stdout); json(template_name);
-                fputs(",\"truth_level\":\"presentation_plan\"}", stdout);
+                ui_lit(stdout, "{\"fragment_id\":"); json(fragment_id);
+                ui_lit(stdout, ",\"surface_grammar\":"); json(start);
+                ui_lit(stdout, ",\"renderer_family\":"); json(cell->renderer_family);
+                ui_lit(stdout, ",\"renderer_variant\":"); json(cell->renderer_variant);
+                ui_lit(stdout, ",\"extent\":"); json(cell->extent);
+                ui_lit(stdout, ",\"interaction_density\":"); json(cell->density);
+                ui_lit(stdout, ",\"template\":"); json(template_name);
+                ui_lit(stdout, ",\"truth_level\":\"presentation_plan\"}");
                 fragment_count++;
             }
         }
     }
-    fputs("],\"fragment_count\":", stdout); printf("%d", fragment_count);
-    fputs(",\"cannot_infer\":[", stdout); json(cannot_infer);
-    fputs(",\"presentation plan -> subject truth\",\"presentation class -> actor identity or authority\",\"renderer or affordance -> authorized effect\",\"template reference -> copied third-party theme code\"],", stdout);
-    fputs("\"required_followups\":[\"InformationPolicy before disclosure\",\"CapabilityClosure before executable action\",\"native effect owner before mutation or spend\"]}\n", stdout);
+    ui_lit(stdout, "],\"fragment_count\":"); printf("%d", fragment_count);
+    ui_lit(stdout, ",\"cannot_infer\":["); json(cannot_infer);
+    ui_lit(stdout, ",\"presentation plan -> subject truth\",\"presentation class -> actor identity or authority\",\"renderer or affordance -> authorized effect\",\"template reference -> copied third-party theme code\"],");
+    ui_lit(stdout, "\"required_followups\":[\"InformationPolicy before disclosure\",\"CapabilityClosure before executable action\",\"native effect owner before mutation or spend\"]}\n");
     return 1;
 }
 

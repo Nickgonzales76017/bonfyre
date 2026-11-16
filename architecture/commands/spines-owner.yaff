@@ -1,6 +1,7 @@
 atlas commands-spines-owner
 
 architecture native-spines-bun-owner
+  source_lineage earliest source integrations/mcp/spines_store.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name NativeSpinesBunOwner
   family commands
   domain Execution / Temporal maintenance, bounded reasoning and candidate placement

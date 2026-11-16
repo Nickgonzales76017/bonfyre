@@ -1,6 +1,7 @@
 #ifndef BF_PUBLIC_ASSET_EXPORT_H
 #define BF_PUBLIC_ASSET_EXPORT_H
 #include "static_asset_closure.h"
+#include "ui_tree.h"
 typedef struct { const char *site; const char *out; } SacWeb;
 static unsigned char *sac_web_load(void *owner,const char *route,size_t *size) {
     SacWeb *web=owner;*size=0;
@@ -26,7 +27,7 @@ static unsigned char *sac_web_load(void *owner,const char *route,size_t *size) {
  done:free(wire);fclose(capture);return body;
 }
 static int publish_assets_cli(const char *site,const char *out) {
-    if(!site||!*site||!out||!*out){fputs("publish-assets: --site-root and --out required\n",stderr);return 2;}
+    if(!site||!*site||!out||!*out){ui_lit(stderr, "publish-assets: --site-root and --out required\n");return 2;}
     SacWeb owner={site,out};return sac_export(out,sac_web_load,&owner);
 }
 #endif

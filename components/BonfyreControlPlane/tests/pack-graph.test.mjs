@@ -59,9 +59,9 @@ live('community fork depends on parent instead of copying it', async () => {
 
 live('pack overlay cannot widen native authority', async () => {
   expect((await graph()).overlay_verbs).toEqual(verbs);
-  const fn = main.slice(main.indexOf('static int pack_verb_allowed'));
-  const listed = [...fn.slice(0, fn.indexOf('\n}')).matchAll(/"([a-z]+)"/g)].map(m => m[1]);
-  expect(listed).toEqual(verbs);
+  const fn = main.slice(main.indexOf('#define PACK_OVERLAY_VERBS')); // the declared verb table, strcmp order
+  const listed = [...fn.slice(0, fn.indexOf('BF_COMMAND_TABLE')).matchAll(/X\("([a-z]+)"/g)].map(m => m[1]);
+  expect(listed).toEqual([...verbs].sort());
   for (const forbidden of ['grant', 'widen', 'authorize', 'elevate', 'trust', 'escalate']) {
     expect(listed).not.toContain(forbidden);
   }
@@ -76,7 +76,7 @@ test('unknown overlay verb is refused out loud', () => {
 
 test('tighten narrows and never widens', () => {
   const fn = main.slice(main.indexOf('static int pack_audience_rank'));
-  const body = fn.slice(fn.indexOf('!strcmp(verb, "tighten")')).split('} else')[0];
+  const body = main.includes('X("tighten", PO_TIGHTEN)') ? fn.slice(fn.indexOf('vid == PO_TIGHTEN')).split('} else')[0] : '';
   expect(body).toContain('r < audience_rank');
   const order = [...fn.slice(0, fn.indexOf('\n}')).matchAll(/"([a-z]+)"/g)].map(m => m[1]);
   expect(order[0]).toBe('self');

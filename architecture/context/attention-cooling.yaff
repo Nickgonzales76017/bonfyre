@@ -63,6 +63,7 @@ architecture atlas-context-provider
   known_gap the installed Bun project owner composes other native owners but its read-only HTTP cutover witness does not establish live generation, financial effects or remote Matrix execution
 
 architecture atlas-provenance
+  source_lineage earliest source architecture/atlas.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name AtlasProvenance
   family context
   domain Context
@@ -94,6 +95,7 @@ architecture atlas-provenance
   known_gap nothing runs the deploy on a schedule, so an index can still go stale between deploys; it can no longer do so silently
 
 architecture claim-falsifiability
+  source_lineage earliest source architecture/check-falsifiable-claims.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name ClaimFalsifiability
   family context
   domain Context
@@ -127,6 +129,7 @@ architecture claim-falsifiability
   known_gap the checker reads patterns, not meaning; a claim expressed any other way passes it silently
 
 architecture witness-grade
+  source_lineage earliest source cmd/BonfyreAtlas/src/main.c first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports architecture/check_witness_grade.py which scripts/retire.sh archived at architecture/check_witness_grade.py.archive
   canonical_name WitnessGrade
   family context
   domain Context

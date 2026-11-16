@@ -2645,6 +2645,17 @@ interaction web-address-serves-journal-through-native-projector
   binding cmd/BonfyreWebAddress/src/site_authored_document.c
   binding cmd/BonfyreWebAddress/src/profile_home.h
 
+interaction profile-claim-binds-once-through-auth
+  source human-community-body
+  destination cmd-auth
+  relation invokes_actor_bind_for_unbound_self_only
+  preserves the session's own user id, the validated lowercase handle, and the one-address-per-account rule enforced by re-reading the binding after the call
+  drops any other user's binding, any handle already held, and any authority or site grant; binding alone publishes nothing
+  forbidden_inference a bound actor -> a published site, a public presence, or authority over anything
+  invalidates_on the actor-bind verb, the actor_closure_bindings shape, or the claim handler changing
+  witness cmd/BonfyreWebAddress/tests/profile_claim.test.mjs
+  binding cmd/BonfyreWebAddress/src/profile_home.h
+
 interaction companions-rows-render-through-shared-native-components
   source human-community-body
   destination cmd-surface-scene

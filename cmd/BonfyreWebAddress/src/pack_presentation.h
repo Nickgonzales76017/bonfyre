@@ -26,15 +26,15 @@ static void pack_presentation_open(sqlite3 *db,const char *pack,const char *labe
         }
     }
     sqlite3_finalize(st);
-    if(!count){fputs("<div class=\"pack-art-type\" aria-hidden=\"true\"><span>AUREKAI</span><strong>",stdout);html(label);fputs("</strong></div>",stdout);}
-    fputs("<span class=\"pack-kind\">",stdout);html(kind);fputs("</span></div><div class=\"pack-copy\"><span class=\"pack-glyph\" aria-hidden=\"true\">",stdout);page_glyph(glyph);fputs("</span><h3>",stdout);html(label);fputs("</h3>",stdout);
+    if(!count){ui_open_a(stdout,"div","class","pack-art-type","aria-hidden","true"); ui_open(stdout,"span",NULL); fputs("AUREKAI",stdout); ui_close(stdout,"span"); ui_open(stdout,"strong",NULL);html(label);ui_close(stdout,"strong"); ui_close(stdout,"div");}
+    ui_open(stdout,"span","pack-kind");html(kind);ui_close(stdout,"span"); ui_close(stdout,"div"); ui_open(stdout,"div","pack-copy"); ui_open_a(stdout,"span","class","pack-glyph","aria-hidden","true");page_glyph(glyph);ui_close(stdout,"span"); ui_open(stdout,"h3",NULL);html(label);ui_close(stdout,"h3");
     if(purpose&&*purpose){ui_text(stdout, "p", "pack-purpose", purpose);}
-    fputs("<div class=\"pack-card-actions\">",stdout);
+    ui_open(stdout,"div","pack-card-actions");
 }
-static void pack_presentation_close(void){fputs("</div></div></article>",stdout);}
+static void pack_presentation_close(void){ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"article");}
 static void pack_presentation_style(void){
     /* A CMS-authored Stitch pattern must reach the real account UI, not only
      * leave an inert data attribute on the body. Owner components stay intact. */
-    fputs("<link rel=\"stylesheet\" href=\"/assets/pack-presentation.css\">",stdout);
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/pack-presentation.css");
 }
 #endif

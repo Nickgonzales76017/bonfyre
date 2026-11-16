@@ -13,6 +13,7 @@
  * that two identical names are one person. An institution here is a publisher
  * whose channels this estate reads, which says nothing about what it is like.
  */
+#include "ui_tree.h"
 #include "../generated/native_estate_hosts.h"
 #include "people_projection.h"
 #include "web_store.h"
@@ -21,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 #include <sqlite3.h>
 #include "bf_lex.h"
 #include "credit_profile_host.h"
@@ -189,47 +192,74 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
             if ((unsigned)shown >= page_size) {has_next=1;break;}
             if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
             if (!shown)
-                fputs("<section id='people-addressed' class='people-sec' aria-label='People on Aurekai'>"
-                      "<header class='people-head'><h2>On Aurekai <small>Estate addresses</small></h2>"
-                      "<p>People who keep their own address here, with every page they publish under it.</p></header>"
-                      "<ul class='people-members'>", out);
+                {ui_start(out,"section");ui_attr_sq(out,"id","people-addressed");ui_attr_sq(out,"class","people-sec");ui_attr_sq(out,"aria-label","People on Aurekai");ui_gt(out);ui_start(out,"header");ui_attr_sq(out,"class","people-head");ui_gt(out);ui_open(out,"h2",NULL);ui_copy(out,"On Aurekai ");ui_open(out,"small",NULL);ui_copy(out,"Estate addresses");ui_close(out,"small");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"People who keep their own address here, with every page they publish under it.");ui_close(out,"p");ui_close(out,"header");ui_start(out,"ul");ui_attr_sq(out,"class","people-members");ui_gt(out);}
             snprintf(current, sizeof(current), "%s", subject);
             label = strchr(subject, ':');
             label = label && label[1] ? label + 1 : subject;
             char canonical[128] = "";
             people_member_host(cms,subject,canonical,sizeof(canonical));
-            fputs("<li data-person-subject='", out); esc(out, subject); fputs("'><span class='people-avatar' aria-hidden='true'>", out);
-            fputs(BF_ICON_USER, out); fputs("</span><div class='people-member'><strong>", out);
-            if(canonical[0]){fputs("<a data-profile-primary href='https://",out);esc(out,canonical);fputs("/'>",out);}
+            ui_start(out,"li");ui_attr_open_sq(out,"data-person-subject"); esc(out, subject); fputs("'><span class='people-avatar' aria-hidden='true'>", out);
+            fputs(BF_ICON_USER, out); ui_close(out,"span");ui_start(out,"div");ui_attr_sq(out,"class","people-member");ui_gt(out);ui_open(out,"strong",NULL);
+            if(canonical[0]){ui_start(out,"a");ui_flag(out,"data-profile-primary");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);fputs("/'>",out);}
             if (*label >= 'a' && *label <= 'z') { fputc(*label - 32, out); esc(out, label + 1); } else esc(out, label);
-            if(canonical[0])fputs("</a>",out);
-            fputs("</strong> <span class='ak-tag is-on'>Resident</span>", out);
+            if(canonical[0])ui_close(out,"a");
+            ui_close(out,"strong");ui_copy(out," ");ui_start(out,"span");ui_attr_sq(out,"class","ak-tag is-on");ui_gt(out);ui_copy(out,"Resident");ui_close(out,"span");
             if(canonical[0]){
-                fputs("<nav data-person-profile-buckets aria-label='Public profile'>",out);
+                ui_start(out,"nav");ui_flag(out,"data-person-profile-buckets");ui_attr_sq(out,"aria-label","Public profile");ui_gt(out);
                 static const char *const labels[]={"Posts","Gallery","Communities","Organizations"};
                 static const char *const tabs[]={"posts","gallery","communities","organizations"};
-                for(size_t i=0;i<4;i++){fputs("<a class='person-content-bucket' data-person-bucket href='https://",out);esc(out,canonical);fputs("/?tab=",out);fputs(tabs[i],out);fputs("'>",out);esc(out,labels[i]);fputs("</a>",out);}
-                fputs("</nav>",out);
+                for(size_t i=0;i<4;i++){ui_start(out,"a");ui_attr_sq(out,"class","person-content-bucket");ui_flag(out,"data-person-bucket");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);fputs("/?tab=",out);fputs(tabs[i],out);fputs("'>",out);esc(out,labels[i]);ui_close(out,"a");}
+                ui_close(out,"nav");
             }
-            fputs("<p class='people-hosts'>", out);
+            ui_start(out,"p");ui_attr_sq(out,"class","people-hosts");ui_gt(out);
             shown++; open = 1;
         }
-        fputs("<a data-profile-surface href='https://", out); esc(out, host); fputs("'>", out);
-        esc(out, host); fputs("</a>", out);
+        ui_start(out,"a");ui_flag(out,"data-profile-surface");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, host); fputs("'>", out);
+        esc(out, host); ui_close(out,"a");
     }
     sqlite3_finalize(st);
     if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
     if (shown) {
-        fputs("</ul><nav class='people-pager' aria-label='More published people'>",out);
-        if(offset){fputs("<a href='/people?from=",out);fprintf(out,"%u",offset>page_size?offset-page_size:0);
+        ui_close(out,"ul");ui_start(out,"nav");ui_attr_sq(out,"class","people-pager");ui_attr_sq(out,"aria-label","More published people");ui_gt(out);
+        if(offset){ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/people?from=");fprintf(out,"%u",offset>page_size?offset-page_size:0);
             if(needle&&*needle){fputs("&amp;q=",out);url(out,needle);}
             fputs("#people-addressed' class='ak-btn'>Previous people</a>",out);}
-        if(has_next){fputs("<a href='/people?from=",out);fprintf(out,"%u",offset+page_size);
+        if(has_next){ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/people?from=");fprintf(out,"%u",offset+page_size);
             if(needle&&*needle){fputs("&amp;q=",out);url(out,needle);}
             fputs("#people-addressed' class='ak-btn'>More people</a>",out);}
-        fputs("</nav></section>",out);
+        ui_close(out,"nav");ui_close(out,"section");
     }
     return shown;
+}
+
+/* The directory's aggregate (every credited name across the reading archive,
+ * grouped by source) is a pure function of the archive and the CMS it is
+ * checked against. It cost a second of SQL on every /people request; each
+ * worker now keeps the last few answers, keyed by those stores' identities
+ * (main file and WAL), the query, the page and a ten-minute clock (the
+ * filter reads "now"). A changed store is a different key. */
+typedef struct { char by[512]; char source[256]; int made; } PeopleMemoRow;
+typedef struct { char key[1600]; int used, total, sources, rows; PeopleMemoRow row[30]; } PeopleMemo;
+static PeopleMemo people_memo[8];
+static unsigned people_memo_next;
+static size_t people_memo_stat(char *out, size_t cap, size_t used, const char *path) {
+    static const char *const tails[] = {"", "-wal"};
+    for (size_t i = 0; path && *path && i < 2; i++) {
+        char full[1100]; struct stat sb; int n;
+        memset(&sb, 0, sizeof(sb));
+        if (snprintf(full, sizeof(full), "%s%s", path, tails[i]) >= (int)sizeof(full)) return cap;
+        (void)stat(full, &sb);
+        n = snprintf(out + used, cap - used, "%s|%lld|%lld|%lld;", full, (long long)sb.st_mtime,
+                     (long long)sb.st_size, (long long)sb.st_ino);
+        if (n < 0 || (size_t)n >= cap - used) return cap;
+        used += (size_t)n;
+    }
+    return used;
+}
+static PeopleMemo *people_memo_find(const char *key) {
+    for (size_t i = 0; i < sizeof(people_memo) / sizeof(people_memo[0]); i++)
+        if (people_memo[i].used && !strcmp(people_memo[i].key, key)) return &people_memo[i];
+    return NULL;
 }
 
 int bf_people_index_ordered(FILE *out, const char *archive_path, const char *route,
@@ -252,7 +282,7 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     /* Public member homes belong to CMS, not the foreign reading archive. */
     if (!db) {
         member_counts(cms,&subjects,&surfaces);
-        if(subjects)fprintf(out,"<dl class='ak-stats is-row' data-people-overview><div><dt>Estate residents</dt><dd class='is-on'>%d</dd><small>%d published pages</small></div></dl>",subjects,surfaces);
+        if(subjects){ui_start(out,"dl");ui_attr_sq(out,"class","ak-stats is-row");ui_flag(out,"data-people-overview");ui_gt(out);ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Estate residents");ui_close(out,"dt");ui_start(out,"dd");ui_attr_sq(out,"class","is-on");ui_gt(out);fprintf(out,"%d",subjects);ui_close(out,"dd");ui_open(out,"small",NULL);fprintf(out,"%d",surfaces);ui_copy(out," published pages");ui_close(out,"small");ui_close(out,"div");ui_close(out,"dl");}
         shown=members_standing(out,cms,needle,offset,page_size);
         if(cms)sqlite3_close(cms);
         return shown;
@@ -279,8 +309,23 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     }
     if (page_size > 30) page_size = 30;
 
-    snprintf(sql, sizeof(sql), "%sSELECT COUNT(*), (SELECT COUNT(DISTINCT source)%s AND person_name(by)) FROM (SELECT by,source%s GROUP BY by,source HAVING person_name(by))", source_cte, named, named);
-    if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
+    char memo_key[1600]; size_t memo_used; PeopleMemo *memo = NULL, fill;
+    memo_used = (size_t)snprintf(memo_key, sizeof(memo_key), "%u|%u|%d|%d|%lld|%s|",
+                                 offset, page_size, recent_first, cms_attached, (long long)(time(NULL) / 600),
+                                 needle ? needle : "");
+    if (memo_used < sizeof(memo_key)) memo_used = people_memo_stat(memo_key, sizeof(memo_key), memo_used, archive_path);
+    if (memo_used < sizeof(memo_key)) memo_used = people_memo_stat(memo_key, sizeof(memo_key), memo_used, cms_path);
+    if (memo_used >= sizeof(memo_key)) memo_key[0] = '\0';
+    if (memo_key[0]) memo = people_memo_find(memo_key);
+    memset(&fill, 0, sizeof(fill));
+    fill.used = memo_key[0] != '\0';
+
+    /* One pass: the sources that printed a plausible name are exactly the
+     * sources of the (name, source) groups that pass, so the second scan of
+     * the archive the old subquery made counted the same set again. */
+    snprintf(sql, sizeof(sql), "%sSELECT COUNT(*), COUNT(DISTINCT source) FROM (SELECT by,source%s GROUP BY by,source HAVING person_name(by))", source_cte, named);
+    if (memo) { total = memo->total; sources = memo->sources; }
+    else if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, needle ? needle : "", -1, SQLITE_TRANSIENT);
         if (sqlite3_step(st) == SQLITE_ROW) { total = sqlite3_column_int(st, 0); sources = sqlite3_column_int(st, 1); }
     }
@@ -288,15 +333,11 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
 
     if (!offset && !(needle && *needle)) {
         member_counts(cms, &subjects, &surfaces);
-        fprintf(out, "<dl class='ak-stats is-row' data-people-overview>"
-                "<div><dt>Estate residents</dt><dd class='is-on'>%d</dd><small>%d page%s of their own</small></div>"
-                "<div><dt>Credited makers</dt><dd>%d</dd><small>names printed by a publisher</small></div>"
-                "<div><dt>Sources</dt><dd>%d</dd><small>feeds that printed them</small></div></dl>",
-                subjects, surfaces, surfaces == 1 ? "" : "s", total, sources);
+        ui_start(out,"dl");ui_attr_sq(out,"class","ak-stats is-row");ui_flag(out,"data-people-overview");ui_gt(out);ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Estate residents");ui_close(out,"dt");ui_start(out,"dd");ui_attr_sq(out,"class","is-on");ui_gt(out);fprintf(out,"%d",subjects);ui_close(out,"dd");ui_open(out,"small",NULL);fprintf(out,"%d",surfaces);ui_copy(out," page");ui_copy(out,surfaces == 1 ? "" : "s");ui_copy(out," of their own");ui_close(out,"small");ui_close(out,"div");ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Credited makers");ui_close(out,"dt");ui_open(out,"dd",NULL);fprintf(out,"%d",total);ui_close(out,"dd");ui_open(out,"small",NULL);ui_copy(out,"names printed by a publisher");ui_close(out,"small");ui_close(out,"div");ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Sources");ui_close(out,"dt");ui_open(out,"dd",NULL);fprintf(out,"%d",sources);ui_close(out,"dd");ui_open(out,"small",NULL);ui_copy(out,"feeds that printed them");ui_close(out,"small");ui_close(out,"div");ui_close(out,"dl");
     }
-    fputs("<nav class='ak-chips' aria-label='People'>", out);
-    fputs("<a class='ak-chip' href='#people-addressed'>On Aurekai</a>", out);
-    fprintf(out, "<a class='ak-chip' aria-current='page' href='#people-credits'>Credited makers <b>%d</b></a>", total);
+    ui_start(out,"nav");ui_attr_sq(out,"class","ak-chips");ui_attr_sq(out,"aria-label","People");ui_gt(out);
+    ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_sq(out,"href","#people-addressed");ui_gt(out);ui_copy(out,"On Aurekai");ui_close(out,"a");
+    ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_sq(out,"aria-current","page");ui_attr_sq(out,"href","#people-credits");ui_gt(out);ui_copy(out,"Credited makers ");ui_open(out,"b",NULL);fprintf(out,"%d",total);ui_close(out,"b");ui_close(out,"a");
     fputs("<a class='ak-chip' href='/organisations'>Publishers</a>"
           "<a class='ak-chip' href='" BF_ORIGIN_SIGNIN "/relationships?context=self'>Your relationships</a></nav>", out);
     member_shown=members_standing(out,cms,needle,offset,page_size);
@@ -316,9 +357,7 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     sqlite3_bind_int(st, 2, (int)page_size);
     sqlite3_bind_int(st, 3, (int)offset);
 
-    fputs("<section id='people-credits' class='people-sec' aria-label='Credited makers'>"
-          "<header class='people-head'><div><h2>Credited makers</h2><p>Writers, hosts and makers named on what this estate reads, most credited first. "
-          "Each source that printed a name is listed and linked on its own.</p></div>", out);
+    ui_start(out,"section");ui_attr_sq(out,"id","people-credits");ui_attr_sq(out,"class","people-sec");ui_attr_sq(out,"aria-label","Credited makers");ui_gt(out);ui_start(out,"header");ui_attr_sq(out,"class","people-head");ui_gt(out);ui_open(out,"div",NULL);ui_open(out,"h2",NULL);ui_copy(out,"Credited makers");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"Writers, hosts and makers named on what this estate reads, most credited first. Each source that printed a name is listed and linked on its own.");ui_close(out,"p");ui_close(out,"div");
     fputs("<form class='people-sort' method='get' action='",out);esc(out,route);
     fputs("'><label for='people-sort-order'>Sort</label><select id='people-sort-order' name='sort' onchange='this.form.submit()'>",out);
     fputs(recent_first ? "<option value='credit'>Most credited first</option><option value='recent' selected>Latest first</option>"
@@ -338,11 +377,25 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
        " AND a.namespace=s.namespace WHERE s.namespace='root' AND a.namespace='root'"
        " AND a.status='published' AND s.status='published' AND s.source=?1"
        " AND s.display_name=?2 AND a.source=s.source LIMIT 1",-1,&publisher_account,NULL);
-    fputs("<ol class='people-list'>",out);
-    while (sqlite3_step(st) == SQLITE_ROW) {
-        const char *name = (const char *)sqlite3_column_text(st, 0);
-        const char *source = (const char *)sqlite3_column_text(st, 3);
-        int made = sqlite3_column_int(st, 1);
+    ui_start(out,"ol");ui_attr_sq(out,"class","people-list");ui_gt(out);
+    fill.total = total; fill.sources = sources;
+    for (int memo_row = 0;; memo_row++) {
+        const char *name, *source; int made;
+        if (memo) {
+            if (memo_row >= memo->rows) break;
+            name = memo->row[memo_row].by; source = memo->row[memo_row].source; made = memo->row[memo_row].made;
+        } else {
+            int rc = sqlite3_step(st);
+            if (rc != SQLITE_ROW) { if (rc != SQLITE_DONE) fill.used = 0; break; }
+            name = (const char *)sqlite3_column_text(st, 0);
+            source = (const char *)sqlite3_column_text(st, 3);
+            made = sqlite3_column_int(st, 1);
+            if (fill.used && fill.rows < 30 && name && source &&
+                strlen(name) < sizeof(fill.row[0].by) && strlen(source) < sizeof(fill.row[0].source)) {
+                PeopleMemoRow *r = &fill.row[fill.rows++];
+                snprintf(r->by, sizeof(r->by), "%s", name); snprintf(r->source, sizeof(r->source), "%s", source); r->made = made;
+            } else fill.used = 0;
+        }
         if (!name || !*name || !source) continue;
         /* Each exact source credit leads to its own host; equal printed names
          * from different sources remain separate observations. */
@@ -375,16 +428,16 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
             }
             initials[k] = 0;
         }
-        fputs("<li data-credit-card data-credit-name='", out); esc(out, name);
+        ui_start(out,"li");ui_flag(out,"data-credit-card");ui_attr_open_sq(out,"data-credit-name"); esc(out, name);
         fputs("' data-publisher-account='",out);esc(out,publisher_id);
         fputs("' data-publisher-subaccount='",out);esc(out,subaccount_id);
         fprintf(out, "'><span class='people-n'>%02u</span><span class='people-avatar' aria-hidden='true'>%s</span><div class='people-who'><h3><a href='",
                 offset + (unsigned)shown + 1, initials);
         /* A byline first opens the exact source-cut the static estate exports. */
         esc(out,route);fputs("?who=",out);url(out,name);fputs("&amp;source=",out);url(out,source);
-        fputs("' data-profile-host='",out);esc(out,primary_credit);fputs("'>",out);esc(out,name);fputs("</a>",out);
-        if (label[0] && strcmp(label, name)) { fputs(" <small>", out); esc(out, label); fputs("</small>", out); }
-        fputs("</h3>", out);
+        fputs("' data-profile-host='",out);esc(out,primary_credit);fputs("'>",out);esc(out,name);ui_close(out,"a");
+        if (label[0] && strcmp(label, name)) { fputs(" <small>", out); esc(out, label); ui_close(out,"small"); }
+        ui_close(out,"h3");
         char domain[128] = "";
         sqlite3_reset(latest); sqlite3_bind_text(latest, 1, name, -1, SQLITE_TRANSIENT); sqlite3_bind_text(latest, 2, source, -1, SQLITE_TRANSIENT);
         if (sqlite3_step(latest) == SQLITE_ROW) {
@@ -395,35 +448,38 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
                 n = strcspn(h, "/?#:"); if (n && n < sizeof(domain)) { memcpy(domain, h, n); domain[n] = 0; }
             }
             const char *date = (const char *)sqlite3_column_text(latest, 3);
-            fputs("<p class='people-latest'>Latest: <a href='/o/", out); url(out, (const char *)sqlite3_column_text(latest, 0)); fputs("/", out);
+            ui_start(out,"p");ui_attr_sq(out,"class","people-latest");ui_gt(out);ui_copy(out,"Latest: ");ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/"); url(out, (const char *)sqlite3_column_text(latest, 0)); fputs("/", out);
             esc(out, (const char *)sqlite3_column_text(latest, 1)); fputs("'>&ldquo;", out); esc(out, (const char *)sqlite3_column_text(latest, 2)); fputs("&rdquo;</a>", out);
             if (date && *date) { fputs(" <time datetime='", out); esc(out, date); fputs("'>(", out); esc(out, date); fputs(")</time>", out); }
-            fputs("</p>", out);
+            ui_close(out,"p");
         }
-        fprintf(out, "</div><p class='people-count'><b>%d piece%s</b><small>at ", made, made == 1 ? "" : "s");
-        esc(out, domain[0] ? domain : source); fputs("</small></p>", out);
+        ui_close(out,"div");ui_start(out,"p");ui_attr_sq(out,"class","people-count");ui_gt(out);ui_open(out,"b",NULL);fprintf(out,"%d",made);ui_copy(out," piece");ui_copy(out,made == 1 ? "" : "s");ui_close(out,"b");ui_open(out,"small",NULL);ui_copy(out,"at ");
+        esc(out, domain[0] ? domain : source); ui_close(out,"small");ui_close(out,"p");
         fputs("<a class='people-keep' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=", out);
-        url(out, name); fputs("&amp;source=", out); url(out, source); fputs("'>", out); fputs(BF_ICON_BOOKMARK, out); fputs("<span>keep track</span></a></li>", out);
+        url(out, name); fputs("&amp;source=", out); url(out, source); fputs("'>", out); fputs(BF_ICON_BOOKMARK, out); ui_open(out,"span",NULL);ui_copy(out,"keep track");ui_close(out,"span");ui_close(out,"a");ui_close(out,"li");
         shown++;
     }
-    fputs("</ol>", out);
+    ui_close(out,"ol");
     if (offset || total > (int)(offset + (unsigned)shown)) {
-        fputs("<nav class='people-pager' aria-label='More makers'>", out);
+        ui_start(out,"nav");ui_attr_sq(out,"class","people-pager");ui_attr_sq(out,"aria-label","More makers");ui_gt(out);
         if (offset) {
-            fputs("<a class='ak-btn' href='", out); esc(out, route); fputs("?", out);
+            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); fputs("?", out);
             if (needle && *needle) { fputs("q=", out); url(out, needle); fputs("&amp;", out); }
             if(recent_first)fputs("sort=recent&amp;",out);fprintf(out, "from=%u#people-credits'>Newer</a>", offset > page_size ? offset - page_size : 0);
         }
         if (total > (int)(offset + (unsigned)shown)) {
-            fputs("<a class='ak-btn' href='", out); esc(out, route); fputs("?", out);
+            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); fputs("?", out);
             if (needle && *needle) { fputs("q=", out); url(out, needle); fputs("&amp;", out); }
             if(recent_first)fputs("sort=recent&amp;",out);fprintf(out, "from=%u#people-credits'>Older (%d more)</a>", offset + (unsigned)shown, total - (int)(offset + (unsigned)shown));
         }
-        fputs("</nav>", out);
+        ui_close(out,"nav");
     }
-    if (!shown) fputs("<p class='ak-empty'>No credited maker matches this view.</p>", out);
-    fputs("<p class='people-boundary' data-identity-boundary>A name here is what a publisher printed. It is not an account, a verified identity or consent, "
-          "and the same name at two sources is not taken to be one person.</p></section>", out);
+    if (!shown) {ui_start(out,"p");ui_attr_sq(out,"class","ak-empty");ui_gt(out);ui_copy(out,"No credited maker matches this view.");ui_close(out,"p");}
+    ui_start(out,"p");ui_attr_sq(out,"class","people-boundary");ui_flag(out,"data-identity-boundary");ui_gt(out);ui_copy(out,"A name here is what a publisher printed. It is not an account, a verified identity or consent, and the same name at two sources is not taken to be one person.");ui_close(out,"p");ui_close(out,"section");
+    if (!memo && fill.used) {
+        snprintf(fill.key, sizeof(fill.key), "%s", memo_key);
+        people_memo[people_memo_next++ % (sizeof(people_memo) / sizeof(people_memo[0]))] = fill;
+    }
     sqlite3_finalize(publisher_account);sqlite3_finalize(st); sqlite3_finalize(where); sqlite3_finalize(latest);
     sqlite3_close(db);
     return shown ? shown : member_shown;
@@ -452,18 +508,16 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             sqlite3_close(db); return 0;
         }
         sqlite3_bind_text(st, 1, who, -1, SQLITE_TRANSIENT);
-        fputs("<section class='region region-person' aria-label='Source choices' data-source-chooser>"
-              "<div class='people-dossier-head'><p class='people-kicker'>Printed at more than one source</p><h2>", out);
+        ui_start(out,"section");ui_attr_sq(out,"class","region region-person");ui_attr_sq(out,"aria-label","Source choices");ui_flag(out,"data-source-chooser");ui_gt(out);ui_start(out,"div");ui_attr_sq(out,"class","people-dossier-head");ui_gt(out);ui_start(out,"p");ui_attr_sq(out,"class","people-kicker");ui_gt(out);ui_copy(out,"Printed at more than one source");ui_close(out,"p");ui_open(out,"h2",NULL);
         esc(out, who);
-        fputs("</h2><p>Pick the source you mean. Each one is shown on its own; equal spellings are not merged into a person.</p></div>"
-              "<ol class='people-source-list'>", out);
+        ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"Pick the source you mean. Each one is shown on its own; equal spellings are not merged into a person.");ui_close(out,"p");ui_close(out,"div");ui_start(out,"ol");ui_attr_sq(out,"class","people-source-list");ui_gt(out);
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *source = (const char *)sqlite3_column_text(st, 0);
             int count = sqlite3_column_int(st, 1);
             if (!source || !*source) continue;
             char public_host[128]={0};
             int qualified=people_name_plausible(who)&&bf_credit_profile_host(who,source,public_host);
-            fputs("<li data-source-observation><h3><a",out);
+            ui_start(out,"li");ui_flag(out,"data-source-observation");ui_gt(out);ui_open(out,"h3",NULL);ui_start(out,"a");
             if(qualified){fputs(" data-credit-profile href='https://",out);esc(out,public_host);fputs("/",out);}
             else{fputs(" href='",out);esc(out,route);fputs("?who=",out);url(out,who);fputs("&amp;source=",out);url(out,source);}
             fputs("'>",out);esc(out,source);
@@ -474,8 +528,7 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             shown++;
         }
         sqlite3_finalize(st);
-        fputs("</ol><p class='people-boundary' data-identity-boundary>This chooser preserves publisher boundaries. "
-              "Nothing here asserts that the same spelling at two sources is the same person. <a href='", out); esc(out, route);
+        ui_close(out,"ol");ui_start(out,"p");ui_attr_sq(out,"class","people-boundary");ui_flag(out,"data-identity-boundary");ui_gt(out);ui_copy(out,"This chooser preserves publisher boundaries. Nothing here asserts that the same spelling at two sources is the same person. ");ui_start(out,"a");ui_attr_open_sq(out,"href"); esc(out, route);
         fputs("'>Back to People</a>.</p></section>", out);
         sqlite3_close(db);
         return shown;
@@ -489,10 +542,9 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
     sqlite3_finalize(st); st = NULL;
     if (!made) { sqlite3_close(db); return 0; }
 
-    fputs("<section class='region region-person people-dossier' aria-label='Source-bound public credit' data-source-dossier>"
-          "<div class='people-dossier-head'><p class='people-kicker'>Credited maker</p><h2>", out);
+    ui_start(out,"section");ui_attr_sq(out,"class","region region-person people-dossier");ui_attr_sq(out,"aria-label","Source-bound public credit");ui_flag(out,"data-source-dossier");ui_gt(out);ui_start(out,"div");ui_attr_sq(out,"class","people-dossier-head");ui_gt(out);ui_start(out,"p");ui_attr_sq(out,"class","people-kicker");ui_gt(out);ui_copy(out,"Credited maker");ui_close(out,"p");ui_open(out,"h2",NULL);
     esc(out, who);
-    fputs("</h2><p class='people-credit-source'>Named by <strong>", out); esc(out, source_filter);
+    ui_close(out,"h2");ui_start(out,"p");ui_attr_sq(out,"class","people-credit-source");ui_gt(out);ui_copy(out,"Named by ");ui_open(out,"strong",NULL); esc(out, source_filter);
     fprintf(out, "</strong> on %d piece%s this estate kept.</p><a class='relationship-link' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",
             made, made == 1 ? "" : "s");
     url(out,who);fputs("&amp;source=",out);url(out,source_filter);fputs("'>Keep track of them</a></div>", out);
@@ -504,7 +556,7 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, who, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(st, 2, source_filter, -1, SQLITE_TRANSIENT);
-        fputs("<ol class='people-work-list' aria-label='Their work at this source'>", out);
+        ui_start(out,"ol");ui_attr_sq(out,"class","people-work-list");ui_attr_sq(out,"aria-label","Their work at this source");ui_gt(out);
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *source = (const char *)sqlite3_column_text(st, 0);
             const char *key = (const char *)sqlite3_column_text(st, 1);
@@ -513,19 +565,18 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             const char *publisher = (const char *)sqlite3_column_text(st, 4);
             const char *date = (const char *)sqlite3_column_text(st, 5);
             if (!title || !*title) continue;
-            fputs("<li><a href='/o/", out);
-            url(out, source); fputs("/", out); esc(out, key); fputs("'>", out); esc(out, title); fputs("</a><p>", out);
-            if (publisher && *publisher) { fputs("<span>", out); esc(out, publisher); fputs("</span>", out); }
-            if (kind && *kind) { fputs("<span>", out); esc(out, kind); fputs("</span>", out); }
-            if (date && *date) { fputs("<time datetime='", out); esc(out, date); fputs("'>", out); esc(out, date); fputs("</time>", out); }
-            fputs("</p></li>", out);
+            ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/");
+            url(out, source); fputs("/", out); esc(out, key); fputs("'>", out); esc(out, title); ui_close(out,"a");ui_open(out,"p",NULL);
+            if (publisher && *publisher) { ui_open(out,"span",NULL); esc(out, publisher); ui_close(out,"span"); }
+            if (kind && *kind) { ui_open(out,"span",NULL); esc(out, kind); ui_close(out,"span"); }
+            if (date && *date) { ui_start(out,"time");ui_attr_open_sq(out,"datetime"); esc(out, date); fputs("'>", out); esc(out, date); ui_close(out,"time"); }
+            ui_close(out,"p");ui_close(out,"li");
             shown++;
         }
-        fputs("</ol>", out);
+        ui_close(out,"ol");
     }
     sqlite3_finalize(st);
-    fputs("<p class='people-boundary' data-identity-boundary>Everything here was published under this exact name by this exact source. "
-          "This is publication evidence, not a profile submitted to Aurekai, a verified identity, consent, or an established relationship.</p></section>", out);
+    ui_start(out,"p");ui_attr_sq(out,"class","people-boundary");ui_flag(out,"data-identity-boundary");ui_gt(out);ui_copy(out,"Everything here was published under this exact name by this exact source. This is publication evidence, not a profile submitted to Aurekai, a verified identity, consent, or an established relationship.");ui_close(out,"p");ui_close(out,"section");
     sqlite3_close(db);
     return shown;
 }
@@ -565,41 +616,38 @@ int bf_organisations_index(FILE *out, const char *ledger_path, const char *route
     sqlite3_bind_int(st, 2, (int)page_size);
     sqlite3_bind_int(st, 3, (int)offset);
 
-    fputs("<section class='region region-orgs' aria-label='Institutions'>"
-          "<h2 class='region-label'>The institutions this estate reads</h2>", out);
-    fprintf(out, "<p class='source-count'>%d publishers</p>", total);
+    ui_start(out,"section");ui_attr_sq(out,"class","region region-orgs");ui_attr_sq(out,"aria-label","Institutions");ui_gt(out);ui_start(out,"h2");ui_attr_sq(out,"class","region-label");ui_gt(out);ui_copy(out,"The institutions this estate reads");ui_close(out,"h2");
+    ui_start(out,"p");ui_attr_sq(out,"class","source-count");ui_gt(out);fprintf(out,"%d",total);ui_copy(out," publishers");ui_close(out,"p");
     fputs("<form class='ledger-find' method='get' action='", out); esc(out, route);
     fputs("'><label>Find an institution <input type='search' name='q' value='", out);
     esc(out, needle ? needle : "");
     fputs("' placeholder='a name, or a host'></label><button class='button primary' type='submit'>Look</button></form>", out);
-    fputs("<ol class='source-roots'>", out);
+    ui_start(out,"ol");ui_attr_sq(out,"class","source-roots");ui_gt(out);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *host = (const char *)sqlite3_column_text(st, 0);
         const char *name = (const char *)sqlite3_column_text(st, 1);
         const char *identity = (const char *)sqlite3_column_text(st, 2);
         int read = sqlite3_column_int(st, 3), listed = sqlite3_column_int(st, 4);
         char address[160] = {0};
-        fputs("<li><a href='/channels?root=", out); url(out, host); fputs("'>", out);
-        esc(out, name); fputs("</a><span class='by'>", out);
-        fprintf(out, "<span>%d read here</span><span>%d listed</span>", read, listed);
+        ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/channels?root="); url(out, host); fputs("'>", out);
+        esc(out, name); ui_close(out,"a");ui_start(out,"span");ui_attr_sq(out,"class","by");ui_gt(out);
+        ui_open(out,"span",NULL);fprintf(out,"%d",read);ui_copy(out," read here");ui_close(out,"span");ui_open(out,"span",NULL);fprintf(out,"%d",listed);ui_copy(out," listed");ui_close(out,"span");
         if (identity && *identity) {
-            fputs("<a href='/about/", out); esc(out, identity); fputs("'>About</a>", out);
+            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/about/"); esc(out, identity); fputs("'>About</a>", out);
         }
         if (cms && institution_address(cms, host, address, sizeof(address))) {
-            fputs("<a href='https://", out); esc(out, address); fputs("'>", out);
-            esc(out, address); fputs("</a>", out);
+            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, address); fputs("'>", out);
+            esc(out, address); ui_close(out,"a");
         }
-        fputs("</span></li>", out);
+        ui_close(out,"span");ui_close(out,"li");
         shown++;
     }
-    fputs("</ol>", out);
+    ui_close(out,"ol");
     if (offset)
-        fprintf(out, "<p class='pager'><a href='%s?from=%u'>Back</a></p>", route,
-                offset > page_size ? offset - page_size : 0);
+        {ui_start(out,"p");ui_attr_sq(out,"class","pager");ui_gt(out);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,route);ui_copy(out,"?from=");fprintf(out,"%u",offset > page_size ? offset - page_size : 0);ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Back");ui_close(out,"a");ui_close(out,"p");}
     if (total > (int)(offset + (unsigned)shown))
-        fprintf(out, "<p class='pager'><a href='%s?from=%u'>More (%d left)</a></p>", route,
-                offset + (unsigned)shown, total - (int)(offset + (unsigned)shown));
-    fputs("</section>", out);
+        {ui_start(out,"p");ui_attr_sq(out,"class","pager");ui_gt(out);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,route);ui_copy(out,"?from=");fprintf(out,"%u",offset + (unsigned)shown);ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"More (");fprintf(out,"%d",total - (int)(offset + (unsigned)shown));ui_copy(out," left)");ui_close(out,"a");ui_close(out,"p");}
+    ui_close(out,"section");
     if (cms) sqlite3_close(cms);
     sqlite3_finalize(st);
     sqlite3_close(db);

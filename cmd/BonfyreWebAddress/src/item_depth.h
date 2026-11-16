@@ -557,22 +557,22 @@ static void depth_publisher_relations(const char *sources_csv, const char *publi
 /* A structured record's facts, in the item's existing facts list. */
 static void depth_emit_facts(const ItemDepth *d) {
     if (d->facts) {
-        fputs("<dl class=\"facts record\">", stdout);
+        ui_open(stdout, "dl", "facts record");
         for (int k = 0; k < d->facts; k++) {
-            fputs("<div><dt>", stdout); html(d->fact_key[k]); fputs("</dt><dd>", stdout);
-            if (public_http_url(d->fact_val[k])) { fputs("<a href=\"", stdout); html(d->fact_val[k]); fputs("\" rel=\"noopener\">", stdout); html(d->fact_val[k]); fputs("</a>", stdout); }
+            (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL)); html(d->fact_key[k]); (ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));
+            if (public_http_url(d->fact_val[k])) { fputs("<a href=\"", stdout); html(d->fact_val[k]); ui_lit(stdout, "\" rel=\"noopener\">"); html(d->fact_val[k]); ui_close(stdout, "a"); }
             else html(d->fact_val[k]);
-            fputs("</dd></div>", stdout);
+            ui_close_n(stdout, "dd", "div", NULL);
         }
-        fputs("</dl>", stdout);
+        ui_close(stdout, "dl");
     }
     if (d->provenances) {
-        fputs("<section class=\"source-provenance\"><h2>Provenance</h2><p>As recorded by the source.</p><ol>", stdout);
+        (ui_open(stdout, "section", "source-provenance"), ui_open(stdout, "h2", NULL), ui_lit(stdout, "Provenance"), ui_close(stdout, "h2"), ui_open(stdout, "p", NULL), ui_lit(stdout, "As recorded by the source."), ui_close(stdout, "p"), ui_open(stdout, "ol", NULL));
         for (int i = 0; i < d->provenances; i++) {
-            fputs("<li>", stdout);
-            if (d->provenance[i].date[0]) { fputs("<strong>", stdout); html(d->provenance[i].date); fputs("</strong> ", stdout); }
-            html(d->provenance[i].description); fputs("</li>", stdout);
+            ui_open(stdout, "li", NULL);
+            if (d->provenance[i].date[0]) { ui_open(stdout, "strong", NULL); html(d->provenance[i].date); (ui_close(stdout, "strong"), ui_lit(stdout, " ")); }
+            html(d->provenance[i].description); ui_close(stdout, "li");
         }
-        fputs("</ol></section>", stdout);
+        ui_close_n(stdout, "ol", "section", NULL);
     }
 }

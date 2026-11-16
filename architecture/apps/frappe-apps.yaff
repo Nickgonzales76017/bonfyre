@@ -40,6 +40,7 @@ architecture frappe-core
   known_gap native phase-one extraction produces metadata grammar only; runtime write-back and controller/effect admission remain separate owners
 
 architecture frappe-interaction-fingerprint
+  source_lineage earliest source cmd/BonfyreFrappeCompiler/src/main.c first committed 2026-07-30 in f0d82323 "fix(cms): isolate namespaces and restore ML command sources"
   canonical_name FrappeInteractionFingerprint
   family apps
   domain Apps / Measured interaction grammar
@@ -68,6 +69,7 @@ interaction fingerprints-select-no-renderer
   witness 2026-09-26 both are emitted from one parse of the same 1,152 DocTypes; the fingerprint names grammars, the surface program names layout and fields, and neither writes the other
 
 architecture frappe-surface-program
+  source_lineage earliest source cmd/BonfyreFrappeCompiler/src/main.c first committed 2026-07-30 in f0d82323 "fix(cms): isolate namespaces and restore ML command sources"
   canonical_name FrappeSurfaceProgram
   family apps
   domain Apps / What a compiled record kind looks like
@@ -124,6 +126,7 @@ interaction record-kinds-offer-the-operator-grammar
   binding cmd/BonfyreWebAddress/src/main.c
 
 architecture frappe-condition-plan
+  source_lineage earliest source cmd/BonfyreCMS/src/main.c first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"
   canonical_name FrappeConditionPlan
   family apps
   domain Apps / When a compiled record kind shows, requires, locks or folds a field
@@ -185,6 +188,7 @@ interaction condition-plans-state-the-rule
   binding cmd/BonfyreWebAddress/src/main.c
 
 architecture frappe-notification-binding
+  source_lineage earliest source cmd/BonfyreCMS/src/main.c first committed 2026-04-06 in 738926ac "feat: initial release — 37 C11 binaries + liblambda-tensors"
   canonical_name FrappeNotificationBinding
   family apps
   domain Apps / What a donor notification becomes when nothing here sends
@@ -275,6 +279,7 @@ interaction notification-filed-through-queue
   binding cmd/BonfyreFrappeCompiler/tests/notification_held_message_test.sh
 
 architecture frappe-metric-plan
+  source_lineage earliest source cmd/BonfyreFrappeCompiler/src/main.c first committed 2026-07-30 in f0d82323 "fix(cms): isolate namespaces and restore ML command sources"
   canonical_name FrappeMetricPlan
   family apps
   domain Apps / What a donor card or chart asks of a store

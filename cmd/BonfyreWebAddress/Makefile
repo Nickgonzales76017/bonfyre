@@ -131,12 +131,29 @@ WEB_ROUTES_HEADER := generated/native_web_routes.h
 $(WEB_ROUTES_HEADER): ../../schemas/control/web-routes.cue tools/compile_web_routes.sh src/web_request.h $(wildcard ../../schemas/storage/stores/*.cue)
 	@sh tools/compile_web_routes.sh
 build/web_main.o build/compact/web_main.o: $(WEB_ROUTES_HEADER)
+# Produced facts reach people through one registry: the renderer's table and the atlas consumer.
+FACT_SURFACES_HEADER := generated/native_fact_surfaces.h
+$(FACT_SURFACES_HEADER): ../../schemas/control/fact-surfaces.cue ../../schemas/control/web-routes.cue tools/compile_fact_surfaces.sh $(wildcard ../../schemas/storage/stores/*.cue)
+	@sh tools/compile_fact_surfaces.sh
+build/web_main.o build/compact/web_main.o: $(FACT_SURFACES_HEADER)
+.PHONY: fact-surfaces-witness
+test: fact-surfaces-witness
+fact-surfaces-witness: $(TARGET)
+	sh tools/compile_fact_surfaces.sh --check
+	sh tests/fact_surfaces_test.sh ./$(TARGET)
 # A records row answers a new store row without a rebuild; a path nobody
 # answers returns 404 with ranked suggestions that never dispatch.
 .PHONY: web-route-kinds-witness
 test: web-route-kinds-witness
 web-route-kinds-witness: $(TARGET)
 	sh tests/web_route_kinds_test.sh ./$(TARGET)
+# Every SQL-backed carrier walks past its first page: ?offset= skips rows, a
+# full page links next in the carrier's own grammar, a short page ends the
+# walk, and a bad offset is 400 rather than page one.
+.PHONY: carrier-paging-witness
+test: carrier-paging-witness
+carrier-paging-witness: $(TARGET)
+	sh tests/carrier_paging_test.sh ./$(TARGET)
 # Estate origins are declared in CUE; a page names a territory, never a host literal.
 ESTATE_HOSTS_HEADER := generated/native_estate_hosts.h
 $(ESTATE_HOSTS_HEADER): ../../schemas/control/estate-hosts.cue tools/compile_estate_hosts.sh

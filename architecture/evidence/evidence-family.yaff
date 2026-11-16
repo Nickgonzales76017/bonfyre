@@ -147,6 +147,7 @@ architecture receipt-envelope
   source_lineage V8.1 ReceiptEnvelope and Run8 cross-provider identity review
   known_gap the native caller validates explicit session files; no standing worker has yet been bound to emit its own AgentSession and ReceiptEnvelope through this contract.
 architecture running-system-attestation
+  source_lineage earliest source scripts/release_attest.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"; ports scripts/release_attest.py which scripts/retire.sh archived at scripts/release_attest.py.archive
   canonical_name RunningSystemAttestation
   owns RunningSystemClaim
   consumes Artifact
@@ -183,6 +184,7 @@ architecture running-system-attestation
   known_gap the seal covers what is deployed, not what built it: a sealed organ cannot be rebuilt from the manifest alone, because source hashes are not recorded beside the binary hashes
 
 architecture witness-mutation
+  source_lineage earliest source scripts/witness_mutation.mjs first committed 2026-11-05 in 44c1481e "feat: land Aug 24 - Nov 5 native estate work"
   canonical_name WitnessMutation
   family evidence
   domain Evidence

@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_CONNECTIONS_WEB_H
 #define BONFYRE_PROFILE_CONNECTIONS_WEB_H
+#include "ui_tree.h"
 #include "form_tree.h"
 #include "../../BonfyreParticipation/src/peer_facets.h"
 /* One profile. Each context is a distinct private participation record.
@@ -34,9 +35,9 @@ static void ph_peer_post_teaser(sqlite3 *cms,const PhSite *site){
   const char *title=(const char*)sqlite3_column_text(s,0);
   const char *time=(const char*)sqlite3_column_text(s,1);
   if(title&&*title){
-   fputs("<div class=\"ph-peer-source\"><small>From their published site</small><p>",stdout);
-   html(title);fputs("</p><time>",stdout);html(time?time:"");
-   fputs("</time> <a rel=\"noopener noreferrer\" href=\"https://",stdout);
+   ui_open(stdout,"div","ph-peer-source");ui_open(stdout,"small",NULL);ui_copy(stdout,"From their published site");ui_close(stdout,"small");ui_open(stdout,"p",NULL);
+   html(title);ui_close(stdout,"p");ui_open(stdout,"time",NULL);html(time?time:"");
+   ui_close(stdout,"time");ui_copy(stdout," ");ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
    html(site->host);fputs("/?tab=posts\">Read on their site</a></div>",stdout);
   }
  }
@@ -52,45 +53,43 @@ static void ph_peer_action(const char *facet,const char *target,const char *choi
 static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,const BfPeerCandidate *row,
                          const char *actor){
  PhSite site;if(!ph_peer_site(cms,row->subject,facet->territory,&site))return;
- fputs("<article class=\"ph-peer-item\" data-peer-candidate><div class=\"ph-peer-item-head\">"
- "<span class=\"ph-peer-mark\" aria-hidden=\"true\">",stdout);
+ ui_start(stdout,"article");ui_attr(stdout,"class","ph-peer-item");ui_flag(stdout,"data-peer-candidate");ui_gt(stdout);ui_open(stdout,"div","ph-peer-item-head");ui_start(stdout,"span");ui_attr(stdout,"class","ph-peer-mark");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);
  html(site.name[0]?"":"A");if(site.name[0]){char initial[2]={site.name[0],0};html(initial);}
- fputs("</span><div><p class=\"ph-kicker\">Published ",stdout);html(facet->label);
+ ui_close(stdout,"span");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Published ");html(facet->label);
  fputs(" profile</p><h3>",stdout);html(site.name);
- fputs("</h3><p class=\"ph-peer-dek\">",stdout);html(site.bio);
- fputs("</p></div><a rel=\"noopener noreferrer\" href=\"https://",stdout);
+ ui_close(stdout,"h3");ui_open(stdout,"p","ph-peer-dek");html(site.bio);
+ ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
  html(site.host);fputs("/\">View profile</a></div>",stdout);
- fputs("<nav class=\"ph-peer-context-links\" aria-label=\"Source-owned publications\"><a href=\"https://",stdout);
+ ui_start(stdout,"nav");ui_attr(stdout,"class","ph-peer-context-links");ui_attr(stdout,"aria-label","Source-owned publications");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
  html(site.host);
  fputs(!strcmp(facet->id,"art")?"/?tab=gallery\">Browse published art</a>":
        !strcmp(facet->id,"civic")?"/?tab=communities\">View public communities</a>":
        !strcmp(facet->id,"projects")?"/?tab=posts\">See published work</a>":
        "/?tab=about\">Read their introduction</a>",stdout);
- fputs("</nav>",stdout);
+ ui_close(stdout,"nav");
  ph_peer_post_teaser(cms,&site);
  if(row->matched){
   BfPeerMessage messages[8];size_t count=0;
-  fputs("<section class=\"ph-peer-thread\" aria-label=\"Private conversation\"><h4>Conversation</h4>",stdout);
+  ui_start(stdout,"section");ui_attr(stdout,"class","ph-peer-thread");ui_attr(stdout,"aria-label","Private conversation");ui_gt(stdout);ui_open(stdout,"h4",NULL);ui_copy(stdout,"Conversation");ui_close(stdout,"h4");
   if(bf_peer_messages(owner,actor,facet->id,row->subject,messages,8,&count)){
-   fputs("<ol>",stdout);for(size_t i=count;i>0;i--){const BfPeerMessage *m=&messages[i-1];
-    fputs("<li><strong>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");fputs("</strong><p>",stdout);html(m->body);fputs("</p></li>",stdout);}
-   if(!count)ui_text(stdout, "li", NULL, "Start a conversation about this shared context.");fputs("</ol>",stdout);
+   ui_open(stdout,"ol",NULL);for(size_t i=count;i>0;i--){const BfPeerMessage *m=&messages[i-1];
+    ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL);html(!strcmp(m->sender,actor)?"You":"Them");ui_close(stdout,"strong");ui_open(stdout,"p",NULL);html(m->body);ui_close(stdout,"p");ui_close(stdout,"li");}
+   if(!count)ui_text(stdout, "li", NULL, "Start a conversation about this shared context.");ui_close(stdout,"ol");
    char nonce[33];ph_nonce(nonce);
    {const FtField hidden[]={{"facet",facet->id},{"other",row->subject},{"nonce",nonce}};
     static const FtInput msg[]={{.label="Message",.name="body",.maxlength="1000",.required=1,.rows=3}};
     const FtForm f={.id="ph-message",.action="/profile/connections/message",.label="Send privately",.hidden=hidden,.nhidden=3,.inputs=msg,.ninputs=1};
     ft_form(stdout,&f);}
   }else ui_text(stdout, "p", NULL, "This conversation is no longer available.");
-  fputs("</section>",stdout);
+  ui_close(stdout,"section");
  }
- if(row->shared_topics[0]){fputs("<p class=\"ph-peer-common\">Shared interests: ",stdout);html(row->shared_topics);fputs("</p>",stdout);}
- fputs("<div class=\"ph-peer-actions\">",stdout);
+ if(row->shared_topics[0]){ui_open(stdout,"p","ph-peer-common");ui_copy(stdout,"Shared interests: ");html(row->shared_topics);ui_close(stdout,"p");}
+ ui_open(stdout,"div","ph-peer-actions");
  if(row->matched){
-  fputs("<p class=\"ph-peer-status\">You both agreed to connect in this context. "
-        "This does not grant content rights, membership, or a vote.</p>",stdout);
+  ui_open(stdout,"p","ph-peer-status");ui_copy(stdout,"You both agreed to connect in this context. This does not grant content rights, membership, or a vote.");ui_close(stdout,"p");
   ph_peer_action(facet->id,row->subject,"none",row->my_choice_revision,"Withdraw connection");
  }else if(row->incoming){
-  fputs("<p class=\"ph-peer-status\">They invited you to connect about ",stdout);
+  ui_open(stdout,"p","ph-peer-status");ui_copy(stdout,"They invited you to connect about ");
   html(facet->label);fputs(". You choose whether to accept.</p>",stdout);
   ph_peer_action(facet->id,row->subject,"accept",row->my_choice_revision,"Accept introduction");
   ph_peer_action(facet->id,row->subject,"pass",row->my_choice_revision,"Pass");
@@ -107,82 +106,70 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
   ph_peer_action(facet->id,row->subject,"pass",row->my_choice_revision,"Not now");
  }
  ph_peer_action(facet->id,row->subject,"block",row->my_choice_revision,"Block across contexts");
- fputs("</div></article>",stdout);(void)actor;
+ ui_close(stdout,"div");ui_close(stdout,"article");(void)actor;
 }
 static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selected){
- fputs("<section class=\"ph-connections\" data-native-peer-context><header class=\"ph-connect-hero\">"
- "<div><p class=\"ph-kicker\">Aurekai · Contextual participation</p>"
- "<h2>Meet through what matters</h2><p>Your relationships change with context: people, art, communities, projects and dating. "
- "Each has its own explicit choices. Public writing, collections, and governance remain with their original owners.</p></div>"
- "<span class=\"ph-connect-hero-mark\" aria-hidden=\"true\">Together</span></header>",stdout);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-connections");ui_flag(stdout,"data-native-peer-context");ui_gt(stdout);ui_open(stdout,"header","ph-connect-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Aurekai · Contextual participation");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Meet through what matters");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Your relationships change with context: people, art, communities, projects and dating. Each has its own explicit choices. Public writing, collections, and governance remain with their original owners.");ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"span");ui_attr(stdout,"class","ph-connect-hero-mark");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);ui_copy(stdout,"Together");ui_close(stdout,"span");ui_close(stdout,"header");
  if(!bf_dating_subject(actor)){
-  fputs("<p class=\"ph-privacy\" role=\"alert\">Connect an exact person identity to your account first.</p></section>",stdout);return;
+  ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"Connect an exact person identity to your account first.");ui_close(stdout,"p");ui_close(stdout,"section");return;
  }
  sqlite3 *owner=ph_dating_open(0);
  BfPeerFacet facets[16];size_t count=0;
  int available=owner&&bf_peer_facets(owner,facets,16,&count);
  const BfPeerFacet *facet=NULL;
  for(size_t i=0;i<count&&available;i++)if(!strcmp(facets[i].id,selected))facet=&facets[i];
- fputs("<nav class=\"ph-connect-contexts\" aria-label=\"Connection contexts\">",stdout);
+ ui_start(stdout,"nav");ui_attr(stdout,"class","ph-connect-contexts");ui_attr(stdout,"aria-label","Connection contexts");ui_gt(stdout);
  if(available)for(size_t i=0;i<count;i++){
-  fputs("<a href=\"/profile?tab=connections&amp;facet=",stdout);url_query_value(facets[i].id);
+  ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=connections&amp;facet=");url_query_value(facets[i].id);
   fputs("\"",stdout);if(!strcmp(selected,facets[i].id))fputs(" aria-current=\"page\"",stdout);
-  fputs(">",stdout);html(facets[i].label);fputs("</a>",stdout);
+  fputs(">",stdout);html(facets[i].label);ui_close(stdout,"a");
  }
  /* Dating is its own profile app tab with its own adult and moderation owner;
   * this context list links to it and never embeds or enrolls it. */
  fputs("<a href=\"/profile?tab=dating\">Dating</a></nav>",stdout);
  if(!owner||!available){
-  fputs("<p role=\"status\" class=\"ph-privacy\">Private Participation is not installed here. "
-   "Your profile, posts and communities remain available; no connections were inferred.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"role","status");ui_attr(stdout,"class","ph-privacy");ui_gt(stdout);ui_copy(stdout,"Private Participation is not installed here. Your profile, posts and communities remain available; no connections were inferred.");ui_close(stdout,"p");ui_close(stdout,"section");
   if(owner)sqlite3_close(owner);return;
  }
  if(!facet){
-  fputs("<p role=\"alert\">That context is not admitted for this account.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"That context is not admitted for this account.");ui_close(stdout,"p");ui_close(stdout,"section");
   sqlite3_close(owner);return;
  }
- fputs("<section class=\"ph-connect-intro\"><div><p class=\"ph-kicker\">Your selected context</p><h3>",stdout);
- html(facet->label);fputs("</h3><p>",stdout);html(facet->description);
- fputs("</p><p class=\"ph-privacy\">Joining this context never enrolls you in dating, "
-  "creates a public post, gives a content license, or represents a civic decision.</p></div>",stdout);
+ ui_open(stdout,"section","ph-connect-intro");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Your selected context");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
+ html(facet->label);ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(facet->description);
+ ui_close(stdout,"p");ui_open(stdout,"p","ph-privacy");ui_copy(stdout,"Joining this context never enrolls you in dating, creates a public post, gives a content license, or represents a civic decision.");ui_close(stdout,"p");ui_close(stdout,"div");
  PhSite mysite;
  if(ph_peer_site(cms,actor,facet->territory,&mysite)){
-  fputs("<nav class=\"ph-connect-source-links\" aria-label=\"Your existing authored pages\">"
-  "<a href=\"/cms/compose/advanced?site=",stdout);url_query_value(mysite.id);
+  ui_start(stdout,"nav");ui_attr(stdout,"class","ph-connect-source-links");ui_attr(stdout,"aria-label","Your existing authored pages");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");url_query_value(mysite.id);
   fputs("\">Edit your published profile</a><a href=\"/cms/compose/advanced?site=",stdout);
   url_query_value(mysite.id);fputs("&amp;new=article\">Write for this site</a><a href=\"",stdout);
   ph_url(&mysite,"gallery",1);fputs("\">Review gallery</a><a href=\"",stdout);
   ph_url(&mysite,"communities",1);fputs("\">Your communities</a></nav>",stdout);
  }else{
-  fputs("<div class=\"ph-connect-source-links\"><p>Publish a profile in this context before "
-   "your public work can appear in others' feeds.</p><a href=\"/account#presence\">Set up a profile site</a></div>",stdout);
+  ui_open(stdout,"div","ph-connect-source-links");ui_open(stdout,"p",NULL);ui_copy(stdout,"Publish a profile in this context before your public work can appear in others' feeds.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"href","/account#presence");ui_gt(stdout);ui_copy(stdout,"Set up a profile site");ui_close(stdout,"a");ui_close(stdout,"div");
  }
- fputs("</section>",stdout);
+ ui_close(stdout,"section");
  unsigned revision=0;int state=bf_peer_status(owner,actor,facet->id,&revision);
  if(state<0){
-  fputs("<p role=\"alert\" class=\"ph-privacy\">The native participation record could not be checked. "
-        "No feed or actions were shown.</p></section>",stdout);
+  ui_start(stdout,"p");ui_attr(stdout,"role","alert");ui_attr(stdout,"class","ph-privacy");ui_gt(stdout);ui_copy(stdout,"The native participation record could not be checked. No feed or actions were shown.");ui_close(stdout,"p");ui_close(stdout,"section");
   sqlite3_close(owner);return;
  }
- fputs("<section class=\"ph-connect-join\"><p class=\"ph-kicker\">Private permission</p>",stdout);
+ ui_open(stdout,"section","ph-connect-join");ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Private permission");ui_close(stdout,"p");
  if(state!=1){
-  fputs("<h3>Not participating in this context</h3>"
-   "<p>Your public profile is still public. This is a separate permission to receive introductions "
-   "from other opted-in members.</p>",stdout);
+  ui_open(stdout,"h3",NULL);ui_copy(stdout,"Not participating in this context");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Your public profile is still public. This is a separate permission to receive introductions from other opted-in members.");ui_close(stdout,"p");
   {char r[16];snprintf(r,sizeof(r),"%u",revision);
    const FtField hidden[]={{"facet",facet->id},{"enable","1"},{"rev",r}};
    static const FtInput ack[]={{.label="Allow introductions for this context only",.type="checkbox",.name="ack",.value="1",.required=1}};
    const FtForm f={.id="ph-join",.action="/profile/connections/join",.label="Join this context",.hidden=hidden,.nhidden=3,.inputs=ack,.ninputs=1};
    ft_form(stdout,&f);}
  }else{
-  fputs("<h3>You chose to participate</h3><p>Introductions are private. Both people "
-   "must independently agree before any connection is described as mutual.</p>",stdout);
+  ui_open(stdout,"h3",NULL);ui_copy(stdout,"You chose to participate");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Introductions are private. Both people must independently agree before any connection is described as mutual.");ui_close(stdout,"p");
   {char r[16];snprintf(r,sizeof(r),"%u",revision);
    const FtField hidden[]={{"facet",facet->id},{"enable","0"},{"rev",r}};
    const FtForm f={.id="ph-leave",.action="/profile/connections/join",.label="Leave this context",.hidden=hidden,.nhidden=3};
    ft_form(stdout,&f);}
  }
- fputs("</section>",stdout);
+ ui_close(stdout,"section");
  if(state==1){
   char topics[265];unsigned topics_revision=0;
   if(bf_peer_interests_read(owner,actor,facet->id,topics,&topics_revision)){
@@ -195,11 +182,9 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
   }
   BfPeerCandidate rows[24];size_t n=0;
   if(!bf_peer_candidates(owner,actor,facet->id,rows,24,&n))
-   fputs("<p class=\"ph-privacy\" role=\"alert\">The owner cannot verify current introductions.</p>",stdout);
+   {ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_attr(stdout,"role","alert");ui_gt(stdout);ui_copy(stdout,"The owner cannot verify current introductions.");ui_close(stdout,"p");}
   else{
-   fputs("<section class=\"ph-peer-stream\" data-peer-feed><header><p class=\"ph-kicker\">Source-backed member feed</p>"
-    "<h3>People and their published work</h3><p>Only members who explicitly participate "
-    "in this context appear. Source titles come from published profile owners, not copied posts.</p></header>",stdout);
+   ui_start(stdout,"section");ui_attr(stdout,"class","ph-peer-stream");ui_flag(stdout,"data-peer-feed");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Source-backed member feed");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);ui_copy(stdout,"People and their published work");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Only members who explicitly participate in this context appear. Source titles come from published profile owners, not copied posts.");ui_close(stdout,"p");ui_close(stdout,"header");
    size_t shown=0;
    for(size_t i=0;i<n;i++){
     PhSite site;
@@ -207,16 +192,12 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
     ph_peer_card(cms,owner,facet,&rows[i],actor);shown++;
    }
    if(!shown){
-    fputs("<div class=\"ph-peer-empty\"><h3>No introductions in this context yet</h3>"
-     "<p>There are no other opted-in, published profiles available here. "
-     "You can still explore existing public work and communities.</p>"
-     "<a href=\"/discover\">Discover published work</a> · "
-     "<a href=\"/profile?tab=communities\">Your communities</a></div>",stdout);
+    ui_open(stdout,"div","ph-peer-empty");ui_open(stdout,"h3",NULL);ui_copy(stdout,"No introductions in this context yet");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"There are no other opted-in, published profiles available here. You can still explore existing public work and communities.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"href","/discover");ui_gt(stdout);ui_copy(stdout,"Discover published work");ui_close(stdout,"a");ui_copy(stdout," · ");ui_start(stdout,"a");ui_attr(stdout,"href","/profile?tab=communities");ui_gt(stdout);ui_copy(stdout,"Your communities");ui_close(stdout,"a");ui_close(stdout,"div");
    }
-   fputs("</section>",stdout);
+   ui_close(stdout,"section");
   }
  }
- sqlite3_close(owner);fputs("</section>",stdout);
+ sqlite3_close(owner);ui_close(stdout,"section");
 }
 static int ph_connections_mutate(const char *input,
                                  const char *raw,const char *host,const char *actor,const BfRequest *route){

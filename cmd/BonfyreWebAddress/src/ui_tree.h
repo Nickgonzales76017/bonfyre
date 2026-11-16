@@ -24,7 +24,55 @@ static UI_UNUSED void ui_open(FILE *o, const char *tag, const char *cls) {
     if (cls) { fputs(" class=\"", o); bf_lex_html_emit(o, cls); fputc('"', o); }
     fputc('>', o);
 }
+/* <tag k="v" ...>: literal attribute name/value pairs in order, values escaped;
+ * a NULL value writes the bare attribute. Terminate with ui_open_a's NULL. */
+#include <stdarg.h>
+static const char ui_dyn_mark[] = "dyn";
+#define UI_DYN (ui_dyn_mark)
+static UI_UNUSED void ui_open_v(FILE *o, const char *tag, ...) {
+    va_list ap; const char *k;
+    fputc('<', o); fputs(tag, o);
+    va_start(ap, tag);
+    while ((k = va_arg(ap, const char *)) != NULL) {
+        const char *v;
+        if (k == UI_DYN) { /* UI_DYN, name, literal prefix, escaped value */
+            const char *name = va_arg(ap, const char *), *pre = va_arg(ap, const char *);
+            v = va_arg(ap, const char *);
+            fputc(' ', o); fputs(name, o); fputs("=\"", o); fputs(pre, o);
+            bf_lex_html_emit(o, v); fputc('"', o);
+            continue;
+        }
+        v = va_arg(ap, const char *);
+        fputc(' ', o); fputs(k, o);
+        if (v) { fputs("=\"", o); bf_lex_html_emit(o, v); fputc('"', o); }
+    }
+    va_end(ap);
+    fputc('>', o);
+}
+#define ui_open_a(o, tag, ...) ui_open_v((o), (tag), __VA_ARGS__, (const char *)NULL)
 static UI_UNUSED void ui_close(FILE *o, const char *tag) { fputs("</", o); fputs(tag, o); fputc('>', o); }
+/* Closing tags in order, NULL-terminated: ui_close_n(o, "span", "li", NULL). */
+#include <stdarg.h>
+static UI_UNUSED void ui_close_n(FILE *o, ...) {
+    va_list ap; va_start(ap, o);
+    for (const char *t = va_arg(ap, const char *); t; t = va_arg(ap, const char *)) ui_close(o, t);
+    va_end(ap);
+}
+/* A tag with fixed attributes declared as data. Names and values are page copy
+ * literals, already entity-encoded; NULL value is a boolean attribute. */
+typedef struct { const char *name, *value; } UiAttr;
+static UI_UNUSED void ui_elem(FILE *o, const char *tag, const UiAttr *attrs, unsigned n, int self_close) {
+    fputc('<', o); fputs(tag, o);
+    for (unsigned i = 0; i < n; i++) {
+        fputc(' ', o); fputs(attrs[i].name, o);
+        if (attrs[i].value) { fputs("=\"", o); fputs(attrs[i].value, o); fputc('"', o); }
+    }
+    fputs(self_close ? "/>" : ">", o);
+}
+/* Literal, already entity-encoded copy between tags. */
+static UI_UNUSED void ui_lit(FILE *o, const char *encoded) { fputs(encoded, o); }
+/* One inline page script, written verbatim (authored literal, never a value). */
+static UI_UNUSED void ui_script(FILE *o, const char *js) { fputs("<script>", o); fputs(js, o); fputs("</script>", o); }
 
 /* One escaped text element: <tag class="cls">text</tag>. */
 static UI_UNUSED void ui_text(FILE *o, const char *tag, const char *cls, const char *text) {
@@ -172,4 +220,25 @@ static UI_UNUSED void ui_layout_open(FILE *o, const char *tag, const char *cls, 
     if (l) ui_layout_attrs(o, l);
     fputc('>', o);
 }
+
+/* Tag pieces for markup that interleaves records with the tag: the tag is
+ * opened, its attributes are written one at a time and the tag is closed
+ * with ui_gt. ui_copy, ui_attr and ui_flag take page-copy literals (already
+ * entity-encoded, never record data); record values go through
+ * bf_lex_html_emit or ui_attr_open ... ui_attr_close. */
+static UI_UNUSED void ui_start(FILE *o, const char *tag) { fputc('<', o); fputs(tag, o); }
+static UI_UNUSED void ui_gt(FILE *o) { fputc('>', o); }
+static UI_UNUSED void ui_attr(FILE *o, const char *name, const char *literal) {
+    fputc(' ', o); fputs(name, o); fputs("=\"", o); fputs(literal, o); fputc('"', o);
+}
+static UI_UNUSED void ui_flag(FILE *o, const char *name) { fputc(' ', o); fputs(name, o); }
+static UI_UNUSED void ui_attr_open(FILE *o, const char *name) { fputc(' ', o); fputs(name, o); fputs("=\"", o); }
+static UI_UNUSED void ui_attr_close(FILE *o) { fputc('"', o); }
+static UI_UNUSED void ui_copy(FILE *o, const char *text) { if (text) fputs(text, o); }
+/* The same pieces for pages whose markup single-quotes its attributes. */
+static UI_UNUSED void ui_attr_sq(FILE *o, const char *name, const char *literal) {
+    fputc(' ', o); fputs(name, o); fputs("='", o); fputs(literal, o); fputc('\'', o);
+}
+static UI_UNUSED void ui_attr_open_sq(FILE *o, const char *name) { fputc(' ', o); fputs(name, o); fputs("='", o); }
+static UI_UNUSED void ui_attr_close_sq(FILE *o) { fputc('\'', o); }
 #endif

@@ -2,9 +2,11 @@
 #ifndef _DARWIN_C_SOURCE
 #define _DARWIN_C_SOURCE
 #endif
+#include "ui_tree.h"
 #include "markdown_fence.h"
 #include "web_store.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
+#include "bf_command_lookup.h"
 /*
  * site — the product face of the estate's site machinery.
  *
@@ -2378,10 +2380,10 @@ static char *text_as_markup(const char *body) {
         size_t len = eol ? (size_t)(eol - line) : strlen(line);
         if (len) {
             char *piece = strndup(line, len);
-            fputs("<p>", out);
+            ui_open(out,"p",NULL);
             if (piece) xml_text(out, piece);
             free(piece);
-            fputs("</p>\n", out);
+            ui_close(out,"p");ui_copy(out,"\n");
         }
         line = eol ? eol + 1 : line + len;
     }
@@ -2433,7 +2435,7 @@ static int site_export_posts(Site *s, const char *name, const char *host, const 
         if (!markup) continue;
         count++;
         if (wordpress) {
-            fputs("<item>\n<title>", out); xml_text(out, title ? title : "");
+            ui_open(out,"item",NULL);ui_copy(out,"\n");ui_open(out,"title",NULL); xml_text(out, title ? title : "");
             fprintf(out, "</title>\n<dc:creator><![CDATA[%s]]></dc:creator>\n<content:encoded><![CDATA[", name);
             /* The one sequence a CDATA section cannot hold is split across two. */
             for (const char *p = markup; *p; p++) { if (!strncmp(p, "]]>", 3)) { fputs("]]]]><![CDATA[>", out); p += 2; } else fputc(*p, out); }
@@ -2700,7 +2702,7 @@ static int import_markup_post(Import *im, const char *post_title, const char *co
     snprintf(dir, sizeof(dir), "%s/post-%ld", im->work, im->imported);
     f = fopen(page, "w");
     if (!f) return 3;
-    fprintf(f, "<html><body><p>%s</p>\n<hr>\n%s</body></html>", post_title, content);
+    ui_open(f,"html",NULL);ui_open(f,"body",NULL);ui_open(f,"p",NULL);ui_copy(f,post_title);ui_close(f,"p");ui_copy(f,"\n");ui_open(f,"hr",NULL);ui_copy(f,"\n");ui_copy(f,content);ui_close(f,"body");ui_close(f,"html");
     fclose(f);
     { char *const av[] = {(char *)im->ingest, page, dir, NULL}; if (run(av, NULL, 0, NULL)) return 0; }
     snprintf(text_path, sizeof(text_path), "%s/normalized.txt", dir);
@@ -2988,6 +2990,33 @@ static void site_usage(void) {
         "  --port N        local port (default 8787)\n", stderr);
 }
 
+#define SITE_VERBS(X) \
+    X("accept", SV_ACCEPT) \
+    X("check", SV_CHECK) \
+    X("domain", SV_DOMAIN) \
+    X("done", SV_DONE) \
+    X("export", SV_EXPORT) \
+    X("import", SV_IMPORT) \
+    X("inbox", SV_INBOX) \
+    X("key", SV_KEY) \
+    X("keys", SV_KEYS) \
+    X("list", SV_LIST) \
+    X("mcp", SV_MCP) \
+    X("new", SV_NEW) \
+    X("offer", SV_OFFER) \
+    X("page", SV_PAGE) \
+    X("paid", SV_PAID) \
+    X("post", SV_POST) \
+    X("promises", SV_PROMISES) \
+    X("search", SV_SEARCH) \
+    X("serve", SV_SERVE) \
+    X("set", SV_SET) \
+    X("share", SV_SHARE) \
+    X("show", SV_SHOW) \
+    X("stop", SV_STOP) \
+    X("usage", SV_USAGE)
+BF_COMMAND_TABLE(site_verbs, SITE_VERBS);
+
 int bf_site_main(int argc, char **argv, const char *self) {
     Site s;
     const char *verb = argc > 2 ? argv[2] : NULL;
@@ -2995,35 +3024,37 @@ int bf_site_main(int argc, char **argv, const char *self) {
     if (verb && bf_help_requested(argc - 1, argv + 1)) { site_usage(); return 0; }
     if (!verb) { site_usage(); return 2; }
     if ((rc = site_init(&s, argc, argv, self))) return rc;
-    if (!strcmp(verb, "new")) return site_new(&s, argc, argv);
-    if (!strcmp(verb, "list")) return site_list(&s);
-    if (!strcmp(verb, "show")) return site_show(&s, argc, argv);
-    if (!strcmp(verb, "search")) return site_search(&s, argc, argv);
-    if (!strcmp(verb, "check")) return site_check(&s, argc, argv);
-    if (!strcmp(verb, "mcp")) return site_mcp(&s, argc, argv);
-    if (!strcmp(verb, "page")) return site_page(&s, argc, argv);
-    if (!strcmp(verb, "key")) return site_key(&s, argc, argv);
-    if (!strcmp(verb, "usage")) return site_meter_usage(&s, argc, argv);
-    if (!strcmp(verb, "inbox")) return site_inbox(&s, argc, argv);
-    if (!strcmp(verb, "offer")) return site_offer(&s, argc, argv);
-    if (!strcmp(verb, "accept")) return site_accept(&s, argc, argv);
-    if (!strcmp(verb, "paid")) return site_paid(&s, argc, argv);
-    if (!strcmp(verb, "done")) return site_done(&s, argc, argv);
-    if (!strcmp(verb, "domain")) return site_domain(&s, argc, argv);
-    if (!strcmp(verb, "set")) return site_set(&s, argc, argv);
-    if (!strcmp(verb, "promises")) return site_promises(&s, argc, argv);
-    if (!strcmp(verb, "post")) return site_post(&s, argc, argv);
-    if (!strcmp(verb, "share")) return site_share(&s, argc, argv);
-    if (!strcmp(verb, "keys")) { int n = argc; char **v = calloc((size_t)argc + 2, sizeof(char *)); if (!v) return 3;
+    switch (bf_command_id(site_verbs, BF_COMMAND_COUNT(site_verbs), verb, -1)) {
+    case SV_ACCEPT: return site_accept(&s, argc, argv);
+    case SV_CHECK: return site_check(&s, argc, argv);
+    case SV_DOMAIN: return site_domain(&s, argc, argv);
+    case SV_DONE: return site_done(&s, argc, argv);
+    case SV_EXPORT: return site_export(&s, argc, argv);
+    case SV_IMPORT: return site_import(&s, argc, argv);
+    case SV_INBOX: return site_inbox(&s, argc, argv);
+    case SV_KEY: return site_key(&s, argc, argv);
+    case SV_KEYS: { int n = argc; char **v = calloc((size_t)argc + 2, sizeof(char *)); if (!v) return 3;
         for (int i = 0; i < argc; i++) v[i] = argv[i]; v[n] = "--list"; return site_key(&s, n + 1, v); }
-    if (!strcmp(verb, "export")) return site_export(&s, argc, argv);
-    if (!strcmp(verb, "import")) return site_import(&s, argc, argv);
-    if (!strcmp(verb, "serve")) {
+    case SV_LIST: return site_list(&s);
+    case SV_MCP: return site_mcp(&s, argc, argv);
+    case SV_NEW: return site_new(&s, argc, argv);
+    case SV_OFFER: return site_offer(&s, argc, argv);
+    case SV_PAGE: return site_page(&s, argc, argv);
+    case SV_PAID: return site_paid(&s, argc, argv);
+    case SV_POST: return site_post(&s, argc, argv);
+    case SV_PROMISES: return site_promises(&s, argc, argv);
+    case SV_SEARCH: return site_search(&s, argc, argv);
+    case SV_SERVE:
         if ((rc = ensure_store(&s)) || (rc = ensure_server(&s))) return rc;
         printf("{\"serving\":true,\"port\":%d,\"home\":", s.port); json_text(stdout, s.home); puts("}");
         return 0;
+    case SV_SET: return site_set(&s, argc, argv);
+    case SV_SHARE: return site_share(&s, argc, argv);
+    case SV_SHOW: return site_show(&s, argc, argv);
+    case SV_STOP: return site_stop(&s);
+    case SV_USAGE: return site_meter_usage(&s, argc, argv);
+    default: break;
     }
-    if (!strcmp(verb, "stop")) return site_stop(&s);
     site_usage();
     return 2;
 }

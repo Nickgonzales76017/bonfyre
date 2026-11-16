@@ -1,5 +1,6 @@
 #ifndef BONFYRE_PROFILE_PUBLIC_COLLECTIONS_H
 #define BONFYRE_PROFILE_PUBLIC_COLLECTIONS_H
+#include "ui_tree.h"
 /* Public profile continuations reuse Auth's exact actor binding and the native
  * CMS community reader. Private membership and institution grants never project. */
 #include "../../BonfyreCMS/src/community_read.h"
@@ -19,7 +20,7 @@ done:
 }
 
 static void ph_public_communities(sqlite3 *db,const PhSite *site,const char *auth_db) {
-    fputs("<section data-profile-communities><h2>Communities</h2><p>Public communities this person has explicitly created. Private participation and invitations are not published here.</p>",stdout);
+    ui_start(stdout,"section");ui_flag(stdout,"data-profile-communities");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Communities");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Public communities this person has explicitly created. Private participation and invitations are not published here.");ui_close(stdout,"p");
     char author[32]={0};sqlite3_stmt *st=NULL;int shown=0;
     if(db&&site&&ph_public_actor_user(site->actor,auth_db,author)&&
        sqlite3_prepare_v2(db,"SELECT community FROM community_body WHERE namespace='root' AND status='published' AND visibility='public' AND moderation_policy=?1 AND created_by_subject=?2 ORDER BY id DESC LIMIT 24",-1,&st,NULL)==SQLITE_OK){
@@ -28,15 +29,15 @@ static void ph_public_communities(sqlite3 *db,const PhSite *site,const char *aut
         while(sqlite3_step(st)==SQLITE_ROW){
             const char *key=(const char*)sqlite3_column_text(st,0);CjrCommunity c;
             if(!key||cjr_community(db,key,&c)!=1||!cjr_public(&c)||strcmp(c.owner,author))continue;
-            if(!shown++)fputs("<div data-public-community-list>",stdout);
-            fputs("<article class=\"ph-post\" data-public-community><h3><a href=\"/community?community=",stdout);
-            url_query_value(c.key);fputs("\">",stdout);html(c.title);fputs("</a></h3><p>",stdout);html(c.description);fputs("</p><a href=\"/community?community=",stdout);url_query_value(c.key);fputs("\">Open public conversations</a></article>",stdout);
+            if(!shown++){ui_start(stdout,"div");ui_flag(stdout,"data-public-community-list");ui_gt(stdout);}
+            ui_start(stdout,"article");ui_attr(stdout,"class","ph-post");ui_flag(stdout,"data-public-community");ui_gt(stdout);ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");
+            url_query_value(c.key);fputs("\">",stdout);html(c.title);ui_close(stdout,"a");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(c.description);ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");url_query_value(c.key);fputs("\">Open public conversations</a></article>",stdout);
         }
     }
     sqlite3_finalize(st);
-    if(shown)fputs("</div>",stdout);
-    else fputs("<div class=\"ph-empty\" data-public-communities-empty><p>No public communities are declared for this profile.</p></div>",stdout);
-    fputs("<p><a href=\"/communities\">Browse public communities</a></p></section>",stdout);
+    if(shown)ui_close(stdout,"div");
+    else {ui_start(stdout,"div");ui_attr(stdout,"class","ph-empty");ui_flag(stdout,"data-public-communities-empty");ui_gt(stdout);ui_open(stdout,"p",NULL);ui_copy(stdout,"No public communities are declared for this profile.");ui_close(stdout,"p");ui_close(stdout,"div");}
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/communities");ui_gt(stdout);ui_copy(stdout,"Browse public communities");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 
 static void ph_public_organizations(void) {

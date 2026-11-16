@@ -1,3 +1,4 @@
+#include "ui_tree.h"
 #include "affinity_projection.h"
 #include "bf_lex.h"
 #include "bf_jsonw.h"
@@ -459,8 +460,8 @@ int bf_companions_page(FILE *out, sqlite3 *db, const char *viewer,
         }
         fputs(rendered, out);
         free(rendered);
-        if (has_more) fputs("<p class=\"bf-native-empty\" data-more>More companions beyond this page.</p>", out);
-        if (!n) fputs("<p class=\"bf-native-empty\" data-empty>No companions match this view.</p>", out);
+        if (has_more) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-more");ui_gt(out);ui_copy(out,"More companions beyond this page.");ui_close(out,"p");}
+        if (!n) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-empty");ui_gt(out);ui_copy(out,"No companions match this view.");ui_close(out,"p");}
         bf_authoring_tree_clear(tree);
         free(tree);
         return n;
@@ -815,7 +816,7 @@ done:
         return -1;
     }
     if (!ft_render(tree, out)) return -1;
-    if (!n) fputs("<p class=\"bf-native-empty\" data-empty>No recent attention.</p>", out);
+    if (!n) {ui_start(out,"p");ui_attr(out,"class","bf-native-empty");ui_flag(out,"data-empty");ui_gt(out);ui_copy(out,"No recent attention.");ui_close(out,"p");}
     return n;
 }
 

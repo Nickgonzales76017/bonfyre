@@ -1,5 +1,6 @@
 #ifndef BONFYRE_GUILD_RECORDS_WEB_H
 #define BONFYRE_GUILD_RECORDS_WEB_H
+#include "ui_tree.h"
 /* A guild's own records, bound to its community_body and community_membership
  * rows (community_journey.h owns both). The guild steward is the body's
  * creator or an active member whose role is steward; membership decides who
@@ -152,18 +153,18 @@ static void gr_button(const char *id, const char *label, const char *action,
 static void gr_open(const char *title, const CjrCommunity *c, const char *here, int personal) {
     ak_app_http(200, personal);
     ak_app_open(title, "workbench", "route-guild");
-    fputs("<nav class=\"ak-wb-strip\" aria-label=\"Guild\"><span class=\"ak-kicker\">Guild</span><b>", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-wb-strip");ui_attr(stdout,"aria-label","Guild");ui_gt(stdout);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild");ui_close(stdout,"span");ui_open(stdout,"b",NULL);
     html(c->title);
-    fputs("</b>", stdout);
+    ui_close(stdout,"b");
     static const char *const keys[] = {"", "bench", "attest", "offers", "registry"};
     static const char *const names[] = {"Curriculum", "My bench", "Attestations", "Offers", "Field registry"};
     for (int i = 0; i < 5; i++) {
-        fputs("<a href=\"/guild/", stdout); html(c->key); fputc('/', stdout); fputs(keys[i], stdout);
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputc('/', stdout); fputs(keys[i], stdout);
         fputc('"', stdout);
         if (!strcmp(here, keys[i])) fputs(" aria-current=\"page\"", stdout);
-        fputs(">", stdout); fputs(names[i], stdout); fputs("</a>", stdout);
+        fputs(">", stdout); fputs(names[i], stdout); ui_close(stdout,"a");
     }
-    fputs("<a href=\"/charters?community=", stdout); url_query_value(c->key);
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/charters?community="); url_query_value(c->key);
     fputs("\">Charters</a><a href=\"/community?community=", stdout); url_query_value(c->key);
     fputs("\">Conversations</a></nav>", stdout);
 }
@@ -194,29 +195,25 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
     int steward = gr_steward(db, c, actor), member = gr_active(db, c, actor);
     char act[160], nonce[33]; gr_act_path(c, act);
     gr_open(c->title, c, "", *actor != 0);
-    fputs("<header class=\"ak-wb-hero\"><div><span class=\"ak-kicker\">Guild curriculum · shop hours · bench proofs</span><h1>", stdout);
-    html(c->title); fputs("</h1><p class=\"ak-lede\">", stdout); html(c->description);
-    fputs("</p><div class=\"ak-actions\">", stdout);
-    if (member) { fputs("<a class=\"ak-btn is-primary\" href=\"/guild/", stdout); html(c->key); fputs("/bench\">Open my bench</a>", stdout); }
-    else if (*actor) { fputs("<a class=\"ak-btn is-primary\" href=\"/community?community=", stdout); url_query_value(c->key); fputs("&amp;tab=join\">Ask to join this guild</a>", stdout); }
-    else { fputs("<a class=\"ak-btn is-primary\" href=\"/login?next=%2Fguild%2F", stdout); url_query_value(c->key); fputs("%2F\">Sign in to take part</a>", stdout); }
-    if (steward) { fputs("<a class=\"ak-btn\" href=\"/guild/", stdout); html(c->key); fputs("/attest\">Attest a skill</a>", stdout); }
-    fputs("</div></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Guild steward</span><h3>", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild curriculum · shop hours · bench proofs");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);
+    html(c->title); ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede"); html(c->description);
+    ui_close(stdout,"p");ui_open(stdout,"div","ak-actions");
+    if (member) { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/bench\">Open my bench</a>", stdout); }
+    else if (*actor) { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community="); url_query_value(c->key); fputs("&amp;tab=join\">Ask to join this guild</a>", stdout); }
+    else { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/login?next=%2Fguild%2F"); url_query_value(c->key); fputs("%2F\">Sign in to take part</a>", stdout); }
+    if (steward) { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/attest\">Vouch for a skill</a>", stdout); }
+    ui_close(stdout,"div");ui_close(stdout,"div");ui_open(stdout,"aside","ak-panel");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild steward");ui_close(stdout,"span");ui_open(stdout,"h3",NULL);
     gr_person(c->owner, actor, NULL);
-    fputs("</h3><p>Apprentices log their own hours and link their bench work. A named steward confirms the hours and writes each sign-off. Nothing here pays, holds money or certifies anyone outside this guild.</p></aside></header>", stdout);
+    ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Apprentices log their own hours and link their bench work. A named steward confirms the hours and writes each sign-off. Nothing here pays, holds money or certifies anyone outside this guild.");ui_close(stdout,"p");ui_close(stdout,"aside");ui_close(stdout,"header");
 
     double apprentices = gr_number(db, "SELECT count(DISTINCT apprentice_subject) FROM guild_hours WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL);
     double confirmed = gr_number(db, "SELECT COALESCE(sum(CAST(hours AS REAL)),0) FROM guild_hours WHERE namespace='root' AND community=?1 AND state='confirmed' AND status='published'", c->key, NULL);
     double waiting = gr_number(db, "SELECT (SELECT count(*) FROM guild_hours WHERE namespace='root' AND community=?1 AND state='submitted' AND status='published')+(SELECT count(*) FROM guild_bench_proof WHERE namespace='root' AND community=?1 AND state='submitted' AND status='published')", c->key, NULL);
     double attested = gr_number(db, "SELECT count(*) FROM guild_attestation WHERE namespace='root' AND community=?1 AND state='attested' AND status='published'", c->key, NULL);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Apprentices logging</dt><dd>%.0f</dd><small>people with shop hours here</small></div>"
-           "<div><dt>Confirmed shop hours</dt><dd class=\"is-on\">%.1f</dd><small>confirmed by a steward</small></div>"
-           "<div><dt>Awaiting sign-off</dt><dd>%.0f</dd><small>hours and bench proofs</small></div>"
-           "<div><dt>Skills attested</dt><dd>%.0f</dd><small>current, revocable</small></div></dl>",
-           apprentices, confirmed, waiting, attested);
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Apprentices logging");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",apprentices);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"people with shop hours here");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Confirmed shop hours");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.1f",confirmed);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"confirmed by a steward");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Awaiting sign-off");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",waiting);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"hours and bench proofs");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Skills attested");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",attested);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"current, revocable");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
 
     double required = gr_number(db, "SELECT COALESCE(sum(CAST(required_hours AS REAL)),0) FROM guild_module WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Guild cohort</span><h2>Apprentices and their hours</h2></div></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild cohort");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Apprentices and their hours");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     sqlite3_stmt *s = NULL; int shown = 0;
     if (sqlite3_prepare_v2(db,
         "SELECT h.apprentice_subject,COALESCE(sum(CASE WHEN h.state='confirmed' THEN CAST(h.hours AS REAL) END),0),"
@@ -228,43 +225,43 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
             const char *who = (const char *)sqlite3_column_text(s, 0), *mod = (const char *)sqlite3_column_text(s, 2),
                        *proof = (const char *)sqlite3_column_text(s, 3);
             double h = sqlite3_column_double(s, 1);
-            if (!shown++) fputs("<div class=\"ak-grid is-3\">", stdout);
-            fputs("<article class=\"ak-panel\"><span class=\"ak-tag is-on\">Apprentice</span><h3>", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid is-3");
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Apprentice");ui_close(stdout,"span");ui_open(stdout,"h3",NULL);
             gr_person(who, actor, c->owner);
-            fputs("</h3>", stdout);
-            if (required > 0) printf("<p>%.1f / %.0f confirmed hours</p><div class=\"ak-meter\"><i style=\"width:%.0f%%\"></i></div>", h, required, h >= required ? 100.0 : h * 100.0 / required);
-            else printf("<p>%.1f confirmed hours</p>", h);
-            if (mod) { fputs("<p><span class=\"ak-kicker\">Working on</span><br>", stdout); html(mod); fputs("</p>", stdout); }
-            if (proof) { fputs("<p><span class=\"ak-kicker\">Latest bench proof</span><br>", stdout); html(proof); fputs("</p>", stdout); }
-            fputs("</article>", stdout);
+            ui_close(stdout,"h3");
+            if (required > 0) {ui_open(stdout,"p",NULL);fprintf(stdout,"%.1f",h);ui_copy(stdout," / ");fprintf(stdout,"%.0f",required);ui_copy(stdout," confirmed hours");ui_close(stdout,"p");ui_open(stdout,"div","ak-meter");ui_start(stdout,"i");ui_attr_open(stdout,"style");ui_copy(stdout,"width:");fprintf(stdout,"%.0f",h >= required ? 100.0 : h * 100.0 / required);ui_copy(stdout,"%");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"i");ui_close(stdout,"div");}
+            else {ui_open(stdout,"p",NULL);fprintf(stdout,"%.1f",h);ui_copy(stdout," confirmed hours");ui_close(stdout,"p");}
+            if (mod) { ui_open(stdout,"p",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Working on");ui_close(stdout,"span");ui_open(stdout,"br",NULL); html(mod); ui_close(stdout,"p"); }
+            if (proof) { ui_open(stdout,"p",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Latest bench proof");ui_close(stdout,"span");ui_open(stdout,"br",NULL); html(proof); ui_close(stdout,"p"); }
+            ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout);
+    if (shown) ui_close(stdout,"div");
     else ui_text(stdout, "p", "ak-empty", "No apprentice has logged shop hours in this guild yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\" id=\"queue\"><header><div><span class=\"ak-kicker\">Steward's desk</span><h2>Shop hour and bench sign-off queue</h2></div><p>Each item waits for a steward who is not the apprentice. Confirming is a written statement inside this guild only.</p></header><ul class=\"ak-rows\">", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","queue");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Steward's desk");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Shop hour and bench sign-off queue");ui_close(stdout,"h2");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"Each item waits for a steward who is not the apprentice. Confirming is a written statement inside this guild only.");ui_close(stdout,"p");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT h.entry,h.apprentice_subject,h.hours,h.activity,h.worked_on,COALESCE(m.title,'') FROM guild_hours h LEFT JOIN guild_module m ON m.namespace='root' AND m.community=h.community AND m.module=h.module WHERE h.namespace='root' AND h.community=?1 AND h.state='submitted' AND h.status='published' ORDER BY h.id LIMIT 30", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *key = (const char *)sqlite3_column_text(s, 0), *who = (const char *)sqlite3_column_text(s, 1);
             shown++;
-            fputs("<li><strong>", stdout); gr_person(who, actor, c->owner); fputs(" · ", stdout);
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); gr_person(who, actor, c->owner); fputs(" · ", stdout);
             html((const char *)sqlite3_column_text(s, 2)); fputs(" shop hours · ", stdout);
-            html((const char *)sqlite3_column_text(s, 3)); fputs("</strong><small>", stdout);
+            html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
             html((const char *)sqlite3_column_text(s, 5)); fputs(" · worked ", stdout);
-            html((const char *)sqlite3_column_text(s, 4)); fputs("</small>", stdout);
+            html((const char *)sqlite3_column_text(s, 4)); ui_close(stdout,"small");
             if (steward && strcmp(who, actor)) {
                 ph_nonce(nonce);
                 FtField f[3] = {{0}}; gr_hidden_base(f, "hours-confirm", nonce); f[2].name = "target"; f[2].value = key;
                 char id[64]; snprintf(id, sizeof(id), "gr-hc-%d", shown);
-                fputs("<span class=\"ak-go\">", stdout); gr_button(id, "Confirm hours", act, f, 3);
+                ui_open(stdout,"span","ak-go"); gr_button(id, "Confirm hours", act, f, 3);
                 f[0].value = "hours-decline"; snprintf(id, sizeof(id), "gr-hd-%d", shown);
-                gr_button(id, "Decline", act, f, 3); fputs("</span>", stdout);
+                gr_button(id, "Decline", act, f, 3); ui_close(stdout,"span");
             } else ui_text(stdout, "span", "ak-go", "Awaiting a steward");
-            fputs("</li>", stdout);
+            ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
@@ -272,19 +269,19 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             shown++;
-            fputs("<li><strong>", stdout); gr_person((const char *)sqlite3_column_text(s, 1), actor, c->owner);
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); gr_person((const char *)sqlite3_column_text(s, 1), actor, c->owner);
             fputs(" · bench proof · ", stdout); html((const char *)sqlite3_column_text(s, 2));
-            fputs("</strong><small>Submitted ", stdout); html((const char *)sqlite3_column_text(s, 3));
-            fputs("</small><a class=\"ak-go\" href=\"/guild/", stdout); html(c->key); fputs("/proof/", stdout);
+            ui_close(stdout,"strong");ui_open(stdout,"small",NULL);ui_copy(stdout,"Submitted "); html((const char *)sqlite3_column_text(s, 3));
+            ui_close(stdout,"small");ui_start(stdout,"a");ui_attr(stdout,"class","ak-go");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/proof/", stdout);
             html((const char *)sqlite3_column_text(s, 0)); fputs("\">Review bench proof</a></li>", stdout);
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "Nothing is waiting for a steward.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\" id=\"syllabus\"><header><div><span class=\"ak-kicker\">Curriculum</span><h2>Living syllabus and guild benchmarks</h2></div><p>The stages this guild's steward has written. Each names the shop hours the guild asks for before its bench proof.</p></header>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","syllabus");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Curriculum");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Living syllabus and guild benchmarks");ui_close(stdout,"h2");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"The stages this guild's steward has written. Each names the shop hours the guild asks for before its bench proof.");ui_close(stdout,"p");ui_close(stdout,"header");
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT module,level,title,description,COALESCE(required_hours,''),"
         " (SELECT COALESCE(sum(CAST(hours AS REAL)),0) FROM guild_hours h WHERE h.namespace='root' AND h.community=m.community AND h.module=m.module AND h.apprentice_subject=?2 AND h.state='confirmed'),"
@@ -296,21 +293,21 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
             const char *req = (const char *)sqlite3_column_text(s, 4);
             double mine = sqlite3_column_double(s, 5), need = req && *req ? strtod(req, NULL) : 0;
             int signed_off = sqlite3_column_int(s, 6);
-            if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
-            fputs("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">Level ", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</span>", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid");
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Level ");
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"span");
             if (signed_off) ui_text(stdout, "span", "ak-tag is-on", "Signed off");
-            fputs("</header><h3>", stdout); html((const char *)sqlite3_column_text(s, 2));
-            fputs("</h3><p>", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</p>", stdout);
-            if (need > 0) printf("<p><small>Minimum %.0f shop hours</small></p>", need);
-            if (member && need > 0) printf("<div class=\"ak-meter\"><i style=\"width:%.0f%%\"></i></div><p><small>You: %.1f confirmed</small></p>", mine >= need ? 100.0 : mine * 100.0 / need, mine);
-            fputs("</article>", stdout);
+            ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html((const char *)sqlite3_column_text(s, 2));
+            ui_close(stdout,"h3");ui_open(stdout,"p",NULL); html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"p");
+            if (need > 0) {ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);ui_copy(stdout,"Minimum ");fprintf(stdout,"%.0f",need);ui_copy(stdout," shop hours");ui_close(stdout,"small");ui_close(stdout,"p");}
+            if (member && need > 0) {ui_open(stdout,"div","ak-meter");ui_start(stdout,"i");ui_attr_open(stdout,"style");ui_copy(stdout,"width:");fprintf(stdout,"%.0f",mine >= need ? 100.0 : mine * 100.0 / need);ui_copy(stdout,"%");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"i");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);ui_copy(stdout,"You: ");fprintf(stdout,"%.1f",mine);ui_copy(stdout," confirmed");ui_close(stdout,"small");ui_close(stdout,"p");}
+            ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout);
+    if (shown) ui_close(stdout,"div");
     else ui_text(stdout, "p", "ak-empty", "The steward has not written a curriculum module yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
     if (steward) {
         ph_nonce(nonce);
@@ -321,14 +318,14 @@ static void gr_curriculum(sqlite3 *db, const CjrCommunity *c, const char *actor)
             {"What is practised", "text", "text", "", "", 1, "4000", 1, ""},
             {"Minimum shop hours", "text", "hours", "", "", 0, "6", 0, "decimal"},
         };
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Guild registrar</span><h2>Write a curriculum module</h2><p>Only this guild's steward can add a module. It appears to everyone who opens the guild.</p>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild registrar");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Write a curriculum module");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Only this guild's steward can add a module. It appears to everyone who opens the guild.");ui_close(stdout,"p");
         gr_form("gr-module", "Add module", act, f, 2, in, 4, NULL, NULL, NULL, 0);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
     } else {
-        fputs("<section class=\"ak-band\"><div><span class=\"ak-kicker\">Guild registrar</span><h2>Take up a bench in this guild</h2><p>Members log their own shop hours and link bench work for a steward's written sign-off.</p></div><div class=\"ak-actions\">", stdout);
-        if (member) { fputs("<a class=\"ak-btn\" href=\"/guild/", stdout); html(c->key); fputs("/bench\">Open my bench</a>", stdout); }
-        else { fputs("<a class=\"ak-btn\" href=\"/community?community=", stdout); url_query_value(c->key); fputs("&amp;tab=join\">Ask to join</a>", stdout); }
-        fputs("<a class=\"ak-btn is-quiet\" href=\"/guild/", stdout); html(c->key); fputs("/offers\">See this guild's offers</a></div></section>", stdout);
+        ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild registrar");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Take up a bench in this guild");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Members log their own shop hours and link bench work for a steward's written sign-off.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");
+        if (member) { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/bench\">Open my bench</a>", stdout); }
+        else { ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community="); url_query_value(c->key); fputs("&amp;tab=join\">Ask to join</a>", stdout); }
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/offers\">See this guild's offers</a></div></section>", stdout);
     }
     ak_app_close();
 }
@@ -341,31 +338,31 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     double pending = gr_number(db, "SELECT COALESCE(sum(CAST(hours AS REAL)),0) FROM guild_hours WHERE namespace='root' AND community=?1 AND apprentice_subject=?2 AND state='submitted' AND status='published'", c->key, actor);
     double proofs = gr_number(db, "SELECT count(*) FROM guild_bench_proof WHERE namespace='root' AND community=?1 AND apprentice_subject=?2 AND state='submitted' AND status='published'", c->key, actor);
     double skills = gr_number(db, "SELECT count(*) FROM guild_attestation WHERE namespace='root' AND community=?1 AND member_subject=?2 AND state='attested' AND status='published'", c->key, actor);
-    fputs("<header class=\"ak-wb-hero\"><div><span class=\"ak-kicker\">Apprentice bench</span><h1>Your bench in ", stdout); html(c->title);
-    fputs("</h1><p class=\"ak-lede\">Log the hours you worked and link the bench work you want reviewed. A steward who is not you confirms each entry in writing.</p></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Supervising steward</span><h3>", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Apprentice bench");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Your bench in "); html(c->title);
+    ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Log the hours you worked and link the bench work you want reviewed. A steward who is not you confirms each entry in writing.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","ak-panel");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Supervising steward");ui_close(stdout,"span");ui_open(stdout,"h3",NULL);
     gr_person(c->owner, actor, NULL);
-    fputs("</h3><p>No allowance, escrow or payment is held or released on this page. Recording hours or a sign-off moves no money.</p></aside></header>", stdout);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Confirmed shop hours</dt><dd class=\"is-on\">%.1f</dd>", confirmed);
-    if (required > 0) printf("<small>of %.0f in the curriculum</small><div class=\"ak-meter\"><i style=\"width:%.0f%%\"></i></div>", required, confirmed >= required ? 100.0 : confirmed * 100.0 / required);
-    printf("</div><div><dt>Hours awaiting a steward</dt><dd>%.1f</dd></div><div><dt>Bench proofs awaiting sign-off</dt><dd>%.0f</dd></div><div><dt>Skills attested to you</dt><dd>%.0f</dd></div></dl>", pending, proofs, skills);
+    ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"No allowance, escrow or payment is held or released on this page. Recording hours or a sign-off moves no money.");ui_close(stdout,"p");ui_close(stdout,"aside");ui_close(stdout,"header");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Confirmed shop hours");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.1f",confirmed);ui_close(stdout,"dd");
+    if (required > 0) {ui_open(stdout,"small",NULL);ui_copy(stdout,"of ");fprintf(stdout,"%.0f",required);ui_copy(stdout," in the curriculum");ui_close(stdout,"small");ui_open(stdout,"div","ak-meter");ui_start(stdout,"i");ui_attr_open(stdout,"style");ui_copy(stdout,"width:");fprintf(stdout,"%.0f",confirmed >= required ? 100.0 : confirmed * 100.0 / required);ui_copy(stdout,"%");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"i");ui_close(stdout,"div");}
+    ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Hours awaiting a steward");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.1f",pending);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Bench proofs awaiting sign-off");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",proofs);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Skills attested to you");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",skills);ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");
 
     FtOption opt[24]; char vals[24][97], labels[24][200]; unsigned nmod = 0;
     gr_module_options(db, c->key, opt, vals, labels, &nmod, 24);
 
-    fputs("<div class=\"ak-grid is-main\" style=\"grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)\">", stdout);
-    fputs("<section class=\"ak-panel\" id=\"proofs\"><header><h2>Bench proofs</h2><span class=\"ak-kicker\">Linked work · steward sign-off</span></header><ul class=\"ak-rows\">", stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","ak-grid is-main");ui_attr(stdout,"style","grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)");ui_gt(stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"id","proofs");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Bench proofs");ui_close(stdout,"h2");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Linked work · steward sign-off");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     sqlite3_stmt *s = NULL; int shown = 0; char note[4001] = "", note_by[64] = "", note_at[32] = "";
     if (sqlite3_prepare_v2(db, "SELECT p.proof,p.title,p.state,p.submitted_at,COALESCE(m.title,''),COALESCE(p.sign_off,''),COALESCE(p.steward_subject,''),COALESCE(p.decided_at,'') FROM guild_bench_proof p LEFT JOIN guild_module m ON m.namespace='root' AND m.community=p.community AND m.module=p.module WHERE p.namespace='root' AND p.community=?1 AND p.apprentice_subject=?2 AND p.status='published' ORDER BY p.id DESC LIMIT 20", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT); sqlite3_bind_text(s, 2, actor, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *state = (const char *)sqlite3_column_text(s, 2), *sign = (const char *)sqlite3_column_text(s, 5);
             shown++;
-            fputs("<a href=\"/guild/", stdout); html(c->key); fputs("/proof/", stdout); html((const char *)sqlite3_column_text(s, 0));
-            fputs("\"><strong>", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("</strong><small>", stdout);
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(c->key); fputs("/proof/", stdout); html((const char *)sqlite3_column_text(s, 0));
+            fputs("\"><strong>", stdout); html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
             html((const char *)sqlite3_column_text(s, 4)); fputs(" · submitted ", stdout); html((const char *)sqlite3_column_text(s, 3));
-            fputs("</small><span class=\"ak-go\">", stdout);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
             fputs(!strcmp(state, "signed") ? "Signed off" : !strcmp(state, "returned") ? "Returned" : "Awaiting sign-off", stdout);
-            fputs("</span></a>", stdout);
+            ui_close(stdout,"span");ui_close(stdout,"a");
             if (!*note && sign && *sign) {
                 snprintf(note, sizeof(note), "%s", sign);
                 snprintf(note_by, sizeof(note_by), "%s", (const char *)sqlite3_column_text(s, 6));
@@ -374,7 +371,7 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "You have not linked any bench work yet.");
     if (nmod) {
         ph_nonce(nonce);
@@ -386,33 +383,33 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         };
         gr_form("gr-proof", "Submit bench proof", act, f, 2, in, 3, "Module", "module", opt, nmod);
     } else ui_text(stdout, "p", "ak-empty", "Bench proofs open once the steward writes a curriculum module.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
-    fputs("<aside class=\"ak-panel is-raised\"><span class=\"ak-kicker\">Steward's latest note</span>", stdout);
+    ui_open(stdout,"aside","ak-panel is-raised");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Steward's latest note");ui_close(stdout,"span");
     if (*note) {
-        fputs("<p class=\"ak-lede\">“", stdout); html(note); fputs("”</p><p><small>— ", stdout);
-        gr_person(note_by, actor, c->owner); fputs(", ", stdout); html(note_at); fputs("</small></p>", stdout);
+        ui_open(stdout,"p","ak-lede");ui_copy(stdout,"“"); html(note); fputs("”</p><p><small>— ", stdout);
+        gr_person(note_by, actor, c->owner); fputs(", ", stdout); html(note_at); ui_close(stdout,"small");ui_close(stdout,"p");
     } else ui_text(stdout, "p", "ak-empty", "When a steward signs off or returns your work, their words appear here.");
-    fputs("</aside></div>", stdout);
+    ui_close(stdout,"aside");ui_close(stdout,"div");
 
-    fputs("<section class=\"ak-sec\" id=\"hours\"><header><div><span class=\"ak-kicker\">Hours of practice</span><h2>My shop hours</h2></div></header><div class=\"ak-scroll\"><table class=\"ak-table\"><thead><tr><th>Day</th><th>Activity</th><th>Module</th><th>Hours</th><th>State</th></tr></thead><tbody>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","hours");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Hours of practice");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"My shop hours");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-scroll");ui_open(stdout,"table","ak-table");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Day");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Activity");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Module");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Hours");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"State");ui_close(stdout,"th");ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT h.worked_on,h.activity,COALESCE(m.title,''),h.hours,h.state,COALESCE(h.confirmed_by,'') FROM guild_hours h LEFT JOIN guild_module m ON m.namespace='root' AND m.community=h.community AND m.module=h.module WHERE h.namespace='root' AND h.community=?1 AND h.apprentice_subject=?2 AND h.status='published' ORDER BY h.worked_on DESC,h.id DESC LIMIT 40", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT); sqlite3_bind_text(s, 2, actor, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *state = (const char *)sqlite3_column_text(s, 4), *by = (const char *)sqlite3_column_text(s, 5);
             shown++;
-            fputs("<tr><td><code>", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("</code></td><td>", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</td><td>", stdout); html((const char *)sqlite3_column_text(s, 2));
-            fputs("</td><td>", stdout); html((const char *)sqlite3_column_text(s, 3)); fputs("</td><td>", stdout);
-            if (!strcmp(state, "confirmed")) { fputs("<span class=\"ak-tag is-on\">Confirmed</span> ", stdout); gr_person(by, actor, c->owner); }
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);ui_open(stdout,"code",NULL); html((const char *)sqlite3_column_text(s, 0)); ui_close(stdout,"code");ui_close(stdout,"td");ui_open(stdout,"td",NULL);
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"td");ui_open(stdout,"td",NULL); html((const char *)sqlite3_column_text(s, 2));
+            ui_close(stdout,"td");ui_open(stdout,"td",NULL); html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"td");ui_open(stdout,"td",NULL);
+            if (!strcmp(state, "confirmed")) { ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Confirmed");ui_close(stdout,"span");ui_copy(stdout," "); gr_person(by, actor, c->owner); }
             else if (!strcmp(state, "declined")) ui_text(stdout, "span", "ak-tag", "Declined");
             else ui_text(stdout, "span", "ak-tag", "Awaiting steward");
-            fputs("</td></tr>", stdout);
+            ui_close(stdout,"td");ui_close(stdout,"tr");
         }
     }
     sqlite3_finalize(s);
-    fputs("</tbody></table></div>", stdout);
+    ui_close(stdout,"tbody");ui_close(stdout,"table");ui_close(stdout,"div");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No hours logged yet.");
     if (nmod) {
         char today[11]; gr_today(today); ph_nonce(nonce);
@@ -422,13 +419,13 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             {"Hours", "text", "hours", "", "", 0, "5", 1, "decimal"},
             {"What you did", "text", "title", "", "", 0, "160", 1, ""},
         };
-        fputs("<div class=\"ak-ask\" style=\"margin-top:18px\">", stdout);
+        ui_start(stdout,"div");ui_attr(stdout,"class","ak-ask");ui_attr(stdout,"style","margin-top:18px");ui_gt(stdout);
         gr_form("gr-hours", "Log shop hours", act, f, 2, in, 3, "Module", "module", opt, nmod);
-        fputs("</div>", stdout);
+        ui_close(stdout,"div");
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Curriculum</span><h2>Progression map</h2></div></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Curriculum");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Progression map");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT level,title,COALESCE(required_hours,''),"
         " (SELECT COALESCE(sum(CAST(hours AS REAL)),0) FROM guild_hours h WHERE h.namespace='root' AND h.community=m.community AND h.module=m.module AND h.apprentice_subject=?2 AND h.state='confirmed'),"
@@ -438,19 +435,19 @@ static void gr_bench(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *req = (const char *)sqlite3_column_text(s, 2);
             double mine = sqlite3_column_double(s, 3), need = req && *req ? strtod(req, NULL) : 0;
-            if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
-            fputs("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">Level ", stdout); html((const char *)sqlite3_column_text(s, 0));
-            fputs("</span>", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid");
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Level "); html((const char *)sqlite3_column_text(s, 0));
+            ui_close(stdout,"span");
             fputs(sqlite3_column_int(s, 4) ? "<span class=\"ak-tag is-on\">Signed off</span>" : mine > 0 ? "<span class=\"ak-tag\">In practice</span>" : "", stdout);
-            fputs("</header><h3>", stdout); html((const char *)sqlite3_column_text(s, 1)); fputs("</h3>", stdout);
-            if (need > 0) printf("<p><small>%.1f / %.0f hours</small></p><div class=\"ak-meter\"><i style=\"width:%.0f%%\"></i></div>", mine, need, mine >= need ? 100.0 : mine * 100.0 / need);
-            else printf("<p><small>%.1f confirmed hours</small></p>", mine);
-            fputs("</article>", stdout);
+            ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"h3");
+            if (need > 0) {ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);fprintf(stdout,"%.1f",mine);ui_copy(stdout," / ");fprintf(stdout,"%.0f",need);ui_copy(stdout," hours");ui_close(stdout,"small");ui_close(stdout,"p");ui_open(stdout,"div","ak-meter");ui_start(stdout,"i");ui_attr_open(stdout,"style");ui_copy(stdout,"width:");fprintf(stdout,"%.0f",mine >= need ? 100.0 : mine * 100.0 / need);ui_copy(stdout,"%");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"i");ui_close(stdout,"div");}
+            else {ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);fprintf(stdout,"%.1f",mine);ui_copy(stdout," confirmed hours");ui_close(stdout,"small");ui_close(stdout,"p");}
+            ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "No modules yet.");
-    fputs("</section>", stdout);
+    if (shown) ui_close(stdout,"div"); else ui_text(stdout, "p", "ak-empty", "No modules yet.");
+    ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -464,36 +461,36 @@ static void gr_proof(sqlite3 *db, const CjrCommunity *c, const char *actor, cons
     int steward = gr_steward(db, c, actor);
     char act[160], nonce[33]; gr_act_path(c, act);
     gr_open(GRC(0), c, "", 1);
-    fputs("<header class=\"ak-wb-hero\"><div><p class=\"ak-actions\"><span class=\"ak-tag is-on\">Level ", stdout); html(GRC(9)); fputs(" · ", stdout); html(GRC(10));
-    fputs("</span><span class=\"ak-tag\">Submitted ", stdout); html(GRC(5)); fputs("</span><span class=\"ak-tag\">", stdout);
+    ui_open(stdout,"header","ak-wb-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-actions");ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Level "); html(GRC(9)); fputs(" · ", stdout); html(GRC(10));
+    ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");ui_copy(stdout,"Submitted "); html(GRC(5)); ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");
     fputs(!strcmp(state, "signed") ? "Signed off" : !strcmp(state, "returned") ? "Returned for more work" : "Awaiting sign-off", stdout);
-    fputs("</span></p><h1>", stdout); html(GRC(0)); fputs("</h1><p class=\"ak-lede\">", stdout); html(GRC(2));
-    fputs("</p></div><aside class=\"ak-panel\"><span class=\"ak-kicker\">Apprentice</span><h3>", stdout); gr_person(apprentice, actor, c->owner);
-    fputs("</h3><span class=\"ak-kicker\">Signatory steward</span><h3>", stdout);
+    ui_close(stdout,"span");ui_close(stdout,"p");ui_open(stdout,"h1",NULL); html(GRC(0)); ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede"); html(GRC(2));
+    ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","ak-panel");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Apprentice");ui_close(stdout,"span");ui_open(stdout,"h3",NULL); gr_person(apprentice, actor, c->owner);
+    ui_close(stdout,"h3");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Signatory steward");ui_close(stdout,"span");ui_open(stdout,"h3",NULL);
     gr_person(*GRC(7) ? GRC(7) : c->owner, actor, *GRC(7) ? c->owner : NULL);
-    fputs("</h3></aside></header>", stdout);
+    ui_close(stdout,"h3");ui_close(stdout,"aside");ui_close(stdout,"header");
     double hours = gr_number(db, "SELECT COALESCE(sum(CAST(hours AS REAL)),0) FROM guild_hours WHERE namespace='root' AND community=?1 AND state='confirmed' AND status='published' AND apprentice_subject=?2", c->key, apprentice);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Section 01</span><h2>The work submitted</h2></div></header><div class=\"ak-grid is-2\"><article class=\"ak-panel\"><h3>Linked evidence</h3><p>The apprentice links where the work can be seen. Review it there; this page does not copy or verify it.</p><p><a class=\"ak-btn\" rel=\"nofollow noopener noreferrer\" target=\"_blank\" href=\"", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Section 01");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"The work submitted");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid is-2");ui_open(stdout,"article","ak-panel");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Linked evidence");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"The apprentice links where the work can be seen. Review it there; this page does not copy or verify it.");ui_close(stdout,"p");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"rel","nofollow noopener noreferrer");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href");
     html(GRC(1)); fputs("\">Open the linked work</a></p><p><small>", stdout); html(GRC(1));
-    printf("</small></p></article><article class=\"ak-panel\"><h3>Confirmed shop hours</h3><dl class=\"ak-spec\"><dt>All modules</dt><dd class=\"is-on\">%.1f</dd>", hours);
-    fputs("</dl><p>Hours count only after a steward confirms them.</p></article></div></section>", stdout);
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Section 02</span><h2>Steward's sign-off</h2></div></header>", stdout);
+    ui_close(stdout,"small");ui_close(stdout,"p");ui_close(stdout,"article");ui_open(stdout,"article","ak-panel");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Confirmed shop hours");ui_close(stdout,"h3");ui_open(stdout,"dl","ak-spec");ui_open(stdout,"dt",NULL);ui_copy(stdout,"All modules");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.1f",hours);ui_close(stdout,"dd");
+    ui_close(stdout,"dl");ui_open(stdout,"p",NULL);ui_copy(stdout,"Hours count only after a steward confirms them.");ui_close(stdout,"p");ui_close(stdout,"article");ui_close(stdout,"div");ui_close(stdout,"section");
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Section 02");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Steward's sign-off");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     if (*GRC(6)) {
-        fputs("<blockquote class=\"ak-panel is-raised\"><p class=\"ak-lede\">“", stdout); html(GRC(6)); fputs("”</p><p><small>— ", stdout);
-        gr_person(GRC(7), actor, c->owner); fputs(", ", stdout); html(GRC(8)); fputs("</small></p></blockquote>", stdout);
+        ui_open(stdout,"blockquote","ak-panel is-raised");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"“"); html(GRC(6)); fputs("”</p><p><small>— ", stdout);
+        gr_person(GRC(7), actor, c->owner); fputs(", ", stdout); html(GRC(8)); ui_close(stdout,"small");ui_close(stdout,"p");ui_close(stdout,"blockquote");
     }
     if (steward && !strcmp(state, "submitted") && strcmp(apprentice, actor)) {
         ph_nonce(nonce);
         FtField f[3]; gr_hidden_base(f, "proof-decide", nonce); f[2].name = "target"; f[2].value = key;
         FtOption o[2] = {{"sign", "Sign off this bench proof", 1}, {"return", "Return it for more work", 0}};
         GrIn in[] = {{"Your written sign-off or reasons", "text", "text", "", "", 1, "4000", 1, ""}};
-        fputs("<div class=\"ak-ask\"><p>Your words are recorded with your name. Signing off releases no allowance, escrow or payment and is not a certificate outside this guild.</p>", stdout);
+        ui_open(stdout,"div","ak-ask");ui_open(stdout,"p",NULL);ui_copy(stdout,"Your words are recorded with your name. Signing off releases no allowance, escrow or payment and is not a certificate outside this guild.");ui_close(stdout,"p");
         gr_form("gr-decide", "Record my decision", act, f, 3, in, 1, "Decision", "kind", o, 2);
-        fputs("</div>", stdout);
+        ui_close(stdout,"div");
     } else if (!strcmp(state, "submitted")) {
         ui_text(stdout, "p", "ak-empty", "Waiting for a steward who is not the apprentice to write a sign-off.");
     }
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
 #undef GRC
     sqlite3_finalize(s);
     ak_app_close();
@@ -503,7 +500,7 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     int steward = gr_steward(db, c, actor);
     char act[160], nonce[33]; gr_act_path(c, act);
     gr_open("Skill attestations", c, "attest", *actor != 0);
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Steward attestation</span><h1>Skills this guild attests</h1><p class=\"ak-lede\">A steward states, in writing and by name, that a current member holds a skill. The steward can revoke it; the history stays.</p></div></header>", stdout);
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Steward attestation");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Skills this guild attests");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"A steward states, in writing and by name, that a current member holds a skill. The steward can revoke it; the history stays.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
     if (steward) {
         FtOption opt[40]; char vals[40][24], labels[40][40]; unsigned n = 0;
         sqlite3_stmt *s = NULL;
@@ -517,7 +514,7 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             }
         }
         sqlite3_finalize(s);
-        fputs("<section class=\"ak-ask\"><span class=\"ak-kicker\">Attestation gateway</span><h2>Attest a member's skill</h2>", stdout);
+        ui_open(stdout,"section","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Attestation gateway");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Attest a member's skill");ui_close(stdout,"h2");
         if (n) {
             ph_nonce(nonce);
             FtField f[2]; gr_hidden_base(f, "attest", nonce);
@@ -527,21 +524,21 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             };
             gr_form("gr-attest", "Record attestation", act, f, 2, in, 2, "Member", "member", opt, n);
         } else ui_text(stdout, "p", "ak-empty", "This guild has no other active members to attest yet.");
-        fputs("</section>", stdout);
+        ui_close(stdout,"section");
     }
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Register</span><h2>Attested skills</h2></div></header><ul class=\"ak-rows\">", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Register");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Attested skills");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"ul","ak-rows");
     sqlite3_stmt *s = NULL; int shown = 0;
     if (sqlite3_prepare_v2(db, "SELECT attestation,member_subject,skill,statement,steward_subject,state,attested_at,COALESCE(revoked_at,''),COALESCE(revoke_reason,'') FROM guild_attestation WHERE namespace='root' AND community=?1 AND status='published' ORDER BY id DESC LIMIT 60", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
             const char *state = (const char *)sqlite3_column_text(s, 5);
             shown++;
-            fputs("<li><strong>", stdout); gr_person((const char *)sqlite3_column_text(s, 1), actor, c->owner); fputs(" · ", stdout);
-            html((const char *)sqlite3_column_text(s, 2)); fputs("</strong><small>", stdout); html((const char *)sqlite3_column_text(s, 3));
+            ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); gr_person((const char *)sqlite3_column_text(s, 1), actor, c->owner); fputs(" · ", stdout);
+            html((const char *)sqlite3_column_text(s, 2)); ui_close(stdout,"strong");ui_open(stdout,"small",NULL); html((const char *)sqlite3_column_text(s, 3));
             fputs(" — attested by ", stdout); gr_person((const char *)sqlite3_column_text(s, 4), actor, c->owner); fputs(", ", stdout);
             html((const char *)sqlite3_column_text(s, 6));
             if (!strcmp(state, "revoked")) { fputs(" · revoked ", stdout); html((const char *)sqlite3_column_text(s, 7)); fputs(": ", stdout); html((const char *)sqlite3_column_text(s, 8)); }
-            fputs("</small><span class=\"ak-go\">", stdout);
+            ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
             if (!strcmp(state, "attested") && steward) {
                 ph_nonce(nonce);
                 FtField f[3]; gr_hidden_base(f, "attest-revoke", nonce); f[2].name = "target"; f[2].value = (const char *)sqlite3_column_text(s, 0);
@@ -549,13 +546,13 @@ static void gr_attest(sqlite3 *db, const CjrCommunity *c, const char *actor) {
                 char id[40]; snprintf(id, sizeof(id), "gr-rv-%d", shown);
                 gr_form(id, "Revoke", act, f, 3, in, 1, NULL, NULL, NULL, 0);
             } else fputs(!strcmp(state, "attested") ? "Current" : "Revoked", stdout);
-            fputs("</span></li>", stdout);
+            ui_close(stdout,"span");ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(s);
-    fputs("</ul>", stdout);
+    ui_close(stdout,"ul");
     if (!shown) ui_text(stdout, "p", "ak-empty", "No skill has been attested in this guild yet.");
-    fputs("</section>", stdout);
+    ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -567,22 +564,22 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
     const char *key = (const char *)sqlite3_column_text(s, 0), *kind = (const char *)sqlite3_column_text(s, 1),
                *state = (const char *)sqlite3_column_text(s, 7);
     char act[160], nonce[33]; snprintf(act, sizeof(act), "/guild/%s/act", guild_key);
-    fputs("<article class=\"ak-panel\" id=\"offer-", stdout); html(key); fputs("\"><header><span class=\"ak-tag is-on\">", stdout);
-    fputs(gr_kind_label(kind), stdout); fputs("</span><span class=\"ak-tag\">", stdout);
-    fputs(!strcmp(state, "open") ? "Open" : "Closed", stdout); fputs("</span></header>", stdout);
+    ui_start(stdout,"article");ui_attr(stdout,"class","ak-panel");ui_attr_open(stdout,"id");ui_copy(stdout,"offer-"); html(key); fputs("\"><header><span class=\"ak-tag is-on\">", stdout);
+    fputs(gr_kind_label(kind), stdout); ui_close(stdout,"span");ui_open(stdout,"span","ak-tag");
+    fputs(!strcmp(state, "open") ? "Open" : "Closed", stdout); ui_close(stdout,"span");ui_close(stdout,"header");
     if (show_guild) { ui_text(stdout, "span", "ak-kicker", guild_title); }
-    fputs("<h3>", stdout); html((const char *)sqlite3_column_text(s, 2)); fputs("</h3><p>", stdout);
-    html((const char *)sqlite3_column_text(s, 3)); fputs("</p><dl class=\"ak-spec\">", stdout);
-    if (*(const char *)sqlite3_column_text(s, 4)) { fputs("<dt>Stated terms</dt><dd class=\"is-on\">", stdout); html((const char *)sqlite3_column_text(s, 4)); fputs("</dd>", stdout); }
-    if (*(const char *)sqlite3_column_text(s, 5)) { fputs("<dt>Where</dt><dd>", stdout); html((const char *)sqlite3_column_text(s, 5)); fputs("</dd>", stdout); }
-    if (*(const char *)sqlite3_column_text(s, 6)) { fputs("<dt>Closes</dt><dd>", stdout); html((const char *)sqlite3_column_text(s, 6)); fputs("</dd>", stdout); }
-    printf("<dt>Applications</dt><dd>%.0f</dd></dl>", gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND offer=?2 AND status='published' AND state<>'withdrawn'", guild_key, key));
-    if (show_guild) { fputs("<p><a class=\"ak-btn\" href=\"/guild/", stdout); html(guild_key); fputs("/offers#offer-", stdout); html(key); fputs("\">Open the offer</a></p></article>", stdout); return; }
+    ui_open(stdout,"h3",NULL); html((const char *)sqlite3_column_text(s, 2)); ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
+    html((const char *)sqlite3_column_text(s, 3)); ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
+    if (*(const char *)sqlite3_column_text(s, 4)) { ui_open(stdout,"dt",NULL);ui_copy(stdout,"Stated terms");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on"); html((const char *)sqlite3_column_text(s, 4)); ui_close(stdout,"dd"); }
+    if (*(const char *)sqlite3_column_text(s, 5)) { ui_open(stdout,"dt",NULL);ui_copy(stdout,"Where");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); html((const char *)sqlite3_column_text(s, 5)); ui_close(stdout,"dd"); }
+    if (*(const char *)sqlite3_column_text(s, 6)) { ui_open(stdout,"dt",NULL);ui_copy(stdout,"Closes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); html((const char *)sqlite3_column_text(s, 6)); ui_close(stdout,"dd"); }
+    ui_open(stdout,"dt",NULL);ui_copy(stdout,"Applications");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND offer=?2 AND status='published' AND state<>'withdrawn'", guild_key, key));ui_close(stdout,"dd");ui_close(stdout,"dl");
+    if (show_guild) { ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/guild/"); html(guild_key); fputs("/offers#offer-", stdout); html(key); fputs("\">Open the offer</a></p></article>", stdout); return; }
     if (!strcmp(state, "open") && *actor && !steward) {
         char existing[24] = "";
         gr_row(db, "SELECT id,state FROM guild_offer_application WHERE namespace='root' AND offer=?1 AND applicant_subject=?2 ORDER BY id DESC LIMIT 1", key, actor, existing, sizeof(existing), NULL, 0, NULL, 0);
         if (*existing && strcmp(existing, "withdrawn")) {
-            fputs("<p><span class=\"ak-tag is-on\">Your application: ", stdout); html(existing); fputs("</span></p>", stdout);
+            ui_open(stdout,"p",NULL);ui_open(stdout,"span","ak-tag is-on");ui_copy(stdout,"Your application: "); html(existing); ui_close(stdout,"span");ui_close(stdout,"p");
         } else {
             ph_nonce(nonce);
             FtField f[3]; gr_hidden_base(f, "apply", nonce); f[2].name = "target"; f[2].value = key;
@@ -591,18 +588,18 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
             gr_form(id, "Apply", act, f, 3, in, 1, NULL, NULL, NULL, 0);
         }
     } else if (!*actor && !strcmp(state, "open")) {
-        fputs("<p><a class=\"ak-btn\" href=\"/login?next=%2Fguild%2F", stdout); url_query_value(guild_key); fputs("%2Foffers\">Sign in to apply</a></p>", stdout);
+        ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/login?next=%2Fguild%2F"); url_query_value(guild_key); fputs("%2Foffers\">Sign in to apply</a></p>", stdout);
     }
     if (steward) {
         sqlite3_stmt *a = NULL; int n = 0;
-        fputs("<ul class=\"ak-rows\">", stdout);
+        ui_open(stdout,"ul","ak-rows");
         if (sqlite3_prepare_v2(db, "SELECT application,applicant_subject,statement,state,COALESCE(decision_note,'') FROM guild_offer_application WHERE namespace='root' AND community=?1 AND offer=?2 AND status='published' ORDER BY id LIMIT 40", -1, &a, NULL) == SQLITE_OK) {
             sqlite3_bind_text(a, 1, guild_key, -1, SQLITE_TRANSIENT); sqlite3_bind_text(a, 2, key, -1, SQLITE_TRANSIENT);
             while (sqlite3_step(a) == SQLITE_ROW) {
                 const char *st = (const char *)sqlite3_column_text(a, 3);
                 n++;
-                fputs("<li><strong>", stdout); gr_person((const char *)sqlite3_column_text(a, 1), actor, owner); fputs("</strong><small>", stdout);
-                html((const char *)sqlite3_column_text(a, 2)); fputs("</small><span class=\"ak-go\">", stdout);
+                ui_open(stdout,"li",NULL);ui_open(stdout,"strong",NULL); gr_person((const char *)sqlite3_column_text(a, 1), actor, owner); ui_close(stdout,"strong");ui_open(stdout,"small",NULL);
+                html((const char *)sqlite3_column_text(a, 2)); ui_close(stdout,"small");ui_open(stdout,"span","ak-go");
                 if (!strcmp(st, "submitted")) {
                     ph_nonce(nonce);
                     FtField f[3]; gr_hidden_base(f, "apply-decide", nonce); f[2].name = "target"; f[2].value = (const char *)sqlite3_column_text(a, 0);
@@ -611,11 +608,11 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
                     char id[60]; snprintf(id, sizeof(id), "gr-ad-%d", n);
                     gr_form(id, "Record decision", act, f, 3, in, 1, "Decision", "kind", o, 2);
                 } else { html(st); }
-                fputs("</span></li>", stdout);
+                ui_close(stdout,"span");ui_close(stdout,"li");
             }
         }
         sqlite3_finalize(a);
-        fputs("</ul>", stdout);
+        ui_close(stdout,"ul");
         if (!n) ui_text(stdout, "p", "ak-empty", "No applications yet.");
         if (!strcmp(state, "open")) {
             ph_nonce(nonce);
@@ -624,18 +621,15 @@ static void gr_offer_panel(sqlite3 *db, sqlite3_stmt *s, const char *actor, int 
             gr_button(id, "Close this offer", act, f, 3);
         }
     }
-    fputs("</article>", stdout);
+    ui_close(stdout,"article");
 }
 #define GR_OFFER_COLUMNS "offer,kind,title,terms,COALESCE(stated_value,''),COALESCE(place,''),COALESCE(closes_on,''),state"
 static void gr_offers(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     int steward = gr_steward(db, c, actor);
     char act[160], nonce[33]; gr_act_path(c, act);
     gr_open("Grants, patronage and openings", c, "offers", *actor != 0);
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Guild offers</span><h1>Grants, patronage and apprenticeship openings</h1><p class=\"ak-lede\">What this guild offers, with its stated terms. Anyone signed in can apply; the steward records each decision. No money moves here and nothing is signed for you.</p></div></header>", stdout);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Open offers</dt><dd class=\"is-on\">%.0f</dd></div><div><dt>Applications</dt><dd>%.0f</dd></div><div><dt>Accepted</dt><dd>%.0f</dd></div></dl>",
-           gr_number(db, "SELECT count(*) FROM guild_offer WHERE namespace='root' AND community=?1 AND state='open' AND status='published'", c->key, NULL),
-           gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND state<>'withdrawn' AND status='published'", c->key, NULL),
-           gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND state='accepted' AND status='published'", c->key, NULL));
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild offers");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Grants, patronage and apprenticeship openings");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"What this guild offers, with its stated terms. Anyone signed in can apply; the steward records each decision. No money moves here and nothing is signed for you.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Open offers");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer WHERE namespace='root' AND community=?1 AND state='open' AND status='published'", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Applications");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND state<>'withdrawn' AND status='published'", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Accepted");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer_application WHERE namespace='root' AND community=?1 AND state='accepted' AND status='published'", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");
     static const char *const kinds[] = {"grant", "patronage", "apprenticeship"};
     static const char *const titles[] = {"Grants", "Patronage", "Apprenticeship openings"};
     int any = 0;
@@ -644,10 +638,10 @@ static void gr_offers(sqlite3 *db, const CjrCommunity *c, const char *actor) {
         if (sqlite3_prepare_v2(db, "SELECT " GR_OFFER_COLUMNS " FROM guild_offer WHERE namespace='root' AND community=?1 AND kind=?2 AND status='published' ORDER BY state='open' DESC,id DESC LIMIT 30", -1, &s, NULL) != SQLITE_OK) continue;
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT); sqlite3_bind_text(s, 2, kinds[k], -1, SQLITE_STATIC);
         while (sqlite3_step(s) == SQLITE_ROW) {
-            if (!shown++) { printf("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Section %d</span><h2>%s</h2></div></header><div class=\"ak-grid\">", k + 1, titles[k]); }
+            if (!shown++) { ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Section ");fprintf(stdout,"%d",k + 1);ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,titles[k]);ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");ui_open(stdout,"div","ak-grid"); }
             gr_offer_panel(db, s, actor, steward, c->key, c->title, c->owner, 0);
         }
-        if (shown) { fputs("</div></section>", stdout); any = 1; }
+        if (shown) { ui_close(stdout,"div");ui_close(stdout,"section"); any = 1; }
         sqlite3_finalize(s);
     }
     if (!any) ui_text(stdout, "p", "ak-empty", "This guild has not posted an offer yet.");
@@ -662,33 +656,30 @@ static void gr_offers(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             {"Where", "text", "place", "", "", 0, "120", 0, ""},
             {"Closes on", "date", "closes", "", "", 0, "10", 0, ""},
         };
-        fputs("<section class=\"ak-sec\"><div class=\"ak-ask\"><span class=\"ak-kicker\">Guild treasury notice</span><h2>Post an offer</h2><p>The terms are what the guild says it intends. Posting holds no funds and makes no payment.</p>", stdout);
+        ui_open(stdout,"section","ak-sec");ui_open(stdout,"div","ak-ask");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guild treasury notice");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Post an offer");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"The terms are what the guild says it intends. Posting holds no funds and makes no payment.");ui_close(stdout,"p");
         gr_form("gr-offer", "Post offer", act, f, 2, in, 5, "Kind", "kind", o, 3);
-        fputs("</div></section>", stdout);
+        ui_close(stdout,"div");ui_close(stdout,"section");
     }
     ak_app_close();
 }
 static void gr_openings(sqlite3 *db, const char *actor) {
     ak_app_http(200, *actor != 0);
     ak_app_open("Apprenticeship openings", "workbench", "route-guild");
-    fputs("<nav class=\"ak-wb-strip\" aria-label=\"Guilds\"><span class=\"ak-kicker\">Guilds</span><a href=\"/guilds\">All guilds</a><a href=\"/guild/openings\" aria-current=\"page\">Openings</a><a href=\"/charters\">Charters</a></nav>", stdout);
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Labour commons</span><h1>Apprenticeships and guild openings</h1><p class=\"ak-lede\">Benches and openings posted by guild stewards, with their terms in their own words. You apply to the guild; its steward decides. Nobody filters you by machine.</p><div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"/guild/new\">Start a guild</a><a class=\"ak-btn\" href=\"/guilds\">Browse guilds</a></div></div></header>", stdout);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Open openings</dt><dd class=\"is-on\">%.0f</dd></div><div><dt>Guilds offering</dt><dd>%.0f</dd></div><div><dt>Placements accepted</dt><dd>%.0f</dd></div></dl>",
-           gr_number(db, "SELECT count(*) FROM guild_offer WHERE namespace='root' AND kind='apprenticeship' AND state='open' AND status='published'", NULL, NULL),
-           gr_number(db, "SELECT count(DISTINCT community) FROM guild_offer WHERE namespace='root' AND state='open' AND status='published'", NULL, NULL),
-           gr_number(db, "SELECT count(*) FROM guild_offer_application a JOIN guild_offer o ON o.namespace='root' AND o.offer=a.offer WHERE a.namespace='root' AND o.kind='apprenticeship' AND a.state='accepted'", NULL, NULL));
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-wb-strip");ui_attr(stdout,"aria-label","Guilds");ui_gt(stdout);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Guilds");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr(stdout,"href","/guilds");ui_gt(stdout);ui_copy(stdout,"All guilds");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/guild/openings");ui_attr(stdout,"aria-current","page");ui_gt(stdout);ui_copy(stdout,"Openings");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"href","/charters");ui_gt(stdout);ui_copy(stdout,"Charters");ui_close(stdout,"a");ui_close(stdout,"nav");
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Labour commons");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Apprenticeships and guild openings");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Benches and openings posted by guild stewards, with their terms in their own words. You apply to the guild; its steward decides. Nobody filters you by machine.");ui_close(stdout,"p");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr(stdout,"href","/guild/new");ui_gt(stdout);ui_copy(stdout,"Start a guild");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/guilds");ui_gt(stdout);ui_copy(stdout,"Browse guilds");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"header");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Open openings");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer WHERE namespace='root' AND kind='apprenticeship' AND state='open' AND status='published'", NULL, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Guilds offering");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(DISTINCT community) FROM guild_offer WHERE namespace='root' AND state='open' AND status='published'", NULL, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Placements accepted");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM guild_offer_application a JOIN guild_offer o ON o.namespace='root' AND o.offer=a.offer WHERE a.namespace='root' AND o.kind='apprenticeship' AND a.state='accepted'", NULL, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");
     sqlite3_stmt *s = NULL; int shown = 0;
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Open now</span><h2>Available openings</h2></div></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Open now");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Available openings");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     if (sqlite3_prepare_v2(db, "SELECT o.offer,o.kind,o.title,o.terms,COALESCE(o.stated_value,''),COALESCE(o.place,''),COALESCE(o.closes_on,''),o.state,c.community,c.title,c.created_by_subject FROM guild_offer o JOIN community_body c ON c.namespace='root' AND c.community=o.community AND c.governance_scope='local-guild' AND c.status='published' AND c.visibility='public' WHERE o.namespace='root' AND o.state='open' AND o.status='published' ORDER BY o.kind='apprenticeship' DESC,o.id DESC LIMIT 40", -1, &s, NULL) == SQLITE_OK) {
         while (sqlite3_step(s) == SQLITE_ROW) {
-            if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid");
             gr_offer_panel(db, s, actor, 0, (const char *)sqlite3_column_text(s, 8), (const char *)sqlite3_column_text(s, 9), (const char *)sqlite3_column_text(s, 10), 1);
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout);
+    if (shown) ui_close(stdout,"div");
     else ui_text(stdout, "p", "ak-empty", "No guild has an open apprenticeship or grant right now.");
-    fputs("</section><section class=\"ak-band\"><div><span class=\"ak-kicker\">Open a bench</span><h2>Offer an apprenticeship</h2><p>Start a guild, write its curriculum, and post an opening with your terms.</p></div><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/guild/new\">Start a guild</a></div></section>", stdout);
+    ui_close(stdout,"section");ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Open a bench");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Offer an apprenticeship");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Start a guild, write its curriculum, and post an opening with your terms.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/guild/new");ui_gt(stdout);ui_copy(stdout,"Start a guild");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"section");
     ak_app_close();
 }
 
@@ -696,31 +687,28 @@ static void gr_registry(sqlite3 *db, const CjrCommunity *c, const char *actor) {
     int member = gr_active(db, c, actor);
     char act[160], nonce[33]; gr_act_path(c, act);
     gr_open("Field registry", c, "registry", *actor != 0);
-    fputs("<header class=\"ak-wb-hero is-solo\"><div><span class=\"ak-kicker\">Field registry · provenance</span><h1>What members have seen, and where to check it</h1><p class=\"ak-lede\">Each observation carries the link a member cites. When the estate already reads that source, its name is shown. A recorded observation is not a verified one.</p></div></header>", stdout);
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Observations</dt><dd class=\"is-on\">%.0f</dd></div><div><dt>Observers</dt><dd>%.0f</dd></div><div><dt>Known sources cited</dt><dd>%.0f</dd></div></dl>",
-           gr_number(db, "SELECT count(*) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL),
-           gr_number(db, "SELECT count(DISTINCT observer_subject) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL),
-           gr_number(db, "SELECT count(*) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published' AND COALESCE(internet_source,'')<>''", c->key, NULL));
+    ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Field registry · provenance");ui_close(stdout,"span");ui_open(stdout,"h1",NULL);ui_copy(stdout,"What members have seen, and where to check it");ui_close(stdout,"h1");ui_open(stdout,"p","ak-lede");ui_copy(stdout,"Each observation carries the link a member cites. When the estate already reads that source, its name is shown. A recorded observation is not a verified one.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Observations");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Observers");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(DISTINCT observer_subject) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published'", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Known sources cited");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%.0f",gr_number(db, "SELECT count(*) FROM field_observation WHERE namespace='root' AND community=?1 AND status='published' AND COALESCE(internet_source,'')<>''", c->key, NULL));ui_close(stdout,"dd");ui_close(stdout,"div");ui_close(stdout,"dl");
     sqlite3_stmt *s = NULL; int shown = 0;
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Registry</span><h2>Observations</h2></div></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Registry");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Observations");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
     if (sqlite3_prepare_v2(db, "SELECT f.title,f.observation,f.source_url,f.observed_at,COALESCE(f.place,''),f.observer_subject,COALESCE(i.label,'') FROM field_observation f LEFT JOIN internet_source i ON i.namespace='root' AND i.source=f.internet_source AND COALESCE(f.internet_source,'')<>'' WHERE f.namespace='root' AND f.community=?1 AND f.status='published' GROUP BY f.id ORDER BY f.observed_at DESC,f.id DESC LIMIT 60", -1, &s, NULL) == SQLITE_OK) {
         sqlite3_bind_text(s, 1, c->key, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(s) == SQLITE_ROW) {
-            if (!shown++) fputs("<div class=\"ak-grid\">", stdout);
-            fputs("<article class=\"ak-panel\"><header><span class=\"ak-kicker\">", stdout); html((const char *)sqlite3_column_text(s, 3));
-            fputs("</span>", stdout);
+            if (!shown++) ui_open(stdout,"div","ak-grid");
+            ui_open(stdout,"article","ak-panel");ui_open(stdout,"header",NULL);ui_open(stdout,"span","ak-kicker"); html((const char *)sqlite3_column_text(s, 3));
+            ui_close(stdout,"span");
             if (*(const char *)sqlite3_column_text(s, 6)) { ui_text(stdout, "span", "ak-tag is-on", (const char *)sqlite3_column_text(s, 6)); }
-            fputs("</header><h3>", stdout); html((const char *)sqlite3_column_text(s, 0)); fputs("</h3><p>", stdout);
-            html((const char *)sqlite3_column_text(s, 1)); fputs("</p><dl class=\"ak-spec\">", stdout);
-            if (*(const char *)sqlite3_column_text(s, 4)) { fputs("<dt>Where</dt><dd>", stdout); html((const char *)sqlite3_column_text(s, 4)); fputs("</dd>", stdout); }
-            fputs("<dt>Observer</dt><dd>", stdout); gr_person((const char *)sqlite3_column_text(s, 5), actor, c->owner);
-            fputs("</dd></dl><p><a rel=\"nofollow noopener noreferrer\" target=\"_blank\" href=\"", stdout); html((const char *)sqlite3_column_text(s, 2));
+            ui_close(stdout,"header");ui_open(stdout,"h3",NULL); html((const char *)sqlite3_column_text(s, 0)); ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
+            html((const char *)sqlite3_column_text(s, 1)); ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
+            if (*(const char *)sqlite3_column_text(s, 4)) { ui_open(stdout,"dt",NULL);ui_copy(stdout,"Where");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); html((const char *)sqlite3_column_text(s, 4)); ui_close(stdout,"dd"); }
+            ui_open(stdout,"dt",NULL);ui_copy(stdout,"Observer");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL); gr_person((const char *)sqlite3_column_text(s, 5), actor, c->owner);
+            ui_close(stdout,"dd");ui_close(stdout,"dl");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"rel","nofollow noopener noreferrer");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html((const char *)sqlite3_column_text(s, 2));
             fputs("\">Check the cited source</a></p></article>", stdout);
         }
     }
     sqlite3_finalize(s);
-    if (shown) fputs("</div>", stdout); else ui_text(stdout, "p", "ak-empty", "No observation has been recorded here yet.");
-    fputs("</section>", stdout);
+    if (shown) ui_close(stdout,"div"); else ui_text(stdout, "p", "ak-empty", "No observation has been recorded here yet.");
+    ui_close(stdout,"section");
     if (member) {
         char today[11]; gr_today(today); ph_nonce(nonce);
         FtField f[2]; gr_hidden_base(f, "observe", nonce);
@@ -731,9 +719,9 @@ static void gr_registry(sqlite3 *db, const CjrCommunity *c, const char *actor) {
             {"Observed on", "date", "date", today, "", 0, "10", 1, ""},
             {"Place", "text", "place", "", "", 0, "120", 0, ""},
         };
-        fputs("<section class=\"ak-band\" style=\"display:block\"><span class=\"ak-kicker\">Lodge an observation</span><h2>Add to the registry</h2><p>Members of this community can record what they saw with a source anyone can open.</p></section><div class=\"ak-ask\" style=\"margin-top:16px\">", stdout);
+        ui_start(stdout,"section");ui_attr(stdout,"class","ak-band");ui_attr(stdout,"style","display:block");ui_gt(stdout);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Lodge an observation");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Add to the registry");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Members of this community can record what they saw with a source anyone can open.");ui_close(stdout,"p");ui_close(stdout,"section");ui_start(stdout,"div");ui_attr(stdout,"class","ak-ask");ui_attr(stdout,"style","margin-top:16px");ui_gt(stdout);
         gr_form("gr-observe", "Record observation", act, f, 2, in, 5, NULL, NULL, NULL, 0);
-        fputs("</div>", stdout);
+        ui_close(stdout,"div");
     }
     ak_app_close();
 }

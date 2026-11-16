@@ -62,8 +62,8 @@ static int serve_surface_catalogue(const char *accept) {
     printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\n"
            "Cache-Control: no-store\r\nConnection: close\r\n\r\n",
            as_json ? "application/json" : "text/html; charset=utf-8");
-    if (as_json) printf("{\"surfaces\":[");
-    else printf("<ul class=\"surface-catalogue\">");
+    if (as_json) ui_lit(stdout, "{\"surfaces\":[");
+    else ui_open(stdout, "ul", "surface-catalogue");
 
     /* Section 68: a pattern declares the owner it reads, the extent it renders
      * at, the action layer it carries and the authority that layer demands.
@@ -134,11 +134,11 @@ static int serve_surface_catalogue(const char *accept) {
                 html(pat);
                 printf("</a> <span class=\"reads\">reads %s ", src);
                 html(rd ? rd : "");
-                printf("</span> <span class=\"effect\">");
+                (ui_close(stdout, "span"), ui_lit(stdout, " "), ui_open(stdout, "span", "effect"));
                 html(ef ? ef : "");
-                printf("</span>");
-                if (rq && *rq) { printf(" <span class=\"requires\">requires "); html(rq); printf("</span>"); }
-                printf("</li>");
+                ui_close(stdout, "span");
+                if (rq && *rq) { (ui_lit(stdout, " "), ui_open(stdout, "span", "requires"), ui_lit(stdout, "requires ")); html(rq); ui_close(stdout, "span"); }
+                ui_close(stdout, "li");
             }
             rows++;
         }
@@ -153,7 +153,7 @@ static int serve_surface_catalogue(const char *accept) {
                "\"extent_parameter\":\"?extent=<extent>, narrowing only\","
                "\"extent_note\":\"extent decides the action layer: chip, card and section are "
                "references to a surface and carry none\"}\n", rows);
-    else printf("</ul>");
+    else ui_close(stdout, "ul");
     fflush(stdout);
     return 1;
 }
@@ -207,13 +207,13 @@ static int split_cols(char *line, char *col[], int max);
  * descriptor named nothing, so an unlabelled pattern is unchanged. */
 static void surface_heading(const char *title, const char *caption) {
     if (!title || !*title) return;
-    printf("<h2 class=\"surface-title\">");
+    ui_open(stdout, "h2", "surface-title");
     html(title);
-    printf("</h2>");
+    ui_close(stdout, "h2");
     if (caption && *caption) {
-        printf("<p class=\"surface-caption\">");
+        ui_open(stdout, "p", "surface-caption");
         html(caption);
-        printf("</p>");
+        ui_close(stdout, "p");
     }
 }
 
@@ -288,7 +288,7 @@ static void surface_json_head(const char *pattern, const char *title, const char
     if (!acts)
         printf("\"action_layer_withheld_because\":\"%s extent is a reference to a surface, "
                "not room to act inside one\",", served_extent);
-    printf("\"records\":[");
+    ui_lit(stdout, "\"records\":[");
 }
 
 /* What a narrowed surface withheld, said in the answer rather than left to be
@@ -298,7 +298,7 @@ static void surface_json_tail(int rows, int withheld) {
     if (withheld)
         printf(",\"withheld_by_extent\":%d,\"whole_at\":\"the same address without ?extent\"",
                withheld);
-    printf("}\n");
+    ui_lit(stdout, "}\n");
 }
 
 static void surface_withheld_html(int withheld, const char *authored) {
@@ -405,7 +405,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
         if (as_json)
             printf("{\"error\":\"ambiguous_pattern_descriptor\",\"pattern\":\"%s\"}\n", pattern);
         else
-            printf("<p class=\"surface-denied\">This surface has more than one published descriptor and is refused until its ownership is reconciled.</p>");
+            (ui_open(stdout, "p", "surface-denied"), ui_lit(stdout, "This surface has more than one published descriptor and is refused until its ownership is reconciled."), ui_close(stdout, "p"));
         return 1;
     }
     sqlite3_finalize(st);
@@ -598,7 +598,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
             printf("{\"error\":\"surface_authority_required\",\"pattern\":\"%s\",\"requires\":\"%s\"}\n",
                    pattern, requires);
         else
-            printf("<p class=\"surface-denied\">This section needs an admitted session.</p>");
+            (ui_open(stdout, "p", "surface-denied"), ui_lit(stdout, "This section needs an admitted session."), ui_close(stdout, "p"));
         return 1;
     }
 
@@ -680,17 +680,17 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                     json_escape_into(i < ncol ? col[i] : "", esc, sizeof(esc));
                     printf("%s\"%s\":\"%s\"", i ? "," : "", names[i], esc);
                 }
-                printf("}");
+                ui_lit(stdout, "}");
             } else if (!strcmp(shape, "link") && ncol > 1) {
                 printf("<a class=\"way\" href=\"");
-                html(col[1]); printf("\">"); html(col[0]); printf("</a>");
+                html(col[1]); ui_lit(stdout, "\">"); html(col[0]); ui_close(stdout, "a");
             } else {
-                printf("<dl class=\"surface-record\">");
+                ui_open(stdout, "dl", "surface-record");
                 for (i = 0; i < nfields; i++) {
-                    printf("<dt>"); html(names[i]);
-                    printf("</dt><dd>"); html(i < ncol ? col[i] : ""); printf("</dd>");
+                    ui_open(stdout, "dt", NULL); html(names[i]);
+                    (ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(i < ncol ? col[i] : ""); ui_close(stdout, "dd");
                 }
-                printf("</dl>");
+                ui_close(stdout, "dl");
             }
             rows++;
         }
@@ -711,7 +711,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
 
     if (!cms_type_registered(db, reads)) {
         sqlite3_close(db);
-        printf("HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
+        ui_lit(stdout, "HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
         return 1;
     }
 
@@ -815,7 +815,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
     if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) != SQLITE_OK) {
         fprintf(stderr, "[surface] pattern '%s': %s\n", pattern, sqlite3_errmsg(db));
         sqlite3_close(db);
-        printf("HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
+        ui_lit(stdout, "HTTP/1.1 204 No Content\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n");
         return 1;
     }
     {
@@ -858,7 +858,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                 json_escape_into(v ? v : "", esc, sizeof(esc));
                 printf("%s\"%s\":\"%s\"", i ? "," : "", names[i], esc);
             }
-            printf("}");
+            ui_lit(stdout, "}");
         } else if (!strcmp(shape, "door")) {
             /* The door shape: eyebrow, heading, body, ways. Render primitives
              * live here rather than in the descriptor, so a CMS write can
@@ -868,36 +868,36 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
             const char *body    = nfields > 2 ? (const char *)sqlite3_column_text(st, 2) : NULL;
             const char *ways    = nfields > 3 ? (const char *)sqlite3_column_text(st, 3) : NULL;
             if (!eyebrow || !heading || !body) continue;
-            printf("<article class=\"door\"><p class=\"eyebrow\"><i></i>");
+            (ui_open(stdout, "article", "door"), ui_open(stdout, "p", "eyebrow"), ui_open(stdout, "i", NULL), ui_close(stdout, "i"));
             html(eyebrow);
-            printf("</p><h3>");
+            (ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));
             html(heading);
-            printf("</h3><p>");
+            (ui_close(stdout, "h3"), ui_open(stdout, "p", NULL));
             html(body);
-            printf("</p><div class=\"ways\">");
+            (ui_close(stdout, "p"), ui_open(stdout, "div", "ways"));
             if (ways) ways_html(ways);
-            printf("</div></article>");
+            ui_close_n(stdout, "div", "article", NULL);
         } else if (!strcmp(shape, "link")) {
             const char *label = (const char *)sqlite3_column_text(st, 0);
             const char *href  = nfields > 1 ? (const char *)sqlite3_column_text(st, 1) : NULL;
             if (!label || !href) continue;
             printf("<a class=\"way\" href=\"");
             html(href);
-            printf("\">");
+            ui_lit(stdout, "\">");
             html(label);
-            printf("</a>");
+            ui_close(stdout, "a");
         } else {
             /* An unknown shape renders as a definition list rather than
              * nothing: the records are real and the reader should see them
              * even when the presentation has not been given a name yet. */
-            printf("<dl class=\"surface-record\">");
+            ui_open(stdout, "dl", "surface-record");
             for (i = 0; i < nfields; i++) {
                 const char *v = (const char *)sqlite3_column_text(st, i);
-                printf("<dt>");
+                ui_open(stdout, "dt", NULL);
                 html(names[i]);
-                printf("</dt><dd>");
+                (ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));
                 html(v ? v : "");
-                printf("</dd>");
+                ui_close(stdout, "dd");
             }
             /* The authored affordance, rendered server-side.
              *
@@ -941,15 +941,15 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                                     break;
                                 }
                             p = end;
-                        } else if (*p == '&') fputs("&amp;", stdout);
+                        } else if (*p == '&') ui_lit(stdout, "&amp;");
                         else putchar(*p);
                     }
-                    printf("\">");
+                    ui_lit(stdout, "\">");
                     html(act_label);
-                    printf("</a>");
+                    ui_close(stdout, "a");
                 }
             }
-            printf("</dl>");
+            ui_close(stdout, "dl");
         }
         rows++;
     }

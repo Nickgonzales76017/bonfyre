@@ -1,5 +1,6 @@
 #ifndef BF_PROFILE_AUTHORING_OVERVIEW_H
 #define BF_PROFILE_AUTHORING_OVERVIEW_H
+#include "ui_tree.h"
 /* Public, exact CMS-owned C composition. When a site has not undergone a
  * reviewed authoring publication, preserve its existing editorial projection. */
 #include "profile_story.h"
@@ -13,12 +14,11 @@ static int bf_profile_authoring_overview_emit(FILE *out,sqlite3 *db,const char *
  int blocks=0;
  int ready=bf_site_authored_document_project(db,site_id,"/",content,cap,&blocks);
  if(ready==1&&blocks>0){
-  fputs("<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">",out);
+  ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_attr(out,"href","/assets/authoring-reader.css");ui_gt(out);
   fputs("<script defer src=\"/assets/authoring-reader.js\"></script>",out);
-  fputs("<div data-profile-authoring=\"typed-native-c\" role=\"region\""
-        " aria-label=\"Published profile composition\">",out);
+  ui_start(out,"div");ui_attr(out,"data-profile-authoring","typed-native-c");ui_attr(out,"role","region");ui_attr(out,"aria-label","Published profile composition");ui_gt(out);
   fputs(content,out);
-  fputs("</div>",out);
+  ui_close(out,"div");
   free(content);return blocks;
  }
  free(content);

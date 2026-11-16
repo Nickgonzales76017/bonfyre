@@ -46,11 +46,11 @@ static void spo_source_label(const char *topic) {
     spo_domain(topic,domain);
     bf_sha256_hex((const uint8_t*)(topic?topic:""),topic?strlen(topic):0,digest);
     digest[12]=0;
-    fputs("<strong>",stdout);
+    ui_open(stdout,"strong",NULL);
     html(*domain?domain:"Source address withheld");
-    fputs("</strong> <small>source ",stdout);
+    ui_close(stdout,"strong"); fputs(" ",stdout); ui_open(stdout,"small",NULL); fputs("source ",stdout);
     html(digest);
-    fputs("</small>",stdout);
+    ui_close(stdout,"small");
 }
 /* Three independent bounded pagination coordinates, one per native ledger. */
 static int spo_parse_page(const char *raw,unsigned *out){
@@ -82,15 +82,11 @@ static void spo_page_links(const char *q,const char *state,unsigned page,
         fputs(dir<0?"Previous ":"More ",stdout);html(labels[view]);
         fputs("s</a>",stdout);
     }
-    fputs("</nav>",stdout);
+    ui_close(stdout,"nav");
 }
 static void spo_material_demands(sqlite3 *db,const char *q,const char *state,unsigned page,unsigned dpage,unsigned fpage) {
     sqlite3_stmt *st=NULL;int n=0,step=0;
-    fputs("<section id=\"material-demands\" data-source-material-demands>"
-          "<h2>MaterialCompiler observation demands</h2>"
-          "<p>These are retained requests for new source observations. They do not "
-          "require an active hub subscription. A request does not prove that any "
-          "foreign content has been read or admitted.</p>",stdout);
+    ui_open_a(stdout,"section","id","material-demands","data-source-material-demands",(const char *)NULL); ui_open(stdout,"h2",NULL); fputs("MaterialCompiler observation demands",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("These are retained requests for new source observations. They do not require an active hub subscription. A request does not prove that any foreign content has been read or admitted.",stdout); ui_close(stdout,"p");
     const char *sql=
         "SELECT d.topic,COUNT(*),MAX(d.last_requested_at),"
         "COALESCE((SELECT s.state FROM source_dirty s WHERE s.topic=d.topic "
@@ -103,79 +99,74 @@ static void spo_material_demands(sqlite3 *db,const char *q,const char *state,uns
         "LIMIT 26 OFFSET ?2";
     if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK){
         sqlite3_finalize(st);
-        fputs("<p role=\"status\">The material-demand ledger is not yet available in this carrier.</p></section>",stdout);
+        ui_open_a(stdout,"p","role","status"); fputs("The material-demand ledger is not yet available in this carrier.",stdout); ui_close(stdout,"p"); ui_close(stdout,"section");
         return;
     }
     sqlite3_bind_text(st,1,q,-1,SQLITE_TRANSIENT);
     sqlite3_bind_int(st,2,(int)dpage*25);
-    fputs("<ol class=\"spo-ledger\">",stdout);
+    ui_open(stdout,"ol","spo-ledger");
     while((step=sqlite3_step(st))==SQLITE_ROW && n<25){
         const char *topic=(const char*)sqlite3_column_text(st,0);
         const char *status=(const char*)sqlite3_column_text(st,3);
         if(!topic||!*topic)continue;
         n++;
-        fputs("<li data-material-demand>",stdout);
+        ui_open_a(stdout,"li","data-material-demand",(const char *)NULL);
         spo_source_label(topic);
-        fputs("<dl><div><dt>Distinct requests</dt><dd>",stdout);
+        ui_open(stdout,"dl",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Distinct requests"); ui_open(stdout,"dd",NULL);
         printf("%lld",(long long)sqlite3_column_int64(st,1));
-        fputs("</dd></div><div><dt>Latest request</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Latest request"); ui_open(stdout,"dd",NULL);
         printf("%lld",(long long)sqlite3_column_int64(st,2));
-        fputs("</dd></div><div><dt>Observation queue</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Observation queue"); ui_open(stdout,"dd",NULL);
         html(status?status:"not queued");
-        fputs("</dd></div><div><dt>Observation attempts</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Observation attempts"); ui_open(stdout,"dd",NULL);
         printf("%d",sqlite3_column_int(st,4));
-        fputs("</dd></div></dl></li>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"li");
     }
     if(!n)ui_text(stdout, "li", NULL, "No material observation demands match this view.");
-    fputs("</ol>",stdout);
+    ui_close(stdout,"ol");
     spo_page_links(q,state,page,dpage,fpage,1,step==SQLITE_ROW);
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
     sqlite3_finalize(st);
 }
 static void spo_fact_handoffs(sqlite3 *db,const char *q,const char *state,unsigned page,unsigned dpage,unsigned fpage) {
     sqlite3_stmt *st=NULL;int n=0,step=0;
-    fputs("<section id=\"fact-handoffs\" data-source-fact-handoffs>"
-          "<h2>ForeignTwin to FactDelta handoffs</h2>"
-          "<p>Each retained row is a downstream notification obligation after a "
-          "ForeignTwin observation. It is not proof of publication, delivery, "
-          "fact verification, or completion by the receiving owner.</p>",stdout);
+    ui_open_a(stdout,"section","id","fact-handoffs","data-source-fact-handoffs",(const char *)NULL); ui_open(stdout,"h2",NULL); fputs("ForeignTwin to FactDelta handoffs",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("Each retained row is a downstream notification obligation after a ForeignTwin observation. It is not proof of publication, delivery, fact verification, or completion by the receiving owner.",stdout); ui_close(stdout,"p");
     const char *sql=
         "SELECT topic,observed_at,attempts FROM foreign_delta "
         "WHERE (?1='' OR instr(lower(topic),lower(?1))>0) "
         "ORDER BY observed_at DESC,topic LIMIT 26 OFFSET ?2";
     if(sqlite3_prepare_v2(db,sql,-1,&st,NULL)!=SQLITE_OK){
         sqlite3_finalize(st);
-        fputs("<p role=\"status\">The FactDelta handoff ledger is not yet available in this carrier.</p></section>",stdout);
+        ui_open_a(stdout,"p","role","status"); fputs("The FactDelta handoff ledger is not yet available in this carrier.",stdout); ui_close(stdout,"p"); ui_close(stdout,"section");
         return;
     }
     sqlite3_bind_text(st,1,q,-1,SQLITE_TRANSIENT);
     sqlite3_bind_int(st,2,(int)fpage*25);
-    fputs("<ol class=\"spo-ledger\">",stdout);
+    ui_open(stdout,"ol","spo-ledger");
     while((step=sqlite3_step(st))==SQLITE_ROW && n<25){
         const char *topic=(const char*)sqlite3_column_text(st,0);
         if(!topic||!*topic)continue;
         n++;
-        fputs("<li data-fact-handoff>",stdout);spo_source_label(topic);
-        fputs("<dl><div><dt>Recorded observation time</dt><dd>",stdout);
+        ui_open_a(stdout,"li","data-fact-handoff",(const char *)NULL);spo_source_label(topic);
+        ui_open(stdout,"dl",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Recorded observation time"); ui_open(stdout,"dd",NULL);
         printf("%lld",(long long)sqlite3_column_int64(st,1));
-        fputs("</dd></div><div><dt>Handoff attempts</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Handoff attempts"); ui_open(stdout,"dd",NULL);
         printf("%d",sqlite3_column_int(st,2));
-        fputs("</dd></div><div><dt>Standing</dt><dd>Pending downstream notification</dd></div></dl></li>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Standing"); ui_text(stdout,"dd",NULL,"Pending downstream notification"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"li");
     }
     if(!n)ui_text(stdout, "li", NULL, "No pending native FactDelta handoffs match this view.");
-    fputs("</ol>",stdout);
+    ui_close(stdout,"ol");
     spo_page_links(q,state,page,dpage,fpage,2,step==SQLITE_ROW);
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
     sqlite3_finalize(st);
 }
 /* A refused or unavailable console still opens on the one shell, in the
  * console's own layout, saying which owner decided. */
 static void spo_refusal(int code,const char *title,const char *why){
     ak_app_http(code,1);ak_app_open("WebSub delivery","connections","route-push");
-    fputs("<div class=\"ak-wb-strip\"><span>Sources</span><span>Push delivery</span><span class=\"ak-live is-off\">",stdout);html(title);
-    fputs("</span></div><section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/sources\">Sources</a> &middot; WebSub</p>"
-          "<h1>Push delivery, leases and signatures</h1><p class=\"ak-lede\">",stdout);html(why);
-    fputs("</p><div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/sources\">Back to sources</a></div></div></section>",stdout);
+    ui_open(stdout,"div","ak-wb-strip"); ui_text(stdout,"span",NULL,"Sources"); ui_text(stdout,"span",NULL,"Push delivery"); ui_open(stdout,"span","ak-live is-off");html(title);
+    ui_close(stdout,"span"); ui_close(stdout,"div"); ui_open(stdout,"section","ak-wb-hero is-solo"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); ui_open_a(stdout,"a","href","/sources"); fputs("Sources",stdout); ui_close(stdout,"a"); fputs(" &middot; WebSub",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Push delivery, leases and signatures",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede");html(why);
+    ui_close(stdout,"p"); ui_open(stdout,"div","ak-actions"); ui_open_a(stdout,"a","class","ak-btn","href","/sources"); fputs("Back to sources",stdout); ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"section");
     ak_app_close();
 }
 static int serve_source_push_operations(const BfRequest *r) {
@@ -240,21 +231,17 @@ static int serve_source_push_operations(const BfRequest *r) {
     ak_app_http(200,1);ak_app_open("WebSub delivery","connections","route-push");
     printf("<div class=\"ak-wb-strip\"><span>WebSub</span><span>HMAC-SHA256 callbacks</span><span>Subscriptions <b>%lld</b></span>"
            "<span class=\"ak-live%s\">%s</span></div>",n_total,n_expired?" is-off":"",n_expired?"Leases past expiry":"Leases current");
-    fputs("<section class=\"ak-wb-hero is-solo\" data-source-push-operations><div><p class=\"ak-kicker\"><a href=\"/sources\">Sources</a> &middot; Push delivery</p>"
-          "<h1>Lease renewal and signature console</h1>"
-          "<p class=\"ak-lede\">Every feed that pushes to us: its hub, how long its lease has left, whether the hub answered the challenge, "
-          "and how many signed callbacks were accepted or refused. A challenge proves the hub knows the topic; a valid signature admits a callback. "
-          "Neither publishes anything.</p></div></section>",stdout);
+    ui_open_a(stdout,"section","class","ak-wb-hero is-solo","data-source-push-operations",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); ui_open_a(stdout,"a","href","/sources"); fputs("Sources",stdout); ui_close(stdout,"a"); fputs(" &middot; Push delivery",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Lease renewal and signature console",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Every feed that pushes to us: its hub, how long its lease has left, whether the hub answered the challenge, and how many signed callbacks were accepted or refused. A challenge proves the hub knows the topic; a valid signature admits a callback. Neither publishes anything.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_close(stdout,"section");
     printf("<dl class=\"ak-stats is-row\"><div><dt>Active leases</dt><dd class=\"is-on\">%lld<small style=\"display:inline\"> / %lld</small></dd><small>%lld past expiry</small></div>"
            "<div><dt>Accepted deliveries</dt><dd>%lld</dd><small>signed callbacks admitted</small></div>"
            "<div><dt>Refused callbacks</dt><dd>%lld</dd><small>subscriptions with a signature mismatch</small></div>"
            "<div><dt>Sources changed</dt><dd>%lld</dd><small>waiting for a separate read</small></div></dl>",
            n_active,n_total,n_expired,n_deliv,n_rejected,n_dirty);
-    fputs("<div class=\"spo-layout\"><div class=\"spo-main\">",stdout);
-    fputs("<nav class=\"spo-rail\" aria-label=\"Native source pipeline\"><a href=\"#subscriptions\">Subscriptions</a><a href=\"#material-demands\">Material observation demands</a><a href=\"#fact-handoffs\">FactDelta handoffs</a></nav>",stdout);
+    ui_open(stdout,"div","spo-layout"); ui_open(stdout,"div","spo-main");
+    ui_open_a(stdout,"nav","class","spo-rail","aria-label","Native source pipeline"); ui_open_a(stdout,"a","href","#subscriptions"); fputs("Subscriptions",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","#material-demands"); fputs("Material observation demands",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","#fact-handoffs"); fputs("FactDelta handoffs",stdout); ui_close(stdout,"a"); ui_close(stdout,"nav");
     spo_filters(q,state);
-    fputs("<section id=\"subscriptions\"><h2>Hub subscriptions and delivery</h2>",stdout);
-    fputs("<ol class=\"spo-list\" data-source-push-list>",stdout);
+    ui_open_a(stdout,"section","id","subscriptions"); ui_open(stdout,"h2",NULL); fputs("Hub subscriptions and delivery",stdout); ui_close(stdout,"h2");
+    ui_open_a(stdout,"ol","class","spo-list","data-source-push-list",(const char *)NULL);
     int n=0;time_t now=time(NULL);int rc;
     while((rc=sqlite3_step(st))==SQLITE_ROW&&n<25){
         const char *topic=(const char*)sqlite3_column_text(st,0);
@@ -272,51 +259,41 @@ static int serve_source_push_operations(const BfRequest *r) {
         const char *standing=!strcmp(rawstate?rawstate:"","active")&&lease<=now?
             "expired":(rawstate?rawstate:"unknown");
         n++;
-        fputs("<li data-source-push-row data-state=\"",stdout);html(standing);
-        fputs("\"><details><summary><strong>",stdout);
+        ui_open_a(stdout,"li","data-source-push-row",(const char *)NULL,UI_DYN,"data-state","",(standing)); ui_open(stdout,"details",NULL); ui_open(stdout,"summary",NULL); ui_open(stdout,"strong",NULL);
         html(*origin?origin:"Source address withheld");fputs(" <small>topic ",stdout);
-        digest[12]=0;html(digest);fputs("</small></strong><span>",stdout);html(standing);
-        fputs("</span></summary><dl><div><dt>Hub</dt><dd>",stdout);
-        html(*hubname?hubname:"Address withheld");fputs("</dd></div><div><dt>Lease</dt><dd>",stdout);
+        digest[12]=0;html(digest);ui_close(stdout,"small"); ui_close(stdout,"strong"); ui_open(stdout,"span",NULL);html(standing);
+        ui_close(stdout,"span"); ui_close(stdout,"summary"); ui_open(stdout,"dl",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Hub"); ui_open(stdout,"dd",NULL);
+        html(*hubname?hubname:"Address withheld");ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Lease"); ui_open(stdout,"dd",NULL);
         if(lease>0){printf("%lld seconds %s",(long long)(lease-(sqlite3_int64)now),lease<=now?"past expiry":"remaining");}
         else fputs("Not verified",stdout);
-        fputs("</dd></div><div><dt>Challenge accepted</dt><dd>",stdout);
-        html(verified&&*verified?verified:"Not observed");fputs("</dd></div><div><dt>Accepted deliveries</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Challenge accepted"); ui_open(stdout,"dd",NULL);
+        html(verified&&*verified?verified:"Not observed");ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Accepted deliveries"); ui_open(stdout,"dd",NULL);
         printf("%lld",(long long)deliveries);
-        fputs("</dd></div><div><dt>Rejected callbacks</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Rejected callbacks"); ui_open(stdout,"dd",NULL);
         printf("%lld",(long long)rejected);
-        fputs("</dd></div><div><dt>Last accepted delivery</dt><dd>",stdout);
-        html(delivered&&*delivered?delivered:"Never");fputs("</dd></div><div><dt>Separate source observation</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Last accepted delivery"); ui_open(stdout,"dd",NULL);
+        html(delivered&&*delivered?delivered:"Never");ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Separate source observation"); ui_open(stdout,"dd",NULL);
         html(dirty&&*dirty?dirty:"none");printf(" · %d attempts",attempts);
-        fputs("</dd></div><div><dt>Observation authority</dt><dd>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Observation authority"); ui_open(stdout,"dd",NULL);
         fputs(receipt?"Stored receipt present (not revalidated here)":"No retained authority receipt",stdout);
-        fputs("</dd></div></dl></details></li>",stdout);
+        ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"details"); ui_close(stdout,"li");
     }
     int more=rc==SQLITE_ROW;
     sqlite3_finalize(st);
     if(!n)ui_text(stdout, "li", NULL, "No matching subscriptions in the retained native carrier.");
-    fputs("</ol>",stdout);
+    ui_close(stdout,"ol");
     spo_page_links(q,state,page,dpage,fpage,0,more);
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
     spo_material_demands(db,q,state,page,dpage,fpage);
     spo_fact_handoffs(db,q,state,page,dpage,fpage);
     sqlite3_close(db);
-    fputs("</div><aside class=\"spo-side\"><section class=\"ak-panel\" id=\"setup\"><header><h2>Add a push feed</h2><span class=\"ak-tag is-on\">WebSub 0.4</span></header>"
-          "<p>Paste a feed address. It is reviewed first: the feed's own <code>rel=\"hub\"</code> link names its hub, and robots.txt is respected. "
-          "Subscribing, renewing and unsubscribing are explicit operations of the WebSub owner; this page never sends them.</p>",stdout);
+    ui_close(stdout,"div"); ui_open(stdout,"aside","spo-side"); ui_open_a(stdout,"section","class","ak-panel","id","setup"); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Add a push feed",stdout); ui_close(stdout,"h2"); ui_open(stdout,"span","ak-tag is-on"); fputs("WebSub 0.4",stdout); ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"p",NULL); fputs("Paste a feed address. It is reviewed first: the feed's own ",stdout); ui_open(stdout,"code",NULL); fputs("rel=\"hub\"",stdout); ui_close(stdout,"code"); fputs(" link names its hub, and robots.txt is respected. Subscribing, renewing and unsubscribing are explicit operations of the WebSub owner; this page never sends them.",stdout); ui_close(stdout,"p");
     {   BfAuthoringTree *tree=calloc(1,sizeof(*tree));
         int ok=tree&&ft_action(tree,"push-topic",NULL,0,"Review this feed","get","/studio/",NULL,0)&&
                ft_field(tree,"push-topic-url","push-topic",0,"Topic address","url","foreign_url","","https://example.org/feed.xml",0,NULL,"1200",1,"url");
         if(tree){if(ok)ft_render(tree,stdout);else{bf_authoring_tree_clear(tree);free(tree);}}
     }
-    fputs("</section><section class=\"ak-console\" aria-label=\"Handshake path\"><b>handshake path</b><br>"
-          "&gt; discover the hub from the feed<br>&gt; subscribe with a separate authority receipt<br>"
-          "&gt; hub GET hub.mode=subscribe &amp; hub.challenge<br>&gt; echo the challenge, 200 OK<br>"
-          "&gt; POST callback with X-Hub-Signature sha256=&hellip;<br>&gt; constant-time HMAC compare<br>"
-          "&gt; source marked changed, read separately<br><br>A silent hub is not evidence that nothing was published.</section></aside></div>"
-          "<section class=\"ak-band\"><div><p class=\"ak-kicker\">Where it goes next</p><h2>Changed sources are read, receipted, then known.</h2>"
-          "<p>A delivery only marks a source as changed. The read that follows is its own receipted observation.</p></div>"
-          "<div class=\"ak-actions\"><a class=\"ak-btn\" href=\"/sources\">Source library</a></div></section>",stdout);
+    ui_close(stdout,"section"); ui_open_a(stdout,"section","class","ak-console","aria-label","Handshake path"); ui_open(stdout,"b",NULL); fputs("handshake path",stdout); ui_close(stdout,"b"); ui_open(stdout,"br",NULL); fputs("&gt; discover the hub from the feed",stdout); ui_open(stdout,"br",NULL); fputs("&gt; subscribe with a separate authority receipt",stdout); ui_open(stdout,"br",NULL); fputs("&gt; hub GET hub.mode=subscribe &amp; hub.challenge",stdout); ui_open(stdout,"br",NULL); fputs("&gt; echo the challenge, 200 OK",stdout); ui_open(stdout,"br",NULL); fputs("&gt; POST callback with X-Hub-Signature sha256=&hellip;",stdout); ui_open(stdout,"br",NULL); fputs("&gt; constant-time HMAC compare",stdout); ui_open(stdout,"br",NULL); fputs("&gt; source marked changed, read separately",stdout); ui_open(stdout,"br",NULL); ui_open(stdout,"br",NULL); fputs("A silent hub is not evidence that nothing was published.",stdout); ui_close(stdout,"section"); ui_close(stdout,"aside"); ui_close(stdout,"div"); ui_open(stdout,"section","ak-band"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Where it goes next",stdout); ui_close(stdout,"p"); ui_open(stdout,"h2",NULL); fputs("Changed sources are read, receipted, then known.",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("A delivery only marks a source as changed. The read that follows is its own receipted observation.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"div","ak-actions"); ui_open_a(stdout,"a","class","ak-btn","href","/sources"); fputs("Source library",stdout); ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"section");
     ak_app_close();
     return 1;
 }

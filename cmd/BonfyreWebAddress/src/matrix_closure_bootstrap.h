@@ -1,5 +1,6 @@
 #ifndef BONFYRE_MATRIX_CLOSURE_BOOTSTRAP_H
 #define BONFYRE_MATRIX_CLOSURE_BOOTSTRAP_H
+#include "ui_tree.h"
 #include "../generated/native_estate_hosts.h"
 #include "tenant_host_binding.h"
 /* Extracted verbatim from main.c lines 122-1016 (mechanical split, no logic changes). */
@@ -611,7 +612,7 @@ static int native_template_marker(char *out, size_t out_sz, const char *template
 static sqlite3 *cms_open_ro(void);
 
 static int emit_closure_linked_html(BfMatrix *m, const char *path, const char *host,
-                                    const char *target, const char *query) {
+                                    const char *target, const char *query, int cms_app) {
     FILE *file; long size; char *body, *head; char crate[768], zarr[768];
     BfMatrixAddressResolution resolved;
     int has_resolution = m && target && matrix_path_resolution(m, host, target, &resolved);
@@ -647,7 +648,7 @@ static int emit_closure_linked_html(BfMatrix *m, const char *path, const char *h
     /* The current CMS authoring app shares the estate's signed-in shell.
      * It remains a cached public document with a private, session-checked
      * navigation slot. No principal, credential or draft enters this HTML. */
-    if (target && (!strcmp(target,"/cms") || !strcmp(target,"/cms/"))) {
+    if (cms_app) {
         char *start = strstr(body,"<body>");
         if (start) {
             const size_t prefix = (size_t)(start + 6 - body);
@@ -706,7 +707,7 @@ static int emit_closure_linked_html(BfMatrix *m, const char *path, const char *h
                     fwrite(identity + strlen(identity_marker), 1,
                            (size_t)(head - (identity + strlen(identity_marker))), stdout);
                 } else fwrite(body, 1, (size_t)(head - body), stdout);
-                fputs("<link rel=\"describedby\" type=\"application/ld+json\" href=\"", stdout);
+                ui_start(stdout,"link");ui_attr(stdout,"rel","describedby");ui_attr(stdout,"type","application/ld+json");ui_attr_open(stdout,"href");
                 html(crate);
                 fputs("\"><link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"", stdout);
                 html(zarr);
@@ -729,7 +730,7 @@ static int emit_closure_linked_html(BfMatrix *m, const char *path, const char *h
         fwrite(identity + strlen(identity_marker), 1,
                (size_t)(head - (identity + strlen(identity_marker))), stdout);
     } else fwrite(body, 1, (size_t)(head - body), stdout);
-    fputs("<link rel=\"describedby\" type=\"application/ld+json\" href=\"", stdout); html(crate);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","describedby");ui_attr(stdout,"type","application/ld+json");ui_attr_open(stdout,"href"); html(crate);
     fputs("\"><link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"", stdout); html(zarr);
     fputs("\">", stdout);
     if (has_resolution) internet_context(&resolved);
@@ -772,15 +773,15 @@ static void emit_resolved_identity_metadata(const BfMatrixAddressResolution *res
     const char *canon = resolved && *resolved->canonical_address ? resolved->canonical_address : NULL;
     ui_text(stdout, "title", NULL, title);
     fputs(BF_AUREKAI_FAVICON_LINK, stdout);
-    fputs("<meta name=\"description\" content=\"", stdout); html(desc); fputs("\">", stdout);
-    fputs("<meta property=\"og:title\" content=\"", stdout); html(title); fputs("\">", stdout);
-    fputs("<meta property=\"og:description\" content=\"", stdout); html(desc); fputs("\">", stdout);
+    ui_start(stdout,"meta");ui_attr(stdout,"name","description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
+    ui_start(stdout,"meta");ui_attr(stdout,"property","og:title");ui_attr_open(stdout,"content"); html(title); fputs("\">", stdout);
+    ui_start(stdout,"meta");ui_attr(stdout,"property","og:description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
     if (canon) {
-        fputs("<meta property=\"og:url\" content=\"", stdout); html(canon); fputs("\">", stdout);
-        fputs("<link rel=\"canonical\" href=\"", stdout); html(canon); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"property","og:url");ui_attr_open(stdout,"content"); html(canon); fputs("\">", stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","canonical");ui_attr_open(stdout,"href"); html(canon); fputs("\">", stdout);
     }
-    fputs("<meta name=\"twitter:title\" content=\"", stdout); html(title); fputs("\">", stdout);
-    fputs("<meta name=\"twitter:description\" content=\"", stdout); html(desc); fputs("\">", stdout);
+    ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:title");ui_attr_open(stdout,"content"); html(title); fputs("\">", stdout);
+    ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
 }
 
 /* The matrix root is a real resolved subject, not a brand-neutral static page.
@@ -807,8 +808,7 @@ static int emit_matrix_index(const char *root, const BfMatrixAddressResolution *
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
            "Cache-Control: no-cache\r\nConnection: close\r\n\r\n");
     fwrite(body, 1, (size_t)(slot - body), stdout);
-    fputs("<link rel=\"describedby\" type=\"application/ld+json\" href=\"/ro-crate/ro-crate-metadata.json\">"
-          "<link rel=\"alternate\" type=\"application/vnd.zarr+json\" href=\"/zarr/zarr.json\">", stdout);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","describedby");ui_attr(stdout,"type","application/ld+json");ui_attr(stdout,"href","/ro-crate/ro-crate-metadata.json");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","alternate");ui_attr(stdout,"type","application/vnd.zarr+json");ui_attr(stdout,"href","/zarr/zarr.json");ui_gt(stdout);
     {
         /* Identity, emitted per resolved host. These tags used to be written
          * into index.html pointing at one host, so three of four territories
@@ -821,15 +821,15 @@ static int emit_matrix_index(const char *root, const BfMatrixAddressResolution *
         const char *canon = *out->canonical_address ? out->canonical_address : NULL;
         ui_text(stdout, "title", NULL, title);
         fputs(BF_AUREKAI_FAVICON_LINK, stdout);
-        fputs("<meta name=\"description\" content=\"", stdout); html(desc); fputs("\">", stdout);
-        fputs("<meta property=\"og:title\" content=\"", stdout); html(title); fputs("\">", stdout);
-        fputs("<meta property=\"og:description\" content=\"", stdout); html(desc); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"name","description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"property","og:title");ui_attr_open(stdout,"content"); html(title); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"property","og:description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
         if (canon) {
-            fputs("<meta property=\"og:url\" content=\"", stdout); html(canon); fputs("\">", stdout);
-            fputs("<link rel=\"canonical\" href=\"", stdout); html(canon); fputs("\">", stdout);
+            ui_start(stdout,"meta");ui_attr(stdout,"property","og:url");ui_attr_open(stdout,"content"); html(canon); fputs("\">", stdout);
+            ui_start(stdout,"link");ui_attr(stdout,"rel","canonical");ui_attr_open(stdout,"href"); html(canon); fputs("\">", stdout);
         }
-        fputs("<meta name=\"twitter:title\" content=\"", stdout); html(title); fputs("\">", stdout);
-        fputs("<meta name=\"twitter:description\" content=\"", stdout); html(desc); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:title");ui_attr_open(stdout,"content"); html(title); fputs("\">", stdout);
+        ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
     }
     fputs("<script>window.BonfyreMatrixContext={\"subject\":", stdout); json(out->subject_id);
     fputs(",\"presence\":", stdout); json(out->presence_id);

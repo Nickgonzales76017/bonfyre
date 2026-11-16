@@ -23,27 +23,26 @@ static void aw_picker_card(const char *site,sqlite3_int64 world,const char *spac
                            int position,const char *ref,const char *title,const char *by,
                            const char *kind,const char *context){
     if(!aw_picker_ref(ref)||!title||!*title)return;
-    fputs("<li class=\"aw-picker-card\" data-world-picker-card><div class=\"aw-picker-copy\"><strong>",stdout);
-    html(title);fputs("</strong>",stdout);
+    ui_open_a(stdout,"li","class","aw-picker-card","data-world-picker-card",(const char *)NULL); ui_open(stdout,"div","aw-picker-copy"); ui_open(stdout,"strong",NULL);
+    html(title);ui_close(stdout,"strong");
     if(by&&*by){ui_text(stdout, "small", NULL, by);}
     if(context&&*context){ui_text(stdout, "small", NULL, context);}
     fputs("<a href=\"/o/",stdout);
     const char *slash=strchr(ref,'/');
     char source[96];size_t n=(size_t)(slash-ref);memcpy(source,ref,n);source[n]=0;
     page_url_escape(source);fputs("/",stdout);html(slash+1);
-    fputs("\">Open retained item</a></div>",stdout);
-    fputs("<form action=\"/workspace/world\" method=\"post\" data-world-picker-add>",stdout);
+    fputs("\">Open retained item",stdout); ui_close(stdout,"a"); ui_close(stdout,"div");
+    ui_open_a(stdout,"form","action","/workspace/world","method","post","data-world-picker-add",(const char *)NULL);
     world_web_hidden_base(site,world,space,"item",revision);
     char p[12];snprintf(p,sizeof(p),"%d",position);ph_hidden("position",p);
     ph_hidden("ref",ref);ph_hidden("role",kind&&*kind?kind:"feature");
-    fputs("<button type=\"submit\">Add to draft</button></form></li>",stdout);
+    ui_open_a(stdout,"button","type","submit"); fputs("Add to draft",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"li");
 }
 static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,const char *space,
                            long long revision,int position,long uid,const char *selected,const char *query){
     if(!db||!site||!space||uid<1||position<1||position>AW_ITEM_LIMIT)return;
 
-    fputs("<section class=\"aw-picker\" data-world-source-picker><h3>Choose from your library</h3>"
-          "<p>Use something you saved, or browse a retained source. The selection stays in this draft until you explicitly publish the room. Its original rights, authorship and availability remain with the source.</p>",stdout);
+    ui_open_a(stdout,"section","class","aw-picker","data-world-source-picker",(const char *)NULL); ui_open(stdout,"h3",NULL); fputs("Choose from your library",stdout); ui_close(stdout,"h3"); ui_open(stdout,"p",NULL); fputs("Use something you saved, or browse a retained source. The selection stays in this draft until you explicitly publish the room. Its original rights, authorship and availability remain with the source.",stdout); ui_close(stdout,"p");
     char actor[56];snprintf(actor,sizeof(actor),"user:%ld",uid);
     sqlite3_stmt *st=NULL;int found=0;
     if(sqlite3_prepare_v2(db,
@@ -54,13 +53,13 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
         while(sqlite3_step(st)==SQLITE_ROW&&found<12){
             const char *ref=(const char*)sqlite3_column_text(st,0);
             if(!aw_picker_ref(ref))continue;
-            if(!found++)fputs("<h4>Your private saved references</h4><ul data-world-saved-picks>",stdout);
+            if(!found++)do{ ui_open(stdout,"h4",NULL); fputs("Your private saved references",stdout); ui_close(stdout,"h4"); ui_open_a(stdout,"ul","data-world-saved-picks",(const char *)NULL); }while(0);
             aw_picker_card(site,world,space,revision,position,ref,
                 (const char*)sqlite3_column_text(st,1),(const char*)sqlite3_column_text(st,2),
                 "feature",(const char*)sqlite3_column_text(st,3));
         }
     }
-    sqlite3_finalize(st);st=NULL;if(found)fputs("</ul>",stdout);
+    sqlite3_finalize(st);st=NULL;if(found)ui_close(stdout,"ul");
     else ui_text(stdout, "p", NULL, "No retained references are saved in this account yet. You can choose items from a published source below.");
     ui_text(stdout, "h4", NULL, "Browse observed sources");
     {char number[24];snprintf(number,sizeof(number),"%lld",(long long)world);
@@ -78,16 +77,16 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
         while(sqlite3_step(st)==SQLITE_ROW){
             const char *source=(const char*)sqlite3_column_text(st,0);
             if(!aw_picker_source(source))continue;
-            if(!found++)fputs("<ul class=\"aw-picker-source\" data-world-observed-sources>",stdout);
+            if(!found++)ui_open_a(stdout,"ul","class","aw-picker-source","data-world-observed-sources",(const char *)NULL);
             fputs("<li><a href=\"/workspace/worlds?site=",stdout);url_query_value(site);
             printf("&amp;world=%lld&amp;space=",(long long)world);url_query_value(space);
             fputs("&amp;source=",stdout);url_query_value(source);fputs("\"><strong>",stdout);
             const char *label=(const char*)sqlite3_column_text(st,1),*family=(const char*)sqlite3_column_text(st,2);
-            html(label&&*label?label:source);fputs("</strong><small>",stdout);html(family?family:"Source");fputs("</small></a></li>",stdout);
+            html(label&&*label?label:source);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(family?family:"Source");ui_close(stdout,"small"); ui_close(stdout,"a"); ui_close(stdout,"li");
         }
     }
     sqlite3_finalize(st);st=NULL;
-    if(found)fputs("</ul>",stdout);else ui_text(stdout, "p", NULL, "No currently observed sources match this search.");
+    if(found)ui_close(stdout,"ul");else ui_text(stdout, "p", NULL, "No currently observed sources match this search.");
     if(selected&&*selected){
         int admitted=0;
         if(sqlite3_prepare_v2(db,
@@ -107,19 +106,19 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
                     if(strcmp(item->source,selected)||strlen(item->key)!=24||
                        strspn(item->key,"0123456789abcdef")!=24||!item->title[0])continue;
                     char ref[160];snprintf(ref,sizeof(ref),"%s/%s",item->source,item->key);
-                    if(!shown++)fputs("<h4>Current material from this source</h4><ul data-world-source-picks>",stdout);
+                    if(!shown++)do{ ui_open(stdout,"h4",NULL); fputs("Current material from this source",stdout); ui_close(stdout,"h4"); ui_open_a(stdout,"ul","data-world-source-picks",(const char *)NULL); }while(0);
                     const char *kind=item->kind==BF_PAGE_MATERIAL_AUDIO?"track":
                                      item->kind==BF_PAGE_MATERIAL_VIDEO?"screening":
                                      item->kind==BF_PAGE_MATERIAL_PHOTO?"artwork":"feature";
                     aw_picker_card(site,world,space,revision,position,ref,item->title,item->by,
                                    kind,item->rights);
                 }
-                if(shown)fputs("</ul>",stdout);
+                if(shown)ui_close(stdout,"ul");
                 else ui_text(stdout, "p", NULL, "No currently retained pieces are available from this source.");
                 free(material);
             }else ui_text(stdout, "p", NULL, "The source reader is unavailable. Your draft has not changed.");
         }
     }
-    fputs("</section>",stdout);
+    ui_close(stdout,"section");
 }
 #endif
